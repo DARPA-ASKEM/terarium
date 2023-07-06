@@ -851,10 +851,10 @@ $imagePreviewActionIconFontSize: 1.5rem !default;
 $imagePreviewActionIconBorderRadius: 50% !default;
 
 //petrinet
-$petri-nodeBorder: var(--gray-800);
-$petri-nodeFill: var(--surface);
+$petri-nodeBorder: var(--gray-500);
+$petri-nodeFill: var(--gray-500);
 $petri-lineColor: var(--gray-700);
-$petri-inputBox: var(--gray-300);
+$petri-inputBox: var(--surface-0);
 
 
 :root {
@@ -931,8 +931,8 @@ $petri-inputBox: var(--gray-300);
 	--text-color-danger: #{$dangerTextButton};
 	--constrain-width: 55rem;
 	color-scheme: light;
-	--petri-nodeBorder: #{$petri-nodeBorder};
-	--petri-nodeFill: var(--surface);
+	--petri-nodeBorder: var(--gray-300);
+	--petri-nodeFill: var(--gray-300);
 	--petri-lineColor: #{$petri-lineColor};
 	--petri-inputBox: #{$petri-inputBox};
 	--port-base-size: 8px;
