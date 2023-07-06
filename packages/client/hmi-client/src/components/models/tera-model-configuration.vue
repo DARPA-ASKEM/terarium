@@ -60,7 +60,7 @@
 							</span>
 							<InputText
 								v-else
-								v-model="modelConfigs[i].name"
+								:value="modelConfigs[i].name"
 								autofocus
 								@focusout="cellEditStates[i].name = false"
 								@keyup.enter="
