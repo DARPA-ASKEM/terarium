@@ -2,7 +2,21 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
-import { NodeData, EdgeData, NodeType } from './petrinet-service';
+import { Model } from '@/types/Types';
+import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
+
+export interface NodeData {
+	type: string;
+	uid?: string | number;
+}
+
+export interface EdgeData {
+	numEdges: number;
+}
+export enum NodeType {
+	State = 'state',
+	Transition = 'transition'
+}
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
@@ -74,10 +88,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter((d) => d.data.type === 'S' || d.data.type === NodeType.State);
-		const transitions = selection.filter(
-			(d) => d.data.type === 'T' || d.data.type === NodeType.Transition
-		);
+		const species = selection.filter((d) => d.data.type === NodeType.State);
+		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
+
+		console.log('\t', species.size());
+		console.log('\t', transitions.size());
+		console.log('\t', selection.data());
 
 		// transitions
 		transitions
@@ -430,11 +446,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	getShapeOffset(node: any, angle: number) {
 		switch (node.data.type) {
-			case 'T': {
+			case NodeType.Transition: {
 				// transitions -> squares
 				return { x: node.x, y: node.y };
 			}
-			case 'S': {
+			case NodeType.State: {
 				// species -> circles with multiplier
 				const radius = node.width * 1.5;
 				return { x: node.x + radius * Math.cos(angle), y: node.y + radius * Math.sin(angle) };
@@ -446,9 +462,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	addNode(type: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
-		const size = type === 'S' ? 60 : 30;
+		const size = type === NodeType.State ? 60 : 30;
+		const id = `s-${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
-			id: `s-${this.graph.nodes.length + 1}`,
+			id,
 			label: name,
 			x: pos.x,
 			y: pos.y,
@@ -460,6 +477,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			}
 		});
 
+		petrinetService.addNode(this.graph.amr as Model, id, name);
 		this.render();
 	}
 
@@ -467,7 +485,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// FIXME: hardwired sizing
 		const positionX = this.chartSize.width / 2;
 		const positionY = this.chartSize.height / 2;
-		const size = type === 'S' ? 60 : 30;
+		const size = type === NodeType.State ? 60 : 30;
 		this.graph.nodes.push({
 			id: `s-${this.graph.nodes.length + 1}`,
 			label: name,

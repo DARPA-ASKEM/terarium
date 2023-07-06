@@ -161,12 +161,12 @@ public class ModelResource {
 			.build();
 	}
 
-	@POST
+	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateModel(
 		@PathParam("id") final String id,
-		final ModelStub model
+		final Model model
 	) {
 		return proxy.updateModel(id, model);
 	}
@@ -174,7 +174,7 @@ public class ModelResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createModel(
-		final ModelStub model
+		final Model model
 	) {
 		return proxy.createModel(model);
 	}

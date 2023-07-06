@@ -7,7 +7,6 @@ import ProjectView from '@/page/project/tera-project.vue';
 // These are test/experiment pages
 import ModelEditorView from '@/temp/ModelEditor.vue';
 import ModelRunnerView from '@/temp/ModelRunner.vue';
-import TA2Playground from '@/temp/TA2Playground.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import SSE from '@/temp/sse.vue';
@@ -45,7 +44,6 @@ const routes = [
 	},
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
-	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
