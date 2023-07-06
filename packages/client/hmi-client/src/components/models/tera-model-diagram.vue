@@ -364,7 +364,7 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(AMRToPetri(props.model));
+		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
 		if (latexFormula) {
 			updateLatexFormula(latexFormula);
 		} else {

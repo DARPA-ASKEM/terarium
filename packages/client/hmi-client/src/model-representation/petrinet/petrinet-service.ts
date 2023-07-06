@@ -73,7 +73,7 @@ export const convertToIGraph = (amr: Model) => {
 			y: 0,
 			width: 100,
 			height: 100,
-			data: state,
+			data: { type: 'state' },
 			nodes: []
 		});
 	});
@@ -87,7 +87,7 @@ export const convertToIGraph = (amr: Model) => {
 			y: 0,
 			width: 100,
 			height: 100,
-			data: transition,
+			data: { type: 'transition' },
 			nodes: []
 		});
 	});
@@ -136,5 +136,5 @@ export const convertToIGraph = (amr: Model) => {
 	return result;
 };
 
-// FIXME
+// FIXME AMR todo
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
