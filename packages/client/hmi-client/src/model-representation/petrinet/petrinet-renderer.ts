@@ -105,7 +105,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', '#FFF')
+			.style('fill', 'var(--petri-nodeFill')
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
@@ -149,9 +149,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('stroke', '#FFF')
-			.style('stroke-width', '6px')
+			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'butt')
-			.style('stroke-linejoin', 'matter')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.text((d) => d.label);
@@ -161,7 +160,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', '#FFF')
+			.attr('fill', 'var(--petri-nodeFill)')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
@@ -191,9 +190,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('stroke', '#FFF')
-			.style('stroke-width', '6px')
-			.style('stroke-linecap', 'butt')
-			.style('stroke-linejoin', 'matter')
+			.style('stroke-width', '3px')
+			.style('stroke-linecap', 'round')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.text((d) => d.label);
@@ -230,7 +228,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.style('stroke', 'var(--gray-50)')
 				.style('stroke-width', '6px')
 				.style('stroke-linecap', 'butt')
-				.style('stroke-linejoin', 'matter')
 				.style('fill', 'var(--text-color-primary')
 				.text((d) => d.data?.numEdges as number);
 		});
@@ -257,7 +254,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				'style',
 				`width:${
 					w * 0.8
-				}px; height:30px; background: var(--petri-inputBox); border-radius:var(--border-radius); border: 2px solid transparent; text-align:center; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%);`
+				}px; height:30px; background: var(--petri-inputBox); border-radius:var(--border-radius); border: 2px solid transparent; text-align:center; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); padding-left:2px; padding-right:2px;`
 			)
 			.attr('value', selection.datum().label);
 	}
