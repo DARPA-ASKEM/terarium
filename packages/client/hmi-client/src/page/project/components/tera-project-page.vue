@@ -29,7 +29,7 @@
 		@vue:mounted="emit('asset-loaded')"
 	/>
 	<!--Add new process/asset views here-->
-	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
+	<template v-else-if="assetId && !isEmpty(tabs)">
 		<tera-document
 			v-if="pageType === ProjectAssetTypes.DOCUMENTS"
 			:xdd-uri="getXDDuri(assetId)"
@@ -79,7 +79,6 @@ const props = defineProps<{
 	pageType?: ProjectAssetTypes | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
-	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
 const emit = defineEmits([

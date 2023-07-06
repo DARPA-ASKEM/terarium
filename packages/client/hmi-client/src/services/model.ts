@@ -1,12 +1,9 @@
 import API from '@/api/api';
-import { Model } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
 import { ResourceType } from '@/stores/resources';
-
-// TODO - to be removed after July 2023 Hackathon
-import { SIDARTHE } from '@/temp/models/BIOMD0000000955_askenet';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -18,9 +15,6 @@ export async function createModel(model): Promise<Model | null> {
  * @return Model|null - the model, or null if none returned by API
  */
 export async function getModel(modelId: string): Promise<Model | null> {
-	// TODO - to be removed after July 2023 Hackathon
-	if (modelId === 'biomd0000000955-model-id') return SIDARTHE;
-
 	const response = await API.get(`/models/${modelId}`);
 	return response?.data ?? null;
 }
@@ -80,4 +74,9 @@ export async function addModelToProject(
 	} else {
 		logger.warn('Could not add new model to project.');
 	}
+}
+
+export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[] | []> {
+	const response = await API.get(`/models/${modelId}/model_configurations`);
+	return response?.data ?? [];
 }

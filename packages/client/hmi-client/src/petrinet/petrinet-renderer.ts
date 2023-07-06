@@ -295,7 +295,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.duration(200)
 					.style('opacity', 1)
 					.style('visibility', 'visible');
-				console.log('hihihi');
 				this.selectNodeEdit(this.nodeSelection);
 			}
 		}
