@@ -40,11 +40,8 @@ export interface IGraph<V, E> {
 	nodes: INode<V>[];
 	edges: IEdge<E>[];
 
-	// Serve as pass-thru for akem-models
-	parameters?: any;
-	metadata?: any;
-	width?: number;
-	height?: number;
+	// keep an AMR model ref
+	amr?: any;
 }
 
 export type D3Selection = d3.Selection<d3.BaseType, any, null, any>;

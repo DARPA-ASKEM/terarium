@@ -91,17 +91,12 @@ import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
+import { PetrinetRenderer, NodeData, EdgeData, NodeType } from '@/petrinet/petrinet-renderer';
+import { mathmlToPetri, petriToLatex } from '@/petrinet/petrinet-service';
 import {
-	parsePetriNet2IGraph,
-	PetriNet,
-	NodeData,
-	EdgeData,
-	mathmlToPetri,
-	NodeType,
-	petriToLatex
-} from '@/petrinet/petrinet-service';
-import { parseAMR2IGraph, AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
+	convertAMRToACSet,
+	convertToIGraph
+} from '@/model-representation/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
@@ -235,7 +230,9 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
-			const data = await petriToLatex(AMRToPetri(props.model));
+			const data = await petriToLatex(convertAMRToACSet(props.model));
+
+			console.log('watcher', data);
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -328,10 +325,7 @@ watch(
 	[props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
-			S: { width: 60, height: 60 },
-			T: { width: 40, height: 40 }
-		});
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
@@ -380,6 +374,7 @@ watch(
 	{ deep: true }
 );
 
+/*
 const updatePetri = async (m: PetriNet) => {
 	// equationML.value = mathmlString;
 	// Convert petri net into a graph
@@ -413,6 +408,7 @@ const updatePetri = async (m: PetriNet) => {
 	await renderer?.render();
 	updateLatexFormula(equationLatexNew.value);
 };
+*/
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
@@ -437,7 +433,9 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
-				updatePetri(newPetri.value);
+
+				// FIXME: equation to AMR
+				// updatePetri(newPetri.value);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -479,10 +477,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
 
 	if (renderer) {
 		renderer.setEditMode(false);

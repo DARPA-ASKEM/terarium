@@ -3,15 +3,15 @@ import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 
-interface NodeData {
+export interface NodeData {
 	type: string;
 	uid?: string | number;
 }
 
-interface EdgeData {
+export interface EdgeData {
 	numEdges: number;
 }
-enum NodeType {
+export enum NodeType {
 	State = 'S',
 	Transition = 'T'
 }
