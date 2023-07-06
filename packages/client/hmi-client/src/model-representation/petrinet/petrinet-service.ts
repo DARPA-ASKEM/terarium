@@ -1,6 +1,6 @@
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, PetriNetState, PetriNetTransition, Model } from '@/types/Types';
-import { parseIGraph2PetriNet, PetriNet } from '@/petrinet/petrinet-service';
+import { PetriNet } from '@/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
 
 /**
@@ -281,11 +281,4 @@ export const parseAMRPetriNet2IGraph = (
 	} // end T
 
 	return result;
-};
-
-// This is a temp helper function.
-// This is just used to go from new format -> old format as we calibration, simulation, and latex converter all need this old format while the switch over is happening.
-export const AMRToPetri = (model: Model, attributeForName?: string) => {
-	const tempGraph = parseAMR2IGraph(model);
-	return parseIGraph2PetriNet(tempGraph, attributeForName); // TODO: Ensure this step properly parses back to O
 };

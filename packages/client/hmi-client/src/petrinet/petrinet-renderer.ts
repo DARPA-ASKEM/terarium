@@ -2,7 +2,19 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
-import { NodeData, EdgeData, NodeType } from './petrinet-service';
+
+interface NodeData {
+	type: string;
+	uid?: string | number;
+}
+
+interface EdgeData {
+	numEdges: number;
+}
+enum NodeType {
+	State = 'S',
+	Transition = 'T'
+}
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
