@@ -6,9 +6,9 @@ import { logger } from '@/utils/logger';
 // Transform a MathML list of strings to an AMR
 const mathmlToAMR = async (mathml: string[]): Promise<Model | null> => {
 	try {
-		const { status, data } = await API.post('/transforms/mathml-to-amr', mathml);
-		if (status && status === 200) {
-			return (data as Model) ?? null;
+		const response = await API.post('/transforms/mathml-to-amr', mathml);
+		if (response && response?.status === 200) {
+			return (response?.data as Model) ?? null;
 		}
 		logger.error('MathML to AMR Error (skema-rs): Server did not provide a correct response', {
 			showToast: false

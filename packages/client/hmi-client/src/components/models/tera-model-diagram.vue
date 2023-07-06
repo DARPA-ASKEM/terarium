@@ -102,12 +102,12 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
+import { mathmlToAMR } from '@/services/models/transformations';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-// import { ITypedModel } from '@/types/Model';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -404,7 +404,13 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
+			console.group('MathML');
+			console.log('MathML', cleanedMathML);
+			const amr = await mathmlToAMR(cleanedMathML);
+			console.log('AMR', amr);
 			newPetri.value = await mathmlToPetri(cleanedMathML);
+			console.log('PetriNet', newPetri.value);
+			console.groupEnd();
 			if (
 				(isArray(newPetri.value) && newPetri.value.length > 0) ||
 				(!isArray(newPetri.value) &&
