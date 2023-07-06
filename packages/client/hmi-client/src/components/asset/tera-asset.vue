@@ -146,7 +146,7 @@ header.shrinked {
 	height: 3rem;
 	position: sticky;
 	top: -1px;
-	z-index: 1;
+	z-index: 2;
 	isolation: isolate;
 	background-color: rgba(255, 255, 255, 0.85);
 	backdrop-filter: blur(6px);
@@ -198,6 +198,7 @@ header.shrinked aside {
 	align-items: center;
 	gap: 1rem;
 }
+
 main:deep(.p-inputtext.p-inputtext-sm) {
 	padding: 0.65rem 0.65rem 0.65rem 3rem;
 }
