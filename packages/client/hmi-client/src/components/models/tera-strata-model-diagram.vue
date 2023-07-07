@@ -10,26 +10,57 @@
 						:maxSize="equationPanelMaxSize"
 					>
 						<section class="graph-element">
-							<Toolbar>
-								<template #start>
-									<Button
-										@click="resetZoom"
-										label="Reset zoom"
-										class="p-button-sm p-button-outlined toolbar-button"
-									/>
-								</template>
-							</Toolbar>
+							<section v-if="showTypingToolbar">
+								<div class="typing-row">
+									<div>COLOR</div>
+									<div class="input-header">NODE TYPE</div>
+									<div class="input-header">NAME OF TYPE</div>
+									<div class="input-header">ASSIGN TO</div>
+									<div><div class="empty-spacer" :style="{ width: `28px` }"></div></div>
+								</div>
+								<div class="typing-row" v-for="(modelType, index) in modelTypes" :key="index">
+									<div>
+										<div
+											:class="
+												modelType.nodeType === 'Variable'
+													? `legend-key-state`
+													: `legend-key-transition-lg`
+											"
+											:style="{ backgroundColor: strataTypeColors[index] }"
+										/>
+									</div>
+									<div>
+										<Dropdown
+											class="p-inputtext-sm"
+											:options="nodeTypes"
+											v-model="modelType.nodeType"
+										/>
+									</div>
+									<div>
+										<InputText class="p-inputtext-sm" />
+									</div>
+									<div>
+										<Dropdown class="p-inputtext-sm" placeholder="Select nodes" />
+									</div>
+									<div>
+										<Button icon="pi pi-times" text rounded />
+									</div>
+								</div>
+							</section>
 							<section class="legend">
 								<ul>
 									<li v-for="(type, i) in stateTypes" :key="i">
-										<div class="legend-state" :style="{ backgroundColor: strataTypeColors[i] }" />
+										<div
+											class="legend-key-state"
+											:style="{ backgroundColor: strataTypeColors[i] }"
+										/>
 										{{ type }}
 									</li>
 								</ul>
 								<ul>
 									<li v-for="(type, i) in transitionTypes" :key="i">
 										<div
-											class="legend-transition"
+											class="legend-key-transition"
 											:style="{ backgroundColor: strataTypeColors[stateTypes?.length ?? 0 + i] }"
 										/>
 										{{ type }}
@@ -57,9 +88,10 @@ import { parseAMR2IGraph, AMRToPetri } from '@/model-representation/petrinet/pet
 import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
 import { strataTypeColors } from '@/utils/color-schemes';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -74,6 +106,7 @@ const emit = defineEmits([
 const props = defineProps<{
 	model: Model | null;
 	nodePreview?: boolean;
+	showTypingToolbar?: boolean;
 }>();
 
 const newModelName = ref('New Model');
@@ -93,6 +126,15 @@ const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.nam
 const transitionTypes = computed(() =>
 	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
 );
+const modelTypes = ref<
+	{
+		nodeType: string;
+		typeName?: string;
+		assignTo?: string;
+	}[]
+>([]);
+// const numberNodes = computed<number>(() => props.model?.model.states.length + props.model?.model.transitions.length);
+const nodeTypes = ref<string[]>(['Variable', 'Transition']);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -146,6 +188,17 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
+			console.log('test');
+			modelTypes.value.push(
+				{
+					nodeType: 'Variable',
+					typeName: props.model.semantics?.typing?.type_system.states[0].name
+				},
+				{
+					nodeType: 'Transition',
+					typeName: props.model.semantics?.typing?.type_system.transitions[0].properties?.name
+				}
+			);
 			const data = await petriToLatex(AMRToPetri(props.model));
 			if (data) {
 				updateLatexFormula(data);
@@ -261,10 +314,6 @@ onMounted(async () => {
 onUnmounted(() => {
 	document.removeEventListener('keyup', editorKeyHandler);
 });
-
-const resetZoom = async () => {
-	renderer?.setToDefaultZoom();
-};
 </script>
 
 <style scoped>
@@ -291,17 +340,26 @@ main {
 	margin-left: 1rem;
 	display: flex;
 	gap: 1rem;
+	background-color: var(--surface-section);
+	border-radius: 0.5rem;
+	padding: 0.5rem;
 }
-.legend-state {
+.legend-key-state {
 	height: 24px;
 	width: 24px;
 	border-radius: 12px;
 }
 
-.legend-transition {
+.legend-key-transition {
 	height: 16px;
 	width: 16px;
 	border-radius: 4px;
+}
+
+.legend-key-transition-lg {
+	height: 24px;
+	width: 24px;
+	border-radius: 6px;
 }
 
 ul {
@@ -403,5 +461,40 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.typing-row {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	padding: 1rem;
+	color: var(--text-color-subdued);
+	gap: 1rem;
+	font-size: var(--font-caption);
+}
+
+.typing-row > div {
+	display: flex;
+	flex: 1 1 auto;
+	justify-content: flex-start;
+}
+
+.typing-row > div:first-of-type {
+	flex: 0 0 48px;
+	min-width: 0;
+}
+
+.typing-row > div:last-of-type {
+	flex: 0 1 0px;
+	min-width: 0;
+}
+
+.p-inputtext,
+.p-dropdown {
+	min-width: 150px;
+}
+
+.input-header {
+	min-width: 150px;
 }
 </style>

@@ -55,7 +55,7 @@
 				<Accordion :active-index="0">
 					<AccordionTab header="Model">
 						<div class="step-1-inner">
-							<tera-model-diagram :model="model" :is-editable="false" />
+							<tera-strata-model-diagram :model="model" show-typing-toolbar />
 							<div class="input">
 								<label for="strata-type">Select a strata type</label>
 								<Dropdown
@@ -87,7 +87,7 @@
 								</div>
 							</section>
 							<section v-else>
-								<tera-strata-model-diagram :model="strataModel" :is-editable="false" strata-view />
+								<tera-strata-model-diagram :model="strataModel" />
 							</section>
 						</div>
 					</AccordionTab>
@@ -113,7 +113,6 @@ import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
-import TeraModelDiagram from '../models/tera-model-diagram.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
