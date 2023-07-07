@@ -66,31 +66,6 @@ public class ModelResource {
 	}
 
 	@GET
-	@Path("/intermediates/{id}")
-	public Response getIntermediate(
-		@PathParam("id") final String id
-	) {
-		return proxy.getIntermediate(id);
-	}
-
-	@DELETE
-	@Path("/intermediates/{id}")
-	public Response deleteIntermediate(
-		@PathParam("id") final String id
-	) {
-		return proxy.deleteIntermediate(id);
-	}
-
-	@POST
-	@Path("/intermediates")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createIntermediate(
-		final Intermediate intermediate
-	) {
-		return proxy.createIntermediate(intermediate);
-	}
-
-	@GET
 	@Path("/descriptions")
 	public Response getDescriptions(
 		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,

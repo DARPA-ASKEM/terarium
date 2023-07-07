@@ -38,25 +38,6 @@ public interface ModelProxy {
 	);
 
 	@GET
-	@Path("/intermediates/{id}")
-	Response getIntermediate(
-		@PathParam("id") String id
-	);
-
-	@DELETE
-	@Path("/intermediates/{id}")
-	Response deleteIntermediate(
-		@PathParam("id") String id
-	);
-
-	@POST
-	@Path("/intermediates")
-	@Consumes(MediaType.APPLICATION_JSON)
-	Response createIntermediate(
-		Intermediate intermediate
-	);
-
-	@GET
 	@Path("/descriptions")
 	Response getDescriptions(
 		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
