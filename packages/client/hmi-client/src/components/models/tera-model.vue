@@ -27,6 +27,13 @@
 				/>
 			</span>
 			<Button
+				v-if="isEditable"
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
 				label="Create new model"
@@ -434,6 +441,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel } from '@/services/model';
+import { addAsset } from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
@@ -441,6 +449,7 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
+import Menu from 'primevue/menu';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
@@ -464,7 +473,8 @@ const props = defineProps({
 	},
 	isEditable: {
 		type: Boolean,
-		required: true
+		default: false,
+		required: false
 	},
 	highlight: {
 		type: String,
@@ -485,6 +495,33 @@ const model = ref<Model | null>(null);
 const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
+/*
+ * User Menu
+ */
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	// { icon: 'pi pi-pencil', label: 'Rename', command: renameModel },
+	{ icon: 'pi pi-clone', label: 'Make a copy', command: duplicateModel }
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+async function duplicateModel() {
+	if (!model.value) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	const duplicateModelResponse = await createModel(model.value);
+	if (!duplicateModelResponse) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	await addAsset(props.project.id, ProjectAssetTypes.MODELS, duplicateModelResponse.id);
+	// Should probably refresh or emit update?
+}
 
 /* Model */
 const name = computed(() => highlightSearchTerms(model.value?.name));
