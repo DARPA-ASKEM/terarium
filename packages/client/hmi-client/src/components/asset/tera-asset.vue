@@ -1,7 +1,7 @@
 <template>
 	<main @scroll="updateScrollPosition">
 		<slot name="nav" />
-		<header v-if="shrinkHeader" class="shrinked">
+		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
 			<aside class="spread-out">
 				<slot name="edit-buttons" />
@@ -13,14 +13,15 @@
 				/>
 			</aside>
 		</header>
-		<header id="asset-top" ref="headerRef">
-			<template v-if="!hideHeader">
+		<template v-if="!hideIntro">
+			<header id="asset-top" ref="headerRef">
 				<section>
 					<!-- put the buttons above the title if there is an overline -->
 					<div v-if="overline" class="vertically-center">
 						<span class="overline">{{ overline }}</span>
 						<slot name="edit-buttons" />
 					</div>
+					<slot name="info-bar" />
 
 					<!--For naming asset such as model or code file-->
 					<div class="vertically-center">
@@ -54,8 +55,8 @@
 						@click="emit('close-preview')"
 					/>
 				</aside>
-			</template>
-		</header>
+			</header>
+		</template>
 		<section :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
@@ -74,7 +75,8 @@ const props = defineProps<{
 	authors?: string;
 	doi?: string;
 	publisher?: string;
-	hideHeader?: boolean;
+	hideIntro?: boolean;
+	showStickyHeader?: boolean;
 	stretchContent?: boolean;
 }>();
 
@@ -146,7 +148,7 @@ header.shrinked {
 	height: 3rem;
 	position: sticky;
 	top: -1px;
-	z-index: 1;
+	z-index: 2;
 	isolation: isolate;
 	background-color: rgba(255, 255, 255, 0.85);
 	backdrop-filter: blur(6px);
@@ -198,6 +200,7 @@ header.shrinked aside {
 	align-items: center;
 	gap: 1rem;
 }
+
 main:deep(.p-inputtext.p-inputtext-sm) {
 	padding: 0.65rem 0.65rem 0.65rem 3rem;
 }
