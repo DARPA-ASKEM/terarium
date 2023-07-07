@@ -47,7 +47,7 @@
 							aria-haspopup="true"
 							aria-controls="overlay_tmenu"
 						/>
-						<TieredMenu ref="tieredMenuRef" :model="menuItems" :popup="true" @click.stop />
+						<Menu ref="menuRef" :model="menuItems" :popup="true" @click.stop />
 					</header>
 					<p>{{ annotation.content }}</p>
 					<footer>
@@ -87,6 +87,25 @@
 			label="Add note"
 			class="p-button-text p-button-flat"
 		/>
+		<Teleport to="body">
+			<tera-modal
+				v-if="isDeleteNoteModal"
+				@modal-mask-clicked="isDeleteNoteModal = false"
+				class="remove-modal"
+			>
+				<template #header>
+					<h4>Delete note</h4>
+				</template>
+				<template #default>
+					<p>Are you sure you want to delete the following note?</p>
+					<p class="note-to-delete">{{ annotations[selectedNoteIndex].content }}</p>
+				</template>
+				<template #footer>
+					<Button label="Delete" class="p-button-danger" @click="deleteNote()" />
+					<Button label="Cancel" class="p-button-secondary" @click="isDeleteNoteModal = false" />
+				</template>
+			</tera-modal>
+		</Teleport>
 	</main>
 </template>
 
@@ -95,7 +114,7 @@ import { ref, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import TieredMenu from 'primevue/tieredmenu';
+import Menu from 'primevue/menu';
 import { Annotation } from '@/types/common';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
 import {
@@ -104,6 +123,7 @@ import {
 	getAnnotations,
 	updateAnnotation
 } from '@/services/models/annotations';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
 
 const props = defineProps<{
@@ -142,10 +162,9 @@ const menuItems = ref([
 	{
 		label: 'Delete',
 		icon: 'pi pi-fw pi-trash',
-		items: [{ label: 'Yes, delete this note', command: () => deleteNote() }]
-	},
-	{
-		label: 'Are you sure?'
+		command: () => {
+			isDeleteNoteModal.value = true;
+		}
 	}
 ]);
 const annotations = ref<Annotation[]>([]);
@@ -156,7 +175,8 @@ const isEditingNote = ref(false);
 const showDeletetionConfirmation = ref(false);
 const selectedNoteSection = ref<string[]>([]);
 const newNoteSection = ref();
-const tieredMenuRef = ref();
+const menuRef = ref();
+const isDeleteNoteModal = ref(false);
 
 async function getAndPopulateAnnotations() {
 	if (props.assetId && props.pageType) {
@@ -170,7 +190,7 @@ async function getAndPopulateAnnotations() {
 }
 
 function toggle(event) {
-	tieredMenuRef.value[selectedNoteIndex.value].toggle(event);
+	menuRef.value[selectedNoteIndex.value].toggle(event);
 }
 
 const addNote = async () => {
@@ -202,6 +222,7 @@ async function deleteNote() {
 	const noteToDelete: Annotation = annotations.value[selectedNoteIndex.value];
 	await deleteAnnotation(noteToDelete.id);
 	await getAndPopulateAnnotations();
+	isDeleteNoteModal.value = false;
 }
 
 function toggleAnnotationInput() {
@@ -257,6 +278,13 @@ header {
 .p-dropdown:deep(span.p-dropdown-label.p-inputtext.p-placeholder) {
 	height: 2rem;
 	padding: 0rem;
+}
+
+.note-to-delete {
+	margin-top: 1rem;
+	padding: 0.5rem;
+	border-radius: var(--border-radius);
+	background-color: var(--surface-highlight);
 }
 
 footer {
