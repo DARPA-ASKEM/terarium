@@ -86,12 +86,12 @@ enum NodeType {
 	Transition = 'T'
 }
 
-interface NodeData {
+export interface NodeData {
 	type: string;
 	uid?: string | number;
 }
 
-interface EdgeData {
+export interface EdgeData {
 	numEdges: number;
 }
 

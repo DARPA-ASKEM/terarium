@@ -431,7 +431,7 @@ import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
+import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -548,7 +548,7 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 // };
 
 function updateModelContent(rendererGraph) {
-	if (model.value) model.value.model = parseIGraph2PetriNet(rendererGraph);
+	if (model.value) model.value = convertToAMRModel(rendererGraph);
 }
 
 // Highlight strings based on props.highlight
