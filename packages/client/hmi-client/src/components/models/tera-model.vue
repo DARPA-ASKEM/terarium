@@ -384,14 +384,12 @@
 			</Accordion>
 		</template>
 		<template v-if="modelView === ModelView.MODEL">
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab header="Model diagram">
-					<tera-model-diagram
-						:model="model"
-						:is-editable="props.isEditable"
-						@update-model-content="updateModelContent"
-					/>
-				</AccordionTab>
+			<tera-model-diagram
+				:model="model"
+				:is-editable="props.isEditable"
+				@update-model-content="updateModelContent"
+			/>
+			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
 					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
