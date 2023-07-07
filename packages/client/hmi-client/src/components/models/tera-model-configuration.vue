@@ -318,8 +318,6 @@ function updateModelConfigValue(configIndex: number = modalVal.value.configIndex
 
 async function initializeConfigSpace() {
 	modelConfigs.value = [];
-	console.log(props.model.id);
-
 	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
 
 	console.log('Configs', modelConfigs.value);
