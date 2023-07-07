@@ -44,11 +44,67 @@
 				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
 			</Chip>
 		</aside>
+		<Teleport to="body">
+			<tera-modal
+				v-if="isEvaluationScenarioModalVisible"
+				class="modal"
+				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
+			>
+				<template #header>
+					<h4>Create project</h4>
+				</template>
+				<template #default>
+					<form>
+						<label for="evaluation-scenario-name">Scenario</label>
+						<InputText id="evaluation-scenario-name" type="text" v-model="evaluationScenarioName" />
+
+						<label for="evaluation-scenario-task">Task</label>
+						<InputText
+							id="evaluation-scenario-task"
+							type="text"
+							v-model="evaluationScenarioTask"
+							placeholder="What is the scenario question?"
+						/>
+
+						<label for="evaluation-scenario-description">Description</label>
+						<Textarea
+							id="evaluation-scenario-description"
+							rows="5"
+							v-model="evaluationScenarioDescription"
+							placeholder="Describe what you are working on"
+						/>
+
+						<label for="evaluation-scenario-notes">Notes</label>
+						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
+					</form>
+				</template>
+				<template #footer>
+					<Button class="p-button-secondary" @click="isEvaluationScenarioModalVisible = false"
+						>Close</Button
+					>
+					<Button
+						class="p-button-danger"
+						:disabled="!isEvaluationScenarioValid"
+						@click="stopEvaluationScenario"
+						>Stop</Button
+					>
+					<Button
+						class="p-button-warning"
+						:disabled="!isEvaluationScenarioValid"
+						@click="pauseEvaluationScenario"
+						>Pause</Button
+					>
+					<Button :disabled="!isEvaluationScenarioValid" @click="beginEvaluationScenario"
+						>Begin</Button
+					>
+				</template>
+			</tera-modal>
+		</Teleport>
 	</header>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty } from 'lodash';
 import Avatar from 'primevue/avatar';
@@ -63,6 +119,12 @@ import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import { IProject } from '@/types/Project';
+import InputText from 'primevue/inputtext';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import Textarea from 'primevue/textarea';
+import * as EventService from '@/services/event';
+import { EventType } from '@/types/Types';
+import useResourcesStore from '@/stores/resources';
 
 const props = defineProps<{
 	active: boolean;
@@ -76,6 +138,104 @@ const props = defineProps<{
  */
 const router = useRouter();
 const navigationMenu = ref();
+const resources = useResourcesStore();
+
+/**
+ * Evaluation scenario code
+ */
+const isEvaluationScenarioModalVisible = ref(false);
+const evaluationScenarioName = ref('');
+const evaluationScenarioTask = ref('');
+const evaluationScenarioDescription = ref('');
+const evaluationScenarioNotes = ref('');
+const isEvaluationScenarioValid = computed(
+	() =>
+		evaluationScenarioName.value !== '' &&
+		evaluationScenarioTask.value !== '' &&
+		evaluationScenarioDescription.value !== ''
+);
+
+/**
+ * Logs an event to the server to begin an evaluation. Additionally, persists the evaluation
+ * model to local storage
+ */
+const beginEvaluationScenario = () => {
+	EventService.create(
+		EventType.EvaluationScenario,
+		resources.activeProject?.id,
+		JSON.stringify(getEvaluationScenarioData('start'))
+	);
+	persistEvaluationScenario();
+	isEvaluationScenarioModalVisible.value = false;
+};
+
+/**
+ * Logs an event to the server to stop an evalation.  Clears the persisted model in local storage.
+ */
+const stopEvaluationScenario = () => {
+	EventService.create(
+		EventType.EvaluationScenario,
+		resources.activeProject?.id,
+		JSON.stringify(getEvaluationScenarioData('stop'))
+	);
+	clearEvaluationScenario();
+	isEvaluationScenarioModalVisible.value = false;
+};
+
+/**
+ * Logs an event to the server to pause an evaluation.
+ */
+const pauseEvaluationScenario = () => {
+	EventService.create(
+		EventType.EvaluationScenario,
+		resources.activeProject?.id,
+		JSON.stringify(getEvaluationScenarioData('pause'))
+	);
+	isEvaluationScenarioModalVisible.value = false;
+};
+
+/**
+ * Returns the evaluation meta data model for the given action
+ * @param action	the action name to log
+ */
+
+const getEvaluationScenarioData = (action: string) => ({
+	name: evaluationScenarioName.value,
+	task: evaluationScenarioTask.value,
+	description: evaluationScenarioDescription.value,
+	notes: evaluationScenarioNotes.value,
+	action
+});
+
+/**
+ * Saves the model to local storage
+ */
+const persistEvaluationScenario = () => {
+	window.localStorage.setItem('evaluationScenarioName', evaluationScenarioName.value);
+	window.localStorage.setItem('evaluationScenarioTask', evaluationScenarioTask.value);
+	window.localStorage.setItem('evaluationScenarioDescription', evaluationScenarioDescription.value);
+	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
+};
+
+const loadEvaluationScenario = () => {
+	evaluationScenarioName.value = window.localStorage.getItem('evaluationScenarioName') || '';
+	evaluationScenarioTask.value = window.localStorage.getItem('evaluationScenarioTask') || '';
+	evaluationScenarioDescription.value =
+		window.localStorage.getItem('evaluationScenarioDescription') || '';
+	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
+};
+
+/**
+ * Clears the model from local storage an memory
+ */
+const clearEvaluationScenario = () => {
+	evaluationScenarioName.value = '';
+	evaluationScenarioTask.value = '';
+	evaluationScenarioDescription.value = '';
+	evaluationScenarioNotes.value = '';
+	persistEvaluationScenario();
+};
+
 const homeItem: MenuItem = {
 	label: RouteMetadata[RouteName.HomeRoute].displayName,
 	icon: RouteMetadata[RouteName.HomeRoute].icon,
@@ -101,12 +261,22 @@ const userMenu = ref();
 const isLogoutDialog = ref(false);
 const userMenuItems = ref([
 	{
+		label: 'Evaluation Scenario',
+		command: () => {
+			isEvaluationScenarioModalVisible.value = true;
+		}
+	},
+	{
 		label: 'Logout',
 		command: () => {
 			isLogoutDialog.value = true;
 		}
 	}
 ]);
+
+onMounted(() => {
+	loadEvaluationScenario();
+});
 
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
@@ -301,5 +471,17 @@ i {
 .navigation-menu {
 	margin-top: 0.25rem;
 	min-width: fit-content !important;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.modal input,
+.modal textarea {
+	display: block;
+	margin-bottom: 2rem;
+	width: 100%;
 }
 </style>
