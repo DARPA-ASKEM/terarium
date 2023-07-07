@@ -25,14 +25,14 @@
 					@click="modelView = ModelView.MODEL"
 					:active="modelView === ModelView.MODEL"
 				/>
-				<Button
-					v-if="isEditable"
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleOptionsMenu"
-				/>
-				<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</span>
+			<Button
+				v-if="isEditable"
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
@@ -473,7 +473,8 @@ const props = defineProps({
 	},
 	isEditable: {
 		type: Boolean,
-		required: true
+		default: false,
+		required: false
 	},
 	highlight: {
 		type: String,
