@@ -38,7 +38,31 @@
 						>
 							{{ id }}
 						</th>
-						<!--TODO: Insert new th loops for time and observables here-->
+						<th
+							v-for="({ id }, i) in configurations[0]?.semantics?.ode.observables"
+							:header="id"
+							:key="i"
+						>
+							<section class="editable-cell">
+								<span>{{ id }}</span>
+								<Button
+									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+									icon="pi pi-ellipsis-v"
+									@click="($event) => showObservableHeaderMenu($event, i)"
+								/>
+								<Menu ref="observableHeaderMenu" :model="observableHeaderMenuItems" :popup="true" />
+								<!-- Changes observable name for all configs?? -->
+								<!-- <InputText v-model.lazy="modelConfigs[i].configuration.semantics.ode.observables[j].id" v-focus /> -->
+							</section>
+						</th>
+						<th>
+							<Button
+								class="p-button-sm p-button-outlined"
+								label="Add"
+								icon="pi pi-plus"
+								@click="addObservable"
+							/>
+						</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
@@ -143,25 +167,25 @@
 							/>
 						</td>
 						<td
-							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
+							v-for="(observable, j) of configuration?.semantics?.ode.observables"
 							:key="j"
-							@click="cellEditStates[i].parameters[j] = true"
+							@click="cellEditStates[i].observables[j] = true"
 						>
-							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
-								<span>{{ parameter.value }}</span>
+							<section v-if="!cellEditStates[i].observables[j]" class="editable-cell">
+								<span>{{ observable.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
-									@click.stop="openValueModal('parameters', 'value', i, j)"
+									@click.stop="openValueModal('observables', 'expression', i, j)"
 								/>
 							</section>
 							<InputText
 								v-else
-								v-model.lazy="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
+								v-model.lazy="modelConfigs[i].configuration.semantics.ode.observables[j].expression"
 								v-focus
-								@focusout="cellEditStates[i].parameters[j] = false"
+								@focusout="cellEditStates[i].observables[j] = false"
 								@keyup.enter="
-									cellEditStates[i].parameters[j] = false;
+									cellEditStates[i].observables[j] = false;
 									updateModelConfigValue(i);
 								"
 							/>
@@ -268,56 +292,56 @@ const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-// let chosenObservableIndex = 0;
+let chosenObservableIndex = 0;
 
 const configurations = computed<Model[]>(
 	() => modelConfigs.value?.map((m) => m.configuration) ?? []
 );
 
-// const observables = ref<any[]>([]);
+// Now it adds the observable to all the configurations...
+function addObservable() {
+	for (let i = 0; i < modelConfigs.value.length; i++) {
+		if (!modelConfigs.value[i].configuration.semantics.ode.observables) {
+			modelConfigs.value[i].configuration.semantics.ode.observables = [];
+		}
 
-// function addObservable() {
-// 	for (let i = 0; i < modelConfigs.value.length; i++) {
-// 		if (!modelConfigs.value[i].configuration.semantics.ode.observables) {
-// 			modelConfigs.value[i].configuration.semantics.ode.observables = [];
-// 		}
+		modelConfigs.value[i].configuration.semantics.ode.observables.push({
+			id: `noninf`,
+			name: `Non-infectious`,
+			states: ['S', 'R'],
+			expression: 'S+R',
+			expression_mathml: '<apply><plus/><ci>S</ci><ci>R</ci></apply>'
+		});
 
-// 		modelConfigs.value[i].configuration.semantics.ode.observables.push({
-// 			id: `noninf`,
-// 			name: `Non-infectious`,
-// 			states: ['S', 'R'],
-// 			expression: 'S+R',
-// 			expression_mathml: '<apply><plus/><ci>S</ci><ci>R</ci></apply>'
-// 		});
+		updateModelConfiguration(modelConfigs.value[i]);
+	}
+}
 
-// 		updateModelConfiguration(modelConfigs.value[i]);
-// 	}
-// }
+const observableHeaderMenu = ref();
+const showObservableHeaderMenu = (event, i) => {
+	chosenObservableIndex = i;
+	console.log(observableHeaderMenu.value[i]);
+	observableHeaderMenu.value[i].toggle(event);
+};
 
-// const observableHeaderMenu = ref();
-// const showObservableHeaderMenu = (event, i) => {
-// 	chosenObservableIndex = i;
-// 	observableHeaderMenu.value[i].toggle(event);
-// };
-
-// const observableHeaderMenuItems = ref([
-// 	{
-// 		label: 'Edit name',
-// 		command: () => { }
-// 	},
-// 	{
-// 		label: 'Remove',
-// 		command: () => {
-// 			for (let i = 0; i < modelConfigs.value.length; i++) {
-// 				modelConfigs.value[i].configuration.semantics.ode.observables.splice(
-// 					chosenObservableIndex,
-// 					1
-// 				);
-// 				updateModelConfiguration(modelConfigs.value[i]);
-// 			}
-// 		}
-// 	}
-// ]);
+const observableHeaderMenuItems = ref([
+	{
+		label: 'Edit name',
+		command: () => {}
+	},
+	{
+		label: 'Remove',
+		command: () => {
+			for (let i = 0; i < modelConfigs.value.length; i++) {
+				modelConfigs.value[i].configuration.semantics.ode.observables.splice(
+					chosenObservableIndex,
+					1
+				);
+				updateModelConfiguration(modelConfigs.value[i]);
+			}
+		}
+	}
+]);
 
 // Makes cell inputs focus once they appear
 const vFocus = {
@@ -332,12 +356,17 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
 
 		for (let i = 0; i < headerNames.length; i++) {
 			if (configurations.value?.[0]?.semantics?.ode[headerNames[i]]) {
+				const colspan = configurations.value?.[0]?.semantics?.ode[headerNames[i]].length;
+
 				result.push({
 					name: headerNames[i],
-					colspan: configurations.value?.[0]?.semantics?.ode[headerNames[i]].length
+					colspan: headerNames[i] === 'observables' ? colspan + 1 : colspan // + 1 to fit Add button
 				});
 			}
 		}
+		// Just so user can add an observable when there are none by default
+		if (!headerNames.includes('observables')) result.push({ name: 'observables', colspan: 1 });
+
 		return result;
 	}
 	return [];
