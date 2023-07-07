@@ -66,8 +66,7 @@
 							@equation-updated="setNewLatexFormula"
 							@validate-mathml="validateMathML"
 							@set-editing="isEditingEQ = true"
-						>
-						</tera-math-editor>
+						/>
 					</section>
 				</TeraResizablePanel>
 			</AccordionTab>
