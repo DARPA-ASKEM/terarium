@@ -10,7 +10,6 @@ import ModelRunnerView from '@/temp/ModelRunner.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import SSE from '@/temp/sse.vue';
-import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
 import SimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from './routes';
 
@@ -47,7 +46,6 @@ const routes = [
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
-	{ path: '/workflow-playground', component: WorkflowPlayground },
 	{ path: '/simulation-workflow', component: SimulationWorkflow },
 	{ path: '/sse', component: SSE }
 ];
