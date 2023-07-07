@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray } from 'lodash';
+import { isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -217,7 +217,6 @@ watch(
 		if (props.model) {
 			const data = await petriToLatex(convertAMRToACSet(props.model));
 
-			console.log('watcher', data);
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -250,20 +249,12 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 	if (event.key === 'Backspace' && renderer) {
 		if (renderer && renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
-			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
-			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
-			renderer.nodeSelection = null;
-			renderer.render();
+			renderer.removeNode(nodeData.id);
 		}
 
 		if (renderer && renderer.edgeSelection) {
 			const edgeData = renderer.edgeSelection.datum();
-			remove(
-				renderer.graph.edges,
-				(e) => e.source === edgeData.source && e.target === edgeData.target
-			);
-			renderer.edgeSelection = null;
-			renderer.render();
+			renderer.removeEdge(edgeData.source, edgeData.target);
 		}
 	}
 	if (event.key === 'Enter' && renderer) {
@@ -335,11 +326,6 @@ watch(
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
 		});
-
-		// renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
-		// 	// Note: do not change the renderer's visuals, this is done internally
-		// 	onVariableSelected(d.label);
-		// });
 
 		// Render graph
 		await renderer?.setData(graphData);
@@ -436,7 +422,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 };
 
 onMounted(async () => {
-	// fetchRelatedTerariumArtifacts();
 	document.addEventListener('keyup', editorKeyHandler);
 });
 
@@ -449,7 +434,7 @@ const toggleEditMode = () => {
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
 		emit('update-model-content', renderer.graph);
-		updateModel(props.model);
+		updateModel(renderer.graph.amr);
 	}
 };
 

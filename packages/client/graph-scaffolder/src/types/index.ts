@@ -39,8 +39,10 @@ export interface IEdge<T> {
 export interface IGraph<V, E> {
 	nodes: INode<V>[];
 	edges: IEdge<E>[];
+	width?: number;
+	height?: number;
 
-	// keep an AMR model ref
+	// keep an AMR copy
 	amr?: any;
 }
 

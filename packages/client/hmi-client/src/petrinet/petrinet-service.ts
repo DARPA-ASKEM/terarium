@@ -81,12 +81,17 @@ export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 	return null;
 };
 
-interface NodeData {
+enum NodeType {
+	State = 'S',
+	Transition = 'T'
+}
+
+export interface NodeData {
 	type: string;
 	uid?: string | number;
 }
 
-interface EdgeData {
+export interface EdgeData {
 	numEdges: number;
 }
 
