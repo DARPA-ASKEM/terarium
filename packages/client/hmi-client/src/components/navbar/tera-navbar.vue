@@ -51,7 +51,7 @@
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
 			>
 				<template #header>
-					<h4>Create project</h4>
+					<h4>Evaluation Scenario</h4>
 				</template>
 				<template #default>
 					<form>
