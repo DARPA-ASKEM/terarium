@@ -1,87 +1,77 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!nodePreview">
-			<div ref="splitterContainer" class="splitter-container">
-				<Splitter :gutterSize="5" :layout="layout">
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="equationPanelSize"
-						:minSize="equationPanelMinSize"
-						:maxSize="equationPanelMaxSize"
-					>
-						<section class="graph-element">
-							<Toolbar>
-								<template #start>
+		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1]" class="accordion-group">
+			<AccordionTab header="Model diagram">
+				<TeraResizablePanel class="diagram-container">
+					<section class="graph-element">
+						<Toolbar>
+							<template #start>
+								<Button
+									@click="resetZoom"
+									label="Reset zoom"
+									class="p-button-sm p-button-outlined toolbar-button"
+								/>
+							</template>
+							<template #center>
+								<span class="toolbar-subgroup">
 									<Button
-										@click="resetZoom"
-										label="Reset zoom"
+										v-if="isEditing"
+										@click="addState"
+										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
-								</template>
-								<template #center>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="addState"
-											label="Add state"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											v-if="isEditing"
-											@click="addTransition"
-											label="Add transition"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-									</span>
-								</template>
-								<template #end>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											:class="
-												isEditing
-													? 'p-button-sm toolbar-button-saveModel'
-													: 'p-button-sm p-button-outlined toolbar-button'
-											"
-										/>
-									</span>
-								</template>
-							</Toolbar>
-							<div v-if="model" ref="graphElement" class="graph-element" />
-							<ContextMenu ref="menu" :model="contextMenuItems" />
-						</section>
-					</SplitterPanel>
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="mathPanelSize"
-						:minSize="mathPanelMinSize"
-						:maxSize="mathPanelMaxSize"
-					>
-						<section class="math-editor-container" :class="mathEditorSelected">
-							<tera-math-editor
-								:is-editable="isEditable"
-								:latex-equation="equationLatex"
-								:is-editing-eq="isEditingEQ"
-								:is-math-ml-valid="isMathMLValid"
-								:math-mode="MathEditorModes.LIVE"
-								@cancel-editing="cancelEditng"
-								@equation-updated="setNewLatexFormula"
-								@validate-mathml="validateMathML"
-								@set-editing="isEditingEQ = true"
-							>
-							</tera-math-editor>
-						</section>
-					</SplitterPanel>
-				</Splitter>
-			</div>
-		</TeraResizablePanel>
+									<Button
+										v-if="isEditing"
+										@click="addTransition"
+										label="Add transition"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+								</span>
+							</template>
+							<template #end>
+								<span class="toolbar-subgroup">
+									<Button
+										v-if="isEditing"
+										@click="cancelEdit"
+										label="Cancel"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+									<Button
+										@click="toggleEditMode"
+										:label="isEditing ? 'Save model' : 'Edit model'"
+										:class="
+											isEditing
+												? 'p-button-sm toolbar-button-saveModel'
+												: 'p-button-sm p-button-outlined toolbar-button'
+										"
+									/>
+								</span>
+							</template>
+						</Toolbar>
+						<div v-if="model" ref="graphElement" class="graph-element" />
+						<ContextMenu ref="menu" :model="contextMenuItems" />
+					</section>
+				</TeraResizablePanel>
+			</AccordionTab>
+			<AccordionTab header="Model equations">
+				<TeraResizablePanel class="diagram-container">
+					<section class="math-editor-container" :class="mathEditorSelected">
+						<tera-math-editor
+							:is-editable="isEditable"
+							:latex-equation="equationLatex"
+							:is-editing-eq="isEditingEQ"
+							:is-math-ml-valid="isMathMLValid"
+							:math-mode="MathEditorModes.LIVE"
+							@cancel-editing="cancelEditng"
+							@equation-updated="setNewLatexFormula"
+							@validate-mathml="validateMathML"
+							@set-editing="isEditingEQ = true"
+						>
+						</tera-math-editor>
+					</section>
+				</TeraResizablePanel>
+			</AccordionTab>
+		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
 </template>
@@ -108,8 +98,8 @@ import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
@@ -146,14 +136,6 @@ const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
-
-const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(0);
-const equationPanelMaxSize = ref<number>(100);
-
-const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(0);
-const mathPanelMaxSize = ref<number>(100);
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
@@ -463,9 +445,17 @@ const addTransition = async () => {
 
 <style scoped>
 main {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
 	overflow: auto;
+}
+
+.accordion-group {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.diagram-container {
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
 }
 
 .preview {
@@ -511,10 +501,6 @@ section math-editor {
 	z-index: 10;
 }
 
-.splitter-container {
-	height: 100%;
-}
-
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
@@ -545,19 +531,6 @@ section math-editor {
 .math-editor-error {
 	border: 4px solid var(--surface-border-warning);
 	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-.p-splitter {
-	border: none;
-	height: 100%;
-}
-
-.tera-split-panel {
-	position: relative;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	width: 100%;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
