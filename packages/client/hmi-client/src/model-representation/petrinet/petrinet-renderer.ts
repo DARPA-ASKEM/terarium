@@ -1,8 +1,23 @@
+import _ from 'lodash';
 import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
-import { NodeData, EdgeData, NodeType } from './petrinet-service';
+import { Model } from '@/types/Types';
+import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
+
+export interface NodeData {
+	type: string;
+}
+
+export interface EdgeData {
+	numEdges: number;
+}
+
+export enum NodeType {
+	State = 'state',
+	Transition = 'transition'
+}
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
@@ -74,10 +89,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter((d) => d.data.type === 'S' || d.data.type === NodeType.State);
-		const transitions = selection.filter(
-			(d) => d.data.type === 'T' || d.data.type === NodeType.Transition
-		);
+		const species = selection.filter((d) => d.data.type === NodeType.State);
+		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
 
 		// transitions
 		transitions
@@ -188,7 +201,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'none')
 			.style('stroke', EDGE_COLOR)
 			.style('stroke-opacity', EDGE_OPACITY)
-			.style('stroke-width', 1)
+			.style('stroke-width', 3)
 			.attr('marker-end', 'url(#arrowhead)');
 
 		this.updateMultiEdgeLabels();
@@ -364,6 +377,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		);
 
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			console.log('drag ended', sourceData, targetData);
 			chart?.selectAll('.new-edge').remove();
 			// reset colour after drag
 			selection.selectAll('.selectableNode').attr('stroke', 'var(--petri-nodeBorder)');
@@ -427,11 +441,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	getShapeOffset(node: any, angle: number) {
 		switch (node.data.type) {
-			case 'T': {
+			case NodeType.Transition: {
 				// transitions -> squares
 				return { x: node.x, y: node.y };
 			}
-			case 'S': {
+			case NodeType.State: {
 				// species -> circles with multiplier
 				const radius = node.width * 1.5;
 				return { x: node.x + radius * Math.cos(angle), y: node.y + radius * Math.sin(angle) };
@@ -443,9 +457,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	addNode(type: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
-		const size = type === 'S' ? 60 : 30;
+		const size = type === NodeType.State ? 60 : 30;
+		const id = `${type}-${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
-			id: `s-${this.graph.nodes.length + 1}`,
+			id,
 			label: name,
 			x: pos.x,
 			y: pos.y,
@@ -457,6 +472,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			}
 		});
 
+		const amr = this.graph.amr as Model;
+		if (type === NodeType.State) {
+			petrinetService.addState(amr, id, name);
+		} else {
+			petrinetService.addTransition(amr, id, name);
+		}
 		this.render();
 	}
 
@@ -464,21 +485,31 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// FIXME: hardwired sizing
 		const positionX = this.chartSize.width / 2;
 		const positionY = this.chartSize.height / 2;
-		const size = type === 'S' ? 60 : 30;
-		this.graph.nodes.push({
-			id: `s-${this.graph.nodes.length + 1}`,
-			label: name,
-			x: positionX,
-			y: positionY,
-			width: size,
-			height: size,
-			nodes: [],
-			data: {
-				type
-			}
+		this.addNode(type, name, { x: positionX, y: positionY });
+	}
+
+	removeNode(id: string) {
+		const nodeData = this.nodeSelection?.datum();
+		if (!nodeData) return;
+		const edgesToRemove = this.graph.edges.filter(
+			(e) => e.source === nodeData.id || e.target === nodeData.id
+		);
+		_.remove(this.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
+		_.remove(this.graph.nodes, (n) => n.id === nodeData.id);
+		this.nodeSelection = null;
+		this.render();
+
+		const amr = this.graph.amr as Model;
+		edgesToRemove.forEach((e) => {
+			console.log('lala', e.source, e.target);
+			petrinetService.removeEdge(amr, e.source, e.target);
 		});
 
-		this.render();
+		if (nodeData.data.type === NodeType.State) {
+			petrinetService.removeState(amr, id);
+		} else {
+			petrinetService.removeTransition(amr, id);
+		}
 	}
 
 	addEdge(source: any, target: any) {
@@ -505,47 +536,29 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			});
 		}
 		this.render();
+
+		const amr = this.graph.amr as Model;
+		petrinetService.addEdge(amr, source.id, target.id);
 	}
 
-	// Test adding edge to one of four quadrants on the target
-	addEdgeTest(source: any, target: any) {
-		// prevent nodes with same type from being linked with each other
-		if (source.data.type === target.data.type) {
-			return;
-		}
-
-		let quadrant = 0;
-		if (target.x - source.x < 0 && target.y - source.y > 0) {
-			quadrant = 1;
-		}
-		if (target.x - source.x < 0 && target.y - source.y < 0) {
-			quadrant = 2;
-		}
-		if (target.x - source.x > 0 && target.y - source.y < 0) {
-			quadrant = 3;
-		}
-
-		const edgeVectorAngle =
-			(quadrant * Math.PI) / 2 + Math.abs(Math.atan((target.y - source.y) / (target.x - source.x)));
-		// console.log(edgeVectorAngle / 2 / Math.PI * 360);
-
+	removeEdge(sourceId: string, targetId: string) {
 		const existingEdge = this.graph.edges.find(
-			(edge) => edge.source === source.id && edge.target === target.id
+			(edge) => edge.source === sourceId && edge.target === targetId
 		);
-		if (existingEdge && existingEdge.data) {
-			existingEdge.data.numEdges++;
+		if (!existingEdge) return;
+
+		console.log('removing', sourceId, targetId);
+
+		if (existingEdge.data && existingEdge.data.numEdges > 1) {
+			existingEdge.data.numEdges--;
 		} else {
-			this.graph.edges.push({
-				id: `${source.id}_${target.id}`,
-				source: source.id,
-				target: target.id,
-				points: [
-					this.getShapeOffset(source, edgeVectorAngle),
-					this.getShapeOffset(target, (edgeVectorAngle + Math.PI) % (Math.PI * 2))
-				],
-				data: { numEdges: 1 }
-			});
+			this.graph.edges = this.graph.edges.filter(
+				(d) => d.source === sourceId && d.target === targetId
+			);
 		}
 		this.render();
+
+		const amr = this.graph.amr as Model;
+		petrinetService.removeEdge(amr, sourceId, targetId);
 	}
 }
