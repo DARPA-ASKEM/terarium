@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import java.util.List;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 
@@ -37,12 +38,15 @@ public class TransformResource {
 	}
 
 	@POST
-	@Path("/mathml-to-amr")
+	@Path("/mathml-to-amr/{framework}")
 	@APIResponses({
 		@APIResponse(responseCode = "500", description = "An error occurred retrieving the AMR"),
 		@APIResponse(responseCode = "400", description = "Query must contain a valid MathML and a Model framework")
 	})
-	public Response mathML2AMR(List<String> mathml, String framework) {
+	public Response mathML2AMR(
+		final List<String> mathml,
+		@PathParam("framework") final String framework
+	) {
 
 		// Check if we have a framework and a MathML
 		if (framework == null || mathml == null || mathml.isEmpty()) {

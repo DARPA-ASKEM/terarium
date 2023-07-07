@@ -9,7 +9,7 @@ const mathmlToAMR = async (
 	framework: Model['framework']
 ): Promise<Model | null> => {
 	try {
-		const response = await API.post('/transforms/mathml-to-amr', { mathml, framework });
+		const response = await API.post(`/transforms/mathml-to-amr/${framework}`, mathml);
 		if (response && response?.status === 200) {
 			return (response?.data as Model) ?? null;
 		}
