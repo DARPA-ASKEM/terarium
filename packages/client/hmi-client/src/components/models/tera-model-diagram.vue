@@ -392,7 +392,7 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		try {
 			console.group('MathML');
 			console.log('MathML', cleanedMathML);
-			const amr = await mathmlToAMR(cleanedMathML);
+			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
 			console.log('AMR', amr);
 			newPetri.value = await mathmlToPetri(cleanedMathML);
 			console.log('PetriNet', newPetri.value);

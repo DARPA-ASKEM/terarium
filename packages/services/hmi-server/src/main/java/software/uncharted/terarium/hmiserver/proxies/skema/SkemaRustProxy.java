@@ -1,5 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import java.util.List;
@@ -51,5 +54,5 @@ public interface SkemaRustProxy {
 	@PUT
 	@Path("/mathml/amr")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response convertMathML2AMR(List<String> mathML);
+	Response convertMathML2AMR(JsonNode request);
 }

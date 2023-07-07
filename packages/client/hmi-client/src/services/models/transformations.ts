@@ -4,15 +4,21 @@ import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 // Transform a MathML list of strings to an AMR
-const mathmlToAMR = async (mathml: string[]): Promise<Model | null> => {
+const mathmlToAMR = async (
+	mathml: string[],
+	framework: Model['framework']
+): Promise<Model | null> => {
 	try {
-		const response = await API.post('/transforms/mathml-to-amr', mathml);
+		const response = await API.post('/transforms/mathml-to-amr', { mathml, framework });
 		if (response && response?.status === 200) {
 			return (response?.data as Model) ?? null;
 		}
-		logger.error('MathML to AMR Error (skema-rs): Server did not provide a correct response', {
-			showToast: false
-		});
+		logger.error(
+			`MathML to AMR: skema-rs Server did not provide a correct response [HTTP ${response?.status}]`,
+			{
+				showToast: false
+			}
+		);
 	} catch (error: unknown) {
 		if ((error as AxiosError).isAxiosError) {
 			const axiosError = error as AxiosError;
