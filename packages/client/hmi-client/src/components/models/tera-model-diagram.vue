@@ -87,27 +87,26 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray } from 'lodash';
+import { isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
-	parsePetriNet2IGraph,
-	PetriNet,
+	PetrinetRenderer,
 	NodeData,
 	EdgeData,
-	mathmlToPetri,
-	NodeType,
-	petriToLatex
-} from '@/petrinet/petrinet-service';
-import { parseAMR2IGraph, AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
+	NodeType
+} from '@/model-representation/petrinet/petrinet-renderer';
+import { mathmlToPetri, petriToLatex } from '@/petrinet/petrinet-service';
+import {
+	convertAMRToACSet,
+	convertToIGraph
+} from '@/model-representation/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-// import { ITypedModel } from '@/types/Model';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -137,8 +136,6 @@ const isEditingEQ = ref<boolean>(false);
 
 const newModelName = ref('New Model');
 const newPetri = ref();
-
-const selectedVariable = ref('');
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -196,24 +193,6 @@ const mathEditorSelected = computed(() => {
 	return '';
 });
 
-const onVariableSelected = (variable: string) => {
-	if (variable) {
-		if (variable === selectedVariable.value) {
-			selectedVariable.value = '';
-			equationLatex.value = equationLatexOriginal.value;
-		} else {
-			selectedVariable.value = variable;
-			equationLatex.value = equationLatexOriginal.value.replaceAll(
-				selectedVariable.value,
-				String.raw`{\color{red}${variable}}`
-			);
-		}
-		renderer?.toggoleNodeSelectionByLabel(variable);
-	} else {
-		equationLatex.value = equationLatexOriginal.value;
-	}
-};
-
 const setNewLatexFormula = (formulaString: string) => {
 	equationLatexNew.value = formulaString;
 };
@@ -235,7 +214,8 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
-			const data = await petriToLatex(AMRToPetri(props.model));
+			const data = await petriToLatex(convertAMRToACSet(props.model));
+
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -268,20 +248,12 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 	if (event.key === 'Backspace' && renderer) {
 		if (renderer && renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
-			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
-			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
-			renderer.nodeSelection = null;
-			renderer.render();
+			renderer.removeNode(nodeData.id);
 		}
 
 		if (renderer && renderer.edgeSelection) {
 			const edgeData = renderer.edgeSelection.datum();
-			remove(
-				renderer.graph.edges,
-				(e) => e.source === edgeData.source && e.target === edgeData.target
-			);
-			renderer.edgeSelection = null;
-			renderer.render();
+			renderer.removeEdge(edgeData.source, edgeData.target);
 		}
 	}
 	if (event.key === 'Enter' && renderer) {
@@ -307,7 +279,7 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('S', '?', { x: eventX, y: eventY });
+				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
 			}
 		}
 	},
@@ -316,7 +288,7 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('T', '?', { x: eventX, y: eventY });
+				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
 			}
 		}
 	}
@@ -328,10 +300,7 @@ watch(
 	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
-			S: { width: 60, height: 60 },
-			T: { width: 40, height: 40 }
-		});
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
@@ -355,22 +324,12 @@ watch(
 
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
-
-			// de-select node if selection exists
-			if (selectedVariable.value) {
-				onVariableSelected(selectedVariable.value);
-			}
-		});
-
-		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
-			// Note: do not change the renderer's visuals, this is done internally
-			onVariableSelected(d.label);
 		});
 
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(AMRToPetri(props.model));
+		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
 		if (latexFormula) {
 			updateLatexFormula(latexFormula);
 		} else {
@@ -380,6 +339,7 @@ watch(
 	{ deep: true }
 );
 
+/*
 const updatePetri = async (m: PetriNet) => {
 	// equationML.value = mathmlString;
 	// Convert petri net into a graph
@@ -413,6 +373,7 @@ const updatePetri = async (m: PetriNet) => {
 	await renderer?.render();
 	updateLatexFormula(equationLatexNew.value);
 };
+*/
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
@@ -437,7 +398,9 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
-				updatePetri(newPetri.value);
+
+				// FIXME: equation to AMR
+				// updatePetri(newPetri.value);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -452,7 +415,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 };
 
 onMounted(async () => {
-	// fetchRelatedTerariumArtifacts();
 	document.addEventListener('keyup', editorKeyHandler);
 });
 
@@ -465,10 +427,7 @@ const toggleEditMode = () => {
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
 		emit('update-model-content', renderer.graph);
-		updateModel(props.model);
-	} else if (isEditing.value && selectedVariable.value) {
-		// de-select node if selection exists
-		onVariableSelected(selectedVariable.value);
+		updateModel(renderer.graph.amr);
 	}
 };
 
@@ -479,10 +438,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
 
 	if (renderer) {
 		renderer.setEditMode(false);

@@ -64,7 +64,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import useResourcesStore from '@/stores/resources';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
