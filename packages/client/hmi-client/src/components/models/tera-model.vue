@@ -713,10 +713,6 @@ function editRow(event: Event) {
 	display: flex;
 }
 
-section math-editor {
-	justify-content: center;
-}
-
 .floating-edit-button {
 	background-color: var(--surface-0);
 	margin-top: 10px;
@@ -725,71 +721,9 @@ section math-editor {
 	z-index: 10;
 }
 
-.splitter-container {
-	height: 100%;
-}
-
-.graph-element {
-	background-color: var(--surface-0);
-	height: 100%;
-	max-height: 100%;
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
-}
-
-.math-editor-container {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-}
-
-.math-editor-selected {
-	border: 4px solid var(--primary-color);
-}
-
-.math-editor-error {
-	border: 4px solid var(--surface-border-warning);
-	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-.model_diagram {
-	display: flex;
-	height: 100%;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	overflow: auto;
-}
-
-.p-splitter {
-	height: 100%;
-}
-
 .p-datatable:deep(td:hover) {
 	background-color: var(--surface-secondary);
 	cursor: pointer;
-}
-
-.tera-split-panel {
-	position: relative;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	width: 100%;
-}
-
-/* Let svg dynamically resize when the sidebar opens/closes or page resizes */
-:deep(.graph-element svg) {
-	width: 100%;
-	height: 100%;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {

@@ -415,7 +415,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 };
 
 onMounted(async () => {
-	// fetchRelatedTerariumArtifacts();
 	document.addEventListener('keyup', editorKeyHandler);
 });
 

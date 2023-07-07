@@ -42,7 +42,7 @@ export interface IGraph<V, E> {
 	width?: number;
 	height?: number;
 
-	// keep an AMR model ref
+	// keep an AMR copy
 	amr?: any;
 }
 
