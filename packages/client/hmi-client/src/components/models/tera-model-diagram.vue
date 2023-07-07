@@ -339,12 +339,9 @@ watch(
 	{ deep: true }
 );
 
-const updatePetriNet = async (model: Model['model']) => {
+const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
 
 	// Create renderer
 	renderer = new PetrinetRenderer({
@@ -395,7 +392,7 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
 
-				updatePetriNet(model);
+				updatePetriNet(amr);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
