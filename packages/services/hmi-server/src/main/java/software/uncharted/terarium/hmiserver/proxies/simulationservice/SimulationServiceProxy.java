@@ -25,7 +25,7 @@ public interface SimulationServiceProxy {
 	@Path("/calibrate")
 	@Consumes(MediaType.APPLICATION_JSON)
 	JobResponse makeCalibrateJob(
-		CalibrationRequest calibrationRequest
+		JsonNode request
 	);
 
 	@GET
