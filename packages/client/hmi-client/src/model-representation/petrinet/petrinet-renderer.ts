@@ -8,7 +8,6 @@ import * as petrinetService from '@/model-representation/petrinet/petrinet-servi
 
 export interface NodeData {
 	type: string;
-	uid?: string | number;
 }
 
 export interface EdgeData {
@@ -378,6 +377,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		);
 
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			console.log('drag ended', sourceData, targetData);
 			chart?.selectAll('.new-edge').remove();
 			// reset colour after drag
 			selection.selectAll('.selectableNode').attr('stroke', 'var(--petri-nodeBorder)');
