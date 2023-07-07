@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -105,14 +105,7 @@ import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-// Get rid of these emits
-const emit = defineEmits([
-	'update-tab-name',
-	'close-preview',
-	'asset-loaded',
-	'close-current-tab',
-	'update-model-content'
-]);
+const emit = defineEmits(['update-model']);
 
 const props = defineProps<{
 	model: Model | null;
@@ -124,8 +117,6 @@ const menu = ref();
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
-
-const newModelName = ref('New Model');
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -205,21 +196,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
-);
-
-onUpdated(() => {
-	if (props.model) {
-		emit('asset-loaded');
-	}
-});
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -400,7 +376,7 @@ const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
-		emit('update-model-content', renderer.graph);
+		emit('update-model', renderer.graph);
 		updateModel(renderer.graph.amr);
 	}
 };

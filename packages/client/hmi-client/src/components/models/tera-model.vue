@@ -452,8 +452,8 @@ import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
 enum ModelView {
-	DESCRIPTION = 'description',
-	MODEL = 'model'
+	DESCRIPTION,
+	MODEL
 }
 
 // TODO - Get rid of these emits
