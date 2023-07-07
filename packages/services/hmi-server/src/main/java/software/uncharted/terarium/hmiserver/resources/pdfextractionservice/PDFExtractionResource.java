@@ -3,18 +3,10 @@ package software.uncharted.terarium.hmiserver.resources.pdfextractionservice;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
 import javax.inject.Inject;
-
-import org.jboss.resteasy.annotations.Query;
-import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
-
 import software.uncharted.terarium.hmiserver.proxies.pdfextractionservice.PDFExtractionServiceProxy;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import javax.ws.rs.*;

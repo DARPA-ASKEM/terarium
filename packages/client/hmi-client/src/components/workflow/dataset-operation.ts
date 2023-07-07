@@ -1,10 +1,21 @@
-import { Operation } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+
+export interface DatasetOperationState {
+	datasetId: string | null;
+}
 
 export const DatasetOperation: Operation = {
-	name: 'Dataset',
+	name: WorkflowOperationTypes.DATASET,
 	description: 'Select a dataset',
 	isRunnable: true,
 	inputs: [],
-	outputs: [{ type: 'dataset' }],
-	action: () => {}
+	outputs: [{ type: 'datasetId' }],
+	action: () => {},
+
+	initState: () => {
+		const init: DatasetOperationState = {
+			datasetId: null
+		};
+		return init;
+	}
 };

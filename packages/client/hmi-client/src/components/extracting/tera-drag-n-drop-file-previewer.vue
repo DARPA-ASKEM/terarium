@@ -2,23 +2,23 @@
 	<div class="file-title-container">
 		<div class="file-name-container">
 			<p class="file-name">
-				<b>{{ props.file?.name }}</b>
+				{{ props.file?.name }}
 			</p>
 		</div>
 		<div>
 			<Button
 				@click="emit('remove-file')"
 				icon="pi pi-times"
-				class="p-button-square"
+				class="p-button-rounded p-button-text p-button-sm"
 				style="max-width: 10px; max-height: 10px"
 			/>
 		</div>
 	</div>
 	<div class="file-preview" scrolling="no">
 		<template v-if="props.isProcessing">
-			<h1>Extracting...</h1>
+			<p class="progress-message">Uploading...</p>
 			<div class="card">
-				<ProgressBar :value="progress"></ProgressBar>
+				<ProgressBar :value="props.progress"></ProgressBar>
 			</div>
 		</template>
 		<template v-else-if="props.showPreview">
@@ -36,7 +36,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
 import { AcceptedTypes } from '@/types/common';
@@ -59,33 +58,16 @@ const props = defineProps({
 	},
 	showError: {
 		type: Boolean
+	},
+	progress: {
+		type: Number,
+		default: undefined
 	}
 });
-
-const progress = ref(0);
-let progressUpdater;
-
-const updateProgress = () => {
-	if (progress.value < 98) {
-		progress.value += 1;
-	}
-};
 
 const getSrc = (file) => URL.createObjectURL(file);
 
 const emit = defineEmits(['remove-file']);
-
-watch(
-	() => props.isProcessing,
-	() => {
-		if (props.isProcessing) {
-			progress.value = 0;
-			progressUpdater = setInterval(updateProgress, 50);
-		} else {
-			clearInterval(progressUpdater);
-		}
-	}
-);
 </script>
 <style scoped>
 .file-preview {
@@ -98,18 +80,22 @@ watch(
 }
 
 .file-name {
-	font-size: 12px;
-	background-color: var(--primary-color-text);
-	margin-left: 5px;
-	margin-right: 5px;
+	font-size: var(--font-body-small);
+	color: var(--text-color-primary);
+	border: none;
 }
 
 .file-name-container {
-	margin-bottom: 5px;
-	flex-grow: 1;
-	min-height: 22px;
+	display: flex;
+	gap: 1rem;
+	flex-direction: row;
 }
 
+.progress-message {
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
+	margin-top: 0.5rem;
+}
 .file-preview embed {
 	width: 100%;
 	height: 100%;

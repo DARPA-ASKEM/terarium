@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { Model } from '@/types/Model';
+import { Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
@@ -48,12 +48,7 @@ export async function getAllModelDescriptions(): Promise<Model[] | null> {
 }
 
 export async function updateModel(model: Model) {
-	const response = await API.post(`/models/${model.id}`, {
-		name: model.name,
-		description: model.description,
-		framework: model.framework,
-		content: JSON.stringify(model.content)
-	});
+	const response = await API.put(`/models/${model.id}`, model);
 	return response?.data ?? null;
 }
 
@@ -74,4 +69,9 @@ export async function addModelToProject(
 	} else {
 		logger.warn('Could not add new model to project.');
 	}
+}
+
+export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[] | []> {
+	const response = await API.get(`/models/${modelId}/model_configurations`);
+	return response?.data ?? [];
 }

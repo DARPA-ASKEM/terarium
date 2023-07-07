@@ -4,7 +4,6 @@ package software.uncharted.terarium.hmiserver.proxies.pdfextractionservice;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import javax.ws.rs.core.MediaType;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import org.glassfish.jersey.media.multipart.FormDataParam;

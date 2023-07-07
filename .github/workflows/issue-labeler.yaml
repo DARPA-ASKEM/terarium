@@ -1,0 +1,27 @@
+---
+# Automatically label issues depending on the content found in title and body.
+# Rules are based on RegEx expressions and are defined in the `.github/labeler.yaml` file.
+name: 'Issue Labeler'
+
+# yamllint disable-line rule:truthy
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-22.04
+    permissions:
+      issues: write
+    steps:
+      - name: Label issues
+        uses: github/issue-labeler@v3.1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yaml
+          enable-versioned-regex: 0
+          include-title: 1

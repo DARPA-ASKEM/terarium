@@ -34,11 +34,10 @@
         border: $tableHeaderCellBorder;
         border-width: $tableHeaderCellBorderWidth;
         font-weight: $tableHeaderCellFontWeight;
-        font-size: $fontCaption;
+        font-size: $fontBodySmall;
         color: $tableHeaderCellTextColor;
         background: $tableHeaderCellBg;
         transition: $listItemTransition;
-        text-transform: uppercase;
     }
 
     .p-datatable-tfoot>tr>td {

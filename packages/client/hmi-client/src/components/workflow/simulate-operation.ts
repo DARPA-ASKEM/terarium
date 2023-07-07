@@ -1,11 +1,26 @@
-import { Operation } from '@/types/workflow';
+import { TimeSpan } from '@/types/Types';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { ChartConfig } from '@/types/SimulateConfig';
+
+export interface SimulateOperationState {
+	chartConfigs: ChartConfig[];
+	currentTimespan: TimeSpan;
+}
 
 export const SimulateOperation: Operation = {
-	name: 'SimulateOperation',
+	name: WorkflowOperationTypes.SIMULATE,
 	description: 'given a model id, and configuration id, run a simulation',
-	inputs: [{ type: 'modelConfig' }],
-	outputs: [],
+	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
+	outputs: [{ type: 'simOutput' }],
 	isRunnable: true,
+
+	initState: () => {
+		const init: SimulateOperationState = {
+			chartConfigs: [],
+			currentTimespan: { start: 1, end: 100 }
+		};
+		return init;
+	},
 
 	// TODO: Figure out mapping
 	// Calls API, returns results.

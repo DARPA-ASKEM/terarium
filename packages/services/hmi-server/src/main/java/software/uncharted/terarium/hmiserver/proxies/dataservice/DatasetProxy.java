@@ -1,11 +1,13 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -27,7 +29,7 @@ public interface DatasetProxy {
 	@Path("/features")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createFeatures(
-		Feature feature
+		JsonNode feature
 	);
 
 	@GET
@@ -47,7 +49,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateFeature(
 		@PathParam("id") String id,
-		Feature feature
+		JsonNode feature
 	);
 
 	@GET
@@ -61,7 +63,7 @@ public interface DatasetProxy {
 	@Path("/qualifiers")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createQualifiers(
-		Qualifier qualifier
+		JsonNode qualifier
 	);
 
 	@GET
@@ -81,7 +83,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateQualifier(
 		@PathParam("id") String id,
-		Qualifier qualifier
+		JsonNode qualifier
 	);
 
 	@GET
@@ -93,7 +95,7 @@ public interface DatasetProxy {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createDatasets(
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@GET
@@ -113,7 +115,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateDataset(
 		@PathParam("id") String id,
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@POST
@@ -123,20 +125,17 @@ public interface DatasetProxy {
 		@PathParam("id") String id
 	);
 
+
 	@GET
-	@Path("/{id}/file")
-	Response getCsv(
+	@Path("/{id}/upload-url")
+	PresignedURL getUploadUrl(
 		@PathParam("id") String id,
-		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
+		@QueryParam("filename") String filename
 	);
 
-	@POST
-	@Path("/{id}/file")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	Response uploadFile(
-		@PathParam("id") String id,
-		@QueryParam("filename") String filename,
-		@FormDataParam("file") MultipartFormDataOutput file
+	@GET
+	@Path("/{id}/download-url")
+	PresignedURL getDownloadUrl(
+		@PathParam("id") String id, @QueryParam("filename") String filename
 	);
 }

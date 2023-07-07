@@ -44,7 +44,6 @@ services:
     image: ghcr.io/darpa-askem/data-service:latest
     environment:
       DATASET_STORAGE_BASE_URL: s3://datasets/
-      STORAGE_HOST: http://minio:9000
       OPENAI_KEY: sk
       SQL_URL: data-service-dev-db
       SQL_PORT: 5432
@@ -52,26 +51,14 @@ services:
       SQL_PASSWORD: dev
       NEO4J_ENABLED:
       NEO4J_driver: neo4j://neo4j:7687
-      AWS_ACCESS_KEY_ID: miniouser
-      AWS_SECRET_ACCESS_KEY: miniopass
+      S3_BUCKET: askem
+      S3_DATASET_PATH: "datasets"
+      S3_RESULTS_PATH: "simulations"
     depends_on:
-      - minio
       - neo4j
       - data-service-dev-db
     ports:
       - "8000:8000"
-  minio:
-    image: ghcr.io/darpa-askem/data-service-storage:latest
-    environment:
-      MINIO_ROOT_USER: miniouser
-      MINIO_ROOT_PASSWORD: miniopass
-    expose:
-      - 9000
-      - 9001
-    entrypoint: ""
-    command: ["minio", "server", "/data"]
-    volumes:
-      - minio-data:/data
   neo4j:
     image: ghcr.io/darpa-askem/data-service-graphdb:5.3.0.3
     expose:

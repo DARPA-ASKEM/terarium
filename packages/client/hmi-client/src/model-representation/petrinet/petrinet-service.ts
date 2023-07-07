@@ -1,0 +1,249 @@
+import _ from 'lodash';
+import { IGraph } from '@graph-scaffolder/types';
+import { PetriNetModel, Model } from '@/types/Types';
+import { PetriNet } from '@/petrinet/petrinet-service';
+
+export interface NodeData {
+	type: string;
+}
+
+export interface EdgeData {
+	numEdges: number;
+}
+
+export const convertAMRToACSet = (amr: Model) => {
+	const result: PetriNet = {
+		S: [],
+		T: [],
+		I: [],
+		O: []
+	};
+
+	const petrinetModel = amr.model as PetriNetModel;
+
+	petrinetModel.states.forEach((s) => {
+		result.S.push({ sname: s.id });
+	});
+
+	petrinetModel.transitions.forEach((t) => {
+		result.T.push({ tname: t.id });
+	});
+
+	petrinetModel.transitions.forEach((transition) => {
+		transition.input.forEach((input) => {
+			result.I.push({
+				is: result.S.findIndex((s) => s.sname === input) + 1,
+				it: result.T.findIndex((t) => t.tname === transition.id) + 1
+			});
+		});
+	});
+
+	petrinetModel.transitions.forEach((transition) => {
+		transition.output.forEach((output) => {
+			result.O.push({
+				os: result.S.findIndex((s) => s.sname === output) + 1,
+				ot: result.T.findIndex((t) => t.tname === transition.id) + 1
+			});
+		});
+	});
+
+	return result;
+};
+
+export const convertToIGraph = (amr: Model) => {
+	const result: IGraph<NodeData, EdgeData> = {
+		width: 500,
+		height: 500,
+		amr: _.cloneDeep(amr),
+		nodes: [],
+		edges: []
+	};
+
+	const petrinetModel = amr.model as PetriNetModel;
+
+	petrinetModel.states.forEach((state) => {
+		result.nodes.push({
+			id: state.id,
+			label: state.id,
+			type: 'state',
+			x: 0,
+			y: 0,
+			width: 100,
+			height: 100,
+			data: { type: 'state' },
+			nodes: []
+		});
+	});
+
+	petrinetModel.transitions.forEach((transition) => {
+		result.nodes.push({
+			id: transition.id,
+			label: transition.id,
+			type: 'transition',
+			x: 0,
+			y: 0,
+			width: 100,
+			height: 100,
+			data: { type: 'transition' },
+			nodes: []
+		});
+	});
+
+	petrinetModel.transitions.forEach((transition) => {
+		transition.input.forEach((input) => {
+			const key = `${input}:${transition.id}`;
+
+			// Collapse hyper edges
+			const existingEdge = result.edges.find((edge) => edge.id === key);
+			if (existingEdge && existingEdge.data) {
+				existingEdge.data.numEdges++;
+				return;
+			}
+
+			result.edges.push({
+				id: key,
+				source: input,
+				target: transition.id,
+				points: [],
+				data: { numEdges: 1 }
+			});
+		});
+	});
+
+	petrinetModel.transitions.forEach((transition) => {
+		transition.output.forEach((output) => {
+			const key = `${transition.id}:${output}`;
+
+			// Collapse hyper edges
+			const existingEdge = result.edges.find((edge) => edge.id === key);
+			if (existingEdge && existingEdge.data) {
+				existingEdge.data.numEdges++;
+				return;
+			}
+
+			result.edges.push({
+				id: key,
+				source: transition.id,
+				target: output,
+				points: [],
+				data: { numEdges: 1 }
+			});
+		});
+	});
+	return result;
+};
+
+// FIXME AMR todo
+export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
+
+export const addState = (amr: Model, id: string, name: string) => {
+	amr.model.states.push({
+		id,
+		name,
+		description: ''
+	});
+	amr.semantics?.ode.initials?.push({
+		target: id,
+		expression: '',
+		expression_mathml: ''
+	});
+};
+
+export const addTransition = (amr: Model, id: string, name: string) => {
+	amr.model.transitions.push({
+		id,
+		input: [],
+		output: [],
+		properties: {
+			name,
+			description: ''
+		}
+	});
+	amr.semantics?.ode.rates?.push({
+		target: id,
+		expression: '',
+		expression_mathml: ''
+	});
+};
+
+export const removeState = (amr: Model, id: string) => {
+	const model = amr.model as PetriNetModel;
+
+	// Remove from AMR topology
+	model.states = model.states.filter((d) => d.id !== id);
+	model.transitions.forEach((t) => {
+		_.remove(t.input, (d) => d === id);
+		_.remove(t.output, (d) => d === id);
+	});
+
+	// Remove from semantics
+	if (amr.semantics?.ode) {
+		const ode = amr.semantics.ode;
+		if (ode.initials) {
+			_.remove(ode.initials, (d) => d.target === id);
+		}
+	}
+};
+
+export const removeTransition = (amr: Model, id: string) => {
+	const model = amr.model as PetriNetModel;
+
+	// Remove from AMR topology
+	model.transitions = model.transitions.filter((d) => d.id !== id);
+
+	// Remove from semantics
+	if (amr.semantics?.ode) {
+		const ode = amr.semantics.ode;
+		if (ode.rates) {
+			_.remove(ode.rates, (d) => d.target === id);
+		}
+	}
+};
+
+export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === sourceId);
+	if (state) {
+		// if source is a state then the target is a transition
+		const transition = model.transitions.find((d) => d.id === targetId);
+		if (transition) {
+			transition.input.push(sourceId);
+		}
+	} else {
+		// if source is a transition then the target is a state
+		const transition = model.transitions.find((d) => d.id === sourceId);
+		if (transition) {
+			transition.output.push(targetId);
+		}
+	}
+};
+
+export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === sourceId);
+	if (state) {
+		const transition = model.transitions.find((d) => d.id === targetId);
+		if (!transition) return;
+
+		let c = 0;
+		transition.input = transition.input.filter((id) => {
+			if (c === 0 && id === sourceId) {
+				c++;
+				return false;
+			}
+			return true;
+		});
+	} else {
+		const transition = model.transitions.find((d) => d.id === sourceId);
+		if (!transition) return;
+
+		let c = 0;
+		transition.output = transition.output.filter((id) => {
+			if (c === 0 && id === targetId) {
+				c++;
+				return false;
+			}
+			return true;
+		});
+	}
+};

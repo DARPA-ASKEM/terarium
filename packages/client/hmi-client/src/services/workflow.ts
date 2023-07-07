@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import API from '@/api/api';
 import _ from 'lodash';
 import {
 	Operation,
@@ -20,11 +21,11 @@ import {
  * - Should we update workflow node status on modification???
  */
 
-export const create = () => {
+export const emptyWorkflow = (name: string = 'test', description: string = '') => {
 	const workflow: Workflow = {
 		id: uuidv4(),
-		name: 'test',
-		description: '',
+		name,
+		description,
 
 		transform: { x: 0, y: 0, k: 1 },
 		nodes: [],
@@ -45,13 +46,15 @@ export const addNode = (
 		operationType: op.name,
 		x: pos.x,
 		y: pos.y,
+		state: {},
 
 		inputs: op.inputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null
+			value: null,
+			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
 		/*
@@ -69,15 +72,19 @@ export const addNode = (
 		height: size.height
 	};
 
+	if (op.initState) {
+		node.state = op.initState();
+	}
+
 	wf.nodes.push(node);
 };
 
 export const addEdge = (
 	wf: Workflow,
 	sourceId: string,
-	sourceOutputPortId: string,
+	sourcePortId: string,
 	targetId: string,
-	targetInputPortId: string,
+	targetPortId: string,
 	points: Position[]
 ) => {
 	const sourceNode = wf.nodes.find((d) => d.id === sourceId);
@@ -85,8 +92,8 @@ export const addEdge = (
 	if (!sourceNode) return;
 	if (!targetNode) return;
 
-	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourceOutputPortId);
-	const targetInputPort = targetNode.inputs.find((d) => d.id === targetInputPortId);
+	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourcePortId);
+	const targetInputPort = targetNode.inputs.find((d) => d.id === targetPortId);
 
 	if (!sourceOutputPort) return;
 	if (!targetInputPort) return;
@@ -95,9 +102,9 @@ export const addEdge = (
 	const existingEdge = wf.edges.find(
 		(d) =>
 			d.source === sourceId &&
-			d.sourcePortId === sourceOutputPortId &&
+			d.sourcePortId === sourcePortId &&
 			d.target === targetId &&
-			d.targetPortId === targetInputPortId
+			d.targetPortId === targetPortId
 	);
 
 	if (existingEdge) return;
@@ -105,20 +112,26 @@ export const addEdge = (
 	// Check if type is compatible
 	if (sourceOutputPort.value === null) return;
 	if (sourceOutputPort.type !== targetInputPort.type) return;
+	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+		return;
+	}
 
 	// Transfer data value/reference
-	targetInputPort.value = sourceOutputPort.value;
-
-	// TODO: Need to fix for multi-values
-	targetInputPort.label = sourceOutputPort.label;
+	if (targetInputPort.acceptMultiple && targetInputPort.value && sourceOutputPort.value) {
+		targetInputPort.label = `${sourceOutputPort.label},${targetInputPort.label}`;
+		targetInputPort.value = [...targetInputPort.value, ...sourceOutputPort.value];
+	} else {
+		targetInputPort.label = sourceOutputPort.label;
+		targetInputPort.value = sourceOutputPort.value;
+	}
 
 	const edge: WorkflowEdge = {
 		id: uuidv4(),
 		workflowId: wf.id,
 		source: sourceId,
-		sourcePortId: sourceOutputPortId,
+		sourcePortId,
 		target: targetId,
-		targetPortId: targetInputPortId,
+		targetPortId,
 		points: _.cloneDeep(points)
 	};
 
@@ -153,3 +166,89 @@ export const removeNode = (wf: Workflow, id: string) => {
 	// Remove the node
 	wf.nodes = wf.nodes.filter((node) => node.id !== id);
 };
+
+export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
+	const node = wf.nodes.find((d) => d.id === nodeId);
+	if (!node) return;
+	node.state = state;
+};
+
+/**
+ * API hooks: Handles reading and writing back to the store
+ * */
+
+// Create
+export const createWorkflow = async (workflow: Workflow) => {
+	const response = await API.post('/workflows', workflow);
+	return response?.data ?? null;
+};
+
+// Update
+export const updateWorkflow = async (workflow: Workflow) => {
+	const id = workflow.id;
+	const response = await API.put(`/workflows/${id}`, workflow);
+	return response?.data ?? null;
+};
+
+// Get
+export const getWorkflow = async (id: string) => {
+	const response = await API.get(`/workflows/${id}`);
+	return response?.data ?? null;
+};
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Events bus for workflow
+/// /////////////////////////////////////////////////////////////////////////////
+type EventCallback = (args: any) => void;
+type EventName = string | symbol;
+class EventEmitter {
+	listeners: Map<EventName, Set<EventCallback>> = new Map();
+
+	on(eventName: EventName, fn: EventCallback): void {
+		if (!this.listeners.has(eventName)) {
+			this.listeners.set(eventName, new Set());
+		}
+		this.listeners.get(eventName)?.add(fn);
+	}
+
+	once(eventName: EventName, fn: EventCallback): void {
+		if (!this.listeners.has(eventName)) {
+			this.listeners.set(eventName, new Set());
+		}
+
+		const onceWrapper = (args: any) => {
+			fn(args);
+			this.off(eventName, onceWrapper);
+		};
+		this.listeners.get(eventName)?.add(onceWrapper);
+	}
+
+	off(eventName: EventName, fn: EventCallback): void {
+		const set = this.listeners.get(eventName);
+		if (set) {
+			set.delete(fn);
+		}
+	}
+
+	removeAllEvents(eventName: EventName): void {
+		if (this.listeners.has(eventName)) {
+			this.listeners.delete(eventName);
+		}
+	}
+
+	emit(eventName: EventName, args: any): boolean {
+		const fns = this.listeners.get(eventName);
+		if (!fns) return false;
+
+		fns.forEach((f) => {
+			f(args);
+		});
+		return true;
+	}
+
+	emitNodeStateChange(payload: { workflowId: string; nodeId: string; state: any }) {
+		this.emit('node-state-change', payload);
+	}
+}
+
+export const workflowEventBus = new EventEmitter();

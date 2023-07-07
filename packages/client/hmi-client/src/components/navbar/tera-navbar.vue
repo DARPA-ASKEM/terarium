@@ -300,5 +300,6 @@ i {
  */
 .navigation-menu {
 	margin-top: 0.25rem;
+	min-width: fit-content !important;
 }
 </style>

@@ -5,6 +5,7 @@
 			<template v-else-if="props.searchTerm"
 				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
 			>
+			<template v-else>{{ itemsText }} </template>
 		</span>
 	</div>
 	<div v-if="chosenFacets.length > 0" class="facet-chips">
@@ -46,10 +47,8 @@
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
-import { XDDExtractionType } from '@/types/XDD';
-import { Document, XDDFacetsItemResponse, Dataset } from '@/types/Types';
+import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import useQueryStore from '@/stores/query';
-import { Model } from '@/types/Model';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
@@ -120,36 +119,9 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resultType === ResourceType.XDD) {
-			let documentsFromExtractions: Document[] = [];
-
-			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
-				const docMap: { [docid: string]: Document } = {};
-
-				searchResults.xddExtractions.forEach((ex) => {
-					const docid = ex.properties.documentBibjson.gddId;
-					if (docMap[docid] === undefined) {
-						docMap[docid] = ex.properties.documentBibjson;
-						docMap[docid].relatedExtractions = [];
-					}
-					// Avoid duplicate documents
-					else if (ex.askemClass === XDDExtractionType.Doc) {
-						const docExtractions = docMap[docid].relatedExtractions?.filter(
-							(extraction) => extraction.askemClass === XDDExtractionType.Doc
-						);
-
-						if (docExtractions) {
-							for (let i = 0; i < docExtractions.length; i++) {
-								if (ex.properties.doi === docExtractions[i].properties.doi) return; // Skip
-							}
-						}
-					}
-					docMap[docid].relatedExtractions?.push(ex);
-				});
-				documentsFromExtractions = Object.values(docMap) as Document[];
-			}
 			const documentSearchResults = searchResults.results as Document[];
 
-			return [...documentsFromExtractions, ...documentSearchResults];
+			return [...documentSearchResults];
 		}
 		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
 			return searchResults.results;
@@ -180,6 +152,15 @@ const resultsText = computed(() => {
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
 	return `Showing ${resultsCount.value} ${truncated}result${s} for `;
+});
+
+const itemsText = computed(() => {
+	if (resultsCount.value === 0) {
+		return 'No results found';
+	}
+	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
+	const s = resultsCount.value === 1 ? '' : 's';
+	return `Showing ${resultsCount.value} ${truncated}item${s}.`;
 });
 </script>
 
