@@ -35,7 +35,7 @@ export interface GithubRepo {
 
 export interface Artifact {
     id?: string;
-    timestamp?: Date;
+    timestamp?: any;
     username: string;
     name: string;
     description?: string;

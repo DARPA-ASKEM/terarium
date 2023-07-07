@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
@@ -22,7 +23,7 @@ public interface ArtifactProxy {
 															 @DefaultValue("0") @QueryParam("page") Integer page);
 
 	@POST
-	Artifact createArtifact(Artifact artifact);
+	Artifact createArtifact(JsonNode artifact);
 
 	@GET
 	@Path("/{id}")

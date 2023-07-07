@@ -26,7 +26,7 @@ public class Artifact {
 
 	/* Timestamp of creation */
 	@TSOptional
-	private Instant timestamp;
+	private Object timestamp;
 
 	/* Username of who created this asset */
 	private String username;
