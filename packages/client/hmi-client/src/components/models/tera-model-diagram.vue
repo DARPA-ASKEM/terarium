@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1]" class="accordion-group">
+		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1]">
 			<AccordionTab header="Model diagram">
 				<TeraResizablePanel class="diagram-container">
 					<section class="graph-element">
@@ -448,11 +448,12 @@ main {
 	overflow: auto;
 }
 
-.accordion-group {
+.p-accordion {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 }
+
 .diagram-container {
 	border: 1px solid var(--surface-border);
 	border-radius: var(--border-radius);
