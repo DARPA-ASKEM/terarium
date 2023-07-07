@@ -1,3 +1,6 @@
+// Rearranged VIRIDIS_14 color scheme.
+// We may want to change this in the future, but as of now there is no requirements for what colours should be used
+// so these were chosen somewhat arbitrarily.
 export const strataTypeColors = [
 	'#fde725',
 	'#cde11d',
