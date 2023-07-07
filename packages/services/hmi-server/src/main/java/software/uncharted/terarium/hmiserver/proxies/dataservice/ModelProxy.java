@@ -79,6 +79,7 @@ public interface ModelProxy {
 	@GET
 	@Path("/{id}/model_configurations")
 	List<ModelConfiguration> getModelConfigurations(
-			@PathParam("id") String id
+			@PathParam("id") String id,
+			@QueryParam("page_size") int pageSize
 	);
 }
