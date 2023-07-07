@@ -81,6 +81,5 @@ public interface ModelProxy {
 	List<ModelConfiguration> getModelConfigurations(
 			@PathParam("id") String id,
 			@QueryParam("page_size") int pageSize
-			// @QueryParam("page") int page
 	);
 }
