@@ -491,12 +491,20 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	removeNode(id: string) {
 		const nodeData = this.nodeSelection?.datum();
 		if (!nodeData) return;
+		const edgesToRemove = this.graph.edges.filter(
+			(e) => e.source === nodeData.id || e.target === nodeData.id
+		);
 		_.remove(this.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
 		_.remove(this.graph.nodes, (n) => n.id === nodeData.id);
 		this.nodeSelection = null;
 		this.render();
 
 		const amr = this.graph.amr as Model;
+		edgesToRemove.forEach((e) => {
+			console.log('lala', e.source, e.target);
+			petrinetService.removeEdge(amr, e.source, e.target);
+		});
+
 		if (nodeData.data.type === NodeType.State) {
 			petrinetService.removeState(amr, id);
 		} else {
@@ -537,7 +545,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		const existingEdge = this.graph.edges.find(
 			(edge) => edge.source === sourceId && edge.target === targetId
 		);
-		if (existingEdge && existingEdge.data) {
+		if (!existingEdge) return;
+
+		console.log('removing', sourceId, targetId);
+
+		if (existingEdge.data && existingEdge.data.numEdges > 1) {
 			existingEdge.data.numEdges--;
 		} else {
 			this.graph.edges = this.graph.edges.filter(

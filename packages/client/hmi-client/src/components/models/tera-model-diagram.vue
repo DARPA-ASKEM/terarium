@@ -428,7 +428,7 @@ const toggleEditMode = () => {
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
 		emit('update-model-content', renderer.graph);
-		updateModel(props.model);
+		updateModel(renderer.graph.amr);
 	}
 };
 

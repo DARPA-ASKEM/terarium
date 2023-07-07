@@ -54,7 +54,7 @@ export const convertToIGraph = (amr: Model) => {
 	const result: IGraph<NodeData, EdgeData> = {
 		width: 500,
 		height: 500,
-		amr,
+		amr: _.cloneDeep(amr),
 		nodes: [],
 		edges: []
 	};
@@ -189,11 +189,7 @@ export const removeTransition = (amr: Model, id: string) => {
 	const model = amr.model as PetriNetModel;
 
 	// Remove from AMR topology
-	_.remove(model.states, (d) => d.id === id);
-	model.transitions.forEach((t) => {
-		_.remove(t.input, (d) => d === id);
-		_.remove(t.output, (d) => d === id);
-	});
+	model.transitions = model.transitions.filter((d) => d.id !== id);
 
 	// Remove from semantics
 	if (amr.semantics?.ode) {
@@ -233,9 +229,9 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 		transition.input = transition.input.filter((id) => {
 			if (c === 0 && id === sourceId) {
 				c++;
-				return true;
+				return false;
 			}
-			return false;
+			return true;
 		});
 	} else {
 		const transition = model.transitions.find((d) => d.id === sourceId);
@@ -245,9 +241,9 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 		transition.output = transition.output.filter((id) => {
 			if (c === 0 && id === targetId) {
 				c++;
-				return true;
+				return false;
 			}
-			return false;
+			return true;
 		});
 	}
 };
