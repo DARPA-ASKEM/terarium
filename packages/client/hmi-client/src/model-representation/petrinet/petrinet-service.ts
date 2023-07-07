@@ -10,10 +10,6 @@ export interface NodeData {
 export interface EdgeData {
 	numEdges: number;
 }
-export enum NodeType {
-	State = 'S',
-	Transition = 'T'
-}
 
 export const convertAMRToACSet = (amr: Model) => {
 	const result: PetriNet = {
