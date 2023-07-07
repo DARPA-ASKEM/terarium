@@ -147,7 +147,7 @@ public class ModelResource {
 	public Response getModelConfigurations(
 			@PathParam("id") String id
 	) {
-		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id);
+		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id, 100);
 		return Response
 			.status(Response.Status.OK)
 			.entity(configs)
