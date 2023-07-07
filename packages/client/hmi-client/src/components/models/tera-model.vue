@@ -27,6 +27,13 @@
 				/>
 			</span>
 			<Button
+				v-if="isEditable"
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
 				label="Create new model"
@@ -377,14 +384,12 @@
 			</Accordion>
 		</template>
 		<template v-if="modelView === ModelView.MODEL">
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab header="Model diagram">
-					<tera-model-diagram
-						:model="model"
-						:is-editable="props.isEditable"
-						@update-model-content="updateModelContent"
-					/>
-				</AccordionTab>
+			<tera-model-diagram
+				:model="model"
+				:is-editable="props.isEditable"
+				@update-model-content="updateModelContent"
+			/>
+			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
 					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
@@ -431,9 +436,10 @@ import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
+import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel } from '@/services/model';
+import { addAsset } from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
@@ -441,6 +447,7 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
+import Menu from 'primevue/menu';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
@@ -464,7 +471,8 @@ const props = defineProps({
 	},
 	isEditable: {
 		type: Boolean,
-		required: true
+		default: false,
+		required: false
 	},
 	highlight: {
 		type: String,
@@ -485,6 +493,33 @@ const model = ref<Model | null>(null);
 const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
+/*
+ * User Menu
+ */
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	// { icon: 'pi pi-pencil', label: 'Rename', command: renameModel },
+	{ icon: 'pi pi-clone', label: 'Make a copy', command: duplicateModel }
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+async function duplicateModel() {
+	if (!model.value) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	const duplicateModelResponse = await createModel(model.value);
+	if (!duplicateModelResponse) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	await addAsset(props.project.id, ProjectAssetTypes.MODELS, duplicateModelResponse.id);
+	// Should probably refresh or emit update?
+}
 
 /* Model */
 const name = computed(() => highlightSearchTerms(model.value?.name));
@@ -548,7 +583,7 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 // };
 
 function updateModelContent(rendererGraph) {
-	if (model.value) model.value.model = parseIGraph2PetriNet(rendererGraph);
+	if (model.value) model.value = convertToAMRModel(rendererGraph);
 }
 
 // Highlight strings based on props.highlight
@@ -713,10 +748,6 @@ function editRow(event: Event) {
 	display: flex;
 }
 
-section math-editor {
-	justify-content: center;
-}
-
 .floating-edit-button {
 	background-color: var(--surface-0);
 	margin-top: 10px;
@@ -725,71 +756,9 @@ section math-editor {
 	z-index: 10;
 }
 
-.splitter-container {
-	height: 100%;
-}
-
-.graph-element {
-	background-color: var(--surface-0);
-	height: 100%;
-	max-height: 100%;
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
-}
-
-.math-editor-container {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-}
-
-.math-editor-selected {
-	border: 4px solid var(--primary-color);
-}
-
-.math-editor-error {
-	border: 4px solid var(--surface-border-warning);
-	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-.model_diagram {
-	display: flex;
-	height: 100%;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	overflow: auto;
-}
-
-.p-splitter {
-	height: 100%;
-}
-
 .p-datatable:deep(td:hover) {
 	background-color: var(--surface-secondary);
 	cursor: pointer;
-}
-
-.tera-split-panel {
-	position: relative;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	width: 100%;
-}
-
-/* Let svg dynamically resize when the sidebar opens/closes or page resizes */
-:deep(.graph-element svg) {
-	width: 100%;
-	height: 100%;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {

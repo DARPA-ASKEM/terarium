@@ -294,6 +294,7 @@ const showAccordion = computed(() => {
 	margin-right: 1rem;
 	max-width: 70rem;
 }
+
 .inline-message:deep(.p-message-wrapper) {
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
@@ -303,10 +304,12 @@ const showAccordion = computed(() => {
 	border: 4px solid var(--primary-color);
 	border-width: 0px 0px 0px 6px;
 }
+
 .p-buttonset {
 	white-space: nowrap;
 	margin-left: 0.5rem;
 }
+
 .metadata {
 	margin: 1rem;
 	display: flex;
