@@ -3,14 +3,12 @@
 		<ul>
 			<li v-for="(annotation, idx) of annotations" :key="idx">
 				<template v-if="isEditingNote && idx === selectedNoteIndex">
-					<div class="annotation-header">
-						<Dropdown
-							placeholder="Unassigned"
-							class="p-button p-button-text notes-dropdown-button"
-							:options="noteOptions"
-							v-model="selectedNoteSection[idx]"
-						/>
-					</div>
+					<Dropdown
+						placeholder="Unassigned"
+						class="p-button p-button-text"
+						:options="noteOptions"
+						v-model="selectedNoteSection[idx]"
+					/>
 					<Textarea
 						v-model="annotation.content"
 						ref="annotationTextInput"
@@ -29,39 +27,42 @@
 					</div>
 				</template>
 				<template v-else>
-					<div class="annotation-header">
+					<header>
 						<Dropdown
 							disabled
 							placeholder="Unassigned"
-							class="p-button p-button-text notes-dropdown-button"
+							class="p-button p-button-text"
 							:options="noteOptions"
 							v-model="selectedNoteSection[idx]"
 						/>
 						<Button
 							icon="pi pi-ellipsis-v"
 							class="p-button-rounded p-button-secondary"
-							@click="selectedNoteIndex = idx"
+							@click="
+								($event) => {
+									selectedNoteIndex = idx;
+									toggle($event);
+								}
+							"
+							aria-haspopup="true"
+							aria-controls="overlay_tmenu"
 						/>
-					</div>
-					<div>
-						<p>{{ annotation.content }}</p>
-						<div class="annotation-author-date">
-							{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
-						</div>
-					</div>
+						<TieredMenu ref="tieredMenuRef" :model="menuItems" :popup="true" @click.stop />
+					</header>
+					<p>{{ annotation.content }}</p>
+					<footer>
+						{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+					</footer>
 				</template>
 			</li>
-			<TieredMenu :model="menuItems" :popup="true" @click.stop />
 		</ul>
 		<section v-if="isAnnotationInputOpen">
-			<div class="annotation-header">
-				<Dropdown
-					placeholder="Unassigned"
-					class="p-button p-button-text notes-dropdown-button"
-					:options="noteOptions"
-					v-model="newNoteSection"
-				/>
-			</div>
+			<Dropdown
+				placeholder="Unassigned"
+				class="p-button p-button-text"
+				:options="noteOptions"
+				v-model="newNoteSection"
+			/>
 			<Textarea
 				v-model="annotationContent"
 				ref="annotationTextInput"
@@ -155,14 +156,21 @@ const isEditingNote = ref(false);
 const showDeletetionConfirmation = ref(false);
 const selectedNoteSection = ref<string[]>([]);
 const newNoteSection = ref();
+const tieredMenuRef = ref();
 
 async function getAndPopulateAnnotations() {
 	if (props.assetId && props.pageType) {
 		annotations.value = await getAnnotations(props.assetId, props.pageType);
 		selectedNoteSection.value = annotations.value?.map((note) => note.section);
 	} else {
+		// TODO: Overview page should have its own notes
+		annotations.value = [];
 		selectedNoteSection.value = [];
 	}
+}
+
+function toggle(event) {
+	tieredMenuRef.value[selectedNoteIndex.value].toggle(event);
 }
 
 const addNote = async () => {
@@ -236,34 +244,28 @@ ul {
 	gap: 1rem;
 }
 
-.annotation-header {
+header {
 	height: 2rem;
 	display: flex;
 	justify-content: space-between;
 }
 
-.notes-dropdown-button {
-	color: var(--text-color-subdued);
+.p-dropdown {
+	height: 2rem;
+}
+
+.p-dropdown:deep(span.p-dropdown-label.p-inputtext.p-placeholder) {
+	height: 2rem;
 	padding: 0rem;
 }
 
-.annotation-panel .p-dropdown:not(.p-disabled).p-focus {
-	box-shadow: none;
-	background-color: var(--surface-hover);
-}
-
-.annotation-author-date {
+footer {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	display: flex;
 	justify-content: space-between;
 	gap: 0.5rem;
 	padding-top: 0.25rem;
-	padding-right: 1rem;
-}
-
-.annotation-content {
-	padding: 0rem 0.5rem 0rem 0.5rem;
 }
 
 .p-inputtext {
