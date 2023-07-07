@@ -6,9 +6,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
@@ -80,24 +78,6 @@ public class ModelResource {
 		@PathParam("id") final String id
 	) {
 		return proxy.getDescription(id);
-	}
-
-	@GET
-	@Path("/{id}/parameters")
-	public Response getParameters(
-		@PathParam("id") final String id
-	) {
-		return proxy.getParameters(id);
-	}
-
-	@PUT
-	@Path("/parameters/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateParameters(
-		@PathParam("id") final String id,
-		final Map<String, Object> parameters
-	) {
-		return proxy.updateParameters(id, parameters);
 	}
 
 	/**
