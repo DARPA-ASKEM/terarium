@@ -95,36 +95,72 @@
 					<i class="pi pi-search" />
 					<InputText placeholder="Keyword search" class="keyword-search" />
 				</span>
+				<SplitButton
+					class="resource-list-button"
+					icon="pi pi-plus"
+					label="New Resource"
+					:model="tableActionMenuItems"
+				>
+				</SplitButton>
 			</div>
 			<!-- resource list data table -->
 			<DataTable
 				v-model:selection="selectedResources"
-				dataKey="id"
+				dataKey="assetId"
 				tableStyle="min-width: 50rem"
 				:value="assets"
+				row-hover
+				:row-class="() => 'p-selectable-row'"
 			>
 				<Column selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column field="assetName" header="Name" sortable style="width: 45%">
+				<Column field="assetName" header="Name" sortable style="width: 10%">
 					<template #body="slotProps">
 						<Button
+							:icon="slotProps.data.pageType === 'publications' ? 'pi pi-file' : undefined"
 							:title="slotProps.data.assetName"
+							:label="slotProps.data.assetName"
 							class="asset-button"
 							plain
 							text
 							size="small"
 							@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
 						>
-							<span class="p-button-label">{{ slotProps.data.assetName }}</span>
 						</Button>
 					</template>
 				</Column>
 				<Column field="" header="Modified" sortable style="width: 15%"></Column>
 				<Column field="tags" header="Tags"></Column>
-				<Column header="Resource Type" sortable>
+				<Column header="Type" sortable>
 					<template #body="slotProps">
-						<Tag :value="slotProps.data.pageType" />
+						{{ slotProps.data.pageType }}
 					</template>
 				</Column>
+				<Column
+					headerStyle="width: 3rem; text-align: center"
+					bodyStyle="text-align: center; overflow: visible"
+				>
+					<template #body>
+						<Button
+							class="row-action-button"
+							icon="pi pi-ellipsis-v"
+							plain
+							text
+							rounded
+							@click.stop="showRowActions"
+						/>
+						<Menu ref="rowActionMenu" :model="rowActionMenuItems" :popup="true" />
+					</template>
+				</Column>
+				<template #empty>
+					<div class="explorer-status">
+						<img src="@assets/svg/seed.svg" alt="Seed" />
+						<h2 class="no-results-found">No resources.</h2>
+						<span
+							>Add resources to your project with the quick link buttons, or use the explorer to
+							find documents, models and datasets of interest.</span
+						>
+					</div>
+				</template>
 			</DataTable>
 		</section>
 		<section class="drag-n-drop">
@@ -197,12 +233,12 @@
 
 <script setup lang="ts">
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
-import { nextTick, Ref, ref, computed } from 'vue';
+import { nextTick, Ref, ref, computed, onMounted } from 'vue';
 import InputText from 'primevue/inputtext';
-import Tag from 'primevue/tag';
 import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
+import SplitButton from 'primevue/splitbutton';
 import Menu from 'primevue/menu';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -391,7 +427,47 @@ function showProjectMenu(event: any) {
 	projectMenu.value.toggle(event);
 }
 
+/* hacky way of listening to row hover events to display/hide the action button, prime vue unfortunately doesn't have this capability */
+function setRowHover() {
+	const tableRows = document.querySelectorAll('.p-selectable-row');
+	tableRows.forEach((tableRow) => {
+		const buttonBar = tableRow.querySelector('.row-action-button .pi-ellipsis-v') as HTMLElement;
+		buttonBar.style.display = 'none';
+		tableRow.addEventListener('mouseover', () => {
+			buttonBar.style.removeProperty('display');
+		});
+		tableRow.addEventListener('mouseleave', () => {
+			buttonBar.style.display = 'none';
+		});
+	});
+}
+
+/* Table Action Menu */
+const tableActionMenuItems = [
+	{
+		label: 'Code file'
+	},
+	{
+		label: 'Make model from an equation'
+	}
+];
+
+/* Row Action Menu */
+const rowActionMenu = ref();
+const rowActionMenuItems = ref([
+	{ label: 'Open' },
+	{ label: 'Rename' },
+	{ label: 'Make a copy' },
+	{ label: 'Delete' },
+	{ label: 'Download' }
+]);
+const showRowActions = (event) => rowActionMenu.value.toggle(event);
+
 const isUploadResourcesModalVisible = ref(false);
+
+onMounted(() => {
+	setRowHover();
+});
 </script>
 
 <style scoped>
@@ -554,13 +630,7 @@ ul {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
-}
-
-:deep(.asset-button.p-button > span) {
-	display: inline-flex;
-	width: 100%;
 	padding: 0.375rem 1rem;
-	overflow: hidden;
 }
 
 :deep(.asset-button.p-button[active='true']) {
@@ -572,5 +642,28 @@ ul {
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.resource-list-button {
+	margin-left: auto;
+}
+
+:deep(.resource-list-button .p-button.p-button-icon-only) {
+	color: #ffffff;
+}
+
+.explorer-status {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1rem;
+	align-items: center;
+	margin-bottom: 8rem;
+	flex-grow: 1;
+	font-size: var(--font-body-small);
+	color: var(--text-color-subdued);
+}
+
+.row-action-button {
 }
 </style>

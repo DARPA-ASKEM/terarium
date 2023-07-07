@@ -496,7 +496,7 @@ $tableHeaderFontWeight: 500 !default;
 $tableHeaderPadding: 1rem 1rem !default;
 
 $tableHeaderCellPadding: 1rem 1rem !default;
-$tableHeaderCellBg: #ffffff !default;
+$tableHeaderCellBg: var(--gray-300) !default;
 $tableHeaderCellTextColor: var(--text-color-primary) !default;
 $tableHeaderCellFontWeight: 600 !default;
 $tableHeaderCellBorder: 1px solid var(--surface-border-light) !default;
