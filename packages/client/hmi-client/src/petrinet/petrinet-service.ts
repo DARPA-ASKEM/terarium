@@ -29,28 +29,6 @@ interface Output {
 	os: number; // State ID which is the target
 }
 
-// Transform list of mathML strings to a petrinet ascet
-export const mathmlToPetri = async (mathml: string[]) => {
-	try {
-		const resp = await API.post('/transforms/mathml-to-acset', mathml);
-
-		if (resp && resp.status === 200 && resp.data) {
-			return resp.data;
-		}
-		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('mathmlToPetri Error: ', axiosError.response?.data || axiosError.message, {
-				showToast: false
-			});
-		} else {
-			logger.error(error, { showToast: false });
-		}
-	}
-	return null;
-};
-
 // Transfrom a petrinet into latex
 export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 	try {
