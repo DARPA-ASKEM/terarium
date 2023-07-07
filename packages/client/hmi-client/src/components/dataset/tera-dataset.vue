@@ -249,6 +249,10 @@ const toggleSettingsMenu = (event: Event) => {
 	menu.value.toggle(event);
 };
 
+function formatName(name: string) {
+	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
+}
+
 const datasetView = ref(DatasetView.DESCRIPTION);
 
 const chatThoughtLabel = computed(() =>

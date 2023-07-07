@@ -1,3 +1,6 @@
+---
+# Terarium docker compose by Matthew Printz
+
 version: '3'
 services:
   hmi-client:
@@ -114,7 +117,7 @@ services:
       - POSTGRES_USER=dev
       - POSTGRES_DB=askem
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U dev -d askem" ]
+      test: ["CMD-SHELL", "pg_isready -U dev -d askem"]
       interval: 10s
       timeout: 5s
       retries: 5

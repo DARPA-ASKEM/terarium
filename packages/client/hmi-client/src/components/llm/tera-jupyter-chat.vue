@@ -91,6 +91,7 @@ const runningSessions = ref();
 
 const emit = defineEmits([
 	'new-message',
+	'download-response',
 	'update-table-preview',
 	'update-kernel-status',
 	'new-dataset-saved'

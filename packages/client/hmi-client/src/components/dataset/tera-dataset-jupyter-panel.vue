@@ -77,10 +77,10 @@ import { addAsset } from '@/services/project';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { CsvAsset, Dataset } from '@/types/Types';
+import { newSession, sessionManager, JupyterMessage } from '@/services/jupyter';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-import { newSession, sessionManager, JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 // import { createNewDataset } from '@/services/dataset';
@@ -96,7 +96,7 @@ const props = defineProps<{
 	dataset: Dataset;
 }>();
 
-const kernelStatus = ref(<String>'');
+const kernelStatus = ref(<string>'');
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
 const newCsvContent: any = ref(null);
@@ -104,7 +104,7 @@ const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<String | null>'');
+const saveAsName = ref(<string | null>'');
 const toast = useToastService();
 
 const updateKernelStatus = (statusString: string) => {
@@ -212,7 +212,7 @@ const saveAsNewDataset = async () => {
 	if (!hasValidDatasetName.value || saveAsName.value === null) {
 		return;
 	}
-	const datasetName: string = String(saveAsName.value);
+	const datasetName = saveAsName.value;
 	// TODO: Fix this so that the dataset is created through hmi-server. Currently this is breaking because hmi-server is converting the
 	// data_type property on the columns to upper case.
 
@@ -226,8 +226,9 @@ const saveAsNewDataset = async () => {
 	// newDataset.fileNames = [filename];
 	// const result = await createNewDataset(newDataset);
 
+	// import { KernelConnection as JupyterKernelConnection } from '@/services/jupyter';
 	const session = jupyterSession.session;
-	const kernel = session?.kernel;
+	const kernel = session?.kernel as IKernelConnection;
 	const messageBody = {
 		session: session?.name || '',
 		channel: 'shell',
@@ -253,7 +254,7 @@ const onNewDatasetSaved = async (payload) => {
 
 const downloadDataset = () => {
 	const session = jupyterSession.session;
-	const kernel = session?.kernel;
+	const kernel = session?.kernel as IKernelConnection;
 	const messageBody = {
 		session: session?.name || '',
 		channel: 'shell',
