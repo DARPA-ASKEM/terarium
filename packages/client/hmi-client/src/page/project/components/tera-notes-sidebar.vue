@@ -274,8 +274,8 @@ footer {
 	min-width: 100%;
 }
 
-.p-inputtext:hover {
-	border-color: var(--primary-color) !important;
+.p-inputtext:enabled:hover {
+	border-color: var(--primary-color);
 }
 
 .save-cancel-buttons {
