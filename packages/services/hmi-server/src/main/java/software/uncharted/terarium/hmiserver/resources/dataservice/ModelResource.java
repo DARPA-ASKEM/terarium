@@ -146,8 +146,10 @@ public class ModelResource {
 	@Path("/{id}/model_configurations")
 	public Response getModelConfigurations(
 			@PathParam("id") String id
+			// @QueryParam("page_size") int pageSize,
+			// @QueryParam("page") int page
 	) {
-		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id);
+		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id, 100, 0);
 		return Response
 			.status(Response.Status.OK)
 			.entity(configs)
