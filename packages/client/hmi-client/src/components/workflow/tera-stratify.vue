@@ -149,7 +149,7 @@ watch(
 		if (modelConfigurationId) {
 			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
 			if (modelConfiguration.value) {
-				model.value = await getModel(modelConfiguration.value.configuration.id);
+				model.value = await getModel(modelConfiguration.value.modelId);
 			}
 		}
 	},

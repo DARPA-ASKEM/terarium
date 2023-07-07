@@ -47,13 +47,19 @@
 </template>
 
 <script setup lang="ts">
-import { remove } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
-import { NodeData, EdgeData, petriToLatex } from '@/petrinet/petrinet-service';
-import { parseAMR2IGraph, AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
+import {
+	PetrinetRenderer,
+	NodeData,
+	EdgeData
+} from '@/model-representation/petrinet/petrinet-renderer';
+import { petriToLatex } from '@/petrinet/petrinet-service';
+import {
+	convertAMRToACSet,
+	convertToIGraph
+} from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -73,21 +79,29 @@ const emit = defineEmits([
 
 const props = defineProps<{
 	model: Model | null;
+	isEditable: boolean;
 	nodePreview?: boolean;
 }>();
 
+const menu = ref();
+
 const newModelName = ref('New Model');
-const selectedVariable = ref('');
+
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
+
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
+
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
+
 const equationPanelSize = ref<number>(50);
 const equationPanelMinSize = ref<number>(0);
 const equationPanelMaxSize = ref<number>(100);
+
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
+
 const modelTypeSystem = computed(() => props.model?.semantics?.typing?.type_system);
 const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.name));
 const transitionTypes = computed(() =>
@@ -117,24 +131,6 @@ onUnmounted(() => {
 	window.removeEventListener('resize', handleResize);
 });
 
-const onVariableSelected = (variable: string) => {
-	if (variable) {
-		if (variable === selectedVariable.value) {
-			selectedVariable.value = '';
-			equationLatex.value = equationLatexOriginal.value;
-		} else {
-			selectedVariable.value = variable;
-			equationLatex.value = equationLatexOriginal.value.replaceAll(
-				selectedVariable.value,
-				String.raw`{\color{red}${variable}}`
-			);
-		}
-		renderer?.toggoleNodeSelectionByLabel(variable);
-	} else {
-		equationLatex.value = equationLatexOriginal.value;
-	}
-};
-
 const updateLatexFormula = (formulaString: string) => {
 	equationLatex.value = formulaString;
 	equationLatexOriginal.value = formulaString;
@@ -146,7 +142,8 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
-			const data = await petriToLatex(AMRToPetri(props.model));
+			const data = await petriToLatex(convertAMRToACSet(props.model));
+
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -179,20 +176,12 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 	if (event.key === 'Backspace' && renderer) {
 		if (renderer && renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
-			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
-			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
-			renderer.nodeSelection = null;
-			renderer.render();
+			renderer.removeNode(nodeData.id);
 		}
 
 		if (renderer && renderer.edgeSelection) {
 			const edgeData = renderer.edgeSelection.datum();
-			remove(
-				renderer.graph.edges,
-				(e) => e.source === edgeData.source && e.target === edgeData.target
-			);
-			renderer.edgeSelection = null;
-			renderer.render();
+			renderer.removeEdge(edgeData.source, edgeData.target);
 		}
 	}
 	if (event.key === 'Enter' && renderer) {
@@ -217,10 +206,7 @@ watch(
 	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
-			S: { width: 60, height: 60 },
-			T: { width: 40, height: 40 }
-		});
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
@@ -235,15 +221,14 @@ watch(
 			renderer?.addEdge(d.source, d.target);
 		});
 
-		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
-			// Note: do not change the renderer's visuals, this is done internally
-			onVariableSelected(d.label);
+		renderer.on('background-click', () => {
+			if (menu.value) menu.value.hide();
 		});
 
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(AMRToPetri(props.model));
+		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
 		if (latexFormula) {
 			updateLatexFormula(latexFormula);
 		} else {
@@ -253,8 +238,43 @@ watch(
 	{ deep: true }
 );
 
+/*
+const updatePetri = async (m: PetriNet) => {
+	// equationML.value = mathmlString;
+	// Convert petri net into a graph
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
+		S: { width: 60, height: 60 },
+		T: { width: 40, height: 40 }
+	});
+
+	// Create renderer
+	renderer = new PetrinetRenderer({
+		el: graphElement.value as HTMLDivElement,
+		useAStarRouting: false,
+		useStableZoomPan: true,
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
+	});
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		renderer?.addEdge(d.source, d.target);
+	});
+
+	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+		if (!renderer?.editMode) return;
+		eventX = pos.x;
+		eventY = pos.y;
+		menu.value.toggle(evt);
+	});
+
+	// Render graph
+	await renderer?.setData(graphData);
+	await renderer?.render();
+	updateLatexFormula(equationLatexNew.value);
+};
+*/
+
 onMounted(async () => {
-	// fetchRelatedTerariumArtifacts();
 	document.addEventListener('keyup', editorKeyHandler);
 });
 
@@ -272,15 +292,6 @@ main {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	overflow: auto;
-}
-
-.preview {
-	min-height: 8rem;
-	background-color: var(--surface-secondary);
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
 }
 
 .legend {
@@ -316,6 +327,15 @@ li {
 	gap: 0.5rem;
 }
 
+.preview {
+	min-height: 8rem;
+	background-color: var(--surface-secondary);
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+}
+
 .p-toolbar {
 	position: absolute;
 	width: 100%;
@@ -329,27 +349,6 @@ li {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
 }
-
-.toolbar-button-saveModel {
-	margin: 0.25rem;
-}
-
-.toolbar-subgroup {
-	display: flex;
-}
-
-section math-editor {
-	justify-content: center;
-}
-
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
-}
-
 .splitter-container {
 	height: 100%;
 }
@@ -362,28 +361,6 @@ section math-editor {
 	overflow: hidden;
 	border: none;
 	position: relative;
-}
-
-.math-editor-container {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-}
-
-.math-editor-selected {
-	border: 4px solid var(--primary-color);
-}
-
-.math-editor-error {
-	border: 4px solid var(--surface-border-warning);
-	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .p-splitter {

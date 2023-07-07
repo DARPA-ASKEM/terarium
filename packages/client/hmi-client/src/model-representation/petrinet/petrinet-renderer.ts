@@ -9,7 +9,7 @@ import * as petrinetService from '@/model-representation/petrinet/petrinet-servi
 
 export interface NodeData {
 	type: string;
-	strataType: string;
+	strataType?: string;
 }
 
 export interface EdgeData {
