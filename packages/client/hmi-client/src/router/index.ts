@@ -42,11 +42,7 @@ const routes = [
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.ModelEditor, component: ModelEditorView },
-	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
-	{ path: '/simulation-workflow', component: SimulationWorkflow },
-	{ path: '/sse', component: SSE },
-	{ path: '/workflow-playground', component: WorkflowPlayground }
+	{ path: '/sse', component: SSE }
 ];
 
 const router = createRouter({

@@ -57,6 +57,7 @@
 							:autorun="true"
 							context="dataset"
 							:context_info="{ id: props.assetId }"
+							:save-as-new-dataset="console.log"
 						/>
 					</div>
 				</div>

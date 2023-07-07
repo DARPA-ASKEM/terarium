@@ -37,6 +37,10 @@ JupyterKernelConnection.prototype.sendJupyterMessage = function (msg) {
 
 export type JupyterMessageType =
 	| 'code_cell'
+	| 'save_dataset_request'
+	| 'save_dataset_response'
+	| 'download_request'
+	| 'download_response'
 	| 'visualization'
 	| 'llm_request'
 	| 'llm_response'

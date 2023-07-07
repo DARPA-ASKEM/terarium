@@ -12,7 +12,7 @@
 			<div class="saved-name">{{ props.savedName }}</div>
 			<InputText v-model="savedFileName" class="post-fix" :style="`padding:3px;`" />
 			<i class="pi pi-times i" :class="{ clear: hasValidFileName }" @click="savedFileName = ''"></i>
-			<i class="pi pi-check i" :class="{ save: hasValidFileName }" @click="saveFile"></i>
+			<i class="pi pi-check i" :class="{ save: hasValidFileName }" @click="saveAsNewDataset()"></i>
 		</div>
 	</div>
 </template>
@@ -71,6 +71,7 @@ const props = defineProps({
 	}
 });
 
+const emit = defineEmits(['save-as-new-dataset']);
 const savedFileName = ref<string>('');
 const hasValidFileName = computed<boolean>(() => savedFileName.value !== '');
 const codeCell = ref<HTMLElement | null>(null);
@@ -122,8 +123,9 @@ commands.addKeyBinding({
 });
 
 // Save file function
-const saveFile = () => {
-	console.log('Saving File...');
+const saveAsNewDataset = () => {
+	emit('save-as-new-dataset', { datasetName: savedFileName.value });
+	console.log('save-as-new-dataset emitted');
 };
 
 onMounted(() => {

@@ -194,35 +194,11 @@
 			</Accordion>
 		</template>
 		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
-			<div class="data-transform-container">
-				<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="getActiveIndex">
-					<AccordionTab>
-						<template #header>
-							Data Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-						</template>
-						<tera-dataset-datatable
-							class="tera-dataset-datatable"
-							v-if="jupyterCsv"
-							:rows="10"
-							:raw-content="jupyterCsv"
-							:previous-headers="oldCsvHeaders"
-						/>
-					</AccordionTab>
-				</Accordion>
-
-				<div class="gpt-header">
-					<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
-					<span> <header id="GPT">TGPT</header></span>
-				</div>
-				<tera-jupyter-chat
-					:project="props.project"
-					:asset-id="props.assetId"
-					:show-jupyter-settings="showKernels"
-					:show-chat-thought="showChatThoughts"
-					@update-table-preview="updateJupyterTable"
-					@update-kernel-status="updateKernelStatus"
-				/>
-			</div>
+			<tera-dataset-jupyter-panel
+				:asset-id="props.assetId"
+				:project="props.project"
+				:dataset="dataset"
+			/>
 		</template>
 	</tera-asset>
 </template>
@@ -237,16 +213,13 @@ import { isString } from 'lodash';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { CsvAsset, Dataset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import RelatedPublications from '../widgets/tera-related-publications.vue';
-// import { newSession } from '@/services/jupyter';
-// import { SessionContext } from '@jupyterlab/apputils';
-// const jupyterSession = ref(<SessionContext | null>null);
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -261,7 +234,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
-const kernelStatus = ref(<String>'');
 const metadata = ref();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
@@ -277,10 +249,6 @@ const toggleSettingsMenu = (event: Event) => {
 	menu.value.toggle(event);
 };
 
-const updateKernelStatus = (statusString: string) => {
-	kernelStatus.value = statusString;
-};
-
 const datasetView = ref(DatasetView.DESCRIPTION);
 
 const chatThoughtLabel = computed(() =>
@@ -292,25 +260,6 @@ const kernelSettingsLabel = computed(() =>
 );
 
 const csvContent = computed(() => rawContent.value?.csv);
-
-const getActiveIndex = computed(() => {
-	if (!jupyterCsv.value) {
-		return [1];
-	}
-	return [0, 1];
-});
-
-const statusStyle = computed(() => {
-	if (kernelStatus.value === 'idle') {
-		return 'color: green';
-	}
-
-	if (kernelStatus.value === 'busy') {
-		return 'color: orange';
-	}
-
-	return 'color: red';
-});
 
 const items = ref([
 	{
@@ -344,10 +293,6 @@ function highlightSearchTerms(text: string | undefined): string {
 const openDatesetChatTab = () => {
 	datasetView.value = DatasetView.LLM;
 	jupyterCsv.value = null;
-};
-
-const updateJupyterTable = (newJupyterCsv: CsvAsset) => {
-	jupyterCsv.value = newJupyterCsv;
 };
 
 onUpdated(() => {
