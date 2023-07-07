@@ -80,7 +80,7 @@ public interface ModelProxy {
 	@Path("/{id}/model_configurations")
 	List<ModelConfiguration> getModelConfigurations(
 			@PathParam("id") String id,
-			@QueryParam("page_size") int pageSize,
-			@QueryParam("page") int page
+			@QueryParam("page_size") int pageSize
+			// @QueryParam("page") int page
 	);
 }

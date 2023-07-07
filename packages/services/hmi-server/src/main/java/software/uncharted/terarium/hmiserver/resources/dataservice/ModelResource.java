@@ -149,7 +149,7 @@ public class ModelResource {
 			// @QueryParam("page_size") int pageSize,
 			// @QueryParam("page") int page
 	) {
-		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id, 100, 0);
+		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id, 100);
 		return Response
 			.status(Response.Status.OK)
 			.entity(configs)
