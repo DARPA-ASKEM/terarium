@@ -11,6 +11,8 @@ export interface EdgeData {
 	numEdges: number;
 }
 
+// Used to derive equations
+// AMR => ACSet => ODE => Equation => Latex
 export const convertAMRToACSet = (amr: Model) => {
 	const result: PetriNet = {
 		S: [],
@@ -133,7 +135,6 @@ export const convertToIGraph = (amr: Model) => {
 	return result;
 };
 
-// FIXME AMR todo
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
 export const addState = (amr: Model, id: string, name: string) => {
@@ -144,8 +145,35 @@ export const addState = (amr: Model, id: string, name: string) => {
 	});
 	amr.semantics?.ode.initials?.push({
 		target: id,
-		expression: '',
-		expression_mathml: ''
+		expression: `${id}P`,
+		expression_mathml: `<ci>${id}P</ci>`
+	});
+	amr.semantics?.ode.parameters?.push({
+		id: `${id}P`,
+		name: '',
+		description: '',
+		value: 100
+	});
+};
+
+export const updateStateId = (amr: Model, id: string, newId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === id);
+	if (!state) return;
+
+	state.id = newId;
+
+	const initial = amr.semantics?.ode.initials?.find((d) => d.target === id);
+	if (!initial) return;
+	initial.target = newId;
+
+	model.transitions.forEach((transition) => {
+		for (let i = 0; i < transition.input.length; i++) {
+			if (transition.input[i] === id) transition.input[i] = newId;
+		}
+		for (let i = 0; i < transition.output.length; i++) {
+			if (transition.output[i] === id) transition.output[i] = newId;
+		}
 	});
 };
 

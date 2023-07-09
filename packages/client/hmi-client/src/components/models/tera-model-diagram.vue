@@ -435,11 +435,11 @@ const resetZoom = async () => {
 };
 
 const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
+	renderer?.addNodeCenter(NodeType.State, 'state');
 };
 
 const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
+	renderer?.addNodeCenter(NodeType.Transition, 'transition');
 };
 </script>
 

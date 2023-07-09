@@ -132,8 +132,6 @@ export interface PresignedURL {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
-    parameters?: ModelParameter[];
-    metadata?: ModelMetadata;
 }
 
 export interface CalibrationRequest {
@@ -202,14 +200,6 @@ export interface PetriNetTransition {
     output: string[];
     grounding: ModelGrounding;
     properties: PetriNetTransitionProperties;
-}
-
-export interface ModelParameter {
-    id: string;
-    description?: string;
-    value?: number;
-    grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
 }
 
 export interface Document {
@@ -298,11 +288,6 @@ export interface PetriNetTransitionProperties {
     rate: ModelExpression;
 }
 
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
-}
-
 export interface Extraction {
     id: number;
     askemClass: string;
@@ -333,6 +318,15 @@ export interface Initial {
     target: string;
     expression: string;
     expression_mathml: string;
+}
+
+export interface ModelParameter {
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
 }
 
 export interface Observable {
@@ -397,6 +391,11 @@ export interface XDDUrlExtraction {
     url: string;
     resourceTitle: string;
     extractedFrom: string[];
+}
+
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
 }
 
 export interface State {

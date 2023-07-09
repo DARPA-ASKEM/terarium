@@ -458,7 +458,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	addNode(type: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
 		const size = type === NodeType.State ? 60 : 30;
-		const id = `${type}-${this.graph.nodes.length + 1}`;
+		const id = `${type}${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
 			id,
 			label: name,
