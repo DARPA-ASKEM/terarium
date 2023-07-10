@@ -1,16 +1,15 @@
+// Colour palette is from https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=12
 export const strataTypeColors = [
-	'#fde725',
-	'#cde11d',
-	'#98d83e',
-	'#67cc5c',
-	'#40bd72',
-	'#25ac82',
-	'#1f998a',
-	'#24878e',
-	'#2b748e',
-	'#34618d',
-	'#3d4d8a',
-	'#453581',
-	'#481c6e',
-	'#440154'
+	'#a6cee3',
+	'#1f78b4',
+	'#b2df8a',
+	'#33a02c',
+	'#fb9a99',
+	'#e31a1c',
+	'#fdbf6f',
+	'#ff7f00',
+	'#cab2d6',
+	'#6a3d9a',
+	'#ffff99',
+	'#b15928'
 ];
