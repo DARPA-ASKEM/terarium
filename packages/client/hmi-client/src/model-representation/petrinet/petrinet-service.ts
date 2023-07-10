@@ -235,7 +235,7 @@ export const updateRateExpression = (amr: Model, transition: PetriNetTransition)
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
-	const param = amr.semantics?.ode.parameters.find((d) => d.id === `${transition.id}Param`);
+	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
 	if (!param) return;
 
 	const inputStr = transition.input.map((d) => `${d}`);
