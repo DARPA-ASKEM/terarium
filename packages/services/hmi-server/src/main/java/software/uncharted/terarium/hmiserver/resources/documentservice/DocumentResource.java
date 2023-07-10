@@ -28,7 +28,7 @@ public class DocumentResource {
 	DocumentProxy proxy;
 
 	@ConfigProperty(name = "xdd.api_es_key")
-	Optional<String> devKey;
+	Optional<String> apiKey;
 
 	// NOTE: the query parameters match the proxy version and the type XDDSearchPayload
 	@GET
@@ -88,10 +88,10 @@ public class DocumentResource {
 
 
 				String apiKey = "";
-				if (devKey.isPresent())
-					apiKey = devKey.get();
+				if (this.apiKey.isPresent())
+					apiKey = this.apiKey.get();
 				else {
-					log.error("XDD API key missing. ES will fail.");
+					log.error("XDD API key missing. Extractions will not work");
 					return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 				}
 
