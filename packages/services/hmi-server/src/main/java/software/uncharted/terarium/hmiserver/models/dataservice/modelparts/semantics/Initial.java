@@ -10,9 +10,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 
 @Data
 @Accessors(chain = true)
-public class Rate {
+public class Initial {
 	private String target;
 	private String expression;
+
 	@JsonAlias("expression_mathml")
 	private String expression_mathml;
 }

@@ -27,6 +27,13 @@
 				/>
 			</span>
 			<Button
+				v-if="isEditable"
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
 				label="Create new model"
@@ -155,7 +162,7 @@
 											<label>Identifiers</label>
 										</td>
 										<td>
-											<button type="submit" label="submit" />	
+											<button type="submit" label="submit" />
 										</td>
 									</template>
 									<template v-else> -->
@@ -377,20 +384,14 @@
 			</Accordion>
 		</template>
 		<template v-if="modelView === ModelView.MODEL">
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab header="Model diagram">
-					<tera-model-diagram
-						:model="model"
-						:is-editable="props.isEditable"
-						@update-model-content="updateModelContent"
-					/>
-				</AccordionTab>
+			<tera-model-diagram
+				:model="model"
+				:is-editable="props.isEditable"
+				@update-model-content="updateModelContent"
+			/>
+			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration
-						v-if="modelConfigurations"
-						:model-configurations="modelConfigurations"
-						:is-editable="props.isEditable"
-					/>
+					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -435,18 +436,18 @@ import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
+import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel } from '@/services/model';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { addAsset } from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Model, Document, Dataset, ProvenanceType, ModelConfiguration } from '@/types/Types';
+import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
+import Menu from 'primevue/menu';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
@@ -470,7 +471,8 @@ const props = defineProps({
 	},
 	isEditable: {
 		type: Boolean,
-		required: true
+		default: false,
+		required: false
 	},
 	highlight: {
 		type: String,
@@ -483,17 +485,41 @@ const openValueConfig = ref(false);
 const modelView = ref(ModelView.DESCRIPTION);
 const resources = useResourcesStore();
 const router = useRouter();
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const model = ref<Model | null>(null);
 
-const modelConfigurations = ref<ModelConfiguration[]>([]);
-
 const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
+/*
+ * User Menu
+ */
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	// { icon: 'pi pi-pencil', label: 'Rename', command: renameModel },
+	{ icon: 'pi pi-clone', label: 'Make a copy', command: duplicateModel }
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+async function duplicateModel() {
+	if (!model.value) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	const duplicateModelResponse = await createModel(model.value);
+	if (!duplicateModelResponse) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	await addAsset(props.project.id, ProjectAssetTypes.MODELS, duplicateModelResponse.id);
+	// Should probably refresh or emit update?
+}
 
 /* Model */
 const name = computed(() => highlightSearchTerms(model.value?.name));
@@ -557,7 +583,7 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 // };
 
 function updateModelContent(rendererGraph) {
-	if (model.value) model.value.model = parseIGraph2PetriNet(rendererGraph);
+	if (model.value) model.value = convertToAMRModel(rendererGraph);
 }
 
 // Highlight strings based on props.highlight
@@ -576,62 +602,14 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
-async function getModelConfigurations() {
-	if (openedWorkflowNodeStore.node) {
-		const modelConfigIds = openedWorkflowNodeStore.node.outputs;
-		modelConfigurations.value = [];
-
-		// FIXME: If you keep the drilldown open while switching from one model node to the next you'll see a duplicate of the previous row
-		// It's a duplicate of a config that belongs to that node as they both have the same config id
-		// Also this function seems to run twice and a bunch of petrinet service errors show up (when you switch nodes and drilldown is open)
-		// console.log(openedWorkflowNodeStore.node.outputs)
-
-		if (modelConfigIds) {
-			for (let i = 0; i < modelConfigIds.length; i++) {
-				const modelConfigId = modelConfigIds[i].value?.[0];
-				// Don't need to eslint-disable no await in for loop once we are able to pass in a list of ids
-				// eslint-disable-next-line
-				const response = await getModelConfigurationById(modelConfigId);
-				modelConfigurations.value.push(response);
-			}
-			// FIXME: Why is this called when switching from one drilldown panel to a different type (there is already a guard checking for operation type in the watcher that calls this function)
-			if (modelConfigurations.value[0].modelId) {
-				model.value = await getModel(modelConfigurations.value[0].modelId);
-				fetchRelatedTerariumArtifacts();
-			}
-		}
-	}
-}
-
-watch(
-	() => [openedWorkflowNodeStore.node?.outputs],
-	() => {
-		getModelConfigurations();
-	},
-	{ deep: true }
-);
+// TODO: Get model configurations
 
 watch(
 	() => [props.assetId],
 	async () => {
-		if (openedWorkflowNodeStore.node?.operationType === 'ModelOperation') {
-			getModelConfigurations();
-		} else if (props.assetId !== '') {
+		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
-
-			// TODO: Display model config in model page (non-drilldown)
-			// When not in drilldown just show defualt config for now???
-			// if (model.value) {
-			// 	modelConfigurations.value.push({
-			// 		id: 'default',
-			// 		name: 'Default',
-			// 		description: 'Default',
-			// 		modelId: model.value.id,
-			// 		amrConfiguration: model.value
-			//		// missing S, T, I, O configuration
-			// 	});
-			// }
 		} else {
 			model.value = null;
 		}
@@ -770,10 +748,6 @@ function editRow(event: Event) {
 	display: flex;
 }
 
-section math-editor {
-	justify-content: center;
-}
-
 .floating-edit-button {
 	background-color: var(--surface-0);
 	margin-top: 10px;
@@ -782,71 +756,9 @@ section math-editor {
 	z-index: 10;
 }
 
-.splitter-container {
-	height: 100%;
-}
-
-.graph-element {
-	background-color: var(--surface-0);
-	height: 100%;
-	max-height: 100%;
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
-}
-
-.math-editor-container {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-}
-
-.math-editor-selected {
-	border: 4px solid var(--primary-color);
-}
-
-.math-editor-error {
-	border: 4px solid var(--surface-border-warning);
-	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-.model_diagram {
-	display: flex;
-	height: 100%;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	overflow: auto;
-}
-
-.p-splitter {
-	height: 100%;
-}
-
 .p-datatable:deep(td:hover) {
 	background-color: var(--surface-secondary);
 	cursor: pointer;
-}
-
-.tera-split-panel {
-	position: relative;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	width: 100%;
-}
-
-/* Let svg dynamically resize when the sidebar opens/closes or page resizes */
-:deep(.graph-element svg) {
-	width: 100%;
-	height: 100%;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {

@@ -84,7 +84,6 @@ export interface ModelConfiguration {
     description?: string;
     modelId: string;
     configuration: any;
-    amrConfiguration: any;
 }
 
 export interface ProvenanceQueryParam {
@@ -235,6 +234,7 @@ export interface ModelParameter {
 export interface Document {
     gddId: string;
     title: string;
+    abstractText: string;
     journal: string;
     type: string;
     number: string;
@@ -253,7 +253,6 @@ export interface Document {
     knownEntities: KnownEntities;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
-    abstract: string;
 }
 
 export interface XDDFacetsItemResponse {
@@ -269,7 +268,7 @@ export interface XDDResponseOK {
 
 export interface OdeSemantics {
     rates: Rate[];
-    initials?: any[];
+    initials?: Initial[];
     parameters?: ModelParameter[];
     observables?: Observable[];
     time?: any;
@@ -309,7 +308,7 @@ export interface ModelGrounding {
 
 export interface ModelExpression {
     expression: string;
-    expressionMathml: string;
+    expression_mathml: string;
 }
 
 export interface PetriNetTransitionProperties {
@@ -335,7 +334,8 @@ export interface Extraction {
 
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
-    summaries: { [index: string]: { [index: string]: string } };
+    askemObjects: Extraction[];
+    summaries: string[];
 }
 
 export interface XDDFacetBucket {
@@ -346,7 +346,13 @@ export interface XDDFacetBucket {
 export interface Rate {
     target: string;
     expression: string;
-    expressionMathml: string;
+    expression_mathml: string;
+}
+
+export interface Initial {
+    target: string;
+    expression: string;
+    expression_mathml: string;
 }
 
 export interface Observable {
@@ -354,7 +360,7 @@ export interface Observable {
     name?: string;
     states: string[];
     expression?: string;
-    expressionMathml?: string;
+    expression_mathml?: string;
 }
 
 export interface TypeSystem {
@@ -391,6 +397,7 @@ export interface ProvenanceInfo {
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
+    abstractText: string;
     xddId: string;
     documentId: string;
     documentTitle: string;
@@ -404,7 +411,6 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
-    abstract: string;
 }
 
 export interface XDDUrlExtraction {

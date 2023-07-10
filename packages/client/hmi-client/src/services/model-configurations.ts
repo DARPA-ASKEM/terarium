@@ -1,8 +1,8 @@
+import _ from 'lodash';
 import API from '@/api/api';
 import { ModelConfiguration, Model } from '@/types/Types';
-import * as AMRService from '@/model-representation/petrinet/petrinet-service';
 
-export const getModelConfigurations = async () => {
+export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model_configurations`);
 	return (response?.data as ModelConfiguration[]) ?? null;
 };
@@ -18,19 +18,28 @@ export const createModelConfiguration = async (
 	description: string,
 	configuration: Model
 ) => {
-	// FIXME: We need to hack this into a PetriNet acset until TA3 can consume AMRs. June 21, 2023
-	const hackConfig: any = AMRService.convertAMRToACSet(configuration.model as any);
 	const response = await API.post(`/model_configurations`, {
 		model_id,
 		name,
 		description,
-		configuration: hackConfig,
-		amr_configuration: configuration
+		configuration
 	});
 	return response?.data ?? null;
 };
 
 export const updateModelConfiguration = async (config: ModelConfiguration) => {
+	// Do a sanity pass to ensure type-safety
+	const model: Model = config.configuration as Model;
+	const parameters = model.semantics?.ode.parameters;
+	if (parameters) {
+		parameters.forEach((param) => {
+			if (param.value && typeof param.value === 'string' && _.isNumber(+param.value)) {
+				param.value = +param.value;
+				console.debug(`corerce ${param.id} ${param.value} to number`);
+			}
+		});
+	}
+
 	const response = await API.put(`/model_configurations/${config.id}`, config);
 	return response?.data ?? null;
 };

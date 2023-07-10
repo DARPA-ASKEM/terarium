@@ -1,21 +1,16 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate">Run</Button>
-		<div class="chart-container">
+		<div class="chart-container" v-if="runResults">
 			<SimulateChart
-				v-for="index in openedWorkflowNodeStore.numCharts"
+				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
-				:chart-idx="index"
+				:chartConfig="cfg"
+				@configuration-change="configurationChange(index, $event)"
 			/>
 		</div>
-		<Button
-			class="add-chart"
-			text
-			@click="openedWorkflowNodeStore.appendChart"
-			label="Add Chart"
-			icon="pi pi-plus"
-		></Button>
+		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<div>loading...</div>
@@ -23,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
@@ -30,18 +26,17 @@ import { ModelConfiguration } from '@/types/Types';
 
 import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
-import { RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperation } from './simulate-operation';
+import { SimulateOperation, SimulateOperationState } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 const emit = defineEmits(['append-output-port']);
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
 
@@ -52,41 +47,20 @@ const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
-watch(
-	() => props.node,
-	(node) => openedWorkflowNodeStore.setNode(node ?? null),
-	{ deep: true }
-);
-
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
-	const modelConfigurationObj = modelConfiguration.value as any;
-	const semantics = modelConfigurationObj.amrConfiguration.semantics;
-	const ode = semantics.ode;
-
-	// FIXME: Dummy up the payload to make things work, but not correct results
-	const initials = ode.initials.map((d) => d.target);
-	const rates = ode.rates.map((d) => d.target);
-	const initialsObj = {};
-	const paramsObj = {};
-
-	initials.forEach((d) => {
-		initialsObj[d] = Math.random() * 100;
-	});
-	rates.forEach((d) => {
-		paramsObj[d] = Math.random() * 0.05;
-	});
+	const state = props.node.state as SimulateOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload = {
 			modelConfigId: configId,
-			timespan: { start: openedWorkflowNodeStore.tspan[0], end: openedWorkflowNodeStore.tspan[1] },
-			extra: {
-				initials: initialsObj,
-				params: paramsObj
+			timespan: {
+				start: state.currentTimespan.start,
+				end: state.currentTimespan.end
 			},
+			extra: {},
 			engine: 'sciml'
 		};
 		const response = await makeForecastJob(payload);
@@ -143,9 +117,18 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	emit('append-output-port', {
 		type: SimulateOperation.outputs[0].type,
 		label: `${port.label} Results`,
-		value: {
-			runIdList
-		}
+		value: runIdList
+	});
+};
+
+const configurationChange = (index: number, config: ChartConfig) => {
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
 	});
 };
 
@@ -168,7 +151,7 @@ onMounted(async () => {
 	const port = node.outputs[0];
 	if (!port) return;
 
-	const runIdList = (port.value as any)[0].runIdList as string[];
+	const runIdList = port.value as string[];
 	await Promise.all(
 		runIdList.map(async (runId) => {
 			const resultCsv = await getRunResult(runId, 'result.csv');
@@ -177,6 +160,17 @@ onMounted(async () => {
 		})
 	);
 });
+
+const addChart = () => {
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
 </script>
 
 <style scoped>

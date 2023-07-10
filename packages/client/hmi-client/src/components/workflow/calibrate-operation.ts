@@ -2,13 +2,23 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
+import { ChartConfig } from '@/types/SimulateConfig';
+
+export interface CalibrateMap {
+	modelVariable: string;
+	datasetVariable: string;
+}
+
+export interface CalibrationOperationState {
+	chartConfigs: ChartConfig[];
+	mapping: CalibrateMap[];
+}
 
 export const CalibrationOperation: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION,
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
-	inputs: [{ type: 'modelConfigId' }, { type: 'dataset' }],
+	inputs: [{ type: 'modelConfigId' }, { type: 'datasetId' }],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 
@@ -25,10 +35,6 @@ export const CalibrationOperation: Operation = {
 			// Get the model:
 			const model = await getModel(modelId);
 			if (model) {
-				const petriNetString = JSON.stringify(AMRToPetri(model));
-				console.log('Petrinet String: ');
-				console.log(petriNetString);
-
 				// Make calibration job.
 				// const calibrationParam: CalibrationRequest = calibrationParamExample;
 				// const result = makeCalibrateJob(calibrationParam);
@@ -37,5 +43,13 @@ export const CalibrationOperation: Operation = {
 			}
 		}
 		return [{ type: null, value: null }];
+	},
+
+	initState: () => {
+		const init: CalibrationOperationState = {
+			chartConfigs: [],
+			mapping: [{ modelVariable: '', datasetVariable: '' }]
+		};
+		return init;
 	}
 };

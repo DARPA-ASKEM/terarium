@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.resources.documentservice;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -13,6 +14,7 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentPro
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
 
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,6 +26,9 @@ public class DocumentResource {
 
 	@RestClient
 	DocumentProxy proxy;
+
+	@ConfigProperty(name = "xdd.api_es_key")
+	Optional<String> apiKey;
 
 	// NOTE: the query parameters match the proxy version and the type XDDSearchPayload
 	@GET
@@ -80,13 +85,25 @@ public class DocumentResource {
 				match = null;
 			}
 			try {
-				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(
+
+
+				String apiKey = "";
+				if (this.apiKey.isPresent())
+					apiKey = this.apiKey.get();
+				else {
+					log.error("XDD API key missing. Extractions will not work");
+					return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+				}
+
+				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(apiKey,
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
 					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url);
 
 
+
+
 				if (doc.getErrorMessage() != null) {
-					Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(doc.getErrorMessage())
 						.build();
 				}
@@ -94,6 +111,7 @@ public class DocumentResource {
 				if (doc.getSuccess() == null || doc.getSuccess().getData().isEmpty()) {
 					return Response.noContent().build();
 				}
+
 				return Response.status(Response.Status.OK).entity(doc).build();
 
 			} catch (RuntimeException e) {
