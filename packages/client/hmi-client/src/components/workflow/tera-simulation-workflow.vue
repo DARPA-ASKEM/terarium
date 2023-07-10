@@ -15,19 +15,21 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<InputText
-					v-if="isRenamingWorkflow"
-					class="p-inputtext-sm"
-					v-model.lazy="newWorkflowName"
-					placeholder="Workflow name"
-					@keyup.enter="updateWorkflowName"
-				/>
-				<h5 v-else>{{ wf.name }}</h5>
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleOptionsMenu"
-				/>
+				<div class="button-group">
+					<InputText
+						v-if="isRenamingWorkflow"
+						class="p-inputtext-sm"
+						v-model.lazy="newWorkflowName"
+						placeholder="Workflow name"
+						@keyup.enter="updateWorkflowName"
+					/>
+					<h5 v-else>{{ wf.name }}</h5>
+					<Button
+						icon="pi pi-ellipsis-v"
+						class="p-button-icon-only p-button-text p-button-rounded"
+						@click="toggleOptionsMenu"
+					/>
+				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
@@ -663,6 +665,7 @@ function resetZoom() {
 
 .button-group {
 	display: flex;
+	align-items: center;
 	flex-direction: row;
 	gap: 1rem;
 }
