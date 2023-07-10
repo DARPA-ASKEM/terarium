@@ -330,11 +330,11 @@
 					</div>
 				</AccordionTab>
 
-				<!-- Other extractions -->
+				<!-- Other concepts -->
 				<AccordionTab>
 					<template #header>
-						Other extractions
-						<span class="artifact-amount">({{ otherExtractions.length }})</span>
+						Other concepts
+						<span class="artifact-amount">({{ otherConcepts.length }})</span>
 					</template>
 					<div class="p-datatable p-datatable-sm">
 						<table class="p-datatable-table">
@@ -347,7 +347,7 @@
 								</tr>
 							</thead>
 							<tbody class="p-datatable-tbody">
-								<tr v-for="item in otherExtractions" :key="item.payload?.id?.id">
+								<tr v-for="item in otherConcepts" :key="item.payload?.id?.id">
 									<td>{{ item.payload?.id?.id ?? '--' }}</td>
 									<td>
 										{{
@@ -579,7 +579,7 @@ const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
 });
-const otherExtractions = computed(() => {
+const otherConcepts = computed(() => {
 	const ids = [
 		...(states.value?.map((s) => s.id) ?? []),
 		...(transitions.value?.map((t) => t.id) ?? [])
