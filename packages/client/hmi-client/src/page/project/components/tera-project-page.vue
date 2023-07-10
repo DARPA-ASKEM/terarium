@@ -15,6 +15,14 @@
 			openNextCodeFile();
 		"
 	/>
+	<code-editor
+		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS"
+		:initial-code="code"
+		@vue:mounted="
+			emit('asset-loaded');
+			openTextArtifact();
+		"
+	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
 		:project="project"
@@ -71,10 +79,12 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
 import { addAsset } from '@/services/project';
+import { getArtifactFileAsText } from '@/services/artifact';
 
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
+	assetName?: string;
 	pageType?: ProjectAssetTypes | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
@@ -154,6 +164,12 @@ async function openNextCodeFile() {
 			params: currentRequest.asset
 		});
 	}
+}
+
+async function openTextArtifact() {
+	const res: string | null = await getArtifactFileAsText(props.assetId!, props.assetName!);
+	if (!res) return;
+	code.value = res;
 }
 
 // Just preserving this as this didn't even work when it was in tera-project.vue - same error occurs on staging

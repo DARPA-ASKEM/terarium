@@ -22,12 +22,9 @@ async function createNewArtifactFromGithubFile(
 
 	if (!fileName) return null;
 
-	// Remove the file extension from the name, if any
-	const name: string = fileName?.replace(/\.[^/.]+$/, '');
-
 	// Create a new artifact with the same name as the file, and post the metadata to TDS
 	const artifact: Artifact = {
-		name,
+		name: fileName,
 		description: path,
 		fileNames: [fileName],
 		username: userName
@@ -65,12 +62,9 @@ async function uploadArtifactToProject(
 	projectId: string,
 	description?: string
 ): Promise<any> {
-	// Remove the file extension from the name, if any
-	const name = file.name.replace(/\.[^/.]+$/, '');
-
 	// Create a new artifact with the same name as the file, and post the metadata to TDS
 	const artifact: Artifact = {
-		name,
+		name: file.name,
 		description: description || file.name,
 		fileNames: [file.name],
 		username: userName
@@ -116,4 +110,15 @@ async function addFileToArtifact(artifactId: string, file: File): Promise<boolea
 	return response && response.status < 400;
 }
 
-export { uploadArtifactToProject, createNewArtifactFromGithubFile };
+async function getArtifactFileAsText(artifactId: string, fileName: string): Promise<string | null> {
+	const response = await API.get(
+		`/artifacts/${artifactId}/download-file-as-text?filename=${fileName}`,
+		{}
+	);
+
+	if (!response || response.status >= 400) return null;
+
+	return response.data;
+}
+
+export { uploadArtifactToProject, createNewArtifactFromGithubFile, getArtifactFileAsText };

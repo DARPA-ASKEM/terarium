@@ -12,7 +12,7 @@
 				ref="fileInput"
 				@change="onFileChange"
 				multiple
-				accept=".pdf,.csv"
+				accept=".pdf,.csv,.txt,.md"
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">

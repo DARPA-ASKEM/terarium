@@ -84,6 +84,28 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 		return artifactProxy.getArtifactUploadUrl(artifactId, filename);
 	}
 
+	@GET
+	@Path("/{id}/download-file-as-text")
+	public Response downloadFileAsText(@PathParam("id") String artifactId, @QueryParam("filename") String filename) {
+
+		log.debug("Downloading artifact {} from project", artifactId);
+
+		if (artifactPath.isEmpty()) {
+			log.error("Artifact path not set");
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+		String objectKey = String.format("%s/%s/%s", artifactPath.get(), artifactId, filename);
+
+		String fileAsString =  downloadStringFromS3(objectKey);
+
+		return Response.status(Response.Status.OK).entity(fileAsString).type(MediaType.TEXT_PLAIN).build();
+
+	}
+
 	@PUT
 	@Path("/{artifactId}/uploadFile")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
