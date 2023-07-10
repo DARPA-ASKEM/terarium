@@ -8,11 +8,11 @@
 	>
 		<template #name-input>
 			<InputText
+				v-if="isEditingProject"
 				v-model="newProjectName"
 				ref="inputElement"
 				class="project-name-input"
 				@keyup.enter="updateProjectName"
-				:class="{ isVisible: isEditingProject }"
 			/>
 		</template>
 		<template #edit-buttons>
@@ -550,6 +550,7 @@ ul {
 .modal:deep(main) {
 	width: 50rem;
 }
+
 :deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
