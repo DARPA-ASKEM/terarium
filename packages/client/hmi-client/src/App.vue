@@ -136,7 +136,7 @@ API.interceptors.response.use(
 			ToastSeverity.error,
 			`${ToastSummaries.NETWORK_ERROR} (${status})`,
 			'Unauthorized',
-			5000
+			500
 		);
 		if (status === 401 || status === 403) {
 			router.push({ name: 'unauthorized' });
@@ -175,6 +175,7 @@ watch(
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 resourcesStore.$subscribe((mutation, state) => {
 	project.value = state.activeProject;
+	console.log(project.value);
 });
 
 const isAboutModalVisible = ref(false);
