@@ -22,11 +22,7 @@
 									<!-- legend key -->
 									<div>
 										<div
-											:class="
-												row.nodeType === 'Variable'
-													? `legend-key-state`
-													: `legend-key-transition-lg`
-											"
+											:class="getLegendKeyClass(row.nodeType ?? '')"
 											:style="{ backgroundColor: strataTypeColors[index] }"
 										/>
 									</div>
@@ -34,20 +30,24 @@
 										<!-- node type -->
 										<Dropdown
 											class="p-inputtext-sm"
-											:options="Object.keys(assignToOptions)"
+											:options="Object.keys(assignToOptions[index])"
 											v-model="row.nodeType"
 										/>
 									</div>
 									<div>
 										<!-- name of type -->
-										<InputText class="p-inputtext-sm" />
+										<InputText
+											class="p-inputtext-sm"
+											@input="onUpdateTypeName"
+											v-model="row.typeName"
+										/>
 									</div>
 									<div>
 										<!-- assign to -->
 										<MultiSelect
 											class="p-inputtext-sm"
 											placeholder="Select nodes"
-											:options="assignToOptions[row.nodeType]"
+											:options="assignToOptions[index][row.nodeType ?? '']"
 											v-model="row.assignTo"
 										/>
 									</div>
@@ -56,12 +56,19 @@
 										<Button icon="pi pi-times" text rounded />
 									</div>
 								</div>
+								<Button
+									label="Add type"
+									icon="pi pi-plus"
+									class="p-button-sm"
+									text
+									@click="addTypedRow"
+								/>
 							</section>
 							<section class="legend">
 								<ul>
 									<li v-for="(type, i) in stateTypes" :key="i">
 										<div
-											class="legend-key-state"
+											class="legend-key-circle"
 											:style="{ backgroundColor: strataTypeColors[i] }"
 										/>
 										{{ type }}
@@ -70,20 +77,20 @@
 								<ul>
 									<li v-for="(type, i) in transitionTypes" :key="i">
 										<div
-											class="legend-key-transition"
+											class="legend-key-square"
 											:style="{ backgroundColor: strataTypeColors[stateTypes?.length ?? 0 + i] }"
 										/>
 										{{ type }}
 									</li>
 								</ul>
 							</section>
-							<div v-if="model" ref="graphElement" class="graph-element" />
+							<div v-if="typedModel" ref="graphElement" class="graph-element" />
 						</section>
 					</SplitterPanel>
 				</Splitter>
 			</div>
 		</TeraResizablePanel>
-		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
+		<div v-else-if="typedModel" ref="graphElement" class="graph-element preview" />
 	</main>
 </template>
 
@@ -126,7 +133,7 @@ const props = defineProps<{
 	showTypingToolbar?: boolean;
 }>();
 
-const menu = ref();
+const typedModel = ref<Model | null>();
 
 const newModelName = ref('New Model');
 
@@ -153,21 +160,41 @@ const transitionTypes = computed(() =>
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
 	{
-		nodeType: string;
+		nodeType?: string;
 		typeName?: string;
 		assignTo?: string[];
 	}[]
 >([]);
+// const assignTo = computed<string[][]>(() => typedRows.value.filter(row => row.assignTo !== undefined).map(row => row.assignTo!));;
 
-const assignToOptions = computed(() => {
+const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
+	const options: { [s: string]: string[] }[] = [];
 	if (props.model) {
-		return {
-			Variable: props.model.model.states.map((s) => s.id),
-			Transition: props.model.model.transitions.map((s) => s.id)
-		};
+		typedRows.value.forEach(() => {
+			options.push({
+				Variable: props.model!.model.states.map((s) => s.id),
+				Transition: props.model!.model.transitions.map((t) => t.id)
+			});
+		});
 	}
-	return {};
+	return options;
 });
+
+function onUpdateTypeName() {}
+
+function addTypedRow() {
+	typedRows.value.push({});
+}
+
+function getLegendKeyClass(type: string) {
+	if (type === 'Variable') {
+		return 'legend-key-circle';
+	}
+	if (type === 'Transition') {
+		return 'legend-key-square';
+	}
+	return '';
+}
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -203,6 +230,7 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
+			typedModel.value = props.model;
 			typedRows.value.push(
 				{
 					nodeType: 'Variable',
@@ -232,6 +260,14 @@ watch(
 		}
 	}
 );
+
+// watch(typedRows, () => {
+
+// }, { deep: true });
+
+// watch(assignTo, () => {
+
+// }, { deep: true });
 
 onUpdated(() => {
 	if (props.model) {
@@ -293,10 +329,6 @@ watch(
 			renderer?.addEdge(d.source, d.target);
 		});
 
-		renderer.on('background-click', () => {
-			if (menu.value) menu.value.hide();
-		});
-
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
@@ -338,22 +370,16 @@ main {
 	border-radius: 0.5rem;
 	padding: 0.5rem;
 }
-.legend-key-state {
+.legend-key-circle {
 	height: 24px;
 	width: 24px;
 	border-radius: 12px;
 }
 
-.legend-key-transition {
-	height: 16px;
-	width: 16px;
-	border-radius: 4px;
-}
-
-.legend-key-transition-lg {
+.legend-key-square {
 	height: 24px;
 	width: 24px;
-	border-radius: 6px;
+	border-radius: 4px;
 }
 
 ul {
