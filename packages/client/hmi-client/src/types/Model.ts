@@ -6,7 +6,6 @@ export type ITypedModel<T> = {
 	name: string;
 	description: string;
 
-	framework: string;
 	concept: string;
 	timestamp: string | Date;
 	/* parameters: { [key: string]: string }; */

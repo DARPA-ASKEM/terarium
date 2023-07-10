@@ -652,7 +652,6 @@ const createNewModel = async () => {
 	if (props.project) {
 		const newModel = {
 			name: newModelName.value,
-			framework: 'Petri Net',
 			description: newDescription.value,
 			content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
 		};

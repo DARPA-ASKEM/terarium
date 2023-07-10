@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
-
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
 @Data
 @Accessors(chain = true)
 public class State {
@@ -16,4 +16,6 @@ public class State {
     private String description;
     @TSOptional
     private ModelGrounding grounding;
+    @TSOptional
+    private ModelUnit units;
 }
