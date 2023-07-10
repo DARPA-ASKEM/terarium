@@ -317,7 +317,7 @@ export interface Extraction {
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
-    summaries: { [index: string]: { [index: string]: string } };
+    summaries: string[];
 }
 
 export interface XDDFacetBucket {

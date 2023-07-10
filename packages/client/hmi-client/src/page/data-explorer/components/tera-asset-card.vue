@@ -93,7 +93,6 @@
 						</span>
 						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</span>
-					<template v-else> No {{ chosenExtractionFilter }}s</template>
 				</div>
 			</figure>
 			<slot name="default"></slot>

@@ -18,7 +18,7 @@ public class KnownEntities implements Serializable {
 	@JsonAlias("askem_object")
 	private List<Extraction> askemObjects;
 
-	private Map<String, Map<String, String>> summaries;
+	private List<String> summaries;
 
 
 }
