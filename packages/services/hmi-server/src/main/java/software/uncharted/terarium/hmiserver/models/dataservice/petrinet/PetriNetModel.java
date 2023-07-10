@@ -6,8 +6,8 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+// import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+// import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 
 import java.util.List;
 
@@ -18,9 +18,9 @@ public class PetriNetModel {
 	private List<PetriNetState> states;
 	private List<PetriNetTransition> transitions;
 
-	@TSOptional
-	private List<ModelParameter> parameters;
+	// @TSOptional
+	// private List<ModelParameter> parameters;
 
-	@TSOptional
-	private ModelMetadata metadata;
+	// @TSOptional
+	// private ModelMetadata metadata;
 }

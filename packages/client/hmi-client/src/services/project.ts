@@ -195,6 +195,7 @@ const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.SIMULATIONS, 'settings'],
 	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'code'],
+	[ProjectAssetTypes.SIMULATION_WORKFLOW, 'git-merge'],
 	['overview', 'layout']
 ]);
 
