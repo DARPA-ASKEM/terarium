@@ -2,12 +2,17 @@
 	<tera-asset
 		:name="name"
 		:is-editable="isEditable"
-		:is-creating-asset="assetId === ''"
+		:is-naming-asset="isNamingModel"
 		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
 	>
 		<template #name-input>
-			<InputText v-model="newModelName" placeholder="Title of new model" />
+			<InputText
+				v-if="isNamingModel"
+				v-model.lazy="newModelName"
+				placeholder="Title of new model"
+				@keyup.enter="updateModelName"
+			/>
 		</template>
 		<template #edit-buttons>
 			<span class="p-buttonset">
@@ -421,7 +426,7 @@
 </template>
 
 <script setup lang="ts">
-import { capitalize, groupBy, isEmpty, round } from 'lodash';
+import { capitalize, groupBy, isEmpty, round, cloneDeep } from 'lodash';
 import { watch, ref, computed, onUpdated, PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import Accordion from 'primevue/accordion';
@@ -438,7 +443,7 @@ import RelatedPublications from '@/components/widgets/tera-related-publications.
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
-import { createModel, addModelToProject, getModel } from '@/services/model';
+import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import useResourcesStore from '@/stores/resources';
@@ -493,19 +498,30 @@ const model = ref<Model | null>(null);
 const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
+
+const isRenamingModel = ref(false);
+const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
 /*
  * User Menu
  */
 const optionsMenu = ref();
 const optionsMenuItems = ref([
-	// { icon: 'pi pi-pencil', label: 'Rename', command: renameModel },
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingModel.value = true;
+			newModelName.value = model.value?.name ?? '';
+		}
+	},
 	{ icon: 'pi pi-clone', label: 'Make a copy', command: duplicateModel }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
-
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
 
 async function duplicateModel() {
 	if (!model.value) {
@@ -658,6 +674,16 @@ const createNewModel = async () => {
 		}
 	}
 };
+
+async function updateModelName() {
+	if (model.value) {
+		const modelClone = cloneDeep(model.value);
+		modelClone.name = newModelName.value;
+		updateModel(modelClone);
+		isRenamingModel.value = false;
+		model.value = await getModel(props.assetId);
+	}
+}
 
 // Toggle rows to become editable
 function editRow(event: Event) {
