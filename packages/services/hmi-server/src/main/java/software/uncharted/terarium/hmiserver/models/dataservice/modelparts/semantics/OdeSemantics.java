@@ -16,7 +16,7 @@ public class OdeSemantics {
 	private List<Rate> rates;
 
 	@TSOptional
-	private List<Object> initials;
+	private List<Initial> initials;
 
 	@TSOptional
 	private List<ModelParameter> parameters;

@@ -25,7 +25,7 @@
 			>
 				<div
 					class="input-port-container"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseenter="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 					@focus="() => {}"
@@ -56,7 +56,7 @@
 			>
 				<div
 					class="output-port-container"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseenter="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"

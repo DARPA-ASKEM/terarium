@@ -48,12 +48,7 @@ export async function getAllModelDescriptions(): Promise<Model[] | null> {
 }
 
 export async function updateModel(model: Model) {
-	const response = await API.post(`/models/${model.id}`, {
-		name: model.name,
-		description: model.description,
-		framework: model.framework,
-		content: JSON.stringify(model.model)
-	});
+	const response = await API.put(`/models/${model.id}`, model);
 	return response?.data ?? null;
 }
 

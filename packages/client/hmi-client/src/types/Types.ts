@@ -257,7 +257,7 @@ export interface XDDResponseOK {
 
 export interface OdeSemantics {
     rates: Rate[];
-    initials?: any[];
+    initials?: Initial[];
     parameters?: ModelParameter[];
     observables?: Observable[];
     time?: any;
@@ -332,6 +332,12 @@ export interface XDDFacetBucket {
 }
 
 export interface Rate {
+    target: string;
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface Initial {
     target: string;
     expression: string;
     expression_mathml: string;
