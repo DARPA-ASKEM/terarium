@@ -2,7 +2,6 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import { ChartConfig } from '@/types/SimulateConfig';
 
 export interface CalibrateMap {
@@ -36,10 +35,6 @@ export const CalibrationOperation: Operation = {
 			// Get the model:
 			const model = await getModel(modelId);
 			if (model) {
-				const petriNetString = JSON.stringify(AMRToPetri(model));
-				console.log('Petrinet String: ');
-				console.log(petriNetString);
-
 				// Make calibration job.
 				// const calibrationParam: CalibrationRequest = calibrationParamExample;
 				// const result = makeCalibrateJob(calibrationParam);
