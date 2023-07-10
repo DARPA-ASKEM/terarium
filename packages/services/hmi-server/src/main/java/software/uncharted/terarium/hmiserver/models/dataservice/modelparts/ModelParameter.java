@@ -10,6 +10,9 @@ public class ModelParameter {
 	private String id;
 
 	@TSOptional
+	private String name;
+
+	@TSOptional
 	private String description;
 
 	@TSOptional
@@ -20,5 +23,8 @@ public class ModelParameter {
 	
 	@TSOptional
 	private ModelDistribution distribution;
+
+	@TSOptional
+	private ModelUnit unit;
 }
 

@@ -56,15 +56,15 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    framework: string;
     name: string;
     description: string;
-    model_version: string;
+    model_version?: string;
     schema: string;
-    schema_name: string;
+    schema_name?: string;
     model: { [index: string]: any };
+    properties?: any;
     semantics?: ModelSemantics;
-    metadata: ModelMetadata;
+    metadata?: ModelMetadata;
 }
 
 export interface ModelConfiguration {
@@ -206,10 +206,12 @@ export interface PetriNetTransition {
 
 export interface ModelParameter {
     id: string;
+    name?: string;
     description?: string;
     value?: number;
     grounding?: ModelGrounding;
     distribution?: ModelDistribution;
+    unit?: ModelUnit;
 }
 
 export interface Document {
@@ -301,6 +303,11 @@ export interface PetriNetTransitionProperties {
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
 }
 
 export interface Extraction {
@@ -405,6 +412,7 @@ export interface State {
     name?: string;
     description?: string;
     grounding?: ModelGrounding;
+    units?: ModelUnit;
 }
 
 export interface Transition {
