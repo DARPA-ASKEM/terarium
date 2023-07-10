@@ -99,11 +99,12 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { mathmlToPetri, petriToLatex } from '@/petrinet/petrinet-service';
+import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
+import { mathmlToAMR } from '@/services/models/transformations';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
@@ -139,7 +140,6 @@ const isEditingEQ = ref<boolean>(false);
 // const showAMREditor = ref<boolean>(false);
 
 const newModelName = ref('New Model');
-const newPetri = ref();
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -320,14 +320,9 @@ watch(
 	{ deep: true }
 );
 
-/*
-const updatePetri = async (m: PetriNet) => {
-	// equationML.value = mathmlString;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
+const updatePetriNet = async (model: Model) => {
+	// Convert PetriNet into a graph
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
 
 	// Create renderer
 	renderer = new PetrinetRenderer({
@@ -354,7 +349,6 @@ const updatePetri = async (m: PetriNet) => {
 	await renderer?.render();
 	updateLatexFormula(equationLatexNew.value);
 };
-*/
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
@@ -370,18 +364,16 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
-			newPetri.value = await mathmlToPetri(cleanedMathML);
+			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
+			const model = amr?.model;
 			if (
-				(isArray(newPetri.value) && newPetri.value.length > 0) ||
-				(!isArray(newPetri.value) &&
-					Object.keys(newPetri.value).length > 0 &&
-					hasNoEmptyKeys(newPetri.value))
+				(model && isArray(model) && model.length > 0) ||
+				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
 
-				// FIXME: equation to AMR
-				// updatePetri(newPetri.value);
+				updatePetriNet(amr);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'

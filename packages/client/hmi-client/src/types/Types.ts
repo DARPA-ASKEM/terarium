@@ -205,6 +205,7 @@ export interface PetriNetTransition {
 export interface Document {
     gddId: string;
     title: string;
+    abstractText: string;
     journal: string;
     type: string;
     number: string;
@@ -223,7 +224,6 @@ export interface Document {
     knownEntities: KnownEntities;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
-    abstract: string;
 }
 
 export interface XDDFacetsItemResponse {
@@ -300,7 +300,8 @@ export interface Extraction {
 
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
-    summaries: { [index: string]: { [index: string]: string } };
+    askemObjects: Extraction[];
+    summaries: string[];
 }
 
 export interface XDDFacetBucket {
@@ -371,6 +372,7 @@ export interface ProvenanceInfo {
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
+    abstractText: string;
     xddId: string;
     documentId: string;
     documentTitle: string;
@@ -384,7 +386,6 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
-    abstract: string;
 }
 
 export interface XDDUrlExtraction {
@@ -456,6 +457,7 @@ export interface MetadataDataset {
 
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
 }
 
 export enum FileType {
