@@ -5,6 +5,7 @@
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
+		ref="assetPanel"
 	>
 		<template #edit-buttons>
 			<span class="p-buttonset">
@@ -198,6 +199,9 @@
 				:asset-id="props.assetId"
 				:project="props.project"
 				:dataset="dataset"
+				:show-kernels="showKernels"
+				:show-chat-thoughts="showChatThoughts"
+				@is-typing="updateScroll"
 			/>
 		</template>
 	</tera-asset>
@@ -245,6 +249,15 @@ const dataset: Ref<Dataset | null> = ref(null);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 
+const assetPanel = ref({ assetContainer: HTMLElement });
+
+const updateScroll = () => {
+	const el = assetPanel.value.assetContainer;
+	if (el) {
+		el.scrollTop = el.scrollHeight;
+	}
+};
+
 const toggleSettingsMenu = (event: Event) => {
 	menu.value.toggle(event);
 };
@@ -279,7 +292,6 @@ const items = ref([
 				label: chatThoughtLabel,
 				command: () => {
 					showChatThoughts.value = !showChatThoughts.value;
-					console.log(showChatThoughts);
 				}
 			}
 		]

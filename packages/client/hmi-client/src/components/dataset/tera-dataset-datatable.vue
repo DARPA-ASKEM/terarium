@@ -5,11 +5,11 @@
 		:value="csvContent?.slice(1, csvContent.length)"
 		:rows="props.rows"
 		paginator
-		paginatorPosition="both"
+		:paginatorPosition="paginatorPosition ? paginatorPosition : `both`"
 		removableSort
 		resizable-columns
 		showGridlines
-		tableStyle="width:auto"
+		:tableStyle="tableStyle ? tableStyle : `width:auto`"
 	>
 		<Column
 			v-for="(colName, index) of csvHeaders"
@@ -46,6 +46,8 @@ const props = defineProps<{
 	rows: number;
 	previewMode?: boolean;
 	previousHeaders?: String[] | null;
+	paginatorPosition?: 'bottom' | 'both' | 'top' | undefined;
+	tableStyle?: String;
 }>();
 
 const CATEGORYPERCENTAGE = 0.9;

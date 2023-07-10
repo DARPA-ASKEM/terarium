@@ -13,7 +13,7 @@
 import { ref, watchEffect, computed } from 'vue';
 // import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 
-const emit = defineEmits(['has-been-drawn', 'delete']);
+const emit = defineEmits(['has-been-drawn', 'delete', 'is-typing']);
 const responseThought = ref(<HTMLElement | null>null);
 const hasBeenDrawn = ref(false);
 
@@ -26,8 +26,11 @@ const props = defineProps<{
 const charIndex = ref(0);
 
 watchEffect(() => {
+	if (hasBeenDrawn.value) {
+		return;
+	}
 	const typing = setInterval(() => {
-		// responseThought.value?.scrollTo();
+		emit('is-typing');
 		charIndex.value++;
 		if (charIndex.value > props.thought.length) {
 			clearInterval(typing);

@@ -1,5 +1,42 @@
 <template>
 	<div class="data-transform-container">
+		<ConfirmDialog></ConfirmDialog>
+		<!-- Jupyter Kernel Settings -->
+		<div class="settings-title" v-if="showKernels">Kernel Settings</div>
+		<div class="jupyter-settings" v-if="showKernels">
+			<!-- Kernel Dropdown Selector -->
+			<div class="kernel-dropdown">
+				<Dropdown
+					v-model="selectedKernel"
+					:options="runningSessions"
+					filter
+					optionLabel="kernelId"
+					optionsValue="value"
+					:disabled="runningSessions.length === 0"
+					style="min-width: 100%; height: 30px; margin-bottom: 10px"
+				/>
+			</div>
+
+			<!-- Kernel Control Buttons -->
+			<Button
+				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
+				@click="confirmDelete"
+				:disabled="runningSessions.length <= 0"
+				>Delete Kernel</Button
+			>
+			<Button
+				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
+				@click="confirmDeleteAll"
+				:disabled="runningSessions.length <= 0"
+				>Delete ALL</Button
+			>
+			<Button
+				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
+				@click="confirmReconnect"
+				:disabled="runningSessions.length <= 0"
+				>Reconnect</Button
+			>
+		</div>
 		<Accordion :multiple="true" :activeIndex="getActiveIndex">
 			<AccordionTab>
 				<template #header>
@@ -56,14 +93,15 @@
 		<tera-jupyter-chat
 			:project="props.project"
 			:asset-id="props.assetId"
-			:show-jupyter-settings="showKernels"
-			:show-chat-thought="showChatThoughts"
+			:show-jupyter-settings="true"
+			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			@update-table-preview="updateJupyterTable"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
+			@is-typing="emit('is-typing')"
 		/>
 	</div>
 </template>
@@ -79,28 +117,38 @@ import { addAsset } from '@/services/project';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { CsvAsset, Dataset } from '@/types/Types';
-import { newSession, sessionManager, JupyterMessage } from '@/services/jupyter';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
+import { newSession, sessionManager, serverSettings, JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import Dropdown from 'primevue/dropdown';
+import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
+import ConfirmDialog from 'primevue/confirmdialog';
+import { useConfirm } from 'primevue/useconfirm';
+
 // import { createNewDataset } from '@/services/dataset';
 
 // const jupyterSession = ref(<SessionContext>newSession('llmkernel', 'ChattyNode'));
 const jupyterSession: SessionContext = newSession('llmkernel', 'ChattyNode');
 const selectedKernel = ref();
-const runningSessions = ref();
+const runningSessions = ref<any[]>([]);
+
+const confirm = useConfirm();
 
 const props = defineProps<{
 	assetId: string;
 	project: IProject;
 	dataset: Dataset;
+	showKernels: boolean;
+	showChatThoughts: boolean;
 }>();
 
 const kernelStatus = ref(<string>'');
 const showKernels = ref(<boolean>false);
-const showChatThoughts = ref(<boolean>false);
+const emit = defineEmits(['is-typing']);
+
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
@@ -112,16 +160,6 @@ const toast = useToastService();
 const updateKernelStatus = (statusString: string) => {
 	kernelStatus.value = statusString;
 };
-
-// const chatThoughtLabel = computed(() =>
-// 	showChatThoughts.value ? 'Auto hide chat thoughts' : 'Do not auto hide chat thoughts'
-// );
-
-// const kernelSettingsLabel = computed(() =>
-// 	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
-// );
-
-// const activeSessions = computed(() => sessionManager.running());
 
 const csvContent = computed(() => jupyterCsv.value?.csv);
 
@@ -243,6 +281,74 @@ const saveAsNewDataset = async () => {
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
+};
+
+const killKernel = () => {
+	shutdownKernel(selectedKernel.value.kernelId, serverSettings);
+	updateKernelList();
+};
+
+const deleteAllKernels = () => {
+	runningSessions.value.forEach((k) => {
+		shutdownKernel(k.kernelId, serverSettings);
+	});
+	updateKernelList();
+};
+
+// Kernel Confirmation dialogs
+const confirmReconnect = () => {
+	confirm.require({
+		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} ?`,
+		header: 'Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			deleteAllKernels();
+		}
+	});
+};
+
+const confirmDeleteAll = () => {
+	confirm.require({
+		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} sessions?`,
+		header: 'Terminate All Kernels',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			deleteAllKernels();
+		}
+	});
+};
+
+const confirmDelete = () => {
+	confirm.require({
+		message: `Are you sure you want to terminate session ${runningSessions.value.length}?`,
+		header: 'Terminate Kernel',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			killKernel();
+		}
+	});
+};
+
+// eslint-disable-next-line vue/return-in-computed-property
+const updateKernelList = () => {
+	jupyterSession.ready.then(() => {
+		if (jupyterSession.session) {
+			const sessions = sessionManager.running();
+			const results: IModel[] = [];
+			let result = sessions.next();
+			while (result) {
+				result = sessions.next();
+			}
+			runningSessions.value = undefined;
+			runningSessions.value = results
+				.reverse()
+				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			selectedKernel.value = {
+				kernelId: jupyterSession.session?.kernel?.id,
+				value: jupyterSession.session?.id
+			};
+		}
+	});
 };
 
 const onNewDatasetSaved = async (payload) => {

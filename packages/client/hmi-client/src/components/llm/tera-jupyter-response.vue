@@ -24,7 +24,7 @@
 								@click="showHideThought"
 							></i>
 							<!-- Show spinning icon if the message is still being drawn -->
-							<i v-if="!props.hasBeenDrawn" class="pi pi-spin pi-spinner thought-icon"></i>
+							<i v-else-if="!props.hasBeenDrawn" class="pi pi-spin pi-spinner thought-icon"></i>
 						</span>
 						{{ msg.timestamp }}
 					</div>
@@ -44,8 +44,9 @@
 						<tera-jupyter-response-thought
 							:thought="formattedThought(m.content['text'].trim())"
 							:has-been-drawn="props.hasBeenDrawn"
-							:show-thought="!msg.query || showThought || props.showChatThought"
+							:show-thought="!msg.query || showThought || props.showChatThoughts"
 							@has-been-drawn="thoughtHasBeenDrawn"
+							@is-typing="emit('is-typing')"
 						/>
 					</div>
 					<!-- Handle code_cell type -->
@@ -85,7 +86,7 @@ import { ref, computed } from 'vue';
 import { CsvAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
-const emit = defineEmits(['has-been-drawn']);
+const emit = defineEmits(['has-been-drawn', 'is-typing']);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
@@ -95,7 +96,7 @@ const props = defineProps<{
 		messages: JupyterMessage[];
 		resultingCsv: CsvAsset | null;
 	};
-	showChatThought: boolean;
+	showChatThoughts: boolean;
 	hasBeenDrawn: boolean;
 	isExecutingCode: boolean;
 	assetId?: string;

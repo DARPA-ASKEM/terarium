@@ -1,43 +1,5 @@
 <template>
 	<div class="tera-jupyter-chat">
-		<ConfirmDialog></ConfirmDialog>
-		<!-- Jupyter Kernel Settings -->
-		<div class="settings-title" v-if="props.showJupyterSettings">Kernel Settings</div>
-		<div class="jupyter-settings" v-if="props.showJupyterSettings">
-			<!-- Kernel Dropdown Selector -->
-			<div class="kernel-dropdown">
-				<Dropdown
-					v-model="selectedKernel"
-					:options="runningSessions"
-					filter
-					optionLabel="kernelId"
-					optionsValue="value"
-					:disabled="runningSessions.length === 0"
-					style="min-width: 100%; height: 30px; margin-bottom: 10px"
-				/>
-			</div>
-
-			<!-- Kernel Control Buttons -->
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmDelete"
-				:disabled="runningSessions.length <= 0"
-				>Delete Kernel</Button
-			>
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmDeleteAll"
-				:disabled="runningSessions.length <= 0"
-				>Delete ALL</Button
-			>
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmReconnect"
-				:disabled="runningSessions.length <= 0"
-				>Reconnect</Button
-			>
-		</div>
-
 		<!-- Jupyter Response and Input -->
 		<div ref="messageContainer">
 			<tera-jupyter-response
@@ -48,8 +10,9 @@
 				:msg="msg"
 				:has-been-drawn="renderedMessages.has(msg.query_id)"
 				:is-executing-code="isExecutingCode"
-				:show-chat-thought="props.showChatThought"
+				:show-chat-thoughts="props.showChatThoughts"
 				@has-been-drawn="hasBeenDrawn(msg.query_id)"
+				@is-typing="emit('is-typing')"
 			/>
 
 			<!-- Chatty Input -->
@@ -66,16 +29,11 @@
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { ref, watch, onUnmounted, computed } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { JupyterMessage, sessionManager, serverSettings, KernelState } from '@/services/jupyter';
+import { JupyterMessage, sessionManager, KernelState } from '@/services/jupyter';
 import { CsvAsset } from '@/types/Types';
-import { useConfirm } from 'primevue/useconfirm';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import Dropdown from 'primevue/dropdown';
-import Button from 'primevue/button';
-import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
-import ConfirmDialog from 'primevue/confirmdialog';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -84,8 +42,6 @@ const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
 const renderedMessages = ref(new Set<any>());
 const messageContainer = ref(<HTMLElement | null>null);
-const confirm = useConfirm();
-const selectedKernel = ref();
 const activeSessions = ref(sessionManager.running());
 const runningSessions = ref();
 
@@ -94,7 +50,8 @@ const emit = defineEmits([
 	'download-response',
 	'update-table-preview',
 	'update-kernel-status',
-	'new-dataset-saved'
+	'new-dataset-saved',
+	'is-typing'
 ]);
 
 const props = defineProps<{
@@ -104,7 +61,7 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
-	showChatThought?: boolean;
+	showChatThoughts?: boolean;
 	jupyterSession: SessionContext;
 	kernelStatus: String;
 }>();
@@ -232,28 +189,6 @@ const nestedMessages = computed(() => {
 	return result;
 });
 
-// eslint-disable-next-line vue/return-in-computed-property
-const updateKernelList = () => {
-	props.jupyterSession.ready.then(() => {
-		if (props.jupyterSession.session) {
-			const sessions = sessionManager.running();
-			const results: IModel[] = [];
-			let result = sessions.next();
-			while (result) {
-				result = sessions.next();
-			}
-			runningSessions.value = undefined;
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
-			selectedKernel.value = {
-				kernelId: props.jupyterSession.session?.kernel?.id,
-				value: props.jupyterSession.session?.id
-			};
-		}
-	});
-};
-
 const updateKernelStatus = (kernelStatus) => {
 	emit('update-kernel-status', kernelStatus);
 };
@@ -282,52 +217,6 @@ const newJupyterResponse = (jupyterResponse) => {
 	} else {
 		console.log('Unknown Jupyter event', jupyterResponse);
 	}
-};
-
-const killKernel = () => {
-	shutdownKernel(selectedKernel.value.kernelId, serverSettings);
-	updateKernelList();
-};
-
-const deleteAllKernels = () => {
-	runningSessions.value.forEach((k) => {
-		shutdownKernel(k.kernelId, serverSettings);
-	});
-	updateKernelList();
-};
-
-// Kernel Confirmation dialogs
-const confirmReconnect = () => {
-	confirm.require({
-		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} ?`,
-		header: 'Confirmation',
-		icon: 'pi pi-exclamation-triangle',
-		accept: () => {
-			deleteAllKernels();
-		}
-	});
-};
-
-const confirmDeleteAll = () => {
-	confirm.require({
-		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} sessions?`,
-		header: 'Terminate All Kernels',
-		icon: 'pi pi-exclamation-triangle',
-		accept: () => {
-			deleteAllKernels();
-		}
-	});
-};
-
-const confirmDelete = () => {
-	confirm.require({
-		message: `Are you sure you want to terminate session ${runningSessions.value.length}?`,
-		header: 'Terminate Kernel',
-		icon: 'pi pi-exclamation-triangle',
-		accept: () => {
-			killKernel();
-		}
-	});
 };
 
 onUnmounted(() => {

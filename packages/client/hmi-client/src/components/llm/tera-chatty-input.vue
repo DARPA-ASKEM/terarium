@@ -13,7 +13,7 @@
 					type="text"
 					:disabled="props.kernelIsBusy"
 					:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
-					@keydown.enter="emit('submit-query', queryString)"
+					@keydown.enter="submitQuery"
 				></InputText>
 			</span>
 			<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" style="height: 3px"></ProgressBar>
@@ -54,6 +54,11 @@ const queryString = ref('');
 const containerElement = ref<HTMLElement | null>(null);
 const inputElement = ref<HTMLInputElement | null>(null);
 const fixedDivWidth = ref(0);
+
+const submitQuery = () => {
+	emit('submit-query', queryString.value);
+	queryString.value = '';
+};
 
 onMounted(() => {
 	if (props.focusInput) {
