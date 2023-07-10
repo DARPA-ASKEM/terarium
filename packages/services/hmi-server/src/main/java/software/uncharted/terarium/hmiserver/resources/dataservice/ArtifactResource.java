@@ -4,15 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.SdkHttpResponse;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
@@ -41,6 +33,7 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 	ArtifactProxy artifactProxy;
 
 	@RestClient
+	@Inject
 	JsDelivrProxy gitHubProxy;
 
 	@ConfigProperty(name = "aws.artifact_path")
@@ -103,7 +96,7 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 		log.debug("Uploading artifact {} to project", artifactId);
 
 
-		if (!artifactPath.isPresent()) {
+		if (artifactPath.isEmpty()) {
 			log.error("Artifact path not set");
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -124,6 +117,10 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 				.build();
 		} else {
 			log.error("Failed to upload file file to dataset {}", artifactId);
+			if(res == null  || res.statusText().isEmpty()) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_JSON)
+					.build();
+			}
 			return Response.status(res.statusCode(), res.statusText().get()).type(MediaType.APPLICATION_JSON)
 				.build();
 		}
@@ -132,7 +129,7 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 	}
 
 	/**
-	 * Downloads a file from github given the path and owner name, then uploads it to the project.
+	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
 	 */
 	@PUT
 	@Path("/{artifactId}/uploadArtifactFromGithub")
@@ -146,7 +143,7 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 		log.debug("Uploading artifact file from github to dataset {}", artifactId);
 
 		//verify that dataSetPath and bucket are set. If not, return an error
-		if (!artifactPath.isPresent()) {
+		if (artifactPath.isEmpty()) {
 			log.error("artifactPath information not set. Cannot upload file from github.");
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -154,7 +151,7 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 				.build();
 		}
 
-		//download file from github
+		//download file from GitHub
 		String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path);
 
 		String objectKey = String.format("%s/%s/%s", artifactPath.get(), artifactId, filename);
@@ -171,6 +168,10 @@ public class ArtifactResource extends DataStorageResource implements SnakeCaseRe
 				.build();
 		} else {
 			log.error("Failed to upload artifact file to dataset {}", artifactId);
+			if(res.statusText().isEmpty()) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_JSON)
+					.build();
+			}
 			return Response.status(res.statusCode(), res.statusText().get()).type(MediaType.APPLICATION_JSON)
 				.build();
 		}
