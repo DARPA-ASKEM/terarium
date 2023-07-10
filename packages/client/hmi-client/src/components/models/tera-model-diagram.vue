@@ -74,18 +74,6 @@
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
-
-	<!-- Temp editor -->
-	<!--
-	<Teleport to="body">
-		<editor-modal
-			v-if="renderer && showAMREditor"
-			:amr="renderer.graph.amr"
-			@close="showAMREditor = false"
-			@save="updateModel($event)"
-		/>
-	</Teleport>
-	-->
 </template>
 
 <script setup lang="ts">
@@ -137,7 +125,6 @@ const menu = ref();
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
-// const showAMREditor = ref<boolean>(false);
 
 const newModelName = ref('New Model');
 
@@ -392,7 +379,6 @@ const toggleEditMode = () => {
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
 		emit('update-model-content', renderer.graph);
-		// showAMREditor.value = true;
 		updateModel(renderer.graph.amr);
 	}
 };
