@@ -74,6 +74,16 @@
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
+
+	<!-- Temp editor -->
+	<Teleport to="body">
+		<editor-modal
+			v-if="renderer && showAMREditor"
+			:amr="renderer.graph.amr"
+			@close="showAMREditor = false"
+			@save="updateModel($event)"
+		/>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -102,6 +112,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -123,6 +134,7 @@ const menu = ref();
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
+const showAMREditor = ref<boolean>(false);
 
 const newModelName = ref('New Model');
 const newPetri = ref();
@@ -155,15 +167,6 @@ const updateLayout = () => {
 const handleResize = () => {
 	updateLayout();
 };
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
 
 const mathEditorSelected = computed(() => {
 	if (!isMathMLValid.value) {
@@ -214,12 +217,6 @@ watch(
 		}
 	}
 );
-
-onUpdated(() => {
-	if (props.model) {
-		emit('asset-loaded');
-	}
-});
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -396,20 +393,13 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	}
 };
 
-onMounted(async () => {
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
-
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
 		emit('update-model-content', renderer.graph);
-		updateModel(renderer.graph.amr);
+		showAMREditor.value = true;
+		// updateModel(renderer.graph.amr);
 	}
 };
 
@@ -441,6 +431,23 @@ const addState = async () => {
 const addTransition = async () => {
 	renderer?.addNodeCenter(NodeType.Transition, 'transition');
 };
+
+onMounted(() => {
+	document.addEventListener('keyup', editorKeyHandler);
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', editorKeyHandler);
+	window.removeEventListener('resize', handleResize);
+});
+
+onUpdated(() => {
+	if (props.model) {
+		emit('asset-loaded');
+	}
+});
 </script>
 
 <style scoped>
