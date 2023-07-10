@@ -185,6 +185,7 @@ services:
       - ES_PASSWORD=tdsElasticPass
       - ELASTIC_PASSWORD=tdsElasticPass
       - KIBANA_PASSWORD=tdsKibanaPass
+      - SEED_DATA=true
     depends_on:
       data-service-dev-db:
         condition: service_healthy
