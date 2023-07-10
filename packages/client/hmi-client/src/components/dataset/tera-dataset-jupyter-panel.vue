@@ -15,6 +15,7 @@
 				<div>
 					<Button
 						class="save-button p-button p-button-secondary p-button-sm"
+						title="Saves the current version of df as a new Terarium asset"
 						@click="showSaveInput = !showSaveInput"
 					>
 						<span class="pi pi-save p-button-icon p-button-icon-left"></span>
@@ -38,6 +39,7 @@
 					</span>
 					<Button
 						class="save-button p-button p-button-secondary p-button-sm"
+						title="Download the current version of df as a CSV file"
 						@click="downloadDataset"
 					>
 						<span class="pi pi-download p-button-icon p-button-icon-left"></span>

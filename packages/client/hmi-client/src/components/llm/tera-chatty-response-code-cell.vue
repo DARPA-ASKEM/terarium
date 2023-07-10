@@ -7,18 +7,18 @@
 			<i class="pi pi-check-circle check"></i>
 			<div class="run">Success</div>
 		</div>
-		<div class="save-file-container">
+		<!-- <div class="save-file-container">
 			<div class="save-as">Save As:</div>
 			<div class="saved-name">{{ props.savedName }}</div>
 			<InputText v-model="savedFileName" class="post-fix" :style="`padding:3px;`" />
 			<i class="pi pi-times i" :class="{ clear: hasValidFileName }" @click="savedFileName = ''"></i>
 			<i class="pi pi-check i" :class="{ save: hasValidFileName }" @click="saveAsNewDataset()"></i>
-		</div>
+		</div> -->
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref } from 'vue';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
@@ -29,7 +29,7 @@ import {
 } from '@jupyterlab/completer';
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
-import InputText from 'primevue/inputtext';
+// import InputText from 'primevue/inputtext';
 
 const props = defineProps({
 	jupyterSession: {
@@ -61,19 +61,19 @@ const props = defineProps({
 		type: Object,
 		default: () => {}
 	},
-	savedName: {
-		type: String,
-		default: 'Dataset Name_'
-	},
+	// savedName: {
+	// 	type: String,
+	// 	default: 'Dataset Name_'
+	// },
 	postFix: {
 		type: String,
 		default: 'new'
 	}
 });
 
-const emit = defineEmits(['save-as-new-dataset']);
-const savedFileName = ref<string>('');
-const hasValidFileName = computed<boolean>(() => savedFileName.value !== '');
+// const emit = defineEmits(['save-as-new-dataset']);
+// const savedFileName = ref<string>('');
+// const hasValidFileName = computed<boolean>(() => savedFileName.value !== '');
 const codeCell = ref<HTMLElement | null>(null);
 
 // Initialize cellWidget
@@ -123,10 +123,10 @@ commands.addKeyBinding({
 });
 
 // Save file function
-const saveAsNewDataset = () => {
-	emit('save-as-new-dataset', { datasetName: savedFileName.value });
-	console.log('save-as-new-dataset emitted');
-};
+// const saveAsNewDataset = () => {
+// 	emit('save-as-new-dataset', { datasetName: savedFileName.value });
+// 	console.log('save-as-new-dataset emitted');
+// };
 
 onMounted(() => {
 	props.jupyterSession.ready.then(() => {
@@ -188,21 +188,21 @@ cellWidget.activate();
 	padding-left: 5px;
 	padding-right: 10px;
 }
-.save-file-container {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding-bottom: 5px;
-	padding-top: 5px;
-	font-size: 1rem;
-}
+// .save-file-container {
+// 	display: flex;
+// 	flex-direction: row;
+// 	align-items: center;
+// 	padding-bottom: 5px;
+// 	padding-top: 5px;
+// 	font-size: 1rem;
+// }
 
-.saved-name {
-	display: flex;
-	flex-direction: row;
-	padding-left: 5px;
-	padding-right: 5px;
-}
+// .saved-name {
+// 	display: flex;
+// 	flex-direction: row;
+// 	padding-left: 5px;
+// 	padding-right: 5px;
+// }
 .post-fix {
 	padding: 0px;
 	height: 20px;
