@@ -151,7 +151,6 @@ async function fetchProject(id: IProject['id']) {
 	project.value = await ProjectService.get(id, true);
 
 	// fetch basic metadata about project assets and save them into a global store/cache
-	resourcesStore.activeProjectAssets = project.value?.assets ?? null;
 	resourcesStore.setActiveProject(project.value);
 }
 
@@ -175,7 +174,7 @@ watch(
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 resourcesStore.$subscribe((mutation, state) => {
 	project.value = state.activeProject;
-	console.log(project.value);
+	console.log(project.value, resourcesStore);
 });
 
 const isAboutModalVisible = ref(false);
