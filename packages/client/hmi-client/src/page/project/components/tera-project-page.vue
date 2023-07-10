@@ -161,7 +161,11 @@ async function openNextCodeFile() {
 // I think this is meant to make the tab name and the model name to be the same as you're editing it which isn't important/necessary
 const updateTabName = (tabName: string) => {
 	const tabsClone = cloneDeep(props.tabs);
-	if (tabsClone) {
+
+	// FIXME: Active tab index is undefined so tab name doesn't get updated when model or workflow name get updated
+	// console.log(tabName, tabsClone, props.activeTabIndex)
+
+	if (tabsClone?.[props.activeTabIndex!]?.assetName) {
 		tabsClone[props.activeTabIndex!].assetName = tabName;
 		emit('update:tabs', tabsClone);
 	}
