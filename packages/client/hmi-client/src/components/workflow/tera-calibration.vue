@@ -98,8 +98,20 @@
 				></Button>
 			</AccordionTab>
 			<AccordionTab header="Calibrated parameter values">
-				<!-- <tera-model-configuration :model="modelConfig.model" :is-editable="false"
-					:model-config-node-input="calibratedModelConfig" /> -->
+				<table class="p-datatable-table">
+					<thead class="p-datatable-thead">
+						<th>Parameter</th>
+						<th>Value</th>
+					</thead>
+					<tr v-for="(content, key) in parameterResult" :key="key">
+						<td>
+							<p>{{ key }}</p>
+						</td>
+						<td>
+							<p>{{ content }}</p>
+						</td>
+					</tr>
+				</table>
 			</AccordionTab>
 		</Accordion>
 	</tera-asset>
@@ -156,6 +168,7 @@ const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value
 const currentDatasetFileName = ref<string>();
 const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.value);
 const runResults = ref<RunResults>({});
+const parameterResult = ref<{ [index: string]: any }[]>();
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 // Tom TODO: Make this generic... its copy paste from node.
@@ -233,6 +246,8 @@ watch(
 		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
 		const csvData = csvParse(resultCsv);
 		runResults.value[simulationIds.value[0].runId] = csvData as any;
+		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+		console.log(parameterResult.value);
 	},
 	{ immediate: true }
 );
