@@ -28,7 +28,7 @@
 						/>
 					</template>
 				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.framework }}</div>
+				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.schema_name }}</div>
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
