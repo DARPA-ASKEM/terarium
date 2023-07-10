@@ -25,22 +25,16 @@
 	<footer class="footer">
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
 		<div class="footer-group">
-			<a target="_blank" rel="noopener noreferrer" :href="documentation">documentation</a>
-			<a
-				target="_blank"
-				rel="noopener noreferrer"
-				href="javascript:void;"
-				@click="isAboutModalVisible = true"
-				>about</a
-			>
+			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
 			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue"
-				>report an issue</a
+				>Report an issue</a
 			>
 			<a
 				target="_blank"
 				rel="noopener noreferrer"
 				href="https://terarium.canny.io/request-a-feature"
-				>request a feature</a
+				>Request a feature</a
 			>
 		</div>
 	</footer>
@@ -230,6 +224,7 @@ footer {
 }
 
 .footer-group {
+	font-size: var(--font-caption);
 	margin: 0 2rem;
 	display: flex;
 	align-items: center;

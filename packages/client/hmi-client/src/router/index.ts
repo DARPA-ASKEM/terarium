@@ -4,15 +4,11 @@ import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/project/tera-project.vue';
+
 // These are test/experiment pages
-import ModelEditorView from '@/temp/ModelEditor.vue';
-import ModelRunnerView from '@/temp/ModelRunner.vue';
-import TA2Playground from '@/temp/TA2Playground.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import SSE from '@/temp/sse.vue';
-import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
-import SimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -45,12 +41,7 @@ const routes = [
 	},
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
-	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.ModelEditor, component: ModelEditorView },
-	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
-	{ path: '/workflow-playground', component: WorkflowPlayground },
-	{ path: '/simulation-workflow', component: SimulationWorkflow },
 	{ path: '/sse', component: SSE }
 ];
 
