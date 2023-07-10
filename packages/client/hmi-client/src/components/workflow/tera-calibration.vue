@@ -247,7 +247,6 @@ watch(
 		const csvData = csvParse(resultCsv);
 		runResults.value[simulationIds.value[0].runId] = csvData as any;
 		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
-		console.log(parameterResult.value);
 	},
 	{ immediate: true }
 );
@@ -273,5 +272,9 @@ watch(
 .train-test-ratio > .p-slider {
 	margin-top: 1rem;
 	width: 100%;
+}
+
+th {
+	text-align: left;
 }
 </style>

@@ -313,7 +313,6 @@ watch(
 		const csvData = csvParse(resultCsv);
 		runResults.value[simulationIds.value[0].runId] = csvData as any;
 		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
-		console.log(parameterResult.value);
 	},
 	{ immediate: true }
 );
@@ -324,5 +323,8 @@ watch(
 	width: 156px;
 	height: 25px;
 	border-radius: 6px;
+}
+th {
+	text-align: left;
 }
 </style>
