@@ -5,6 +5,7 @@
 			<template v-else-if="props.searchTerm"
 				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
 			>
+			<template v-else>{{ itemsText }} </template>
 		</span>
 	</div>
 	<div v-if="chosenFacets.length > 0" class="facet-chips">
@@ -151,6 +152,15 @@ const resultsText = computed(() => {
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
 	return `Showing ${resultsCount.value} ${truncated}result${s} for `;
+});
+
+const itemsText = computed(() => {
+	if (resultsCount.value === 0) {
+		return 'No results found';
+	}
+	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
+	const s = resultsCount.value === 1 ? '' : 's';
+	return `Showing ${resultsCount.value} ${truncated}item${s}.`;
 });
 </script>
 

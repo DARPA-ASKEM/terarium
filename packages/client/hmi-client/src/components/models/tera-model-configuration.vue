@@ -144,7 +144,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep, capitalize, isArray, isEmpty } from 'lodash';
+import { capitalize, isArray, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
 import Column from 'primevue/column';
@@ -155,20 +155,17 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, Model } from '@/types/Types';
 import { AnyValueMap } from '@/types/common';
 import {
 	createModelConfiguration,
 	updateModelConfiguration
 } from '@/services/model-configurations';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { ModelOperation } from '@/components/workflow/model-operation';
-
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+import { getModelConfigurations } from '@/services/model';
 
 const props = defineProps<{
 	isEditable: boolean;
-	modelConfigurations: ModelConfiguration[];
+	model: Model;
 	calibrationConfig?: boolean;
 }>();
 
@@ -185,7 +182,7 @@ const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
 const configurations = computed<any[]>(
-	() => editableModelConfigs.value?.map((m) => m.amrConfiguration.semantics.ode) ?? []
+	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
 );
 
 // TODO: Clean this up and use appropriate loops
@@ -244,8 +241,6 @@ const modelConfigurationTable = computed(() => {
 			}
 		}
 
-		// console.log(variables);
-
 		return editableModelConfigs.value.map((modelConfig, i) => ({
 			name: modelConfig.name,
 			...variables[i]
@@ -254,7 +249,6 @@ const modelConfigurationTable = computed(() => {
 	return [];
 });
 
-// TODO: Reimplement this for calibration
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
 	...selectedParameters.value
@@ -262,19 +256,19 @@ const selectedModelVariables = computed(() => [
 defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
-	const response = await createModelConfiguration(
-		props.modelConfigurations[0].modelId,
-		`Config ${props.modelConfigurations.length + 1}`,
-		'shawntest',
-		editableModelConfigs.value[editableModelConfigs.value.length - 1].amrConfiguration
-	);
+	const configurationObj = editableModelConfigs.value.length
+		? editableModelConfigs.value[0].configuration
+		: props.model;
 
-	// FIXME: Not a good idea to update reactive variables through global storage
-	openedWorkflowNodeStore.appendOutputPort({
-		type: ModelOperation.outputs[0].type,
-		label: `Config ${props.modelConfigurations.length + 1}`,
-		value: response.id
-	});
+	const response = await createModelConfiguration(
+		props.model.id,
+		`Config ${editableModelConfigs.value.length + 1}`,
+		'Test',
+		configurationObj
+	);
+	console.log(response);
+
+	// TODO: notify change
 }
 
 function addConfigValue() {
@@ -307,26 +301,29 @@ function updateModelConfigValue(
 
 	if (field === 'name' && newValue) {
 		configToUpdate.name = newValue;
-	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value) {
-		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value = value;
-	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression) {
-		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression = value;
+	} else if (configToUpdate.configuration.semantics.ode[type][typeIndex].value) {
+		configToUpdate.configuration.semantics.ode[type][typeIndex].value = value;
+	} else if (configToUpdate.configuration.semantics.ode[type][typeIndex].expression) {
+		configToUpdate.configuration.semantics.ode[type][typeIndex].expression = value;
 	}
 
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
 
-function initializeConfigSpace() {
+async function initializeConfigSpace() {
 	editableModelConfigs.value = [];
-	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
+
+	const allConfigs = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	editableModelConfigs.value = allConfigs.filter((d) => d.configuration);
+
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '' };
 }
 
 watch(
-	() => props.modelConfigurations,
+	() => props.model,
 	() => initializeConfigSpace(),
 	{ deep: true }
 );
