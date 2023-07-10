@@ -25,8 +25,8 @@
 
 					<!--For naming asset such as model or code file-->
 					<div class="vertically-center">
-						<slot v-if="isCreatingAsset" name="name-input" />
-						<h4 v-else v-html="name" class="nudge-down" />
+						<slot name="name-input" />
+						<h4 v-if="!isNamingAsset" v-html="name" class="nudge-down" />
 
 						<div v-if="!overline" class="vertically-center">
 							<slot name="edit-buttons" />
@@ -71,7 +71,7 @@ const props = defineProps<{
 	name: string;
 	overline?: string;
 	isEditable: boolean;
-	isCreatingAsset?: boolean;
+	isNamingAsset?: boolean;
 	authors?: string;
 	doi?: string;
 	publisher?: string;
@@ -90,7 +90,7 @@ const shrinkHeader = computed(() => {
 	return (
 		scrollPosition.value > headerHeight && // Appear if (original header - 50px) is scrolled past
 		scrollPosition.value !== 0 && // Handles case where original header is shorter than shrunk header (happens in PDF view)
-		!props.isCreatingAsset // Don't appear while creating an asset eg. a model
+		!props.isNamingAsset // Don't appear while creating an asset eg. a model
 	);
 });
 
