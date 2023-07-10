@@ -10,7 +10,7 @@
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && asset.relatedExtractions"
+					v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects"
 				>
 					<template
 						v-for="icon in [
@@ -51,7 +51,7 @@
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
 		<aside class="preview-and-options">
-			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
+			<figure v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects">
 				<template v-if="relatedAsset">
 					<img
 						v-if="relatedAsset.properties.image"
@@ -61,7 +61,7 @@
 					/>
 					<div class="link" v-else-if="relatedAsset.properties.doi">
 						<a
-							v-if="relatedAsset.properties.documentBibjson.link"
+							v-if="relatedAsset.properties.documentBibjson?.link"
 							:href="relatedAsset.properties.documentBibjson.link[0].url"
 							@click.stop
 							rel="noreferrer noopener"
@@ -93,7 +93,6 @@
 						</span>
 						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</span>
-					<template v-else> No {{ chosenExtractionFilter }}s</template>
 				</div>
 			</figure>
 			<slot name="default"></slot>
@@ -138,11 +137,11 @@ const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
 
-	if (props.asset.relatedExtractions) {
-		const documentsWithUrls = props.asset.relatedExtractions.filter(
+	if (props.asset.knownEntities.askemObjects) {
+		const documentsWithUrls = props.asset.knownEntities.askemObjects.filter(
 			(ex) =>
 				ex.askemClass === XDDExtractionType.Doc &&
-				ex.properties.documentBibjson.knownEntities != null &&
+				ex.properties.documentBibjson?.knownEntities &&
 				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
 		);
 
@@ -163,9 +162,9 @@ const urlExtractions = computed(() => {
 });
 
 const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
-	if (props.asset.relatedExtractions) {
+	if (props.asset.knownEntities.askemObjects) {
 		const allExtractions = [
-			...(props.asset.relatedExtractions as UrlExtraction[] & Extraction[]),
+			...(props.asset.knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
 			...(urlExtractions.value as UrlExtraction[] & Extraction[])
 		];
 
