@@ -261,7 +261,7 @@ const tabStore = useTabStore();
 
 const router = useRouter();
 
-const isResourcesSliderOpen = ref(true);
+const isResourcesSliderOpen = ref(false);
 const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');

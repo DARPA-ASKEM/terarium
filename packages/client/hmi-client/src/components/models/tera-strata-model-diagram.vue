@@ -18,11 +18,12 @@
 									<div class="input-header">ASSIGN TO</div>
 									<div><div class="empty-spacer" :style="{ width: `28px` }"></div></div>
 								</div>
-								<div class="typing-row" v-for="(modelType, index) in modelTypes" :key="index">
+								<div class="typing-row" v-for="(row, index) in typedRows" :key="index">
+									<!-- legend key -->
 									<div>
 										<div
 											:class="
-												modelType.nodeType === 'Variable'
+												row.nodeType === 'Variable'
 													? `legend-key-state`
 													: `legend-key-transition-lg`
 											"
@@ -30,18 +31,27 @@
 										/>
 									</div>
 									<div>
+										<!-- node type -->
 										<Dropdown
 											class="p-inputtext-sm"
-											:options="nodeTypes"
-											v-model="modelType.nodeType"
+											:options="Object.keys(assignToOptions)"
+											v-model="row.nodeType"
 										/>
 									</div>
 									<div>
+										<!-- name of type -->
 										<InputText class="p-inputtext-sm" />
 									</div>
 									<div>
-										<Dropdown class="p-inputtext-sm" placeholder="Select nodes" />
+										<!-- assign to -->
+										<MultiSelect
+											class="p-inputtext-sm"
+											placeholder="Select nodes"
+											:options="assignToOptions[row.nodeType]"
+											v-model="row.assignTo"
+										/>
 									</div>
+									<!-- cancel row  -->
 									<div>
 										<Button icon="pi pi-times" text rounded />
 									</div>
@@ -97,6 +107,7 @@ import SplitterPanel from 'primevue/splitterpanel';
 import { Model } from '@/types/Types';
 import { strataTypeColors } from '@/utils/color-schemes';
 import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
@@ -111,7 +122,6 @@ const emit = defineEmits([
 
 const props = defineProps<{
 	model: Model | null;
-	isEditable: boolean;
 	nodePreview?: boolean;
 	showTypingToolbar?: boolean;
 }>();
@@ -140,15 +150,24 @@ const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.nam
 const transitionTypes = computed(() =>
 	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
 );
-const modelTypes = ref<
+// these are values that user will edit/select that correspond to each row in the model typing editor
+const typedRows = ref<
 	{
 		nodeType: string;
 		typeName?: string;
-		assignTo?: string;
+		assignTo?: string[];
 	}[]
 >([]);
-// const numberNodes = computed<number>(() => props.model?.model.states.length + props.model?.model.transitions.length);
-const nodeTypes = ref<string[]>(['Variable', 'Transition']);
+
+const assignToOptions = computed(() => {
+	if (props.model) {
+		return {
+			Variable: props.model.model.states.map((s) => s.id),
+			Transition: props.model.model.transitions.map((s) => s.id)
+		};
+	}
+	return {};
+});
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -184,13 +203,15 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
-			modelTypes.value.push(
+			typedRows.value.push(
 				{
 					nodeType: 'Variable',
+					// populate type name if input model already has types
 					typeName: props.model.semantics?.typing?.type_system.states[0].name
 				},
 				{
 					nodeType: 'Transition',
+					// populate type name if input model already has types
 					typeName: props.model.semantics?.typing?.type_system.transitions[0].properties?.name
 				}
 			);
@@ -288,42 +309,6 @@ watch(
 	},
 	{ deep: true }
 );
-
-/*
-const updatePetri = async (m: PetriNet) => {
-	// equationML.value = mathmlString;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
-
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
-
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
-
-	// Render graph
-	await renderer?.setData(graphData);
-	await renderer?.render();
-	updateLatexFormula(equationLatexNew.value);
-};
-*/
 
 onMounted(async () => {
 	document.addEventListener('keyup', editorKeyHandler);
@@ -460,12 +445,13 @@ li {
 }
 
 .typing-row > div:last-of-type {
-	flex: 0 1 0px;
+	flex: 0 1 28px;
 	min-width: 0;
 }
 
 .p-inputtext,
-.p-dropdown {
+.p-dropdown,
+.p-multiselect {
 	min-width: 150px;
 }
 
