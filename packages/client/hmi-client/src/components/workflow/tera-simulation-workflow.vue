@@ -15,7 +15,22 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<h5>{{ wf.name }}</h5>
+				<div class="button-group">
+					<InputText
+						v-if="isRenamingWorkflow"
+						class="p-inputtext-sm"
+						v-model.lazy="newWorkflowName"
+						placeholder="Workflow name"
+						@keyup.enter="updateWorkflowName"
+					/>
+					<h5 v-else>{{ wf.name }}</h5>
+					<Button
+						icon="pi pi-ellipsis-v"
+						class="p-button-icon-only p-button-text p-button-rounded"
+						@click="toggleOptionsMenu"
+					/>
+				</div>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
@@ -156,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import { isArray, cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
@@ -185,6 +200,7 @@ import {
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
@@ -234,6 +250,26 @@ const VIRIDIS_14 = [
 	'#cde11d',
 	'#fde725'
 ];
+
+const isRenamingWorkflow = ref(false);
+const newWorkflowName = ref('');
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingWorkflow.value = true;
+			newWorkflowName.value = wf.value?.name ?? '';
+		}
+	}
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
 const getVariableColorByRunIdx = (edgeIdx: number) =>
 	wf.value.edges.length > 1
 		? VIRIDIS_14[Math.floor((edgeIdx / wf.value.edges.length) * VIRIDIS_14.length)]
@@ -276,6 +312,14 @@ async function selectModel(node: WorkflowNode, data: { id: string }) {
 	});
 }
 
+async function updateWorkflowName() {
+	const workflowClone = cloneDeep(wf.value);
+	workflowClone.name = newWorkflowName.value;
+	workflowService.updateWorkflow(workflowClone);
+	isRenamingWorkflow.value = false;
+	wf.value = await workflowService.getWorkflow(props.assetId);
+}
+
 async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
 	node.state.datasetId = data.id;
 	node.outputs = [
@@ -294,7 +338,7 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
-		value: _.isArray(port.value) ? port.value : [port.value],
+		value: isArray(port.value) ? port.value : [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 
@@ -621,6 +665,7 @@ function resetZoom() {
 
 .button-group {
 	display: flex;
+	align-items: center;
 	flex-direction: row;
 	gap: 1rem;
 }
@@ -630,8 +675,6 @@ function resetZoom() {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
-	padding-top: 0px;
-	padding-bottom: 0px;
 }
 
 .toolbar .button-group .secondary-button:hover {
