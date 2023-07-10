@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.documentservice;
 
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -19,7 +20,7 @@ public class ExtractionProperties implements Serializable {
 
 	private String trustScore;
 
-	@JsonProperty("abstract")
+	@JsonAlias("abstract")
 	private String abstractText;
 
 	private String xddId;
