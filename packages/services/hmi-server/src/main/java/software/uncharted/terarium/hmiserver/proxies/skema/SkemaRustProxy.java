@@ -1,8 +1,6 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import java.util.List;
