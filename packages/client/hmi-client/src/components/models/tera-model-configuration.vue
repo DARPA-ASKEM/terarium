@@ -322,6 +322,24 @@ async function initializeConfigSpace() {
 
 	console.log('Configs', modelConfigs.value);
 
+	// Ensure that we always have a "default config" model configuration
+	if (modelConfigs.value.length === 0) {
+		console.debug(`creating default config for model ${props.model.id}`);
+		await createModelConfiguration(props.model.id, 'Default config', 'Default config', props.model);
+		modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	} else {
+		const defaultConfig = modelConfigs.value.find((d) => d.name === 'Default config');
+		if (!defaultConfig) {
+			await createModelConfiguration(
+				props.model.id,
+				'Default config',
+				'Default config',
+				props.model
+			);
+		}
+		modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	}
+
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };

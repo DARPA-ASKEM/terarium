@@ -76,6 +76,7 @@
 	</main>
 
 	<!-- Temp editor -->
+	<!--
 	<Teleport to="body">
 		<editor-modal
 			v-if="renderer && showAMREditor"
@@ -84,6 +85,7 @@
 			@save="updateModel($event)"
 		/>
 	</Teleport>
+	-->
 </template>
 
 <script setup lang="ts">
@@ -112,7 +114,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
-import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
+// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -134,7 +136,7 @@ const menu = ref();
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
-const showAMREditor = ref<boolean>(false);
+// const showAMREditor = ref<boolean>(false);
 
 const newModelName = ref('New Model');
 const newPetri = ref();
@@ -398,8 +400,8 @@ const toggleEditMode = () => {
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
 		emit('update-model-content', renderer.graph);
-		showAMREditor.value = true;
-		// updateModel(renderer.graph.amr);
+		// showAMREditor.value = true;
+		updateModel(renderer.graph.amr);
 	}
 };
 

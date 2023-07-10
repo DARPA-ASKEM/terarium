@@ -152,6 +152,7 @@ export const convertToIGraph = (amr: Model) => {
 	return result;
 };
 
+const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
 export const addState = (amr: Model, id: string, name: string) => {
@@ -169,7 +170,7 @@ export const addState = (amr: Model, id: string, name: string) => {
 		id: `${id}Param`,
 		name: '',
 		description: '',
-		value: Number.NaN
+		value: DUMMY_VALUE
 	});
 };
 
@@ -192,7 +193,7 @@ export const addTransition = (amr: Model, id: string, name: string) => {
 		id: `${id}Param`,
 		name: '',
 		description: '',
-		value: Number.NaN
+		value: DUMMY_VALUE
 	});
 };
 
