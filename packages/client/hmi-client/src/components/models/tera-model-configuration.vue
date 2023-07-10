@@ -311,7 +311,6 @@ function openValueModal(
 
 function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigs.value[configIndex];
-	console.log(configToUpdate);
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
@@ -319,9 +318,6 @@ function updateModelConfigValue(configIndex: number = modalVal.value.configIndex
 async function initializeConfigSpace() {
 	modelConfigs.value = [];
 	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
-
-	console.log('Configs', modelConfigs.value);
-
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
