@@ -62,9 +62,9 @@
 					<header id="Section-Summaries">Section Summaries</header>
 				</template>
 				<ul>
-					<li v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+					<li v-for="(section, index) of doc.knownEntities.summaries" :key="index">
 						<h6>{{ index }}</h6>
-						<p v-html="highlightSearchTerms(section)" />
+						<p v-html="highlightSearchTerms(section[index])" />
 					</li>
 				</ul>
 			</AccordionTab>
