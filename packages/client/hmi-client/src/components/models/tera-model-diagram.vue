@@ -73,6 +73,16 @@
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
+
+	<!-- Temp editor -->
+	<Teleport to="body">
+		<editor-modal
+			v-if="renderer && showAMREditor"
+			:amr="renderer.graph.amr"
+			@close="showAMREditor = false"
+			@save="updateModel($event)"
+		/>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -102,9 +112,10 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-model-content']);
 
 const props = defineProps<{
 	model: Model | null;
@@ -116,6 +127,7 @@ const menu = ref();
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
+const showAMREditor = ref<boolean>(false);
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -145,15 +157,6 @@ const updateLayout = () => {
 const handleResize = () => {
 	updateLayout();
 };
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
 
 const mathEditorSelected = computed(() => {
 	if (!isMathMLValid.value) {
@@ -363,20 +366,13 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	}
 };
 
-onMounted(async () => {
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
-
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
 	if (!isEditing.value && props.model && renderer) {
-		emit('update-model', renderer.graph);
-		updateModel(renderer.graph.amr);
+		emit('update-model-content', renderer.graph);
+		showAMREditor.value = true;
+		// updateModel(renderer.graph.amr);
 	}
 };
 
@@ -402,12 +398,23 @@ const resetZoom = async () => {
 };
 
 const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
+	renderer?.addNodeCenter(NodeType.State, 'state');
 };
 
 const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
+	renderer?.addNodeCenter(NodeType.Transition, 'transition');
 };
+
+onMounted(() => {
+	document.addEventListener('keyup', editorKeyHandler);
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', editorKeyHandler);
+	window.removeEventListener('resize', handleResize);
+});
 </script>
 
 <style scoped>
