@@ -46,7 +46,7 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 		if (status && status !== 200) return null;
 		return data ?? null;
 	} catch (error) {
-		logger.error(error);
+		logger.error(error, { showToast: false });
 		return null;
 	}
 }

@@ -109,8 +109,9 @@
 									<td>
 										<template v-if="parameter?.distribution?.parameters">
 											[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
-											{{ round(parameter?.distribution?.parameters.maximum, 4) }}] </template
-										><template v-else>--</template>
+											{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
+										</template>
+										<template v-else>--</template>
 									</td>
 									<td>
 										<template v-if="extractions?.[parameter.id]">
@@ -119,13 +120,6 @@
 										<template v-else>--</template>
 									</td>
 								</tr>
-								<!-- <tr class="p-rowgroup-footer">
-									<td colspan="5">
-										<span class="parameter-description">
-											{{ parameterGroup.data[0].description}}
-										</span>
-									</td>
-								</tr> -->
 							</tbody>
 						</table>
 					</div>
@@ -183,14 +177,29 @@
 											v-for="extraction in extractions?.[state?.id]"
 											:key="extraction.payload.id.id"
 										>
-											<em>Name</em> {{ extraction.payload.names.map((n) => n.name).join(', ')
-											}}<br />
-											<em>Concept</em>
-											{{ extraction.payload.descriptions.map((n) => n.grounding_text).join(', ')
-											}}<br />
-											<em>Identifiers</em>
-											{{ extraction.payload.groundings.map((n) => n.grounding_text).join(', ')
-											}}<br />
+											<em>Name: </em>
+											{{ extraction.payload.names.map((n) => n.name).join(', ') }} &mdash;
+											<em>Descriptions: </em>
+											<a
+												v-for="description in extraction.payload.descriptions"
+												:key="description.id.id"
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${description.grounding[0].grounding_id}`"
+											>
+												{{ description.grounding[0].grounding_text }}
+											</a>
+											&mdash;
+											<em>Identifiers: </em>
+											<a
+												v-for="(grounding, index) in extraction.payload.groundings"
+												:key="index"
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
+											>
+												{{ grounding.grounding_text }}
+											</a>
 										</li>
 									</ul>
 								</div>
@@ -246,40 +255,85 @@
 
 				<!-- Observables -->
 				<AccordionTab>
-					<template #header
-						>Observables <span class="artifact-amount">({{ observables.length }})</span></template
-					>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>ID</th>
-									<th>Name</th>
-									<th>Expression</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="observable in observables" :key="observable.id">
-									<td>{{ observable.id ?? '--' }}</td>
-									<td>{{ observable.name ?? '--' }}</td>
-									<td>
-										<katex-element
-											v-if="observable.expression"
-											:expression="observable.expression"
-										/>
-										<template v-else>--</template>
-									</td>
-									<td>
-										<template v-if="extractions?.[observable.id]">
-											<Tag :value="extractions?.[observable.id].length" />
-										</template>
-										<template v-else>--</template>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<template #header>
+						Observables <span class="artifact-amount">({{ observables.length }})</span>
+					</template>
+					<main class="datatable" style="--columns: 4">
+						<header>
+							<div>ID</div>
+							<div>Name</div>
+							<div>Expression</div>
+							<div>Extractions</div>
+						</header>
+						<section
+							v-for="observable in observables"
+							:key="observable.id"
+							:class="[
+								{ active: isSectionEditable === `observable-${observable.id}` },
+								`observable-${observable.id}`
+							]"
+						>
+							<template v-if="isSectionEditable === `observable-${observable.id}`">
+								<div>{{ observable.id ?? '--' }}</div>
+								<div>{{ observable.name ?? '--' }}</div>
+								<div>
+									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<template v-else>--</template>
+								</div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+								<div v-if="extractions?.[observable?.id]">
+									<ul>
+										<li
+											v-for="extraction in extractions?.[observable?.id]"
+											:key="extraction.payload.id.id"
+										>
+											<em>Name: </em>
+											{{ extraction.payload.names.map((n) => n.name).join(', ') }} &mdash;
+											<em>Descriptions: </em>
+											<a
+												v-for="description in extraction.payload.descriptions"
+												:key="description.id.id"
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${description.grounding[0].grounding_id}`"
+											>
+												{{ description.grounding[0].grounding_text }}
+											</a>
+											&mdash;
+											<em>Identifiers: </em>
+											<a
+												v-for="(grounding, index) in extraction.payload.groundings"
+												:key="index"
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
+											>
+												{{ grounding.grounding_text }}
+											</a>
+										</li>
+									</ul>
+								</div>
+							</template>
+							<template v-else>
+								<div>{{ observable.id ?? '--' }}</div>
+								<div>{{ observable.name ?? '--' }}</div>
+								<div>
+									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template v-if="extractions?.[observable.id]">
+										<Tag :value="extractions?.[observable.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- Transitions -->
@@ -287,47 +341,107 @@
 					<template #header>
 						Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>Label</th>
-									<th>Input</th>
-									<th>Output</th>
-									<th>Expression</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="transition in transitions" :key="transition.id">
-									<td>{{ transition?.properties?.name ?? '--' }}</td>
-									<td>
-										{{
-											transition?.input && transition.input?.length > 0
-												? transition.input.sort().join(', ')
-												: '--'
-										}}
-									</td>
-									<td>
-										{{
-											transition?.output && transition.output?.length > 0
-												? transition.output.sort().join(', ')
-												: '--'
-										}}
-									</td>
-									<td>
-										<katex-element :expression="getTransitionExpression(transition.id)" />
-									</td>
-									<td>
-										<template v-if="extractions?.[transition.id]">
-											<Tag :value="extractions?.[transition.id].length" />
-										</template>
-										<template v-else>--</template>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<main class="datatable" style="--columns: 5">
+						<header>
+							<div>Label</div>
+							<div>Input</div>
+							<div>Output</div>
+							<div>Expression</div>
+							<div>Extractions</div>
+						</header>
+						<section
+							v-for="transition in transitions"
+							:key="transition.id"
+							:class="[
+								{ active: isSectionEditable === `transition-${transition.id}` },
+								`transition-${transition.id}`
+							]"
+						>
+							<template v-if="isSectionEditable === `transition-${transition.id}`">
+								<div>{{ transition?.properties?.name ?? '--' }}</div>
+								<div>
+									{{
+										transition?.input && transition.input?.length > 0
+											? transition.input.sort().join(', ')
+											: '--'
+									}}
+								</div>
+								<div>
+									{{
+										transition?.output && transition.output?.length > 0
+											? transition.output.sort().join(', ')
+											: '--'
+									}}
+								</div>
+								<div>
+									<katex-element :expression="getTransitionExpression(transition.id)" />
+								</div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+								<div v-if="extractions?.[transition?.id]">
+									<ul>
+										<li
+											v-for="extraction in extractions?.[transition?.id]"
+											:key="extraction.payload.id.id"
+										>
+											<em>Name: </em>
+											{{ extraction.payload.names.map((n) => n.name).join(', ') }} &mdash;
+											<em>Descriptions: </em>
+											<a
+												v-for="description in extraction.payload.descriptions"
+												:key="description.id.id"
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${description.grounding[0].grounding_id}`"
+											>
+												{{ description.grounding[0].grounding_text }}
+											</a>
+											&mdash;
+											<em>Identifiers: </em>
+											<a
+												v-for="(grounding, index) in extraction.payload.groundings"
+												:key="index"
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
+											>
+												{{ grounding.grounding_text }}
+											</a>
+										</li>
+									</ul>
+								</div>
+							</template>
+							<template v-else>
+								<td>{{ transition?.properties?.name ?? '--' }}</td>
+								<td>
+									{{
+										transition?.input && transition.input?.length > 0
+											? transition.input.sort().join(', ')
+											: '--'
+									}}
+								</td>
+								<td>
+									{{
+										transition?.output && transition.output?.length > 0
+											? transition.output.sort().join(', ')
+											: '--'
+									}}
+								</td>
+								<td>
+									<katex-element :expression="getTransitionExpression(transition.id)" />
+								</td>
+								<td>
+									<template v-if="extractions?.[transition.id]">
+										<Tag :value="extractions?.[transition.id].length" />
+									</template>
+									<template v-else>--</template>
+								</td>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- Other concepts -->
@@ -570,11 +684,7 @@ const time = computed(() => [model.value?.semantics?.ode.time] ?? []);
 const states = computed(() => model.value?.model?.states ?? []);
 const transitions = computed(() => model.value?.model?.transitions ?? []);
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
-const publications = computed(() =>
-	['biomd0000000955-model-id', '58ba4f73-56e3-44a5-aa03-138224beec11'].includes(props.assetId)
-		? ['https://arxiv.org/pdf/2003.09861.pdf']
-		: []
-);
+const publications = computed(() => []);
 const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
@@ -585,7 +695,9 @@ const otherConcepts = computed(() => {
 		...(transitions.value?.map((t) => t.id) ?? [])
 	];
 	const key = Object.keys(extractions.value).find((k) => !ids.includes(k));
-	if (key) return extractions.value[key.toString()];
+	if (key) {
+		return extractions.value[key.toString()].filter((e) => e.type === 'anchored_extraction');
+	}
 	return [];
 });
 const isSectionEditable = ref<string | null>();
