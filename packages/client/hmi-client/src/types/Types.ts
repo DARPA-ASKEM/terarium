@@ -67,15 +67,15 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    framework: string;
     name: string;
     description: string;
-    model_version: string;
+    model_version?: string;
     schema: string;
-    schema_name: string;
+    schema_name?: string;
     model: { [index: string]: any };
+    properties?: any;
     semantics?: ModelSemantics;
-    metadata: ModelMetadata;
+    metadata?: ModelMetadata;
 }
 
 export interface ModelConfiguration {
@@ -143,8 +143,6 @@ export interface PresignedURL {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
-    parameters?: ModelParameter[];
-    metadata?: ModelMetadata;
 }
 
 export interface CalibrationRequest {
@@ -221,14 +219,6 @@ export interface PetriNetTransition {
     output: string[];
     grounding: ModelGrounding;
     properties: PetriNetTransitionProperties;
-}
-
-export interface ModelParameter {
-    id: string;
-    description?: string;
-    value?: number;
-    grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
 }
 
 export interface Document {
@@ -317,11 +307,6 @@ export interface PetriNetTransitionProperties {
     rate: ModelExpression;
 }
 
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
-}
-
 export interface Extraction {
     id: number;
     askemClass: string;
@@ -353,6 +338,16 @@ export interface Initial {
     target: string;
     expression: string;
     expression_mathml: string;
+}
+
+export interface ModelParameter {
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+    unit?: ModelUnit;
 }
 
 export interface Observable {
@@ -419,11 +414,22 @@ export interface XDDUrlExtraction {
     extractedFrom: string[];
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
+}
+
 export interface State {
     id: string;
     name?: string;
     description?: string;
     grounding?: ModelGrounding;
+    units?: ModelUnit;
 }
 
 export interface Transition {
@@ -477,6 +483,7 @@ export interface MetadataDataset {
 
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
 }
 
 export enum FileType {

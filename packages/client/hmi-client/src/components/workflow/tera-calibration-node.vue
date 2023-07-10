@@ -52,6 +52,22 @@
 				icon="pi pi-plus"
 			></Button>
 		</AccordionTab>
+		<AccordionTab header="Calibrated parameter values">
+			<table class="p-datatable-table">
+				<thead class="p-datatable-thead">
+					<th>Parameter</th>
+					<th>Value</th>
+				</thead>
+				<tr v-for="(content, key) in parameterResult" :key="key">
+					<td>
+						<p>{{ key }}</p>
+					</td>
+					<td>
+						<p>{{ content }}</p>
+					</td>
+				</tr>
+			</table>
+		</AccordionTab>
 		<!-- <AccordionTab header="Loss"></AccordionTab>
 		<AccordionTab header="Parameters"></AccordionTab>
 		<AccordionTab header="Variables"></AccordionTab> -->
@@ -97,6 +113,7 @@ const currentDatasetFileName = ref<string>();
 const modelConfig = ref<ModelConfiguration>();
 const startedRunId = ref<string>();
 const completedRunId = ref<string>();
+const parameterResult = ref<{ [index: string]: any }>();
 
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
@@ -295,6 +312,7 @@ watch(
 		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
 		const csvData = csvParse(resultCsv);
 		runResults.value[simulationIds.value[0].runId] = csvData as any;
+		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 	},
 	{ immediate: true }
 );
@@ -305,5 +323,8 @@ watch(
 	width: 156px;
 	height: 25px;
 	border-radius: 6px;
+}
+th {
+	text-align: left;
 }
 </style>
