@@ -11,3 +11,11 @@ const searchByExampleItem = ref<ResultType | null>(null);
 export function useSearchByExampleOptions() {
 	return { searchByExampleOptions, searchByExampleItem };
 }
+
+export function extractResourceName(resource): string {
+	if (resource.name) {
+		return resource.name;
+	}
+
+	return resource.title;
+}

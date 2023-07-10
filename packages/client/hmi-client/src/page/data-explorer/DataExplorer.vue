@@ -140,7 +140,7 @@ import TeraSelectedResourcesHeaderPane from '@/page/data-explorer/components/ter
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { XDDFacetsItemResponse } from '@/types/Types';
-import { useSearchByExampleOptions } from './search-by-example';
+import { useSearchByExampleOptions, extractResourceName } from './search-by-example';
 
 // FIXME: page count is not taken into consideration
 
@@ -404,6 +404,8 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	//         if a document is selected then find related documents (from xDD)
 	// REVIEW: executing a related content search means to find related artifacts to the one selected:
 	//         if a model/dataset/document is selected then find related artifacts from TDS
+
+	searchTerm.value = extractResourceName(searchByExampleItem.value);
 	if (searchOptions.similarContent || searchOptions.relatedContent) {
 		isSliderFacetsOpen.value = false;
 		// NOTE the executeSearch will set proper search-by-example search parameters

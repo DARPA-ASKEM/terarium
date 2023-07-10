@@ -210,7 +210,6 @@ ul {
 
 .result-count {
 	font-size: var(--font-caption);
-	white-space: nowrap;
 }
 
 .result-count span {

@@ -128,7 +128,10 @@ import { useDragEvent } from '@/services/drag-drop';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import Checkbox from 'primevue/checkbox';
 import { SearchByExampleOptions } from '@/types/common';
-import { useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
+import {
+	useSearchByExampleOptions,
+	extractResourceName
+} from '@/page/data-explorer/search-by-example';
 
 const props = defineProps<{
 	showSuggestions: boolean;
@@ -170,6 +173,7 @@ const initiateSearch = () => {
 function initiateSearchByExample() {
 	searchByExampleOptions.value = { ...selectedSearchByExampleOptions.value };
 	searchByExampleToggle.value = false;
+	query.value = extractResourceName(searchByExampleItem.value);
 }
 
 function addToQuery(term: string) {
