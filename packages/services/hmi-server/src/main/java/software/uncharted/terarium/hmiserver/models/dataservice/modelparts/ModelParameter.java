@@ -17,10 +17,10 @@ public class ModelParameter {
 
 	@TSOptional
 	private Double value;
-	
+
 	@TSOptional
 	private ModelGrounding grounding;
-	
+
 	@TSOptional
 	private ModelDistribution distribution;
 

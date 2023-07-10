@@ -8,11 +8,11 @@
 	>
 		<template #name-input>
 			<InputText
+				v-if="isEditingProject"
 				v-model="newProjectName"
 				ref="inputElement"
 				class="project-name-input"
 				@keyup.enter="updateProjectName"
-				:class="{ isVisible: isEditingProject }"
 			/>
 		</template>
 		<template #edit-buttons>
@@ -400,8 +400,8 @@ a {
 }
 
 .overview-banner {
-	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 10% center,
-		linear-gradient(45deg, #d5e8e5 0%, #f0f4f0 100%) no-repeat;
+	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 20% center,
+		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
 	background-size: 25%, 100%;
 	height: auto;
 }
@@ -550,6 +550,7 @@ ul {
 .modal:deep(main) {
 	width: 50rem;
 }
+
 :deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;

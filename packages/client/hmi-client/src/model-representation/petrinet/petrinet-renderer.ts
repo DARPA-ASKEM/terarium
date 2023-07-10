@@ -281,6 +281,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		if (!this.editMode) return;
 		selection.selectAll('.no-drag').attr('stroke-width', 1);
 		const newLabel = (selection.select('input').node() as HTMLInputElement).value;
+
+		if (selection.datum().data.type === NodeType.State) {
+			petrinetService.updateStateId(this.graph.amr, selection.datum().label, newLabel);
+		} else {
+			petrinetService.updateTransitioneId(this.graph.amr, selection.datum().label, newLabel);
+		}
+
 		selection.datum().label = newLabel;
 		selection.select('text').text(newLabel).style('fill-opacity', 1.0);
 		selection.select('foreignObject').remove();
@@ -479,7 +486,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	addNode(type: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
 		const size = type === NodeType.State ? 60 : 30;
-		const id = `${type}-${this.graph.nodes.length + 1}`;
+		const id = `${type}${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
 			id,
 			label: name,

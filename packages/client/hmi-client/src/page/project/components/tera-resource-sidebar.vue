@@ -50,7 +50,7 @@
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
-		<Accordion v-if="!isEmpty(assets)" :multiple="true">
+		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
 					<template v-if="type === ProjectAssetTypes.DOCUMENTS">Publications & Documents</template>
