@@ -675,8 +675,6 @@ function resetZoom() {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
-	padding-top: 0px;
-	padding-bottom: 0px;
 }
 
 .toolbar .button-group .secondary-button:hover {
