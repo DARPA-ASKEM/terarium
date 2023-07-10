@@ -458,6 +458,7 @@ export interface MetadataDataset {
 
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
 }
 
 export enum FileType {
