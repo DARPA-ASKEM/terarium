@@ -116,15 +116,27 @@
 				<Column field="assetName" header="Name" sortable style="width: 10%">
 					<template #body="slotProps">
 						<Button
-							:icon="slotProps.data.pageType === 'publications' ? 'pi pi-file' : undefined"
 							:title="slotProps.data.assetName"
-							:label="slotProps.data.assetName"
 							class="asset-button"
 							plain
 							text
 							size="small"
 							@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
 						>
+							<div>
+								<vue-feather
+									v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
+									:type="getAssetIcon(slotProps.data.pageType ?? null)"
+									size="1rem"
+									stroke="rgb(16, 24, 40)"
+								/>
+								<component
+									v-else
+									:is="getAssetIcon(slotProps.data.pageType ?? null)"
+									class="p-button-icon-left icon"
+								/>
+								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
+							</div>
 						</Button>
 					</template>
 				</Column>
@@ -235,7 +247,7 @@
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { nextTick, Ref, ref, computed, onMounted } from 'vue';
 import InputText from 'primevue/inputtext';
-import { update as updateProject } from '@/services/project';
+import { getAssetIcon, update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import SplitButton from 'primevue/splitbutton';
