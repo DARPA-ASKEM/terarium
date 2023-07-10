@@ -202,16 +202,6 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
-export interface ModelParameter {
-    id: string;
-    name?: string;
-    description?: string;
-    value?: number;
-    grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
-    unit?: ModelUnit;
-}
-
 export interface Document {
     gddId: string;
     title: string;
@@ -338,6 +328,7 @@ export interface ModelParameter {
     value?: number;
     grounding?: ModelGrounding;
     distribution?: ModelDistribution;
+    unit?: ModelUnit;
 }
 
 export interface Observable {
