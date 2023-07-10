@@ -230,7 +230,7 @@ export const removeTransition = (amr: Model, id: string) => {
 	}
 };
 
-const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
+export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
@@ -242,10 +242,8 @@ const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
 	const expression = inputStr.join('*') + '*' + param.id;
 	// eslint-disable-next-line
 	const expressionMathml =
-		'<times/><apply>' +
-		inputStr.map((d) => `<ci>${d}</ci>`).join('') +
-		`<ci>${param.id}</ci>` +
-		'</apply>';
+		`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
+		`</apply>`;
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
 };
