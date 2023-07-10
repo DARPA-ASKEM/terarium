@@ -28,7 +28,7 @@ public class Extraction implements Serializable {
 
 	private ExtractionProperties properties;
 
-	@JsonAlias("askem_id")
+	@JsonAlias({"askem_id", "ASKEM_ID"})
 	private String askemId;
 
 	@JsonAlias("_xdd_created")

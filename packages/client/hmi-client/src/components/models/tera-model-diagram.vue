@@ -87,11 +87,12 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { mathmlToPetri, petriToLatex } from '@/petrinet/petrinet-service';
+import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
+import { mathmlToAMR } from '@/services/models/transformations';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
@@ -102,6 +103,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -125,7 +127,6 @@ const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
 
 const newModelName = ref('New Model');
-const newPetri = ref();
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -155,15 +156,6 @@ const updateLayout = () => {
 const handleResize = () => {
 	updateLayout();
 };
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
 
 const mathEditorSelected = computed(() => {
 	if (!isMathMLValid.value) {
@@ -214,12 +206,6 @@ watch(
 		}
 	}
 );
-
-onUpdated(() => {
-	if (props.model) {
-		emit('asset-loaded');
-	}
-});
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -321,14 +307,9 @@ watch(
 	{ deep: true }
 );
 
-/*
-const updatePetri = async (m: PetriNet) => {
-	// equationML.value = mathmlString;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
+const updatePetriNet = async (model: Model) => {
+	// Convert PetriNet into a graph
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
 
 	// Create renderer
 	renderer = new PetrinetRenderer({
@@ -355,7 +336,6 @@ const updatePetri = async (m: PetriNet) => {
 	await renderer?.render();
 	updateLatexFormula(equationLatexNew.value);
 };
-*/
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
@@ -371,18 +351,16 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
-			newPetri.value = await mathmlToPetri(cleanedMathML);
+			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
+			const model = amr?.model;
 			if (
-				(isArray(newPetri.value) && newPetri.value.length > 0) ||
-				(!isArray(newPetri.value) &&
-					Object.keys(newPetri.value).length > 0 &&
-					hasNoEmptyKeys(newPetri.value))
+				(model && isArray(model) && model.length > 0) ||
+				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
 
-				// FIXME: equation to AMR
-				// updatePetri(newPetri.value);
+				updatePetriNet(amr);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -395,14 +373,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		isMathMLValid.value = true;
 	}
 };
-
-onMounted(async () => {
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
 
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
@@ -435,12 +405,29 @@ const resetZoom = async () => {
 };
 
 const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
+	renderer?.addNodeCenter(NodeType.State, 'state');
 };
 
 const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
+	renderer?.addNodeCenter(NodeType.Transition, 'transition');
 };
+
+onMounted(() => {
+	document.addEventListener('keyup', editorKeyHandler);
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', editorKeyHandler);
+	window.removeEventListener('resize', handleResize);
+});
+
+onUpdated(() => {
+	if (props.model) {
+		emit('asset-loaded');
+	}
+});
 </script>
 
 <style scoped>

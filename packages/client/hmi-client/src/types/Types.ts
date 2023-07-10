@@ -132,8 +132,6 @@ export interface PresignedURL {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
-    parameters?: ModelParameter[];
-    metadata?: ModelMetadata;
 }
 
 export interface CalibrationRequest {
@@ -204,17 +202,10 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
-export interface ModelParameter {
-    id: string;
-    description?: string;
-    value?: number;
-    grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
-}
-
 export interface Document {
     gddId: string;
     title: string;
+    abstractText: string;
     journal: string;
     type: string;
     number: string;
@@ -233,7 +224,6 @@ export interface Document {
     knownEntities: KnownEntities;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
-    abstract: string;
 }
 
 export interface XDDFacetsItemResponse {
@@ -298,11 +288,6 @@ export interface PetriNetTransitionProperties {
     rate: ModelExpression;
 }
 
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
-}
-
 export interface Extraction {
     id: number;
     askemClass: string;
@@ -315,7 +300,8 @@ export interface Extraction {
 
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
-    summaries: { [index: string]: { [index: string]: string } };
+    askemObjects: Extraction[];
+    summaries: string[];
 }
 
 export interface XDDFacetBucket {
@@ -333,6 +319,15 @@ export interface Initial {
     target: string;
     expression: string;
     expression_mathml: string;
+}
+
+export interface ModelParameter {
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
 }
 
 export interface Observable {
@@ -377,6 +372,7 @@ export interface ProvenanceInfo {
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
+    abstractText: string;
     xddId: string;
     documentId: string;
     documentTitle: string;
@@ -390,13 +386,17 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
-    abstract: string;
 }
 
 export interface XDDUrlExtraction {
     url: string;
     resourceTitle: string;
     extractedFrom: string[];
+}
+
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
 }
 
 export interface State {
@@ -457,6 +457,7 @@ export interface MetadataDataset {
 
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
 }
 
 export enum FileType {
