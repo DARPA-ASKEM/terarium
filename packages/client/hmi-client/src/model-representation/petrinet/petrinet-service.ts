@@ -75,7 +75,7 @@ export const convertToIGraph = (amr: Model) => {
 		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
 			id: state.id,
-			label: state.id,
+			label: state.name ?? state.id,
 			type: 'state',
 			x: 0,
 			y: 0,
