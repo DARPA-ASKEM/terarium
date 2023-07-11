@@ -55,9 +55,9 @@
 			<table class="model-biblio">
 				<tr>
 					<th>Framework</th>
-					<th>Model version</th>
-					<th>Date created</th>
-					<th>Created by</th>
+					<th>Model Version</th>
+					<th>Date Created</th>
+					<th>Created By</th>
 					<th>Source</th>
 				</tr>
 				<tr>

@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<TeraResizablePanel>
+		<TeraResizablePanel v-if="!nodePreview">
 			<div ref="splitterContainer" class="splitter-container">
 				<Splitter :gutterSize="5" :layout="layout">
 					<SplitterPanel
@@ -10,88 +10,45 @@
 						:maxSize="equationPanelMaxSize"
 					>
 						<section class="graph-element">
-							<section v-if="showTypingToolbar">
-								<div class="typing-row">
-									<div>COLOR</div>
-									<div class="input-header">NODE TYPE</div>
-									<div class="input-header">NAME OF TYPE</div>
-									<div class="input-header">ASSIGN TO</div>
-									<div><div class="empty-spacer" :style="{ width: `28px` }"></div></div>
-								</div>
-								<div class="typing-row" v-for="(row, index) in typedRows" :key="index">
-									<!-- legend key -->
-									<div>
-										<div
-											:class="getLegendKeyClass(row.nodeType ?? '')"
-											:style="{ backgroundColor: strataTypeColors[index] }"
-										/>
-									</div>
-									<div>
-										<!-- node type -->
-										<Dropdown
-											class="p-inputtext-sm"
-											:options="Object.keys(assignToOptions[index])"
-											v-model="row.nodeType"
-										/>
-									</div>
-									<div>
-										<!-- name of type -->
-										<InputText class="p-inputtext-sm" v-model="row.typeName" />
-									</div>
-									<div>
-										<!-- assign to -->
-										<MultiSelect
-											class="p-inputtext-sm"
-											placeholder="Select nodes"
-											:options="assignToOptions[index][row.nodeType ?? '']"
-											v-model="row.assignTo"
-										/>
-									</div>
-									<!-- cancel row  -->
-									<div>
-										<Button icon="pi pi-times" text rounded />
-									</div>
-								</div>
-								<Button
-									label="Add type"
-									icon="pi pi-plus"
-									class="p-button-sm"
-									text
-									@click="addTypedRow"
-								/>
-							</section>
+							<Toolbar>
+								<template #start>
+									<Button
+										@click="resetZoom"
+										label="Reset zoom"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+								</template>
+							</Toolbar>
 							<section class="legend">
 								<ul>
 									<li v-for="(type, i) in stateTypes" :key="i">
-										<div
-											class="legend-key-circle"
-											:style="{ backgroundColor: strataTypeColors[i] }"
-										/>
+										<div class="legend-state" :style="{ backgroundColor: strataTypeColors[i] }" />
 										{{ type }}
 									</li>
 								</ul>
 								<ul>
 									<li v-for="(type, i) in transitionTypes" :key="i">
 										<div
-											class="legend-key-square"
+											class="legend-transition"
 											:style="{ backgroundColor: strataTypeColors[stateTypes?.length ?? 0 + i] }"
 										/>
 										{{ type }}
 									</li>
 								</ul>
 							</section>
-							<div v-if="typedModel" ref="graphElement" class="graph-element" />
+							<div v-if="model" ref="graphElement" class="graph-element" />
 						</section>
 					</SplitterPanel>
 				</Splitter>
 			</div>
 		</TeraResizablePanel>
+		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
 </template>
 
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -106,11 +63,9 @@ import {
 import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model, TypeSystem } from '@/types/Types';
+import Toolbar from 'primevue/toolbar';
+import { Model } from '@/types/Types';
 import { strataTypeColors } from '@/utils/color-schemes';
-import Dropdown from 'primevue/dropdown';
-import MultiSelect from 'primevue/multiselect';
-import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -123,12 +78,12 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-	model: Model;
-	showTypingToolbar: boolean;
-	typeSystem?: TypeSystem;
+	model: Model | null;
+	isEditable: boolean;
+	nodePreview?: boolean;
 }>();
 
-const typedModel = ref<Model>();
+const menu = ref();
 
 const newModelName = ref('New Model');
 
@@ -147,45 +102,11 @@ const equationPanelMaxSize = ref<number>(100);
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const modelTypeSystem = computed(() => props.model.semantics?.typing?.type_system);
+const modelTypeSystem = computed(() => props.model?.semantics?.typing?.type_system);
 const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.name));
 const transitionTypes = computed(() =>
 	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
 );
-// these are values that user will edit/select that correspond to each row in the model typing editor
-const typedRows = ref<
-	{
-		nodeType?: string;
-		typeName?: string;
-		assignTo?: string[];
-	}[]
->([]);
-
-// TODO: don't allow user to assign a variable or transition twice
-const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
-	const options: { [s: string]: string[] }[] = [];
-	typedRows.value.forEach(() => {
-		options.push({
-			Variable: props.model.model.states.map((s) => s.id),
-			Transition: props.model.model.transitions.map((t) => t.id)
-		});
-	});
-	return options;
-});
-
-function addTypedRow() {
-	typedRows.value.push({});
-}
-
-function getLegendKeyClass(type: string) {
-	if (type === 'Variable') {
-		return 'legend-key-circle';
-	}
-	if (type === 'Transition') {
-		return 'legend-key-square';
-	}
-	return '';
-}
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -220,29 +141,15 @@ watch(
 	() => [props.model],
 	async () => {
 		updateLatexFormula('');
-		typedModel.value = props.model;
-		const data = await petriToLatex(convertAMRToACSet(props.model));
-		if (data) {
-			updateLatexFormula(data);
+		if (props.model) {
+			const data = await petriToLatex(convertAMRToACSet(props.model));
+
+			if (data) {
+				updateLatexFormula(data);
+			}
 		}
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => props.typeSystem,
-	() => {
-		typedRows.value.push(
-			{
-				nodeType: 'Variable',
-				typeName: props.typeSystem?.states[0].name
-			},
-			{
-				nodeType: 'Transition',
-				typeName: props.typeSystem?.transitions[0].properties?.name
-			}
-		);
-	}
 );
 
 watch(
@@ -254,56 +161,11 @@ watch(
 	}
 );
 
-// construct TypingSemantics data structure when user updates variable/transition assignments
-watch(
-	typedRows,
-	() => {
-		const stateTypedMap: string[][] = [];
-		const transitionTypedMap: string[][] = [];
-		const typeSystem: TypeSystem = { states: [], transitions: [] };
-		typedRows.value.forEach((row) =>
-			row.assignTo?.forEach((parameter) => {
-				if (row.typeName && row.typeName && row.nodeType) {
-					if (row.nodeType === 'Variable') {
-						stateTypedMap.push([parameter, row.typeName]);
-					}
-					if (row.nodeType === 'Transition') {
-						transitionTypedMap.push([parameter, row.typeName]);
-					}
-				}
-			})
-		);
-		stateTypedMap.forEach((map) => {
-			// See if there is a corresponding type defined in the strata model's type system
-			// If not, generate a new one
-			const typeId = map[1];
-			const state = props.typeSystem?.states.find((s) => typeId === s.id);
-			if (state) {
-				typeSystem.states.push(state);
-			} else {
-				typeSystem.states.push({
-					id: typeId,
-					name: typeId,
-					description: typeId
-				});
-			}
-		});
-		transitionTypedMap.forEach((map) => {
-			// See if there is a corresponding type defined in the strata model's type system
-			// If not, generate a new one
-			const transition = props.typeSystem?.transitions.find((t) => map[1] === t.id);
-			if (transition) {
-				typeSystem.transitions.push(transition);
-			} else {
-				// TODO: generate Transition data structure and infer types of inputs/outputs
-			}
-		});
-		// const typeMap: string[][] = {...stateTypedMap, ...transitionTypedMap}
-		// const typingSemantics: TypingSemantics = { type_map: typeMap, type_system: typeSystem };
-		// TODO: call petrinet-service to update amr with typing
-	},
-	{ deep: true }
-);
+onUpdated(() => {
+	if (props.model) {
+		emit('asset-loaded');
+	}
+});
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -359,6 +221,10 @@ watch(
 			renderer?.addEdge(d.source, d.target);
 		});
 
+		renderer.on('background-click', () => {
+			if (menu.value) menu.value.hide();
+		});
+
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
@@ -372,6 +238,42 @@ watch(
 	{ deep: true }
 );
 
+/*
+const updatePetri = async (m: PetriNet) => {
+	// equationML.value = mathmlString;
+	// Convert petri net into a graph
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
+		S: { width: 60, height: 60 },
+		T: { width: 40, height: 40 }
+	});
+
+	// Create renderer
+	renderer = new PetrinetRenderer({
+		el: graphElement.value as HTMLDivElement,
+		useAStarRouting: false,
+		useStableZoomPan: true,
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
+	});
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		renderer?.addEdge(d.source, d.target);
+	});
+
+	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+		if (!renderer?.editMode) return;
+		eventX = pos.x;
+		eventY = pos.y;
+		menu.value.toggle(evt);
+	});
+
+	// Render graph
+	await renderer?.setData(graphData);
+	await renderer?.render();
+	updateLatexFormula(equationLatexNew.value);
+};
+*/
+
 onMounted(async () => {
 	document.addEventListener('keyup', editorKeyHandler);
 });
@@ -379,6 +281,10 @@ onMounted(async () => {
 onUnmounted(() => {
 	document.removeEventListener('keyup', editorKeyHandler);
 });
+
+const resetZoom = async () => {
+	renderer?.setToDefaultZoom();
+};
 </script>
 
 <style scoped>
@@ -396,19 +302,16 @@ main {
 	margin-left: 1rem;
 	display: flex;
 	gap: 1rem;
-	background-color: var(--surface-section);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
 }
-.legend-key-circle {
+.legend-state {
 	height: 24px;
 	width: 24px;
 	border-radius: 12px;
 }
 
-.legend-key-square {
-	height: 24px;
-	width: 24px;
+.legend-transition {
+	height: 16px;
+	width: 16px;
 	border-radius: 4px;
 }
 
@@ -477,41 +380,5 @@ li {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-.typing-row {
-	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	padding: 1rem;
-	color: var(--text-color-subdued);
-	gap: 1rem;
-	font-size: var(--font-caption);
-}
-
-.typing-row > div {
-	display: flex;
-	flex: 1 1 auto;
-	justify-content: flex-start;
-}
-
-.typing-row > div:first-of-type {
-	flex: 0 0 48px;
-	min-width: 0;
-}
-
-.typing-row > div:last-of-type {
-	flex: 0 1 28px;
-	min-width: 0;
-}
-
-.p-inputtext,
-.p-dropdown,
-.p-multiselect {
-	min-width: 150px;
-}
-
-.input-header {
-	min-width: 150px;
 }
 </style>
