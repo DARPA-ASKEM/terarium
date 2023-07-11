@@ -10,6 +10,7 @@ import * as petrinetService from '@/model-representation/petrinet/petrinet-servi
 export interface NodeData {
 	type: string;
 	strataType?: string;
+	expression?: string;
 }
 
 export interface EdgeData {
@@ -152,7 +153,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.on('mouseover', handleMouseOver)
 			.on('mouseout', handleMouseOut);
 
-		// transitions text
+		// transitions label text
 		transitions
 			.append('text')
 			.attr('y', () => 5)
@@ -167,6 +168,20 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('pointer-events', 'none')
 			.html((d) => d.label);
 
+		// transitions expression text
+		transitions
+			.append('text')
+			.attr('y', (d) => -d.height / 2 - 5)
+			.style('text-anchor', 'middle')
+			.style('paint-order', 'stroke')
+			.style('stroke', (d) =>
+				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			)
+			.style('stroke-width', '3px')
+			.style('stroke-linecap', 'butt')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
+			.html((d) => d.data.expression ?? null);
 		// species
 		species
 			.append('circle')
