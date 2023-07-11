@@ -264,6 +264,7 @@ watch(
 	}
 );
 
+// construct TypingSemantics data structure when user updates variable/transition assignments
 watch(
 	typedRows,
 	() => {
@@ -304,9 +305,12 @@ watch(
 			if (transition) {
 				typeSystem.transitions.push(transition);
 			} else {
-				// TODO: generate Transition structure and infer types of inputs/outputs
+				// TODO: generate Transition data structure and infer types of inputs/outputs
 			}
 		});
+		// const typeMap: string[][] = {...stateTypedMap, ...transitionTypedMap}
+		// const typingSemantics: TypingSemantics = { type_map: typeMap, type_system: typeSystem };
+		// TODO: call petrinet-service to update amr with typing
 	},
 	{ deep: true }
 );
