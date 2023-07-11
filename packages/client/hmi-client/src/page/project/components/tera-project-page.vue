@@ -56,7 +56,6 @@
 
 <script setup lang="ts">
 import { ref, Ref } from 'vue';
-import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -70,7 +69,8 @@ import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
-import { addAsset } from '@/services/project';
+import * as ProjectService from '@/services/project';
+import useResourcesStore from '@/stores/resources';
 
 const props = defineProps<{
 	project: IProject;
@@ -113,7 +113,12 @@ const openWorkflow = async () => {
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await addAsset(props.project.id, ProjectAssetTypes.SIMULATION_WORKFLOW, workflowId);
+	await ProjectService.addAsset(
+		props.project.id,
+		ProjectAssetTypes.SIMULATION_WORKFLOW,
+		workflowId
+	);
+	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 
 	emit('update-project', props.project.id);
 
