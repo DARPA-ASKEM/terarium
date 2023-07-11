@@ -390,8 +390,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			const zoomX = this.zoomTransformObject.x / zoomLevel;
 			const zoomY = this.zoomTransformObject.y / zoomLevel;
 
-			// @ts-ignore
 			svg.call(
+				// @ts-ignore
 				this.zoom.transform,
 				d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(zoomX, zoomY)
 			);
