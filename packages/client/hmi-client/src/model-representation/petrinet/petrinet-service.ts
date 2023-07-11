@@ -6,6 +6,7 @@ import { PetriNet } from '@/petrinet/petrinet-service';
 export interface NodeData {
 	type: string;
 	strataType?: string;
+	expression?: string;
 }
 
 export interface EdgeData {
@@ -75,7 +76,7 @@ export const convertToIGraph = (amr: Model) => {
 		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
 			id: state.id,
-			label: state.id,
+			label: state.name ?? state.id,
 			type: 'state',
 			x: 0,
 			y: 0,
@@ -94,6 +95,9 @@ export const convertToIGraph = (amr: Model) => {
 		const typeMap = amr.semantics?.typing?.type_map.find(
 			(map) => map.length === 2 && transition.id === map[0]
 		);
+
+		const targetRate = amr.semantics?.ode.rates.find((rate) => transition.id === rate.target);
+
 		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
 			id: transition.id,
@@ -101,9 +105,9 @@ export const convertToIGraph = (amr: Model) => {
 			type: 'transition',
 			x: 0,
 			y: 0,
-			width: 100,
-			height: 100,
-			data: { type: 'transition', strataType },
+			width: 40,
+			height: 40,
+			data: { type: 'transition', strataType, expression: targetRate?.expression },
 			nodes: []
 		});
 	});

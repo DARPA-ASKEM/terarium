@@ -5,6 +5,7 @@
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
+		ref="assetPanel"
 	>
 		<template #edit-buttons>
 			<span class="p-buttonset">
@@ -22,6 +23,18 @@
 					@click="datasetView = DatasetView.DATA"
 					:active="datasetView === DatasetView.DATA"
 				/>
+				<Button
+					v-if="isEditable"
+					class="p-button-secondary p-button-sm"
+					label="Transform"
+					icon="pi pi-sync"
+					@click="openDatesetChatTab"
+					:active="datasetView === DatasetView.LLM"
+				/>
+			</span>
+			<span v-if="datasetView === DatasetView.LLM && isEditable">
+				<i class="pi pi-cog" @click="toggleSettingsMenu" />
+				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
@@ -34,42 +47,39 @@
 			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
-					<section>{{ csvContent?.length || '-' }}</section>
+					<section>{{ csvContent?.length ?? '--' }}</section>
 				</section>
 				<section>
 					<header>Columns</header>
-					<section>{{ rawContent?.stats?.length || '-' }}</section>
+					<section>{{ rawContent?.stats?.length ?? '--' }}</section>
 				</section>
 				<section>
 					<header>Date uploaded</header>
 					<section>
-						{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') || '-' }}
+						{{ new Date(dataset?.timestamp as string).toLocaleString('en-US') ?? '--' }}
 					</section>
 				</section>
 				<section>
 					<header>Uploaded by</header>
-					<section>{{ dataset?.username || '-' }}</section>
+					<section>{{ dataset?.username ?? '--' }}</section>
 				</section>
 			</section>
 			<section class="metadata data-row">
 				<section>
 					<header>Source Name</header>
-					<section v-if="dataset.url === 'https://github.com/reichlab/covid19-forecast-hub/'">
-						The Reich Lab at UMass-Amherst
-					</section>
-					<section v-else>{{ dataset?.source || '-' }}</section>
+					<section>{{ dataset?.source ?? '--' }}</section>
 				</section>
 				<section>
 					<header>Source URL</header>
 					<section>
-						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url ?? '--' }}</a>
 						<span v-else>-</span>
 					</section>
 				</section>
 			</section>
 			<RelatedPublications
 				@extracted-metadata="enriched = true"
-				:publications="[enriched ? dataset.metadata.documents[0].title ?? '' : '']"
+				:publications="[enriched ? dataset?.metadata?.documents?.[0]?.title ?? '' : '']"
 			/>
 			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
 				<AccordionTab>
@@ -79,10 +89,10 @@
 					<section v-if="enriched">
 						<ul>
 							<li>Dataset name: {{ dataset.name }}</li>
-							<li>Dataset overview: {{ dataset.description }}</li>
-							<li>Dataset URL: {{ dataset.source }}</li>
+							<li>Dataset overview: {{ dataset?.description }}</li>
+							<li>Dataset URL: {{ dataset?.source }}</li>
 							<li>
-								Data size: This dataset currently contains {{ csvContent?.length || '-' }} rows.
+								Data size: This dataset currently contains {{ csvContent?.length ?? '--' }} rows.
 							</li>
 						</ul>
 					</section>
@@ -95,8 +105,12 @@
 					<template #header>
 						<header id="Source">Source</header>
 					</template>
-					This data is sourced from {{ dataset.metadata.documents[0].title }}:
-					<a :href="dataset.metadata.documents[0].url">{{ dataset.metadata.documents[0].url }}</a>
+					This data is sourced from {{ dataset?.metadata?.documents?.[0]?.title ?? '--' }}:
+					<a
+						v-if="dataset?.metadata?.documents?.[0]?.url"
+						:href="dataset.metadata.documents[0].url">
+						{{ dataset.metadata.documents[0].url }}
+					</a>
 				</AccordionTab>
 				<AccordionTab>
 					<template #header>
@@ -219,18 +233,31 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<Accordion v-else-if="DatasetView.DATA" :activeIndex="0">
-			<AccordionTab>
-				<template #header>
-					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-				</template>
-				<tera-dataset-datatable :raw-content="rawContent" />
-			</AccordionTab>
-		</Accordion>
+		<template v-else-if="datasetView === DatasetView.DATA">
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
+				<AccordionTab>
+					<template #header>
+						Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
+					</template>
+					<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
+				</AccordionTab>
+			</Accordion>
+		</template>
+		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
+			<Suspense>
+				<tera-dataset-jupyter-panel
+					:asset-id="props.assetId"
+					:project="props.project"
+					:dataset="dataset"
+					:show-kernels="showKernels"
+					:show-chat-thoughts="showChatThoughts"
+					@is-typing="updateScroll"
+				/>
+			</Suspense>
+		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { downloadRawFile, getDataset } from '@/services/dataset';
 import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
@@ -238,24 +265,88 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
+import { downloadRawFile, getDataset } from '@/services/dataset';
 import { CsvAsset, Dataset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import InputText from 'primevue/inputtext';
+import { IProject } from '@/types/Project';
+import Menu from 'primevue/menu';
 import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 enum DatasetView {
-	DESCRIPTION = 'description',
-	DATA = 'data'
+	DESCRIPTION,
+	DATA,
+	LLM
 }
-
 const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
+	project?: IProject;
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+const showKernels = ref(<boolean>false);
+const showChatThoughts = ref(<boolean>false);
+const menu = ref();
+const newCsvContent: any = ref(null);
+const newCsvHeader: any = ref(null);
+const oldCsvHeaders: any = ref(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
+const jupyterCsv: Ref<CsvAsset | null> = ref(null);
+
+const assetPanel = ref({ assetContainer: HTMLElement });
+
+const updateScroll = () => {
+	const el = assetPanel.value.assetContainer;
+	if (el) {
+		// @ts-ignore
+		el.scrollTop = el.scrollHeight;
+	}
+};
+
+const toggleSettingsMenu = (event: Event) => {
+	menu.value.toggle(event);
+};
+
+function formatName(name: string) {
+	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
+}
+
+const datasetView = ref(DatasetView.DESCRIPTION);
+
+const chatThoughtLabel = computed(() =>
+	showChatThoughts.value ? 'Auto hide chat thoughts' : 'Do not auto hide chat thoughts'
+);
+
+const kernelSettingsLabel = computed(() =>
+	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
+);
+
+const csvContent = computed(() => rawContent.value?.csv);
+
+const items = ref([
+	{
+		label: 'Chat Options',
+		items: [
+			{
+				label: kernelSettingsLabel,
+				command: () => {
+					showKernels.value = !showKernels.value;
+				}
+			},
+			{
+				label: chatThoughtLabel,
+				command: () => {
+					showChatThoughts.value = !showChatThoughts.value;
+				}
+			}
+		]
+	}
+]);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -263,16 +354,6 @@ function highlightSearchTerms(text: string | undefined): string {
 		return textUtil.highlight(text, props.highlight);
 	}
 	return text ?? '';
-}
-
-const dataset = ref<Dataset | null>(null);
-const rawContent: Ref<CsvAsset | null> = ref(null);
-const datasetView = ref(DatasetView.DESCRIPTION);
-
-const csvContent = computed(() => rawContent.value?.csv);
-
-function formatName(name: string) {
-	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
 }
 
 // temporary variable to allow user to click through related publications modal and simulate "getting" enriched data back
@@ -289,6 +370,11 @@ function setSuggestedValue(index: number, suggestedValue: string | undefined) {
 }
 
 const rowEditList = ref<boolean[]>([]);
+
+const openDatesetChatTab = () => {
+	datasetView.value = DatasetView.LLM;
+	jupyterCsv.value = null;
+};
 
 onUpdated(() => {
 	if (dataset.value) {
@@ -308,6 +394,17 @@ onUpdated(() => {
 	}
 });
 
+watch(
+	() => [jupyterCsv.value?.csv],
+	() => {
+		if (jupyterCsv.value?.csv) {
+			oldCsvHeaders.value = newCsvHeader.value;
+			newCsvContent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
+			newCsvHeader.value = jupyterCsv.value.headers;
+		}
+	}
+);
+
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => [props.assetId],
@@ -324,7 +421,6 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
-				console.log(dataset.value);
 			}
 		} else {
 			dataset.value = null;
@@ -348,7 +444,7 @@ watch(
 	background-color: var(--surface-highlight);
 	color: var(--text-color-primary);
 	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
+	border-color: var(--primary-color);
 	border-width: 0px 0px 0px 6px;
 }
 
@@ -388,9 +484,47 @@ watch(
 	max-width: var(--constrain-width);
 }
 
-.layout-topbar {
-	top: 20px;
-	background-color: red;
+main .annotation-group {
+	padding: 0.25rem;
+	border: solid 1px var(--surface-border-light);
+	background-color: var(--gray-50);
+	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	max-width: var(--constrain-width);
+}
+
+.annotation-subheader {
+	font-weight: var(--font-weight-semibold);
+}
+
+.annotation-row {
+	display: flex;
+	flex-direction: row;
+	gap: 3rem;
+}
+
+.tera-dataset-datatable {
+	width: 100%;
+}
+
+.data-transform-container {
+	display: flex;
+	flex-direction: column;
+	padding: 0.5rem;
+	margin: 0.5rem;
+	max-height: 90%;
+}
+
+.kernel-status {
+	margin-right: 10px;
+}
+
+.gpt-header {
+	display: flex;
+	width: 90%;
 }
 
 .variables-table {

@@ -55,9 +55,9 @@
 			<table class="model-biblio">
 				<tr>
 					<th>Framework</th>
-					<th>Model Version</th>
-					<th>Date Created</th>
-					<th>Created By</th>
+					<th>Model version</th>
+					<th>Date created</th>
+					<th>Created by</th>
 					<th>Source</th>
 				</tr>
 				<tr>
@@ -466,9 +466,8 @@ import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-serv
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
-import { addAsset } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
-import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
@@ -511,7 +510,6 @@ const props = defineProps({
 
 const openValueConfig = ref(false);
 const modelView = ref(ModelView.DESCRIPTION);
-const resources = useResourcesStore();
 const router = useRouter();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
@@ -556,8 +554,11 @@ async function duplicateModel() {
 		console.log('Failed to duplicate model.');
 		return;
 	}
-	await addAsset(props.project.id, ProjectAssetTypes.MODELS, duplicateModelResponse.id);
-	// Should probably refresh or emit update?
+	await ProjectService.addAsset(
+		props.project.id,
+		ProjectAssetTypes.MODELS,
+		duplicateModelResponse.id
+	);
 }
 
 /* Model */
@@ -686,7 +687,7 @@ const createNewModel = async () => {
 		if (newModelResp) {
 			const modelId = newModelResp.id.toString();
 			emit('close-current-tab');
-			await addModelToProject(props.project.id, modelId, resources);
+			await addModelToProject(props.project.id, modelId);
 
 			// Go to the model you just created
 			router.push({
@@ -708,6 +709,7 @@ async function updateModelName() {
 		updateModel(modelClone);
 		isRenamingModel.value = false;
 		model.value = await getModel(props.assetId);
+		// FIXME: Names aren't updated in sidebar
 	}
 }
 
