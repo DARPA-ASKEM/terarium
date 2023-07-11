@@ -55,7 +55,7 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-	project: IProject;
+	project?: IProject;
 	assetName?: string;
 	assetId?: string;
 	assetType?: ProjectAssetTypes;

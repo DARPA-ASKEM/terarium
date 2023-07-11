@@ -144,7 +144,7 @@ const confirm = useConfirm();
 
 const props = defineProps<{
 	assetId: string;
-	project: IProject;
+	project?: IProject;
 	dataset: Dataset;
 	showKernels: boolean;
 	showChatThoughts: boolean;
@@ -356,6 +356,10 @@ const updateKernelList = () => {
 };
 
 const onNewDatasetSaved = async (payload) => {
+	if (!props.project) {
+		toast.error('Unable to save dataset', "Can't find active an project");
+		return;
+	}
 	const datasetId = payload.dataset_id;
 	await addAsset(props.project.id, ProjectAssetTypes.DATASETS, datasetId);
 	toast.success(
