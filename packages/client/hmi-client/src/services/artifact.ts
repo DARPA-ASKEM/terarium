@@ -3,6 +3,7 @@ import API from '@/api/api';
 import { ProjectAssetTypes } from '@/types/Project';
 import { addAsset } from '@/services/project';
 import { Ref } from 'vue';
+import { logger } from '@/utils/logger';
 
 /**
  * This is a helper function to take an arbitrary file from a github repo and create a new artifact from it
@@ -41,6 +42,7 @@ async function createNewArtifactFromGithubFile(
 	);
 
 	if (!urlResponse || urlResponse.status >= 400) {
+		logger.error(`Failed to upload artifact from github: ${urlResponse}`);
 		return null;
 	}
 
@@ -127,7 +129,10 @@ async function getArtifactFileAsText(artifactId: string, fileName: string): Prom
 		{}
 	);
 
-	if (!response || response.status >= 400) return null;
+	if (!response || response.status >= 400) {
+		logger.error('Error getting artifact file as text');
+		return null;
+	}
 
 	return response.data;
 }
