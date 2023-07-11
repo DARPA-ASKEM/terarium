@@ -404,7 +404,6 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	//         if a document is selected then find related documents (from xDD)
 	// REVIEW: executing a related content search means to find related artifacts to the one selected:
 	//         if a model/dataset/document is selected then find related artifacts from TDS
-
 	if (searchOptions.similarContent || searchOptions.relatedContent) {
 		isSliderFacetsOpen.value = false;
 		// NOTE the executeSearch will set proper search-by-example search parameters

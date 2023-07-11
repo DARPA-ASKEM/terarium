@@ -5,7 +5,6 @@
 			<template v-else-if="props.searchTerm">
 				{{ resultsText }}
 				<span v-if="resultsStr.length === 0"> "{{ props.searchTerm }}" </span>
-				<!-- TODO: update CSS styles for tera asset card -->
 				<div v-else-if="resultsStr.length > 0" class="search-by-example-card">
 					<tera-asset-card
 						:asset="searchByExampleAssetCardProp"
@@ -54,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType } from 'vue';
+import { ref, computed, PropType, onUnmounted } from 'vue';
 import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
@@ -167,15 +166,17 @@ const optionBoolstoStrs = {
 const resultsStr = computed(() => {
 	let s = '';
 
-	Object.entries(searchByExampleOptions.value).forEach((item) => {
-		const [key, value] = item;
-		if (value) {
-			if (s.length > 0) {
-				s += ', ';
+	if (searchByExampleAssetCardProp.value) {
+		Object.entries(searchByExampleOptions.value).forEach((item) => {
+			const [key, value] = item;
+			if (value) {
+				if (s.length > 0) {
+					s += ', ';
+				}
+				s += optionBoolstoStrs[key];
 			}
-			s += optionBoolstoStrs[key];
-		}
-	});
+		});
+	}
 
 	return s;
 });
@@ -197,6 +198,10 @@ const itemsText = computed(() => {
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
 	return `Showing ${resultsCount.value} ${truncated}item${s}.`;
+});
+
+onUnmounted(() => {
+	searchByExampleAssetCardProp.value = null;
 });
 </script>
 
@@ -272,7 +277,6 @@ ul {
 }
 
 .search-by-example-card {
-	border-radius: 10px;
 	margin-top: 1rem;
 	margin-bottom: 2rem;
 }
