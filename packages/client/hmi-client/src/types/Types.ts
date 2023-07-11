@@ -217,7 +217,7 @@ export interface PetriNetTransition {
     id: string;
     input: string[];
     output: string[];
-    grounding: ModelGrounding;
+    grounding?: ModelGrounding;
     properties: PetriNetTransitionProperties;
 }
 
@@ -303,8 +303,8 @@ export interface ModelExpression {
 
 export interface PetriNetTransitionProperties {
     name: string;
-    grounding: ModelGrounding;
-    rate: ModelExpression;
+    description: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Extraction {

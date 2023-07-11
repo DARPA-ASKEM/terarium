@@ -17,4 +17,12 @@ public interface ModelServiceProxy {
 	Response petrinetToLatex(
 			PetriNet content
 	);
+
+	@POST
+	@Path("/api/stratify")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response stratify(
+			Object baseModel,
+			Object fluModel
+	);
 }

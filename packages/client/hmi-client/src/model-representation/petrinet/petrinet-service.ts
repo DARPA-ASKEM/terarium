@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, Model, PetriNetTransition } from '@/types/Types';
+import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
 
 export interface NodeData {
@@ -231,6 +231,8 @@ export const removeTransition = (amr: Model, id: string) => {
 	}
 };
 
+// Update a transition's expression and expression_mathml fields based on
+// mass-kinetics
 export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
@@ -331,4 +333,34 @@ export const updateTransitioneId = (amr: Model, id: string, newId: string) => {
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
+};
+
+// Replace typing semantics
+export const addTyping = (amr: Model, typing: TypingSemantics) => {
+	if (amr.semantics) {
+		amr.semantics.typing = typing;
+	}
+};
+
+// Add a reflexive transition loop to the state
+export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
+	const model: PetriNetModel = amr.model as PetriNetModel;
+	model.transitions.push({
+		id: reflexiveId,
+		input: [stateId],
+		output: [stateId],
+		grounding: undefined,
+		properties: {
+			name: reflexiveId,
+			description: ''
+		}
+	});
+};
+
+export const mergeMetadata = (amr: Model, amrOld: Model) => {
+	console.log(amr, amrOld);
+};
+
+export const stratify = (baseAMR: Model, fluxAMR: Model) => {
+	console.log(baseAMR, fluxAMR);
 };
