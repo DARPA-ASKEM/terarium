@@ -136,7 +136,7 @@ import { useConfirm } from 'primevue/useconfirm';
 // import { createNewDataset } from '@/services/dataset';
 
 // const jupyterSession = ref(<SessionContext>newSession('llmkernel', 'ChattyNode'));
-const jupyterSession: SessionContext = newSession('llmkernel', 'ChattyNode');
+const jupyterSession: SessionContext = await newSession('llmkernel', 'ChattyNode');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 

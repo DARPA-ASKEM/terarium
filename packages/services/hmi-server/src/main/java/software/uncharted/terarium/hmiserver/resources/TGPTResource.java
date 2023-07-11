@@ -18,9 +18,6 @@ public class TGPTResource {
 	@Inject
 	ObjectMapper mapper;
 
-	@ConfigProperty(name = "tgpt.api_key")
-	Optional<String> key;
-
 	@ConfigProperty(name = "tgpt.baseUrl", defaultValue = "/chatty/")
 	String baseUrl;
 

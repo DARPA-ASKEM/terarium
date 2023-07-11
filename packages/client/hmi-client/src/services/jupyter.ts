@@ -14,7 +14,6 @@ import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
-import { onMounted } from 'vue';
 import API from '@/api/api';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
@@ -137,8 +136,9 @@ export const getSessionManager = () => sessionManager;
 export const mimeService = new CodeMirrorMimeTypeService();
 
 export const renderMime = new RenderMimeRegistry({ initialFactories });
-onMounted(async () => {
-	const settingsResponse = await API.get('/tgpt/settings');
+
+export const newSession = async (kernelName: string, name: string) => {
+	const settingsResponse = await API.get('/tgpt/configuration');
 	const settings = settingsResponse.data;
 	ServerConnection.makeSettings(settings);
 	kernelManager = new KernelManager({
@@ -151,9 +151,6 @@ onMounted(async () => {
 	specsManager = new KernelSpecManager({
 		serverSettings
 	});
-});
-
-export const newSession = (kernelName: string, name: string) => {
 	const sessionContext = new SessionContext({
 		sessionManager,
 		specsManager,
