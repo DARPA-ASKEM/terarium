@@ -207,8 +207,6 @@ import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
-import * as ProjectService from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
@@ -320,8 +318,7 @@ async function updateWorkflowName() {
 	workflowService.updateWorkflow(workflowClone);
 	isRenamingWorkflow.value = false;
 	wf.value = await workflowService.getWorkflow(props.assetId);
-	// FIXME: This should update names in sidebar
-	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+	// FIXME: Names aren't updated in sidebar
 }
 
 async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {

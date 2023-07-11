@@ -2,16 +2,16 @@
 	<tera-asset
 		:name="project?.name"
 		:authors="project?.username"
+		:is-naming-asset="isRenamingProject"
 		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
 		is-editable
 		class="overview-banner"
 	>
 		<template #name-input>
 			<InputText
-				v-if="isEditingProject"
+				v-if="isRenamingProject"
 				v-model="newProjectName"
 				ref="inputElement"
-				class="project-name-input"
 				@keyup.enter="updateProjectName"
 			/>
 		</template>
@@ -202,7 +202,7 @@ import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Projec
 import { nextTick, Ref, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
-import { update as updateProject } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -222,7 +222,6 @@ import { CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
-import * as ProjectService from '@/services/project';
 import { uploadArtifactToProject } from '@/services/artifact';
 
 const props = defineProps<{
@@ -230,8 +229,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['open-workflow', 'open-asset']);
 const router = useRouter();
-const resources = useResourcesStore();
-const isEditingProject = ref(false);
+const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 const progress: Ref<number> = ref(0);
@@ -375,8 +373,10 @@ async function importCompleted(
 			logger.error('Failed to upload file. Is it too large?', { showToast: true });
 		}
 		results.value = null;
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 		isUploadResourcesModalVisible.value = false;
+
+		// TODO: See about getting rid of this
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
 	}
@@ -384,20 +384,17 @@ async function importCompleted(
 
 async function editProject() {
 	newProjectName.value = props.project.name;
-	isEditingProject.value = true;
+	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
 
 async function updateProjectName() {
-	isEditingProject.value = false;
+	isRenamingProject.value = false;
 	const updatedProject = props.project;
 	updatedProject.name = newProjectName.value;
-	const id = await updateProject(updatedProject);
-	if (id) {
-		resources.setActiveProject(updatedProject);
-	}
+	await ProjectService.update(updatedProject);
 }
 
 const projectMenu = ref();
@@ -534,7 +531,6 @@ h3 {
 	padding: 0 0 0 1rem;
 	margin-left: -1rem;
 	border: 0;
-	visibility: hidden;
 	width: 33%;
 }
 

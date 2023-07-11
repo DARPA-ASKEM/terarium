@@ -538,7 +538,6 @@ async function duplicateModel() {
 		ProjectAssetTypes.MODELS,
 		duplicateModelResponse.id
 	);
-	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 }
 
 /* Model */
@@ -686,8 +685,7 @@ async function updateModelName() {
 		updateModel(modelClone);
 		isRenamingModel.value = false;
 		model.value = await getModel(props.assetId);
-		// FIXME: This should update names in sidebar
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		// FIXME: Names aren't updated in sidebar
 	}
 }
 

@@ -40,8 +40,6 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 const resources = useResourcesStore();
 
-const validProject = computed(() => resources.activeProject);
-
 const projectsList = ref<IProject[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
@@ -56,7 +54,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 	// first, insert into the proper table/collection
 	const res = await addDocuments(body);
-	if (res && validProject.value) {
+	if (res && resources.activeProject) {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
@@ -65,10 +63,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 		// update local copy of project assets
 		// @ts-ignore
-		validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
-		resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(body);
-
-		useResourcesStore().setActiveProject(await ProjectService.get(validProject.value.id, true));
+		resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId, body);
 	}
 };
 
@@ -81,8 +76,8 @@ const addAssetsToProject = async (projectName) => {
 		const project = projectsList.value.find((p) => p.name === projectName.value);
 		projectId = project?.id as string;
 	} else {
-		if (!validProject.value) return;
-		projectId = validProject.value.id;
+		if (!resources.activeProject) return;
+		projectId = resources.activeProject.id;
 	}
 
 	addResourcesToProject(projectId);

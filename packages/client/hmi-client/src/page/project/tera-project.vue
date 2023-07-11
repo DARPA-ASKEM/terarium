@@ -245,7 +245,6 @@ import TeraCalibration from '@/components/workflow/tera-calibration.vue';
 import TeraSimulate from '@/components/workflow/tera-simulate.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import { workflowEventBus } from '@/services/workflow';
-import useResourcesStore from '@/stores/resources';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -405,7 +404,6 @@ async function removeAsset(asset: Tab) {
 		);
 
 		if (isRemoved) {
-			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isEqual(tab, asset)));
 			logger.info(`${assetName} was removed.`, { showToast: true });
 			return;

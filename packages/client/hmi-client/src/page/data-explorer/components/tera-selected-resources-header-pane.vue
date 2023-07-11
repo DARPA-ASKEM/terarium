@@ -46,8 +46,6 @@ const props = defineProps({
 const emit = defineEmits(['close', 'clear-selected']);
 const resources = useResourcesStore();
 
-const validProject = computed(() => resources.activeProject);
-
 const projectsList = ref<IProject[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
@@ -64,19 +62,16 @@ const addResourcesToProject = async (projectId: string) => {
 
 			// first, insert into the proper table/collection
 			const res = await addDocuments(body);
-			if (res && validProject.value) {
+			if (res && resources) {
 				const documentId = res.id;
 
 				// then, link and store in the project assets
 				const assetsType = ProjectAssetTypes.DOCUMENTS;
 				await ProjectService.addAsset(projectId, assetsType, documentId);
 
-				// update local copy of project assets - may not be needed now
+				// update local copy of project assets
 				// @ts-ignore
-				validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
-				resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(body);
-
-				useResourcesStore().setActiveProject(await ProjectService.get(validProject.value.id, true));
+				resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId, body);
 			}
 		}
 		if (isModel(selectedItem)) {
@@ -88,8 +83,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 			// update local copy of project assets
 			// @ts-ignore
-			validProject.value?.assets.models.push(modelId);
-			resources.activeProject?.assets?.[ProjectAssetTypes.MODELS].push(selectedItem);
+			resources.activeProject?.assets?.[ProjectAssetTypes.MODELS].push(modelId, selectedItem);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
@@ -100,8 +94,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 			// update local copy of project assets
 			// @ts-ignore
-			validProject.value?.assets.datasets.push(datasetId);
-			resources.activeProject?.assets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
+			resources.activeProject?.assets?.[ProjectAssetTypes.DATASETS].push(datasetId, selectedItem);
 		}
 	});
 };
@@ -114,8 +107,8 @@ const addAssetsToProject = async (projectName) => {
 		const project = projectsList.value.find((p) => p.name === projectName.value);
 		projectId = project?.id as string;
 	} else {
-		if (!validProject.value) return;
-		projectId = validProject.value.id;
+		if (!resources.activeProject) return;
+		projectId = resources.activeProject.id;
 	}
 
 	addResourcesToProject(projectId);

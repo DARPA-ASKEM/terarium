@@ -76,7 +76,6 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
 import * as ProjectService from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import { getArtifactFileAsText } from '@/services/artifact';
 
 const props = defineProps<{
@@ -120,7 +119,6 @@ const openWorkflow = async () => {
 		ProjectAssetTypes.SIMULATION_WORKFLOW,
 		workflowId
 	);
-	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 
 	router.push({
 		name: RouteName.ProjectRoute,
