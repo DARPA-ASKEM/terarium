@@ -385,7 +385,17 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
-		this.setToDefaultZoom();
+		if (this.options.useStableZoomPan && this.zoomTransformObject) {
+			const zoomLevel = this.zoomTransformObject.k;
+			const zoomX = this.zoomTransformObject.x / zoomLevel;
+			const zoomY = this.zoomTransformObject.y / zoomLevel;
+			svg.call(
+				this.zoom.transform,
+				d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(zoomX, zoomY)
+			);
+		} else {
+			this.setToDefaultZoom();
+		}
 	}
 
 	setToDefaultZoom() {
