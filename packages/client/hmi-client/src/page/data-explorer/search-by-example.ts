@@ -8,8 +8,9 @@ const searchByExampleOptions = ref<SearchByExampleOptions>({
 	relatedContent: false
 });
 const searchByExampleItem = ref<ResultType | null>(null);
+const searchByExampleAssetCardProp = ref();
 export function useSearchByExampleOptions() {
-	return { searchByExampleOptions, searchByExampleItem };
+	return { searchByExampleOptions, searchByExampleItem, searchByExampleAssetCardProp };
 }
 
 export function extractResourceName(resource): string {

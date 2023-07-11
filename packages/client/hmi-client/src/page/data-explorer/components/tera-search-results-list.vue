@@ -6,11 +6,12 @@
 				{{ resultsText }}
 				<span v-if="resultsStr.length === 0"> "{{ props.searchTerm }}" </span>
 				<!-- TODO: update CSS styles for tera asset card -->
-				<tera-asset-card
-					v-else-if="resultsStr.length > 0"
-					:asset="(searchByExampleAsset as ResultType)"
-					:resource-type="(resultType as ResourceType)"
-				/>
+				<div v-else-if="resultsStr.length > 0" class="search-by-example-card">
+					<tera-asset-card
+						:asset="searchByExampleAssetCardProp"
+						:resource-type="(resultType as ResourceType)"
+					/>
+				</div>
 			</template>
 			<template v-else>{{ itemsText }} </template>
 		</span>
@@ -56,11 +57,14 @@
 import { ref, computed, PropType } from 'vue';
 import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import useQueryStore from '@/stores/query';
-import { SearchResults, ResourceType, ResultType, SearchByExampleOptions } from '@/types/common';
+import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
+import { useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
 import TeraSearchItem from './tera-search-item.vue';
+
+const { searchByExampleOptions, searchByExampleAssetCardProp } = useSearchByExampleOptions();
 
 const props = defineProps({
 	dataItems: {
@@ -90,14 +94,6 @@ const props = defineProps({
 	docCount: {
 		type: Number,
 		default: 0
-	},
-	searchOptions: {
-		type: Object as PropType<SearchByExampleOptions>,
-		default: () => {}
-	},
-	searchByExampleAsset: {
-		type: Object,
-		default: null
 	}
 });
 
@@ -171,7 +167,7 @@ const optionBoolstoStrs = {
 const resultsStr = computed(() => {
 	let s = '';
 
-	Object.entries(props.searchOptions).forEach((item) => {
+	Object.entries(searchByExampleOptions.value).forEach((item) => {
 		const [key, value] = item;
 		if (value) {
 			if (s.length > 0) {
@@ -273,5 +269,11 @@ ul {
 
 .search-container {
 	overflow-y: auto;
+}
+
+.search-by-example-card {
+	border-radius: 10px;
+	margin-top: 1rem;
+	margin-bottom: 2rem;
 }
 </style>

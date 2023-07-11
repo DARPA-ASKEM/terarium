@@ -157,7 +157,8 @@ const selectedSearchByExampleOptions = ref<SearchByExampleOptions>({
 	backwardCitation: false,
 	relatedContent: false
 });
-const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
+const { searchByExampleOptions, searchByExampleItem, searchByExampleAssetCardProp } =
+	useSearchByExampleOptions();
 
 function clearQuery() {
 	query.value = '';
@@ -173,6 +174,11 @@ const initiateSearch = () => {
 function initiateSearchByExample() {
 	searchByExampleOptions.value = { ...selectedSearchByExampleOptions.value };
 	searchByExampleToggle.value = false;
+
+	// used in order to update the "showing x of y results with ... to <Asset Card>"
+	// section after a search by example is initiated
+	searchByExampleAssetCardProp.value = { ...searchByExampleItem.value };
+	// used to update the search bar text with the name of the search by example asset
 	query.value = extractResourceName(searchByExampleItem.value);
 }
 
