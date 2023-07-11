@@ -40,9 +40,6 @@ public class DatasetColumn {
 	@TSOptional
 	private Grounding grounding;
 
-	@TSOptional
-	private String description;
-
 	enum ColumnType {
 		@JsonAlias("unknown")
 		UNKNOWN,
