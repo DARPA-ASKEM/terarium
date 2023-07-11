@@ -2,14 +2,14 @@
 	<p v-for="extraction in extractions" :key="extraction.payload.id.id">
 		<template v-if="extraction.payload?.names">
 			<em>Name</em>
-			{{ extraction.payload.names.map((n) => n.name).join(', ') }}
+			<span>{{ extraction.payload.names.map((n) => n.name).join(', ') }}</span>
 		</template>
 		<template v-if="extraction.payload?.descriptions">
-			<em>Descriptions: </em>
+			<em>Descriptions</em>
 			{{ extraction.payload.descriptions }}
 		</template>
 		<template v-if="extraction.payload?.groundings">
-			<em>Concept: </em>
+			<em>Concept</em>
 			<a
 				v-for="(grounding, index) in extraction.payload.groundings"
 				:key="index"
@@ -22,11 +22,9 @@
 		</template>
 		<template v-if="extraction.payload?.value_specs">
 			<em>Values</em>
-			<ul>
-				<li v-for="value in extraction.payload.value_specs" :key="value.id.id">
-					{{ value }}
-				</li>
-			</ul>
+			<span v-for="value in extraction.payload.value_specs" :key="value.id.id">
+				{{ value }}
+			</span>
 		</template>
 	</p>
 </template>
@@ -39,3 +37,18 @@ defineProps({
 	}
 });
 </script>
+
+<style scoped>
+p {
+	margin: 1rem;
+}
+
+em {
+	display: inline-block;
+	font-weight: var(--font-weight-semibold);
+}
+
+em + * {
+	margin: 0 0.5rem;
+}
+</style>
