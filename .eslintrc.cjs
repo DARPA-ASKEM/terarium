@@ -21,7 +21,6 @@ module.exports = {
 		'prefer-destructuring': 'off',
 		'vuejs-accessibility/click-events-have-key-events': 'off',
 		'vuejs-accessibility/label-has-for': 'off',
-		'vuejs-accessibility/form-control-has-label': 'off',
 		'vue/multi-word-component-names': 'off',
 		'import/prefer-default-export': 'off'
 	},
