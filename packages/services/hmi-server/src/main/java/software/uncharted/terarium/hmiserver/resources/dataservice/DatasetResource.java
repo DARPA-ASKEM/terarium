@@ -48,6 +48,7 @@ import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 @Slf4j
 public class DatasetResource extends DataStorageResource implements SnakeCaseResource {
 	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
+	private static final int DEFAULT_CSV_LIMIT = 10;
 
 	@ConfigProperty(name = "aws.bucket")
 	Optional<String> bucket;
@@ -219,8 +220,9 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@Path("/{datasetId}/downloadCSV")
 	public Response getCsv(
 		@PathParam("datasetId") final String datasetId,
-		@QueryParam("filename") final String filename
-	) {
+		@QueryParam("filename") final String filename,
+		@QueryParam(value = "limit") final Integer limit		// -1 means no limit
+	) throws IOException {
 
 		log.debug("Getting CSV content");
 
@@ -246,11 +248,22 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		ResponseInputStream<GetObjectResponse> s3objectResponse = client
 			.getObject(request);
 
-		String csvString = new BufferedReader(new InputStreamReader(s3objectResponse))
-			.lines()
-			.collect(Collectors.joining("\n"));
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(s3objectResponse));
 
-		List<List<String>> csv = csvToRecords(csvString);
+		// Read the specified amount of lines, or the default (including the header)
+		String line;
+		final StringBuilder csvStringBuilder = new StringBuilder();
+		long lineCount = 0;
+		final long linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
+		while ((line = reader.readLine()) != null) {
+			csvStringBuilder.append(line);
+			lineCount++;
+			if (linesToRead != -1 && lineCount >= linesToRead) {
+				break;
+			}
+		}
+
+		List<List<String>> csv = csvToRecords(csvStringBuilder.toString());
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
 		for (int i = 0; i < csv.get(0).size(); i++){
