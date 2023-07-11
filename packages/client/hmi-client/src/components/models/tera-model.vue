@@ -623,6 +623,7 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
