@@ -51,6 +51,7 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 @Slf4j
 public class DatasetResource {
 	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
+	private static final int DEFAULT_CSV_LIMIT = 10;
 
 	@ConfigProperty(name = "aws.bucket")
 	Optional<String> bucket;
@@ -222,7 +223,8 @@ public class DatasetResource {
 	@Path("/{datasetId}/downloadCSV")
 	public Response getCsv(
 		@PathParam("datasetId") final String datasetId,
-		@QueryParam("filename") final String filename
+		@QueryParam("filename") final String filename,
+		@QueryParam(value = "limit") final Integer limit
 	) throws IOException {
 
 		log.debug("Getting CSV content");
@@ -251,11 +253,12 @@ public class DatasetResource {
 
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(s3objectResponse));
 
-		// Read the first 10 lines of the file including the header
+		// Read the specified amount of lines, or the default (including the header)
 		String line;
 		final StringBuilder csvStringBuilder = new StringBuilder();
 		int lineCount = 0;
-		while ((line = reader.readLine()) != null && lineCount <= 10) {
+		final int linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
+		while ((line = reader.readLine()) != null && lineCount <= linesToRead) {
 			csvStringBuilder.append(line);
 			lineCount++;
 		}
