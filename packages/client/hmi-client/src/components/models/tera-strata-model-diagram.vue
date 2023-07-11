@@ -106,11 +106,12 @@ import {
 import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model, TypeSystem } from '@/types/Types';
+import { Model, Transition, TypeSystem } from '@/types/Types';
 import { strataTypeColors } from '@/utils/color-schemes';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
+import { generateTypeTransition } from '@/services/models/stratification-service';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -128,7 +129,7 @@ const props = defineProps<{
 	typeSystem?: TypeSystem;
 }>();
 
-const typedModel = ref<Model>();
+const typedModel = ref<Model>(props.model);
 
 const newModelName = ref('New Model');
 
@@ -288,14 +289,29 @@ watch(
 				});
 			}
 		});
+		// const typingSemantics: TypingSemantics = { type_map: stateTypedMap, type_system: typeSystem };
+		// addTyping(typedModel.value, typingSemantics);
+
 		transitionTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
 			// If not, generate a new one
-			const transition = props.typeSystem?.transitions.find((t) => map[1] === t.id);
+			const transitionId = map[0];
+			const typeId = map[1];
+			let transition: Transition | undefined | null;
+			transition = props.typeSystem?.transitions.find((t) => map[1] === t.id);
 			if (transition) {
 				typeSystem.transitions.push(transition);
 			} else {
-				// TODO: generate Transition data structure and infer types of inputs/outputs
+				transition = generateTypeTransition(typedModel.value, transitionId, typeId);
+				if (transition) {
+					typeSystem.transitions.push({
+						...transition,
+						properties: {
+							name: typeId,
+							description: typeId
+						}
+					});
+				}
 			}
 		});
 		// const typeMap: string[][] = {...stateTypedMap, ...transitionTypedMap}
@@ -304,39 +320,6 @@ watch(
 	},
 	{ deep: true }
 );
-
-const editorKeyHandler = (event: KeyboardEvent) => {
-	// Ignore backspace if the current focus is a text/input box
-	if ((event.target as HTMLElement).tagName === 'INPUT') {
-		return;
-	}
-
-	if (event.key === 'Backspace' && renderer) {
-		if (renderer && renderer.nodeSelection) {
-			const nodeData = renderer.nodeSelection.datum();
-			renderer.removeNode(nodeData.id);
-		}
-
-		if (renderer && renderer.edgeSelection) {
-			const edgeData = renderer.edgeSelection.datum();
-			renderer.removeEdge(edgeData.source, edgeData.target);
-		}
-	}
-	if (event.key === 'Enter' && renderer) {
-		if (renderer.nodeSelection) {
-			renderer.deselectNode(renderer.nodeSelection);
-			renderer.nodeSelection
-				.selectAll('.no-drag')
-				.style('opacity', 0)
-				.style('visibility', 'hidden');
-			renderer.nodeSelection = null;
-		}
-		if (renderer.edgeSelection) {
-			renderer.deselectEdge(renderer.edgeSelection);
-			renderer.edgeSelection = null;
-		}
-	}
-};
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
@@ -371,14 +354,6 @@ watch(
 	},
 	{ deep: true }
 );
-
-onMounted(async () => {
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
 </script>
 
 <style scoped>

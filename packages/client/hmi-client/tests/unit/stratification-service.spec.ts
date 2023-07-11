@@ -95,13 +95,13 @@ describe('test generate age strata model', () => {
 						],
 						transitions: [
 							{
-								id: 'Strata',
-								input: ['Pop'],
-								output: ['Pop'],
+								id: 'Infect',
+								input: ['Pop', 'Pop'],
+								output: ['Pop', 'Pop'],
 								properties: {
-									name: 'Strata',
+									name: 'Infect',
 									description:
-										'1-to-1 process that represents a change in the demographic division of a human individual.'
+										'2-to-2 interaction that represents infectious contact between two human individuals.'
 								}
 							}
 						]
