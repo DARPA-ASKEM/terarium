@@ -190,9 +190,7 @@ import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
-import useResourcesStore from '@/stores/resources';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
-import * as ProjectService from '@/services/project';
 
 const props = defineProps<{
 	urlString: string;
@@ -297,8 +295,7 @@ async function openSelectedFiles() {
 		await importDocumentFiles(selectedDocumentFiles);
 	}
 
-	if (props.project)
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project?.id, true));
+	// FIXME: Files aren't opening
 	isModalVisible.value = false;
 }
 
