@@ -231,6 +231,8 @@ export const removeTransition = (amr: Model, id: string) => {
 	}
 };
 
+// Update a transition's expression and expression_mathml fields based on
+// mass-kinetics
 export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
@@ -331,4 +333,20 @@ export const updateTransitioneId = (amr: Model, id: string, newId: string) => {
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
+};
+
+export const addTyping = (amr: Model, typing: any) => {
+	console.log(amr, typing);
+};
+
+export const addReflexives = (amr: Model, stateId: string) => {
+	console.log(amr, stateId);
+};
+
+export const mergeMetadata = (amr: Model, amrOld: Model) => {
+	console.log(amr, amrOld);
+};
+
+export const stratify = (baseAMR: Model, fluxAMR: Model) => {
+	console.log(baseAMR, fluxAMR);
 };
