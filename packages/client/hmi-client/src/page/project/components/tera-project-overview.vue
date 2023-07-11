@@ -375,7 +375,7 @@ async function importCompleted(
 		results.value = null;
 		isUploadResourcesModalVisible.value = false;
 
-		// TODO: See about getting rid of this
+		// TODO: See about getting rid of this - this refresh should preferably be within a service
 		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
