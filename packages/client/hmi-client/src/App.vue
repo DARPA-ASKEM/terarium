@@ -174,7 +174,7 @@ watch(
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 resourcesStore.$subscribe((mutation, state) => {
 	project.value = state.activeProject;
-	console.log(project.value, resourcesStore);
+	console.log('update:', project.value, resourcesStore);
 });
 
 const isAboutModalVisible = ref(false);

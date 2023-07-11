@@ -56,7 +56,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 	// first, insert into the proper table/collection
 	const res = await addDocuments(body);
-	if (res) {
+	if (res && validProject.value) {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
@@ -66,7 +66,9 @@ const addResourcesToProject = async (projectId: string) => {
 		// update local copy of project assets
 		// @ts-ignore
 		validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
-		resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
+		resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(body);
+
+		useResourcesStore().setActiveProject(await ProjectService.get(validProject.value.id, true));
 	}
 };
 

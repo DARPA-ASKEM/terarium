@@ -444,7 +444,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
-import { addAsset } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
@@ -533,8 +533,12 @@ async function duplicateModel() {
 		console.log('Failed to duplicate model.');
 		return;
 	}
-	await addAsset(props.project.id, ProjectAssetTypes.MODELS, duplicateModelResponse.id);
-	// Should probably refresh or emit update?
+	await ProjectService.addAsset(
+		props.project.id,
+		ProjectAssetTypes.MODELS,
+		duplicateModelResponse.id
+	);
+	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 }
 
 /* Model */

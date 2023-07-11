@@ -64,17 +64,19 @@ const addResourcesToProject = async (projectId: string) => {
 
 			// first, insert into the proper table/collection
 			const res = await addDocuments(body);
-			if (res) {
+			if (res && validProject.value) {
 				const documentId = res.id;
 
 				// then, link and store in the project assets
 				const assetsType = ProjectAssetTypes.DOCUMENTS;
 				await ProjectService.addAsset(projectId, assetsType, documentId);
 
-				// update local copy of project assets
+				// update local copy of project assets - may not be needed now
 				// @ts-ignore
 				validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
-				resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
+				resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(body);
+
+				useResourcesStore().setActiveProject(await ProjectService.get(validProject.value.id, true));
 			}
 		}
 		if (isModel(selectedItem)) {
@@ -87,7 +89,7 @@ const addResourcesToProject = async (projectId: string) => {
 			// update local copy of project assets
 			// @ts-ignore
 			validProject.value?.assets.models.push(modelId);
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(selectedItem);
+			resources.activeProject?.assets?.[ProjectAssetTypes.MODELS].push(selectedItem);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
@@ -99,7 +101,7 @@ const addResourcesToProject = async (projectId: string) => {
 			// update local copy of project assets
 			// @ts-ignore
 			validProject.value?.assets.datasets.push(datasetId);
-			resources.activeProjectAssets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
+			resources.activeProject?.assets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
 		}
 	});
 };

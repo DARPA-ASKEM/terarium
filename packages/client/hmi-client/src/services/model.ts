@@ -62,7 +62,7 @@ export async function addModelToProject(
 	if (resp) {
 		const model = await getModel(assetId);
 		if (model) {
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+			resources.activeProject?.assets?.[ProjectAssetTypes.MODELS].push(model);
 		} else {
 			logger.warn(`Unable to find model id: ${assetId}`);
 		}
