@@ -55,8 +55,16 @@
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION"
 					:node="workflowNode"
 				/>
-				<tera-simulate
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE"
+				<tera-simulate-julia
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA
+					"
+					:node="workflowNode"
+				/>
+				<tera-simulate-ciemss
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
+					"
 					:node="workflowNode"
 				/>
 				<tera-stratify
@@ -242,7 +250,8 @@ import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
-import TeraSimulate from '@/components/workflow/tera-simulate.vue';
+import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
+import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import { workflowEventBus } from '@/services/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';

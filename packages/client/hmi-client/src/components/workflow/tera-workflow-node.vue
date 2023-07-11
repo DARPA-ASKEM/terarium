@@ -164,7 +164,7 @@ const VIRIDIS_14 = [
 ];
 const getInputLabelColor = (edgeIdx: number) => {
 	const numRuns = props.node.inputs[0].value?.length ?? 0;
-	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE
+	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE_JULIA
 		? VIRIDIS_14[Math.floor((edgeIdx / numRuns) * VIRIDIS_14.length)]
 		: 'inherit';
 };

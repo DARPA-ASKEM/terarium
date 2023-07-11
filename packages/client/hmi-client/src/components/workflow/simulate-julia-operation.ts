@@ -7,8 +7,8 @@ export interface SimulateOperationState {
 	currentTimespan: TimeSpan;
 }
 
-export const SimulateOperation: Operation = {
-	name: WorkflowOperationTypes.SIMULATE,
+export const SimulateJuliaOperation: Operation = {
+	name: WorkflowOperationTypes.SIMULATE_JULIA,
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
 	outputs: [{ type: 'simOutput' }],

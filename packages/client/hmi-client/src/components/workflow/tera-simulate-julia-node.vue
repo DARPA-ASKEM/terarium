@@ -31,7 +31,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperation, SimulateOperationState } from './simulate-operation';
+import { SimulateJuliaOperation, SimulateOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -115,7 +115,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
-		type: SimulateOperation.outputs[0].type,
+		type: SimulateJuliaOperation.outputs[0].type,
 		label: `${port.label} Results`,
 		value: runIdList
 	});
@@ -146,6 +146,7 @@ watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true }
 
 onMounted(async () => {
 	const node = props.node;
+	console.log(node);
 	if (!node) return;
 
 	const port = node.outputs[0];

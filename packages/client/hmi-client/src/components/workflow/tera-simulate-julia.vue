@@ -110,7 +110,7 @@ import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperationState } from './simulate-operation';
+import { SimulateOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
