@@ -190,6 +190,7 @@ import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
+import useResourcesStore from '@/stores/resources';
 
 const props = defineProps<{
 	urlString: string;
@@ -197,7 +198,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const emit = defineEmits(['open-code', 'update-project']);
+const emit = defineEmits(['open-code']);
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -292,7 +293,7 @@ async function openSelectedFiles() {
 		await openDocumentFiles(selectedDocumentFiles);
 	} */
 
-	emit('update-project', props.project?.id);
+	useResourcesStore().setActiveProject(await ProjectService.get(props.project?.id, true));
 	isModalVisible.value = false;
 }
 
@@ -417,6 +418,7 @@ ul li:hover {
 .file-checkboxes {
 	margin-left: 10px;
 }
+
 .t {
 	display: flex;
 	flex-direction: column;

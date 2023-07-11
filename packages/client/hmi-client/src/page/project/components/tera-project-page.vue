@@ -20,7 +20,6 @@
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
-		@update-project="updateProject"
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
@@ -37,7 +36,6 @@
 			:project="project"
 			is-editable
 			@open-code="openCode"
-			@update-project="updateProject"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
@@ -80,13 +78,7 @@ const props = defineProps<{
 	activeTabIndex?: number;
 }>();
 
-const emit = defineEmits([
-	'update:tabs',
-	'asset-loaded',
-	'update-tab-name',
-	'close-current-tab',
-	'update-project'
-]);
+const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
 
 const router = useRouter();
 
@@ -120,8 +112,6 @@ const openWorkflow = async () => {
 	);
 	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 
-	emit('update-project', props.project.id);
-
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
@@ -131,10 +121,6 @@ const openWorkflow = async () => {
 		}
 	});
 };
-
-function updateProject(id: IProject['id']) {
-	emit('update-project', id);
-}
 
 const openOverview = () => {
 	router.push({

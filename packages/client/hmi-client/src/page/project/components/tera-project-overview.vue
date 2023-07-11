@@ -220,11 +220,12 @@ import { CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
+import * as ProjectService from '@/services/project';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'update-project', 'open-asset']);
+const emit = defineEmits(['open-workflow', 'open-asset']);
 const router = useRouter();
 const resources = useResourcesStore();
 const isEditingProject = ref(false);
@@ -345,7 +346,7 @@ async function openImportModal() {
 	results.value = null;
 }
 
-function importCompleted(
+async function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
 	// This is a hacky override for dealing with CSVs
@@ -354,7 +355,7 @@ function importCompleted(
 			logger.error('Failed to upload CSV. Is it too large?', { showToast: true });
 		}
 		results.value = null;
-		emit('update-project', props.project.id);
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 		isUploadResourcesModalVisible.value = false;
 	} else {
 		results.value = newResults;

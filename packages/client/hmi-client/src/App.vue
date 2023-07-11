@@ -13,13 +13,7 @@
 	/>
 	<main>
 		<router-view v-slot="{ Component }">
-			<component
-				class="page"
-				ref="pageRef"
-				:is="Component"
-				:project="project"
-				@update-project="fetchProject"
-			/>
+			<component class="page" ref="pageRef" :is="Component" :project="project" />
 		</router-view>
 	</main>
 	<footer class="footer">
@@ -146,12 +140,8 @@ API.interceptors.response.use(
 
 async function fetchProject(id: IProject['id']) {
 	resourcesStore.reset();
-
-	// fetch project metadata
-	project.value = await ProjectService.get(id, true);
-
 	// fetch basic metadata about project assets and save them into a global store/cache
-	resourcesStore.setActiveProject(project.value);
+	resourcesStore.setActiveProject(await ProjectService.get(id, true));
 }
 
 watch(
@@ -170,11 +160,11 @@ watch(
 	{ immediate: true }
 );
 
+// This is crucial - every time the resource store is modified the project prop will be updated to match it
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 resourcesStore.$subscribe((mutation, state) => {
 	project.value = state.activeProject;
-	console.log('update:', project.value, resourcesStore);
 });
 
 const isAboutModalVisible = ref(false);
