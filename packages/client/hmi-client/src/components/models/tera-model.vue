@@ -685,6 +685,8 @@ async function updateModelName() {
 		updateModel(modelClone);
 		isRenamingModel.value = false;
 		model.value = await getModel(props.assetId);
+		// FIXME: This should update names in sidebar
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	}
 }
 
