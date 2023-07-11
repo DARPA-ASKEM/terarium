@@ -1,5 +1,6 @@
-import { DocumentAsset, Document, Dataset, Model } from '@/types/Types';
+import { DocumentAsset, Document, Dataset, Model, Artifact } from '@/types/Types';
 
+// TODO: this should be an enum driven by our back end.
 export enum ProjectAssetTypes {
 	DOCUMENTS = 'publications',
 	MODELS = 'models',
@@ -8,7 +9,8 @@ export enum ProjectAssetTypes {
 	SIMULATION_RUNS = 'simulation_runs',
 	SIMULATION_WORKFLOW = 'workflows',
 	DATASETS = 'datasets',
-	CODE = 'code'
+	CODE = 'code',
+	ARTIFACTS = 'artifacts'
 }
 
 export enum ProjectPages {
@@ -28,6 +30,7 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.DATASETS]: Dataset[];
 	[ProjectAssetTypes.CODE]: any[];
+	[ProjectAssetTypes.ARTIFACTS]: Artifact[];
 };
 
 export interface IProject {
