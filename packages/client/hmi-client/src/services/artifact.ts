@@ -73,7 +73,7 @@ async function uploadArtifactToProject(
 	const newArtifact: Artifact | null = await createNewArtifact(artifact);
 	if (!newArtifact || !newArtifact.id) return null;
 
-	const successfulUpload = await addFileToArtifact(newArtifact.id, file);
+	const successfulUpload = await addFileToArtifact(newArtifact.id, file, progress);
 	if (!successfulUpload) return null;
 
 	return addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
@@ -94,7 +94,11 @@ async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
  * @param artifactId the artifact to add the file to
  * @param file the file to upload
  */
-async function addFileToArtifact(artifactId: string, file: File): Promise<boolean> {
+async function addFileToArtifact(
+	artifactId: string,
+	file: File,
+	progress: Ref<number>
+): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('file', file);
 
@@ -104,7 +108,14 @@ async function addFileToArtifact(artifactId: string, file: File): Promise<boolea
 		},
 		headers: {
 			'Content-Type': 'multipart/form-data'
-		}
+		},
+		onUploadProgress(progressEvent) {
+			progress.value = Math.min(
+				90,
+				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
+			);
+		},
+		timeout: 30000
 	});
 
 	return response && response.status < 400;
