@@ -246,6 +246,8 @@ import TeraCalibration from '@/components/workflow/tera-calibration.vue';
 import TeraSimulate from '@/components/workflow/tera-simulate.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import { workflowEventBus } from '@/services/workflow';
+import { PresignedURL } from '@/types/Types';
+import { getPresignedDownloadURL } from '@/services/artifact';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -373,10 +375,13 @@ function updateProject(id: IProject['id']) {
 	emit('update-project', id);
 }
 
-function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
+async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (
+	if (asset && asset.assetId && asset.assetName.toLowerCase().endsWith('.pdf')) {
+		const url: PresignedURL | null = await getPresignedDownloadURL(asset.assetId, asset.assetName);
+		if (url) window.open(url.url, '_blank');
+	} else if (
 		!(
 			asset &&
 			asset.assetId === props.assetId &&

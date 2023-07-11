@@ -16,7 +16,7 @@
 		"
 	/>
 	<code-editor
-		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS"
+		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && !assetName?.endsWith('.pdf')"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');

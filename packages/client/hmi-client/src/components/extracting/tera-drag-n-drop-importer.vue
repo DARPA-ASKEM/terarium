@@ -97,13 +97,9 @@ const props = defineProps({
 		type: Array<AcceptedTypes>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[
-				AcceptedTypes.JPEG,
-				AcceptedTypes.JPG,
-				AcceptedTypes.PNG,
-				AcceptedTypes.PDF,
-				AcceptedTypes.CSV
-			].every((v) => value.includes(v))
+			[AcceptedTypes.PDF, AcceptedTypes.CSV, AcceptedTypes.TXT, AcceptedTypes.MD].every((v) =>
+				value.includes(v)
+			)
 	},
 	// custom import action can be passed in as prop
 	importAction: {
