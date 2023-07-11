@@ -23,5 +23,8 @@ public class ModelParameter {
 
 	@TSOptional
 	private ModelDistribution distribution;
+
+	@TSOptional
+	private ModelUnit unit;
 }
 

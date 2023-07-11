@@ -55,9 +55,9 @@
 			<table class="model-biblio">
 				<tr>
 					<th>Framework</th>
-					<th>Model Version</th>
-					<th>Date Created</th>
-					<th>Created By</th>
+					<th>Model version</th>
+					<th>Date created</th>
+					<th>Created by</th>
 					<th>Source</th>
 				</tr>
 				<tr>
@@ -623,6 +623,7 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
@@ -652,7 +653,6 @@ const createNewModel = async () => {
 	if (props.project) {
 		const newModel = {
 			name: newModelName.value,
-			framework: 'Petri Net',
 			description: newDescription.value,
 			content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
 		};

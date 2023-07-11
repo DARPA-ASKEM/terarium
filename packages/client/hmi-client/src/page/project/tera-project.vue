@@ -36,6 +36,7 @@
 					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
+					:asset-name="assetName"
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"

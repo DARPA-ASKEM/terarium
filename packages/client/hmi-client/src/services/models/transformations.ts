@@ -6,10 +6,10 @@ import { logger } from '@/utils/logger';
 // Transform a MathML list of strings to an AMR
 const mathmlToAMR = async (
 	mathml: string[],
-	framework: Model['framework']
+	schemaName: Model['schema_name']
 ): Promise<Model | null> => {
 	try {
-		const response = await API.post(`/transforms/mathml-to-amr/${framework}`, mathml);
+		const response = await API.post(`/transforms/mathml-to-amr/${schemaName}`, mathml);
 		if (response && response?.status === 200) {
 			return (response?.data as Model) ?? null;
 		}

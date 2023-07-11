@@ -311,26 +311,6 @@ const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
 	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
 
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
-
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
-
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
-
 	// Render graph
 	await renderer?.setData(graphData);
 	await renderer?.render();

@@ -153,6 +153,15 @@ export const removeEdge = (wf: Workflow, id: string) => {
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
+
+	// If there are no more references reset the connected status of the source node
+	if (wf.edges.filter((e) => e.source === edgeToRemove.source).length === 0) {
+		const sourceNode = wf.nodes.find((d) => d.id === edgeToRemove.source);
+		if (!sourceNode) return;
+		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
+		if (!sourcePort) return;
+		sourcePort.status = WorkflowPortStatus.NOT_CONNECTED;
+	}
 };
 
 export const removeNode = (wf: Workflow, id: string) => {
