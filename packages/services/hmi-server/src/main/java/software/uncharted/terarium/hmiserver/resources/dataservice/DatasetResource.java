@@ -224,7 +224,7 @@ public class DatasetResource {
 	public Response getCsv(
 		@PathParam("datasetId") final String datasetId,
 		@QueryParam("filename") final String filename,
-		@QueryParam(value = "limit") final Integer limit
+		@QueryParam(value = "limit") final Integer limit		// -1 means no limit
 	) throws IOException {
 
 		log.debug("Getting CSV content");
@@ -256,11 +256,14 @@ public class DatasetResource {
 		// Read the specified amount of lines, or the default (including the header)
 		String line;
 		final StringBuilder csvStringBuilder = new StringBuilder();
-		int lineCount = 0;
-		final int linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
-		while ((line = reader.readLine()) != null && lineCount <= linesToRead) {
+		long lineCount = 0;
+		final long linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
+		while ((line = reader.readLine()) != null) {
 			csvStringBuilder.append(line);
 			lineCount++;
+			if (linesToRead != -1 && lineCount >= linesToRead) {
+				break;
+			}
 		}
 
 		List<List<String>> csv = csvToRecords(csvStringBuilder.toString());
