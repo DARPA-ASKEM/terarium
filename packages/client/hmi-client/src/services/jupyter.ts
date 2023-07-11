@@ -14,6 +14,7 @@ import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
+import API from '@/api/api';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;
@@ -121,28 +122,40 @@ export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageTy
 export declare type JupyterMessage = IJupyterMessage | messages.Message;
 
 // TODO: These settings should be pulled from the environment variables or appropriate config setup.
-export const serverSettings = ServerConnection.makeSettings({
-	baseUrl: '/chatty/',
-	appUrl: 'http://localhost:8078/chatty/',
-	wsUrl: 'ws://localhost:8078/chatty_ws/',
-	token: import.meta.env.VITE_JUPYTER_TOKEN
-});
+let serverSettings;
+export const getServerSettings = () => serverSettings;
+let kernelManager;
+export const getKernelManager = () => kernelManager;
 
-export const kernelManager = new KernelManager({
-	serverSettings
-});
-export const specsManager = new KernelSpecManager({
-	serverSettings
-});
-export const sessionManager = new SessionManager({
-	kernelManager,
-	serverSettings
-});
+let specsManager;
+export const getSpecsManager = () => specsManager;
+
+let sessionManager;
+export const getSessionManager = () => sessionManager;
 
 export const mimeService = new CodeMirrorMimeTypeService();
-export const renderMime = new RenderMimeRegistry({ initialFactories });
 
-export const newSession = (kernelName: string, name: string) => {
+export const renderMime = new RenderMimeRegistry({ initialFactories });
+let initialized = false;
+
+export const newSession = async (kernelName: string, name: string) => {
+	if (!initialized) {
+		const settingsResponse = await API.get('/tgpt/configuration');
+		const settings = settingsResponse.data;
+		serverSettings = ServerConnection.makeSettings(settings);
+		kernelManager = new KernelManager({
+			serverSettings
+		});
+		sessionManager = new SessionManager({
+			kernelManager,
+			serverSettings
+		});
+		specsManager = new KernelSpecManager({
+			serverSettings
+		});
+		initialized = true;
+	}
+
 	const sessionContext = new SessionContext({
 		sessionManager,
 		specsManager,

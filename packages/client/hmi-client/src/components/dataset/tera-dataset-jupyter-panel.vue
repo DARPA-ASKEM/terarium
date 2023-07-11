@@ -120,7 +120,12 @@ import { CsvAsset, Dataset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-import { newSession, sessionManager, serverSettings, JupyterMessage } from '@/services/jupyter';
+import {
+	newSession,
+	JupyterMessage,
+	getServerSettings,
+	getSessionManager
+} from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
@@ -131,7 +136,7 @@ import { useConfirm } from 'primevue/useconfirm';
 // import { createNewDataset } from '@/services/dataset';
 
 // const jupyterSession = ref(<SessionContext>newSession('llmkernel', 'ChattyNode'));
-const jupyterSession: SessionContext = newSession('llmkernel', 'ChattyNode');
+const jupyterSession: SessionContext = await newSession('llmkernel', 'ChattyNode');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -225,7 +230,7 @@ onMounted(() => {
 	// for admin panel
 	jupyterSession.ready.then(() => {
 		if (jupyterSession.session) {
-			const sessions = sessionManager.running();
+			const sessions = getSessionManager().running();
 			const results: IModel[] = [];
 			let result = sessions.next();
 			while (result) {
@@ -284,13 +289,13 @@ const saveAsNewDataset = async () => {
 };
 
 const killKernel = () => {
-	shutdownKernel(selectedKernel.value.kernelId, serverSettings);
+	shutdownKernel(selectedKernel.value.kernelId, getServerSettings());
 	updateKernelList();
 };
 
 const deleteAllKernels = () => {
 	runningSessions.value.forEach((k) => {
-		shutdownKernel(k.kernelId, serverSettings);
+		shutdownKernel(k.kernelId, getServerSettings());
 	});
 	updateKernelList();
 };
@@ -333,7 +338,7 @@ const confirmDelete = () => {
 const updateKernelList = () => {
 	jupyterSession.ready.then(() => {
 		if (jupyterSession.session) {
-			const sessions = sessionManager.running();
+			const sessions = getSessionManager().running();
 			const results: IModel[] = [];
 			let result = sessions.next();
 			while (result) {

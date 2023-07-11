@@ -80,7 +80,7 @@ import JupyterDataPreview from '@/components/llm/jupyter-dataset-preview.vue';
 import { ref, watch } from 'vue';
 
 import { newSession, JupyterMessage } from '@/services/jupyter';
-const jupyterSession = newSession('llmkernel', 'ChattyNode');
+const jupyterSession = await newSession('llmkernel', 'ChattyNode');
 
 const emit = defineEmits(['update-data', 'jupyter-event']);
 
