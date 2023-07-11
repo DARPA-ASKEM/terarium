@@ -108,7 +108,8 @@
 					This data is sourced from {{ dataset?.metadata?.documents?.[0]?.title ?? '--' }}:
 					<a
 						v-if="dataset?.metadata?.documents?.[0]?.url"
-						:href="dataset.metadata.documents[0].url">
+						:href="dataset.metadata.documents[0].url"
+					>
 						{{ dataset.metadata.documents[0].url }}
 					</a>
 				</AccordionTab>
