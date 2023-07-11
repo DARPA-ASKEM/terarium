@@ -118,81 +118,76 @@
 								{{ title }}
 							</div>
 						</div>
-						<div
-							v-for="(column, index) in dataset.columns"
-							class="variables-row"
-							:key="index"
-							@click="rowEditList[index] = true"
-							:active="rowEditList[index]"
-						>
+						<div v-for="(column, index) in dataset.columns" class="variables-row" :key="index">
 							<!-- id -->
-							<InputText
+							<!-- <InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
 								@focus="setSuggestedValue(index, column.name)"
-							/>
-							<div v-else>{{ column.name }}</div>
+							/> -->
+							<div>{{ column.name }}</div>
 							<!-- name - currently just a formatted id -->
-							<InputText
+							<!-- <InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
 								@focus="setSuggestedValue(index, column.name)"
-							/>
-							<div v-else>{{ formatName(column.name) }}</div>
+							/> -->
+							<div>{{ formatName(column.name) }}</div>
 							<!-- data type -->
-							<InputText
+							<!-- <InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.dataType"
 								@focus="setSuggestedValue(index, column.dataType)"
-							/>
-							<div v-else>{{ column.dataType }}</div>
+							/> -->
+							<div>{{ column.dataType }}</div>
 							<!-- units - field does not exist in tds yet -->
-							<InputText
+							<!-- <InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								@focus="setSuggestedValue(index, '')"
-							/>
-							<div v-else>-</div>
+							/> -->
+							<div>-</div>
 							<!-- grounding -->
-							<InputText
+							<!-- <InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="groundingValues[index][0]"
 								@focus="setSuggestedValue(index, groundingValues[index][0])"
-							/>
-							<div v-else>
+							/> -->
+							<div>
 								{{ column.grounding?.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
 							</div>
 							<!-- extractions - field does not exist in tds yet -->
-							<InputText
+							<!-- <InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								@focus="setSuggestedValue(index, '')"
 							/>
-							<div v-else></div>
-							<div v-if="rowEditList[index]" class="row-edit-buttons">
+							<div v-else></div> -->
+							<!-- <div v-if="rowEditList[index]" class="row-edit-buttons">
 								<Button text icon="pi pi-times" @click.stop="rowEditList[index] = false" />
 								<Button text icon="pi pi-check" @click.stop="rowEditList[index] = false" />
-							</div>
+							</div> -->
+
 							<!-- description -->
-							<InputText
+							<!-- <InputText
 								class="p-inputtext-sm variables-description"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.description"
 								@focus="setSuggestedValue(index, column.description)"
-							/>
-							<div class="variables-description" v-else>{{ column.description }}</div>
-							<div v-if="rowEditList[index]" class="variables-suggested">
+							/> -->
+							<div class="variables-description">{{ column.description }}</div>
+							<!-- <div v-if="rowEditList[index]" class="variables-suggested">
 								<span>Suggested value</span>
 								<div>
 									<div class="suggested-value-source">
@@ -213,7 +208,7 @@
 										</ul>
 									</div>
 								</div>
-							</div>
+							</div> -->
 						</div>
 					</div>
 				</AccordionTab>
@@ -241,7 +236,6 @@ import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import InputText from 'primevue/inputtext';
 import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 enum DatasetView {
@@ -282,19 +276,19 @@ const groundingValues = ref<string[][]>([]);
 const suggestedValues = ref<string[]>([]);
 
 // quick and dirty function to populate one suggestd value per column, based on what column field user clicked; possible refactor
-function setSuggestedValue(index: number, suggestedValue: string | undefined) {
-	if (suggestedValues.value.length > index && suggestedValue) {
-		suggestedValues.value[index] = suggestedValue;
-	}
-}
+// function setSuggestedValue(index: number, suggestedValue: string | undefined) {
+// 	if (suggestedValues.value.length > index && suggestedValue) {
+// 		suggestedValues.value[index] = suggestedValue;
+// 	}
+// }
 
-const rowEditList = ref<boolean[]>([]);
+// const rowEditList = ref<boolean[]>([]);
 
 onUpdated(() => {
 	if (dataset.value) {
 		emit('asset-loaded');
 		if (dataset.value.columns) {
-			rowEditList.value = dataset.value.columns.map(() => false);
+			// rowEditList.value = dataset.value.columns.map(() => false);
 			groundingValues.value = dataset.value.columns.map((column) => {
 				const grounding = column.grounding;
 				if (grounding) {
