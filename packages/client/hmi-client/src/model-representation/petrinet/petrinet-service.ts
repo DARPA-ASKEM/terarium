@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, Model, PetriNetTransition } from '@/types/Types';
+import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
 
 export interface NodeData {
@@ -335,12 +335,26 @@ export const updateTransitioneId = (amr: Model, id: string, newId: string) => {
 	rate.target = newId;
 };
 
-export const addTyping = (amr: Model, typing: any) => {
-	console.log(amr, typing);
+// Replace typing semantics
+export const addTyping = (amr: Model, typing: TypingSemantics) => {
+	if (amr.semantics) {
+		amr.semantics.typing = typing;
+	}
 };
 
-export const addReflexives = (amr: Model, stateId: string) => {
-	console.log(amr, stateId);
+// Add a reflexive transition loop to the state
+export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
+	const model: PetriNetModel = amr.model as PetriNetModel;
+	model.transitions.push({
+		id: reflexiveId,
+		input: [stateId],
+		output: [stateId],
+		grounding: undefined,
+		properties: {
+			name: reflexiveId,
+			description: ''
+		}
+	});
 };
 
 export const mergeMetadata = (amr: Model, amrOld: Model) => {
