@@ -195,14 +195,16 @@
 			</Accordion>
 		</template>
 		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
-			<tera-dataset-jupyter-panel
-				:asset-id="props.assetId"
-				:project="props.project"
-				:dataset="dataset"
-				:show-kernels="showKernels"
-				:show-chat-thoughts="showChatThoughts"
-				@is-typing="updateScroll"
-			/>
+			<Suspense>
+				<tera-dataset-jupyter-panel
+					:asset-id="props.assetId"
+					:project="props.project"
+					:dataset="dataset"
+					:show-kernels="showKernels"
+					:show-chat-thoughts="showChatThoughts"
+					@is-typing="updateScroll"
+				/>
+			</Suspense>
 		</template>
 	</tera-asset>
 </template>
