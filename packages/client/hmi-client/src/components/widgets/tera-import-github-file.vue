@@ -191,6 +191,8 @@ import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import useResourcesStore from '@/stores/resources';
+import { createNewArtifactFromGithubFile } from '@/services/artifact';
+import * as ProjectService from '@/services/project';
 
 const props = defineProps<{
 	urlString: string;
@@ -287,13 +289,16 @@ async function openSelectedFiles() {
 		await importDataFiles(selectedDataFiles);
 	}
 
-	/* const selectedDocumentFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Documents);
+	const selectedDocumentFiles: GithubFile[] = selectedFiles.value.filter(
+		(file) => file.fileCategory === FileCategory.Documents
+	);
 
-	if(selectedDocumentFiles.length > 0){
-		await openDocumentFiles(selectedDocumentFiles);
-	} */
+	if (selectedDocumentFiles.length > 0) {
+		await importDocumentFiles(selectedDocumentFiles);
+	}
 
-	useResourcesStore().setActiveProject(await ProjectService.get(props.project?.id, true));
+	if (props.project)
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project?.id, true));
 	isModalVisible.value = false;
 }
 
@@ -332,6 +337,17 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 	githubFiles.forEach(async (githubFile) => {
 		// Create a new dataset from this GitHub file
 		await createNewDatasetFromGithubFile(
+			repoOwnerAndName.value,
+			githubFile.path,
+			props.project?.username ?? '',
+			props.project?.id ?? ''
+		);
+	});
+}
+
+async function importDocumentFiles(githubFiles: GithubFile[]) {
+	githubFiles.forEach(async (githubFile) => {
+		await createNewArtifactFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
 			props.project?.username ?? '',

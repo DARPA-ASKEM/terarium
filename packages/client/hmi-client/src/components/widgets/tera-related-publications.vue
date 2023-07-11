@@ -6,7 +6,7 @@
 				Terarium can extract information from papers and other resources to add relevant information
 				to this resource.
 			</p>
-			<ul>
+			<ul v-if="publications?.length">
 				<li v-for="(publication, index) in publications" :key="index">
 					<a :href="publication">{{ publication }}</a>
 				</li>

@@ -55,9 +55,9 @@
 			<table class="model-biblio">
 				<tr>
 					<th>Framework</th>
-					<th>Model Version</th>
-					<th>Date Created</th>
-					<th>Created By</th>
+					<th>Model version</th>
+					<th>Date created</th>
+					<th>Created by</th>
 					<th>Source</th>
 				</tr>
 				<tr>
@@ -627,6 +627,7 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();

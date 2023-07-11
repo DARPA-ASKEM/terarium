@@ -145,7 +145,9 @@
 							AcceptedTypes.JPG,
 							AcceptedTypes.JPEG,
 							AcceptedTypes.PNG,
-							AcceptedTypes.CSV
+							AcceptedTypes.CSV,
+							AcceptedTypes.TXT,
+							AcceptedTypes.MD
 						]"
 						:import-action="processFiles"
 						:progress="progress"
@@ -221,6 +223,7 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
+import { uploadArtifactToProject } from '@/services/artifact';
 
 const props = defineProps<{
 	project: IProject;
@@ -333,6 +336,17 @@ async function processFiles(
 			}
 			return { file, error: true, response: { text: '', images: [] } };
 		}
+		if (file.type === AcceptedTypes.TXT || file.type === AcceptedTypes.MD) {
+			const response = await uploadArtifactToProject(
+				progress,
+				file,
+				props.project.username ?? '',
+				props.project.id,
+				''
+			);
+			if (response?.data) return { file, error: false, response: { text: '', images: [] } };
+			return { file, error: true, response: { text: '', images: [] } };
+		}
 		// PDF
 		const resp = await getPDFContents(file, extractionMode, extractImages);
 		const text = resp.text ? resp.text : '';
@@ -350,9 +364,15 @@ async function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
 	// This is a hacky override for dealing with CSVs
-	if (newResults && newResults.length === 1 && newResults[0].file.type === AcceptedTypes.CSV) {
+	if (
+		newResults &&
+		newResults.length === 1 &&
+		(newResults[0].file.type === AcceptedTypes.CSV ||
+			newResults[0].file.type === AcceptedTypes.TXT ||
+			newResults[0].file.type === AcceptedTypes.MD)
+	) {
 		if (newResults[0].error) {
-			logger.error('Failed to upload CSV. Is it too large?', { showToast: true });
+			logger.error('Failed to upload file. Is it too large?', { showToast: true });
 		}
 		results.value = null;
 		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
