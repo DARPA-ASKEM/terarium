@@ -238,7 +238,11 @@
 										>
 											{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
 										</a>
-										{{ nameOfCurie(getCurieFromGroudingIdentifier(state.grounding.identifiers)) }}
+										{{
+											getNameOfCurieCached(
+												getCurieFromGroudingIdentifier(state.grounding.identifiers)
+											)
+										}}
 									</template>
 									<template v-else>--</template>
 								</div>
@@ -712,16 +716,29 @@ const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
-async function nameOfCurie(curie: string): Promise<string> {
-	const curies = await getCuriesEntities([curie]);
-	console.log(curies);
-	return curies?.[0].name ?? curie;
-}
-
 // Get the mathematical expression of a transition
 function getTransitionExpression(id): string {
 	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '--';
 }
+
+/**
+ * Concepts
+ */
+
+// Create ref() of this map to allow re-rendering
+const nameOfCurieCache = ref(new Map<string, string>());
+
+function getNameOfCurie(curie: string) {
+	getCuriesEntities([curie]).then((response) =>
+		nameOfCurieCache.value.set(curie, response?.[0].name ?? '')
+	);
+}
+const getNameOfCurieCached = (curie: string): string => {
+	if (!nameOfCurieCache.value.has(curie)) {
+		getNameOfCurie(curie);
+	}
+	return nameOfCurieCache.value.get(curie) ?? '';
+};
 
 function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
 	if (!!identifier && !isEmpty(identifier)) {
