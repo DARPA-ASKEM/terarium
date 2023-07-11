@@ -190,6 +190,7 @@ import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
+import { createNewArtifactFromGithubFile } from '@/services/artifact';
 
 const props = defineProps<{
 	urlString: string;
@@ -286,11 +287,13 @@ async function openSelectedFiles() {
 		await importDataFiles(selectedDataFiles);
 	}
 
-	/* const selectedDocumentFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Documents);
+	const selectedDocumentFiles: GithubFile[] = selectedFiles.value.filter(
+		(file) => file.fileCategory === FileCategory.Documents
+	);
 
-	if(selectedDocumentFiles.length > 0){
-		await openDocumentFiles(selectedDocumentFiles);
-	} */
+	if (selectedDocumentFiles.length > 0) {
+		await importDocumentFiles(selectedDocumentFiles);
+	}
 
 	emit('update-project', props.project?.id);
 	isModalVisible.value = false;
@@ -331,6 +334,17 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 	githubFiles.forEach(async (githubFile) => {
 		// Create a new dataset from this GitHub file
 		await createNewDatasetFromGithubFile(
+			repoOwnerAndName.value,
+			githubFile.path,
+			props.project?.username ?? '',
+			props.project?.id ?? ''
+		);
+	});
+}
+
+async function importDocumentFiles(githubFiles: GithubFile[]) {
+	githubFiles.forEach(async (githubFile) => {
+		await createNewArtifactFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
 			props.project?.username ?? '',
