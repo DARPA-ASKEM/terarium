@@ -51,6 +51,8 @@
 				:search-term="searchTerm"
 				:is-loading="isLoading"
 				:doc-count="docCount"
+				:search-options="searchByExampleOptions"
+				:search-by-example-asset="searchByExampleItem!"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 		</div>
@@ -414,7 +416,8 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 
 		await executeSearch();
 
-		searchByExampleItem.value = null;
+		// TODO: figure out why this is set to null here
+		// searchByExampleItem.value = null;
 		dirtyResults.value[resourceType.value] = false;
 	}
 };

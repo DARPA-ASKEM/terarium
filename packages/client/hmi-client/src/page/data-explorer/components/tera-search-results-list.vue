@@ -2,9 +2,16 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else-if="props.searchTerm"
-				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
-			>
+			<template v-else-if="props.searchTerm">
+				{{ resultsText }}
+				<span v-if="resultsStr.length === 0"> "{{ props.searchTerm }}" </span>
+				<!-- TODO: update CSS styles for tera asset card -->
+				<tera-asset-card
+					v-else-if="resultsStr.length > 0"
+					:asset="(searchByExampleAsset as ResultType)"
+					:resource-type="(resultType as ResourceType)"
+				/>
+			</template>
 			<template v-else>{{ itemsText }} </template>
 		</span>
 	</div>
@@ -49,9 +56,10 @@
 import { ref, computed, PropType } from 'vue';
 import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import useQueryStore from '@/stores/query';
-import { SearchResults, ResourceType, ResultType } from '@/types/common';
+import { SearchResults, ResourceType, ResultType, SearchByExampleOptions } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
+import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import TeraSearchItem from './tera-search-item.vue';
 
 const props = defineProps({
@@ -82,6 +90,14 @@ const props = defineProps({
 	docCount: {
 		type: Number,
 		default: 0
+	},
+	searchOptions: {
+		type: Object as PropType<SearchByExampleOptions>,
+		default: () => {}
+	},
+	searchByExampleAsset: {
+		type: Object,
+		default: null
 	}
 });
 
@@ -145,13 +161,37 @@ const resultsCount = computed(() => {
 	return total;
 });
 
+const optionBoolstoStrs = {
+	similarContent: 'similar content',
+	forwardCitation: 'forward citations',
+	backwardCitation: 'backward citations',
+	relatedContent: 'related resources'
+};
+
+const resultsStr = computed(() => {
+	let s = '';
+
+	Object.entries(props.searchOptions).forEach((item) => {
+		const [key, value] = item;
+		if (value) {
+			if (s.length > 0) {
+				s += ', ';
+			}
+			s += optionBoolstoStrs[key];
+		}
+	});
+
+	return s;
+});
+
 const resultsText = computed(() => {
 	if (resultsCount.value === 0) {
 		return 'No results found for';
 	}
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
-	return `Showing ${resultsCount.value} ${truncated}result${s} for `;
+	const toOrFor = resultsStr.value.length > 0 ? `with ${resultsStr.value} to` : 'for';
+	return `Showing ${resultsCount.value} ${truncated}result${s} ${toOrFor} `;
 });
 
 const itemsText = computed(() => {

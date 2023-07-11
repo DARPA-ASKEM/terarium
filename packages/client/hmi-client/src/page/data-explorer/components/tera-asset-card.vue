@@ -104,8 +104,8 @@
 import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
-import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
-import { ResourceType } from '@/types/common';
+import { Extraction, XDDUrlExtraction } from '@/types/Types';
+import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
 
@@ -116,7 +116,7 @@ type UrlExtraction = {
 };
 
 const props = defineProps<{
-	asset: Document & Model & Dataset;
+	asset: ResultType;
 	resourceType: ResourceType;
 	highlight?: string;
 }>();
