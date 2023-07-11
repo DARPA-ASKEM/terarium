@@ -101,12 +101,13 @@ import {
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
-	convertToIGraph
+	convertToIGraph,
+	addTyping
 } from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model, Transition, TypeSystem } from '@/types/Types';
+import { Model, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { strataTypeColors } from '@/utils/color-schemes';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
@@ -280,8 +281,10 @@ watch(
 			const typeId = map[1];
 			const state = props.typeSystem?.states.find((s) => typeId === s.id);
 			if (state) {
-				typeSystem.states.push(state);
-			} else {
+				if (!typeSystem.states.find((s) => s.id === state.id)) {
+					typeSystem.states.push(state);
+				}
+			} else if (!typeSystem.states.find((s) => s.id === typeId)) {
 				typeSystem.states.push({
 					id: typeId,
 					name: typeId,
@@ -289,8 +292,9 @@ watch(
 				});
 			}
 		});
-		// const typingSemantics: TypingSemantics = { type_map: stateTypedMap, type_system: typeSystem };
-		// addTyping(typedModel.value, typingSemantics);
+		let typingSemantics: TypingSemantics;
+		typingSemantics = { type_map: stateTypedMap, type_system: typeSystem };
+		addTyping(typedModel.value, typingSemantics);
 
 		transitionTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
@@ -314,9 +318,9 @@ watch(
 				}
 			}
 		});
-		// const typeMap: string[][] = {...stateTypedMap, ...transitionTypedMap}
-		// const typingSemantics: TypingSemantics = { type_map: typeMap, type_system: typeSystem };
-		// TODO: call petrinet-service to update amr with typing
+		const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
+		typingSemantics = { type_map: typeMap, type_system: typeSystem };
+		addTyping(typedModel.value, typingSemantics);
 	},
 	{ deep: true }
 );
@@ -324,10 +328,10 @@ watch(
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
-	[() => props.model, graphElement],
+	[() => typedModel, graphElement],
 	async () => {
-		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+		if (typedModel.value === null || graphElement.value === null) return;
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(typedModel.value);
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
@@ -345,12 +349,6 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
-		if (latexFormula) {
-			updateLatexFormula(latexFormula);
-		} else {
-			updateLatexFormula('');
-		}
 	},
 	{ deep: true }
 );
