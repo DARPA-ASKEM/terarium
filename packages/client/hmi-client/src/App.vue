@@ -161,9 +161,7 @@ watch(
 );
 
 // This is crucial - every time the resource store is modified the project prop will be updated to match it
-// Once you update assets within a project (add/remove) you must set the resource store to what's in the project in the backend
-// See example of usage in tera-model.vue at the end of duplicateModel()
-// Ideally we'd update the resource store within the project service itself but couldn't find a way to do that
+// Once you update assets within a project (add/remove) the project service sets the resource store to what's in the project in the backend
 resourcesStore.$subscribe((_mutation, state) => {
 	project.value = state.activeProject;
 });
