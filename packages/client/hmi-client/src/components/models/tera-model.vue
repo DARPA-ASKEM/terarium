@@ -446,7 +446,6 @@ import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
-import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
@@ -488,7 +487,6 @@ const props = defineProps({
 
 const openValueConfig = ref(false);
 const modelView = ref(ModelView.DESCRIPTION);
-const resources = useResourcesStore();
 const router = useRouter();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
@@ -663,7 +661,7 @@ const createNewModel = async () => {
 		if (newModelResp) {
 			const modelId = newModelResp.id.toString();
 			emit('close-current-tab');
-			await addModelToProject(props.project.id, modelId, resources);
+			await addModelToProject(props.project.id, modelId);
 
 			// Go to the model you just created
 			router.push({
