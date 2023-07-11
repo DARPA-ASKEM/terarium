@@ -113,7 +113,7 @@
 				:row-class="() => 'p-selectable-row'"
 			>
 				<Column selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column field="assetName" header="Name" sortable style="width: 10%">
+				<Column field="assetName" header="Name" sortable style="width: 25%">
 					<template #body="slotProps">
 						<Button
 							:title="slotProps.data.assetName"
@@ -123,26 +123,25 @@
 							size="small"
 							@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
 						>
-							<div>
-								<vue-feather
-									v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
-									:type="getAssetIcon(slotProps.data.pageType ?? null)"
-									size="1rem"
-									stroke="rgb(16, 24, 40)"
-								/>
-								<component
-									v-else
-									:is="getAssetIcon(slotProps.data.pageType ?? null)"
-									class="p-button-icon-left icon"
-								/>
-								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
-							</div>
+							<vue-feather
+								v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
+								:type="getAssetIcon(slotProps.data.pageType ?? null)"
+								size="1rem"
+								stroke="rgb(16, 24, 40)"
+								class="p-button-icon-left icon"
+							/>
+							<component
+								v-else
+								:is="getAssetIcon(slotProps.data.pageType ?? null)"
+								class="p-button-icon-left icon"
+							/>
+							<span class="p-button-label">{{ slotProps.data.assetName }}</span>
 						</Button>
 					</template>
 				</Column>
-				<Column field="" header="Modified" sortable style="width: 15%"></Column>
-				<Column field="tags" header="Tags"></Column>
-				<Column header="Type" sortable>
+				<Column field="" header="Modified" sortable style="width: 25%"></Column>
+				<Column field="tags" header="Tags" style="width: 25%"></Column>
+				<Column header="Type" style="width: 25%" sortable>
 					<template #body="slotProps">
 						{{ slotProps.data.pageType }}
 					</template>
@@ -659,6 +658,10 @@ ul {
 	width: 50rem;
 }
 
+.asset-button {
+	display: flex;
+}
+
 :deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
@@ -673,8 +676,6 @@ ul {
 :deep(.asset-button.p-button .p-button-label) {
 	overflow: hidden;
 	text-align: left;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .resource-list-button {
@@ -695,8 +696,5 @@ ul {
 	flex-grow: 1;
 	font-size: var(--font-body-small);
 	color: var(--text-color-subdued);
-}
-
-.row-action-button {
 }
 </style>
