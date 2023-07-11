@@ -3,7 +3,7 @@ import { Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
-import { ResourceType } from '@/stores/resources';
+import useResourcesStore from '@/stores/resources';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -52,17 +52,13 @@ export async function updateModel(model: Model) {
 	return response?.data ?? null;
 }
 
-export async function addModelToProject(
-	projectId: string,
-	assetId: string,
-	resources: ResourceType
-) {
+export async function addModelToProject(projectId: string, assetId: string) {
 	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
 
 	if (resp) {
 		const model = await getModel(assetId);
 		if (model) {
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+			useResourcesStore().activeProject?.assets?.[ProjectAssetTypes.MODELS].push(model);
 		} else {
 			logger.warn(`Unable to find model id: ${assetId}`);
 		}
