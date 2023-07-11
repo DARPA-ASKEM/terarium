@@ -223,7 +223,7 @@ public class DatasetResource {
 	public Response getCsv(
 		@PathParam("datasetId") final String datasetId,
 		@QueryParam("filename") final String filename
-	) {
+	) throws IOException {
 
 		log.debug("Getting CSV content");
 
@@ -249,11 +249,18 @@ public class DatasetResource {
 		ResponseInputStream<GetObjectResponse> s3objectResponse = client
 			.getObject(request);
 
-		String csvString = new BufferedReader(new InputStreamReader(s3objectResponse))
-			.lines()
-			.collect(Collectors.joining("\n"));
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(s3objectResponse));
 
-		List<List<String>> csv = csvToRecords(csvString);
+		// Read the first 10 lines of the file including the header
+		String line;
+		final StringBuilder csvStringBuilder = new StringBuilder();
+		int lineCount = 0;
+		while ((line = reader.readLine()) != null && lineCount <= 10) {
+			csvStringBuilder.append(line);
+			lineCount++;
+		}
+
+		List<List<String>> csv = csvToRecords(csvStringBuilder.toString());
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
 		for (int i = 0; i < csv.get(0).size(); i++){
