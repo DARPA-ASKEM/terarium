@@ -130,7 +130,7 @@ API.interceptors.response.use(
 			ToastSeverity.error,
 			`${ToastSummaries.NETWORK_ERROR} (${status})`,
 			'Unauthorized',
-			500
+			5000
 		);
 		if (status === 401 || status === 403) {
 			router.push({ name: 'unauthorized' });
