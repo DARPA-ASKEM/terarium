@@ -366,9 +366,7 @@ function importCompleted(
 	if (
 		newResults &&
 		newResults.length === 1 &&
-		(newResults[0].file.type === AcceptedTypes.CSV ||
-			newResults[0].file.type === AcceptedTypes.TXT ||
-			newResults[0].file.type === AcceptedTypes.MD)
+		[AcceptedTypes.CSV, AcceptedTypes.TXT, AcceptedTypes.MD].includes(newResults[0].file.type)
 	) {
 		if (newResults[0].error) {
 			logger.error('Failed to upload file. Is it too large?', { showToast: true });
