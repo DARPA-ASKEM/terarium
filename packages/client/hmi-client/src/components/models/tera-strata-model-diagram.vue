@@ -180,8 +180,6 @@ const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	return options;
 });
 
-function onUpdateTypeName() {}
-
 function addTypedRow() {
 	typedRows.value.push({});
 }
