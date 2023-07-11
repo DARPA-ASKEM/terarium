@@ -234,7 +234,7 @@ const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
-	project: IProject;
+	project?: IProject;
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);

@@ -43,7 +43,7 @@ import { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
-	rows: number;
+	rows?: number;
 	previewMode?: boolean;
 	previousHeaders?: String[] | null;
 	paginatorPosition?: 'bottom' | 'both' | 'top' | undefined;
