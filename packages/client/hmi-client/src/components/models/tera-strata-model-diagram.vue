@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!nodePreview">
+		<TeraResizablePanel>
 			<div ref="splitterContainer" class="splitter-container">
 				<Splitter :gutterSize="5" :layout="layout">
 					<SplitterPanel
@@ -36,11 +36,7 @@
 									</div>
 									<div>
 										<!-- name of type -->
-										<InputText
-											class="p-inputtext-sm"
-											@input="onUpdateTypeName"
-											v-model="row.typeName"
-										/>
+										<InputText class="p-inputtext-sm" v-model="row.typeName" />
 									</div>
 									<div>
 										<!-- assign to -->
@@ -90,13 +86,12 @@
 				</Splitter>
 			</div>
 		</TeraResizablePanel>
-		<div v-else-if="typedModel" ref="graphElement" class="graph-element preview" />
 	</main>
 </template>
 
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -128,13 +123,12 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-	model: Model | null;
-	nodePreview?: boolean;
-	showTypingToolbar?: boolean;
+	model: Model;
+	showTypingToolbar: boolean;
 	typeSystem?: TypeSystem;
 }>();
 
-const typedModel = ref<Model | null>();
+const typedModel = ref<Model>();
 
 const newModelName = ref('New Model');
 
@@ -153,7 +147,7 @@ const equationPanelMaxSize = ref<number>(100);
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const modelTypeSystem = computed(() => props.model?.semantics?.typing?.type_system);
+const modelTypeSystem = computed(() => props.model.semantics?.typing?.type_system);
 const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.name));
 const transitionTypes = computed(() =>
 	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
@@ -170,14 +164,12 @@ const typedRows = ref<
 // TODO: don't allow user to assign a variable or transition twice
 const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	const options: { [s: string]: string[] }[] = [];
-	if (props.model) {
-		typedRows.value.forEach(() => {
-			options.push({
-				Variable: props.model!.model.states.map((s) => s.id),
-				Transition: props.model!.model.transitions.map((t) => t.id)
-			});
+	typedRows.value.forEach(() => {
+		options.push({
+			Variable: props.model.model.states.map((s) => s.id),
+			Transition: props.model.model.transitions.map((t) => t.id)
 		});
-	}
+	});
 	return options;
 });
 
@@ -228,12 +220,10 @@ watch(
 	() => [props.model],
 	async () => {
 		updateLatexFormula('');
-		if (props.model) {
-			typedModel.value = props.model;
-			const data = await petriToLatex(convertAMRToACSet(props.model));
-			if (data) {
-				updateLatexFormula(data);
-			}
+		typedModel.value = props.model;
+		const data = await petriToLatex(convertAMRToACSet(props.model));
+		if (data) {
+			updateLatexFormula(data);
 		}
 	},
 	{ immediate: true }
@@ -314,12 +304,6 @@ watch(
 	},
 	{ deep: true }
 );
-
-onUpdated(() => {
-	if (props.model) {
-		emit('asset-loaded');
-	}
-});
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box

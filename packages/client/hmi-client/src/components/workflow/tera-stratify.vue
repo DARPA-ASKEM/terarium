@@ -56,6 +56,7 @@
 					<AccordionTab header="Model">
 						<div class="step-1-inner">
 							<tera-strata-model-diagram
+								v-if="model"
 								:model="model"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
@@ -91,7 +92,7 @@
 								</div>
 							</section>
 							<section v-else>
-								<tera-strata-model-diagram :model="strataModel" />
+								<tera-strata-model-diagram :model="strataModel" :show-typing-toolbar="false" />
 							</section>
 						</div>
 					</AccordionTab>
