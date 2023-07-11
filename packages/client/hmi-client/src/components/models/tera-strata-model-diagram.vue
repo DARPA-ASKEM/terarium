@@ -167,6 +167,7 @@ const typedRows = ref<
 	}[]
 >([]);
 
+// TODO: don't allow user to assign a variable or transition twice
 const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	const options: { [s: string]: string[] }[] = [];
 	if (props.model) {
