@@ -94,7 +94,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			url +=
-				'?types=datasets&types=model_configurations&types=models&types=publications&types=simulations&types=workflows';
+				'?types=datasets&types=model_configurations&types=artifacts&types=models&types=publications&types=simulations&types=workflows';
 		}
 		const response = await API.get(url);
 		const { status, data } = response;
@@ -195,6 +195,7 @@ const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.SIMULATIONS, 'settings'],
 	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'code'],
+	[ProjectAssetTypes.SIMULATION_WORKFLOW, 'git-merge'],
 	['overview', 'layout']
 ]);
 

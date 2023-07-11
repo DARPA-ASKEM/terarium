@@ -3,11 +3,13 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
+import { strataTypeColors } from '@/utils/color-schemes';
 import { Model } from '@/types/Types';
 import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
 
 export interface NodeData {
 	type: string;
+	strataType?: string;
 }
 
 export interface EdgeData {
@@ -92,6 +94,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		const species = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
 
+		const strataTypes: string[] = [];
+		selection.each((d) => {
+			const strataType = d.data.strataType;
+			if (strataType && !strataTypes.includes(strataType)) {
+				strataTypes.push(strataType as string);
+			}
+		});
 		// transitions
 		transitions
 			.append('rect')
@@ -102,7 +111,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', 'var(--petri-nodeFill')
+			.style('fill', (d) =>
+				d.data.strataType
+					? strataTypeColors[strataTypes.indexOf(d.data.strataType)]
+					: 'var(--petri-nodeFill'
+			)
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
@@ -145,19 +158,25 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', '#FFF')
+			.style('stroke', (d) =>
+				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			)
 			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'butt')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.text((d) => d.label);
+			.html((d) => d.label);
 
 		// species
 		species
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', 'var(--petri-nodeFill)')
+			.attr('fill', (d) =>
+				d.data.strataType
+					? strataTypeColors[strataTypes.indexOf(d.data.strataType)]
+					: 'var(--petri-nodeFill)'
+			)
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
@@ -186,7 +205,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', '#FFF')
+			.style('stroke', (d) =>
+				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			)
 			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'round')
 			.style('fill', 'var(--text-color-primary')
@@ -260,6 +281,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		if (!this.editMode) return;
 		selection.selectAll('.no-drag').attr('stroke-width', 1);
 		const newLabel = (selection.select('input').node() as HTMLInputElement).value;
+
+		if (selection.datum().data.type === NodeType.State) {
+			petrinetService.updateStateId(this.graph.amr, selection.datum().label, newLabel);
+		} else {
+			petrinetService.updateTransitioneId(this.graph.amr, selection.datum().label, newLabel);
+		}
+
 		selection.datum().label = newLabel;
 		selection.select('text').text(newLabel).style('fill-opacity', 1.0);
 		selection.select('foreignObject').remove();
@@ -458,7 +486,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	addNode(type: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
 		const size = type === NodeType.State ? 60 : 30;
-		const id = `${type}-${this.graph.nodes.length + 1}`;
+		const id = `${type}${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
 			id,
 			label: name,

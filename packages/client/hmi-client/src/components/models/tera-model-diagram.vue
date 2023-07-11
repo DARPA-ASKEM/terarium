@@ -1,87 +1,77 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!nodePreview">
-			<div ref="splitterContainer" class="splitter-container">
-				<Splitter :gutterSize="5" :layout="layout">
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="equationPanelSize"
-						:minSize="equationPanelMinSize"
-						:maxSize="equationPanelMaxSize"
-					>
-						<section class="graph-element">
-							<Toolbar>
-								<template #start>
+		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1]">
+			<AccordionTab header="Model diagram">
+				<TeraResizablePanel class="diagram-container">
+					<section class="graph-element">
+						<Toolbar>
+							<template #start>
+								<Button
+									@click="resetZoom"
+									label="Reset zoom"
+									class="p-button-sm p-button-outlined toolbar-button"
+								/>
+							</template>
+							<template #center>
+								<span class="toolbar-subgroup">
 									<Button
-										@click="resetZoom"
-										label="Reset zoom"
+										v-if="isEditing"
+										@click="addState"
+										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
-								</template>
-								<template #center>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="addState"
-											label="Add state"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											v-if="isEditing"
-											@click="addTransition"
-											label="Add transition"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-									</span>
-								</template>
-								<template #end>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											:class="
-												isEditing
-													? 'p-button-sm toolbar-button-saveModel'
-													: 'p-button-sm p-button-outlined toolbar-button'
-											"
-										/>
-									</span>
-								</template>
-							</Toolbar>
-							<div v-if="model" ref="graphElement" class="graph-element" />
-							<ContextMenu ref="menu" :model="contextMenuItems" />
-						</section>
-					</SplitterPanel>
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="mathPanelSize"
-						:minSize="mathPanelMinSize"
-						:maxSize="mathPanelMaxSize"
-					>
-						<section class="math-editor-container" :class="mathEditorSelected">
-							<tera-math-editor
-								:is-editable="isEditable"
-								:latex-equation="equationLatex"
-								:is-editing-eq="isEditingEQ"
-								:is-math-ml-valid="isMathMLValid"
-								:math-mode="MathEditorModes.LIVE"
-								@cancel-editing="cancelEditng"
-								@equation-updated="setNewLatexFormula"
-								@validate-mathml="validateMathML"
-								@set-editing="isEditingEQ = true"
-							>
-							</tera-math-editor>
-						</section>
-					</SplitterPanel>
-				</Splitter>
-			</div>
-		</TeraResizablePanel>
+									<Button
+										v-if="isEditing"
+										@click="addTransition"
+										label="Add transition"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+								</span>
+							</template>
+							<template #end>
+								<span class="toolbar-subgroup">
+									<Button
+										v-if="isEditing"
+										@click="cancelEdit"
+										label="Cancel"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+									<Button
+										@click="toggleEditMode"
+										:label="isEditing ? 'Save model' : 'Edit model'"
+										:class="
+											isEditing
+												? 'p-button-sm toolbar-button-saveModel'
+												: 'p-button-sm p-button-outlined toolbar-button'
+										"
+									/>
+								</span>
+							</template>
+						</Toolbar>
+						<div v-if="model" ref="graphElement" class="graph-element" />
+						<ContextMenu ref="menu" :model="contextMenuItems" />
+					</section>
+				</TeraResizablePanel>
+			</AccordionTab>
+			<AccordionTab header="Model equations">
+				<TeraResizablePanel class="diagram-container">
+					<section class="math-editor-container" :class="mathEditorSelected">
+						<tera-math-editor
+							:is-editable="isEditable"
+							:latex-equation="equationLatex"
+							:is-editing-eq="isEditingEQ"
+							:is-math-ml-valid="isMathMLValid"
+							:math-mode="MathEditorModes.LIVE"
+							@cancel-editing="cancelEditng"
+							@equation-updated="setNewLatexFormula"
+							@validate-mathml="validateMathML"
+							@set-editing="isEditingEQ = true"
+						>
+						</tera-math-editor>
+					</section>
+				</TeraResizablePanel>
+			</AccordionTab>
+		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
 </template>
@@ -97,21 +87,23 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { mathmlToPetri, petriToLatex } from '@/petrinet/petrinet-service';
+import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
+import { mathmlToAMR } from '@/services/models/transformations';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -135,7 +127,6 @@ const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
 
 const newModelName = ref('New Model');
-const newPetri = ref();
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -146,14 +137,6 @@ const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
-
-const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(0);
-const equationPanelMaxSize = ref<number>(100);
-
-const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(0);
-const mathPanelMaxSize = ref<number>(100);
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
@@ -173,15 +156,6 @@ const updateLayout = () => {
 const handleResize = () => {
 	updateLayout();
 };
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
 
 const mathEditorSelected = computed(() => {
 	if (!isMathMLValid.value) {
@@ -232,12 +206,6 @@ watch(
 		}
 	}
 );
-
-onUpdated(() => {
-	if (props.model) {
-		emit('asset-loaded');
-	}
-});
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -297,7 +265,7 @@ const contextMenuItems = ref([
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
-	[props.model, graphElement],
+	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
@@ -339,41 +307,15 @@ watch(
 	{ deep: true }
 );
 
-/*
-const updatePetri = async (m: PetriNet) => {
-	// equationML.value = mathmlString;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
-
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
-
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
+const updatePetriNet = async (model: Model) => {
+	// Convert PetriNet into a graph
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
 
 	// Render graph
 	await renderer?.setData(graphData);
 	await renderer?.render();
 	updateLatexFormula(equationLatexNew.value);
 };
-*/
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
@@ -389,18 +331,16 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
-			newPetri.value = await mathmlToPetri(cleanedMathML);
+			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
+			const model = amr?.model;
 			if (
-				(isArray(newPetri.value) && newPetri.value.length > 0) ||
-				(!isArray(newPetri.value) &&
-					Object.keys(newPetri.value).length > 0 &&
-					hasNoEmptyKeys(newPetri.value))
+				(model && isArray(model) && model.length > 0) ||
+				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
 
-				// FIXME: equation to AMR
-				// updatePetri(newPetri.value);
+				updatePetriNet(amr);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -413,14 +353,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		isMathMLValid.value = true;
 	}
 };
-
-onMounted(async () => {
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
 
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
@@ -453,19 +385,45 @@ const resetZoom = async () => {
 };
 
 const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
+	renderer?.addNodeCenter(NodeType.State, 'state');
 };
 
 const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
+	renderer?.addNodeCenter(NodeType.Transition, 'transition');
 };
+
+onMounted(() => {
+	document.addEventListener('keyup', editorKeyHandler);
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', editorKeyHandler);
+	window.removeEventListener('resize', handleResize);
+});
+
+onUpdated(() => {
+	if (props.model) {
+		emit('asset-loaded');
+	}
+});
 </script>
 
 <style scoped>
 main {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
 	overflow: auto;
+}
+
+.p-accordion {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.diagram-container {
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
 }
 
 .preview {
@@ -511,10 +469,6 @@ section math-editor {
 	z-index: 10;
 }
 
-.splitter-container {
-	height: 100%;
-}
-
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
@@ -545,19 +499,6 @@ section math-editor {
 .math-editor-error {
 	border: 4px solid var(--surface-border-warning);
 	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-.p-splitter {
-	border: none;
-	height: 100%;
-}
-
-.tera-split-panel {
-	position: relative;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	width: 100%;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */

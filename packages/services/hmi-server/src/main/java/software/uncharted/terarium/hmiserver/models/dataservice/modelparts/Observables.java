@@ -6,25 +6,15 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
-public class ModelParameter {
+public class Observables {
 	private String id;
 
 	@TSOptional
 	private String name;
 
 	@TSOptional
-	private String description;
+	private String expression;
 
 	@TSOptional
-	private Double value;
-
-	@TSOptional
-	private ModelGrounding grounding;
-
-	@TSOptional
-	private ModelDistribution distribution;
-
-	@TSOptional
-	private ModelUnit unit;
+	private String expression_mathml;
 }
-
