@@ -94,7 +94,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			url +=
-				'?types=datasets&types=model_configurations&types=models&types=publications&types=simulations&types=workflows';
+				'?types=datasets&types=model_configurations&types=artifacts&types=models&types=publications&types=simulations&types=workflows';
 		}
 		const response = await API.get(url);
 		const { status, data } = response;
