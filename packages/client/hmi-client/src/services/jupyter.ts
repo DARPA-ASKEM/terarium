@@ -14,6 +14,8 @@ import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
+import { onMounted } from 'vue';
+import API from '@/api/api';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;
@@ -121,26 +123,35 @@ export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageTy
 export declare type JupyterMessage = IJupyterMessage | messages.Message;
 
 // TODO: These settings should be pulled from the environment variables or appropriate config setup.
-export const serverSettings = ServerConnection.makeSettings({
-	baseUrl: '/chatty/',
-	appUrl: 'http://localhost:8078/chatty/',
-	wsUrl: 'ws://localhost:8078/chatty_ws/',
-	token: import.meta.env.VITE_JUPYTER_TOKEN
-});
+let serverSettings;
+export const getServerSettings = () => serverSettings;
+let kernelManager;
+export const getKernelManager = () => kernelManager;
 
-export const kernelManager = new KernelManager({
-	serverSettings
-});
-export const specsManager = new KernelSpecManager({
-	serverSettings
-});
-export const sessionManager = new SessionManager({
-	kernelManager,
-	serverSettings
-});
+let specsManager;
+export const getSpecsManager = () => specsManager;
+
+let sessionManager;
+export const getSessionManager = () => sessionManager;
 
 export const mimeService = new CodeMirrorMimeTypeService();
+
 export const renderMime = new RenderMimeRegistry({ initialFactories });
+onMounted(async () => {
+	const settingsResponse = await API.get('/tgpt/settings');
+	const settings = settingsResponse.data;
+	ServerConnection.makeSettings(settings);
+	kernelManager = new KernelManager({
+		serverSettings
+	});
+	sessionManager = new SessionManager({
+		kernelManager,
+		serverSettings
+	});
+	specsManager = new KernelSpecManager({
+		serverSettings
+	});
+});
 
 export const newSession = (kernelName: string, name: string) => {
 	const sessionContext = new SessionContext({

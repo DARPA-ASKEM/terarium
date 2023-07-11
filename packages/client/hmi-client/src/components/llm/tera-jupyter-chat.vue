@@ -29,7 +29,7 @@
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { ref, watch, onUnmounted, computed } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { JupyterMessage, sessionManager, KernelState } from '@/services/jupyter';
+import { getSessionManager, JupyterMessage, KernelState } from '@/services/jupyter';
 import { CsvAsset } from '@/types/Types';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
@@ -42,7 +42,7 @@ const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
 const renderedMessages = ref(new Set<any>());
 const messageContainer = ref(<HTMLElement | null>null);
-const activeSessions = ref(sessionManager.running());
+const activeSessions = ref(getSessionManager().running());
 const runningSessions = ref();
 
 const emit = defineEmits([
