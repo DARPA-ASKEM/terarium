@@ -111,7 +111,7 @@ import {
 import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model } from '@/types/Types';
+import { Model, TypeSystem } from '@/types/Types';
 import { strataTypeColors } from '@/utils/color-schemes';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
@@ -131,6 +131,7 @@ const props = defineProps<{
 	model: Model | null;
 	nodePreview?: boolean;
 	showTypingToolbar?: boolean;
+	typeSystem?: TypeSystem;
 }>();
 
 const typedModel = ref<Model | null>();
@@ -165,7 +166,6 @@ const typedRows = ref<
 		assignTo?: string[];
 	}[]
 >([]);
-// const assignTo = computed<string[][]>(() => typedRows.value.filter(row => row.assignTo !== undefined).map(row => row.assignTo!));;
 
 const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	const options: { [s: string]: string[] }[] = [];
@@ -231,18 +231,6 @@ watch(
 		updateLatexFormula('');
 		if (props.model) {
 			typedModel.value = props.model;
-			typedRows.value.push(
-				{
-					nodeType: 'Variable',
-					// populate type name if input model already has types
-					typeName: props.model.semantics?.typing?.type_system.states[0].name
-				},
-				{
-					nodeType: 'Transition',
-					// populate type name if input model already has types
-					typeName: props.model.semantics?.typing?.type_system.transitions[0].properties?.name
-				}
-			);
 			const data = await petriToLatex(convertAMRToACSet(props.model));
 			if (data) {
 				updateLatexFormula(data);
@@ -250,6 +238,22 @@ watch(
 		}
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => props.typeSystem,
+	() => {
+		typedRows.value.push(
+			{
+				nodeType: 'Variable',
+				typeName: props.typeSystem?.states[0].name
+			},
+			{
+				nodeType: 'Transition',
+				typeName: props.typeSystem?.transitions[0].properties?.name
+			}
+		);
+	}
 );
 
 watch(
@@ -261,13 +265,52 @@ watch(
 	}
 );
 
-// watch(typedRows, () => {
-
-// }, { deep: true });
-
-// watch(assignTo, () => {
-
-// }, { deep: true });
+watch(
+	typedRows,
+	() => {
+		const stateTypedMap: string[][] = [];
+		const transitionTypedMap: string[][] = [];
+		const typeSystem: TypeSystem = { states: [], transitions: [] };
+		typedRows.value.forEach((row) =>
+			row.assignTo?.forEach((parameter) => {
+				if (row.typeName && row.typeName && row.nodeType) {
+					if (row.nodeType === 'Variable') {
+						stateTypedMap.push([parameter, row.typeName]);
+					}
+					if (row.nodeType === 'Transition') {
+						transitionTypedMap.push([parameter, row.typeName]);
+					}
+				}
+			})
+		);
+		stateTypedMap.forEach((map) => {
+			// See if there is a corresponding type defined in the strata model's type system
+			// If not, generate a new one
+			const typeId = map[1];
+			const state = props.typeSystem?.states.find((s) => typeId === s.id);
+			if (state) {
+				typeSystem.states.push(state);
+			} else {
+				typeSystem.states.push({
+					id: typeId,
+					name: typeId,
+					description: typeId
+				});
+			}
+		});
+		transitionTypedMap.forEach((map) => {
+			// See if there is a corresponding type defined in the strata model's type system
+			// If not, generate a new one
+			const transition = props.typeSystem?.transitions.find((t) => map[1] === t.id);
+			if (transition) {
+				typeSystem.transitions.push(transition);
+			} else {
+				// TODO: generate Transition structure and infer types of inputs/outputs
+			}
+		});
+	},
+	{ deep: true }
+);
 
 onUpdated(() => {
 	if (props.model) {
