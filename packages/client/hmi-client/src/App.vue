@@ -161,9 +161,7 @@ watch(
 );
 
 // This is crucial - every time the resource store is modified the project prop will be updated to match it
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-resourcesStore.$subscribe((mutation, state) => {
+resourcesStore.$subscribe((_mutation, state) => {
 	project.value = state.activeProject;
 });
 
