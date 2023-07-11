@@ -344,7 +344,6 @@ const updateKernelList = () => {
 			while (result) {
 				result = sessions.next();
 			}
-			runningSessions.value = undefined;
 			runningSessions.value = results
 				.reverse()
 				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));

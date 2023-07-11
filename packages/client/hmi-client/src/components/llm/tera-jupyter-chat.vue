@@ -231,7 +231,7 @@ watch(
 	() => [activeSessions.value],
 	() => {
 		if (props.jupyterSession.session) {
-			const sessions = sessionManager.running();
+			const sessions = getSessionManager().running();
 			const results: IModel[] = [];
 			let result = sessions.next();
 			while (result) {

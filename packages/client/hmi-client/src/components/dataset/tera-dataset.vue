@@ -254,6 +254,7 @@ const assetPanel = ref({ assetContainer: HTMLElement });
 const updateScroll = () => {
 	const el = assetPanel.value.assetContainer;
 	if (el) {
+		// @ts-ignore
 		el.scrollTop = el.scrollHeight;
 	}
 };
