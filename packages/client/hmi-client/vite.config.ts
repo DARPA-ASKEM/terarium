@@ -4,12 +4,7 @@ import vue from '@vitejs/plugin-vue';
 import svgLoader from 'vite-svg-loader';
 import * as path from 'path';
 
-const node_modules_dir = path.resolve(
-	__dirname,
-	process.env.NODE_ENV === 'development' && process.env.COMPOSED !== 'true'
-		? '../../../node_modules/'
-		: './node_modules/'
-);
+const node_modules_dir = path.resolve(__dirname, '../../../node_modules/');
 
 /**
  * Vite Configuration
