@@ -47,7 +47,7 @@
 							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
-							@click="generateStrataModel"
+							@click="stratifyStep = 2"
 						/>
 					</div>
 					<span v-else>Define the groups you want to stratify your model with.</span>
@@ -55,7 +55,12 @@
 				<Accordion :active-index="0">
 					<AccordionTab header="Model">
 						<div class="step-1-inner">
-							<tera-model-diagram :model="model" :is-editable="false" />
+							<tera-strata-model-diagram
+								v-if="model"
+								:model="model"
+								:show-typing-toolbar="stratifyStep === 2"
+								:type-system="strataModelTypeSystem"
+							/>
 							<div class="input">
 								<label for="strata-type">Select a strata type</label>
 								<Dropdown
@@ -87,7 +92,7 @@
 								</div>
 							</section>
 							<section v-else>
-								<tera-strata-model-diagram :model="strataModel" :is-editable="false" strata-view />
+								<tera-strata-model-diagram :model="strataModel" :show-typing-toolbar="false" />
 							</section>
 						</div>
 					</AccordionTab>
@@ -98,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -108,12 +113,11 @@ import {
 	generateAgeStrataModel,
 	generateLocationStrataModel
 } from '@/services/models/stratification-service';
-import { Model, ModelConfiguration } from '@/types/Types';
+import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
-import TeraModelDiagram from '../models/tera-model-diagram.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -130,6 +134,9 @@ const labels = ref();
 const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
+const strataModelTypeSystem = computed<TypeSystem | undefined>(
+	() => strataModel.value?.semantics?.typing?.type_system
+);
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
