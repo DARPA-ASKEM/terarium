@@ -96,7 +96,7 @@ export const convertToIGraph = (amr: Model) => {
 			(map) => map.length === 2 && transition.id === map[0]
 		);
 
-		const targetNode = amr.semantics?.ode.rates.find((node) => transition.id === node.target);
+		const targetRate = amr.semantics?.ode.rates.find((rate) => transition.id === rate.target);
 
 		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
@@ -107,7 +107,7 @@ export const convertToIGraph = (amr: Model) => {
 			y: 0,
 			width: 40,
 			height: 40,
-			data: { type: 'transition', strataType, expression: targetNode?.expression },
+			data: { type: 'transition', strataType, expression: targetRate?.expression },
 			nodes: []
 		});
 	});

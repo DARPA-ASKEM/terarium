@@ -174,9 +174,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', (d) => -d.height / 2 - 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) =>
-				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-			)
+			.style('stroke', '#FFF')
 			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'butt')
 			.style('fill', 'var(--text-color-primary')
