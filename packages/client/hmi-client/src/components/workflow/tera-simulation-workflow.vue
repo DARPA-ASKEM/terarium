@@ -423,6 +423,11 @@ const contextMenuItems = ref([
 				}
 			},
 			{
+				label: 'Simulate ensemble',
+				disabled: true,
+				command: () => {}
+			},
+			{
 				label: 'Calibrate',
 				command: () => {
 					workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
@@ -441,6 +446,11 @@ const contextMenuItems = ref([
 			},
 			{
 				label: 'Calibrate & Simulate',
+				disabled: true,
+				command: () => {}
+			},
+			{
+				label: 'Calibrate & Simulate ensemble',
 				disabled: true,
 				command: () => {}
 			}
