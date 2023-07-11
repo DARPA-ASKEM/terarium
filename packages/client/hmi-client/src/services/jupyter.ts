@@ -136,21 +136,26 @@ export const getSessionManager = () => sessionManager;
 export const mimeService = new CodeMirrorMimeTypeService();
 
 export const renderMime = new RenderMimeRegistry({ initialFactories });
+let initialized = false;
 
 export const newSession = async (kernelName: string, name: string) => {
-	const settingsResponse = await API.get('/tgpt/configuration');
-	const settings = settingsResponse.data;
-	ServerConnection.makeSettings(settings);
-	kernelManager = new KernelManager({
-		serverSettings
-	});
-	sessionManager = new SessionManager({
-		kernelManager,
-		serverSettings
-	});
-	specsManager = new KernelSpecManager({
-		serverSettings
-	});
+	if (!initialized) {
+		const settingsResponse = await API.get('/tgpt/configuration');
+		const settings = settingsResponse.data;
+		serverSettings = ServerConnection.makeSettings(settings);
+		kernelManager = new KernelManager({
+			serverSettings
+		});
+		sessionManager = new SessionManager({
+			kernelManager,
+			serverSettings
+		});
+		specsManager = new KernelSpecManager({
+			serverSettings
+		});
+		initialized = true;
+	}
+
 	const sessionContext = new SessionContext({
 		sessionManager,
 		specsManager,
