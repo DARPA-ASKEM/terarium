@@ -48,6 +48,7 @@
 		/>
 		<tera-dataset
 			v-else-if="pageType === ProjectAssetTypes.DATASETS"
+			:project="project"
 			:asset-id="assetId"
 			is-editable
 			@asset-loaded="emit('asset-loaded')"
