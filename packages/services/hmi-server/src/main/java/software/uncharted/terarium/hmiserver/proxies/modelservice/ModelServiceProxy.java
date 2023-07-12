@@ -23,6 +23,6 @@ public interface ModelServiceProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response stratify(
 			Object baseModel,
-			Object fluModel
+			Object fluxModel
 	);
 }
