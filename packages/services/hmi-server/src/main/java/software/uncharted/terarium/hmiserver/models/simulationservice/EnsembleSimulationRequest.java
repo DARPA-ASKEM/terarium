@@ -15,7 +15,7 @@ import java.util.List;
 @TSModel
 public class EnsembleSimulationRequest implements Serializable {
 	@JsonAlias("model_configs")
-	private EnsembleModelConfigs modelConfigs;
+	private List<EnsembleModelConfigs> modelConfigs;
 
 	@JsonAlias("time_span")
 	private TimeSpan timespan;

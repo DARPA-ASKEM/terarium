@@ -174,7 +174,7 @@ export interface EnsembleModelConfigs {
 }
 
 export interface EnsembleSimulationRequest {
-    modelConfigs: EnsembleModelConfigs;
+    modelConfigs: EnsembleModelConfigs[];
     timespan: TimeSpan;
     extra: any;
     engine: string;
