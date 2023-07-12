@@ -44,76 +44,69 @@
 					transformation tools.</Message
 				>
 			</div>
-			<section class="metadata data-row">
+			<section class="metadata data-row" v-if="!metadata">
 				<section>
 					<header>Rows</header>
-					<section>{{ csvContent?.length ?? '--' }}</section>
+					<section>{{ csvContent?.length || '-' }}</section>
 				</section>
 				<section>
 					<header>Columns</header>
-					<section>{{ rawContent?.stats?.length ?? '--' }}</section>
+					<section>{{ rawContent?.stats?.length || '-' }}</section>
+					<header>Metadata</header>
+					<section>{{ dataset?.metadata || '-' }}</section>
 				</section>
 				<section>
 					<header>Date uploaded</header>
 					<section>
-						{{ new Date(dataset?.timestamp as string).toLocaleString('en-US') ?? '--' }}
+						{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') || '-' }}
 					</section>
 				</section>
 				<section>
 					<header>Uploaded by</header>
-					<section>{{ dataset?.username ?? '--' }}</section>
+					<section>{{ dataset?.username || '-' }}</section>
 				</section>
 			</section>
-			<section class="metadata data-row">
+			<section class="metadata data-row" v-if="!metadata">
 				<section>
 					<header>Source Name</header>
-					<section>{{ dataset?.source ?? '--' }}</section>
+					<section>{{ dataset?.source || '-' }}</section>
 				</section>
 				<section>
 					<header>Source URL</header>
 					<section>
-						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url ?? '--' }}</a>
+						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url || '-' }}</a>
 						<span v-else>-</span>
 					</section>
 				</section>
 			</section>
 			<RelatedPublications
-				@extracted-metadata="enriched = true"
-				:publications="[enriched ? dataset?.metadata?.documents?.[0]?.title ?? '' : '']"
+				@extracted-metadata="(extract) => (metadata = extract)"
+				:publications="[metadata?.source]"
 			/>
-			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
+			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<section v-if="enriched">
+					<section v-if="metadata">
 						<ul>
-							<li>Dataset name: {{ dataset.name }}</li>
-							<li>Dataset overview: {{ dataset?.description }}</li>
-							<li>Dataset URL: {{ dataset?.source }}</li>
+							<li>Dataset name: {{ metadata.name }}</li>
+							<li>Dataset overview: {{ metadata.description }}</li>
+							<li>Dataset URL: {{ metadata.source }}</li>
 							<li>
-								Data size: This dataset currently contains {{ csvContent?.length ?? '--' }} rows.
+								Data size: This dataset currently contains {{ csvContent?.length || '-' }} rows.
 							</li>
 						</ul>
 					</section>
-					<p v-else>
-						No information available. Add resources to generate a description. Or click edit icon to
-						edit this field directly.
-					</p>
+					<p v-else v-html="dataset?.description" />
 				</AccordionTab>
-				<AccordionTab v-if="enriched">
+				<AccordionTab v-if="metadata">
 					<template #header>
 						<header id="Source">Source</header>
 					</template>
-					This data is sourced from {{ dataset?.metadata?.documents?.[0]?.title ?? '--' }}:
-					<a
-						v-if="dataset?.metadata?.documents?.[0]?.url"
-						:href="dataset.metadata.documents[0].url"
-					>
-						{{ dataset.metadata.documents[0].url }}
-					</a>
+					This data is sourced from {{ metadata.source }}
 				</AccordionTab>
-				<AccordionTab>
+				<AccordionTab v-if="metadata">
 					<template #header>
 						<header id="Variables">Variables</header>
 					</template>
@@ -125,7 +118,7 @@
 									'NAME',
 									'DATA TYPE',
 									'UNITS',
-									'CONCEPTS',
+									'GROUNDING',
 									'EXTRACTIONS'
 								]"
 								:key="index"
@@ -133,104 +126,61 @@
 								{{ title }}
 							</div>
 						</div>
-						<div
-							v-for="(column, index) in dataset.columns"
-							class="variables-row"
-							:key="index"
-							@click="rowEditList[index] = true"
-							:active="rowEditList[index]"
-						>
-							<!-- id -->
-							<InputText
-								class="p-inputtext-sm"
-								type="text"
-								v-if="rowEditList[index]"
-								v-model="column.name"
-								@focus="setSuggestedValue(index, column.name)"
-							/>
-							<div v-else>{{ column.name }}</div>
-							<!-- name - currently just a formatted id -->
-							<InputText
-								class="p-inputtext-sm"
-								type="text"
-								v-if="rowEditList[index]"
-								v-model="column.name"
-								@focus="setSuggestedValue(index, column.name)"
-							/>
-							<div v-else>{{ formatName(column.name) }}</div>
-							<!-- data type -->
-							<InputText
-								class="p-inputtext-sm"
-								type="text"
-								v-if="rowEditList[index]"
-								v-model="column.dataType"
-								@focus="setSuggestedValue(index, column.dataType)"
-							/>
-							<div v-else>{{ column.dataType }}</div>
-							<!-- units - field does not exist in tds yet -->
-							<InputText
-								class="p-inputtext-sm"
-								type="text"
-								v-if="rowEditList[index]"
-								@focus="setSuggestedValue(index, '')"
-							/>
-							<div v-else>-</div>
-							<!-- grounding -->
-							<InputText
-								class="p-inputtext-sm"
-								type="text"
-								v-if="rowEditList[index]"
-								v-model="groundingValues[index][0]"
-								@focus="setSuggestedValue(index, groundingValues[index][0])"
-							/>
-							<div v-else>
-								{{ column.grounding?.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
+						<div v-for="(column, index) in metadata.columns" class="variables-row" :key="index">
+							<div>{{ column.name }}</div>
+							<div>{{ formatName(column.name) }}</div>
+							<div>{{ column.data_type }}</div>
+							<div>-</div>
+							<div>
+								{{ column.grounding.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
 							</div>
-							<!-- extractions - field does not exist in tds yet -->
-							<InputText
-								class="p-inputtext-sm"
-								type="text"
-								v-if="rowEditList[index]"
-								@focus="setSuggestedValue(index, '')"
-							/>
-							<div v-else></div>
-							<div v-if="rowEditList[index]" class="row-edit-buttons">
-								<Button text icon="pi pi-times" @click.stop="rowEditList[index] = false" />
-								<Button text icon="pi pi-check" @click.stop="rowEditList[index] = false" />
-							</div>
-							<!-- description -->
-							<InputText
-								class="p-inputtext-sm variables-description"
-								type="text"
-								v-if="rowEditList[index]"
-								v-model="column.description"
-								@focus="setSuggestedValue(index, column.description)"
-							/>
-							<div class="variables-description" v-else>{{ column.description }}</div>
-							<div v-if="rowEditList[index]" class="variables-suggested">
-								<span>Suggested value</span>
-								<div>
-									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata.documents[0].title }}
-									</div>
-									<div class="suggested-value">{{ suggestedValues[index] }}</div>
-								</div>
-								<span>Other possible values</span>
-								<div>
-									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata.documents[0].title }}
-									</div>
-									<div class="suggested-value">
-										<ul>
-											<li v-for="(grounding, g) in groundingValues[index].slice(1, 5)" :key="g">
-												{{ grounding }}
-											</li>
-										</ul>
-									</div>
-								</div>
-							</div>
+							<div></div>
+							<div class="variables-description">{{ column.description }}</div>
 						</div>
 					</div>
+				</AccordionTab>
+				<AccordionTab v-if="(annotations?.length || 0) > 0">
+					<template #header>
+						<header id="Annotations">
+							Annotations
+							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
+						</header>
+					</template>
+					<section v-if="annotations">
+						<header class="annotation-subheader">Annotations</header>
+						<section class="annotation-group">
+							<section
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name"
+								class="annotation-row data-row"
+							>
+								<section>
+									<header>Name</header>
+									<section>{{ name }}</section>
+								</section>
+								<section>
+									<header>Description</header>
+									<section>{{ annotations[name] }}</section>
+								</section>
+							</section>
+						</section>
+					</section>
+				</AccordionTab>
+			</Accordion>
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
+				<AccordionTab v-if="(annotations?.['feature']?.length || 0) > 0">
+					<template #header>
+						<header id="Variables">
+							Variables<span class="artifact-amount">({{ annotations?.['feature']?.length }})</span>
+						</header>
+					</template>
+					<DataTable :value="annotations?.['feature']">
+						<Column field="name" header="Name"></Column>
+						<Column field="featureType" header="Type"></Column>
+						<Column field="description" header="Definition"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="concept" header="Concept"></Column>
+					</DataTable>
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -271,15 +221,16 @@ import { CsvAsset, Dataset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import InputText from 'primevue/inputtext';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 enum DatasetView {
-	DESCRIPTION,
-	DATA,
-	LLM
+	DESCRIPTION = 'description',
+	DATA = 'data',
+	LLM = 'llm'
 }
 const props = defineProps<{
 	assetId: string;
@@ -289,6 +240,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+const metadata = ref();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
 const menu = ref();
@@ -357,21 +309,6 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-// temporary variable to allow user to click through related publications modal and simulate "getting" enriched data back
-const enriched = ref(false);
-
-const groundingValues = ref<string[][]>([]);
-const suggestedValues = ref<string[]>([]);
-
-// quick and dirty function to populate one suggestd value per column, based on what column field user clicked; possible refactor
-function setSuggestedValue(index: number, suggestedValue: string | undefined) {
-	if (suggestedValues.value.length > index && suggestedValue) {
-		suggestedValues.value[index] = suggestedValue;
-	}
-}
-
-const rowEditList = ref<boolean[]>([]);
-
 const openDatesetChatTab = () => {
 	datasetView.value = DatasetView.LLM;
 	jupyterCsv.value = null;
@@ -380,18 +317,6 @@ const openDatesetChatTab = () => {
 onUpdated(() => {
 	if (dataset.value) {
 		emit('asset-loaded');
-		if (dataset.value.columns) {
-			rowEditList.value = dataset.value.columns.map(() => false);
-			groundingValues.value = dataset.value.columns.map((column) => {
-				const grounding = column.grounding;
-				if (grounding) {
-					const keys = Object.keys(grounding.identifiers);
-					return keys.map((k) => grounding.identifiers[k]);
-				}
-				return [];
-			});
-			suggestedValues.value = dataset.value.columns.map(() => '');
-		}
 	}
 });
 
@@ -430,6 +355,20 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
+const showAccordion = computed(() => {
+	if (metadata.value) {
+		return [0, 1, 2];
+	}
+	if (dataset.value?.columns) {
+		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
+			? [1]
+			: [0];
+	}
+
+	return [0];
+});
 </script>
 
 <style scoped>
@@ -445,7 +384,7 @@ watch(
 	background-color: var(--surface-highlight);
 	color: var(--text-color-primary);
 	border-radius: var(--border-radius);
-	border-color: var(--primary-color);
+	border: 4px solid var(--primary-color);
 	border-width: 0px 0px 0px 6px;
 }
 
@@ -539,14 +478,14 @@ main .annotation-group {
 
 .variables-header {
 	display: grid;
-	grid-template-columns: repeat(6, 1fr) 0.5fr;
+	grid-template-columns: repeat(6, 1fr);
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 }
 
 .variables-row {
 	display: grid;
-	grid-template-columns: repeat(6, 1fr) 0.5fr;
+	grid-template-columns: repeat(6, 1fr);
 	grid-template-rows: 1fr 1fr;
 	border-top: 1px solid var(--surface-border);
 }
@@ -555,54 +494,9 @@ main .annotation-group {
 	background-color: var(--surface-highlight);
 }
 
-.variables-row[active='true'] {
-	background-color: var(--surface-highlight);
-	grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
-}
-
 .variables-description {
 	grid-row: 2;
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
-}
-
-.variables-suggested {
-	grid-row: 3 / span 3;
-	grid-column: 1 / span 6;
-}
-
-.variables-suggested div {
-	display: flex;
-	white-space: nowrap;
-	overflow: hidden;
-}
-
-.variables-suggested span {
-	font-weight: bold;
-}
-
-.variables-suggested i {
-	margin-right: 0.5rem;
-}
-
-.suggested-value-source {
-	margin-right: 2rem;
-}
-
-.suggested-value {
-	color: var(--text-color-subdued);
-}
-
-.variables-suggested .suggested-value ul {
-	flex-direction: row;
-}
-
-main :deep(.p-inputtext.p-inputtext-sm) {
-	padding-left: 0.65rem;
-}
-
-.row-edit-buttons {
-	display: flex;
-	justify-content: space-evenly;
 }
 </style>
