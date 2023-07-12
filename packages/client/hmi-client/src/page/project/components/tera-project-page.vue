@@ -23,6 +23,11 @@
 			openTextArtifact();
 		"
 	/>
+	<tera-pdf-embed
+		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && assetName?.endsWith('.pdf')"
+		:title="assetName"
+		:file-promise="getPDFBytes()"
+	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
 		:project="project"
@@ -78,9 +83,10 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
 import * as ProjectService from '@/services/project';
-import { getArtifactFileAsText } from '@/services/artifact';
+import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { createModel } from '@/services/model';
+import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 
 const props = defineProps<{
 	project: IProject;
@@ -96,6 +102,7 @@ const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'clo
 const router = useRouter();
 
 const code = ref<string>();
+
 const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
@@ -179,6 +186,10 @@ async function openNextCodeFile() {
 			params: currentRequest.asset
 		});
 	}
+}
+
+function getPDFBytes(): Promise<ArrayBuffer | null> {
+	return getArtifactArrayBuffer(props.assetId!, props.assetName!);
 }
 
 async function openTextArtifact() {
