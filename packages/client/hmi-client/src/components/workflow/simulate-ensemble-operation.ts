@@ -2,16 +2,12 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 // import { EnsembleRequest } from '@/types/Types';
 // import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';
-
-export interface EnsembleMap {
-	genericModelVariable: string;
-	modelVariable: string;
-}
+// import { EnsembleModelConfigs, EnsembleSimulationRequest } from '@/types/Types';
 
 export interface EnsembleOperationState {
 	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
-	mapping: EnsembleMap[];
+	mapping: { [index: string]: string }[];
 }
 
 export const EnsembleOperation: Operation = {
@@ -31,7 +27,7 @@ export const EnsembleOperation: Operation = {
 		const init: EnsembleOperationState = {
 			modelConfigIds: [],
 			chartConfigs: [],
-			mapping: [{ genericModelVariable: '', modelVariable: '' }]
+			mapping: []
 		};
 		return init;
 	}
