@@ -1,6 +1,11 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Simulation, SimulationRequest, CalibrationRequest } from '@/types/Types';
+import {
+	Simulation,
+	SimulationRequest,
+	CalibrationRequest,
+	EnsembleSimulationRequest
+} from '@/types/Types';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -41,6 +46,17 @@ export async function makeCalibrateJob(calibrationParams: CalibrationRequest) {
 		const resp = await API.post('simulation-request/calibrate', calibrationParams);
 		const output = resp.data;
 		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+export async function makeEnsembleSimulation(params: EnsembleSimulationRequest) {
+	try {
+		console.log('Need to still hook this up');
+		console.log(params);
+		return {} as any;
 	} catch (err) {
 		logger.error(err);
 		return null;

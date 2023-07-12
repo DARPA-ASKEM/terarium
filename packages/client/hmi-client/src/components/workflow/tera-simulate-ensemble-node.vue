@@ -30,8 +30,7 @@ const props = defineProps<{
 // const emit = defineEmits(['append-output-port']);
 
 const showSpinner = ref(false);
-// const runResults = ref<RunResults>({});
-const modelConfigIds = computed<string[] | undefined>(() => props.node.inputs[0].value);
+const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
 
 const runEnsemble = async () => {
 	console.log('TODO');
