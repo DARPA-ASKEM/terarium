@@ -76,7 +76,7 @@
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editRow">
+			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editSection">
 				<!-- Description -->
 				<AccordionTab>
 					<template #header>Description</template>
@@ -92,43 +92,53 @@
 					<template #header>
 						Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>ID</th>
-									<th>Value</th>
-									<th>Distribution</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="parameter in parameters" :key="parameter.id">
-									<td>{{ parameter.id ?? '--' }}</td>
-									<td>{{ parameter?.value ?? '--' }}</td>
-									<td>
-										<template v-if="parameter?.distribution?.parameters">
-											[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
-											{{ round(parameter?.distribution?.parameters.maximum, 4) }}] </template
-										><template v-else>--</template>
-									</td>
-									<td>
-										<template v-if="extractions?.[parameter.id]">
-											<Tag :value="extractions?.[parameter.id].length" />
-										</template>
-										<template v-else>--</template>
-									</td>
-								</tr>
-								<!-- <tr class="p-rowgroup-footer">
-									<td colspan="5">
-										<span class="parameter-description">
-											{{ parameterGroup.data[0].description}}
-										</span>
-									</td>
-								</tr> -->
-							</tbody>
-						</table>
-					</div>
+					<main v-if="parameters.length > 0" class="datatable" style="--columns: 4">
+						<header>
+							<div>ID</div>
+							<div>Value</div>
+							<div>Distribution</div>
+							<div>Extractions</div>
+						</header>
+						<section
+							v-for="parameter in parameters"
+							:key="parameter.id"
+							:class="[
+								{ active: isSectionEditable === `parameter-${parameter.id}` },
+								`parameter-${parameter.id}`
+							]"
+						>
+							<template v-if="isSectionEditable === `parameter-${parameter.id}`">
+								<div><input type="text" :value="parameter?.name ?? '--'" /></div>
+								<div><input type="text" :value="parameter?.value ?? '--'" /></div>
+								<div>--</div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+								<div v-if="extractions?.[parameter?.id]" style="grid-column: 1 / span 4">
+									<tera-model-extraction :extractions="extractions[parameter.id]" />
+								</div>
+							</template>
+							<template v-else>
+								<div>{{ parameter?.id ?? '--' }}</div>
+								<div>{{ parameter?.value ?? '--' }}</div>
+								<div>
+									<template v-if="parameter?.distribution?.parameters">
+										[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
+										{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
+									</template>
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template v-if="extractions?.[parameter.id]">
+										<Tag :value="extractions?.[parameter.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- State variables -->
@@ -136,126 +146,117 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>ID</th>
-									<th>Name</th>
-									<th>Unit</th>
-									<th>Concept</th>
-									<th>Identifiers</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="state in states" :key="state.id" :class="`state-${state.id}`">
-									<!-- <template v-if="isRowEditable === `state-${state.id}`">
-										<td>
-											<input type="text" :value="state?.id ?? '--'" />
-										</td>
-										<td>
-											<input type="text" :value="state?.name ?? '--'" />
-										</td>
-										<td>
-											<input type="text" :value="state?.units?.expression ?? '--'" />
-										</td>
-										<td>
-											<label>Concept</label>
-										</td>
-										<td>
-											<label>Identifiers</label>
-										</td>
-										<td>
-											<button type="submit" label="submit" />
-										</td>
-									</template>
-									<template v-else> -->
-									<td>{{ state?.id ?? '--' }}</td>
-									<td>{{ state?.name ?? '--' }}</td>
-									<td>{{ state?.units?.expression ?? '--' }}</td>
-									<td>
-										<template v-if="state?.grounding?.context && !isEmpty(state.grounding.context)">
-											<template
-												v-for="[key, curie] in Object.entries(state.grounding.context)"
-												:key="key"
-											>
-												<a
-													target="_blank"
-													rel="noopener noreferrer"
-													:href="`http://34.230.33.149:8772/${curie}`"
-												>
-													{{ key }} ({{ curie }})</a
-												><br />
-											</template>
-										</template>
-										<template v-else>--</template>
-									</td>
-									<td>
-										<template
-											v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
+					<main v-if="states.length > 0" class="datatable" style="--columns: 4">
+						<header>
+							<div>Name</div>
+							<div>Unit</div>
+							<div>Concept</div>
+							<div>Extractions</div>
+						</header>
+						<section
+							v-for="state in states"
+							:key="state.id"
+							:class="[{ active: isSectionEditable === `state-${state.id}` }, `state-${state.id}`]"
+						>
+							<template v-if="isSectionEditable === `state-${state.id}`">
+								<div><input type="text" :value="state?.name ?? '--'" /></div>
+								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
+								<div>Identifiers</div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+								<div v-if="extractions?.[state?.id]" style="grid-column: 1 / span 4">
+									<tera-model-extraction :extractions="extractions[state.id]" />
+								</div>
+							</template>
+							<template v-else>
+								<div>{{ state?.name ?? '--' }}</div>
+								<div>{{ state?.units?.expression ?? '--' }}</div>
+								<div>
+									<template
+										v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
+									>
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
+												state.grounding.identifiers
+											)}`"
 										>
-											<a
-												target="_blank"
-												rel="noopener noreferrer"
-												:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
-													state.grounding.identifiers
-												)}`"
-											>
-												{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
-											</a>
-										</template>
-										<template v-else>--</template>
-									</td>
-									<td>
-										<template v-if="extractions?.[state?.id]">
-											<Tag :value="extractions?.[state?.id].length" />
-										</template>
-										<template v-else>--</template>
-									</td>
-									<!-- </template> -->
-								</tr>
-							</tbody>
-						</table>
-					</div>
+											{{
+												getNameOfCurieCached(
+													getCurieFromGroudingIdentifier(state.grounding.identifiers)
+												)
+											}}
+										</a>
+									</template>
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template v-if="extractions?.[state?.id]">
+										<Tag :value="extractions?.[state?.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- Observables -->
 				<AccordionTab>
-					<template #header
-						>Observables <span class="artifact-amount">({{ observables.length }})</span></template
-					>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>ID</th>
-									<th>Name</th>
-									<th>Expression</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="observable in observables" :key="observable.id">
-									<td>{{ observable.id ?? '--' }}</td>
-									<td>{{ observable.name ?? '--' }}</td>
-									<td>
-										<katex-element
-											v-if="observable.expression"
-											:expression="observable.expression"
-										/>
-										<template v-else>--</template>
-									</td>
-									<td>
-										<template v-if="extractions?.[observable.id]">
-											<Tag :value="extractions?.[observable.id].length" />
-										</template>
-										<template v-else>--</template>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<template #header>
+						Observables <span class="artifact-amount">({{ observables.length }})</span>
+					</template>
+					<main v-if="observables.length > 0" class="datatable" style="--columns: 4">
+						<header>
+							<div>ID</div>
+							<div>Name</div>
+							<div>Expression</div>
+							<div>Extractions</div>
+						</header>
+						<section
+							v-for="observable in observables"
+							:key="observable.id"
+							:class="[
+								{ active: isSectionEditable === `observable-${observable.id}` },
+								`observable-${observable.id}`
+							]"
+						>
+							<template v-if="isSectionEditable === `observable-${observable.id}`">
+								<div>{{ observable.id ?? '--' }}</div>
+								<div>{{ observable.name ?? '--' }}</div>
+								<div>
+									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<template v-else>--</template>
+								</div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+								<div v-if="extractions?.[observable?.id]" style="grid-column: 1 / span 4">
+									<tera-model-extraction :extractions="extractions[observable.id]" />
+								</div>
+							</template>
+							<template v-else>
+								<div>{{ observable.id ?? '--' }}</div>
+								<div>{{ observable.name ?? '--' }}</div>
+								<div>
+									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template v-if="extractions?.[observable.id]">
+										<Tag :value="extractions?.[observable.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- Transitions -->
@@ -263,104 +264,129 @@
 					<template #header>
 						Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>Label</th>
-									<th>Input</th>
-									<th>Output</th>
-									<th>Expression</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="transition in transitions" :key="transition.id">
-									<td>{{ transition?.properties?.name ?? '--' }}</td>
-									<td>
-										{{
-											transition?.input && transition.input?.length > 0
-												? transition.input.sort().join(', ')
-												: '--'
-										}}
-									</td>
-									<td>
-										{{
-											transition?.output && transition.output?.length > 0
-												? transition.output.sort().join(', ')
-												: '--'
-										}}
-									</td>
-									<td>
-										<katex-element :expression="getTransitionExpression(transition.id)" />
-									</td>
-									<td>
-										<template v-if="extractions?.[transition.id]">
-											<Tag :value="extractions?.[transition.id].length" />
-										</template>
-										<template v-else>--</template>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<main v-if="transitions.length > 0" class="datatable" style="--columns: 5">
+						<header>
+							<div>Label</div>
+							<div>Input</div>
+							<div>Output</div>
+							<div>Expression</div>
+							<div>Extractions</div>
+						</header>
+						<section
+							v-for="(transition, index) in transitions"
+							:key="index"
+							:class="[
+								{ active: isSectionEditable === `transition-${index}` },
+								`transition-${index}`
+							]"
+						>
+							<template v-if="isSectionEditable === `transition-${index}`">
+								<div>{{ transition?.properties?.name ?? '--' }}</div>
+								<div>
+									{{
+										transition?.input && transition.input?.length > 0
+											? transition.input.sort().join(', ')
+											: '--'
+									}}
+								</div>
+								<div>
+									{{
+										transition?.output && transition.output?.length > 0
+											? transition.output.sort().join(', ')
+											: '--'
+									}}
+								</div>
+								<div>
+									<katex-element :expression="getTransitionExpression(transition.id)" />
+								</div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+								<div v-if="extractions?.[transition?.id]" style="grid-column: 1 / span 5">
+									<tera-model-extraction :extractions="extractions[transition.id]" />
+								</div>
+							</template>
+							<template v-else>
+								<div>{{ transition?.properties?.name ?? '--' }}</div>
+								<div>
+									{{
+										transition?.input && transition.input?.length > 0
+											? transition.input.sort().join(', ')
+											: '--'
+									}}
+								</div>
+								<div>
+									{{
+										transition?.output && transition.output?.length > 0
+											? transition.output.sort().join(', ')
+											: '--'
+									}}
+								</div>
+								<div>
+									<katex-element :expression="getTransitionExpression(transition.id)" />
+								</div>
+								<div>
+									<template v-if="extractions?.[transition.id]">
+										<Tag :value="extractions?.[transition.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
-				<!-- Other extractions -->
+				<!-- Other concepts -->
 				<AccordionTab>
 					<template #header>
-						Other extractions
-						<span class="artifact-amount">({{ otherExtractions.length }})</span>
+						Other concepts
+						<span class="artifact-amount">({{ otherConcepts.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>payload id</th>
-									<th>names</th>
-									<th>descriptions</th>
-									<th>concept</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="item in otherExtractions" :key="item.payload?.id?.id">
-									<td>{{ item.payload?.id?.id ?? '--' }}</td>
-									<td>
-										{{
-											item.payload?.names?.length > 0
-												? item.payload?.names?.map((n) => n?.name).join(', ')
-												: '--'
-										}}
-									</td>
-									<td>
-										{{
-											item.payload?.descriptions?.length > 0
-												? item.payload?.descriptions?.map((d) => d?.source).join(', ')
-												: '--'
-										}}
-									</td>
-									<td>
-										<template v-if="!item.payload.groundings || item.payload.groundings.length < 1"
-											>--</template
-										>
-										<template
-											v-else
-											v-for="grounding in item.payload.groundings"
-											:key="grounding.grounding_id"
-										>
-											<a
-												target="_blank"
-												rel="noopener noreferrer"
-												:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
-											>
-												{{ grounding.grounding_text }}
-											</a>
-										</template>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<main v-if="otherConcepts.length > 0" class="datatable" style="--columns: 4">
+						<header>
+							<div>Payload id</div>
+							<div>Names</div>
+							<div>Descriptions</div>
+							<div>Concept</div>
+						</header>
+						<section v-for="item in otherConcepts" :key="item.payload?.id?.id">
+							<div>{{ item.payload?.id?.id ?? '--' }}</div>
+							<div>
+								{{
+									item.payload?.names?.length > 0
+										? item.payload?.names?.map((n) => n?.name).join(', ')
+										: '--'
+								}}
+							</div>
+							<div>
+								{{
+									item.payload?.descriptions?.length > 0
+										? item.payload?.descriptions?.map((d) => d?.source).join(', ')
+										: '--'
+								}}
+							</div>
+							<div>
+								<template v-if="!item.payload.groundings || item.payload.groundings.length < 1"
+									>--</template
+								>
+								<template
+									v-else
+									v-for="grounding in item.payload.groundings"
+									:key="grounding.grounding_id"
+								>
+									<a
+										target="_blank"
+										rel="noopener noreferrer"
+										:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
+									>
+										{{ grounding.grounding_text }}
+									</a>
+								</template>
+							</div>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- Time -->
@@ -369,22 +395,17 @@
 						Time
 						<span class="artifact-amount">({{ time.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>ID</th>
-									<th>Units</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="(item, index) in time" :key="index">
-									<td>{{ item?.id ?? '--' }}</td>
-									<td>{{ item?.units?.expression ?? '--' }}</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+					<main v-if="time.length > 0" class="datatable" style="--columns: 3">
+						<header>
+							<div>ID</div>
+							<div>Units</div>
+							<div>Extractions</div>
+						</header>
+						<section v-for="(item, index) in time" :key="index">
+							<div>{{ item?.id ?? '--' }}</div>
+							<div>{{ item?.units?.expression ?? '--' }}</div>
+						</section>
+					</main>
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -443,6 +464,7 @@ import RelatedPublications from '@/components/widgets/tera-related-publications.
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
+import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -452,12 +474,13 @@ import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
+import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
 enum ModelView {
-	DESCRIPTION = 'description',
-	MODEL = 'model'
+	DESCRIPTION,
+	MODEL
 }
 
 // TODO - Get rid of these emits
@@ -542,27 +565,29 @@ async function duplicateModel() {
 const name = computed(() => highlightSearchTerms(model.value?.name));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
-const time = computed(() => [model.value?.semantics?.ode.time] ?? []);
+const time = computed(() =>
+	model.value?.semantics?.ode?.time ? [model.value.semantics.ode.time] : []
+);
 const states = computed(() => model.value?.model?.states ?? []);
 const transitions = computed(() => model.value?.model?.transitions ?? []);
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
-const publications = computed(() =>
-	props.assetId === 'biomd0000000955-model-id' ? ['https://arxiv.org/pdf/2003.09861.pdf'] : []
-);
+const publications = computed(() => []);
 const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
 });
-const otherExtractions = computed(() => {
+const otherConcepts = computed(() => {
 	const ids = [
 		...(states.value?.map((s) => s.id) ?? []),
 		...(transitions.value?.map((t) => t.id) ?? [])
 	];
 	const key = Object.keys(extractions.value).find((k) => !ids.includes(k));
-	if (key) return extractions.value[key.toString()];
+	if (key) {
+		return extractions.value[key.toString()].filter((e) => e.type === 'anchored_extraction');
+	}
 	return [];
 });
-const isRowEditable = ref<string>();
+const isSectionEditable = ref<string | null>();
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -579,6 +604,19 @@ function getTransitionExpression(id): string {
 	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '--';
 }
 
+/**
+ * Concepts
+ */
+const nameOfCurieCache = ref(new Map<string, string>());
+const getNameOfCurieCached = (curie: string): string => {
+	if (!nameOfCurieCache.value.has(curie)) {
+		getCuriesEntities([curie]).then((response) =>
+			nameOfCurieCache.value.set(curie, response?.[0].name ?? '')
+		);
+	}
+	return nameOfCurieCache.value.get(curie) ?? '';
+};
+
 function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
 	if (!!identifier && !isEmpty(identifier)) {
 		const [key, value] = Object.entries(identifier)[0];
@@ -586,18 +624,6 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 	}
 	return '';
 }
-
-// States/transitions aren't selected like this anymore - maybe somehow later?
-// const onStateVariableClick = () => {
-// 	if (selectedRow.value) {
-// 		equationLatex.value = equationLatexOriginal.value.replaceAll(
-// 			selectedRow.value.sname,
-// 			String.raw`{\color{red}${selectedRow.value.sname}}`
-// 		);
-// 	} else {
-// 		equationLatex.value = equationLatexOriginal.value;
-// 	}
-// };
 
 function updateModelContent(rendererGraph) {
 	if (model.value) model.value = convertToAMRModel(rendererGraph);
@@ -687,24 +713,45 @@ async function updateModelName() {
 	}
 }
 
-// Toggle rows to become editable
-function editRow(event: Event) {
+// Toggle rows to become editable, display extractions to choose from.
+function editSection(event: Event) {
 	if (!event?.target) return;
-	const row = (event.target as HTMLElement).closest('.p-datatable-tbody tr');
-	if (!row) return;
-	isRowEditable.value = row.className;
+	const section = (event.target as HTMLElement).closest('.datatable section');
+	if (!section) return;
+	isSectionEditable.value =
+		isSectionEditable.value === section.className ? null : section.className;
 }
 </script>
 
 <style scoped>
-:deep(.p-datatable .p-datatable-tbody > tr > .borderless-row) {
-	border-bottom: none;
+.datatable header,
+.datatable section {
+	align-items: center;
+	border-bottom: 1px solid var(--surface-border-light);
+	display: grid;
+	grid-template-columns: repeat(var(--columns), calc(100% / var(--columns)));
+	grid-auto-flow: row;
+	justify-items: start;
 }
 
-.parameter-description {
-	font-weight: 500;
-	font-size: var(--font-body-small);
-	color: var(--text-color-secondary);
+.datatable header > div,
+.datatable section > div {
+	padding: 0.5rem;
+}
+
+.datatable header {
+	color: var(--text-color-light);
+	font-size: var(--font-caption);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+}
+
+.datatable section.active {
+	background-color: var(--surface-secondary);
+}
+
+.datatable input {
+	width: 100%;
 }
 
 .model-biblio {
@@ -743,10 +790,10 @@ function editRow(event: Event) {
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
 	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
+	border-color: var(--primary-color);
 	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
 	border-width: 0px 0px 0px 6px;
+	color: var(--text-color-primary);
 }
 
 .p-buttonset {
