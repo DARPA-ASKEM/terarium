@@ -68,8 +68,11 @@
 										<td>
 											{{ id }}
 										</td>
-										<td>
+										<td v-if="customWeights === false">
 											{{ weights[i] }}
+										</td>
+										<td v-else>
+											<InputNumber v-model="weights[i]" />
 										</td>
 									</tr>
 								</tbody>
@@ -85,7 +88,7 @@
 
 <script setup lang="ts">
 // import _ from 'lodash';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 // import { Model } from '@/types/Types';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 // import { getSimulation, getRunResult } from '@/services/models/simulation-service';
@@ -95,6 +98,7 @@ import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
+import InputNumber from 'primevue/inputnumber';
 // import { workflowEventBus } from '@/services/workflow';
 
 const props = defineProps<{
@@ -116,15 +120,15 @@ const activeTab = ref(EnsembleTabs.input);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 // const listModels = ref<Model>();
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
-
+const customWeights = ref<boolean>(false);
 // List of each observible + state for each model.
 // const listModelOptions = ref<{}[]>();
+const weights = ref<number[]>(calculateWeights());
 
 function calculateWeights() {
-	if (
-		ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS &&
-		listModelIds.value
-	) {
+	if (!listModelIds.value) return [];
+	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
+		customWeights.value = false;
 		const percent = 1 / listModelIds.value.length;
 		const outputList: number[] = [];
 		for (let i = 0; i < listModelIds.value.length; i++) {
@@ -132,9 +136,22 @@ function calculateWeights() {
 		}
 		return outputList;
 	}
+	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
+		customWeights.value = true;
+	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
+		customWeights.value = false;
+		console.log('TODO: Get weights from AMRs');
+	}
 	return [];
 }
-const weights = computed(calculateWeights);
+
+watch(
+	[() => ensembleCalibrationMode.value, listModelIds.value],
+	async () => {
+		weights.value = calculateWeights();
+	},
+	{ immediate: true }
+);
 
 // watch(
 // 	() => props.node.inputs,
