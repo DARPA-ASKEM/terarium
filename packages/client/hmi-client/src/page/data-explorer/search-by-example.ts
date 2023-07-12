@@ -14,9 +14,22 @@ export function useSearchByExampleOptions() {
 }
 
 export function extractResourceName(resource): string {
-	if (resource.name) {
-		return resource.name;
-	}
+	return resource.name ?? resource.title;
+}
 
-	return resource.title;
+const optionBoolsToStrs = {
+	similarContent: 'similar content',
+	forwardCitation: 'forward citations',
+	backwardCitation: 'backward citations',
+	relatedContent: 'related resources'
+};
+export function getSearchByExampleOptionsString(): string {
+	const result: string[] = [];
+	Object.entries(searchByExampleOptions.value).forEach(([key, value]) => {
+		if (value) {
+			result.push(optionBoolsToStrs[key]);
+		}
+	});
+
+	return result.join(', ');
 }

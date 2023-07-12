@@ -4,8 +4,8 @@
 			<template v-if="isLoading">Loading...</template>
 			<template v-else-if="props.searchTerm">
 				{{ resultsText }}
-				<span v-if="resultsStr.length === 0"> "{{ props.searchTerm }}" </span>
-				<div v-else-if="resultsStr.length > 0" class="search-by-example-card">
+				<span v-if="searchByExampleOptionsStr.length === 0"> "{{ props.searchTerm }}" </span>
+				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
 					<tera-asset-card
 						:asset="searchByExampleAssetCardProp"
 						:resource-type="(resultType as ResourceType)"
@@ -60,10 +60,13 @@ import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
-import { useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
+import {
+	useSearchByExampleOptions,
+	getSearchByExampleOptionsString
+} from '@/page/data-explorer/search-by-example';
 import TeraSearchItem from './tera-search-item.vue';
 
-const { searchByExampleOptions, searchByExampleAssetCardProp } = useSearchByExampleOptions();
+const { searchByExampleAssetCardProp } = useSearchByExampleOptions();
 
 const props = defineProps({
 	dataItems: {
@@ -156,30 +159,7 @@ const resultsCount = computed(() => {
 	return total;
 });
 
-const optionBoolstoStrs = {
-	similarContent: 'similar content',
-	forwardCitation: 'forward citations',
-	backwardCitation: 'backward citations',
-	relatedContent: 'related resources'
-};
-
-const resultsStr = computed(() => {
-	let s = '';
-
-	if (searchByExampleAssetCardProp.value) {
-		Object.entries(searchByExampleOptions.value).forEach((item) => {
-			const [key, value] = item;
-			if (value) {
-				if (s.length > 0) {
-					s += ', ';
-				}
-				s += optionBoolstoStrs[key];
-			}
-		});
-	}
-
-	return s;
-});
+const searchByExampleOptionsStr = computed(() => getSearchByExampleOptionsString());
 
 const resultsText = computed(() => {
 	if (resultsCount.value === 0) {
@@ -187,7 +167,10 @@ const resultsText = computed(() => {
 	}
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
-	const toOrFor = resultsStr.value.length > 0 ? `with ${resultsStr.value} to` : 'for';
+	const toOrFor =
+		searchByExampleOptionsStr.value.length > 0
+			? `with ${searchByExampleOptionsStr.value} to`
+			: 'for';
 	return `Showing ${resultsCount.value} ${truncated}result${s} ${toOrFor} `;
 });
 
