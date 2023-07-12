@@ -22,9 +22,11 @@ export type ResourceType = Store<
 const useResourcesStore = defineStore('resources', {
 	state: () => ({
 		xddDataset: null as string | null,
-		activeProject: null as null | IProject,
-		activeProjectAssets: null as ProjectAssets | null
+		activeProject: null as null | IProject
 	}),
+	getters: {
+		activeProjectAssets: (state) => state.activeProject?.assets
+	},
 	actions: {
 		setXDDDataset(dataset: string | null) {
 			this.xddDataset = dataset;
@@ -34,7 +36,6 @@ const useResourcesStore = defineStore('resources', {
 		},
 		reset() {
 			this.activeProject = null;
-			this.activeProjectAssets = null;
 		}
 	}
 });

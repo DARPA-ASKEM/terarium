@@ -2,16 +2,16 @@
 	<tera-asset
 		:name="project?.name"
 		:authors="project?.username"
+		:is-naming-asset="isRenamingProject"
 		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
 		is-editable
 		class="overview-banner"
 	>
 		<template #name-input>
 			<InputText
-				v-if="isEditingProject"
+				v-if="isRenamingProject"
 				v-model="newProjectName"
 				ref="inputElement"
-				class="project-name-input"
 				@keyup.enter="updateProjectName"
 			/>
 		</template>
@@ -199,7 +199,7 @@ import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Projec
 import { nextTick, Ref, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
-import { update as updateProject } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -223,10 +223,9 @@ import { uploadArtifactToProject } from '@/services/artifact';
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'update-project', 'open-asset']);
+const emit = defineEmits(['open-workflow', 'open-asset']);
 const router = useRouter();
-const resources = useResourcesStore();
-const isEditingProject = ref(false);
+const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 const progress: Ref<number> = ref(0);
@@ -296,7 +295,7 @@ async function openImportModal() {
 	results.value = null;
 }
 
-function importCompleted(
+async function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
 	// This is a hacky override for dealing with CSVs
@@ -311,8 +310,10 @@ function importCompleted(
 			logger.error('Failed to upload file. Is it too large?', { showToast: true });
 		}
 		results.value = null;
-		emit('update-project', props.project.id);
 		isUploadResourcesModalVisible.value = false;
+
+		// TODO: See about getting rid of this - this refresh should preferably be within a service
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
 	}
@@ -320,20 +321,17 @@ function importCompleted(
 
 async function editProject() {
 	newProjectName.value = props.project.name;
-	isEditingProject.value = true;
+	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
 
 async function updateProjectName() {
-	isEditingProject.value = false;
+	isRenamingProject.value = false;
 	const updatedProject = props.project;
 	updatedProject.name = newProjectName.value;
-	const id = await updateProject(updatedProject);
-	if (id) {
-		resources.setActiveProject(updatedProject);
-	}
+	await ProjectService.update(updatedProject);
 }
 
 const projectMenu = ref();
@@ -470,7 +468,6 @@ h3 {
 	padding: 0 0 0 1rem;
 	margin-left: -1rem;
 	border: 0;
-	visibility: hidden;
 	width: 33%;
 }
 
