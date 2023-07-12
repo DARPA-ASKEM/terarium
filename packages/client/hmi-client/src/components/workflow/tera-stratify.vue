@@ -69,6 +69,7 @@
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
 								@all-nodes-typed="isBaseModelFullyTyped = true"
+								:show-reflexives-toolbar="false"
 							/>
 							<div class="input">
 								<label for="strata-type">Select a strata type</label>
