@@ -1,4 +1,4 @@
-import { Artifact } from '@/types/Types';
+import { Artifact, PresignedURL } from '@/types/Types';
 import API from '@/api/api';
 import { ProjectAssetTypes } from '@/types/Project';
 import { addAsset } from '@/services/project';
@@ -137,4 +137,23 @@ async function getArtifactFileAsText(artifactId: string, fileName: string): Prom
 	return response.data;
 }
 
-export { uploadArtifactToProject, createNewArtifactFromGithubFile, getArtifactFileAsText };
+async function getPresignedDownloadURL(
+	artifactId: string,
+	fileName: string
+): Promise<PresignedURL | null> {
+	const response = await API.get(`/artifacts/${artifactId}/download-url?filename=${fileName}`, {});
+
+	if (!response || response.status >= 400) {
+		logger.error('Error getting presigned download url');
+		return null;
+	}
+
+	return response.data;
+}
+
+export {
+	uploadArtifactToProject,
+	createNewArtifactFromGithubFile,
+	getArtifactFileAsText,
+	getPresignedDownloadURL
+};

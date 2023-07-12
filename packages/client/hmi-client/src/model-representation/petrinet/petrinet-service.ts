@@ -159,6 +159,30 @@ export const convertToIGraph = (amr: Model) => {
 const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
+export const newAMR = () => {
+	const amr: Model = {
+		id: '',
+		name: 'new model',
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
+};
+
 export const addState = (amr: Model, id: string, name: string) => {
 	amr.model.states.push({
 		id,

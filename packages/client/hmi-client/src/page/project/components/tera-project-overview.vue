@@ -61,6 +61,7 @@
 					size="large"
 					icon="pi pi-share-alt"
 					class="p-button p-button-secondary quick-link-button"
+					@click="emit('new-model')"
 				/>
 				<Button
 					size="large"
@@ -142,9 +143,6 @@
 						:show-preview="true"
 						:accept-types="[
 							AcceptedTypes.PDF,
-							AcceptedTypes.JPG,
-							AcceptedTypes.JPEG,
-							AcceptedTypes.PNG,
 							AcceptedTypes.CSV,
 							AcceptedTypes.TXT,
 							AcceptedTypes.MD
@@ -211,11 +209,10 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab, AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
+import { Tab, AcceptedTypes } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
-import API, { Poller } from '@/api/api';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
 import { CsvAsset } from '@/types/Types';
@@ -227,7 +224,7 @@ import { uploadArtifactToProject } from '@/services/artifact';
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'open-asset']);
+const emit = defineEmits(['open-workflow', 'open-asset', 'new-model']);
 const router = useRouter();
 const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -261,61 +258,7 @@ const assets = computed(() => {
 	return result;
 });
 
-async function getPDFContents(
-	file: string | Blob,
-	extractionMode: string,
-	extractImages: string
-): Promise<PDFExtractionResponseType> {
-	const formData = new FormData();
-	formData.append('file', file);
-
-	const result = await API.post(`/extract/convertpdftask/`, formData, {
-		params: {
-			extraction_method: extractionMode,
-			extract_images: extractImages
-		},
-		headers: {
-			'Content-Type': 'multipart/form-data'
-		}
-	});
-
-	if (result) {
-		const taskID = result.data.task_id;
-
-		const poller = new Poller<object>()
-			.setInterval(2000)
-			.setThreshold(90)
-			.setPollAction(async () => {
-				const response = await API.get(`/extract/task-result/${taskID}`);
-
-				if (response.data.status === 'SUCCESS' && response.data.result) {
-					return {
-						data: response.data.result,
-						progress: null,
-						error: null
-					};
-				}
-				return {
-					data: null,
-					progress: null,
-					error: null
-				};
-			});
-		const pollerResults = await poller.start();
-
-		if (pollerResults.data) {
-			return pollerResults.data as PDFExtractionResponseType;
-		}
-	}
-	return { text: '', images: [] } as PDFExtractionResponseType;
-}
-
-async function processFiles(
-	files: File[],
-	extractionMode: string,
-	extractImages: string,
-	csvDescription: string
-) {
+async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
 		if (file.type === AcceptedTypes.CSV) {
 			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
@@ -334,22 +277,17 @@ async function processFiles(
 			}
 			return { file, error: true, response: { text: '', images: [] } };
 		}
-		if (file.type === AcceptedTypes.TXT || file.type === AcceptedTypes.MD) {
-			const response = await uploadArtifactToProject(
-				progress,
-				file,
-				props.project.username ?? '',
-				props.project.id,
-				''
-			);
-			if (response?.data) return { file, error: false, response: { text: '', images: [] } };
-			return { file, error: true, response: { text: '', images: [] } };
-		}
-		// PDF
-		const resp = await getPDFContents(file, extractionMode, extractImages);
-		const text = resp.text ? resp.text : '';
-		const images = resp.images ? resp.images : [];
-		return { file, error: false, response: { text, images } };
+
+		// This is pdf, txt, md files
+		const response = await uploadArtifactToProject(
+			progress,
+			file,
+			props.project.username ?? '',
+			props.project.id,
+			''
+		);
+		if (response?.data) return { file, error: false, response: { text: '', images: [] } };
+		return { file, error: true, response: { text: '', images: [] } };
 	});
 }
 

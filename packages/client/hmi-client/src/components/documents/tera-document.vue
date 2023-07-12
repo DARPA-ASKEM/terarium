@@ -406,7 +406,7 @@ function downloadPDF() {
 */
 function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
-	return link.match(/^.*\.(pdf|PDF)$/);
+	return link.toLowerCase().endsWith('.pdf');
 }
 
 const openPDF = () => {

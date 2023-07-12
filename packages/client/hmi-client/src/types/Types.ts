@@ -128,6 +128,7 @@ export interface DatasetColumn {
     annotations: string[];
     metadata?: { [index: string]: any };
     grounding?: Grounding;
+    description?: string;
 }
 
 export interface Grounding {
@@ -143,6 +144,13 @@ export interface PresignedURL {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
+}
+
+export interface DKG {
+    curie: string;
+    name: string;
+    description: string;
+    link: string;
 }
 
 export interface CalibrationRequest {
@@ -199,10 +207,10 @@ export interface ModelSemantics {
 }
 
 export interface ModelMetadata {
-    processed_at: number;
-    processed_by: string;
-    variable_statements: VariableStatement[];
-    annotations: Annotations;
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
     attributes: any[];
 }
 
