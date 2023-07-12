@@ -40,7 +40,6 @@
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
-					@update-project="updateProject"
 				/>
 			</SplitterPanel>
 			<SplitterPanel class="project-page top-z-index" v-if="workflowNode" :size="20">
@@ -256,8 +255,6 @@ const props = defineProps<{
 	pageType?: ProjectAssetTypes | ProjectPages;
 }>();
 
-const emit = defineEmits(['update-project']);
-
 const tabStore = useTabStore();
 
 const router = useRouter();
@@ -369,10 +366,6 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
-function updateProject(id: IProject['id']) {
-	emit('update-project', id);
-}
-
 function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
@@ -411,7 +404,6 @@ async function removeAsset(asset: Tab) {
 		);
 
 		if (isRemoved) {
-			emit('update-project', props.project.id);
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isEqual(tab, asset)));
 			logger.info(`${assetName} was removed.`, { showToast: true });
 			return;
