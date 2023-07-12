@@ -458,7 +458,7 @@ function showProjectMenu(event: any) {
 	projectMenu.value.toggle(event);
 }
 
-/* hacky way of listening to row hover events to display/hide the action button, prime vue unfortunately doesn't have this capability */
+/* hacky way of listening to row hover events to display/hide the action button, prime vue unfortunately doesn't have the capability to listen to row hover */
 function setRowHover() {
 	const tableRows = document.querySelectorAll('.p-selectable-row');
 	tableRows.forEach((tableRow) => {
@@ -668,7 +668,9 @@ ul {
 	padding: 0;
 	padding: 0.375rem 1rem;
 }
-
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+	background: var(--gray-300);
+}
 :deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
 }
@@ -676,6 +678,10 @@ ul {
 :deep(.asset-button.p-button .p-button-label) {
 	overflow: hidden;
 	text-align: left;
+}
+
+:deep(.asset-button .p-button-icon-left .icon) {
+	overflow: visible;
 }
 
 .resource-list-button {
