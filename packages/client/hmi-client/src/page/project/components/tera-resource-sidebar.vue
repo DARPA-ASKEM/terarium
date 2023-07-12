@@ -13,18 +13,6 @@
 					})
 				"
 			/>
-			<Button
-				icon="pi pi-user-edit"
-				v-tooltip="`Create model from Equation`"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="
-					emit('open-asset', {
-						assetName: 'New Model',
-						pageType: ProjectAssetTypes.MODELS,
-						assetId: undefined
-					})
-				"
-			/>
 		</header>
 		<Button
 			class="asset-button"
@@ -102,7 +90,10 @@
 					<i
 						v-if="activeAssetId && activeAssetId === tab.assetId"
 						class="pi pi-times removeResourceButton"
-						@click="isRemovalModal = true"
+						@click.stop="
+							assetToDelete = tab;
+							isRemovalModal = true;
+						"
 					/>
 				</Button>
 			</AccordionTab>
@@ -118,12 +109,12 @@
 				</template>
 				<template #default>
 					<p>
-						Removing <em>{{ activeTab.assetName }}</em> will permanently remove it from
+						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
 						{{ project.name }}.
 					</p>
 				</template>
 				<template #footer>
-					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
+					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
 					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
 				</template>
 			</tera-modal>
@@ -151,11 +142,12 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
+const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset']);
 
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
+const assetToDelete = ref<Tab | null>(null);
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -180,8 +172,8 @@ const assets = computed((): IProjectAssetTabs => {
 	return tabs;
 });
 
-function removeAsset(asset = props.activeTab) {
-	emit('remove-asset', asset);
+function removeAsset() {
+	emit('remove-asset', assetToDelete.value);
 	isRemovalModal.value = false;
 }
 
@@ -222,9 +214,11 @@ header {
 	margin-right: 0.75rem;
 	font-size: 0.75rem;
 }
+
 .removeResourceButton:hover {
 	color: var(--text-color-danger);
 }
+
 .dragged-asset {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);

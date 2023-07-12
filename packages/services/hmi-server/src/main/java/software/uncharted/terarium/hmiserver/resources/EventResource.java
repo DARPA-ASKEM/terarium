@@ -57,6 +57,8 @@ public class EventResource {
 	@POST
 	@Transactional
 	public Response postEvent(final Event event) {
+		event.setUsername(securityIdentity.getPrincipal().getName());
+
 		structuredLog.log(StructuredLog.Type.EVENT, securityIdentity.getPrincipal().getName(), "event", event);
 
 		// Do not save the event to the database if the type is not specified as persistent
@@ -66,7 +68,6 @@ public class EventResource {
 				.build();
 		}
 
-		event.setUsername(securityIdentity.getPrincipal().getName());
 		Event.persist(event);
 		return Response
 			.ok(event)

@@ -128,7 +128,10 @@ import { useDragEvent } from '@/services/drag-drop';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import Checkbox from 'primevue/checkbox';
 import { SearchByExampleOptions } from '@/types/common';
-import { useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
+import {
+	useSearchByExampleOptions,
+	extractResourceName
+} from '@/page/data-explorer/search-by-example';
 
 const props = defineProps<{
 	showSuggestions: boolean;
@@ -154,7 +157,8 @@ const selectedSearchByExampleOptions = ref<SearchByExampleOptions>({
 	backwardCitation: false,
 	relatedContent: false
 });
-const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
+const { searchByExampleOptions, searchByExampleItem, searchByExampleAssetCardProp } =
+	useSearchByExampleOptions();
 
 function clearQuery() {
 	query.value = '';
@@ -163,13 +167,20 @@ function clearQuery() {
 
 const initiateSearch = () => {
 	emit('query-changed', query.value);
-	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
+	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value, byExample: 'false' } });
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
 function initiateSearchByExample() {
 	searchByExampleOptions.value = { ...selectedSearchByExampleOptions.value };
 	searchByExampleToggle.value = false;
+
+	// used in order to update the "showing x of y results with ... to <Asset Card>"
+	// section after a search by example is initiated
+	searchByExampleAssetCardProp.value = { ...searchByExampleItem.value };
+	// used to update the search bar text with the name of the search by example asset
+	query.value = extractResourceName(searchByExampleItem.value);
+	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value, byExample: 'true' } });
 }
 
 function addToQuery(term: string) {

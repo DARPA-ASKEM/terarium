@@ -390,10 +390,24 @@ const executeSearch = async () => {
 	isLoading.value = false;
 };
 
+const clearSearchByExampleSelections = () => {
+	// clear out the serch by example option selections
+	searchByExampleOptions.value = {
+		similarContent: false,
+		forwardCitation: false,
+		backwardCitation: false,
+		relatedContent: false
+	};
+	// clear out search by example item
+	searchByExampleItem.value = null;
+};
+
 const disableSearchByExample = () => {
 	// disable search by example, if it was enabled
 	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
 	executeSearchByExample.value = false;
+
+	clearSearchByExampleSelections();
 };
 
 const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
@@ -507,12 +521,11 @@ const clearItemSelected = () => {
 // };
 
 async function executeNewQuery() {
-	// If search query is not empty update the search term
-	if (!isEmpty(route.query?.q?.toString()) && route.query?.q?.toString()) {
+	if (route.query?.q?.toString() === '' || route.query?.q?.toString()) {
 		searchTerm.value = route.query?.q?.toString();
 	}
 
-	// If the search term is empty or is the same as the previous term don't execute a search
+	// If the search term is the same as the previous term don't execute a search
 
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();
@@ -548,7 +561,12 @@ watch(clientFilters, async (n, o) => {
 // Gets query from search-bar.vue
 watch(
 	() => route.query,
-	() => executeNewQuery()
+	() => {
+		// Adding another query param 'byExample' for what should be a better way to determine whether we are searching by example or not.
+		// For now this is just a boolean string but this can be looked into further to maybe add additional parameters when searching by example.
+		// i.e. refreshing will land the user on the page with the example resource type already populated and used to search
+		if (route.query.byExample !== 'true') executeNewQuery();
+	}
 );
 
 watch(searchByExampleOptions, () => onSearchByExample(searchByExampleOptions.value));
