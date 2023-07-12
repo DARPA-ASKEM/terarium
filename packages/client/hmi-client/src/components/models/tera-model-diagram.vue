@@ -103,6 +103,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -156,15 +157,6 @@ const handleResize = () => {
 	updateLayout();
 };
 
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
-
 const mathEditorSelected = computed(() => {
 	if (!isMathMLValid.value) {
 		return 'math-editor-error';
@@ -214,12 +206,6 @@ watch(
 		}
 	}
 );
-
-onUpdated(() => {
-	if (props.model) {
-		emit('asset-loaded');
-	}
-});
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -325,26 +311,6 @@ const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
 	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
 
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
-
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
-
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
-
 	// Render graph
 	await renderer?.setData(graphData);
 	await renderer?.render();
@@ -388,14 +354,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	}
 };
 
-onMounted(async () => {
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
-
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
@@ -427,12 +385,29 @@ const resetZoom = async () => {
 };
 
 const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
+	renderer?.addNodeCenter(NodeType.State, 'state');
 };
 
 const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
+	renderer?.addNodeCenter(NodeType.Transition, 'transition');
 };
+
+onMounted(() => {
+	document.addEventListener('keyup', editorKeyHandler);
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', editorKeyHandler);
+	window.removeEventListener('resize', handleResize);
+});
+
+onUpdated(() => {
+	if (props.model) {
+		emit('asset-loaded');
+	}
+});
 </script>
 
 <style scoped>

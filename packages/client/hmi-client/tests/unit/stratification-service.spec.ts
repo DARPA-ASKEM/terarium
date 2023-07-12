@@ -12,7 +12,6 @@ describe('test generate age strata model', () => {
 		const model = generateAgeStrataModel(stateNames);
 		expect(model).toEqual({
 			id: '',
-			framework: '',
 			name: 'Age-contact strata model',
 			description: 'Age-contact strata model',
 			schema:
@@ -134,7 +133,6 @@ describe('test generate location strata model', () => {
 		const model = generateLocationStrataModel(stateNames);
 		expect(model).toEqual({
 			id: '',
-			framework: '',
 			name: 'Location-travel strata model',
 			description: 'Location-travel strata model',
 			schema:

@@ -33,6 +33,17 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
+export interface Artifact {
+    id?: string;
+    timestamp?: any;
+    username: string;
+    name: string;
+    description?: string;
+    fileNames: string[];
+    metadata?: any;
+    concepts?: Concept[];
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -56,15 +67,15 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    framework: string;
     name: string;
     description: string;
-    model_version: string;
+    model_version?: string;
     schema: string;
-    schema_name: string;
+    schema_name?: string;
     model: { [index: string]: any };
+    properties?: any;
     semantics?: ModelSemantics;
-    metadata: ModelMetadata;
+    metadata?: ModelMetadata;
 }
 
 export interface ModelConfiguration {
@@ -132,8 +143,6 @@ export interface PresignedURL {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
-    parameters?: ModelParameter[];
-    metadata?: ModelMetadata;
 }
 
 export interface CalibrationRequest {
@@ -176,6 +185,14 @@ export interface Links {
     self: string;
 }
 
+export interface Concept {
+    id: string;
+    curie: string;
+    type: Type;
+    status: OntologicalField;
+    object_id: string;
+}
+
 export interface ModelSemantics {
     ode: OdeSemantics;
     typing?: TypingSemantics;
@@ -202,14 +219,6 @@ export interface PetriNetTransition {
     output: string[];
     grounding: ModelGrounding;
     properties: PetriNetTransitionProperties;
-}
-
-export interface ModelParameter {
-    id: string;
-    description?: string;
-    value?: number;
-    grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
 }
 
 export interface Document {
@@ -298,11 +307,6 @@ export interface PetriNetTransitionProperties {
     rate: ModelExpression;
 }
 
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
-}
-
 export interface Extraction {
     id: number;
     askemClass: string;
@@ -334,6 +338,16 @@ export interface Initial {
     target: string;
     expression: string;
     expression_mathml: string;
+}
+
+export interface ModelParameter {
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+    unit?: ModelUnit;
 }
 
 export interface Observable {
@@ -400,11 +414,22 @@ export interface XDDUrlExtraction {
     extractedFrom: string[];
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
+}
+
 export interface State {
     id: string;
     name?: string;
     description?: string;
     grounding?: ModelGrounding;
+    units?: ModelUnit;
 }
 
 export interface Transition {
@@ -503,4 +528,19 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum Type {
+    Datasets = "DATASETS",
+    Extractions = "EXTRACTIONS",
+    Intermediates = "INTERMEDIATES",
+    Models = "MODELS",
+    Plans = "PLANS",
+    Publications = "PUBLICATIONS",
+    SimulationRuns = "SIMULATION_RUNS",
+}
+
+export enum OntologicalField {
+    Object = "OBJECT",
+    Unit = "UNIT",
 }

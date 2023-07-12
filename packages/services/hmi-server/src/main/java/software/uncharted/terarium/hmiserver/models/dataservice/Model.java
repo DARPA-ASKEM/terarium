@@ -20,24 +20,28 @@ import java.util.Map;
 public class Model implements Serializable {
 	private String id;
 
-	private String framework;
-
 	private String name;
 
 	@JsonSetter(nulls = Nulls.SKIP)
 	private String description = "";
 
+	@TSOptional
 	private String model_version;
 
 	private String schema;
 
+	@TSOptional
 	private String schema_name;
 
 	private Map<String, Object> model;
 
 	@TSOptional
+	private Object properties;
+
+	@TSOptional
 	private ModelSemantics semantics;
 
+	@TSOptional
 	private ModelMetadata metadata;
 
 }

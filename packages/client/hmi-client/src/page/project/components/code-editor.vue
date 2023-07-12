@@ -232,12 +232,11 @@ async function createModelFromCode() {
 		const newModelName = 'New model';
 		const newModel = {
 			name: newModelName,
-			framework: 'Petri Net',
 			content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
 		};
 		const model = await createModel(newModel);
-		if (model && props.project) {
-			await addModelToProject(props.project.id, model.id.toString(), resourcesStore);
+		if (model && props.project && resourcesStore) {
+			await addModelToProject(props.project.id, model.id.toString());
 
 			router.push({
 				name: RouteName.ProjectRoute,

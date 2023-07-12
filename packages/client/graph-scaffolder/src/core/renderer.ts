@@ -385,19 +385,42 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
-		this.setToDefaultZoom();
+		if (this.options.useStableZoomPan && this.zoomTransformObject) {
+			const zoomLevel = this.zoomTransformObject.k;
+			const zoomX = this.zoomTransformObject.x / zoomLevel;
+			const zoomY = this.zoomTransformObject.y / zoomLevel;
+
+			svg.call(
+				// @ts-ignore
+				this.zoom.transform,
+				d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(zoomX, zoomY)
+			);
+		} else {
+			this.setToDefaultZoom();
+		}
 	}
 
 	setToDefaultZoom() {
 		const svg = d3.select(this.svgEl);
-		let scale = 1;
+		let scaleFactor = 1;
+		let translateX = 1;
+		let translateY = 100;
 		if (this.chart) {
-			scale = this.chartSize.width / (this.graph.width ?? 1);
+			const graphCenterX = (this.graph.width ?? 0) / 2;
+			const graphCenterY = (this.graph.height ?? 0) / 2;
+			scaleFactor = Math.min(
+				this.chartSize.width / (this.graph.width ?? 1),
+				this.chartSize.height / (this.graph.height ?? 1)
+			);
+
+			// Calculate the translation to center the graph
+			translateX = this.chartSize.width / 2 - scaleFactor * graphCenterX;
+			translateY = this.chartSize.height / 2 - scaleFactor * graphCenterY;
 		}
 
 		svg.call(
 			this.zoom?.transform as any,
-			d3.zoomIdentity.translate(1, 100).scale(scale).translate(0, 0)
+			d3.zoomIdentity.translate(translateX, translateY).scale(scaleFactor)
 		);
 	}
 

@@ -10,15 +10,21 @@ public class ModelParameter {
 	private String id;
 
 	@TSOptional
+	private String name;
+
+	@TSOptional
 	private String description;
 
 	@TSOptional
 	private Double value;
-	
+
 	@TSOptional
 	private ModelGrounding grounding;
-	
+
 	@TSOptional
 	private ModelDistribution distribution;
+
+	@TSOptional
+	private ModelUnit unit;
 }
 
