@@ -521,10 +521,12 @@ const clearItemSelected = () => {
 // };
 
 async function executeNewQuery() {
-	if (route.query?.q?.toString() === '' || route.query?.q?.toString()) {
+	// If search query is not empty update the search term
+	if (!isEmpty(route.query?.q?.toString()) && route.query?.q?.toString()) {
 		searchTerm.value = route.query?.q?.toString();
 	}
-	// If the search term is the same as the previous term don't execute a search
+
+	// If the search term is empty or is the same as the previous term don't execute a search
 
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();
@@ -564,13 +566,11 @@ watch(
 		// Adding another query param 'byExample' for what should be a better way to determine whether we are searching by example or not.
 		// For now this is just a boolean string but this can be looked into further to maybe add additional parameters when searching by example.
 		// i.e. refreshing will land the user on the page with the example resource type already populated and used to search
-		if (route.query.byExample === 'true') {
-			onSearchByExample(searchByExampleOptions.value);
-		} else {
-			executeNewQuery();
-		}
+		if (route.query.byExample !== 'true') executeNewQuery();
 	}
 );
+
+watch(searchByExampleOptions, () => onSearchByExample(searchByExampleOptions.value));
 
 // Default query on reload
 onMounted(async () => {
