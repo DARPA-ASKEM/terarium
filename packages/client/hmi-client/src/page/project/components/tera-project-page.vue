@@ -143,7 +143,7 @@ const newModel = async () => {
 	const modelId = response?.id;
 
 	// 2. Add the model to the project
-	await addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 
 	// 3. Reroute
 	router.push({
