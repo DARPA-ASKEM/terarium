@@ -2,12 +2,12 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 // import { EnsembleRequest } from '@/types/Types';
 // import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';
-// import { EnsembleModelConfigs, EnsembleSimulationRequest } from '@/types/Types';
+import { EnsembleModelConfigs } from '@/types/Types';
 
 export interface EnsembleOperationState {
 	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
-	mapping: { [index: string]: string }[];
+	mapping: EnsembleModelConfigs[];
 }
 
 export const EnsembleOperation: Operation = {

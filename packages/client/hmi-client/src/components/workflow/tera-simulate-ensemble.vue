@@ -81,10 +81,10 @@
 											{{ id }}
 										</td>
 										<td v-if="customWeights === false">
-											{{ weights[i] }}
+											{{ ensembleConfigs[i].weight }}
 										</td>
 										<td v-else>
-											<InputNumber v-model="weights[i]" />
+											<InputNumber v-model="ensembleConfigs[i].weight" />
 										</td>
 									</tr>
 								</tbody>
@@ -164,33 +164,30 @@ const MINBARLENGTH = 1;
 
 const activeTab = ref(EnsembleTabs.input);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
-// const listModels = ref<Model>();
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
-const allModelOptions = ref<string[][]>([]);
 // List of each observible + state for each model.
-const weights = ref<number[]>([]);
-// const mapping = ref<Mapping[]>(props.node.state.mapping);
+const allModelOptions = ref<string[][]>([]);
+// const weights = ref<number[]>([]);
+const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>({ start: 0, end: 90 });
 const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 
-const disableRunButton = computed(() => !weights.value);
+const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
 const disabledCalibrationWeights = computed(() => false);
 
-function calculateWeights() {
-	if (!listModelIds.value) return [];
+const calculateWeights = () => {
+	if (!ensembleConfigs.value) return;
 	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
 		customWeights.value = false;
-		const percent = 1 / listModelIds.value.length;
-		const outputList: number[] = [];
-		for (let i = 0; i < listModelIds.value.length; i++) {
-			outputList.push(percent);
+		const percent = 1 / ensembleConfigs.value.length;
+		for (let i = 0; i < ensembleConfigs.value.length; i++) {
+			ensembleConfigs.value[i].weight = percent;
 		}
-		return outputList;
 	}
 	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
 		customWeights.value = true;
@@ -198,23 +195,13 @@ function calculateWeights() {
 		customWeights.value = false;
 		console.log('TODO: Get weights from AMRs');
 	}
-	return [];
-}
+	console.log('Ensemble Config');
+	console.log(ensembleConfigs.value);
+};
 
 const runEnsemble = async () => {
-	const ensembleConfigs: EnsembleModelConfigs[] = [];
-	for (let i = 0; i < listModelIds.value.length; i++) {
-		const id = listModelIds.value[i];
-		const obs = {};
-		const weight = weights.value[i];
-		ensembleConfigs.push({
-			id,
-			observables: obs,
-			weight
-		});
-	}
 	const params: EnsembleSimulationRequest = {
-		modelConfigs: ensembleConfigs,
+		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
 		engine: 'sciml',
 		extra: { num_samples: 100 }
@@ -257,11 +244,7 @@ const updateOutputPorts = async (runId) => {
 
 // function addMapping(modelId: string) {
 // 	console.log(modelId);
-// 	mapping.value.push({
-// 		modelId: modelId,
-// 		compartmentName: "",
-// 		value: ""
-// 	});
+// 	mapping.value[0].observables.push({});
 
 // 	const state: EnsembleOperationState = _.cloneDeep(props.node.state);
 // 	state.mapping = mapping.value;
@@ -276,16 +259,17 @@ const updateOutputPorts = async (runId) => {
 const setBarChartData = () => {
 	const documentStyle = getComputedStyle(document.documentElement);
 	const datasetLabel: string[] = [];
-	for (let i = 0; i < listModelIds.value.length; i++) {
-		datasetLabel.push(listModelIds.value[i]);
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		datasetLabel.push(ensembleConfigs.value[i].id);
 	}
+	const weights = ensembleConfigs.value.map((element) => element.weight);
 	return {
 		labels: datasetLabel,
 		datasets: [
 			{
 				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
 				borderColor: documentStyle.getPropertyValue('--primary-color'),
-				data: weights.value,
+				data: weights,
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
 				minBarLength: MINBARLENGTH
@@ -337,7 +321,7 @@ const setChartOptions = () => {
 watch(
 	[() => ensembleCalibrationMode.value, listModelIds.value],
 	async () => {
-		weights.value = calculateWeights();
+		calculateWeights();
 	},
 	{ immediate: true }
 );
@@ -347,6 +331,7 @@ onMounted(() => {
 		() => props.node.state.modelConfigIds,
 		async () => {
 			allModelConfigurations.value = [];
+			ensembleConfigs.value = [];
 			// Fetch Model Configurations
 			await Promise.all(
 				listModelIds.value.map(async (id) => {
@@ -367,7 +352,16 @@ onMounted(() => {
 				);
 				allModelOptions.value.push(tempList);
 			}
-			weights.value = calculateWeights();
+
+			// Init ensemble Configs:
+			for (let i = 0; i < listModelIds.value.length; i++) {
+				ensembleConfigs.value[i] = {
+					id: listModelIds.value[i],
+					observables: {},
+					weight: 0
+				};
+			}
+			calculateWeights();
 		},
 		{ immediate: true }
 	);
