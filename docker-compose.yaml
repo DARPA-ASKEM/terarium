@@ -35,6 +35,8 @@ services:
       - data-service-port=8000
       - model-service-host=model-service
       - model-service-port=8888
+    volumes:
+      - ./packages/services/hmi-server/src:/hmi-server/packages/services/hmi-server/src
   terarium-db:
     image: postgres:15.1
     expose:

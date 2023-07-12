@@ -8,6 +8,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class PresignedURL {
-	private String url;
-	private String method;
+	public String url;
+	public String method;
 }

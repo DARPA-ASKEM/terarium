@@ -1,9 +1,17 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -31,6 +39,8 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import java.util.*;
 import java.lang.Math;
 import com.google.common.math.Stats;
@@ -48,7 +58,7 @@ import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 @Slf4j
 public class DatasetResource extends DataStorageResource implements SnakeCaseResource {
 	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
-	private static final int DEFAULT_CSV_LIMIT = 10;
+	private static final int DEFAULT_CSV_LIMIT = 200;
 
 	@ConfigProperty(name = "aws.bucket")
 	Optional<String> bucket;
@@ -226,29 +236,13 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 
 		log.debug("Getting CSV content");
 
-		//verify that dataSetPath and bucket are set. If not, return an error
-		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
-			log.error("S3 information not set. Cannot download CSV.");
-			return Response
-				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.type(MediaType.APPLICATION_JSON)
-				.build();
-		}
+		PresignedURL downloadUrl = this.getDownloadUrl(datasetId, filename);
+		String url = downloadUrl.url;
 
-		AwsCredentialsProvider awsCredentials = StaticCredentialsProvider.create(
-			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
-
-		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
-
-		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(awsCredentials).build();
-
-		GetObjectRequest request = GetObjectRequest.builder()
-			.bucket(bucket.get()).key(objectKey).build();
-
-		ResponseInputStream<GetObjectResponse> s3objectResponse = client
-			.getObject(request);
-
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(s3objectResponse));
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		final HttpGet get = new HttpGet(url);
+		final HttpResponse response = httpclient.execute(get);
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 
 		// Read the specified amount of lines, or the default (including the header)
 		String line;
@@ -256,7 +250,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		long lineCount = 0;
 		final long linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
 		while ((line = reader.readLine()) != null) {
-			csvStringBuilder.append(line);
+			csvStringBuilder.append(line + "\n");
 			lineCount++;
 			if (linesToRead != -1 && lineCount >= linesToRead) {
 				break;
@@ -339,23 +333,23 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		Map<String, InputStream> input
 	) throws IOException {
 
+		InputStream file = input.get("file");
+		// byte[] data = file.readAllBytes();
+		// TODO: Save input file to temporary local file then upload from local file so entire file 
+		// doesn't need to be loaded into memory
 		log.debug("Uploading CSV file to dataset {}", datasetId);
 
-		//verify that dataSetPath and bucket are set. If not, return an error
-		if (!dataSetPath.isPresent()) {
-			log.error("dataset path information not set. Cannot upload CSV.");
-			return Response
-				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.type(MediaType.APPLICATION_JSON)
-				.build();
-		}
+		PresignedURL uploadUrl = this.getUploadUrl(datasetId, filename);
+		String url = uploadUrl.url;
 
-		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
-
-		SdkHttpResponse res = uploadBytesToS3(objectKey, input.get("file").readAllBytes());
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		final HttpPut put = new HttpPut(url);
+		// TODO: This doesn't work because PUT to AWS requires the file size and doesn't just allow streaming. :(
+		put.setEntity(new InputStreamEntity(input.get("file"), -1));
+		final HttpResponse res = httpclient.execute(put);
 
 		//find the status of the response
-		if (res.isSuccessful()) {
+		if (res.getStatusLine().getStatusCode() == 200) {
 			log.debug("Successfully uploaded CSV file to dataset {}", datasetId);
 			return Response
 				.status(Response.Status.OK)
@@ -363,7 +357,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 				.build();
 		} else {
 			log.error("Failed to upload CSV file to dataset {}", datasetId);
-			return Response.status(res.statusCode(), res.statusText().get()).type(MediaType.APPLICATION_JSON)
+			return Response.status(res.getStatusLine().getStatusCode(), res.getStatusLine().getReasonPhrase()).type(MediaType.APPLICATION_JSON)
 				.build();
 		}
 
