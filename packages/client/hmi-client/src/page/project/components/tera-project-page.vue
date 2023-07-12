@@ -28,7 +28,6 @@
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
-		@update-project="updateProject"
 		@new-model="newModel"
 	/>
 	<tera-simulation-workflow
@@ -46,11 +45,11 @@
 			:project="project"
 			is-editable
 			@open-code="openCode"
-			@update-project="updateProject"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
 			v-else-if="pageType === ProjectAssetTypes.DATASETS"
+			:project="project"
 			:asset-id="assetId"
 			is-editable
 			@asset-loaded="emit('asset-loaded')"
@@ -65,7 +64,6 @@
 
 <script setup lang="ts">
 import { ref, Ref } from 'vue';
-import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -79,7 +77,7 @@ import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
-import { addAsset } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import { getArtifactFileAsText } from '@/services/artifact';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { createModel } from '@/services/model';
@@ -93,13 +91,7 @@ const props = defineProps<{
 	activeTabIndex?: number;
 }>();
 
-const emit = defineEmits([
-	'update:tabs',
-	'asset-loaded',
-	'update-tab-name',
-	'close-current-tab',
-	'update-project'
-]);
+const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
 
 const router = useRouter();
 
@@ -126,9 +118,11 @@ const openWorkflow = async () => {
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await addAsset(props.project.id, ProjectAssetTypes.SIMULATION_WORKFLOW, workflowId);
-
-	emit('update-project', props.project.id);
+	await ProjectService.addAsset(
+		props.project.id,
+		ProjectAssetTypes.SIMULATION_WORKFLOW,
+		workflowId
+	);
 
 	router.push({
 		name: RouteName.ProjectRoute,
@@ -151,8 +145,6 @@ const newModel = async () => {
 	// 2. Add the model to the project
 	await addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 
-	emit('update-project', props.project.id);
-
 	// 3. Reroute
 	router.push({
 		name: RouteName.ProjectRoute,
@@ -163,10 +155,6 @@ const newModel = async () => {
 		}
 	});
 };
-
-function updateProject(id: IProject['id']) {
-	emit('update-project', id);
-}
 
 const openOverview = () => {
 	router.push({
