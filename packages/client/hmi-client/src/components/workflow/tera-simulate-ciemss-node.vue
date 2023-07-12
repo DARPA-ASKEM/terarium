@@ -142,8 +142,7 @@ watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true }
 watch(
 	() => runResults.value,
 	(input) => {
-		const runResult = JSON.parse(JSON.stringify(input));
-		// renderedRuns.value = runResults.value;
+		const runResult: RunResults = JSON.parse(JSON.stringify(input));
 
 		// convert to array from array-like object
 		const parsedSimProbData = Object.values(runResult);
@@ -154,8 +153,8 @@ watch(
 			return;
 		}
 
-		const numTimestamps = (parsedSimProbData[0] as any[]).length;
-		const aggregateRun: any = [];
+		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
+		const aggregateRun: { [key: string]: number }[] = [];
 
 		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
 			for (let run = 0; run < numRuns; run++) {
