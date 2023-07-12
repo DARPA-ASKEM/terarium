@@ -30,7 +30,9 @@ const GTAG = await axios.get('/configuration/ga');
 app.use(
 	VueGtag,
 	{
-		config: { id: GTAG.data }
+		config: {
+			id: GTAG.data
+		}
 	},
 	router
 );
