@@ -146,7 +146,6 @@ watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true }
 
 onMounted(async () => {
 	const node = props.node;
-	console.log(node);
 	if (!node) return;
 
 	const port = node.outputs[0];

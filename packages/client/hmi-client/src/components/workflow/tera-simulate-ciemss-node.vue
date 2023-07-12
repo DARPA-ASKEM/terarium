@@ -20,7 +20,7 @@
 				label="Add Chart"
 				icon="pi pi-plus"
 			></Button>
-			<Button size="small" label="Run" icon="pi pi-play"></Button>
+			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>
 		</div>
 	</section>
 	<section v-else>
@@ -30,20 +30,20 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
-import { csvParse } from 'd3';
-// import { ModelConfiguration } from '@/types/Types';
 
-// import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/simulation-service';
+import {
+	makeForecastJobCiemss as makeForecastJob,
+	getSimulation,
+	getRunResultCiemss
+} from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateOperationState } from './simulate-ciemss-operation';
-
-import SimulateProbabilisticData from './simulate-prob-data';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -53,9 +53,10 @@ const emit = defineEmits(['append-output-port']);
 
 const showSpinner = ref(false);
 
-// const startedRunIdList = ref<string[]>([]);
+const startedRunIdList = ref<string[]>([]);
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
+const runConfigs = ref<{ [paramKey: string]: number[] }>({});
 const renderedRuns = ref<RunResults>({});
 
 const lineColorArray = computed(() => {
@@ -71,6 +72,72 @@ const lineWidthArray = computed(() => {
 	output.push(2);
 	return output;
 });
+
+const runSimulate = async () => {
+	const modelConfigurationList = props.node.inputs[0].value;
+	if (!modelConfigurationList?.length) return;
+
+	const state = props.node.state as SimulateOperationState;
+
+	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
+		const payload = {
+			modelConfigId: configId,
+			timespan: {
+				start: state.currentTimespan.start,
+				end: state.currentTimespan.end
+			},
+			extra: { num_samples: 100 },
+			engine: 'ciemss'
+		};
+		const response = await makeForecastJob(payload);
+		return response.id;
+	});
+
+	startedRunIdList.value = await Promise.all(simulationRequests);
+	getStatus();
+	showSpinner.value = true;
+};
+
+// Retrieve run ids
+// FIXME: Replace with API.poller
+const getStatus = async () => {
+	const requestList: any[] = [];
+	startedRunIdList.value.forEach((id) => {
+		requestList.push(getSimulation(id));
+	});
+
+	const currentSimulations = await Promise.all(requestList);
+	const ongoingStatusList = ['running', 'queued'];
+
+	if (currentSimulations.every(({ status }) => status === 'complete')) {
+		completedRunIdList.value = startedRunIdList.value;
+		showSpinner.value = false;
+	} else if (currentSimulations.some(({ status }) => ongoingStatusList.includes(status))) {
+		// recursively call until all runs retrieved
+		setTimeout(getStatus, 3000);
+	} else {
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunIdList.value);
+		throw Error('Failed Runs');
+	}
+};
+
+// assume only one run for now
+const watchCompletedRunList = async (runIdList: string[]) => {
+	if (runIdList.length === 0) return;
+
+	const output = await getRunResultCiemss(runIdList[0]);
+	runResults.value = output.runResults;
+	runConfigs.value = output.runConfigs;
+
+	const port = props.node.inputs[0];
+	emit('append-output-port', {
+		type: SimulateCiemssOperation.outputs[0].type,
+		label: `${port.label} Results`,
+		value: runIdList
+	});
+};
+watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
 watch(
 	() => runResults.value,
@@ -110,57 +177,6 @@ watch(
 	},
 	{ immediate: true, deep: true }
 );
-
-onMounted(async () => {
-	const parsedSimProbData = csvParse(SimulateProbabilisticData);
-
-	// populate completedRunIdList
-	completedRunIdList.value = new Array(
-		Number(parsedSimProbData[parsedSimProbData.length - 1].sample_id) + 1
-	)
-		.fill('0')
-		.map((_x, i) => i.toString());
-
-	// initialize runResults
-	for (let i = 0; i < completedRunIdList.value.length; i++) {
-		runResults.value[i.toString()] = [];
-	}
-
-	// populate runResults
-	parsedSimProbData.forEach((inputRow) => {
-		const outputRow = { timestamp: inputRow.timepoint_id };
-		Object.keys(inputRow).forEach((key) => {
-			if (key.includes('_sol')) {
-				outputRow[key.replace('_sol', '')] = inputRow[key];
-			}
-		});
-		runResults.value[inputRow.sample_id as string].push(outputRow as any);
-	});
-
-	const port = props.node.inputs[0];
-	emit('append-output-port', {
-		type: SimulateCiemssOperation.outputs[0].type,
-		label: `${port.label} Results`,
-		value: completedRunIdList.value
-	});
-
-	// console.log(completedRunIdList.value);
-	// console.log(runResults.value);
-	// const node = props.node;
-	// if (!node) return;
-
-	// const port = node.outputs[0];
-	// if (!port) return;
-
-	// const runIdList = (port.value as any)[0].runIdList as string[];
-	// await Promise.all(
-	// 	runIdList.map(async (runId) => {
-	// 		const resultCsv = await getRunResult(runId, 'result.csv');
-	// 		const csvData = csvParse(resultCsv);
-	// 		runResults.value[runId] = csvData as any;
-	// 	})
-	// );
-});
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateOperationState = _.cloneDeep(props.node.state);

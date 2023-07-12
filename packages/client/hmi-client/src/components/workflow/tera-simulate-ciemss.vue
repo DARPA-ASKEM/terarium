@@ -10,7 +10,7 @@
 				@click="activeTab = SimulateTabs.input"
 			/>
 			<Button
-				label="Ouput"
+				label="Output"
 				severity="secondary"
 				icon="pi pi-sign-out"
 				size="small"
@@ -28,11 +28,7 @@
 					{{ `${rawDataKeys.length} columns | ${parsedRawData.length} rows` }}
 				</div>
 				<div class="datatable-header-select-container">
-					<MultiSelect
-						v-model="selectedCols"
-						:options="rawDataKeys"
-						placeholder="Select Colummns"
-					/>
+					<MultiSelect v-model="selectedCols" :options="rawDataKeys" placeholder="Select columns" />
 				</div>
 			</div>
 			<div
@@ -65,7 +61,7 @@
 				v-model:first="paginatorFirst"
 				v-model:rows="paginatorRows"
 				:totalRecords="parsedRawData.length"
-				:rowsPerPageOptions="[10, 20, 30]"
+				:rowsPerPageOptions="[5, 10, 20, 50]"
 			></Paginator>
 			<simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
@@ -73,6 +69,7 @@
 				:run-results="renderedRuns"
 				:chartConfig="cfg"
 				:line-color-array="lineColorArray"
+				:line-width-array="lineWidthArray"
 				@configuration-change="configurationChange(index, $event)"
 			/>
 			<Button
@@ -92,7 +89,7 @@
 						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
-						<template #header> Working Title </template>
+						<template #header> Configuration options </template>
 						<div class="uncertainty-container">
 							<input-switch v-model="uncertainty" />
 							<div class="uncertainty">
@@ -114,7 +111,7 @@
 						<tera-model-configuration v-if="model" :model="model" :run-configs="runConfigs" />
 					</AccordionTab>
 					<AccordionTab>
-						<template #header> Simulation Time Range </template>
+						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
 							<!--
 							<div class="sim-tspan-group">
@@ -168,21 +165,19 @@ import Button from 'primevue/button';
 import InputSwitch from 'primevue/inputswitch';
 import InputNumber from 'primevue/inputnumber';
 import Paginator from 'primevue/paginator';
-import { ModelConfiguration, Model, TimeSpan } from '@/types/Types';
+import { Model, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
+import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { getRunResultCiemss } from '@/services/models/simulation-service';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration-ciemss.vue';
+import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
+import { SimulateOperationState } from '@/components/workflow/simulate-ciemss-operation';
 
-import { getModel } from '@/services/model';
-import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperationState } from './simulate-ciemss-operation';
-
-import SimulateProbabilisticData from './simulate-prob-data';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -202,8 +197,6 @@ const parsedRawData = ref<any>();
 const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
 const renderedRuns = ref<RunResults>({});
-
-const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 const uncertainty = ref<boolean>(true);
 const uncertaintyPercentage = ref<number>(10);
@@ -239,48 +232,27 @@ const addChart = () => {
 };
 
 onMounted(async () => {
-	const modelConfigId = props.node.inputs[0].value?.[0];
-	modelConfiguration.value = await getModelConfigurationById(modelConfigId);
-	if (modelConfiguration.value) {
-		model.value = await getModel(modelConfiguration.value.modelId);
+	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
+	// e.g. just take the first one.
+	if (!props.node) return;
+
+	const nodeObj = props.node;
+
+	if (!nodeObj.outputs[0]) return;
+	const port = nodeObj.outputs[0];
+	if (!port.value) return;
+	const simulationId = port.value[0];
+
+	const modelConfigId = nodeObj.inputs[0].value?.[0];
+	const modelConfiguration = await getModelConfigurationById(modelConfigId);
+	if (modelConfiguration) {
+		model.value = await getModel(modelConfiguration.modelId);
 	}
 
-	// Fetch run results
-	parsedRawData.value = csvParse(SimulateProbabilisticData);
-	const parsedSimProbData = parsedRawData.value;
-
-	// populate completedRunIdList
-	const completedRunIdList = new Array(
-		Number(parsedSimProbData[parsedSimProbData.length - 1].sample_id) + 1
-	)
-		.fill('0')
-		.map((_x, i) => i.toString());
-
-	// initialize runResults
-	for (let i = 0; i < completedRunIdList.length; i++) {
-		runResults.value[i.toString()] = [];
-	}
-
-	// populate runResults
-	parsedSimProbData.forEach((inputRow) => {
-		const outputRowRunResults = { timestamp: inputRow.timepoint_id };
-		Object.keys(inputRow).forEach((key) => {
-			if (key.includes('_sol')) {
-				outputRowRunResults[key.replace('_sol', '')] = inputRow[key];
-			} else if (key.includes('_param')) {
-				const paramKey = key.replace('_param', '');
-				if (!runConfigs.value[paramKey]) {
-					runConfigs.value[paramKey] = [];
-				}
-				runConfigs.value[paramKey].push(Number(inputRow[key]));
-			}
-		});
-		runResults.value[inputRow.sample_id as string].push(outputRowRunResults as any);
-	});
-
-	Object.keys(runConfigs.value).forEach((key) => {
-		runConfigs.value[key] = runConfigs.value[key].sort();
-	});
+	const output = await getRunResultCiemss(simulationId);
+	parsedRawData.value = output.parsedRawData;
+	runResults.value = output.runResults;
+	runConfigs.value = output.runConfigs;
 });
 
 const lineColorArray = computed(() => {
@@ -291,11 +263,17 @@ const lineColorArray = computed(() => {
 	return output;
 });
 
+const lineWidthArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
+	output.push(2);
+	return output;
+});
+
+// process run result data to create mean run line
 watch(
 	() => runResults.value,
 	(input) => {
 		const runResult = JSON.parse(JSON.stringify(input));
-		// renderedRuns.value = runResults.value;
 
 		// convert to array from array-like object
 		const parsedSimProbData = Object.values(runResult);
