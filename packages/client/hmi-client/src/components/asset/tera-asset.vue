@@ -1,5 +1,5 @@
 <template>
-	<main @scroll="updateScrollPosition">
+	<main @scroll="updateScrollPosition" id="tango" ref="assetContainer">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
@@ -66,6 +66,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
+
+const assetContainer = ref();
+
+defineExpose({
+	assetContainer
+});
 
 const props = defineProps<{
 	name: string;
@@ -148,7 +154,7 @@ header.shrinked {
 	height: 3rem;
 	position: sticky;
 	top: -1px;
-	z-index: 2;
+	z-index: 100;
 	isolation: isolate;
 	background-color: rgba(255, 255, 255, 0.85);
 	backdrop-filter: blur(6px);
