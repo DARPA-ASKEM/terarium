@@ -54,20 +54,42 @@
 				</TeraResizablePanel>
 			</AccordionTab>
 			<AccordionTab header="Model equations">
-				<TeraResizablePanel class="diagram-container">
+				<TeraResizablePanel :class="diagramContainerStyle">
+					<section class="controls">
+						<span v-if="props.isEditable" class="equation-edit-button">
+							<Button
+								v-if="isEditingEQ"
+								@click="isEditingEQ = false"
+								label="Cancel"
+								class="p-button-sm p-button-outlined edit-button"
+							/>
+							<Button
+								@click="isEditingEQ = true"
+								:label="isEditingEQ ? 'Save equation' : 'Edit equation'"
+								:class="isEditingEQ ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
+							/>
+						</span>
+					</section>
 					<section class="math-editor-container" :class="mathEditorSelected">
 						<tera-math-editor
+							v-for="(eq, index) in equationLatex"
+							:key="index"
+							:index="index"
 							:is-editable="isEditable"
-							:latex-equation="equationLatex"
+							:latex-equation="eq"
 							:is-editing-eq="isEditingEQ"
 							:is-math-ml-valid="isMathMLValid"
-							:math-mode="MathEditorModes.LIVE"
-							@cancel-editing="cancelEditng"
-							@equation-updated="setNewLatexFormula"
-							@validate-mathml="validateMathML"
-							@set-editing="isEditingEQ = true"
+							@equation-updated="setNewEquation"
+							ref="equations"
 						>
 						</tera-math-editor>
+						<Button
+							v-if="isEditingEQ"
+							class="p-button-sm p-button-outlined add-equation-button"
+							icon="pi pi-plus"
+							label="Add Equation"
+							@click="equationLatex.push('')"
+						/>
 					</section>
 				</TeraResizablePanel>
 			</AccordionTab>
@@ -93,7 +115,7 @@ import {
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
 import { mathmlToAMR } from '@/services/models/transformations';
-import { separateEquations, MathEditorModes } from '@/utils/math';
+import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -115,6 +137,8 @@ const emit = defineEmits([
 	'update-model-content'
 ]);
 
+const equations = ref<any[]>([]);
+
 const props = defineProps<{
 	model: Model | null;
 	isEditable: boolean;
@@ -126,11 +150,18 @@ const menu = ref();
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
 
+const diagramContainerStyle = computed(() => {
+	if (isEditingEQ.value) {
+		return `diagram-container-editing`;
+	}
+	return `diagram-container`;
+});
+
 const newModelName = ref('New Model');
 
-const equationLatex = ref<string>('');
-const equationLatexOriginal = ref<string>('');
-const equationLatexNew = ref<string>('');
+const equationLatex = ref<string[]>([]);
+const equationLatexOriginal = ref<string[]>([]);
+const equationLatexNew = ref<string[]>([]);
 const isMathMLValid = ref<boolean>(true);
 
 const splitterContainer = ref<HTMLElement | null>(null);
@@ -157,6 +188,15 @@ const handleResize = () => {
 	updateLayout();
 };
 
+const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
+	console.log(mathmlEq);
+	equationLatex.value[index] = latexEq;
+};
+
+// const currentEquations = computed(() => {
+// 	return equations.value.map((eq) => separateEquations(eq.mathLiveField.getValue('math-ml')));
+// });
+
 const mathEditorSelected = computed(() => {
 	if (!isMathMLValid.value) {
 		return 'math-editor-error';
@@ -167,20 +207,39 @@ const mathEditorSelected = computed(() => {
 	return '';
 });
 
-const setNewLatexFormula = (formulaString: string) => {
-	equationLatexNew.value = formulaString;
-};
+// const setNewLatexFormula = (formulaString: string[]) => {
+// 	equationLatexNew.value = formulaString;
+// };
 
-const updateLatexFormula = (formulaString: string) => {
+const updateLatexFormula = (formulaString: string[]) => {
 	equationLatex.value = formulaString;
 	equationLatexOriginal.value = formulaString;
 };
 
-const cancelEditng = () => {
-	isEditingEQ.value = false;
-	isMathMLValid.value = true;
-	updateLatexFormula(equationLatexOriginal.value);
-};
+// const cancelEditng = () => {
+// 	isEditingEQ.value = false;
+// 	isMathMLValid.value = true;
+// 	updateLatexFormula(equationLatexOriginal.value);
+// };
+
+function joinStringLists(lists: string[][]): string[] {
+	return ([] as string[]).concat(...lists);
+}
+
+// const combinedList = joinStringLists(nestedLists);
+// console.log(combinedList);
+
+watch(
+	() => [equationLatex.value],
+	() => {
+		const test = equations.value.map((eq) =>
+			separateEquations(eq.mathLiveField.getValue('math-ml'))
+		);
+		console.log(test);
+		validateMathML(joinStringLists(test), false);
+	},
+	{ deep: true }
+);
 
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
@@ -189,9 +248,20 @@ watch(
 		updateLatexFormula('');
 		if (props.model) {
 			const data = await petriToLatex(convertAMRToACSet(props.model));
+			console.log(data);
+			const eqList = data
+				?.split(' \\\\')
+				.map(
+					(elem) =>
+						`\\begin{align} ${elem
+							.replace('\\\\', '\\')
+							.replace('\\begin{align}', '')
+							.replace('\\end{align}', '')
+							.trim()} \\end{align}`
+				);
 
 			if (data) {
-				updateLatexFormula(data);
+				updateLatexFormula(eqList || []);
 			}
 		}
 	},
@@ -298,10 +368,20 @@ watch(
 		await renderer?.setData(graphData);
 		await renderer?.render();
 		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
+		const eqList = latexFormula
+			?.split(' \\\\')
+			.map(
+				(elem) =>
+					`\\begin{align} ${elem
+						.replace('\\\\', '\\')
+						.replace('\\begin{align}', '')
+						.replace('\\end{align}', '')
+						.trim()} \\end{align}`
+			);
 		if (latexFormula) {
-			updateLatexFormula(latexFormula);
+			updateLatexFormula(eqList || []);
 		} else {
-			updateLatexFormula('');
+			updateLatexFormula([]);
 		}
 	},
 	{ deep: true }
@@ -311,9 +391,11 @@ const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
 	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
 
-	// Render graph
-	await renderer?.setData(graphData);
-	await renderer?.render();
+	if (renderer) {
+		await renderer.setData(graphData);
+		renderer.isGraphDirty = true;
+		await renderer.render();
+	}
 	updateLatexFormula(equationLatexNew.value);
 };
 
@@ -322,25 +404,27 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
 };
 
-const validateMathML = async (mathMlString: string, editMode: boolean) => {
+const validateMathML = async (mathMlString: string[], editMode: boolean) => {
 	isEditingEQ.value = true;
 	isMathMLValid.value = false;
-	const cleanedMathML = separateEquations(mathMlString);
-	if (mathMlString === '') {
+	console.log(mathMlString);
+	const cleanedMathML = mathMlString;
+	if (mathMlString.length === 0) {
 		isMathMLValid.value = true;
 		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
 			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
 			const model = amr?.model;
+			console.log(model);
 			if (
 				(model && isArray(model) && model.length > 0) ||
 				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
-
-				updatePetriNet(amr);
+				console.log(props.model);
+				if (props.model !== null) updatePetriNet(props.model);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -426,6 +510,13 @@ main {
 	border-radius: var(--border-radius);
 }
 
+.diagram-container-editing {
+	box-shadow: inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073,
+		inset 0 0 0 1px var(--primary-color);
+	border: 2px solid var(--primary-color);
+	border-radius: var(--border-radius);
+}
+
 .preview {
 	min-height: 8rem;
 	background-color: var(--surface-secondary);
@@ -490,15 +581,29 @@ section math-editor {
 	border: 4px solid transparent;
 	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
 	overflow: auto;
+	padding-top: 50px;
+	padding-bottom: 20px;
 }
 
-.math-editor-selected {
-	border: 4px solid var(--primary-color);
+.controls {
+	display: flex;
+	flex-direction: row;
+	margin: 0.5rem 2.5rem 0px 10px;
+	justify-content: flex-end;
+	position: relative;
+	z-index: 20;
 }
 
-.math-editor-error {
-	border: 4px solid var(--surface-border-warning);
-	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+.edit-button {
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.add-equation-button {
+	width: 150px;
+	min-height: 30px;
+	margin-left: 5px;
+	margin-top: 5px;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
