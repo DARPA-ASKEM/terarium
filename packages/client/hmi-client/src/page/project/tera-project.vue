@@ -13,7 +13,6 @@
 					:tabs="tabs"
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
-					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
 				/>
