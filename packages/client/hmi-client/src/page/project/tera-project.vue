@@ -368,7 +368,7 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
-function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
+async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
 	if (asset && asset.assetId && asset.assetName.toLowerCase().endsWith('.pdf')) {
