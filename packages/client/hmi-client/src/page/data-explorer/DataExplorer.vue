@@ -521,7 +521,7 @@ const clearItemSelected = () => {
 // };
 
 async function executeNewQuery() {
-	if (route.query?.q?.toString() === '' && route.query?.q?.toString()) {
+	if (route.query?.q?.toString() === '' || route.query?.q?.toString()) {
 		searchTerm.value = route.query?.q?.toString();
 	}
 
