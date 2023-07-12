@@ -142,6 +142,7 @@ onUnmounted(() => {
 .tera-context-menu:deep(.p-submenu-header .p-menuitem-link) {
 	padding-left: 0px;
 	padding-bottom: 0px;
+	margin-top: 0.5rem;
 }
 
 .tera-context-menu:deep(.p-submenu-header .p-menuitem-link):hover {
@@ -149,9 +150,7 @@ onUnmounted(() => {
 	cursor: default;
 }
 .tera-context-menu:deep(.p-submenu-header .p-menuitem-link .p-menuitem-text) {
-	color: var(--text-color-secondary);
-}
-.tera-context-menu:deep(.p-submenu-header .p-menuitem-link .p-menuitem-text):hover {
-	color: var(--text-color-secondary);
+	color: var(--text-color-primary);
+	font-weight: var(--font-weight-semibold);
 }
 </style>

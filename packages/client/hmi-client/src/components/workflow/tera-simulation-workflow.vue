@@ -411,7 +411,7 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Deterministic',
+		label: 'DETERMINISTIC',
 		items: [
 			{
 				label: 'Simulate',
@@ -438,7 +438,7 @@ const contextMenuItems = ref([
 		]
 	},
 	{
-		label: 'Probabilistic',
+		label: 'PROBABILISTIC',
 		items: [
 			{
 				label: 'Simulate',
