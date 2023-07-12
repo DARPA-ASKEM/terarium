@@ -1,6 +1,7 @@
 import { logger } from '@/utils/logger';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
@@ -18,6 +19,7 @@ export const app = createApp(App);
 app.use(ToastService);
 app.use(createPinia());
 app.use(router);
+app.use(ConfirmationService);
 app.use(PrimeVue, { ripple: true });
 app.directive('tooltip', Tooltip);
 
@@ -30,3 +32,10 @@ await auth.fetchSSO();
 
 app.mount('body');
 logger.info('Application Mounted', { showToast: false, silent: true });
+
+// Allow the use of CSS custom properties
+declare module '@vue/runtime-dom' {
+	export interface CSSProperties {
+		[key: `--${string}`]: string | undefined;
+	}
+}

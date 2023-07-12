@@ -268,7 +268,7 @@ const executeSearch = async () => {
 			facets: true, // include facets aggregation data in the search results
 			match: true,
 			additional_fields: 'title,abstract',
-			known_entities: 'url_extractions'
+			known_entities: 'url_extractions,askem_object'
 		},
 		model: {},
 		dataset: {}
@@ -476,21 +476,21 @@ const updateAssetType = async (newResourceType: ResourceType) => {
 	if (resourceType.value !== newResourceType) {
 		resourceType.value = newResourceType;
 
-		if (executeSearchByExample.value === false) {
-			// if no data currently exist for the selected tab,
-			// or if data exists but outdated then we should refetch
-			const resList = dataItemsUnfiltered.value.find(
-				(res) => res.searchSubsystem === resourceType.value
-			);
-			if (!resList || dirtyResults.value[resourceType.value]) {
-				disableSearchByExample();
-				await executeSearch();
-				dirtyResults.value[resourceType.value] = false;
-			} else {
-				// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
-				// re-calculate the facets
-				calculateFacets(dataItemsUnfiltered.value, dataItems.value);
-			}
+		if (executeSearchByExample.value) return;
+
+		// if no data currently exist for the selected tab,
+		// or if data exists but outdated then we should refetch
+		const resList = dataItemsUnfiltered.value.find(
+			(res) => res.searchSubsystem === resourceType.value
+		);
+		if (!resList || dirtyResults.value[resourceType.value]) {
+			disableSearchByExample();
+			await executeSearch();
+			dirtyResults.value[resourceType.value] = false;
+		} else {
+			// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
+			// re-calculate the facets
+			calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 		}
 	}
 };
@@ -507,15 +507,12 @@ const clearItemSelected = () => {
 // };
 
 async function executeNewQuery() {
-	const previousSearchTerm = searchTerm.value;
-
 	// If search query is not empty update the search term
 	if (!isEmpty(route.query?.q?.toString()) && route.query?.q?.toString()) {
 		searchTerm.value = route.query?.q?.toString();
 	}
 
 	// If the search term is empty or is the same as the previous term don't execute a search
-	if (isEmpty(searchTerm.value) || previousSearchTerm === searchTerm.value) return;
 
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();

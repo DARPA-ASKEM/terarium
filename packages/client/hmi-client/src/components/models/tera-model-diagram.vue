@@ -1,0 +1,509 @@
+<template>
+	<main>
+		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1]">
+			<AccordionTab header="Model diagram">
+				<TeraResizablePanel class="diagram-container">
+					<section class="graph-element">
+						<Toolbar>
+							<template #start>
+								<Button
+									@click="resetZoom"
+									label="Reset zoom"
+									class="p-button-sm p-button-outlined toolbar-button"
+								/>
+							</template>
+							<template #center>
+								<span class="toolbar-subgroup">
+									<Button
+										v-if="isEditing"
+										@click="addState"
+										label="Add state"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+									<Button
+										v-if="isEditing"
+										@click="addTransition"
+										label="Add transition"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+								</span>
+							</template>
+							<template #end>
+								<span class="toolbar-subgroup">
+									<Button
+										v-if="isEditing"
+										@click="cancelEdit"
+										label="Cancel"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+									<Button
+										@click="toggleEditMode"
+										:label="isEditing ? 'Save model' : 'Edit model'"
+										:class="
+											isEditing
+												? 'p-button-sm toolbar-button-saveModel'
+												: 'p-button-sm p-button-outlined toolbar-button'
+										"
+									/>
+								</span>
+							</template>
+						</Toolbar>
+						<div v-if="model" ref="graphElement" class="graph-element" />
+						<ContextMenu ref="menu" :model="contextMenuItems" />
+					</section>
+				</TeraResizablePanel>
+			</AccordionTab>
+			<AccordionTab header="Model equations">
+				<TeraResizablePanel class="diagram-container">
+					<section class="math-editor-container" :class="mathEditorSelected">
+						<tera-math-editor
+							:is-editable="isEditable"
+							:latex-equation="equationLatex"
+							:is-editing-eq="isEditingEQ"
+							:is-math-ml-valid="isMathMLValid"
+							:math-mode="MathEditorModes.LIVE"
+							@cancel-editing="cancelEditng"
+							@equation-updated="setNewLatexFormula"
+							@validate-mathml="validateMathML"
+							@set-editing="isEditingEQ = true"
+						>
+						</tera-math-editor>
+					</section>
+				</TeraResizablePanel>
+			</AccordionTab>
+		</Accordion>
+		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
+	</main>
+</template>
+
+<script setup lang="ts">
+import { isEmpty, pickBy, isArray } from 'lodash';
+import { IGraph } from '@graph-scaffolder/index';
+import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { runDagreLayout } from '@/services/graph';
+import {
+	PetrinetRenderer,
+	NodeData,
+	EdgeData,
+	NodeType
+} from '@/model-representation/petrinet/petrinet-renderer';
+import { petriToLatex } from '@/petrinet/petrinet-service';
+import {
+	convertAMRToACSet,
+	convertToIGraph
+} from '@/model-representation/petrinet/petrinet-service';
+import { mathmlToAMR } from '@/services/models/transformations';
+import { separateEquations, MathEditorModes } from '@/utils/math';
+import { updateModel } from '@/services/model';
+import { logger } from '@/utils/logger';
+import Button from 'primevue/button';
+import ContextMenu from 'primevue/contextmenu';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import Toolbar from 'primevue/toolbar';
+import { Model } from '@/types/Types';
+// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
+import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+
+// Get rid of these emits
+const emit = defineEmits([
+	'update-tab-name',
+	'close-preview',
+	'asset-loaded',
+	'close-current-tab',
+	'update-model-content'
+]);
+
+const props = defineProps<{
+	model: Model | null;
+	isEditable: boolean;
+	nodePreview?: boolean;
+}>();
+
+const menu = ref();
+
+const isEditing = ref<boolean>(false);
+const isEditingEQ = ref<boolean>(false);
+
+const newModelName = ref('New Model');
+
+const equationLatex = ref<string>('');
+const equationLatexOriginal = ref<string>('');
+const equationLatexNew = ref<string>('');
+const isMathMLValid = ref<boolean>(true);
+
+const splitterContainer = ref<HTMLElement | null>(null);
+const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
+
+const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
+
+const graphElement = ref<HTMLDivElement | null>(null);
+let renderer: PetrinetRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
+
+const updateLayout = () => {
+	if (splitterContainer.value) {
+		layout.value =
+			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
+			window.innerWidth < 800
+				? 'vertical'
+				: 'horizontal';
+	}
+};
+
+const handleResize = () => {
+	updateLayout();
+};
+
+const mathEditorSelected = computed(() => {
+	if (!isMathMLValid.value) {
+		return 'math-editor-error';
+	}
+	if (isEditingEQ.value) {
+		return 'math-editor-selected';
+	}
+	return '';
+});
+
+const setNewLatexFormula = (formulaString: string) => {
+	equationLatexNew.value = formulaString;
+};
+
+const updateLatexFormula = (formulaString: string) => {
+	equationLatex.value = formulaString;
+	equationLatexOriginal.value = formulaString;
+};
+
+const cancelEditng = () => {
+	isEditingEQ.value = false;
+	isMathMLValid.value = true;
+	updateLatexFormula(equationLatexOriginal.value);
+};
+
+// Whenever selectedModelId changes, fetch model with that ID
+watch(
+	() => [props.model],
+	async () => {
+		updateLatexFormula('');
+		if (props.model) {
+			const data = await petriToLatex(convertAMRToACSet(props.model));
+
+			if (data) {
+				updateLatexFormula(data);
+			}
+		}
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => newModelName.value,
+	(newValue, oldValue) => {
+		if (newValue !== oldValue) {
+			emit('update-tab-name', newValue);
+		}
+	}
+);
+
+const editorKeyHandler = (event: KeyboardEvent) => {
+	// Ignore backspace if the current focus is a text/input box
+	if ((event.target as HTMLElement).tagName === 'INPUT') {
+		return;
+	}
+
+	if (event.key === 'Backspace' && renderer) {
+		if (renderer && renderer.nodeSelection) {
+			const nodeData = renderer.nodeSelection.datum();
+			renderer.removeNode(nodeData.id);
+		}
+
+		if (renderer && renderer.edgeSelection) {
+			const edgeData = renderer.edgeSelection.datum();
+			renderer.removeEdge(edgeData.source, edgeData.target);
+		}
+	}
+	if (event.key === 'Enter' && renderer) {
+		if (renderer.nodeSelection) {
+			renderer.deselectNode(renderer.nodeSelection);
+			renderer.nodeSelection
+				.selectAll('.no-drag')
+				.style('opacity', 0)
+				.style('visibility', 'hidden');
+			renderer.nodeSelection = null;
+		}
+		if (renderer.edgeSelection) {
+			renderer.deselectEdge(renderer.edgeSelection);
+			renderer.edgeSelection = null;
+		}
+	}
+};
+
+// Model editor context menu
+const contextMenuItems = ref([
+	{
+		label: 'Add state',
+		icon: 'pi pi-fw pi-circle',
+		command: () => {
+			if (renderer) {
+				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
+			}
+		}
+	},
+	{
+		label: 'Add transition',
+		icon: 'pi pi-fw pi-stop',
+		command: () => {
+			if (renderer) {
+				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
+			}
+		}
+	}
+]);
+
+// Render graph whenever a new model is fetched or whenever the HTML element
+//	that we render the graph to changes.
+watch(
+	[() => props.model, graphElement],
+	async () => {
+		if (props.model === null || graphElement.value === null) return;
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+
+		// Create renderer
+		renderer = new PetrinetRenderer({
+			el: graphElement.value as HTMLDivElement,
+			useAStarRouting: false,
+			useStableZoomPan: true,
+			runLayout: runDagreLayout,
+			dragSelector: 'no-drag'
+		});
+
+		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+			renderer?.addEdge(d.source, d.target);
+		});
+
+		renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+			if (!renderer?.editMode) return;
+			eventX = pos.x;
+			eventY = pos.y;
+			menu.value.show(evt);
+		});
+
+		renderer.on('background-click', () => {
+			if (menu.value) menu.value.hide();
+		});
+
+		// Render graph
+		await renderer?.setData(graphData);
+		await renderer?.render();
+		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
+		if (latexFormula) {
+			updateLatexFormula(latexFormula);
+		} else {
+			updateLatexFormula('');
+		}
+	},
+	{ deep: true }
+);
+
+const updatePetriNet = async (model: Model) => {
+	// Convert PetriNet into a graph
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
+
+	// Render graph
+	await renderer?.setData(graphData);
+	await renderer?.render();
+	updateLatexFormula(equationLatexNew.value);
+};
+
+const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
+	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
+	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
+};
+
+const validateMathML = async (mathMlString: string, editMode: boolean) => {
+	isEditingEQ.value = true;
+	isMathMLValid.value = false;
+	const cleanedMathML = separateEquations(mathMlString);
+	if (mathMlString === '') {
+		isMathMLValid.value = true;
+		isEditingEQ.value = false;
+	} else if (!editMode) {
+		try {
+			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
+			const model = amr?.model;
+			if (
+				(model && isArray(model) && model.length > 0) ||
+				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
+			) {
+				isMathMLValid.value = true;
+				isEditingEQ.value = false;
+
+				updatePetriNet(amr);
+			} else {
+				logger.error(
+					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
+				);
+			}
+		} catch (e) {
+			isMathMLValid.value = false;
+		}
+	} else if (editMode) {
+		isMathMLValid.value = true;
+	}
+};
+
+const toggleEditMode = () => {
+	isEditing.value = !isEditing.value;
+	renderer?.setEditMode(isEditing.value);
+	if (!isEditing.value && props.model && renderer) {
+		emit('update-model-content', renderer.graph);
+		updateModel(renderer.graph.amr);
+	}
+};
+
+// Cancel existing edits, currently this will:
+// - Resets changs to the model structure
+const cancelEdit = async () => {
+	isEditing.value = false;
+	if (!props.model) return;
+
+	// Convert petri net into a graph with raw input data
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+
+	if (renderer) {
+		renderer.setEditMode(false);
+		await renderer.setData(graphData);
+		renderer.isGraphDirty = true;
+		await renderer.render();
+	}
+};
+
+const resetZoom = async () => {
+	renderer?.setToDefaultZoom();
+};
+
+const addState = async () => {
+	renderer?.addNodeCenter(NodeType.State, 'state');
+};
+
+const addTransition = async () => {
+	renderer?.addNodeCenter(NodeType.Transition, 'transition');
+};
+
+onMounted(() => {
+	document.addEventListener('keyup', editorKeyHandler);
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', editorKeyHandler);
+	window.removeEventListener('resize', handleResize);
+});
+
+onUpdated(() => {
+	if (props.model) {
+		emit('asset-loaded');
+	}
+});
+</script>
+
+<style scoped>
+main {
+	overflow: auto;
+}
+
+.p-accordion {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.diagram-container {
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
+}
+
+.preview {
+	min-height: 8rem;
+	background-color: var(--surface-secondary);
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+}
+
+.p-toolbar {
+	position: absolute;
+	width: 100%;
+	z-index: 1;
+	isolation: isolate;
+	background: transparent;
+	padding: 0.5rem;
+}
+
+.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
+	background-color: var(--surface-0);
+	margin: 0.25rem;
+}
+
+.toolbar-button-saveModel {
+	margin: 0.25rem;
+}
+
+.toolbar-subgroup {
+	display: flex;
+}
+
+section math-editor {
+	justify-content: center;
+}
+
+.floating-edit-button {
+	background-color: var(--surface-0);
+	margin-top: 10px;
+	position: absolute;
+	right: 10px;
+	z-index: 10;
+}
+
+.graph-element {
+	background-color: var(--surface-secondary);
+	height: 100%;
+	max-height: 100%;
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+}
+
+.math-editor-container {
+	display: flex;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	flex-direction: column;
+	border: 4px solid transparent;
+	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
+	overflow: auto;
+}
+
+.math-editor-selected {
+	border: 4px solid var(--primary-color);
+}
+
+.math-editor-error {
+	border: 4px solid var(--surface-border-warning);
+	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Let svg dynamically resize when the sidebar opens/closes or page resizes */
+:deep(.graph-element svg) {
+	width: 100%;
+	height: 100%;
+}
+</style>

@@ -2,9 +2,10 @@
 	<main>
 		<tera-slider-panel
 			v-model:is-open="isResourcesSliderOpen"
-			content-width="300px"
+			content-width="240px"
 			header="Resources"
 			direction="left"
+			class="resource-panel"
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
@@ -12,15 +13,15 @@
 					:tabs="tabs"
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
-					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
 				/>
 			</template>
 		</tera-slider-panel>
 		<Splitter>
-			<SplitterPanel :size="20">
+			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
+					class="tab-group"
 					v-if="!isEmpty(tabs)"
 					:tabs="tabs"
 					:active-tab-index="activeTabIndex"
@@ -30,26 +31,46 @@
 					@click="getAndPopulateAnnotations()"
 				/>
 				<tera-project-page
+					v-if="project"
 					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
+					:asset-name="assetName"
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
 				/>
 			</SplitterPanel>
-			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
-				<Button label="Print chosen node" @click="printChosenNode" />
-				<!--
-					for now just testing model component in drilldown
-					asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???
-				-->
-				<tera-project-page
+			<SplitterPanel class="project-page top-z-index" v-if="workflowNode" :size="20">
+				<tera-tab-group
+					v-if="workflowNode"
+					class="tab-group"
+					:tabs="[{ assetName: workflowNode.operationType }]"
+					:active-tab-index="0"
+					:loading-tab-index="null"
+					@close-tab="workflowNode = null"
+				/>
+				<tera-calibration
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION"
+					:node="workflowNode"
+				/>
+				<tera-simulate
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE"
+					:node="workflowNode"
+				/>
+				<tera-stratify
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
+					:node="workflowNode"
+				/>
+				<tera-model-workflow-wrapper
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
 					:project="project"
-					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
-					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
-					is-drilldown
-					@asset-loaded="setActiveTab"
+					:node="workflowNode"
+				/>
+				<tera-dataset-workflow-wrapper
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.DATASET"
+					:project="project"
+					:node="workflowNode"
 				/>
 			</SplitterPanel>
 		</Splitter>
@@ -194,6 +215,9 @@
 import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty, isEqual } from 'lodash';
+import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
+import TeraDatasetWorkflowWrapper from '@/components/workflow/tera-dataset-workflow-wrapper.vue';
+import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
@@ -203,7 +227,6 @@ import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar
 import { RouteName } from '@/router/routes';
 import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
@@ -217,6 +240,12 @@ import {
 import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraSimulate from '@/components/workflow/tera-simulate.vue';
+import TeraStratify from '@/components/workflow/tera-stratify.vue';
+import { workflowEventBus } from '@/services/workflow';
+import { PresignedURL } from '@/types/Types';
+import { getPresignedDownloadURL } from '@/services/artifact';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -227,10 +256,7 @@ const props = defineProps<{
 	pageType?: ProjectAssetTypes | ProjectPages;
 }>();
 
-const emit = defineEmits(['update-project']);
-
 const tabStore = useTabStore();
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const router = useRouter();
 
@@ -244,6 +270,15 @@ const menuOpenEvent = ref();
 const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
 const isNoteDeletionConfirmation = ref(false);
+
+const workflowNode = ref<WorkflowNode | null>(null);
+// const workflowOperation = ref<string>('');
+
+workflowEventBus.on('drilldown', (payload: any) => {
+	console.log('listener', payload);
+	workflowNode.value = payload;
+});
+
 const noteDeletionConfirmationMenuItem = {
 	label: 'Are you sure?',
 	icon: '',
@@ -332,14 +367,13 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
-function printChosenNode() {
-	console.log(openedWorkflowNodeStore.workflowNode);
-}
-
-function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
+async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (
+	if (asset && asset.assetId && asset.assetName.toLowerCase().endsWith('.pdf')) {
+		const url: PresignedURL | null = await getPresignedDownloadURL(asset.assetId, asset.assetName);
+		if (url) window.open(url.url, '_blank');
+	} else if (
 		!(
 			asset &&
 			asset.assetId === props.assetId &&
@@ -366,17 +400,14 @@ async function removeAsset(asset: Tab) {
 	const { assetName, assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (
-		assetId &&
-		pageType &&
-		isProjectAssetTypes(pageType) &&
-		pageType !== ProjectPages.OVERVIEW &&
-		pageType !== ProjectAssetTypes.SIMULATION_WORKFLOW
-	) {
-		const isRemoved = await ProjectService.deleteAsset(props.project.id, pageType, assetId);
+	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
+		const isRemoved = await ProjectService.deleteAsset(
+			props.project.id,
+			pageType as ProjectAssetTypes,
+			assetId
+		);
 
 		if (isRemoved) {
-			emit('update-project', props.project.id);
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isEqual(tab, asset)));
 			logger.info(`${assetName} was removed.`, { showToast: true });
 			return;
@@ -389,6 +420,13 @@ async function removeAsset(asset: Tab) {
 watch(
 	() => projectContext.value,
 	() => {
+		if (projectContext.value) {
+			// Automatically go to overview page when project is opened
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+			});
+		}
 		if (
 			tabs.value.length > 0 &&
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
@@ -430,8 +468,12 @@ tabStore.$subscribe(() => {
 });
 
 async function getAndPopulateAnnotations() {
-	annotations.value = await getAnnotations(props.assetId, props.pageType);
-	selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	if (props.assetId && props.pageType) {
+		annotations.value = await getAnnotations(props.assetId, props.pageType);
+		selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	} else {
+		selectedNoteSection.value = [];
+	}
 }
 
 const addNote = async () => {
@@ -478,13 +520,15 @@ function formatAuthorTimestamp(username, timestamp) {
 </script>
 
 <style scoped>
-section,
-.p-splitter-panel {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	overflow-x: auto;
-	overflow-y: hidden;
+.resource-panel {
+	z-index: 1000;
+	isolation: isolate;
+}
+
+.tab-group {
+	z-index: 2;
+	isolation: isolate;
+	position: relative;
 }
 
 .p-splitter {
@@ -492,6 +536,24 @@ section,
 	flex: 1;
 	background: none;
 	border: none;
+	overflow-x: hidden;
+}
+
+section,
+.p-splitter:deep(.project-page) {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.p-splitter:deep(.p-splitter-gutter) {
+	z-index: 1000;
+}
+
+.top-z-index {
+	z-index: 1000;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
@@ -514,6 +576,7 @@ section,
 .annotation-header {
 	display: flex;
 	justify-content: space-between;
+	height: 2rem;
 }
 
 .annotation-header .p-button.p-button-secondary {
@@ -546,10 +609,6 @@ section,
 	padding-right: 1rem;
 }
 
-.annotation-content {
-	padding: 0rem 0.5rem 0rem 0.5rem;
-}
-
 .annotation-input-container {
 	display: flex;
 	flex-direction: column;
@@ -568,10 +627,6 @@ section,
 
 .annotation-input-box .p-inputtext:hover {
 	border-color: var(--primary-color) !important;
-}
-
-.annotation-header {
-	height: 2rem;
 }
 
 .save-cancel-buttons {

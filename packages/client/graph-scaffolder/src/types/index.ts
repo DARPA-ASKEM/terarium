@@ -41,6 +41,9 @@ export interface IGraph<V, E> {
 	edges: IEdge<E>[];
 	width?: number;
 	height?: number;
+
+	// keep an AMR copy
+	amr?: any;
 }
 
 export type D3Selection = d3.Selection<d3.BaseType, any, null, any>;

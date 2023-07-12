@@ -1,22 +1,31 @@
 package software.uncharted.terarium.hmiserver.proxies.simulationservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationParams;
-import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationParams;
+import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 
 @RegisterRestClient(configKey = "simulation-service")
 @Produces(MediaType.APPLICATION_JSON)
 public interface SimulationServiceProxy {
 	@POST
-	@Path("/calls/forecast")
+	@Path("/simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response makeForecastRun(
-		SimulationParams simulationParams
+	JobResponse makeForecastRun(
+		JsonNode request
+	);
+
+	@POST
+	@Path("/calibrate")
+	@Consumes(MediaType.APPLICATION_JSON)
+	JobResponse makeCalibrateJob(
+		JsonNode request
 	);
 
 	@GET
@@ -31,12 +40,5 @@ public interface SimulationServiceProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response getRunResult(
 		@PathParam("runId") String runId
-	);
-
-	@POST
-	@Path("/calls/calibrate")
-	@Consumes(MediaType.APPLICATION_JSON)
-	Response makeCalibrateJob(
-		CalibrationParams calibrationParams
 	);
 }

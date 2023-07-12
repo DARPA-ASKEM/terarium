@@ -13,25 +13,23 @@
 	/>
 	<main>
 		<router-view v-slot="{ Component }">
-			<component
-				class="page"
-				ref="pageRef"
-				:is="Component"
-				:project="project"
-				@update-project="fetchProject"
-			/>
+			<component class="page" ref="pageRef" :is="Component" :project="project" />
 		</router-view>
 	</main>
 	<footer class="footer">
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
-		<div class="footer-button-group">
-			<Button label="about" class="footer-button" text @click="isAboutModalVisible = true" />
-			<a href="https://terarium.canny.io/report-an-issue" class="no-text-decoration">
-				<Button label="report an issue" class="footer-button" text />{{ null }}
-			</a>
-			<a href="https://terarium.canny.io/request-a-feature" class="no-text-decoration">
-				<Button label="request a feature" class="footer-button" text />{{ null }}
-			</a>
+		<div class="footer-group">
+			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
+			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue"
+				>Report an issue</a
+			>
+			<a
+				target="_blank"
+				rel="noopener noreferrer"
+				href="https://terarium.canny.io/request-a-feature"
+				>Request a feature</a
+			>
 		</div>
 	</footer>
 	<tera-modal
@@ -92,8 +90,8 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import { ResourceType } from '@/types/common';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useCurrentRoute } from './router/index';
-import TeraModal from './components/widgets/tera-modal.vue';
 
 const toast = useToastService();
 /**
@@ -141,12 +139,9 @@ API.interceptors.response.use(
 );
 
 async function fetchProject(id: IProject['id']) {
-	// fetch project metadata
-	project.value = await ProjectService.get(id, true);
-
+	resourcesStore.reset();
 	// fetch basic metadata about project assets and save them into a global store/cache
-	resourcesStore.activeProjectAssets = project.value?.assets ?? null;
-	resourcesStore.setActiveProject(project.value);
+	resourcesStore.setActiveProject(await ProjectService.get(id, true));
 }
 
 watch(
@@ -165,13 +160,22 @@ watch(
 	{ immediate: true }
 );
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-resourcesStore.$subscribe((mutation, state) => {
+// This is crucial - every time the resource store is modified the project prop will be updated to match it
+// Once you update assets within a project (add/remove) the project service sets the resource store to what's in the project in the backend
+resourcesStore.$subscribe((_mutation, state) => {
 	project.value = state.activeProject;
 });
 
 const isAboutModalVisible = ref(false);
+
+const documentation = computed(() => {
+	const host = window.location.hostname ?? 'localhost';
+	if (host === 'localhost') {
+		return '//localhost:8000';
+	}
+	const url = host.replace(/\bapp\b/g, 'documentation');
+	return `https://${url}`;
+});
 </script>
 
 <style scoped>
@@ -202,25 +206,23 @@ footer {
 	background-color: var(--surface-section);
 	border-top: 1px solid var(--surface-border-light);
 	display: flex;
+	gap: 2rem;
 	grid-area: footer;
 	height: 3rem;
 	justify-content: space-between;
 }
 
-.footer-button-group {
-	padding-right: 3rem;
+.footer-group {
+	font-size: var(--font-caption);
+	margin: 0 2rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-around;
+	gap: 2rem;
 }
 
-.no-text-decoration {
+.footer-group a {
 	text-decoration: none;
-}
-
-.p-button.p-component.p-button-text.footer-button {
-	color: var(--text-color-secondary);
-}
-
-.p-button.p-component.p-button-text.footer-button:hover {
-	color: var(--text-color-primary);
 }
 
 .about-modal-content {
@@ -257,9 +259,5 @@ footer {
 
 .constrain-width {
 	max-width: 40rem;
-}
-
-.subdued {
-	color: var(--text-color-secondary);
 }
 </style>

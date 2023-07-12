@@ -1,7 +1,6 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import {
-	Dataset,
 	FACET_FIELDS as DATASET_FACET_FIELDS,
 	DISPLAY_NAMES as DATASET_DISPLAY_NAMES
 } from '@/types/Dataset';
@@ -16,7 +15,7 @@ import {
 	FACET_FIELDS as DOCUMENT_FACET_FIELDS,
 	GITHUB_URL
 } from '@/types/XDD';
-import { Document, XDDFacetsItemResponse } from '@/types/Types';
+import { Document, XDDFacetsItemResponse, Dataset } from '@/types/Types';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
 import { logger } from '@/utils/logger';

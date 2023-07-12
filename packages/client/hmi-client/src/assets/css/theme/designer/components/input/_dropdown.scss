@@ -82,6 +82,7 @@
 
     .p-dropdown-items {
         padding: $inputListPadding;
+        max-width: $inputListMaxWidth;
 
         .p-dropdown-item {
             margin: $inputListItemMargin;
@@ -91,6 +92,7 @@
             background: $inputListItemBg;
             transition: $listItemTransition;
             border-radius: $inputListItemBorderRadius;
+            white-space: normal;
 
             &.p-highlight {
                 color: $highlightTextColor;

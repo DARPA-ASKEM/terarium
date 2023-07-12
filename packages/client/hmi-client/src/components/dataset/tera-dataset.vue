@@ -2,180 +2,304 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
+		ref="assetPanel"
 	>
-		<template #nav>
-			<tera-asset-nav
-				:asset-content="datasetContent"
-				:show-header-links="datasetView === DatasetView.DESCRIPTION"
-			>
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Description"
-							icon="pi pi-list"
-							@click="datasetView = DatasetView.DESCRIPTION"
-							:active="datasetView === DatasetView.DESCRIPTION"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Data"
-							icon="pi pi-file"
-							@click="datasetView = DatasetView.DATA"
-							:active="datasetView === DatasetView.DATA"
-						/>
-					</span>
-				</template>
-			</tera-asset-nav>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Description"
+					icon="pi pi-list"
+					@click="datasetView = DatasetView.DESCRIPTION"
+					:active="datasetView === DatasetView.DESCRIPTION"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Data"
+					icon="pi pi-file"
+					@click="datasetView = DatasetView.DATA"
+					:active="datasetView === DatasetView.DATA"
+				/>
+				<Button
+					v-if="isEditable"
+					class="p-button-secondary p-button-sm"
+					label="Transform"
+					icon="pi pi-sync"
+					@click="openDatesetChatTab"
+					:active="datasetView === DatasetView.LLM"
+				/>
+			</span>
+			<span v-if="datasetView === DatasetView.LLM && isEditable">
+				<i class="pi pi-cog" @click="toggleSettingsMenu" />
+				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
+			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
-			<section class="metadata data-row">
+			<div class="container">
+				<Message class="inline-message" icon="none"
+					>This page describes the dataset. Use the content switcher above to see the data table and
+					transformation tools.</Message
+				>
+			</div>
+			<section class="metadata data-row" v-if="!metadata">
 				<section>
-					<header>Maintainer</header>
-					<section>{{ dataset?.maintainer || '-' }}</section>
+					<header>Rows</header>
+					<section>{{ csvContent?.length || '-' }}</section>
 				</section>
 				<section>
-					<header>Quality</header>
-					<section>{{ dataset?.quality || '-' }}</section>
+					<header>Columns</header>
+					<section>{{ rawContent?.stats?.length || '-' }}</section>
+					<header>Metadata</header>
+					<section>{{ dataset?.metadata || '-' }}</section>
 				</section>
 				<section>
-					<header>URL</header>
+					<header>Date uploaded</header>
 					<section>
-						<a :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') || '-' }}
 					</section>
 				</section>
 				<section>
-					<header>Geospatial resolution</header>
-					<section>{{ dataset?.geospatialResolution || '-' }}</section>
-				</section>
-				<section>
-					<header>Temporal resolution</header>
-					<section>{{ dataset?.temporalResolution || '-' }}</section>
-				</section>
-				<section>
-					<header>Number of records</header>
-					<section>{{ csvContent?.length }}</section>
+					<header>Uploaded by</header>
+					<section>{{ dataset?.username || '-' }}</section>
 				</section>
 			</section>
+			<section class="metadata data-row" v-if="!metadata">
+				<section>
+					<header>Source Name</header>
+					<section>{{ dataset?.source || '-' }}</section>
+				</section>
+				<section>
+					<header>Source URL</header>
+					<section>
+						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						<span v-else>-</span>
+					</section>
+				</section>
+			</section>
+			<RelatedPublications
+				@extracted-metadata="(extract) => (metadata = extract)"
+				:publications="[metadata?.source]"
+			/>
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<p v-html="dataset.description" />
+					<section v-if="metadata">
+						<ul>
+							<li>Dataset name: {{ metadata.name }}</li>
+							<li>Dataset overview: {{ metadata.description }}</li>
+							<li>Dataset URL: {{ metadata.source }}</li>
+							<li>
+								Data size: This dataset currently contains {{ csvContent?.length || '-' }} rows.
+							</li>
+						</ul>
+					</section>
+					<p v-else v-html="dataset?.description" />
 				</AccordionTab>
-				<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
+				<AccordionTab v-if="metadata">
+					<template #header>
+						<header id="Source">Source</header>
+					</template>
+					This data is sourced from {{ metadata.source }}
+				</AccordionTab>
+				<AccordionTab v-if="metadata">
+					<template #header>
+						<header id="Variables">Variables</header>
+					</template>
+					<div class="variables-table">
+						<div class="variables-header">
+							<div
+								v-for="(title, index) in [
+									'ID',
+									'NAME',
+									'DATA TYPE',
+									'UNITS',
+									'GROUNDING',
+									'EXTRACTIONS'
+								]"
+								:key="index"
+							>
+								{{ title }}
+							</div>
+						</div>
+						<div v-for="(column, index) in metadata.columns" class="variables-row" :key="index">
+							<div>{{ column.name }}</div>
+							<div>{{ formatName(column.name) }}</div>
+							<div>{{ column.data_type }}</div>
+							<div>-</div>
+							<div>
+								{{ column.grounding.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
+							</div>
+							<div></div>
+							<div class="variables-description">{{ column.description }}</div>
+						</div>
+					</div>
+				</AccordionTab>
+				<AccordionTab v-if="(annotations?.length || 0) > 0">
 					<template #header>
 						<header id="Annotations">
 							Annotations
-							<span class="artifact-amount">
-								({{ (annotations?.geo?.length || 0) + (annotations?.date?.length || 0) }})
-							</span>
+							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
 						</header>
 					</template>
-					<section v-if="annotations?.geo">
-						<header class="annotation-subheader">Geospatial annotations</header>
+					<section v-if="annotations">
+						<header class="annotation-subheader">Annotations</header>
 						<section class="annotation-group">
 							<section
-								v-for="annotation in annotations?.geo"
-								:key="annotation.name"
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name"
 								class="annotation-row data-row"
 							>
 								<section>
 									<header>Name</header>
-									<section class="value">{{ annotation.name }}</section>
+									<section>{{ name }}</section>
 								</section>
 								<section>
 									<header>Description</header>
-									<section>{{ annotation.description }}</section>
-								</section>
-								<section>
-									<header>GADM level</header>
-									<section>{{ annotation.gadm_level }}</section>
-								</section>
-							</section>
-						</section>
-					</section>
-					<section v-if="annotations?.date">
-						<header class="annotation-subheader">Temporal annotations</header>
-						<section class="annotation-group">
-							<section
-								v-for="annotation in annotations?.date"
-								:key="annotation.name"
-								class="annotation-row data-row"
-							>
-								<section>
-									<header>Name</header>
-									<section>{{ annotation.name }}</section>
-								</section>
-								<section>
-									<header>Description</header>
-									<section>{{ annotation.description }}</section>
-								</section>
-								<section>
-									<header>Time format</header>
-									<section>{{ annotation.time_format }}</section>
+									<section>{{ annotations[name] }}</section>
 								</section>
 							</section>
 						</section>
 					</section>
 				</AccordionTab>
-				<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
+			</Accordion>
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
+				<AccordionTab v-if="(annotations?.['feature']?.length || 0) > 0">
 					<template #header>
-						<header id="Features">
-							Features<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
+						<header id="Variables">
+							Variables<span class="artifact-amount">({{ annotations?.['feature']?.length }})</span>
 						</header>
 					</template>
-					<ol class="numbered-list">
-						<li v-for="(feature, index) of annotations?.feature" :key="index">
-							<span>{{ feature.display_name || feature.name }}</span
-							>:
-							<span class="feature-type">{{ feature.feature_type }}</span>
-						</li>
-					</ol>
+					<DataTable :value="annotations?.['feature']">
+						<Column field="name" header="Name"></Column>
+						<Column field="featureType" header="Type"></Column>
+						<Column field="description" header="Definition"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="concept" header="Concept"></Column>
+					</DataTable>
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<Accordion v-else-if="DatasetView.DATA" :activeIndex="0">
-			<AccordionTab>
-				<template #header>
-					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-				</template>
-				<tera-dataset-datatable :raw-content="rawContent" />
-			</AccordionTab>
-		</Accordion>
+		<template v-else-if="datasetView === DatasetView.DATA">
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
+				<AccordionTab>
+					<template #header>
+						Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
+					</template>
+					<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
+				</AccordionTab>
+			</Accordion>
+		</template>
+		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
+			<Suspense>
+				<tera-dataset-jupyter-panel
+					:asset-id="props.assetId"
+					:project="props.project"
+					:dataset="dataset"
+					:show-kernels="showKernels"
+					:show-chat-thoughts="showChatThoughts"
+					@is-typing="updateScroll"
+				/>
+			</Suspense>
+		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { downloadRawFile, getDataset } from '@/services/dataset';
-import { Dataset } from '@/types/Dataset';
-import { computed, ref, watch, onUpdated } from 'vue';
+import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
+import Message from 'primevue/message';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import { CsvAsset } from '@/types/Types';
-import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import { downloadRawFile, getDataset } from '@/services/dataset';
+import { CsvAsset, Dataset } from '@/types/Types';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import { IProject } from '@/types/Project';
+import Menu from 'primevue/menu';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 enum DatasetView {
 	DESCRIPTION = 'description',
-	DATA = 'data'
+	DATA = 'data',
+	LLM = 'llm'
 }
-
 const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
+	project?: IProject;
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+const metadata = ref();
+const showKernels = ref(<boolean>false);
+const showChatThoughts = ref(<boolean>false);
+const menu = ref();
+const newCsvContent: any = ref(null);
+const newCsvHeader: any = ref(null);
+const oldCsvHeaders: any = ref(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
+const jupyterCsv: Ref<CsvAsset | null> = ref(null);
+
+const assetPanel = ref({ assetContainer: HTMLElement });
+
+const updateScroll = () => {
+	const el = assetPanel.value.assetContainer;
+	if (el) {
+		// @ts-ignore
+		el.scrollTop = el.scrollHeight;
+	}
+};
+
+const toggleSettingsMenu = (event: Event) => {
+	menu.value.toggle(event);
+};
+
+function formatName(name: string) {
+	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
+}
+
+const datasetView = ref(DatasetView.DESCRIPTION);
+
+const chatThoughtLabel = computed(() =>
+	showChatThoughts.value ? 'Auto hide chat thoughts' : 'Do not auto hide chat thoughts'
+);
+
+const kernelSettingsLabel = computed(() =>
+	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
+);
+
+const csvContent = computed(() => rawContent.value?.csv);
+
+const items = ref([
+	{
+		label: 'Chat Options',
+		items: [
+			{
+				label: kernelSettingsLabel,
+				command: () => {
+					showKernels.value = !showKernels.value;
+				}
+			},
+			{
+				label: chatThoughtLabel,
+				command: () => {
+					showChatThoughts.value = !showChatThoughts.value;
+				}
+			}
+		]
+	}
+]);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -185,20 +309,10 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const dataset = ref<Dataset | null>(null);
-const rawContent = ref<CsvAsset | null>(null);
-const datasetView = ref(DatasetView.DESCRIPTION);
-
-const csvContent = computed(() => rawContent.value?.csv);
-
-const datasetContent = computed(() => [
-	{ key: 'Description', value: dataset.value?.description },
-	{
-		key: 'Annotations',
-		value: [...(annotations.value?.geo ?? []), ...(annotations.value?.date ?? [])]
-	},
-	{ key: 'Features', value: annotations.value?.feature }
-]);
+const openDatesetChatTab = () => {
+	datasetView.value = DatasetView.LLM;
+	jupyterCsv.value = null;
+};
 
 onUpdated(() => {
 	if (dataset.value) {
@@ -206,13 +320,26 @@ onUpdated(() => {
 	}
 });
 
+watch(
+	() => [jupyterCsv.value?.csv],
+	() => {
+		if (jupyterCsv.value?.csv) {
+			oldCsvHeaders.value = newCsvHeader.value;
+			newCsvContent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
+			newCsvHeader.value = jupyterCsv.value.headers;
+		}
+	}
+);
+
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId, 10);
-			const datasetTemp = await getDataset(props.assetId);
+			const datasetTemp: Dataset | null = await getDataset(props.assetId);
+
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -229,22 +356,45 @@ watch(
 	{ immediate: true }
 );
 
-const annotations = computed(() => dataset.value?.annotations.annotations);
-const showAccordion = computed(() =>
-	dataset.value?.annotations.annotations.date && dataset.value?.annotations.annotations.geo
-		? [2]
-		: [0]
-);
+const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
+const showAccordion = computed(() => {
+	if (metadata.value) {
+		return [0, 1, 2];
+	}
+	if (dataset.value?.columns) {
+		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
+			? [1]
+			: [0];
+	}
+
+	return [0];
+});
 </script>
 
 <style scoped>
+.container {
+	margin-left: 1rem;
+	margin-right: 1rem;
+	max-width: 70rem;
+}
+
+.inline-message:deep(.p-message-wrapper) {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	background-color: var(--surface-highlight);
+	color: var(--text-color-primary);
+	border-radius: var(--border-radius);
+	border: 4px solid var(--primary-color);
+	border-width: 0px 0px 0px 6px;
+}
+
+.p-buttonset {
+	white-space: nowrap;
+	margin-left: 0.5rem;
+}
+
 .metadata {
 	margin: 1rem;
-	margin-bottom: 0.5rem;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background-color: var(--gray-50);
-	padding: 0.25rem;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-evenly;
@@ -252,7 +402,6 @@ const showAccordion = computed(() =>
 
 .metadata > section {
 	flex: 1;
-	padding: 0.5rem;
 }
 
 /* Datatable  */
@@ -263,21 +412,6 @@ const showAccordion = computed(() =>
 
 .data-row > section > section:last-child {
 	font-size: var(--font-body-small);
-}
-
-.annotation-row > section {
-	flex: 1;
-	padding: 0.5rem;
-}
-
-.numbered-list {
-	list-style: numbered-list;
-	margin-left: 2rem;
-	list-style-position: outside;
-}
-
-ol.numbered-list li::marker {
-	color: var(--text-color-subdued);
 }
 
 .feature-type {
@@ -312,8 +446,57 @@ main .annotation-group {
 	gap: 3rem;
 }
 
-.layout-topbar {
-	top: 20px;
-	background-color: red;
+.tera-dataset-datatable {
+	width: 100%;
+}
+
+.data-transform-container {
+	display: flex;
+	flex-direction: column;
+	padding: 0.5rem;
+	margin: 0.5rem;
+	max-height: 90%;
+}
+
+.kernel-status {
+	margin-right: 10px;
+}
+
+.gpt-header {
+	display: flex;
+	width: 90%;
+}
+
+.variables-table {
+	display: grid;
+	grid-template-columns: 1fr;
+}
+
+.variables-table div {
+	padding: 0.25rem;
+}
+
+.variables-header {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+}
+
+.variables-row {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-template-rows: 1fr 1fr;
+	border-top: 1px solid var(--surface-border);
+}
+
+.variables-row:hover {
+	background-color: var(--surface-highlight);
+}
+
+.variables-description {
+	grid-row: 2;
+	grid-column: 1 / span 6;
+	color: var(--text-color-subdued);
 }
 </style>

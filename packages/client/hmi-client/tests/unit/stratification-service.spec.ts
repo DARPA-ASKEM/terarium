@@ -1,6 +1,232 @@
-import { expect, it, test } from 'vitest';
-import { fetchStratificationResult } from '@/services/models/stratification-service';
+import { describe, expect, it, test } from 'vitest';
+import {
+	fetchStratificationResult,
+	generateAgeStrataModel,
+	generateLocationStrataModel
+} from '@/services/models/stratification-service';
 import { PetriNet } from '@/petrinet/petrinet-service';
+
+describe('test generate age strata model', () => {
+	it(`with inputs 'Young,Old'`, () => {
+		const stateNames = ['Young', 'Old'];
+		const model = generateAgeStrataModel(stateNames);
+		expect(model).toEqual({
+			id: '',
+			name: 'Age-contact strata model',
+			description: 'Age-contact strata model',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1',
+			model: {
+				states: [
+					{
+						id: 'A1',
+						name: 'Young',
+						description:
+							'Number of individuals relative to the total population that are in age group A1.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
+					},
+					{
+						id: 'A2',
+						name: 'Old',
+						description:
+							'Number of individuals relative to the total population that are in age group A2.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
+					}
+				],
+				transitions: [
+					{
+						id: 'c11',
+						input: ['A1', 'A1'],
+						output: ['A1', 'A1'],
+						properties: {
+							name: 'c&#8321&#8321',
+							description: 'Infective interaction between individuals.'
+						}
+					},
+					{
+						id: 'c12',
+						input: ['A1', 'A2'],
+						output: ['A1', 'A2'],
+						properties: {
+							name: 'c&#8321&#8322',
+							description: 'Infective interaction between individuals.'
+						}
+					},
+					{
+						id: 'c21',
+						input: ['A2', 'A1'],
+						output: ['A2', 'A1'],
+						properties: {
+							name: 'c&#8322&#8321',
+							description: 'Infective interaction between individuals.'
+						}
+					},
+					{
+						id: 'c22',
+						input: ['A2', 'A2'],
+						output: ['A2', 'A2'],
+						properties: {
+							name: 'c&#8322&#8322',
+							description: 'Infective interaction between individuals.'
+						}
+					}
+				]
+			},
+			semantics: {
+				ode: {
+					rates: []
+				},
+				typing: {
+					type_system: {
+						states: [
+							{
+								id: 'Pop',
+								name: 'Pop',
+								description: 'Compartment of individuals in a human population.'
+							}
+						],
+						transitions: [
+							{
+								id: 'Strata',
+								input: ['Pop'],
+								output: ['Pop'],
+								properties: {
+									name: 'Strata',
+									description:
+										'1-to-1 process that represents a change in the demographic division of a human individual.'
+								}
+							}
+						]
+					},
+					type_map: [
+						['A1', 'Pop'],
+						['A2', 'Pop'],
+						['c11', 'Strata'],
+						['c12', 'Strata'],
+						['c21', 'Strata'],
+						['c22', 'Strata']
+					]
+				}
+			},
+			metadata: {
+				processed_at: 0,
+				processed_by: '',
+				variable_statements: [],
+				annotations: {},
+				attributes: []
+			}
+		});
+	});
+});
+
+describe('test generate location strata model', () => {
+	it(`with inputs 'Toronto,Montreal'`, () => {
+		const stateNames = ['Toronto', 'Montreal'];
+		const model = generateLocationStrataModel(stateNames);
+		expect(model).toEqual({
+			id: '',
+			name: 'Location-travel strata model',
+			description: 'Location-travel strata model',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1',
+			model: {
+				states: [
+					{
+						id: 'L1',
+						name: 'Toronto',
+						description:
+							'Number of individuals relative to the total population that are in location L1.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
+					},
+					{
+						id: 'L2',
+						name: 'Montreal',
+						description:
+							'Number of individuals relative to the total population that are in location L2.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
+					}
+				],
+				transitions: [
+					{
+						id: 't12',
+						input: ['L1'],
+						output: ['L2'],
+						properties: {
+							name: 't&#8321&#8322',
+							description: 'Travel of an individual from location L1 and L2.'
+						}
+					},
+					{
+						id: 't21',
+						input: ['L2'],
+						output: ['L1'],
+						properties: {
+							name: 't&#8322&#8321',
+							description: 'Travel of an individual from location L2 and L1.'
+						}
+					}
+				]
+			},
+			semantics: {
+				ode: {
+					rates: []
+				},
+				typing: {
+					type_system: {
+						states: [
+							{
+								id: 'Pop',
+								name: 'Pop',
+								description: 'Compartment of individuals in a human population.'
+							}
+						],
+						transitions: [
+							{
+								id: 'Strata',
+								input: ['Pop'],
+								output: ['Pop'],
+								properties: {
+									name: 'Strata',
+									description:
+										'1-to-1 process that represents a change in the demographic division of a human individual.'
+								}
+							}
+						]
+					},
+					type_map: [
+						['L1', 'Pop'],
+						['L2', 'Pop'],
+						['t12', 'Strata'],
+						['t21', 'Strata']
+					]
+				}
+			},
+			metadata: {
+				processed_at: 0,
+				processed_by: '',
+				variable_statements: [],
+				annotations: {},
+				attributes: []
+			}
+		});
+	});
+});
 
 // const SIRDModel: PetriNet = {
 // 	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],

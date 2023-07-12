@@ -8,58 +8,46 @@
 		:doi="highlightSearchTerms(doi)"
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
-		:hide-header="documentView === DocumentView.PDF"
+		:hide-intro="documentView === DocumentView.PDF"
 		:stretch-content="documentView === DocumentView.PDF"
+		:show-sticky-header="documentView === DocumentView.PDF"
 	>
-		<template #nav>
-			<tera-asset-nav
-				:asset-content="documentContent"
-				:show-header-links="documentView === DocumentView.EXRACTIONS"
-				v-if="isEditable"
-			>
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Extractions"
-							icon="pi pi-list"
-							@click="documentView = DocumentView.EXRACTIONS"
-							:active="documentView === DocumentView.EXRACTIONS"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="PDF"
-							icon="pi pi-file"
-							:loading="!pdfLink"
-							@click="documentView = DocumentView.PDF"
-							:active="documentView === DocumentView.PDF"
-						/>
-					</span>
-				</template>
-				<template #page-search>
-					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText placeholder="Find in page" class="p-inputtext-sm" />
-					</span>
-				</template>
-			</tera-asset-nav>
-		</template>
 		<template #bottom-header-buttons>
 			<Button
+				v-if="!isEditable"
 				class="p-button-sm p-button-outlined"
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"
 				:loading="!pdfLink && !linkIsPDF()"
 			/>
-			<Button
-				class="p-button-sm p-button-outlined"
-				@click="downloadPDF"
-				:icon="'pi pi-cloud-download'"
-				:loading="!pdfLink"
-				label="Download PDF"
-			/>
+		</template>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Extractions"
+					icon="pi pi-list"
+					@click="documentView = DocumentView.EXRACTIONS"
+					:active="documentView === DocumentView.EXRACTIONS"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="PDF"
+					icon="pi pi-file"
+					:loading="!pdfLink"
+					@click="documentView = DocumentView.PDF"
+					:active="documentView === DocumentView.PDF"
+				/>
+			</span>
+		</template>
+		<template #info-bar>
+			<div class="container">
+				<Message class="inline-message" icon="none"
+					>This page contains extractions from the document. Use the content switcher above to see
+					the original PDF if it is available.</Message
+				>
+			</div>
 		</template>
 		<Accordion
 			v-if="documentView === DocumentView.EXRACTIONS"
@@ -72,14 +60,14 @@
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
-			<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
+			<AccordionTab v-if="doc?.knownEntities?.summaries">
 				<template #header>
 					<header id="Section-Summaries">Section Summaries</header>
 				</template>
 				<ul>
-					<li v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+					<li v-for="(section, index) of doc.knownEntities.summaries" :key="index">
 						<h6>{{ index }}</h6>
-						<p v-html="highlightSearchTerms(section)" />
+						<p v-html="highlightSearchTerms(section[index])" />
 					</li>
 				</ul>
 			</AccordionTab>
@@ -159,9 +147,10 @@
 				</template>
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<tera-import-code-button
+						<tera-import-github-file
 							:urlString="url"
 							:show-import-button="isEditable"
+							:project="project"
 							@open-code="openCode"
 						/>
 					</li>
@@ -192,7 +181,7 @@
 					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
-						<span v-html="highlightSearchTerms(ex.properties.abstract)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
 						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</li>
 				</ul>
@@ -245,23 +234,21 @@ import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
+import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType, Tab } from '@/types/common';
+import { CodeRequest, ResultType } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import TeraImportCodeButton from '@/components/widgets/tera-import-code-button.vue';
+import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
-import { Extraction, ProvenanceType, Document } from '@/types/Types';
+import { Model, Extraction, ProvenanceType, Document, Dataset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
-import InputText from 'primevue/inputtext';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import { IProject } from '@/types/Project';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -273,6 +260,7 @@ const props = defineProps<{
 	isEditable: boolean;
 	highlight?: string;
 	previewLineLimit?: number;
+	project?: IProject;
 }>();
 
 const doc = ref<Document | null>(null);
@@ -281,8 +269,8 @@ const documentView = ref(DocumentView.EXRACTIONS);
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
-function openCode(assetToOpen: Tab, newCode?: string) {
-	emit('open-code', assetToOpen, newCode);
+function openCode(codeRequests: CodeRequest[]) {
+	emit('open-code', codeRequests);
 }
 
 // Highlight strings based on props.highlight
@@ -320,8 +308,8 @@ const docLink = computed(() =>
 );
 
 const formattedAbstract = computed(() => {
-	if (!doc.value || !doc.value.abstract) return '';
-	return highlightSearchTerms(doc.value.abstract);
+	if (!doc.value || !doc.value.abstractText) return '';
+	return highlightSearchTerms(doc.value.abstractText);
 });
 
 const doi = computed(() => getDocumentDoi(doc.value));
@@ -340,7 +328,7 @@ const equations = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
 );
 const otherUrls = computed(() =>
-	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
+	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions?.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
@@ -366,7 +354,10 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => associatedResources.value.filter((d) => isDocument(d)) as Document[]
 );
-
+/*
+// This is the model content that is displayed in the scroll-to-section featuer
+// That feature was removed, but way may want to bring it back.
+// I suggest we keep this unil we decide to remove it for good.
 const documentContent = computed(() => [
 	{ key: 'Abstract', value: formattedAbstract.value },
 	{ key: 'Section-Summaries', value: doc.value?.knownEntities?.summaries?.sections },
@@ -379,6 +370,7 @@ const documentContent = computed(() => [
 	{ key: 'References', value: doc.value?.citationList },
 	{ key: 'Associated-Resources', value: associatedResources.value }
 ]);
+*/
 
 // This fetches various parts of the document: figures, tables, equations ... etc
 const fetchDocumentArtifacts = async () => {
@@ -401,7 +393,8 @@ const fetchAssociatedResources = async () => {
 	}
 };
 
-// Better than wrapping download button with an anchor
+/*
+// Jamie: The 'Download PDF' button was removed from the UI but I left the code here in case we want to add it back in the future.
 function downloadPDF() {
 	if (pdfLink.value) {
 		const link = document.createElement('a');
@@ -410,10 +403,10 @@ function downloadPDF() {
 		link.click();
 	}
 }
-
+*/
 function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
-	return link.match(/^.*\.(pdf|PDF)$/);
+	return link.toLowerCase().endsWith('.pdf');
 }
 
 const openPDF = () => {
@@ -468,10 +461,25 @@ onUpdated(() => {
 });
 </script>
 <style scoped>
-.find-in-page {
-	border: 1px solid var(--surface-border-light) !important;
-	padding: 0.75rem;
-	width: 11.75rem;
+.container {
+	margin-left: 1rem;
+	margin-right: 1rem;
+	max-width: 70rem;
+}
+
+.inline-message:deep(.p-message-wrapper) {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	background-color: var(--surface-highlight);
+	color: var(--text-color-primary);
+	border-radius: var(--border-radius);
+	border: 4px solid var(--primary-color);
+	border-width: 0px 0px 0px 6px;
+}
+
+.p-buttonset {
+	white-space: nowrap;
+	margin-left: 0.5rem;
 }
 
 .extracted-item {

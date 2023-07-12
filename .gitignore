@@ -37,6 +37,7 @@ nb-configuration.xml
 
 # Local environment
 .env
+.openai.env
 
 # Yarn
 .yarn/*
@@ -55,11 +56,3 @@ build
 # MISC
 create.sql
 .eslintcache
-
-# Python
-__pycache__/
-response.txt
-response.zip
-supervisord*.*
-output
-uploads
