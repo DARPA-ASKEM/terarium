@@ -412,7 +412,6 @@ function openValueModal(
 
 function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigs.value[configIndex];
-	console.log(configToUpdate);
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
@@ -421,7 +420,33 @@ async function initializeConfigSpace() {
 	modelConfigs.value = [];
 	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
 
-	console.log('Configs', modelConfigs.value);
+	// FIXME: Should use flavor or type to denote "default config" instead of by name
+	// There is a lot of backand forth that should be avoided
+	// Ensure that we always have a "default config" model configuration
+	if (modelConfigs.value.length === 0) {
+		await createModelConfiguration(props.model.id, 'Default config', 'Default config', props.model);
+		modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	} else {
+		const cfg = modelConfigs.value.find((d) => d.name === 'Default config');
+		if (!cfg) {
+			await createModelConfiguration(
+				props.model.id,
+				'Default config',
+				'Default config',
+				props.model
+			);
+		}
+		modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	}
+
+	// Refresh the datastore with whatever we currently have
+	const defaultConfig = modelConfigs.value.find(
+		(d) => d.name === 'Default config'
+	) as ModelConfiguration;
+	if (defaultConfig) {
+		defaultConfig.configuration = props.model;
+		updateModelConfiguration(defaultConfig);
+	}
 
 	extractions.value = ['Default'];
 	openValueConfig.value = false;

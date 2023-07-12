@@ -2,17 +2,17 @@
 	<tera-asset
 		:name="project?.name"
 		:authors="project?.username"
+		:is-naming-asset="isRenamingProject"
 		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
 		is-editable
 		class="overview-banner"
 	>
 		<template #name-input>
 			<InputText
+				v-if="isRenamingProject"
 				v-model="newProjectName"
 				ref="inputElement"
-				class="project-name-input"
 				@keyup.enter="updateProjectName"
-				:class="{ isVisible: isEditingProject }"
 			/>
 		</template>
 		<template #edit-buttons>
@@ -145,7 +145,9 @@
 							AcceptedTypes.JPG,
 							AcceptedTypes.JPEG,
 							AcceptedTypes.PNG,
-							AcceptedTypes.CSV
+							AcceptedTypes.CSV,
+							AcceptedTypes.TXT,
+							AcceptedTypes.MD
 						]"
 						:import-action="processFiles"
 						:progress="progress"
@@ -200,7 +202,7 @@ import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Projec
 import { nextTick, Ref, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
-import { update as updateProject } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -220,14 +222,14 @@ import { CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
+import { uploadArtifactToProject } from '@/services/artifact';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'update-project', 'open-asset']);
+const emit = defineEmits(['open-workflow', 'open-asset']);
 const router = useRouter();
-const resources = useResourcesStore();
-const isEditingProject = ref(false);
+const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 const progress: Ref<number> = ref(0);
@@ -332,6 +334,17 @@ async function processFiles(
 			}
 			return { file, error: true, response: { text: '', images: [] } };
 		}
+		if (file.type === AcceptedTypes.TXT || file.type === AcceptedTypes.MD) {
+			const response = await uploadArtifactToProject(
+				progress,
+				file,
+				props.project.username ?? '',
+				props.project.id,
+				''
+			);
+			if (response?.data) return { file, error: false, response: { text: '', images: [] } };
+			return { file, error: true, response: { text: '', images: [] } };
+		}
 		// PDF
 		const resp = await getPDFContents(file, extractionMode, extractImages);
 		const text = resp.text ? resp.text : '';
@@ -345,17 +358,25 @@ async function openImportModal() {
 	results.value = null;
 }
 
-function importCompleted(
+async function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
 	// This is a hacky override for dealing with CSVs
-	if (newResults && newResults.length === 1 && newResults[0].file.type === AcceptedTypes.CSV) {
+	if (
+		newResults &&
+		newResults.length === 1 &&
+		(newResults[0].file.type === AcceptedTypes.CSV ||
+			newResults[0].file.type === AcceptedTypes.TXT ||
+			newResults[0].file.type === AcceptedTypes.MD)
+	) {
 		if (newResults[0].error) {
-			logger.error('Failed to upload CSV. Is it too large?', { showToast: true });
+			logger.error('Failed to upload file. Is it too large?', { showToast: true });
 		}
 		results.value = null;
-		emit('update-project', props.project.id);
 		isUploadResourcesModalVisible.value = false;
+
+		// TODO: See about getting rid of this - this refresh should preferably be within a service
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
 	}
@@ -363,20 +384,17 @@ function importCompleted(
 
 async function editProject() {
 	newProjectName.value = props.project.name;
-	isEditingProject.value = true;
+	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
 
 async function updateProjectName() {
-	isEditingProject.value = false;
+	isRenamingProject.value = false;
 	const updatedProject = props.project;
 	updatedProject.name = newProjectName.value;
-	const id = await updateProject(updatedProject);
-	if (id) {
-		resources.setActiveProject(updatedProject);
-	}
+	await ProjectService.update(updatedProject);
 }
 
 const projectMenu = ref();
@@ -400,8 +418,8 @@ a {
 }
 
 .overview-banner {
-	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 10% center,
-		linear-gradient(45deg, #d5e8e5 0%, #f0f4f0 100%) no-repeat;
+	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 20% center,
+		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
 	background-size: 25%, 100%;
 	height: auto;
 }
@@ -513,7 +531,6 @@ h3 {
 	padding: 0 0 0 1rem;
 	margin-left: -1rem;
 	border: 0;
-	visibility: hidden;
 	width: 33%;
 }
 
@@ -550,6 +567,7 @@ ul {
 .modal:deep(main) {
 	width: 50rem;
 }
+
 :deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;

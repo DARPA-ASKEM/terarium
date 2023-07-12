@@ -1,5 +1,5 @@
 <template>
-	<main @scroll="updateScrollPosition">
+	<main @scroll="updateScrollPosition" id="tango" ref="assetContainer">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
@@ -25,8 +25,8 @@
 
 					<!--For naming asset such as model or code file-->
 					<div class="vertically-center">
-						<slot v-if="isCreatingAsset" name="name-input" />
-						<h4 v-else v-html="name" class="nudge-down" />
+						<slot name="name-input" />
+						<h4 v-if="!isNamingAsset" v-html="name" class="nudge-down" />
 
 						<div v-if="!overline" class="vertically-center">
 							<slot name="edit-buttons" />
@@ -67,11 +67,17 @@
 import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 
+const assetContainer = ref();
+
+defineExpose({
+	assetContainer
+});
+
 const props = defineProps<{
 	name: string;
 	overline?: string;
 	isEditable: boolean;
-	isCreatingAsset?: boolean;
+	isNamingAsset?: boolean;
 	authors?: string;
 	doi?: string;
 	publisher?: string;
@@ -90,7 +96,7 @@ const shrinkHeader = computed(() => {
 	return (
 		scrollPosition.value > headerHeight && // Appear if (original header - 50px) is scrolled past
 		scrollPosition.value !== 0 && // Handles case where original header is shorter than shrunk header (happens in PDF view)
-		!props.isCreatingAsset // Don't appear while creating an asset eg. a model
+		!props.isNamingAsset // Don't appear while creating an asset eg. a model
 	);
 });
 
@@ -148,7 +154,7 @@ header.shrinked {
 	height: 3rem;
 	position: sticky;
 	top: -1px;
-	z-index: 2;
+	z-index: 100;
 	isolation: isolate;
 	background-color: rgba(255, 255, 255, 0.85);
 	backdrop-filter: blur(6px);

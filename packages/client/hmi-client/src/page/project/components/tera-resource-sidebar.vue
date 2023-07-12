@@ -50,7 +50,7 @@
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
-		<Accordion v-if="!isEmpty(assets)" :multiple="true">
+		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
 					<template v-if="type === ProjectAssetTypes.DOCUMENTS">Publications & Documents</template>
@@ -102,7 +102,10 @@
 					<i
 						v-if="activeAssetId && activeAssetId === tab.assetId"
 						class="pi pi-times removeResourceButton"
-						@click="isRemovalModal = true"
+						@click.stop="
+							assetToDelete = tab;
+							isRemovalModal = true;
+						"
 					/>
 				</Button>
 			</AccordionTab>
@@ -118,12 +121,12 @@
 				</template>
 				<template #default>
 					<p>
-						Removing <em>{{ activeTab.assetName }}</em> will permanently remove it from
+						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
 						{{ project.name }}.
 					</p>
 				</template>
 				<template #footer>
-					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
+					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
 					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
 				</template>
 			</tera-modal>
@@ -156,6 +159,7 @@ const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
+const assetToDelete = ref<Tab | null>(null);
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -180,8 +184,8 @@ const assets = computed((): IProjectAssetTabs => {
 	return tabs;
 });
 
-function removeAsset(asset = props.activeTab) {
-	emit('remove-asset', asset);
+function removeAsset() {
+	emit('remove-asset', assetToDelete.value);
 	isRemovalModal.value = false;
 }
 
@@ -222,9 +226,11 @@ header {
 	margin-right: 0.75rem;
 	font-size: 0.75rem;
 }
+
 .removeResourceButton:hover {
 	color: var(--text-color-danger);
 }
+
 .dragged-asset {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);
