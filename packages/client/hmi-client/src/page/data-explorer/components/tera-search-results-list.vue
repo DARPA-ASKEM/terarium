@@ -2,9 +2,16 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else-if="props.searchTerm"
-				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
-			>
+			<template v-else-if="props.searchTerm">
+				{{ resultsText }}
+				<span v-if="searchByExampleOptionsStr.length === 0"> "{{ props.searchTerm }}" </span>
+				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
+					<tera-asset-card
+						:asset="searchByExampleAssetCardProp"
+						:resource-type="(resultType as ResourceType)"
+					/>
+				</div>
+			</template>
 			<template v-else>{{ itemsText }} </template>
 		</span>
 	</div>
@@ -46,13 +53,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType } from 'vue';
+import { ref, computed, PropType, onUnmounted } from 'vue';
 import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
+import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
+import {
+	useSearchByExampleOptions,
+	getSearchByExampleOptionsString
+} from '@/page/data-explorer/search-by-example';
 import TeraSearchItem from './tera-search-item.vue';
+
+const { searchByExampleAssetCardProp } = useSearchByExampleOptions();
 
 const props = defineProps({
 	dataItems: {
@@ -145,13 +159,19 @@ const resultsCount = computed(() => {
 	return total;
 });
 
+const searchByExampleOptionsStr = computed(() => getSearchByExampleOptionsString());
+
 const resultsText = computed(() => {
 	if (resultsCount.value === 0) {
 		return 'No results found for';
 	}
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
-	return `Showing ${resultsCount.value} ${truncated}result${s} for `;
+	const toOrFor =
+		searchByExampleOptionsStr.value.length > 0
+			? `with ${searchByExampleOptionsStr.value} to`
+			: 'for';
+	return `Showing ${resultsCount.value} ${truncated}result${s} ${toOrFor} `;
 });
 
 const itemsText = computed(() => {
@@ -161,6 +181,10 @@ const itemsText = computed(() => {
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
 	return `Showing ${resultsCount.value} ${truncated}item${s}.`;
+});
+
+onUnmounted(() => {
+	searchByExampleAssetCardProp.value = null;
 });
 </script>
 
@@ -210,7 +234,6 @@ ul {
 
 .result-count {
 	font-size: var(--font-caption);
-	white-space: nowrap;
 }
 
 .result-count span {
@@ -234,5 +257,10 @@ ul {
 
 .search-container {
 	overflow-y: auto;
+}
+
+.search-by-example-card {
+	margin-top: 1rem;
+	margin-bottom: 2rem;
 }
 </style>

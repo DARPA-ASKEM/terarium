@@ -17,16 +17,12 @@ export const isMathML = (mathMLString: string): boolean => {
  * Checks if a string is a mathML equation and returns its latex
  */
 export const getLatexFromMathML = (mathMLString: string): string => {
-	if (isMathML(mathMLString)) {
-		try {
-			return Mathml2latex.convert(mathMLString);
-		} catch (error) {
-			logger.error(error, { showToast: false, silent: true });
-			return '';
-		}
+	try {
+		return Mathml2latex.convert(`<math display="block">${mathMLString}</math>`);
+	} catch (error) {
+		logger.error(error, { showToast: false, silent: true });
+		return '';
 	}
-
-	return mathMLString;
 };
 
 /**
@@ -113,7 +109,6 @@ export function flattenMathMLElement(element: Element | null) {
 	}
 }
 
-// Cleans the mathMLString produced by either katex or mathlive for use with mathml to petri endpoint
 // Seperates the mathMLString into seperate equations into a list
 export function separateEquations(mathMLString: string): string[] {
 	if (!mathMLString) return [''];
@@ -156,6 +151,10 @@ export function separateEquations(mathMLString: string): string[] {
 				equations.push(newRowString);
 			}
 		});
+	}
+	const mi = mathMLDocument.querySelector('mi');
+	if (mi) {
+		equations.push(mi.innerHTML);
 	}
 	return equations;
 }

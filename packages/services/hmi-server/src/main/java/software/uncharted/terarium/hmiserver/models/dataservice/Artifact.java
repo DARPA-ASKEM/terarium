@@ -7,7 +7,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
-import java.time.Instant;
+
 import java.util.List;
 
 /**

@@ -1,6 +1,7 @@
 import _ from 'lodash';
+import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, Model, PetriNetTransition } from '@/types/Types';
+import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
 
 export interface NodeData {
@@ -159,6 +160,30 @@ export const convertToIGraph = (amr: Model) => {
 const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
+export const newAMR = () => {
+	const amr: Model = {
+		id: '',
+		name: 'new model',
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
+};
+
 export const addState = (amr: Model, id: string, name: string) => {
 	amr.model.states.push({
 		id,
@@ -235,6 +260,8 @@ export const removeTransition = (amr: Model, id: string) => {
 	}
 };
 
+// Update a transition's expression and expression_mathml fields based on
+// mass-kinetics
 export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
@@ -335,4 +362,34 @@ export const updateTransitioneId = (amr: Model, id: string, newId: string) => {
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
+};
+
+// Replace typing semantics
+export const addTyping = (amr: Model, typing: TypingSemantics) => {
+	if (amr.semantics) {
+		amr.semantics.typing = typing;
+	}
+};
+
+// Add a reflexive transition loop to the state
+// This is a special type of addTransition that creates a self loop
+export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
+	addTransition(amr, reflexiveId, reflexiveId);
+	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
+	if (transition) {
+		transition.input = [stateId];
+		transition.output = [stateId];
+	}
+};
+
+export const mergeMetadata = (amr: Model, amrOld: Model) => {
+	console.log(amr, amrOld);
+};
+
+export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
+	const response = await API.post('/modeling-request/stratify', {
+		baseModel: baseAMR,
+		fluxModel: fluxAMR
+	});
+	return response.data as Model;
 };
