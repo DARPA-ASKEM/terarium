@@ -91,14 +91,6 @@ public class DocumentResource {
 				}
 			}
 
-			// // if similar_docs, make sure that only docid is present
-			// if (similar_docs != null && (docid != null || doi != null)) {
-			// 	if (term != null || github_url != null) {
-			// 		log.error("You cannot query with 'term' or 'github_url' when querying 'similar_docs'");
-			// 		return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-			// 	}
-			// }
-
 			try {
 
 
