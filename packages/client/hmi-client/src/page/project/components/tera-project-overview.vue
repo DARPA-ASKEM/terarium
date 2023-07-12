@@ -61,6 +61,7 @@
 					size="large"
 					icon="pi pi-share-alt"
 					class="p-button p-button-secondary quick-link-button"
+					@click="emit('new-model')"
 				/>
 				<Button
 					size="large"
@@ -227,7 +228,7 @@ import { uploadArtifactToProject } from '@/services/artifact';
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'open-asset']);
+const emit = defineEmits(['open-workflow', 'open-asset', 'new-model']);
 const router = useRouter();
 const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
