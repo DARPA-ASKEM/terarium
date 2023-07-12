@@ -142,7 +142,6 @@ onUnmounted(() => {
 .tera-context-menu:deep(.p-submenu-header .p-menuitem-link) {
 	padding-left: 0px;
 	padding-bottom: 0px;
-	margin-top: 0.5rem;
 }
 
 .tera-context-menu:deep(.p-submenu-header .p-menuitem-link):hover {
