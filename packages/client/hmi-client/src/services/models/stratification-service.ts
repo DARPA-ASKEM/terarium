@@ -186,6 +186,19 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 	};
 }
 
+export function generateTypeState(amr: Model, stateId: string, typeId: string): State | null {
+	const states = amr.semantics?.typing?.type_system.states ?? [];
+	const existingState = states.find((s) => s.id === stateId);
+	if (existingState) {
+		return null;
+	}
+	return {
+		id: typeId,
+		name: typeId,
+		description: typeId
+	};
+}
+
 /* 
 	Return a Transition with inferred inputs and outputs based on a partially typed amr.
 	Return null if type inference cannot be completed for whatever reason.
@@ -199,6 +212,11 @@ export function generateTypeTransition(
 	FIterate through typeMap and get the corresponding type id for each transition id in input/output, where the first value of each element in typeMap
 	is the transition id, and the second element is the type id. */
 	const typeMap: string[][] | undefined = amr.semantics?.typing?.type_map;
+	const transitions: Transition[] = amr.semantics?.typing?.type_system.transitions ?? [];
+	const existingTransition = transitions.find((t) => t.id === transitionId);
+	if (existingTransition) {
+		return null;
+	}
 	if (!typeMap) {
 		return null;
 	}
@@ -233,5 +251,13 @@ export function generateTypeTransition(
 		return null;
 	}
 
-	return { id: typeId, input: typeInputs, output: typeOutputs };
+	return {
+		id: typeId,
+		input: typeInputs,
+		output: typeOutputs,
+		properties: {
+			name: typeId,
+			description: typeId
+		}
+	};
 }

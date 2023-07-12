@@ -101,12 +101,15 @@ import {
 import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
+import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorMap } from '@/utils/color-schemes';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
-import { generateTypeTransition } from '@/services/models/stratification-service';
+import {
+	generateTypeTransition,
+	generateTypeState
+} from '@/services/models/stratification-service';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -278,7 +281,7 @@ watch(
 	() => {
 		const stateTypedMap: string[][] = [];
 		const transitionTypedMap: string[][] = [];
-		const typeSystem: TypeSystem = { states: [], transitions: [] };
+		const updatedTypeSystem: TypeSystem = { states: [], transitions: [] };
 		let typingSemantics: TypingSemantics;
 		typedRows.value.forEach((row) =>
 			row.assignTo?.forEach((parameter) => {
@@ -296,23 +299,24 @@ watch(
 		stateTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
 			// If not, generate a new one
+			const stateId = map[0];
 			const typeId = map[1];
-			const state = props.typeSystem?.states.find((s) => typeId === s.id);
-			if (state) {
-				if (!typeSystem.states.find((s) => s.id === state.id)) {
-					typeSystem.states.push(state);
+			let state: State | undefined | null;
+			state =
+				props.typeSystem?.states.find((s) => typeId === s.id) ||
+				typedModel.value.semantics?.typing?.type_system.states.find((s) => typeId === s.id);
+			if (state && !updatedTypeSystem.states.find((s) => s.id === state!.id)) {
+				updatedTypeSystem.states.push(state);
+			} else if (!updatedTypeSystem.states.find((s) => s.id === typeId)) {
+				state = generateTypeState(typedModel.value, stateId, typeId);
+				if (state) {
+					updatedTypeSystem.states.push(state);
 				}
-			} else if (!typeSystem.states.find((s) => s.id === typeId)) {
-				typeSystem.states.push({
-					id: typeId,
-					name: typeId,
-					description: typeId
-				});
 			}
 		});
 
 		if (stateTypedMap.length > 0) {
-			typingSemantics = { type_map: stateTypedMap, type_system: typeSystem };
+			typingSemantics = { type_map: stateTypedMap, type_system: updatedTypeSystem };
 			addTyping(typedModel.value, typingSemantics);
 		}
 
@@ -322,25 +326,21 @@ watch(
 			const transitionId = map[0];
 			const typeId = map[1];
 			let transition: Transition | undefined | null;
-			transition = props.typeSystem?.transitions.find((t) => map[1] === t.id);
-			if (transition) {
-				typeSystem.transitions.push(transition);
-			} else {
+			transition =
+				props.typeSystem?.transitions.find((t) => map[1] === t.id) ||
+				typedModel.value.semantics?.typing?.type_system.transitions.find((t) => typeId === t.id);
+			if (transition && !updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
+				updatedTypeSystem.transitions.push(transition);
+			} else if (!updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
 				transition = generateTypeTransition(typedModel.value, transitionId, typeId);
 				if (transition) {
-					typeSystem.transitions.push({
-						...transition,
-						properties: {
-							name: typeId,
-							description: typeId
-						}
-					});
+					updatedTypeSystem.transitions.push(transition);
 				}
 			}
 		});
 		if (transitionTypedMap.length > 0) {
 			const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
-			typingSemantics = { type_map: typeMap, type_system: typeSystem };
+			typingSemantics = { type_map: typeMap, type_system: updatedTypeSystem };
 			addTyping(typedModel.value, typingSemantics);
 		}
 	},
