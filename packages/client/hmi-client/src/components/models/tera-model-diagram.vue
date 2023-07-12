@@ -72,7 +72,7 @@
 					</section>
 					<section class="math-editor-container" :class="mathEditorSelected">
 						<tera-math-editor
-							v-for="(eq, index) in equationLatex"
+							v-for="(eq, index) in latexEquationList"
 							:key="index"
 							:index="index"
 							:is-editable="isEditable"
@@ -88,7 +88,7 @@
 							class="p-button-sm p-button-outlined add-equation-button"
 							icon="pi pi-plus"
 							label="Add Equation"
-							@click="equationLatex.push('')"
+							@click="latexEquationList.push('')"
 						/>
 					</section>
 				</TeraResizablePanel>
@@ -159,9 +159,9 @@ const diagramContainerStyle = computed(() => {
 
 const newModelName = ref('New Model');
 
-const equationLatex = ref<string[]>([]);
-const equationLatexOriginal = ref<string[]>([]);
-const equationLatexNew = ref<string[]>([]);
+const latexEquationList = ref<string[]>([]);
+const latexEquationsOriginalList = ref<string[]>([]);
+const newLatexEquationsList = ref<string[]>([]);
 const isMathMLValid = ref<boolean>(true);
 
 const splitterContainer = ref<HTMLElement | null>(null);
@@ -190,7 +190,7 @@ const handleResize = () => {
 
 const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
 	console.log(mathmlEq);
-	equationLatex.value[index] = latexEq;
+	latexEquationList.value[index] = latexEq;
 };
 
 // const currentEquations = computed(() => {
@@ -207,36 +207,22 @@ const mathEditorSelected = computed(() => {
 	return '';
 });
 
-// const setNewLatexFormula = (formulaString: string[]) => {
-// 	equationLatexNew.value = formulaString;
-// };
-
 const updateLatexFormula = (formulaString: string[]) => {
-	equationLatex.value = formulaString;
-	equationLatexOriginal.value = formulaString;
+	latexEquationList.value = formulaString;
+	latexEquationsOriginalList.value = formulaString;
 };
-
-// const cancelEditng = () => {
-// 	isEditingEQ.value = false;
-// 	isMathMLValid.value = true;
-// 	updateLatexFormula(equationLatexOriginal.value);
-// };
 
 function joinStringLists(lists: string[][]): string[] {
 	return ([] as string[]).concat(...lists);
 }
 
-// const combinedList = joinStringLists(nestedLists);
-// console.log(combinedList);
-
 watch(
-	() => [equationLatex.value],
+	() => [latexEquationList.value],
 	() => {
-		const test = equations.value.map((eq) =>
+		const mathMLEquations = equations.value.map((eq) =>
 			separateEquations(eq.mathLiveField.getValue('math-ml'))
 		);
-		console.log(test);
-		validateMathML(joinStringLists(test), false);
+		validateMathML(joinStringLists(mathMLEquations), false);
 	},
 	{ deep: true }
 );
@@ -245,7 +231,7 @@ watch(
 watch(
 	() => [props.model],
 	async () => {
-		updateLatexFormula('');
+		updateLatexFormula([]);
 		if (props.model) {
 			const data = await petriToLatex(convertAMRToACSet(props.model));
 			console.log(data);
@@ -396,7 +382,7 @@ const updatePetriNet = async (model: Model) => {
 		renderer.isGraphDirty = true;
 		await renderer.render();
 	}
-	updateLatexFormula(equationLatexNew.value);
+	updateLatexFormula(newLatexEquationsList.value);
 };
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
@@ -404,27 +390,27 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
 };
 
-const validateMathML = async (mathMlString: string[], editMode: boolean) => {
+const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
 	isEditingEQ.value = true;
 	isMathMLValid.value = false;
-	console.log(mathMlString);
-	const cleanedMathML = mathMlString;
-	if (mathMlString.length === 0) {
+	const cleanedMathML = mathMLStringList;
+	if (mathMLStringList.length === 0) {
 		isMathMLValid.value = true;
 		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
-			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
+			const amr = await mathmlToAMR(cleanedMathML, 'petrinet'); // This model is not compatible.
 			const model = amr?.model;
-			console.log(model);
 			if (
 				(model && isArray(model) && model.length > 0) ||
 				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
-				console.log(props.model);
+
+				// this is just updating the petrinet diagram back to the original model
 				if (props.model !== null) updatePetriNet(props.model);
+				// if (model !== null) updatePetriNet(model); -> doesn't work because model is NOT an AMR right now.
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
