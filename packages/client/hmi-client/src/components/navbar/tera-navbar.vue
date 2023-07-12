@@ -299,9 +299,7 @@ const searchBarRef = ref();
 const terms = ref<string[]>([]);
 
 async function updateRelatedTerms(query?: string) {
-	// Don't update related terms if the query is empty as we will stay in the previous one
-	// Accept the empty query once we get out of the data explorer route
-	if (!isEmpty(query) || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
+	if (query || query === '' || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
 }
 
 function searchByExampleModalToggled() {
