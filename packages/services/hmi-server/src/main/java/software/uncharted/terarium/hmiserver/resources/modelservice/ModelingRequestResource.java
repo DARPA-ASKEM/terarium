@@ -29,6 +29,8 @@ public class ModelingRequestResource {
 			final Object baseModel,
 			final Object fluxModel
 	) {
+		System.out.println(baseModel);
+		System.out.println(fluxModel);
 		return modelServiceProxy.stratify(baseModel, fluxModel);
 	}
 }

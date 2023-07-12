@@ -18,6 +18,12 @@
 					:active="stratifyView === StratifyView.Output"
 				/>
 			</span>
+			<Button
+				class="stratify-button"
+				label="Stratify"
+				icon="pi pi-arrow-right"
+				@click="runStratify"
+			/>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -99,6 +105,30 @@
 				</Accordion>
 			</section>
 		</section>
+		<section class="step-1" v-else-if="stratifyView === StratifyView.Output">
+			<div>If this is not what you expected, go back to the input page to make changes.</div>
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Stratified model">
+					<div class="step-1-inner">
+						<tera-strata-model-diagram
+							:model="stratify_output"
+							:show-typing-toolbar="stratifyStep === 2"
+							:type-system="strataModelTypeSystem"
+						/>
+					</div>
+				</AccordionTab>
+				<AccordionTab header="Strata model">
+					<div class="step-1-inner">
+						<tera-strata-model-diagram
+							:model="stratify_output"
+							:show-typing-toolbar="stratifyStep === 2"
+							:type-system="strataModelTypeSystem"
+						/>
+					</div>
+				</AccordionTab>
+			</Accordion>
+			<div>Saved as: {{ stratify_output.name }}</div>
+		</section>
 	</main>
 </template>
 
@@ -117,6 +147,10 @@ import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
+import { sir_typed_aug } from '@/temp/models/sir_typed_aug';
+import { flux_typed_aug } from '@/temp/models/flux_typed_aug';
+import { stratify_output } from '@/temp/models/stratify_output';
+import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 
 const props = defineProps<{
@@ -149,6 +183,11 @@ function generateStrataModel() {
 	}
 }
 
+async function runStratify() {
+	const stratifiedModel = await stratify(sir_typed_aug, flux_typed_aug);
+	console.log(stratifiedModel);
+}
+
 watch(
 	() => props.node.inputs[0],
 	async () => {
@@ -177,6 +216,10 @@ header {
 	gap: 1rem;
 	padding: 1rem;
 	align-items: center;
+}
+
+.stratify-button {
+	margin-left: auto;
 }
 
 nav {
