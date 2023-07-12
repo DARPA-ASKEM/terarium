@@ -207,10 +207,10 @@ export interface ModelSemantics {
 }
 
 export interface ModelMetadata {
-    processed_at: number;
-    processed_by: string;
-    variable_statements: VariableStatement[];
-    annotations: Annotations;
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
     attributes: any[];
 }
 
