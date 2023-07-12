@@ -399,7 +399,7 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
-			const amr = await mathmlToAMR(cleanedMathML, 'petrinet'); // This model is not compatible.
+			const amr = await mathmlToAMR(cleanedMathML, 'petrinet');
 			const model = amr?.model;
 			if (
 				(model && isArray(model) && model.length > 0) ||
@@ -408,9 +408,8 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
 
-				// this is just updating the petrinet diagram back to the original model
 				if (props.model !== null) updatePetriNet(props.model);
-				// if (model !== null) updatePetriNet(model); -> doesn't work because model is NOT an AMR right now.
+				// if (model !== null) updatePetriNet(model);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
