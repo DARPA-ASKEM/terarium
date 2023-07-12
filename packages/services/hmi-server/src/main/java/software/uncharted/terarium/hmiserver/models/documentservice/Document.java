@@ -70,6 +70,6 @@ public class Document implements Serializable {
 	@JsonAlias("cited_by")
 	private List<Map<String, Object>> citedBy;
 
-
+	@JsonAlias("similar_docs")
+	private SimilarDocuments similarDocuments;
 }
-

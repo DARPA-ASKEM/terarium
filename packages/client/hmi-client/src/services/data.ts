@@ -159,6 +159,10 @@ const searchXDDDocuments = async (
 		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
 	}
 
+	if (xddSearchParam?.similar_docs) {
+		searchParams += `&similar_docs=${xddSearchParam?.similar_docs}`;
+	}
+
 	//
 	// "max": "Maximum number of documents to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
@@ -308,7 +312,7 @@ const getAssets = async (params: GetAssetsParams) => {
 			break;
 		case ResourceType.XDD:
 			assetResults = assetResults as Document[];
-			assetFacets = xddResults?.facets ? xddResults?.facets : {};
+			assetFacets = xddResults?.facets ?? {};
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -437,6 +441,9 @@ const getAssets = async (params: GetAssetsParams) => {
 /**
  * fetch list of related documented utilizing
  *  semantic similarity (i.e., document embedding) from XDD via the HMI server
+ *
+ * TODO: this should probably be deprecated at some point now that we're using
+ * the "/documents?docid=<id>&similar_docs=true" endpoint as an alternative
  */
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (docid === '' || dataset === null) {
@@ -568,13 +575,15 @@ const fetchData = async (
 			// are we executing a search-by-example
 			// (i.e., to find similar documents or related artifacts for a given document)?
 			if (searchParam.xdd && searchParam?.xdd.dataset) {
-				if (searchParam?.xdd.similar_search_enabled) {
-					const relatedDocuments = await getRelatedDocuments(
-						searchParam?.xdd.related_search_id as string,
-						searchParam?.xdd.dataset
-					);
+				if (searchParam?.xdd.similar_search_enabled && searchParam?.xdd.related_search_id) {
+					const xddDocuments = await searchXDDDocuments('', {
+						docid: searchParam.xdd.related_search_id as string,
+						similar_docs: true
+					});
+					const similarDocuments = xddDocuments?.data[0].similarDocuments;
 					const similarDocumentsSearchResults = {
-						results: relatedDocuments,
+						results: similarDocuments?.documents ?? [],
+						facets: similarDocuments?.facets ?? {},
 						searchSubsystem: ResourceType.XDD
 					};
 					finalResponse.allData.push(similarDocumentsSearchResults);

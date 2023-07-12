@@ -8,7 +8,7 @@ import software.uncharted.terarium.hmiserver.resources.documentservice.responses
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-@RegisterRestClient(configKey = "xdd-document-service")
+@RegisterRestClient(configKey = "xdd-dev-service")
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface DocumentProxy {
@@ -36,7 +36,8 @@ public interface DocumentProxy {
 		@QueryParam("additional_fields") String additional_fields,
 		@QueryParam("match") String match,
 		@QueryParam("known_entities") String known_entities,
-		@QueryParam("github_url") String github_url
+		@QueryParam("github_url") String github_url,
+		@QueryParam("similar_docs") String similar_docs
 	);
 
 	@GET

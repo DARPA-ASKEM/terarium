@@ -60,12 +60,13 @@ public class DocumentResource {
 		@QueryParam("additional_fields") String additional_fields,
 		@QueryParam("match") String match,
 		@QueryParam("known_entities") String known_entities,
-		@QueryParam("github_url") String github_url
+		@QueryParam("github_url") String github_url,
+		@QueryParam("similar_docs") String similar_docs
 	) {
 
 		// only go ahead with the query if at least one param is present
 		if (docid != null || doi != null || term != null || github_url != null) {
-			// for a more direct search, if doi is valid, then make sure other params are null
+			// for a more direct search, if doi is valid, then make sure other params (except similar_docs) are null
 			if (docid != null || doi != null) {
 				title = null;
 				term = null;
@@ -83,7 +84,21 @@ public class DocumentResource {
 				publisher = null;
 				additional_fields = null;
 				match = null;
+
+				// similar_docs can only be queried in conjuntion with 'docid' or 'doi'
+				if (similar_docs != null) {
+					github_url = null;
+				}
 			}
+
+			// // if similar_docs, make sure that only docid is present
+			// if (similar_docs != null && (docid != null || doi != null)) {
+			// 	if (term != null || github_url != null) {
+			// 		log.error("You cannot query with 'term' or 'github_url' when querying 'similar_docs'");
+			// 		return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+			// 	}
+			// }
+
 			try {
 
 
@@ -97,7 +112,7 @@ public class DocumentResource {
 
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(apiKey,
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url);
+					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_docs);
 
 
 
