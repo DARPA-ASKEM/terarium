@@ -17,13 +17,6 @@
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
 						<th
-							v-for="({ target }, i) in configurations[0]?.semantics?.ode.rates"
-							:header="target"
-							:key="i"
-						>
-							{{ target }}
-						</th>
-						<th
 							v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
 							:header="target"
 							:key="i"
@@ -232,18 +225,10 @@ const vFocus = {
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
 	if (configurations.value?.[0]?.semantics) {
-		const headerNames = Object.keys(configurations.value[0]?.semantics.ode) ?? [];
-		const result: { name: string; colspan: number }[] = [];
-
-		for (let i = 0; i < headerNames.length; i++) {
-			if (configurations.value?.[0]?.semantics?.ode[headerNames[i]]) {
-				result.push({
-					name: headerNames[i],
-					colspan: configurations.value?.[0]?.semantics?.ode[headerNames[i]].length
-				});
-			}
-		}
-		return result;
+		return ['initials', 'parameters'].map((name) => {
+			const colspan = configurations.value?.[0]?.semantics?.ode?.[name].length ?? 0;
+			return { name, colspan };
+		});
 	}
 	return [];
 });
