@@ -1,11 +1,13 @@
 import { logger } from '@/utils/logger';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import axios from 'axios';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
 import VueFeather from 'vue-feather';
+import VueGtag from 'vue-gtag';
 import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
 import useAuthStore from './stores/auth';
@@ -22,6 +24,16 @@ app.use(router);
 app.use(ConfirmationService);
 app.use(PrimeVue, { ripple: true });
 app.directive('tooltip', Tooltip);
+
+// Configure Google Analytics
+const GTAG = await axios.get('/configuration/ga');
+app.use(
+	VueGtag,
+	{
+		config: { id: GTAG.data }
+	},
+	router
+);
 
 app.component('math-field', MathfieldElement);
 app.component(VueFeather.name, VueFeather);
