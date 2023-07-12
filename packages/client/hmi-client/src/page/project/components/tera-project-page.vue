@@ -29,6 +29,7 @@
 		@vue:mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
 		@update-project="updateProject"
+		@new-model="newModel"
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
@@ -80,6 +81,8 @@ import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workfl
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
 import { addAsset } from '@/services/project';
 import { getArtifactFileAsText } from '@/services/artifact';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import { createModel } from '@/services/model';
 
 const props = defineProps<{
 	project: IProject;
@@ -133,6 +136,30 @@ const openWorkflow = async () => {
 			assetName: 'Workflow',
 			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
 			assetId: workflowId
+		}
+	});
+};
+
+const newModel = async () => {
+	// 1. Load an empty AMR
+	const amr = newAMR();
+	(amr as any).id = undefined; // FIXME: id hack
+
+	const response = await createModel(amr);
+	const modelId = response?.id;
+
+	// 2. Add the model to the project
+	await addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+
+	emit('update-project', props.project.id);
+
+	// 3. Reroute
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: {
+			assetName: 'Model',
+			pageType: ProjectAssetTypes.MODELS,
+			assetId: modelId
 		}
 	});
 };
