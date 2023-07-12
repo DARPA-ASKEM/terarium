@@ -50,7 +50,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 	);
 	const typeMap: string[][] = states
 		.map((state) => [state.id, 'Pop'])
-		.concat(transitions.map((transition) => [transition.id, 'Strata']));
+		.concat(transitions.map((transition) => [transition.id, 'Infect']));
 	const semantics: ModelSemantics = {
 		ode: {
 			rates: []

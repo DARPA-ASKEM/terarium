@@ -23,7 +23,7 @@
 									<div>
 										<div
 											:class="getLegendKeyClass(row.nodeType ?? '')"
-											:style="{ backgroundColor: strataTypeColors[index] }"
+											:style="getLegendKeyStyle(row.typeName ?? '')"
 										/>
 									</div>
 									<div>
@@ -63,19 +63,13 @@
 							<section class="legend">
 								<ul>
 									<li v-for="(type, i) in stateTypes" :key="i">
-										<div
-											class="legend-key-circle"
-											:style="{ backgroundColor: strataTypeColors[i] }"
-										/>
+										<div class="legend-key-circle" :style="getLegendKeyStyle(type ?? '')" />
 										{{ type }}
 									</li>
 								</ul>
 								<ul>
 									<li v-for="(type, i) in transitionTypes" :key="i">
-										<div
-											class="legend-key-square"
-											:style="{ backgroundColor: strataTypeColors[stateTypes?.length ?? 0 + i] }"
-										/>
+										<div class="legend-key-square" :style="getLegendKeyStyle(type ?? '')" />
 										{{ type }}
 									</li>
 								</ul>
@@ -108,7 +102,7 @@ import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { Model, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
-import { strataTypeColors } from '@/utils/color-schemes';
+import { useNodeTypeColorMap } from '@/utils/color-schemes';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
@@ -149,10 +143,11 @@ const equationPanelMaxSize = ref<number>(100);
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const modelTypeSystem = computed(() => props.model.semantics?.typing?.type_system);
-const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.name));
+const stateTypes = computed(() =>
+	props.model.semantics?.typing?.type_system?.states.map((s) => s.name)
+);
 const transitionTypes = computed(() =>
-	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
+	props.model.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
 );
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
@@ -168,12 +163,14 @@ const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	const options: { [s: string]: string[] }[] = [];
 	typedRows.value.forEach(() => {
 		options.push({
-			Variable: props.model.model.states.map((s) => s.id),
-			Transition: props.model.model.transitions.map((t) => t.id)
+			Variable: typedModel.value.model.states.map((s) => s.id),
+			Transition: typedModel.value.model.transitions.map((t) => t.id)
 		});
 	});
 	return options;
 });
+
+const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorMap();
 
 function addTypedRow() {
 	typedRows.value.push({});
@@ -187,6 +184,12 @@ function getLegendKeyClass(type: string) {
 		return 'legend-key-square';
 	}
 	return '';
+}
+
+function getLegendKeyStyle(id: string) {
+	return {
+		backgroundColor: getNodeTypeColor(id)
+	};
 }
 
 const updateLayout = () => {
@@ -234,6 +237,12 @@ watch(
 watch(
 	() => props.typeSystem,
 	() => {
+		props.typeSystem?.states.forEach((s) => {
+			setNodeTypeColor(s.id);
+		});
+		props.typeSystem?.transitions.forEach((t) => {
+			setNodeTypeColor(t.id);
+		});
 		typedRows.value.push(
 			{
 				nodeType: 'Variable',
@@ -263,6 +272,7 @@ watch(
 		const stateTypedMap: string[][] = [];
 		const transitionTypedMap: string[][] = [];
 		const typeSystem: TypeSystem = { states: [], transitions: [] };
+		let typingSemantics: TypingSemantics;
 		typedRows.value.forEach((row) =>
 			row.assignTo?.forEach((parameter) => {
 				if (row.typeName && row.typeName && row.nodeType) {
@@ -275,6 +285,7 @@ watch(
 				}
 			})
 		);
+
 		stateTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
 			// If not, generate a new one
@@ -292,9 +303,11 @@ watch(
 				});
 			}
 		});
-		let typingSemantics: TypingSemantics;
-		typingSemantics = { type_map: stateTypedMap, type_system: typeSystem };
-		addTyping(typedModel.value, typingSemantics);
+
+		if (stateTypedMap.length > 0) {
+			typingSemantics = { type_map: stateTypedMap, type_system: typeSystem };
+			addTyping(typedModel.value, typingSemantics);
+		}
 
 		transitionTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
@@ -318,9 +331,11 @@ watch(
 				}
 			}
 		});
-		const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
-		typingSemantics = { type_map: typeMap, type_system: typeSystem };
-		addTyping(typedModel.value, typingSemantics);
+		if (transitionTypedMap.length > 0) {
+			const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
+			typingSemantics = { type_map: typeMap, type_system: typeSystem };
+			addTyping(typedModel.value, typingSemantics);
+		}
 	},
 	{ deep: true }
 );

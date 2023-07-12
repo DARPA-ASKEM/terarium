@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
-import { strataTypeColors } from '@/utils/color-schemes';
+import { useNodeTypeColorMap } from '@/utils/color-schemes';
 import { Model } from '@/types/Types';
 import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
 
@@ -35,6 +35,8 @@ const EDGE_OPACITY = 0.5;
 
 const HANDLE_SIZE = 4;
 const HANDLE_SIZE_HOVER = 8;
+
+const { getNodeTypeColor } = useNodeTypeColorMap();
 
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
@@ -112,9 +114,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('rx', '6')
 			.attr('ry', '6')
 			.style('fill', (d) =>
-				d.data.strataType
-					? strataTypeColors[strataTypes.indexOf(d.data.strataType)]
-					: 'var(--petri-nodeFill'
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
 			)
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
@@ -158,9 +158,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) =>
-				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-			)
+			.style('stroke', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#FFF'))
 			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'butt')
 			.style('fill', 'var(--text-color-primary')
@@ -173,9 +171,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
 			.attr('fill', (d) =>
-				d.data.strataType
-					? strataTypeColors[strataTypes.indexOf(d.data.strataType)]
-					: 'var(--petri-nodeFill)'
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'
 			)
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
@@ -205,9 +201,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) =>
-				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-			)
+			.style('stroke', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#FFF'))
 			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'round')
 			.style('fill', 'var(--text-color-primary')
