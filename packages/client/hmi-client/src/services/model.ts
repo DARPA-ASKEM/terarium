@@ -5,6 +5,9 @@ import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
 
+// TODO - to be removed after July 2023 Hackathon
+import { MATHMLMODEL } from '@/temp/models/mathml';
+
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
 	return response?.data ?? null;
@@ -15,6 +18,9 @@ export async function createModel(model): Promise<Model | null> {
  * @return Model|null - the model, or null if none returned by API
  */
 export async function getModel(modelId: string): Promise<Model | null> {
+	// TODO - to be removed after July 2023 Hackathon
+	if (modelId === 'mathml-model') return MATHMLMODEL;
+
 	const response = await API.get(`/models/${modelId}`);
 	return response?.data ?? null;
 }
