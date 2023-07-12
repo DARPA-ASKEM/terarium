@@ -325,6 +325,7 @@ async function updateWorkflowName() {
 	workflowService.updateWorkflow(workflowClone);
 	isRenamingWorkflow.value = false;
 	wf.value = await workflowService.getWorkflow(props.assetId);
+	// FIXME: Names aren't updated in sidebar
 }
 
 async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
@@ -432,6 +433,11 @@ const contextMenuItems = ref([
 				}
 			},
 			{
+				label: 'Simulate ensemble',
+				disabled: true,
+				command: () => {}
+			},
+			{
 				label: 'Calibrate',
 				command: () => {
 					workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
@@ -455,6 +461,11 @@ const contextMenuItems = ref([
 			},
 			{
 				label: 'Calibrate & Simulate',
+				disabled: true,
+				command: () => {}
+			},
+			{
+				label: 'Calibrate & Simulate ensemble',
 				disabled: true,
 				command: () => {}
 			}

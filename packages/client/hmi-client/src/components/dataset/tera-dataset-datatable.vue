@@ -2,24 +2,25 @@
 <template>
 	<DataTable
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-		:rows="50"
 		:value="csvContent?.slice(1, csvContent.length)"
+		:rows="props.rows"
 		paginator
-		paginatorPosition="both"
+		:paginatorPosition="paginatorPosition ? paginatorPosition : `both`"
 		removableSort
 		resizable-columns
 		showGridlines
-		tableStyle="width:auto"
+		:tableStyle="tableStyle ? tableStyle : `width:auto`"
 	>
 		<Column
 			v-for="(colName, index) of csvHeaders"
 			:key="index"
 			:field="index.toString()"
 			:header="colName"
+			:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 			sortable
 		>
 			<!-- column summary charts below -->
-			<template #header v-if="!previewMode">
+			<template #header v-if="!previewMode && props.rawContent?.stats">
 				<div class="histogram">
 					<div class="histogram-label-min">Min: {{ csvMinsToDisplay?.at(index) }}</div>
 					<Chart type="bar" :height="800" :data="chartData?.at(index)" :options="chartOptions" />
@@ -42,7 +43,11 @@ import { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
+	rows?: number;
 	previewMode?: boolean;
+	previousHeaders?: String[] | null;
+	paginatorPosition?: 'bottom' | 'both' | 'top' | undefined;
+	tableStyle?: String;
 }>();
 
 const CATEGORYPERCENTAGE = 0.9;

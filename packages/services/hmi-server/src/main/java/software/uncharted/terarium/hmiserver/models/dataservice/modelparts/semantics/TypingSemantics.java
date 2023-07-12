@@ -11,9 +11,7 @@ import java.util.List;
 @Accessors(chain = true)
 public class TypingSemantics {
 
-	@JsonProperty("type_system")
-	private TypeSystem typeSystem;
+	private TypeSystem type_system;
 
-	@JsonProperty("type_map")
-	private List<List<String>> typeMap;
+	private List<List<String>> type_map;
 }

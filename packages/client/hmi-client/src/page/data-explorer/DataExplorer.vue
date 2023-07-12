@@ -390,10 +390,24 @@ const executeSearch = async () => {
 	isLoading.value = false;
 };
 
+const clearSearchByExampleSelections = () => {
+	// clear out the serch by example option selections
+	searchByExampleOptions.value = {
+		similarContent: false,
+		forwardCitation: false,
+		backwardCitation: false,
+		relatedContent: false
+	};
+	// clear out search by example item
+	searchByExampleItem.value = null;
+};
+
 const disableSearchByExample = () => {
 	// disable search by example, if it was enabled
 	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
 	executeSearchByExample.value = false;
+
+	clearSearchByExampleSelections();
 };
 
 const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {

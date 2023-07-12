@@ -3,7 +3,10 @@ import { Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
-import { ResourceType } from '@/stores/resources';
+import useResourcesStore from '@/stores/resources';
+
+// TODO - to be removed after July 2023 Hackathon
+import { MATHMLMODEL } from '@/temp/models/mathml';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -15,6 +18,9 @@ export async function createModel(model): Promise<Model | null> {
  * @return Model|null - the model, or null if none returned by API
  */
 export async function getModel(modelId: string): Promise<Model | null> {
+	// TODO - to be removed after July 2023 Hackathon
+	if (modelId === 'mathml-model') return MATHMLMODEL;
+
 	const response = await API.get(`/models/${modelId}`);
 	return response?.data ?? null;
 }
@@ -52,17 +58,13 @@ export async function updateModel(model: Model) {
 	return response?.data ?? null;
 }
 
-export async function addModelToProject(
-	projectId: string,
-	assetId: string,
-	resources: ResourceType
-) {
+export async function addModelToProject(projectId: string, assetId: string) {
 	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
 
 	if (resp) {
 		const model = await getModel(assetId);
 		if (model) {
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+			useResourcesStore().activeProject?.assets?.[ProjectAssetTypes.MODELS].push(model);
 		} else {
 			logger.warn(`Unable to find model id: ${assetId}`);
 		}
