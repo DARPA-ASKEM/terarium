@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.proxies.modelservice;
 
+import software.uncharted.terarium.hmiserver.models.modelservice.StratifyRequest;
+
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
@@ -21,8 +23,9 @@ public interface ModelServiceProxy {
 	@POST
 	@Path("/api/stratify")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	Response stratify(
-			Object baseModel,
-			Object fluxModel
+			StratifyRequest req
 	);
+
 }
