@@ -56,9 +56,9 @@
 							:language="m.content['language']"
 							:code="m.content['code']"
 							:autorun="true"
+							:notebook-item-id="msg.query_id"
 							context="dataset"
 							:context_info="{ id: props.assetId }"
-							:save-as-new-dataset="console.log"
 						/>
 					</div>
 					<!-- Show dataset if available -->

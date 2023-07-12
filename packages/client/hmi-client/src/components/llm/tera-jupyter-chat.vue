@@ -3,8 +3,8 @@
 		<!-- Jupyter Response and Input -->
 		<div ref="messageContainer">
 			<tera-jupyter-response
-				v-for="(msg, index) in nestedMessages"
-				ref="responses"
+				v-for="(msg, index) in notebookItems"
+				ref="notebookCells"
 				:key="index"
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
@@ -23,14 +23,20 @@
 				:kernel-is-busy="props.kernelStatus !== KernelState.idle"
 				context="dataset"
 				@submitQuery="submitQuery"
+				@add-code-cell="addCodeCell"
 			/>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onUnmounted, computed, onMounted } from 'vue';
+import { ref, watch, onUnmounted, onMounted } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { getSessionManager, JupyterMessage, KernelState } from '@/services/jupyter';
+import {
+	getSessionManager,
+	JupyterMessage,
+	KernelState,
+	createMessageId
+} from '@/services/jupyter';
 import { CsvAsset } from '@/types/Types';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
@@ -45,7 +51,18 @@ const renderedMessages = ref(new Set<any>());
 const messageContainer = ref(<HTMLElement | null>null);
 const activeSessions = ref(null);
 const runningSessions = ref();
-const responses = ref([]);
+const notebookItems = ref(
+	<
+		{
+			query_id: string;
+			query: string | null;
+			timestamp: string;
+			messages: JupyterMessage[];
+			resultingCsv: CsvAsset | null;
+		}[]
+	>[]
+);
+const notebookCells = ref([]);
 
 const emit = defineEmits([
 	'new-message',
@@ -71,7 +88,6 @@ onMounted(() => {
 	activeSessions.value = getSessionManager().running();
 });
 
-const isQuery = (message) => message.header.msg_type === 'llm_request';
 const hasBeenDrawn = (message_id: string) => {
 	renderedMessages.value.add(message_id);
 	messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
@@ -80,138 +96,124 @@ const hasBeenDrawn = (message_id: string) => {
 const queryString = ref('');
 
 const iopubMessageHandler = (_session, message) => {
-	if (message.msg_type === 'status') {
+	if (message.header.msg_type === 'status') {
 		const newState: KernelState = KernelState[KernelState[message.content.execution_state]];
 		updateKernelStatus(KernelState[newState]);
 		return;
 	}
-	newJupyterResponse(message);
+	newJupyterMessage(message);
 };
 
 props.jupyterSession.iopubMessage.connect(iopubMessageHandler);
 
 const submitQuery = (inputStr: string | undefined) => {
-	console.log(inputStr);
 	if (inputStr !== undefined) {
 		const kernel = props.jupyterSession.session?.kernel as IKernelConnection;
 		if (kernel === undefined || kernel === null) {
 			return;
 		}
 		updateKernelStatus(KernelState.busy);
+		const msgId = createMessageId('llm_request');
 		const message: JupyterMessage = createMessage({
 			session: props.jupyterSession.session?.name || '',
 			channel: 'shell',
 			content: { request: inputStr },
 			msgType: 'llm_request',
-			msgId: `${kernel.id}-setcontext`
+			msgId
 		});
 		kernel?.sendJupyterMessage(message);
-		newJupyterResponse({ ...message, msg_type: 'llm_request' });
+		newJupyterMessage(message);
 		queryString.value = '';
 	}
 };
 
-const nestedMessages = computed(() => {
+const addCodeCell = () => {
+	const msgId = createMessageId('code_cell');
+	const date = new Date().toISOString();
+	const emptyCell: JupyterMessage = {
+		header: {
+			msg_id: msgId,
+			msg_type: 'code_cell',
+			username: 'username',
+			session: 'c4af9869-23efbe216d9848478c1651fd',
+			date: date,
+			version: '5.3'
+		},
+		parent_header: {},
+		metadata: {},
+		content: {
+			language: 'python',
+			code: ''
+		},
+		channel: 'iopub'
+	};
+	messagesHistory.value.push(emptyCell);
+	updateNotebookCells(emptyCell);
+	hasBeenDrawn(msgId);
+};
+
+// const nestedMessages = computed(() => {
+const updateNotebookCells = (message) => {
 	// This computed property groups Jupyter messages into queries
 	// and stores resulting csv after each query.
-	const result: {
-		query_id: string;
-		query: string;
-		timestamp: string;
-		messages: JupyterMessage[];
-		resultingCsv: CsvAsset | null;
-	}[] = [];
-	let currentQuery = '';
-	let currentQueryId = '';
-	let currentTimestamp = '';
-	let currentMessages: JupyterMessage[] = [];
+	let notebookItem;
+	const parentId: String | null = message.parent_header?.msg_id || message.header?.msg_id || null;
 
-	if (messagesHistory.value.length) {
-		messagesHistory.value.forEach((message) => {
-			if (isQuery(message)) {
-				if (currentMessages.length > 0) {
-					// removes the empty query
-					if (result.length > 0 && result[result.length - 1].query === currentQuery) {
-						result.pop();
-					}
-					// When a new query is encountered, push the previous query and its messages into result
-					result.push({
-						query_id: currentQueryId,
-						query: currentQuery,
-						timestamp: currentTimestamp,
-						messages: currentMessages,
-						resultingCsv: null
-						// resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
-					});
-					// Clear the currentMessages for new query
-					currentMessages = [];
-				}
-				result.push({
-					query_id: message.header.msg_id,
-					// eslint-disable-next-line @typescript-eslint/dot-notation
-					query: message.content['request'],
-					timestamp: message.header.date,
-					messages: [],
-					resultingCsv: null
-					// resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
-				});
-				// Update the currentQuery, currentQueryId and currentTimestamp with new values
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				currentQuery = message.content['request'];
-				currentQueryId = message.header.msg_id;
-				currentTimestamp = message.header.date;
-			} else {
-				// If the message is not a query, add it to currentMessages
-				currentMessages.push(message);
-			}
-		});
-		// Add the last group of messages to the result
-		if (currentMessages.length > 0) {
-			if (result.length > 0 && result[result.length - 1].query === currentQuery) {
-				result[result.length - 1].messages = currentMessages;
-			} else {
-				result.push({
-					query_id: currentQueryId,
-					query: currentQuery,
-					timestamp: currentTimestamp,
-					messages: currentMessages,
-					resultingCsv: null
-					// resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
-				});
-			}
-		}
+	if (parentId) {
+		// Update existing cell
+		notebookItem = notebookItems.value.find((val) => val.query_id === parentId);
 	}
-	return result;
-});
+	if (!notebookItem) {
+		const query = message.header.msg_type === 'llm_request' ? message.content.request : null;
+		// New cell
+		notebookItem = {
+			query_id: parentId,
+			query,
+			timestamp: message.parent_header.date,
+			messages: [],
+			resultingCsv: null
+		};
+		notebookItems.value.push(notebookItem);
+	}
+	if (message.header.msg_type === 'dataset') {
+		// If we get a new dataset, remove any old datasets
+		notebookItem.messages = notebookItem.messages.filter(
+			(msg) => msg.header.msg_type !== 'dataset'
+		);
+		notebookItem.resultingCsv = message.content;
+	}
+	notebookItem.messages.push(message);
+};
 
 const updateKernelStatus = (kernelStatus) => {
 	emit('update-kernel-status', kernelStatus);
 };
 
-const newJupyterResponse = (jupyterResponse) => {
+const newJupyterMessage = (jupyterMessage) => {
 	if (
 		['stream', 'code_cell', 'llm_request', 'chatty_response', 'dataset'].indexOf(
-			jupyterResponse.header.msg_type
+			jupyterMessage.header.msg_type
 		) > -1
 	) {
-		messagesHistory.value.push(jupyterResponse);
+		messagesHistory.value.push(jupyterMessage);
+		updateNotebookCells(jupyterMessage);
 		isExecutingCode.value = false;
 		emit('new-message', messagesHistory.value);
-	} else if (jupyterResponse.header.msg_type === 'save_dataset_response') {
-		emit('new-dataset-saved', jupyterResponse.content);
+	} else if (jupyterMessage.header.msg_type === 'save_dataset_response') {
+		emit('new-dataset-saved', jupyterMessage.content);
 		isExecutingCode.value = false;
-	} else if (jupyterResponse.header.msg_type === 'download_response') {
-		emit('download-response', jupyterResponse.content);
+	} else if (jupyterMessage.header.msg_type === 'download_response') {
+		emit('download-response', jupyterMessage.content);
 		isExecutingCode.value = false;
-	} else if (jupyterResponse.header.msg_type === 'execute_input') {
+	} else if (jupyterMessage.header.msg_type === 'execute_input') {
 		isExecutingCode.value = true;
 	} else {
-		console.log('Unknown Jupyter event', jupyterResponse);
+		console.log('Unknown Jupyter event', jupyterMessage);
 	}
 };
 
 const scrollToLastCell = (element, msg) => {
-	if (msg === nestedMessages.value[nestedMessages.value.length - 1]) {
+	if (msg === notebookItems.value[notebookItems.value.length - 1]) {
 		element.scrollIntoView(false);
 	}
 };
