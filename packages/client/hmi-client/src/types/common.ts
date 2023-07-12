@@ -109,9 +109,6 @@ export type CodeRequest = {
 // TODO this should come from the back end, and we should also have maps for the "categories" of types (artifacts, models, datasets, etc)
 export enum AcceptedTypes {
 	PDF = 'application/pdf',
-	JPG = 'image/jpg',
-	JPEG = 'image/jpeg',
-	PNG = 'image/png',
 	CSV = 'text/csv',
 	TXT = 'text/plain',
 	MD = 'text/markdown',

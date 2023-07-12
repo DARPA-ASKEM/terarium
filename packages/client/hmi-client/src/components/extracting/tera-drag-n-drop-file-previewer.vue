@@ -25,9 +25,6 @@
 			<template v-if="file && file.type === AcceptedTypes.PDF">
 				<embed :src="getSrc(file)" />
 			</template>
-			<template v-else-if="file && imageTypes.includes(file.type?.toString())">
-				<img :src="getSrc(file)" alt="" />
-			</template>
 		</template>
 		<template v-else-if="props.showError">
 			<div>Error Please Try Again</div>
@@ -39,8 +36,6 @@
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
 import { AcceptedTypes } from '@/types/common';
-
-const imageTypes: Array<String> = [AcceptedTypes.JPG, AcceptedTypes.PNG, AcceptedTypes.JPEG];
 
 const props = defineProps({
 	file: {

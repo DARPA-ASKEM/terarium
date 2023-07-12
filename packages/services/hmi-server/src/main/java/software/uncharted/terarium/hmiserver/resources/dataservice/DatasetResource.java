@@ -48,7 +48,7 @@ import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 @Slf4j
 public class DatasetResource extends DataStorageResource implements SnakeCaseResource {
 	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
-	private static final int DEFAULT_CSV_LIMIT = 10;
+	private static final int DEFAULT_CSV_LIMIT = 100;
 
 	@ConfigProperty(name = "aws.bucket")
 	Optional<String> bucket;
