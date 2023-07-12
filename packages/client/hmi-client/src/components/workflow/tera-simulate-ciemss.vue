@@ -174,7 +174,7 @@ import { getRunResultCiemss } from '@/services/models/simulation-service';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration-ciemss.vue';
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
-import { SimulateOperationState } from '@/components/workflow/simulate-ciemss-operation';
+import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
@@ -210,7 +210,7 @@ const paginatorFirst = ref(0);
 // );
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -221,7 +221,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({

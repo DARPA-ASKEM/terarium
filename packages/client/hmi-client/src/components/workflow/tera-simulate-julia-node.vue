@@ -31,7 +31,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateJuliaOperation, SimulateOperationState } from './simulate-julia-operation';
+import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -51,7 +51,7 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
-	const state = props.node.state as SimulateOperationState;
+	const state = props.node.state as SimulateJuliaOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload = {
@@ -122,7 +122,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -162,7 +162,7 @@ onMounted(async () => {
 });
 
 const addChart = () => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({

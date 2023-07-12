@@ -43,7 +43,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateCiemssOperation, SimulateOperationState } from './simulate-ciemss-operation';
+import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -77,7 +77,7 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
-	const state = props.node.state as SimulateOperationState;
+	const state = props.node.state as SimulateCiemssOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload = {
@@ -178,7 +178,7 @@ watch(
 );
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -189,7 +189,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({

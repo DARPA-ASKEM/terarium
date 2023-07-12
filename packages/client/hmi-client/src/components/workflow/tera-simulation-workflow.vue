@@ -371,7 +371,6 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
-	console.log(node);
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
 };

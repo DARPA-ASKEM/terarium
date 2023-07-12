@@ -94,7 +94,7 @@ public class SimulationRequestResource {
 		sim.setWorkflowId("dummy");
 		sim.setUserId(0);
 		sim.setProjectId(0);
-		sim.setEngine("sciml");
+		sim.setEngine("ciemss");
 
 		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
 		return simulationProxy.createSimulation(jn);

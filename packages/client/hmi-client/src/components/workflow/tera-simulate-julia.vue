@@ -110,7 +110,7 @@ import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperationState } from './simulate-julia-operation';
+import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -134,7 +134,7 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 // );
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -145,7 +145,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
