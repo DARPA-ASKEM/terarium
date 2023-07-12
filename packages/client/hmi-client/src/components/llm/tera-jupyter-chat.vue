@@ -4,6 +4,7 @@
 		<div ref="messageContainer">
 			<tera-jupyter-response
 				v-for="(msg, index) in nestedMessages"
+				ref="responses"
 				:key="index"
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
@@ -13,6 +14,7 @@
 				:show-chat-thoughts="props.showChatThoughts"
 				@has-been-drawn="hasBeenDrawn(msg.query_id)"
 				@is-typing="emit('is-typing')"
+				@cell-updated="scrollToLastCell"
 			/>
 
 			<!-- Chatty Input -->
@@ -26,7 +28,6 @@
 	</div>
 </template>
 <script setup lang="ts">
-// import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { ref, watch, onUnmounted, computed, onMounted } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { getSessionManager, JupyterMessage, KernelState } from '@/services/jupyter';
@@ -44,11 +45,11 @@ const renderedMessages = ref(new Set<any>());
 const messageContainer = ref(<HTMLElement | null>null);
 const activeSessions = ref(null);
 const runningSessions = ref();
+const responses = ref([]);
 
 const emit = defineEmits([
 	'new-message',
 	'download-response',
-	'update-table-preview',
 	'update-kernel-status',
 	'new-dataset-saved',
 	'is-typing'
@@ -109,16 +110,6 @@ const submitQuery = (inputStr: string | undefined) => {
 		queryString.value = '';
 	}
 };
-
-// let jupyterCsv: CsvAsset | null = null;
-
-// function cloneCsvAsset(asset: CsvAsset): CsvAsset {
-// 	return {
-// 		csv: [...asset.csv.map((row) => [...row])], // create a copy of each sub-array
-// 		stats: asset.stats ? [...asset.stats] : undefined, // copy stats array if it exists
-// 		headers: [...asset.headers] // copy headers array
-// 	};
-// }
 
 const nestedMessages = computed(() => {
 	// This computed property groups Jupyter messages into queries
@@ -199,17 +190,13 @@ const updateKernelStatus = (kernelStatus) => {
 
 const newJupyterResponse = (jupyterResponse) => {
 	if (
-		['stream', 'code_cell', 'llm_request', 'chatty_response'].indexOf(
+		['stream', 'code_cell', 'llm_request', 'chatty_response', 'dataset'].indexOf(
 			jupyterResponse.header.msg_type
 		) > -1
 	) {
 		messagesHistory.value.push(jupyterResponse);
 		isExecutingCode.value = false;
 		emit('new-message', messagesHistory.value);
-	} else if (jupyterResponse.header.msg_type === 'dataset') {
-		emit('update-table-preview', jupyterResponse.content);
-		// jupyterCsv = jupyterResponse.content;
-		isExecutingCode.value = false;
 	} else if (jupyterResponse.header.msg_type === 'save_dataset_response') {
 		emit('new-dataset-saved', jupyterResponse.content);
 		isExecutingCode.value = false;
@@ -220,6 +207,12 @@ const newJupyterResponse = (jupyterResponse) => {
 		isExecutingCode.value = true;
 	} else {
 		console.log('Unknown Jupyter event', jupyterResponse);
+	}
+};
+
+const scrollToLastCell = (element, msg) => {
+	if (msg === nestedMessages.value[nestedMessages.value.length - 1]) {
+		element.scrollIntoView(false);
 	}
 };
 

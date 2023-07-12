@@ -42,6 +42,7 @@ export type JupyterMessageType =
 	| 'save_dataset_response'
 	| 'download_request'
 	| 'download_response'
+	| 'dataset'
 	| 'visualization'
 	| 'llm_request'
 	| 'llm_response'

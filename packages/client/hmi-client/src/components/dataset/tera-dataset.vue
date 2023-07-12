@@ -450,14 +450,6 @@ main .annotation-group {
 	width: 100%;
 }
 
-.data-transform-container {
-	display: flex;
-	flex-direction: column;
-	padding: 0.5rem;
-	margin: 0.5rem;
-	max-height: 90%;
-}
-
 .kernel-status {
 	margin-right: 10px;
 }
