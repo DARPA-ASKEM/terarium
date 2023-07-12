@@ -131,9 +131,11 @@ i {
 .tab[active='true'][loading='false'] {
 	border-bottom-color: var(--primary-color);
 }
-
-.tab[active='false']:hover {
+.tab[active='false'] {
 	background-color: var(--surface-secondary);
+}
+.tab[active='false']:hover {
+	background-color: var(--surface-highlight);
 }
 
 .tab:not(:hover) .p-button {
