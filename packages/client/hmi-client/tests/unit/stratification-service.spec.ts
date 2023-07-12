@@ -109,10 +109,10 @@ describe('test generate age strata model', () => {
 					type_map: [
 						['A1', 'Pop'],
 						['A2', 'Pop'],
-						['c11', 'Strata'],
-						['c12', 'Strata'],
-						['c21', 'Strata'],
-						['c22', 'Strata']
+						['c11', 'Infect'],
+						['c12', 'Infect'],
+						['c21', 'Infect'],
+						['c22', 'Infect']
 					]
 				}
 			},
