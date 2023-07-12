@@ -2,16 +2,16 @@
 	<tera-asset
 		:name="project?.name"
 		:authors="project?.username"
+		:is-naming-asset="isRenamingProject"
 		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
 		is-editable
 		class="overview-banner"
 	>
 		<template #name-input>
 			<InputText
-				v-if="isEditingProject"
+				v-if="isRenamingProject"
 				v-model="newProjectName"
 				ref="inputElement"
-				class="project-name-input"
 				@keyup.enter="updateProjectName"
 			/>
 		</template>
@@ -61,6 +61,7 @@
 					size="large"
 					icon="pi pi-share-alt"
 					class="p-button p-button-secondary quick-link-button"
+					@click="emit('new-model')"
 				/>
 				<Button
 					size="large"
@@ -142,10 +143,9 @@
 						:show-preview="true"
 						:accept-types="[
 							AcceptedTypes.PDF,
-							AcceptedTypes.JPG,
-							AcceptedTypes.JPEG,
-							AcceptedTypes.PNG,
-							AcceptedTypes.CSV
+							AcceptedTypes.CSV,
+							AcceptedTypes.TXT,
+							AcceptedTypes.MD
 						]"
 						:import-action="processFiles"
 						:progress="progress"
@@ -200,7 +200,7 @@ import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Projec
 import { nextTick, Ref, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
-import { update as updateProject } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -209,25 +209,24 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab, AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
+import { Tab, AcceptedTypes } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
-import API, { Poller } from '@/api/api';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
 import { CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
+import { uploadArtifactToProject } from '@/services/artifact';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'update-project', 'open-asset']);
+const emit = defineEmits(['open-workflow', 'open-asset', 'new-model']);
 const router = useRouter();
-const resources = useResourcesStore();
-const isEditingProject = ref(false);
+const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 const progress: Ref<number> = ref(0);
@@ -259,61 +258,7 @@ const assets = computed(() => {
 	return result;
 });
 
-async function getPDFContents(
-	file: string | Blob,
-	extractionMode: string,
-	extractImages: string
-): Promise<PDFExtractionResponseType> {
-	const formData = new FormData();
-	formData.append('file', file);
-
-	const result = await API.post(`/extract/convertpdftask/`, formData, {
-		params: {
-			extraction_method: extractionMode,
-			extract_images: extractImages
-		},
-		headers: {
-			'Content-Type': 'multipart/form-data'
-		}
-	});
-
-	if (result) {
-		const taskID = result.data.task_id;
-
-		const poller = new Poller<object>()
-			.setInterval(2000)
-			.setThreshold(90)
-			.setPollAction(async () => {
-				const response = await API.get(`/extract/task-result/${taskID}`);
-
-				if (response.data.status === 'SUCCESS' && response.data.result) {
-					return {
-						data: response.data.result,
-						progress: null,
-						error: null
-					};
-				}
-				return {
-					data: null,
-					progress: null,
-					error: null
-				};
-			});
-		const pollerResults = await poller.start();
-
-		if (pollerResults.data) {
-			return pollerResults.data as PDFExtractionResponseType;
-		}
-	}
-	return { text: '', images: [] } as PDFExtractionResponseType;
-}
-
-async function processFiles(
-	files: File[],
-	extractionMode: string,
-	extractImages: string,
-	csvDescription: string
-) {
+async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
 		if (file.type === AcceptedTypes.CSV) {
 			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
@@ -332,11 +277,17 @@ async function processFiles(
 			}
 			return { file, error: true, response: { text: '', images: [] } };
 		}
-		// PDF
-		const resp = await getPDFContents(file, extractionMode, extractImages);
-		const text = resp.text ? resp.text : '';
-		const images = resp.images ? resp.images : [];
-		return { file, error: false, response: { text, images } };
+
+		// This is pdf, txt, md files
+		const response = await uploadArtifactToProject(
+			progress,
+			file,
+			props.project.username ?? '',
+			props.project.id,
+			''
+		);
+		if (response?.data) return { file, error: false, response: { text: '', images: [] } };
+		return { file, error: true, response: { text: '', images: [] } };
 	});
 }
 
@@ -345,17 +296,25 @@ async function openImportModal() {
 	results.value = null;
 }
 
-function importCompleted(
+async function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
 	// This is a hacky override for dealing with CSVs
-	if (newResults && newResults.length === 1 && newResults[0].file.type === AcceptedTypes.CSV) {
+	if (
+		newResults &&
+		newResults.length === 1 &&
+		(newResults[0].file.type === AcceptedTypes.CSV ||
+			newResults[0].file.type === AcceptedTypes.TXT ||
+			newResults[0].file.type === AcceptedTypes.MD)
+	) {
 		if (newResults[0].error) {
-			logger.error('Failed to upload CSV. Is it too large?', { showToast: true });
+			logger.error('Failed to upload file. Is it too large?', { showToast: true });
 		}
 		results.value = null;
-		emit('update-project', props.project.id);
 		isUploadResourcesModalVisible.value = false;
+
+		// TODO: See about getting rid of this - this refresh should preferably be within a service
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
 	}
@@ -363,20 +322,17 @@ function importCompleted(
 
 async function editProject() {
 	newProjectName.value = props.project.name;
-	isEditingProject.value = true;
+	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
 
 async function updateProjectName() {
-	isEditingProject.value = false;
+	isRenamingProject.value = false;
 	const updatedProject = props.project;
 	updatedProject.name = newProjectName.value;
-	const id = await updateProject(updatedProject);
-	if (id) {
-		resources.setActiveProject(updatedProject);
-	}
+	await ProjectService.update(updatedProject);
 }
 
 const projectMenu = ref();
@@ -513,7 +469,6 @@ h3 {
 	padding: 0 0 0 1rem;
 	margin-left: -1rem;
 	border: 0;
-	visibility: hidden;
 	width: 33%;
 }
 

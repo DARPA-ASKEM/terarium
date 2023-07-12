@@ -390,10 +390,24 @@ const executeSearch = async () => {
 	isLoading.value = false;
 };
 
+const clearSearchByExampleSelections = () => {
+	// clear out the serch by example option selections
+	searchByExampleOptions.value = {
+		similarContent: false,
+		forwardCitation: false,
+		backwardCitation: false,
+		relatedContent: false
+	};
+	// clear out search by example item
+	searchByExampleItem.value = null;
+};
+
 const disableSearchByExample = () => {
 	// disable search by example, if it was enabled
 	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
 	executeSearchByExample.value = false;
+
+	clearSearchByExampleSelections();
 };
 
 const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
@@ -476,21 +490,21 @@ const updateAssetType = async (newResourceType: ResourceType) => {
 	if (resourceType.value !== newResourceType) {
 		resourceType.value = newResourceType;
 
-		if (executeSearchByExample.value === false) {
-			// if no data currently exist for the selected tab,
-			// or if data exists but outdated then we should refetch
-			const resList = dataItemsUnfiltered.value.find(
-				(res) => res.searchSubsystem === resourceType.value
-			);
-			if (!resList || dirtyResults.value[resourceType.value]) {
-				disableSearchByExample();
-				await executeSearch();
-				dirtyResults.value[resourceType.value] = false;
-			} else {
-				// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
-				// re-calculate the facets
-				calculateFacets(dataItemsUnfiltered.value, dataItems.value);
-			}
+		if (executeSearchByExample.value) return;
+
+		// if no data currently exist for the selected tab,
+		// or if data exists but outdated then we should refetch
+		const resList = dataItemsUnfiltered.value.find(
+			(res) => res.searchSubsystem === resourceType.value
+		);
+		if (!resList || dirtyResults.value[resourceType.value]) {
+			disableSearchByExample();
+			await executeSearch();
+			dirtyResults.value[resourceType.value] = false;
+		} else {
+			// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
+			// re-calculate the facets
+			calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 		}
 	}
 };

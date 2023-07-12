@@ -33,6 +33,17 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
+export interface Artifact {
+    id?: string;
+    timestamp?: any;
+    username: string;
+    name: string;
+    description?: string;
+    fileNames: string[];
+    metadata?: any;
+    concepts?: Concept[];
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -117,6 +128,7 @@ export interface DatasetColumn {
     annotations: string[];
     metadata?: { [index: string]: any };
     grounding?: Grounding;
+    description?: string;
 }
 
 export interface Grounding {
@@ -132,6 +144,13 @@ export interface PresignedURL {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
+}
+
+export interface DKG {
+    curie: string;
+    name: string;
+    description: string;
+    link: string;
 }
 
 export interface CalibrationRequest {
@@ -174,16 +193,24 @@ export interface Links {
     self: string;
 }
 
+export interface Concept {
+    id: string;
+    curie: string;
+    type: Type;
+    status: OntologicalField;
+    object_id: string;
+}
+
 export interface ModelSemantics {
     ode: OdeSemantics;
     typing?: TypingSemantics;
 }
 
 export interface ModelMetadata {
-    processed_at: number;
-    processed_by: string;
-    variable_statements: VariableStatement[];
-    annotations: Annotations;
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
     attributes: any[];
 }
 
@@ -198,7 +225,7 @@ export interface PetriNetTransition {
     id: string;
     input: string[];
     output: string[];
-    grounding: ModelGrounding;
+    grounding?: ModelGrounding;
     properties: PetriNetTransitionProperties;
 }
 
@@ -284,8 +311,8 @@ export interface ModelExpression {
 
 export interface PetriNetTransitionProperties {
     name: string;
-    grounding: ModelGrounding;
-    rate: ModelExpression;
+    description: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Extraction {
@@ -509,4 +536,19 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum Type {
+    Datasets = "DATASETS",
+    Extractions = "EXTRACTIONS",
+    Intermediates = "INTERMEDIATES",
+    Models = "MODELS",
+    Plans = "PLANS",
+    Publications = "PUBLICATIONS",
+    SimulationRuns = "SIMULATION_RUNS",
+}
+
+export enum OntologicalField {
+    Object = "OBJECT",
+    Unit = "UNIT",
 }
