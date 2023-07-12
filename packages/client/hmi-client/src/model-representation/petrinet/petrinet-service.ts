@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
@@ -347,24 +348,24 @@ export const addTyping = (amr: Model, typing: TypingSemantics) => {
 };
 
 // Add a reflexive transition loop to the state
+// This is a special type of addTransition that creates a self loop
 export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
-	const model: PetriNetModel = amr.model as PetriNetModel;
-	model.transitions.push({
-		id: reflexiveId,
-		input: [stateId],
-		output: [stateId],
-		grounding: undefined,
-		properties: {
-			name: reflexiveId,
-			description: ''
-		}
-	});
+	addTransition(amr, reflexiveId, reflexiveId);
+	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
+	if (transition) {
+		transition.input = [stateId];
+		transition.output = [stateId];
+	}
 };
 
 export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
 
-export const stratify = (baseAMR: Model, fluxAMR: Model) => {
-	console.log(baseAMR, fluxAMR);
+export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
+	const response = await API.post('/modeling-request/stratify', {
+		baseModel: baseAMR,
+		fluxModel: fluxAMR
+	});
+	return response.data as Model;
 };
