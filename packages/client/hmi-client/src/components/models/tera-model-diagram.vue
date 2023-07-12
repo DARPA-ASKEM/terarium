@@ -161,7 +161,7 @@ const newModelName = ref('New Model');
 
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
-const newLatexEquationsList = ref<string[]>([]);
+// const newLatexEquationsList = ref<string[]>([]);
 const isMathMLValid = ref<boolean>(true);
 
 const splitterContainer = ref<HTMLElement | null>(null);
@@ -382,7 +382,7 @@ const updatePetriNet = async (model: Model) => {
 		renderer.isGraphDirty = true;
 		await renderer.render();
 	}
-	updateLatexFormula(newLatexEquationsList.value);
+	updateLatexFormula(latexEquationList.value);
 };
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
