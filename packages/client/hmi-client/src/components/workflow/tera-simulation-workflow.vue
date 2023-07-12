@@ -35,7 +35,12 @@
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
-					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
+					<Menu
+						ref="addComponentMenu"
+						:model="contextMenuItems"
+						:popup="true"
+						style="white-space: nowrap; width: auto"
+					/>
 				</div>
 			</div>
 		</template>
