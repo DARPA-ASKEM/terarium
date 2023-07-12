@@ -44,10 +44,18 @@
 							@click="strataModel = null"
 						/>
 						<Button
+							v-if="!isBaseModelFullyTyped"
 							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
 							@click="stratifyStep = 2"
+						/>
+						<Button
+							v-else
+							class="p-button-sm"
+							label="Continue to step 3: Manage interactions"
+							icon="pi pi-arrow-right"
+							@click="stratifyStep = 3"
 						/>
 					</div>
 					<span v-else>Define the groups you want to stratify your model with.</span>
@@ -60,6 +68,7 @@
 								:model="model"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
+								@all-nodes-typed="isBaseModelFullyTyped = true"
 							/>
 							<div class="input">
 								<label for="strata-type">Select a strata type</label>
@@ -92,7 +101,11 @@
 								</div>
 							</section>
 							<section v-else>
-								<tera-strata-model-diagram :model="strataModel" :show-typing-toolbar="false" />
+								<tera-strata-model-diagram
+									:model="strataModel"
+									:show-typing-toolbar="false"
+									:show-reflexives-toolbar="isBaseModelFullyTyped"
+								/>
 							</section>
 						</div>
 					</AccordionTab>
@@ -137,6 +150,7 @@ const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
 	() => strataModel.value?.semantics?.typing?.type_system
 );
+const isBaseModelFullyTyped = ref(false);
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {

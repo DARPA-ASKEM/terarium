@@ -115,13 +115,15 @@ const emit = defineEmits([
 	'close-preview',
 	'asset-loaded',
 	'close-current-tab',
-	'update-model-content'
+	'update-model-content',
+	'all-nodes-typed'
 ]);
 
 const props = defineProps<{
 	model: Model;
 	showTypingToolbar: boolean;
 	typeSystem?: TypeSystem;
+	showReflexivesToolbar: boolean;
 }>();
 
 const typedModel = ref<Model>(props.model);
@@ -157,6 +159,11 @@ const typedRows = ref<
 		assignTo?: string[];
 	}[]
 >([]);
+
+const numberNodes = computed(
+	() => typedModel.value.model.states.length + typedModel.value.model.transitions.length
+);
+const numberTypedRows = computed(() => typedModel.value.semantics?.typing?.type_map.length ?? 0);
 
 // TODO: don't allow user to assign a variable or transition twice
 const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
@@ -339,6 +346,12 @@ watch(
 	},
 	{ deep: true }
 );
+
+watch(numberTypedRows, () => {
+	if (numberTypedRows.value === numberNodes.value) {
+		emit('all-nodes-typed');
+	}
+});
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
