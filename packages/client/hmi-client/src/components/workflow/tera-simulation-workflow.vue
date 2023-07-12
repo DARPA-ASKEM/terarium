@@ -56,28 +56,33 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
+						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset' && datasets"
+						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
 					<tera-simulate-node
-						v-else-if="node.operationType === 'SimulateOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
+					<tera-simulate-ensemble-node
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATEENSEMBLE"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -191,6 +196,7 @@ import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
 import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
+import TeraSimulateEnsembleNode from '@/components/workflow/tera-simulate-ensemble-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import {
@@ -210,6 +216,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
+import { EnsembleOperation } from './simulate-ensemble-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -407,6 +414,12 @@ const contextMenuItems = ref([
 		label: 'Stratify',
 		command: () => {
 			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
+		}
+	},
+	{
+		label: 'Ensemble',
+		command: () => {
+			workflowService.addNode(wf.value, EnsembleOperation, newNodePosition);
 		}
 	},
 	{

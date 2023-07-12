@@ -73,6 +73,12 @@
 					:project="project"
 					:node="workflowNode"
 				/>
+				<tera-simulate-ensemble
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATEENSEMBLE
+					"
+					:node="workflowNode"
+				/>
 			</SplitterPanel>
 		</Splitter>
 		<tera-slider-panel
@@ -242,6 +248,7 @@ import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraSimulateEnsemble from '@/components/workflow/tera-simulate-ensemble.vue';
 import TeraSimulate from '@/components/workflow/tera-simulate.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import { workflowEventBus } from '@/services/workflow';

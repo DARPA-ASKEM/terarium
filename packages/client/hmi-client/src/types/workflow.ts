@@ -5,7 +5,8 @@ export enum WorkflowOperationTypes {
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',
 	SIMULATE = 'SimulateOperation',
-	STRATIFY = 'Stratify'
+	STRATIFY = 'Stratify',
+	SIMULATEENSEMBLE = 'SimulateEnsemble'
 }
 
 export enum WorkflowStatus {
