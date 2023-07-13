@@ -35,7 +35,12 @@
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
-					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
+					<Menu
+						ref="addComponentMenu"
+						:model="contextMenuItems"
+						:popup="true"
+						style="white-space: nowrap; width: auto"
+					/>
 				</div>
 			</div>
 		</template>
@@ -67,8 +72,13 @@
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
-					<tera-simulate-node
-						v-else-if="node.operationType === 'SimulateOperation'"
+					<tera-simulate-julia-node
+						v-else-if="node.operationType === 'SimulateJuliaOperation'"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-simulate-ciemss-node
+						v-else-if="node.operationType === 'SimulateCiemssOperation'"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -190,13 +200,15 @@ import {
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
-import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
+import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
+import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import {
-	SimulateOperation,
-	SimulateOperationState
-} from '@/components/workflow/simulate-operation';
+	SimulateJuliaOperation,
+	SimulateJuliaOperationState
+} from '@/components/workflow/simulate-julia-operation';
+import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
@@ -276,7 +288,7 @@ const getVariableColorByRunIdx = (edgeIdx: number) =>
 		: '#1B8073';
 const isEdgeTargetSim = (edge) =>
 	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
-	WorkflowOperationTypes.SIMULATE;
+	WorkflowOperationTypes.SIMULATE_JULIA;
 
 const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
@@ -347,10 +359,11 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	// should be built into the Operation directly. What we are doing is to update the internal state
 	// and this feels it is leaking too much low-level information
 	if (
-		node.operationType === WorkflowOperationTypes.SIMULATE ||
+		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
+		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
 		node.operationType === WorkflowOperationTypes.CALIBRATION
 	) {
-		const state = node.state as SimulateOperationState;
+		const state = node.state as SimulateJuliaOperationState;
 		if (state.chartConfigs.length === 0) {
 			state.chartConfigs.push({
 				selectedRun: port.value[0],
@@ -411,12 +424,12 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Deterministic',
+		label: 'DETERMINISTIC',
 		items: [
 			{
 				label: 'Simulate',
 				command: () => {
-					workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateJuliaOperation, newNodePosition, {
 						width: 420,
 						height: 220
 					});
@@ -438,12 +451,17 @@ const contextMenuItems = ref([
 		]
 	},
 	{
-		label: 'Probabilistic',
+		label: 'PROBABILISTIC',
 		items: [
 			{
 				label: 'Simulate',
-				disabled: true,
-				command: () => {}
+				command: () => {
+					workflowService.addNode(wf.value, SimulateCiemssOperation, newNodePosition, {
+						width: 420,
+						height: 220
+					});
+					workflowDirty = true;
+				}
 			},
 			{
 				label: 'Calibrate & Simulate',

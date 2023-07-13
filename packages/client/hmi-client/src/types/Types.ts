@@ -339,7 +339,7 @@ export interface XDDFacetBucket {
 export interface Rate {
     target: string;
     expression: string;
-    expression_mathml: string;
+    expression_mathml?: string;
 }
 
 export interface Initial {
@@ -492,6 +492,7 @@ export interface MetadataDataset {
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
 }
 
 export enum FileType {
