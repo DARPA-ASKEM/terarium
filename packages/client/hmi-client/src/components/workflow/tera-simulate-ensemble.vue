@@ -210,7 +210,7 @@ const completedRunId = ref<string>();
 const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
-const disabledCalibrationWeights = computed(() => false);
+const disabledCalibrationWeights = computed(() => true);
 const newObservableKey = ref<string>('');
 
 const calculateWeights = () => {
@@ -228,8 +228,6 @@ const calculateWeights = () => {
 		customWeights.value = false;
 		console.log('TODO: Get weights from AMRs');
 	}
-	console.log('Ensemble Config');
-	console.log(ensembleConfigs.value);
 };
 
 const runEnsemble = async () => {
@@ -277,9 +275,7 @@ const updateOutputPorts = async (runId) => {
 
 function addMapping() {
 	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].observables.push({ [newObservableKey.value]: 'test' });
-		console.log('Tom look here');
-		console.log(ensembleConfigs.value[i].observables[0]);
+		ensembleConfigs.value[i].observables.push({ [newObservableKey.value]: '' });
 	}
 
 	const state: EnsembleOperationState = _.cloneDeep(props.node.state);
@@ -290,13 +286,6 @@ function addMapping() {
 		nodeId: props.node.id,
 		state
 	});
-	// console.log("Mapping updated:");
-	// for (let i of Object.keys(ensembleConfigs.value[0].observables[0])){
-	// 	console.log(i);
-	// 	console.log(ensembleConfigs.value[0].observables[0]["testn"]);
-	// }
-
-	console.log(ensembleConfigs.value);
 }
 
 const setBarChartData = () => {
@@ -372,7 +361,6 @@ watch(
 watch(
 	() => listModelIds,
 	async () => {
-		console.log('List changed');
 		allModelConfigurations.value = [];
 		// Fetch Model Configurations
 		await Promise.all(
@@ -381,20 +369,17 @@ watch(
 				allModelConfigurations.value.push(result);
 			})
 		);
-		console.log(allModelConfigurations.value);
 		allModelOptions.value = [];
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
-			const tempList = allModelConfigurations.value[i].configuration.model.states.map(
-				(element) => element.id
-			);
-			tempList.push(
-				allModelConfigurations.value[i].configuration.semantics.ode.observables.map(
-					(element) => element.id
-				)
+			const tempList: string[] = [];
+			allModelConfigurations.value[i].configuration.model.states.forEach((element) => {
+				tempList.push(element.id);
+			});
+			allModelConfigurations.value[i].configuration.semantics.ode.observables.forEach((element) =>
+				tempList.push(element.id)
 			);
 			allModelOptions.value.push(tempList);
 		}
-
 		// calculateWeights();
 		console.log('------------');
 	},
