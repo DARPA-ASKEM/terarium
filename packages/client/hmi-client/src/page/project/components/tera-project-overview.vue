@@ -146,7 +146,11 @@
 								AcceptedTypes.PDF,
 								AcceptedTypes.CSV,
 								AcceptedTypes.TXT,
-								AcceptedTypes.MD
+								AcceptedTypes.MD,
+								AcceptedTypes.PY,
+								AcceptedTypes.JS,
+								AcceptedTypes.M,
+								AcceptedTypes.R
 							]"
 							:accept-extensions="[
 								AcceptedExtensions.PDF,

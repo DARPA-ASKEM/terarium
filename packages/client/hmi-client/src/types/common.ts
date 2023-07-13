@@ -112,7 +112,10 @@ export enum AcceptedTypes {
 	CSV = 'text/csv',
 	TXT = 'text/plain',
 	MD = 'text/markdown',
-	PY = 'text/x-python'
+	PY = 'text/x-python-script',
+	M = 'text/x-matlab',
+	JS = 'application/javascript',
+	R = 'text/x-r'
 }
 
 export enum AcceptedExtensions {
@@ -120,7 +123,10 @@ export enum AcceptedExtensions {
 	CSV = 'csv',
 	TXT = 'txt',
 	MD = 'md',
-	PY = 'py'
+	PY = 'py',
+	M = 'm',
+	JS = 'js',
+	R = 'r'
 }
 
 export interface PDFExtractionResponseType {

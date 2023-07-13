@@ -12,7 +12,7 @@
 				ref="fileInput"
 				@change="onFileChange"
 				multiple
-				accept=".pdf,.csv,.txt,.md"
+				accept=".pdf,.csv,.txt,.md,.py,.m,.js,.R"
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
@@ -79,9 +79,16 @@ const props = defineProps({
 		type: Array<AcceptedTypes>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[AcceptedTypes.PDF, AcceptedTypes.CSV, AcceptedTypes.TXT, AcceptedTypes.MD].every((v) =>
-				value.includes(v)
-			)
+			[
+				AcceptedTypes.PDF,
+				AcceptedTypes.CSV,
+				AcceptedTypes.TXT,
+				AcceptedTypes.MD,
+				AcceptedTypes.PY,
+				AcceptedTypes.M,
+				AcceptedTypes.JS,
+				AcceptedTypes.R
+			].every((v) => value.includes(v))
 	},
 	acceptExtensions: {
 		type: Array<AcceptedExtensions>,
@@ -91,7 +98,11 @@ const props = defineProps({
 				AcceptedExtensions.PDF,
 				AcceptedExtensions.CSV,
 				AcceptedExtensions.TXT,
-				AcceptedExtensions.MD
+				AcceptedExtensions.MD,
+				AcceptedExtensions.PY,
+				AcceptedExtensions.M,
+				AcceptedExtensions.JS,
+				AcceptedExtensions.R
 			].every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
