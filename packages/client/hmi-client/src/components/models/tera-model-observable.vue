@@ -46,7 +46,7 @@ import { computed, watch, ref } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
 import { mathmlToAMR } from '@/services/models/transformations';
-import { isArray } from 'lodash';
+import { isArray, isEmpty, pickBy } from 'lodash';
 import { logger } from '@/utils/logger';
 import { separateEquations } from '@/utils/math';
 import { Model, Observable } from '@/types/Types';
@@ -55,6 +55,8 @@ const props = defineProps<{
 	model: Model | null;
 	isEditable: boolean;
 }>();
+
+const emit = defineEmits(['update-model-observables']);
 
 // References
 const isEditing = ref<boolean>(false);
@@ -78,8 +80,8 @@ const addObservable = () => {
 };
 
 const updateObservables = () => {
-	if (isEditingObservables.value) {
-		isEditingObservables.value = false;
+	if (isEditing.value) {
+		isEditing.value = false;
 		// update
 		emit(
 			'update-model-observables',
@@ -98,7 +100,7 @@ const updateObservables = () => {
 			eq.isEditingEquation = false;
 		});
 	} else {
-		isEditingObservables.value = true;
+		isEditing.value = true;
 	}
 };
 

@@ -71,8 +71,6 @@ import ContextMenu from 'primevue/contextmenu';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
 
-const emit = defineEmits(['update-model-content', 'update-model-observables']);
-
 const props = defineProps<{
 	model: Model | null;
 	isEditable: boolean;

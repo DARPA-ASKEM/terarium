@@ -44,7 +44,7 @@ import { computed, watch, ref } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
 import { mathmlToAMR } from '@/services/models/transformations';
-import { isArray } from 'lodash';
+import { isArray, isEmpty, pickBy } from 'lodash';
 import { logger } from '@/utils/logger';
 import { separateEquations } from '@/utils/math';
 import { Model } from '@/types/Types';
