@@ -172,7 +172,7 @@ import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
-import TeraModelConfiguration from '@/components/models/tera-model-configuration-ciemss.vue';
+import TeraModelConfiguration from '@/components/models/tera-model-configuration-distribution.vue';
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 
