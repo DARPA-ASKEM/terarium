@@ -89,6 +89,10 @@
 						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
+						<template #header> Model configuration </template>
+						<tera-model-configuration v-if="model" :model="model" :is-editable="false" />
+					</AccordionTab>
+					<AccordionTab>
 						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
 							<!--
@@ -164,6 +168,7 @@ import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 
