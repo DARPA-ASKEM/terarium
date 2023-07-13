@@ -146,8 +146,9 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<main v-if="states.length > 0" class="datatable" style="--columns: 4">
+					<main v-if="states.length > 0" class="datatable" style="--columns: 5">
 						<header>
+							<div>Id</div>
 							<div>Name</div>
 							<div>Unit</div>
 							<div>Concept</div>
@@ -159,6 +160,7 @@
 							:class="[{ active: isSectionEditable === `state-${state.id}` }, `state-${state.id}`]"
 						>
 							<template v-if="isSectionEditable === `state-${state.id}`">
+								<div><input type="text" :value="state.id ?? '--'" /></div>
 								<div><input type="text" :value="state?.name ?? '--'" /></div>
 								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
 								<div>Identifiers</div>
@@ -172,6 +174,7 @@
 								</div>
 							</template>
 							<template v-else>
+								<div>{{ state.id ?? '--' }}</div>
 								<div>{{ state?.name ?? '--' }}</div>
 								<div>{{ state?.units?.expression ?? '--' }}</div>
 								<div>
@@ -264,9 +267,10 @@
 					<template #header>
 						Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 					</template>
-					<main v-if="transitions.length > 0" class="datatable" style="--columns: 5">
+					<main v-if="transitions.length > 0" class="datatable" style="--columns: 6">
 						<header>
-							<div>Label</div>
+							<div>Id</div>
+							<div>Name</div>
 							<div>Input</div>
 							<div>Output</div>
 							<div>Expression</div>
@@ -281,6 +285,7 @@
 							]"
 						>
 							<template v-if="isSectionEditable === `transition-${index}`">
+								<div>{{ transition.id }}</div>
 								<div>{{ transition.name }}</div>
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
@@ -298,6 +303,7 @@
 								</div>
 							</template>
 							<template v-else>
+								<div>{{ transition.id }}</div>
 								<div>{{ transition.name }}</div>
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
@@ -550,17 +556,24 @@ const time = computed(() =>
 const states = computed(() => model.value?.model?.states ?? []);
 
 // Model Transitions
-const transitions = computed(() =>
-	cloneDeep(model.value?.model?.transitions ?? []).map((t) => ({
-		id: t.id,
-		name: t?.properties?.name ?? t.id ?? '--',
-		input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
-		output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
-		expression:
-			model?.value?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ?? null,
-		extractions: extractions?.[t.id] ?? null
-	}))
-);
+const transitions = computed(() => {
+	const results: any[] = [];
+	if (model.value?.model?.transitions) {
+		model.value.model.transitions.forEach((t) => {
+			results.push({
+				id: t.id,
+				name: t?.properties?.name ?? '--',
+				input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
+				output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
+				expression:
+					model?.value?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ??
+					null,
+				extractions: extractions?.[t.id] ?? null
+			});
+		});
+	}
+	return results;
+});
 
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 
