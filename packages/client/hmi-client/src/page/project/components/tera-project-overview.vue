@@ -146,7 +146,23 @@
 								AcceptedTypes.PDF,
 								AcceptedTypes.CSV,
 								AcceptedTypes.TXT,
-								AcceptedTypes.MD
+								AcceptedTypes.MD,
+								AcceptedTypes.PY,
+								AcceptedTypes.JS,
+								AcceptedTypes.M,
+								AcceptedTypes.R,
+								AcceptedTypes.JL
+							]"
+							:accept-extensions="[
+								AcceptedExtensions.PDF,
+								AcceptedExtensions.CSV,
+								AcceptedExtensions.TXT,
+								AcceptedExtensions.MD,
+								AcceptedExtensions.PY,
+								AcceptedExtensions.M,
+								AcceptedExtensions.JS,
+								AcceptedExtensions.R,
+								AcceptedExtensions.JL
 							]"
 							:import-action="processFiles"
 							:progress="progress"
@@ -211,7 +227,7 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab, AcceptedTypes } from '@/types/common';
+import { Tab, AcceptedTypes, AcceptedExtensions } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';

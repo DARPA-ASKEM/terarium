@@ -51,7 +51,8 @@ import {
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
-	convertToIGraph
+	convertToIGraph,
+	addTyping
 } from '@/model-representation/petrinet/petrinet-service';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';

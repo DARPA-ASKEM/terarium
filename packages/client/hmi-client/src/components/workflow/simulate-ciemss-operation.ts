@@ -5,6 +5,7 @@ import { ChartConfig } from '@/types/SimulateConfig';
 export interface SimulateCiemssOperationState {
 	chartConfigs: ChartConfig[];
 	currentTimespan: TimeSpan;
+	numSamples: number;
 }
 
 export const SimulateCiemssOperation: Operation = {
@@ -17,7 +18,8 @@ export const SimulateCiemssOperation: Operation = {
 	initState: () => {
 		const init: SimulateCiemssOperationState = {
 			chartConfigs: [],
-			currentTimespan: { start: 1, end: 100 }
+			currentTimespan: { start: 1, end: 100 },
+			numSamples: 100
 		};
 		return init;
 	},

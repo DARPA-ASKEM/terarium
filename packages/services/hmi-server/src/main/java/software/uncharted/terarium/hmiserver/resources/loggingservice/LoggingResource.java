@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.resources.loggingservice;
 
 import io.quarkus.security.identity.SecurityIdentity;
+import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.services.LogMessage;
 import software.uncharted.terarium.hmiserver.services.LoggingService;
 
@@ -24,6 +25,7 @@ public class LoggingResource {
 
 	@POST
 	@Path("/logs")
+	@IgnoreRequestLogging
 	public Response echoLogs(LoggingService logData) {
 		for (LogMessage log : logData.getLogs()) {
 			logData.logMessage(log, securityIdentity.getPrincipal().getName());
