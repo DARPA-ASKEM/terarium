@@ -604,7 +604,7 @@ function initiateModelDuplication() {
 		console.log('Failed to duplicate model.');
 		return;
 	}
-	const modelName = getJustModelName(model.value.name);
+	const modelName = getJustModelName(model.value.name.trim());
 	copyModelName.value = getSuggestedModelName(modelName, 1);
 	isCopyModelModalVisible.value = true;
 }
