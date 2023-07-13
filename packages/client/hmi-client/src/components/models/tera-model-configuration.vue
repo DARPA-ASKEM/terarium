@@ -101,7 +101,13 @@
 							@keyup.enter="cellEditStates[i].parameters[j] = true"
 						>
 							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
-								<span>{{ parameter.value }}</span>
+								<div class="distribution-cell">
+									<span>{{ parameter.value }}</span>
+									<span class="distribution-range" v-if="parameter.distribution"
+										>Min: {{ parameter.distribution.parameters.minimum }} Max:
+										{{ parameter.distribution.parameters.maximum }}</span
+									>
+								</div>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
@@ -493,5 +499,13 @@ td:hover .cell-menu {
 
 .p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
 	display: none;
+}
+
+.distribution-cell {
+	display: flex;
+	flex-direction: column;
+}
+.distribution-range {
+	white-space: nowrap;
 }
 </style>
