@@ -252,46 +252,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 	}
 
-	selectNodeEdit(selection: D3SelectionINode<NodeData>) {
-		selection.selectAll('.no-drag').attr('stroke-width', 3);
-		selection.select('text').style('fill-opacity', 0);
-
-		// Add in a input textbox to change the name
-		const w = selection.datum().width;
-		const h = selection.datum().width;
-
-		selection
-			.append('foreignObject')
-			.attr('x', -0.5 * w)
-			.attr('y', -0.5 * h)
-			.attr('width', w)
-			.attr('height', h)
-			.attr('style', 'position:relative')
-			.append('xhtml:input')
-			.attr('type', 'text')
-			.attr(
-				'style',
-				`width:${
-					w * 0.8
-				}px; height:30px; background: var(--petri-inputBox); border-radius:var(--border-radius); border: 2px solid transparent; text-align:center; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); padding-left:2px; padding-right:2px;`
-			)
-			.attr('value', selection.datum().label);
-	}
-
 	deselectNode(selection: D3SelectionINode<NodeData>) {
 		if (!this.editMode) return;
 		selection.selectAll('.no-drag').attr('stroke-width', 1);
-		const newLabel = (selection.select('input').node() as HTMLInputElement).value;
-
-		if (selection.datum().data.type === NodeType.State) {
-			petrinetService.updateStateId(this.graph.amr, selection.datum().label, newLabel);
-		} else {
-			petrinetService.updateTransitioneId(this.graph.amr, selection.datum().label, newLabel);
-		}
-
-		selection.datum().label = newLabel;
-		selection.select('text').text(newLabel).style('fill-opacity', 1.0);
-		selection.select('foreignObject').remove();
 	}
 
 	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
@@ -334,7 +297,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.duration(200)
 					.style('opacity', 1)
 					.style('visibility', 'visible');
-				this.selectNodeEdit(this.nodeSelection);
 			}
 		}
 
@@ -461,10 +423,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			this.nodeSelection = this.chart
 				.selectAll('.node-ui')
 				.filter((d: any) => d.id === id) as D3SelectionINode<NodeData>;
-
-			if (this.nodeSelection) {
-				this.selectNodeEdit(this.nodeSelection);
-			}
 		}
 	}
 
@@ -484,10 +442,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		}
 	}
 
-	addNode(type: string, name: string, pos: { x: number; y: number }) {
+	addNode(type: string, id: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
 		const size = type === NodeType.State ? 60 : 30;
-		const id = `${type}${this.graph.nodes.length + 1}`;
+		// const id = `${type}${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
 			id,
 			label: name,

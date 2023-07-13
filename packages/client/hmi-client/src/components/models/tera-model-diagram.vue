@@ -16,13 +16,13 @@
 								<span class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
-										@click="addState"
+										@click="addNode(NodeType.State)"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
 										v-if="isEditing"
-										@click="addTransition"
+										@click="addNode(NodeType.Transition)"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
@@ -152,8 +152,23 @@
 	</main>
 
 	<Teleport to="body">
-		<tera-modal v-if="openAddState" @modal-mask-clicked="openAddState = false"> Hello </tera-modal>
-		<tera-modal v-if="openAddTransition" @modal-mask-clicked="openAddTransition = false">
+		<tera-modal v-if="openAddNode === true" @modal-mask-clicked="openAddNode = false">
+			<div>
+				<InputText v-model="addNodeObj.id" placeholder="Id" />
+			</div>
+			<div>
+				<InputText v-model="addNodeObj.name" placeholder="Name" />
+			</div>
+			<template #footer>
+				<Button label="Add state" @click="addNode(addNodeObj.nodeType)" />
+				<Button label="Cancel" @click="openAddTransition = false" />
+			</template>
+		</tera-modal>
+		<tera-modal v-if="openAddTransition === true" @modal-mask-clicked="openAddTransition = false">
+			<template #footer>
+				<Button label="Add transition" />
+				<Button label="Cancel" />
+			</template>
 		</tera-modal>
 	</Teleport>
 </template>
@@ -185,6 +200,8 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model, Observable } from '@/types/Types';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -219,11 +236,14 @@ const observablesRefs = ref<any[]>([]);
 const observervablesList = ref<Observable[]>([]);
 
 // For model editing
-const openAddState = ref<boolean>(false);
-// const addStateFields: { id: string, name: string } = {
-// 	id: '',
-// 	name: ''
-// };
+interface AddStateObj {
+	id: string;
+	name: string;
+	nodeType: string;
+}
+const openAddNode = ref<boolean>(false);
+const addNodeObj: AddStateObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+
 const openAddTransition = ref<boolean>(false);
 
 const addObservable = () => {
@@ -282,7 +302,6 @@ const setNewObservables = (
 	name: string,
 	id: string
 ) => {
-	console.log(name);
 	const obs: Observable = {
 		id,
 		name,
@@ -403,7 +422,6 @@ watch(
 				);
 
 			if (data) {
-				console.log(0);
 				updateLatexFormula(eqList || []);
 			}
 		}
@@ -450,21 +468,16 @@ const contextMenuItems = ref([
 		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			if (renderer) {
-				openAddState.value = true;
-				console.log('!!!!!!!!!!!!!!!!!!!1');
-				// renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
-			}
+			addNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+			openAddNode.value = true;
 		}
 	},
 	{
 		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			if (renderer) {
-				openAddTransition.value = true;
-				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
-			}
+			addNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+			openAddNode.value = true;
 		}
 	}
 ]);
@@ -516,7 +529,6 @@ watch(
 						.trim()} \\end{align}`
 			);
 		if (latexFormula) {
-			console.log(1);
 			updateLatexFormula(eqList || []);
 		} else {
 			updateLatexFormula([]);
@@ -601,12 +613,19 @@ const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, 'state');
-};
-
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, 'transition');
+const addNode = async () => {
+	if (!renderer) return;
+	if (eventX && eventY) {
+		renderer.addNode(addNodeObj.value.nodeType, addNodeObj.value.id, addNodeObj.value.name, {
+			x: eventX,
+			y: eventY
+		});
+	} else {
+		renderer.addNodeCenter(addNodeObj.value.nodeType, addNodeObj.value.id, addNodeObj.value.name);
+	}
+	eventX = -1;
+	eventY = -1;
+	openAddNode.value = false;
 };
 
 const observablesList = computed(() => props.model?.semantics?.ode?.observables ?? []);
