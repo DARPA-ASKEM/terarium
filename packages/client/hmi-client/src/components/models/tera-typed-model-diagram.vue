@@ -247,12 +247,14 @@ watch(
 watch(
 	() => props.typeSystem,
 	() => {
+		const nodeIds: string[] = [];
 		props.typeSystem?.states.forEach((s) => {
-			setNodeTypeColor(s.id);
+			nodeIds.push(s.id);
 		});
 		props.typeSystem?.transitions.forEach((t) => {
-			setNodeTypeColor(t.id);
+			nodeIds.push(t.id);
 		});
+		setNodeTypeColor(nodeIds);
 		typedRows.value.push(
 			{
 				nodeType: 'Variable',

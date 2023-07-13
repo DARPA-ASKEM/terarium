@@ -102,14 +102,14 @@ watch(
 				(t) => t.id
 			);
 			if (modelToUpdateTransitionIds && modelToCompareTypeTransitionIds) {
-				console.log(`${props.modelToUpdate.id} - ${modelToUpdateTransitionIds}`);
-				console.log(`${props.modelToUpdate.id} - ${modelToCompareTypeTransitionIds}`);
 				const unassignedIds = modelToCompareTypeTransitionIds.filter(
 					(id) => !modelToUpdateTransitionIds.includes(id)
 				);
 				const unassignedTransitions: Transition[] =
 					modelToCompareTypeSystem.value?.transitions.filter((t) => unassignedIds.includes(t.id));
-				unassignedTransitionTypes.push(unassignedTransitions[0]);
+				if (unassignedTransitions.length > 0) {
+					unassignedTransitionTypes.push(unassignedTransitions[0]);
+				}
 			}
 
 			props.modelToUpdate.model.states.forEach((state) => {
