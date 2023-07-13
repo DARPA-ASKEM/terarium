@@ -394,7 +394,6 @@ watch(
 				);
 
 			if (data) {
-				console.log(0);
 				updateLatexFormula(eqList || []);
 			}
 		}
@@ -513,7 +512,6 @@ watch(
 						.trim()} \\end{align}`
 			);
 		if (latexFormula) {
-			console.log(1);
 			updateLatexFormula(eqList || []);
 		} else {
 			updateLatexFormula([]);
