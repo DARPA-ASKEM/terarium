@@ -82,6 +82,8 @@
 			<RelatedPublications
 				@extracted-metadata="(extract) => (metadata = extract)"
 				:publications="[metadata?.source]"
+				:project="project"
+				:dialog-flavour="'dataset'"
 			/>
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
