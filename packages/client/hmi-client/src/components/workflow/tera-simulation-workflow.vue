@@ -201,7 +201,7 @@ import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import {
 	SimulateJuliaOperation,
-	SimulateOperationState
+	SimulateJuliaOperationState
 } from '@/components/workflow/simulate-julia-operation';
 import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
@@ -358,7 +358,7 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
 		node.operationType === WorkflowOperationTypes.CALIBRATION
 	) {
-		const state = node.state as SimulateOperationState;
+		const state = node.state as SimulateJuliaOperationState;
 		if (state.chartConfigs.length === 0) {
 			state.chartConfigs.push({
 				selectedRun: port.value[0],

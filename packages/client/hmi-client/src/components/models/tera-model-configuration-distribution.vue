@@ -106,6 +106,7 @@
 </template>
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
+import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import { ModelConfiguration, Model } from '@/types/Types';
 import { getModelConfigurations } from '@/services/model';
