@@ -89,28 +89,6 @@
 						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
-						<template #header> Configuration options </template>
-						<div class="uncertainty-container">
-							<input-switch v-model="uncertainty" />
-							<div class="uncertainty">
-								<div>Add uncertainty</div>
-								<div>
-									This option turns the values without ranges into distributions with a width of +/-
-									a set amount
-								</div>
-								<div class="uncertainty-input">
-									<label for="uncertaintyAmt"> Uncertainty Amount </label>
-									<InputNumber
-										inputId="uncertaintyAmt"
-										v-model="uncertaintyPercentage"
-										suffix=" %"
-									/>
-								</div>
-							</div>
-						</div>
-						<tera-model-configuration v-if="model" :model="model" :run-configs="runConfigs" />
-					</AccordionTab>
-					<AccordionTab>
 						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
 							<!--
@@ -144,6 +122,21 @@
 							</div>
 						</div>
 					</AccordionTab>
+					<AccordionTab>
+						<template #header> Other options </template>
+						<div class="sim-tspan-container">
+							<div class="sim-tspan-group">
+								<label for="4">Number of stochastic samples</label>
+								<InputNumber
+									id="4"
+									class="p-inputtext-sm"
+									v-model="numSamples"
+									inputId="integeronly"
+									:min="2"
+								/>
+							</div>
+						</div>
+					</AccordionTab>
 				</Accordion>
 			</div>
 		</div>
@@ -162,7 +155,6 @@ import MultiSelect from 'primevue/multiselect';
 // import DataTable from 'primevue/datatable';
 // import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import InputSwitch from 'primevue/inputswitch';
 import InputNumber from 'primevue/inputnumber';
 import Paginator from 'primevue/paginator';
 import { Model, TimeSpan } from '@/types/Types';
@@ -172,7 +164,6 @@ import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
-import TeraModelConfiguration from '@/components/models/tera-model-configuration-distribution.vue';
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 
@@ -184,6 +175,7 @@ const props = defineProps<{
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+const numSamples = ref<number>(props.node.state.numSamples);
 
 enum SimulateTabs {
 	input,
@@ -197,9 +189,6 @@ const parsedRawData = ref<any>();
 const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
 const renderedRuns = ref<RunResults>({});
-
-const uncertainty = ref<boolean>(true);
-const uncertaintyPercentage = ref<number>(10);
 
 const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
@@ -308,6 +297,19 @@ watch(
 	{ immediate: true, deep: true }
 );
 
+watch(
+	() => numSamples.value,
+	(n) => {
+		const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+		state.numSamples = n;
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
+	}
+);
+
 const rawDataKeys = computed(() => Object.keys(parsedRawData.value[0]));
 
 const rawDataRenderedRows = computed(() =>
@@ -378,20 +380,5 @@ const rawDataRenderedRows = computed(() =>
 .datatable-header-title {
 	white-space: nowrap;
 	margin-right: 1em;
-}
-
-.uncertainty-container {
-	display: flex;
-	gap: 1em;
-}
-.uncertainty {
-	flex-grow: 1;
-	flex-basis: 0;
-	margin: 1em;
-	margin-top: 0;
-}
-.uncertainty-input {
-	margin-top: 1em;
-	font-weight: bolder;
 }
 </style>

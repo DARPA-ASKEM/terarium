@@ -86,7 +86,7 @@ const runSimulate = async () => {
 				start: state.currentTimespan.start,
 				end: state.currentTimespan.end
 			},
-			extra: { num_samples: 100 },
+			extra: { num_samples: state.numSamples },
 			engine: 'ciemss'
 		};
 		const response = await makeForecastJob(payload);
