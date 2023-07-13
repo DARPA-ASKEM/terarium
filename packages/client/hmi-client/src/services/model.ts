@@ -73,7 +73,7 @@ export async function addModelToProject(projectId: string, assetId: string) {
 	}
 }
 
-export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[] | []> {
+export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[]> {
 	const response = await API.get(`/models/${modelId}/model_configurations`);
-	return response?.data ?? [];
+	return response?.data ?? ([] as ModelConfiguration[]);
 }
