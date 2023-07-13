@@ -18,7 +18,8 @@ public class StructuredLog {
 	public enum Type {
 		REQUEST_STARTED,
 		REQUEST_COMPLETED,
-		EVENT
+		EVENT,
+		PROXY_REQUEST
 	}
 
 	@ConfigProperty(name = "quarkus.log.console.json", defaultValue = "false")
@@ -46,7 +47,9 @@ public class StructuredLog {
 
 			if (keyValuePairs != null) {
 				for (int i = 0; i < keyValuePairs.length; i += 2) {
-					data.put(keyValuePairs[i].toString(), keyValuePairs[i + 1]);
+					if (keyValuePairs[i + 1] != null) {
+						data.put(keyValuePairs[i].toString(), keyValuePairs[i + 1]);
+					}
 				}
 			}
 			log.info(asJsonString(data));
