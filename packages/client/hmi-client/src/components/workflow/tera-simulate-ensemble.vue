@@ -190,11 +190,12 @@ export interface Mapping {
 }
 
 const CATEGORYPERCENTAGE = 0.9;
-const BARPERCENTAGE = 1.0;
+const BARPERCENTAGE = 0.6;
 const MINBARLENGTH = 1;
 
 const activeTab = ref(EnsembleTabs.input);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
+const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
@@ -288,17 +289,17 @@ function addMapping() {
 
 const setBarChartData = () => {
 	const documentStyle = getComputedStyle(document.documentElement);
-	const datasetLabel: string[] = [];
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		datasetLabel.push(ensembleConfigs.value[i].id);
-	}
+	// const datasetLabel: string[] = [];
+	// for (let i = 0; i < ensembleConfigs.value.length; i++) {
+	// 	datasetLabel.push(ensembleConfigs.value[i].id);
+	// }
 	const weights = ensembleConfigs.value.map((element) => element.weight);
 	return {
-		labels: datasetLabel,
+		labels: listModelLabels.value,
 		datasets: [
 			{
-				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
-				borderColor: documentStyle.getPropertyValue('--primary-color'),
+				backgroundColor: documentStyle.getPropertyValue('--text-color-secondary'),
+				borderColor: documentStyle.getPropertyValue('--text-color-secondary'),
 				data: weights,
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
@@ -317,7 +318,7 @@ const setChartOptions = () => {
 		plugins: {
 			legend: {
 				labels: {
-					fontColor: documentStyle.getPropertyValue('--primary-color')
+					fontColor: documentStyle.getPropertyValue('--text-color-primary')
 				},
 				display: false
 			}
@@ -325,7 +326,7 @@ const setChartOptions = () => {
 		scales: {
 			x: {
 				ticks: {
-					color: documentStyle.getPropertyValue('--primary-color'),
+					color: documentStyle.getPropertyValue('--text-color-primary'),
 					font: {
 						weight: 500
 					}
@@ -337,10 +338,10 @@ const setChartOptions = () => {
 			},
 			y: {
 				ticks: {
-					color: documentStyle.getPropertyValue('--primary-color')
+					color: documentStyle.getPropertyValue('--text-color-primary')
 				},
 				grid: {
-					color: documentStyle.getPropertyValue('--surface-border-light'),
+					display: false,
 					drawBorder: false
 				}
 			}
@@ -379,6 +380,8 @@ watch(
 			allModelOptions.value.push(tempList);
 		}
 		calculateWeights();
+		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+		console.log('------------');
 	},
 	{ immediate: true }
 );
@@ -406,13 +409,19 @@ watch(
 }
 
 .ensemble-calibration-mode {
-	display: grid;
-	padding-left: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1rem;
+	margin-left: 1rem;
+	/* min-width: fit-content; */
+	padding-right: 3rem;
 }
 
 .ensemble-calibration-graph {
-	padding-left: 0.5rem;
+	/* margin-left: 1rem; */
 	height: 200px;
+	width: 80%;
 }
 .model-weights {
 	display: flex;
