@@ -53,7 +53,7 @@ logger.info('Application Mounted', { showToast: false, silent: true });
 let previousRoute;
 let routeStartedMillis = Date.now();
 const resources = useResourcesStore();
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
 	if (previousRoute) {
 		const nowMillis = Date.now();
 		const timeSpent = nowMillis - routeStartedMillis;
