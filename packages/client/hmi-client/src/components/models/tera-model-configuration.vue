@@ -208,9 +208,10 @@
 		</tera-modal>
 	</Teleport>
 </template>
+
 <script setup lang="ts">
+import _, { isEmpty, cloneDeep } from 'lodash';
 import { watch, ref, computed, onMounted } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
