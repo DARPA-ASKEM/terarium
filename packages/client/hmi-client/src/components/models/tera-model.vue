@@ -414,6 +414,7 @@
 				:model="model"
 				:is-editable="props.isEditable"
 				@update-model-content="updateModelContent"
+				@update-model-observables="updateModelObservables"
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
@@ -627,6 +628,13 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 
 function updateModelContent(rendererGraph) {
 	if (model.value) model.value = convertToAMRModel(rendererGraph);
+}
+
+function updateModelObservables(observableMathMLList) {
+	// assign the new observables
+	if (model.value !== null && model.value.semantics?.ode?.observables) {
+		model.value.semantics.ode.observables = observableMathMLList;
+	}
 }
 
 // Highlight strings based on props.highlight
