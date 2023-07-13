@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.models.dataservice.Association;
 import software.uncharted.terarium.hmiserver.models.dataservice.Person;
 
@@ -14,12 +15,14 @@ import javax.ws.rs.core.Response;
 public interface PersonProxy {
 	@GET
 	@Path("/associations/{id}")
+	@LogRestClientTime
 	Response getAssociation(
 		@PathParam("id") String id
 	);
 
 	@DELETE
 	@Path("/associations/{id}")
+	@LogRestClientTime
 	Response deleteAssociation(
 		@PathParam("id") String id
 	);
@@ -27,6 +30,7 @@ public interface PersonProxy {
 	@PATCH
 	@Path("/associations/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response updateAssociation(
 		@PathParam("id") String id,
 		Association association
@@ -35,11 +39,13 @@ public interface PersonProxy {
 	@POST
 	@Path("/associations")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response createAssociation(
 		Association association
 	);
 
 	@GET
+	@LogRestClientTime
 	Response getPersons(
 		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") Integer page
@@ -47,18 +53,21 @@ public interface PersonProxy {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response createPerson(
 		Person person
 	);
 
 	@GET
 	@Path("/{id}")
+	@LogRestClientTime
 	Response getPerson(
 		@PathParam("id") String id
 	);
 
 	@DELETE
 	@Path("/{id}")
+	@LogRestClientTime
 	Response deletePerson(
 		@PathParam("id") String id
 	);
@@ -66,6 +75,7 @@ public interface PersonProxy {
 	@PATCH
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response updatePerson(
 		@PathParam("id") String id,
 		Person person

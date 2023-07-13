@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
@@ -17,10 +18,12 @@ import java.util.*;
 public interface WorkflowProxy {
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response getWorkflows();
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response createWorkflow(
 		Workflow workflow
 	);
@@ -28,6 +31,7 @@ public interface WorkflowProxy {
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response updateWorkflow(
 		@PathParam("id") String id,
 		Workflow workflow
@@ -36,6 +40,7 @@ public interface WorkflowProxy {
 
 	@GET
 	@Path("/{id}")
+	@LogRestClientTime
 	Response getWorkflowById(
 		@PathParam("id") String id
 	);
