@@ -107,7 +107,7 @@
 								</td>
 							</div>
 							<td v-for="(element, i) in ensembleConfigs" :key="i">
-								<template v-for="(key, j) in ensembleConfigs[i].observables" :key="j">
+								<template v-for="(element, j) in ensembleConfigs[i].observables" :key="j">
 									<Dropdown
 										v-for="(key, k) in Object.keys(ensembleConfigs[i].observables[j])"
 										:key="k"
@@ -165,8 +165,6 @@ import {
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import { workflowEventBus } from '@/services/workflow';
-// import DataTable from 'primevue/datatable';
-// import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import { EnsembleOperation, EnsembleOperationState } from './simulate-ensemble-operation';
 
@@ -380,8 +378,7 @@ watch(
 			);
 			allModelOptions.value.push(tempList);
 		}
-		// calculateWeights();
-		console.log('------------');
+		calculateWeights();
 	},
 	{ immediate: true }
 );

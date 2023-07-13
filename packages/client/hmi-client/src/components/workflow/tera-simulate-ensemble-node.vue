@@ -1,6 +1,5 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
-		<Button @click="runEnsemble">Run</Button>
 		<div class="invalid-block" v-if="props.node.statusCode === WorkflowStatus.INVALID">
 			<img class="image" src="@assets/svg/plants.svg" alt="" />
 			<p>Configure in side panel</p>
@@ -14,7 +13,6 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, watch, computed } from 'vue';
-import Button from 'primevue/button';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
@@ -33,9 +31,6 @@ const props = defineProps<{
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
 const mapping = ref<EnsembleModelConfigs[]>([]);
-const runEnsemble = async () => {
-	console.log('TODO');
-};
 
 watch(
 	() => modelConfigIds.value,
