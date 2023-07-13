@@ -551,7 +551,7 @@ const states = computed(() => model.value?.model?.states ?? []);
 
 // Model Transitions
 const transitions = computed(() =>
-	structuredClone(model.value?.model?.transitions ?? []).map((t) => ({
+	cloneDeep(model.value?.model?.transitions ?? []).map((t) => ({
 		id: t.id,
 		name: t?.properties?.name ?? t.id ?? '--',
 		input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
