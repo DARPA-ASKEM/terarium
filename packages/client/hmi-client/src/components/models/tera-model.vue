@@ -394,30 +394,40 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-if="modelView === ModelView.MODEL">
-			<tera-model-diagram
-				:model="model"
-				:is-editable="props.isEditable"
-				@update-model-content="updateModelContent"
-				@update-model-observables="updateModelObservables"
-			/>
-			<Accordion multiple :active-index="[0, 1]">
-				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-					<DataTable :value="relatedTerariumModels">
-						<Column field="name" header="Models" />
-					</DataTable>
-					<DataTable :value="relatedTerariumDatasets">
-						<Column field="name" header="Datasets" />
-					</DataTable>
-					<DataTable :value="relatedTerariumDocuments">
-						<Column field="name" header="Documents" />
-					</DataTable>
-				</AccordionTab>
-			</Accordion>
-		</template>
+		<Accordion
+			v-if="model && modelView === ModelView.MODEL"
+			multiple
+			:active-index="[0, 1, 2, 3, 4]"
+		>
+			<AccordionTab header="Diagram">
+				<tera-model-diagram
+					:model="model"
+					:is-editable="props.isEditable"
+					@update-model-content="updateModelContent"
+					@update-model-observables="updateModelObservables"
+				/>
+			</AccordionTab>
+			<AccordionTab header="Equations">
+				<tera-model-equation :model="model" :is-editable="props.isEditable" />
+			</AccordionTab>
+			<AccordionTab header="Observables">
+				<tera-model-observable :model="model" :is-editable="props.isEditable" />
+			</AccordionTab>
+			<AccordionTab header="Configurations">
+				<tera-model-configuration :model="model" :is-editable="props.isEditable" />
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents" />
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
 		<Teleport to="body">
 			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 				<template #header>
@@ -461,8 +471,10 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
-import TeraModelDiagram from './tera-model-diagram.vue';
-import TeraModelConfiguration from './tera-model-configuration.vue';
+import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
+import TeraModelEquation from '@/components/models/tera-model-equation.vue';
+import TeraModelObservable from '@/components/models/tera-model-observable.vue';
 
 enum ModelView {
 	DESCRIPTION,

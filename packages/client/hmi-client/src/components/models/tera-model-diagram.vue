@@ -1,161 +1,60 @@
 <template>
 	<main>
-		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1, 2]">
-			<AccordionTab header="Model diagram">
-				<TeraResizablePanel class="diagram-container">
-					<section class="graph-element">
-						<Toolbar>
-							<template #start>
-								<Button
-									@click="resetZoom"
-									label="Reset zoom"
-									class="p-button-sm p-button-outlined toolbar-button"
-								/>
-							</template>
-							<template #center>
-								<span class="toolbar-subgroup">
-									<Button
-										v-if="isEditing"
-										@click="addState"
-										label="Add state"
-										class="p-button-sm p-button-outlined toolbar-button"
-									/>
-									<Button
-										v-if="isEditing"
-										@click="addTransition"
-										label="Add transition"
-										class="p-button-sm p-button-outlined toolbar-button"
-									/>
-								</span>
-							</template>
-							<template #end>
-								<span class="toolbar-subgroup">
-									<Button
-										v-if="isEditing"
-										@click="cancelEdit"
-										label="Cancel"
-										class="p-button-sm p-button-outlined toolbar-button"
-									/>
-									<Button
-										@click="toggleEditMode"
-										:label="isEditing ? 'Save model' : 'Edit model'"
-										:class="
-											isEditing
-												? 'p-button-sm toolbar-button-saveModel'
-												: 'p-button-sm p-button-outlined toolbar-button'
-										"
-									/>
-								</span>
-							</template>
-						</Toolbar>
-						<div v-if="model" ref="graphElement" class="graph-element" />
-						<ContextMenu ref="menu" :model="contextMenuItems" />
-					</section>
-				</TeraResizablePanel>
-			</AccordionTab>
-			<AccordionTab header="Model equations">
-				<TeraResizablePanel
-					:class="isEditingEQ ? `diagram-container-editing` : `diagram-container`"
-				>
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingEQ"
-								@click="cancelEditEquations"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-								style="background-color: white"
-							/>
-							<Button
-								@click="isEditingEQ = true"
-								:label="isEditingEQ ? 'Update model' : 'Edit equation'"
-								:class="isEditingEQ ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
-							/>
-						</span>
-					</section>
-					<section class="math-editor-container" :class="mathEditorSelected">
-						<tera-math-editor
-							v-for="(eq, index) in latexEquationList"
-							:key="index"
-							:index="index"
-							:is-editable="isEditable"
-							:latex-equation="eq"
-							:is-editing-eq="isEditingEQ"
-							:is-math-ml-valid="isMathMLValid"
-							@equation-updated="setNewEquation"
-							@delete="deleteEquation"
-							ref="equationsRef"
-						>
-						</tera-math-editor>
+		<section v-if="!nodePreview" class="graph-element">
+			<Toolbar>
+				<template #start>
+					<Button
+						@click="resetZoom"
+						label="Reset zoom"
+						class="p-button-sm p-button-outlined toolbar-button"
+					/>
+				</template>
+				<template #center>
+					<span class="toolbar-subgroup">
 						<Button
-							v-if="isEditingEQ"
-							class="p-button-sm add-equation-button"
-							icon="pi pi-plus"
-							label="Add Equation"
-							@click="latexEquationList.push('')"
-							text
+							v-if="isEditing"
+							@click="addState"
+							label="Add state"
+							class="p-button-sm p-button-outlined toolbar-button"
 						/>
-					</section>
-				</TeraResizablePanel>
-			</AccordionTab>
-			<AccordionTab header="Model Observables">
-				<TeraResizablePanel
-					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
-					:start-height="200"
-				>
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingObservables"
-								@click="cancelEditObservables"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-							/>
-							<Button
-								v-if="observervablesList.length !== 0"
-								@click="updateObservables"
-								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
-								:class="
-									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
-								"
-							/>
-						</span>
-					</section>
-					<section class="observable-editor-container">
-						<tera-math-editor
-							v-for="(ob, index) in observervablesList"
-							:key="index"
-							:index="index"
-							:is-editable="isEditable"
-							:latex-equation="ob.expression || ''"
-							:id="ob.id"
-							:name="ob.name"
-							:is-editing-eq="isEditingObservables"
-							@equation-updated="setNewObservables"
-							@delete="deleteObservable"
-							ref="observablesRefs"
-						>
-						</tera-math-editor>
 						<Button
-							v-if="observablesList.length === 0 || isEditingObservables"
-							class="p-button-sm add-equation-button"
-							icon="pi pi-plus"
-							label="Add Observable"
-							@click="addObservable"
-							text
+							v-if="isEditing"
+							@click="addTransition"
+							label="Add transition"
+							class="p-button-sm p-button-outlined toolbar-button"
 						/>
-					</section>
-				</TeraResizablePanel>
-			</AccordionTab>
-		</Accordion>
+					</span>
+				</template>
+				<template #end>
+					<span class="toolbar-subgroup">
+						<Button
+							v-if="isEditing"
+							@click="cancelEdit"
+							label="Cancel"
+							class="p-button-sm p-button-outlined toolbar-button"
+						/>
+						<Button
+							@click="toggleEditMode"
+							:label="isEditing ? 'Save model' : 'Edit model'"
+							:class="
+								isEditing
+									? 'p-button-sm toolbar-button-saveModel'
+									: 'p-button-sm p-button-outlined toolbar-button'
+							"
+						/>
+					</span>
+				</template>
+			</Toolbar>
+			<div v-if="model" ref="graphElement" class="graph-element" />
+			<ContextMenu ref="menu" :model="contextMenuItems" />
+		</section>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
 </template>
 
 <script setup lang="ts">
-import { isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { watch, ref, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -168,23 +67,15 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
-import { mathmlToAMR } from '@/services/models/transformations';
 import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
-import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
-import { Model, Observable } from '@/types/Types';
-// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
-import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import { Model } from '@/types/Types';
 
 // Get rid of these emits
 const emit = defineEmits([
-	'update-tab-name',
 	'close-preview',
 	'asset-loaded',
 	'close-current-tab',
@@ -199,35 +90,12 @@ const props = defineProps<{
 }>();
 
 const menu = ref();
-
 const isEditing = ref<boolean>(false);
-const isEditingEQ = ref<boolean>(false);
-const isEditingObservables = ref<boolean>(false);
-
-const newModelName = ref('New Model');
 
 // Model Equations
 const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
-// const newLatexEquationsList = ref<string[]>([]);
-const isMathMLValid = ref<boolean>(true);
-
-// Observable Equations
-const observablesRefs = ref<any[]>([]);
-const observervablesList = ref<Observable[]>([]);
-
-const addObservable = () => {
-	isEditingObservables.value = true;
-	const obs: Observable = {
-		id: '',
-		name: '',
-		states: [],
-		expression: '',
-		expression_mathml: ''
-	};
-	observervablesList.value.push(obs);
-};
 
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
@@ -252,107 +120,6 @@ const updateLayout = () => {
 const handleResize = () => {
 	updateLayout();
 };
-
-const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
-	console.log(mathmlEq);
-	latexEquationList.value[index] = latexEq;
-};
-
-const deleteEquation = (index) => {
-	latexEquationList.value.splice(index, 1);
-};
-
-const deleteObservable = (index) => {
-	observervablesList.value.splice(index, 1);
-};
-
-const setNewObservables = (
-	index: number,
-	latexEq: string,
-	mathmlEq: string,
-	name: string,
-	id: string
-) => {
-	console.log(name);
-	const obs: Observable = {
-		id,
-		name,
-		states: [],
-		expression: latexEq,
-		expression_mathml: mathmlEq
-	};
-	observervablesList.value[index] = obs;
-	emit('update-model-observables', observervablesList.value);
-};
-
-const cancelEditEquations = () => {
-	isEditingEQ.value = false;
-	latexEquationList.value = latexEquationsOriginalList.value.map((eq) => eq);
-	equationsRef.value.forEach((eq) => {
-		eq.isEditingEquation = false;
-	});
-};
-
-const cancelEditObservables = () => {
-	isEditingObservables.value = false;
-	observervablesList.value = observervablesList.value.filter((eq) => eq.expression !== '');
-	observablesRefs.value.forEach((eq) => {
-		eq.isEditingEquation = false;
-	});
-};
-
-function extractVariablesFromMathML(mathML: string): string[] {
-	const parser = new DOMParser();
-	const xmlDoc = parser.parseFromString(mathML, 'text/xml');
-
-	const variables: string[] = [];
-
-	const miElements = xmlDoc.getElementsByTagName('mi');
-	for (let i = 0; i < miElements.length; i++) {
-		const miElement = miElements[i];
-		const variable = miElement.textContent?.trim();
-		if (variable) {
-			variables.push(variable);
-		}
-	}
-
-	return variables;
-}
-
-const updateObservables = () => {
-	if (isEditingObservables.value) {
-		isEditingObservables.value = false;
-		// update
-		emit(
-			'update-model-observables',
-			observablesRefs.value.map((eq, index) => {
-				console.log(eq);
-				return {
-					id: eq.id || observablesRefs.value[index].id,
-					name: eq.name || observablesRefs.value[index].name,
-					expression: eq.mathLiveField.value,
-					expression_mathml: eq.mathLiveField.getValue('math-ml'),
-					states: extractVariablesFromMathML(eq.mathLiveField.getValue('math-ml'))
-				};
-			})
-		);
-		observablesRefs.value.forEach((eq) => {
-			eq.isEditingEquation = false;
-		});
-	} else {
-		isEditingObservables.value = true;
-	}
-};
-
-const mathEditorSelected = computed(() => {
-	if (!isMathMLValid.value) {
-		return 'math-editor-error';
-	}
-	if (isEditingEQ.value) {
-		return 'math-editor-selected';
-	}
-	return '';
-});
 
 const updateLatexFormula = (equationsList: string[]) => {
 	latexEquationList.value = equationsList;
@@ -399,15 +166,6 @@ watch(
 		}
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
 );
 
 const editorKeyHandler = (event: KeyboardEvent) => {
@@ -520,52 +278,6 @@ watch(
 	{ deep: true }
 );
 
-const updatePetriNet = async (model: Model) => {
-	// Convert PetriNet into a graph
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
-
-	if (renderer) {
-		await renderer.setData(graphData);
-		renderer.isGraphDirty = true;
-		await renderer.render();
-	}
-	updateLatexFormula(latexEquationList.value);
-};
-
-const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
-	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
-	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
-};
-
-const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
-	isMathMLValid.value = false;
-	const cleanedMathML = mathMLStringList;
-	if (mathMLStringList.length === 0) {
-		isMathMLValid.value = true;
-	} else if (!editMode) {
-		try {
-			const amr = await mathmlToAMR(cleanedMathML, 'petrinet'); // This model is not compatible.
-			const model = amr?.model;
-			if (
-				(model && isArray(model) && model.length > 0) ||
-				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
-			) {
-				isMathMLValid.value = true;
-				if (props.model !== null) updatePetriNet(props.model);
-				// if (model !== null) updatePetriNet(model); -> doesn't work because model is NOT an AMR right now.
-			} else {
-				logger.error(
-					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-				);
-			}
-		} catch (e) {
-			isMathMLValid.value = false;
-		}
-	} else if (editMode) {
-		isMathMLValid.value = true;
-	}
-};
-
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
@@ -603,8 +315,6 @@ const addState = async () => {
 const addTransition = async () => {
 	renderer?.addNodeCenter(NodeType.Transition, 'transition');
 };
-
-const observablesList = computed(() => props.model?.semantics?.ode?.observables ?? []);
 
 onMounted(() => {
 	document.addEventListener('keyup', editorKeyHandler);
@@ -681,18 +391,6 @@ main {
 	display: flex;
 }
 
-section math-editor {
-	justify-content: center;
-}
-
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
-}
-
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
@@ -701,59 +399,6 @@ section math-editor {
 	overflow: hidden;
 	border: none;
 	position: relative;
-}
-
-.math-editor-container {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
-}
-
-.observable-editor-container {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
-}
-
-.controls {
-	display: flex;
-	flex-direction: row;
-	margin: 0.5rem 2.5rem 0px 10px;
-	justify-content: flex-end;
-	position: relative;
-	z-index: 20;
-}
-
-.edit-button {
-	margin-left: 5px;
-	margin-right: 5px;
-}
-
-.add-equation-button {
-	width: 150px;
-	min-height: 30px;
-	margin-left: 5px;
-	margin-top: 5px;
-	border: none;
-	outline: none;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
