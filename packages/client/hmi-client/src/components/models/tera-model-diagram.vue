@@ -152,7 +152,11 @@
 	</main>
 
 	<Teleport to="body">
-		<tera-modal v-if="openEditNode === true" @modal-mask-clicked="openEditNode = false">
+		<tera-modal
+			class="edit-modal"
+			v-if="openEditNode === true"
+			@modal-mask-clicked="openEditNode = false"
+		>
 			<template #header>
 				<h4>Add/Edit node</h4>
 			</template>
@@ -796,5 +800,9 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.edit-modal:deep(main) {
+	max-width: 50rem;
 }
 </style>
