@@ -10,26 +10,12 @@
 						:maxSize="equationPanelMaxSize"
 					>
 						<section class="graph-element">
-							<section v-if="showReflexivesToolbar">
-								<div
-									class="reflexives-row"
-									v-for="(option, stateType) in reflexiveOptions"
-									:key="stateType"
-								>
-									<div v-for="(transition, i) in option" :key="i">
-										<div>
-											{{ `Which groups of type '${stateType}' are allowed to '${transition.id}'` }}
-										</div>
-										<MultiSelect
-											class="p-inputtext-sm"
-											placeholder="Select"
-											:options="reflexiveNodeOptions[stateType]"
-											:model-value="statesToAddReflexives[stateType]"
-											@update:model-value="newValue => updateStatesToAddReflexives(newValue, stateType as string, transition.id)"
-										/>
-									</div>
-								</div>
-							</section>
+							<tera-reflexives-toolbar
+								v-if="showReflexivesToolbar && strataModel && baseModel"
+								:strata-model="strataModel"
+								:base-model="baseModel"
+								@model-updated="(value) => (typedModel = value)"
+							/>
 							<section class="legend">
 								<ul>
 									<li v-for="(type, i) in stateTypes" :key="i">
@@ -65,16 +51,14 @@ import {
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
-	convertToIGraph,
-	addReflexives,
-	addTyping
+	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
+import { Model, TypeSystem } from '@/types/Types';
 import { useNodeTypeColorMap } from '@/utils/color-schemes';
-import MultiSelect from 'primevue/multiselect';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
 // Get rid of these emits
 const emit = defineEmits([
@@ -92,7 +76,7 @@ const props = defineProps<{
 	showReflexivesToolbar: boolean;
 }>();
 
-const typedModel = ref<Model>(props.strataModel);
+const typedModel = ref<Model>(props.strataModel); // this is the object being edited
 
 const newModelName = ref('New Model');
 
@@ -153,96 +137,6 @@ const updateLatexFormula = (formulaString: string) => {
 	equationLatex.value = formulaString;
 	equationLatexOriginal.value = formulaString;
 };
-
-const excludedTransitionTypes: Transition[] = [];
-const reflexiveOptions = ref<{ [stateType: string]: Transition[] }>({});
-const reflexiveNodeOptions = computed<{ [id: string]: string[] }>(() => {
-	const options: { [id: string]: string[] } = {};
-	Object.keys(reflexiveOptions.value).forEach((key) => {
-		options[key] =
-			props.strataModel.semantics?.typing?.type_map.filter((m) => m[1] === key).map((m) => m[0]) ??
-			[];
-	});
-	return options;
-});
-const statesToAddReflexives = ref<{ [id: string]: string[] }>({});
-const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
-	const map: { [id: string]: string } = {};
-	props.baseModel?.semantics?.typing?.type_system.transitions.forEach((type) => {
-		const transitionId =
-			props.baseModel?.semantics?.typing?.type_map.find((m) => m[1] === type.id)?.[0] ?? '';
-		map[type.id] = transitionId;
-	});
-	return map;
-});
-
-function updateStatesToAddReflexives(
-	newValue: string[],
-	typeOfState: string,
-	typeOfTransition: string
-) {
-	statesToAddReflexives.value[typeOfState] = newValue;
-	const updatedTypeMap = typedModel.value.semantics?.typing?.type_map;
-	const updatedTypeSystem = typedModel.value.semantics?.typing?.type_system;
-
-	if (updatedTypeMap && updatedTypeSystem) {
-		newValue.forEach((stateId) => {
-			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`;
-			addReflexives(typedModel.value, stateId, newTransitionId);
-
-			const transition = props.baseModel?.semantics?.typing?.type_system.transitions.find(
-				(t) => t.id === typeOfTransition
-			);
-			if (transition) {
-				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
-					updatedTypeMap.push([newTransitionId, typeOfTransition]);
-				}
-				if (!updatedTypeSystem.transitions.find((t) => t.id === typeOfTransition)) {
-					updatedTypeSystem.transitions.push(transition);
-				}
-			}
-		});
-		const updatedTyping: TypingSemantics = {
-			type_map: updatedTypeMap,
-			type_system: updatedTypeSystem
-		};
-		addTyping(typedModel.value, updatedTyping);
-	}
-}
-
-watch(
-	[() => props.showReflexivesToolbar, () => props.baseModelTypeSystem],
-	() => {
-		if (props.showReflexivesToolbar && props.baseModelTypeSystem) {
-			const strataTypeTransitionIds =
-				props.strataModel.semantics?.typing?.type_system.transitions.map((t) => t.id);
-			const baseModelTypeTransitionIds = props.baseModelTypeSystem?.transitions.map((t) => t.id);
-			if (strataTypeTransitionIds && baseModelTypeTransitionIds) {
-				const excludedIds = baseModelTypeTransitionIds.filter(
-					(id) => !strataTypeTransitionIds.includes(id)
-				);
-				const excludedTransitions: Transition[] = props.baseModelTypeSystem?.transitions.filter(
-					(t) => excludedIds.includes(t.id)
-				);
-				excludedTransitionTypes.push(excludedTransitions[0]);
-			}
-
-			props.strataModel.model.states.forEach((state) => {
-				// get type of state for each state in strata model
-				const type: string =
-					props.strataModel.semantics?.typing?.type_map.find((m) => m[0] === state.id)?.[1] ?? '';
-				// for each excluded transition type, check if inputs or ouputs have the type of this state
-				const allowedTransitionsForState: Transition[] = excludedTransitionTypes.filter(
-					(excluded) => excluded.input.includes(type) || excluded.output.includes(type)
-				);
-				if (!reflexiveOptions.value[type]) {
-					reflexiveOptions.value[type] = allowedTransitionsForState;
-				}
-			});
-		}
-	},
-	{ immediate: true }
-);
 
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
@@ -327,6 +221,7 @@ main {
 	border-radius: 0.5rem;
 	padding: 0.5rem;
 }
+
 .legend-key-circle {
 	height: 24px;
 	width: 24px;
@@ -373,6 +268,7 @@ li {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
 }
+
 .splitter-container {
 	height: 100%;
 }
