@@ -151,6 +151,10 @@ function extractVariablesFromMathML(mathML: string): string[] {
 	return variables;
 }
 
+const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
+	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
+	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
+};
 function joinStringLists(lists: string[][]): string[] {
 	return ([] as string[]).concat(...lists);
 }
@@ -168,8 +172,6 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
 			) {
 				isMathMLValid.value = true;
-				if (props.model !== null) updatePetriNet(props.model);
-				// if (model !== null) updatePetriNet(model); -> doesn't work because model is NOT an AMR right now.
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
