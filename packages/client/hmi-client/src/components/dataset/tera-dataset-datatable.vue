@@ -110,12 +110,24 @@ const setBarChartData = (bins: any[]) => {
 		dummyLabels.push(i.toString());
 	}
 	return {
-		labels: dummyLabels,
+		labels: [
+			'Bin 1',
+			'Bin 2',
+			'Bin 3',
+			'Bin 4',
+			'Bin 5',
+			'Bin 6',
+			'Bin 7',
+			'Bin 8',
+			'Bin 9',
+			'Bin 10'
+		].reverse(),
 		datasets: [
 			{
-				label: false,
+				label: 'Count',
 				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
-				borderColor: documentStyle.getPropertyValue('--primary-color'),
+				borderColor: '#FFF',
+				borderWidth: 1,
 				data: bins,
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
@@ -137,7 +149,11 @@ const setChartOptions = () => {
 				display: false
 			},
 			tooltip: {
-				enabled: false
+				enabled: true,
+				position: 'nearest',
+				displayColors: false,
+				beforeTitle: 'Count:',
+				backgroundColor: '#666666dd'
 			}
 		},
 		scales: {
