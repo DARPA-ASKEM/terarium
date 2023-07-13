@@ -150,6 +150,12 @@
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
+
+	<Teleport to="body">
+		<tera-modal v-if="openAddState" @modal-mask-clicked="openAddState = false"> Hello </tera-modal>
+		<tera-modal v-if="openAddTransition" @modal-mask-clicked="openAddTransition = false">
+		</tera-modal>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -179,15 +185,12 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model, Observable } from '@/types/Types';
-// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
 const emit = defineEmits([
 	'update-tab-name',
-	'close-preview',
 	'asset-loaded',
-	'close-current-tab',
 	'update-model-content',
 	'update-model-observables'
 ]);
@@ -204,8 +207,6 @@ const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
 const isEditingObservables = ref<boolean>(false);
 
-const newModelName = ref('New Model');
-
 // Model Equations
 const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
@@ -216,6 +217,14 @@ const isMathMLValid = ref<boolean>(true);
 // Observable Equations
 const observablesRefs = ref<any[]>([]);
 const observervablesList = ref<Observable[]>([]);
+
+// For model editing
+const openAddState = ref<boolean>(false);
+// const addStateFields: { id: string, name: string } = {
+// 	id: '',
+// 	name: ''
+// };
+const openAddTransition = ref<boolean>(false);
 
 const addObservable = () => {
 	isEditingObservables.value = true;
@@ -402,15 +411,6 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
-);
-
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
 	if ((event.target as HTMLElement).tagName === 'INPUT') {
@@ -451,7 +451,9 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
-				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
+				openAddState.value = true;
+				console.log('!!!!!!!!!!!!!!!!!!!1');
+				// renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
 			}
 		}
 	},
@@ -460,6 +462,7 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {
+				openAddTransition.value = true;
 				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
 			}
 		}
