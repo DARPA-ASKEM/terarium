@@ -316,7 +316,7 @@ onUnmounted(() => {
 	height: 100%;
 	max-height: 100%;
 	min-height: 50vh;
-	flex-grow: 1;
+	resize: vertical;
 	overflow: hidden;
 	position: relative;
 }
