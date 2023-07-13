@@ -12,13 +12,13 @@
 				<span class="toolbar-subgroup">
 					<Button
 						v-if="isEditing"
-						@click="addState"
+						@click="addNode"
 						label="Add state"
 						class="p-button-sm p-button-outlined toolbar-button"
 					/>
 					<Button
 						v-if="isEditing"
-						@click="addTransition"
+						@click="addNode"
 						label="Add transition"
 						class="p-button-sm p-button-outlined toolbar-button"
 					/>
@@ -48,6 +48,23 @@
 		<ContextMenu ref="menu" :model="contextMenuItems" />
 	</section>
 	<div v-else-if="model" ref="graphElement" class="graph-element preview" />
+	<Teleport to="body">
+		<tera-modal v-if="openEditNode === true" @modal-mask-clicked="openEditNode = false">
+			<template #header>
+				<h4>Add/Edit node</h4>
+			</template>
+			<div>
+				<InputText v-model="editNodeObj.id" placeholder="Id" />
+			</div>
+			<div>
+				<InputText v-model="editNodeObj.name" placeholder="Name" />
+			</div>
+			<template #footer>
+				<Button label="Submit" @click="addNode()" />
+				<Button label="Cancel" @click="openEditNode = false" />
+			</template>
+		</tera-modal>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -65,11 +82,12 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
-import { updateModel } from '@/services/model';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
 
 const props = defineProps<{
 	model: Model | null;
@@ -83,6 +101,16 @@ const isEditing = ref<boolean>(false);
 // Model Equations
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
+
+// For model editing
+interface AddStateObj {
+	id: string;
+	name: string;
+	nodeType: string;
+}
+const openEditNode = ref<boolean>(false);
+const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+let previousId: any = null;
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
@@ -164,18 +192,16 @@ const contextMenuItems = ref([
 		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
-			}
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+			openEditNode.value = true;
 		}
 	},
 	{
 		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
-			}
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+			openEditNode.value = true;
 		}
 	}
 ]);
@@ -195,6 +221,17 @@ watch(
 			useStableZoomPan: true,
 			runLayout: runDagreLayout,
 			dragSelector: 'no-drag'
+		});
+
+		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
+			const data = selection.datum();
+			editNodeObj.value = {
+				id: data.id,
+				name: data.label,
+				nodeType: data.data.type
+			};
+			previousId = data.id;
+			openEditNode.value = true;
 		});
 
 		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
@@ -235,15 +272,6 @@ watch(
 	{ deep: true }
 );
 
-const toggleEditMode = () => {
-	isEditing.value = !isEditing.value;
-	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && props.model && renderer) {
-		emit('update-model-content', renderer.graph);
-		updateModel(renderer.graph.amr);
-	}
-};
-
 // Cancel existing edits, currently this will:
 // - Resets changes to the model structure
 const cancelEdit = async () => {
@@ -261,8 +289,26 @@ const cancelEdit = async () => {
 	}
 };
 const resetZoom = async () => renderer?.setToDefaultZoom();
-const addState = async () => renderer?.addNodeCenter(NodeType.State, 'state');
-const addTransition = async () => renderer?.addNodeCenter(NodeType.Transition, 'transition');
+const addNode = async () => {
+	if (!renderer) return;
+
+	const node = editNodeObj.value;
+
+	if (!previousId) {
+		if (eventX && eventY) {
+			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
+		} else {
+			renderer.addNodeCenter(node.nodeType, node.id, node.name);
+		}
+	} else {
+		renderer.updateNode(previousId, node.id, node.name);
+		previousId = null;
+	}
+
+	eventX = -1;
+	eventY = -1;
+	openEditNode.value = false;
+};
 
 onMounted(() => {
 	document.addEventListener('keyup', editorKeyHandler);
