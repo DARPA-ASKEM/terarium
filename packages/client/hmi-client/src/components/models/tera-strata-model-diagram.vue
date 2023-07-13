@@ -144,12 +144,14 @@ watch(
 watch(
 	() => props.baseModelTypeSystem,
 	() => {
+		const nodeIds: string[] = [];
 		props.baseModelTypeSystem?.states.forEach((s) => {
-			setNodeTypeColor(s.id);
+			nodeIds.push(s.id);
 		});
 		props.baseModelTypeSystem?.transitions.forEach((t) => {
-			setNodeTypeColor(t.id);
+			nodeIds.push(t.id);
 		});
+		setNodeTypeColor(nodeIds);
 	}
 );
 

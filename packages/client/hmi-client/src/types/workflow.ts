@@ -4,7 +4,8 @@ export enum WorkflowOperationTypes {
 	CALIBRATION = 'CalibrationOperation',
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',
-	SIMULATE = 'SimulateOperation',
+	SIMULATE_JULIA = 'SimulateJuliaOperation',
+	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
 	STRATIFY = 'Stratify'
 }
 
