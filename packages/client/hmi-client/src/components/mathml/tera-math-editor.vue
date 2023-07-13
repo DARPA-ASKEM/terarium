@@ -1,35 +1,65 @@
 <template>
 	<section class="math-editor">
-		<div :class="test2">
-			<section class="menu" v-if="isEditingEquation">
-				<div v-if="isEditingEquation" class="input-label">MathLive</div>
-				<Button
-					class="delete"
-					icon="pi pi-trash"
-					aria-label="Delete"
-					@click="console.log('click')"
-				></Button>
-			</section>
-			<math-field
-				:class="mathFieldStyle"
-				ref="mathLiveField"
-				:disabled="!isEditingEq"
-				@click="isEditingEq ? (isEditingEquation = true) : console.log(`abc`)"
-				><slot>{{ props.latexEquation }}</slot></math-field
+		<div :class="expandedDiv">
+			<div v-if="isEditingEquation" class="input-label">MathLive</div>
+			<div
+				class="eq"
+				@mouseenter="hover = true"
+				@mouseleave="hover = false"
+				@focus="hover = true"
+				@blur="hover = false"
 			>
-			<div v-if="isEditingEquation" class="input-label">LaTeX</div>
-			<section class="latex-input" v-if="isEditingEquation">
-				<InputText
-					v-model="latexTextInput"
-					:class="latexTextInputStyle"
-					id="latexInput"
-					type="text"
-					aria-label="latexInput"
-					:unstyled="true"
-					@keyup="updateEquation"
-					@click="isEditingEq ? (isEditingEquation = true) : console.log(`abc`)"
-				/>
-			</section>
+				<math-field
+					:class="mathFieldStyle"
+					ref="mathLiveField"
+					:disabled="!isEditingEq"
+					@click="isEditingEq ? (isEditingEquation = true) : null"
+					@focus="showKeyboard"
+					@blur="hideKeyboard"
+					><slot>{{ props.latexEquation }}</slot>
+				</math-field>
+				<section class="menu">
+					<Button
+						type="button"
+						class="delete"
+						label="Delete"
+						@click="toggleMenu"
+						aria-haspopup="true"
+						aria-controls="overlay_menu"
+						:style="hover && isEditingEq && !isEditingEquation ? `display: flex` : ``"
+					/>
+					<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
+				</section>
+			</div>
+			<div v-if="isEditingEquation">
+				<div class="input-label">LaTeX</div>
+				<section class="latex-input" v-if="isEditingEquation">
+					<InputText
+						v-model="latexTextInput"
+						class="latex-input-text"
+						id="latexInput"
+						type="text"
+						aria-label="latexInput"
+						:unstyled="true"
+						@keyup="updateEquation"
+						@click="isEditingEq ? (isEditingEquation = true) : null"
+					/>
+				</section>
+				<div class="controls">
+					<Button
+						class="control-button"
+						label="Save"
+						aria-label="Save"
+						@click="isEditingEquation = false"
+					></Button>
+					<Button
+						class="control-button"
+						label="Cancel"
+						aria-label="Cancel"
+						@click="isEditingEquation = false"
+					></Button>
+				</div>
+			</div>
 		</div>
 	</section>
 </template>
@@ -39,30 +69,48 @@ import { ref, watch, onMounted, computed } from 'vue';
 import { Mathfield, MathfieldElement } from 'mathlive';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 // import { logger } from '@/utils/logger';
+
+const menu = ref();
+const items = ref([
+	{
+		items: [
+			{
+				label: 'Confirm Delete?',
+				command: () => {
+					emit('delete', props.index);
+				}
+			}
+		]
+	}
+]);
+
+const toggleMenu = (event) => {
+	event.target.style = `display:flex`;
+	menu.value.toggle(event);
+};
 
 const mathLiveField = ref<Mathfield | null>(new MathfieldElement({ fontsDirectory: 'fonts/' }));
 
-const emit = defineEmits(['equation-updated']);
+const emit = defineEmits(['equation-updated', 'delete']);
+const hover = ref(false);
 
 onMounted(() => {
-	mathLiveField.value?.setOptions({ virtualKeyboardMode: 'onfocus' });
 	latexTextInput.value = props.latexEquation;
 });
 const latexTextInput = ref<string>('');
 const isEditingEquation = ref(false);
-const latexTextInputStyle = computed(() => `latex-input-text`);
 
 const mathFieldStyle = computed(() => {
 	if (isEditingEquation.value) {
-		return `mathlive-equation editeq`;
+		return `mathlive-equation editing2`;
 	}
 
 	return props.isEditingEq ? `mathlive-equation editing` : `mathlive-equation`;
 });
 
 const updateEquation = () => {
-	console.log(mathLiveField.value?.getValue('math-ml'));
 	emit(
 		'equation-updated',
 		props.index,
@@ -71,10 +119,11 @@ const updateEquation = () => {
 	);
 };
 
-const test2 = computed(() => (isEditingEquation.value ? `this-class` : ``));
+const expandedDiv = computed(() => (isEditingEquation.value ? `expanded-div` : ``));
 
 defineExpose({
-	mathLiveField
+	mathLiveField,
+	isEditingEquation
 });
 
 const props = defineProps({
@@ -108,24 +157,46 @@ const renderEquations = () => {
 	mathLiveField.value?.setValue(props.latexEquation, { suppressChangeNotifications: true });
 };
 
+const showKeyboard = () => {
+	mathLiveField.value?.setOptions({ virtualKeyboardMode: 'manual' });
+};
+
+const hideKeyboard = () => {
+	mathLiveField.value?.setOptions({ virtualKeyboardMode: 'off' });
+};
+
 watch(
 	() => props.latexEquation,
 	() => {
+		if (props.latexEquation === '') {
+			isEditingEquation.value = true;
+		}
 		renderEquations();
 	}
 );
 
 onMounted(() => {
+	if (props.latexEquation === '') {
+		isEditingEquation.value = true;
+	}
 	renderEquations();
 });
 </script>
 
 <style scoped>
+.eq {
+	position: relative;
+	display: flex;
+	flex-grow: 1;
+}
+
 math-field {
 	border-radius: 4px;
 	border: none;
 	outline: none;
 	font-size: 1em;
+	width: 99%;
+	flex-grow: 1;
 	transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
@@ -133,24 +204,13 @@ math-field[disabled] {
 	opacity: 1;
 }
 
-math-field:focus {
-	border-color: var(--primary-color);
-	box-shadow: inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px var(--primary-color);
-}
-
-.mf {
-	background-color: var(--gray-100);
-}
-
 .mathlive-equation {
-	display: flex;
 	flex-direction: row;
 	padding: 10px;
 	align-items: center;
-	justify-content: center;
 	width: 99%;
 	margin: 5px;
+	padding-left: 20px;
 	flex-grow: 1;
 }
 
@@ -168,18 +228,33 @@ math-field:focus {
 	font-family: var(--font-family);
 }
 
-.this-class {
+.expanded-div {
 	background-color: var(--gray-0);
 	padding: 10px;
 	margin: 10px;
 	box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
-	border: 1px solid var(--primary-color);
+	border: 1px solid var(--surface-border);
 	border-radius: 3px;
 }
 
 .editing {
-	background-color: var(--gray-100);
+	background-color: var(--gray-0);
 	cursor: pointer;
+}
+
+.editing:hover {
+	background-color: var(--surface-highlight);
+	cursor: pointer;
+}
+
+.editing2 {
+	border: 1px solid var(--surface-border);
+	background-color: var(--gray-0);
+	margin-right: 10px;
+}
+
+.editing2:hover {
+	background-color: var(--gray-0);
 }
 
 .editeq {
@@ -190,7 +265,7 @@ math-field:focus {
 	flex-direction: row;
 	background-color: var(--gray-0);
 	border-color: var(--gray-300);
-	padding: 5px;
+	padding: 10px;
 	height: auto;
 	resize: none;
 	overflow-y: hidden;
@@ -202,17 +277,52 @@ math-field:focus {
 	margin: 5px;
 }
 
+.latex-input-text:focus {
+	box-shadow: none !important;
+	outline: none;
+}
+
 .menu {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
+	position: absolute;
+	right: 20px;
 	padding-right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	margin: auto 0;
 }
 
 .delete {
 	background-color: white;
+	height: 30px;
 	color: black;
+	background-color: var(--gray-0);
 	justify-content: flex-end;
-	width: 50px;
+	width: 70px;
+	border: 1px solid var(--surface-border);
+	display: none;
+}
+
+.controls {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+	padding-right: 15px;
+}
+
+.control-button {
+	background-color: white;
+	height: 30px;
+	color: black;
+	background-color: var(--gray-0);
+	justify-content: flex-end;
+	width: 70px;
+	margin-left: 10px;
+	border: 1px solid var(--surface-border);
+	border-radius: 6px;
+	font-family: Figtree;
+	font-size: 10px;
+	font-weight: 500;
+	line-height: 16px;
+	letter-spacing: 0.75px;
 }
 </style>
