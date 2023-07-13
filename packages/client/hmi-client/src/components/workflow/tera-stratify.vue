@@ -41,10 +41,11 @@
 							class="p-button-sm p-button-outlined"
 							label="Go back"
 							icon="pi pi-arrow-left"
-							@click="strataModel = null"
+							:disabled="stratifyStep === 0"
+							@click="stratifyStep--"
 						/>
 						<Button
-							v-if="!isBaseModelFullyTyped"
+							v-if="!typedBaseModel"
 							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
@@ -63,13 +64,12 @@
 				<Accordion :active-index="0">
 					<AccordionTab header="Model">
 						<div class="step-1-inner">
-							<tera-strata-model-diagram
+							<tera-typed-model-diagram
 								v-if="model"
 								:model="model"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
-								@all-nodes-typed="isBaseModelFullyTyped = true"
-								:show-reflexives-toolbar="false"
+								@all-nodes-typed="(typedModel) => onAllNodesTyped(typedModel)"
 							/>
 							<div class="input">
 								<label for="strata-type">Select a strata type</label>
@@ -103,9 +103,10 @@
 							</section>
 							<section v-else>
 								<tera-strata-model-diagram
-									:model="strataModel"
-									:show-typing-toolbar="false"
-									:show-reflexives-toolbar="isBaseModelFullyTyped"
+									:strata-model="strataModel"
+									:base-model="typedBaseModel"
+									:base-model-type-system="typedBaseModel?.semantics?.typing?.type_system"
+									:show-reflexives-toolbar="stratifyStep === 3"
 								/>
 							</section>
 						</div>
@@ -132,6 +133,7 @@ import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
+import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -151,7 +153,7 @@ const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
 	() => strataModel.value?.semantics?.typing?.type_system
 );
-const isBaseModelFullyTyped = ref(false);
+const typedBaseModel = ref<Model | null>(null);
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -162,6 +164,10 @@ function generateStrataModel() {
 			strataModel.value = generateLocationStrataModel(stateNames);
 		}
 	}
+}
+
+function onAllNodesTyped(typedModel: Model) {
+	typedBaseModel.value = typedModel;
 }
 
 watch(

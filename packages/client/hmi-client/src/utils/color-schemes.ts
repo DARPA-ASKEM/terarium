@@ -33,6 +33,9 @@ function setNodeTypeColor(id: string): void {
 	if (!id) {
 		return;
 	}
+	if (nodeTypeColorMap.value[id]) {
+		return;
+	}
 	nodeTypeColorMap.value[id] = nodeTypeColors[count.value];
 	if (count.value >= nodeTypeColors.length) {
 		count.value = 0;

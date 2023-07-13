@@ -10,55 +10,25 @@
 						:maxSize="equationPanelMaxSize"
 					>
 						<section class="graph-element">
-							<section v-if="showTypingToolbar">
-								<div class="typing-row">
-									<div>COLOR</div>
-									<div class="input-header">NODE TYPE</div>
-									<div class="input-header">NAME OF TYPE</div>
-									<div class="input-header">ASSIGN TO</div>
-									<div><div class="empty-spacer" :style="{ width: `28px` }"></div></div>
-								</div>
-								<div class="typing-row" v-for="(row, index) in typedRows" :key="index">
-									<!-- legend key -->
-									<div>
-										<div
-											:class="getLegendKeyClass(row.nodeType ?? '')"
-											:style="getLegendKeyStyle(row.typeName ?? '')"
-										/>
-									</div>
-									<div>
-										<!-- node type -->
-										<Dropdown
-											class="p-inputtext-sm"
-											:options="Object.keys(assignToOptions[index])"
-											v-model="row.nodeType"
-										/>
-									</div>
-									<div>
-										<!-- name of type -->
-										<InputText class="p-inputtext-sm" v-model="row.typeName" />
-									</div>
-									<div>
-										<!-- assign to -->
+							<section v-if="showReflexivesToolbar">
+								<div
+									class="reflexives-row"
+									v-for="(option, stateType) in reflexiveOptions"
+									:key="stateType"
+								>
+									<div v-for="(transition, i) in option" :key="i">
+										<div>
+											{{ `Which groups of type '${stateType}' are allowed to '${transition.id}'` }}
+										</div>
 										<MultiSelect
 											class="p-inputtext-sm"
-											placeholder="Select nodes"
-											:options="assignToOptions[index][row.nodeType ?? '']"
-											v-model="row.assignTo"
+											placeholder="Select"
+											:options="reflexiveNodeOptions[stateType]"
+											:model-value="statesToAddReflexives[stateType]"
+											@update:model-value="newValue => updateStatesToAddReflexives(newValue, stateType as string, transition.id)"
 										/>
 									</div>
-									<!-- cancel row  -->
-									<div>
-										<Button icon="pi pi-times" text rounded />
-									</div>
 								</div>
-								<Button
-									label="Add type"
-									icon="pi pi-plus"
-									class="p-button-sm"
-									text
-									@click="addTypedRow"
-								/>
 							</section>
 							<section class="legend">
 								<ul>
@@ -96,20 +66,13 @@ import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
 	convertToIGraph,
-	addTyping
+	addReflexives
 } from '@/model-representation/petrinet/petrinet-service';
-import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
+import { Model, Transition, TypeSystem } from '@/types/Types';
 import { useNodeTypeColorMap } from '@/utils/color-schemes';
-import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import InputText from 'primevue/inputtext';
-import {
-	generateTypeTransition,
-	generateTypeState
-} from '@/services/models/stratification-service';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -118,18 +81,17 @@ const emit = defineEmits([
 	'close-preview',
 	'asset-loaded',
 	'close-current-tab',
-	'update-model-content',
-	'all-nodes-typed'
+	'update-model-content'
 ]);
 
 const props = defineProps<{
-	model: Model;
-	showTypingToolbar: boolean;
-	typeSystem?: TypeSystem;
+	strataModel: Model;
+	baseModel: Model | null;
+	baseModelTypeSystem?: TypeSystem;
 	showReflexivesToolbar: boolean;
 }>();
 
-const typedModel = ref<Model>(props.model);
+const typedModel = ref<Model>(props.strataModel);
 
 const newModelName = ref('New Model');
 
@@ -149,52 +111,13 @@ const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
 const stateTypes = computed(() =>
-	props.model.semantics?.typing?.type_system?.states.map((s) => s.name)
+	props.strataModel.semantics?.typing?.type_system?.states.map((s) => s.name)
 );
 const transitionTypes = computed(() =>
-	props.model.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
+	props.strataModel.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
 );
-// these are values that user will edit/select that correspond to each row in the model typing editor
-const typedRows = ref<
-	{
-		nodeType?: string;
-		typeName?: string;
-		assignTo?: string[];
-	}[]
->([]);
-
-const numberNodes = computed(
-	() => typedModel.value.model.states.length + typedModel.value.model.transitions.length
-);
-const numberTypedRows = computed(() => typedModel.value.semantics?.typing?.type_map.length ?? 0);
-
-// TODO: don't allow user to assign a variable or transition twice
-const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
-	const options: { [s: string]: string[] }[] = [];
-	typedRows.value.forEach(() => {
-		options.push({
-			Variable: typedModel.value.model.states.map((s) => s.id),
-			Transition: typedModel.value.model.transitions.map((t) => t.id)
-		});
-	});
-	return options;
-});
 
 const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorMap();
-
-function addTypedRow() {
-	typedRows.value.push({});
-}
-
-function getLegendKeyClass(type: string) {
-	if (type === 'Variable') {
-		return 'legend-key-circle';
-	}
-	if (type === 'Transition') {
-		return 'legend-key-square';
-	}
-	return '';
-}
 
 function getLegendKeyStyle(id: string) {
 	return {
@@ -230,13 +153,84 @@ const updateLatexFormula = (formulaString: string) => {
 	equationLatexOriginal.value = formulaString;
 };
 
+const excludedTransitionTypes: Transition[] = [];
+const reflexiveOptions = ref<{ [stateType: string]: Transition[] }>({});
+const reflexiveNodeOptions = computed<{ [id: string]: string[] }>(() => {
+	const options: { [id: string]: string[] } = {};
+	Object.keys(reflexiveOptions.value).forEach((key) => {
+		options[key] =
+			props.strataModel.semantics?.typing?.type_map.filter((m) => m[1] === key).map((m) => m[0]) ??
+			[];
+	});
+	return options;
+});
+const statesToAddReflexives = ref<{ [id: string]: string[] }>({});
+const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
+	const map: { [id: string]: string } = {};
+	props.baseModel?.semantics?.typing?.type_system.transitions.forEach((type) => {
+		const transitionId =
+			props.baseModel?.semantics?.typing?.type_map.find((m) => m[1] === type.id)?.[0] ?? '';
+		map[type.id] = transitionId;
+	});
+	return map;
+});
+
+function updateStatesToAddReflexives(
+	newValue: string[],
+	typeOfState: string,
+	typeOfTransition: string
+) {
+	statesToAddReflexives.value[typeOfState] = newValue;
+	newValue.forEach((stateId) => {
+		addReflexives(
+			typedModel.value,
+			stateId,
+			`${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`
+		);
+	});
+}
+
+watch(
+	[() => props.showReflexivesToolbar, () => props.baseModelTypeSystem],
+	() => {
+		if (props.showReflexivesToolbar && props.baseModelTypeSystem) {
+			const strataTypeTransitionIds =
+				props.strataModel.semantics?.typing?.type_system.transitions.map((t) => t.id);
+			const baseModelTypeTransitionIds = props.baseModelTypeSystem?.transitions.map((t) => t.id);
+			if (strataTypeTransitionIds && baseModelTypeTransitionIds) {
+				const excludedIds = baseModelTypeTransitionIds.filter(
+					(id) => !strataTypeTransitionIds.includes(id)
+				);
+				const excludedTransitions: Transition[] = props.baseModelTypeSystem?.transitions.filter(
+					(t) => excludedIds.includes(t.id)
+				);
+				excludedTransitionTypes.push(excludedTransitions[0]);
+			}
+
+			props.strataModel.model.states.forEach((state) => {
+				// get type of state for each state in strata model
+				const type: string =
+					props.strataModel.semantics?.typing?.type_map.find((m) => m[0] === state.id)?.[1] ?? '';
+				// for each excluded transition type, check if inputs or ouputs have the type of this state
+				const allowedTransitionsForState: Transition[] = excludedTransitionTypes.filter(
+					(excluded) => excluded.input.includes(type) || excluded.output.includes(type)
+				);
+				if (!reflexiveOptions.value[type]) {
+					reflexiveOptions.value[type] = allowedTransitionsForState;
+				}
+			});
+		}
+	},
+	{ immediate: true }
+);
+
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
-	() => [props.model],
+	() => [props.strataModel],
 	async () => {
 		updateLatexFormula('');
-		typedModel.value = props.model;
-		const data = await petriToLatex(convertAMRToACSet(props.model));
+		typedModel.value = props.strataModel;
+		const data = await petriToLatex(convertAMRToACSet(props.strataModel));
 		if (data) {
 			updateLatexFormula(data);
 		}
@@ -245,24 +239,14 @@ watch(
 );
 
 watch(
-	() => props.typeSystem,
+	() => props.baseModelTypeSystem,
 	() => {
-		props.typeSystem?.states.forEach((s) => {
+		props.baseModelTypeSystem?.states.forEach((s) => {
 			setNodeTypeColor(s.id);
 		});
-		props.typeSystem?.transitions.forEach((t) => {
+		props.baseModelTypeSystem?.transitions.forEach((t) => {
 			setNodeTypeColor(t.id);
 		});
-		typedRows.value.push(
-			{
-				nodeType: 'Variable',
-				typeName: props.typeSystem?.states[0].name
-			},
-			{
-				nodeType: 'Transition',
-				typeName: props.typeSystem?.transitions[0].properties?.name
-			}
-		);
 	}
 );
 
@@ -274,84 +258,6 @@ watch(
 		}
 	}
 );
-
-// construct TypingSemantics data structure when user updates variable/transition assignments
-watch(
-	typedRows,
-	() => {
-		const stateTypedMap: string[][] = [];
-		const transitionTypedMap: string[][] = [];
-		const updatedTypeSystem: TypeSystem = { states: [], transitions: [] };
-		let typingSemantics: TypingSemantics;
-		typedRows.value.forEach((row) =>
-			row.assignTo?.forEach((parameter) => {
-				if (row.typeName && row.typeName && row.nodeType) {
-					if (row.nodeType === 'Variable') {
-						stateTypedMap.push([parameter, row.typeName]);
-					}
-					if (row.nodeType === 'Transition') {
-						transitionTypedMap.push([parameter, row.typeName]);
-					}
-				}
-			})
-		);
-
-		stateTypedMap.forEach((map) => {
-			// See if there is a corresponding type defined in the strata model's type system
-			// If not, generate a new one
-			const stateId = map[0];
-			const typeId = map[1];
-			let state: State | undefined | null;
-			state =
-				props.typeSystem?.states.find((s) => typeId === s.id) ||
-				typedModel.value.semantics?.typing?.type_system.states.find((s) => typeId === s.id);
-			if (state && !updatedTypeSystem.states.find((s) => s.id === state!.id)) {
-				updatedTypeSystem.states.push(state);
-			} else if (!updatedTypeSystem.states.find((s) => s.id === typeId)) {
-				state = generateTypeState(typedModel.value, stateId, typeId);
-				if (state) {
-					updatedTypeSystem.states.push(state);
-				}
-			}
-		});
-
-		if (stateTypedMap.length > 0) {
-			typingSemantics = { type_map: stateTypedMap, type_system: updatedTypeSystem };
-			addTyping(typedModel.value, typingSemantics);
-		}
-
-		transitionTypedMap.forEach((map) => {
-			// See if there is a corresponding type defined in the strata model's type system
-			// If not, generate a new one
-			const transitionId = map[0];
-			const typeId = map[1];
-			let transition: Transition | undefined | null;
-			transition =
-				props.typeSystem?.transitions.find((t) => map[1] === t.id) ||
-				typedModel.value.semantics?.typing?.type_system.transitions.find((t) => typeId === t.id);
-			if (transition && !updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
-				updatedTypeSystem.transitions.push(transition);
-			} else if (!updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
-				transition = generateTypeTransition(typedModel.value, transitionId, typeId);
-				if (transition) {
-					updatedTypeSystem.transitions.push(transition);
-				}
-			}
-		});
-		if (transitionTypedMap.length > 0) {
-			const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
-			typingSemantics = { type_map: typeMap, type_system: updatedTypeSystem };
-			addTyping(typedModel.value, typingSemantics);
-		}
-	},
-	{ deep: true }
-);
-
-watch(numberTypedRows, () => {
-	if (numberTypedRows.value === numberNodes.value) {
-		emit('all-nodes-typed');
-	}
-});
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
@@ -480,39 +386,27 @@ li {
 	height: 100%;
 }
 
-.typing-row {
+.reflexives-row {
 	display: flex;
-	justify-content: space-around;
+	flex-direction: column;
+}
+
+.reflexives-row > div {
+	display: flex;
+	justify-content: space-between;
 	align-items: center;
-	padding: 1rem;
-	color: var(--text-color-subdued);
-	gap: 1rem;
-	font-size: var(--font-caption);
 }
 
-.typing-row > div {
-	display: flex;
-	flex: 1 1 auto;
-	justify-content: flex-start;
-}
-
-.typing-row > div:first-of-type {
-	flex: 0 0 48px;
-	min-width: 0;
-}
-
-.typing-row > div:last-of-type {
-	flex: 0 1 28px;
-	min-width: 0;
+.reflexives-row > div > div {
+	margin: 1rem;
 }
 
 .p-inputtext,
-.p-dropdown,
 .p-multiselect {
 	min-width: 150px;
 }
 
-.input-header {
-	min-width: 150px;
+.p-multiselect .p-multiselect-label {
+	padding: 0.875rem 0.875rem;
 }
 </style>
