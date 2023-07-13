@@ -110,7 +110,6 @@ watch(
 					modelToCompareTypeSystem.value?.transitions.filter((t) => unassignedIds.includes(t.id));
 				if (unassignedTransitions.length > 0) {
 					unassignedTransitionTypes = unassignedTransitionTypes.concat(unassignedTransitions);
-					console.log(unassignedTransitionTypes);
 				}
 			}
 			props.modelToUpdate.model.states.forEach((state) => {
