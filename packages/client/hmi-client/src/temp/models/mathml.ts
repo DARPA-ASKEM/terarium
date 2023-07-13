@@ -3,6 +3,7 @@
 import { Model } from '@/types/Types';
 
 export const MATHMLMODEL: Model = {
+	id: 'mathml model',
 	name: 'mathml model',
 	schema:
 		'https://github.com/DARPA-ASKEM/Model-Representations/blob/main/petrinet/petrinet_schema.json',
@@ -65,22 +66,22 @@ export const MATHMLMODEL: Model = {
 				{
 					target: 'β',
 					expression: 'β*I*S',
-					expression_mathml: null
+					expression_mathml: 'null'
 				},
 				{
 					target: 'γ',
 					expression: 'γ*I',
-					expression_mathml: null
+					expression_mathml: 'null'
 				},
 				{
 					target: 'δ',
 					expression: 'δ*E',
-					expression_mathml: null
+					expression_mathml: 'null'
 				},
 				{
 					target: 'ρ',
 					expression: 'ρ*I',
-					expression_mathml: null
+					expression_mathml: 'null'
 				}
 			],
 			initials: [
