@@ -1,6 +1,6 @@
 <template>
-	<section class="controls">
-		<span v-if="props.isEditable" class="equation-edit-button">
+	<main>
+		<aside v-if="props.isEditable">
 			<Button
 				v-if="isEditing"
 				@click="cancelEditEquations"
@@ -13,30 +13,30 @@
 				:label="isEditing ? 'Update model' : 'Edit equation'"
 				:class="isEditing ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
 			/>
-		</span>
-	</section>
-	<section class="math-editor-container" :class="mathEditorSelected">
-		<tera-math-editor
-			v-for="(eq, index) in latexEquationList"
-			:key="index"
-			:index="index"
-			:is-editable="isEditable"
-			:latex-equation="eq"
-			:is-editing-eq="isEditing"
-			:is-math-ml-valid="isMathMLValid"
-			@equation-updated="setNewEquation"
-			@delete="deleteEquation"
-			ref="equationsRef"
-		/>
-		<Button
-			v-if="isEditing"
-			class="p-button-sm add-equation-button"
-			icon="pi pi-plus"
-			label="Add Equation"
-			@click="latexEquationList.push('')"
-			text
-		/>
-	</section>
+		</aside>
+		<section class="math-editor-container" :class="mathEditorSelected">
+			<tera-math-editor
+				v-for="(eq, index) in latexEquationList"
+				:key="index"
+				:index="index"
+				:is-editable="isEditable"
+				:latex-equation="eq"
+				:is-editing-eq="isEditing"
+				:is-math-ml-valid="isMathMLValid"
+				@equation-updated="setNewEquation"
+				@delete="deleteEquation"
+				ref="equationsRef"
+			/>
+			<Button
+				v-if="isEditing"
+				class="p-button-sm add-equation-button"
+				icon="pi pi-plus"
+				label="Add Equation"
+				@click="latexEquationList.push('')"
+				text
+			/>
+		</section>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -133,8 +133,9 @@ watch(
 </script>
 
 <style scoped>
-section math-editor {
-	justify-content: center;
+main {
+	position: relative;
+	min-height: 50vh;
 }
 
 .math-editor-container {
@@ -144,7 +145,6 @@ section math-editor {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	min-height: 50vh;
 	flex-direction: column;
 	border: 4px solid transparent;
 	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
@@ -153,7 +153,7 @@ section math-editor {
 	padding-bottom: 20px;
 }
 
-.controls {
+aside {
 	display: flex;
 	flex-direction: row;
 	margin: 0.5rem 2.5rem 0px 10px;
