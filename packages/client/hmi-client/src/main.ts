@@ -61,12 +61,14 @@ router.beforeEach((to, from, next) => {
 			EventType.RouteTiming,
 			resources.activeProject?.id,
 			JSON.stringify({
-				name: previousRoute,
+				name: previousRoute.name,
+				path: previousRoute.path,
+				fullPath: previousRoute.fullPath,
 				timeSpent
 			})
 		);
 	}
-	previousRoute = to.name;
+	previousRoute = to;
 	routeStartedMillis = Date.now();
 	next();
 });
