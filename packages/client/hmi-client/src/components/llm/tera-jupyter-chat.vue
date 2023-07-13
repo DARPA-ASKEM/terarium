@@ -136,7 +136,7 @@ const addCodeCell = () => {
 			msg_type: 'code_cell',
 			username: 'username',
 			session: 'c4af9869-23efbe216d9848478c1651fd',
-			date: date,
+			date,
 			version: '5.3'
 		},
 		parent_header: {},

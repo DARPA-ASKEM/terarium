@@ -67,7 +67,7 @@
 						class="tera-dataset-datatable"
 						paginatorPosition="bottom"
 						:rows="10"
-						:raw-content="m.content"
+						:raw-content="(m.content as CsvAsset)"
 						:preview-mode="true"
 						:showGridlines="true"
 						table-style="width: 100%; font-size: small;"
@@ -94,7 +94,8 @@ const emit = defineEmits(['has-been-drawn', 'is-typing', 'cell-updated']);
 const props = defineProps<{
 	jupyterSession: SessionContext;
 	msg: {
-		query: string;
+		query_id: string;
+		query: string | null;
 		timestamp: string;
 		messages: JupyterMessage[];
 		resultingCsv: CsvAsset | null;
