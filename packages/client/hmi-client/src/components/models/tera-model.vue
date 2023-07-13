@@ -542,7 +542,7 @@ const isRenamingModel = ref(false);
 const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
 
 const isCopyModelModalVisible = ref<boolean>(false);
-const copyModelNameInputPrompt = ref<string>('What do you want to name it?');
+const copyModelNameInputPrompt = ref<string>('');
 const copyModelName = ref<string>('');
 
 const isValidName = ref<boolean>(true);
@@ -612,6 +612,7 @@ function initiateModelDuplication() {
 		logger.info('Failed to duplicate model.');
 		return;
 	}
+	copyModelNameInputPrompt.value = 'What do you want to name it?';
 	const modelName = getJustModelName(model.value.name.trim());
 	copyModelName.value = getSuggestedModelName(modelName, 1);
 	isCopyModelModalVisible.value = true;
