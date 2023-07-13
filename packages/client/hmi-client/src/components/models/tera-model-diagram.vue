@@ -188,8 +188,7 @@ const handleResize = () => {
 	updateLayout();
 };
 
-const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
-	console.log(mathmlEq);
+const setNewEquation = (index: number, latexEq: string) => {
 	latexEquationList.value[index] = latexEq;
 };
 
@@ -234,7 +233,6 @@ watch(
 		updateLatexFormula([]);
 		if (props.model) {
 			const data = await petriToLatex(convertAMRToACSet(props.model));
-			console.log(data);
 			const eqList = data
 				?.split(' \\\\')
 				.map(

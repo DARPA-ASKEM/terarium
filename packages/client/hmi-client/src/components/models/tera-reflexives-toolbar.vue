@@ -24,23 +24,23 @@ import { Model, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { addReflexives, addTyping } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
-	strataModel: Model;
-	baseModel: Model;
+	modelToUpdate: Model; // the model to which we will add reflexives
+	modelToCompare: Model; // the model we are checking against to see if there are unassigned types
 }>();
 
 const emit = defineEmits(['model-updated']);
 
-const baseModelTypeSystem = computed<TypeSystem | undefined>(
-	() => props.baseModel.semantics?.typing?.type_system
+const modelToCompareTypeSystem = computed<TypeSystem | undefined>(
+	() => props.modelToCompare.semantics?.typing?.type_system
 );
-const typedModel = ref<Model>(props.strataModel); // this is the object that is being edited
-const excludedTransitionTypes: Transition[] = [];
+const typedModel = ref<Model>(props.modelToUpdate); // this is the object that is being edited
+const unassignedTransitionTypes: Transition[] = [];
 const statesToAddReflexives = ref<{ [id: string]: string[] }>({});
 const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
 	const map: { [id: string]: string } = {};
-	props.baseModel?.semantics?.typing?.type_system.transitions.forEach((type) => {
+	props.modelToCompare?.semantics?.typing?.type_system.transitions.forEach((type) => {
 		const transitionId =
-			props.baseModel?.semantics?.typing?.type_map.find((m) => m[1] === type.id)?.[0] ?? '';
+			props.modelToCompare?.semantics?.typing?.type_map.find((m) => m[1] === type.id)?.[0] ?? '';
 		map[type.id] = transitionId;
 	});
 	return map;
@@ -50,8 +50,9 @@ const reflexiveNodeOptions = computed<{ [id: string]: string[] }>(() => {
 	const options: { [id: string]: string[] } = {};
 	Object.keys(reflexiveOptions.value).forEach((key) => {
 		options[key] =
-			props.strataModel.semantics?.typing?.type_map.filter((m) => m[1] === key).map((m) => m[0]) ??
-			[];
+			props.modelToUpdate.semantics?.typing?.type_map
+				.filter((m) => m[1] === key)
+				.map((m) => m[0]) ?? [];
 	});
 	return options;
 });
@@ -70,7 +71,7 @@ function updateStatesToAddReflexives(
 			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`;
 			addReflexives(typedModel.value, stateId, newTransitionId);
 
-			const transition = props.baseModel?.semantics?.typing?.type_system.transitions.find(
+			const transition = props.modelToCompare?.semantics?.typing?.type_system.transitions.find(
 				(t) => t.id === typeOfTransition
 			);
 			if (transition) {
@@ -92,29 +93,32 @@ function updateStatesToAddReflexives(
 }
 
 watch(
-	[() => baseModelTypeSystem],
+	[() => modelToCompareTypeSystem],
 	() => {
-		if (baseModelTypeSystem.value) {
-			const strataTypeTransitionIds =
-				props.strataModel.semantics?.typing?.type_system.transitions.map((t) => t.id);
-			const baseModelTypeTransitionIds = baseModelTypeSystem.value?.transitions.map((t) => t.id);
-			if (strataTypeTransitionIds && baseModelTypeTransitionIds) {
-				const excludedIds = baseModelTypeTransitionIds.filter(
-					(id) => !strataTypeTransitionIds.includes(id)
+		if (modelToCompareTypeSystem.value) {
+			const modelToUpdateTransitionIds =
+				props.modelToUpdate.semantics?.typing?.type_system.transitions.map((t) => t.id);
+			const modelToCompareTypeTransitionIds = modelToCompareTypeSystem.value?.transitions.map(
+				(t) => t.id
+			);
+			if (modelToUpdateTransitionIds && modelToCompareTypeTransitionIds) {
+				console.log(`${props.modelToUpdate.id} - ${modelToUpdateTransitionIds}`);
+				console.log(`${props.modelToUpdate.id} - ${modelToCompareTypeTransitionIds}`);
+				const unassignedIds = modelToCompareTypeTransitionIds.filter(
+					(id) => !modelToUpdateTransitionIds.includes(id)
 				);
-				const excludedTransitions: Transition[] = baseModelTypeSystem.value?.transitions.filter(
-					(t) => excludedIds.includes(t.id)
-				);
-				excludedTransitionTypes.push(excludedTransitions[0]);
+				const unassignedTransitions: Transition[] =
+					modelToCompareTypeSystem.value?.transitions.filter((t) => unassignedIds.includes(t.id));
+				unassignedTransitionTypes.push(unassignedTransitions[0]);
 			}
 
-			props.strataModel.model.states.forEach((state) => {
+			props.modelToUpdate.model.states.forEach((state) => {
 				// get type of state for each state in strata model
 				const type: string =
-					props.strataModel.semantics?.typing?.type_map.find((m) => m[0] === state.id)?.[1] ?? '';
-				// for each excluded transition type, check if inputs or ouputs have the type of this state
-				const allowedTransitionsForState: Transition[] = excludedTransitionTypes.filter(
-					(excluded) => excluded.input.includes(type) || excluded.output.includes(type)
+					props.modelToUpdate.semantics?.typing?.type_map.find((m) => m[0] === state.id)?.[1] ?? '';
+				// for each unassigned transition type, check if inputs or ouputs have the type of this state
+				const allowedTransitionsForState: Transition[] = unassignedTransitionTypes.filter(
+					(unassigned) => unassigned.input.includes(type) || unassigned.output.includes(type)
 				);
 				if (!reflexiveOptions.value[type]) {
 					reflexiveOptions.value[type] = allowedTransitionsForState;

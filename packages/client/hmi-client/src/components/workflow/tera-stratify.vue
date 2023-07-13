@@ -67,9 +67,11 @@
 							<tera-typed-model-diagram
 								v-if="model"
 								:model="model"
+								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
 								@all-nodes-typed="(typedModel) => onAllNodesTyped(typedModel)"
+								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 							<div class="input">
 								<label for="strata-type">Select a strata type</label>
@@ -147,7 +149,7 @@ const stratifyView = ref(StratifyView.Input);
 const stratifyStep = ref(1);
 const strataType = ref();
 const labels = ref();
-const strataModel = ref<Model | null>(null);
+const strataModel = ref<Model | undefined>();
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(

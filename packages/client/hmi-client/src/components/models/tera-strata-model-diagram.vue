@@ -12,8 +12,8 @@
 						<section class="graph-element">
 							<tera-reflexives-toolbar
 								v-if="showReflexivesToolbar && strataModel && baseModel"
-								:strata-model="strataModel"
-								:base-model="baseModel"
+								:model-to-update="strataModel"
+								:model-to-compare="baseModel"
 								@model-updated="(value) => (typedModel = value)"
 							/>
 							<section class="legend">
@@ -60,15 +60,6 @@ import { useNodeTypeColorMap } from '@/utils/color-schemes';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
-// Get rid of these emits
-const emit = defineEmits([
-	'update-tab-name',
-	'close-preview',
-	'asset-loaded',
-	'close-current-tab',
-	'update-model-content'
-]);
-
 const props = defineProps<{
 	strataModel: Model;
 	baseModel: Model | null;
@@ -77,8 +68,6 @@ const props = defineProps<{
 }>();
 
 const typedModel = ref<Model>(props.strataModel); // this is the object being edited
-
-const newModelName = ref('New Model');
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -161,15 +150,6 @@ watch(
 		props.baseModelTypeSystem?.transitions.forEach((t) => {
 			setNodeTypeColor(t.id);
 		});
-	}
-);
-
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
 	}
 );
 
