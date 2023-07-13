@@ -159,11 +159,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) =>
-				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-			)
-			.style('stroke-width', '3px')
-			.style('stroke-linecap', 'butt')
+			// .style('stroke', (d) =>
+			// 	d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			// )
+			// .style('stroke-width', '3px')
+			// .style('stroke-linecap', 'butt')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => d.label);
@@ -218,11 +218,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) =>
-				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-			)
-			.style('stroke-width', '3px')
-			.style('stroke-linecap', 'round')
+			// .style('stroke', (d) =>
+			// 	d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			// )
+			// .style('stroke-width', '3px')
+			// .style('stroke-linecap', 'round')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.text((d) => d.label);

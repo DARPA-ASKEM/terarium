@@ -281,56 +281,35 @@
 							]"
 						>
 							<template v-if="isSectionEditable === `transition-${index}`">
-								<div>{{ transition?.properties?.name ?? '--' }}</div>
+								<div>{{ transition.name }}</div>
+								<div>{{ transition.input }}</div>
+								<div>{{ transition.output }}</div>
 								<div>
-									{{
-										transition?.input && transition.input?.length > 0
-											? transition.input.sort().join(', ')
-											: '--'
-									}}
-								</div>
-								<div>
-									{{
-										transition?.output && transition.output?.length > 0
-											? transition.output.sort().join(', ')
-											: '--'
-									}}
-								</div>
-								<div>
-									<katex-element :expression="getTransitionExpression(transition.id)" />
+									<katex-element v-if="transition.expression" :expression="transition.expression" />
+									<template v-else>--</template>
 								</div>
 								<div>
 									<!-- TODO: needs to make those button active -->
 									<Button icon="pi pi-check" text rounded aria-label="Save" />
 									<Button icon="pi pi-times" text rounded aria-label="Discard" />
 								</div>
-								<div v-if="extractions?.[transition?.id]" style="grid-column: 1 / span 5">
-									<tera-model-extraction :extractions="extractions[transition.id]" />
+								<div v-if="transition?.extractions" style="grid-column: 1 / span 5">
+									<tera-model-extraction :extractions="transition?.extractions" />
 								</div>
 							</template>
 							<template v-else>
-								<div>{{ transition?.properties?.name ?? '--' }}</div>
+								<div>{{ transition.name }}</div>
+								<div>{{ transition.input }}</div>
+								<div>{{ transition.output }}</div>
 								<div>
-									{{
-										transition?.input && transition.input?.length > 0
-											? transition.input.sort().join(', ')
-											: '--'
-									}}
+									<katex-element v-if="transition.expression" :expression="transition.expression" />
+									<template v-else>--</template>
 								</div>
 								<div>
-									{{
-										transition?.output && transition.output?.length > 0
-											? transition.output.sort().join(', ')
-											: '--'
-									}}
-								</div>
-								<div>
-									<katex-element :expression="getTransitionExpression(transition.id)" />
-								</div>
-								<div>
-									<template v-if="extractions?.[transition.id]">
-										<Tag :value="extractions?.[transition.id].length" />
-									</template>
+									<Tag
+										v-if="transition?.extractions"
+										:value="extractions?.[transition.id].length"
+									/>
 									<template v-else>--</template>
 								</div>
 							</template>
@@ -567,12 +546,27 @@ const name = computed(() => highlightSearchTerms(model.value?.name));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
 const time = computed(() =>
-	model.value?.semantics?.ode?.time ? [model.value.semantics.ode.time] : []
+	model.value?.semantics?.ode?.time ? [model.value?.semantics.ode.time] : []
 );
 const states = computed(() => model.value?.model?.states ?? []);
-const transitions = computed(() => model.value?.model?.transitions ?? []);
+
+// Model Transitions
+const transitions = computed(() =>
+	structuredClone(model.value?.model?.transitions ?? []).map((t) => ({
+		id: t.id,
+		name: t?.properties?.name ?? t.id ?? '--',
+		input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
+		output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
+		expression:
+			model?.value?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ?? null,
+		extractions: extractions?.[t.id] ?? null
+	}))
+);
+
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
+
 const publications = computed(() => []);
+
 const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
@@ -599,11 +593,6 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
-
-// Get the mathematical expression of a transition
-function getTransitionExpression(id): string {
-	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '--';
-}
 
 /**
  * Concepts

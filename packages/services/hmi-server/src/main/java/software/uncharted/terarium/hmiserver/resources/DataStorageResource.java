@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -103,6 +104,36 @@ public abstract class DataStorageResource {
 		String result = new BufferedReader(new InputStreamReader(s3objectResponse))
 			.lines()
 			.collect(Collectors.joining("\n"));
+
+		return result;
+	}
+
+	protected byte[] downloadBytesFromS3(String key) {
+		//verify that our required S3 fields are set. If not, return an error
+		if (!bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
+			log.error("S3 information not set. Cannot download file.");
+			return null;
+		}
+
+		AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(
+			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
+
+		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(credentialsProvider).build();
+
+		GetObjectRequest request = GetObjectRequest.builder()
+			.bucket(bucket.get()).key(key).build();
+
+		ResponseInputStream<GetObjectResponse> s3objectResponse = client
+			.getObject(request);
+
+		//now just get the bytes to return
+		byte[] result = new byte[0];
+		try {
+			result = s3objectResponse.readAllBytes();
+		} catch (IOException e) {
+			log.error("Error reading bytes from S3 object", e);
+			return null;
+		}
 
 		return result;
 	}
