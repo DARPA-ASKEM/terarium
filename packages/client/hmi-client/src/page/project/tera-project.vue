@@ -53,8 +53,16 @@
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION"
 					:node="workflowNode"
 				/>
-				<tera-simulate
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE"
+				<tera-simulate-julia
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA
+					"
+					:node="workflowNode"
+				/>
+				<tera-simulate-ciemss
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
+					"
 					:node="workflowNode"
 				/>
 				<tera-stratify
@@ -106,11 +114,10 @@ import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
-import TeraSimulate from '@/components/workflow/tera-simulate.vue';
+import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
+import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import { workflowEventBus } from '@/services/workflow';
-import { PresignedURL } from '@/types/Types';
-import { getPresignedDownloadURL } from '@/services/artifact';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -155,10 +162,7 @@ function setActiveTab() {
 async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (asset && asset.assetId && asset.assetName.toLowerCase().endsWith('.pdf')) {
-		const url: PresignedURL | null = await getPresignedDownloadURL(asset.assetId, asset.assetName);
-		if (url) window.open(url.url, '_blank');
-	} else if (
+	if (
 		!(
 			asset &&
 			asset.assetId === props.assetId &&

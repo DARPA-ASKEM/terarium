@@ -33,6 +33,8 @@
 				>
 					<div class="input port" />
 					<div>
+						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
+						<span v-if="!input.label">{{ input.type }}</span>
 						<span
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"
@@ -164,7 +166,7 @@ const VIRIDIS_14 = [
 ];
 const getInputLabelColor = (edgeIdx: number) => {
 	const numRuns = props.node.inputs[0].value?.length ?? 0;
-	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE
+	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE_JULIA
 		? VIRIDIS_14[Math.floor((edgeIdx / numRuns) * VIRIDIS_14.length)]
 		: 'inherit';
 };

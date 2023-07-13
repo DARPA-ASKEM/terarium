@@ -1,198 +1,216 @@
 <template>
-	<tera-asset
-		:name="project?.name"
-		:authors="project?.username"
-		:is-naming-asset="isRenamingProject"
-		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
-		is-editable
-		class="overview-banner"
-	>
-		<template #name-input>
-			<InputText
-				v-if="isRenamingProject"
-				v-model="newProjectName"
-				ref="inputElement"
-				@keyup.enter="updateProjectName"
-			/>
-		</template>
-		<template #edit-buttons>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-		</template>
-		<section>
-			<section class="summary">
-				<!-- This div is so that child elements will automatically collapse margins -->
-				<div>
-					<!-- Description & Contributors -->
-					<section class="description">
-						<p>
-							{{ project?.description }}
-						</p>
-					</section>
+	<div class="scrollable">
+		<tera-asset
+			:name="project?.name"
+			:authors="project?.username"
+			:is-naming-asset="isRenamingProject"
+			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
+			is-editable
+			class="overview-banner"
+		>
+			<template #name-input>
+				<InputText
+					v-if="isRenamingProject"
+					v-model="newProjectName"
+					ref="inputElement"
+					@keyup.enter="updateProjectName"
+				/>
+			</template>
+			<template #edit-buttons>
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="showProjectMenu"
+				/>
+				<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			</template>
+			<section>
+				<section class="summary">
+					<!-- This div is so that child elements will automatically collapse margins -->
+					<div>
+						<!-- Description & Contributors -->
+						<section class="description">
+							<p>
+								{{ project?.description }}
+							</p>
+						</section>
+					</div>
+				</section>
+				<!-- Project summary KPIs -->
+				<section class="summary-KPI-bar">
+					<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
+						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
+						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
+					</div>
+				</section>
+			</section>
+		</tera-asset>
+		<section class="content-container">
+			<h5>Quick links</h5>
+			<!-- Quick link buttons go here -->
+			<section>
+				<div class="quick-links">
+					<Button
+						label="Upload resources"
+						size="large"
+						icon="pi pi-cloud-upload"
+						class="p-button p-button-secondary quick-link-button"
+						@click="openImportModal"
+					/>
+					<Button
+						label="New model"
+						size="large"
+						icon="pi pi-share-alt"
+						class="p-button p-button-secondary quick-link-button"
+						@click="emit('new-model')"
+					/>
+					<Button
+						size="large"
+						class="p-button p-button-secondary quick-link-button"
+						@click="emit('open-workflow')"
+					>
+						<vue-feather
+							class="p-button-icon-left"
+							type="git-merge"
+							size="1.25rem"
+							stroke="rgb(16, 24, 40)"
+						/>
+						<span class="p-button-label">New workflow</span>
+					</Button>
+					<Button size="large" class="p-button p-button-secondary quick-link-button">
+						<compare-models-icon class="icon" />
+						<span class="p-button-label">Compare models</span>
+					</Button>
+					<Button
+						label="New simulation"
+						size="large"
+						icon="pi pi-play"
+						class="p-button p-button-secondary quick-link-button"
+					/>
 				</div>
 			</section>
-			<!-- Project summary KPIs -->
-			<section class="summary-KPI-bar">
-				<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
-					<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
-					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
+			<!-- Resources list table goes here -->
+			<section class="resource-list">
+				<div class="resource-list-section-header">
+					<h4>Resource Manager</h4>
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText placeholder="Keyword search" class="keyword-search" />
+					</span>
 				</div>
-			</section>
-		</section>
-	</tera-asset>
-	<section class="content-container">
-		<h5>Quick links</h5>
-		<!-- Quick link buttons go here -->
-		<section>
-			<div class="quick-links">
-				<Button
-					label="Upload resources"
-					size="large"
-					icon="pi pi-cloud-upload"
-					class="p-button p-button-secondary quick-link-button"
-					@click="openImportModal"
-				/>
-				<Button
-					label="New model"
-					size="large"
-					icon="pi pi-share-alt"
-					class="p-button p-button-secondary quick-link-button"
-					@click="emit('new-model')"
-				/>
-				<Button
-					size="large"
-					class="p-button p-button-secondary quick-link-button"
-					@click="emit('open-workflow')"
+				<!-- resource list data table -->
+				<DataTable
+					v-model:selection="selectedResources"
+					dataKey="id"
+					tableStyle="min-width: 50rem"
+					:value="assets"
 				>
-					<vue-feather
-						class="p-button-icon-left"
-						type="git-merge"
-						size="1.25rem"
-						stroke="rgb(16, 24, 40)"
-					/>
-					<span class="p-button-label">New workflow</span>
-				</Button>
-				<Button size="large" class="p-button p-button-secondary quick-link-button">
-					<compare-models-icon class="icon" />
-					<span class="p-button-label">Compare models</span>
-				</Button>
-				<Button
-					label="New simulation"
-					size="large"
-					icon="pi pi-play"
-					class="p-button p-button-secondary quick-link-button"
-				/>
-			</div>
-		</section>
-		<!-- Resources list table goes here -->
-		<section class="resource-list">
-			<div class="resource-list-section-header">
-				<h4>Resource Manager</h4>
-				<span class="p-input-icon-left">
-					<i class="pi pi-search" />
-					<InputText placeholder="Keyword search" class="keyword-search" />
-				</span>
-			</div>
-			<!-- resource list data table -->
-			<DataTable
-				v-model:selection="selectedResources"
-				dataKey="id"
-				tableStyle="min-width: 50rem"
-				:value="assets"
-			>
-				<Column selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column field="assetName" header="Name" sortable style="width: 45%">
-					<template #body="slotProps">
-						<Button
-							:title="slotProps.data.assetName"
-							class="asset-button"
-							plain
-							text
-							size="small"
-							@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
-						>
-							<span class="p-button-label">{{ slotProps.data.assetName }}</span>
-						</Button>
+					<Column selection-mode="multiple" headerStyle="width: 3rem" />
+					<Column field="assetName" header="Name" sortable style="width: 45%">
+						<template #body="slotProps">
+							<Button
+								:title="slotProps.data.assetName"
+								class="asset-button"
+								plain
+								text
+								size="small"
+								@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
+							>
+								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
+							</Button>
+						</template>
+					</Column>
+					<Column field="" header="Modified" sortable style="width: 15%"></Column>
+					<Column field="tags" header="Tags"></Column>
+					<Column header="Resource Type" sortable>
+						<template #body="slotProps">
+							<Tag :value="slotProps.data.pageType" />
+						</template>
+					</Column>
+				</DataTable>
+			</section>
+			<section class="drag-n-drop">
+				<tera-modal
+					v-if="isUploadResourcesModalVisible"
+					class="modal"
+					@modal-mask-clicked="isUploadResourcesModalVisible = false"
+				>
+					<template #header>
+						<h4>Upload resources</h4>
 					</template>
-				</Column>
-				<Column field="" header="Modified" sortable style="width: 15%"></Column>
-				<Column field="tags" header="Tags"></Column>
-				<Column header="Resource Type" sortable>
-					<template #body="slotProps">
-						<Tag :value="slotProps.data.pageType" />
-					</template>
-				</Column>
-			</DataTable>
-		</section>
-		<section class="drag-n-drop">
-			<tera-modal
-				v-if="isUploadResourcesModalVisible"
-				class="modal"
-				@modal-mask-clicked="isUploadResourcesModalVisible = false"
-			>
-				<template #header>
-					<h4>Upload resources</h4>
-				</template>
-				<template #default>
-					<p class="subheader">Add resources to your project here</p>
-					<tera-drag-and-drop-importer
-						:show-preview="true"
-						:accept-types="[
-							AcceptedTypes.PDF,
-							AcceptedTypes.CSV,
-							AcceptedTypes.TXT,
-							AcceptedTypes.MD
-						]"
-						:import-action="processFiles"
-						:progress="progress"
-						@import-completed="importCompleted"
-					></tera-drag-and-drop-importer>
+					<template #default>
+						<p class="subheader">Add resources to your project here</p>
+						<tera-drag-and-drop-importer
+							:show-preview="true"
+							:accept-types="[
+								AcceptedTypes.PDF,
+								AcceptedTypes.CSV,
+								AcceptedTypes.TXT,
+								AcceptedTypes.MD,
+								AcceptedTypes.PY,
+								AcceptedTypes.JS,
+								AcceptedTypes.M,
+								AcceptedTypes.R,
+								AcceptedTypes.JL
+							]"
+							:accept-extensions="[
+								AcceptedExtensions.PDF,
+								AcceptedExtensions.CSV,
+								AcceptedExtensions.TXT,
+								AcceptedExtensions.MD,
+								AcceptedExtensions.PY,
+								AcceptedExtensions.M,
+								AcceptedExtensions.JS,
+								AcceptedExtensions.R,
+								AcceptedExtensions.JL
+							]"
+							:import-action="processFiles"
+							:progress="progress"
+							@import-completed="importCompleted"
+						></tera-drag-and-drop-importer>
 
-					<section v-if="isUploadResourcesModalVisible">
-						<Card v-for="(item, i) in results" :key="i" class="card">
-							<template #title>
-								<div class="card-img"></div>
-							</template>
-							<template #content>
-								<div class="card-content">
-									<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
-									<div v-if="item.response" class="file-content">
-										<br />
-										<div>Extracted Text</div>
-										<div>{{ item.response.text }}</div>
-										<br />
-										<div v-if="item.response.images">Images Found</div>
-										<div v-for="image in item.response.images" :key="image">
-											<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+						<section v-if="isUploadResourcesModalVisible">
+							<Card v-for="(item, i) in results" :key="i" class="card">
+								<template #title>
+									<div class="card-img"></div>
+								</template>
+								<template #content>
+									<div class="card-content">
+										<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+										<div v-if="item.response" class="file-content">
+											<br />
+											<div>Extracted Text</div>
+											<div>{{ item.response.text }}</div>
+											<br />
+											<div v-if="item.response.images">Images Found</div>
+											<div v-for="image in item.response.images" :key="image">
+												<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+											</div>
+											<br />
+											<i class="pi pi-plus"></i>
 										</div>
-										<br />
-										<i class="pi pi-plus"></i>
 									</div>
-								</div>
-							</template>
-						</Card>
-					</section>
-				</template>
-				<template #footer>
-					<Button
-						label="Upload"
-						class="p-button-primary"
-						@click="isUploadResourcesModalVisible = false"
-						:disabled="!results"
-					/>
-					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isUploadResourcesModalVisible = false"
-					/>
-				</template>
-			</tera-modal>
+								</template>
+							</Card>
+						</section>
+					</template>
+					<template #footer>
+						<Button
+							label="Upload"
+							class="p-button-primary"
+							@click="isUploadResourcesModalVisible = false"
+							:disabled="!results"
+						/>
+						<Button
+							label="Cancel"
+							class="p-button-secondary"
+							@click="isUploadResourcesModalVisible = false"
+						/>
+					</template>
+				</tera-modal>
+			</section>
 		</section>
-	</section>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -209,7 +227,7 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab, AcceptedTypes } from '@/types/common';
+import { Tab, AcceptedTypes, AcceptedExtensions } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
@@ -351,6 +369,15 @@ const isUploadResourcesModalVisible = ref(false);
 </script>
 
 <style scoped>
+.scrollable {
+	overflow-y: auto;
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+.scrollable::-webkit-scrollbar {
+	display: none;
+}
+
 a {
 	text-decoration: underline;
 }

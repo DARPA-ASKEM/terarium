@@ -151,9 +151,26 @@ async function getPresignedDownloadURL(
 	return response.data;
 }
 
+async function getArtifactArrayBuffer(
+	artifactId: string,
+	fileName: string
+): Promise<ArrayBuffer | null> {
+	const response = await API.get(`/artifacts/${artifactId}/download-file?filename=${fileName}`, {
+		responseType: 'arraybuffer'
+	});
+
+	if (!response || response.status >= 400) {
+		logger.error('Error getting file download url');
+		return null;
+	}
+
+	return response.data;
+}
+
 export {
 	uploadArtifactToProject,
 	createNewArtifactFromGithubFile,
 	getArtifactFileAsText,
-	getPresignedDownloadURL
+	getPresignedDownloadURL,
+	getArtifactArrayBuffer
 };

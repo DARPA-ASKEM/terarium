@@ -82,6 +82,8 @@
 			<RelatedPublications
 				@extracted-metadata="(extract) => (metadata = extract)"
 				:publications="[metadata?.source]"
+				:project="project"
+				:dialog-flavour="'dataset'"
 			/>
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
@@ -448,14 +450,6 @@ main .annotation-group {
 
 .tera-dataset-datatable {
 	width: 100%;
-}
-
-.data-transform-container {
-	display: flex;
-	flex-direction: column;
-	padding: 0.5rem;
-	margin: 0.5rem;
-	max-height: 90%;
 }
 
 .kernel-status {
