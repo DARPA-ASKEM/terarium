@@ -69,6 +69,7 @@
 								:height="200"
 								:data="setBarChartData()"
 								:options="setChartOptions()"
+								:plugins="dataLabelPlugin"
 							/>
 							<table v-else class="p-datatable-table">
 								<thead class="p-datatable-thead">
@@ -167,9 +168,12 @@ import {
 } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { workflowEventBus } from '@/services/workflow';
 import InputText from 'primevue/inputtext';
 import { EnsembleOperation, EnsembleOperationState } from './simulate-ensemble-operation';
+
+const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -320,24 +324,24 @@ const setChartOptions = () => {
 		aspectRatio: 0.8,
 		plugins: {
 			legend: {
-				labels: {
-					fontColor: documentStyle.getPropertyValue('--text-color-primary')
-				},
 				display: false
+			},
+			datalabels: {
+				anchor: 'end',
+				align: 'right',
+				formatter: (n: number) => `${Math.round(n * 100)}%`,
+				labels: {
+					value: {
+						font: {
+							size: 12
+						}
+					}
+				}
 			}
 		},
 		scales: {
 			x: {
-				ticks: {
-					color: documentStyle.getPropertyValue('--text-color-primary'),
-					font: {
-						weight: 500
-					}
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
+				display: false
 			},
 			y: {
 				ticks: {
@@ -416,14 +420,14 @@ watch(
 	justify-content: center;
 	gap: 1rem;
 	margin-left: 1rem;
-	/* min-width: fit-content; */
+	min-width: fit-content;
 	padding-right: 3rem;
 }
 
 .ensemble-calibration-graph {
 	/* margin-left: 1rem; */
 	height: 200px;
-	width: 80%;
+	/* width: 80%; */
 }
 .model-weights {
 	display: flex;
