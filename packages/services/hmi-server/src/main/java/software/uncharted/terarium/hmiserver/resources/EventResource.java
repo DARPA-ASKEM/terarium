@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.resources;
 import io.quarkus.security.identity.SecurityIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.services.StructuredLog;
@@ -56,6 +57,7 @@ public class EventResource {
 	 */
 	@POST
 	@Transactional
+	@IgnoreRequestLogging
 	public Response postEvent(final Event event) {
 		event.setUsername(securityIdentity.getPrincipal().getName());
 
