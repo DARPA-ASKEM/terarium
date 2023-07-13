@@ -23,18 +23,83 @@ public class ExtractionResource {
 	@RestClient
 	ExtractionServiceProxy extractionProxy;
 
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Map<String, Object> proxyPostMathMLToAMR(List<String> payload, @QueryParam("model") String model) {
-			return extractionProxy.postMathMLToAMR(payload, model);
+	/**
+	 * Retrieve the status of a simulation
+	 *
+	 * @param simulationId the id of the simulation
+	 *
+	 * @return the status of the simulation
+	 */
+	@GET
+	@Path("/status/{simulation_id}")
+	public Response getTaskStatus(
+		@PathParam("simulation_id") final String simulationId) {
+		return extractionProxy.getTaskStatus(simulationId);
 	}
 
-	// checks a taskId status
-	@GET
-	@Path("/task-result/{taskId}")
-	public Response getTaskStatus(
-			@PathParam("taskId") final String taskId) {
-		return extractionProxy.getTaskStatus(taskId);
-	}
+	/**
+	 * Post MathML to skema service to get AMR return
+	 *
+	 * @param		model (String) the id of the model
+	 *
+	 * Args:
+	 *     mathMLPayload (List<String>): A list of MathML strings representing the functions that are
+	 * 													         used to convert to AMR model (str, optional): AMR model return type.
+	 * 													         Defaults to "petrinet". Options: "regnet", "petrinet".
+	 *
+	 * @return AMR model
+	 */
+	@POST
+	@Path("/mathml_to_amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postMathMLToAMR(
+		@QueryParam("model") String model,
+		List<String> mathMLPayload
+	) {
+		return extractionProxy.postMathMLToAMR(model, mathMLPayload);
+	};
+
+	/**
+	 * Post a PDF to the extraction service
+	 *
+	 * @param    annotateSkema (Boolean): Whether to annotate the PDF with Skema
+	 * @param    annotateMIT (Boolean): Whether to annotate the PDF with AMR
+	 * @param    name (String): The name of the PDF
+	 * @param    description (String): The description of the PDF
+	 *
+	 * Args:
+	 *     pdf (Object): The PDF file to upload
+	 *
+	 * @return extractions of the pdf
+	 */
+	@POST
+	@Path("/pdf_extractions")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postPDFExtractions(
+		@DefaultValue("true") @QueryParam("annotate_skema") Boolean annotateSkema,
+		@DefaultValue("true") @QueryParam("annotate_amr") Boolean annotateMIT,
+		@QueryParam("name") String name,
+		@QueryParam("model") String description,
+		Object pdf
+	) {
+		return extractionProxy.postPDFExtractions(annotateSkema, annotateMIT, name, description, pdf);
+	};
+
+	/**
+	 * Profile a dataset
+	 *
+	 * @param		datasetId (String): The ID of the dataset to profile
+	 * @param		documentText (String): The text of the document to profile
+	 *
+	 * @return the profiled dataset
+	 */
+	@POST
+	@Path("/profile_dataset")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postProfileDataset(
+		@QueryParam("dataset_id") String datasetId,
+		@QueryParam("document_text") String documentText
+	) {
+		return extractionProxy.postProfileDataset(datasetId, documentText);
+	};
 }
