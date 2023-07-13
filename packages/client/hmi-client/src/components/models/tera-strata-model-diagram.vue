@@ -66,11 +66,12 @@ import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
 	convertToIGraph,
-	addReflexives
+	addReflexives,
+	addTyping
 } from '@/model-representation/petrinet/petrinet-service';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { Model, Transition, TypeSystem } from '@/types/Types';
+import { Model, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorMap } from '@/utils/color-schemes';
 import MultiSelect from 'primevue/multiselect';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
@@ -182,11 +183,22 @@ function updateStatesToAddReflexives(
 ) {
 	statesToAddReflexives.value[typeOfState] = newValue;
 	newValue.forEach((stateId) => {
-		addReflexives(
-			typedModel.value,
-			stateId,
-			`${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`
+		const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`;
+		addReflexives(typedModel.value, stateId, newTransitionId);
+		const updatedTypeMap = typedModel.value.semantics?.typing?.type_map ?? [];
+		const transition = props.baseModel?.semantics?.typing?.type_system.transitions.find(
+			(t) => t.id === typeOfTransition
 		);
+		const updatedTypeSystem = typedModel.value.semantics?.typing?.type_system;
+		if (updatedTypeMap && transition && updatedTypeSystem) {
+			updatedTypeMap.push([newTransitionId, typeOfTransition]);
+			updatedTypeSystem.transitions.push(transition);
+			const updatedTyping: TypingSemantics = {
+				type_map: updatedTypeMap,
+				type_system: updatedTypeSystem
+			};
+			addTyping(typedModel.value, updatedTyping);
+		}
 	});
 }
 
