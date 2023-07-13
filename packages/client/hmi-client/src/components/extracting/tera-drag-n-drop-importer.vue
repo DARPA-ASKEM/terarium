@@ -87,7 +87,8 @@ const props = defineProps({
 				AcceptedTypes.PY,
 				AcceptedTypes.M,
 				AcceptedTypes.JS,
-				AcceptedTypes.R
+				AcceptedTypes.R,
+				AcceptedTypes.JL
 			].every((v) => value.includes(v))
 	},
 	acceptExtensions: {
@@ -102,7 +103,8 @@ const props = defineProps({
 				AcceptedExtensions.PY,
 				AcceptedExtensions.M,
 				AcceptedExtensions.JS,
-				AcceptedExtensions.R
+				AcceptedExtensions.R,
+				AcceptedExtensions.JL
 			].every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop

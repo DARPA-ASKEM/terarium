@@ -150,13 +150,19 @@
 								AcceptedTypes.PY,
 								AcceptedTypes.JS,
 								AcceptedTypes.M,
-								AcceptedTypes.R
+								AcceptedTypes.R,
+								AcceptedTypes.JL
 							]"
 							:accept-extensions="[
 								AcceptedExtensions.PDF,
 								AcceptedExtensions.CSV,
 								AcceptedExtensions.TXT,
-								AcceptedExtensions.MD
+								AcceptedExtensions.MD,
+								AcceptedExtensions.PY,
+								AcceptedExtensions.M,
+								AcceptedExtensions.JS,
+								AcceptedExtensions.R,
+								AcceptedExtensions.JL
 							]"
 							:import-action="processFiles"
 							:progress="progress"

@@ -115,7 +115,8 @@ export enum AcceptedTypes {
 	PY = 'text/x-python-script',
 	M = 'text/x-matlab',
 	JS = 'application/javascript',
-	R = 'text/x-r'
+	R = 'text/x-r',
+	JL = 'application/julia'
 }
 
 export enum AcceptedExtensions {
@@ -126,7 +127,8 @@ export enum AcceptedExtensions {
 	PY = 'py',
 	M = 'm',
 	JS = 'js',
-	R = 'r'
+	R = 'r',
+	JL = 'jl'
 }
 
 export interface PDFExtractionResponseType {
