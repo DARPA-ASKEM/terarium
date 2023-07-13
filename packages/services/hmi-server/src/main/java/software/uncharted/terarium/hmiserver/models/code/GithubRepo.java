@@ -19,7 +19,7 @@ import java.util.Map;
 public class GithubRepo {
 
 	@TSIgnore
-	private static final List<String> CODE_TYPES = new ArrayList<>(List.of(".py", ".m", ".js" ));
+	private static final List<String> CODE_TYPES = new ArrayList<>(List.of(".py", ".m", ".js", ".R", ".jl" ));
 
 	@TSIgnore
 	private static final List<String> DATA_TYPES = new ArrayList<>(List.of(".csv", ".json", ".tsv", ".xml", ".yaml", ".yml"));

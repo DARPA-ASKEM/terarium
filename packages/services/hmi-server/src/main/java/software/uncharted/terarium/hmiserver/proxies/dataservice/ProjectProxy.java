@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
@@ -19,6 +20,7 @@ import java.util.*;
 public interface ProjectProxy {
 
 	@GET
+	@LogRestClientTime
 	List<Project> getProjects(
 		@DefaultValue("50") @QueryParam("page_size") Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") Integer page
@@ -26,12 +28,14 @@ public interface ProjectProxy {
 
 	@GET
 	@Path("/{id}")
+	@LogRestClientTime
 	Response getProject(
 		@PathParam("id") String id
 	);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response createProject(
 		Project project
 	);
@@ -39,6 +43,7 @@ public interface ProjectProxy {
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response updateProject(
 		@PathParam("id") String id,
 		Project project
@@ -47,12 +52,14 @@ public interface ProjectProxy {
 	@DELETE
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
+	@LogRestClientTime
 	Response deleteProject(
 		@PathParam("id") String id
 	);
 
 	@GET
 	@Path("/{project_id}/assets")
+	@LogRestClientTime
 	Assets getAssets(
 		@PathParam("project_id") String projectId,
 		@QueryParam("types") final List<String> types
@@ -60,6 +67,7 @@ public interface ProjectProxy {
 
 	@POST
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	@LogRestClientTime
 	Response createAsset(
 		@PathParam("project_id") String projectId,
 		@PathParam("resource_type") String type, // ResourceType
@@ -68,6 +76,7 @@ public interface ProjectProxy {
 
 	@DELETE
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	@LogRestClientTime
 	Response deleteAsset(
 		@PathParam("project_id") String projectId,
 		@PathParam("resource_type") String type, // ResourceType
