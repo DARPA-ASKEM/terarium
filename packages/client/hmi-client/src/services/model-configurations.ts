@@ -27,6 +27,10 @@ export const createModelConfiguration = async (
 	return response?.data ?? null;
 };
 
+export const addDefaultConfiguration = async (model: Model): Promise<void> => {
+	await createModelConfiguration(model.id, 'Default config', 'Default config', model);
+};
+
 export const updateModelConfiguration = async (config: ModelConfiguration) => {
 	// Do a sanity pass to ensure type-safety
 	const model: Model = config.configuration as Model;
