@@ -1,7 +1,7 @@
 <template>
 	<!--TODO: Once we implement the unique border design remove the p-datatable-gridlines class and make a custom series of classes to support the borders we want-->
 	<div
-		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)"
+		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders)"
 		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
 	>
 		<div class="p-datatable-wrapper">
@@ -57,66 +57,31 @@
 							</div>
 						</td>
 						<td class="p-frozen-column second-frozen">
-							<span v-if="!cellEditStates[i].name" @click="cellEditStates[i].name = true">
+							<span>
 								{{ name }}
 							</span>
-							<InputText
-								v-else
-								v-model.lazy="modelConfigs[i].name"
-								v-focus
-								@focusout="cellEditStates[i].name = false"
-								@keyup.enter="
-									cellEditStates[i].name = false;
-									updateModelConfigValue(i);
-								"
-							/>
 						</td>
 						<td
 							v-for="(rate, j) of configuration?.semantics?.ode.rates"
 							class="p-editable-column"
 							:key="j"
-							@click="cellEditStates[i].rates[j] = true"
 						>
-							<section v-if="!cellEditStates[i].rates[j]" class="editable-cell">
+							<section class="editable-cell">
 								<span>{{ rate.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
 								/>
 							</section>
-							<InputText
-								v-else
-								v-model.lazy="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
-								v-focus
-								@focusout="cellEditStates[i].rates[j] = false"
-								@keyup.enter="
-									cellEditStates[i].rates[j] = false;
-									updateModelConfigValue(i);
-								"
-							/>
 						</td>
-						<td
-							v-for="(initial, j) of configuration?.semantics?.ode.initials"
-							:key="j"
-							@click="cellEditStates[i].initials[j] = true"
-						>
-							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
+						<td v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="j">
+							<section class="editable-cell">
 								<span>{{ initial.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
 								/>
 							</section>
-							<InputText
-								v-else
-								v-model.lazy="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
-								v-focus
-								@focusout="cellEditStates[i].initials[j] = false"
-								@keyup.enter="
-									cellEditStates[i].initials[j] = false;
-									updateModelConfigValue(i);
-								"
-							/>
 						</td>
 						<td
 							v-for="(key, j) of runConfigsKeys"
@@ -133,76 +98,16 @@
 								/>
 							</section>
 						</td>
-						<!--TODO: Insert new td loops for time and observables here-->
 					</tr>
 				</tbody>
 			</table>
 		</div>
 	</div>
-	<Teleport to="body">
-		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
-			<template #header>
-				<h4>
-					{{
-						modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-							modalVal.odeObjIndex
-						]['id'] ??
-						modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-							modalVal.odeObjIndex
-						]['target']
-					}}
-				</h4>
-				<span>Select a value for this configuration</span>
-			</template>
-			<template #default>
-				<TabView>
-					<TabPanel v-for="(tab, i) in extractions" :key="tab" :header="tab">
-						<div>
-							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" v-model="extractions[i]" />
-						</div>
-						<div>
-							<label for="name">Source</label>
-							<InputText class="p-inputtext-sm" />
-						</div>
-						<div>
-							<label for="name">Value</label>
-							<InputText
-								class="p-inputtext-sm"
-								v-model="
-									modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-										modalVal.odeObjIndex
-									][modalVal.valueName]
-								"
-							/>
-						</div>
-					</TabPanel>
-				</TabView>
-				<Button
-					class="p-button-sm p-button-outlined"
-					icon="pi pi-plus"
-					label="Add value"
-					@click="addConfigValue"
-				/>
-			</template>
-			<template #footer>
-				<Button label="OK" @click="updateModelConfigValue()" />
-				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
-			</template>
-		</tera-modal>
-	</Teleport>
 </template>
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
-// import Checkbox from 'primevue/checkbox'; // Add back in later
 import Button from 'primevue/button';
-import TabView from 'primevue/tabview';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import TabPanel from 'primevue/tabpanel';
-import InputText from 'primevue/inputtext';
 import { ModelConfiguration, Model } from '@/types/Types';
-import { updateModelConfiguration } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
 
 const props = defineProps<{
@@ -212,26 +117,13 @@ const props = defineProps<{
 }>();
 
 const modelConfigs = ref<ModelConfiguration[]>([]);
-const cellEditStates = ref<any[]>([]);
 
 // const selectedModelConfig = ref();
 const extractions = ref<any[]>([]);
 
-const openValueConfig = ref(false);
-const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
-
-// Selected columns - TODO: add in for filtering calibration dropdowns
-const selectedInitials = ref<string[]>([]);
-const selectedParameters = ref<string[]>([]);
-
 const configurations = computed<Model[]>(
 	() => modelConfigs.value?.map((m) => m.configuration) ?? []
 );
-
-// Makes cell inputs focus once they appear
-const vFocus = {
-	mounted: (el) => el.focus()
-};
 
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
@@ -252,53 +144,12 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
 	return [];
 });
 
-const selectedModelVariables = computed(() => [
-	...selectedInitials.value,
-	...selectedParameters.value
-]);
-defineExpose({ selectedModelVariables });
-
-function addConfigValue() {
-	extractions.value.push(`Untitled`);
-}
-
-function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
-	const configToUpdate = modelConfigs.value[configIndex];
-	updateModelConfiguration(configToUpdate);
-	openValueConfig.value = false;
-}
-
 async function initializeConfigSpace() {
 	modelConfigs.value = [];
 	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
 
-	console.log('Configs', modelConfigs.value);
-
 	extractions.value = ['Default'];
-	openValueConfig.value = false;
-	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 }
-
-function resetCellEditing() {
-	const row = { name: false };
-
-	for (let i = 0; i < tableHeaders.value.length; i++) {
-		const { name, colspan } = tableHeaders.value[i];
-		row[name] = Array(colspan).fill(false);
-	}
-
-	// Can't use fill here because the same row object would be referenced throughout the array
-	const cellEditStatesArr = new Array(modelConfigs.value.length);
-	for (let i = 0; i < modelConfigs.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
-	cellEditStates.value = cellEditStatesArr;
-}
-
-watch(
-	() => tableHeaders.value,
-	() => {
-		resetCellEditing();
-	}
-);
 
 watch(
 	() => props.model,
