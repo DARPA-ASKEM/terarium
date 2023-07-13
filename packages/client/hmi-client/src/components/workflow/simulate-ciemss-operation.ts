@@ -2,20 +2,20 @@ import { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { ChartConfig } from '@/types/SimulateConfig';
 
-export interface SimulateOperationState {
+export interface SimulateCiemssOperationState {
 	chartConfigs: ChartConfig[];
 	currentTimespan: TimeSpan;
 }
 
-export const SimulateOperation: Operation = {
-	name: WorkflowOperationTypes.SIMULATE,
+export const SimulateCiemssOperation: Operation = {
+	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
 	outputs: [{ type: 'simOutput' }],
 	isRunnable: true,
 
 	initState: () => {
-		const init: SimulateOperationState = {
+		const init: SimulateCiemssOperationState = {
 			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 }
 		};

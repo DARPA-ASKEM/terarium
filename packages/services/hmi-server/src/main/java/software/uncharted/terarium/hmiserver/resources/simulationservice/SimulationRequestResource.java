@@ -12,6 +12,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
+import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -25,6 +26,9 @@ public class SimulationRequestResource {
 
 	@RestClient
 	SimulationServiceProxy simulationServiceProxy;
+
+	@RestClient
+	SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
 	@RestClient
 	SimulationProxy simulationProxy;
@@ -65,6 +69,37 @@ public class SimulationRequestResource {
 		return simulationProxy.createSimulation(jn);
 	}
 
+
+	@POST
+	@Path("ciemss/forecast")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Make new forecast simulation in CIEMSS")
+	public Simulation makeForecastRunCiemss(
+		final SimulationRequest request
+	) {
+		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
+
+		Simulation sim = new Simulation();
+		sim.setId(res.getSimulationId());
+		sim.setType("simulation");
+
+		// FIXME: engine is set twice, talk to TDS
+		request.setEngine("ciemss");
+
+		sim.setExecutionPayload(request);
+
+		// FIXME: These fiels are arguable unnecessary
+		sim.setStatus("queued");
+		sim.setWorkflowId("dummy");
+		sim.setUserId(0);
+		sim.setProjectId(0);
+		sim.setEngine("ciemss");
+
+		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
+		return simulationProxy.createSimulation(jn);
+	}
+
 	@POST
 	@Path("/calibrate")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -77,16 +112,16 @@ public class SimulationRequestResource {
 
 		Simulation sim = new Simulation();
 		sim.setId(res.getSimulationId());
-		sim.setType("calibration");
+		sim.setType("simulation");
 
 		sim.setExecutionPayload(request);
 
-		// FIXME: These fiels are arguable unnecessary
-		sim.setStatus("queued");
-		sim.setWorkflowId("dummy");
-		sim.setUserId(0);
-		sim.setProjectId(0);
-		sim.setEngine("sciml");
+		// // FIXME: These fiels are arguable unnecessary
+		// sim.setStatus("queued");
+		// sim.setWorkflowId("dummy");
+		// sim.setUserId(0);
+		// sim.setProjectId(0);
+		// sim.setEngine("sciml");
 
 		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
 		return simulationProxy.createSimulation(jn);
