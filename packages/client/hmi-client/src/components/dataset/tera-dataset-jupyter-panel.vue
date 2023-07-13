@@ -37,55 +37,6 @@
 				>Reconnect</Button
 			>
 		</div>
-		<Accordion :multiple="true" :activeIndex="getActiveIndex">
-			<AccordionTab>
-				<template #header>
-					Data Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-				</template>
-				<tera-dataset-datatable
-					class="tera-dataset-datatable"
-					v-if="jupyterCsv"
-					:rows="10"
-					:raw-content="jupyterCsv"
-					:previous-headers="oldCsvHeaders"
-				/>
-				<div>
-					<Button
-						class="save-button p-button p-button-secondary p-button-sm"
-						title="Saves the current version of df as a new Terarium asset"
-						@click="showSaveInput = !showSaveInput"
-					>
-						<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-						<span class="p-button-text">Save as</span>
-					</Button>
-					<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-						<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-						<i
-							class="pi pi-times i"
-							:class="{ clear: hasValidDatasetName }"
-							@click="saveAsName = ''"
-						></i>
-						<i
-							class="pi pi-check i"
-							:class="{ save: hasValidDatasetName }"
-							@click="
-								saveAsNewDataset();
-								showSaveInput = false;
-							"
-						></i>
-					</span>
-					<Button
-						class="save-button p-button p-button-secondary p-button-sm"
-						title="Download the current version of df as a CSV file"
-						@click="downloadDataset"
-					>
-						<span class="pi pi-download p-button-icon p-button-icon-left"></span>
-						<span class="p-button-text">Download</span>
-					</Button>
-				</div>
-			</AccordionTab>
-		</Accordion>
-
 		<div class="gpt-header">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 			<span><header id="GPT">TGPT</header></span>
@@ -97,18 +48,49 @@
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
-			@update-table-preview="updateJupyterTable"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 			@is-typing="emit('is-typing')"
 		/>
+		<div>
+			<Button
+				class="save-button p-button p-button-secondary p-button-sm"
+				title="Saves the current version of df as a new Terarium asset"
+				@click="showSaveInput = !showSaveInput"
+			>
+				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Save as</span>
+			</Button>
+			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<i
+					class="pi pi-times i"
+					:class="{ clear: hasValidDatasetName }"
+					@click="saveAsName = ''"
+				></i>
+				<i
+					class="pi pi-check i"
+					:class="{ save: hasValidDatasetName }"
+					@click="
+						saveAsNewDataset();
+						showSaveInput = false;
+					"
+				></i>
+			</span>
+			<Button
+				class="save-button p-button p-button-secondary p-button-sm"
+				title="Download the current version of df as a CSV file"
+				@click="downloadDataset"
+			>
+				<span class="pi pi-download p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Download</span>
+			</Button>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted, Ref } from 'vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
@@ -117,14 +99,14 @@ import { addAsset } from '@/services/project';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { CsvAsset, Dataset } from '@/types/Types';
-import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
 	newSession,
 	JupyterMessage,
 	getServerSettings,
-	getSessionManager
+	getSessionManager,
+	createMessageId
 } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -166,16 +148,7 @@ const updateKernelStatus = (statusString: string) => {
 	kernelStatus.value = statusString;
 };
 
-const csvContent = computed(() => jupyterCsv.value?.csv);
-
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
-
-const getActiveIndex = computed(() => {
-	if (!jupyterCsv.value) {
-		return [1];
-	}
-	return [0, 1];
-});
 
 const statusStyle = computed(() => {
 	if (kernelStatus.value === 'idle') {
@@ -189,17 +162,13 @@ const statusStyle = computed(() => {
 	return 'color: red';
 });
 
-const updateJupyterTable = (newJupyterCsv: CsvAsset) => {
-	jupyterCsv.value = newJupyterCsv;
-};
-
 const setKernelContext = (kernel: IKernelConnection, context_info) => {
 	const messageBody = {
 		session: jupyterSession.session?.name || '',
 		channel: 'shell',
 		content: context_info,
 		msgType: 'context_setup_request',
-		msgId: `${kernel.id}-setcontext`
+		msgId: createMessageId('context_setup_request')
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
@@ -282,7 +251,7 @@ const saveAsNewDataset = async () => {
 			name: datasetName
 		},
 		msgType: 'save_dataset_request',
-		msgId: `${kernel?.id}-save_dataset_request`
+		msgId: createMessageId('save_dataset_request')
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
@@ -376,7 +345,7 @@ const downloadDataset = () => {
 		channel: 'shell',
 		content: {},
 		msgType: 'download_dataset_request',
-		msgId: `${kernel?.id}-download_dataset_request`
+		msgId: createMessageId('download_dataset_request')
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
@@ -476,6 +445,7 @@ main .annotation-group {
 	display: flex;
 	flex-direction: column;
 	padding: 0.5rem;
+	padding-bottom: 5rem;
 	margin: 0.5rem;
 	max-height: 90%;
 }
