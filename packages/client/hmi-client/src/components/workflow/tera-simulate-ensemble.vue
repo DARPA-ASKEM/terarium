@@ -93,32 +93,32 @@
 					</div>
 				</AccordionTab>
 				<AccordionTab header="Mapping">
-					<table>
+					<table v-if="ensembleConfigs[0].observables.length > 0">
 						<tr>
 							<th>Ensemble Variables</th>
 							<th v-for="(element, i) in ensembleConfigs" :key="i">
 								{{ element.id }}
 							</th>
 						</tr>
-						<template v-for="(element, i) in ensembleConfigs" :key="i">
-							<template v-for="(key, j) in ensembleConfigs[i].observables" :key="j">
-								<tr>
-									<!-- {{ Object.keys(ensembleConfigs[i].observables[j]) }} -->
-									{{
-										'Obs Key'
-									}}
-
-									<td v-for="(key, k) in Object.keys(ensembleConfigs[i].observables[j])" :key="k">
-										<InputText v-model="ensembleConfigs[i].observables[j][key]" />
-									</td>
-								</tr>
-							</template>
-						</template>
-						{{
-							'Input Box'
-						}}
-						<!-- <InputText v-model="newObservableKey" placeholder="Variable Name" /> -->
+						<tr>
+							<div class="row-header">
+								<td v-for="(element, i) in ensembleConfigs[0].observables" :key="i">
+									{{ Object.keys(ensembleConfigs[0].observables[i]).pop() }}
+								</td>
+							</div>
+							<td v-for="(element, i) in ensembleConfigs" :key="i">
+								<template v-for="(key, j) in ensembleConfigs[i].observables" :key="j">
+									<Dropdown
+										v-for="(key, k) in Object.keys(ensembleConfigs[i].observables[j])"
+										:key="k"
+										v-model="ensembleConfigs[i].observables[j][key]"
+										:options="allModelOptions[i]"
+									/>
+								</template>
+							</td>
+						</tr>
 					</table>
+					<InputText v-model="newObservableKey" placeholder="Variable Name" />
 					<Button
 						class="p-button-sm p-button-outlined"
 						icon="pi pi-plus"
@@ -162,7 +162,7 @@ import {
 	TimeSpan,
 	EnsembleModelConfigs
 } from '@/types/Types';
-// import Dropdown from 'primevue/dropdown';
+import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import { workflowEventBus } from '@/services/workflow';
 // import DataTable from 'primevue/datatable';
@@ -407,6 +407,15 @@ watch(
 	width: 9em;
 	margin: 0em 1em;
 	margin-bottom: 1em;
+}
+
+.row-header {
+	display: flex;
+	flex-direction: column;
+}
+
+.row-header td {
+	margin: 1rem 0;
 }
 
 .tera-ensemble {
