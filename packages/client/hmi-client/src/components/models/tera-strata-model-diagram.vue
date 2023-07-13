@@ -16,7 +16,9 @@
 									<div class="input-header">NODE TYPE</div>
 									<div class="input-header">NAME OF TYPE</div>
 									<div class="input-header">ASSIGN TO</div>
-									<div><div class="empty-spacer" :style="{ width: `28px` }"></div></div>
+									<div>
+										<div class="empty-spacer" :style="{ width: `28px` }"></div>
+									</div>
 								</div>
 								<div class="typing-row" v-for="(row, index) in typedRows" :key="index">
 									<!-- legend key -->
@@ -130,8 +132,6 @@ const props = defineProps<{
 }>();
 
 const typedModel = ref<Model>(props.model);
-
-const newModelName = ref('New Model');
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -266,15 +266,6 @@ watch(
 	}
 );
 
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
-);
-
 // construct TypingSemantics data structure when user updates variable/transition assignments
 watch(
 	typedRows,
@@ -401,6 +392,7 @@ main {
 	border-radius: 0.5rem;
 	padding: 0.5rem;
 }
+
 .legend-key-circle {
 	height: 24px;
 	width: 24px;
@@ -447,6 +439,7 @@ li {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
 }
+
 .splitter-container {
 	height: 100%;
 }
