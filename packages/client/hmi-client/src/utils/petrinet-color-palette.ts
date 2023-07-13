@@ -16,15 +16,21 @@ export const nodeTypeColors = [
 ];
 
 let scale: d3.ScaleOrdinal<string, string, never> = d3.scaleOrdinal(nodeTypeColors).domain([]);
+const domain: string[] = [];
 
 function getNodeTypeColor(id: string): string {
 	return scale(id);
 }
 
 function setNodeTypeColor(ids: string[]): void {
-	scale = d3.scaleOrdinal(nodeTypeColors).domain(ids);
+	ids.forEach((id) => {
+		if (!domain.includes(id)) {
+			domain.push(id);
+		}
+	});
+	scale = d3.scaleOrdinal(nodeTypeColors).domain(domain);
 }
 
-export function useNodeTypeColorMap() {
+export function useNodeTypeColorPalette() {
 	return { getNodeTypeColor, setNodeTypeColor };
 }

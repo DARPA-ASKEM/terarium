@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
-import { useNodeTypeColorMap } from '@/utils/color-schemes';
+import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import { Model } from '@/types/Types';
 import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
 
@@ -36,7 +36,7 @@ const EDGE_OPACITY = 0.5;
 const HANDLE_SIZE = 4;
 const HANDLE_SIZE_HOVER = 8;
 
-const { getNodeTypeColor } = useNodeTypeColorMap();
+const { getNodeTypeColor } = useNodeTypeColorPalette();
 
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
