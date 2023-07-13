@@ -207,6 +207,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/parser@npm:^7.18.4":
+  version: 7.22.7
+  resolution: "@babel/parser@npm:7.22.7"
+  bin:
+    parser: ./bin/babel-parser.js
+  checksum: 02209ddbd445831ee8bf966fdf7c29d189ed4b14343a68eb2479d940e7e3846340d7cc6bd654a5f3d87d19dc84f49f50a58cf9363bee249dc5409ff3ba3dab54
+  languageName: node
+  linkType: hard
+
 "@babel/parser@npm:^7.20.15, @babel/parser@npm:^7.21.3":
   version: 7.21.8
   resolution: "@babel/parser@npm:7.21.8"
@@ -3796,6 +3805,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/compiler-sfc@npm:2.7.14":
+  version: 2.7.14
+  resolution: "@vue/compiler-sfc@npm:2.7.14"
+  dependencies:
+    "@babel/parser": ^7.18.4
+    postcss: ^8.4.14
+    source-map: ^0.6.1
+  checksum: 25e00abaecb311f1effbf539bc3e4fdeedb39d35f9c2947b2640187a047e6a7400e693fd7da1d3a98977b9078c5bf629ca47f8b9a59dc14a080c0a1e1dd06a49
+  languageName: node
+  linkType: hard
+
 "@vue/compiler-sfc@npm:3.2.45":
   version: 3.2.45
   resolution: "@vue/compiler-sfc@npm:3.2.45"
@@ -5693,7 +5713,7 @@ cors@latest:
   languageName: node
   linkType: hard
 
-"csstype@npm:^3.0.2, csstype@npm:^3.1.1":
+"csstype@npm:^3.0.2, csstype@npm:^3.1.0, csstype@npm:^3.1.1":
   version: 3.1.2
   resolution: "csstype@npm:3.1.2"
   checksum: e1a52e6c25c1314d6beef5168da704ab29c5186b877c07d822bd0806717d9a265e8493a2e35ca7e68d0f5d472d43fac1cdce70fd79fd0853dff81f3028d857b5
@@ -8842,6 +8862,8 @@ cors@latest:
     event-source-polyfill: 1.0.31
     feather-icons: 4.29.0
     graph-scaffolder: "*"
+    jquery: ^3.7.0
+    jquery-ui: ^1.13.2
     katex: 0.16.8
     lodash: 4.17.21
     mathlive: 0.89.2
@@ -8849,6 +8871,7 @@ cors@latest:
     p5: 1.6.0
     path-browserify: ^1.0.1
     pinia: 2.0.33
+    pivottable: ^2.23.0
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
     primeflex: 3.3.1
@@ -8862,6 +8885,7 @@ cors@latest:
     vitest: 0.24.5
     vue: 3.3.4
     vue-feather: 2.0.0
+    vue-pivottable: ^0.4.64
     vue-router: 4.1.6
     vue-tsc: 1.6.5
     vue3-ace-editor: 2.2.2
@@ -10361,6 +10385,22 @@ cors@latest:
   bin:
     jest: bin/jest.js
   checksum: a8ff2eb0f421623412236e23cbe67c638127fffde466cba9606bc0c0553b4c1e5cb116d7e0ef990b5d1712851652c8ee461373b578df50857fe635b94ff455d5
+  languageName: node
+  linkType: hard
+
+"jquery-ui@npm:^1.13.2":
+  version: 1.13.2
+  resolution: "jquery-ui@npm:1.13.2"
+  dependencies:
+    jquery: ">=1.8.0 <4.0.0"
+  checksum: 0d04a4b86e703d6ff71bcc37335f99be137b03fa24fa22f00f61f5aac132e7143b7d6dd9973ad4f72366e102826e417bc3d88c1640f7dd824961a7131bd3966a
+  languageName: node
+  linkType: hard
+
+"jquery@npm:>=1.8.0 <4.0.0, jquery@npm:>=1.9.0, jquery@npm:^3.7.0":
+  version: 3.7.0
+  resolution: "jquery@npm:3.7.0"
+  checksum: 907785e133afc427650a131af5fccef66a404885037513b3d4d7d63aee6409bcc32a39836868c60e59b05aa0fb8ace8961c18b2ee3ffdf6ffdb571d6d7cd88ff
   languageName: node
   linkType: hard
 
@@ -12173,6 +12213,15 @@ opn@latest:
   languageName: node
   linkType: hard
 
+"pivottable@npm:^2.23.0":
+  version: 2.23.0
+  resolution: "pivottable@npm:2.23.0"
+  dependencies:
+    jquery: ">=1.9.0"
+  checksum: 4ab03492186e85e2b03a163f2fbc7e5eea5aa8608f0b22a126b21c28263391992c133a837638cd9abc0343827333a6903470625882955bda92076d945e28869c
+  languageName: node
+  linkType: hard
+
 "pixi-viewport@npm:4.37.0":
   version: 4.37.0
   resolution: "pixi-viewport@npm:4.37.0"
@@ -12283,6 +12332,17 @@ opn@latest:
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
   checksum: e39ac60ccd1542d4f9d93d894048aac0d686b3bb38e927d8386005718e6793dbbb46930f0a523fe382f1bbd843c6d980aaea791252bf5e176180e5a4336d9679
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.14":
+  version: 8.4.25
+  resolution: "postcss@npm:8.4.25"
+  dependencies:
+    nanoid: ^3.3.6
+    picocolors: ^1.0.0
+    source-map-js: ^1.0.2
+  checksum: 9ed3ab8af43ad5210c28f56f916fd9b8c9f94fbeaebbf645dcf579bc28bdd8056c2a7ecc934668d399b81fedb6128f0c4b299f931e50454964bc911c25a3a0a2
   languageName: node
   linkType: hard
 
@@ -13404,6 +13464,13 @@ send@latest:
     ip: ^2.0.0
     smart-buffer: ^4.2.0
   checksum: 259d9e3e8e1c9809a7f5c32238c3d4d2a36b39b83851d0f573bfde5f21c4b1288417ce1af06af1452569cd1eb0841169afd4998f0e04ba04656f6b7f0e46d748
+  languageName: node
+  linkType: hard
+
+"sortablejs@npm:1.10.2":
+  version: 1.10.2
+  resolution: "sortablejs@npm:1.10.2"
+  checksum: 37f8d47a9702b93c38077c5e0af90174dcf8e95cf96fe61a722033003eb293bdf3832e4a943f281eaedc433e24cd7d5a48a408706a71a21e75bc11ced0b358da
   languageName: node
   linkType: hard
 
@@ -14709,6 +14776,16 @@ send@latest:
   languageName: node
   linkType: hard
 
+"vue-pivottable@npm:^0.4.64":
+  version: 0.4.64
+  resolution: "vue-pivottable@npm:0.4.64"
+  dependencies:
+    vue: ^2.6.10
+    vuedraggable: ^2.23.0
+  checksum: df4e45510f7eb00c68de4b259f09dcf515cc970d2e4e9085d496690919b1031550572266ed6462a4e001dec0baf76fff3c0c0b9c62d97199ee96963b0a6e407e
+  languageName: node
+  linkType: hard
+
 "vue-router@npm:4.1.6":
   version: 4.1.6
   resolution: "vue-router@npm:4.1.6"
@@ -14776,6 +14853,16 @@ send@latest:
   languageName: node
   linkType: hard
 
+"vue@npm:^2.6.10":
+  version: 2.7.14
+  resolution: "vue@npm:2.7.14"
+  dependencies:
+    "@vue/compiler-sfc": 2.7.14
+    csstype: ^3.1.0
+  checksum: 8b06da67cc40870c66a30b7a6bc2874950cd4383792c371eb30497dd14fc7b41cf308b1c4517368d8f0e7ac16198c08de19236f6a79fe43f4bdbc4a1d9d4ad07
+  languageName: node
+  linkType: hard
+
 "vue@npm:^3.2.22":
   version: 3.2.47
   resolution: "vue@npm:3.2.47"
@@ -14799,6 +14886,15 @@ send@latest:
     "@vue/server-renderer": 3.2.45
     "@vue/shared": 3.2.45
   checksum: df60ca80cb9fdce408eccd0c7a4d44720df9855c62e340448650d8048b1edd25da6f3bd99ed7efc19efbe1f3fdcec4ae8067ab10ae50be5bb363d996ad29251a
+  languageName: node
+  linkType: hard
+
+"vuedraggable@npm:^2.23.0":
+  version: 2.24.3
+  resolution: "vuedraggable@npm:2.24.3"
+  dependencies:
+    sortablejs: 1.10.2
+  checksum: 5fbdf829c1d9fe1aa206a2e23e058524e8e5ee48aa7b682922b07cb59115891f56c681aa57d2952a43054f23af08504f381da84625d7409d699977790dc870c8
   languageName: node
   linkType: hard
 
