@@ -239,7 +239,7 @@ interface AddStateObj {
 	nodeType: string;
 }
 const openEditNode = ref<boolean>(false);
-const editNodeObj: AddStateObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
 let previousId: any = null;
 
 const addObservable = () => {
