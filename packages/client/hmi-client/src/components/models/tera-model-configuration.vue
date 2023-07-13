@@ -343,7 +343,7 @@ async function initializeConfigSpace() {
 		(d) => d.name === 'Default config'
 	) as ModelConfiguration;
 	if (defaultConfig) {
-		defaultConfig.configuration = props.model;
+		defaultConfig.configuration = _.cloneDeep(props.model);
 		updateModelConfiguration(defaultConfig);
 	}
 
