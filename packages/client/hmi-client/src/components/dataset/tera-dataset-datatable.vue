@@ -202,9 +202,6 @@ const setChartOptions = () => {
 	top: -0.5rem;
 }
 
-.column-summary-value {
-	font-variant-numeric: tabular-nums;
-}
 .histogram {
 	height: 100px;
 }
