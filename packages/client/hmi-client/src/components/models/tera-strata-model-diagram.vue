@@ -112,10 +112,10 @@ const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
 const stateTypes = computed(() =>
-	props.strataModel.semantics?.typing?.type_system?.states.map((s) => s.name)
+	typedModel.value.semantics?.typing?.type_system?.states.map((s) => s.name)
 );
 const transitionTypes = computed(() =>
-	props.strataModel.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
+	typedModel.value.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
 );
 
 const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorMap();
@@ -182,24 +182,32 @@ function updateStatesToAddReflexives(
 	typeOfTransition: string
 ) {
 	statesToAddReflexives.value[typeOfState] = newValue;
-	newValue.forEach((stateId) => {
-		const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`;
-		addReflexives(typedModel.value, stateId, newTransitionId);
-		const updatedTypeMap = typedModel.value.semantics?.typing?.type_map ?? [];
-		const transition = props.baseModel?.semantics?.typing?.type_system.transitions.find(
-			(t) => t.id === typeOfTransition
-		);
-		const updatedTypeSystem = typedModel.value.semantics?.typing?.type_system;
-		if (updatedTypeMap && transition && updatedTypeSystem) {
-			updatedTypeMap.push([newTransitionId, typeOfTransition]);
-			updatedTypeSystem.transitions.push(transition);
-			const updatedTyping: TypingSemantics = {
-				type_map: updatedTypeMap,
-				type_system: updatedTypeSystem
-			};
-			addTyping(typedModel.value, updatedTyping);
-		}
-	});
+	const updatedTypeMap = typedModel.value.semantics?.typing?.type_map;
+	const updatedTypeSystem = typedModel.value.semantics?.typing?.type_system;
+
+	if (updatedTypeMap && updatedTypeSystem) {
+		newValue.forEach((stateId) => {
+			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`;
+			addReflexives(typedModel.value, stateId, newTransitionId);
+
+			const transition = props.baseModel?.semantics?.typing?.type_system.transitions.find(
+				(t) => t.id === typeOfTransition
+			);
+			if (transition) {
+				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
+					updatedTypeMap.push([newTransitionId, typeOfTransition]);
+				}
+				if (!updatedTypeSystem.transitions.find((t) => t.id === typeOfTransition)) {
+					updatedTypeSystem.transitions.push(transition);
+				}
+			}
+		});
+		const updatedTyping: TypingSemantics = {
+			type_map: updatedTypeMap,
+			type_system: updatedTypeSystem
+		};
+		addTyping(typedModel.value, updatedTyping);
+	}
 }
 
 watch(
