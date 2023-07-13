@@ -38,7 +38,12 @@
 									</div>
 									<div>
 										<!-- name of type -->
-										<InputText class="p-inputtext-sm" v-model="row.typeName" />
+										<InputText
+											class="p-inputtext-sm"
+											:model-value="row.typeName"
+											@update:model-value="(newValue) => setTypeNameBuffer(newValue, index)"
+											@change="updateRowTypeName(index)"
+										/>
 									</div>
 									<div>
 										<!-- assign to -->
@@ -163,6 +168,8 @@ const typedRows = ref<
 	}[]
 >([]);
 
+let typeNameBuffer: string[] = [];
+
 const numberNodes = computed(
 	() => typedModel.value.model.states.length + typedModel.value.model.transitions.length
 );
@@ -184,6 +191,14 @@ const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorMap();
 
 function addTypedRow() {
 	typedRows.value.push({});
+}
+
+function setTypeNameBuffer(newValue, row) {
+	typeNameBuffer[row] = newValue;
+}
+
+function updateRowTypeName(rowIndex: number) {
+	typedRows.value[rowIndex].typeName = typeNameBuffer[rowIndex];
 }
 
 function getLegendKeyClass(type: string) {
@@ -255,16 +270,19 @@ watch(
 			nodeIds.push(t.id);
 		});
 		setNodeTypeColor(nodeIds);
-		typedRows.value.push(
-			{
-				nodeType: 'Variable',
-				typeName: props.typeSystem?.states[0].name
-			},
-			{
-				nodeType: 'Transition',
-				typeName: props.typeSystem?.transitions[0].properties?.name
-			}
-		);
+		if (typedRows.value.length === 0) {
+			typedRows.value.push(
+				{
+					nodeType: 'Variable',
+					typeName: props.typeSystem?.states[0].name
+				},
+				{
+					nodeType: 'Transition',
+					typeName: props.typeSystem?.transitions[0].properties?.name
+				}
+			);
+		}
+		typeNameBuffer = typedRows.value.map((r) => r.typeName ?? '');
 	}
 );
 
