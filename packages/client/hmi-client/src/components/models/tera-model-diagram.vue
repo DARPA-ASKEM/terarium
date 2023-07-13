@@ -16,13 +16,13 @@
 								<span class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
-										@click="addNode(NodeType.State)"
+										@click="addNode()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
 										v-if="isEditing"
-										@click="addNode(NodeType.Transition)"
+										@click="addNode()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
@@ -154,7 +154,7 @@
 	<Teleport to="body">
 		<tera-modal v-if="openEditNode === true" @modal-mask-clicked="openEditNode = false">
 			<template #header>
-				<h4>Add/Edit node {{ editNodeObj }}</h4>
+				<h4>Add/Edit node</h4>
 			</template>
 			<div>
 				<InputText v-model="editNodeObj.id" placeholder="Id" />
@@ -163,7 +163,7 @@
 				<InputText v-model="editNodeObj.name" placeholder="Name" />
 			</div>
 			<template #footer>
-				<Button label="Add node" @click="addNode(editNodeObj.nodeType)" />
+				<Button label="Submit" @click="addNode()" />
 				<Button label="Cancel" @click="openEditNode = false" />
 			</template>
 		</tera-modal>

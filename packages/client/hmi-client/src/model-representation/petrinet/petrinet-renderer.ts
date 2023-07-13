@@ -474,11 +474,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.render();
 	}
 
-	addNodeCenter(type: string, name: string) {
+	addNodeCenter(type: string, id: string, name: string) {
 		// FIXME: hardwired sizing
 		const positionX = this.chartSize.width / 2;
 		const positionY = this.chartSize.height / 2;
-		this.addNode(type, name, { x: positionX, y: positionY });
+		this.addNode(type, id, name, { x: positionX, y: positionY });
 	}
 
 	removeNode(id: string) {
