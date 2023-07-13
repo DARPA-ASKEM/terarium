@@ -152,22 +152,19 @@
 	</main>
 
 	<Teleport to="body">
-		<tera-modal v-if="openAddNode === true" @modal-mask-clicked="openAddNode = false">
-			<div>
-				<InputText v-model="addNodeObj.id" placeholder="Id" />
-			</div>
-			<div>
-				<InputText v-model="addNodeObj.name" placeholder="Name" />
-			</div>
-			<template #footer>
-				<Button label="Add state" @click="addNode(addNodeObj.nodeType)" />
-				<Button label="Cancel" @click="openAddTransition = false" />
+		<tera-modal v-if="openEditNode === true" @modal-mask-clicked="openEditNode = false">
+			<template #header>
+				<h4>Add/Edit node {{ editNodeObj }}</h4>
 			</template>
-		</tera-modal>
-		<tera-modal v-if="openAddTransition === true" @modal-mask-clicked="openAddTransition = false">
+			<div>
+				<InputText v-model="editNodeObj.id" placeholder="Id" />
+			</div>
+			<div>
+				<InputText v-model="editNodeObj.name" placeholder="Name" />
+			</div>
 			<template #footer>
-				<Button label="Add transition" />
-				<Button label="Cancel" />
+				<Button label="Add node" @click="addNode(editNodeObj.nodeType)" />
+				<Button label="Cancel" @click="openEditNode = false" />
 			</template>
 		</tera-modal>
 	</Teleport>
@@ -241,10 +238,9 @@ interface AddStateObj {
 	name: string;
 	nodeType: string;
 }
-const openAddNode = ref<boolean>(false);
-const addNodeObj: AddStateObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
-
-const openAddTransition = ref<boolean>(false);
+const openEditNode = ref<boolean>(false);
+const editNodeObj: AddStateObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+let previousId = '';
 
 const addObservable = () => {
 	isEditingObservables.value = true;
@@ -468,16 +464,16 @@ const contextMenuItems = ref([
 		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			addNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
-			openAddNode.value = true;
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+			openEditNode.value = true;
 		}
 	},
 	{
 		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			addNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
-			openAddNode.value = true;
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+			openEditNode.value = true;
 		}
 	}
 ]);
@@ -497,6 +493,17 @@ watch(
 			useStableZoomPan: true,
 			runLayout: runDagreLayout,
 			dragSelector: 'no-drag'
+		});
+
+		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
+			const data = selection.datum();
+			editNodeObj.value = {
+				id: data.id,
+				name: data.label,
+				nodeType: data.data.type
+			};
+			previousId = data.id;
+			openEditNode.value = true;
 		});
 
 		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
@@ -615,17 +622,23 @@ const resetZoom = async () => {
 
 const addNode = async () => {
 	if (!renderer) return;
-	if (eventX && eventY) {
-		renderer.addNode(addNodeObj.value.nodeType, addNodeObj.value.id, addNodeObj.value.name, {
-			x: eventX,
-			y: eventY
-		});
+
+	const node = editNodeObj.value;
+
+	if (!previousId || previousId === '') {
+		if (eventX && eventY) {
+			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
+		} else {
+			renderer.addNodeCenter(node.nodeType, node.id, node.name);
+		}
 	} else {
-		renderer.addNodeCenter(addNodeObj.value.nodeType, addNodeObj.value.id, addNodeObj.value.name);
+		renderer.updateNode(previousId, node.id, node.name);
+		previousId = '';
 	}
+
 	eventX = -1;
 	eventY = -1;
-	openAddNode.value = false;
+	openEditNode.value = false;
 };
 
 const observablesList = computed(() => props.model?.semantics?.ode?.observables ?? []);

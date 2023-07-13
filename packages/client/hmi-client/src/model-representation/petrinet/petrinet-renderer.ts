@@ -161,7 +161,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.html((d) => d.label);
+			.html((d) => d.id);
 
 		// transitions expression text
 		transitions
@@ -213,7 +213,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.text((d) => d.label);
+			.text((d) => d.id);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
@@ -497,6 +497,21 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		} else {
 			petrinetService.removeTransition(amr, id);
 		}
+	}
+
+	updateNode(id: string, newId: string, newName: string) {
+		const node = this.graph.nodes.find((d) => d.id === id);
+		if (!node) return;
+		node.id = newId;
+		node.label = newName;
+
+		console.log('updating node...', newId, newName);
+		this.graph.edges.forEach((edge) => {
+			if (edge.source === id) edge.source = newId;
+			if (edge.target === id) edge.target = newId;
+		});
+
+		this.render();
 	}
 
 	addEdge(source: any, target: any) {
