@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import * as d3 from 'd3';
 // Colour palette is from https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=12
 export const nodeTypeColors = [
 	'#a6cee3',
@@ -15,33 +15,14 @@ export const nodeTypeColors = [
 	'#b15928'
 ];
 
-const nodeTypeColorMap = ref<{ [id: string]: string }>({});
-const count = ref(0);
+let scale: d3.ScaleOrdinal<string, string, never> = d3.scaleOrdinal(nodeTypeColors).domain([]);
 
 function getNodeTypeColor(id: string): string {
-	if (!id) {
-		return '#FFF';
-	}
-	const color = nodeTypeColorMap.value[id];
-	if (!color) {
-		setNodeTypeColor(id);
-	}
-	return nodeTypeColorMap.value[id];
+	return scale(id);
 }
 
-function setNodeTypeColor(id: string): void {
-	if (!id) {
-		return;
-	}
-	if (nodeTypeColorMap.value[id]) {
-		return;
-	}
-	nodeTypeColorMap.value[id] = nodeTypeColors[count.value];
-	if (count.value >= nodeTypeColors.length) {
-		count.value = 0;
-	} else {
-		count.value++;
-	}
+function setNodeTypeColor(ids: string[]): void {
+	scale = d3.scaleOrdinal(nodeTypeColors).domain(ids);
 }
 
 export function useNodeTypeColorMap() {
