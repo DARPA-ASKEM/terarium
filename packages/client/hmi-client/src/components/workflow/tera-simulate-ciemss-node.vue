@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 
 import {
@@ -86,7 +86,7 @@ const runSimulate = async () => {
 				start: state.currentTimespan.start,
 				end: state.currentTimespan.end
 			},
-			extra: { num_samples: 100 },
+			extra: { num_samples: state.numSamples },
 			engine: 'ciemss'
 		};
 		const response = await makeForecastJob(payload);
@@ -198,6 +198,16 @@ const addChart = () => {
 		state
 	});
 };
+
+onMounted(async () => {
+	const port = props.node.outputs[0];
+	if (!port) return;
+
+	const runIdList = port.value as string[];
+	const output = await getRunResultCiemss(runIdList[0]);
+	runResults.value = output.runResults;
+	runConfigs.value = output.runConfigs;
+});
 </script>
 
 <style scoped>
