@@ -253,8 +253,7 @@ const handleResize = () => {
 	updateLayout();
 };
 
-const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
-	console.log(mathmlEq);
+const setNewEquation = (index: number, latexEq: string) => {
 	latexEquationList.value[index] = latexEq;
 };
 
