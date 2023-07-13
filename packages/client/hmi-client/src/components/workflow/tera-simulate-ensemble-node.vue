@@ -70,6 +70,10 @@ section {
 	padding: 10px;
 	background: var(--surface-overlay);
 }
+
+.result-container {
+	align-items: center;
+}
 .image {
 	height: 8.75rem;
 	margin-bottom: 0.5rem;
