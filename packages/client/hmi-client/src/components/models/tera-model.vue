@@ -438,11 +438,11 @@
 				@modal-mask-clicked="isCopyModelModalVisible = false"
 			>
 				<template #header>
-					<header>Make a copy</header>
+					<h4>Make a copy</h4>
 				</template>
 				<template #default>
 					<form>
-						<label for="copy-model">What do you want to name it?</label>
+						<label for="copy-model">{{ copyModelNameInputPrompt }}</label>
 						<InputText
 							v-bind:class="invalidInputStyle"
 							id="copy-model"
@@ -492,6 +492,7 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
+import { logger } from '@/utils/logger';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
@@ -541,6 +542,7 @@ const isRenamingModel = ref(false);
 const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
 
 const isCopyModelModalVisible = ref<boolean>(false);
+const copyModelNameInputPrompt = ref<string>('What do you want to name it?');
 const copyModelName = ref<string>('');
 
 const isValidName = ref<boolean>(true);
@@ -607,7 +609,7 @@ function getSuggestedModelName(currModelName: string, counter: number): string {
 
 function initiateModelDuplication() {
 	if (!model.value) {
-		console.log('Failed to duplicate model.');
+		logger.info('Failed to duplicate model.');
 		return;
 	}
 	const modelName = getJustModelName(model.value.name.trim());
@@ -617,17 +619,20 @@ function initiateModelDuplication() {
 
 async function duplicateModel() {
 	if (existingModelNames.value.includes(copyModelName.value.trim())) {
-		console.log('Duplicate model name - Please enter a different name');
+		copyModelNameInputPrompt.value = 'Duplicate model name - please enter a different name:';
 		isValidName.value = false;
+		logger.info('Duplicate model name - please enter a different name');
 		return;
 	}
+	copyModelNameInputPrompt.value = 'Creating a copy...';
 	isValidName.value = true;
 	const duplicateModelResponse = await createModel({
 		...model.value,
 		name: copyModelName.value.trim()
 	});
 	if (!duplicateModelResponse) {
-		console.log('Failed to duplicate model.');
+		logger.info('Failed to duplicate model.');
+		isCopyModelModalVisible.value = false;
 		return;
 	}
 	await ProjectService.addAsset(
@@ -941,11 +946,6 @@ function editSection(event: Event) {
 	color: var(--text-color-light);
 	font-size: var(--font-caption);
 	text-transform: uppercase;
-}
-
-.modal header {
-	font-size: 20px;
-	font-weight: bold;
 }
 
 .modal label {
