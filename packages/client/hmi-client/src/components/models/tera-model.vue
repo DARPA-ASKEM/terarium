@@ -75,7 +75,11 @@
 					<td>{{ model?.metadata?.processed_by ?? '--' }}</td>
 				</tr>
 			</table>
-			<RelatedPublications :publications="publications" />
+			<RelatedPublications
+				:publications="publications"
+				:project="project"
+				:dialog-flavour="'model'"
+			/>
 			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editSection">
 				<!-- Description -->
 				<AccordionTab>
@@ -519,7 +523,7 @@ const props = defineProps({
 	project: {
 		type: Object as PropType<IProject> | null,
 		default: null,
-		required: false
+		required: true
 	},
 	assetId: {
 		type: String,
