@@ -134,7 +134,7 @@ const emit = defineEmits(['all-nodes-typed']);
 
 const props = defineProps<{
 	model: Model;
-	strataModel: Model | undefined;
+	strataModel: Model | null;
 	showTypingToolbar: boolean;
 	typeSystem?: TypeSystem;
 	showReflexivesToolbar: boolean;

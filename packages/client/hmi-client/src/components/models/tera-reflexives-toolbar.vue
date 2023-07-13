@@ -20,8 +20,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import MultiSelect from 'primevue/multiselect';
-import { Model, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
-import { addReflexives, addTyping } from '@/model-representation/petrinet/petrinet-service';
+import { Model, PetriNetTransition, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
+import {
+	addReflexives,
+	addTyping,
+	updateRateExpression
+} from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
 	modelToUpdate: Model; // the model to which we will add reflexives
@@ -71,6 +75,7 @@ function updateStatesToAddReflexives(newValue: string[], typeOfTransition: strin
 				(t) => t.id === typeOfTransition
 			);
 			if (transition) {
+				updateRateExpression(typedModel.value, transition as PetriNetTransition);
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
 					updatedTypeMap.push([newTransitionId, typeOfTransition]);
 				}
