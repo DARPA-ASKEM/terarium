@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 
 import {
@@ -198,6 +198,16 @@ const addChart = () => {
 		state
 	});
 };
+
+onMounted(async () => {
+	const port = props.node.outputs[0];
+	if (!port) return;
+
+	const runIdList = port.value as string[];
+	const output = await getRunResultCiemss(runIdList[0]);
+	runResults.value = output.runResults;
+	runConfigs.value = output.runConfigs;
+});
 </script>
 
 <style scoped>
