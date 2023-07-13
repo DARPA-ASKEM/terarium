@@ -22,6 +22,21 @@ public class RestClientTimingInterceptor {
 
 	@Inject
 	StructuredLog structuredLog;
+
+	/**
+	 * Create a structured log of the proxy being called.  Logs:
+	 * 	- PROXY_REQUEST identifier
+	 * 	- The username of the user making the proxy, Anonymous if it is done on behalf of the system itself
+	 * 	- The name of the proxy method (in Java)
+	 * 	- The name of the parent class (the actual rest client)
+	 * 	- The rest path being executed
+	 * 	- The method type (GET, POST, etc)
+	 * 	- An optional group that can be specified on the annotation, if not provided, defaults to the package name for grouping
+	 * 	- The time in ms the call took
+	 * @param context	Invocation context
+	 * @return				the next interceptor in the chain
+	 * @throws Exception
+	 */
 	@AroundInvoke
 	public Object measureInvocationTime(InvocationContext context) throws Exception {
 		long startTime = System.currentTimeMillis();
@@ -41,6 +56,11 @@ public class RestClientTimingInterceptor {
 		}
 	}
 
+	/**
+	 * Get the method type of the rest call being made
+	 * @param context	Invocation context
+	 * @return				The method type (GET, POST, etc)
+	 */
 	private String getType(InvocationContext context) {
 		if (context.getMethod().getAnnotation(javax.ws.rs.GET.class) != null) {
 			return "GET";
@@ -60,6 +80,11 @@ public class RestClientTimingInterceptor {
 		return null;
 	}
 
+	/**
+	 * Gets the @Path annotation for the method being called prefixed with the parent class
+	 * @param context	Invocation context
+	 * @return
+	 */
 	private String getPath(InvocationContext context) {
 		String parentPath = getPath(context.getMethod().getDeclaringClass());
 		String methodPath = getPath(context.getMethod());
@@ -69,12 +94,23 @@ public class RestClientTimingInterceptor {
 		return methodPath;
 	}
 
+	/**
+	 * Gets the @Path annotation for the class
+	 * @param clazz	The class to get the path for
+	 * @return			The value of the annotation or an empty string if it doesn't exist
+	 */
 	private String getPath(Class<?> clazz) {
 		if (clazz.getAnnotation(javax.ws.rs.Path.class) != null) {
 			return clazz.getAnnotation(javax.ws.rs.Path.class).value();
 		}
 		return "";
 	}
+
+	/**
+	 * Gets the @Path annotation for the method
+	 * @param method	The method to get the path for
+	 * @return				The value of the annotation or an empty string if it doesn't exist
+	 */
 	private String getPath(Method method) {
 		if (method.getAnnotation(javax.ws.rs.Path.class) != null) {
 			return method.getAnnotation(javax.ws.rs.Path.class).value();
@@ -82,6 +118,11 @@ public class RestClientTimingInterceptor {
 		return "";
 	}
 
+	/**
+	 * Gets the parent package of the class
+	 * @param context	Invocation context
+	 * @return				The parent package name
+	 */
 	private String parentPackage(InvocationContext context) {
 		final String fullyQualifiedPackage = context.getMethod().getDeclaringClass().getPackage().getName();
 		return fullyQualifiedPackage.split("\\.")[fullyQualifiedPackage.split("\\.").length - 1];
