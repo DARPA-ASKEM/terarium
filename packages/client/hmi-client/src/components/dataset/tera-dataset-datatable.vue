@@ -5,7 +5,10 @@
 		:value="csvContent?.slice(1, csvContent.length)"
 		:rows="props.rows"
 		paginator
-		:paginatorPosition="paginatorPosition ? paginatorPosition : `both`"
+		:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"
+		:rowsPerPageOptions="[5, 10, 25, 50, 100]"
+		paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+		currentPageReportTemplate="{first} to {last} of {totalRecords}"
 		removableSort
 		resizable-columns
 		showGridlines

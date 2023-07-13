@@ -1,11 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies.documentservice;
 
-import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.ConfigProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.annotation.ClientHeaderParam;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 
 import javax.ws.rs.HeaderParam;
@@ -14,7 +11,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Optional;
 
 /**
  * This is a temporary proxy as currently the ES endpoint is just on xDD's development
@@ -35,6 +31,7 @@ public interface ESSearchProxy {
 	 */
 	@POST
 	@Path("/es")
+	@LogRestClientTime
 	Response search(@HeaderParam("x-api-key") final String apiKey, final String data);
 
 }

@@ -477,11 +477,6 @@ onUpdated(() => {
 	border-width: 0px 0px 0px 6px;
 }
 
-.p-buttonset {
-	white-space: nowrap;
-	margin-left: 0.5rem;
-}
-
 .extracted-item {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;

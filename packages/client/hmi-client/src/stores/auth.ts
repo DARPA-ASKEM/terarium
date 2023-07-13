@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { config } from 'vue-gtag';
 
 /**
  * Decode the OIDC token for additional information
@@ -76,6 +77,11 @@ const useAuthStore = defineStore('auth', {
 
 						this.name = tokenInfo.name;
 						this.email = tokenInfo.email;
+
+						// Configure Google Analytics user_id property.  The preferred username is
+						// the username within Keycloak, or, when using GitHub authentication, the GitHub
+						// username.
+						config({ user_id: tokenInfo.preferred_username });
 					} catch (error) {
 						console.error('Unable to decode authentication token for additional user information');
 						this.name = null;

@@ -68,6 +68,10 @@ const props = defineProps({
 	postFix: {
 		type: String,
 		default: 'new'
+	},
+	notebookItemId: {
+		type: String,
+		default: null
 	}
 });
 
@@ -107,7 +111,8 @@ commands.addCommand('invoke:completer', {
 	}
 });
 commands.addCommand('run:cell', {
-	execute: () => CodeCell.execute(cellWidget, props.jupyterSession)
+	execute: () =>
+		CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItemId })
 });
 
 // Add Key Bindings
@@ -156,7 +161,7 @@ onMounted(() => {
 
 // Execute cell function
 const run = () => {
-	CodeCell.execute(cellWidget, props.jupyterSession);
+	CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItemId });
 };
 
 cellWidget.activate();
