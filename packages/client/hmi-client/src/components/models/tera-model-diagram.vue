@@ -320,9 +320,6 @@ onMounted(() => {
 	document.addEventListener('keyup', editorKeyHandler);
 	window.addEventListener('resize', handleResize);
 	handleResize();
-	if (observablesList.value.length > 0) {
-		observervablesList.value = observablesList.value.filter((ob) => ob.expression);
-	}
 });
 
 onUnmounted(() => {
