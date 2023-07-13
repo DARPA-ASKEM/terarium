@@ -5,6 +5,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.List;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
@@ -14,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 // Used to specify the location of a dataset for simulation-service
 public class EnsembleModelConfigs {
     private String id;
-    private Map<String, String> observables;
+    private List<Map<String, String>> observables;
     private float weight;
 
 }

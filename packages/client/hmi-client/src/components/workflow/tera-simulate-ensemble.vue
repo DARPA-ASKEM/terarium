@@ -92,7 +92,40 @@
 						</section>
 					</div>
 				</AccordionTab>
-				<AccordionTab header="Mapping"> </AccordionTab>
+				<AccordionTab header="Mapping">
+					<table>
+						<tr>
+							<th>Ensemble Variables</th>
+							<th v-for="(element, i) in ensembleConfigs" :key="i">
+								{{ element.id }}
+							</th>
+						</tr>
+						<template v-for="(element, i) in ensembleConfigs" :key="i">
+							<template v-for="(key, j) in ensembleConfigs[i].observables" :key="j">
+								<tr>
+									<!-- {{ Object.keys(ensembleConfigs[i].observables[j]) }} -->
+									{{
+										'Obs Key'
+									}}
+
+									<td v-for="(key, k) in Object.keys(ensembleConfigs[i].observables[j])" :key="k">
+										<InputText v-model="ensembleConfigs[i].observables[j][key]" />
+									</td>
+								</tr>
+							</template>
+						</template>
+						{{
+							'Input Box'
+						}}
+						<!-- <InputText v-model="newObservableKey" placeholder="Variable Name" /> -->
+					</table>
+					<Button
+						class="p-button-sm p-button-outlined"
+						icon="pi pi-plus"
+						label="Add mapping"
+						@click="addMapping"
+					/>
+				</AccordionTab>
 				<AccordionTab header="Time Span">
 					<table>
 						<thead class="p-datatable-thead">
@@ -113,8 +146,8 @@
 </template>
 
 <script setup lang="ts">
-// import _ from 'lodash';
-import { ref, computed, watch, onMounted } from 'vue';
+import _ from 'lodash';
+import { ref, computed, watch } from 'vue';
 import { getSimulation, makeEnsembleSimulation } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
@@ -131,11 +164,11 @@ import {
 } from '@/types/Types';
 // import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
-import { EnsembleOperation } from './simulate-ensemble-operation';
-// import { workflowEventBus } from '@/services/workflow';
+import { workflowEventBus } from '@/services/workflow';
 // import DataTable from 'primevue/datatable';
 // import Column from 'primevue/column';
-// import InputText from 'primevue/inputtext';
+import InputText from 'primevue/inputtext';
+import { EnsembleOperation, EnsembleOperationState } from './simulate-ensemble-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -168,7 +201,6 @@ const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<string[][]>([]);
-// const weights = ref<number[]>([]);
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>({ start: 0, end: 90 });
@@ -179,6 +211,7 @@ const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
 const disabledCalibrationWeights = computed(() => false);
+const newObservableKey = ref<string>('');
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -242,19 +275,29 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-// function addMapping(modelId: string) {
-// 	console.log(modelId);
-// 	mapping.value[0].observables.push({});
+function addMapping() {
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		ensembleConfigs.value[i].observables.push({ [newObservableKey.value]: 'test' });
+		console.log('Tom look here');
+		console.log(ensembleConfigs.value[i].observables[0]);
+	}
 
-// 	const state: EnsembleOperationState = _.cloneDeep(props.node.state);
-// 	state.mapping = mapping.value;
+	const state: EnsembleOperationState = _.cloneDeep(props.node.state);
+	state.mapping = ensembleConfigs.value;
 
-// 	workflowEventBus.emitNodeStateChange({
-// 		workflowId: props.node.workflowId,
-// 		nodeId: props.node.id,
-// 		state
-// 	});
-// };
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+	// console.log("Mapping updated:");
+	// for (let i of Object.keys(ensembleConfigs.value[0].observables[0])){
+	// 	console.log(i);
+	// 	console.log(ensembleConfigs.value[0].observables[0]["testn"]);
+	// }
+
+	console.log(ensembleConfigs.value);
+}
 
 const setBarChartData = () => {
 	const documentStyle = getComputedStyle(document.documentElement);
@@ -326,46 +369,37 @@ watch(
 	{ immediate: true }
 );
 
-onMounted(() => {
-	watch(
-		() => props.node.state.modelConfigIds,
-		async () => {
-			allModelConfigurations.value = [];
-			ensembleConfigs.value = [];
-			// Fetch Model Configurations
-			await Promise.all(
-				listModelIds.value.map(async (id) => {
-					const result = await getModelConfigurationById(id);
-					allModelConfigurations.value.push(result);
-				})
+watch(
+	() => listModelIds,
+	async () => {
+		console.log('List changed');
+		allModelConfigurations.value = [];
+		// Fetch Model Configurations
+		await Promise.all(
+			listModelIds.value.map(async (id) => {
+				const result = await getModelConfigurationById(id);
+				allModelConfigurations.value.push(result);
+			})
+		);
+		console.log(allModelConfigurations.value);
+		allModelOptions.value = [];
+		for (let i = 0; i < allModelConfigurations.value.length; i++) {
+			const tempList = allModelConfigurations.value[i].configuration.model.states.map(
+				(element) => element.id
 			);
-			console.log(allModelConfigurations.value);
-			allModelOptions.value = [];
-			for (let i = 0; i < allModelConfigurations.value.length; i++) {
-				const tempList = allModelConfigurations.value[i].configuration.model.states.map(
+			tempList.push(
+				allModelConfigurations.value[i].configuration.semantics.ode.observables.map(
 					(element) => element.id
-				);
-				tempList.push(
-					allModelConfigurations.value[i].configuration.semantics.ode.observables.map(
-						(element) => element.id
-					)
-				);
-				allModelOptions.value.push(tempList);
-			}
+				)
+			);
+			allModelOptions.value.push(tempList);
+		}
 
-			// Init ensemble Configs:
-			for (let i = 0; i < listModelIds.value.length; i++) {
-				ensembleConfigs.value[i] = {
-					id: listModelIds.value[i],
-					observables: {},
-					weight: 0
-				};
-			}
-			calculateWeights();
-		},
-		{ immediate: true }
-	);
-});
+		// calculateWeights();
+		console.log('------------');
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>

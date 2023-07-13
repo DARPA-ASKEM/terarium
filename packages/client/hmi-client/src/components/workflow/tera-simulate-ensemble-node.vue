@@ -22,6 +22,7 @@ import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { RunResults } from '@/types/SimulateConfig';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
+import { EnsembleModelConfigs } from '@/types/Types';
 import { EnsembleOperationState } from './simulate-ensemble-operation';
 
 const props = defineProps<{
@@ -31,7 +32,7 @@ const props = defineProps<{
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
-
+const mapping = ref<EnsembleModelConfigs[]>([]);
 const runEnsemble = async () => {
 	console.log('TODO');
 };
@@ -42,8 +43,19 @@ watch(
 		console.log('Updated node model config ids');
 		if (modelConfigIds.value) {
 			console.log(modelConfigIds.value);
+
+			// Init ensemble Configs:
+			for (let i = 0; i < modelConfigIds.value.length; i++) {
+				mapping.value[i] = {
+					id: modelConfigIds.value[i],
+					observables: [],
+					weight: 0
+				};
+			}
+			console.log(mapping.value);
 			const state: EnsembleOperationState = _.cloneDeep(props.node.state);
 			state.modelConfigIds = modelConfigIds.value;
+			state.mapping = mapping.value;
 			workflowEventBus.emitNodeStateChange({
 				workflowId: props.node.workflowId,
 				nodeId: props.node.id,
