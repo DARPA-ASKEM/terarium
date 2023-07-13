@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
 	ServerConnection,
@@ -42,6 +43,7 @@ export type JupyterMessageType =
 	| 'save_dataset_response'
 	| 'download_request'
 	| 'download_response'
+	| 'dataset'
 	| 'visualization'
 	| 'llm_request'
 	| 'llm_response'
@@ -90,6 +92,7 @@ export interface IJupyterMessageContent {
 	response?: string;
 	text?: string;
 	code?: string;
+	language?: string;
 }
 
 export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageType> {
@@ -137,6 +140,12 @@ export const mimeService = new CodeMirrorMimeTypeService();
 
 export const renderMime = new RenderMimeRegistry({ initialFactories });
 let initialized = false;
+
+export const createMessageId = (msgType) => {
+	// const timestamp = Date
+	const uuid = uuidv4().replaceAll('-', '').slice(0, 16);
+	return `tgpt-${uuid}-${msgType}`;
+};
 
 export const newSession = async (kernelName: string, name: string) => {
 	if (!initialized) {

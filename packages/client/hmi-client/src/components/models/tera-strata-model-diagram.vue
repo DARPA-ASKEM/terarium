@@ -10,72 +10,22 @@
 						:maxSize="equationPanelMaxSize"
 					>
 						<section class="graph-element">
-							<section v-if="showTypingToolbar">
-								<div class="typing-row">
-									<div>COLOR</div>
-									<div class="input-header">NODE TYPE</div>
-									<div class="input-header">NAME OF TYPE</div>
-									<div class="input-header">ASSIGN TO</div>
-									<div><div class="empty-spacer" :style="{ width: `28px` }"></div></div>
-								</div>
-								<div class="typing-row" v-for="(row, index) in typedRows" :key="index">
-									<!-- legend key -->
-									<div>
-										<div
-											:class="getLegendKeyClass(row.nodeType ?? '')"
-											:style="{ backgroundColor: strataTypeColors[index] }"
-										/>
-									</div>
-									<div>
-										<!-- node type -->
-										<Dropdown
-											class="p-inputtext-sm"
-											:options="Object.keys(assignToOptions[index])"
-											v-model="row.nodeType"
-										/>
-									</div>
-									<div>
-										<!-- name of type -->
-										<InputText class="p-inputtext-sm" v-model="row.typeName" />
-									</div>
-									<div>
-										<!-- assign to -->
-										<MultiSelect
-											class="p-inputtext-sm"
-											placeholder="Select nodes"
-											:options="assignToOptions[index][row.nodeType ?? '']"
-											v-model="row.assignTo"
-										/>
-									</div>
-									<!-- cancel row  -->
-									<div>
-										<Button icon="pi pi-times" text rounded />
-									</div>
-								</div>
-								<Button
-									label="Add type"
-									icon="pi pi-plus"
-									class="p-button-sm"
-									text
-									@click="addTypedRow"
-								/>
-							</section>
+							<tera-reflexives-toolbar
+								v-if="showReflexivesToolbar && strataModel && baseModel"
+								:model-to-update="strataModel"
+								:model-to-compare="baseModel"
+								@model-updated="(value) => (typedModel = value)"
+							/>
 							<section class="legend">
 								<ul>
 									<li v-for="(type, i) in stateTypes" :key="i">
-										<div
-											class="legend-key-circle"
-											:style="{ backgroundColor: strataTypeColors[i] }"
-										/>
+										<div class="legend-key-circle" :style="getLegendKeyStyle(type ?? '')" />
 										{{ type }}
 									</li>
 								</ul>
 								<ul>
 									<li v-for="(type, i) in transitionTypes" :key="i">
-										<div
-											class="legend-key-square"
-											:style="{ backgroundColor: strataTypeColors[stateTypes?.length ?? 0 + i] }"
-										/>
+										<div class="legend-key-square" :style="getLegendKeyStyle(type ?? '')" />
 										{{ type }}
 									</li>
 								</ul>
@@ -103,34 +53,21 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
-import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { Model, TypeSystem } from '@/types/Types';
-import { strataTypeColors } from '@/utils/color-schemes';
-import Dropdown from 'primevue/dropdown';
-import MultiSelect from 'primevue/multiselect';
-import InputText from 'primevue/inputtext';
+import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
-
-// Get rid of these emits
-const emit = defineEmits([
-	'update-tab-name',
-	'close-preview',
-	'asset-loaded',
-	'close-current-tab',
-	'update-model-content'
-]);
+import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
 const props = defineProps<{
-	model: Model;
-	showTypingToolbar: boolean;
-	typeSystem?: TypeSystem;
+	strataModel: Model;
+	baseModel: Model | null;
+	baseModelTypeSystem?: TypeSystem;
+	showReflexivesToolbar: boolean;
 }>();
 
-const typedModel = ref<Model>();
-
-const newModelName = ref('New Model');
+const typedModel = ref<Model>(props.strataModel); // this is the object being edited
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
@@ -147,44 +84,19 @@ const equationPanelMaxSize = ref<number>(100);
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const modelTypeSystem = computed(() => props.model.semantics?.typing?.type_system);
-const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.name));
-const transitionTypes = computed(() =>
-	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
+const stateTypes = computed(() =>
+	typedModel.value.semantics?.typing?.type_system?.states.map((s) => s.name)
 );
-// these are values that user will edit/select that correspond to each row in the model typing editor
-const typedRows = ref<
-	{
-		nodeType?: string;
-		typeName?: string;
-		assignTo?: string[];
-	}[]
->([]);
+const transitionTypes = computed(() =>
+	typedModel.value.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
+);
 
-// TODO: don't allow user to assign a variable or transition twice
-const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
-	const options: { [s: string]: string[] }[] = [];
-	typedRows.value.forEach(() => {
-		options.push({
-			Variable: props.model.model.states.map((s) => s.id),
-			Transition: props.model.model.transitions.map((t) => t.id)
-		});
-	});
-	return options;
-});
+const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();
 
-function addTypedRow() {
-	typedRows.value.push({});
-}
-
-function getLegendKeyClass(type: string) {
-	if (type === 'Variable') {
-		return 'legend-key-circle';
-	}
-	if (type === 'Transition') {
-		return 'legend-key-square';
-	}
-	return '';
+function getLegendKeyStyle(id: string) {
+	return {
+		backgroundColor: getNodeTypeColor(id)
+	};
 }
 
 const updateLayout = () => {
@@ -217,11 +129,11 @@ const updateLatexFormula = (formulaString: string) => {
 
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
-	() => [props.model],
+	() => [props.strataModel],
 	async () => {
 		updateLatexFormula('');
-		typedModel.value = props.model;
-		const data = await petriToLatex(convertAMRToACSet(props.model));
+		typedModel.value = props.strataModel;
+		const data = await petriToLatex(convertAMRToACSet(props.strataModel));
 		if (data) {
 			updateLatexFormula(data);
 		}
@@ -230,121 +142,26 @@ watch(
 );
 
 watch(
-	() => props.typeSystem,
+	() => props.baseModelTypeSystem,
 	() => {
-		typedRows.value.push(
-			{
-				nodeType: 'Variable',
-				typeName: props.typeSystem?.states[0].name
-			},
-			{
-				nodeType: 'Transition',
-				typeName: props.typeSystem?.transitions[0].properties?.name
-			}
-		);
-	}
-);
-
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
-);
-
-// construct TypingSemantics data structure when user updates variable/transition assignments
-watch(
-	typedRows,
-	() => {
-		const stateTypedMap: string[][] = [];
-		const transitionTypedMap: string[][] = [];
-		const typeSystem: TypeSystem = { states: [], transitions: [] };
-		typedRows.value.forEach((row) =>
-			row.assignTo?.forEach((parameter) => {
-				if (row.typeName && row.typeName && row.nodeType) {
-					if (row.nodeType === 'Variable') {
-						stateTypedMap.push([parameter, row.typeName]);
-					}
-					if (row.nodeType === 'Transition') {
-						transitionTypedMap.push([parameter, row.typeName]);
-					}
-				}
-			})
-		);
-		stateTypedMap.forEach((map) => {
-			// See if there is a corresponding type defined in the strata model's type system
-			// If not, generate a new one
-			const typeId = map[1];
-			const state = props.typeSystem?.states.find((s) => typeId === s.id);
-			if (state) {
-				typeSystem.states.push(state);
-			} else {
-				typeSystem.states.push({
-					id: typeId,
-					name: typeId,
-					description: typeId
-				});
-			}
+		const nodeIds: string[] = [];
+		props.baseModelTypeSystem?.states.forEach((s) => {
+			nodeIds.push(s.id);
 		});
-		transitionTypedMap.forEach((map) => {
-			// See if there is a corresponding type defined in the strata model's type system
-			// If not, generate a new one
-			const transition = props.typeSystem?.transitions.find((t) => map[1] === t.id);
-			if (transition) {
-				typeSystem.transitions.push(transition);
-			} else {
-				// TODO: generate Transition data structure and infer types of inputs/outputs
-			}
+		props.baseModelTypeSystem?.transitions.forEach((t) => {
+			nodeIds.push(t.id);
 		});
-		// const typeMap: string[][] = {...stateTypedMap, ...transitionTypedMap}
-		// const typingSemantics: TypingSemantics = { type_map: typeMap, type_system: typeSystem };
-		// TODO: call petrinet-service to update amr with typing
-	},
-	{ deep: true }
+		setNodeTypeColor(nodeIds);
+	}
 );
-
-const editorKeyHandler = (event: KeyboardEvent) => {
-	// Ignore backspace if the current focus is a text/input box
-	if ((event.target as HTMLElement).tagName === 'INPUT') {
-		return;
-	}
-
-	if (event.key === 'Backspace' && renderer) {
-		if (renderer && renderer.nodeSelection) {
-			const nodeData = renderer.nodeSelection.datum();
-			renderer.removeNode(nodeData.id);
-		}
-
-		if (renderer && renderer.edgeSelection) {
-			const edgeData = renderer.edgeSelection.datum();
-			renderer.removeEdge(edgeData.source, edgeData.target);
-		}
-	}
-	if (event.key === 'Enter' && renderer) {
-		if (renderer.nodeSelection) {
-			renderer.deselectNode(renderer.nodeSelection);
-			renderer.nodeSelection
-				.selectAll('.no-drag')
-				.style('opacity', 0)
-				.style('visibility', 'hidden');
-			renderer.nodeSelection = null;
-		}
-		if (renderer.edgeSelection) {
-			renderer.deselectEdge(renderer.edgeSelection);
-			renderer.edgeSelection = null;
-		}
-	}
-};
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
-	[() => props.model, graphElement],
+	[() => typedModel, graphElement],
 	async () => {
-		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+		if (typedModel.value === null || graphElement.value === null) return;
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(typedModel.value);
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
@@ -362,23 +179,9 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
-		if (latexFormula) {
-			updateLatexFormula(latexFormula);
-		} else {
-			updateLatexFormula('');
-		}
 	},
 	{ deep: true }
 );
-
-onMounted(async () => {
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
 </script>
 
 <style scoped>
@@ -400,6 +203,7 @@ main {
 	border-radius: 0.5rem;
 	padding: 0.5rem;
 }
+
 .legend-key-circle {
 	height: 24px;
 	width: 24px;
@@ -446,6 +250,7 @@ li {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
 }
+
 .splitter-container {
 	height: 100%;
 }
@@ -479,39 +284,27 @@ li {
 	height: 100%;
 }
 
-.typing-row {
+.reflexives-row {
 	display: flex;
-	justify-content: space-around;
+	flex-direction: column;
+}
+
+.reflexives-row > div {
+	display: flex;
+	justify-content: space-between;
 	align-items: center;
-	padding: 1rem;
-	color: var(--text-color-subdued);
-	gap: 1rem;
-	font-size: var(--font-caption);
 }
 
-.typing-row > div {
-	display: flex;
-	flex: 1 1 auto;
-	justify-content: flex-start;
-}
-
-.typing-row > div:first-of-type {
-	flex: 0 0 48px;
-	min-width: 0;
-}
-
-.typing-row > div:last-of-type {
-	flex: 0 1 28px;
-	min-width: 0;
+.reflexives-row > div > div {
+	margin: 1rem;
 }
 
 .p-inputtext,
-.p-dropdown,
 .p-multiselect {
 	min-width: 150px;
 }
 
-.input-header {
-	min-width: 150px;
+.p-multiselect .p-multiselect-label {
+	padding: 0.875rem 0.875rem;
 }
 </style>
