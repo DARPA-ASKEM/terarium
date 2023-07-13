@@ -66,6 +66,7 @@
 		"uuid": "9.0.0",
 		"vue": "3.3.4",
 		"vue-feather": "2.0.0",
+		"vue-gtag": "2.0.1",
 		"vue-pivottable": "^0.4.64",
 		"vue-router": "4.1.6",
 		"vue3-ace-editor": "2.2.2",

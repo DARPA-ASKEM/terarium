@@ -1,14 +1,14 @@
 <template>
 	<p v-for="extraction in extractions" :key="extraction.payload.id.id">
-		<template v-if="extraction.payload?.names">
+		<template v-if="!isEmpty(extraction.payload?.names)">
 			<em>Name</em>
 			<span>{{ extraction.payload.names.map((n) => n.name).join(', ') }}</span>
 		</template>
-		<template v-if="extraction.payload?.descriptions">
+		<template v-if="!isEmpty(extraction.payload?.descriptions)">
 			<em>Descriptions</em>
-			{{ extraction.payload.descriptions }}
+			{{ extraction.payload.descriptions.map((d) => d.source).join(', ') }}
 		</template>
-		<template v-if="extraction.payload?.groundings">
+		<template v-if="!isEmpty(extraction.payload?.groundings)">
 			<em>Concept</em>
 			<a
 				v-for="(grounding, index) in extraction.payload.groundings"
@@ -20,16 +20,16 @@
 				{{ grounding.grounding_text }}
 			</a>
 		</template>
-		<template v-if="extraction.payload?.value_specs">
+		<template v-if="!isEmpty(extraction.payload?.value_specs)">
 			<em>Values</em>
-			<span v-for="value in extraction.payload.value_specs" :key="value.id.id">
-				{{ value }}
-			</span>
+			<span>{{ extraction.payload.value_specs.map((v) => v.value.source).join(', ') }}</span>
 		</template>
 	</p>
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
+
 defineProps({
 	extractions: {
 		type: Array<any>,
