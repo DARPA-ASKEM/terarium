@@ -33,6 +33,8 @@
 				>
 					<div class="input port" />
 					<div>
+						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
+						<span v-if="!input.label">{{ input.type }}</span>
 						<span
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"
