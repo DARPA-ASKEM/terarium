@@ -1,7 +1,6 @@
 <template>
-	<!--TODO: Once we implement the unique border design remove the p-datatable-gridlines class and make a custom series of classes to support the borders we want-->
 	<div
-		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)"
+		v-if="isConfigurationVisible"
 		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
 	>
 		<div class="p-datatable-wrapper">
@@ -17,13 +16,6 @@
 					<tr>
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
-						<th
-							v-for="({ target }, i) in configurations[0]?.semantics?.ode.rates"
-							:header="target"
-							:key="i"
-						>
-							{{ target }}
-						</th>
 						<th
 							v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
 							:header="target"
@@ -42,7 +34,7 @@
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr v-for="({ configuration, name }, i) in modelConfigs" :key="i">
+					<tr v-for="({ configuration, name }, i) in modelConfigurations" :key="i">
 						<!--TODO: This td is a placeholder, row selection doesn't work-->
 						<td class="p-selection-column p-frozen-column">
 							<div class="p-checkbox p-component">
@@ -60,36 +52,11 @@
 							</span>
 							<InputText
 								v-else
-								v-model.lazy="modelConfigs[i].name"
+								v-model.lazy="modelConfigurations[i].name"
 								v-focus
 								@focusout="cellEditStates[i].name = false"
 								@keyup.enter="
 									cellEditStates[i].name = false;
-									updateModelConfigValue(i);
-								"
-							/>
-						</td>
-						<td
-							v-for="(rate, j) of configuration?.semantics?.ode.rates"
-							class="p-editable-column"
-							:key="j"
-							@click="cellEditStates[i].rates[j] = true"
-						>
-							<section v-if="!cellEditStates[i].rates[j]" class="editable-cell">
-								<span>{{ rate.expression }}</span>
-								<Button
-									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-									icon="pi pi-ellipsis-v"
-									@click.stop="openValueModal('rates', 'expression', i, j)"
-								/>
-							</section>
-							<InputText
-								v-else
-								v-model.lazy="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
-								v-focus
-								@focusout="cellEditStates[i].rates[j] = false"
-								@keyup.enter="
-									cellEditStates[i].rates[j] = false;
 									updateModelConfigValue(i);
 								"
 							/>
@@ -109,7 +76,9 @@
 							</section>
 							<InputText
 								v-else
-								v-model.lazy="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+								v-model.lazy="
+									modelConfigurations[i].configuration.semantics.ode.initials[j].expression
+								"
 								v-focus
 								@focusout="cellEditStates[i].initials[j] = false"
 								@keyup.enter="
@@ -133,7 +102,9 @@
 							</section>
 							<InputText
 								v-else
-								v-model.lazy="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
+								v-model.lazy="
+									modelConfigurations[i].configuration.semantics.ode.parameters[j].value
+								"
 								v-focus
 								@focusout="cellEditStates[i].parameters[j] = false"
 								@keyup.enter="
@@ -142,7 +113,6 @@
 								"
 							/>
 						</td>
-						<!--TODO: Insert new td loops for time and observables here-->
 					</tr>
 				</tbody>
 			</table>
@@ -160,10 +130,10 @@
 			<template #header>
 				<h4>
 					{{
-						modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
+						modelConfigurations[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
 							modalVal.odeObjIndex
 						]['id'] ??
-						modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
+						modelConfigurations[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
 							modalVal.odeObjIndex
 						]['target']
 					}}
@@ -186,9 +156,9 @@
 							<InputText
 								class="p-inputtext-sm"
 								v-model="
-									modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-										modalVal.odeObjIndex
-									][modalVal.valueName]
+									modelConfigurations[modalVal.configIndex].configuration.semantics.ode[
+										modalVal.odeType
+									][modalVal.odeObjIndex][modalVal.valueName]
 								"
 							/>
 						</div>
@@ -210,9 +180,8 @@
 </template>
 
 <script setup lang="ts">
-import _, { isEmpty, cloneDeep } from 'lodash';
 import { watch, ref, computed, onMounted } from 'vue';
-// import Checkbox from 'primevue/checkbox'; // Add back in later
+import { isEmpty, cloneDeep } from 'lodash';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -221,7 +190,8 @@ import InputText from 'primevue/inputtext';
 import { ModelConfiguration, Model } from '@/types/Types';
 import {
 	createModelConfiguration,
-	updateModelConfiguration
+	updateModelConfiguration,
+	addDefaultConfiguration
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
 
@@ -231,21 +201,21 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
-const modelConfigs = ref<ModelConfiguration[]>([]);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
-
-// const selectedModelConfig = ref();
 const extractions = ref<any[]>([]);
-
 const openValueConfig = ref(false);
 const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
-
-// Selected columns - TODO: add in for filtering calibration dropdowns
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
 const configurations = computed<Model[]>(
-	() => modelConfigs.value?.map((m) => m.configuration) ?? []
+	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
+);
+
+// Decide if we should display the whole configuration table
+const isConfigurationVisible = computed(
+	() => !isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)
 );
 
 // Makes cell inputs focus once they appear
@@ -256,18 +226,10 @@ const vFocus = {
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
 	if (configurations.value?.[0]?.semantics) {
-		const headerNames = Object.keys(configurations.value[0]?.semantics.ode) ?? [];
-		const result: { name: string; colspan: number }[] = [];
-
-		for (let i = 0; i < headerNames.length; i++) {
-			if (configurations.value?.[0]?.semantics?.ode[headerNames[i]]) {
-				result.push({
-					name: headerNames[i],
-					colspan: configurations.value?.[0]?.semantics?.ode[headerNames[i]].length
-				});
-			}
-		}
-		return result;
+		return ['initials', 'parameters'].map((name) => {
+			const colspan = configurations.value?.[0]?.semantics?.ode?.[name].length ?? 0;
+			return { name, colspan };
+		});
 	}
 	return [];
 });
@@ -279,13 +241,13 @@ const selectedModelVariables = computed(() => [
 defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
-	const configurationToAdd = modelConfigs.value.length
-		? modelConfigs.value[0].configuration
+	const configurationToAdd = modelConfigurations.value.length
+		? modelConfigurations.value[0].configuration
 		: props.model;
 
 	const response = await createModelConfiguration(
 		props.model.id,
-		`Config ${modelConfigs.value.length + 1}`,
+		`Config ${modelConfigurations.value.length + 1}`,
 		'Test',
 		configurationToAdd
 	);
@@ -311,40 +273,28 @@ function openValueModal(
 }
 
 function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
-	const configToUpdate = modelConfigs.value[configIndex];
+	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
 
 async function initializeConfigSpace() {
-	modelConfigs.value = [];
-	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	let tempConfigurations = await getModelConfigurations(props.model.id);
 
-	// FIXME: Should use flavor or type to denote "default config" instead of by name
-	// There is a lot of backand forth that should be avoided
 	// Ensure that we always have a "default config" model configuration
-	if (modelConfigs.value.length === 0) {
-		await createModelConfiguration(props.model.id, 'Default config', 'Default config', props.model);
-		modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
-	} else {
-		const cfg = modelConfigs.value.find((d) => d.name === 'Default config');
-		if (!cfg) {
-			await createModelConfiguration(
-				props.model.id,
-				'Default config',
-				'Default config',
-				props.model
-			);
-		}
-		modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	if (isEmpty(tempConfigurations) || !tempConfigurations.find((d) => d.name === 'Default config')) {
+		await addDefaultConfiguration(props.model);
+		tempConfigurations = await getModelConfigurations(props.model.id);
 	}
 
+	modelConfigurations.value = tempConfigurations;
+
 	// Refresh the datastore with whatever we currently have
-	const defaultConfig = modelConfigs.value.find(
+	const defaultConfig = modelConfigurations.value.find(
 		(d) => d.name === 'Default config'
 	) as ModelConfiguration;
 	if (defaultConfig) {
-		defaultConfig.configuration = _.cloneDeep(props.model);
+		defaultConfig.configuration = cloneDeep(props.model);
 		updateModelConfiguration(defaultConfig);
 	}
 
@@ -362,8 +312,8 @@ function resetCellEditing() {
 	}
 
 	// Can't use fill here because the same row object would be referenced throughout the array
-	const cellEditStatesArr = new Array(modelConfigs.value.length);
-	for (let i = 0; i < modelConfigs.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
+	const cellEditStatesArr = new Array(modelConfigurations.value.length);
+	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
 	cellEditStates.value = cellEditStatesArr;
 }
 
