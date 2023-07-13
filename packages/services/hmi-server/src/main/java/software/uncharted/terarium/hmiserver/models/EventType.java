@@ -4,7 +4,8 @@ import lombok.Getter;
 
 public enum EventType {
 	SEARCH(true),
-	EVALUATION_SCENARIO(false);
+	EVALUATION_SCENARIO(false),
+	ROUTE_TIMING(false);
 
 	EventType(boolean persistent) {
 		this.persistent = persistent;
