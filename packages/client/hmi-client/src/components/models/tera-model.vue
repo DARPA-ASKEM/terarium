@@ -550,9 +550,8 @@ const time = computed(() =>
 const states = computed(() => model.value?.model?.states ?? []);
 
 // Model Transitions
-const transitions = computed(() => {
-	const list = model.value?.model?.transitions ?? [];
-	return [...list].map((t) => ({
+const transitions = computed(() =>
+	structuredClone(model.value?.model?.transitions ?? []).map((t) => ({
 		id: t.id,
 		name: t?.properties?.name ?? t.id ?? '--',
 		input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
@@ -560,8 +559,8 @@ const transitions = computed(() => {
 		expression:
 			model?.value?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ?? null,
 		extractions: extractions?.[t.id] ?? null
-	}));
-});
+	}))
+);
 
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 
