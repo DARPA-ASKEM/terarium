@@ -16,7 +16,12 @@
 					@click="isEditingEq ? (isEditingEquation = true) : null"
 					@focus="showKeyboard"
 					@blur="hideKeyboard"
-					><slot>{{ props.latexEquation }}</slot>
+					@keyup="
+						latexTextInput = mathLiveField?.getValue('latex-unstyled')
+							? mathLiveField?.getValue('latex-unstyled')
+							: ''
+					"
+				>
 				</math-field>
 				<section class="menu">
 					<Button
@@ -28,7 +33,7 @@
 						aria-controls="overlay_menu"
 						:style="hover && isEditingEq && !isEditingEquation ? `display: flex` : ``"
 					/>
-					<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
+					<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
 				</section>
 			</div>
 			<div v-if="isEditingEquation">
@@ -46,6 +51,24 @@
 					/>
 				</section>
 				<div class="controls">
+					<span class="meta-property">Name:</span>
+					<span class="meta-property-value" @dblclick="nameInput = false"
+						><InputText
+							v-model="name"
+							class="control-button"
+							:disabled="nameInput"
+							@blur="nameInput = true"
+						></InputText
+					></span>
+					<span class="meta-property">ID:</span>
+					<span class="meta-property-value" @dblclick="idInput = false"
+						><InputText
+							v-model="id"
+							class="control-button"
+							:disabled="idInput"
+							@blur="idInput = true"
+						></InputText>
+					</span>
 					<Button
 						class="control-button"
 						label="Save"
@@ -72,59 +95,15 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 // import { logger } from '@/utils/logger';
 
-const menu = ref();
-const items = ref([
-	{
-		items: [
-			{
-				label: 'Confirm Delete?',
-				command: () => {
-					emit('delete', props.index);
-				}
-			}
-		]
-	}
-]);
-
-const toggleMenu = (event) => {
-	event.target.style = `display:flex`;
-	menu.value.toggle(event);
-};
-
 const mathLiveField = ref<Mathfield | null>(new MathfieldElement({ fontsDirectory: 'fonts/' }));
-
 const emit = defineEmits(['equation-updated', 'delete']);
 const hover = ref(false);
-
-onMounted(() => {
-	latexTextInput.value = props.latexEquation;
-});
 const latexTextInput = ref<string>('');
 const isEditingEquation = ref(false);
 
-const mathFieldStyle = computed(() => {
-	if (isEditingEquation.value) {
-		return `mathlive-equation editing2`;
-	}
-
-	return props.isEditingEq ? `mathlive-equation editing` : `mathlive-equation`;
-});
-
-const updateEquation = () => {
-	emit(
-		'equation-updated',
-		props.index,
-		latexTextInput.value,
-		mathLiveField.value?.getValue('math-ml')
-	);
-};
-
-const expandedDiv = computed(() => (isEditingEquation.value ? `expanded-div` : ``));
-
-defineExpose({
-	mathLiveField,
-	isEditingEquation
-});
+const menu = ref();
+const nameInput = ref(true);
+const idInput = ref(true);
 
 const props = defineProps({
 	// LaTeX formula to be populated
@@ -150,8 +129,66 @@ const props = defineProps({
 	index: {
 		type: Number,
 		required: true
+	},
+	id: {
+		type: String,
+		required: false,
+		default: 'New Id'
+	},
+	name: {
+		type: String,
+		required: false,
+		default: 'Name'
 	}
 });
+
+const id = ref(props.id);
+const name = ref(props.name);
+const expandedDiv = computed(() => (isEditingEquation.value ? `expanded-div` : ``));
+
+defineExpose({
+	mathLiveField,
+	isEditingEquation,
+	id: id.value,
+	name: name.value
+});
+
+const menuItems = ref([
+	{
+		items: [
+			{
+				label: 'Confirm Delete?',
+				command: () => {
+					emit('delete', props.index);
+				}
+			}
+		]
+	}
+]);
+
+const toggleMenu = (event) => {
+	event.target.style = `display:flex`;
+	menu.value.toggle(event);
+};
+
+const mathFieldStyle = computed(() => {
+	if (isEditingEquation.value) {
+		return `mathlive-equation editing2`;
+	}
+
+	return props.isEditingEq ? `mathlive-equation editing` : `mathlive-equation`;
+});
+
+const updateEquation = () => {
+	emit(
+		'equation-updated',
+		props.index,
+		latexTextInput.value,
+		mathLiveField.value?.getValue('math-ml'),
+		name.value,
+		id.value
+	);
+};
 
 const renderEquations = () => {
 	mathLiveField.value?.setValue(props.latexEquation, { suppressChangeNotifications: true });
@@ -179,6 +216,7 @@ onMounted(() => {
 	if (props.latexEquation === '') {
 		isEditingEquation.value = true;
 	}
+	latexTextInput.value = props.latexEquation;
 	renderEquations();
 });
 </script>
@@ -312,7 +350,7 @@ math-field[disabled] {
 .control-button {
 	background-color: white;
 	height: 30px;
-	color: black;
+	color: var(--gray-1000);
 	background-color: var(--gray-0);
 	justify-content: flex-end;
 	width: 70px;
@@ -324,5 +362,25 @@ math-field[disabled] {
 	font-weight: 500;
 	line-height: 16px;
 	letter-spacing: 0.75px;
+}
+
+.control-button:disabled {
+	color: var(--gray-1000);
+	opacity: 100%;
+	border: none;
+}
+
+.meta-data {
+	padding-left: 10px;
+	padding-bottom: 5px;
+}
+
+.meta-property {
+	font-weight: bold;
+	padding-right: 15px;
+}
+
+.meta-property-value {
+	padding-right: 15px;
 }
 </style>

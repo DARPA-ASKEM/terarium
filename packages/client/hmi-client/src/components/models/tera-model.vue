@@ -146,8 +146,9 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<main v-if="states.length > 0" class="datatable" style="--columns: 4">
+					<main v-if="states.length > 0" class="datatable" style="--columns: 5">
 						<header>
+							<div>Id</div>
 							<div>Name</div>
 							<div>Unit</div>
 							<div>Concept</div>
@@ -159,6 +160,7 @@
 							:class="[{ active: isSectionEditable === `state-${state.id}` }, `state-${state.id}`]"
 						>
 							<template v-if="isSectionEditable === `state-${state.id}`">
+								<div><input type="text" :value="state.id ?? '--'" /></div>
 								<div><input type="text" :value="state?.name ?? '--'" /></div>
 								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
 								<div>Identifiers</div>
@@ -172,6 +174,7 @@
 								</div>
 							</template>
 							<template v-else>
+								<div>{{ state.id ?? '--' }}</div>
 								<div>{{ state?.name ?? '--' }}</div>
 								<div>{{ state?.units?.expression ?? '--' }}</div>
 								<div>
@@ -264,9 +267,10 @@
 					<template #header>
 						Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 					</template>
-					<main v-if="transitions.length > 0" class="datatable" style="--columns: 5">
+					<main v-if="transitions.length > 0" class="datatable" style="--columns: 6">
 						<header>
-							<div>Label</div>
+							<div>Id</div>
+							<div>Name</div>
 							<div>Input</div>
 							<div>Output</div>
 							<div>Expression</div>
@@ -281,6 +285,7 @@
 							]"
 						>
 							<template v-if="isSectionEditable === `transition-${index}`">
+								<div>{{ transition.id }}</div>
 								<div>{{ transition.name }}</div>
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
@@ -298,6 +303,7 @@
 								</div>
 							</template>
 							<template v-else>
+								<div>{{ transition.id }}</div>
 								<div>{{ transition.name }}</div>
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
@@ -423,6 +429,37 @@
 				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
 			</tera-modal>
 		</Teleport>
+
+		<!-- Copy model modal -->
+		<Teleport to="body">
+			<tera-modal
+				v-if="isCopyModelModalVisible"
+				class="modal"
+				@modal-mask-clicked="isCopyModelModalVisible = false"
+			>
+				<template #header>
+					<h4>Make a copy</h4>
+				</template>
+				<template #default>
+					<form>
+						<label for="copy-model">{{ copyModelNameInputPrompt }}</label>
+						<InputText
+							v-bind:class="invalidInputStyle"
+							id="copy-model"
+							type="text"
+							v-model="copyModelName"
+							placeholder="Model name"
+						/>
+					</form>
+				</template>
+				<template #footer>
+					<Button @click="duplicateModel">Copy model</Button>
+					<Button class="p-button-secondary" @click="isCopyModelModalVisible = false">
+						Cancel
+					</Button>
+				</template>
+			</tera-modal>
+		</Teleport>
 	</tera-asset>
 </template>
 
@@ -455,6 +492,7 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
+import { logger } from '@/utils/logger';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
@@ -503,6 +541,21 @@ const newPetri = ref();
 const isRenamingModel = ref(false);
 const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
 
+const isCopyModelModalVisible = ref<boolean>(false);
+const copyModelNameInputPrompt = ref<string>('');
+const copyModelName = ref<string>('');
+
+const isValidName = ref<boolean>(true);
+const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
+
+const existingModelNames = computed(() => {
+	const modelNames: string[] = [];
+	props.project.assets?.models.forEach((item) => {
+		modelNames.push(item.name);
+	});
+	return modelNames;
+});
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
@@ -520,18 +573,67 @@ const optionsMenuItems = ref([
 			newModelName.value = model.value?.name ?? '';
 		}
 	},
-	{ icon: 'pi pi-clone', label: 'Make a copy', command: duplicateModel }
+	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
-async function duplicateModel() {
+function getJustModelName(modelName: string): string {
+	let potentialNum: string = '';
+	let completeParen: boolean = false;
+	let idx = modelName.length;
+	if (modelName.charAt(modelName.length - 1) === ')') {
+		for (let i = modelName.length - 2; i >= 0; i--) {
+			if (modelName.charAt(i) === '(') {
+				completeParen = true;
+				idx = i;
+				break;
+			}
+			potentialNum = modelName.charAt(i) + potentialNum;
+		}
+	}
+
+	if (completeParen && !Number.isNaN(potentialNum as any)) {
+		return modelName.substring(0, idx).trim();
+	}
+	return modelName.trim();
+}
+
+function getSuggestedModelName(currModelName: string, counter: number): string {
+	const suggestedName = `${currModelName} (${counter})`;
+
+	if (!existingModelNames.value.includes(suggestedName)) {
+		return suggestedName;
+	}
+	return getSuggestedModelName(currModelName, counter + 1);
+}
+
+function initiateModelDuplication() {
 	if (!model.value) {
-		console.log('Failed to duplicate model.');
+		logger.info('Failed to duplicate model.');
 		return;
 	}
-	const duplicateModelResponse = await createModel(model.value);
+	copyModelNameInputPrompt.value = 'What do you want to name it?';
+	const modelName = getJustModelName(model.value.name.trim());
+	copyModelName.value = getSuggestedModelName(modelName, 1);
+	isCopyModelModalVisible.value = true;
+}
+
+async function duplicateModel() {
+	if (existingModelNames.value.includes(copyModelName.value.trim())) {
+		copyModelNameInputPrompt.value = 'Duplicate model name - please enter a different name:';
+		isValidName.value = false;
+		logger.info('Duplicate model name - please enter a different name');
+		return;
+	}
+	copyModelNameInputPrompt.value = 'Creating a copy...';
+	isValidName.value = true;
+	const duplicateModelResponse = await createModel({
+		...model.value,
+		name: copyModelName.value.trim()
+	});
 	if (!duplicateModelResponse) {
-		console.log('Failed to duplicate model.');
+		logger.info('Failed to duplicate model.');
+		isCopyModelModalVisible.value = false;
 		return;
 	}
 	await ProjectService.addAsset(
@@ -539,6 +641,7 @@ async function duplicateModel() {
 		ProjectAssetTypes.MODELS,
 		duplicateModelResponse.id
 	);
+	isCopyModelModalVisible.value = false;
 }
 
 /* Model */
@@ -551,17 +654,24 @@ const time = computed(() =>
 const states = computed(() => model.value?.model?.states ?? []);
 
 // Model Transitions
-const transitions = computed(() =>
-	structuredClone(model.value?.model?.transitions ?? []).map((t) => ({
-		id: t.id,
-		name: t?.properties?.name ?? t.id ?? '--',
-		input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
-		output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
-		expression:
-			model?.value?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ?? null,
-		extractions: extractions?.[t.id] ?? null
-	}))
-);
+const transitions = computed(() => {
+	const results: any[] = [];
+	if (model.value?.model?.transitions) {
+		model.value.model.transitions.forEach((t) => {
+			results.push({
+				id: t.id,
+				name: t?.properties?.name ?? '--',
+				input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
+				output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
+				expression:
+					model?.value?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ??
+					null,
+				extractions: extractions?.[t.id] ?? null
+			});
+		});
+	}
+	return results;
+});
 
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 
@@ -820,5 +930,10 @@ function editSection(event: Event) {
 	color: var(--text-color-light);
 	font-size: var(--font-caption);
 	text-transform: uppercase;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
 }
 </style>
