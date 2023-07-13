@@ -240,7 +240,7 @@ interface AddStateObj {
 }
 const openEditNode = ref<boolean>(false);
 const editNodeObj: AddStateObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
-let previousId = '';
+let previousId: any = null;
 
 const addObservable = () => {
 	isEditingObservables.value = true;
@@ -625,7 +625,7 @@ const addNode = async () => {
 
 	const node = editNodeObj.value;
 
-	if (!previousId || previousId === '') {
+	if (!previousId) {
 		if (eventX && eventY) {
 			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
 		} else {
@@ -633,7 +633,7 @@ const addNode = async () => {
 		}
 	} else {
 		renderer.updateNode(previousId, node.id, node.name);
-		previousId = '';
+		previousId = null;
 	}
 
 	eventX = -1;

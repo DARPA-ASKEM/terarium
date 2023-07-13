@@ -10,7 +10,6 @@ import * as petrinetService from '@/model-representation/petrinet/petrinet-servi
 export interface NodeData {
 	type: string;
 	strataType?: string;
-	expression?: string;
 }
 
 export interface EdgeData {
@@ -174,7 +173,14 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke-linecap', 'butt')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.html((d) => d.data.expression ?? null);
+			.html((d) => {
+				const rate = this.graph.amr.semantics.ode.rates.find((r) => r.target === d.id);
+				if (rate) {
+					return rate.expression;
+				}
+				return '';
+			});
+
 		// species
 		species
 			.append('circle')
@@ -505,12 +511,17 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		node.id = newId;
 		node.label = newName;
 
-		console.log('updating node...', newId, newName);
 		this.graph.edges.forEach((edge) => {
 			if (edge.source === id) edge.source = newId;
 			if (edge.target === id) edge.target = newId;
 		});
 
+		const amr = this.graph.amr;
+		if (node.data.type === NodeType.State) {
+			petrinetService.updateState(amr, id, newId, newName);
+		} else {
+			petrinetService.updateTransitione(amr, id, newId, newName);
+		}
 		this.render();
 	}
 
