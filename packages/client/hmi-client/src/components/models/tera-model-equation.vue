@@ -137,18 +137,6 @@ section math-editor {
 	justify-content: center;
 }
 
-.diagram-container {
-	border: 1px solid var(--surface-border);
-	border-radius: var(--border-radius);
-}
-
-.diagram-container-editing {
-	box-shadow: inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px var(--primary-color);
-	border: 2px solid var(--primary-color);
-	border-radius: var(--border-radius);
-}
-
 .math-editor-container {
 	display: flex;
 	position: absolute;
@@ -156,21 +144,7 @@ section math-editor {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
-}
-
-.observable-editor-container {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
+	min-height: 50vh;
 	flex-direction: column;
 	border: 4px solid transparent;
 	border-radius: 0px var(--border-radius) var(--border-radius) 0px;

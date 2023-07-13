@@ -1,60 +1,58 @@
 <template>
-	<main>
-		<section v-if="!nodePreview" class="graph-element">
-			<Toolbar>
-				<template #start>
+	<section v-if="!nodePreview" class="graph-element">
+		<Toolbar>
+			<template #start>
+				<Button
+					@click="resetZoom"
+					label="Reset zoom"
+					class="p-button-sm p-button-outlined toolbar-button"
+				/>
+			</template>
+			<template #center>
+				<span class="toolbar-subgroup">
 					<Button
-						@click="resetZoom"
-						label="Reset zoom"
+						v-if="isEditing"
+						@click="addState"
+						label="Add state"
 						class="p-button-sm p-button-outlined toolbar-button"
 					/>
-				</template>
-				<template #center>
-					<span class="toolbar-subgroup">
-						<Button
-							v-if="isEditing"
-							@click="addState"
-							label="Add state"
-							class="p-button-sm p-button-outlined toolbar-button"
-						/>
-						<Button
-							v-if="isEditing"
-							@click="addTransition"
-							label="Add transition"
-							class="p-button-sm p-button-outlined toolbar-button"
-						/>
-					</span>
-				</template>
-				<template #end>
-					<span class="toolbar-subgroup">
-						<Button
-							v-if="isEditing"
-							@click="cancelEdit"
-							label="Cancel"
-							class="p-button-sm p-button-outlined toolbar-button"
-						/>
-						<Button
-							@click="toggleEditMode"
-							:label="isEditing ? 'Save model' : 'Edit model'"
-							:class="
-								isEditing
-									? 'p-button-sm toolbar-button-saveModel'
-									: 'p-button-sm p-button-outlined toolbar-button'
-							"
-						/>
-					</span>
-				</template>
-			</Toolbar>
-			<div v-if="model" ref="graphElement" class="graph-element" />
-			<ContextMenu ref="menu" :model="contextMenuItems" />
-		</section>
-		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
-	</main>
+					<Button
+						v-if="isEditing"
+						@click="addTransition"
+						label="Add transition"
+						class="p-button-sm p-button-outlined toolbar-button"
+					/>
+				</span>
+			</template>
+			<template #end>
+				<span class="toolbar-subgroup">
+					<Button
+						v-if="isEditing"
+						@click="cancelEdit"
+						label="Cancel"
+						class="p-button-sm p-button-outlined toolbar-button"
+					/>
+					<Button
+						@click="toggleEditMode"
+						:label="isEditing ? 'Save model' : 'Edit model'"
+						:class="
+							isEditing
+								? 'p-button-sm toolbar-button-saveModel'
+								: 'p-button-sm p-button-outlined toolbar-button'
+						"
+					/>
+				</span>
+			</template>
+		</Toolbar>
+		<div v-if="model" ref="graphElement" class="graph-element" />
+		<ContextMenu ref="menu" :model="contextMenuItems" />
+	</section>
+	<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 </template>
 
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, onMounted, onUnmounted, onUpdated } from 'vue';
+import { watch, ref, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -67,21 +65,13 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
-import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
 
-// Get rid of these emits
-const emit = defineEmits([
-	'close-preview',
-	'asset-loaded',
-	'close-current-tab',
-	'update-model-content',
-	'update-model-observables'
-]);
+const emit = defineEmits(['update-model-content', 'update-model-observables']);
 
 const props = defineProps<{
 	model: Model | null;
@@ -93,32 +83,16 @@ const menu = ref();
 const isEditing = ref<boolean>(false);
 
 // Model Equations
-const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
-
-const splitterContainer = ref<HTMLElement | null>(null);
-const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
-
-const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
 
-const updateLayout = () => {
-	if (splitterContainer.value) {
-		layout.value =
-			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
-			window.innerWidth < 800
-				? 'vertical'
-				: 'horizontal';
-	}
-};
-
 const handleResize = () => {
-	updateLayout();
+	console.log('updateLayout');
 };
 
 const updateLatexFormula = (equationsList: string[]) => {
@@ -126,21 +100,6 @@ const updateLatexFormula = (equationsList: string[]) => {
 	if (latexEquationsOriginalList.value.length === 0)
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
-
-function joinStringLists(lists: string[][]): string[] {
-	return ([] as string[]).concat(...lists);
-}
-
-watch(
-	() => [latexEquationList.value],
-	() => {
-		const mathMLEquations = equationsRef.value.map((eq) =>
-			separateEquations(eq.mathLiveField.getValue('math-ml'))
-		);
-		validateMathML(joinStringLists(mathMLEquations), false);
-	},
-	{ deep: true }
-);
 
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
@@ -288,7 +247,7 @@ const toggleEditMode = () => {
 };
 
 // Cancel existing edits, currently this will:
-// - Resets changs to the model structure
+// - Resets changes to the model structure
 const cancelEdit = async () => {
 	isEditing.value = false;
 	if (!props.model) return;
@@ -303,60 +262,22 @@ const cancelEdit = async () => {
 		await renderer.render();
 	}
 };
-
-const resetZoom = async () => {
-	renderer?.setToDefaultZoom();
-};
-
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, 'state');
-};
-
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, 'transition');
-};
+const resetZoom = async () => renderer?.setToDefaultZoom();
+const addState = async () => renderer?.addNodeCenter(NodeType.State, 'state');
+const addTransition = async () => renderer?.addNodeCenter(NodeType.Transition, 'transition');
 
 onMounted(() => {
 	document.addEventListener('keyup', editorKeyHandler);
 	window.addEventListener('resize', handleResize);
 	handleResize();
 });
-
 onUnmounted(() => {
 	document.removeEventListener('keyup', editorKeyHandler);
 	window.removeEventListener('resize', handleResize);
 });
-
-onUpdated(() => {
-	if (props.model) {
-		emit('asset-loaded');
-	}
-});
 </script>
 
 <style scoped>
-main {
-	overflow: auto;
-}
-
-.p-accordion {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.diagram-container {
-	border: 1px solid var(--surface-border);
-	border-radius: var(--border-radius);
-}
-
-.diagram-container-editing {
-	box-shadow: inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px var(--primary-color);
-	border: 2px solid var(--primary-color);
-	border-radius: var(--border-radius);
-}
-
 .preview {
 	min-height: 8rem;
 	background-color: var(--surface-secondary);
@@ -389,12 +310,14 @@ main {
 }
 
 .graph-element {
+	border: 1px solid transparent;
+	border-radius: var(--border-radius);
 	background-color: var(--surface-secondary);
 	height: 100%;
 	max-height: 100%;
+	min-height: 50vh;
 	flex-grow: 1;
 	overflow: hidden;
-	border: none;
 	position: relative;
 }
 

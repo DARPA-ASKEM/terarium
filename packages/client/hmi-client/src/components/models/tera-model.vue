@@ -394,11 +394,8 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<Accordion
-			v-if="model && modelView === ModelView.MODEL"
-			multiple
-			:active-index="[0, 1, 2, 3, 4]"
-		>
+
+		<Accordion v-if="model && modelView === ModelView.MODEL" multiple :active-index="[0]">
 			<AccordionTab header="Diagram">
 				<tera-model-diagram
 					:model="model"
@@ -428,6 +425,8 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+
+		<!-- Related publications modal -->
 		<Teleport to="body">
 			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 				<template #header>
