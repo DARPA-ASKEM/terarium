@@ -115,6 +115,14 @@ export enum AcceptedTypes {
 	PY = 'text/x-python'
 }
 
+export enum AcceptedExtensions {
+	PDF = 'pdf',
+	CSV = 'csv',
+	TXT = 'txt',
+	MD = 'md',
+	PY = 'py'
+}
+
 export interface PDFExtractionResponseType {
 	text: string;
 	images: string[];

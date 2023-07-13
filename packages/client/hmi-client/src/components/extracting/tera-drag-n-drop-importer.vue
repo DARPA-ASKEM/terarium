@@ -52,7 +52,7 @@
 import { ref, computed } from 'vue';
 import API from '@/api/api';
 import Button from 'primevue/button';
-import { AcceptedTypes } from '@/types/common';
+import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
 const emit = defineEmits(['import-completed']);
@@ -82,6 +82,17 @@ const props = defineProps({
 			[AcceptedTypes.PDF, AcceptedTypes.CSV, AcceptedTypes.TXT, AcceptedTypes.MD].every((v) =>
 				value.includes(v)
 			)
+	},
+	acceptExtensions: {
+		type: Array<AcceptedExtensions>,
+		required: true,
+		validator: (value: Array<string>) =>
+			[
+				AcceptedExtensions.PDF,
+				AcceptedExtensions.CSV,
+				AcceptedExtensions.TXT,
+				AcceptedExtensions.MD
+			].every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
 	importAction: {
@@ -119,13 +130,19 @@ const props = defineProps({
 const addFiles = (addedFiles: File[] | undefined) => {
 	if (addedFiles !== undefined && addedFiles.length > 0) {
 		for (let i = 0; i < addedFiles.length; i++) {
-			// only add files that weren't added before
-			if (props.acceptTypes.indexOf(addedFiles[i].type as AcceptedTypes) > -1) {
-				const index = importFiles.value.findIndex((item) => item.name === addedFiles[i].name);
+			// if we have a file type specified, check to see if it is an accepted type
+			// if we do not have a file type specified, check to see if the name ends with an accepted extension
+			const addedFile = addedFiles[i];
+			if (
+				props.acceptTypes.includes(addedFile.type as AcceptedTypes) ||
+				props.acceptExtensions.includes(addedFile.name.split('.').pop() as AcceptedExtensions)
+			) {
+				// only add files that weren't added before
+				const index = importFiles.value.findIndex((item) => item.name === addedFile.name);
 				if (index === -1) {
-					importFiles.value.push(addedFiles[i]);
+					importFiles.value.push(addedFile);
 				} else {
-					console.log(`${addedFiles[i].name} File already added!`);
+					console.log(`${addedFile.name} File already added!`);
 				}
 			}
 		}
