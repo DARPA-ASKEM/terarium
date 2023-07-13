@@ -25,7 +25,11 @@
 									<div>
 										<div
 											:class="getLegendKeyClass(row.nodeType ?? '')"
-											:style="getLegendKeyStyle(row.typeName ?? '')"
+											:style="
+												getLegendKeyStyle(
+													row.assignTo && row.nodeType && row.typeName ? row.typeName : ''
+												)
+											"
 										/>
 									</div>
 									<div>
@@ -115,7 +119,7 @@ import Button from 'primevue/button';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
-import { useNodeTypeColorMap } from '@/utils/color-schemes';
+import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
@@ -187,7 +191,7 @@ const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	return options;
 });
 
-const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorMap();
+const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();
 
 function addTypedRow() {
 	typedRows.value.push({});
@@ -212,6 +216,11 @@ function getLegendKeyClass(type: string) {
 }
 
 function getLegendKeyStyle(id: string) {
+	if (!id) {
+		return {
+			backgroundColor: 'transparent'
+		};
+	}
 	return {
 		backgroundColor: getNodeTypeColor(id)
 	};
@@ -533,3 +542,4 @@ li {
 	padding: 0.875rem 0.875rem;
 }
 </style>
+@/utils/petrinet-color-palette

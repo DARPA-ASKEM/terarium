@@ -56,7 +56,7 @@ import {
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { Model, TypeSystem } from '@/types/Types';
-import { useNodeTypeColorMap } from '@/utils/color-schemes';
+import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
@@ -91,7 +91,7 @@ const transitionTypes = computed(() =>
 	typedModel.value.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
 );
 
-const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorMap();
+const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();
 
 function getLegendKeyStyle(id: string) {
 	return {
