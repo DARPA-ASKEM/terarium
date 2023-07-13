@@ -9,8 +9,8 @@
 					class="p-inputtext-sm"
 					placeholder="Select"
 					:options="reflexiveNodeOptions[stateType]"
-					:model-value="statesToAddReflexives[stateType]"
-					@update:model-value="newValue => updateStatesToAddReflexives(newValue, stateType as string, transition.id)"
+					:model-value="statesToAddReflexives[transition.id]"
+					@update:model-value="(newValue) => updateStatesToAddReflexives(newValue, transition.id)"
 				/>
 			</div>
 		</div>
@@ -34,7 +34,7 @@ const modelToCompareTypeSystem = computed<TypeSystem | undefined>(
 	() => props.modelToCompare.semantics?.typing?.type_system
 );
 const typedModel = ref<Model>(props.modelToUpdate); // this is the object that is being edited
-const unassignedTransitionTypes: Transition[] = [];
+let unassignedTransitionTypes: Transition[] = [];
 const statesToAddReflexives = ref<{ [id: string]: string[] }>({});
 const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
 	const map: { [id: string]: string } = {};
@@ -57,12 +57,8 @@ const reflexiveNodeOptions = computed<{ [id: string]: string[] }>(() => {
 	return options;
 });
 
-function updateStatesToAddReflexives(
-	newValue: string[],
-	typeOfState: string,
-	typeOfTransition: string
-) {
-	statesToAddReflexives.value[typeOfState] = newValue;
+function updateStatesToAddReflexives(newValue: string[], typeOfTransition: string) {
+	statesToAddReflexives.value[typeOfTransition] = newValue;
 	const updatedTypeMap = typedModel.value.semantics?.typing?.type_map;
 	const updatedTypeSystem = typedModel.value.semantics?.typing?.type_system;
 
@@ -108,10 +104,10 @@ watch(
 				const unassignedTransitions: Transition[] =
 					modelToCompareTypeSystem.value?.transitions.filter((t) => unassignedIds.includes(t.id));
 				if (unassignedTransitions.length > 0) {
-					unassignedTransitionTypes.push(unassignedTransitions[0]);
+					unassignedTransitionTypes = unassignedTransitionTypes.concat(unassignedTransitions);
+					console.log(unassignedTransitionTypes);
 				}
 			}
-
 			props.modelToUpdate.model.states.forEach((state) => {
 				// get type of state for each state in strata model
 				const type: string =
