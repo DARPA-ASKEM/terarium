@@ -1,43 +1,34 @@
 <template>
 	<div class="simulate-chart">
-		<div class="multiselect-title">Select variables to plot</div>
+		<!-- <div class="multiselect-title">Select variables to plot</div> -->
 		<MultiSelect
-			v-if="openedWorkflowNodeStore.chartConfigs[props.chartIdx]"
-			v-model="openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable"
+			v-model="selectedVariable"
 			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
 			placeholder="Select a State Variable"
+			@update:model-value="updateSelectedVariable"
 		>
 			<template v-slot:value>
-				<template
-					v-for="(variable, index) in openedWorkflowNodeStore.chartConfigs[props.chartIdx]
-						.selectedVariable"
-					:key="index"
-				>
+				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span
-						class="selected-label-item"
-						:style="{ color: hasMultiRuns ? 'black' : getVariableColorByVar(variable) }"
-						>{{ variable }}</span
-					>
+					<span :style="{ color: hasMultiRuns ? 'black' : getVariableColorByVar(variable) }">
+						{{ variable }}
+					</span>
 				</template>
 			</template>
 		</MultiSelect>
-		<MultiSelect v-else placeholder="No Data" :disabled="true" />
 		<Chart type="line" :data="chartData" :options="CHART_OPTIONS" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, watch, computed, onMounted } from 'vue';
-import { isEmpty } from 'lodash';
-
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-
-import { RunResults } from '@/types/SimulateConfig';
+const emit = defineEmits(['configuration-change']);
 
 type DatasetType = {
 	data: number[];
@@ -85,13 +76,16 @@ const CHART_OPTIONS = {
 
 const props = defineProps<{
 	runResults: RunResults;
-	chartIdx: number;
+	chartConfig: ChartConfig;
+	lineColorArray?: string[];
+	lineWidthArray?: string[];
 }>();
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 // data for rendering ui
 let stateVariablesList: string[] = [];
 const chartData = ref({});
+
+const selectedVariable = ref<string[]>(props.chartConfig.selectedVariable);
 
 // temp
 const VIRIDIS_14 = [
@@ -112,9 +106,8 @@ const VIRIDIS_14 = [
 ];
 
 const getVariableColorByVar = (variableName: string) => {
-	const { selectedVariable } = openedWorkflowNodeStore.chartConfigs[props.chartIdx];
-	const codeIdx = selectedVariable.findIndex((variable) => variable === variableName);
-	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
+	const codeIdx = selectedVariable.value.findIndex((variable) => variable === variableName);
+	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.value.length) * VIRIDIS_14.length)];
 };
 
 const getVariableColorByRunIdx = (runIdx: number) => {
@@ -127,9 +120,20 @@ const hasMultiRuns = computed(() => {
 	return runIdList.length > 1;
 });
 
+const getLineColor = (variableName: string, runIdx: number) => {
+	if (props.lineColorArray) {
+		return props.lineColorArray[runIdx];
+	}
+	return hasMultiRuns.value
+		? getVariableColorByRunIdx(runIdx)
+		: getVariableColorByVar(variableName);
+};
+
+const getLineWidth = (runIdx: number) => (props.lineWidthArray ? props.lineWidthArray[runIdx] : 2);
+
 const watchRunResults = async (runResults) => {
 	const runIdList = Object.keys(props.runResults) as string[];
-	if (!runIdList.length || isEmpty(runResults)) {
+	if (!runIdList.length || _.isEmpty(runResults)) {
 		return;
 	}
 
@@ -142,20 +146,6 @@ const watchRunResults = async (runResults) => {
 			(key) => key !== 'timestep' && key !== 'timestamp' && key !== 'date'
 		);
 	}
-
-	// grab variable columns here?
-	// console.log(stateVariablesList)
-	// console.log(props.runResults)
-	// console.log(Object.keys(props.runResults[Object.keys(props.runResults)[0]][0]).filter(
-	// 	(key) => (key !== 'timestep' && key !== 'timestamp' && key !== 'date')
-	// ))
-
-	if (!openedWorkflowNodeStore.chartConfigs[props.chartIdx]) {
-		openedWorkflowNodeStore.setChartConfig(props.chartIdx, {
-			selectedVariable: [stateVariablesList[0]],
-			selectedRun: runIdList[0]
-		});
-	}
 	renderGraph();
 };
 
@@ -163,14 +153,12 @@ const renderGraph = () => {
 	const { runResults } = props;
 	const runIdList = Object.keys(props.runResults) as string[];
 
-	console.log('renderGraph', runResults, runIdList);
-
-	if (!runIdList.length || isEmpty(runResults)) {
+	if (!runIdList.length || _.isEmpty(runResults)) {
 		return;
 	}
 
 	const datasets: DatasetType[] = [];
-	openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable.forEach((variable) =>
+	selectedVariable.value.forEach((variable) =>
 		runIdList
 			.map((runId) => runResults[runId])
 			.forEach((run, runIdx) => {
@@ -181,9 +169,8 @@ const renderGraph = () => {
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
 					tension: 0.4,
-					borderColor: hasMultiRuns.value
-						? getVariableColorByRunIdx(runIdx)
-						: getVariableColorByVar(variable)
+					borderColor: getLineColor(variable, runIdx),
+					borderWidth: getLineWidth(runIdx)
 				};
 				datasets.push(dataset);
 			})
@@ -194,13 +181,25 @@ const renderGraph = () => {
 	};
 };
 
+const updateSelectedVariable = () => {
+	emit('configuration-change', {
+		selectedVariable,
+		selectedRun: props.chartConfig.selectedRun
+	});
+};
+
 onMounted(() => {
 	// FIXME: Should use deep, need to rewire the dependencies
 	watch(() => props.runResults, watchRunResults, { immediate: true, deep: true });
 
-	if (openedWorkflowNodeStore.chartConfigs[props.chartIdx]) {
-		watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable, renderGraph);
-	}
+	watch(
+		() => props.chartConfig,
+		() => {
+			selectedVariable.value = props.chartConfig.selectedVariable;
+			renderGraph();
+		},
+		{ immediate: true, deep: true }
+	);
 });
 </script>
 
@@ -208,10 +207,6 @@ onMounted(() => {
 .multiselect-title {
 	font-size: smaller;
 	font-weight: 700;
-}
-
-.selected-label-item {
-	font-weight: bold;
 }
 
 .p-chart {

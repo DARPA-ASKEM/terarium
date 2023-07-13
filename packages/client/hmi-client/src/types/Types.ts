@@ -33,6 +33,17 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
+export interface Artifact {
+    id?: string;
+    timestamp?: any;
+    username: string;
+    name: string;
+    description?: string;
+    fileNames: string[];
+    metadata?: any;
+    concepts?: Concept[];
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -56,15 +67,15 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    framework: string;
     name: string;
     description: string;
-    model_version: string;
+    model_version?: string;
     schema: string;
-    schema_name: string;
+    schema_name?: string;
     model: { [index: string]: any };
+    properties?: any;
     semantics?: ModelSemantics;
-    metadata: ModelMetadata;
+    metadata?: ModelMetadata;
 }
 
 export interface ModelConfiguration {
@@ -73,7 +84,6 @@ export interface ModelConfiguration {
     description?: string;
     modelId: string;
     configuration: any;
-    amrConfiguration: any;
 }
 
 export interface ProvenanceQueryParam {
@@ -134,8 +144,13 @@ export interface PresignedURL {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
-    parameters?: ModelParameter[];
-    metadata?: ModelMetadata;
+}
+
+export interface DKG {
+    curie: string;
+    name: string;
+    description: string;
+    link: string;
 }
 
 export interface CalibrationRequest {
@@ -178,16 +193,24 @@ export interface Links {
     self: string;
 }
 
+export interface Concept {
+    id: string;
+    curie: string;
+    type: Type;
+    status: OntologicalField;
+    object_id: string;
+}
+
 export interface ModelSemantics {
     ode: OdeSemantics;
     typing?: TypingSemantics;
 }
 
 export interface ModelMetadata {
-    processed_at: number;
-    processed_by: string;
-    variable_statements: VariableStatement[];
-    annotations: Annotations;
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
     attributes: any[];
 }
 
@@ -202,21 +225,14 @@ export interface PetriNetTransition {
     id: string;
     input: string[];
     output: string[];
-    grounding: ModelGrounding;
-    properties: PetriNetTransitionProperties;
-}
-
-export interface ModelParameter {
-    id: string;
-    description?: string;
-    value?: number;
     grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
+    properties: PetriNetTransitionProperties;
 }
 
 export interface Document {
     gddId: string;
     title: string;
+    abstractText: string;
     journal: string;
     type: string;
     number: string;
@@ -235,7 +251,6 @@ export interface Document {
     knownEntities: KnownEntities;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
-    abstract: string;
 }
 
 export interface XDDFacetsItemResponse {
@@ -251,7 +266,7 @@ export interface XDDResponseOK {
 
 export interface OdeSemantics {
     rates: Rate[];
-    initials?: any[];
+    initials?: Initial[];
     parameters?: ModelParameter[];
     observables?: Observable[];
     time?: any;
@@ -291,18 +306,13 @@ export interface ModelGrounding {
 
 export interface ModelExpression {
     expression: string;
-    expressionMathml: string;
+    expression_mathml: string;
 }
 
 export interface PetriNetTransitionProperties {
     name: string;
-    grounding: ModelGrounding;
-    rate: ModelExpression;
-}
-
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
+    description: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Extraction {
@@ -317,7 +327,8 @@ export interface Extraction {
 
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
-    summaries: { [index: string]: { [index: string]: string } };
+    askemObjects: Extraction[];
+    summaries: string[];
 }
 
 export interface XDDFacetBucket {
@@ -328,7 +339,23 @@ export interface XDDFacetBucket {
 export interface Rate {
     target: string;
     expression: string;
-    expressionMathml: string;
+    expression_mathml?: string;
+}
+
+export interface Initial {
+    target: string;
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface ModelParameter {
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+    unit?: ModelUnit;
 }
 
 export interface Observable {
@@ -336,7 +363,7 @@ export interface Observable {
     name?: string;
     states: string[];
     expression?: string;
-    expressionMathml?: string;
+    expression_mathml?: string;
 }
 
 export interface TypeSystem {
@@ -373,6 +400,7 @@ export interface ProvenanceInfo {
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
+    abstractText: string;
     xddId: string;
     documentId: string;
     documentTitle: string;
@@ -386,7 +414,6 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
-    abstract: string;
 }
 
 export interface XDDUrlExtraction {
@@ -395,11 +422,22 @@ export interface XDDUrlExtraction {
     extractedFrom: string[];
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
+}
+
 export interface State {
     id: string;
     name?: string;
     description?: string;
     grounding?: ModelGrounding;
+    units?: ModelUnit;
 }
 
 export interface Transition {
@@ -453,6 +491,8 @@ export interface MetadataDataset {
 
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
 }
 
 export enum FileType {
@@ -497,4 +537,19 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum Type {
+    Datasets = "DATASETS",
+    Extractions = "EXTRACTIONS",
+    Intermediates = "INTERMEDIATES",
+    Models = "MODELS",
+    Plans = "PLANS",
+    Publications = "PUBLICATIONS",
+    SimulationRuns = "SIMULATION_RUNS",
+}
+
+export enum OntologicalField {
+    Object = "OBJECT",
+    Unit = "UNIT",
 }

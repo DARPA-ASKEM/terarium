@@ -4,9 +4,10 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonSetter;
 
 import java.util.List;
+
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
 
 @Data
@@ -15,5 +16,6 @@ public class Rate {
 	private String target;
 	private String expression;
 	@JsonAlias("expression_mathml")
-	private String expressionMathml;
+	@TSOptional
+	private String expression_mathml;
 }

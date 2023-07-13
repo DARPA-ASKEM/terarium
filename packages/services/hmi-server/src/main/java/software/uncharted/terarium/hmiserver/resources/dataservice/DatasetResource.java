@@ -1,9 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -11,13 +8,11 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
@@ -44,13 +39,16 @@ import com.google.common.math.Quantiles;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import software.uncharted.terarium.hmiserver.resources.DataStorageResource;
+import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 
 @Path("/api/datasets")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Dataset REST Endpoints")
 @Slf4j
-public class DatasetResource {
+public class DatasetResource extends DataStorageResource implements SnakeCaseResource {
 	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
+	private static final int DEFAULT_CSV_LIMIT = 100;
 
 	@ConfigProperty(name = "aws.bucket")
 	Optional<String> bucket;
@@ -222,8 +220,9 @@ public class DatasetResource {
 	@Path("/{datasetId}/downloadCSV")
 	public Response getCsv(
 		@PathParam("datasetId") final String datasetId,
-		@QueryParam("filename") final String filename
-	) {
+		@QueryParam("filename") final String filename,
+		@QueryParam(value = "limit") final Integer limit		// -1 means no limit
+	) throws IOException {
 
 		log.debug("Getting CSV content");
 
@@ -249,11 +248,22 @@ public class DatasetResource {
 		ResponseInputStream<GetObjectResponse> s3objectResponse = client
 			.getObject(request);
 
-		String csvString = new BufferedReader(new InputStreamReader(s3objectResponse))
-			.lines()
-			.collect(Collectors.joining("\n"));
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(s3objectResponse));
 
-		List<List<String>> csv = csvToRecords(csvString);
+		// Read the specified amount of lines, or the default (including the header)
+		String line;
+		final StringBuilder csvStringBuilder = new StringBuilder();
+		long lineCount = 0;
+		final long linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
+		while ((line = reader.readLine()) != null) {
+			csvStringBuilder.append(line).append(System.getProperty("line.separator"));
+			lineCount++;
+			if (linesToRead != -1 && lineCount >= linesToRead) {
+				break;
+			}
+		}
+
+		List<List<String>> csv = csvToRecords(csvStringBuilder.toString());
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
 		for (int i = 0; i < csv.get(0).size(); i++){
@@ -283,8 +293,8 @@ public class DatasetResource {
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
 		//verify that dataSetPath and bucket are set. If not, return an error
-		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
-			log.error("S3 information not set. Cannot upload CSV from github.");
+		if (!dataSetPath.isPresent()) {
+			log.error("dataSetPath information not set. Cannot upload CSV from github.");
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
@@ -294,18 +304,12 @@ public class DatasetResource {
 		//download CSV from github
 		String csvString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path);
 
-		//init our S3 client
-		AwsCredentialsProvider awsCredentials = StaticCredentialsProvider.create(
-			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
-		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(awsCredentials).build();
+
 		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
-
-		PutObjectRequest request = PutObjectRequest.builder().bucket(bucket.get()).key(objectKey).build();
-
-		PutObjectResponse res = client.putObject(request, RequestBody.fromString(csvString));
+		SdkHttpResponse res = uploadStringToS3(objectKey, csvString);
 
 		//find the status of the response
-		if (res.sdkHttpResponse().isSuccessful()) {
+		if (res.isSuccessful()) {
 			log.debug("Successfully uploaded CSV file to dataset {}", datasetId);
 			return Response
 				.status(Response.Status.OK)
@@ -313,7 +317,7 @@ public class DatasetResource {
 				.build();
 		} else {
 			log.error("Failed to upload CSV file to dataset {}", datasetId);
-			return Response.status(res.sdkHttpResponse().statusCode(), res.sdkHttpResponse().statusText().get()).type(MediaType.APPLICATION_JSON)
+			return Response.status(res.statusCode(), res.statusText().get()).type(MediaType.APPLICATION_JSON)
 				.build();
 		}
 	}
@@ -338,8 +342,8 @@ public class DatasetResource {
 		log.debug("Uploading CSV file to dataset {}", datasetId);
 
 		//verify that dataSetPath and bucket are set. If not, return an error
-		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
-			log.error("S3 information not set. Cannot upload CSV.");
+		if (!dataSetPath.isPresent()) {
+			log.error("dataset path information not set. Cannot upload CSV.");
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
@@ -348,18 +352,10 @@ public class DatasetResource {
 
 		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
 
-
-		//init our S3 client
-		AwsCredentialsProvider awsCredentials = StaticCredentialsProvider.create(
-			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
-		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(awsCredentials).build();
-
-		PutObjectRequest request = PutObjectRequest.builder().bucket(bucket.get()).key(objectKey).build();
-
-		PutObjectResponse res = client.putObject(request, RequestBody.fromBytes(input.get("file").readAllBytes()));
+		SdkHttpResponse res = uploadBytesToS3(objectKey, input.get("file").readAllBytes());
 
 		//find the status of the response
-		if (res.sdkHttpResponse().isSuccessful()) {
+		if (res.isSuccessful()) {
 			log.debug("Successfully uploaded CSV file to dataset {}", datasetId);
 			return Response
 				.status(Response.Status.OK)
@@ -367,7 +363,7 @@ public class DatasetResource {
 				.build();
 		} else {
 			log.error("Failed to upload CSV file to dataset {}", datasetId);
-			return Response.status(res.sdkHttpResponse().statusCode(), res.sdkHttpResponse().statusText().get()).type(MediaType.APPLICATION_JSON)
+			return Response.status(res.statusCode(), res.statusText().get()).type(MediaType.APPLICATION_JSON)
 				.build();
 		}
 
@@ -463,17 +459,5 @@ public class DatasetResource {
 		return proxy.getDownloadUrl(id, filename);
 	}
 
-	/**
-	 * Serialize a given object to be in snake-case instead of camelCase, as may be
-	 * required by the proxied endpoint.
-	 * @param object
-	 * @return
-	 */
-	private JsonNode convertObjectToSnakeCaseJsonNode(Object object) {
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-		return mapper.convertValue(object, JsonNode.class);
-	}
 }

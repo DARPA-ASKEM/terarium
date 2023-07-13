@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.resources;
 import io.quarkus.security.identity.SecurityIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.services.StructuredLog;
@@ -56,7 +57,10 @@ public class EventResource {
 	 */
 	@POST
 	@Transactional
+	@IgnoreRequestLogging
 	public Response postEvent(final Event event) {
+		event.setUsername(securityIdentity.getPrincipal().getName());
+
 		structuredLog.log(StructuredLog.Type.EVENT, securityIdentity.getPrincipal().getName(), "event", event);
 
 		// Do not save the event to the database if the type is not specified as persistent
@@ -66,7 +70,6 @@ public class EventResource {
 				.build();
 		}
 
-		event.setUsername(securityIdentity.getPrincipal().getName());
 		Event.persist(event);
 		return Response
 			.ok(event)

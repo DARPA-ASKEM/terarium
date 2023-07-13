@@ -8,8 +8,9 @@
 		:doi="highlightSearchTerms(doi)"
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
-		:hide-header="documentView === DocumentView.PDF"
+		:hide-intro="documentView === DocumentView.PDF"
 		:stretch-content="documentView === DocumentView.PDF"
+		:show-sticky-header="documentView === DocumentView.PDF"
 	>
 		<template #bottom-header-buttons>
 			<Button
@@ -40,12 +41,14 @@
 				/>
 			</span>
 		</template>
-		<div class="container">
-			<Message class="inline-message" icon="none"
-				>This page contains extractions from the document. Use the content switcher above to see the
-				original PDF if it is available.</Message
-			>
-		</div>
+		<template #info-bar>
+			<div class="container">
+				<Message class="inline-message" icon="none"
+					>This page contains extractions from the document. Use the content switcher above to see
+					the original PDF if it is available.</Message
+				>
+			</div>
+		</template>
 		<Accordion
 			v-if="documentView === DocumentView.EXRACTIONS"
 			:multiple="true"
@@ -57,14 +60,14 @@
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
-			<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
+			<AccordionTab v-if="doc?.knownEntities?.summaries">
 				<template #header>
 					<header id="Section-Summaries">Section Summaries</header>
 				</template>
 				<ul>
-					<li v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+					<li v-for="(section, index) of doc.knownEntities.summaries" :key="index">
 						<h6>{{ index }}</h6>
-						<p v-html="highlightSearchTerms(section)" />
+						<p v-html="highlightSearchTerms(section[index])" />
 					</li>
 				</ul>
 			</AccordionTab>
@@ -149,7 +152,6 @@
 							:show-import-button="isEditable"
 							:project="project"
 							@open-code="openCode"
-							@update-project="updateProject"
 						/>
 					</li>
 				</ul>
@@ -179,7 +181,7 @@
 					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
-						<span v-html="highlightSearchTerms(ex.properties.abstract)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
 						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</li>
 				</ul>
@@ -265,15 +267,12 @@ const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded', 'update-project']);
+const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
 function openCode(codeRequests: CodeRequest[]) {
 	emit('open-code', codeRequests);
 }
 
-function updateProject(id: IProject['id']) {
-	emit('update-project', id);
-}
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -309,8 +308,8 @@ const docLink = computed(() =>
 );
 
 const formattedAbstract = computed(() => {
-	if (!doc.value || !doc.value.abstract) return '';
-	return highlightSearchTerms(doc.value.abstract);
+	if (!doc.value || !doc.value.abstractText) return '';
+	return highlightSearchTerms(doc.value.abstractText);
 });
 
 const doi = computed(() => getDocumentDoi(doc.value));
@@ -329,7 +328,7 @@ const equations = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
 );
 const otherUrls = computed(() =>
-	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
+	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions?.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
@@ -407,7 +406,7 @@ function downloadPDF() {
 */
 function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
-	return link.match(/^.*\.(pdf|PDF)$/);
+	return link.toLowerCase().endsWith('.pdf');
 }
 
 const openPDF = () => {
@@ -467,6 +466,7 @@ onUpdated(() => {
 	margin-right: 1rem;
 	max-width: 70rem;
 }
+
 .inline-message:deep(.p-message-wrapper) {
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
@@ -476,10 +476,7 @@ onUpdated(() => {
 	border: 4px solid var(--primary-color);
 	border-width: 0px 0px 0px 6px;
 }
-.p-buttonset {
-	white-space: nowrap;
-	margin-left: 0.5rem;
-}
+
 .extracted-item {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;

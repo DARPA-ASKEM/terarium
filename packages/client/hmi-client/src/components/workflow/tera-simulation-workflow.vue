@@ -15,12 +15,32 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<h5>{{ wf.name }}</h5>
+				<div class="button-group">
+					<InputText
+						v-if="isRenamingWorkflow"
+						class="p-inputtext-sm"
+						v-model.lazy="newWorkflowName"
+						placeholder="Workflow name"
+						@keyup.enter="updateWorkflowName"
+					/>
+					<h5 v-else>{{ wf.name }}</h5>
+					<Button
+						icon="pi pi-ellipsis-v"
+						class="p-button-icon-only p-button-text p-button-rounded"
+						@click="toggleOptionsMenu"
+					/>
+				</div>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
-					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
+					<Menu
+						ref="addComponentMenu"
+						:model="contextMenuItems"
+						:popup="true"
+						style="white-space: nowrap; width: auto"
+					/>
 				</div>
 			</div>
 		</template>
@@ -36,6 +56,7 @@
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-node="(event) => removeNode(event)"
+				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
@@ -43,23 +64,26 @@
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
 						:node="node"
-						:model-id="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
-						:outputAmount="node.outputs.length + 1"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
+						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
-						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
+						:node="node"
+						@select-dataset="(event) => selectDataset(node, event)"
+					/>
+					<tera-simulate-julia-node
+						v-else-if="node.operationType === 'SimulateJuliaOperation'"
+						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
-					<tera-simulate-node
-						v-else-if="node.operationType === 'SimulateOperation'"
+					<tera-simulate-ciemss-node
+						v-else-if="node.operationType === 'SimulateCiemssOperation'"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -157,8 +181,10 @@
 </template>
 
 <script setup lang="ts">
+import { isArray, cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -174,13 +200,19 @@ import {
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
-import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
+import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
+import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
-import { SimulateOperation } from '@/components/workflow/simulate-operation';
+import {
+	SimulateJuliaOperation,
+	SimulateJuliaOperationState
+} from '@/components/workflow/simulate-julia-operation';
+import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
@@ -190,6 +222,8 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
+
+const workflowEventBus = workflowService.workflowEventBus;
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -228,13 +262,33 @@ const VIRIDIS_14 = [
 	'#cde11d',
 	'#fde725'
 ];
+
+const isRenamingWorkflow = ref(false);
+const newWorkflowName = ref('');
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingWorkflow.value = true;
+			newWorkflowName.value = wf.value?.name ?? '';
+		}
+	}
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
 const getVariableColorByRunIdx = (edgeIdx: number) =>
 	wf.value.edges.length > 1
 		? VIRIDIS_14[Math.floor((edgeIdx / wf.value.edges.length) * VIRIDIS_14.length)]
 		: '#1B8073';
 const isEdgeTargetSim = (edge) =>
 	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
-	WorkflowOperationTypes.SIMULATE;
+	WorkflowOperationTypes.SIMULATE_JULIA;
 
 const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
@@ -252,14 +306,71 @@ const testOperation: Operation = {
 const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
+async function selectModel(node: WorkflowNode, data: { id: string }) {
+	node.state.modelId = data.id;
+
+	// FIXME: Need additional design to work out exactly what to show. June 2023
+	// FIXME: Need to merge with any existing output-port results (e.g. new configs are added)
+	const configurationList = await getModelConfigurations(data.id);
+	node.outputs = [];
+	configurationList.forEach((configuration) => {
+		node.outputs.push({
+			id: uuidv4(),
+			type: 'modelConfigId',
+			label: configuration.name,
+			value: [configuration.id],
+			status: WorkflowPortStatus.NOT_CONNECTED
+		});
+	});
+}
+
+async function updateWorkflowName() {
+	const workflowClone = cloneDeep(wf.value);
+	workflowClone.name = newWorkflowName.value;
+	workflowService.updateWorkflow(workflowClone);
+	isRenamingWorkflow.value = false;
+	wf.value = await workflowService.getWorkflow(props.assetId);
+	// FIXME: Names aren't updated in sidebar
+}
+
+async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
+	node.state.datasetId = data.id;
+	node.outputs = [
+		{
+			id: uuidv4(),
+			type: 'datasetId',
+			label: data.name,
+			value: [data.id],
+			status: WorkflowPortStatus.NOT_CONNECTED
+		}
+	];
+}
+
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
-		value: [port.value],
+		value: isArray(port.value) ? port.value : [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
+
+	// FIXME: This is a bit hacky, we should split this out into separate events, or the action
+	// should be built into the Operation directly. What we are doing is to update the internal state
+	// and this feels it is leaking too much low-level information
+	if (
+		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
+		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
+		node.operationType === WorkflowOperationTypes.CALIBRATION
+	) {
+		const state = node.state as SimulateJuliaOperationState;
+		if (state.chartConfigs.length === 0) {
+			state.chartConfigs.push({
+				selectedRun: port.value[0],
+				selectedVariable: []
+			});
+		}
+	}
 	workflowDirty = true;
 }
 
@@ -268,6 +379,15 @@ const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
 };
+
+const drilldown = (event: WorkflowNode) => {
+	workflowEventBus.emit('drilldown', event);
+};
+
+workflowEventBus.on('node-state-change', (payload: any) => {
+	if (wf.value.id !== payload.workflowId) return;
+	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
+});
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
@@ -304,17 +424,22 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Deterministic',
+		label: 'DETERMINISTIC',
 		items: [
 			{
 				label: 'Simulate',
 				command: () => {
-					workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateJuliaOperation, newNodePosition, {
 						width: 420,
 						height: 220
 					});
 					workflowDirty = true;
 				}
+			},
+			{
+				label: 'Simulate ensemble',
+				disabled: true,
+				command: () => {}
 			},
 			{
 				label: 'Calibrate',
@@ -326,15 +451,25 @@ const contextMenuItems = ref([
 		]
 	},
 	{
-		label: 'Probabilistic',
+		label: 'PROBABILISTIC',
 		items: [
 			{
 				label: 'Simulate',
+				command: () => {
+					workflowService.addNode(wf.value, SimulateCiemssOperation, newNodePosition, {
+						width: 420,
+						height: 220
+					});
+					workflowDirty = true;
+				}
+			},
+			{
+				label: 'Calibrate & Simulate',
 				disabled: true,
 				command: () => {}
 			},
 			{
-				label: 'Calibrate & Simulate',
+				label: 'Calibrate & Simulate ensemble',
 				disabled: true,
 				command: () => {}
 			}
@@ -539,6 +674,7 @@ function resetZoom() {
 	console.log('clean up layout');
 }
 </script>
+
 <style scoped>
 .toolbar {
 	display: flex;
@@ -558,6 +694,7 @@ function resetZoom() {
 
 .button-group {
 	display: flex;
+	align-items: center;
 	flex-direction: row;
 	gap: 1rem;
 }
@@ -567,8 +704,6 @@ function resetZoom() {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
-	padding-top: 0px;
-	padding-bottom: 0px;
 }
 
 .toolbar .button-group .secondary-button:hover {

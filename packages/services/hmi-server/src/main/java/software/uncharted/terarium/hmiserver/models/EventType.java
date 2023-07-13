@@ -3,7 +3,9 @@ package software.uncharted.terarium.hmiserver.models;
 import lombok.Getter;
 
 public enum EventType {
-	SEARCH(true);
+	SEARCH(true),
+	EVALUATION_SCENARIO(false),
+	ROUTE_TIMING(false);
 
 	EventType(boolean persistent) {
 		this.persistent = persistent;

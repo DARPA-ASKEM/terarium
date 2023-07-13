@@ -46,6 +46,7 @@ export const addNode = (
 		operationType: op.name,
 		x: pos.x,
 		y: pos.y,
+		state: {},
 
 		inputs: op.inputs.map((port) => ({
 			id: uuidv4(),
@@ -70,6 +71,10 @@ export const addNode = (
 		width: size.width,
 		height: size.height
 	};
+
+	if (op.initState) {
+		node.state = op.initState();
+	}
 
 	wf.nodes.push(node);
 };
@@ -148,6 +153,15 @@ export const removeEdge = (wf: Workflow, id: string) => {
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
+
+	// If there are no more references reset the connected status of the source node
+	if (wf.edges.filter((e) => e.source === edgeToRemove.source).length === 0) {
+		const sourceNode = wf.nodes.find((d) => d.id === edgeToRemove.source);
+		if (!sourceNode) return;
+		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
+		if (!sourcePort) return;
+		sourcePort.status = WorkflowPortStatus.NOT_CONNECTED;
+	}
 };
 
 export const removeNode = (wf: Workflow, id: string) => {
@@ -160,6 +174,12 @@ export const removeNode = (wf: Workflow, id: string) => {
 
 	// Remove the node
 	wf.nodes = wf.nodes.filter((node) => node.id !== id);
+};
+
+export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
+	const node = wf.nodes.find((d) => d.id === nodeId);
+	if (!node) return;
+	node.state = state;
 };
 
 /**
@@ -184,3 +204,60 @@ export const getWorkflow = async (id: string) => {
 	const response = await API.get(`/workflows/${id}`);
 	return response?.data ?? null;
 };
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Events bus for workflow
+/// /////////////////////////////////////////////////////////////////////////////
+type EventCallback = (args: any) => void;
+type EventName = string | symbol;
+class EventEmitter {
+	listeners: Map<EventName, Set<EventCallback>> = new Map();
+
+	on(eventName: EventName, fn: EventCallback): void {
+		if (!this.listeners.has(eventName)) {
+			this.listeners.set(eventName, new Set());
+		}
+		this.listeners.get(eventName)?.add(fn);
+	}
+
+	once(eventName: EventName, fn: EventCallback): void {
+		if (!this.listeners.has(eventName)) {
+			this.listeners.set(eventName, new Set());
+		}
+
+		const onceWrapper = (args: any) => {
+			fn(args);
+			this.off(eventName, onceWrapper);
+		};
+		this.listeners.get(eventName)?.add(onceWrapper);
+	}
+
+	off(eventName: EventName, fn: EventCallback): void {
+		const set = this.listeners.get(eventName);
+		if (set) {
+			set.delete(fn);
+		}
+	}
+
+	removeAllEvents(eventName: EventName): void {
+		if (this.listeners.has(eventName)) {
+			this.listeners.delete(eventName);
+		}
+	}
+
+	emit(eventName: EventName, args: any): boolean {
+		const fns = this.listeners.get(eventName);
+		if (!fns) return false;
+
+		fns.forEach((f) => {
+			f(args);
+		});
+		return true;
+	}
+
+	emitNodeStateChange(payload: { workflowId: string; nodeId: string; state: any }) {
+		this.emit('node-state-change', payload);
+	}
+}
+
+export const workflowEventBus = new EventEmitter();

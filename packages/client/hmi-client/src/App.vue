@@ -13,34 +13,22 @@
 	/>
 	<main>
 		<router-view v-slot="{ Component }">
-			<component
-				class="page"
-				ref="pageRef"
-				:is="Component"
-				:project="project"
-				@update-project="fetchProject"
-			/>
+			<component class="page" ref="pageRef" :is="Component" :project="project" />
 		</router-view>
 	</main>
 	<footer class="footer">
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
 		<div class="footer-group">
-			<a target="_blank" rel="noopener noreferrer" :href="documentation">documentation</a>
-			<a
-				target="_blank"
-				rel="noopener noreferrer"
-				href="javascript:void;"
-				@click="isAboutModalVisible = true"
-				>about</a
-			>
+			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
 			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue"
-				>report an issue</a
+				>Report an issue</a
 			>
 			<a
 				target="_blank"
 				rel="noopener noreferrer"
 				href="https://terarium.canny.io/request-a-feature"
-				>request a feature</a
+				>Request a feature</a
 			>
 		</div>
 	</footer>
@@ -152,13 +140,8 @@ API.interceptors.response.use(
 
 async function fetchProject(id: IProject['id']) {
 	resourcesStore.reset();
-
-	// fetch project metadata
-	project.value = await ProjectService.get(id, true);
-
 	// fetch basic metadata about project assets and save them into a global store/cache
-	resourcesStore.activeProjectAssets = project.value?.assets ?? null;
-	resourcesStore.setActiveProject(project.value);
+	resourcesStore.setActiveProject(await ProjectService.get(id, true));
 }
 
 watch(
@@ -177,9 +160,9 @@ watch(
 	{ immediate: true }
 );
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-resourcesStore.$subscribe((mutation, state) => {
+// This is crucial - every time the resource store is modified the project prop will be updated to match it
+// Once you update assets within a project (add/remove) the project service sets the resource store to what's in the project in the backend
+resourcesStore.$subscribe((_mutation, state) => {
 	project.value = state.activeProject;
 });
 
@@ -230,6 +213,7 @@ footer {
 }
 
 .footer-group {
+	font-size: var(--font-caption);
 	margin: 0 2rem;
 	display: flex;
 	align-items: center;

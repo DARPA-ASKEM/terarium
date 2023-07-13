@@ -4,7 +4,8 @@ export enum WorkflowOperationTypes {
 	CALIBRATION = 'CalibrationOperation',
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',
-	SIMULATE = 'SimulateOperation',
+	SIMULATE_JULIA = 'SimulateJuliaOperation',
+	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
 	STRATIFY = 'Stratify'
 }
 
@@ -35,6 +36,8 @@ export interface Operation {
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
+
+	initState?: Function;
 
 	action?: Function;
 	validation?: Function;
@@ -68,6 +71,9 @@ export interface WorkflowNode {
 	height: number;
 	inputs: WorkflowPort[];
 	outputs: WorkflowPort[];
+
+	// Internal state. For example chosen model, display color ... etc
+	state: any;
 
 	// FIXME: The section below is slated to be further spec'ed out later.
 	// State and progress, tracking of intermediate results

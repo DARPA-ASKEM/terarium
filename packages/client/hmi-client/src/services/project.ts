@@ -9,6 +9,7 @@ import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import ResultsIcon from '@/assets/svg/icons/results.svg?component';
 import { Component } from 'vue';
+import useResourcesStore from '@/stores/resources';
 
 /**
  * Create a project
@@ -40,6 +41,7 @@ async function update(project: IProject): Promise<IProject | null> {
 		if (status !== 200) {
 			return null;
 		}
+		useResourcesStore().setActiveProject(await get(project.id, true));
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);
@@ -94,7 +96,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			url +=
-				'?types=datasets&types=model_configurations&types=models&types=publications&types=simulations&types=workflows';
+				'?types=datasets&types=model_configurations&types=artifacts&types=models&types=publications&types=simulations&types=workflows';
 		}
 		const response = await API.get(url);
 		const { status, data } = response;
@@ -117,6 +119,9 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 	// FIXME: handle cases where assets is already added to the project
 	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 	const response = await API.post(url);
+	if (response.data) {
+		useResourcesStore().setActiveProject(await get(projectId, true));
+	}
 	return response?.data ?? null;
 }
 
@@ -135,6 +140,9 @@ async function deleteAsset(
 	try {
 		const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 		const { status } = await API.delete(url);
+		if (status >= 200 && status < 300) {
+			useResourcesStore().setActiveProject(await get(projectId, true));
+		}
 		return status >= 200 && status < 300;
 	} catch (error) {
 		logger.error(error);
@@ -195,6 +203,7 @@ const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.SIMULATIONS, 'settings'],
 	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'code'],
+	[ProjectAssetTypes.SIMULATION_WORKFLOW, 'git-merge'],
 	['overview', 'layout']
 ]);
 

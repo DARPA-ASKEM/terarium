@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.proxies.documentservice;
 
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.*;
 
@@ -13,8 +14,10 @@ import javax.ws.rs.core.MediaType;
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface DocumentProxy {
 	@GET
-	@Path("/api/v1/articles")
+	@Path("/api/v2/articles")
+	@LogRestClientTime
 	XDDResponse<DocumentsResponseOK> getDocuments(
+		@QueryParam("api_key") String apiKey,
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
@@ -43,7 +46,7 @@ public interface DocumentProxy {
 	XDDSetsResponse getAvailableSets();
 
 	@GET
-	@Path("/api/v1/dictionaries")
+	@Path("/api/v2/dictionaries")
 	XDDResponse<XDDDictionariesResponseOK> getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all);
 
 	@GET

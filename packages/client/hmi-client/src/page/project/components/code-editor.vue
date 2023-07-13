@@ -64,7 +64,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import useResourcesStore from '@/stores/resources';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
@@ -232,12 +232,11 @@ async function createModelFromCode() {
 		const newModelName = 'New model';
 		const newModel = {
 			name: newModelName,
-			framework: 'Petri Net',
 			content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
 		};
 		const model = await createModel(newModel);
-		if (model && props.project) {
-			await addModelToProject(props.project.id, model.id.toString(), resourcesStore);
+		if (model && props.project && resourcesStore) {
+			await addModelToProject(props.project.id, model.id.toString());
 
 			router.push({
 				name: RouteName.ProjectRoute,

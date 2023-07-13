@@ -14,13 +14,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import * as ModelService from '@/services/models/model-service';
+import API from '@/api/api';
 import { EventSourcePolyfill } from 'event-source-polyfill';
+import useAuthStore from '../stores/auth';
 
 const models = ref<Array<string>>([]);
 
 function listen() {
-	const events = new EventSourcePolyfill('/api/user/server-sent-events');
+	const auth = useAuthStore();
+	const events = new EventSourcePolyfill('/api/user/server-sent-events', {
+		headers: {
+			Authorization: `Bearer ${auth.token}`
+		}
+	});
 	//const events = new EventSource("/api/server-sent-events", { withCredentials: true });
 	events.onmessage = (event) => {
 		const id: string = JSON.parse(event.data)?.id;
@@ -30,7 +36,7 @@ function listen() {
 }
 
 async function createEmptyModel() {
-	await ModelService.create();
+	await API.put('/dev-tests/user-event');
 }
 </script>
 

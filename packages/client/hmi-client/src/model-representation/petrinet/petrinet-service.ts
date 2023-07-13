@@ -1,42 +1,22 @@
+import _ from 'lodash';
+import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, PetriNetState, PetriNetTransition, Model } from '@/types/Types';
-import { parseIGraph2PetriNet, PetriNet } from '@/petrinet/petrinet-service';
-import { logger } from '@/utils/logger';
-
-/**
- * Given a petrinet model convert to an IGraph representation g
- * for the renderer
- * First add each node found in S and T, then add each edge found in I and O
- */
-interface PetriSizeConfig {
-	S: {
-		width: number;
-		height: number;
-	};
-	T: {
-		width: number;
-		height: number;
-	};
-}
-const defaultSizeConfig: PetriSizeConfig = {
-	S: { width: 40, height: 40 },
-	T: { width: 40, height: 40 }
-};
+import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
+import { PetriNet } from '@/petrinet/petrinet-service';
 
 export interface NodeData {
 	type: string;
-	uid?: string | number;
+	strataType?: string;
+	expression?: string;
 }
 
 export interface EdgeData {
 	numEdges: number;
 }
-export enum NodeType {
-	State = 'S',
-	Transition = 'T'
-}
 
-export const convertAMRToACSet = (amr: PetriNetModel) => {
+// Used to derive equations
+// AMR => ACSet => ODE => Equation => Latex
+export const convertAMRToACSet = (amr: Model) => {
 	const result: PetriNet = {
 		S: [],
 		T: [],
@@ -44,15 +24,17 @@ export const convertAMRToACSet = (amr: PetriNetModel) => {
 		O: []
 	};
 
-	amr.states.forEach((s) => {
+	const petrinetModel = amr.model as PetriNetModel;
+
+	petrinetModel.states.forEach((s) => {
 		result.S.push({ sname: s.id });
 	});
 
-	amr.transitions.forEach((t) => {
+	petrinetModel.transitions.forEach((t) => {
 		result.T.push({ tname: t.id });
 	});
 
-	amr.transitions.forEach((transition) => {
+	petrinetModel.transitions.forEach((transition) => {
 		transition.input.forEach((input) => {
 			result.I.push({
 				is: result.S.findIndex((s) => s.sname === input) + 1,
@@ -61,7 +43,7 @@ export const convertAMRToACSet = (amr: PetriNetModel) => {
 		});
 	});
 
-	amr.transitions.forEach((transition) => {
+	petrinetModel.transitions.forEach((transition) => {
 		transition.output.forEach((output) => {
 			result.O.push({
 				os: result.S.findIndex((s) => s.sname === output) + 1,
@@ -73,45 +55,65 @@ export const convertAMRToACSet = (amr: PetriNetModel) => {
 	return result;
 };
 
-export const convertToGraph = (petri: PetriNetModel) => {
-	const result: IGraph<PetriNetState | PetriNetTransition, EdgeData> = {
+export const convertToIGraph = (amr: Model) => {
+	const result: IGraph<NodeData, EdgeData> = {
 		width: 500,
 		height: 500,
-		parameters: petri.parameters,
-		metadata: petri.metadata,
+		amr: _.cloneDeep(amr),
 		nodes: [],
 		edges: []
 	};
 
-	petri.states.forEach((state) => {
+	const petrinetModel = amr.model as PetriNetModel;
+
+	petrinetModel.states.forEach((state) => {
+		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The first element is a state or transition id, the second element is the type id.
+		// Find the inner array that matches the current state / transition that we are iterating on
+		// Get the second element of that array, which is the id of its type
+		const typeMap = amr.semantics?.typing?.type_map.find(
+			(map) => map.length === 2 && state.id === map[0]
+		);
+		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
 			id: state.id,
-			label: state.id,
+			label: state.name ?? state.id,
 			type: 'state',
 			x: 0,
 			y: 0,
 			width: 100,
 			height: 100,
-			data: state,
+			data: { type: 'state', strataType },
 			nodes: []
 		});
 	});
 
-	petri.transitions.forEach((transition) => {
+	petrinetModel.transitions.forEach((transition) => {
+		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The first element is a state or transition id, the second element is the type id.
+		// Find the inner array that matches the current state / transition that we are iterating on
+		// Get the second element of that array, which is the id of its type
+		const typeMap = amr.semantics?.typing?.type_map.find(
+			(map) => map.length === 2 && transition.id === map[0]
+		);
+
+		const targetRate = amr.semantics?.ode.rates.find((rate) => transition.id === rate.target);
+
+		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
 			id: transition.id,
 			label: transition.id,
 			type: 'transition',
 			x: 0,
 			y: 0,
-			width: 100,
-			height: 100,
-			data: transition,
+			width: 40,
+			height: 40,
+			data: { type: 'transition', strataType, expression: targetRate?.expression },
 			nodes: []
 		});
 	});
 
-	petri.transitions.forEach((transition) => {
+	petrinetModel.transitions.forEach((transition) => {
 		transition.input.forEach((input) => {
 			const key = `${input}:${transition.id}`;
 
@@ -132,7 +134,7 @@ export const convertToGraph = (petri: PetriNetModel) => {
 		});
 	});
 
-	petri.transitions.forEach((transition) => {
+	petrinetModel.transitions.forEach((transition) => {
 		transition.output.forEach((output) => {
 			const key = `${transition.id}:${output}`;
 
@@ -155,137 +157,239 @@ export const convertToGraph = (petri: PetriNetModel) => {
 	return result;
 };
 
-export const convertToPetriNetModel = (g: IGraph<PetriNetState | PetriNetTransition, EdgeData>) => {
-	const result: PetriNetModel = {
-		states: [],
-		transitions: [],
-		metadata: undefined,
-		parameters: undefined
-	};
+const DUMMY_VALUE = -999;
+export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
-	// Copy
-	result.metadata = g.metadata;
-	result.parameters = g.parameters;
-	result.states = g.nodes.filter((d) => d.type === 'state').map((d) => d.data) as PetriNetState[];
-	result.transitions = g.nodes
-		.filter((d) => d.type === 'transition')
-		.map((d) => d.data) as PetriNetTransition[];
-	return result;
+export const newAMR = () => {
+	const amr: Model = {
+		id: '',
+		name: 'new model',
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
 };
 
-// Used to traffic control AMRS.
-// Totally useless right now as there is only 1 type of AMR (petrinet)
-export const parseAMR2IGraph = (amr: Model, config: PetriSizeConfig = defaultSizeConfig) => {
-	if (amr.schema.toLowerCase().includes('petri')) return parseAMRPetriNet2IGraph(amr, config);
-
-	logger.warn(`Schema not recognized${amr}`);
-	const emptyGraph: IGraph<NodeData, EdgeData> = {
-		width: 500,
-		height: 500,
-		nodes: [],
-		edges: []
-	};
-	return emptyGraph;
+export const addState = (amr: Model, id: string, name: string) => {
+	amr.model.states.push({
+		id,
+		name,
+		description: ''
+	});
+	amr.semantics?.ode.initials?.push({
+		target: id,
+		expression: `${id}Param`,
+		expression_mathml: `<ci>${id}Param</ci>`
+	});
+	amr.semantics?.ode.parameters?.push({
+		id: `${id}Param`,
+		name: '',
+		description: '',
+		value: DUMMY_VALUE
+	});
 };
 
-// Convert an AMR Petrinet -> IGraph
-export const parseAMRPetriNet2IGraph = (
-	amr: Model,
-	config: PetriSizeConfig = defaultSizeConfig
-) => {
-	const result: IGraph<NodeData, EdgeData> = {
-		width: 500,
-		height: 500,
-		nodes: [],
-		edges: []
-	};
-	const petrinet = amr.model as PetriNetModel;
-	// add each nodes in S
-	for (let i = 0; i < petrinet.states.length; i++) {
-		const aNode = petrinet.states[i];
-		result.nodes.push({
-			id: aNode.id,
-			label: aNode.name,
-			x: 0,
-			y: 0,
-			height: config.S.height,
-			width: config.S.width,
-			data: { type: NodeType.State, uid: aNode.grounding.identifiers.ido },
-			nodes: []
-		});
+export const addTransition = (amr: Model, id: string, name: string) => {
+	amr.model.transitions.push({
+		id,
+		input: [],
+		output: [],
+		properties: {
+			name,
+			description: ''
+		}
+	});
+	amr.semantics?.ode.rates?.push({
+		target: id,
+		expression: `${id}Param`,
+		expression_mathml: `<ci>${id}Param</ci>`
+	});
+	amr.semantics?.ode.parameters?.push({
+		id: `${id}Param`,
+		name: '',
+		description: '',
+		value: DUMMY_VALUE
+	});
+};
+
+export const removeState = (amr: Model, id: string) => {
+	const model = amr.model as PetriNetModel;
+
+	// Remove from AMR topology
+	model.states = model.states.filter((d) => d.id !== id);
+	model.transitions.forEach((t) => {
+		_.remove(t.input, (d) => d === id);
+		_.remove(t.output, (d) => d === id);
+	});
+
+	// Remove from semantics
+	if (amr.semantics?.ode) {
+		const ode = amr.semantics.ode;
+		if (ode.initials) {
+			_.remove(ode.initials, (d) => d.target === id);
+		}
 	}
-
-	// Add each node found in T
-	for (let i = 0; i < petrinet.transitions.length; i++) {
-		const aTransition = petrinet.transitions[i];
-		// Add the node for this transition
-		result.nodes.push({
-			id: aTransition.id,
-			label: aTransition.properties.name,
-			x: 0,
-			y: 0,
-			height: config.T.height,
-			width: config.T.width,
-			data: { type: NodeType.Transition, uid: undefined },
-			nodes: []
-		});
-
-		// Add input edge(s) for this transition:
-		for (let j = 0; j < aTransition.input.length; j++) {
-			const sourceId = aTransition.input[j];
-			const targetId = aTransition.id;
-
-			// Collapse hyper edges
-			const existingEdge = result.edges.find(
-				(edge) => edge.source === sourceId && edge.target === targetId
-			);
-
-			if (existingEdge && existingEdge.data) {
-				existingEdge.data.numEdges++;
-				continue;
-			}
-
-			result.edges.push({
-				source: sourceId,
-				target: targetId,
-				points: [],
-				data: {
-					numEdges: 1
-				}
-			});
-		}
-		// Add output edge(s) for this transition:
-		for (let j = 0; j < aTransition.output.length; j++) {
-			const sourceId = aTransition.id;
-			const targetId = aTransition.output[j];
-
-			// Collapse hyper edges
-			const existingEdge = result.edges.find(
-				(edge) => edge.source === sourceId && edge.target === targetId
-			);
-
-			if (existingEdge && existingEdge.data) {
-				existingEdge.data.numEdges++;
-				continue;
-			}
-
-			result.edges.push({
-				source: sourceId,
-				target: targetId,
-				points: [],
-				data: {
-					numEdges: 1
-				}
-			});
-		}
-	} // end T
-
-	return result;
 };
 
-// This is a temp helper function.
-// This is just used to go from new format -> old format as we calibration, simulation, and latex converter all need this old format while the switch over is happening.
-export const AMRToPetri = (model: Model, attributeForName?: string) => {
-	const tempGraph = parseAMR2IGraph(model);
-	return parseIGraph2PetriNet(tempGraph, attributeForName); // TODO: Ensure this step properly parses back to O
+export const removeTransition = (amr: Model, id: string) => {
+	const model = amr.model as PetriNetModel;
+
+	// Remove from AMR topology
+	model.transitions = model.transitions.filter((d) => d.id !== id);
+
+	// Remove from semantics
+	if (amr.semantics?.ode) {
+		const ode = amr.semantics.ode;
+		if (ode.rates) {
+			_.remove(ode.rates, (d) => d.target === id);
+		}
+	}
+};
+
+// Update a transition's expression and expression_mathml fields based on
+// mass-kinetics
+export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
+	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
+	if (!rate) return;
+
+	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+	if (!param) return;
+
+	const inputStr = transition.input.map((d) => `${d}`);
+	// eslint-disable-next-line
+	const expression = inputStr.join('*') + '*' + param.id;
+	// eslint-disable-next-line
+	const expressionMathml =
+		`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
+		`</apply>`;
+	rate.expression = expression;
+	rate.expression_mathml = expressionMathml;
+};
+
+export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === sourceId);
+	if (state) {
+		// if source is a state then the target is a transition
+		const transition = model.transitions.find((d) => d.id === targetId);
+		if (transition) {
+			transition.input.push(sourceId);
+			updateRateExpression(amr, transition);
+		}
+	} else {
+		// if source is a transition then the target is a state
+		const transition = model.transitions.find((d) => d.id === sourceId);
+		if (transition) {
+			transition.output.push(targetId);
+			updateRateExpression(amr, transition);
+		}
+	}
+};
+
+export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === sourceId);
+	if (state) {
+		const transition = model.transitions.find((d) => d.id === targetId);
+		if (!transition) return;
+
+		let c = 0;
+		transition.input = transition.input.filter((id) => {
+			if (c === 0 && id === sourceId) {
+				c++;
+				return false;
+			}
+			return true;
+		});
+		updateRateExpression(amr, transition);
+	} else {
+		const transition = model.transitions.find((d) => d.id === sourceId);
+		if (!transition) return;
+
+		let c = 0;
+		transition.output = transition.output.filter((id) => {
+			if (c === 0 && id === targetId) {
+				c++;
+				return false;
+			}
+			return true;
+		});
+		updateRateExpression(amr, transition);
+	}
+};
+
+export const updateStateId = (amr: Model, id: string, newId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === id);
+	if (!state) return;
+
+	state.id = newId;
+
+	const initial = amr.semantics?.ode.initials?.find((d) => d.target === id);
+	if (!initial) return;
+	initial.target = newId;
+
+	model.transitions.forEach((transition) => {
+		for (let i = 0; i < transition.input.length; i++) {
+			if (transition.input[i] === id) transition.input[i] = newId;
+		}
+		for (let i = 0; i < transition.output.length; i++) {
+			if (transition.output[i] === id) transition.output[i] = newId;
+		}
+	});
+};
+
+export const updateTransitioneId = (amr: Model, id: string, newId: string) => {
+	const model = amr.model as PetriNetModel;
+	const transition = model.transitions.find((d) => d.id === id);
+	if (!transition) return;
+	transition.id = newId;
+
+	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
+	if (!rate) return;
+	rate.target = newId;
+};
+
+// Replace typing semantics
+export const addTyping = (amr: Model, typing: TypingSemantics) => {
+	if (amr.semantics) {
+		amr.semantics.typing = typing;
+	}
+};
+
+// Add a reflexive transition loop to the state
+// This is a special type of addTransition that creates a self loop
+export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
+	addTransition(amr, reflexiveId, reflexiveId);
+	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
+	if (transition) {
+		transition.input = [stateId];
+		transition.output = [stateId];
+	}
+};
+
+export const mergeMetadata = (amr: Model, amrOld: Model) => {
+	console.log(amr, amrOld);
+};
+
+export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
+	const response = await API.post('/modeling-request/stratify', {
+		baseModel: baseAMR,
+		fluxModel: fluxAMR
+	});
+	return response.data as Model;
 };

@@ -5,6 +5,7 @@
 			<DataTable class="p-datatable-xsm" :value="mapping">
 				<Column field="modelVariable">
 					<template #body="{ data, field }">
+						<!-- Tom TODO: No v-model -->
 						<Dropdown
 							class="w-full"
 							placeholder="Select a variable"
@@ -15,6 +16,7 @@
 				</Column>
 				<Column field="datasetVariable">
 					<template #body="{ data, field }">
+						<!-- Tom TODO: No v-model -->
 						<Dropdown
 							class="w-full"
 							placeholder="Select a variable"
@@ -35,20 +37,36 @@
 		</AccordionTab>
 		<AccordionTab header="Variables">
 			<tera-simulate-chart
-				v-for="index in calibrateNumCharts"
+				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
-				:run-id-list="simulationIds"
-				:chart-idx="index"
+				:chartConfig="cfg"
+				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
 			<Button
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="calibrateNumCharts++"
+				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
 			></Button>
+		</AccordionTab>
+		<AccordionTab header="Calibrated parameter values">
+			<table class="p-datatable-table">
+				<thead class="p-datatable-thead">
+					<th>Parameter</th>
+					<th>Value</th>
+				</thead>
+				<tr v-for="(content, key) in parameterResult" :key="key">
+					<td>
+						<p>{{ key }}</p>
+					</td>
+					<td>
+						<p>{{ content }}</p>
+					</td>
+				</tr>
+			</table>
 		</AccordionTab>
 		<!-- <AccordionTab header="Loss"></AccordionTab>
 		<AccordionTab header="Parameters"></AccordionTab>
@@ -71,11 +89,16 @@ import {
 	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
-import { CalibrationOperation } from './calibrate-operation';
+import { workflowEventBus } from '@/services/workflow';
+import _ from 'lodash';
+import {
+	CalibrationOperation,
+	CalibrationOperationState,
+	CalibrateMap
+} from './calibrate-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -83,7 +106,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['append-output-port']);
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -91,22 +113,16 @@ const currentDatasetFileName = ref<string>();
 const modelConfig = ref<ModelConfiguration>();
 const startedRunId = ref<string>();
 const completedRunId = ref<string>();
+const parameterResult = ref<{ [index: string]: any }>();
 
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
-const calibrateNumCharts = ref<number>(1);
 const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
 
-const mapping = ref<any[]>([
-	{
-		modelVariable: '',
-		datasetVariable: ''
-	}
-]);
-
+const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const disableRunButton = computed(
@@ -128,12 +144,15 @@ const runCalibrate = async () => {
 		return;
 
 	const formattedMap: { [index: string]: string } = {};
-	mapping.value.forEach((ele) => {
-		formattedMap[ele.datasetVariable] = ele.modelVariable;
-	});
+	// If the user has done any mapping populate formattedMap
+	if (mapping.value[0].datasetVariable !== '') {
+		mapping.value.forEach((ele) => {
+			formattedMap[ele.datasetVariable] = ele.modelVariable;
+		});
+	}
 	// TODO: TS/1225 -> Should not have to rand results
-	const initials = modelConfig.value.amrConfiguration.semantics.ode.initials.map((d) => d.target);
-	const rates = modelConfig.value.amrConfiguration.semantics.ode.rates.map((d) => d.target);
+	const initials = modelConfig.value.configuration.semantics.ode.initials.map((d) => d.target);
+	const rates = modelConfig.value.configuration.semantics.ode.rates.map((d) => d.target);
 	const initialsObj = {};
 	const paramsObj = {};
 
@@ -151,10 +170,7 @@ const runCalibrate = async () => {
 			filename: currentDatasetFileName.value,
 			mappings: formattedMap
 		},
-		extra: {
-			initials: initialsObj,
-			params: paramsObj
-		},
+		extra: {},
 		engine: 'sciml'
 	};
 	const response = await makeCalibrateJob(calibrationRequest);
@@ -197,12 +213,53 @@ const updateOutputPorts = async (runId) => {
 };
 
 // Used from button to add new entry to the mapping object
+// Tom TODO: Make this generic, its copy paste from drilldown
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',
 		datasetVariable: ''
 	});
+
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
 }
+
+// Tom TODO: Make this generic, its copy paste from drilldown
+const chartConfigurationChange = (index: number, config: ChartConfig) => {
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const addChart = () => {
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+watch(
+	() => props.node.inputs[1],
+	async () => {
+		console.log(props.node.inputs[1]);
+	},
+	{ immediate: true }
+);
 
 // Set up model config + dropdown names
 // Note: Same as calibrate side panel
@@ -214,6 +271,22 @@ watch(
 		);
 		modelConfig.value = modelConfiguration;
 		modelColumnNames.value = modelColumnNameOptions;
+		// Preset the mapping for all model columns:
+		mapping.value = [];
+		modelColumnNames.value?.map((columnName) =>
+			mapping.value.push({
+				modelVariable: columnName,
+				datasetVariable: ''
+			})
+		);
+		const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+		state.mapping = mapping.value;
+
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
 	},
 	{ immediate: true }
 );
@@ -231,12 +304,6 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	() => props.node,
-	(node) => openedWorkflowNodeStore.setNode(node ?? null),
-	{ deep: true }
-);
-
 // Fetch simulation run results whenever output changes
 watch(
 	() => simulationIds.value,
@@ -245,6 +312,7 @@ watch(
 		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
 		const csvData = csvParse(resultCsv);
 		runResults.value[simulationIds.value[0].runId] = csvData as any;
+		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 	},
 	{ immediate: true }
 );
@@ -255,5 +323,8 @@ watch(
 	width: 156px;
 	height: 25px;
 	border-radius: 6px;
+}
+th {
+	text-align: left;
 }
 </style>
