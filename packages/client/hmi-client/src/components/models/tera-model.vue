@@ -610,13 +610,16 @@ function initiateModelDuplication() {
 }
 
 async function duplicateModel() {
-	if (existingModelNames.value.includes(copyModelName.value)) {
+	if (existingModelNames.value.includes(copyModelName.value.trim())) {
 		console.log('Duplicate model name - Please enter a different name');
 		isValidName.value = false;
 		return;
 	}
 	isValidName.value = true;
-	const duplicateModelResponse = await createModel({ ...model.value, name: copyModelName.value });
+	const duplicateModelResponse = await createModel({
+		...model.value,
+		name: copyModelName.value.trim()
+	});
 	if (!duplicateModelResponse) {
 		console.log('Failed to duplicate model.');
 		return;
