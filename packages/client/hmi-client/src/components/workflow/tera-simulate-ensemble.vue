@@ -93,31 +93,34 @@
 					</div>
 				</AccordionTab>
 				<AccordionTab header="Mapping">
-					<table v-if="ensembleConfigs[0].observables.length > 0">
-						<tr>
-							<th>Ensemble Variables</th>
-							<th v-for="(element, i) in ensembleConfigs" :key="i">
-								{{ element.id }}
-							</th>
-						</tr>
-						<tr>
-							<div class="row-header">
-								<td v-for="(element, i) in ensembleConfigs[0].observables" :key="i">
-									{{ Object.keys(ensembleConfigs[0].observables[i]).pop() }}
+					<template v-if="ensembleConfigs.length > 0">
+						<table v-if="ensembleConfigs[0].observables.length > 0">
+							<tr>
+								<th>Ensemble Variables</th>
+								<th v-for="(element, i) in ensembleConfigs" :key="i">
+									{{ element.id }}
+								</th>
+							</tr>
+							<tr>
+								<div class="row-header">
+									<td v-for="(element, i) in ensembleConfigs[0].observables" :key="i">
+										{{ Object.keys(ensembleConfigs[0].observables[i]).pop() }}
+									</td>
+								</div>
+								<td v-for="(element, i) in ensembleConfigs" :key="i">
+									<template v-for="(element, j) in ensembleConfigs[i].observables" :key="j">
+										<Dropdown
+											v-for="(key, k) in Object.keys(ensembleConfigs[i].observables[j])"
+											:key="k"
+											v-model="ensembleConfigs[i].observables[j][key]"
+											:options="allModelOptions[i]"
+										/>
+									</template>
 								</td>
-							</div>
-							<td v-for="(element, i) in ensembleConfigs" :key="i">
-								<template v-for="(element, j) in ensembleConfigs[i].observables" :key="j">
-									<Dropdown
-										v-for="(key, k) in Object.keys(ensembleConfigs[i].observables[j])"
-										:key="k"
-										v-model="ensembleConfigs[i].observables[j][key]"
-										:options="allModelOptions[i]"
-									/>
-								</template>
-							</td>
-						</tr>
-					</table>
+							</tr>
+						</table>
+					</template>
+
 					<InputText v-model="newObservableKey" placeholder="Variable Name" />
 					<Button
 						class="p-button-sm p-button-outlined"
