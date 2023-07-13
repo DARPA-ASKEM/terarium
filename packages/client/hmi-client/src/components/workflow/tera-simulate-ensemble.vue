@@ -384,7 +384,6 @@ watch(
 		}
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
-		console.log('------------');
 	},
 	{ immediate: true }
 );
