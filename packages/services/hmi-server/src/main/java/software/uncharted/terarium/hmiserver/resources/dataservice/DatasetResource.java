@@ -256,7 +256,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		long lineCount = 0;
 		final long linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
 		while ((line = reader.readLine()) != null) {
-			csvStringBuilder.append(line);
+			csvStringBuilder.append(line).append(System.getProperty("line.separator"));
 			lineCount++;
 			if (linesToRead != -1 && lineCount >= linesToRead) {
 				break;

@@ -178,6 +178,7 @@
 		</tera-modal>
 	</Teleport>
 </template>
+
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
 import { isEmpty, cloneDeep } from 'lodash';
@@ -293,7 +294,7 @@ async function initializeConfigSpace() {
 		(d) => d.name === 'Default config'
 	) as ModelConfiguration;
 	if (defaultConfig) {
-		defaultConfig.configuration = props.model;
+		defaultConfig.configuration = cloneDeep(props.model);
 		updateModelConfiguration(defaultConfig);
 	}
 
