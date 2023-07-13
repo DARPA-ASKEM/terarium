@@ -120,6 +120,10 @@ i {
 	overflow: visible;
 }
 
+.tab {
+	border-bottom-width: 2px;
+}
+
 .tab:hover {
 	border-color: var(--surface-border-light);
 }
@@ -147,8 +151,8 @@ i {
 .tab + div {
 	width: calc(100% - 2px);
 	position: relative;
-	height: 1px;
-	top: -1px;
+	height: 2px;
+	top: -2px;
 	left: 1px;
 }
 
