@@ -141,6 +141,38 @@ export interface PresignedURL {
     method: string;
 }
 
+export interface State {
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+    units?: ModelUnit;
+}
+
+export interface Transition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
+}
+
+export interface TypeSystem {
+    name: string;
+    description: string;
+    schema: string;
+    model_version: string;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
+}
+
+export interface TypingSemantics {
+    map: string[][];
+    system: TypeSystem;
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
@@ -213,6 +245,22 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
     attributes: any[];
+}
+
+export interface ModelGrounding {
+    identifiers: { [index: string]: any };
+    context?: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface Properties {
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface PetriNetState {
@@ -293,11 +341,6 @@ export interface Annotations {
     diseases?: string[];
     hosts?: string[];
     model_types?: string[];
-}
-
-export interface ModelGrounding {
-    identifiers: { [index: string]: any };
-    context?: { [index: string]: any };
 }
 
 export interface ModelExpression {
@@ -416,11 +459,6 @@ export interface XDDUrlExtraction {
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
-}
-
-export interface ModelUnit {
-    expression: string;
-    expression_mathml: string;
 }
 
 export interface VariableMetadata {

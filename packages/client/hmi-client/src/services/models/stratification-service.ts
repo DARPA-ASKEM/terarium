@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Model, ModelSemantics, State, Transition } from '@/types/Types';
+import { Model, ModelSemantics } from '@/types/Types';
 
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification

@@ -4,6 +4,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
+@TSModel
 public class TypeSystem  implements Serializable{
 	private String name;
 
