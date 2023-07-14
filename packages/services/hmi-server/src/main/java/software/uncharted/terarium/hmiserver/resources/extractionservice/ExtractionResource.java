@@ -53,10 +53,10 @@ public class ExtractionResource {
 	@Path("/mathml_to_amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postMathMLToAMR(
-		@QueryParam("model") String model,
+		@DefaultValue("petrinet") @QueryParam("framework") String framework,
 		List<String> mathMLPayload
 	) {
-		return extractionProxy.postMathMLToAMR(model, mathMLPayload);
+		return extractionProxy.postMathMLToAMR(framework, mathMLPayload);
 	};
 
 	/**

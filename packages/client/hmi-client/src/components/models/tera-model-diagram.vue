@@ -569,21 +569,17 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 		isMathMLValid.value = true;
 	} else if (!editMode) {
 		try {
-			if (props?.model?.id) {
-				const model = (await mathmlToAMR(props.model.id, cleanedMathML)) as Model;
-				if (
-					(model && isArray(model) && model.length > 0) ||
-					(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
-				) {
-					isMathMLValid.value = true;
-					if (model !== null) await updatePetriNet(model);
-				} else {
-					logger.error(
-						'MathML cannot be converted to a PetriNet.  Please try again or click cancel.'
-					);
-				}
+			const model = (await mathmlToAMR(cleanedMathML)) as Model;
+			if (
+				(model && isArray(model) && model.length > 0) ||
+				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
+			) {
+				isMathMLValid.value = true;
+				if (model !== null) await updatePetriNet(model);
 			} else {
-				logger.error('Model ID is not defined');
+				logger.error(
+					'MathML cannot be converted to a PetriNet.  Please try again or click cancel.'
+				);
 			}
 		} catch (e) {
 			isMathMLValid.value = false;

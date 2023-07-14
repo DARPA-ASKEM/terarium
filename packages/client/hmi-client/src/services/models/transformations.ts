@@ -4,9 +4,9 @@ import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 // Transform a MathML list of strings to an AMR
-const mathmlToAMR = async (model_id: Model['id'], mathml: string[]): Promise<Model | null> => {
+const mathmlToAMR = async (mathml: string[]): Promise<Model | null> => {
 	try {
-		const response = await API.post(`/extract/mathml-to-amr?model=${model_id}`, mathml);
+		const response = await API.post(`/extract/mathml-to-amr`, mathml);
 		if (response && response?.status === 200) {
 			return (response?.data as Model) ?? null;
 		}
