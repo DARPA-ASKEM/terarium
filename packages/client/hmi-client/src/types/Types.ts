@@ -162,7 +162,7 @@ export interface TypeSystem {
     transitions: Transition[];
 }
 
-export interface TypeSystem2 {
+export interface TypeSystemExtended {
     name: string;
     description: string;
     schema: string;
@@ -174,13 +174,8 @@ export interface TypeSystem2 {
 }
 
 export interface TypingSemantics {
-    type_system: TypeSystem;
-    type_map: string[][];
-}
-
-export interface TypingSemantics2 {
     map: string[][];
-    system: TypeSystem;
+    system: any;
 }
 
 export interface PetriNetModel {
@@ -246,7 +241,7 @@ export interface Concept {
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
-    typing?: any;
+    typing?: TypingSemantics;
 }
 
 export interface ModelMetadata {
