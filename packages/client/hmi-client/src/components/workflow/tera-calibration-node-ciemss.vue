@@ -74,6 +74,16 @@
 				</tr>
 			</table>
 		</AccordionTab>
+		<AccordionTab header="EXTRAS">
+			<span class="extras">
+				<label>num_samples</label>
+				<InputNumber v-model="numSamples"></InputNumber>
+				<label>num_iterations</label>
+				<InputNumber v-model="numIterations"></InputNumber>
+				<label>method</label>
+				<Dropdown :options="ciemssMethodOptions" v-model="method" />
+			</span>
+		</AccordionTab>
 		<!-- <AccordionTab header="Loss"></AccordionTab>
 		<AccordionTab header="Parameters"></AccordionTab>
 		<AccordionTab header="Variables"></AccordionTab> -->
@@ -89,6 +99,7 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import InputNumber from 'primevue/inputnumber';
 import { CalibrationRequestCiemss, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
 import {
 	makeCalibrateJobCiemss,
@@ -129,6 +140,12 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+
+// EXTRA section
+const numSamples = ref(100);
+const numIterations = ref(100);
+const method = ref('dopri5');
+const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const disableRunButton = computed(
 	() =>
@@ -176,8 +193,9 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			num_samples: 100,
-			num_iterations: 100
+			num_samples: numSamples.value,
+			num_iterations: numIterations.value,
+			method: method.value
 		},
 		timespan: {
 			start: 0,
@@ -185,6 +203,7 @@ const runCalibrate = async () => {
 		},
 		engine: 'ciemss'
 	};
+	console.log(calibrationRequest);
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	startedRunId.value = response.simulationId;
@@ -338,5 +357,8 @@ th {
 	color: var(--text-color-subdued);
 	font-size: 12px;
 	font-weight: 400;
+}
+.extras {
+	display: grid;
 }
 </style>
