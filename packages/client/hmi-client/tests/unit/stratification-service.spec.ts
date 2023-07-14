@@ -82,7 +82,72 @@ describe('test generate age strata model', () => {
 			},
 			semantics: {
 				ode: {
-					rates: []
+					rates: [
+						{
+							target: 'c11',
+							expression: 'A1*A1*beta11',
+							expression_mathml: '<apply><times/><ci>A1</ci><ci>A1</ci><ci>beta11</ci></apply>'
+						},
+						{
+							target: 'c12',
+							expression: 'A1*A2*beta12',
+							expression_mathml: '<apply><times/><ci>A1</ci><ci>A2</ci><ci>beta12</ci></apply>'
+						},
+						{
+							target: 'c21',
+							expression: 'A2*A1*beta21',
+							expression_mathml: '<apply><times/><ci>A2</ci><ci>A1</ci><ci>beta21</ci></apply>'
+						},
+						{
+							target: 'c22',
+							expression: 'A2*A2*beta22',
+							expression_mathml: '<apply><times/><ci>A2</ci><ci>A2</ci><ci>beta22</ci></apply>'
+						}
+					],
+					initials: [
+						{
+							target: 'A1',
+							expression: 'A1init',
+							expression_mathml: '<ci>A1init</ci>'
+						},
+						{
+							target: 'A2',
+							expression: 'A2init',
+							expression_mathml: '<ci>A2init</ci>'
+						}
+					],
+					parameters: [
+						{
+							id: 'beta11',
+							description: "infection rate from age group 'Young' to 'Young'",
+							value: 0.25
+						},
+						{
+							id: 'beta12',
+							description: "infection rate from age group 'Young' to 'Old'",
+							value: 0.25
+						},
+						{
+							id: 'beta21',
+							description: "infection rate from age group 'Old' to 'Young'",
+							value: 0.25
+						},
+						{
+							id: 'beta22',
+							description: "infection rate from age group 'Old' to 'Old'",
+							value: 0.25
+						},
+						{
+							id: 'A1init',
+							description: "Proportion of population in age group 'Young' at timestep 0",
+							value: 0.5
+						},
+						{
+							id: 'A2init',
+							description: "Proportion of population in age group 'Old' at timestep 0",
+							value: 0.5
+						}
+					]
 				},
 				typing: {
 					type_system: {
@@ -185,7 +250,52 @@ describe('test generate location strata model', () => {
 			},
 			semantics: {
 				ode: {
-					rates: []
+					rates: [
+						{
+							target: 't12',
+							expression: 'L1*tau12',
+							expression_mathml: '<apply><times/><ci>L1</ci><ci>tau12</ci></apply>'
+						},
+						{
+							target: 't21',
+							expression: 'L2*tau21',
+							expression_mathml: '<apply><times/><ci>L2</ci><ci>tau21</ci></apply>'
+						}
+					],
+					initials: [
+						{
+							target: 'L1',
+							expression: 'L1init',
+							expression_mathml: '<ci>L1init</ci>'
+						},
+						{
+							target: 'L2',
+							expression: 'L2init',
+							expression_mathml: '<ci>L2init</ci>'
+						}
+					],
+					parameters: [
+						{
+							id: 'tau12',
+							description: "travel rate from location 'Toronto' to 'Montreal'",
+							value: 0.5
+						},
+						{
+							id: 'tau21',
+							description: "travel rate from location 'Montreal' to 'Toronto'",
+							value: 0.5
+						},
+						{
+							id: 'L1init',
+							description: "Proportion of population in location 'Toronto' at timestep 0",
+							value: 0.5
+						},
+						{
+							id: 'L2init',
+							description: "Proportion of population in location 'Montreal' at timestep 0",
+							value: 0.5
+						}
+					]
 				},
 				typing: {
 					type_system: {

@@ -1,6 +1,7 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Model, ModelSemantics, State, Transition } from '@/types/Types';
+import { Model, ModelSemantics, PetriNetTransition, State, Transition } from '@/types/Types';
+import { updateRateExpression } from '@/model-representation/petrinet/petrinet-service';
 
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification
@@ -51,36 +52,105 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 	const typeMap: string[][] = states
 		.map((state) => [state.id, 'Pop'])
 		.concat(transitions.map((transition) => [transition.id, 'Infect']));
+	const typeSystem = {
+		states: [
+			{
+				id: 'Pop',
+				name: 'Pop',
+				description: 'Compartment of individuals in a human population.'
+			}
+		],
+		transitions: [
+			{
+				id: 'Infect',
+				input: ['Pop', 'Pop'],
+				output: ['Pop', 'Pop'],
+				properties: {
+					name: 'Infect',
+					description:
+						'2-to-2 interaction that represents infectious contact between two human individuals.'
+				}
+			}
+		]
+	};
+	const rates = [
+		{
+			target: transitions[0].id,
+			expression: '',
+			expression_mathml: ''
+		},
+		{
+			target: transitions[1].id,
+			expression: '',
+			expression_mathml: ''
+		},
+		{
+			target: transitions[2].id,
+			expression: '',
+			expression_mathml: ''
+		},
+		{
+			target: transitions[3].id,
+			expression: '',
+			expression_mathml: ''
+		}
+	];
+	const initials = [
+		{
+			target: states[0].id,
+			expression: `${states[0].id}init`,
+			expression_mathml: `<ci>${states[0].id}init</ci>`
+		},
+		{
+			target: states[1].id,
+			expression: `${states[1].id}init`,
+			expression_mathml: `<ci>${states[1].id}init</ci>`
+		}
+	];
+	const parameters = [
+		{
+			id: 'beta11',
+			description: `infection rate from age group '${states[0].name}' to '${states[0].name}'`,
+			value: 1 / transitions.length
+		},
+		{
+			id: 'beta12',
+			description: `infection rate from age group '${states[0].name}' to '${states[1].name}'`,
+			value: 1 / transitions.length
+		},
+		{
+			id: 'beta21',
+			description: `infection rate from age group '${states[1].name}' to '${states[0].name}'`,
+			value: 1 / transitions.length
+		},
+		{
+			id: 'beta22',
+			description: `infection rate from age group '${states[1].name}' to '${states[1].name}'`,
+			value: 1 / transitions.length
+		},
+		{
+			id: `${states[0].id}init`,
+			description: `Proportion of population in age group '${states[0].name}' at timestep 0`,
+			value: 1 / states.length
+		},
+		{
+			id: `${states[1].id}init`,
+			description: `Proportion of population in age group '${states[1].name}' at timestep 0`,
+			value: 1 / states.length
+		}
+	];
 	const semantics: ModelSemantics = {
 		ode: {
-			rates: []
+			rates,
+			initials,
+			parameters
 		},
 		typing: {
-			type_system: {
-				states: [
-					{
-						id: 'Pop',
-						name: 'Pop',
-						description: 'Compartment of individuals in a human population.'
-					}
-				],
-				transitions: [
-					{
-						id: 'Infect',
-						input: ['Pop', 'Pop'],
-						output: ['Pop', 'Pop'],
-						properties: {
-							name: 'Infect',
-							description:
-								'2-to-2 interaction that represents infectious contact between two human individuals.'
-						}
-					}
-				]
-			},
+			type_system: typeSystem,
 			type_map: typeMap
 		}
 	};
-	return {
+	const model: Model = {
 		id: 'age-contact',
 		name: 'Age-contact strata model',
 		description: 'Age-contact strata model',
@@ -101,6 +171,10 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 			attributes: []
 		}
 	};
+	transitions.forEach((t, i) =>
+		updateRateExpression(model, t as PetriNetTransition, parameters[i].id)
+	);
+	return model;
 }
 
 export function generateLocationStrataModel(stateNames: string[]): Model {
@@ -134,32 +208,81 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 	const typeMap: string[][] = states
 		.map((state) => [state.id, 'Pop'])
 		.concat(transitions.map((transition) => [transition.id, 'Strata']));
+	const rates = [
+		{
+			target: transitions[0].id,
+			expression: `${transitions[0].input[0]}*tau12`,
+			expression_mathml: `<apply><times/><ci>${transitions[0].input[0]}</ci><ci>tau12</ci></apply>`
+		},
+		{
+			target: transitions[1].id,
+			expression: `${transitions[1].input[0]}*tau21`,
+			expression_mathml: `<apply><times/><ci>${transitions[1].input[0]}</ci><ci>tau21</ci></apply>`
+		}
+	];
+	const initials = [
+		{
+			target: states[0].id,
+			expression: `${states[0].id}init`,
+			expression_mathml: `<ci>${states[0].id}init</ci>`
+		},
+		{
+			target: states[1].id,
+			expression: `${states[1].id}init`,
+			expression_mathml: `<ci>${states[1].id}init</ci>`
+		}
+	];
+	const parameters = [
+		{
+			id: 'tau12',
+			description: `travel rate from location '${states[0].name}' to '${states[1].name}'`,
+			value: 1 / transitions.length
+		},
+		{
+			id: 'tau21',
+			description: `travel rate from location '${states[1].name}' to '${states[0].name}'`,
+			value: 1 / transitions.length
+		},
+		{
+			id: `${states[0].id}init`,
+			description: `Proportion of population in location '${states[0].name}' at timestep 0`,
+			value: 1 / states.length
+		},
+		{
+			id: `${states[1].id}init`,
+			description: `Proportion of population in location '${states[1].name}' at timestep 0`,
+			value: 1 / states.length
+		}
+	];
+	const typeSystem = {
+		states: [
+			{
+				id: 'Pop',
+				name: 'Pop',
+				description: 'Compartment of individuals in a human population.'
+			}
+		],
+		transitions: [
+			{
+				id: 'Strata',
+				input: ['Pop'],
+				output: ['Pop'],
+				properties: {
+					name: 'Strata',
+					description:
+						'1-to-1 process that represents a change in the demographic division of a human individual.'
+				}
+			}
+		]
+	};
 	const semantics: ModelSemantics = {
 		ode: {
-			rates: []
+			rates,
+			initials,
+			parameters
 		},
 		typing: {
-			type_system: {
-				states: [
-					{
-						id: 'Pop',
-						name: 'Pop',
-						description: 'Compartment of individuals in a human population.'
-					}
-				],
-				transitions: [
-					{
-						id: 'Strata',
-						input: ['Pop'],
-						output: ['Pop'],
-						properties: {
-							name: 'Strata',
-							description:
-								'1-to-1 process that represents a change in the demographic division of a human individual.'
-						}
-					}
-				]
-			},
+			type_system: typeSystem,
 			type_map: typeMap
 		}
 	};

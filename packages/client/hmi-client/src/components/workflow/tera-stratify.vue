@@ -18,6 +18,13 @@
 					:active="stratifyView === StratifyView.Output"
 				/>
 			</span>
+			<Button
+				v-if="stratifyStep === 3"
+				class="stratify-button"
+				label="Stratify"
+				icon="pi pi-arrow-right"
+				:disabled="typedBaseModel !== null && strataModel !== null"
+			/>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -45,7 +52,7 @@
 							@click="goBack"
 						/>
 						<Button
-							v-if="!typedBaseModel"
+							v-if="stratifyStep === 1"
 							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
@@ -142,6 +149,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+// import { stratify } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -173,6 +181,10 @@ function generateStrataModel() {
 		}
 	}
 }
+
+// function doStratify() {
+// 	// await stratify(typedBaseModel, )
+// }
 
 function onAllNodesTyped(typedModel: Model) {
 	typedBaseModel.value = typedModel;

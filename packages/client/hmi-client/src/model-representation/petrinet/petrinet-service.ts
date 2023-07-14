@@ -190,11 +190,11 @@ export const addState = (amr: Model, id: string, name: string) => {
 	});
 	amr.semantics?.ode.initials?.push({
 		target: id,
-		expression: `${id}Param`,
-		expression_mathml: `<ci>${id}Param</ci>`
+		expression: `${id}init`,
+		expression_mathml: `<ci>${id}init</ci>`
 	});
 	amr.semantics?.ode.parameters?.push({
-		id: `${id}Param`,
+		id: `${id}init`,
 		name: '',
 		description: '',
 		value: DUMMY_VALUE
@@ -260,11 +260,17 @@ export const removeTransition = (amr: Model, id: string) => {
 
 // Update a transition's expression and expression_mathml fields based on
 // mass-kinetics
-export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
+export const updateRateExpression = (
+	amr: Model,
+	transition: PetriNetTransition,
+	parameterId?: string
+) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+	const param = amr.semantics?.ode?.parameters?.find(
+		(d) => d.id === (parameterId ?? `${transition.id}Param`)
+	);
 	if (!param) return;
 
 	const inputStr = transition.input.map((d) => `${d}`);
@@ -275,7 +281,6 @@ export const updateRateExpression = (amr: Model, transition: PetriNetTransition)
 		`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
 		`</apply>`;
 
-	console.log('>>', expression);
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
 };

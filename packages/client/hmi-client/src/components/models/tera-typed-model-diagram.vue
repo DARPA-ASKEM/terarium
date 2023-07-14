@@ -538,8 +538,7 @@ li {
 	min-width: 150px;
 }
 
-.p-multiselect .p-multiselect-label {
+:deep(.p-multiselect .p-multiselect-label.p-placeholder) {
 	padding: 0.875rem 0.875rem;
 }
 </style>
-@/utils/petrinet-color-palette
