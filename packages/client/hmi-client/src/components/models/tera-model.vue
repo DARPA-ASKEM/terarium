@@ -45,6 +45,7 @@
 				class="p-button-sm"
 			/>
 		</template>
+		<tera-stratified-model-configuration :is-editable="props.isEditable" />
 		<template v-if="modelView === ModelView.DESCRIPTION">
 			<div class="container">
 				<Message class="inline-message" icon="none">
@@ -497,6 +498,7 @@ import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
+import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 

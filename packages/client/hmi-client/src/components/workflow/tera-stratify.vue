@@ -129,6 +129,7 @@
 			</section>
 		</section>
 		<section class="step-1" v-else-if="stratifyView === StratifyView.Output">
+			<tera-stratify-value-matrix />
 			<div>If this is not what you expected, go back to the input page to make changes.</div>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Stratified model">
@@ -164,6 +165,7 @@ import { stratify_output } from '@/temp/models/stratify_output';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+import TeraStratifyValueMatrix from '../models/tera-stratify-value-matrix.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
