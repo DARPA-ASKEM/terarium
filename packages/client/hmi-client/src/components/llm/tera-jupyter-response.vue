@@ -56,20 +56,23 @@
 							:language="m.content['language']"
 							:code="m.content['code']"
 							:autorun="true"
+							:notebook-item-id="msg.query_id"
 							context="dataset"
 							:context_info="{ id: props.assetId }"
-							:save-as-new-dataset="console.log"
 						/>
 					</div>
+					<!-- Show dataset if available -->
+					<tera-dataset-datatable
+						v-else-if="m.header.msg_type === 'dataset'"
+						class="tera-dataset-datatable"
+						paginatorPosition="bottom"
+						:rows="10"
+						:raw-content="(m.content as CsvAsset)"
+						:preview-mode="true"
+						:showGridlines="true"
+						table-style="width: 100%; font-size: small;"
+					/>
 				</div>
-				<!-- Show dataset if available -->
-				<tera-dataset-datatable
-					class="tera-dataset-datatable"
-					v-if="msg.resultingCsv"
-					:rows="10"
-					:raw-content="msg.resultingCsv"
-					:preview-mode="true"
-				/>
 			</div>
 		</section>
 	</div>
@@ -82,16 +85,17 @@ import TeraChattyCodeCell from '@/components/llm/tera-chatty-response-code-cell.
 import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-thought.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { ref, computed } from 'vue';
+import { ref, computed, onUpdated, onMounted } from 'vue';
 import { CsvAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
-const emit = defineEmits(['has-been-drawn', 'is-typing']);
+const emit = defineEmits(['has-been-drawn', 'is-typing', 'cell-updated']);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
 	msg: {
-		query: string;
+		query_id: string;
+		query: string | null;
 		timestamp: string;
 		messages: JupyterMessage[];
 		resultingCsv: CsvAsset | null;
@@ -165,6 +169,13 @@ function toTitleCase(str: string): string {
 const thoughtHasBeenDrawn = () => {
 	emit('has-been-drawn');
 };
+
+onMounted(() => {
+	emit('cell-updated', resp.value, props.msg);
+});
+onUpdated(() => {
+	emit('cell-updated', resp.value, props.msg);
+});
 </script>
 
 <style scoped>
@@ -190,6 +201,7 @@ const thoughtHasBeenDrawn = () => {
 	border-radius: 3px;
 	margin-top: 10px;
 	transition: background-color 0.3s, border 0.3s;
+	border: 1px solid rgba(0, 0, 0, 0);
 }
 
 .jupyter-response:hover {

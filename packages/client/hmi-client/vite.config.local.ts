@@ -17,6 +17,12 @@ config.server.fs = {
 	allow: ['.', '/graph-scaffolder']
 };
 config.server.proxy = {
+	'/configuration': {
+		target: `http://${process.env.hmi_server_host || 'hmi-server'}:${
+			process.env.hmi_server_port || 3000
+		}`,
+		changeOrigin: true
+	},
 	'/api': {
 		target: `http://${process.env.hmi_server_host || 'hmi-server'}:${
 			process.env.hmi_server_port || 3000

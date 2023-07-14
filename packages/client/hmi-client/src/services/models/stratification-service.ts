@@ -81,7 +81,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		}
 	};
 	return {
-		id: '',
+		id: 'age-contact',
 		name: 'Age-contact strata model',
 		description: 'Age-contact strata model',
 		schema:
@@ -164,7 +164,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 		}
 	};
 	return {
-		id: '',
+		id: 'location-travel',
 		name: 'Location-travel strata model',
 		description: 'Location-travel strata model',
 		schema:

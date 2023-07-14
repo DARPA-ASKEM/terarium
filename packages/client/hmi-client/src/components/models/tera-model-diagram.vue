@@ -16,13 +16,13 @@
 								<span class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
-										@click="addState"
+										@click="addNode()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
 										v-if="isEditing"
-										@click="addTransition"
+										@click="addNode()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
@@ -150,6 +150,28 @@
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
+
+	<Teleport to="body">
+		<tera-modal
+			class="edit-modal"
+			v-if="openEditNode === true"
+			@modal-mask-clicked="openEditNode = false"
+		>
+			<template #header>
+				<h4>Add/Edit node</h4>
+			</template>
+			<div>
+				<InputText v-model="editNodeObj.id" placeholder="Id" />
+			</div>
+			<div>
+				<InputText v-model="editNodeObj.name" placeholder="Name" />
+			</div>
+			<template #footer>
+				<Button label="Submit" @click="addNode()" />
+				<Button label="Cancel" @click="openEditNode = false" />
+			</template>
+		</tera-modal>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -179,15 +201,14 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
 import { Model, Observable } from '@/types/Types';
-// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
 const emit = defineEmits([
 	'update-tab-name',
-	'close-preview',
 	'asset-loaded',
-	'close-current-tab',
 	'update-model-content',
 	'update-model-observables'
 ]);
@@ -204,8 +225,6 @@ const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
 const isEditingObservables = ref<boolean>(false);
 
-const newModelName = ref('New Model');
-
 // Model Equations
 const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
@@ -216,6 +235,16 @@ const isMathMLValid = ref<boolean>(true);
 // Observable Equations
 const observablesRefs = ref<any[]>([]);
 const observervablesList = ref<Observable[]>([]);
+
+// For model editing
+interface AddStateObj {
+	id: string;
+	name: string;
+	nodeType: string;
+}
+const openEditNode = ref<boolean>(false);
+const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+let previousId: any = null;
 
 const addObservable = () => {
 	isEditingObservables.value = true;
@@ -253,8 +282,7 @@ const handleResize = () => {
 	updateLayout();
 };
 
-const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
-	console.log(mathmlEq);
+const setNewEquation = (index: number, latexEq: string) => {
 	latexEquationList.value[index] = latexEq;
 };
 
@@ -273,7 +301,6 @@ const setNewObservables = (
 	name: string,
 	id: string
 ) => {
-	console.log(name);
 	const obs: Observable = {
 		id,
 		name,
@@ -394,21 +421,11 @@ watch(
 				);
 
 			if (data) {
-				console.log(0);
 				updateLatexFormula(eqList || []);
 			}
 		}
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
 );
 
 const editorKeyHandler = (event: KeyboardEvent) => {
@@ -450,18 +467,16 @@ const contextMenuItems = ref([
 		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
-			}
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+			openEditNode.value = true;
 		}
 	},
 	{
 		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
-			}
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+			openEditNode.value = true;
 		}
 	}
 ]);
@@ -481,6 +496,17 @@ watch(
 			useStableZoomPan: true,
 			runLayout: runDagreLayout,
 			dragSelector: 'no-drag'
+		});
+
+		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
+			const data = selection.datum();
+			editNodeObj.value = {
+				id: data.id,
+				name: data.label,
+				nodeType: data.data.type
+			};
+			previousId = data.id;
+			openEditNode.value = true;
 		});
 
 		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
@@ -513,7 +539,6 @@ watch(
 						.trim()} \\end{align}`
 			);
 		if (latexFormula) {
-			console.log(1);
 			updateLatexFormula(eqList || []);
 		} else {
 			updateLatexFormula([]);
@@ -598,12 +623,25 @@ const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, 'state');
-};
+const addNode = async () => {
+	if (!renderer) return;
 
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, 'transition');
+	const node = editNodeObj.value;
+
+	if (!previousId) {
+		if (eventX && eventY) {
+			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
+		} else {
+			renderer.addNodeCenter(node.nodeType, node.id, node.name);
+		}
+	} else {
+		renderer.updateNode(previousId, node.id, node.name);
+		previousId = null;
+	}
+
+	eventX = -1;
+	eventY = -1;
+	openEditNode.value = false;
 };
 
 const observablesList = computed(() => props.model?.semantics?.ode?.observables ?? []);
@@ -762,5 +800,9 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.edit-modal:deep(main) {
+	max-width: 50rem;
 }
 </style>
