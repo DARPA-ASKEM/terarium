@@ -410,7 +410,7 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 
 // Returns a 1xN matrix describing state's initials
 export const extractMapping = (amr: Model, id: string) => {
-	const typeMapList = amr.semantics?.typing.map as [string, string][];
+	const typeMapList = amr.semantics?.typing?.map as [string, string][];
 	const item = typeMapList.find((d) => d[0] === id);
 	if (!item) return [];
 	const result = typeMapList.filter((d) => d[1] === item[1]);
