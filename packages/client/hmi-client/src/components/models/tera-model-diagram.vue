@@ -175,7 +175,6 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -190,7 +189,7 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
-import { mathmlToAMR } from '@/services/models/transformations';
+import { mathmlToAMR } from '@/services/models/extractions';
 import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
@@ -557,11 +556,6 @@ const updatePetriNet = async (model: Model) => {
 	updateLatexFormula(latexEquationList.value);
 };
 
-const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
-	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
-	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
-};
-
 const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
 	isMathMLValid.value = false;
 	const cleanedMathML = mathMLStringList;
@@ -570,13 +564,11 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 	} else if (!editMode) {
 		try {
 			const model = (await mathmlToAMR(cleanedMathML)) as Model;
-			if (
-				(model && isArray(model) && model.length > 0) ||
-				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
-			) {
-				isMathMLValid.value = true;
-				if (model !== null) await updatePetriNet(model);
-			} else {
+			isMathMLValid.value = true;
+
+			try {
+				await updatePetriNet(model);
+			} catch {
 				logger.error(
 					'MathML cannot be converted to a PetriNet.  Please try again or click cancel.'
 				);
