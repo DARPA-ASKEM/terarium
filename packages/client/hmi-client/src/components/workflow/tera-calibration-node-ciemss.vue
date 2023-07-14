@@ -140,7 +140,6 @@ const disableRunButton = computed(
 );
 
 const runCalibrate = async () => {
-	console.log('Starting calibration');
 	if (
 		!modelConfigId.value ||
 		!datasetId.value ||
@@ -189,8 +188,6 @@ const runCalibrate = async () => {
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	startedRunId.value = response.simulationId;
-	console.log('Started:');
-	console.log(response);
 	getStatus();
 	// showSpinner.value = true;s
 };
@@ -204,8 +201,6 @@ const getStatus = async () => {
 
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
-		console.log('Completed');
-		console.log(completedRunId);
 		updateOutputPorts(completedRunId);
 		// showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
@@ -269,14 +264,6 @@ const addChart = () => {
 		state
 	});
 };
-
-watch(
-	() => props.node.inputs[1],
-	async () => {
-		console.log(props.node.inputs[1]);
-	},
-	{ immediate: true }
-);
 
 // Set up model config + dropdown names
 // Note: Same as calibrate side panel
