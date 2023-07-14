@@ -179,20 +179,19 @@ const runCalibrate = async () => {
 		},
 		extra: {
 			num_samples: 100,
-			start_time: 0,
-			num_iterations: 1000,
-			lr: 0.03,
-			verbose: false,
-			num_particles: 1,
-			method: 'dopri5'
+			num_iterations: 100
 		},
-		engine: 'sciml'
+		timespan: {
+			start: 0,
+			end: 90
+		},
+		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
-	startedRunId.value = response.id;
+	startedRunId.value = response.simulationId;
 	console.log('Started:');
-	console.log(startedRunId.value);
+	console.log(response);
 	getStatus();
 	// showSpinner.value = true;s
 };

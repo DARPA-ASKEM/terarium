@@ -141,6 +141,7 @@ const disableRunButton = computed(
 );
 
 const runCalibrate = async () => {
+	console.log('Start Run');
 	if (
 		!modelConfigId.value ||
 		!datasetId.value ||
@@ -181,13 +182,15 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 
-	startedRunId.value = response.id;
+	startedRunId.value = response.simulationId;
+	console.log(response);
 	getStatus();
 	// showSpinner.value = true;s
 };
 // Retrieve run ids
 // FIXME: Replace with API.poller
 const getStatus = async () => {
+	console.log('Checking status');
 	if (!startedRunId.value) return;
 
 	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object

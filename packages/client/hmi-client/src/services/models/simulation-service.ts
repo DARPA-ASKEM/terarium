@@ -112,7 +112,11 @@ export async function makeCalibrateJobJulia(calibrationParams: CalibrationReques
 
 export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss) {
 	try {
+		console.log("Calling ciemss's calibration with");
+		console.log(calibrationParams);
 		const resp = await API.post('simulation-request/ciemss/calibrate', calibrationParams);
+		console.log('Response returned!');
+		console.log(resp);
 		const output = resp.data;
 		return output;
 	} catch (err) {
