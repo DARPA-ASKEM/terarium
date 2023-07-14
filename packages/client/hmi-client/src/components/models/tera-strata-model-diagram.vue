@@ -164,13 +164,17 @@ watch(
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(typedModel.value);
 
 		// Create renderer
-		renderer = new PetrinetRenderer({
-			el: graphElement.value as HTMLDivElement,
-			useAStarRouting: false,
-			useStableZoomPan: true,
-			runLayout: runDagreLayout,
-			dragSelector: 'no-drag'
-		});
+		if (!renderer) {
+			renderer = new PetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dragSelector: 'no-drag'
+			});
+		} else {
+			renderer.isGraphDirty = true;
+		}
 
 		// Render graph
 		await renderer?.setData(graphData);
