@@ -244,10 +244,26 @@ main {
 	user-select: none;
 	box-shadow: var(--overlayMenuShadow);
 }
+main::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--border-radius);
+	box-shadow: var(--overlayMenuShadowHover);
+	z-index: -1;
+	opacity: 0;
+	transition: opacity 0.075s ease-out;
+}
 
 main:hover {
-	box-shadow: var(--overlayMenuShadowHover);
 	z-index: 2;
+}
+
+main:hover::after {
+	opacity: 1;
 }
 
 main:hover > header {
@@ -264,6 +280,7 @@ header {
 	white-space: nowrap;
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
+	transition: background-color 0.075s ease-out;
 }
 
 header:hover {
