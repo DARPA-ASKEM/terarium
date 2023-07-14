@@ -77,7 +77,8 @@
 						<label for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
 
-						<p>Status: {{ evaluationScenearioStatus }}</p>
+						<p>Status: {{ evaluationScenarioStatus }}</p>
+						<p>Runtime: {{ evaluationScenarioRuntimeString }}</p>
 					</form>
 				</template>
 				<template #footer>
@@ -87,9 +88,9 @@
 					<Button
 						class="p-button-danger"
 						v-if="
-							evaluationScenearioStatus === 'started' ||
-							evaluationScenearioStatus === 'resumed' ||
-							evaluationScenearioStatus === 'paused'
+							evaluationScenarioStatus === 'started' ||
+							evaluationScenarioStatus === 'resumed' ||
+							evaluationScenarioStatus === 'paused'
 						"
 						:disabled="!isEvaluationScenarioValid"
 						@click="stopEvaluationScenario"
@@ -97,20 +98,18 @@
 					>
 					<Button
 						class="p-button-warning"
-						v-if="
-							evaluationScenearioStatus === 'started' || evaluationScenearioStatus === 'resumed'
-						"
+						v-if="evaluationScenarioStatus === 'started' || evaluationScenarioStatus === 'resumed'"
 						@click="pauseEvaluationScenario"
 						>Pause</Button
 					>
 					<Button
 						class="p-button-warning"
-						v-if="evaluationScenearioStatus === 'paused'"
+						v-if="evaluationScenarioStatus === 'paused'"
 						@click="resumeEvaluationScenario"
 						>Resume</Button
 					>
 					<Button
-						:disabled="!isEvaluationScenarioValid || evaluationScenearioStatus !== ''"
+						:disabled="!isEvaluationScenarioValid || evaluationScenarioStatus !== ''"
 						@click="beginEvaluationScenario"
 						>Begin</Button
 					>
@@ -166,7 +165,21 @@ const evaluationScenarioName = ref('');
 const evaluationScenarioTask = ref('');
 const evaluationScenarioDescription = ref('');
 const evaluationScenarioNotes = ref('');
-const evaluationScenearioStatus = ref('');
+const evaluationScenarioStatus = ref('');
+const evaluationScenarioRuntimeMillis = ref(0);
+let intervalId = null;
+
+const evaluationScenarioRuntimeString = computed(() => {
+	const h = Math.floor(evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60);
+	const m = Math.floor((evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60 - h) * 60);
+	const s = Math.floor(
+		((evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60 - h) * 60 - m) * 60
+	);
+	const hS = h < 10 ? `0${h}` : `${h}`;
+	const mS = m < 10 ? `0${m}` : `${m}`;
+	const sS = s < 10 ? `0${s}` : `${s}`;
+	return `${hS}:${mS}:${sS}`;
+});
 const isEvaluationScenarioValid = computed(
 	() =>
 		evaluationScenarioName.value !== '' &&
@@ -185,9 +198,8 @@ const beginEvaluationScenario = async () => {
 		JSON.stringify(getEvaluationScenarioData('started'))
 	);
 	persistEvaluationScenario();
-	evaluationScenearioStatus.value = (
-		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
-	).data;
+	await refreshEvaluationScenario();
+	startEvaluationTimer();
 	isEvaluationScenarioModalVisible.value = false;
 };
 
@@ -201,6 +213,7 @@ const stopEvaluationScenario = async () => {
 		JSON.stringify(getEvaluationScenarioData('stopped'))
 	);
 	clearEvaluationScenario();
+	clearInterval(intervalId);
 	isEvaluationScenarioModalVisible.value = false;
 };
 
@@ -213,9 +226,8 @@ const pauseEvaluationScenario = async () => {
 		resources.activeProject?.id,
 		JSON.stringify(getEvaluationScenarioData('paused'))
 	);
-	evaluationScenearioStatus.value = (
-		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
-	).data;
+	await refreshEvaluationScenario();
+	clearInterval(intervalId);
 	isEvaluationScenarioModalVisible.value = false;
 };
 
@@ -225,9 +237,8 @@ const resumeEvaluationScenario = async () => {
 		resources.activeProject?.id,
 		JSON.stringify(getEvaluationScenarioData('resumed'))
 	);
-	evaluationScenearioStatus.value = (
-		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
-	).data;
+	await refreshEvaluationScenario();
+	startEvaluationTimer();
 	isEvaluationScenarioModalVisible.value = false;
 };
 
@@ -254,6 +265,16 @@ const persistEvaluationScenario = () => {
 	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
 };
 
+const refreshEvaluationScenario = async () => {
+	evaluationScenarioStatus.value = (
+		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
+	).data;
+
+	evaluationScenarioRuntimeMillis.value = (
+		await API.get(`/evaluation/runtime?name=${evaluationScenarioName.value}`)
+	).data;
+};
+
 const loadEvaluationScenario = async () => {
 	evaluationScenarioName.value = window.localStorage.getItem('evaluationScenarioName') || '';
 	evaluationScenarioTask.value = window.localStorage.getItem('evaluationScenarioTask') || '';
@@ -262,8 +283,18 @@ const loadEvaluationScenario = async () => {
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
 
 	if (evaluationScenarioName.value !== '') {
-		const statusResponse = await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`);
-		evaluationScenearioStatus.value = statusResponse.data;
+		await refreshEvaluationScenario();
+	}
+};
+
+const startEvaluationTimer = () => {
+	if (
+		evaluationScenarioStatus.value === 'started' ||
+		evaluationScenarioStatus.value === 'resumed'
+	) {
+		intervalId = setInterval(() => {
+			evaluationScenarioRuntimeMillis.value += 1000;
+		}, 1000);
 	}
 };
 
@@ -275,7 +306,8 @@ const clearEvaluationScenario = () => {
 	evaluationScenarioTask.value = '';
 	evaluationScenarioDescription.value = '';
 	evaluationScenarioNotes.value = '';
-	evaluationScenearioStatus.value = '';
+	evaluationScenarioStatus.value = '';
+	evaluationScenarioRuntimeMillis.value = 0;
 	persistEvaluationScenario();
 };
 
@@ -319,6 +351,7 @@ const userMenuItems = ref([
 
 onMounted(async () => {
 	await loadEvaluationScenario();
+	startEvaluationTimer();
 });
 
 const showUserMenu = (event) => {
