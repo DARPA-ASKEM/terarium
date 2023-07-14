@@ -5,7 +5,7 @@
 			<DataTable class="p-datatable-xsm" :value="mapping">
 				<Column field="modelVariable">
 					<template #header>
-						<span class="column-header">Model Variables</span>
+						<span class="column-header">MODEL VARIABLE</span>
 					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
@@ -19,7 +19,7 @@
 				</Column>
 				<Column field="datasetVariable">
 					<template #header>
-						<span class="column-header">Dataset Variables</span>
+						<span class="column-header">DATASET VARIABLE</span>
 					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
@@ -332,5 +332,11 @@ watch(
 }
 th {
 	text-align: left;
+}
+
+.column-header {
+	color: var(--text-color-subdued);
+	font-size: 12px;
+	font-weight: 400;
 }
 </style>
