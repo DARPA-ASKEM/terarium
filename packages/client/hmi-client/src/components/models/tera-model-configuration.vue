@@ -63,6 +63,7 @@
 									cellEditStates[i].name = false;
 									updateModelConfigValue(i);
 								"
+								class="cell-input"
 							/>
 						</td>
 						<td
@@ -91,6 +92,7 @@
 									cellEditStates[i].initials[j] = false;
 									updateModelConfigValue(i);
 								"
+								class="cell-input"
 							/>
 						</td>
 						<td
@@ -125,6 +127,7 @@
 									cellEditStates[i].parameters[j] = false;
 									updateModelConfigValue(i);
 								"
+								class="cell-input"
 							/>
 						</td>
 					</tr>
@@ -405,11 +408,19 @@ onMounted(() => {
 	visibility: hidden;
 }
 
+.cell-input {
+	width: calc(100%);
+	height: 4rem;
+}
 .editable-cell {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	min-width: 3rem;
+}
+td:has(.cell-input) {
+	padding: 2px !important;
+	max-width: 4rem;
 }
 
 .p-datatable:deep(td) {
