@@ -7,7 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.utils.Converter;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
@@ -105,16 +106,16 @@ public class SimulationRequestResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create calibrate job")
-	public Simulation makeCalibrateJob(
-		final CalibrationRequest request
+	public JobResponse makeCalibrateJob(
+		final CalibrationRequestJulia request
 	) {
 		final JobResponse res = simulationServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 
-		Simulation sim = new Simulation();
-		sim.setId(res.getSimulationId());
-		sim.setType("simulation");
+		// Simulation sim = new Simulation();
+		// sim.setId(res.getSimulationId());
+		// sim.setType("simulation");
 
-		sim.setExecutionPayload(request);
+		// sim.setExecutionPayload(request);
 
 		// // FIXME: These fiels are arguable unnecessary
 		// sim.setStatus("queued");
@@ -123,7 +124,32 @@ public class SimulationRequestResource {
 		// sim.setProjectId(0);
 		// sim.setEngine("sciml");
 
-		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
-		return simulationProxy.createSimulation(jn);
+		// JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
+		// return simulationProxy.createSimulation(jn);
+		return res;
 	}
+
+	@POST
+	@Path("ciemss/calibrate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Create calibrate job")
+	public JobResponse makeCalibrateJobCiemss(
+		final CalibrationRequestCiemss request
+	) {
+		final JobResponse res = simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+
+		// Simulation sim = new Simulation();
+		// sim.setId(res.getSimulationId());
+		// sim.setType("simulation");
+
+		// sim.setExecutionPayload(request);
+
+		// JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
+		// return simulationProxy.createSimulation(jn);
+
+		return res;
+	}
+
+
 }

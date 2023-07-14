@@ -10,6 +10,8 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import ResultsIcon from '@/assets/svg/icons/results.svg?component';
 import { Component } from 'vue';
 import useResourcesStore from '@/stores/resources';
+import * as EventService from '@/services/event';
+import { EventType } from '@/types/Types';
 
 /**
  * Create a project
@@ -119,6 +121,16 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 	// FIXME: handle cases where assets is already added to the project
 	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 	const response = await API.post(url);
+
+	EventService.create(
+		EventType.AddResourcesToProject,
+		projectId,
+		JSON.stringify({
+			assetsType,
+			assetId
+		})
+	);
+
 	if (response.data) {
 		useResourcesStore().setActiveProject(await get(projectId, true));
 	}
