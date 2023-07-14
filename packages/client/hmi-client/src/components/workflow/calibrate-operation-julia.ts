@@ -9,12 +9,12 @@ export interface CalibrateMap {
 	datasetVariable: string;
 }
 
-export interface CalibrationOperationState {
+export interface CalibrationOperationStateJulia {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
 }
 
-export const CalibrationOperation: Operation = {
+export const CalibrationOperationJulia: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION_JULIA,
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
@@ -46,7 +46,7 @@ export const CalibrationOperation: Operation = {
 	},
 
 	initState: () => {
-		const init: CalibrationOperationState = {
+		const init: CalibrationOperationStateJulia = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }]
 		};

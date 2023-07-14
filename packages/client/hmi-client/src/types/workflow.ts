@@ -2,6 +2,7 @@ export enum WorkflowOperationTypes {
 	ADD = 'add', // temp for test to work
 	TEST = 'TestOperation',
 	CALIBRATION_JULIA = 'CalibrationOperationJulia',
+	CALIBRATION_CIEMSS = 'CalibrationOperationCiemss',
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',
 	SIMULATE_JULIA = 'SimulateJuliaOperation',

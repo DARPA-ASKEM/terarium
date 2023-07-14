@@ -203,7 +203,7 @@ import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-nod
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
-import { CalibrationOperation } from '@/components/workflow/calibrate-operation-julia';
+import { CalibrationOperationJulia } from '@/components/workflow/calibrate-operation-julia';
 import {
 	SimulateJuliaOperation,
 	SimulateJuliaOperationState
@@ -444,7 +444,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Calibrate',
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+					workflowService.addNode(wf.value, CalibrationOperationJulia, newNodePosition);
 					workflowDirty = true;
 				}
 			}
@@ -465,8 +465,14 @@ const contextMenuItems = ref([
 			},
 			{
 				label: 'Calibrate & Simulate',
-				disabled: true,
-				command: () => {}
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
+						width: 420,
+						height: 220
+					});
+					workflowDirty = true;
+				}
 			},
 			{
 				label: 'Calibrate & Simulate ensemble',

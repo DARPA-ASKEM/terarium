@@ -55,6 +55,12 @@
 					"
 					:node="workflowNode"
 				/>
+				<tera-calibration-ciemss
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
+					"
+					:node="workflowNode"
+				/>
 				<tera-simulate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA
@@ -116,6 +122,7 @@ import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibrationJulia from '@/components/workflow/tera-calibration-julia.vue';
+import TeraCalibrationCiemss from '@/components/workflow/tera-calibration-ciemss.vue';
 import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
