@@ -19,7 +19,6 @@ export const CalibrationOperationJulia: Operation = {
 	displayName: 'Calibrate (Deterministic)',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
-	displayName: 'Calibration',
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model Configuration' },
 		{ type: 'datasetId', label: 'Dataset' }
