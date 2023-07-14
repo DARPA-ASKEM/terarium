@@ -240,7 +240,8 @@ const addChart = () => {
 
 const saveDataset = async () => {
 	if (!props.node) return;
-	await createDatasetFromSimulationResult(props.project.id, props.node.outputs[0].value[0]);
+	// @ts-ignore: Object is possibly 'null'.
+	await createDatasetFromSimulationResult(props.project.id, props.node!.outputs[0].value[0]);
 	// TODO: See about getting rid of this - this refresh should preferably be within a service
 	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 };

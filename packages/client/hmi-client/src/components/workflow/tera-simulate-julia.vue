@@ -170,6 +170,7 @@ const addChart = () => {
 
 const saveDataset = async () => {
 	if (!props.node) return;
+	// @ts-ignore: Object is possibly 'null'.
 	await createDatasetFromSimulationResult(props.project.id, props.node.outputs[0].value[0]);
 	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 };
