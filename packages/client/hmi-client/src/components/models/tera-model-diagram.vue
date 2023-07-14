@@ -158,7 +158,7 @@
 			@modal-mask-clicked="openEditNode = false"
 		>
 			<template #header>
-				<h4>Add/Edit node</h4>
+				<h4>Add/Edit {{ editNodeObj.nodeType }}</h4>
 			</template>
 			<div>
 				<InputText v-model="editNodeObj.id" placeholder="Id" />
