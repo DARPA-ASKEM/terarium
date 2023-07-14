@@ -417,7 +417,7 @@ export const extractMapping = (amr: Model, id: string) => {
 	return result.map((d) => d[0]);
 };
 
-// Flattens out transitions and their relationships into a 1-D vector
+// Flattens out transitions and their relationships/types into a 1-D vector
 export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]) => {
 	const model = amr.model as PetriNetModel;
 	const transitions = model.transitions;
@@ -430,23 +430,24 @@ export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]
 
 		const input = transition.input;
 		const output = transition.output;
-
 		const obj: any = {};
 
+		// Get input typings
 		input.forEach((iid) => {
-			const mapping = amr.semantics?.typing.map.find((t) => t[0] === iid);
+			const mapping = amr.semantics?.typing?.map.find((t) => t[0] === iid);
 			if (!mapping) return;
 			obj[mapping[1]] = mapping[0];
 		});
 
+		// Get output typings
 		output.forEach((oid) => {
-			const mapping = amr.semantics?.typing.map.find((t) => t[0] === oid);
+			const mapping = amr.semantics?.typing?.map.find((t) => t[0] === oid);
 			if (!mapping) return;
 			obj[mapping[1]] = mapping[0];
 		});
 
-		// Add self
-		const mapping = amr.semantics?.typing.map.find((d) => d[0] === transition.id);
+		// Get self typing
+		const mapping = amr.semantics?.typing?.map.find((d) => d[0] === transition.id);
 		if (mapping) {
 			obj[mapping[1]] = mapping[0];
 		}
