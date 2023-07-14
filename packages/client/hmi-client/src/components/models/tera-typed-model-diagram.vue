@@ -78,7 +78,7 @@
 								@model-updated="
 									(value) => {
 										typedModel = value;
-										emit('model-updated');
+										emit('model-updated', value);
 									}
 								"
 							/>

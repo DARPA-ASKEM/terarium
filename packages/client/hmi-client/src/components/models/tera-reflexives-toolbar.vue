@@ -88,7 +88,7 @@ function updateStatesToAddReflexives(
 				(t) => t.id === typeOfTransition
 			);
 			if (transition) {
-				updateRateExpression(typedModel.value, reflexive as PetriNetTransition);
+				updateRateExpression(typedModel.value, reflexive as PetriNetTransition, reflexive.id);
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
 					updatedTypeMap.push([newTransitionId, typeOfTransition]);
 				}
@@ -105,6 +105,17 @@ function updateStatesToAddReflexives(
 	}
 	emit('model-updated', typedModel.value);
 }
+
+watch(
+	() => props.modelToUpdate,
+	() => {
+		if (props.modelToCompare) {
+			typedModel.value = props.modelToUpdate;
+			emit('model-updated', typedModel.value);
+		}
+	},
+	{ immediate: true }
+);
 
 watch(
 	[() => modelToCompareTypeSystem],

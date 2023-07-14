@@ -183,10 +183,9 @@ export const newAMR = () => {
 };
 
 export const addState = (amr: Model, id: string, name: string) => {
-	if (amr.model.states((s) => s.id === id)) {
+	if (amr.model.states.find((s) => s.id === id)) {
 		return;
 	}
-	console.log(`adding state ${id}`);
 	amr.model.states.push({
 		id,
 		name,
@@ -270,14 +269,12 @@ export const removeTransition = (amr: Model, id: string) => {
 export const updateRateExpression = (
 	amr: Model,
 	transition: PetriNetTransition,
-	parameterId?: string
+	parameterId: string
 ) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
-	const param = amr.semantics?.ode?.parameters?.find(
-		(d) => d.id === (parameterId ?? `${transition.id}Param`)
-	);
+	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
 	if (!param) return;
 
 	const inputStr = transition.input.map((d) => `${d}`);
@@ -300,14 +297,14 @@ export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
 		const transition = model.transitions.find((d) => d.id === targetId);
 		if (transition) {
 			transition.input.push(sourceId);
-			updateRateExpression(amr, transition);
+			updateRateExpression(amr, transition, transition.id);
 		}
 	} else {
 		// if source is a transition then the target is a state
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (transition) {
 			transition.output.push(targetId);
-			updateRateExpression(amr, transition);
+			updateRateExpression(amr, transition, transition.id);
 		}
 	}
 };
@@ -327,7 +324,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition);
+		updateRateExpression(amr, transition, transition.id);
 	} else {
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (!transition) return;
@@ -340,7 +337,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition);
+		updateRateExpression(amr, transition, transition.id);
 	}
 };
 
@@ -366,7 +363,7 @@ export const updateState = (amr: Model, id: string, newId: string, newName: stri
 	});
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t);
+		updateRateExpression(amr, t, t.id);
 	});
 };
 
@@ -382,7 +379,7 @@ export const updateTransitione = (amr: Model, id: string, newId: string, newName
 	rate.target = newId;
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t);
+		updateRateExpression(amr, t, t.id);
 	});
 };
 
@@ -409,7 +406,7 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
 
-function modifyModelforStratification(amr: Model) {
+export const modifyModelTypeSystemforStratification = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
 		const { name, description, schema, semantics } = amrCopy;
@@ -423,15 +420,22 @@ function modifyModelforStratification(amr: Model) {
 		amrCopy.semantics.typing.system = typeSystem;
 	}
 	return amrCopy;
+};
+
+function unifyModelTypeSystems(baseAMR: Model, fluxAMR: Model) {
+	// Entries in type system need to be in the same order for stratification
+	// They should contain the same state and transition entries for both baseAMR and fluxAMR, just in a different order
+	// So just overwrite one with the other instead of sorting
+	const typeSystem = baseAMR.semantics?.typing?.system;
+	if (fluxAMR.semantics?.typing?.system) {
+		fluxAMR.semantics.typing.system.model = typeSystem.model;
+	}
 }
 
 export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
-	const baseModel = modifyModelforStratification(baseAMR);
-	const fluxModel = modifyModelforStratification(fluxAMR);
-	console.log({
-		baseModel,
-		fluxModel
-	});
+	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
+	const fluxModel = modifyModelTypeSystemforStratification(fluxAMR);
+	unifyModelTypeSystems(baseModel, fluxModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,
 		fluxModel
