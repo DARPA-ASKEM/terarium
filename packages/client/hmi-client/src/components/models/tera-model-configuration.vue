@@ -10,7 +10,7 @@
 						<th class="p-frozen-column"></th>
 						<th class="p-frozen-column second-frozen"></th>
 						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
-							{{ name }}
+							<span class="capitalize">{{ name }}</span>
 						</th>
 					</tr>
 					<tr>
@@ -397,7 +397,10 @@ onMounted(() => {
 }
 
 .p-datatable-thead th {
-	text-transform: capitalize;
+	text-transform: none !important;
+	color: var(--text-color-primary) !important;
+	font-size: var(--font-size-small) !important;
+	padding-left: 1rem !important;
 }
 
 .model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
@@ -450,5 +453,10 @@ td:hover .cell-menu {
 }
 .distribution-range {
 	white-space: nowrap;
+}
+
+.capitalize {
+	text-transform: capitalize !important;
+	font-size: var(--font-body-medium) !important;
 }
 </style>
