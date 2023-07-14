@@ -19,11 +19,11 @@
 				/>
 			</span>
 			<Button
-				v-if="stratifyStep === 3"
 				class="stratify-button"
 				label="Stratify"
 				icon="pi pi-arrow-right"
-				:disabled="typedBaseModel !== null && strataModel !== null"
+				@click="doStratify"
+				:disabled="stratifyStep !== 3"
 			/>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
@@ -77,7 +77,7 @@
 								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
-								@all-nodes-typed="(typedModel) => onAllNodesTyped(typedModel)"
+								@model-updated="(value) => (typedBaseModel = value)"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -122,6 +122,7 @@
 									:base-model="typedBaseModel"
 									:base-model-type-system="typedBaseModel?.semantics?.typing?.type_system"
 									:show-reflexives-toolbar="stratifyStep === 3"
+									@model-updated="(value) => (typedStrataModel = value)"
 								/>
 							</AccordionTab>
 						</Accordion>
@@ -170,6 +171,7 @@ const strataModelTypeSystem = computed<TypeSystem | undefined>(
 	() => strataModel.value?.semantics?.typing?.type_system
 );
 const typedBaseModel = ref<Model | null>(null);
+const typedStrataModel = ref<Model | null>(null);
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -182,12 +184,10 @@ function generateStrataModel() {
 	}
 }
 
-// function doStratify() {
-// 	// await stratify(typedBaseModel, )
-// }
-
-function onAllNodesTyped(typedModel: Model) {
-	typedBaseModel.value = typedModel;
+function doStratify() {
+	console.log(typedBaseModel.value);
+	console.log(typedStrataModel.value);
+	// await stratify(typedBaseModel, )
 }
 
 function goBack() {

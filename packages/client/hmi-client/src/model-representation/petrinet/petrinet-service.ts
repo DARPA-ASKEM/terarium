@@ -183,6 +183,10 @@ export const newAMR = () => {
 };
 
 export const addState = (amr: Model, id: string, name: string) => {
+	if (amr.model.states((s) => s.id === id)) {
+		return;
+	}
+	console.log(`adding state ${id}`);
 	amr.model.states.push({
 		id,
 		name,
@@ -201,7 +205,10 @@ export const addState = (amr: Model, id: string, name: string) => {
 	});
 };
 
-export const addTransition = (amr: Model, id: string, name: string) => {
+export const addTransition = (amr: Model, id: string, name: string, value?: number) => {
+	if (amr.model.transitions.find((t) => t.id === id)) {
+		return;
+	}
 	amr.model.transitions.push({
 		id,
 		input: [],
@@ -220,7 +227,7 @@ export const addTransition = (amr: Model, id: string, name: string) => {
 		id: `${id}Param`,
 		name: '',
 		description: '',
-		value: DUMMY_VALUE
+		value: value ?? DUMMY_VALUE
 	});
 };
 
@@ -388,8 +395,9 @@ export const addTyping = (amr: Model, typing: TypingSemantics) => {
 
 // Add a reflexive transition loop to the state
 // This is a special type of addTransition that creates a self loop
+const DEFAULT_REFLEXIVE_PARAM_VALUE = 1.0;
 export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
-	addTransition(amr, reflexiveId, reflexiveId);
+	addTransition(amr, reflexiveId, reflexiveId, DEFAULT_REFLEXIVE_PARAM_VALUE);
 	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
 	if (transition) {
 		transition.input = [stateId];

@@ -75,7 +75,12 @@
 								v-if="showReflexivesToolbar && model && strataModel"
 								:model-to-update="model"
 								:model-to-compare="strataModel"
-								@model-updated="(value) => (typedModel = value)"
+								@model-updated="
+									(value) => {
+										typedModel = value;
+										emit('model-updated');
+									}
+								"
 							/>
 							<section class="legend">
 								<ul>
@@ -130,7 +135,7 @@ import {
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
-const emit = defineEmits(['all-nodes-typed']);
+const emit = defineEmits(['model-updated']);
 
 const props = defineProps<{
 	model: Model;
@@ -369,7 +374,7 @@ watch(
 
 watch(numberTypedRows, () => {
 	if (numberTypedRows.value === numberNodes.value) {
-		emit('all-nodes-typed', typedModel.value);
+		emit('model-updated', typedModel.value);
 	}
 });
 

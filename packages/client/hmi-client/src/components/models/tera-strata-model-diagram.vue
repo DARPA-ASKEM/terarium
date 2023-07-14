@@ -14,7 +14,12 @@
 								v-if="showReflexivesToolbar && strataModel && baseModel"
 								:model-to-update="strataModel"
 								:model-to-compare="baseModel"
-								@model-updated="(value) => (typedModel = value)"
+								@model-updated="
+									(value) => {
+										typedModel = value;
+										emit('model-updated', value);
+									}
+								"
 							/>
 							<section class="legend">
 								<ul>
@@ -66,6 +71,8 @@ const props = defineProps<{
 	baseModelTypeSystem?: TypeSystem;
 	showReflexivesToolbar: boolean;
 }>();
+
+const emit = defineEmits(['model-updated']);
 
 const typedModel = ref<Model>(props.strataModel); // this is the object being edited
 
