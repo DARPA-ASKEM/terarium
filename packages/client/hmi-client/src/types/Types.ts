@@ -477,6 +477,7 @@ export interface MetadataDataset {
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
 }
 
 export enum FileType {

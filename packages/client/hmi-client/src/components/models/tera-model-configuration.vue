@@ -46,7 +46,11 @@
 								</div>
 							</div>
 						</td>
-						<td class="p-frozen-column second-frozen">
+						<td
+							class="p-frozen-column second-frozen"
+							tabindex="0"
+							@keyup.enter="cellEditStates[i].name = true"
+						>
 							<span v-if="!cellEditStates[i].name" @click="cellEditStates[i].name = true">
 								{{ name }}
 							</span>
@@ -65,6 +69,8 @@
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
 							@click="cellEditStates[i].initials[j] = true"
+							tabindex="0"
+							@keyup.enter="cellEditStates[i].initials[j] = true"
 						>
 							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
 								<span>{{ initial.expression }}</span>
@@ -91,9 +97,17 @@
 							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
 							:key="j"
 							@click="cellEditStates[i].parameters[j] = true"
+							tabindex="0"
+							@keyup.enter="cellEditStates[i].parameters[j] = true"
 						>
 							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
-								<span>{{ parameter.value }}</span>
+								<div class="distribution-cell">
+									<span>{{ parameter.value }}</span>
+									<span class="distribution-range" v-if="parameter.distribution"
+										>Min: {{ parameter.distribution.parameters.minimum }} Max:
+										{{ parameter.distribution.parameters.maximum }}</span
+									>
+								</div>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
@@ -118,13 +132,13 @@
 			</table>
 		</div>
 	</div>
-	<Button
-		v-if="isEditable"
-		class="p-button-sm p-button-outlined"
-		icon="pi pi-plus"
+	<SplitButton
+		outlined
 		label="Add configuration"
-		@click="addModelConfiguration"
-	/>
+		size="small"
+		icon="pi pi-plus"
+		:model="configItems"
+	></SplitButton>
 	<Teleport to="body">
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
@@ -141,38 +155,50 @@
 				<span>Select a value for this configuration</span>
 			</template>
 			<template #default>
-				<TabView>
-					<TabPanel v-for="(tab, i) in extractions" :key="tab" :header="tab">
+				<TabView v-model:activeIndex="activeIndex">
+					<TabPanel v-for="(extraction, i) in extractions" :key="i">
+						<template #header>
+							<span>{{ extraction.name }}</span>
+						</template>
 						<div>
 							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" v-model="extractions[i]" />
-						</div>
-						<div>
-							<label for="name">Source</label>
-							<InputText class="p-inputtext-sm" />
+							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
 						</div>
 						<div>
 							<label for="name">Value</label>
-							<InputText
-								class="p-inputtext-sm"
-								v-model="
-									modelConfigurations[modalVal.configIndex].configuration.semantics.ode[
-										modalVal.odeType
-									][modalVal.odeObjIndex][modalVal.valueName]
-								"
-							/>
+							<InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" />
+						</div>
+						<div v-if="modalVal.odeType === 'parameters'">
+							<label for="name">Distribution</label>
+							<Checkbox v-model="extraction.isDistribution" :binary="true"></Checkbox>
+							<div v-if="extraction.isDistribution">
+								<label for="name">Min</label>
+								<InputText
+									class="p-inputtext-sm"
+									:key="'min' + i"
+									v-model="extraction.distribution.parameters.minimum"
+								/>
+								<label for="name">Max</label>
+								<InputText
+									class="p-inputtext-sm"
+									:key="'max' + i"
+									v-model="extraction.distribution.parameters.maximum"
+								/>
+							</div>
 						</div>
 					</TabPanel>
 				</TabView>
-				<Button
-					class="p-button-sm p-button-outlined"
-					icon="pi pi-plus"
-					label="Add value"
-					@click="addConfigValue"
-				/>
 			</template>
 			<template #footer>
-				<Button label="OK" @click="updateModelConfigValue()" />
+				<Button
+					label="OK"
+					@click="
+						() => {
+							setModelParameters();
+							updateModelConfigValue();
+						}
+					"
+				/>
 				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
 			</template>
 		</tera-modal>
@@ -183,10 +209,12 @@
 import { watch, ref, computed, onMounted } from 'vue';
 import { isEmpty, cloneDeep } from 'lodash';
 import Button from 'primevue/button';
+import SplitButton from 'primevue/splitbutton';
 import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
+import Checkbox from 'primevue/checkbox';
 import { ModelConfiguration, Model } from '@/types/Types';
 import {
 	createModelConfiguration,
@@ -206,8 +234,9 @@ const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
-const selectedInitials = ref<string[]>([]);
-const selectedParameters = ref<string[]>([]);
+
+const activeIndex = ref(0);
+const configItems = ref<any[]>([]);
 
 const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
@@ -234,30 +263,16 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
 	return [];
 });
 
-const selectedModelVariables = computed(() => [
-	...selectedInitials.value,
-	...selectedParameters.value
-]);
-defineExpose({ selectedModelVariables });
-
-async function addModelConfiguration() {
-	const configurationToAdd = modelConfigurations.value.length
-		? modelConfigurations.value[0].configuration
-		: props.model;
-
-	const response = await createModelConfiguration(
+async function addModelConfiguration(config: ModelConfiguration) {
+	await createModelConfiguration(
 		props.model.id,
-		`Config ${modelConfigurations.value.length + 1}`,
-		'Test',
-		configurationToAdd
+		`Copy of ${config.name}`,
+		config.description as string,
+		config.configuration
 	);
-	console.log(response);
-
-	// TODO: notify change
-}
-
-function addConfigValue() {
-	extractions.value.push(`Untitled`);
+	setTimeout(() => {
+		initializeConfigSpace();
+	}, 800);
 }
 
 function openValueModal(
@@ -267,8 +282,36 @@ function openValueModal(
 	odeObjIndex: number
 ) {
 	if (props.isEditable) {
+		activeIndex.value = 0;
 		openValueConfig.value = true;
 		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
+		const modelParameter = cloneDeep(
+			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
+		);
+		extractions.value[0].value = modelParameter[valueName];
+		extractions.value[0].name = modelParameter.name ?? 'Default';
+		extractions.value[0].isDistribution = !!modelParameter.distribution;
+		// we are only adding the ability to add one type of distribution for now...
+		extractions.value[0].distribution = modelParameter.distribution ?? {
+			type: 'Uniform1',
+			parameters: { minimum: null, maximum: null }
+		};
+	}
+}
+
+// function to set the provided values from the modal
+function setModelParameters() {
+	const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
+	const modelParameter =
+		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
+	modelParameter[valueName] = extractions.value[activeIndex.value].value;
+	modelParameter.name = extractions.value[activeIndex.value].name;
+
+	// delete the distribution if the checkbox isn't selected
+	if (extractions.value[activeIndex.value].isDistribution) {
+		modelParameter.distribution = extractions.value[activeIndex.value].distribution;
+	} else {
+		delete modelParameter.distribution;
 	}
 }
 
@@ -280,6 +323,13 @@ function updateModelConfigValue(configIndex: number = modalVal.value.configIndex
 
 async function initializeConfigSpace() {
 	let tempConfigurations = await getModelConfigurations(props.model.id);
+
+	configItems.value = tempConfigurations.map((config) => ({
+		label: config.name,
+		command: () => {
+			addModelConfiguration(config);
+		}
+	}));
 
 	// Ensure that we always have a "default config" model configuration
 	if (isEmpty(tempConfigurations) || !tempConfigurations.find((d) => d.name === 'Default config')) {
@@ -298,9 +348,9 @@ async function initializeConfigSpace() {
 		updateModelConfiguration(defaultConfig);
 	}
 
-	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
+	extractions.value = [{ name: '', value: '' }];
 }
 
 function resetCellEditing() {
@@ -325,9 +375,8 @@ watch(
 );
 
 watch(
-	() => props.model,
-	() => initializeConfigSpace(),
-	{ deep: true }
+	() => props.model.id,
+	() => initializeConfigSpace()
 );
 
 onMounted(() => {
@@ -366,9 +415,13 @@ onMounted(() => {
 .p-datatable:deep(td) {
 	cursor: pointer;
 }
+.p-datatable:deep(td:focus) {
+	background-color: var(--primary-color-lighter);
+}
 
 .p-frozen-column {
 	left: 0px;
+	white-space: nowrap;
 }
 
 .second-frozen {
@@ -380,67 +433,11 @@ td:hover .cell-menu {
 	visibility: visible;
 }
 
-.p-tabview {
-	display: flex;
-	gap: 1rem;
-	margin-bottom: 1rem;
-	justify-content: space-between;
-}
-
-.p-tabview:deep(> *) {
-	width: 50vw;
-	height: 50vh;
-	overflow: auto;
-}
-
-.p-tabview:deep(.p-tabview-nav) {
-	flex-direction: column;
-}
-
-.p-tabview:deep(label) {
-	display: block;
-	font-size: var(--font-caption);
-	margin-bottom: 0.25rem;
-}
-
-.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
-	width: 100%;
-}
-
-.p-tabview:deep(.p-tabview-panels) {
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border-light);
-	background-color: var(--surface-ground);
-}
-
-.p-tabview:deep(.p-tabview-panel) {
+.distribution-cell {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
 }
-
-.p-tabview:deep(.p-tabview-nav li) {
-	border-left: 3px solid transparent;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
-	border-bottom: 1px solid var(--surface-border-light);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight) {
-	border-left: 3px solid var(--primary-color);
-	background: var(--surface-highlight);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-	background: none;
-}
-
-.p-tabview:deep(.p-inputtext) {
-	width: 100%;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
-	display: none;
+.distribution-range {
+	white-space: nowrap;
 }
 </style>

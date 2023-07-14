@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.proxies.mira;
 
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
@@ -17,12 +18,14 @@ import java.util.List;
 public interface DKGProxy {
 	@GET
 	@Path("/entity/{curie}")
+	@LogRestClientTime
 	DKG getEntity(
 		@PathParam("curie") final String curie
 	);
 
 	@GET
 	@Path("/entities/{curies}")
+	@LogRestClientTime
 	List<DKG> getEntities(
 		@PathParam("curies") final String curies
 	);

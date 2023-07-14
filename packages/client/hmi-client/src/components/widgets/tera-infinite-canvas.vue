@@ -177,7 +177,8 @@ onMounted(() => {
 		.attr('width', '100%')
 		.attr('height', '100%')
 		.attr('pointer-events', 'none')
-		.attr('fill', 'url(#dotPattern)');
+		.attr('fill', 'url(#dotPattern)')
+		.style('mix-blend-mode', 'darken');
 
 	// Assign debug grid
 	if (props.debugMode) {

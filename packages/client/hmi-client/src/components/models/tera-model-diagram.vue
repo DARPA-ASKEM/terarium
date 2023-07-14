@@ -16,13 +16,13 @@
 								<span class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
-										@click="addState"
+										@click="prepareStateEdit()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
 										v-if="isEditing"
-										@click="addTransition"
+										@click="prepareTransitionEdit()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
@@ -100,42 +100,44 @@
 			</AccordionTab>
 			<AccordionTab header="Model Observables">
 				<TeraResizablePanel
-					:class="isEditingObservable ? `diagram-container-editing` : `diagram-container`"
+					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
 					:start-height="200"
 				>
 					<section class="controls">
 						<span v-if="props.isEditable" class="equation-edit-button">
 							<Button
-								v-if="isEditingObservable"
+								v-if="isEditingObservables"
 								@click="cancelEditObservables"
 								label="Cancel"
 								class="p-button-sm p-button-outlined edit-button"
 							/>
 							<Button
-								v-if="obsersevableEquationsList.length !== 0"
-								@click="saveObservables"
-								:label="isEditingObservable ? 'Update observable' : 'Edit observables'"
+								v-if="observervablesList.length !== 0"
+								@click="updateObservables"
+								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
 								:class="
-									isEditingObservable ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
+									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
 								"
 							/>
 						</span>
 					</section>
 					<section class="observable-editor-container">
 						<tera-math-editor
-							v-for="(eq, index) in obsersevableEquationsList"
+							v-for="(ob, index) in observervablesList"
 							:key="index"
 							:index="index"
 							:is-editable="isEditable"
-							:latex-equation="eq"
-							:is-editing-eq="isEditingObservable"
+							:latex-equation="ob.expression || ''"
+							:id="ob.id"
+							:name="ob.name"
+							:is-editing-eq="isEditingObservables"
 							@equation-updated="setNewObservables"
 							@delete="deleteObservable"
 							ref="observablesRefs"
 						>
 						</tera-math-editor>
 						<Button
-							v-if="observablesList.length === 0 || isEditingObservable"
+							v-if="observablesList.length === 0 || isEditingObservables"
 							class="p-button-sm add-equation-button"
 							icon="pi pi-plus"
 							label="Add Observable"
@@ -148,6 +150,28 @@
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
+
+	<Teleport to="body">
+		<tera-modal
+			class="edit-modal"
+			v-if="openEditNode === true"
+			@modal-mask-clicked="openEditNode = false"
+		>
+			<template #header>
+				<h4>Add/Edit node</h4>
+			</template>
+			<div>
+				<InputText v-model="editNodeObj.id" placeholder="Id" />
+			</div>
+			<div>
+				<InputText v-model="editNodeObj.name" placeholder="Name" />
+			</div>
+			<template #footer>
+				<Button label="Submit" :disabled="editNodeObj.id === ''" @click="addNode()" />
+				<Button label="Cancel" class="p-button-secondary" @click="openEditNode = false" />
+			</template>
+		</tera-modal>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -176,16 +200,15 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
-import { Model } from '@/types/Types';
-// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
+import { Model, Observable } from '@/types/Types';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
 const emit = defineEmits([
 	'update-tab-name',
-	'close-preview',
 	'asset-loaded',
-	'close-current-tab',
 	'update-model-content',
 	'update-model-observables'
 ]);
@@ -200,9 +223,7 @@ const menu = ref();
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
-const isEditingObservable = ref<boolean>(false);
-
-const newModelName = ref('New Model');
+const isEditingObservables = ref<boolean>(false);
 
 // Model Equations
 const equationsRef = ref<any[]>([]);
@@ -213,11 +234,28 @@ const isMathMLValid = ref<boolean>(true);
 
 // Observable Equations
 const observablesRefs = ref<any[]>([]);
-const obsersevableEquationsList = ref<string[]>([]);
+const observervablesList = ref<Observable[]>([]);
+
+// For model editing
+interface AddStateObj {
+	id: string;
+	name: string;
+	nodeType: string;
+}
+const openEditNode = ref<boolean>(false);
+const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+let previousId: any = null;
 
 const addObservable = () => {
-	isEditingObservable.value = true;
-	obsersevableEquationsList.value.push('');
+	isEditingObservables.value = true;
+	const obs: Observable = {
+		id: '',
+		name: '',
+		states: [],
+		expression: '',
+		expression_mathml: ''
+	};
+	observervablesList.value.push(obs);
 };
 
 const splitterContainer = ref<HTMLElement | null>(null);
@@ -244,8 +282,7 @@ const handleResize = () => {
 	updateLayout();
 };
 
-const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
-	console.log(mathmlEq);
+const setNewEquation = (index: number, latexEq: string) => {
 	latexEquationList.value[index] = latexEq;
 };
 
@@ -254,13 +291,25 @@ const deleteEquation = (index) => {
 };
 
 const deleteObservable = (index) => {
-	obsersevableEquationsList.value.splice(index, 1);
+	observervablesList.value.splice(index, 1);
 };
 
-const setNewObservables = (index: number, latexEq: string, mathmlEq: string) => {
-	console.log(mathmlEq);
-	obsersevableEquationsList.value[index] = latexEq;
-	emit('update-model-observables', obsersevableEquationsList.value);
+const setNewObservables = (
+	index: number,
+	latexEq: string,
+	mathmlEq: string,
+	name: string,
+	id: string
+) => {
+	const obs: Observable = {
+		id,
+		name,
+		states: [],
+		expression: latexEq,
+		expression_mathml: mathmlEq
+	};
+	observervablesList.value[index] = obs;
+	emit('update-model-observables', observervablesList.value);
 };
 
 const cancelEditEquations = () => {
@@ -272,25 +321,53 @@ const cancelEditEquations = () => {
 };
 
 const cancelEditObservables = () => {
-	isEditingObservable.value = false;
-	obsersevableEquationsList.value = obsersevableEquationsList.value.filter((eq) => eq !== '');
+	isEditingObservables.value = false;
+	observervablesList.value = observervablesList.value.filter((eq) => eq.expression !== '');
+	observablesRefs.value.forEach((eq) => {
+		eq.isEditingEquation = false;
+	});
 };
 
-const saveObservables = () => {
-	if (isEditingObservable.value) {
+function extractVariablesFromMathML(mathML: string): string[] {
+	const parser = new DOMParser();
+	const xmlDoc = parser.parseFromString(mathML, 'text/xml');
+
+	const variables: string[] = [];
+
+	const miElements = xmlDoc.getElementsByTagName('mi');
+	for (let i = 0; i < miElements.length; i++) {
+		const miElement = miElements[i];
+		const variable = miElement.textContent?.trim();
+		if (variable) {
+			variables.push(variable);
+		}
+	}
+
+	return variables;
+}
+
+const updateObservables = () => {
+	if (isEditingObservables.value) {
+		isEditingObservables.value = false;
+		// update
 		emit(
 			'update-model-observables',
-			observablesRefs.value.map((eq) => ({
-				id: '',
-				name: '',
-				expression: eq.mathLiveField.value,
-				expression_mathml: eq.mathLiveField.getValue('math-ml'),
-				states: []
-			}))
+			observablesRefs.value.map((eq, index) => {
+				console.log(eq);
+				return {
+					id: eq.id || observablesRefs.value[index].id,
+					name: eq.name || observablesRefs.value[index].name,
+					expression: eq.mathLiveField.value,
+					expression_mathml: eq.mathLiveField.getValue('math-ml'),
+					states: extractVariablesFromMathML(eq.mathLiveField.getValue('math-ml'))
+				};
+			})
 		);
-		isEditingObservable.value = false;
+		observablesRefs.value.forEach((eq) => {
+			eq.isEditingEquation = false;
+		});
 	} else {
-		isEditingObservable.value = true;
+		isEditingObservables.value = true;
 	}
 };
 
@@ -344,21 +421,11 @@ watch(
 				);
 
 			if (data) {
-				console.log(0);
 				updateLatexFormula(eqList || []);
 			}
 		}
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
 );
 
 const editorKeyHandler = (event: KeyboardEvent) => {
@@ -400,18 +467,14 @@ const contextMenuItems = ref([
 		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
-			}
+			prepareStateEdit();
 		}
 	},
 	{
 		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
-			}
+			prepareTransitionEdit();
 		}
 	}
 ]);
@@ -431,6 +494,17 @@ watch(
 			useStableZoomPan: true,
 			runLayout: runDagreLayout,
 			dragSelector: 'no-drag'
+		});
+
+		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
+			const data = selection.datum();
+			editNodeObj.value = {
+				id: data.id,
+				name: data.label,
+				nodeType: data.data.type
+			};
+			previousId = data.id;
+			openEditNode.value = true;
 		});
 
 		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
@@ -463,7 +537,6 @@ watch(
 						.trim()} \\end{align}`
 			);
 		if (latexFormula) {
-			console.log(1);
 			updateLatexFormula(eqList || []);
 		} else {
 			updateLatexFormula([]);
@@ -548,12 +621,35 @@ const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, 'state');
+const prepareStateEdit = () => {
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+	openEditNode.value = true;
 };
 
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, 'transition');
+const prepareTransitionEdit = () => {
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+	openEditNode.value = true;
+};
+
+const addNode = async () => {
+	if (!renderer) return;
+
+	const node = editNodeObj.value;
+
+	if (!previousId) {
+		if (eventX && eventY) {
+			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
+		} else {
+			renderer.addNodeCenter(node.nodeType, node.id, node.name);
+		}
+	} else {
+		renderer.updateNode(previousId, node.id, node.name);
+		previousId = null;
+	}
+
+	eventX = -1;
+	eventY = -1;
+	openEditNode.value = false;
 };
 
 const observablesList = computed(() => props.model?.semantics?.ode?.observables ?? []);
@@ -563,11 +659,8 @@ onMounted(() => {
 	window.addEventListener('resize', handleResize);
 	handleResize();
 	if (observablesList.value.length > 0) {
-		obsersevableEquationsList.value = observablesList.value.map((ob) =>
-			ob.expression ? ob.expression : ''
-		);
+		observervablesList.value = observablesList.value.filter((ob) => ob.expression);
 	}
-	console.log(observablesList);
 });
 
 onUnmounted(() => {
@@ -715,5 +808,9 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.edit-modal:deep(main) {
+	max-width: 50rem;
 }
 </style>

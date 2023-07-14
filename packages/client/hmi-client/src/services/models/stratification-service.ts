@@ -50,7 +50,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 	);
 	const typeMap: string[][] = states
 		.map((state) => [state.id, 'Pop'])
-		.concat(transitions.map((transition) => [transition.id, 'Strata']));
+		.concat(transitions.map((transition) => [transition.id, 'Infect']));
 	const semantics: ModelSemantics = {
 		ode: {
 			rates: []
@@ -66,13 +66,13 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 				],
 				transitions: [
 					{
-						id: 'Strata',
-						input: ['Pop'],
-						output: ['Pop'],
+						id: 'Infect',
+						input: ['Pop', 'Pop'],
+						output: ['Pop', 'Pop'],
 						properties: {
-							name: 'Strata',
+							name: 'Infect',
 							description:
-								'1-to-1 process that represents a change in the demographic division of a human individual.'
+								'2-to-2 interaction that represents infectious contact between two human individuals.'
 						}
 					}
 				]
@@ -81,7 +81,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		}
 	};
 	return {
-		id: '',
+		id: 'age-contact',
 		name: 'Age-contact strata model',
 		description: 'Age-contact strata model',
 		schema:
@@ -164,7 +164,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 		}
 	};
 	return {
-		id: '',
+		id: 'location-travel',
 		name: 'Location-travel strata model',
 		description: 'Location-travel strata model',
 		schema:
@@ -182,6 +182,82 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 			variable_statements: [],
 			annotations: {},
 			attributes: []
+		}
+	};
+}
+
+export function generateTypeState(amr: Model, stateId: string, typeId: string): State | null {
+	const states = amr.semantics?.typing?.type_system.states ?? [];
+	const existingState = states.find((s) => s.id === stateId);
+	if (existingState) {
+		return null;
+	}
+	return {
+		id: typeId,
+		name: typeId,
+		description: typeId
+	};
+}
+
+/* 
+	Return a Transition with inferred inputs and outputs based on a partially typed amr.
+	Return null if type inference cannot be completed for whatever reason.
+	*/
+export function generateTypeTransition(
+	amr: Model,
+	transitionId: string,
+	typeId: string
+): Transition | null {
+	/* Get inputs and outputs of transition from transitionId
+	FIterate through typeMap and get the corresponding type id for each transition id in input/output, where the first value of each element in typeMap
+	is the transition id, and the second element is the type id. */
+	const typeMap: string[][] | undefined = amr.semantics?.typing?.type_map;
+	const transitions: Transition[] = amr.semantics?.typing?.type_system.transitions ?? [];
+	const existingTransition = transitions.find((t) => t.id === transitionId);
+	if (existingTransition) {
+		return null;
+	}
+	if (!typeMap) {
+		return null;
+	}
+	const transition: Transition = amr.model.transitions.find(
+		(t) => t.id === transitionId
+	) as Transition;
+	if (!transition) {
+		return null;
+	}
+	const inputs: string[] = transition.input;
+	const outputs: string[] = transition.output;
+
+	const typeInputs: string[] = [];
+	const typeOutputs: string[] = [];
+	inputs.forEach((i) => {
+		const map = typeMap.find((m) => m[0] === i);
+		if (map && map.length === 2) {
+			typeInputs.push(map[1]);
+		}
+	});
+	outputs.forEach((o) => {
+		const map = typeMap.find((m) => m[0] === o);
+		if (map && map.length === 2) {
+			typeOutputs.push(map[1]);
+		}
+	});
+
+	/* typeInput and typeOutput should be 1:1 mappings of inputs and outputs, respectively, therefore lengths should be the same.
+	If they are not, that means no mapping was found for at least one of the elements of inputs/outputs, meaning the type system
+	in the amr was invalid. */
+	if (inputs.length !== typeInputs.length || outputs.length !== typeInputs.length) {
+		return null;
+	}
+
+	return {
+		id: typeId,
+		input: typeInputs,
+		output: typeOutputs,
+		properties: {
+			name: typeId,
+			description: typeId
 		}
 	};
 }
