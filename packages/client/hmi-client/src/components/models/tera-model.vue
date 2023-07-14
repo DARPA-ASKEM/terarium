@@ -650,6 +650,7 @@ watch(
 		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
+			console.log(model.value);
 			fetchRelatedTerariumArtifacts();
 		} else {
 			model.value = null;

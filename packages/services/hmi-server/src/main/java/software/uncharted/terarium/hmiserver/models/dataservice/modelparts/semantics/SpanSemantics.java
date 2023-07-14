@@ -6,11 +6,10 @@ import lombok.experimental.Accessors;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
-public class TypingSemantics {
-	private List<List<String>> type_map;
-
-	private TypeSystem system;
+public class SpanSemantics {
+    private List<SpanValue> span_value;
 }

@@ -107,6 +107,10 @@
 		</section>
 		<section class="step-1" v-else-if="stratifyView === StratifyView.Output">
 			<div>If this is not what you expected, go back to the input page to make changes.</div>
+			<table>
+				<thead></thead>
+				<tbody></tbody>
+			</table>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Stratified model">
 					<div class="step-1-inner">
@@ -149,6 +153,8 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { sir_typed_aug } from '@/temp/models/sir_typed_aug';
 import { flux_typed_aug } from '@/temp/models/flux_typed_aug';
+import { flux_typed } from '@/temp/models/flux_typed';
+import { extractModelMatrices } from '@/services/extract-model-matrices';
 import { stratify_output } from '@/temp/models/stratify_output';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
@@ -191,6 +197,8 @@ async function runStratify() {
 watch(
 	() => props.node.inputs[0],
 	async () => {
+		console.log(extractModelMatrices(flux_typed));
+
 		const modelConfigurationId = props.node.inputs[0].value?.[0];
 		if (modelConfigurationId) {
 			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);

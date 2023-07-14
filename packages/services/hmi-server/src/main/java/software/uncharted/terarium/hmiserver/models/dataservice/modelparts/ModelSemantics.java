@@ -13,5 +13,8 @@ public class ModelSemantics {
 	private OdeSemantics ode;
 
 	@TSOptional
+	private SpanSemantics span;
+
+	@TSOptional
 	private TypingSemantics typing;
 }

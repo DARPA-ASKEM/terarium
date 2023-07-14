@@ -72,7 +72,7 @@ export const convertToIGraph = (amr: Model) => {
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
 
-		console.log(amr.semantics);
+		// console.log(amr.semantics);
 
 		// Changed stratify_output.ts to have the attribute type_map instead of map
 
