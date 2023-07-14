@@ -25,7 +25,7 @@ import { Model, PetriNetTransition, Transition, TypeSystem, TypingSemantics } fr
 import {
 	addReflexives,
 	addTyping,
-	updateRateExpression
+	updateRateExpressionWithParam
 } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
@@ -88,7 +88,11 @@ function updateStatesToAddReflexives(
 				(t) => t.id === typeOfTransition
 			);
 			if (transition) {
-				updateRateExpression(typedModel.value, reflexive as PetriNetTransition, reflexive.id);
+				updateRateExpressionWithParam(
+					typedModel.value,
+					reflexive as PetriNetTransition,
+					reflexive.id
+				);
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
 					updatedTypeMap.push([newTransitionId, typeOfTransition]);
 				}

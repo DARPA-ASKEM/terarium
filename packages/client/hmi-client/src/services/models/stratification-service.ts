@@ -1,7 +1,7 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import { Model, ModelSemantics, PetriNetTransition, State, Transition } from '@/types/Types';
-import { updateRateExpression } from '@/model-representation/petrinet/petrinet-service';
+import { updateRateExpressionWithParam } from '@/model-representation/petrinet/petrinet-service';
 
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification
@@ -172,7 +172,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		}
 	};
 	transitions.forEach((t, i) =>
-		updateRateExpression(model, t as PetriNetTransition, parameters[i].id)
+		updateRateExpressionWithParam(model, t as PetriNetTransition, parameters[i].id)
 	);
 	return model;
 }
@@ -322,7 +322,7 @@ export function generateTypeState(amr: Model, stateId: string, typeId: string): 
 	};
 }
 
-/* 
+/*
 	Return a Transition with inferred inputs and outputs based on a partially typed amr.
 	Return null if type inference cannot be completed for whatever reason.
 	*/

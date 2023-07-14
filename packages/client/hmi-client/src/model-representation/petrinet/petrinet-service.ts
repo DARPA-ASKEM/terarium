@@ -266,7 +266,13 @@ export const removeTransition = (amr: Model, id: string) => {
 
 // Update a transition's expression and expression_mathml fields based on
 // mass-kinetics
-export const updateRateExpression = (
+export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
+	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+	if (!param) return;
+
+	updateRateExpressionWithParam(amr, transition, param.id);
+};
+export const updateRateExpressionWithParam = (
 	amr: Model,
 	transition: PetriNetTransition,
 	parameterId: string
@@ -297,14 +303,14 @@ export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
 		const transition = model.transitions.find((d) => d.id === targetId);
 		if (transition) {
 			transition.input.push(sourceId);
-			updateRateExpression(amr, transition, transition.id);
+			updateRateExpression(amr, transition);
 		}
 	} else {
 		// if source is a transition then the target is a state
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (transition) {
 			transition.output.push(targetId);
-			updateRateExpression(amr, transition, transition.id);
+			updateRateExpression(amr, transition);
 		}
 	}
 };
@@ -324,7 +330,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition, transition.id);
+		updateRateExpression(amr, transition);
 	} else {
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (!transition) return;
@@ -337,7 +343,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition, transition.id);
+		updateRateExpression(amr, transition);
 	}
 };
 
@@ -363,7 +369,7 @@ export const updateState = (amr: Model, id: string, newId: string, newName: stri
 	});
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t, t.id);
+		updateRateExpression(amr, t);
 	});
 };
 
@@ -379,7 +385,7 @@ export const updateTransitione = (amr: Model, id: string, newId: string, newName
 	rate.target = newId;
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t, t.id);
+		updateRateExpression(amr, t);
 	});
 };
 
