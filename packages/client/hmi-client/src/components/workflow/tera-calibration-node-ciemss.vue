@@ -93,18 +93,17 @@ import { CalibrationRequestCiemss, CsvAsset, Simulation, ModelConfiguration } fr
 import {
 	makeCalibrateJobCiemss,
 	getSimulation,
-	getRunResult
+	getRunResultCiemss
 } from '@/services/models/simulation-service';
 import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import {
-	CalibrationOperationJulia,
-	CalibrationOperationStateJulia,
+	CalibrationOperationCiemss,
+	CalibrationOperationStateCiemss,
 	CalibrateMap
-} from './calibrate-operation-julia';
+} from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -222,7 +221,7 @@ const getStatus = async () => {
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
-		type: CalibrationOperationJulia.outputs[0].type,
+		type: CalibrationOperationCiemss.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: {
 			runId
@@ -238,7 +237,7 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -250,7 +249,7 @@ function addMapping() {
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -261,7 +260,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -297,7 +296,7 @@ watch(
 				datasetVariable: ''
 			})
 		);
-		const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+		const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 		state.mapping = mapping.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -327,10 +326,13 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		const csvData = csvParse(resultCsv);
-		runResults.value[simulationIds.value[0].runId] = csvData as any;
-		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		// const csvData = csvParse(resultCsv);
+		// runResults.value[simulationIds.value[0].runId] = csvData as any;
+		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		runResults.value = output.runResults;
 	},
 	{ immediate: true }
 );

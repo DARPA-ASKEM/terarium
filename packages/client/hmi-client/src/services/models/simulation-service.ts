@@ -45,8 +45,8 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
-export async function getRunResultCiemss(runId: string) {
-	const resultCsv = await getRunResult(runId, 'result.csv');
+export async function getRunResultCiemss(runId: string, filename = 'result.csv') {
+	const resultCsv = await getRunResult(runId, filename);
 	const csvData = csvParse(resultCsv);
 
 	const output = {

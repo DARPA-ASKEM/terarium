@@ -369,7 +369,8 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	if (
 		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
 		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
-		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
+		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
+		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 	) {
 		const state = node.state as SimulateJuliaOperationState;
 		if (state.chartConfigs.length === 0) {

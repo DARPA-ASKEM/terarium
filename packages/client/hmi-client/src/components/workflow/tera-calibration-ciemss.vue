@@ -126,12 +126,11 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ref, shallowRef, watch } from 'vue';
-import { csvParse } from 'd3';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-import { getRunResult } from '@/services/models/simulation-service';
+import { getRunResult, getRunResultCiemss } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -249,9 +248,13 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		const csvData = csvParse(resultCsv);
-		runResults.value[simulationIds.value[0].runId] = csvData as any;
+		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		// const csvData = csvParse(resultCsv);
+		// console.log(csvData);
+		// runResults.value[simulationIds.value[0].runId] = csvData as any;
+
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		runResults.value = output.runResults;
 		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 	},
 	{ immediate: true }
