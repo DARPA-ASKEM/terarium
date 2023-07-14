@@ -75,7 +75,7 @@
 					<td>{{ model?.metadata?.processed_by ?? '--' }}</td>
 				</tr>
 			</table>
-			<RelatedPublications
+			<tera-related-publications
 				:publications="publications"
 				:project="project"
 				:dialog-flavour="'model'"
@@ -481,7 +481,7 @@ import Message from 'primevue/message';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
@@ -912,26 +912,9 @@ function editSection(event: Event) {
 	margin-left: 0.5rem;
 }
 
-.p-toolbar {
-	position: absolute;
-	width: 100%;
-	z-index: 1;
-	isolation: isolate;
-	background: transparent;
-	padding: 0.5rem;
-}
-
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
-}
-
-.toolbar-button-saveModel {
-	margin: 0.25rem;
-}
-
-.toolbar-subgroup {
-	display: flex;
 }
 
 .floating-edit-button {

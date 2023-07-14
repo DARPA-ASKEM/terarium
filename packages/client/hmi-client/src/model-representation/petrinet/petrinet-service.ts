@@ -67,11 +67,11 @@ export const convertToIGraph = (amr: Model) => {
 	const petrinetModel = amr.model as PetriNetModel;
 
 	petrinetModel.states.forEach((state) => {
-		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The structure of map is an array of arrays, where each inner array has 2 elements.
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.type_map.find(
+		const typeMap = amr.semantics?.typing?.map.find(
 			(map) => map.length === 2 && state.id === map[0]
 		);
 		const strataType = typeMap?.[1] ?? '';
@@ -89,11 +89,11 @@ export const convertToIGraph = (amr: Model) => {
 	});
 
 	petrinetModel.transitions.forEach((transition) => {
-		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The structure of map is an array of arrays, where each inner array has 2 elements.
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.type_map.find(
+		const typeMap = amr.semantics?.typing?.map.find(
 			(map) => map.length === 2 && transition.id === map[0]
 		);
 
@@ -158,10 +158,10 @@ export const convertToIGraph = (amr: Model) => {
 const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
-export const newAMR = () => {
+export const newAMR = (modelName: string) => {
 	const amr: Model = {
 		id: '',
-		name: 'new model',
+		name: modelName,
 		description: '',
 		schema:
 			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
@@ -402,4 +402,77 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 		fluxModel: fluxAMR
 	});
 	return response.data as Model;
+};
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Stratification
+/// /////////////////////////////////////////////////////////////////////////////
+
+// Returns a 1xN matrix describing state's initials
+export const extractMapping = (amr: Model, id: string) => {
+	const typeMapList = amr.semantics?.typing?.map as [string, string][];
+	const item = typeMapList.find((d) => d[0] === id);
+	if (!item) return [];
+	const result = typeMapList.filter((d) => d[1] === item[1]);
+	return result.map((d) => d[0]);
+};
+
+// Flattens out transitions and their relationships/types into a 1-D vector
+export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]) => {
+	const model = amr.model as PetriNetModel;
+	const transitions = model.transitions;
+
+	const results: any[] = [];
+
+	transitions.forEach((transition) => {
+		const id = transition.id;
+		if (!transitionIds.includes(id)) return;
+
+		const input = transition.input;
+		const output = transition.output;
+		const obj: any = {};
+
+		// Get input typings
+		input.forEach((iid) => {
+			const mapping = amr.semantics?.typing?.map.find((t) => t[0] === iid);
+			if (!mapping) return;
+			obj[mapping[1]] = mapping[0];
+		});
+
+		// Get output typings
+		output.forEach((oid) => {
+			const mapping = amr.semantics?.typing?.map.find((t) => t[0] === oid);
+			if (!mapping) return;
+			obj[mapping[1]] = mapping[0];
+		});
+
+		// Get self typing
+		const mapping = amr.semantics?.typing?.map.find((d) => d[0] === transition.id);
+		if (mapping) {
+			obj[mapping[1]] = mapping[0];
+		}
+
+		// FIXME: not sure what we need
+		obj.id = transition.id;
+		results.push(obj);
+	});
+	return results;
+};
+
+// Returns state list as a 1D vector for pivot matrix
+export const extractStateMatrixData = (amr: Model, stateIds: string[]) => {
+	const model = amr.model as PetriNetModel;
+	const states = model.states;
+	const results: any[] = [];
+
+	states.forEach((state) => {
+		const id = state.id;
+		if (!stateIds.includes(id)) return;
+		const obj: any = {};
+
+		// FIXME: not sure what we need
+		obj.id = state.id;
+		results.push(obj);
+	});
+	return results;
 };
