@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5 class="truncate">{{ node.operationType }}</h5>
+			<h5 class="truncate">{{ node.displayName }}</h5>
 			<span>
 				<Button
 					icon="pi pi-sign-in"
