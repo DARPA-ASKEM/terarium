@@ -362,18 +362,25 @@ function clearError() {
 }
 
 function validateTimeSeries(values) {
+	let isValid = true;
+	if (typeof values !== 'string') {
+		isValid = false;
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+		return isValid;
+	}
 	const timeValuePairs = values.split(',');
 
-	let isValid = true;
 	timeValuePairs.forEach((pair) => {
 		const [time, value] = pair.trim().split(/\s*:\s*/);
 		if (!time || !value) {
-			errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
 			isValid = false;
 		}
 	});
 
 	clearError();
+	if (!isValid) {
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+	}
 	return isValid;
 }
 
