@@ -2,12 +2,22 @@ import { csvParse } from 'd3';
 
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Simulation, SimulationRequest, CalibrationRequest } from '@/types/Types';
+import { Simulation, SimulationRequest, CalibrationRequest, EventType } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
+import * as EventService from '@/services/event';
+import useResourcesStore from '@/stores/resources';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
 		const resp = await API.post('simulation-request/forecast', simulationParam);
+		EventService.create(
+			EventType.TransformPrompt,
+			useResourcesStore().activeProject?.id,
+			JSON.stringify({
+				type: 'julia',
+				params: simulationParam
+			})
+		);
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -19,6 +29,14 @@ export async function makeForecastJob(simulationParam: SimulationRequest) {
 export async function makeForecastJobCiemss(simulationParam: SimulationRequest) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/forecast/', simulationParam);
+		EventService.create(
+			EventType.TransformPrompt,
+			useResourcesStore().activeProject?.id,
+			JSON.stringify({
+				type: 'ciemss',
+				params: simulationParam
+			})
+		);
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -102,6 +120,11 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 
 export async function makeCalibrateJob(calibrationParams: CalibrationRequest) {
 	try {
+		EventService.create(
+			EventType.RunCalibrate,
+			useResourcesStore().activeProject?.id,
+			JSON.stringify(calibrationParams)
+		);
 		const resp = await API.post('simulation-request/calibrate', calibrationParams);
 		const output = resp.data;
 		return output;
