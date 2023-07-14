@@ -403,3 +403,69 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 	});
 	return response.data as Model;
 };
+
+// Returns a 1xN matrix describing state's initials
+export const extractMapping = (amr: Model, id: string) => {
+	const typeMapList = amr.semantics?.typing.map as [string, string][];
+	const item = typeMapList.find((d) => d[0] === id);
+	if (!item) return [];
+	const result = typeMapList.filter((d) => d[1] === item[1]);
+	return result.map((d) => d[0]);
+};
+
+// Flattens out transitions and their relationships into a 1-D vector
+export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]) => {
+	const model = amr.model as PetriNetModel;
+	const transitions = model.transitions;
+
+	const results: any[] = [];
+
+	transitions.forEach((transition) => {
+		const id = transition.id;
+		if (!transitionIds.includes(id)) return;
+
+		const input = transition.input;
+		const output = transition.output;
+
+		const obj: any = {};
+
+		input.forEach((iid) => {
+			const mapping = amr.semantics?.typing.map.find((t) => t[0] === iid);
+			if (!mapping) return;
+			obj[mapping[1]] = mapping[0];
+		});
+
+		output.forEach((oid) => {
+			const mapping = amr.semantics?.typing.map.find((t) => t[0] === oid);
+			if (!mapping) return;
+			obj[mapping[1]] = mapping[0];
+		});
+
+		// Add self
+		const mapping = amr.semantics?.typing.map.find((d) => d[0] === transition.id);
+		if (mapping) {
+			obj[mapping[1]] = mapping[0];
+		}
+
+		// FIXME:
+		obj.id = transition.id;
+		results.push(obj);
+	});
+	return results;
+};
+
+// Returns state list as a 1D vector for pivot matrix
+export const extractStateMatrixData = (amr: Model, stateIds: string[]) => {
+	const model = amr.model as PetriNetModel;
+	const states = model.states;
+	const results: any[] = [];
+
+	states.forEach((state) => {
+		const id = state.id;
+		if (!stateIds.includes(id)) return;
+		const obj: any = {};
+		obj.id = state.id;
+		results.push(obj);
+	});
+	return results;
+};
