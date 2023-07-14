@@ -32,6 +32,7 @@ export interface OperationData {
 // Defines a function: eg: model, simulate, calibrate
 export interface Operation {
 	name: WorkflowOperationTypes;
+	displayName: string;
 	description: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
@@ -63,6 +64,7 @@ export interface WorkflowNode {
 	id: string;
 	workflowId: string;
 	operationType: string;
+	displayName: string;
 
 	// Position on canvas
 	x: number;
