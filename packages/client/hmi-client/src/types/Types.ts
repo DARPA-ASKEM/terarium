@@ -158,6 +158,11 @@ export interface Transition {
 }
 
 export interface TypeSystem {
+    states: State[];
+    transitions: Transition[];
+}
+
+export interface TypeSystem2 {
     name: string;
     description: string;
     schema: string;
@@ -169,6 +174,11 @@ export interface TypeSystem {
 }
 
 export interface TypingSemantics {
+    type_system: TypeSystem;
+    type_map: string[][];
+}
+
+export interface TypingSemantics2 {
     map: string[][];
     system: TypeSystem;
 }
