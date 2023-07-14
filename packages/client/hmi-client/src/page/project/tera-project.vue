@@ -58,12 +58,14 @@
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA
 					"
 					:node="workflowNode"
+					:project="project"
 				/>
 				<tera-simulate-ciemss
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
 					"
 					:node="workflowNode"
+					:project="project"
 				/>
 				<tera-stratify
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"

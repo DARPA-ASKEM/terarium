@@ -95,6 +95,8 @@ export interface ProvenanceQueryParam {
 export interface Simulation {
     id: string;
     executionPayload: any;
+    name?: string;
+    description?: string;
     resultFiles?: string[];
     type: string;
     status: string;
