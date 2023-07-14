@@ -23,12 +23,12 @@
 					{{ dialogFlavour }}. Select the resources you would like to use.
 				</p>
 				<DataTable
-					:value="publications"
+					:value="allResources"
 					v-model:selection="selectedResources"
 					tableStyle="min-width: 50rem"
 				>
 					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-					<Column field="title" sortable header="Name"></Column>
+					<Column field="name" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
 				</DataTable>
 				<template #footer>
@@ -51,10 +51,10 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { computed, ComputedRef, ref, onMounted } from 'vue';
+import { computed, ComputedRef, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { IProject } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
 import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
@@ -63,24 +63,34 @@ import { Artifact, DocumentAsset } from '@/types/Types';
 const visible = ref(false);
 const selectedResources = ref();
 
-// removed from template.  re-add after hack-a-thon and endpoint working.
-const resources: ComputedRef<{ name: string; id: string | undefined; authors: string }[] | any[]> =
-	computed(() => {
-		if (props.project?.assets) {
-			return props.project?.assets.artifacts
-				.filter((artifact: Artifact) =>
-					[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
-						(extension) => artifact.name.endsWith(extension)
-					)
+const allResources: ComputedRef<
+	{ name: string; id: string | undefined; authors: string }[] | any[]
+> = computed(() => {
+	if (props.project?.assets) {
+		const artifactResources = props.project?.assets.artifacts
+			.filter((artifact: Artifact) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
+					artifact.name.endsWith(extension)
 				)
-				.map((artifact: Artifact) => ({
-					name: artifact.name,
-					authors: '',
-					id: artifact.id
-				}));
-		}
-		return [];
-	});
+			)
+			.map((artifact: Artifact) => ({
+				name: artifact.name,
+				authors: '',
+				id: artifact.id,
+				type: ProjectAssetTypes.ARTIFACTS
+			}));
+
+		const documentResources = props.project?.assets.publications.map((document: DocumentAsset) => ({
+			name: document.title,
+			authors: '',
+			id: document.id,
+			type: ProjectAssetTypes.DOCUMENTS
+		}));
+
+		return [...documentResources, ...artifactResources];
+	}
+	return [];
+});
 
 const props = defineProps<{
 	project?: IProject;
@@ -100,10 +110,6 @@ function sendForEnrichments(_selectedResources) {
 	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
 	/* TODO: send selected resources to backend for enrichment */
 }
-
-onMounted(() => {
-	console.log(resources);
-});
 </script>
 
 <style scoped>
