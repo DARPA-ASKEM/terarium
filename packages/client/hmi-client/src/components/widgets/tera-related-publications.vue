@@ -15,14 +15,18 @@
 			<Dialog
 				v-model:visible="visible"
 				modal
-				header="Describe this dataset"
+				:header="`Describe this ${dialogFlavour}`"
 				:style="{ width: '50vw' }"
 			>
 				<p class="constrain-width">
-					Terarium can extract information from papers and other resources to describe this dataset.
-					Select the resources you would like to use.
+					Terarium can extract information from papers and other resources to describe this
+					{{ dialogFlavour }}. Select the resources you would like to use.
 				</p>
-				<DataTable :value="resources" :selection="selectedResources" tableStyle="min-width: 50rem">
+				<DataTable
+					:value="resources"
+					v-model:selection="selectedResources"
+					tableStyle="min-width: 50rem"
+				>
 					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
 					<Column field="name" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
@@ -47,15 +51,39 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { ref } from 'vue';
+import { computed, ComputedRef, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { Artifact } from '@/types/Types';
+import { IProject } from '@/types/Project';
+import { AcceptedExtensions } from '@/types/common';
 
 const visible = ref(false);
-const resources = ref();
 const selectedResources = ref();
 
-defineProps<{ publications?: Array<string> }>();
+const resources: ComputedRef<{ name: string; id: string | undefined; authors: string }[] | any[]> =
+	computed(() => {
+		if (props.project?.assets) {
+			return props.project?.assets.artifacts
+				.filter((artifact: Artifact) =>
+					[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
+						(extension) => artifact.name.endsWith(extension)
+					)
+				)
+				.map((artifact: Artifact) => ({
+					name: artifact.name,
+					authors: '',
+					id: artifact.id
+				}));
+		}
+		return [];
+	});
+
+const props = defineProps<{
+	project?: IProject;
+	publications?: Array<string>;
+	dialogFlavour: string;
+}>();
 const emit = defineEmits(['extracted-metadata']);
 
 function sendForEnrichments(_selectedResources) {
