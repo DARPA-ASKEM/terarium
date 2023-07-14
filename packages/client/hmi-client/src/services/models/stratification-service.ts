@@ -56,7 +56,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 			rates: []
 		},
 		typing: {
-			type_system: {
+			system: {
 				states: [
 					{
 						id: 'Pop',
@@ -77,7 +77,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 					}
 				]
 			},
-			type_map: typeMap
+			map: typeMap
 		}
 	};
 	return {
@@ -139,7 +139,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 			rates: []
 		},
 		typing: {
-			type_system: {
+			system: {
 				states: [
 					{
 						id: 'Pop',
@@ -160,7 +160,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 					}
 				]
 			},
-			type_map: typeMap
+			map: typeMap
 		}
 	};
 	return {
@@ -187,7 +187,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 }
 
 export function generateTypeState(amr: Model, stateId: string, typeId: string): State | null {
-	const states = amr.semantics?.typing?.type_system.states ?? [];
+	const states = amr.semantics?.typing?.system.states ?? [];
 	const existingState = states.find((s) => s.id === stateId);
 	if (existingState) {
 		return null;
@@ -211,8 +211,8 @@ export function generateTypeTransition(
 	/* Get inputs and outputs of transition from transitionId
 	FIterate through typeMap and get the corresponding type id for each transition id in input/output, where the first value of each element in typeMap
 	is the transition id, and the second element is the type id. */
-	const typeMap: string[][] | undefined = amr.semantics?.typing?.type_map;
-	const transitions: Transition[] = amr.semantics?.typing?.type_system.transitions ?? [];
+	const typeMap: string[][] | undefined = amr.semantics?.typing?.map;
+	const transitions: Transition[] = amr.semantics?.typing?.system.transitions ?? [];
 	const existingTransition = transitions.find((t) => t.id === transitionId);
 	if (existingTransition) {
 		return null;

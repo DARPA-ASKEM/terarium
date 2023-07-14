@@ -8,6 +8,7 @@ import { CsvAsset, Dataset } from '@/types/Types';
 import { addAsset } from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Ref } from 'vue';
+import { AxiosResponse } from 'axios';
 
 /**
  * Get all datasets
@@ -175,6 +176,21 @@ async function createNewDatasetFromCSV(
 	return downloadRawFile(newDataSet.id, file.name);
 }
 
+async function createDatasetFromSimulationResult(
+	projectId: string,
+	simulationId: string
+): Promise<Dataset | null> {
+	const response: AxiosResponse<Dataset> = await API.put(
+		`/datasets/create-from-simulation-result?simulationId=${simulationId}`
+	);
+	if (!response || response.status >= 400) {
+		console.log(`Error creating new dataset ${response?.status}`);
+		return null;
+	}
+	await addAsset(projectId, ProjectAssetTypes.DATASETS, response.data.id);
+	return response.data;
+}
+
 export {
 	getAll,
 	getDataset,
@@ -182,5 +198,6 @@ export {
 	downloadRawFile,
 	createNewDatasetFromCSV,
 	createNewDataset,
-	createNewDatasetFromGithubFile
+	createNewDatasetFromGithubFile,
+	createDatasetFromSimulationResult
 };
