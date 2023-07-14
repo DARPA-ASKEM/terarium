@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1]">
+		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1, 2]">
 			<AccordionTab header="Model diagram">
 				<TeraResizablePanel class="diagram-container">
 					<section class="graph-element">
@@ -16,13 +16,13 @@
 								<span class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
-										@click="addState"
+										@click="addNode()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
 										v-if="isEditing"
-										@click="addTransition"
+										@click="addNode()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
@@ -54,18 +54,21 @@
 				</TeraResizablePanel>
 			</AccordionTab>
 			<AccordionTab header="Model equations">
-				<TeraResizablePanel :class="diagramContainerStyle">
+				<TeraResizablePanel
+					:class="isEditingEQ ? `diagram-container-editing` : `diagram-container`"
+				>
 					<section class="controls">
 						<span v-if="props.isEditable" class="equation-edit-button">
 							<Button
 								v-if="isEditingEQ"
-								@click="isEditingEQ = false"
+								@click="cancelEditEquations"
 								label="Cancel"
 								class="p-button-sm p-button-outlined edit-button"
+								style="background-color: white"
 							/>
 							<Button
 								@click="isEditingEQ = true"
-								:label="isEditingEQ ? 'Save equation' : 'Edit equation'"
+								:label="isEditingEQ ? 'Update model' : 'Edit equation'"
 								:class="isEditingEQ ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
 							/>
 						</span>
@@ -80,15 +83,66 @@
 							:is-editing-eq="isEditingEQ"
 							:is-math-ml-valid="isMathMLValid"
 							@equation-updated="setNewEquation"
-							ref="equations"
+							@delete="deleteEquation"
+							ref="equationsRef"
 						>
 						</tera-math-editor>
 						<Button
 							v-if="isEditingEQ"
-							class="p-button-sm p-button-outlined add-equation-button"
+							class="p-button-sm add-equation-button"
 							icon="pi pi-plus"
 							label="Add Equation"
 							@click="latexEquationList.push('')"
+							text
+						/>
+					</section>
+				</TeraResizablePanel>
+			</AccordionTab>
+			<AccordionTab header="Model Observables">
+				<TeraResizablePanel
+					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
+					:start-height="200"
+				>
+					<section class="controls">
+						<span v-if="props.isEditable" class="equation-edit-button">
+							<Button
+								v-if="isEditingObservables"
+								@click="cancelEditObservables"
+								label="Cancel"
+								class="p-button-sm p-button-outlined edit-button"
+							/>
+							<Button
+								v-if="observervablesList.length !== 0"
+								@click="updateObservables"
+								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
+								:class="
+									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
+								"
+							/>
+						</span>
+					</section>
+					<section class="observable-editor-container">
+						<tera-math-editor
+							v-for="(ob, index) in observervablesList"
+							:key="index"
+							:index="index"
+							:is-editable="isEditable"
+							:latex-equation="ob.expression || ''"
+							:id="ob.id"
+							:name="ob.name"
+							:is-editing-eq="isEditingObservables"
+							@equation-updated="setNewObservables"
+							@delete="deleteObservable"
+							ref="observablesRefs"
+						>
+						</tera-math-editor>
+						<Button
+							v-if="observablesList.length === 0 || isEditingObservables"
+							class="p-button-sm add-equation-button"
+							icon="pi pi-plus"
+							label="Add Observable"
+							@click="addObservable"
+							text
 						/>
 					</section>
 				</TeraResizablePanel>
@@ -96,6 +150,28 @@
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
+
+	<Teleport to="body">
+		<tera-modal
+			class="edit-modal"
+			v-if="openEditNode === true"
+			@modal-mask-clicked="openEditNode = false"
+		>
+			<template #header>
+				<h4>Add/Edit node</h4>
+			</template>
+			<div>
+				<InputText v-model="editNodeObj.id" placeholder="Id" />
+			</div>
+			<div>
+				<InputText v-model="editNodeObj.name" placeholder="Name" />
+			</div>
+			<template #footer>
+				<Button label="Submit" @click="addNode()" />
+				<Button label="Cancel" @click="openEditNode = false" />
+			</template>
+		</tera-modal>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -124,20 +200,18 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
-import { Model } from '@/types/Types';
-// import EditorModal from '@/model-representation/petrinet/editor-modal.vue';
+import { Model, Observable } from '@/types/Types';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
 const emit = defineEmits([
 	'update-tab-name',
-	'close-preview',
 	'asset-loaded',
-	'close-current-tab',
-	'update-model-content'
+	'update-model-content',
+	'update-model-observables'
 ]);
-
-const equations = ref<any[]>([]);
 
 const props = defineProps<{
 	model: Model | null;
@@ -149,20 +223,40 @@ const menu = ref();
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
+const isEditingObservables = ref<boolean>(false);
 
-const diagramContainerStyle = computed(() => {
-	if (isEditingEQ.value) {
-		return `diagram-container-editing`;
-	}
-	return `diagram-container`;
-});
-
-const newModelName = ref('New Model');
-
+// Model Equations
+const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
-const newLatexEquationsList = ref<string[]>([]);
+// const newLatexEquationsList = ref<string[]>([]);
 const isMathMLValid = ref<boolean>(true);
+
+// Observable Equations
+const observablesRefs = ref<any[]>([]);
+const observervablesList = ref<Observable[]>([]);
+
+// For model editing
+interface AddStateObj {
+	id: string;
+	name: string;
+	nodeType: string;
+}
+const openEditNode = ref<boolean>(false);
+const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+let previousId: any = null;
+
+const addObservable = () => {
+	isEditingObservables.value = true;
+	const obs: Observable = {
+		id: '',
+		name: '',
+		states: [],
+		expression: '',
+		expression_mathml: ''
+	};
+	observervablesList.value.push(obs);
+};
 
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
@@ -188,14 +282,94 @@ const handleResize = () => {
 	updateLayout();
 };
 
-const setNewEquation = (index: number, latexEq: string, mathmlEq: string) => {
-	console.log(mathmlEq);
+const setNewEquation = (index: number, latexEq: string) => {
 	latexEquationList.value[index] = latexEq;
 };
 
-// const currentEquations = computed(() => {
-// 	return equations.value.map((eq) => separateEquations(eq.mathLiveField.getValue('math-ml')));
-// });
+const deleteEquation = (index) => {
+	latexEquationList.value.splice(index, 1);
+};
+
+const deleteObservable = (index) => {
+	observervablesList.value.splice(index, 1);
+};
+
+const setNewObservables = (
+	index: number,
+	latexEq: string,
+	mathmlEq: string,
+	name: string,
+	id: string
+) => {
+	const obs: Observable = {
+		id,
+		name,
+		states: [],
+		expression: latexEq,
+		expression_mathml: mathmlEq
+	};
+	observervablesList.value[index] = obs;
+	emit('update-model-observables', observervablesList.value);
+};
+
+const cancelEditEquations = () => {
+	isEditingEQ.value = false;
+	latexEquationList.value = latexEquationsOriginalList.value.map((eq) => eq);
+	equationsRef.value.forEach((eq) => {
+		eq.isEditingEquation = false;
+	});
+};
+
+const cancelEditObservables = () => {
+	isEditingObservables.value = false;
+	observervablesList.value = observervablesList.value.filter((eq) => eq.expression !== '');
+	observablesRefs.value.forEach((eq) => {
+		eq.isEditingEquation = false;
+	});
+};
+
+function extractVariablesFromMathML(mathML: string): string[] {
+	const parser = new DOMParser();
+	const xmlDoc = parser.parseFromString(mathML, 'text/xml');
+
+	const variables: string[] = [];
+
+	const miElements = xmlDoc.getElementsByTagName('mi');
+	for (let i = 0; i < miElements.length; i++) {
+		const miElement = miElements[i];
+		const variable = miElement.textContent?.trim();
+		if (variable) {
+			variables.push(variable);
+		}
+	}
+
+	return variables;
+}
+
+const updateObservables = () => {
+	if (isEditingObservables.value) {
+		isEditingObservables.value = false;
+		// update
+		emit(
+			'update-model-observables',
+			observablesRefs.value.map((eq, index) => {
+				console.log(eq);
+				return {
+					id: eq.id || observablesRefs.value[index].id,
+					name: eq.name || observablesRefs.value[index].name,
+					expression: eq.mathLiveField.value,
+					expression_mathml: eq.mathLiveField.getValue('math-ml'),
+					states: extractVariablesFromMathML(eq.mathLiveField.getValue('math-ml'))
+				};
+			})
+		);
+		observablesRefs.value.forEach((eq) => {
+			eq.isEditingEquation = false;
+		});
+	} else {
+		isEditingObservables.value = true;
+	}
+};
 
 const mathEditorSelected = computed(() => {
 	if (!isMathMLValid.value) {
@@ -207,9 +381,10 @@ const mathEditorSelected = computed(() => {
 	return '';
 });
 
-const updateLatexFormula = (formulaString: string[]) => {
-	latexEquationList.value = formulaString;
-	latexEquationsOriginalList.value = formulaString;
+const updateLatexFormula = (equationsList: string[]) => {
+	latexEquationList.value = equationsList;
+	if (latexEquationsOriginalList.value.length === 0)
+		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
 
 function joinStringLists(lists: string[][]): string[] {
@@ -219,7 +394,7 @@ function joinStringLists(lists: string[][]): string[] {
 watch(
 	() => [latexEquationList.value],
 	() => {
-		const mathMLEquations = equations.value.map((eq) =>
+		const mathMLEquations = equationsRef.value.map((eq) =>
 			separateEquations(eq.mathLiveField.getValue('math-ml'))
 		);
 		validateMathML(joinStringLists(mathMLEquations), false);
@@ -234,7 +409,6 @@ watch(
 		updateLatexFormula([]);
 		if (props.model) {
 			const data = await petriToLatex(convertAMRToACSet(props.model));
-			console.log(data);
 			const eqList = data
 				?.split(' \\\\')
 				.map(
@@ -252,15 +426,6 @@ watch(
 		}
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
 );
 
 const editorKeyHandler = (event: KeyboardEvent) => {
@@ -302,18 +467,16 @@ const contextMenuItems = ref([
 		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
-			}
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+			openEditNode.value = true;
 		}
 	},
 	{
 		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			if (renderer) {
-				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
-			}
+			editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+			openEditNode.value = true;
 		}
 	}
 ]);
@@ -333,6 +496,17 @@ watch(
 			useStableZoomPan: true,
 			runLayout: runDagreLayout,
 			dragSelector: 'no-drag'
+		});
+
+		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
+			const data = selection.datum();
+			editNodeObj.value = {
+				id: data.id,
+				name: data.label,
+				nodeType: data.data.type
+			};
+			previousId = data.id;
+			openEditNode.value = true;
 		});
 
 		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
@@ -382,7 +556,7 @@ const updatePetriNet = async (model: Model) => {
 		renderer.isGraphDirty = true;
 		await renderer.render();
 	}
-	updateLatexFormula(newLatexEquationsList.value);
+	updateLatexFormula(latexEquationList.value);
 };
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
@@ -391,12 +565,10 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 };
 
 const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
-	isEditingEQ.value = true;
 	isMathMLValid.value = false;
 	const cleanedMathML = mathMLStringList;
 	if (mathMLStringList.length === 0) {
 		isMathMLValid.value = true;
-		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
 			const amr = await mathmlToAMR(cleanedMathML, 'petrinet'); // This model is not compatible.
@@ -406,9 +578,6 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
 			) {
 				isMathMLValid.value = true;
-				isEditingEQ.value = false;
-
-				// this is just updating the petrinet diagram back to the original model
 				if (props.model !== null) updatePetriNet(props.model);
 				// if (model !== null) updatePetriNet(model); -> doesn't work because model is NOT an AMR right now.
 			} else {
@@ -454,18 +623,36 @@ const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, 'state');
+const addNode = async () => {
+	if (!renderer) return;
+
+	const node = editNodeObj.value;
+
+	if (!previousId) {
+		if (eventX && eventY) {
+			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
+		} else {
+			renderer.addNodeCenter(node.nodeType, node.id, node.name);
+		}
+	} else {
+		renderer.updateNode(previousId, node.id, node.name);
+		previousId = null;
+	}
+
+	eventX = -1;
+	eventY = -1;
+	openEditNode.value = false;
 };
 
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, 'transition');
-};
+const observablesList = computed(() => props.model?.semantics?.ode?.observables ?? []);
 
 onMounted(() => {
 	document.addEventListener('keyup', editorKeyHandler);
 	window.addEventListener('resize', handleResize);
 	handleResize();
+	if (observablesList.value.length > 0) {
+		observervablesList.value = observablesList.value.filter((ob) => ob.expression);
+	}
 });
 
 onUnmounted(() => {
@@ -571,6 +758,21 @@ section math-editor {
 	padding-bottom: 20px;
 }
 
+.observable-editor-container {
+	display: flex;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	flex-direction: column;
+	border: 4px solid transparent;
+	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
+	overflow: auto;
+	padding-top: 50px;
+	padding-bottom: 20px;
+}
+
 .controls {
 	display: flex;
 	flex-direction: row;
@@ -590,11 +792,17 @@ section math-editor {
 	min-height: 30px;
 	margin-left: 5px;
 	margin-top: 5px;
+	border: none;
+	outline: none;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.edit-modal:deep(main) {
+	max-width: 50rem;
 }
 </style>

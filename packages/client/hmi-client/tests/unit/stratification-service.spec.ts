@@ -11,7 +11,7 @@ describe('test generate age strata model', () => {
 		const stateNames = ['Young', 'Old'];
 		const model = generateAgeStrataModel(stateNames);
 		expect(model).toEqual({
-			id: '',
+			id: 'age-contact',
 			name: 'Age-contact strata model',
 			description: 'Age-contact strata model',
 			schema:
@@ -95,13 +95,13 @@ describe('test generate age strata model', () => {
 						],
 						transitions: [
 							{
-								id: 'Strata',
-								input: ['Pop'],
-								output: ['Pop'],
+								id: 'Infect',
+								input: ['Pop', 'Pop'],
+								output: ['Pop', 'Pop'],
 								properties: {
-									name: 'Strata',
+									name: 'Infect',
 									description:
-										'1-to-1 process that represents a change in the demographic division of a human individual.'
+										'2-to-2 interaction that represents infectious contact between two human individuals.'
 								}
 							}
 						]
@@ -109,10 +109,10 @@ describe('test generate age strata model', () => {
 					type_map: [
 						['A1', 'Pop'],
 						['A2', 'Pop'],
-						['c11', 'Strata'],
-						['c12', 'Strata'],
-						['c21', 'Strata'],
-						['c22', 'Strata']
+						['c11', 'Infect'],
+						['c12', 'Infect'],
+						['c21', 'Infect'],
+						['c22', 'Infect']
 					]
 				}
 			},
@@ -132,7 +132,7 @@ describe('test generate location strata model', () => {
 		const stateNames = ['Toronto', 'Montreal'];
 		const model = generateLocationStrataModel(stateNames);
 		expect(model).toEqual({
-			id: '',
+			id: 'location-travel',
 			name: 'Location-travel strata model',
 			description: 'Location-travel strata model',
 			schema:
