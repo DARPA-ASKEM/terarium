@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 const addOperation: Operation = {
 	name: WorkflowOperationTypes.ADD,
+	displayName: 'Add',
 	description: 'add two numbers',
 	inputs: [{ type: 'number' }, { type: 'number' }],
 	outputs: [{ type: 'number' }],

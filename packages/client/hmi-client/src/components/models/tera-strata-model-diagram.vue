@@ -85,10 +85,10 @@ const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
 const stateTypes = computed(() =>
-	typedModel.value.semantics?.typing?.type_system?.states.map((s) => s.name)
+	typedModel.value.semantics?.typing?.system?.states.map((s) => s.name)
 );
 const transitionTypes = computed(() =>
-	typedModel.value.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
+	typedModel.value.semantics?.typing?.system?.transitions.map((t) => t.properties?.name)
 );
 
 const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();

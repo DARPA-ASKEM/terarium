@@ -342,7 +342,7 @@ export const typedSir: Model = {
 			]
 		},
 		typing: {
-			type_system: {
+			system: {
 				states: [
 					{
 						id: 'Pop',
@@ -408,7 +408,7 @@ export const typedSir: Model = {
 					}
 				]
 			},
-			type_map: [
+			map: [
 				['S', 'Pop'],
 				['I', 'Pop'],
 				['R', 'Pop'],
