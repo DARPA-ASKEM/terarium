@@ -109,7 +109,7 @@ export function flattenMathMLElement(element: Element | null) {
 	}
 }
 
-// Seperates the mathMLString into seperate equations into a list
+// Separates the mathMLString into separate equations into a list
 export function separateEquations(mathMLString: string): string[] {
 	if (!mathMLString) return [''];
 

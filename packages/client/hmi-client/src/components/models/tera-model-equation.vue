@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main :class="{ error: !isMathMLValid, selected: isEditing }">
 		<aside v-if="props.isEditable">
 			<Button
 				v-if="isEditing"
@@ -14,7 +14,7 @@
 				:class="isEditing ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
 			/>
 		</aside>
-		<section :class="{ error: !isMathMLValid, selected: isEditing }">
+		<section>
 			<tera-math-editor
 				v-for="(eq, index) in latexEquationList"
 				:key="index"
@@ -48,6 +48,8 @@ import { isArray, isEmpty, pickBy } from 'lodash';
 import { logger } from '@/utils/logger';
 import { separateEquations } from '@/utils/math';
 import { Model } from '@/types/Types';
+import { petriToLatex } from '@/petrinet/petrinet-service';
+import { convertAMRToACSet } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
 	model: Model | null;
@@ -62,6 +64,13 @@ const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
 const isMathMLValid = ref<boolean>(true);
+
+const updateLatexFormula = (equationsList: string[]) => {
+	latexEquationList.value = equationsList;
+	if (isEmpty(latexEquationsOriginalList.value)) {
+		latexEquationsOriginalList.value = [...equationsList];
+	}
+};
 
 // Utils
 const setNewEquation = (index: number, latexEq: string) => {
@@ -126,22 +135,58 @@ watch(
 	},
 	{ deep: true }
 );
+
+// Whenever selectedModelId changes, fetch model with that ID
+watch(
+	() => [props.model],
+	async () => {
+		updateLatexFormula([]);
+		if (props.model) {
+			const data = await petriToLatex(convertAMRToACSet(props.model));
+			const eqList = data
+				?.split(' \\\\')
+				.map(
+					(elem) =>
+						`\\begin{align} ${elem
+							.replace('\\\\', '\\')
+							.replace('\\begin{align}', '')
+							.replace('\\end{align}', '')
+							.trim()} \\end{align}`
+				);
+
+			if (data) {
+				updateLatexFormula(eqList || []);
+			}
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
 main {
+	border-radius: var(--border-radius);
+	border-color: transparent;
+	border-style: solid;
+	border-width: 2px;
 	min-height: 3rem;
 	position: relative;
+	isolation: isolate;
+}
+
+main.selected {
+	border-color: var(--primary-color);
 }
 
 aside {
 	display: flex;
 	position: absolute;
-	top: 0;
-	right: 0;
+	top: 0.5rem;
+	right: 0.5rem;
+	z-index: 2;
 }
 
-section {
+main > section {
 	display: flex;
 	flex-direction: column;
 	padding-top: 2rem;
@@ -150,8 +195,7 @@ section {
 .add-equation-button {
 	width: 150px;
 	min-height: 30px;
-	margin-left: 5px;
-	margin-top: 5px;
+	margin: 0.5rem;
 	border: none;
 	outline: none;
 }

@@ -398,15 +398,9 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-
-		<Accordion v-if="model && modelView === ModelView.MODEL" multiple :active-index="[0]">
+		<Accordion v-if="model && modelView === ModelView.MODEL" multiple :active-index="[1, 2]">
 			<AccordionTab header="Diagram">
-				<tera-model-diagram
-					:model="model"
-					:is-editable="props.isEditable"
-					@update-model-content="updateModelContent"
-					@update-model-observables="updateModelObservables"
-				/>
+				<tera-model-diagram :model="model" :is-editable="props.isEditable" />
 			</AccordionTab>
 			<AccordionTab header="Equations">
 				<tera-model-equation :model="model" :is-editable="props.isEditable" />
@@ -492,7 +486,7 @@ import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
+// import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
@@ -739,17 +733,17 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 	}
 	return '';
 }
-
-function updateModelContent(rendererGraph) {
-	if (model.value) model.value = convertToAMRModel(rendererGraph);
-}
-
-function updateModelObservables(observableMathMLList) {
-	// assign the new observables
-	if (model.value !== null && model.value.semantics?.ode?.observables) {
-		model.value.semantics.ode.observables = observableMathMLList;
-	}
-}
+//
+// function updateModelContent(rendererGraph) {
+// 	if (model.value) model.value = convertToAMRModel(rendererGraph);
+// }
+//
+// function updateModelObservables(observableMathMLList) {
+// 	// assign the new observables
+// 	if (model.value !== null && model.value.semantics?.ode?.observables) {
+// 		model.value.semantics.ode.observables = observableMathMLList;
+// 	}
+// }
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
