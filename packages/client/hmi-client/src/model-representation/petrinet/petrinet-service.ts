@@ -67,7 +67,7 @@ export const convertToIGraph = (amr: Model) => {
 	const petrinetModel = amr.model as PetriNetModel;
 
 	petrinetModel.states.forEach((state) => {
-		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The structure of map is an array of arrays, where each inner array has 2 elements.
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
@@ -76,7 +76,7 @@ export const convertToIGraph = (amr: Model) => {
 
 		// Changed stratify_output.ts to have the attribute type_map instead of map
 
-		const typeMap = amr.semantics?.typing?.type_map.find(
+		const typeMap = amr.semantics?.typing?.map.find(
 			(map) => map.length === 2 && state.id === map[0]
 		);
 		const strataType = typeMap?.[1] ?? '';
@@ -94,15 +94,13 @@ export const convertToIGraph = (amr: Model) => {
 	});
 
 	petrinetModel.transitions.forEach((transition) => {
-		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The structure of map is an array of arrays, where each inner array has 2 elements.
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.type_map.find(
+		const typeMap = amr.semantics?.typing?.map.find(
 			(map) => map.length === 2 && transition.id === map[0]
 		);
-
-		const targetRate = amr.semantics?.ode.rates.find((rate) => transition.id === rate.target);
 
 		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
@@ -113,7 +111,7 @@ export const convertToIGraph = (amr: Model) => {
 			y: 0,
 			width: 40,
 			height: 40,
-			data: { type: 'transition', strataType, expression: targetRate?.expression },
+			data: { type: 'transition', strataType },
 			nodes: []
 		});
 	});
@@ -281,6 +279,8 @@ export const updateRateExpression = (amr: Model, transition: PetriNetTransition)
 	const expressionMathml =
 		`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
 		`</apply>`;
+
+	console.log('>>', expression);
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
 };
@@ -337,12 +337,13 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 	}
 };
 
-export const updateStateId = (amr: Model, id: string, newId: string) => {
+export const updateState = (amr: Model, id: string, newId: string, newName: string) => {
 	const model = amr.model as PetriNetModel;
 	const state = model.states.find((d) => d.id === id);
 	if (!state) return;
 
 	state.id = newId;
+	state.name = newName;
 
 	const initial = amr.semantics?.ode.initials?.find((d) => d.target === id);
 	if (!initial) return;
@@ -356,17 +357,26 @@ export const updateStateId = (amr: Model, id: string, newId: string) => {
 			if (transition.output[i] === id) transition.output[i] = newId;
 		}
 	});
+
+	model.transitions.forEach((t) => {
+		updateRateExpression(amr, t);
+	});
 };
 
-export const updateTransitioneId = (amr: Model, id: string, newId: string) => {
+export const updateTransitione = (amr: Model, id: string, newId: string, newName: string) => {
 	const model = amr.model as PetriNetModel;
 	const transition = model.transitions.find((d) => d.id === id);
 	if (!transition) return;
 	transition.id = newId;
+	transition.properties.name = newName;
 
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
+
+	model.transitions.forEach((t) => {
+		updateRateExpression(amr, t);
+	});
 };
 
 // Replace typing semantics

@@ -2,11 +2,8 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
-import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 
 import javax.ws.rs.*;
@@ -18,6 +15,8 @@ import java.util.List;
 @Path("/datasets")
 @Produces(MediaType.APPLICATION_JSON)
 public interface DatasetProxy {
+
+	@LogRestClientTime
 	@GET
 	@Path("/features")
 	Response getFeatures(

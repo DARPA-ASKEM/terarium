@@ -1,20 +1,32 @@
 <template>
 	<div class="tera-chatty-container" ref="containerElement">
-		<!-- <label for="chatt-input"></label> -->
 		<div class="chat-input-container">
 			<span class="p-input-icon-right">
-				<i class="pi pi-spin pi-spinner" v-if="props.kernelIsBusy" />
-				<i class="pi pi-send" v-else />
-				<InputText
-					:style="{ width: fixedDivWidth + 'px' }"
-					class="input"
-					ref="inputElement"
-					v-model="queryString"
-					type="text"
-					:disabled="props.kernelIsBusy"
-					:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
-					@keydown.enter="submitQuery"
-				></InputText>
+				<div>
+					<span>
+						<InputText
+							:style="{ width: fixedDivWidth + 'px' }"
+							class="input"
+							ref="inputElement"
+							v-model="queryString"
+							type="text"
+							:disabled="props.kernelIsBusy"
+							:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
+							@keydown.enter="submitQuery"
+						></InputText>
+						<i class="pi pi-spin pi-spinner kernel-status" v-if="props.kernelIsBusy" />
+						<i class="pi pi-send kernel-status" v-else />
+					</span>
+					<Button
+						ref="addCodeCellButton"
+						class="p-button p-button-secondary p-button-sm"
+						title="Add a code cell to the notebook"
+						@click="addCodeCell"
+					>
+						<span class="pi pi-plus-circle p-button-icon p-button-icon-left"></span>
+						<span class="p-button-text">Add Code Cell</span>
+					</Button>
+				</div>
 			</span>
 			<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" style="height: 3px"></ProgressBar>
 		</div>
@@ -26,7 +38,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import InputText from 'primevue/inputtext';
 
-const emit = defineEmits(['submit-query']);
+const emit = defineEmits(['submit-query', 'add-code-cell']);
 
 const props = defineProps({
 	placeholderMessage: {
@@ -53,11 +65,16 @@ const queryString = ref('');
 
 const containerElement = ref<HTMLElement | null>(null);
 const inputElement = ref<HTMLInputElement | null>(null);
+const addCodeCellButton = ref<HTMLElement | null>(null);
 const fixedDivWidth = ref(0);
 
 const submitQuery = () => {
 	emit('submit-query', queryString.value);
 	queryString.value = '';
+};
+
+const addCodeCell = () => {
+	emit('add-code-cell');
 };
 
 onMounted(() => {
@@ -66,11 +83,9 @@ onMounted(() => {
 	}
 
 	const updateWidth = () => {
-		if (containerElement.value) {
+		if (containerElement.value && addCodeCellButton.value) {
 			fixedDivWidth.value =
-				containerElement.value.offsetWidth - 20
-					? containerElement.value?.offsetWidth
-					: fixedDivWidth.value;
+				containerElement.value.offsetWidth - addCodeCellButton.value.offsetWidth - 25;
 		}
 	};
 
@@ -103,6 +118,11 @@ onMounted(() => {
 .input {
 	color: black;
 	background-color: var(--gray-300);
+}
+
+.kernel-status {
+	position: relative;
+	right: 2rem;
 }
 
 .input:disabled {

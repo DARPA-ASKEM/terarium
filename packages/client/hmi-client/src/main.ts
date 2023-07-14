@@ -10,6 +10,9 @@ import VueFeather from 'vue-feather';
 import VueGtag from 'vue-gtag';
 import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
+import { EventType } from '@/types/Types';
+import * as EventService from '@/services/event';
+import useResourcesStore from '@/stores/resources';
 import useAuthStore from './stores/auth';
 import router from './router';
 import '@node_modules/katex/dist/katex.min.css';
@@ -46,6 +49,29 @@ await auth.fetchSSO();
 
 app.mount('body');
 logger.info('Application Mounted', { showToast: false, silent: true });
+
+let previousRoute;
+let routeStartedMillis = Date.now();
+const resources = useResourcesStore();
+router.beforeEach((to, _from, next) => {
+	if (previousRoute) {
+		const nowMillis = Date.now();
+		const timeSpent = nowMillis - routeStartedMillis;
+		EventService.create(
+			EventType.RouteTiming,
+			resources.activeProject?.id,
+			JSON.stringify({
+				name: previousRoute.name,
+				path: previousRoute.path,
+				fullPath: previousRoute.fullPath,
+				timeSpent
+			})
+		);
+	}
+	previousRoute = to;
+	routeStartedMillis = Date.now();
+	next();
+});
 
 // Allow the use of CSS custom properties
 declare module '@vue/runtime-dom' {
