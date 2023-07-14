@@ -16,13 +16,13 @@
 								<span class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
-										@click="addNode()"
+										@click="prepareStateEdit()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
 										v-if="isEditing"
-										@click="addNode()"
+										@click="prepareTransitionEdit()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
@@ -167,8 +167,8 @@
 				<InputText v-model="editNodeObj.name" placeholder="Name" />
 			</div>
 			<template #footer>
-				<Button label="Submit" @click="addNode()" />
-				<Button label="Cancel" @click="openEditNode = false" />
+				<Button label="Submit" :disabled="editNodeObj.id === ''" @click="addNode()" />
+				<Button label="Cancel" class="p-button-secondary" @click="openEditNode = false" />
 			</template>
 		</tera-modal>
 	</Teleport>
@@ -467,16 +467,14 @@ const contextMenuItems = ref([
 		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
-			openEditNode.value = true;
+			prepareStateEdit();
 		}
 	},
 	{
 		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
-			openEditNode.value = true;
+			prepareTransitionEdit();
 		}
 	}
 ]);
@@ -621,6 +619,16 @@ const cancelEdit = async () => {
 
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
+};
+
+const prepareStateEdit = () => {
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+	openEditNode.value = true;
+};
+
+const prepareTransitionEdit = () => {
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+	openEditNode.value = true;
 };
 
 const addNode = async () => {
