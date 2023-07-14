@@ -569,19 +569,21 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 		isMathMLValid.value = true;
 	} else if (!editMode) {
 		try {
-			const amr = await mathmlToAMR(cleanedMathML, 'petrinet'); // This model is not compatible.
-			const model = amr?.model;
-			if (
-				(model && isArray(model) && model.length > 0) ||
-				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
-			) {
-				isMathMLValid.value = true;
-				if (props.model !== null) updatePetriNet(props.model);
-				// if (model !== null) updatePetriNet(model); -> doesn't work because model is NOT an AMR right now.
+			if (props?.model?.id) {
+				const model = (await mathmlToAMR(props.model.id, cleanedMathML)) as Model;
+				if (
+					(model && isArray(model) && model.length > 0) ||
+					(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
+				) {
+					isMathMLValid.value = true;
+					if (model !== null) await updatePetriNet(model);
+				} else {
+					logger.error(
+						'MathML cannot be converted to a PetriNet.  Please try again or click cancel.'
+					);
+				}
 			} else {
-				logger.error(
-					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-				);
+				logger.error('Model ID is not defined');
 			}
 		} catch (e) {
 			isMathMLValid.value = false;
