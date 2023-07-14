@@ -140,32 +140,21 @@ watch(
 
 <style scoped>
 main {
+	min-height: 3rem;
 	position: relative;
-	min-height: 50vh;
 }
 
 .math-editor-container {
 	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
 	flex-direction: column;
-	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
+	padding-top: 2rem;
 }
 
 aside {
 	display: flex;
-	flex-direction: row;
-	margin: 0.5rem 2.5rem 0px 10px;
-	justify-content: flex-end;
-	position: relative;
-	z-index: 20;
+	position: absolute;
+	top: 0;
+	right: 0;
 }
 
 .add-equation-button {

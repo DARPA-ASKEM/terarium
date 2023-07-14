@@ -52,35 +52,35 @@
 				</section>
 				<div class="controls">
 					<span class="meta-property">Name:</span>
-					<span class="meta-property-value" @dblclick="nameInput = false"
-						><InputText
+					<span class="meta-property-value" @dblclick="nameInput = false">
+						<InputText
 							v-model="name"
 							class="control-button"
 							:disabled="nameInput"
 							@blur="nameInput = true"
-						></InputText
-					></span>
+						/>
+					</span>
 					<span class="meta-property">ID:</span>
-					<span class="meta-property-value" @dblclick="idInput = false"
-						><InputText
+					<span class="meta-property-value" @dblclick="idInput = false">
+						<InputText
 							v-model="id"
 							class="control-button"
 							:disabled="idInput"
 							@blur="idInput = true"
-						></InputText>
+						/>
 					</span>
 					<Button
 						class="control-button"
 						label="Save"
 						aria-label="Save"
 						@click="isEditingEquation = false"
-					></Button>
+					/>
 					<Button
 						class="control-button"
 						label="Cancel"
 						aria-label="Cancel"
 						@click="isEditingEquation = false"
-					></Button>
+					/>
 				</div>
 			</div>
 		</div>
