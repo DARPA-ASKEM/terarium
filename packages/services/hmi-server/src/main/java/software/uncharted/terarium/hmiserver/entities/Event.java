@@ -53,9 +53,10 @@ public class Event extends PanacheEntityBase implements Serializable {
 	@Column(nullable = false)
 	private EventType type;
 
-	@Column(length = 2047)
+	@Column(columnDefinition = "TEXT")
 	@TSOptional
 	private String value;
+
 
 	/**
 	 * Gets events by type and an option search string for values

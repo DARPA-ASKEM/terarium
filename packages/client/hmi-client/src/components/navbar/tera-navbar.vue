@@ -76,6 +76,8 @@
 
 						<label for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
+
+						<p>Status: {{ evaluationScenearioStatus }}</p>
 					</form>
 				</template>
 				<template #footer>
@@ -84,17 +86,32 @@
 					>
 					<Button
 						class="p-button-danger"
+						v-if="
+							evaluationScenearioStatus === 'started' ||
+							evaluationScenearioStatus === 'resumed' ||
+							evaluationScenearioStatus === 'paused'
+						"
 						:disabled="!isEvaluationScenarioValid"
 						@click="stopEvaluationScenario"
 						>Stop</Button
 					>
 					<Button
 						class="p-button-warning"
-						:disabled="!isEvaluationScenarioValid"
+						v-if="
+							evaluationScenearioStatus === 'started' || evaluationScenearioStatus === 'resumed'
+						"
 						@click="pauseEvaluationScenario"
 						>Pause</Button
 					>
-					<Button :disabled="!isEvaluationScenarioValid" @click="beginEvaluationScenario"
+					<Button
+						class="p-button-warning"
+						v-if="evaluationScenearioStatus === 'paused'"
+						@click="resumeEvaluationScenario"
+						>Resume</Button
+					>
+					<Button
+						:disabled="!isEvaluationScenarioValid || evaluationScenearioStatus !== ''"
+						@click="beginEvaluationScenario"
 						>Begin</Button
 					>
 				</template>
@@ -125,6 +142,7 @@ import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
+import API from '@/api/api';
 
 const props = defineProps<{
 	active: boolean;
@@ -148,6 +166,7 @@ const evaluationScenarioName = ref('');
 const evaluationScenarioTask = ref('');
 const evaluationScenarioDescription = ref('');
 const evaluationScenarioNotes = ref('');
+const evaluationScenearioStatus = ref('');
 const isEvaluationScenarioValid = computed(
 	() =>
 		evaluationScenarioName.value !== '' &&
@@ -159,24 +178,27 @@ const isEvaluationScenarioValid = computed(
  * Logs an event to the server to begin an evaluation. Additionally, persists the evaluation
  * model to local storage
  */
-const beginEvaluationScenario = () => {
-	EventService.create(
+const beginEvaluationScenario = async () => {
+	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('start'))
+		JSON.stringify(getEvaluationScenarioData('started'))
 	);
 	persistEvaluationScenario();
+	evaluationScenearioStatus.value = (
+		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
+	).data;
 	isEvaluationScenarioModalVisible.value = false;
 };
 
 /**
  * Logs an event to the server to stop an evalation.  Clears the persisted model in local storage.
  */
-const stopEvaluationScenario = () => {
-	EventService.create(
+const stopEvaluationScenario = async () => {
+	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('stop'))
+		JSON.stringify(getEvaluationScenarioData('stopped'))
 	);
 	clearEvaluationScenario();
 	isEvaluationScenarioModalVisible.value = false;
@@ -185,12 +207,27 @@ const stopEvaluationScenario = () => {
 /**
  * Logs an event to the server to pause an evaluation.
  */
-const pauseEvaluationScenario = () => {
-	EventService.create(
+const pauseEvaluationScenario = async () => {
+	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('pause'))
+		JSON.stringify(getEvaluationScenarioData('paused'))
 	);
+	evaluationScenearioStatus.value = (
+		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
+	).data;
+	isEvaluationScenarioModalVisible.value = false;
+};
+
+const resumeEvaluationScenario = async () => {
+	await EventService.create(
+		EventType.EvaluationScenario,
+		resources.activeProject?.id,
+		JSON.stringify(getEvaluationScenarioData('resumed'))
+	);
+	evaluationScenearioStatus.value = (
+		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
+	).data;
 	isEvaluationScenarioModalVisible.value = false;
 };
 
@@ -217,12 +254,17 @@ const persistEvaluationScenario = () => {
 	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
 };
 
-const loadEvaluationScenario = () => {
+const loadEvaluationScenario = async () => {
 	evaluationScenarioName.value = window.localStorage.getItem('evaluationScenarioName') || '';
 	evaluationScenarioTask.value = window.localStorage.getItem('evaluationScenarioTask') || '';
 	evaluationScenarioDescription.value =
 		window.localStorage.getItem('evaluationScenarioDescription') || '';
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
+
+	if (evaluationScenarioName.value !== '') {
+		const statusResponse = await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`);
+		evaluationScenearioStatus.value = statusResponse.data;
+	}
 };
 
 /**
@@ -233,6 +275,7 @@ const clearEvaluationScenario = () => {
 	evaluationScenarioTask.value = '';
 	evaluationScenarioDescription.value = '';
 	evaluationScenarioNotes.value = '';
+	evaluationScenearioStatus.value = '';
 	persistEvaluationScenario();
 };
 
@@ -274,8 +317,8 @@ const userMenuItems = ref([
 	}
 ]);
 
-onMounted(() => {
-	loadEvaluationScenario();
+onMounted(async () => {
+	await loadEvaluationScenario();
 });
 
 const showUserMenu = (event) => {
