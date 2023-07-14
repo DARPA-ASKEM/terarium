@@ -54,6 +54,8 @@ const props = defineProps<{
 	isEditable: boolean;
 }>();
 
+// const emit = defineEmits(['update-model-content']);
+
 // References
 const isEditing = ref<boolean>(false);
 const equationsRef = ref<any[]>([]);
