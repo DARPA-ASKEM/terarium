@@ -14,7 +14,7 @@ public class ModelSemantics {
 	private OdeSemantics ode;
 
 	@TSOptional
-	private List<TypingSemantics> span;
+	private List<Object> span;
 
 	@TSOptional
 	private Object typing;
