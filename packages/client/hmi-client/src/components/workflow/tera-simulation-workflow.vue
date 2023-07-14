@@ -61,29 +61,34 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
+						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset' && datasets"
+						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
 					<tera-simulate-julia-node
-						v-else-if="node.operationType === 'SimulateJuliaOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-ciemss-node
-						v-else-if="node.operationType === 'SimulateCiemssOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
+					<tera-calibration-julia-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibration-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -198,11 +203,13 @@ import {
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
-import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
+import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
-import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
+import { CalibrationOperationJulia } from '@/components/workflow/calibrate-operation-julia';
+import { CalibrationOperationCiemss } from '@/components/workflow/calibrate-operation-ciemss';
 import {
 	SimulateJuliaOperation,
 	SimulateJuliaOperationState
@@ -361,7 +368,8 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	if (
 		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
 		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
-		node.operationType === WorkflowOperationTypes.CALIBRATION
+		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
+		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 	) {
 		const state = node.state as SimulateJuliaOperationState;
 		if (state.chartConfigs.length === 0) {
@@ -444,7 +452,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Calibrate',
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+					workflowService.addNode(wf.value, CalibrationOperationJulia, newNodePosition);
 					workflowDirty = true;
 				}
 			}
@@ -465,8 +473,14 @@ const contextMenuItems = ref([
 			},
 			{
 				label: 'Calibrate & Simulate',
-				disabled: true,
-				command: () => {}
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
+						width: 420,
+						height: 220
+					});
+					workflowDirty = true;
+				}
 			},
 			{
 				label: 'Calibrate & Simulate ensemble',

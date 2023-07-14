@@ -4,6 +4,9 @@
 		<AccordionTab header="Mapping">
 			<DataTable class="p-datatable-xsm" :value="mapping">
 				<Column field="modelVariable">
+					<template #header>
+						<span class="column-header">MODEL VARIABLE</span>
+					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
 						<Dropdown
@@ -15,6 +18,9 @@
 					</template>
 				</Column>
 				<Column field="datasetVariable">
+					<template #header>
+						<span class="column-header">DATASET VARIABLE</span>
+					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
 						<Dropdown
@@ -68,6 +74,16 @@
 				</tr>
 			</table>
 		</AccordionTab>
+		<AccordionTab header="EXTRAS">
+			<span class="extras">
+				<label>num_samples</label>
+				<InputNumber v-model="numSamples"></InputNumber>
+				<label>num_iterations</label>
+				<InputNumber v-model="numIterations"></InputNumber>
+				<label>method</label>
+				<Dropdown :options="ciemssMethodOptions" v-model="method" />
+			</span>
+		</AccordionTab>
 		<!-- <AccordionTab header="Loss"></AccordionTab>
 		<AccordionTab header="Parameters"></AccordionTab>
 		<AccordionTab header="Variables"></AccordionTab> -->
@@ -83,22 +99,22 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { CalibrationRequest, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
+import InputNumber from 'primevue/inputnumber';
+import { CalibrationRequestCiemss, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
 import {
-	makeCalibrateJob,
+	makeCalibrateJobCiemss,
 	getSimulation,
-	getRunResult
+	getRunResultCiemss
 } from '@/services/models/simulation-service';
-import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import {
-	CalibrationOperation,
-	CalibrationOperationState,
+	CalibrationOperationCiemss,
+	CalibrationOperationStateCiemss,
 	CalibrateMap
-} from './calibrate-operation';
+} from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -124,6 +140,12 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+
+// EXTRA section
+const numSamples = ref(100);
+const numIterations = ref(100);
+const method = ref('dopri5');
+const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const disableRunButton = computed(
 	() =>
@@ -163,19 +185,28 @@ const runCalibrate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
-	const calibrationRequest: CalibrationRequest = {
+	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
 			mappings: formattedMap
 		},
-		extra: {},
-		engine: 'sciml'
+		extra: {
+			num_samples: numSamples.value,
+			num_iterations: numIterations.value,
+			method: method.value
+		},
+		timespan: {
+			start: 0,
+			end: 90
+		},
+		engine: 'ciemss'
 	};
-	const response = await makeCalibrateJob(calibrationRequest);
+	console.log(calibrationRequest);
+	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
-	startedRunId.value = response.id;
+	startedRunId.value = response.simulationId;
 	getStatus();
 	// showSpinner.value = true;s
 };
@@ -204,7 +235,7 @@ const getStatus = async () => {
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
-		type: CalibrationOperation.outputs[0].type,
+		type: CalibrationOperationCiemss.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: {
 			runId
@@ -220,7 +251,7 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -232,7 +263,7 @@ function addMapping() {
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -243,7 +274,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -253,20 +284,12 @@ const addChart = () => {
 	});
 };
 
-watch(
-	() => props.node.inputs[1],
-	async () => {
-		console.log(props.node.inputs[1]);
-	},
-	{ immediate: true }
-);
-
 // Set up model config + dropdown names
 // Note: Same as calibrate side panel
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -279,7 +302,7 @@ watch(
 				datasetVariable: ''
 			})
 		);
-		const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+		const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 		state.mapping = mapping.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -296,7 +319,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
@@ -309,10 +332,13 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		const csvData = csvParse(resultCsv);
-		runResults.value[simulationIds.value[0].runId] = csvData as any;
-		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		// const csvData = csvParse(resultCsv);
+		// runResults.value[simulationIds.value[0].runId] = csvData as any;
+		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		runResults.value = output.runResults;
 	},
 	{ immediate: true }
 );
@@ -326,5 +352,13 @@ watch(
 }
 th {
 	text-align: left;
+}
+.column-header {
+	color: var(--text-color-subdued);
+	font-size: 12px;
+	font-weight: 400;
+}
+.extras {
+	display: grid;
 }
 </style>

@@ -1,12 +1,20 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { GithubRepo } from '@/types/Types';
+import { EventType, GithubRepo } from '@/types/Types';
+import * as EventService from '@/services/event';
+import useResourcesStore from '@/stores/resources';
 
 export async function getGithubRepositoryContent(
 	repoOwnerAndName: string,
 	path: string
 ): Promise<GithubRepo> {
 	try {
+		EventService.create(
+			EventType.GithubImport,
+			useResourcesStore().activeProject?.id,
+			JSON.stringify({ repoOwnerAndName, path })
+		);
+
 		const response = await API.get('/code/repo-content', {
 			params: { repoOwnerAndName, path }
 		});

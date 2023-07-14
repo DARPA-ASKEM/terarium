@@ -37,6 +37,9 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import InputText from 'primevue/inputtext';
+import * as EventService from '@/services/event';
+import { EventType } from '@/types/Types';
+import useResourcesStore from '@/stores/resources';
 
 const emit = defineEmits(['submit-query', 'add-code-cell']);
 
@@ -69,12 +72,18 @@ const addCodeCellButton = ref<HTMLElement | null>(null);
 const fixedDivWidth = ref(0);
 
 const submitQuery = () => {
+	EventService.create(
+		EventType.TransformPrompt,
+		useResourcesStore().activeProject?.id,
+		queryString.value
+	);
 	emit('submit-query', queryString.value);
 	queryString.value = '';
 };
 
 const addCodeCell = () => {
 	emit('add-code-cell');
+	EventService.create(EventType.AddCodeCell, useResourcesStore().activeProject?.id);
 };
 
 onMounted(() => {
