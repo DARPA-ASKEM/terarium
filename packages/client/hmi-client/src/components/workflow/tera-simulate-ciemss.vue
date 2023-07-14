@@ -79,7 +79,15 @@
 				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
-			></Button>
+			/>
+			<Button
+				class="add-chart"
+				text
+				:outlined="true"
+				@click="saveDataset"
+				label="Save as Dataset"
+				icon="pi pi-save"
+			/>
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -153,6 +161,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import MultiSelect from 'primevue/multiselect';
+import * as ProjectService from '@/services/project';
 // import Column from 'primevue/column';
 // import Row from 'primevue/row';
 // import ColumnGroup from 'primevue/columngroup';
@@ -174,9 +183,13 @@ import { SimulateCiemssOperationState } from '@/components/workflow/simulate-cie
 
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { IProject } from '@/types/Project';
+import useResourcesStore from '@/stores/resources';
 
 const props = defineProps<{
 	node: WorkflowNode;
+	project: IProject;
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
@@ -223,6 +236,13 @@ const addChart = () => {
 		nodeId: props.node.id,
 		state
 	});
+};
+
+const saveDataset = async () => {
+	if (!props.node) return;
+	await createDatasetFromSimulationResult(props.project.id, props.node.outputs[0].value[0]);
+	// TODO: See about getting rid of this - this refresh should preferably be within a service
+	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 };
 
 onMounted(async () => {
