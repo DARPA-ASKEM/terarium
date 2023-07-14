@@ -81,12 +81,8 @@
 				</section>
 			</section>
 			<RelatedPublications
-				@extracted-metadata="enriched = true"
-				:publications="
-					enriched && dataset.metadata.documents.length > 0
-						? dataset.metadata.documents[0].title
-						: ''
-				"
+				@extracted-metadata="gotEnrichedData"
+				:publications="props.project?.assets?.publications"
 			/>
 			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
 				<AccordionTab>
@@ -112,8 +108,11 @@
 					<template #header>
 						<header id="Source">Source</header>
 					</template>
-					This data is sourced from {{ dataset.metadata.documents[0].title }}:
-					<a :href="dataset.metadata.documents[0].url">{{ dataset.metadata.documents[0].url }}</a>
+					This data is sourced from
+					{{ dataset.metadata.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
+					<a :href="dataset.metadata.documents ? dataset.metadata.documents[0].url : ''">{{
+						dataset.metadata.documents ? dataset.metadata.documents[0].url : ''
+					}}</a>
 				</AccordionTab>
 				<AccordionTab>
 					<template #header>
@@ -306,6 +305,11 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
+const gotEnrichedData = (payload) => {
+	console.log(payload);
+	enriched.value = true;
+};
+
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
@@ -416,6 +420,7 @@ const openDatesetChatTab = () => {
 
 onUpdated(() => {
 	if (dataset.value) {
+		console.log(dataset.value);
 		emit('asset-loaded');
 
 		// setting values related to editing rows in the variables table

@@ -6,12 +6,12 @@
 				Terarium can extract information from papers and other resources to add relevant information
 				to this resource.
 			</p>
-			<ul v-if="publications?.length">
+			<ul>
 				<li v-for="(publication, index) in publications" :key="index">
-					<a :href="publication">{{ publication }}</a>
+					<a :href="publication.xdd_uri">{{ publication.title }}</a>
 				</li>
 			</ul>
-			<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
+			<Button icon="pi pi-plus" label="Add resources" text @click="addResources" />
 			<Dialog
 				v-model:visible="visible"
 				modal
@@ -22,7 +22,7 @@
 					Terarium can extract information from papers and other resources to describe this dataset.
 					Select the resources you would like to use.
 				</p>
-				<DataTable :value="resources" :selection="selectedResources" tableStyle="min-width: 50rem">
+				<DataTable v-bind="resources" :selection="selectedResources" tableStyle="min-width: 50rem">
 					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
 					<Column field="name" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
@@ -47,23 +47,36 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
+import { DocumentAsset } from '@/types/Types';
 
 const visible = ref(false);
-const resources = ref();
+
 const selectedResources = ref();
 
-defineProps<{ publications?: Array<string> }>();
+const props = defineProps<{ publications?: Array<DocumentAsset> }>();
+const resources = ref(props.publications);
 const emit = defineEmits(['extracted-metadata']);
+
+const addResources = () => {
+	visible.value = true;
+	// do something
+};
 
 function sendForEnrichments(_selectedResources) {
 	console.log('sending these resources for enrichment:', _selectedResources);
 
-	emit('extracted-metadata');
+	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
 	/* TODO: send selected resources to backend for enrichment */
 }
+
+onMounted(() => {
+	console.log('test');
+	console.log(props.publications);
+});
 </script>
 
 <style scoped>
