@@ -204,7 +204,7 @@ export interface Concept {
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: TypingSemantics[];
-    typing?: TypingSemantics;
+    typing?: any;
 }
 
 export interface ModelMetadata {
