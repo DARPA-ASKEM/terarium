@@ -103,6 +103,7 @@ function sendForEnrichments(_selectedResources) {
 onMounted(() => {
 	console.log('test');
 	console.log(props.publications);
+	console.log(props.project);
 });
 </script>
 

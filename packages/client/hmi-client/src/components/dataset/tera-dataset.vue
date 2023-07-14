@@ -80,9 +80,11 @@
 					</section>
 				</section>
 			</section>
-			<RelatedPublications
+			<tera-related-publications
 				@extracted-metadata="gotEnrichedData"
+				:dialog-flavour="'dataset'"
 				:publications="props.project?.assets?.publications"
+				:project="project"
 			/>
 			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
 				<AccordionTab>
@@ -90,14 +92,76 @@
 						<header id="Description">Description</header>
 					</template>
 					<section v-if="enriched">
-						<ul>
-							<li>Dataset name: {{ dataset.name }}</li>
-							<li>Dataset overview: {{ dataset.description }}</li>
-							<li>Dataset URL: {{ dataset.source }}</li>
-							<li>
-								Data size: This dataset currently contains {{ csvContent?.length || '-' }} rows.
-							</li>
-						</ul>
+						<div class="dataset-detail">
+							<div class="full-width">
+								<div class="detail-list">
+									<h2 class="title">Dataset Details</h2>
+									<ul>
+										<li><strong>Dataset name:</strong> {{ dataset.name }}</li>
+										<li><strong>Dataset overview:</strong> {{ dataset.description }}</li>
+										<li>
+											<strong>Dataset URL:</strong>
+											<a :href="dataset.source">{{ dataset.source }}</a>
+										</li>
+										<li>
+											<strong>Data size:</strong> This dataset currently contains
+											{{ csvContent?.length || '-' }} rows.
+										</li>
+									</ul>
+								</div>
+							</div>
+							<div class="column">
+								<h3 class="title">{{ headers.DESCRIPTION }}</h3>
+								<p class="content">{{ enrichedData.DESCRIPTION }}</p>
+
+								<h3 class="subtitle">{{ headers.AUTHOR_NAME }}</h3>
+								<p class="content">{{ enrichedData.AUTHOR_NAME }}</p>
+
+								<h3 class="subtitle">{{ headers.AUTHOR_EMAIL }}</h3>
+								<p class="content">{{ enrichedData.AUTHOR_EMAIL }}</p>
+							</div>
+
+							<div class="column">
+								<h3 class="subtitle">{{ headers.DATE }}</h3>
+								<p class="content">{{ enrichedData.DATE }}</p>
+
+								<h3 class="subtitle">{{ headers.SCHEMA }}</h3>
+								<p class="content">{{ enrichedData.SCHEMA }}</p>
+
+								<h3 class="subtitle">{{ headers.PROVENANCE }}</h3>
+								<p class="content">{{ enrichedData.PROVENANCE }}</p>
+							</div>
+
+							<div class="column">
+								<h3 class="subtitle">{{ headers.SENSITIVITY }}</h3>
+								<p class="content">{{ enrichedData.SENSITIVITY }}</p>
+							</div>
+							<div class="column">
+								<h3 class="subtitle">{{ headers.LICENSE }}</h3>
+								<p class="content">{{ enrichedData.LICENSE }}</p>
+							</div>
+							<div class="full-width">
+								<h3 class="subtitle">{{ headers.EXAMPLES }}</h3>
+								<ul class="example-list" v-if="enrichedData.EXAMPLES">
+									<li
+										class="example-item"
+										v-for="(value, key) in JSON.parse(enrichedData.EXAMPLES)"
+										:key="key"
+									>
+										<strong>{{ key }}:</strong>{{ value }}
+									</li>
+								</ul>
+							</div>
+							<div class="full-width">
+								<h3 class="subtitle">{{ `Extraction Table` }}</h3>
+								<DataTable :value="pd">
+									<Column field="col_name" header="Column Name"></Column>
+									<Column field="concept" header="Concept"></Column>
+									<Column field="unit" header="Unit"></Column>
+									<Column field="description" header="Description"></Column>
+								</DataTable>
+							</div>
+						</div>
 					</section>
 					<p v-else>
 						No information available. Add resources to generate a description. Or click edit icon to
@@ -291,7 +355,11 @@ import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-p
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
-import RelatedPublications from '../widgets/tera-related-publications.vue';
+import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+
+const enrichedData = ref();
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -306,9 +374,25 @@ const props = defineProps<{
 }>();
 
 const gotEnrichedData = (payload) => {
-	console.log(payload);
+	enrichedData.value = payload;
 	enriched.value = true;
 };
+
+const pd = computed(() =>
+	enrichedData.value ? Object.values(enrichedData.value.DATA_PROFILING_RESULT) : []
+);
+
+const headers = ref({
+	DESCRIPTION: 'Project Description',
+	AUTHOR_NAME: 'Author Name',
+	AUTHOR_EMAIL: 'Author Email',
+	DATE: 'Date of Data',
+	SCHEMA: 'Data Schema',
+	PROVENANCE: 'Data Provenance',
+	SENSITIVITY: 'Data Sensitivity',
+	EXAMPLES: 'Example Data',
+	LICENSE: 'License Information'
+});
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const showKernels = ref(<boolean>false);
@@ -635,14 +719,6 @@ main .annotation-group {
 	flex-direction: row;
 }
 
-li::after {
-	content: ' | ';
-}
-
-li:last-child::after {
-	content: '';
-}
-
 main :deep(.p-inputtext.p-inputtext-sm) {
 	padding-left: 0.65rem;
 }
@@ -650,5 +726,68 @@ main :deep(.p-inputtext.p-inputtext-sm) {
 .row-edit-buttons {
 	display: flex;
 	justify-content: space-evenly;
+}
+.dataset-detail {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	font-family: Arial, sans-serif;
+	transition: all 0.3s ease;
+	padding: 20px;
+}
+
+.column,
+.detail-list {
+	width: 30%;
+	margin-bottom: 20px;
+}
+
+.full-width {
+	width: 100%;
+}
+
+.detail-list {
+	padding: 10px;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.detail-list ul {
+	list-style: none;
+	padding: 0;
+}
+
+.detail-list ul li {
+	margin-bottom: 10px;
+}
+
+.title {
+	font-size: 16px;
+	margin-bottom: 20px;
+}
+
+.subtitle {
+	font-size: 14px;
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+.content {
+	font-size: 16px;
+	margin-bottom: 10px;
+}
+
+.example-list {
+	list-style-type: none;
+	padding: 0;
+}
+
+.example-item {
+	margin-bottom: 10px;
+}
+
+.example-item:hover {
+	color: #f78c6c;
+	transition: all 0.3s ease;
 }
 </style>

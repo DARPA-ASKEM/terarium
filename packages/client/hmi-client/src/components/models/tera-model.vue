@@ -75,7 +75,7 @@
 					<td>{{ model?.metadata?.processed_by ?? '--' }}</td>
 				</tr>
 			</table>
-			<RelatedPublications
+			<tera-related-publications
 				:publications="publications"
 				:project="project"
 				:dialog-flavour="'model'"
@@ -481,7 +481,7 @@ import Message from 'primevue/message';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
