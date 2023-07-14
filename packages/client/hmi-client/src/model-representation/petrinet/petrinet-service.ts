@@ -404,6 +404,10 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 	return response.data as Model;
 };
 
+/// /////////////////////////////////////////////////////////////////////////////
+// Stratification
+/// /////////////////////////////////////////////////////////////////////////////
+
 // Returns a 1xN matrix describing state's initials
 export const extractMapping = (amr: Model, id: string) => {
 	const typeMapList = amr.semantics?.typing.map as [string, string][];
@@ -447,7 +451,7 @@ export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]
 			obj[mapping[1]] = mapping[0];
 		}
 
-		// FIXME:
+		// FIXME: not sure what we need
 		obj.id = transition.id;
 		results.push(obj);
 	});
@@ -464,6 +468,8 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[]) => {
 		const id = state.id;
 		if (!stateIds.includes(id)) return;
 		const obj: any = {};
+
+		// FIXME: not sure what we need
 		obj.id = state.id;
 		results.push(obj);
 	});
