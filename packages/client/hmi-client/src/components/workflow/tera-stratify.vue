@@ -18,6 +18,13 @@
 					:active="stratifyView === StratifyView.Output"
 				/>
 			</span>
+			<Button
+				class="stratify-button"
+				label="Stratify"
+				icon="pi pi-arrow-right"
+				@click="doStratify"
+				:disabled="stratifyStep !== 3"
+			/>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -45,7 +52,7 @@
 							@click="goBack"
 						/>
 						<Button
-							v-if="!typedBaseModel"
+							v-if="stratifyStep === 1"
 							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
@@ -70,7 +77,7 @@
 								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
-								@all-nodes-typed="(typedModel) => onAllNodesTyped(typedModel)"
+								@model-updated="(value) => (typedBaseModel = value)"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -113,8 +120,9 @@
 								<tera-strata-model-diagram
 									:strata-model="strataModel"
 									:base-model="typedBaseModel"
-									:base-model-type-system="typedBaseModel?.semantics?.typing?.type_system"
+									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
 									:show-reflexives-toolbar="stratifyStep === 3"
+									@model-updated="(value) => (typedStrataModel = value)"
 								/>
 							</AccordionTab>
 						</Accordion>
@@ -140,6 +148,7 @@ import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
+import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
 
@@ -159,9 +168,11 @@ const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
-	() => strataModel.value?.semantics?.typing?.type_system
+	() => strataModel.value?.semantics?.typing?.system
 );
 const typedBaseModel = ref<Model | null>(null);
+const typedStrataModel = ref<Model | null>(null);
+const stratifiedModel = ref<Model>();
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -174,8 +185,10 @@ function generateStrataModel() {
 	}
 }
 
-function onAllNodesTyped(typedModel: Model) {
-	typedBaseModel.value = typedModel;
+async function doStratify() {
+	if (typedBaseModel.value && typedStrataModel.value) {
+		stratifiedModel.value = await stratify(typedBaseModel.value, typedStrataModel.value);
+	}
 }
 
 function goBack() {
@@ -291,5 +304,9 @@ section {
 
 .generate-strata-model {
 	padding: 0 0.5rem 0 0.5rem;
+}
+
+.stratify-button {
+	margin-left: auto;
 }
 </style>

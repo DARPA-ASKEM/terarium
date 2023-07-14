@@ -69,14 +69,20 @@ export async function getRunResultCiemss(runId: string, filename = 'result.csv')
 	parsedRawData.forEach((inputRow) => {
 		const outputRowRunResults = { timestamp: inputRow.timepoint_id };
 		Object.keys(inputRow).forEach((key) => {
-			if (key.includes('_sol')) {
-				outputRowRunResults[key.replace('_sol', '')] = inputRow[key];
-			} else if (key.includes('_param')) {
-				const paramKey = key.replace('_param', '');
-				if (!runConfigs[paramKey]) {
-					runConfigs[paramKey] = [];
+			const keyArr = key.split('_');
+			const keySuffix = keyArr.pop();
+			const keyName = keyArr.join('_');
+
+			if (keySuffix === 'param') {
+				outputRowRunResults[keyName] = inputRow[key];
+				if (!runConfigs[keyName]) {
+					runConfigs[keyName] = [];
 				}
-				runConfigs[paramKey].push(Number(inputRow[key]));
+				runConfigs[keyName].push(Number(inputRow[key]));
+			} else if (keySuffix === 'sol') {
+				outputRowRunResults[keyName] = inputRow[key];
+			} else if (keySuffix === 'obs') {
+				outputRowRunResults[keyName] = inputRow[key];
 			}
 		});
 		runResults[inputRow.sample_id as string].push(outputRowRunResults as any);

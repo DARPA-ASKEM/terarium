@@ -14,7 +14,12 @@
 								v-if="showReflexivesToolbar && strataModel && baseModel"
 								:model-to-update="strataModel"
 								:model-to-compare="baseModel"
-								@model-updated="(value) => (typedModel = value)"
+								@model-updated="
+									(value) => {
+										typedModel = value;
+										emit('model-updated', value);
+									}
+								"
 							/>
 							<section class="legend">
 								<ul>
@@ -67,6 +72,8 @@ const props = defineProps<{
 	showReflexivesToolbar: boolean;
 }>();
 
+const emit = defineEmits(['model-updated']);
+
 const typedModel = ref<Model>(props.strataModel); // this is the object being edited
 
 const equationLatex = ref<string>('');
@@ -85,10 +92,10 @@ const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
 const stateTypes = computed(() =>
-	typedModel.value.semantics?.typing?.type_system?.states.map((s) => s.name)
+	typedModel.value.semantics?.typing?.system?.states.map((s) => s.name)
 );
 const transitionTypes = computed(() =>
-	typedModel.value.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
+	typedModel.value.semantics?.typing?.system?.transitions.map((t) => t.properties?.name)
 );
 
 const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();
@@ -164,17 +171,17 @@ watch(
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(typedModel.value);
 
 		// Create renderer
-		renderer = new PetrinetRenderer({
-			el: graphElement.value as HTMLDivElement,
-			useAStarRouting: false,
-			useStableZoomPan: true,
-			runLayout: runDagreLayout,
-			dragSelector: 'no-drag'
-		});
-
-		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-			renderer?.addEdge(d.source, d.target);
-		});
+		if (!renderer) {
+			renderer = new PetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dragSelector: 'no-drag'
+			});
+		} else {
+			renderer.isGraphDirty = true;
+		}
 
 		// Render graph
 		await renderer?.setData(graphData);
@@ -226,24 +233,6 @@ li {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-}
-
-.preview {
-	min-height: 8rem;
-	background-color: var(--surface-secondary);
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
-}
-
-.p-toolbar {
-	position: absolute;
-	width: 100%;
-	z-index: 1;
-	isolation: isolate;
-	background: transparent;
-	padding: 0.5rem;
 }
 
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {

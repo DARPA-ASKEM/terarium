@@ -177,7 +177,6 @@
 				:stroke="isEdgeTargetSim(edge) ? getVariableColorByRunIdx(index) : '#1B8073'"
 				stroke-width="2"
 				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
-				:marker-mid="`url(#smallArrow${isEdgeTargetSim(edge) ? index : ''})`"
 				:key="index"
 				fill="none"
 			/>
