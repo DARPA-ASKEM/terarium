@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -11,6 +12,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 @Accessors(chain = true)
 public class ModelSemantics {
 	private OdeSemantics ode;
+
+	@TSOptional
+	private List<TypingSemantics> span;
 
 	@TSOptional
 	private TypingSemantics typing;

@@ -203,6 +203,7 @@ export interface Concept {
 
 export interface ModelSemantics {
     ode: OdeSemantics;
+    span?: TypingSemantics[];
     typing?: TypingSemantics;
 }
 
@@ -273,8 +274,8 @@ export interface OdeSemantics {
 }
 
 export interface TypingSemantics {
-    type_system: TypeSystem;
-    type_map: string[][];
+    map: string[][];
+    system: TypeSystem;
 }
 
 export interface VariableStatement {
@@ -367,8 +368,14 @@ export interface Observable {
 }
 
 export interface TypeSystem {
-    states: State[];
-    transitions: Transition[];
+    name: string;
+    description: string;
+    schema: string;
+    model_version: string;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
 }
 
 export interface Variable {
@@ -432,22 +439,6 @@ export interface ModelUnit {
     expression_mathml: string;
 }
 
-export interface State {
-    id: string;
-    name?: string;
-    description?: string;
-    grounding?: ModelGrounding;
-    units?: ModelUnit;
-}
-
-export interface Transition {
-    id: string;
-    input: string[];
-    output: string[];
-    grounding?: ModelGrounding;
-    properties?: Properties;
-}
-
 export interface VariableMetadata {
     type: string;
     value: string;
@@ -475,12 +466,6 @@ export interface DKGConcept {
     id: string;
     name: string;
     score: number;
-}
-
-export interface Properties {
-    name: string;
-    grounding?: ModelGrounding;
-    description?: string;
 }
 
 export interface MetadataDataset {

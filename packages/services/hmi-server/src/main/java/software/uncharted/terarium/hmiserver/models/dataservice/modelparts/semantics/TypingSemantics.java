@@ -6,12 +6,12 @@ import lombok.experimental.Accessors;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class TypingSemantics {
+public class TypingSemantics implements Serializable {
+	private List<List<String>> map;
 
-	private TypeSystem type_system;
-
-	private List<List<String>> type_map;
+	private TypeSystem system;
 }
