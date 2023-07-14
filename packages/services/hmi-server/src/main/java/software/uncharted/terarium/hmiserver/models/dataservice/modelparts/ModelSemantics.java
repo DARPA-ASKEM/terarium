@@ -17,5 +17,5 @@ public class ModelSemantics {
 	private List<Object> span;
 
 	@TSOptional
-	private Object typing;
+	private TypingSemantics typing;
 }

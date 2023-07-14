@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
-import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -16,7 +15,7 @@ import java.io.Serializable;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class TypeSystem2  implements Serializable{
+public class TypeSystemExtended implements Serializable{
 	private String name;
 
 	@JsonSetter(nulls = Nulls.SKIP)
@@ -37,5 +36,5 @@ public class TypeSystem2  implements Serializable{
 	@TSOptional
 	private ModelMetadata metadata;
 
-	
+
 }

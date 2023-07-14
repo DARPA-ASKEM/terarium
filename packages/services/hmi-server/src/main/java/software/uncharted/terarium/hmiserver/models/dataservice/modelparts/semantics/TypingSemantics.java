@@ -2,18 +2,15 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 import java.util.List;
+import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class TypingSemantics {
-
-	private TypeSystem type_system;
-
-	private List<List<String>> type_map;
+public class TypingSemantics implements Serializable {
+	private List<List<String>> map;
+	private Object system;
 }
