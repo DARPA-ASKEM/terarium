@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 @Accessors(chain = true)
 @TSModel
 // Used to kick off a calibration job in simulation-service
-public class CalibrationRequest implements Serializable {
+public class CalibrationRequestCiemss implements Serializable {
 	@JsonAlias("model_config_id")
 	private String modelConfigId;
 	private Object extra;

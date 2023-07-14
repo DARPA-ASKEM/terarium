@@ -192,7 +192,15 @@ export interface DKG {
     link: string;
 }
 
-export interface CalibrationRequest {
+export interface CalibrationRequestCiemss {
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
+}
+
+export interface CalibrationRequestJulia {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
