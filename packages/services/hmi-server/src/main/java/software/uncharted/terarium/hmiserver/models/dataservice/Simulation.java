@@ -17,6 +17,12 @@ public class Simulation {
 	@JsonAlias("execution_payload")
 	private Object executionPayload;
 
+	@TSOptional
+	private String name;
+
+	@TSOptional
+	private String description;
+
 	@JsonAlias("result_files")
 	@TSOptional
 	private List<String> resultFiles;
@@ -42,4 +48,5 @@ public class Simulation {
 	@JsonAlias("project_id")
 	@TSOptional
 	private Integer projectId;
+
 }

@@ -1,7 +1,8 @@
 export enum WorkflowOperationTypes {
 	ADD = 'add', // temp for test to work
 	TEST = 'TestOperation',
-	CALIBRATION = 'CalibrationOperation',
+	CALIBRATION_JULIA = 'CalibrationOperationJulia',
+	CALIBRATION_CIEMSS = 'CalibrationOperationCiemss',
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',
 	SIMULATE_JULIA = 'SimulateJuliaOperation',
@@ -33,6 +34,7 @@ export interface OperationData {
 export interface Operation {
 	name: WorkflowOperationTypes;
 	description: string;
+	displayName: string; // Human readable name for each node.
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -61,6 +63,7 @@ export interface WorkflowPort {
 // This is the graphical operation of the operation defined in operationType
 export interface WorkflowNode {
 	id: string;
+	displayName: string;
 	workflowId: string;
 	operationType: string;
 

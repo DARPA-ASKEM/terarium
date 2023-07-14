@@ -9,8 +9,9 @@ export interface SimulateJuliaOperationState {
 
 export const SimulateJuliaOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_JULIA,
+	displayName: 'Simulate (Deterministic)',
 	description: 'given a model id, and configuration id, run a simulation',
-	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
 	outputs: [{ type: 'simOutput' }],
 	isRunnable: true,
 

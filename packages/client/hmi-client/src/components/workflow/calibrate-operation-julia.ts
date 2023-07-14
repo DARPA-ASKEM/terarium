@@ -9,16 +9,20 @@ export interface CalibrateMap {
 	datasetVariable: string;
 }
 
-export interface CalibrationOperationState {
+export interface CalibrationOperationStateJulia {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
 }
 
-export const CalibrationOperation: Operation = {
-	name: WorkflowOperationTypes.CALIBRATION,
+export const CalibrationOperationJulia: Operation = {
+	name: WorkflowOperationTypes.CALIBRATION_JULIA,
+	displayName: 'Calibrate (Deterministic)',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
-	inputs: [{ type: 'modelConfigId' }, { type: 'datasetId' }],
+	inputs: [
+		{ type: 'modelConfigId', label: 'Model Configuration' },
+		{ type: 'datasetId', label: 'Dataset' }
+	],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 
@@ -46,7 +50,7 @@ export const CalibrationOperation: Operation = {
 	},
 
 	initState: () => {
-		const init: CalibrationOperationState = {
+		const init: CalibrationOperationStateJulia = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }]
 		};

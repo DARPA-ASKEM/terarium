@@ -7,6 +7,7 @@ export interface ModelOperationState {
 
 export const ModelOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL,
+	displayName: 'Model',
 	description: 'Select a model and configure its initial and parameter values.',
 	isRunnable: true,
 	inputs: [],

@@ -4,6 +4,14 @@ import lombok.Getter;
 
 public enum EventType {
 	SEARCH(true),
+	ADD_RESOURCES_TO_PROJECT(true),
+	EXTRACT_MODEL(true),
+	PERSIST_MODEL(true),
+	TRANSFORM_PROMPT(true),
+	ADD_CODE_CELL(true),
+	RUN_SIMULATION(true),
+	RUN_CALIBRATE(true),
+	GITHUB_IMPORT(true),
 	EVALUATION_SCENARIO(false),
 	ROUTE_TIMING(false);
 

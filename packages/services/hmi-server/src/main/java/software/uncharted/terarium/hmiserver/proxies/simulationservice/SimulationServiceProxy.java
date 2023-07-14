@@ -9,7 +9,6 @@ import javax.ws.rs.core.Response;
 
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 
