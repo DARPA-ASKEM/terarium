@@ -41,7 +41,7 @@ export const pathFn = d3
 export abstract class Renderer<V, E> extends EventEmitter {
 	options: Options;
 
-	parentMap: Map<string, INode<V>>;
+	parentMap: Map<string, INode<V>> = new Map();
 
 	oldNodeMap: Map<string, IRect> = new Map();
 
@@ -75,7 +75,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	constructor(options: Options) {
 		super(); // Event emitter
-		this.parentMap = new Map();
 		this.options = options;
 
 		if (this.options.el) {
