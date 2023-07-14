@@ -15,7 +15,7 @@ export interface CalibrationOperationState {
 }
 
 export const CalibrationOperation: Operation = {
-	name: WorkflowOperationTypes.CALIBRATION,
+	name: WorkflowOperationTypes.CALIBRATION_JULIA,
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [{ type: 'modelConfigId' }, { type: 'datasetId' }],

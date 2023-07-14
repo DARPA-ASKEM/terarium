@@ -153,7 +153,7 @@ export interface DKG {
     link: string;
 }
 
-export interface CalibrationRequest {
+export interface CalibrationRequestJulia {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;

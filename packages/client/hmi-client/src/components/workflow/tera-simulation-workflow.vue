@@ -82,7 +82,7 @@
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
-					<tera-calibration-node
+					<tera-calibration-julia-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
@@ -199,11 +199,11 @@ import {
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
-import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
-import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
+import { CalibrationOperation } from '@/components/workflow/calibrate-operation-julia';
 import {
 	SimulateJuliaOperation,
 	SimulateJuliaOperationState
@@ -361,7 +361,7 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	if (
 		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
 		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
-		node.operationType === WorkflowOperationTypes.CALIBRATION
+		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
 	) {
 		const state = node.state as SimulateJuliaOperationState;
 		if (state.chartConfigs.length === 0) {

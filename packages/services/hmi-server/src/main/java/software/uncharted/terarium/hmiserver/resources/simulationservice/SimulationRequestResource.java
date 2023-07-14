@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.utils.Converter;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
@@ -106,7 +106,7 @@ public class SimulationRequestResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create calibrate job")
 	public Simulation makeCalibrateJob(
-		final CalibrationRequest request
+		final CalibrationRequestJulia request
 	) {
 		final JobResponse res = simulationServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 

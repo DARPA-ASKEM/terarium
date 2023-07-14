@@ -49,8 +49,10 @@
 					:loading-tab-index="null"
 					@close-tab="workflowNode = null"
 				/>
-				<tera-calibration
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION"
+				<tera-calibration-julia
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
+					"
 					:node="workflowNode"
 				/>
 				<tera-simulate-julia
@@ -113,7 +115,7 @@ import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '
 import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraCalibrationJulia from '@/components/workflow/tera-calibration-julia.vue';
 import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';

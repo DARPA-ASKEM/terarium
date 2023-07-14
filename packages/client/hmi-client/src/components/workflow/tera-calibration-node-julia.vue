@@ -83,13 +83,13 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { CalibrationRequest, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
+import { CalibrationRequestJulia, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
 import {
 	makeCalibrateJob,
 	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
-import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
@@ -98,7 +98,7 @@ import {
 	CalibrationOperation,
 	CalibrationOperationState,
 	CalibrateMap
-} from './calibrate-operation';
+} from './calibrate-operation-julia';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -163,7 +163,7 @@ const runCalibrate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
-	const calibrationRequest: CalibrationRequest = {
+	const calibrationRequest: CalibrationRequestJulia = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
 			id: datasetId.value,
@@ -266,7 +266,7 @@ watch(
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -296,7 +296,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
