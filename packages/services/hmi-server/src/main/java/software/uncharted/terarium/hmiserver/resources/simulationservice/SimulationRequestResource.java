@@ -126,4 +126,26 @@ public class SimulationRequestResource {
 		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
 		return simulationProxy.createSimulation(jn);
 	}
+
+	@POST
+	@Path("ciemss/calibrate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Create calibrate job")
+	public Simulation makeCalibrateJobCiemss(
+		final CalibrationRequestJulia request
+	) {
+		final JobResponse res = simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+
+		Simulation sim = new Simulation();
+		sim.setId(res.getSimulationId());
+		sim.setType("simulation");
+
+		sim.setExecutionPayload(request);
+
+		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
+		return simulationProxy.createSimulation(jn);
+	}
+
+
 }

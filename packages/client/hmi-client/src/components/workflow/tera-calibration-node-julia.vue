@@ -4,6 +4,9 @@
 		<AccordionTab header="Mapping">
 			<DataTable class="p-datatable-xsm" :value="mapping">
 				<Column field="modelVariable">
+					<template #header>
+						<span class="column-header">Model Variables</span>
+					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
 						<Dropdown
@@ -15,6 +18,9 @@
 					</template>
 				</Column>
 				<Column field="datasetVariable">
+					<template #header>
+						<span class="column-header">Dataset Variables</span>
+					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
 						<Dropdown
@@ -85,7 +91,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { CalibrationRequestJulia, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
 import {
-	makeCalibrateJob,
+	makeCalibrateJobJulia,
 	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
@@ -173,7 +179,7 @@ const runCalibrate = async () => {
 		extra: {},
 		engine: 'sciml'
 	};
-	const response = await makeCalibrateJob(calibrationRequest);
+	const response = await makeCalibrateJobJulia(calibrationRequest);
 
 	startedRunId.value = response.id;
 	getStatus();

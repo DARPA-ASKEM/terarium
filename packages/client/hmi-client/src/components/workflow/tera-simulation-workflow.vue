@@ -61,29 +61,34 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
+						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset' && datasets"
+						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
 					<tera-simulate-julia-node
-						v-else-if="node.operationType === 'SimulateJuliaOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-ciemss-node
-						v-else-if="node.operationType === 'SimulateCiemssOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-julia-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibration-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -200,6 +205,7 @@ import {
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
+import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';

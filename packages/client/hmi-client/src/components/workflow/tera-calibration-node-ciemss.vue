@@ -4,6 +4,9 @@
 		<AccordionTab header="Mapping">
 			<DataTable class="p-datatable-xsm" :value="mapping">
 				<Column field="modelVariable">
+					<template #header>
+						<span class="column-header">Model Variables</span>
+					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
 						<Dropdown
@@ -15,6 +18,9 @@
 					</template>
 				</Column>
 				<Column field="datasetVariable">
+					<template #header>
+						<span class="column-header">Dataset Variables</span>
+					</template>
 					<template #body="{ data, field }">
 						<!-- Tom TODO: No v-model -->
 						<Dropdown
@@ -85,7 +91,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { CalibrationRequestCiemss, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
 import {
-	makeCalibrateJob,
+	makeCalibrateJobCiemss,
 	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
@@ -135,6 +141,7 @@ const disableRunButton = computed(
 );
 
 const runCalibrate = async () => {
+	console.log('Starting calibration');
 	if (
 		!modelConfigId.value ||
 		!datasetId.value ||
@@ -170,12 +177,22 @@ const runCalibrate = async () => {
 			filename: currentDatasetFileName.value,
 			mappings: formattedMap
 		},
-		extra: {},
+		extra: {
+			num_samples: 100,
+			start_time: 0,
+			num_iterations: 1000,
+			lr: 0.03,
+			verbose: false,
+			num_particles: 1,
+			method: 'dopri5'
+		},
 		engine: 'sciml'
 	};
-	const response = await makeCalibrateJob(calibrationRequest);
+	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	startedRunId.value = response.id;
+	console.log('Started:');
+	console.log(startedRunId.value);
 	getStatus();
 	// showSpinner.value = true;s
 };
@@ -189,6 +206,8 @@ const getStatus = async () => {
 
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
+		console.log('Completed');
+		console.log(completedRunId);
 		updateOutputPorts(completedRunId);
 		// showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {

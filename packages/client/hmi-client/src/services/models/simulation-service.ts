@@ -2,7 +2,12 @@ import { csvParse } from 'd3';
 
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Simulation, SimulationRequest, CalibrationRequest } from '@/types/Types';
+import {
+	Simulation,
+	SimulationRequest,
+	CalibrationRequestJulia,
+	CalibrationRequestCiemss
+} from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
@@ -94,9 +99,20 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 	}
 }
 
-export async function makeCalibrateJob(calibrationParams: CalibrationRequest) {
+export async function makeCalibrateJobJulia(calibrationParams: CalibrationRequestJulia) {
 	try {
 		const resp = await API.post('simulation-request/calibrate', calibrationParams);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss) {
+	try {
+		const resp = await API.post('simulation-request/ciemss/calibrate', calibrationParams);
 		const output = resp.data;
 		return output;
 	} catch (err) {
