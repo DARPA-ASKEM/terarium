@@ -132,13 +132,13 @@
 			</table>
 		</div>
 	</div>
-	<Button
-		v-if="isEditable"
-		class="p-button-sm p-button-outlined"
-		icon="pi pi-plus"
+	<SplitButton
+		outlined
 		label="Add configuration"
-		@click="addModelConfiguration"
-	/>
+		size="small"
+		icon="pi pi-plus"
+		:model="configItems"
+	></SplitButton>
 	<Teleport to="body">
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
@@ -209,6 +209,7 @@
 import { watch, ref, computed, onMounted } from 'vue';
 import { isEmpty, cloneDeep } from 'lodash';
 import Button from 'primevue/button';
+import SplitButton from 'primevue/splitbutton';
 import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
@@ -233,10 +234,9 @@ const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
-const selectedInitials = ref<string[]>([]);
-const selectedParameters = ref<string[]>([]);
 
 const activeIndex = ref(0);
+const configItems = ref<any[]>([]);
 
 const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
@@ -263,26 +263,16 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
 	return [];
 });
 
-const selectedModelVariables = computed(() => [
-	...selectedInitials.value,
-	...selectedParameters.value
-]);
-defineExpose({ selectedModelVariables });
-
-async function addModelConfiguration() {
-	const configurationToAdd = modelConfigurations.value.length
-		? modelConfigurations.value[0].configuration
-		: props.model;
-
-	const response = await createModelConfiguration(
+async function addModelConfiguration(config: ModelConfiguration) {
+	await createModelConfiguration(
 		props.model.id,
-		`Config ${modelConfigurations.value.length + 1}`,
-		'Test',
-		configurationToAdd
+		`Copy of ${config.name}`,
+		config.description as string,
+		config.configuration
 	);
-	console.log(response);
-
-	// TODO: notify change
+	setTimeout(() => {
+		initializeConfigSpace();
+	}, 800);
 }
 
 function openValueModal(
@@ -334,6 +324,13 @@ function updateModelConfigValue(configIndex: number = modalVal.value.configIndex
 async function initializeConfigSpace() {
 	let tempConfigurations = await getModelConfigurations(props.model.id);
 
+	configItems.value = tempConfigurations.map((config) => ({
+		label: config.name,
+		command: () => {
+			addModelConfiguration(config);
+		}
+	}));
+
 	// Ensure that we always have a "default config" model configuration
 	if (isEmpty(tempConfigurations) || !tempConfigurations.find((d) => d.name === 'Default config')) {
 		await addDefaultConfiguration(props.model);
@@ -378,9 +375,8 @@ watch(
 );
 
 watch(
-	() => props.model,
-	() => initializeConfigSpace(),
-	{ deep: true }
+	() => props.model.id,
+	() => initializeConfigSpace()
 );
 
 onMounted(() => {
@@ -435,70 +431,6 @@ onMounted(() => {
 th:hover .cell-menu,
 td:hover .cell-menu {
 	visibility: visible;
-}
-
-.p-tabview {
-	display: flex;
-	gap: 1rem;
-	margin-bottom: 1rem;
-	justify-content: space-between;
-}
-
-.p-tabview:deep(> *) {
-	width: 50vw;
-	height: 50vh;
-	overflow: auto;
-}
-
-.p-tabview:deep(.p-tabview-nav) {
-	flex-direction: column;
-}
-
-.p-tabview:deep(label) {
-	display: block;
-	font-size: var(--font-caption);
-	margin-bottom: 0.25rem;
-}
-
-.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
-	width: 100%;
-}
-
-.p-tabview:deep(.p-tabview-panels) {
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border-light);
-	background-color: var(--surface-ground);
-}
-
-.p-tabview:deep(.p-tabview-panel) {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.p-tabview:deep(.p-tabview-nav li) {
-	border-left: 3px solid transparent;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
-	border-bottom: 1px solid var(--surface-border-light);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight) {
-	border-left: 3px solid var(--primary-color);
-	background: var(--surface-highlight);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-	background: none;
-}
-
-.p-tabview:deep(.p-inputtext) {
-	width: 100%;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
-	display: none;
 }
 
 .distribution-cell {

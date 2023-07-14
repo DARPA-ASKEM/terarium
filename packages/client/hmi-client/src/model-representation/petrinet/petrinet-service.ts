@@ -67,11 +67,11 @@ export const convertToIGraph = (amr: Model) => {
 	const petrinetModel = amr.model as PetriNetModel;
 
 	petrinetModel.states.forEach((state) => {
-		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The structure of map is an array of arrays, where each inner array has 2 elements.
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.type_map.find(
+		const typeMap = amr.semantics?.typing?.map.find(
 			(map) => map.length === 2 && state.id === map[0]
 		);
 		const strataType = typeMap?.[1] ?? '';
@@ -89,11 +89,11 @@ export const convertToIGraph = (amr: Model) => {
 	});
 
 	petrinetModel.transitions.forEach((transition) => {
-		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The structure of map is an array of arrays, where each inner array has 2 elements.
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.type_map.find(
+		const typeMap = amr.semantics?.typing?.map.find(
 			(map) => map.length === 2 && transition.id === map[0]
 		);
 

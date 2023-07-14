@@ -162,11 +162,9 @@ const equationPanelMaxSize = ref<number>(100);
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const stateTypes = computed(() =>
-	props.model.semantics?.typing?.type_system?.states.map((s) => s.name)
-);
+const stateTypes = computed(() => props.model.semantics?.typing?.system?.states.map((s) => s.name));
 const transitionTypes = computed(() =>
-	props.model.semantics?.typing?.type_system?.transitions.map((t) => t.properties?.name)
+	props.model.semantics?.typing?.system?.transitions.map((t) => t.properties?.name)
 );
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
@@ -182,7 +180,7 @@ let typeNameBuffer: string[] = [];
 const numberNodes = computed(
 	() => typedModel.value.model.states.length + typedModel.value.model.transitions.length
 );
-const numberTypedRows = computed(() => typedModel.value.semantics?.typing?.type_map.length ?? 0);
+const numberTypedRows = computed(() => typedModel.value.semantics?.typing?.map.length ?? 0);
 
 // TODO: don't allow user to assign a variable or transition twice
 const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
@@ -329,7 +327,7 @@ watch(
 			let state: State | undefined | null;
 			state =
 				props.typeSystem?.states.find((s) => typeId === s.id) ||
-				typedModel.value.semantics?.typing?.type_system.states.find((s) => typeId === s.id);
+				typedModel.value.semantics?.typing?.system.states.find((s) => typeId === s.id);
 			if (state && !updatedTypeSystem.states.find((s) => s.id === state!.id)) {
 				updatedTypeSystem.states.push(state);
 			} else if (!updatedTypeSystem.states.find((s) => s.id === typeId)) {
@@ -341,7 +339,7 @@ watch(
 		});
 
 		if (stateTypedMap.length > 0) {
-			typingSemantics = { type_map: stateTypedMap, type_system: updatedTypeSystem };
+			typingSemantics = { map: stateTypedMap, system: updatedTypeSystem };
 			addTyping(typedModel.value, typingSemantics);
 		}
 
@@ -353,7 +351,7 @@ watch(
 			let transition: Transition | undefined | null;
 			transition =
 				props.typeSystem?.transitions.find((t) => map[1] === t.id) ||
-				typedModel.value.semantics?.typing?.type_system.transitions.find((t) => typeId === t.id);
+				typedModel.value.semantics?.typing?.system.transitions.find((t) => typeId === t.id);
 			if (transition && !updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
 				updatedTypeSystem.transitions.push(transition);
 			} else if (!updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
@@ -365,7 +363,7 @@ watch(
 		});
 		if (transitionTypedMap.length > 0) {
 			const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
-			typingSemantics = { type_map: typeMap, type_system: updatedTypeSystem };
+			typingSemantics = { map: typeMap, system: updatedTypeSystem };
 			addTyping(typedModel.value, typingSemantics);
 		}
 	},
@@ -387,17 +385,17 @@ watch(
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(typedModel.value);
 
 		// Create renderer
-		renderer = new PetrinetRenderer({
-			el: graphElement.value as HTMLDivElement,
-			useAStarRouting: false,
-			useStableZoomPan: true,
-			runLayout: runDagreLayout,
-			dragSelector: 'no-drag'
-		});
-
-		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-			renderer?.addEdge(d.source, d.target);
-		});
+		if (!renderer) {
+			renderer = new PetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dragSelector: 'no-drag'
+			});
+		} else {
+			renderer.isGraphDirty = true;
+		}
 
 		// Render graph
 		await renderer?.setData(graphData);
@@ -449,24 +447,6 @@ li {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-}
-
-.preview {
-	min-height: 8rem;
-	background-color: var(--surface-secondary);
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
-}
-
-.p-toolbar {
-	position: absolute;
-	width: 100%;
-	z-index: 1;
-	isolation: isolate;
-	background: transparent;
-	padding: 0.5rem;
 }
 
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {

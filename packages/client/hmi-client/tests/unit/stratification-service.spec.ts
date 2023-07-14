@@ -150,7 +150,7 @@ describe('test generate age strata model', () => {
 					]
 				},
 				typing: {
-					type_system: {
+					system: {
 						states: [
 							{
 								id: 'Pop',
@@ -171,7 +171,7 @@ describe('test generate age strata model', () => {
 							}
 						]
 					},
-					type_map: [
+					map: [
 						['A1', 'Pop'],
 						['A2', 'Pop'],
 						['c11', 'Infect'],
@@ -298,7 +298,7 @@ describe('test generate location strata model', () => {
 					]
 				},
 				typing: {
-					type_system: {
+					system: {
 						states: [
 							{
 								id: 'Pop',
@@ -319,7 +319,7 @@ describe('test generate location strata model', () => {
 							}
 						]
 					},
-					type_map: [
+					map: [
 						['L1', 'Pop'],
 						['L2', 'Pop'],
 						['t12', 'Strata'],
