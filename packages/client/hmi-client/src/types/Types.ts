@@ -203,7 +203,7 @@ export interface Concept {
 
 export interface ModelSemantics {
     ode: OdeSemantics;
-    span?: TypingSemantics[];
+    span?: any[];
     typing?: any;
 }
 
@@ -271,11 +271,6 @@ export interface OdeSemantics {
     parameters?: ModelParameter[];
     observables?: Observable[];
     time?: any;
-}
-
-export interface TypingSemantics {
-    map: string[][];
-    system: TypeSystem;
 }
 
 export interface VariableStatement {
@@ -365,17 +360,6 @@ export interface Observable {
     states: string[];
     expression?: string;
     expression_mathml?: string;
-}
-
-export interface TypeSystem {
-    name: string;
-    description: string;
-    schema: string;
-    model_version: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
 }
 
 export interface Variable {
