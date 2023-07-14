@@ -14,7 +14,7 @@
 				:class="isEditing ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
 			/>
 		</aside>
-		<section class="math-editor-container" :class="mathEditorSelected">
+		<section :class="{ error: !isMathMLValid, selected: isEditing }">
 			<tera-math-editor
 				v-for="(eq, index) in latexEquationList"
 				:key="index"
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref } from 'vue';
+import { watch, ref } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
 import { mathmlToAMR } from '@/services/models/transformations';
@@ -79,16 +79,6 @@ const cancelEditEquations = () => {
 		eq.isEditingEquation = false;
 	});
 };
-
-const mathEditorSelected = computed(() => {
-	if (!isMathMLValid.value) {
-		return 'math-editor-error';
-	}
-	if (isEditing.value) {
-		return 'math-editor-selected';
-	}
-	return '';
-});
 
 function joinStringLists(lists: string[][]): string[] {
 	return ([] as string[]).concat(...lists);
@@ -144,17 +134,17 @@ main {
 	position: relative;
 }
 
-.math-editor-container {
-	display: flex;
-	flex-direction: column;
-	padding-top: 2rem;
-}
-
 aside {
 	display: flex;
 	position: absolute;
 	top: 0;
 	right: 0;
+}
+
+section {
+	display: flex;
+	flex-direction: column;
+	padding-top: 2rem;
 }
 
 .add-equation-button {
