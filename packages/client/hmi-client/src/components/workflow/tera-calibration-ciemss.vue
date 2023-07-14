@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate'" is-editable stretch-content>
+	<tera-asset :name="'Calibrate & Simulate (Probabilistic)'" is-editable stretch-content>
 		<template #nav>
 			<tera-asset-nav :show-header-links="false">
 				<template #viewing-mode>
