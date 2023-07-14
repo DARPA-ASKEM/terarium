@@ -731,14 +731,13 @@ main :deep(.p-inputtext.p-inputtext-sm) {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-between;
-	font-family: Arial, sans-serif;
+	font-family: var(--font-family);
 	transition: all 0.3s ease;
 	padding: 20px;
 }
 
 .column,
 .detail-list {
-	width: 30%;
 	margin-bottom: 20px;
 }
 
@@ -773,7 +772,7 @@ main :deep(.p-inputtext.p-inputtext-sm) {
 }
 
 .content {
-	font-size: 16px;
+	font-size: 12px;
 	margin-bottom: 10px;
 }
 

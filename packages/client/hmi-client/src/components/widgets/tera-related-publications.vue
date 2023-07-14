@@ -23,12 +23,12 @@
 					{{ dialogFlavour }}. Select the resources you would like to use.
 				</p>
 				<DataTable
-					:value="resources"
+					:value="publications"
 					v-model:selection="selectedResources"
 					tableStyle="min-width: 50rem"
 				>
 					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-					<Column field="name" sortable header="Name"></Column>
+					<Column field="title" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
 				</DataTable>
 				<template #footer>
@@ -63,6 +63,7 @@ import { Artifact, DocumentAsset } from '@/types/Types';
 const visible = ref(false);
 const selectedResources = ref();
 
+// removed from template.  re-add after hack-a-thon and endpoint working.
 const resources: ComputedRef<{ name: string; id: string | undefined; authors: string }[] | any[]> =
 	computed(() => {
 		if (props.project?.assets) {
@@ -101,9 +102,7 @@ function sendForEnrichments(_selectedResources) {
 }
 
 onMounted(() => {
-	console.log('test');
-	console.log(props.publications);
-	console.log(props.project);
+	console.log(resources);
 });
 </script>
 
