@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
@@ -183,6 +183,9 @@ export const newAMR = (modelName: string) => {
 };
 
 export const addState = (amr: Model, id: string, name: string) => {
+	if (amr.model.states.find((s) => s.id === id)) {
+		return;
+	}
 	amr.model.states.push({
 		id,
 		name,
@@ -190,18 +193,21 @@ export const addState = (amr: Model, id: string, name: string) => {
 	});
 	amr.semantics?.ode.initials?.push({
 		target: id,
-		expression: `${id}Param`,
-		expression_mathml: `<ci>${id}Param</ci>`
+		expression: `${id}init`,
+		expression_mathml: `<ci>${id}init</ci>`
 	});
 	amr.semantics?.ode.parameters?.push({
-		id: `${id}Param`,
+		id: `${id}init`,
 		name: '',
 		description: '',
 		value: DUMMY_VALUE
 	});
 };
 
-export const addTransition = (amr: Model, id: string, name: string) => {
+export const addTransition = (amr: Model, id: string, name: string, value?: number) => {
+	if (amr.model.transitions.find((t) => t.id === id)) {
+		return;
+	}
 	amr.model.transitions.push({
 		id,
 		input: [],
@@ -220,7 +226,7 @@ export const addTransition = (amr: Model, id: string, name: string) => {
 		id: `${id}Param`,
 		name: '',
 		description: '',
-		value: DUMMY_VALUE
+		value: value ?? DUMMY_VALUE
 	});
 };
 
@@ -261,10 +267,20 @@ export const removeTransition = (amr: Model, id: string) => {
 // Update a transition's expression and expression_mathml fields based on
 // mass-kinetics
 export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
+	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+	if (!param) return;
+
+	updateRateExpressionWithParam(amr, transition, param.id);
+};
+export const updateRateExpressionWithParam = (
+	amr: Model,
+	transition: PetriNetTransition,
+	parameterId: string
+) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
 	if (!param) return;
 
 	const inputStr = transition.input.map((d) => `${d}`);
@@ -275,7 +291,6 @@ export const updateRateExpression = (amr: Model, transition: PetriNetTransition)
 		`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
 		`</apply>`;
 
-	console.log('>>', expression);
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
 };
@@ -383,8 +398,9 @@ export const addTyping = (amr: Model, typing: TypingSemantics) => {
 
 // Add a reflexive transition loop to the state
 // This is a special type of addTransition that creates a self loop
+const DEFAULT_REFLEXIVE_PARAM_VALUE = 1.0;
 export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
-	addTransition(amr, reflexiveId, reflexiveId);
+	addTransition(amr, reflexiveId, reflexiveId, DEFAULT_REFLEXIVE_PARAM_VALUE);
 	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
 	if (transition) {
 		transition.input = [stateId];
@@ -396,10 +412,39 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
 
+export const modifyModelTypeSystemforStratification = (amr: Model) => {
+	const amrCopy = cloneDeep(amr);
+	if (amrCopy.semantics?.typing) {
+		const { name, description, schema, semantics } = amrCopy;
+		const typeSystem = {
+			name,
+			description,
+			schema,
+			model_version: amrCopy.model_version,
+			model: semantics?.typing?.system
+		};
+		amrCopy.semantics.typing.system = typeSystem;
+	}
+	return amrCopy;
+};
+
+function unifyModelTypeSystems(baseAMR: Model, fluxAMR: Model) {
+	// Entries in type system need to be in the same order for stratification
+	// They should contain the same state and transition entries for both baseAMR and fluxAMR, just in a different order
+	// So just overwrite one with the other instead of sorting
+	const typeSystem = baseAMR.semantics?.typing?.system;
+	if (fluxAMR.semantics?.typing?.system) {
+		fluxAMR.semantics.typing.system.model = typeSystem.model;
+	}
+}
+
 export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
+	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
+	const fluxModel = modifyModelTypeSystemforStratification(fluxAMR);
+	unifyModelTypeSystems(baseModel, fluxModel);
 	const response = await API.post('/modeling-request/stratify', {
-		baseModel: baseAMR,
-		fluxModel: fluxAMR
+		baseModel,
+		fluxModel
 	});
 	return response.data as Model;
 };
