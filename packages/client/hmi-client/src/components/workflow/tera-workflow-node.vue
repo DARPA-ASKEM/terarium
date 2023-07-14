@@ -33,8 +33,8 @@
 				>
 					<div class="input port" />
 					<div>
-						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
-						<span v-if="!input.label">{{ input.type }}</span>
+						<!-- if input is empty, show the type -->
+						<span v-if="!input.label">{{ englishLabel(input.type) }}</span>
 						<span
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"
@@ -218,6 +218,7 @@ const toggleNodeMenu = (event) => {
 
 function englishLabel(nodeType) {
 	switch (nodeType) {
+		/* Node headers */
 		case 'SimulateOperation':
 			return 'Simulate';
 		case 'ModelOperation':
@@ -228,6 +229,12 @@ function englishLabel(nodeType) {
 			return 'Simulate (deterministic)';
 		case 'SimulateCiemssOperation':
 			return 'Simulate (probibilistic)';
+		/* Input types */
+		case 'modelConfigId':
+			return 'Model configuration';
+		case 'datasetId':
+			return 'Dataset';
+		/* Default */
 		default:
 			return nodeType;
 	}
