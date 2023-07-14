@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class TypingSemantics {
-	private List<List<String>> type_map;
+	private List<List<String>> map;
 
 	private TypeSystem system;
 }

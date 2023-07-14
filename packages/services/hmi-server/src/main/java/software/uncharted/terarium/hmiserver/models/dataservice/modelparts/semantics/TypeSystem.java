@@ -8,7 +8,26 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class TypeSystem {
+	private String name;
 
-	private List<State> states;
-	private List<Transition> transitions;
+	@JsonSetter(nulls = Nulls.SKIP)
+	private String description = "";
+
+	private String schema;
+
+	private ModelSemantics semantics;
+
+
+	private String model_version;
+
+	private Map<String, Object> model;
+
+	@TSOptional
+	private Object properties;
+
+	@TSOptional
+	private ModelSemantics semantics;
+
+	@TSOptional
+	private ModelMetadata metadata;
 }
