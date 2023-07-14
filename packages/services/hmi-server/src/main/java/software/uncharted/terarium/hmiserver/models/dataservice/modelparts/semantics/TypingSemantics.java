@@ -12,8 +12,6 @@ import java.io.Serializable;
 @Data
 @Accessors(chain = true)
 public class TypingSemantics implements Serializable {
-	@JsonAlias("type_map")
 	private List<List<String>> map;
-	@JsonAlias("type_system")
 	private TypeSystem system;
 }
