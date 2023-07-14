@@ -62,7 +62,7 @@
 						size="large"
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
-						@click="emit('new-model')"
+						@click="isNewModelModalVisible = true"
 					/>
 					<Button
 						size="large"
@@ -210,6 +210,37 @@
 				</tera-modal>
 			</section>
 		</section>
+
+		<!-- New model modal -->
+		<Teleport to="body">
+			<tera-modal
+				v-if="isNewModelModalVisible"
+				class="modal"
+				@modal-mask-clicked="isNewModelModalVisible = false"
+			>
+				<template #header>
+					<h4>New model</h4>
+				</template>
+				<template #default>
+					<form>
+						<label for="new-model">Enter a unique name for your model</label>
+						<InputText
+							v-bind:class="invalidInputStyle"
+							id="new-model"
+							type="text"
+							v-model="newModelName"
+							placeholder="new model"
+						/>
+					</form>
+				</template>
+				<template #footer>
+					<Button @click="createNewModel">Create model</Button>
+					<Button class="p-button-secondary" @click="isNewModelModalVisible = false">
+						Cancel
+					</Button>
+				</template>
+			</tera-modal>
+		</Teleport>
 	</div>
 </template>
 
@@ -252,6 +283,20 @@ const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
 const selectedResources = ref();
+
+const isNewModelModalVisible = ref<boolean>(false);
+const newModelName = ref<string>('');
+
+const isValidName = ref<boolean>(true);
+const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
+
+const existingModelNames = computed(() => {
+	const modelNames: string[] = [];
+	props.project.assets?.models.forEach((item) => {
+		modelNames.push(item.name);
+	});
+	return modelNames;
+});
 
 const assets = computed(() => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -307,6 +352,22 @@ async function processFiles(files: File[], csvDescription: string) {
 		if (response?.data) return { file, error: false, response: { text: '', images: [] } };
 		return { file, error: true, response: { text: '', images: [] } };
 	});
+}
+
+function createNewModel() {
+	if (newModelName.value.trim().length === 0) {
+		isValidName.value = false;
+		logger.info('Model name cannot be empty - please enter a different name');
+		return;
+	}
+	if (existingModelNames.value.includes(newModelName.value.trim())) {
+		isValidName.value = false;
+		logger.info('Duplicate model name - please enter a different name');
+		return;
+	}
+	isValidName.value = true;
+	emit('new-model', newModelName.value.trim());
+	isNewModelModalVisible.value = false;
 }
 
 async function openImportModal() {

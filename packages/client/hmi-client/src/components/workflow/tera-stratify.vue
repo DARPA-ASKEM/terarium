@@ -113,7 +113,7 @@
 								<tera-strata-model-diagram
 									:strata-model="strataModel"
 									:base-model="typedBaseModel"
-									:base-model-type-system="typedBaseModel?.semantics?.typing?.type_system"
+									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
 									:show-reflexives-toolbar="stratifyStep === 3"
 								/>
 							</AccordionTab>
@@ -159,7 +159,7 @@ const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
-	() => strataModel.value?.semantics?.typing?.type_system
+	() => strataModel.value?.semantics?.typing?.system
 );
 const typedBaseModel = ref<Model | null>(null);
 

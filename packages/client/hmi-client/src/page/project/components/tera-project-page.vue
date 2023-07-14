@@ -141,9 +141,9 @@ const openWorkflow = async () => {
 	});
 };
 
-const newModel = async () => {
+const newModel = async (modelName: string) => {
 	// 1. Load an empty AMR
-	const amr = newAMR();
+	const amr = newAMR(modelName);
 	(amr as any).id = undefined; // FIXME: id hack
 
 	const response = await createModel(amr);

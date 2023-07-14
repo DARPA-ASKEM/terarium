@@ -6,12 +6,12 @@
 				Terarium can extract information from papers and other resources to add relevant information
 				to this resource.
 			</p>
-			<ul v-if="publications?.length">
+			<ul>
 				<li v-for="(publication, index) in publications" :key="index">
-					<a :href="publication">{{ publication }}</a>
+					<a :href="publication.xdd_uri">{{ publication.title }}</a>
 				</li>
 			</ul>
-			<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
+			<Button icon="pi pi-plus" label="Add resources" text @click="addResources" />
 			<Dialog
 				v-model:visible="visible"
 				modal
@@ -23,12 +23,12 @@
 					{{ dialogFlavour }}. Select the resources you would like to use.
 				</p>
 				<DataTable
-					:value="resources"
+					:value="publications"
 					v-model:selection="selectedResources"
 					tableStyle="min-width: 50rem"
 				>
 					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-					<Column field="name" sortable header="Name"></Column>
+					<Column field="title" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
 				</DataTable>
 				<template #footer>
@@ -51,16 +51,19 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { computed, ComputedRef, ref } from 'vue';
+import { computed, ComputedRef, ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { Artifact } from '@/types/Types';
 import { IProject } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
+import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
+
+import { Artifact, DocumentAsset } from '@/types/Types';
 
 const visible = ref(false);
 const selectedResources = ref();
 
+// removed from template.  re-add after hack-a-thon and endpoint working.
 const resources: ComputedRef<{ name: string; id: string | undefined; authors: string }[] | any[]> =
 	computed(() => {
 		if (props.project?.assets) {
@@ -81,17 +84,26 @@ const resources: ComputedRef<{ name: string; id: string | undefined; authors: st
 
 const props = defineProps<{
 	project?: IProject;
-	publications?: Array<string>;
+	publications?: Array<DocumentAsset>;
 	dialogFlavour: string;
 }>();
 const emit = defineEmits(['extracted-metadata']);
 
+const addResources = () => {
+	visible.value = true;
+	// do something
+};
+
 function sendForEnrichments(_selectedResources) {
 	console.log('sending these resources for enrichment:', _selectedResources);
 
-	emit('extracted-metadata');
+	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
 	/* TODO: send selected resources to backend for enrichment */
 }
+
+onMounted(() => {
+	console.log(resources);
+});
 </script>
 
 <style scoped>
