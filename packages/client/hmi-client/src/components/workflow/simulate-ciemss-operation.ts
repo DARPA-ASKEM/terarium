@@ -10,8 +10,9 @@ export interface SimulateCiemssOperationState {
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
+	displayName: 'Simulate (Probibilistic)',
 	description: 'given a model id, and configuration id, run a simulation',
-	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model Configuration', acceptMultiple: true }],
 	outputs: [{ type: 'simOutput' }],
 	isRunnable: true,
 

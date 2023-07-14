@@ -7,6 +7,7 @@ export interface DatasetOperationState {
 export const DatasetOperation: Operation = {
 	name: WorkflowOperationTypes.DATASET,
 	description: 'Select a dataset',
+	displayName: 'Dataset',
 	isRunnable: true,
 	inputs: [],
 	outputs: [{ type: 'datasetId' }],
