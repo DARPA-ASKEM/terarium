@@ -9,7 +9,7 @@
 					class="p-inputtext-sm"
 					placeholder="Select"
 					:options="reflexiveNodeOptions[stateType]"
-					optionLabel="name"
+					optionLabel="id"
 					:model-value="statesToAddReflexives[transition.id]"
 					@update:model-value="(newValue) => updateStatesToAddReflexives(newValue, transition.id)"
 				/>

@@ -148,9 +148,9 @@ import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
+import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
-// import { stratify } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -172,6 +172,7 @@ const strataModelTypeSystem = computed<TypeSystem | undefined>(
 );
 const typedBaseModel = ref<Model | null>(null);
 const typedStrataModel = ref<Model | null>(null);
+const stratifiedModel = ref<Model>();
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -184,10 +185,10 @@ function generateStrataModel() {
 	}
 }
 
-function doStratify() {
-	console.log(typedBaseModel.value);
-	console.log(typedStrataModel.value);
-	// await stratify(typedBaseModel, )
+async function doStratify() {
+	if (typedBaseModel.value && typedStrataModel.value) {
+		stratifiedModel.value = await stratify(typedBaseModel.value, typedStrataModel.value);
+	}
 }
 
 function goBack() {
@@ -303,5 +304,9 @@ section {
 
 .generate-strata-model {
 	padding: 0 0.5rem 0 0.5rem;
+}
+
+.stratify-button {
+	margin-left: auto;
 }
 </style>

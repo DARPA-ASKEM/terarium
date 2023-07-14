@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
@@ -409,10 +409,32 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
 
+function modifyModelforStratification(amr: Model) {
+	const amrCopy = cloneDeep(amr);
+	if (amrCopy.semantics?.typing) {
+		const { name, description, schema, semantics } = amrCopy;
+		const typeSystem = {
+			name,
+			description,
+			schema,
+			model_version: amrCopy.model_version,
+			model: semantics?.typing?.system
+		};
+		amrCopy.semantics.typing.system = typeSystem;
+	}
+	return amrCopy;
+}
+
 export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
+	const baseModel = modifyModelforStratification(baseAMR);
+	const fluxModel = modifyModelforStratification(fluxAMR);
+	console.log({
+		baseModel,
+		fluxModel
+	});
 	const response = await API.post('/modeling-request/stratify', {
-		baseModel: baseAMR,
-		fluxModel: fluxAMR
+		baseModel,
+		fluxModel
 	});
 	return response.data as Model;
 };
