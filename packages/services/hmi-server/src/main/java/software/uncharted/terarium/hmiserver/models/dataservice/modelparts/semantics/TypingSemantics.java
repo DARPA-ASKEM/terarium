@@ -3,9 +3,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.io.Serializable;
 
