@@ -44,6 +44,7 @@ export const addNode = (
 		id: uuidv4(),
 		workflowId: wf.id,
 		operationType: op.name,
+		displayName: op.displayName,
 		x: pos.x,
 		y: pos.y,
 		state: {},
