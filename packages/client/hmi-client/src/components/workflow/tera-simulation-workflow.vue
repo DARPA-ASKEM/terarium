@@ -204,6 +204,7 @@ import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-nod
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperationJulia } from '@/components/workflow/calibrate-operation-julia';
+import { CalibrationOperationCiemss } from '@/components/workflow/calibrate-operation-ciemss';
 import {
 	SimulateJuliaOperation,
 	SimulateJuliaOperationState
