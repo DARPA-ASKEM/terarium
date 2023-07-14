@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5 class="truncate">{{ node.operationType }}</h5>
+			<h5 class="truncate">{{ englishLabel(node.operationType) }}</h5>
 			<span>
 				<Button
 					icon="pi pi-sign-in"
@@ -215,6 +215,23 @@ const nodeMenuItems = ref([
 const toggleNodeMenu = (event) => {
 	nodeMenu.value.toggle(event);
 };
+
+function englishLabel(nodeType) {
+	switch (nodeType) {
+		case 'SimulateOperation':
+			return 'Simulate';
+		case 'ModelOperation':
+			return 'Model';
+		case 'CalibrationOperation':
+			return 'Calibrate';
+		case 'SimulateJuliaOperation':
+			return 'Simulate (deterministic)';
+		case 'SimulateCiemssOperation':
+			return 'Simulate (probibilistic)';
+		default:
+			return nodeType;
+	}
+}
 </script>
 
 <style scoped>
