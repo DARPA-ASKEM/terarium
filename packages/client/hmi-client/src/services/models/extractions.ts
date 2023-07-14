@@ -1,4 +1,4 @@
-import API, { Poller } from '@/api/api';
+import API, { Poller, PollerState } from '@/api/api';
 import { AxiosError } from 'axios';
 import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
@@ -6,32 +6,56 @@ import { logger } from '@/utils/logger';
 /**
  * Fetch information from the extraction service via the Poller utility
  * @param id
- * @return {Promise<T | void>}
+ * @return {Promise<PollerResult>}
  */
-async function fetchExtraction(id: string): Promise<T | void> {
-	const poller = new Poller<object>()
-		.setInterval(2000)
-		.setThreshold(90)
-		.setPollAction(async (): Promise<T | null> => {
-			const response = await API.get(`/extract/status/${id}`);
-			if (response?.status === 200 && response?.data?.status === 'finished') {
-				return response.data.result as T;
-			}
-			return null;
-		});
+async function fetchExtraction(id: string) {
+	const poller = new Poller<object>().setPollAction(async (): Promise<T | null> => {
+		const response = await API.get(`/extract/status/${id}`);
+
+		// Finished
+		if (response?.status === 200 && response?.data?.status === 'finished') {
+			return {
+				data: response.data.result as T,
+				progress: null,
+				error: null
+			};
+		}
+
+		// Failed
+		if (response?.status === 200 && response?.data?.status === 'failed') {
+			return {
+				data: null,
+				progress: null,
+				error: true
+			};
+		}
+
+		// Queued
+		return {
+			data: null,
+			progress: null,
+			error: null
+		};
+	});
 	return poller.start();
 }
 
 /**
  * Transform a MathML list of strings to an AMR
+ * @param mathml string[] - list of MathML strings representing a model
+ * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
+ * @return {Promise<Model | null>}
  */
 const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Model | null> => {
 	try {
 		const response = await API.post(`/extract/mathml-to-amr?framework=${framework}`, mathml);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
-			if (status === 'queue') {
-				return (await fetchExtraction(id)) as Model | null;
+			if (status === 'queued') {
+				const result = (await fetchExtraction(id)) as PollResponse<Model | null>;
+				if (result?.state === PollerState.Done) {
+					return result.data as Model;
+				}
 			}
 			if (status === 'finished') {
 				return response.data.result as Model;

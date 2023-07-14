@@ -67,9 +67,16 @@
 								style="background-color: white"
 							/>
 							<Button
+								v-if="isEditingEQ"
+								@click="onClickUpdateModel"
+								label="Update model"
+								class="p-button-sm"
+							/>
+							<Button
+								v-else
 								@click="isEditingEQ = true"
-								:label="isEditingEQ ? 'Update model' : 'Edit equation'"
-								:class="isEditingEQ ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
+								label="Edit equation"
+								class="p-button-sm p-button-outlined edit-button"
 							/>
 						</span>
 					</section>
@@ -192,7 +199,6 @@ import {
 import { mathmlToAMR } from '@/services/models/extractions';
 import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
-import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
@@ -241,6 +247,7 @@ interface AddStateObj {
 	name: string;
 	nodeType: string;
 }
+
 const openEditNode = ref<boolean>(false);
 const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
 let previousId: any = null;
@@ -386,9 +393,13 @@ const updateLatexFormula = (equationsList: string[]) => {
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
 
-function joinStringLists(lists: string[][]): string[] {
-	return ([] as string[]).concat(...lists);
-}
+// Get the MathML list of equations
+const mathmlequations = computed(
+	() =>
+		equationsRef.value
+			.map((eq) => separateEquations(eq.mathLiveField.getValue('math-ml')))
+			.flat() as Array<string>
+);
 
 watch(
 	() => [latexEquationList.value],
@@ -396,7 +407,7 @@ watch(
 		const mathMLEquations = equationsRef.value.map((eq) =>
 			separateEquations(eq.mathLiveField.getValue('math-ml'))
 		);
-		validateMathML(joinStringLists(mathMLEquations), false);
+		validateMathML(mathMLEquations.flat(), false);
 	},
 	{ deep: true }
 );
@@ -558,26 +569,17 @@ const updatePetriNet = async (model: Model) => {
 
 const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
 	isMathMLValid.value = false;
-	const cleanedMathML = mathMLStringList;
 	if (mathMLStringList.length === 0) {
 		isMathMLValid.value = true;
-	} else if (!editMode) {
-		try {
-			const model = (await mathmlToAMR(cleanedMathML)) as Model;
-			isMathMLValid.value = true;
-
-			try {
-				await updatePetriNet(model);
-			} catch {
-				logger.error(
-					'MathML cannot be converted to a PetriNet.  Please try again or click cancel.'
-				);
-			}
-		} catch (e) {
-			isMathMLValid.value = false;
-		}
 	} else if (editMode) {
 		isMathMLValid.value = true;
+	}
+};
+
+const onClickUpdateModel = async () => {
+	const model = (await mathmlToAMR(mathmlequations.value)) as Model;
+	if (model) {
+		await updatePetriNet(model);
 	}
 };
 
