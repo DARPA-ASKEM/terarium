@@ -141,6 +141,43 @@ export interface PresignedURL {
     method: string;
 }
 
+export interface State {
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+    units?: ModelUnit;
+}
+
+export interface Transition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
+}
+
+export interface TypeSystem {
+    states: State[];
+    transitions: Transition[];
+}
+
+export interface TypeSystemExtended {
+    name: string;
+    description: string;
+    schema: string;
+    model_version: string;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
+}
+
+export interface TypingSemantics {
+    map: string[][];
+    system: any;
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
@@ -203,8 +240,8 @@ export interface Concept {
 
 export interface ModelSemantics {
     ode: OdeSemantics;
-    span?: TypingSemantics[];
-    typing?: any;
+    span?: any[];
+    typing?: TypingSemantics;
 }
 
 export interface ModelMetadata {
@@ -213,6 +250,22 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
     attributes: any[];
+}
+
+export interface ModelGrounding {
+    identifiers: { [index: string]: any };
+    context?: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface Properties {
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface PetriNetState {
@@ -273,11 +326,6 @@ export interface OdeSemantics {
     time?: any;
 }
 
-export interface TypingSemantics {
-    map: string[][];
-    system: TypeSystem;
-}
-
 export interface VariableStatement {
     id: string;
     variable: Variable;
@@ -298,11 +346,6 @@ export interface Annotations {
     diseases?: string[];
     hosts?: string[];
     model_types?: string[];
-}
-
-export interface ModelGrounding {
-    identifiers: { [index: string]: any };
-    context?: { [index: string]: any };
 }
 
 export interface ModelExpression {
@@ -367,17 +410,6 @@ export interface Observable {
     expression_mathml?: string;
 }
 
-export interface TypeSystem {
-    name: string;
-    description: string;
-    schema: string;
-    model_version: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
-}
-
 export interface Variable {
     id: string;
     name: string;
@@ -432,11 +464,6 @@ export interface XDDUrlExtraction {
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
-}
-
-export interface ModelUnit {
-    expression: string;
-    expression_mathml: string;
 }
 
 export interface VariableMetadata {
