@@ -292,10 +292,6 @@ function addMapping() {
 
 const setBarChartData = () => {
 	const documentStyle = getComputedStyle(document.documentElement);
-	// const datasetLabel: string[] = [];
-	// for (let i = 0; i < ensembleConfigs.value.length; i++) {
-	// 	datasetLabel.push(ensembleConfigs.value[i].id);
-	// }
 	const weights = ensembleConfigs.value.map((element) => element.weight);
 	return {
 		labels: listModelLabels.value,
@@ -361,7 +357,7 @@ watch(
 );
 
 watch(
-	() => listModelIds,
+	() => listModelIds.value,
 	async () => {
 		allModelConfigurations.value = [];
 		// Fetch Model Configurations
