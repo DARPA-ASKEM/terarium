@@ -83,7 +83,7 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { CalibrationRequestJulia, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
+import { CalibrationRequestCiemss, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
 import {
 	makeCalibrateJob,
 	getSimulation,
@@ -163,7 +163,7 @@ const runCalibrate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
-	const calibrationRequest: CalibrationRequestJulia = {
+	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
 			id: datasetId.value,
