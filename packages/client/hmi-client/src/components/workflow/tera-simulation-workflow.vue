@@ -291,6 +291,7 @@ const isEdgeTargetSim = (edge) =>
 
 const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
+	displayName: 'Test Operation',
 	description: 'A test operation',
 	inputs: [
 		{ type: 'number', label: 'Number input', acceptMultiple: false },
