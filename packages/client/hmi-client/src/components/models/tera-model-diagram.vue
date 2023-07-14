@@ -393,7 +393,7 @@ const updateLatexFormula = (equationsList: string[]) => {
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
 
-// Get the MathML list of equations
+// Get the MathML list of equations from the <tera-math-editor>s
 const mathmlequations = computed(
 	() =>
 		equationsRef.value
@@ -576,6 +576,7 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 	}
 };
 
+// Update the model from the new mathml equations
 const onClickUpdateModel = async () => {
 	const model = (await mathmlToAMR(mathmlequations.value)) as Model;
 	if (model) {

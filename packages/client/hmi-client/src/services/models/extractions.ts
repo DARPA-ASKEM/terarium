@@ -9,33 +9,24 @@ import { logger } from '@/utils/logger';
  * @return {Promise<PollerResult>}
  */
 async function fetchExtraction(id: string) {
+	const pollerResult: PollerResult = { data: null, progress: null, error: null };
 	const poller = new Poller<object>().setPollAction(async (): Promise<T | null> => {
 		const response = await API.get(`/extract/status/${id}`);
 
 		// Finished
 		if (response?.status === 200 && response?.data?.status === 'finished') {
-			return {
-				data: response.data.result as T,
-				progress: null,
-				error: null
-			};
+			pollerResult.data = response.data.result as T;
+			return pollerResult;
 		}
 
 		// Failed
 		if (response?.status === 200 && response?.data?.status === 'failed') {
-			return {
-				data: null,
-				progress: null,
-				error: true
-			};
+			pollerResult.error = true;
+			return pollerResult;
 		}
 
 		// Queued
-		return {
-			data: null,
-			progress: null,
-			error: null
-		};
+		return pollerResult;
 	});
 	return poller.start();
 }
@@ -61,22 +52,16 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 				return response.data.result as Model;
 			}
 		}
-		logger.error(
-			`MathML to AMR: Extraction-service Server did not provide a correct response [HTTP ${response?.status}]`,
-			{ showToast: false }
-		);
+		logger.error(`MathML to AMR request failed`, { toastTitle: 'Error - extraction-service' });
 	} catch (error: unknown) {
 		if ((error as AxiosError).isAxiosError) {
 			const axiosError = error as AxiosError;
-			logger.error(
-				'MathML to AMR Error (skema-rs): ',
-				axiosError.response?.data || axiosError.message,
-				{
-					showToast: false
-				}
-			);
+			logger.error('[extraction-service]', axiosError.response?.data || axiosError.message, {
+				showToast: false,
+				toastTitle: 'Error - extraction-service'
+			});
 		} else {
-			logger.error(error, { showToast: false });
+			logger.error(error, { showToast: false, toastTitle: 'Error - extraction-service' });
 		}
 	}
 	return null;
