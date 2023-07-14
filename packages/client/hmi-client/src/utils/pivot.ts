@@ -114,5 +114,10 @@ export const createMatrix = (data: any[], xDimensions: string[], yDimensions: st
 			rows[y][x].value = dataObj;
 		}
 	}
-	return rows;
+
+	return {
+		matrix: rows,
+		xDimensions,
+		yDimensions
+	};
 };
