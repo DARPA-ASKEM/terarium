@@ -31,16 +31,16 @@ public class ExtractionResource {
 	 * @return the status of the simulation
 	 */
 	@GET
-	@Path("/status/{simulation_id}")
+	@Path("/status/{simulation-id}")
 	public Response getTaskStatus(
-		@PathParam("simulation_id") final String simulationId) {
+		@PathParam("simulation-id") final String simulationId) {
 		return extractionProxy.getTaskStatus(simulationId);
 	}
 
 	/**
 	 * Post MathML to skema service to get AMR return
 	 *
-	 * @param		model (String) the id of the model
+	 * @param		framework (String) the id of the model
 	 *
 	 * Args:
 	 *     mathMLPayload (List<String>): A list of MathML strings representing the functions that are
@@ -50,7 +50,7 @@ public class ExtractionResource {
 	 * @return AMR model
 	 */
 	@POST
-	@Path("/mathml_to_amr")
+	@Path("/mathml-to-amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postMathMLToAMR(
 		@DefaultValue("petrinet") @QueryParam("framework") String framework,
@@ -73,7 +73,7 @@ public class ExtractionResource {
 	 * @return extractions of the pdf
 	 */
 	@POST
-	@Path("/pdf_extractions")
+	@Path("/pdf-extractions")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postPDFExtractions(
 		@DefaultValue("true") @QueryParam("annotate_skema") Boolean annotateSkema,
@@ -94,7 +94,7 @@ public class ExtractionResource {
 	 * @return the profiled dataset
 	 */
 	@POST
-	@Path("/profile_dataset")
+	@Path("/profile-dataset")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postProfileDataset(
 		@QueryParam("dataset_id") String datasetId,
