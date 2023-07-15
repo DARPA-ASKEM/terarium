@@ -6,23 +6,27 @@
 				Terarium can extract information from papers and other resources to add relevant information
 				to this resource.
 			</p>
-			<ul v-if="publications?.length">
+			<ul>
 				<li v-for="(publication, index) in publications" :key="index">
-					<a :href="publication">{{ publication }}</a>
+					<a :href="publication.xdd_uri">{{ publication.title }}</a>
 				</li>
 			</ul>
-			<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
+			<Button icon="pi pi-plus" label="Add resources" text @click="addResources" />
 			<Dialog
 				v-model:visible="visible"
 				modal
-				header="Describe this dataset"
+				:header="`Describe this ${dialogFlavour}`"
 				:style="{ width: '50vw' }"
 			>
 				<p class="constrain-width">
-					Terarium can extract information from papers and other resources to describe this dataset.
-					Select the resources you would like to use.
+					Terarium can extract information from papers and other resources to describe this
+					{{ dialogFlavour }}. Select the resources you would like to use.
 				</p>
-				<DataTable :value="resources" :selection="selectedResources" tableStyle="min-width: 50rem">
+				<DataTable
+					:value="allResources"
+					v-model:selection="selectedResources"
+					tableStyle="min-width: 50rem"
+				>
 					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
 					<Column field="name" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
@@ -47,21 +51,63 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { ref } from 'vue';
+import { computed, ComputedRef, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { AcceptedExtensions } from '@/types/common';
+import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
+
+import { Artifact, DocumentAsset } from '@/types/Types';
 
 const visible = ref(false);
-const resources = ref();
 const selectedResources = ref();
 
-defineProps<{ publications?: Array<string> }>();
+const allResources: ComputedRef<
+	{ name: string; id: string | undefined; authors: string }[] | any[]
+> = computed(() => {
+	if (props.project?.assets) {
+		const artifactResources = props.project?.assets.artifacts
+			.filter((artifact: Artifact) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
+					artifact.name.endsWith(extension)
+				)
+			)
+			.map((artifact: Artifact) => ({
+				name: artifact.name,
+				authors: '',
+				id: artifact.id,
+				type: ProjectAssetTypes.ARTIFACTS
+			}));
+
+		const documentResources = props.project?.assets.publications.map((document: DocumentAsset) => ({
+			name: document.title,
+			authors: '',
+			id: document.id,
+			type: ProjectAssetTypes.DOCUMENTS
+		}));
+
+		return [...documentResources, ...artifactResources];
+	}
+	return [];
+});
+
+const props = defineProps<{
+	project?: IProject;
+	publications?: Array<DocumentAsset>;
+	dialogFlavour: string;
+}>();
 const emit = defineEmits(['extracted-metadata']);
+
+const addResources = () => {
+	visible.value = true;
+	// do something
+};
 
 function sendForEnrichments(_selectedResources) {
 	console.log('sending these resources for enrichment:', _selectedResources);
 
-	emit('extracted-metadata');
+	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
 	/* TODO: send selected resources to backend for enrichment */
 }
 </script>

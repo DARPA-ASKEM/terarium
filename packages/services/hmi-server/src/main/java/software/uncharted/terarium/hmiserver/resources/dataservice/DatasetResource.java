@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import io.quarkus.security.identity.SecurityIdentity;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -13,11 +17,8 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
-import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
-import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 
@@ -38,6 +39,7 @@ import com.google.common.math.Quantiles;
 
 
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.resources.DataStorageResource;
 import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
@@ -56,6 +58,9 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@ConfigProperty(name = "aws.data_set_path")
 	Optional<String> dataSetPath;
 
+	@ConfigProperty(name = "aws.simulate_path")
+	Optional<String> simulatePath;
+
 	@ConfigProperty(name = "aws.access_key_id")
 	Optional<String> accessKeyId;
 
@@ -71,10 +76,18 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 
 	@Inject
 	@RestClient
-	DatasetProxy proxy;
+	DatasetProxy datasetProxy;
 
+	@Inject
 	@RestClient
-	JsDelivrProxy jsdelivrProxy;
+	JsDelivrProxy githubProxy;
+
+	@Inject
+	@RestClient
+	SimulationProxy simulationProxy;
+
+	@Inject
+	SecurityIdentity securityIdentity;
 
 	@GET
 	@Path("/features")
@@ -82,7 +95,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
-		return proxy.getFeatures(pageSize, page);
+		return datasetProxy.getFeatures(pageSize, page);
 	}
 
 	@POST
@@ -91,7 +104,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response createFeatures(
 		final Feature feature
 	) {
-		return proxy.createFeatures(convertObjectToSnakeCaseJsonNode(feature));
+		return datasetProxy.createFeatures(convertObjectToSnakeCaseJsonNode(feature));
 	}
 
 	@GET
@@ -99,7 +112,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response getFeature(
 		@PathParam("id") final String id
 	) {
-		return proxy.getFeature(id);
+		return datasetProxy.getFeature(id);
 	}
 
 	@DELETE
@@ -107,7 +120,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response deleteFeature(
 		@PathParam("id") final String id
 	) {
-		return proxy.deleteFeature(id);
+		return datasetProxy.deleteFeature(id);
 	}
 
 	@PATCH
@@ -117,7 +130,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		@PathParam("id") final String id,
 		final Feature feature
 	) {
-		return proxy.updateFeature(id, convertObjectToSnakeCaseJsonNode(feature));
+		return datasetProxy.updateFeature(id, convertObjectToSnakeCaseJsonNode(feature));
 	}
 
 	@GET
@@ -126,7 +139,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
-		return proxy.getQualifiers(pageSize, page);
+		return datasetProxy.getQualifiers(pageSize, page);
 	}
 
 	@POST
@@ -135,7 +148,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response createQualifiers(
 		final Qualifier qualifier
 	) {
-		return proxy.createQualifiers(convertObjectToSnakeCaseJsonNode(qualifier));
+		return datasetProxy.createQualifiers(convertObjectToSnakeCaseJsonNode(qualifier));
 	}
 
 	@GET
@@ -143,7 +156,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response getQualifier(
 		@PathParam("id") final String id
 	) {
-		return proxy.getQualifier(id);
+		return datasetProxy.getQualifier(id);
 	}
 
 	@DELETE
@@ -151,7 +164,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response deleteQualifier(
 		@PathParam("id") final String id
 	) {
-		return proxy.deleteQualifier(id);
+		return datasetProxy.deleteQualifier(id);
 	}
 
 	@PATCH
@@ -161,7 +174,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		@PathParam("id") final String id,
 		final Qualifier qualifier
 	) {
-		return proxy.updateQualifier(id, convertObjectToSnakeCaseJsonNode(qualifier));
+		return datasetProxy.updateQualifier(id, convertObjectToSnakeCaseJsonNode(qualifier));
 	}
 
 	@GET
@@ -169,7 +182,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		@DefaultValue("500") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
-		return proxy.getDatasets(pageSize, page);
+		return datasetProxy.getDatasets(pageSize, page);
 	}
 
 	@POST
@@ -178,7 +191,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		final Dataset dataset
 	) {
 		JsonNode node = convertObjectToSnakeCaseJsonNode(dataset);
-		return proxy.createDatasets(node);
+		return datasetProxy.createDatasets(node);
 	}
 
 	@GET
@@ -186,7 +199,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Dataset getDataset(
 		@PathParam("id") final String id
 	) {
-		return proxy.getDataset(id);
+		return datasetProxy.getDataset(id);
 	}
 
 	@DELETE
@@ -194,7 +207,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response deleteDataset(
 		@PathParam("id") final String id
 	) {
-		return proxy.deleteDataset(id);
+		return datasetProxy.deleteDataset(id);
 	}
 
 	@PATCH
@@ -204,7 +217,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		@PathParam("id") final String id,
 		final Dataset dataset
 	) {
-		return proxy.updateDataset(id, convertObjectToSnakeCaseJsonNode(dataset));
+		return datasetProxy.updateDataset(id, convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
 	@POST
@@ -213,7 +226,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response deprecateDataset(
 		@PathParam("id") final String id
 	) {
-		return proxy.deprecateDataset(id);
+		return datasetProxy.deprecateDataset(id);
 	}
 
 	@GET
@@ -302,7 +315,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		}
 
 		//download CSV from github
-		String csvString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path);
+		String csvString = githubProxy.getGithubCode(repoOwnerAndName, path);
 
 
 		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
@@ -369,6 +382,87 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 
 
 	}
+
+	/**
+	 * Creates a new dataset from a simulation result. This will create a new dataset, then copy the results
+	 * csv file from the simulate bucket to the dataset bucket
+	 * @param simulationId ID of the simulation to create a dataset from
+	 * @return Dataset the new dataset created
+	 */
+	@PUT
+	@Path("/create-from-simulation-result")
+	public Response createFromSimulationResult(@QueryParam("simulationId") String simulationId){
+
+		Simulation simulation = simulationProxy.getSimulation(simulationId);
+
+		if(simulation.getResultFiles() == null || simulation.getResultFiles().isEmpty()){
+			log.error("Simulation {} has no result files", simulationId);
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+		if (dataSetPath.isEmpty() || simulatePath.isEmpty()) {
+			log.error("dataSetPath or simulatePath information not set. Cannot transfer results");
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+
+
+		String datasetName = simulation.getName() != null? simulation.getName() + " Dataset" : "Simulation Dataset";
+		String datasetDescription = simulation.getDescription() != null? simulation.getDescription() : "Dataset created from simulation";
+		String userName = securityIdentity.getPrincipal().getName();
+		List<String> fileNames = new ArrayList<>();
+		//go through our list of files and copy just the file name, located after the last /
+		for(String fileName : simulation.getResultFiles()){
+			fileNames.add(fileName.substring(fileName.lastIndexOf('/') + 1));
+		}
+
+		Dataset dataset = new Dataset().setDescription(datasetDescription).setName(datasetName).setUsername(userName).setFileNames(fileNames);
+		try {
+			Response response = createDataset(dataset);
+			dataset = response.readEntity(Dataset.class);
+
+
+
+
+			for(String fileName : fileNames){
+				String datasetKey = String.format("%s/%s/%s", dataSetPath.get(), dataset.getId(), fileName);
+				String simulationKey = String.format("%s/%s/%s", simulatePath.get(), simulation.getId(), fileName);
+				SdkHttpResponse res = copyFile(simulationKey, datasetKey);
+				if(!res.isSuccessful()){
+					log.error("Failed to copy file {} to dataset {}", fileName, dataset.getId());
+					return Response
+						.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.type(MediaType.APPLICATION_JSON)
+						.build();
+				}
+
+			}
+		} catch (Exception e) {
+			log.error("Failed to create dataset from simulation {}", simulationId);
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+		//This line seems strange, but, our dataset is not correct from before because of the snake-case issue
+		dataset = getDataset(dataset.getId());
+
+		return Response
+			.status(Response.Status.OK)
+			.type(MediaType.APPLICATION_JSON)
+			.entity(dataset)
+			.build();
+
+	}
+
+
 
 
 	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
@@ -443,7 +537,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@Path("/{id}/upload-url")
 	@Tag(description = "Get a signed url for uploading a file")
 	public PresignedURL getUploadUrl(@PathParam("id") final String id, @QueryParam("filename") final String fileName){
-		return proxy.getUploadUrl(id, fileName);
+		return datasetProxy.getUploadUrl(id, fileName);
 	}
 
 	/**
@@ -456,7 +550,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@Path("/{id}/download-url")
 	@Tag(description = "Get a download url for a file")
 	public PresignedURL getDownloadUrl(@PathParam("id") final String id,  @QueryParam("filename") String filename) {
-		return proxy.getDownloadUrl(id, filename);
+		return datasetProxy.getDownloadUrl(id, filename);
 	}
 
 

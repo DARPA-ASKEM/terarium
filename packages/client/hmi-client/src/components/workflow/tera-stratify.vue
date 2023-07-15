@@ -18,6 +18,13 @@
 					:active="stratifyView === StratifyView.Output"
 				/>
 			</span>
+			<Button
+				class="stratify-button"
+				label="Stratify"
+				icon="pi pi-arrow-right"
+				@click="doStratify"
+				:disabled="stratifyStep !== 3"
+			/>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -41,17 +48,18 @@
 							class="p-button-sm p-button-outlined"
 							label="Go back"
 							icon="pi pi-arrow-left"
-							@click="strataModel = null"
+							:disabled="stratifyStep === 0"
+							@click="goBack"
 						/>
 						<Button
-							v-if="!isBaseModelFullyTyped"
+							v-if="stratifyStep === 1"
 							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
 							@click="stratifyStep = 2"
 						/>
 						<Button
-							v-else
+							v-if="typedBaseModel && stratifyStep === 2"
 							class="p-button-sm"
 							label="Continue to step 3: Manage interactions"
 							icon="pi pi-arrow-right"
@@ -60,57 +68,66 @@
 					</div>
 					<span v-else>Define the groups you want to stratify your model with.</span>
 				</div>
-				<Accordion :active-index="0">
-					<AccordionTab header="Model">
-						<div class="step-1-inner">
-							<tera-strata-model-diagram
+				<div class="step-1-inner">
+					<Accordion :active-index="0">
+						<AccordionTab header="Model">
+							<tera-typed-model-diagram
 								v-if="model"
 								:model="model"
+								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
-								@all-nodes-typed="isBaseModelFullyTyped = true"
-								:show-reflexives-toolbar="false"
+								@model-updated="(value) => (typedBaseModel = value)"
+								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
+						</AccordionTab>
+					</Accordion>
+					<section v-if="!strataModel" class="generate-strata-model">
+						<div class="input">
+							<label for="strata-type">Select a strata type</label>
+							<Dropdown
+								id="strata-type"
+								v-model="strataType"
+								:options="['Age groups', 'Location-travel']"
+							/>
+						</div>
+						<section>
 							<div class="input">
-								<label for="strata-type">Select a strata type</label>
-								<Dropdown
-									id="strata-type"
-									v-model="strataType"
-									:options="['Age groups', 'Location-travel']"
+								<label for="labels"
+									>Enter a comma separated list of labels for each group. (Max 100)</label
+								>
+								<Textarea id="labels" v-model="labels" />
+								<span><i class="pi pi-info-circle" />Or drag a CSV file into this box</span>
+							</div>
+							<div class="buttons">
+								<Button
+									class="p-button-sm p-button-outlined"
+									label="Add another strata group"
+									icon="pi pi-plus"
+								/>
+								<Button
+									class="p-button-sm"
+									:disabled="!(strataType && labels)"
+									label="Generate strata"
+									@click="generateStrataModel"
 								/>
 							</div>
-							<section v-if="!strataModel">
-								<div class="input">
-									<label for="labels"
-										>Enter a comma separated list of labels for each group. (Max 100)</label
-									>
-									<Textarea id="labels" v-model="labels" />
-									<span><i class="pi pi-info-circle" />Or drag a CSV file into this box</span>
-								</div>
-								<div class="buttons">
-									<Button
-										class="p-button-sm p-button-outlined"
-										label="Add another strata group"
-										icon="pi pi-plus"
-									/>
-									<Button
-										class="p-button-sm"
-										:disabled="!(strataType && labels)"
-										label="Generate strata"
-										@click="generateStrataModel"
-									/>
-								</div>
-							</section>
-							<section v-else>
+						</section>
+					</section>
+					<section v-else>
+						<Accordion :active-index="0">
+							<AccordionTab header="Strata">
 								<tera-strata-model-diagram
-									:model="strataModel"
-									:show-typing-toolbar="false"
-									:show-reflexives-toolbar="isBaseModelFullyTyped"
+									:strata-model="strataModel"
+									:base-model="typedBaseModel"
+									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
+									:show-reflexives-toolbar="stratifyStep === 3"
+									@model-updated="(value) => (typedStrataModel = value)"
 								/>
-							</section>
-						</div>
-					</AccordionTab>
-				</Accordion>
+							</AccordionTab>
+						</Accordion>
+					</section>
+				</div>
 			</section>
 		</section>
 	</main>
@@ -131,7 +148,9 @@ import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
+import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
+import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -149,9 +168,11 @@ const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
-	() => strataModel.value?.semantics?.typing?.type_system
+	() => strataModel.value?.semantics?.typing?.system
 );
-const isBaseModelFullyTyped = ref(false);
+const typedBaseModel = ref<Model | null>(null);
+const typedStrataModel = ref<Model | null>(null);
+const stratifiedModel = ref<Model>();
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -161,6 +182,21 @@ function generateStrataModel() {
 		} else if (strataType.value === 'Location-travel') {
 			strataModel.value = generateLocationStrataModel(stateNames);
 		}
+	}
+}
+
+async function doStratify() {
+	if (typedBaseModel.value && typedStrataModel.value) {
+		stratifiedModel.value = await stratify(typedBaseModel.value, typedStrataModel.value);
+	}
+}
+
+function goBack() {
+	if (stratifyStep.value > 0) {
+		if (stratifyStep.value === 1) {
+			strataModel.value = null;
+		}
+		stratifyStep.value--;
 	}
 }
 
@@ -264,5 +300,13 @@ section {
 :deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.generate-strata-model {
+	padding: 0 0.5rem 0 0.5rem;
+}
+
+.stratify-button {
+	margin-left: auto;
 }
 </style>

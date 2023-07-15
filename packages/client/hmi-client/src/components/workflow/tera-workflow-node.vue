@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5 class="truncate">{{ node.operationType }}</h5>
+			<h5 class="truncate">{{ node.displayName }}</h5>
 			<span>
 				<Button
 					icon="pi pi-sign-in"
@@ -33,6 +33,8 @@
 				>
 					<div class="input port" />
 					<div>
+						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
+						<span v-if="!input.label">{{ input.type }}</span>
 						<span
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"

@@ -4,7 +4,7 @@ import { downloadRawFile, getDataset } from '@/services/dataset';
 
 // Used in the setup of calibration node and drill down
 // Takes a model config Id and grabs relevant objects
-export const setupModelInput = async (modelConfigId: string | undefined) => {
+export const setupModelInputJulia = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
 		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
 		// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
@@ -19,7 +19,7 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 
 // Used in the setup of calibration node and drill down
 // takes a datasetId and grabs relevant objects
-export const setupDatasetInput = async (datasetId: string | undefined) => {
+export const setupDatasetInputJulia = async (datasetId: string | undefined) => {
 	if (datasetId) {
 		// Get dataset:
 		const dataset: Dataset | null = await getDataset(datasetId);
