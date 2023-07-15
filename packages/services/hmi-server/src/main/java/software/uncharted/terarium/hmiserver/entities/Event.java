@@ -88,4 +88,9 @@ public class Event extends PanacheEntityBase implements Serializable {
 			.range(0, limit)
 			.list();
 	}
+
+	public static List<Event> findAllByUsername(final String username) {
+		return find("username = ?1", Sort.ascending("timestampmillis"), username)
+			.list();
+	}
 }

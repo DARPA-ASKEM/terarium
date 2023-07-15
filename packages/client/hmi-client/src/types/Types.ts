@@ -10,6 +10,15 @@ export interface Event {
     value?: string;
 }
 
+export interface EvaluationScenarioSummary {
+    name: string;
+    username: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
+}
+
 export interface GithubFile {
     type: FileType;
     encoding: string;
@@ -489,10 +498,18 @@ export interface MetadataDataset {
     metadata: string;
 }
 
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
+}
+
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
     RouteTiming = "ROUTE_TIMING",
+    ProxyTiming = "PROXY_TIMING",
 }
 
 export enum FileType {

@@ -77,7 +77,7 @@
 						<label for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
 
-						<p>Status: {{ evaluationScenarioStatus }}</p>
+						<p>Status: {{ evaluationScenarioCurrentStatus }}</p>
 						<p>Runtime: {{ evaluationScenarioRuntimeString }}</p>
 					</form>
 				</template>
@@ -88,9 +88,9 @@
 					<Button
 						class="p-button-danger"
 						v-if="
-							evaluationScenarioStatus === 'started' ||
-							evaluationScenarioStatus === 'resumed' ||
-							evaluationScenarioStatus === 'paused'
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
 						"
 						:disabled="!isEvaluationScenarioValid"
 						@click="stopEvaluationScenario"
@@ -98,18 +98,21 @@
 					>
 					<Button
 						class="p-button-warning"
-						v-if="evaluationScenarioStatus === 'started' || evaluationScenarioStatus === 'resumed'"
+						v-if="
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
+						"
 						@click="pauseEvaluationScenario"
 						>Pause</Button
 					>
 					<Button
 						class="p-button-warning"
-						v-if="evaluationScenarioStatus === 'paused'"
+						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
 						@click="resumeEvaluationScenario"
 						>Resume</Button
 					>
 					<Button
-						:disabled="!isEvaluationScenarioValid || evaluationScenarioStatus !== ''"
+						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
 						@click="beginEvaluationScenario"
 						>Begin</Button
 					>
@@ -139,7 +142,7 @@ import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
-import { EventType } from '@/types/Types';
+import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
 
@@ -165,7 +168,7 @@ const evaluationScenarioName = ref('');
 const evaluationScenarioTask = ref('');
 const evaluationScenarioDescription = ref('');
 const evaluationScenarioNotes = ref('');
-const evaluationScenarioStatus = ref('');
+const evaluationScenarioCurrentStatus = ref('');
 const evaluationScenarioRuntimeMillis = ref(0);
 let intervalId = null;
 
@@ -195,7 +198,7 @@ const beginEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('started'))
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Started))
 	);
 	persistEvaluationScenario();
 	await refreshEvaluationScenario();
@@ -210,7 +213,7 @@ const stopEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('stopped'))
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Stopped))
 	);
 	clearEvaluationScenario();
 	clearInterval(intervalId);
@@ -224,7 +227,7 @@ const pauseEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('paused'))
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
 	);
 	await refreshEvaluationScenario();
 	clearInterval(intervalId);
@@ -235,7 +238,7 @@ const resumeEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('resumed'))
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
 	);
 	await refreshEvaluationScenario();
 	startEvaluationTimer();
@@ -266,7 +269,7 @@ const persistEvaluationScenario = () => {
 };
 
 const refreshEvaluationScenario = async () => {
-	evaluationScenarioStatus.value = (
+	evaluationScenarioCurrentStatus.value = (
 		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
 	).data;
 
@@ -289,8 +292,8 @@ const loadEvaluationScenario = async () => {
 
 const startEvaluationTimer = () => {
 	if (
-		evaluationScenarioStatus.value === 'started' ||
-		evaluationScenarioStatus.value === 'resumed'
+		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Started ||
+		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Resumed
 	) {
 		intervalId = setInterval(() => {
 			evaluationScenarioRuntimeMillis.value += 1000;
@@ -306,7 +309,7 @@ const clearEvaluationScenario = () => {
 	evaluationScenarioTask.value = '';
 	evaluationScenarioDescription.value = '';
 	evaluationScenarioNotes.value = '';
-	evaluationScenarioStatus.value = '';
+	evaluationScenarioCurrentStatus.value = '';
 	evaluationScenarioRuntimeMillis.value = 0;
 	persistEvaluationScenario();
 };
