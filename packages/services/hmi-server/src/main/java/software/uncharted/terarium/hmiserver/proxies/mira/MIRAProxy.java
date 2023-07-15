@@ -12,10 +12,10 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 @RegisterProvider(HmiResponseExceptionMapper.class)
-@RegisterRestClient(configKey = "mira-dkg")
+@RegisterRestClient(configKey = "mira-api")
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/api")
-public interface DKGProxy {
+public interface MIRAProxy {
 	@GET
 	@Path("/entity/{curie}")
 	@LogRestClientTime
@@ -29,4 +29,12 @@ public interface DKGProxy {
 	List<DKG> getEntities(
 		@PathParam("curies") final String curies
 	);
+
+	@POST
+	@Path("/api/reconstruct_ode_semantics")
+	@LogRestClientTime
+	Object recconstructAMR(
+			final Object amr
+	);
+
 }
