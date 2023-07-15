@@ -6,7 +6,7 @@ public enum EventType {
 	SEARCH(true),
 	EVALUATION_SCENARIO(true),
 	ROUTE_TIMING(true),
-	PROXY_TIMING(true);
+	PROXY_TIMING(true),
 	ADD_RESOURCES_TO_PROJECT(true),
 	EXTRACT_MODEL(true),
 	PERSIST_MODEL(true),
@@ -14,9 +14,7 @@ public enum EventType {
 	ADD_CODE_CELL(true),
 	RUN_SIMULATION(true),
 	RUN_CALIBRATE(true),
-	GITHUB_IMPORT(true),
-	EVALUATION_SCENARIO(false),
-	ROUTE_TIMING(false);
+	GITHUB_IMPORT(true);
 
 	EventType(boolean persistent) {
 		this.persistent = persistent;
