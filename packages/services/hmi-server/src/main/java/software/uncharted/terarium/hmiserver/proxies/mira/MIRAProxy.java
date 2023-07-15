@@ -5,6 +5,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 
 
 import javax.ws.rs.*;
@@ -34,7 +35,7 @@ public interface MIRAProxy {
 	@POST
 	@Path("/api/reconstruct_ode_semantics")
 	@LogRestClientTime
-	Object recconstructODESemantic(
+	Object reconstructODESemantics(
 			final Object amr
 	);
 
