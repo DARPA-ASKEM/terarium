@@ -219,20 +219,27 @@ public class EvaluationResource {
 				.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
 				.forEach(event -> {
 				try {
-					final JsonNode valueNode = mapper.readTree(event.getValue());
 					final List<String> values = new ArrayList<>();
 					values.add(event.getTimestampMillis().toString());
 					values.add(event.getProjectId() != null ? event.getProjectId().toString() : "");
 					values.add(event.getUsername());
 					values.add(event.getType().toString());
 					values.add(event.getValue());
-					for (int i = 5; i < headers.size(); i++) {
-						final String header = headers.get(i);
-						final JsonNode node = valueNode.at(header);
-						if (node.isMissingNode()) {
+
+					try {
+						final JsonNode valueNode = mapper.readTree(event.getValue());
+						for (int i = 5; i < headers.size(); i++) {
+							final String header = headers.get(i);
+							final JsonNode node = valueNode.at(header);
+							if (node.isMissingNode()) {
+								values.add("");
+							} else {
+								values.add(node.asText());
+							}
+						}
+					} catch (Exception ignored) {
+						for (int i = 5; i < headers.size(); i++) {
 							values.add("");
-						} else {
-							values.add(node.asText());
 						}
 					}
 					printer.printRecord(values);
