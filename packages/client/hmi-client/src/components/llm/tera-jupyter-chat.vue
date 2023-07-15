@@ -70,6 +70,7 @@ const emit = defineEmits([
 	'download-response',
 	'update-kernel-status',
 	'new-dataset-saved',
+	'new-model-saved',
 	'is-typing'
 ]);
 
@@ -213,12 +214,17 @@ const newJupyterMessage = (jupyterMessage) => {
 	} else if (jupyterMessage.header.msg_type === 'save_dataset_response') {
 		emit('new-dataset-saved', jupyterMessage.content);
 		isExecutingCode.value = false;
+	} else if (jupyterMessage.header.msg_type === 'save_model_response') {
+		emit('new-model-saved', jupyterMessage.content);
+		isExecutingCode.value = false;
 	} else if (jupyterMessage.header.msg_type === 'download_response') {
 		emit('download-response', jupyterMessage.content);
 		isExecutingCode.value = false;
 	} else if (jupyterMessage.header.msg_type === 'execute_input') {
 		updateNotebookCells(jupyterMessage);
 		isExecutingCode.value = true;
+	} else if (jupyterMessage.header.msg_type === 'model_preview') {
+		updateNotebookCells(jupyterMessage);
 	} else {
 		console.log('Unknown Jupyter event', jupyterMessage);
 	}

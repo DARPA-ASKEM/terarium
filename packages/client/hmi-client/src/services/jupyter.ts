@@ -44,6 +44,7 @@ export type JupyterMessageType =
 	| 'download_request'
 	| 'download_response'
 	| 'dataset'
+	| 'model_preview'
 	| 'visualization'
 	| 'llm_request'
 	| 'llm_response'
