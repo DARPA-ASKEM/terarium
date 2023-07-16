@@ -395,7 +395,10 @@ const updateLatexFormula = (equationsList: string[]) => {
 
 // Get the MathML list of equations from the <tera-math-editor>s
 const mathmlequations = computed(
-	() => equationsRef.value.map((eq) => eq.mathLiveField.getValue('math-ml')).flat() as Array<string>
+	() =>
+		equationsRef.value
+			.map((eq) => `<math>${eq.mathLiveField.getValue('math-ml')}</math>`)
+			.flat() as Array<string>
 );
 
 watch(
