@@ -737,6 +737,7 @@ function updateModelObservables(observableMathMLList) {
 	// assign the new observables
 	if (model.value !== null && model.value.semantics?.ode?.observables) {
 		model.value.semantics.ode.observables = observableMathMLList;
+		updateModel(model.value);
 	}
 }
 
