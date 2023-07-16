@@ -159,8 +159,8 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel } from '@/services/model';
 import { stratify_output } from '@/temp/models/stratify_output';
+import { getModel, createModel } from '@/services/model';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
@@ -201,6 +201,10 @@ function generateStrataModel() {
 async function doStratify() {
 	if (typedBaseModel.value && typedStrataModel.value) {
 		stratifiedModel.value = await stratify(typedBaseModel.value, typedStrataModel.value);
+		if (stratifiedModel.value) {
+			stratifyView.value = StratifyView.Output;
+			await createModel(stratifiedModel.value);
+		}
 	}
 }
 

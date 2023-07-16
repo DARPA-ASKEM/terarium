@@ -1,6 +1,15 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Model, ModelSemantics, PetriNetTransition, State, Transition } from '@/types/Types';
+import {
+	Initial,
+	Model,
+	ModelParameter,
+	ModelSemantics,
+	PetriNetTransition,
+	Rate,
+	State,
+	Transition
+} from '@/types/Types';
 import { updateRateExpressionWithParam } from '@/model-representation/petrinet/petrinet-service';
 
 // Providing the ID of 3 Models (model A, model B, and the type Model)
@@ -36,7 +45,8 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		}
 	}));
 	const transitions: Transition[] = [];
-	states.forEach((outerState, i) =>
+	const parameters: ModelParameter[] = [];
+	states.forEach((outerState, i) => {
 		states.forEach((innerState, j) => {
 			transitions.push({
 				id: `c${i + 1}${j + 1}`,
@@ -47,8 +57,24 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 					description: 'Infective interaction between individuals.'
 				}
 			});
-		})
-	);
+		});
+	});
+	states.forEach((outerState, i) => {
+		states.forEach((innerState, j) => {
+			parameters.push({
+				id: `beta${i + 1}${j + 1}`,
+				description: `infection rate from age group '${outerState.name}' to '${innerState.name}'`,
+				value: 1 / transitions.length
+			});
+		});
+	});
+	states.forEach((state, i) => {
+		parameters.push({
+			id: `${states[i].id}init`,
+			description: `Proportion of population in age group '${state.name}' at timestep 0`,
+			value: 1 / states.length
+		});
+	});
 	const typeMap: string[][] = states
 		.map((state) => [state.id, 'Pop'])
 		.concat(transitions.map((transition) => [transition.id, 'Infect']));
@@ -73,72 +99,22 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 			}
 		]
 	};
-	const rates = [
-		{
-			target: transitions[0].id,
+	const rates: Rate[] = [];
+	transitions.forEach((t) =>
+		rates.push({
+			target: t.id,
 			expression: '',
 			expression_mathml: ''
-		},
-		{
-			target: transitions[1].id,
-			expression: '',
-			expression_mathml: ''
-		},
-		{
-			target: transitions[2].id,
-			expression: '',
-			expression_mathml: ''
-		},
-		{
-			target: transitions[3].id,
-			expression: '',
-			expression_mathml: ''
-		}
-	];
-	const initials = [
-		{
-			target: states[0].id,
-			expression: `${states[0].id}init`,
-			expression_mathml: `<ci>${states[0].id}init</ci>`
-		},
-		{
-			target: states[1].id,
-			expression: `${states[1].id}init`,
-			expression_mathml: `<ci>${states[1].id}init</ci>`
-		}
-	];
-	const parameters = [
-		{
-			id: 'beta11',
-			description: `infection rate from age group '${states[0].name}' to '${states[0].name}'`,
-			value: 1 / transitions.length
-		},
-		{
-			id: 'beta12',
-			description: `infection rate from age group '${states[0].name}' to '${states[1].name}'`,
-			value: 1 / transitions.length
-		},
-		{
-			id: 'beta21',
-			description: `infection rate from age group '${states[1].name}' to '${states[0].name}'`,
-			value: 1 / transitions.length
-		},
-		{
-			id: 'beta22',
-			description: `infection rate from age group '${states[1].name}' to '${states[1].name}'`,
-			value: 1 / transitions.length
-		},
-		{
-			id: `${states[0].id}init`,
-			description: `Proportion of population in age group '${states[0].name}' at timestep 0`,
-			value: 1 / states.length
-		},
-		{
-			id: `${states[1].id}init`,
-			description: `Proportion of population in age group '${states[1].name}' at timestep 0`,
-			value: 1 / states.length
-		}
-	];
+		})
+	);
+	const initials: Initial[] = [];
+	states.forEach((s) =>
+		initials.push({
+			target: s.id,
+			expression: `${s.id}init`,
+			expression_mathml: `<ci>${s.id}init</ci>`
+		})
+	);
 	const semantics: ModelSemantics = {
 		ode: {
 			rates,
@@ -190,6 +166,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 		}
 	}));
 	const transitions: Transition[] = [];
+	const parameters: ModelParameter[] = [];
 	states.forEach((outerState, i) =>
 		states.forEach((innerState, j) => {
 			if (i !== j) {
@@ -205,55 +182,43 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 			}
 		})
 	);
+	states.forEach((outerState, i) => {
+		states.forEach((innerState, j) => {
+			if (i !== j) {
+				parameters.push({
+					id: `tau${i + 1}${j + 1}`,
+					description: `travel rate from location '${outerState.name}' to '${innerState.name}'`,
+					value: 1 / transitions.length
+				});
+			}
+		});
+	});
+	states.forEach((state, i) => {
+		parameters.push({
+			id: `${states[i].id}init`,
+			description: `Proportion of population in location '${state.name}' at timestep 0`,
+			value: 1 / states.length
+		});
+	});
 	const typeMap: string[][] = states
 		.map((state) => [state.id, 'Pop'])
 		.concat(transitions.map((transition) => [transition.id, 'Strata']));
-	const rates = [
-		{
-			target: transitions[0].id,
-			expression: `${transitions[0].input[0]}*tau12`,
-			expression_mathml: `<apply><times/><ci>${transitions[0].input[0]}</ci><ci>tau12</ci></apply>`
-		},
-		{
-			target: transitions[1].id,
-			expression: `${transitions[1].input[0]}*tau21`,
-			expression_mathml: `<apply><times/><ci>${transitions[1].input[0]}</ci><ci>tau21</ci></apply>`
-		}
-	];
-	const initials = [
-		{
-			target: states[0].id,
-			expression: `${states[0].id}init`,
-			expression_mathml: `<ci>${states[0].id}init</ci>`
-		},
-		{
-			target: states[1].id,
-			expression: `${states[1].id}init`,
-			expression_mathml: `<ci>${states[1].id}init</ci>`
-		}
-	];
-	const parameters = [
-		{
-			id: 'tau12',
-			description: `travel rate from location '${states[0].name}' to '${states[1].name}'`,
-			value: 1 / transitions.length
-		},
-		{
-			id: 'tau21',
-			description: `travel rate from location '${states[1].name}' to '${states[0].name}'`,
-			value: 1 / transitions.length
-		},
-		{
-			id: `${states[0].id}init`,
-			description: `Proportion of population in location '${states[0].name}' at timestep 0`,
-			value: 1 / states.length
-		},
-		{
-			id: `${states[1].id}init`,
-			description: `Proportion of population in location '${states[1].name}' at timestep 0`,
-			value: 1 / states.length
-		}
-	];
+	const rates: Rate[] = [];
+	transitions.forEach((t) =>
+		rates.push({
+			target: t.id,
+			expression: '',
+			expression_mathml: ''
+		})
+	);
+	const initials: Initial[] = [];
+	states.forEach((s) =>
+		initials.push({
+			target: s.id,
+			expression: `${s.id}init`,
+			expression_mathml: `<ci>${s.id}init</ci>`
+		})
+	);
 	const typeSystem = {
 		states: [
 			{
@@ -286,7 +251,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 			map: typeMap
 		}
 	};
-	return {
+	const model: Model = {
 		id: 'location-travel',
 		name: 'Location-travel strata model',
 		description: 'Location-travel strata model',
@@ -307,6 +272,10 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 			attributes: []
 		}
 	};
+	transitions.forEach((t, i) =>
+		updateRateExpressionWithParam(model, t as PetriNetTransition, parameters[i].id)
+	);
+	return model;
 }
 
 export function generateTypeState(amr: Model, stateId: string, typeId: string): State | null {
