@@ -98,13 +98,27 @@
 						<td
 							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
 							:key="j"
-							@click="cellEditStates[i].parameters[j] = true"
+							@click="
+								() => {
+									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
+										cellEditStates[i].parameters[j] = true;
+									}
+								}
+							"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].parameters[j] = true"
+							@keyup.enter="
+								() => {
+									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
+										cellEditStates[i].parameters[j] = true;
+									}
+								}
+							"
 						>
 							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
 								<div class="distribution-cell">
-									<span>{{ parameter.value }}</span>
+									<!-- To represent a time series variable -->
+									<span v-if="configuration?.metadata?.timeseries?.[parameter.id]">TS</span>
+									<span v-else>{{ parameter.value }}</span>
 									<span class="distribution-range" v-if="parameter.distribution"
 										>Min: {{ parameter.distribution.parameters.minimum }} Max:
 										{{ parameter.distribution.parameters.maximum }}</span
@@ -167,14 +181,30 @@
 							<label for="name">Name</label>
 							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
 						</div>
+						<div v-if="modalVal.odeType === 'parameters'">
+							<label for="type">Type</label>
+							<Dropdown
+								v-model="extraction.type"
+								:options="typeOptions"
+								optionLabel="label"
+								optionValue="value"
+								placeholder="Select a parameter type"
+							></Dropdown>
+						</div>
 						<div>
 							<label for="name">Value</label>
-							<InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" />
+							<InputText
+								class="p-inputtext-sm"
+								:class="{ 'p-invalid': errorMessage }"
+								:key="'value' + i"
+								v-model="extraction.value"
+								:placeholder="getValuePlaceholder(extraction.type)"
+								@keydown="clearError()"
+							/>
+							<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
 						</div>
 						<div v-if="modalVal.odeType === 'parameters'">
-							<label for="name">Distribution</label>
-							<Checkbox v-model="extraction.isDistribution" :binary="true"></Checkbox>
-							<div v-if="extraction.isDistribution">
+							<div v-if="extraction.type === ParamType.DISTRIBUTION">
 								<label for="name">Min</label>
 								<InputText
 									class="p-inputtext-sm"
@@ -198,7 +228,6 @@
 					@click="
 						() => {
 							setModelParameters();
-							updateModelConfigValue();
 						}
 					"
 				/>
@@ -217,7 +246,7 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import Checkbox from 'primevue/checkbox';
+import Dropdown from 'primevue/dropdown';
 import { ModelConfiguration, Model } from '@/types/Types';
 import {
 	createModelConfiguration,
@@ -225,6 +254,12 @@ import {
 	addDefaultConfiguration
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
+
+enum ParamType {
+	CONSTANT = 'constant',
+	DISTRIBUTION = 'distribution',
+	TIME_SERIES = 'time_series'
+}
 
 const props = defineProps<{
 	isEditable: boolean;
@@ -240,10 +275,17 @@ const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 
 
 const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
+const errorMessage = ref('');
 
 const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
+
+const typeOptions = ref([
+	{ label: 'A constant', value: ParamType.CONSTANT },
+	{ label: 'A distibution', value: ParamType.DISTRIBUTION },
+	{ label: 'A value that changes over time', value: ParamType.TIME_SERIES }
+]);
 
 // Decide if we should display the whole configuration table
 const isConfigurationVisible = computed(
@@ -278,6 +320,13 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	}, 800);
 }
 
+function getValuePlaceholder(parameterType) {
+	if (parameterType === ParamType.TIME_SERIES) {
+		return 'Enter values here as a list of time:value pairs (e.g., 0:500, 10:550, 25:700 etc)';
+	}
+	return '';
+}
+
 function openValueModal(
 	odeType: string,
 	valueName: string,
@@ -285,15 +334,21 @@ function openValueModal(
 	odeObjIndex: number
 ) {
 	if (props.isEditable) {
+		clearError();
 		activeIndex.value = 0;
 		openValueConfig.value = true;
 		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
 		const modelParameter = cloneDeep(
 			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
 		);
-		extractions.value[0].value = modelParameter[valueName];
+
+		// sticking the timeseries values on the metadata, temporary solution for now
+		const modelTimeSeries =
+			cloneDeep(modelConfigurations.value[configIndex].configuration?.metadata?.timeseries) ?? {};
+
+		extractions.value[0].value = getParameterValue(modelParameter, valueName, modelTimeSeries);
 		extractions.value[0].name = modelParameter.name ?? 'Default';
-		extractions.value[0].isDistribution = !!modelParameter.distribution;
+		extractions.value[0].type = getParameterType(modelParameter, modelTimeSeries);
 		// we are only adding the ability to add one type of distribution for now...
 		extractions.value[0].distribution = modelParameter.distribution ?? {
 			type: 'Uniform1',
@@ -302,19 +357,73 @@ function openValueModal(
 	}
 }
 
+function clearError() {
+	errorMessage.value = '';
+}
+
+function validateTimeSeries(values) {
+	let isValid = true;
+	if (typeof values !== 'string') {
+		isValid = false;
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+		return isValid;
+	}
+	const timeValuePairs = values.split(',');
+
+	timeValuePairs.forEach((pair) => {
+		const [time, value] = pair.trim().split(/\s*:\s*/);
+		if (!time || !value) {
+			isValid = false;
+		}
+	});
+
+	clearError();
+	if (!isValid) {
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+	}
+	return isValid;
+}
+
+// to validate input
+function checkModelParameters() {
+	const { type, value } = extractions.value[activeIndex.value];
+
+	if (type === ParamType.TIME_SERIES) {
+		return validateTimeSeries(value);
+	}
+
+	clearError();
+	return true;
+}
+
 // function to set the provided values from the modal
 function setModelParameters() {
-	const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
-	const modelParameter =
-		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
-	modelParameter[valueName] = extractions.value[activeIndex.value].value;
-	modelParameter.name = extractions.value[activeIndex.value].name;
+	if (checkModelParameters()) {
+		const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
+		const modelParameter =
+			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
+		modelParameter[valueName] = extractions.value[activeIndex.value].value;
 
-	// delete the distribution if the checkbox isn't selected
-	if (extractions.value[activeIndex.value].isDistribution) {
-		modelParameter.distribution = extractions.value[activeIndex.value].distribution;
-	} else {
-		delete modelParameter.distribution;
+		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
+
+		modelParameter.name = extractions.value[activeIndex.value].name;
+
+		if (extractions.value[activeIndex.value].type === ParamType.TIME_SERIES) {
+			if (!modelMetadata.timeseries) modelMetadata.timeseries = {};
+			if (!modelMetadata.timeseries[modelParameter.id])
+				modelMetadata.timeseries[modelParameter.id] = {};
+			modelMetadata.timeseries[modelParameter.id] = extractions.value[activeIndex.value].value;
+			delete modelParameter.distribution;
+		} else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
+			modelParameter.distribution = extractions.value[activeIndex.value].distribution;
+			delete modelMetadata.timeseries[modelParameter.id];
+		} else {
+			// A constant
+			delete modelParameter.distribution;
+			delete modelMetadata.timeseries[modelParameter.id];
+		}
+
+		updateModelConfigValue();
 	}
 }
 
@@ -322,6 +431,24 @@ function updateModelConfigValue(configIndex: number = modalVal.value.configIndex
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
+}
+
+function getParameterValue(parameter, valueName, timeseries) {
+	if (parameter.id in timeseries) {
+		return timeseries[parameter.id];
+	}
+	return parameter[valueName];
+}
+function getParameterType(parameter, timeseries) {
+	if (parameter.id in timeseries) {
+		return ParamType.TIME_SERIES;
+	}
+
+	if (parameter.distribution) {
+		return ParamType.DISTRIBUTION;
+	}
+
+	return ParamType.CONSTANT;
 }
 
 async function initializeConfigSpace() {
@@ -447,12 +574,81 @@ td:hover .cell-menu {
 	visibility: visible;
 }
 
+.p-tabview {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	justify-content: space-between;
+}
+
+.p-tabview:deep(> *) {
+	width: 50vw;
+	height: 50vh;
+	overflow: auto;
+}
+
+.p-tabview:deep(.p-tabview-nav) {
+	flex-direction: column;
+}
+
+.p-tabview:deep(label) {
+	display: block;
+	font-size: var(--font-caption);
+	margin-bottom: 0.25rem;
+}
+
+.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-panels) {
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	background-color: var(--surface-ground);
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.p-tabview:deep(.p-tabview-nav li) {
+	border-left: 3px solid transparent;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
+	border-bottom: 1px solid var(--surface-border-light);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight) {
+	border-left: 3px solid var(--primary-color);
+	background: var(--surface-highlight);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+	background: none;
+}
+
+.p-tabview:deep(.p-inputtext) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
+	display: none;
+}
+
 .distribution-cell {
 	display: flex;
 	flex-direction: column;
 }
 .distribution-range {
 	white-space: nowrap;
+}
+
+.invalid-message {
+	color: var(--text-color-danger);
+	font-size: var(--font-caption);
 }
 
 .capitalize {
