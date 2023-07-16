@@ -3,34 +3,16 @@ import EventEmitter from './event-emitter';
 import removeChildren from '../utils/dom-util';
 import { traverseGraph, getAStarPath } from './traverse';
 import { translate } from '../utils/svg-util';
-
-import { INode, IEdge, IGraph, IRect, IPoint, D3Selection, D3SelectionINode } from '../types';
-
-type AsyncFunction<A, O> = (args: A) => Promise<O>;
-type AsyncLayoutFunction<V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
-type LayoutFunction<V, E> = (args: IGraph<V, E>) => IGraph<V, E>;
-
-export interface Options {
-	el?: HTMLDivElement | null;
-	runLayout: AsyncLayoutFunction<any, any> | LayoutFunction<any, any>;
-
-	useZoom?: boolean;
-	zoomRange?: [number, number];
-	useStableLayout?: boolean;
-
-	// Attempt to use the same set of zoom parameters across layout changes
-	useStableZoomPan?: boolean;
-
-	// This is getting around algorithms that do not provide stand-alone routing capabilities, in
-	// which case we can internally route using A-star
-	useAStarRouting?: boolean;
-
-	// Whether to show grid
-	useGrid?: boolean;
-
-	// The css class for custom dragging event
-	dragSelector?: string;
-}
+import {
+	Options,
+	INode,
+	IEdge,
+	IGraph,
+	IRect,
+	IPoint,
+	D3Selection,
+	D3SelectionINode
+} from '../types';
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()

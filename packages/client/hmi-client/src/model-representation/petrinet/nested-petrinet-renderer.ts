@@ -1,35 +1,11 @@
 import { select } from 'd3';
-import { D3SelectionINode, IGraph } from '@graph-scaffolder/types';
-import { Options } from '@graph-scaffolder/core/renderer';
+import { D3SelectionINode, Options } from '@graph-scaffolder/types';
 
 import { NodeType, PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { NodeData } from '@/model-representation/petrinet/petrinet-service';
 
-type AsyncFunction<A, O> = (args: A) => Promise<O>;
-type AsyncLayoutFunction<V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
-type LayoutFunction<V, E> = (args: IGraph<V, E>) => IGraph<V, E>;
-
-export interface NestedPetrinetOptions {
-	el?: HTMLDivElement | null;
+export interface NestedPetrinetOptions extends Options {
 	nestedMap?: { [baseNodeId: string]: string[] };
-	runLayout: AsyncLayoutFunction<any, any> | LayoutFunction<any, any>;
-
-	useZoom?: boolean;
-	zoomRange?: [number, number];
-	useStableLayout?: boolean;
-
-	// Attempt to use the same set of zoom parameters across layout changes
-	useStableZoomPan?: boolean;
-
-	// This is getting around algorithms that do not provide stand-alone routing capabilities, in
-	// which case we can internally route using A-star
-	useAStarRouting?: boolean;
-
-	// Whether to show grid
-	useGrid?: boolean;
-
-	// The css class for custom dragging event
-	dragSelector?: string;
 }
 
 const CIRCLE_PACKING_CHILD_NORMALIZED_RADIUS = [
@@ -64,8 +40,6 @@ const CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS = [
 const CIRCLE_MARGIN_CONST = 1;
 
 export class NestedPetrinetRenderer extends PetrinetRenderer {
-	declare options: NestedPetrinetOptions;
-
 	nestedMap: any;
 
 	// override type of constructor argument
@@ -77,9 +51,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		super.renderNodes(selection);
 
-		const species = selection.filter((d) => d.data.type === NodeType.State);
-
-		species.each((d, idx, g) => {
+		const states = selection.filter((d) => d.data.type === NodeType.State);
+		states.each((d, idx, g) => {
 			const nestedNodes = this.nestedMap[d.id] ?? [];
 			const nestedNodesLen = nestedNodes.length;
 			for (let i = 0; i < nestedNodesLen; i++) {
@@ -93,18 +66,16 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					CIRCLE_PACKING_CHILD_NORMALIZED_RADIUS[nestedNodesLen] *
 					CIRCLE_MARGIN_CONST *
 					parentRadius;
+
+				const xPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0];
+				const yPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1];
+
 				select(g[idx])
 					.append('circle')
 					.classed('shape', true)
 					.attr('r', () => childRadius) // FIXME: need to adjust edge from sqaure mapping to circle
-					.attr(
-						'cx',
-						() => parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0]
-					)
-					.attr(
-						'cy',
-						() => parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1]
-					)
+					.attr('cx', xPos)
+					.attr('cy', yPos)
 					.attr('fill', () => 'transparent')
 					.attr('stroke', '#999999')
 					.attr('stroke-width', 1)
@@ -112,21 +83,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 				select(g[idx])
 					.append('text')
-					.attr(
-						'x',
-						() => parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0]
-					)
-					.attr(
-						'y',
-						() => 5 + parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1]
-					)
+					.attr('x', xPos)
+					.attr('y', 5 + yPos)
 					.style('text-anchor', 'middle')
 					.style('paint-order', 'stroke')
-					// .style('stroke', (d) =>
-					// 	d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-					// )
-					// .style('stroke-width', '3px')
-					// .style('stroke-linecap', 'butt')
 					.style('fill', 'var(--text-color-primary')
 					.style('pointer-events', 'none')
 					.html(() => nodeId ?? '');
