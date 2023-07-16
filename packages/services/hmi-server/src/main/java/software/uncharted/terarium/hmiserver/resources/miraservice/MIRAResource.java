@@ -13,10 +13,7 @@ import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.net.URLEncoder;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 
 
 @Path("/api/mira")
@@ -44,25 +41,15 @@ public class MIRAResource {
 	// This rebuilds the semantics ODE via MIRA
 	// 1. Send AMR to MIRA => MIRANet
 	// 2. Send MIRANet to MIRA to convert back to AMR Petrinet
-	// 3. Overwrite semantics.ode from MIRA's result
-	// 4. Send AMR back
+	// 3. Send AMR back
 	@POST
 	@Path("/reconstruct_ode_semantics")
 	public Object reconstructODESemantics(
 			Object amr
 	) {
-		// ModelSemantics semantics = amr.getSemantics();
-
-		// FIXME: not sure why there is an extra layer
-    // Map map = new HashMap();
-		// map.put("model", amr);
-
 		Object result = proxy.reconstructODESemantics(amr);
-		return result;
 		// Model amrReconstructed = proxy.toPetrinet(result);
 
-		// amr.getSemantics().setOde(amrReconstructed.getSemantics().getOde());
-		// return amr;
+		return result;
 	}
-
 }
