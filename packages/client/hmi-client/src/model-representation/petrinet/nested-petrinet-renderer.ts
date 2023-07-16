@@ -4,38 +4,13 @@ import { D3SelectionINode, Options } from '@graph-scaffolder/types';
 import { NodeType, PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { NodeData } from '@/model-representation/petrinet/petrinet-service';
 
+// packing data sourced from https://hydra.nat.uni-magdeburg.de/packing/cci for up to n=200
+import CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS from '@/model-representation/petrinet/circle-packing-vectors.json';
+import CIRCLE_PACKING_CHILD_NORMALIZED_RADII from '@/model-representation/petrinet/circle-packing-radii.json';
+
 export interface NestedPetrinetOptions extends Options {
 	nestedMap?: { [baseNodeId: string]: string[] };
 }
-
-const CIRCLE_PACKING_CHILD_NORMALIZED_RADIUS = [
-	0,
-	1,
-	0.5,
-	0.464101615138,
-	0.414213562373 // 0.370191908159, 0.333333333333, 0.333333333333, 0.302593388349, 0.276768653914, 0.262258924190
-];
-
-// [x, y]
-const CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS = [
-	[],
-	[[0, 0]],
-	[
-		[0, 0.5],
-		[0, -0.5]
-	],
-	[
-		[0, 0.535898384862],
-		[-0.46410161513, -0.26794919243],
-		[0.46410161513, -0.26794919243]
-	],
-	[
-		[0.414213562373, 0.414213562373],
-		[-0.414213562373, 0.414213562373],
-		[-0.414213562373, -0.414213562373],
-		[0.414213562373, -0.414213562373]
-	]
-];
 
 const CIRCLE_MARGIN_CONST = 1;
 
@@ -57,13 +32,13 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			const nestedNodesLen = nestedNodes.length;
 			for (let i = 0; i < nestedNodesLen; i++) {
 				// skip nodes that can't be laid out for now
-				if (nestedNodesLen >= CIRCLE_PACKING_CHILD_NORMALIZED_RADIUS.length) {
+				if (nestedNodesLen >= CIRCLE_PACKING_CHILD_NORMALIZED_RADII.length) {
 					continue;
 				}
 				const nodeId = nestedNodes[i];
 				const parentRadius = 0.55 * d.width;
 				const childRadius =
-					CIRCLE_PACKING_CHILD_NORMALIZED_RADIUS[nestedNodesLen] *
+					CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] *
 					CIRCLE_MARGIN_CONST *
 					parentRadius;
 
