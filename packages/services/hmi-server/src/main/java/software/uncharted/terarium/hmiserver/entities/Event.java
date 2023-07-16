@@ -53,9 +53,10 @@ public class Event extends PanacheEntityBase implements Serializable {
 	@Column(nullable = false)
 	private EventType type;
 
-	@Column(length = 2047)
+	@Column(columnDefinition = "TEXT")
 	@TSOptional
 	private String value;
+
 
 	/**
 	 * Gets events by type and an option search string for values
@@ -85,6 +86,11 @@ public class Event extends PanacheEntityBase implements Serializable {
 
 		return query
 			.range(0, limit)
+			.list();
+	}
+
+	public static List<Event> findAllByUsername(final String username) {
+		return find("username = ?1", Sort.ascending("timestampmillis"), username)
 			.list();
 	}
 }

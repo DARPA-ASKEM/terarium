@@ -1,0 +1,61 @@
+<template>
+	<DataTable :value="summaries" tableStyle="min-width: 50rem">
+		<Column field="username" header="Username" sortable></Column>
+		<Column field="name" header="Name" sortable></Column>
+		<Column field="task" header="Task" sortable></Column>
+		<Column field="description" header="Description" sortable></Column>
+		<Column field="notes" header="Notes" sortable></Column>
+		<Column field="timestampMillis" header="Timestamp" sortable>
+			<template #body="slotProps">
+				{{ humanizeDate(slotProps.data.timestampMillis) }}
+			</template>
+		</Column>
+		<Column field="download" header="Download">
+			<template #body="slotProps">
+				<Button
+					icon="pi pi-download"
+					label="Download"
+					size="small"
+					@click="downloadCSV(slotProps.data)"
+				></Button>
+			</template>
+		</Column>
+	</DataTable>
+</template>
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import API from '@/api/api';
+import Button from 'primevue/button';
+
+const summaries = ref(null);
+
+onMounted(async () => {
+	summaries.value = (await API.get('/evaluation/scenarios')).data;
+});
+
+const humanizeDate = (timestampMillis: number) => {
+	const date = new Date(timestampMillis);
+	return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+};
+
+const downloadCSV = async (data) => {
+	const username = data.username;
+	const name = data.name;
+	console.log(`Fetching ${username}/${name}`);
+
+	// Build the csv
+	const response = await API.get(`/evaluation/download?username=${username}&name=${name}`);
+	const csv = response.data;
+
+	// Download the file
+	const link = document.createElement('a');
+	const file = new Blob([csv], { type: 'text/csv' });
+	link.href = URL.createObjectURL(file);
+	link.download = `${username}-${name}.csv`;
+	link.click();
+	URL.revokeObjectURL(link.href);
+};
+</script>
+<style scoped lang="scss"></style>
