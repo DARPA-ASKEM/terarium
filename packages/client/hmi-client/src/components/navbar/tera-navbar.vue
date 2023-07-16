@@ -170,7 +170,7 @@ const evaluationScenarioDescription = ref('');
 const evaluationScenarioNotes = ref('');
 const evaluationScenarioCurrentStatus = ref('');
 const evaluationScenarioRuntimeMillis = ref(0);
-let intervalId = null;
+const intervalId = ref<number | undefined>(undefined);
 
 const evaluationScenarioRuntimeString = computed(() => {
 	const h = Math.floor(evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60);
@@ -216,7 +216,7 @@ const stopEvaluationScenario = async () => {
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Stopped))
 	);
 	clearEvaluationScenario();
-	clearInterval(intervalId);
+	clearInterval(intervalId.value);
 	isEvaluationScenarioModalVisible.value = false;
 };
 
@@ -230,7 +230,7 @@ const pauseEvaluationScenario = async () => {
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
 	);
 	await refreshEvaluationScenario();
-	clearInterval(intervalId);
+	clearInterval(intervalId.value);
 	isEvaluationScenarioModalVisible.value = false;
 };
 
@@ -295,7 +295,7 @@ const startEvaluationTimer = () => {
 		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Started ||
 		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Resumed
 	) {
-		intervalId = setInterval(() => {
+		intervalId.value = setInterval(() => {
 			evaluationScenarioRuntimeMillis.value += 1000;
 		}, 1000);
 	}
