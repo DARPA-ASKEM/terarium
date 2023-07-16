@@ -15,6 +15,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+
 
 @Path("/api/mira")
 @Tag(name = "MIRA REST Endpoints")
@@ -46,15 +49,20 @@ public class MIRAResource {
 	@POST
 	@Path("/reconstruct_ode_semantics")
 	public Object reconstructODESemantics(
-			Model amr
+			Object amr
 	) {
-		ModelSemantics semantics = amr.getSemantics();
+		// ModelSemantics semantics = amr.getSemantics();
+
+		// FIXME: not sure why there is an extra layer
+    // Map map = new HashMap();
+		// map.put("model", amr);
 
 		Object result = proxy.reconstructODESemantics(amr);
-		Model amrReconstructed = proxy.toPetrinet(result);
+		return result;
+		// Model amrReconstructed = proxy.toPetrinet(result);
 
-		amr.getSemantics().setOde(amrReconstructed.getSemantics().getOde());
-		return amr;
+		// amr.getSemantics().setOde(amrReconstructed.getSemantics().getOde());
+		// return amr;
 	}
 
 }

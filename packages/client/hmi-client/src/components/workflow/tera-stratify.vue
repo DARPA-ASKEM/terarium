@@ -147,7 +147,7 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel, createModel } from '@/services/model';
+import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
@@ -187,11 +187,19 @@ function generateStrataModel() {
 
 async function doStratify() {
 	if (typedBaseModel.value && typedStrataModel.value) {
-		stratifiedModel.value = await stratify(typedBaseModel.value, typedStrataModel.value);
-		if (stratifiedModel.value) {
-			stratifyView.value = StratifyView.Output;
-			await createModel(stratifiedModel.value);
-		}
+		const amrBase = await stratify(typedBaseModel.value, typedStrataModel.value);
+		console.log('catlab amr', JSON.stringify(amrBase));
+		const amr = await reconstructAMR({ model: amrBase });
+		console.log('mira reconstructed amr', amr);
+
+		stratifiedModel.value = amr;
+
+		// if (stratifiedModel.value) {
+		// 	stratifyView.value = StratifyView.Output;
+		// 	await createModel(stratifiedModel.value);
+		// }
+
+		console.log(createModel);
 	}
 }
 
