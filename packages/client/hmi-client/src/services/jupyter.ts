@@ -44,6 +44,7 @@ export type JupyterMessageType =
 	| 'download_request'
 	| 'download_response'
 	| 'dataset'
+	| 'model_preview'
 	| 'visualization'
 	| 'llm_request'
 	| 'llm_response'
@@ -93,6 +94,7 @@ export interface IJupyterMessageContent {
 	text?: string;
 	code?: string;
 	language?: string;
+	data?: any;
 }
 
 export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageType> {
@@ -107,7 +109,7 @@ export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageTy
 	/**
 	 * The content of the message.
 	 */
-	content: IJupyterMessageContent;
+	content: IJupyterMessageContent | any;
 	/**
 	 * The message header.
 	 */
@@ -119,7 +121,7 @@ export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageTy
 	/**
 	 * The parent message
 	 */
-	parent_header: messages.IHeader | {};
+	parent_header: messages.IHeader | any;
 }
 
 export declare type JupyterMessage = IJupyterMessage | messages.Message;
