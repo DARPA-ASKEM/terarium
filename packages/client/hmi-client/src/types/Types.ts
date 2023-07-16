@@ -529,6 +529,9 @@ export enum EvaluationScenarioStatus {
 
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
+    ProxyTiming = "PROXY_TIMING",
     AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
     ExtractModel = "EXTRACT_MODEL",
     PersistModel = "PERSIST_MODEL",
@@ -537,9 +540,6 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
-    EvaluationScenario = "EVALUATION_SCENARIO",
-    RouteTiming = "ROUTE_TIMING",
-    ProxyTiming = "PROXY_TIMING",
 }
 
 export enum FileType {
