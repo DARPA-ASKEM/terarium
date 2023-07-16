@@ -61,7 +61,8 @@
 							:context_info="{ id: props.assetId }"
 						/>
 					</div>
-					<!-- Show dataset if available -->
+
+					<!-- Show dataset preview if available -->
 					<tera-dataset-datatable
 						v-else-if="m.header.msg_type === 'dataset'"
 						class="tera-dataset-datatable"
@@ -71,6 +72,12 @@
 						:preview-mode="true"
 						:showGridlines="true"
 						table-style="width: 100%; font-size: small;"
+					/>
+					<!-- Show preview image if available -->
+					<img
+						v-else-if="m.header.msg_type === 'model_preview' && m.content.data['image/png']"
+						:src="`data:image/png;base64,${m.content.data['image/png']}`"
+						alt="Preview of model network graph"
 					/>
 				</div>
 			</div>

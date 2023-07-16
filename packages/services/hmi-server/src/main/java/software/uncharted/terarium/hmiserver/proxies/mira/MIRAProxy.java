@@ -33,7 +33,7 @@ public interface MIRAProxy {
 
 	// This returns a MIRANet, not an AMR
 	@POST
-	@Path("/api/reconstruct_ode_semantics")
+	@Path("/reconstruct_ode_semantics")
 	@LogRestClientTime
 	Object reconstructODESemantics(
 			final Object amr
@@ -41,7 +41,7 @@ public interface MIRAProxy {
 
 	// This converts MIRANet (Petrinet) to AMR
 	@POST
-	@Path("/api/to_petrinet")
+	@Path("/to_petrinet")
 	@LogRestClientTime
 	Model toPetrinet(
 			Object obj

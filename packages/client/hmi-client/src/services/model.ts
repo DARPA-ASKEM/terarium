@@ -85,3 +85,11 @@ export async function getModelConfigurations(modelId: string): Promise<ModelConf
 	const response = await API.get(`/models/${modelId}/model_configurations`);
 	return response?.data ?? ([] as ModelConfiguration[]);
 }
+
+/**
+ * Reconstruct an petrinet AMR's ode semantics
+ */
+export async function reconstructAMR(amr: any) {
+	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
+	return response?.data;
+}
