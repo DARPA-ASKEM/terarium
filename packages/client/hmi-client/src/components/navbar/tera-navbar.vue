@@ -170,7 +170,7 @@ const evaluationScenarioDescription = ref('');
 const evaluationScenarioNotes = ref('');
 const evaluationScenarioCurrentStatus = ref('');
 const evaluationScenarioRuntimeMillis = ref(0);
-const intervalId = ref<number | undefined>(undefined);
+const intervalId = ref<ReturnType<typeof setInterval>>();
 
 const evaluationScenarioRuntimeString = computed(() => {
 	const h = Math.floor(evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60);
@@ -207,7 +207,7 @@ const beginEvaluationScenario = async () => {
 };
 
 /**
- * Logs an event to the server to stop an evalation.  Clears the persisted model in local storage.
+ * Logs an event to the server to stop an evaluation.  Clears the persisted model in local storage.
  */
 const stopEvaluationScenario = async () => {
 	await EventService.create(
@@ -246,7 +246,7 @@ const resumeEvaluationScenario = async () => {
 };
 
 /**
- * Returns the evaluation meta data model for the given action
+ * Returns the evaluation metadata model for the given action
  * @param action	the action name to log
  */
 
@@ -302,7 +302,7 @@ const startEvaluationTimer = () => {
 };
 
 /**
- * Clears the model from local storage an memory
+ * Clears the model from local storage in memory
  */
 const clearEvaluationScenario = () => {
 	evaluationScenarioName.value = '';
@@ -542,7 +542,7 @@ i {
 </style>
 <style>
 /*
- * On it's own style, because the pop-up happend outside of this component.
+ * On it's own style, because the pop-up happened outside of this component.
  * To left align the content with the h1.
  */
 .navigation-menu {
