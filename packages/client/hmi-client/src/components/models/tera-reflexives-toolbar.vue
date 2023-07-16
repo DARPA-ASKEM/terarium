@@ -9,6 +9,7 @@
 					class="p-inputtext-sm"
 					placeholder="Select"
 					:options="reflexiveNodeOptions[stateType]"
+					optionLabel="id"
 					:model-value="statesToAddReflexives[transition.id]"
 					@update:model-value="(newValue) => updateStatesToAddReflexives(newValue, transition.id)"
 				/>
@@ -24,7 +25,7 @@ import { Model, PetriNetTransition, Transition, TypeSystem, TypingSemantics } fr
 import {
 	addReflexives,
 	addTyping,
-	updateRateExpression
+	updateRateExpressionWithParam
 } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
@@ -39,7 +40,7 @@ const modelToCompareTypeSystem = computed<TypeSystem | undefined>(
 );
 const typedModel = ref<Model>(props.modelToUpdate); // this is the object that is being edited
 let unassignedTransitionTypes: Transition[] = [];
-const statesToAddReflexives = ref<{ [id: string]: string[] }>({});
+const statesToAddReflexives = ref<{ [id: string]: { id: string; name: string }[] }>({});
 const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
 	const map: { [id: string]: string } = {};
 	props.modelToCompare?.semantics?.typing?.system.transitions.forEach((type) => {
@@ -50,30 +51,48 @@ const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
 	return map;
 });
 const reflexiveOptions = ref<{ [stateType: string]: Transition[] }>({});
-const reflexiveNodeOptions = computed<{ [id: string]: string[] }>(() => {
-	const options: { [id: string]: string[] } = {};
+const reflexiveNodeOptions = computed<{ [id: string]: { id: string; name: string }[] }>(() => {
+	const options: { [id: string]: { id: string; name: string }[] } = {};
 	Object.keys(reflexiveOptions.value).forEach((key) => {
 		options[key] =
-			props.modelToUpdate.semantics?.typing?.map.filter((m) => m[1] === key).map((m) => m[0]) ?? [];
+			props.modelToUpdate.semantics?.typing?.map
+				.filter((m) => m[1] === key)
+				.map((m) => ({ id: m[0], name: stateId2NameMap.value[m[0]] })) ?? [];
 	});
 	return options;
 });
 
-function updateStatesToAddReflexives(newValue: string[], typeOfTransition: string) {
+const stateId2NameMap = computed<{ [id: string]: string }>(() => {
+	const map: { [id: string]: string } = {};
+	props.modelToUpdate.model.states.forEach((state) => {
+		map[state.id] = state.name;
+	});
+	return map;
+});
+
+function updateStatesToAddReflexives(
+	newValue: { id: string; name: string }[],
+	typeOfTransition: string
+) {
 	statesToAddReflexives.value[typeOfTransition] = newValue;
 	const updatedTypeMap = typedModel.value.semantics?.typing?.map;
 	const updatedTypeSystem = typedModel.value.semantics?.typing?.system;
 
 	if (updatedTypeMap && updatedTypeSystem) {
-		newValue.forEach((stateId) => {
-			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${stateId}${stateId}`;
-			addReflexives(typedModel.value, stateId, newTransitionId);
+		newValue.forEach((state) => {
+			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${state.id}${state.id}`;
+			addReflexives(typedModel.value, state.id, newTransitionId);
+			const reflexive = typedModel.value.model.transitions.find((t) => t.id === newTransitionId);
 
 			const transition = props.modelToCompare?.semantics?.typing?.system.transitions.find(
 				(t) => t.id === typeOfTransition
 			);
 			if (transition) {
-				updateRateExpression(typedModel.value, transition as PetriNetTransition);
+				updateRateExpressionWithParam(
+					typedModel.value,
+					reflexive as PetriNetTransition,
+					reflexive.id
+				);
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
 					updatedTypeMap.push([newTransitionId, typeOfTransition]);
 				}
@@ -90,6 +109,17 @@ function updateStatesToAddReflexives(newValue: string[], typeOfTransition: strin
 	}
 	emit('model-updated', typedModel.value);
 }
+
+watch(
+	() => props.modelToUpdate,
+	() => {
+		if (props.modelToCompare) {
+			typedModel.value = props.modelToUpdate;
+			emit('model-updated', typedModel.value);
+		}
+	},
+	{ immediate: true }
+);
 
 watch(
 	[() => modelToCompareTypeSystem],
@@ -148,7 +178,7 @@ watch(
 	min-width: 150px;
 }
 
-.p-multiselect .p-multiselect-label {
+:deep(.p-multiselect .p-multiselect-label.p-placeholder) {
 	padding: 0.875rem 0.875rem;
 }
 </style>

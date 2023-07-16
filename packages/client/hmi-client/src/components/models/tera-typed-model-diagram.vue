@@ -75,7 +75,12 @@
 								v-if="showReflexivesToolbar && model && strataModel"
 								:model-to-update="model"
 								:model-to-compare="strataModel"
-								@model-updated="(value) => (typedModel = value)"
+								@model-updated="
+									(value) => {
+										typedModel = value;
+										emit('model-updated', value);
+									}
+								"
 							/>
 							<section class="legend">
 								<ul>
@@ -130,7 +135,7 @@ import {
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
-const emit = defineEmits(['all-nodes-typed']);
+const emit = defineEmits(['model-updated']);
 
 const props = defineProps<{
 	model: Model;
@@ -367,7 +372,7 @@ watch(
 
 watch(numberTypedRows, () => {
 	if (numberTypedRows.value === numberNodes.value) {
-		emit('all-nodes-typed', typedModel.value);
+		emit('model-updated', typedModel.value);
 	}
 });
 
@@ -518,8 +523,7 @@ li {
 	min-width: 150px;
 }
 
-.p-multiselect .p-multiselect-label {
+:deep(.p-multiselect .p-multiselect-label.p-placeholder) {
 	padding: 0.875rem 0.875rem;
 }
 </style>
-@/utils/petrinet-color-palette

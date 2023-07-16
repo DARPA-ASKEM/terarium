@@ -59,6 +59,7 @@ const notebookItems = ref(
 			timestamp: string;
 			messages: JupyterMessage[];
 			resultingCsv: CsvAsset | null;
+			executions: any[];
 		}[]
 	>[]
 );
@@ -157,12 +158,16 @@ const updateNotebookCells = (message) => {
 	// This computed property groups Jupyter messages into queries
 	// and stores resulting csv after each query.
 	let notebookItem;
-	const parentId: String | null = message.parent_header?.msg_id || message.header?.msg_id || null;
+	const parentId: String | null =
+		message.metadata?.notebook_item ||
+		message.parent_header?.msg_id ||
+		message.header?.msg_id ||
+		null;
 
-	if (parentId) {
-		// Update existing cell
-		notebookItem = notebookItems.value.find((val) => val.query_id === parentId);
-	}
+	// Update existing cell
+	notebookItem = notebookItems.value.find(
+		(val) => val.executions.indexOf(message.parent_header.msg_id) > -1 || val.query_id === parentId
+	);
 	if (!notebookItem) {
 		const query = message.header.msg_type === 'llm_request' ? message.content.request : null;
 		// New cell
@@ -171,7 +176,8 @@ const updateNotebookCells = (message) => {
 			query,
 			timestamp: message.parent_header.date,
 			messages: [],
-			resultingCsv: null
+			resultingCsv: null,
+			executions: []
 		};
 		notebookItems.value.push(notebookItem);
 	}
@@ -181,7 +187,12 @@ const updateNotebookCells = (message) => {
 			(msg) => msg.header.msg_type !== 'dataset'
 		);
 		notebookItem.resultingCsv = message.content;
+	} else if (message.header.msg_type === 'execute_input') {
+		const executionParent = message.parent_header.msg_id;
+		notebookItem.executions.push(executionParent);
+		return;
 	}
+
 	notebookItem.messages.push(message);
 };
 
@@ -206,6 +217,7 @@ const newJupyterMessage = (jupyterMessage) => {
 		emit('download-response', jupyterMessage.content);
 		isExecutingCode.value = false;
 	} else if (jupyterMessage.header.msg_type === 'execute_input') {
+		updateNotebookCells(jupyterMessage);
 		isExecutingCode.value = true;
 	} else {
 		console.log('Unknown Jupyter event', jupyterMessage);

@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate'" is-editable stretch-content>
+	<tera-asset :name="'Calibrate & Simulate (Probabilistic)'" is-editable stretch-content>
 		<template #nav>
 			<tera-asset-nav :show-header-links="false">
 				<template #viewing-mode>
@@ -34,6 +34,9 @@
 			<AccordionTab header="Mapping">
 				<DataTable class="p-datatable-xsm" :value="mapping">
 					<Column field="modelVariable">
+						<template #header>
+							<span class="column-header">MODEL VARIABLE</span>
+						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
 							<Dropdown
@@ -45,6 +48,9 @@
 						</template>
 					</Column>
 					<Column field="datasetVariable">
+						<template #header>
+							<span class="column-header">DATASET VARIABLE</span>
+						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
 							<Dropdown
@@ -120,12 +126,11 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ref, shallowRef, watch } from 'vue';
-import { csvParse } from 'd3';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-import { getRunResult } from '@/services/models/simulation-service';
+import { getRunResult, getRunResultCiemss } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -135,12 +140,12 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
-import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import { CalibrationOperationState, CalibrateMap } from './calibrate-operation';
+import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation-julia';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -173,7 +178,7 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -184,7 +189,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -202,7 +207,7 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -216,7 +221,7 @@ function addMapping() {
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -230,7 +235,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
@@ -243,9 +248,13 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		const csvData = csvParse(resultCsv);
-		runResults.value[simulationIds.value[0].runId] = csvData as any;
+		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		// const csvData = csvParse(resultCsv);
+		// console.log(csvData);
+		// runResults.value[simulationIds.value[0].runId] = csvData as any;
+
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		runResults.value = output.runResults;
 		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 	},
 	{ immediate: true }
@@ -276,5 +285,10 @@ watch(
 
 th {
 	text-align: left;
+}
+.column-header {
+	color: var(--text-color-subdued);
+	font-size: 12px;
+	font-weight: 400;
 }
 </style>

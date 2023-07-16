@@ -9,7 +9,17 @@ export interface PivotMatrixCell {
 	value: any;
 }
 
-export const pivotAxes = (data: any[], xDimensions: string[], yDimensions: string[]) => {
+// Helper function to expand the row and column terms into "lookup" axes
+//
+// For example: given a data array:
+//   [ { a:1, b: 1}, { a: 2, b: 2 } ]
+//
+// If both row = [a, b] and col = [a]
+//
+//   rowAxis = [ { a: 1, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 1 }, { a: 2, b: 2} ]
+//   colAxis = [ { a: 1 }, { a: 2 } ]
+//
+const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]) => {
 	const cardinality = new Map();
 	for (let i = 0; i < data.length; i++) {
 		const keys = Object.keys(data[i]);
@@ -29,57 +39,62 @@ export const pivotAxes = (data: any[], xDimensions: string[], yDimensions: strin
 		});
 	}
 
-	let yAxis: any[] = [];
-	yDimensions.forEach((key) => {
+	// Expansion, basica this is a certesian product across the terms of the specified dimensions
+	let rowAxis: any[] = [];
+	rowDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
-		if (yAxis.length === 0) {
-			yAxis = terms.map((d) => ({ [key]: d }));
+		if (rowAxis.length === 0) {
+			rowAxis = terms.map((d: any) => ({ [key]: d }));
 		} else {
-			const temp = yAxis;
-			yAxis = [];
+			const temp = rowAxis;
+			rowAxis = [];
 			for (let i1 = 0; i1 < temp.length; i1++) {
 				for (let i2 = 0; i2 < terms.length; i2++) {
 					const obj = _.cloneDeep(temp[i1]);
 					obj[key] = terms[i2];
-					yAxis.push(obj);
+					rowAxis.push(obj);
 				}
 			}
 		}
 	});
 
-	let xAxis: any[] = [];
-	xDimensions.forEach((key) => {
+	// Expansion, basica this is a certesian product across the terms of the specified dimensions
+	let colAxis: any[] = [];
+	colDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
-		if (xAxis.length === 0) {
-			xAxis = terms.map((d) => ({ [key]: d }));
+		if (colAxis.length === 0) {
+			colAxis = terms.map((d: any) => ({ [key]: d }));
 		} else {
-			const temp = xAxis;
-			xAxis = [];
+			const temp = colAxis;
+			colAxis = [];
 			for (let i1 = 0; i1 < temp.length; i1++) {
 				for (let i2 = 0; i2 < terms.length; i2++) {
 					const obj = _.cloneDeep(temp[i1]);
 					obj[key] = terms[i2];
-					xAxis.push(obj);
+					colAxis.push(obj);
 				}
 			}
 		}
 	});
-	return { xAxis, yAxis };
+	return { colAxis, rowAxis };
 };
 
-export const createMatrix = (data: any[], xDimensions: string[], yDimensions: string[]) => {
-	const axes = pivotAxes(data, xDimensions, yDimensions);
+// Creates a M x N matrix where
+// M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
+// N =  cardinality(colDimensions[0]) * cardinality(colDimensions[1]) * ... * cardinality(colDimensions[n])
+export const createMatrix = (data: any[], rowDimensions: string[], colDimensions: string[]) => {
+	const axes = pivotAxes(data, colDimensions, rowDimensions);
 	const rows: any[] = [];
 
-	// Bootstrap the matrix
-	for (let y = 0; y < axes.yAxis.length; y++) {
+	// Bootstrap the matrix structure and set the row and col criteria
+	for (let rowIdx = 0; rowIdx < axes.rowAxis.length; rowIdx++) {
 		const row: PivotMatrixCell[] = [];
-		for (let x = 0; x < axes.xAxis.length; x++) {
+		for (let colIdx = 0; colIdx < axes.colAxis.length; colIdx++) {
 			row.push({
-				row: y,
-				col: x,
-				rowCriteria: axes.yAxis[y],
-				colCriteria: axes.xAxis[x],
+				row: rowIdx,
+				col: colIdx,
+				rowCriteria: axes.rowAxis[rowIdx],
+				colCriteria: axes.colAxis[colIdx],
 				value: null
 			});
 		}
@@ -87,9 +102,11 @@ export const createMatrix = (data: any[], xDimensions: string[], yDimensions: st
 	}
 
 	// Populate matrix
-	for (let y = 0; y < axes.yAxis.length; y++) {
-		for (let x = 0; x < axes.xAxis.length; x++) {
-			const obj = rows[y][x];
+	// A cell has a non-null value if the row and col criteria matches
+	// with an element in the data array
+	for (let rowIdx = 0; rowIdx < axes.rowAxis.length; rowIdx++) {
+		for (let colIdx = 0; colIdx < axes.colAxis.length; colIdx++) {
+			const obj = rows[rowIdx][colIdx];
 
 			const dataObj = data.find((d) => {
 				const rowCriteria = obj.rowCriteria;
@@ -101,23 +118,26 @@ export const createMatrix = (data: any[], xDimensions: string[], yDimensions: st
 				for (let i = 0; i < rowKeys.length; i++) {
 					if (d[rowKeys[i]] !== rowCriteria[rowKeys[i]]) {
 						found = false;
+						break;
 					}
 				}
+				if (found === false) return found;
 
 				for (let i = 0; i < colKeys.length; i++) {
 					if (d[colKeys[i]] !== colCriteria[colKeys[i]]) {
 						found = false;
+						break;
 					}
 				}
 				return found;
 			});
-			rows[y][x].value = dataObj;
+			rows[rowIdx][colIdx].value = dataObj;
 		}
 	}
 
 	return {
 		matrix: rows,
-		xDimensions,
-		yDimensions
+		colDimensions,
+		rowDimensions
 	};
 };
