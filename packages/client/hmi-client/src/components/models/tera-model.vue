@@ -30,6 +30,13 @@
 					@click="modelView = ModelView.MODEL"
 					:active="modelView === ModelView.MODEL"
 				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Transform"
+					icon="pi pi-sync"
+					@click="modelView = ModelView.NOTEBOOK"
+					:active="modelView === ModelView.NOTEBOOK"
+				/>
 			</span>
 			<Button
 				v-if="isEditable"
@@ -428,6 +435,18 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
+		<template v-if="modelView === ModelView.NOTEBOOK">
+			<Suspense>
+				<tera-model-jupyter-panel
+					:asset-id="props.assetId"
+					:project="props.project"
+					:model="model"
+					:show-kernels="false"
+					:show-chat-thoughts="false"
+				/>
+				<!-- @is-typing="updateScroll" -->
+			</Suspense>
+		</template>
 		<Teleport to="body">
 			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 				<template #header>
@@ -507,10 +526,12 @@ import TeraStratifiedModelConfiguration from '@/components/models/tera-stratifie
 import { stratify_output } from '@/temp/models/stratify_output';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
+import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
 
 enum ModelView {
 	DESCRIPTION,
-	MODEL
+	MODEL,
+	NOTEBOOK
 }
 
 // TODO - Get rid of these emits
@@ -745,6 +766,7 @@ function updateModelObservables(observableMathMLList) {
 	// assign the new observables
 	if (model.value !== null && model.value.semantics?.ode?.observables) {
 		model.value.semantics.ode.observables = observableMathMLList;
+		updateModel(model.value);
 	}
 }
 
