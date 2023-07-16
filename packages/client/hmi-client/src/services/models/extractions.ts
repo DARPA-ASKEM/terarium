@@ -1,4 +1,4 @@
-import API, { Poller, PollerState } from '@/api/api';
+import API, { Poller, PollerState, PollResponse } from '@/api/api';
 import { AxiosError } from 'axios';
 import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
@@ -9,13 +9,13 @@ import { logger } from '@/utils/logger';
  * @return {Promise<PollerResult>}
  */
 async function fetchExtraction(id: string) {
-	const pollerResult: PollerResult = { data: null, progress: null, error: null };
-	const poller = new Poller<object>().setPollAction(async (): Promise<T | null> => {
+	const pollerResult: PollResponse<any> = { data: null, progress: null, error: null };
+	const poller = new Poller<object>().setPollAction(async () => {
 		const response = await API.get(`/extract/status/${id}`);
 
 		// Finished
 		if (response?.status === 200 && response?.data?.status === 'finished') {
-			pollerResult.data = response.data.result as T;
+			pollerResult.data = response.data.result;
 			return pollerResult;
 		}
 
@@ -43,7 +43,7 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
 			if (status === 'queued') {
-				const result = (await fetchExtraction(id)) as PollResponse<Model | null>;
+				const result = await fetchExtraction(id);
 				if (result?.state === PollerState.Done) {
 					return result.data as Model;
 				}
