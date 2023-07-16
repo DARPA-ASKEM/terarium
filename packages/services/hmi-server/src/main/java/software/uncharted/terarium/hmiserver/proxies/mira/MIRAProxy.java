@@ -5,6 +5,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 
 
 import javax.ws.rs.*;
@@ -30,11 +31,20 @@ public interface MIRAProxy {
 		@PathParam("curies") final String curies
 	);
 
+	// This returns a MIRANet, not an AMR
 	@POST
-	@Path("/api/reconstruct_ode_semantics")
+	@Path("/reconstruct_ode_semantics")
 	@LogRestClientTime
-	Object recconstructAMR(
+	Object reconstructODESemantics(
 			final Object amr
+	);
+
+	// This converts MIRANet (Petrinet) to AMR
+	@POST
+	@Path("/to_petrinet")
+	@LogRestClientTime
+	Model toPetrinet(
+			Object obj
 	);
 
 }
