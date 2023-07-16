@@ -134,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
@@ -148,9 +149,13 @@ import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
+import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
+import useResourcesStore from '@/stores/resources';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+
+const resourceStore = useResourcesStore();
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -172,7 +177,6 @@ const strataModelTypeSystem = computed<TypeSystem | undefined>(
 );
 const typedBaseModel = ref<Model | null>(null);
 const typedStrataModel = ref<Model | null>(null);
-const stratifiedModel = ref<Model>();
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -187,19 +191,20 @@ function generateStrataModel() {
 
 async function doStratify() {
 	if (typedBaseModel.value && typedStrataModel.value) {
-		const amrBase = await stratify(typedBaseModel.value, typedStrataModel.value);
-		console.log('catlab amr', JSON.stringify(amrBase));
-		const amr = await reconstructAMR({ model: amrBase });
-		console.log('mira reconstructed amr', amr);
+		const amrBase = (await stratify(typedBaseModel.value, typedStrataModel.value)) as Model;
+		const amr = (await reconstructAMR({ model: amrBase })) as Model;
 
-		stratifiedModel.value = amr;
+		// Put typing and span back in
+		if (amr.semantics && amr.semantics.ode) {
+			amr.semantics.span = _.cloneDeep(amrBase.semantics?.span);
+			amr.semantics.typing = _.cloneDeep(amrBase.semantics?.typing);
+		}
 
-		// if (stratifiedModel.value) {
-		// 	stratifyView.value = StratifyView.Output;
-		// 	await createModel(stratifiedModel.value);
-		// }
-
-		console.log(createModel);
+		// Create model and asssociate
+		const response = await createModel(amr);
+		const newModelId = response?.id;
+		const projectId = resourceStore.activeProject?.id as string;
+		await addAsset(projectId, 'models', newModelId);
 	}
 }
 
