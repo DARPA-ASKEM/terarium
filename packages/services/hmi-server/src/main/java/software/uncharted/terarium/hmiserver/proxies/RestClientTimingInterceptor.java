@@ -1,8 +1,13 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.quarkus.security.identity.SecurityIdentity;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
+import software.uncharted.terarium.hmiserver.entities.Event;
+import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.services.EventService;
 import software.uncharted.terarium.hmiserver.services.StructuredLog;
 
 import javax.annotation.Priority;
@@ -11,6 +16,7 @@ import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 @Interceptor
 @LogRestClientTime
@@ -22,6 +28,12 @@ public class RestClientTimingInterceptor {
 
 	@Inject
 	StructuredLog structuredLog;
+
+	@Inject
+	ObjectMapper mapper;
+
+	@Inject
+	EventService eventService;
 
 	/**
 	 * Create a structured log of the proxy being called.  Logs:
@@ -53,6 +65,22 @@ public class RestClientTimingInterceptor {
 				"type", getType(context),
 				"group", context.getMethod().getAnnotation(LogRestClientTime.class).group().equals("") ? parentPackage(context) : context.getMethod().getAnnotation(LogRestClientTime.class).group(),
 				"duration", executionTime);
+
+			final Event proxyEvent = new Event()
+				.setId(UUID.randomUUID().toString())
+				.setTimestampMillis(System.currentTimeMillis())
+				.setUsername(user)
+				.setType(EventType.PROXY_TIMING);
+
+			final ObjectNode node = mapper.createObjectNode()
+				.put("method", context.getMethod().getName())
+				.put("class", context.getMethod().getDeclaringClass().getName())
+				.put("path", getPath(context))
+				.put("type", getType(context))
+				.put("group", context.getMethod().getAnnotation(LogRestClientTime.class).group().equals("") ? parentPackage(context) : context.getMethod().getAnnotation(LogRestClientTime.class).group())
+				.put("duration", executionTime);
+			proxyEvent.setValue(node.toString());
+			eventService.persistEvent(proxyEvent);
 		}
 	}
 

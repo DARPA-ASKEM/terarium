@@ -397,7 +397,7 @@ const updateLatexFormula = (equationsList: string[]) => {
 const mathmlequations = computed(
 	() =>
 		equationsRef.value
-			.map((eq) => separateEquations(eq.mathLiveField.getValue('math-ml')))
+			.map((eq) => `<math>${eq.mathLiveField.getValue('math-ml')}</math>`)
 			.flat() as Array<string>
 );
 
