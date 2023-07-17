@@ -194,7 +194,8 @@ import {
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
-	convertToIGraph
+	convertToIGraph,
+	updateExistingModelContent
 } from '@/model-representation/petrinet/petrinet-service';
 import { latexToAMR } from '@/services/models/extractions';
 import { separateEquations } from '@/utils/math';
@@ -572,7 +573,7 @@ const onClickUpdateModel = async () => {
 	const model = (await latexToAMR(latexEquationList.value)) as Model;
 	if (model) {
 		if (props.model) {
-			const newModel = { ...props.model, ...model };
+			const newModel = updateExistingModelContent(model, props.model);
 			await updatePetriNet(newModel);
 			await updateModel(newModel);
 		} else {

@@ -1,5 +1,5 @@
 import API, { Poller, PollerState, PollResponse } from '@/api/api';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
@@ -39,13 +39,14 @@ async function fetchExtraction(id: string) {
  */
 const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Model | null> => {
 	try {
-		const response = await API.post(`/extract/latex-to-amr/${framework}`, latex);
-		if (response && response?.status === 200) {
-			const model = response.data as Model;
-			if (model) return model;
-			logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - SKEMA Unified' });
-			return null;
+		const response: AxiosResponse<Model> = await API.post(
+			`/extract/latex-to-amr/${framework}`,
+			latex
+		);
+		if (response && response?.status === 200 && response?.data) {
+			return response.data;
 		}
+		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - SKEMA Unified' });
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false, toastTitle: 'Error - SKEMA Unified' });
 	}

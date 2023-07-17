@@ -81,9 +81,10 @@ public class ExtractionResource {
 		@DefaultValue("petrinet") @PathParam("framework") String framework,
 		List<String> equations
 	) {
-		// Create the JSON request containing the LaTeX equations and model framework:
-		// - https://skema-unified.staging.terarium.ai/docs#/workflows/equations_to_amr_workflows_latex_equations_to_amr_post
-		// - ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
+		/* Create the JSON request containing the LaTeX equations and model framework:
+		 * https://skema-unified.staging.terarium.ai/docs#/workflows/equations_to_amr_workflows_latex_equations_to_amr_post
+		 * ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
+		 */
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode request = mapper.createObjectNode();
 		request.put("model", framework);
