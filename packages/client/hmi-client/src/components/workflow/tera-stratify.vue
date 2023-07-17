@@ -255,7 +255,7 @@ nav {
 section {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.5rem;
 }
 
 .step-header {
@@ -306,12 +306,9 @@ section {
 }
 
 #strata-type {
-	width: 50%;
+	width: 24rem;
 }
 
-.p-dropdown-panel .p-dropdown-items {
-	max-width: 100%;
-}
 .buttons {
 	display: flex;
 	justify-content: space-between;
