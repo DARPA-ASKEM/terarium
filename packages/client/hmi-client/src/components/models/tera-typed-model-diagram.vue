@@ -219,7 +219,7 @@ function getLegendKeyClass(type: string) {
 function getLegendKeyStyle(id: string) {
 	if (!id) {
 		return {
-			backgroundColor: 'transparent'
+			backgroundColor: 'var(--petri-nodeFill)'
 		};
 	}
 	return {
@@ -487,7 +487,9 @@ li {
 
 .typingSection {
 	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--surface-border-light);
 }
+
 .typing-row {
 	display: flex;
 	justify-content: space-around;
