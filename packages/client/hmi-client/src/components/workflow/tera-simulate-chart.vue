@@ -41,6 +41,9 @@ const CHART_OPTIONS = {
 	devicePixelRatio: 4,
 	maintainAspectRatio: false,
 	pointStyle: false,
+	animation: {
+		duration: 0
+	},
 	plugins: {
 		legend: {
 			display: false
