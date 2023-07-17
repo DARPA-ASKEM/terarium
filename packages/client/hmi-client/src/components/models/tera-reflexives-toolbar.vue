@@ -12,7 +12,7 @@
 					optionLabel="id"
 					:model-value="statesToAddReflexives[transition.id]"
 					@update:model-value="
-						(newValue) => updateStatesToAddReflexives(newValue, transition, stateType)
+						(newValue) => updateStatesToAddReflexives(newValue, transition, stateType as string)
 					"
 				/>
 			</div>
@@ -27,7 +27,7 @@ import { Model, PetriNetTransition, Transition, TypeSystem, TypingSemantics } fr
 import {
 	addReflexives,
 	addTyping,
-	updateRateExpressionWithParam
+	updateRateExpression
 } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
@@ -99,18 +99,14 @@ function updateStatesToAddReflexives(
 			const reflexive = typedModel.value.model.transitions.find((t) => t.id === newTransitionId);
 
 			const transition = props.modelToCompare?.semantics?.typing?.system.transitions.find(
-				(t) => t.id === typeOfTransition
+				(t) => t.id === typeOfTransition.id
 			);
 			if (transition) {
-				updateRateExpressionWithParam(
-					typedModel.value,
-					reflexive as PetriNetTransition,
-					reflexive.id
-				);
+				updateRateExpression(typedModel.value, reflexive as PetriNetTransition);
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
 					updatedTypeMap.push([newTransitionId, typeOfTransition.id]);
 				}
-				if (!updatedTypeSystem.transitions.find((t) => t.id === typeOfTransition)) {
+				if (!updatedTypeSystem.transitions.find((t) => t.id === typeOfTransition.id)) {
 					updatedTypeSystem.transitions.push(transition);
 				}
 			}
