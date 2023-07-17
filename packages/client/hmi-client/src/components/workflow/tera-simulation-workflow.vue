@@ -650,6 +650,7 @@ const drawPath = (v: any) => pathFn(v) as string;
 watch(
 	() => [props.assetId],
 	async () => {
+		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
 		}
