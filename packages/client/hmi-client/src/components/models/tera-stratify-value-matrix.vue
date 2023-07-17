@@ -41,11 +41,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import {
-	// extractType,
-	// extractStateMatrixData,
-	extractTransitionMatrixData
-} from '@/model-representation/petrinet/petrinet-service';
+import { extractTransitionMatrixData } from '@/model-representation/petrinet/petrinet-service';
 import { createMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
