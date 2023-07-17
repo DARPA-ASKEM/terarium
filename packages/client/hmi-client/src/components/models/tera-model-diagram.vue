@@ -234,7 +234,6 @@ const isEditingObservables = ref<boolean>(false);
 const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
-// const newLatexEquationsList = ref<string[]>([]);
 const isMathMLValid = ref<boolean>(true);
 
 // Observable Equations
@@ -392,14 +391,6 @@ const updateLatexFormula = (equationsList: string[]) => {
 	if (latexEquationsOriginalList.value.length === 0)
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
-
-// Get the MathML list of equations from the <tera-math-editor>s
-const mathmlequations = computed(
-	() =>
-		equationsRef.value
-			.map((eq) => `<math>${eq.mathLiveField.getValue('math-ml')}</math>`)
-			.flat() as Array<string>
-);
 
 watch(
 	() => [latexEquationList.value],
@@ -578,7 +569,7 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 
 // Update the model from the new mathml equations
 const onClickUpdateModel = async () => {
-	const model = (await latexToAMR(mathmlequations.value)) as Model;
+	const model = (await latexToAMR(latexEquationList.value)) as Model;
 	if (model) {
 		await updatePetriNet(model);
 	}
