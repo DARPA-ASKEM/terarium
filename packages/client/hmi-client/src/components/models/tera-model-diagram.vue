@@ -88,7 +88,6 @@
 							:is-editable="isEditable"
 							:latex-equation="eq"
 							:is-editing-eq="isEditingEQ"
-							:is-math-ml-valid="isMathMLValid"
 							@equation-updated="setNewEquation"
 							@delete="deleteEquation"
 							ref="equationsRef"
@@ -138,6 +137,7 @@
 							:id="ob.id"
 							:name="ob.name"
 							:is-editing-eq="isEditingObservables"
+							:show-metadata="true"
 							@equation-updated="setNewObservables"
 							@delete="deleteObservable"
 							ref="observablesRefs"
@@ -167,12 +167,26 @@
 			<template #header>
 				<h4>Add/Edit {{ editNodeObj.nodeType }}</h4>
 			</template>
-			<div>
-				<InputText v-model="editNodeObj.id" placeholder="Id" />
+			<div class="modal-input-container">
+				<span class="modal-input-label">ID: </span>
+				<InputText class="modal-input" v-model="editNodeObj.id" placeholder="Id" />
 			</div>
-			<div>
-				<InputText v-model="editNodeObj.name" placeholder="Name" />
+			<div class="modal-input-container">
+				<span class="modal-input-label">Name: </span>
+				<InputText class="modal-input" v-model="editNodeObj.name" placeholder="Name" />
 			</div>
+			<template #math-editor>
+				<div class="modal-input-container">
+					<span class="modal-input-label">Transition Expression: </span>
+					<tera-math-editor
+						:keep-open="true"
+						:is-editing-eq="true"
+						:latex-equation="editNodeObj.expression"
+						@equation-updated="updateRateEquation"
+					>
+					</tera-math-editor>
+				</div>
+			</template>
 			<template #footer>
 				<Button label="Submit" :disabled="editNodeObj.id === ''" @click="addNode()" />
 				<Button label="Cancel" class="p-button-secondary" @click="openEditNode = false" />
@@ -184,6 +198,7 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { cloneDeep } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -194,10 +209,10 @@ import {
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
-	convertToIGraph
+	convertToIGraph,
+	updateExistingModelContent
 } from '@/model-representation/petrinet/petrinet-service';
-import { mathmlToAMR } from '@/services/models/extractions';
-import { separateEquations } from '@/utils/math';
+import { latexToAMR } from '@/services/models/extractions';
 import { updateModel } from '@/services/model';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
@@ -234,8 +249,6 @@ const isEditingObservables = ref<boolean>(false);
 const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
-// const newLatexEquationsList = ref<string[]>([]);
-const isMathMLValid = ref<boolean>(true);
 
 // Observable Equations
 const observablesRefs = ref<any[]>([]);
@@ -246,10 +259,11 @@ interface AddStateObj {
 	id: string;
 	name: string;
 	nodeType: string;
+	expression: string;
 }
 
 const openEditNode = ref<boolean>(false);
-const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '', expression: '' });
 let previousId: any = null;
 
 const addObservable = () => {
@@ -318,6 +332,10 @@ const setNewObservables = (
 	emit('update-model-observables', observervablesList.value);
 };
 
+const updateRateEquation = (_index: number, latexEquation: string) => {
+	editNodeObj.value.expression = latexEquation;
+};
+
 const cancelEditEquations = () => {
 	isEditingEQ.value = false;
 	latexEquationList.value = latexEquationsOriginalList.value.map((eq) => eq);
@@ -378,9 +396,6 @@ const updateObservables = () => {
 };
 
 const mathEditorSelected = computed(() => {
-	if (!isMathMLValid.value) {
-		return 'math-editor-error';
-	}
 	if (isEditingEQ.value) {
 		return 'math-editor-selected';
 	}
@@ -393,50 +408,21 @@ const updateLatexFormula = (equationsList: string[]) => {
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
 
-// Get the MathML list of equations from the <tera-math-editor>s
-const mathmlequations = computed(
-	() =>
-		equationsRef.value
-			.map((eq) => `<math>${eq.mathLiveField.getValue('math-ml')}</math>`)
-			.flat() as Array<string>
-);
-
-watch(
-	() => [latexEquationList.value],
-	() => {
-		const mathMLEquations = equationsRef.value.map((eq) =>
-			separateEquations(eq.mathLiveField.getValue('math-ml'))
+const cleanLatexEquations = (equations: Array<string>): Array<string> =>
+	cloneDeep(equations)
+		.filter((equation) => equation !== '')
+		.map((equation) =>
+			equation
+				// Refactor to make those replaceAll one regex change
+				.replaceAll('\\begin', '')
+				.replaceAll('\\end', '')
+				.replaceAll('\\mathrm', '')
+				.replaceAll('\\right', '')
+				.replaceAll('\\left', '')
+				.replaceAll('{align}', '')
+				.replaceAll('=&', '=')
+				.trim()
 		);
-		validateMathML(mathMLEquations.flat(), false);
-	},
-	{ deep: true }
-);
-
-// Whenever selectedModelId changes, fetch model with that ID
-watch(
-	() => [props.model],
-	async () => {
-		updateLatexFormula([]);
-		if (props.model) {
-			const data = await petriToLatex(convertAMRToACSet(props.model));
-			const eqList = data
-				?.split(' \\\\')
-				.map(
-					(elem) =>
-						`\\begin{align} ${elem
-							.replace('\\\\', '\\')
-							.replace('\\begin{align}', '')
-							.replace('\\end{align}', '')
-							.trim()} \\end{align}`
-				);
-
-			if (data) {
-				updateLatexFormula(eqList || []);
-			}
-		}
-	},
-	{ immediate: true }
-);
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -508,10 +494,14 @@ watch(
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
 			const data = selection.datum();
+			const rate = props.model?.semantics?.ode.rates.find((d) => d.target === data.id);
+
+			// Find The EQ here.
 			editNodeObj.value = {
 				id: data.id,
 				name: data.label,
-				nodeType: data.data.type
+				nodeType: data.data.type,
+				expression: rate?.expression ? rate.expression : ''
 			};
 			previousId = data.id;
 			openEditNode.value = true;
@@ -535,21 +525,19 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
-		const eqList = latexFormula
-			?.split(' \\\\')
-			.map(
-				(elem) =>
-					`\\begin{align} ${elem
-						.replace('\\\\', '\\')
-						.replace('\\begin{align}', '')
-						.replace('\\end{align}', '')
-						.trim()} \\end{align}`
-			);
-		if (latexFormula) {
-			updateLatexFormula(eqList || []);
+
+		// Update the latex equations
+		if (latexEquationList.value.length > 0) {
+			/* TODO
+			    	We need to remedy the fact that the equations are not being updated;
+		        A proper merging of the equations is needed with a diff UI for the user.
+		        For now, we do nothing.
+			 */
 		} else {
-			updateLatexFormula([]);
+			const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
+			if (latexFormula) {
+				updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
+			}
 		}
 	},
 	{ deep: true }
@@ -567,20 +555,23 @@ const updatePetriNet = async (model: Model) => {
 	updateLatexFormula(latexEquationList.value);
 };
 
-const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
-	isMathMLValid.value = false;
-	if (mathMLStringList.length === 0) {
-		isMathMLValid.value = true;
-	} else if (editMode) {
-		isMathMLValid.value = true;
-	}
-};
-
 // Update the model from the new mathml equations
 const onClickUpdateModel = async () => {
-	const model = (await mathmlToAMR(mathmlequations.value)) as Model;
+	const model = (await latexToAMR(latexEquationList.value)) as Model;
 	if (model) {
-		await updatePetriNet(model);
+		if (props.model) {
+			const newModel = updateExistingModelContent(model, props.model);
+			await updatePetriNet(newModel);
+			await updateModel(newModel);
+		} else {
+			await updatePetriNet(model);
+			// FIXME - I don't understand why props.model could be null; but for the hackthon this is a quick fix.
+			// createModel(model);
+		}
+
+		if (renderer) {
+			emit('update-model-content', renderer.graph);
+		}
 	}
 };
 
@@ -594,7 +585,7 @@ const toggleEditMode = () => {
 };
 
 // Cancel existing edits, currently this will:
-// - Resets changs to the model structure
+// - Resets changes to the model structure
 const cancelEdit = async () => {
 	isEditing.value = false;
 	if (!props.model) return;
@@ -615,12 +606,12 @@ const resetZoom = async () => {
 };
 
 const prepareStateEdit = () => {
-	editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.State, expression: '' };
 	openEditNode.value = true;
 };
 
 const prepareTransitionEdit = () => {
-	editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition, expression: '' };
 	openEditNode.value = true;
 };
 
@@ -636,7 +627,7 @@ const addNode = async () => {
 			renderer.addNodeCenter(node.nodeType, node.id, node.name);
 		}
 	} else {
-		renderer.updateNode(previousId, node.id, node.name);
+		renderer.updateNode(previousId, node.id, node.name, node.expression);
 		previousId = null;
 	}
 
@@ -805,5 +796,25 @@ section math-editor {
 
 .edit-modal:deep(main) {
 	max-width: 50rem;
+}
+
+.modal-input-container {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.modal-input {
+	height: 25px;
+	padding-left: 5px;
+	margin: 5px;
+	align-items: baseline;
+}
+
+.modal-input-label {
+	margin-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	align-items: baseline;
 }
 </style>
