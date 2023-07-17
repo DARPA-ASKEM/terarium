@@ -130,6 +130,18 @@
 				</div>
 			</section>
 		</section>
+		<section class="step-1" v-else-if="stratifyView === StratifyView.Output">
+			<div>If this is not what you expected, go back to the input page to make changes.</div>
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Stratified model">
+					<div class="step-1-inner"></div>
+				</AccordionTab>
+				<AccordionTab header="Strata model">
+					<div class="step-1-inner"></div>
+				</AccordionTab>
+			</Accordion>
+			<div>Saved as: {{ stratify_output.name }}</div>
+		</section>
 	</main>
 </template>
 
@@ -148,6 +160,7 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { stratify_output } from '@/temp/models/stratify_output';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
@@ -245,6 +258,10 @@ header {
 	gap: 1rem;
 	padding: 1rem;
 	align-items: center;
+}
+
+.stratify-button {
+	margin-left: auto;
 }
 
 nav {
