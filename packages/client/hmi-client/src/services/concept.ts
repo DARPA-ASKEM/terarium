@@ -42,7 +42,7 @@ async function getFacets(types: string[], curies?: ClauseValue[]): Promise<Conce
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
 	try {
-		const { status, data } = await API.get(`/dkg/${curies.toString()}`);
+		const { status, data } = await API.get(`/mira/${curies.toString()}`);
 		if (status && status !== 200) return null;
 		return data ?? null;
 	} catch (error) {

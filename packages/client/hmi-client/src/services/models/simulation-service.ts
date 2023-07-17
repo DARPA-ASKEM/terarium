@@ -6,7 +6,8 @@ import {
 	Simulation,
 	SimulationRequest,
 	CalibrationRequestJulia,
-	CalibrationRequestCiemss
+	CalibrationRequestCiemss,
+	EventType
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';

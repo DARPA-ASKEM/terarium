@@ -67,9 +67,16 @@
 								style="background-color: white"
 							/>
 							<Button
+								v-if="isEditingEQ"
+								@click="onClickUpdateModel"
+								label="Update model"
+								class="p-button-sm"
+							/>
+							<Button
+								v-else
 								@click="isEditingEQ = true"
-								:label="isEditingEQ ? 'Update model' : 'Edit equation'"
-								:class="isEditingEQ ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
+								label="Edit equation"
+								class="p-button-sm p-button-outlined edit-button"
 							/>
 						</span>
 					</section>
@@ -175,7 +182,6 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -190,10 +196,9 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
-import { mathmlToAMR } from '@/services/models/transformations';
+import { mathmlToAMR } from '@/services/models/extractions';
 import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
-import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
@@ -242,6 +247,7 @@ interface AddStateObj {
 	name: string;
 	nodeType: string;
 }
+
 const openEditNode = ref<boolean>(false);
 const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
 let previousId: any = null;
@@ -387,9 +393,13 @@ const updateLatexFormula = (equationsList: string[]) => {
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
 
-function joinStringLists(lists: string[][]): string[] {
-	return ([] as string[]).concat(...lists);
-}
+// Get the MathML list of equations from the <tera-math-editor>s
+const mathmlequations = computed(
+	() =>
+		equationsRef.value
+			.map((eq) => `<math>${eq.mathLiveField.getValue('math-ml')}</math>`)
+			.flat() as Array<string>
+);
 
 watch(
 	() => [latexEquationList.value],
@@ -397,7 +407,7 @@ watch(
 		const mathMLEquations = equationsRef.value.map((eq) =>
 			separateEquations(eq.mathLiveField.getValue('math-ml'))
 		);
-		validateMathML(joinStringLists(mathMLEquations), false);
+		validateMathML(mathMLEquations.flat(), false);
 	},
 	{ deep: true }
 );
@@ -557,37 +567,20 @@ const updatePetriNet = async (model: Model) => {
 	updateLatexFormula(latexEquationList.value);
 };
 
-const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
-	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
-	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
-};
-
 const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
 	isMathMLValid.value = false;
-	const cleanedMathML = mathMLStringList;
 	if (mathMLStringList.length === 0) {
 		isMathMLValid.value = true;
-	} else if (!editMode) {
-		try {
-			const amr = await mathmlToAMR(cleanedMathML, 'petrinet'); // This model is not compatible.
-			const model = amr?.model;
-			if (
-				(model && isArray(model) && model.length > 0) ||
-				(model && !isArray(model) && Object.keys(model).length > 0 && hasNoEmptyKeys(model))
-			) {
-				isMathMLValid.value = true;
-				if (props.model !== null) updatePetriNet(props.model);
-				// if (model !== null) updatePetriNet(model); -> doesn't work because model is NOT an AMR right now.
-			} else {
-				logger.error(
-					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-				);
-			}
-		} catch (e) {
-			isMathMLValid.value = false;
-		}
 	} else if (editMode) {
 		isMathMLValid.value = true;
+	}
+};
+
+// Update the model from the new mathml equations
+const onClickUpdateModel = async () => {
+	const model = (await mathmlToAMR(mathmlequations.value)) as Model;
+	if (model) {
+		await updatePetriNet(model);
 	}
 };
 
