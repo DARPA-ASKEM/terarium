@@ -309,6 +309,9 @@ section {
 	width: 50%;
 }
 
+.p-dropdown-panel .p-dropdown-items {
+	max-width: 100%;
+}
 .buttons {
 	display: flex;
 	justify-content: space-between;
