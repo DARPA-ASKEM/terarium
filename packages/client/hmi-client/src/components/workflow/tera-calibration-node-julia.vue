@@ -81,7 +81,7 @@
 		</Accordion>
 	</section>
 	<section v-else>
-		<div>loading...</div>
+		<div><i class="pi pi-spin pi-spinner"></i> loading...</div>
 	</section>
 </template>
 
@@ -187,7 +187,6 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 
-	console.log(response);
 	startedRunId.value = response.simulationId;
 	getStatus();
 	showSpinner.value = true;
@@ -204,7 +203,6 @@ const getStatus = async () => {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
 		showSpinner.value = false;
-		// showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
