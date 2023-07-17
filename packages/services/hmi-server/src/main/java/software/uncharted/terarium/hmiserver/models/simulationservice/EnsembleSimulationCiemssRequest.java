@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class EnsembleSimulationRequest implements Serializable {
+public class EnsembleSimulationCiemssRequest implements Serializable {
 	@JsonAlias("model_configs")
 	private List<EnsembleModelConfigs> modelConfigs;
 

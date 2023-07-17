@@ -4,16 +4,17 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { ChartConfig } from '@/types/SimulateConfig';
 import { EnsembleModelConfigs } from '@/types/Types';
 
-export interface EnsembleOperationState {
+export interface EnsembleCiemssOperationState {
 	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
 	mapping: EnsembleModelConfigs[];
 }
 
-export const EnsembleOperation: Operation = {
-	name: WorkflowOperationTypes.SIMULATEENSEMBLE,
+export const EnsembleCiemssOperation: Operation = {
+	name: WorkflowOperationTypes.ENSEMBLE_CIEMSS,
+	displayName: 'Simulate ensemble (deterministic)',
 	description: '',
-	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 
@@ -24,7 +25,7 @@ export const EnsembleOperation: Operation = {
 	},
 
 	initState: () => {
-		const init: EnsembleOperationState = {
+		const init: EnsembleCiemssOperationState = {
 			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: []

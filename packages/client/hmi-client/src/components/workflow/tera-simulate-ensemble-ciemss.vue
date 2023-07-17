@@ -152,7 +152,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { getSimulation, makeEnsembleSimulation } from '@/services/models/simulation-service';
+import { getSimulation, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
@@ -161,7 +161,7 @@ import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
 import {
 	ModelConfiguration,
-	EnsembleSimulationRequest,
+	EnsembleSimulationCiemssRequest,
 	Simulation,
 	TimeSpan,
 	EnsembleModelConfigs
@@ -171,7 +171,10 @@ import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { workflowEventBus } from '@/services/workflow';
 import InputText from 'primevue/inputtext';
-import { EnsembleOperation, EnsembleOperationState } from './simulate-ensemble-operation';
+import {
+	EnsembleCiemssOperation,
+	EnsembleCiemssOperationState
+} from './simulate-ensemble-ciemss-operation';
 
 const dataLabelPlugin = [ChartDataLabels];
 
@@ -237,13 +240,13 @@ const calculateWeights = () => {
 };
 
 const runEnsemble = async () => {
-	const params: EnsembleSimulationRequest = {
+	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
 		engine: 'sciml',
 		extra: { num_samples: 100 }
 	};
-	const response = await makeEnsembleSimulation(params);
+	const response = await makeEnsembleCiemssSimulation(params);
 	startedRunId.value = response.id;
 	getStatus();
 };
@@ -271,7 +274,7 @@ const getStatus = async () => {
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
-		type: EnsembleOperation.outputs[0].type,
+		type: EnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: {
 			runId
@@ -284,7 +287,7 @@ function addMapping() {
 		ensembleConfigs.value[i].observables.push({ [newObservableKey.value]: '' });
 	}
 
-	const state: EnsembleOperationState = _.cloneDeep(props.node.state);
+	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 
 	workflowEventBus.emitNodeStateChange({

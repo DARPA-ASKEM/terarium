@@ -207,6 +207,7 @@ const runCalibrate = async () => {
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	startedRunId.value = response.simulationId;
+	console.log(startedRunId.value);
 	getStatus();
 	// showSpinner.value = true;s
 };

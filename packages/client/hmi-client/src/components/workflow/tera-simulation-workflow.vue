@@ -93,6 +93,7 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
+
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -228,7 +229,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
-// import { EnsembleOperation } from './simulate-ensemble-operation';
+import { EnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -486,7 +487,13 @@ const contextMenuItems = ref([
 			{
 				label: 'Calibrate & Simulate ensemble',
 				disabled: true,
-				command: () => {}
+				command: () => {
+					workflowService.addNode(wf.value, EnsembleCiemssOperation, newNodePosition, {
+						width: 420,
+						height: 220
+					});
+					workflowDirty = true;
+				}
 			}
 		]
 	}

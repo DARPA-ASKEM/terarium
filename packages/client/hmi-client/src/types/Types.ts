@@ -229,7 +229,7 @@ export interface EnsembleModelConfigs {
     weight: number;
 }
 
-export interface EnsembleSimulationRequest {
+export interface EnsembleSimulationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     timespan: TimeSpan;
     extra: any;

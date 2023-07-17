@@ -21,7 +21,7 @@ import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import { EnsembleModelConfigs } from '@/types/Types';
-import { EnsembleOperationState } from './simulate-ensemble-operation';
+import { EnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -48,7 +48,7 @@ watch(
 				};
 			}
 			console.log(mapping.value);
-			const state: EnsembleOperationState = _.cloneDeep(props.node.state);
+			const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 			state.modelConfigIds = modelConfigIds.value;
 			state.mapping = mapping.value;
 			workflowEventBus.emitNodeStateChange({
