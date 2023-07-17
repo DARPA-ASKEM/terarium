@@ -10,7 +10,7 @@
 						:maxSize="equationPanelMaxSize"
 					>
 						<section class="graph-element">
-							<section v-if="showTypingToolbar">
+							<section v-if="showTypingToolbar" class="typingSection">
 								<div class="typing-row">
 									<div>COLOR</div>
 									<div class="input-header">NODE TYPE</div>
@@ -35,7 +35,6 @@
 									<div>
 										<!-- node type -->
 										<Dropdown
-											class="p-inputtext-sm"
 											:options="Object.keys(assignToOptions[index])"
 											v-model="row.nodeType"
 										/>
@@ -43,7 +42,6 @@
 									<div>
 										<!-- name of type -->
 										<InputText
-											class="p-inputtext-sm"
 											:model-value="row.typeName"
 											@update:model-value="(newValue) => setTypeNameBuffer(newValue, index)"
 											@change="updateRowTypeName(index)"
@@ -52,10 +50,10 @@
 									<div>
 										<!-- assign to -->
 										<MultiSelect
-											class="p-inputtext-sm"
 											placeholder="Select nodes"
 											:options="assignToOptions[index][row.nodeType ?? '']"
 											v-model="row.assignTo"
+											:maxSelectedLabels="1"
 										/>
 									</div>
 									<!-- cancel row  -->
@@ -487,6 +485,9 @@ li {
 	height: 100%;
 }
 
+.typingSection {
+	padding-bottom: 1rem;
+}
 .typing-row {
 	display: flex;
 	justify-content: space-around;
@@ -517,13 +518,15 @@ li {
 .p-dropdown,
 .p-multiselect {
 	min-width: 150px;
+	width: 100%;
+}
+
+.p-multiselect-label-container {
+	min-width: 150px;
+	width: 100%;
 }
 
 .input-header {
 	min-width: 150px;
-}
-
-:deep(.p-multiselect .p-multiselect-label.p-placeholder) {
-	padding: 0.875rem 0.875rem;
 }
 </style>

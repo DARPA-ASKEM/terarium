@@ -219,6 +219,14 @@
 								/>
 							</div>
 						</div>
+						<label for="equation">Equation</label>
+						<tera-math-editor
+							:is-editing-eq="true"
+							:latex-equation="''"
+							:keep-open="true"
+							@equation-updated="console.log('equation udpated from configuration')"
+						>
+						</tera-math-editor>
 					</TabPanel>
 				</TabView>
 			</template>
@@ -254,6 +262,7 @@ import {
 	addDefaultConfiguration
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 
 enum ParamType {
 	CONSTANT = 'constant',
@@ -404,6 +413,9 @@ function setModelParameters() {
 			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
 		modelParameter[valueName] = extractions.value[activeIndex.value].value;
 
+		if (!modelConfigurations.value[configIndex].configuration.metadata) {
+			modelConfigurations.value[configIndex].configuration.metadata = {};
+		}
 		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
 
 		modelParameter.name = extractions.value[activeIndex.value].name;
@@ -578,12 +590,10 @@ td:hover .cell-menu {
 	display: flex;
 	gap: 1rem;
 	margin-bottom: 1rem;
-	justify-content: space-between;
 }
 
 .p-tabview:deep(> *) {
 	width: 50vw;
-	height: 50vh;
 	overflow: auto;
 }
 
@@ -595,16 +605,19 @@ td:hover .cell-menu {
 	display: block;
 	font-size: var(--font-caption);
 	margin-bottom: 0.25rem;
+	width: 20%;
 }
 
 .p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
-	width: 100%;
+	width: 20%;
 }
 
 .p-tabview:deep(.p-tabview-panels) {
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	background-color: var(--surface-ground);
+	width: 100%;
+	height: 100%;
 }
 
 .p-tabview:deep(.p-tabview-panel) {
@@ -654,5 +667,25 @@ td:hover .cell-menu {
 .capitalize {
 	text-transform: capitalize !important;
 	font-size: var(--font-body-medium) !important;
+}
+
+.modal-input-container {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.modal-input {
+	height: 25px;
+	padding-left: 5px;
+	margin: 5px;
+	align-items: baseline;
+}
+
+.modal-input-label {
+	margin-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	align-items: baseline;
 }
 </style>
