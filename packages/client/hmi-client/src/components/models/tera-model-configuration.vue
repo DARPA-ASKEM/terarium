@@ -413,6 +413,9 @@ function setModelParameters() {
 			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
 		modelParameter[valueName] = extractions.value[activeIndex.value].value;
 
+		if (!modelConfigurations.value[configIndex].configuration.metadata) {
+			modelConfigurations.value[configIndex].configuration.metadata = {};
+		}
 		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
 
 		modelParameter.name = extractions.value[activeIndex.value].name;
