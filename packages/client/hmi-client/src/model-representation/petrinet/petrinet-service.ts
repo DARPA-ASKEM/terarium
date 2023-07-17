@@ -399,12 +399,20 @@ export const addTyping = (amr: Model, typing: TypingSemantics) => {
 // Add a reflexive transition loop to the state
 // This is a special type of addTransition that creates a self loop
 const DEFAULT_REFLEXIVE_PARAM_VALUE = 1.0;
-export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
+
+export const addReflexives = (
+	amr: Model,
+	stateId: string,
+	reflexiveId: string,
+	numLoops: number = 1
+) => {
 	addTransition(amr, reflexiveId, reflexiveId, DEFAULT_REFLEXIVE_PARAM_VALUE);
 	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
 	if (transition) {
-		transition.input = [stateId];
-		transition.output = [stateId];
+		for (let i = 0; i < numLoops; i++) {
+			transition.input.push(stateId);
+			transition.output.push(stateId);
+		}
 	}
 };
 

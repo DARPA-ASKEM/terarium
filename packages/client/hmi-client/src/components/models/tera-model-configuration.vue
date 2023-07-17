@@ -416,11 +416,11 @@ function setModelParameters() {
 			delete modelParameter.distribution;
 		} else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
 			modelParameter.distribution = extractions.value[activeIndex.value].distribution;
-			delete modelMetadata.timeseries[modelParameter.id];
+			delete modelMetadata.timeseries?.[modelParameter.id];
 		} else {
 			// A constant
 			delete modelParameter.distribution;
-			delete modelMetadata.timeseries[modelParameter.id];
+			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
 
 		updateModelConfigValue();
