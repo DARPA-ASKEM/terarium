@@ -234,12 +234,6 @@ li {
 	align-items: center;
 	gap: 0.5rem;
 }
-
-.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
-	background-color: var(--surface-0);
-	margin: 0.25rem;
-}
-
 .splitter-container {
 	height: 100%;
 }
@@ -252,11 +246,6 @@ li {
 	overflow: hidden;
 	border: none;
 	position: relative;
-}
-
-.p-splitter {
-	border: none;
-	height: 100%;
 }
 
 .tera-split-panel {

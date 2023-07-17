@@ -134,10 +134,10 @@
 			<div>If this is not what you expected, go back to the input page to make changes.</div>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Stratified model">
-					<div class="step-1-inner"></div>
+					<tera-stratify-output-model-diagram v-if="stratifiedModel" :model="stratifiedModel" />
 				</AccordionTab>
 				<AccordionTab header="Strata model">
-					<div class="step-1-inner"></div>
+					<tera-stratify-output-model-diagram v-if="strataModel" :model="strataModel" />
 				</AccordionTab>
 			</Accordion>
 			<div>Saved as: {{ stratify_output.name }}</div>
@@ -167,6 +167,7 @@ import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import useResourcesStore from '@/stores/resources';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+import TeraStratifyOutputModelDiagram from '../models/tera-stratify-output-model-diagram.vue';
 
 const resourceStore = useResourcesStore();
 
@@ -190,6 +191,7 @@ const strataModelTypeSystem = computed<TypeSystem | undefined>(
 );
 const typedBaseModel = ref<Model | null>(null);
 const typedStrataModel = ref<Model | null>(null);
+const stratifiedModel = ref<Model>(stratify_output);
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -212,12 +214,13 @@ async function doStratify() {
 			amr.semantics.span = _.cloneDeep(amrBase.semantics?.span);
 			amr.semantics.typing = _.cloneDeep(amrBase.semantics?.typing);
 		}
-
+		stratifiedModel.value = amr;
 		// Create model and asssociate
 		const response = await createModel(amr);
 		const newModelId = response?.id;
 		const projectId = resourceStore.activeProject?.id as string;
 		await addAsset(projectId, 'models', newModelId);
+		stratifyView.value = StratifyView.Output;
 	}
 }
 

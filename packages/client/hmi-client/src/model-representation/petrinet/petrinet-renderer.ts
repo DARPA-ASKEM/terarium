@@ -174,7 +174,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
-				const rate = this.graph.amr.semantics.ode.rates.find((r) => r.target === d.id);
+				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
 				if (rate) {
 					return rate.expression;
 				}
