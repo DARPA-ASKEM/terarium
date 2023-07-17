@@ -420,7 +420,12 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
+					<tera-stratified-model-configuration
+						v-if="model.semantics?.span"
+						:model="stratify_output"
+						:is-editable="props.isEditable"
+					/>
+					<tera-model-configuration v-else :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -791,6 +796,8 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		// Reset view of model page
+		isRenamingModel.value = false;
 		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);

@@ -31,7 +31,7 @@
 							{{ cell?.value?.[chosenX] }}
 							{{ cell?.value?.[chosenY] }}
 						</template>
-						<template v-else> -- </template>
+						<span class="not-allowed" v-else>N/A</span>
 					</td>
 				</tr>
 			</tbody>
@@ -42,12 +42,28 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { matrixStrata } from '@/temp/models/matrix_strata';
+import { stratify_output } from '@/temp/models/stratify_output';
+import {
+	extractMapping,
+	extractStateMatrixData
+} from '@/model-representation/petrinet/petrinet-service';
+// import { createMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 
 const { matrix, xDimensions, yDimensions } = matrixStrata;
 
 const chosenX = ref(xDimensions[0]);
 const chosenY = ref(yDimensions[0]);
+
+const stateList = extractMapping(stratify_output, 'S_Rgn_1');
+const stateList2 = extractMapping(stratify_output, 'rec_Rgn1_dis');
+console.log(stateList, stateList2);
+
+console.log(extractStateMatrixData(stratify_output, stateList));
+
+// console.log(createMatrix(stratify_output.semantics.span, 'S_Rgn_1', 'S_Rgn_2'));
+
+// console.log(create)
 </script>
 
 <style scoped>
@@ -60,5 +76,9 @@ th {
 .p-frozen-column {
 	left: 0px;
 	white-space: nowrap;
+}
+
+.not-allowed {
+	color: var(--text-color-subdued);
 }
 </style>

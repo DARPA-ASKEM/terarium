@@ -397,7 +397,7 @@ export const stratify_output: Model = {
 			}
 		],
 		typing: {
-			type_map: [
+			map: [
 				['S_Rgn_1', 'Pop'],
 				['I_Rgn_1', 'Pop'],
 				['R_Rgn_1', 'Pop'],

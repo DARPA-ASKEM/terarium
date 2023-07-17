@@ -463,13 +463,14 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 export const extractMapping = (amr: Model, id: string) => {
 	const typeMapList = amr.semantics?.typing?.map as [string, string][];
 	const item = typeMapList.find((d) => d[0] === id);
+	console.log(item);
 	if (!item) return [];
 	const result = typeMapList.filter((d) => d[1] === item[1]);
 	return result.map((d) => d[0]);
 };
 
 // Flattens out transitions and their relationships/types into a 1-D vector
-export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]) => {
+export const extractTransitionMatrixData = (amr: Model, transitionIds: string[]) => {
 	const model = amr.model as PetriNetModel;
 	const transitions = model.transitions;
 

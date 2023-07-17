@@ -43,12 +43,11 @@
 							v-for="({ id }, i) in [...configuration.states, ...configuration.transitions]"
 							:key="i"
 						>
-							<section class="editable-cell">
+							<section class="editable-cell" @click="openValueModal">
 								<span>{{ id }}<i class="pi pi-table"></i></span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
-									@click.stop="openValueModal"
 								/>
 							</section>
 						</td>
@@ -81,7 +80,6 @@
 				<span>Configure the matrix values</span>
 			</template>
 			<template #default>
-				<tera-stratify-value-matrix />
 				<TabView v-model:activeIndex="activeIndex">
 					<TabPanel v-for="(extraction, i) in extractions" :key="i">
 						<template #header>
@@ -92,8 +90,9 @@
 							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
 						</div>
 						<div>
-							<label for="name">Value</label>
-							<InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" />
+							<label for="name">Matrix</label>
+							<tera-stratify-value-matrix />
+							<!-- <InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" /> -->
 						</div>
 						<div v-if="modalVal.odeType === 'parameters'">
 							<label for="name">Distribution</label>
@@ -314,7 +313,10 @@ onMounted(() => {
 }
 
 .p-datatable-thead th {
-	text-transform: capitalize;
+	text-transform: none !important;
+	color: var(--text-color-primary) !important;
+	font-size: var(--font-size-small) !important;
+	padding-left: 1rem !important;
 }
 
 .model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
@@ -325,11 +327,21 @@ onMounted(() => {
 	visibility: hidden;
 }
 
+.cell-input {
+	width: calc(100%);
+	height: 4rem;
+}
+
 .editable-cell {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	min-width: 3rem;
+}
+
+td:has(.cell-input) {
+	padding: 2px !important;
+	max-width: 4rem;
 }
 
 .p-datatable:deep(td) {
@@ -354,6 +366,70 @@ td:hover .cell-menu {
 	visibility: visible;
 }
 
+.p-tabview {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	justify-content: space-between;
+}
+
+.p-tabview:deep(> *) {
+	width: 50vw;
+	height: 50vh;
+	overflow: auto;
+}
+
+.p-tabview:deep(.p-tabview-nav) {
+	flex-direction: column;
+}
+
+.p-tabview:deep(label) {
+	display: block;
+	font-size: var(--font-caption);
+	margin-bottom: 0.25rem;
+}
+
+.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
+	width: 30%;
+}
+
+.p-tabview:deep(.p-tabview-panels) {
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	background-color: var(--surface-ground);
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.p-tabview:deep(.p-tabview-nav li) {
+	border-left: 3px solid transparent;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
+	border-bottom: 1px solid var(--surface-border-light);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight) {
+	border-left: 3px solid var(--primary-color);
+	background: var(--surface-highlight);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+	background: none;
+}
+
+.p-tabview:deep(.p-inputtext) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
+	display: none;
+}
+
 .distribution-cell {
 	display: flex;
 	flex-direction: column;
@@ -361,5 +437,15 @@ td:hover .cell-menu {
 
 .distribution-range {
 	white-space: nowrap;
+}
+
+.invalid-message {
+	color: var(--text-color-danger);
+	font-size: var(--font-caption);
+}
+
+.capitalize {
+	text-transform: capitalize !important;
+	font-size: var(--font-body-medium) !important;
 }
 </style>
