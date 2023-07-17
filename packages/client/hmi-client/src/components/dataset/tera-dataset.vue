@@ -141,18 +141,6 @@
 								<p class="content">{{ enrichedData.LICENSE }}</p>
 							</div>
 							<div class="full-width">
-								<h3 class="subtitle">{{ headers.EXAMPLES }}</h3>
-								<ul class="example-list" v-if="enrichedData.EXAMPLES">
-									<li
-										class="example-item"
-										v-for="(value, key) in JSON.parse(enrichedData.EXAMPLES)"
-										:key="key"
-									>
-										<strong>{{ key }}:</strong>{{ value }}
-									</li>
-								</ul>
-							</div>
-							<div class="full-width">
 								<h3 class="subtitle">{{ `Extraction Table` }}</h3>
 								<DataTable :value="pd">
 									<Column field="col_name" header="Column Name"></Column>
@@ -390,7 +378,6 @@ const headers = ref({
 	SCHEMA: 'Data Schema',
 	PROVENANCE: 'Data Provenance',
 	SENSITIVITY: 'Data Sensitivity',
-	EXAMPLES: 'Example Data',
 	LICENSE: 'License Information'
 });
 
