@@ -481,21 +481,25 @@ const contextMenuItems = ref([
 	}
 ]);
 
+const convertToIGraphHelper = (amr: Model) => {
+	if (isStratifiedAMR(amr)) {
+		// FIXME: wont' work for MIRA
+		return convertToIGraph(props.model.semantics?.span?.[0].system);
+	}
+	return convertToIGraph(amr);
+};
+
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
 	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		let graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
-
-		console.log('is stratified', isStratifiedAMR(props.model));
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
 
 		// Create renderer
 		if (isStratifiedAMR(props.model)) {
 			console.log('hihi', extractNestedMap(props.model));
-			graphData = convertToIGraph(props.model.semantics?.span?.[0].system);
-
 			renderer = new NestedPetrinetRenderer({
 				el: graphElement.value as HTMLDivElement,
 				useAStarRouting: false,
@@ -567,7 +571,7 @@ watch(
 
 const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
+	const graphData = convertToIGraphHelper(model);
 
 	if (renderer) {
 		await renderer.setData(graphData);
