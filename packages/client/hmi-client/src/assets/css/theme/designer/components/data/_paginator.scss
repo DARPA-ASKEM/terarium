@@ -40,6 +40,7 @@
         margin-left: $inlineSpacing;
         margin-right: $inlineSpacing;
         height: $paginatorElementHeight;
+        border-color: var(--surface-border);
 
         .p-dropdown-label {
             padding-right: 0;

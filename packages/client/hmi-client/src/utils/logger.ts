@@ -104,7 +104,7 @@ class Logger {
 		...optionalParams: any[]
 	): void {
 		if (this.options.hooks?.before) {
-			this.options.hooks.before(level, message, this.callerInfo);
+			this.options.hooks.before(level, message.toString(), this.callerInfo);
 		}
 
 		if (this.options.consoleEnabled) {
@@ -112,12 +112,12 @@ class Logger {
 		}
 
 		if (this.options.showToast && messageOptions?.showToast) {
-			this.displayToast(level, message, messageOptions);
+			this.displayToast(level, message.toString(), messageOptions);
 		} else if (this.options.showToast && messageOptions?.showToast !== false) {
-			this.displayToast(level, message, messageOptions);
+			this.displayToast(level, message.toString(), messageOptions);
 		}
 		if (this.options.hooks?.after && messageOptions?.silent !== true) {
-			this.options.hooks.after(level, message, this.callerInfo);
+			this.options.hooks.after(level, message.toString(), this.callerInfo);
 		}
 
 		this.queueLogs(level, message);
@@ -140,7 +140,7 @@ class Logger {
 	 */
 	info(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]): void {
 		this.callerInfo = this.getCallerInfo();
-		this.log(LogLevels.INFO, message, messageOptions, optionalParams);
+		this.log(LogLevels.INFO, message.toString(), messageOptions, optionalParams);
 	}
 
 	/**
@@ -151,7 +151,7 @@ class Logger {
 	 */
 	warn(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
-		this.log(LogLevels.WARN, message, messageOptions, optionalParams);
+		this.log(LogLevels.WARN, message.toString(), messageOptions, optionalParams);
 	}
 
 	/**
@@ -163,7 +163,7 @@ class Logger {
 	 */
 	debug(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
-		this.log(LogLevels.DEBUG, message, messageOptions, optionalParams);
+		this.log(LogLevels.DEBUG, message.toString(), messageOptions, optionalParams);
 	}
 
 	/**
@@ -175,7 +175,7 @@ class Logger {
 	 */
 	error(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
-		this.log(LogLevels.ERROR, message, messageOptions, optionalParams);
+		this.log(LogLevels.ERROR, message.toString(), messageOptions, optionalParams);
 	}
 
 	/**

@@ -28,11 +28,13 @@ import * as d3 from 'd3';
 
 const props = withDefaults(
 	defineProps<{
+		background?: string | undefined;
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
 	}>(),
 	{
+		background: 'dots',
 		debugMode: false,
 		scaleExtent: () => [0.1, 10],
 		lastTransform: undefined
@@ -69,10 +71,29 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 	}
 
 	currentTransform = e.transform;
+
+	if (props.background === 'dots') {
+		const background = d3.select(svgRef.value as SVGGElement);
+		background
+			.select('#dotPattern')
+			.style(
+				'patternTransform',
+				`translate(${currentTransform.x}, ${currentTransform.y}) scale(${currentTransform.k})`
+			);
+	}
 }
 
 function handleZoomEnd() {
 	emit('save-transform', { x: currentTransform.x, y: currentTransform.y, k: currentTransform.k });
+	if (props.background === 'dots') {
+		const background = d3.select(svgRef.value as SVGGElement);
+		background
+			.select('#dotPattern')
+			.style(
+				'patternTransform',
+				`translate(${currentTransform.x}, ${currentTransform.y}) scale(${currentTransform.k})`
+			);
+	}
 }
 
 function updateDimensions() {
@@ -92,7 +113,7 @@ function updateDimensions() {
 			.range([-1, height.value + 1]);
 		xAxis = d3
 			.axisBottom(x)
-			.ticks(((width.value + 2) / (height.value + 2)) * 10)
+			.ticks(((width.value + 2) / (height.value + 2)) * 20)
 			.tickSize(height.value)
 			.tickPadding(8 - height.value);
 		yAxis = d3
@@ -135,6 +156,30 @@ onMounted(() => {
 	updateDimensions();
 	if (canvasRef.value) resizeObserver.observe(canvasRef.value);
 
+	// Draw dot pattern in background
+	svg
+		.append('defs')
+		.append('pattern')
+		.attr('id', 'dotPattern')
+		.attr('width', 12)
+		.attr('height', 12)
+		.attr('patternUnits', 'userSpaceOnUse')
+		.append('circle')
+		.attr('fill', 'var(--surface-border-light)')
+		.attr('cx', 12)
+		.attr('cy', 12)
+		.attr('r', 2);
+
+	svg
+		.append('rect')
+		.attr('x', 0)
+		.attr('y', 0)
+		.attr('width', '100%')
+		.attr('height', '100%')
+		.attr('pointer-events', 'none')
+		.attr('fill', 'url(#dotPattern)')
+		.style('mix-blend-mode', 'darken');
+
 	// Assign debug grid
 	if (props.debugMode) {
 		gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
@@ -164,19 +209,24 @@ main > * {
 
 .background-layer {
 	cursor: grab;
-	width: 100%;
-	height: 100%;
+	background-color: var(--surface-0);
 }
 
 .background-layer:deep(.tick line) {
-	color: var(--surface-border);
+	color: var(--surface-border-light);
+	stroke-width: 1px;
 }
 
+.background-layer:deep(.axis.axis--y),
 .background-layer:deep(.tick text) {
-	color: var(--surface-border);
+	display: block;
 }
 
 svg:active {
 	cursor: grabbing;
+}
+
+.foreground-layer {
+	position: relative;
 }
 </style>

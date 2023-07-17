@@ -10,7 +10,7 @@
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && asset.relatedExtractions"
+					v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects"
 				>
 					<template
 						v-for="icon in [
@@ -28,10 +28,7 @@
 						/>
 					</template>
 				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.framework }}</div>
-				<div v-else-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
-					Simulation run
-				</div>
+				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.schema_name }}</div>
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
@@ -39,9 +36,12 @@
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
 			<div class="description" v-html="highlightSearchTerms(asset.description)" />
-			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
+			<div
+				class="parameters"
+				v-if="resourceType === ResourceType.MODEL && asset?.semantics?.ode?.parameters"
+			>
 				PARAMETERS:
-				{{ asset.parameters }}
+				{{ asset.semantics.ode.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
 			</div>
 			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
@@ -51,7 +51,7 @@
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
 		<aside class="preview-and-options">
-			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
+			<figure v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects">
 				<template v-if="relatedAsset">
 					<img
 						v-if="relatedAsset.properties.image"
@@ -61,7 +61,7 @@
 					/>
 					<div class="link" v-else-if="relatedAsset.properties.doi">
 						<a
-							v-if="relatedAsset.properties.documentBibjson.link"
+							v-if="relatedAsset.properties.documentBibjson?.link"
 							:href="relatedAsset.properties.documentBibjson.link[0].url"
 							@click.stop
 							rel="noreferrer noopener"
@@ -93,7 +93,6 @@
 						</span>
 						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</span>
-					<template v-else> No {{ chosenExtractionFilter }}s</template>
 				</div>
 			</figure>
 			<slot name="default"></slot>
@@ -105,9 +104,7 @@
 import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
-import { Document, Extraction, XDDUrlExtraction } from '@/types/Types';
-import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
+import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
 import { ResourceType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
@@ -140,11 +137,11 @@ const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
 
-	if (props.asset.relatedExtractions) {
-		const documentsWithUrls = props.asset.relatedExtractions.filter(
+	if (props.asset.knownEntities.askemObjects) {
+		const documentsWithUrls = props.asset.knownEntities.askemObjects.filter(
 			(ex) =>
 				ex.askemClass === XDDExtractionType.Doc &&
-				ex.properties.documentBibjson.knownEntities != null &&
+				ex.properties.documentBibjson?.knownEntities &&
 				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
 		);
 
@@ -165,9 +162,9 @@ const urlExtractions = computed(() => {
 });
 
 const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
-	if (props.asset.relatedExtractions) {
+	if (props.asset.knownEntities.askemObjects) {
 		const allExtractions = [
-			...(props.asset.relatedExtractions as UrlExtraction[] & Extraction[]),
+			...(props.asset.knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
 			...(urlExtractions.value as UrlExtraction[] & Extraction[])
 		];
 
@@ -242,11 +239,16 @@ const formatDetails = computed(() => {
 
 // Format features for dataset type
 const formatFeatures = () => {
-	const features = props.asset.annotations.annotations.feature ?? [];
-	if (!features || features.length === 0) return [];
-	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
-	const max = 5;
-	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
+	if (props.resourceType === ResourceType.DATASET) {
+		// TODO: Once we have enrichment and extraction working we can see what annotations will look like
+		/* const columns = props.asset.columns ?? [];
+		if (!columns || columns.length === 0) return [];
+		const annotations = columns.map((c) => (c.annotations ? c.annotations : []));
+		const annotationNames = annotations.map((a) => (a.name ? a.name : ''));
+		const max = 5;
+		return annotationNames.length < max ? annotationNames : annotationNames.slice(0, max); */
+	}
+	return [];
 };
 
 const { setDragData, deleteDragData } = useDragEvent();

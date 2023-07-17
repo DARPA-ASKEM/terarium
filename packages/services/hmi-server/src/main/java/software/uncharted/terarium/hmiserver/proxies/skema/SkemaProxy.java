@@ -1,7 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.models.CodeRequest;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
+import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -19,5 +20,6 @@ public interface SkemaProxy {
 	@POST
 	@Path("/fn-given-filepaths")
 	@Produces(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response getFunctionNetwork(CodeRequest request);
 }

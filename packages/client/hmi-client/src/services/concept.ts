@@ -5,6 +5,8 @@
 import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
+import { DKG } from '@/types/Types';
+import { logger } from '@/utils/logger';
 
 /**
  * Get concept facets
@@ -35,4 +37,18 @@ async function getFacets(types: string[], curies?: ClauseValue[]): Promise<Conce
 	}
 }
 
-export { getFacets };
+/**
+ * Get DKG entities, either single ones or multiple at a time
+ */
+async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
+	try {
+		const { status, data } = await API.get(`/mira/${curies.toString()}`);
+		if (status && status !== 200) return null;
+		return data ?? null;
+	} catch (error) {
+		logger.error(error, { showToast: false });
+		return null;
+	}
+}
+
+export { getCuriesEntities, getFacets };

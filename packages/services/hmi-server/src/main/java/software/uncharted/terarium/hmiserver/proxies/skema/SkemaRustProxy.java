@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 
 import java.util.List;
 import javax.ws.rs.Consumes;
@@ -22,6 +24,7 @@ public interface SkemaRustProxy {
 	@POST
 	@Path("/models")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response addModel(String functionNetwork);
 
 	/**
@@ -31,6 +34,7 @@ public interface SkemaRustProxy {
 	 */
 	@GET
 	@Path("/models/{modelId}/named_opis")
+	@LogRestClientTime
 	Response getModelNamedOpis(@PathParam("modelId") String modelId);
 
 	/**
@@ -40,11 +44,19 @@ public interface SkemaRustProxy {
 	 */
 	@GET
 	@Path("/models/{modelId}/named_opos")
+	@LogRestClientTime
 	Response getModelNamedOpos(@PathParam("modelId") String modelId);
 
 
 	@PUT
 	@Path("/mathml/acset")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
 	Response convertMathML2ACSet(List<String> mathML);
+
+	@PUT
+	@Path("/mathml/amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@LogRestClientTime
+	Response convertMathML2AMR(JsonNode request);
 }

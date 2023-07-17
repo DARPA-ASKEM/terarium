@@ -2,8 +2,6 @@ version=3.81
 
 PROJECT_DIR ?= .
 
-
-
 .SECONDEXPANSION:
 
 .PHONY: all
@@ -37,10 +35,6 @@ clean-hmi-server-native: clean-hmi-server-base
 image-hmi-server-native: clean-hmi-server-native
 	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=native
 	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
-
-
-
-
 
 TARGETS += hmi-client
 clean-hmi-client:

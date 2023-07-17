@@ -1,72 +1,65 @@
 <template>
-	<section>
-		<Dropdown
-			class="w-full"
-			:options="datasets"
-			option-label="name"
-			v-model="selectedDataset"
-			placeholder="Select a dataset"
-		>
-		</Dropdown>
-		<Accordion>
-			<AccordionTab header="Data preview">
-				<!-- <tera-dataset-datatable v-if="rawContent" :raw-content="rawContent" /> -->
-				<section v-if="rawContent">
-					<DataTable
-						class="p-datatable-sm"
-						:value="csvContent?.slice(1, csvContent.length)"
-						paginator
-						:rows="5"
-					>
-						<Column
-							v-for="(colName, index) of csvHeaders"
-							:key="index"
-							:field="index.toString()"
-							:header="colName"
-						/>
-					</DataTable>
-				</section>
-			</AccordionTab>
-		</Accordion>
-	</section>
+	<template v-if="dataset">
+		<h5>{{ dataset.name }}</h5>
+		<section v-if="csvContent">
+			<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
+			<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
+				<Column
+					v-for="(colName, index) of csvHeaders"
+					:key="index"
+					:field="index.toString()"
+					:header="colName"
+				/>
+			</DataTable>
+			<span>Showing first 5 rows</span>
+		</section>
+	</template>
+	<Dropdown
+		v-else
+		class="w-full p-button-sm p-button-outlined"
+		:options="datasets"
+		option-label="name"
+		v-model="dataset"
+		placeholder="Select a dataset"
+	/>
 </template>
 
 <script setup lang="ts">
-import Dropdown from 'primevue/dropdown';
-import { Dataset } from '@/types/Dataset';
-import { computed, ref, watch } from 'vue';
-import { downloadRawFile } from '@/services/dataset';
-import { CsvAsset } from '@/types/Types';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
+import { computed, ref, onMounted, watch } from 'vue';
+import { CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { DatasetOperation } from './dataset-operation';
+import Dropdown from 'primevue/dropdown';
+import { downloadRawFile, getDataset } from '@/services/dataset';
+import { WorkflowNode } from '@/types/workflow';
 
-defineProps<{
+const props = defineProps<{
+	node: WorkflowNode;
 	datasets: Dataset[];
 }>();
 
-const emit = defineEmits(['update-output-port', 'append-output-port']);
+const emit = defineEmits(['select-dataset']);
 
-const selectedDataset = ref<Dataset | null>(null);
+const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
 watch(
-	() => selectedDataset.value,
+	() => dataset.value,
 	async () => {
-		if (selectedDataset.value) {
-			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
-			emit('append-output-port', {
-				type: DatasetOperation.outputs[0].type,
-				label: selectedDataset.value.name,
-				value: selectedDataset.value.id.toString()
-			});
+		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
+			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
+			emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
 		}
 	}
 );
+
+onMounted(async () => {
+	if (props.node.state.datasetId) {
+		dataset.value = await getDataset(props.node.state.datasetId);
+	}
+});
 </script>
 
 <style scoped>
@@ -75,5 +68,24 @@ section {
 	justify-content: center;
 	flex-direction: column;
 	max-width: 400px;
+}
+
+span {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+}
+
+.p-button-sm.p-button-outlined {
+	border: 1px solid var(--surface-border);
+	padding-top: 0rem;
+	padding-bottom: 0rem;
+}
+
+.p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
+	padding: 0.5rem;
+}
+
+.p-button-sm.p-button-outlined:hover {
+	border: 1px solid var(--surface-border-hover);
 }
 </style>

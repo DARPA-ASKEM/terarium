@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import * as ModelService from '@/services/models/model-service';
+import API from '@/api/api';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import useAuthStore from '../stores/auth';
 
@@ -36,7 +36,7 @@ function listen() {
 }
 
 async function createEmptyModel() {
-	await ModelService.create();
+	await API.put('/dev-tests/user-event');
 }
 </script>
 

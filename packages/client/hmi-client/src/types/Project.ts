@@ -1,15 +1,23 @@
-import { DocumentAsset, Document } from '@/types/Types';
-import { Dataset } from '@/types/Dataset';
-import { Model } from './Model';
+import { DocumentAsset, Document, Dataset, Model, Artifact } from '@/types/Types';
 
+// TODO: this should be an enum driven by our back end.
 export enum ProjectAssetTypes {
 	DOCUMENTS = 'publications',
 	MODELS = 'models',
 	PLANS = 'plans',
 	SIMULATIONS = 'simulations',
 	SIMULATION_RUNS = 'simulation_runs',
+	SIMULATION_WORKFLOW = 'workflows',
 	DATASETS = 'datasets',
-	CODE = 'code'
+	CODE = 'code',
+	ARTIFACTS = 'artifacts'
+}
+
+export enum ProjectPages {
+	OVERVIEW = 'overview',
+	CALIBRATE = 'calibrate',
+	STRATIFY = 'stratify',
+	EMPTY = ''
 }
 
 export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
@@ -20,8 +28,9 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.MODELS]: Model[];
 	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.DATASETS]: Dataset[]; // FIXME: add proper type
+	[ProjectAssetTypes.DATASETS]: Dataset[];
 	[ProjectAssetTypes.CODE]: any[];
+	[ProjectAssetTypes.ARTIFACTS]: Artifact[];
 };
 
 export interface IProject {

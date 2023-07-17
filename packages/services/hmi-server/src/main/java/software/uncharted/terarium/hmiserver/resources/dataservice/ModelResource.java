@@ -1,34 +1,26 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import io.quarkus.security.Authenticated;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
-import software.uncharted.terarium.hmiserver.models.mira.DKG;
-import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
-import software.uncharted.terarium.hmiserver.models.petrinet.Species;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
-import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
 @Path("/api/models")
-@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")
@@ -40,10 +32,6 @@ public class ModelResource {
 	@Inject
 	@RestClient
 	ModelProxy proxy;
-
-	@Inject
-	@RestClient
-	DKGProxy dkgProxy;
 
 	@POST
 	@Path("/frameworks")
@@ -71,31 +59,6 @@ public class ModelResource {
 	}
 
 	@GET
-	@Path("/intermediates/{id}")
-	public Response getIntermediate(
-		@PathParam("id") final String id
-	) {
-		return proxy.getIntermediate(id);
-	}
-
-	@DELETE
-	@Path("/intermediates/{id}")
-	public Response deleteIntermediate(
-		@PathParam("id") final String id
-	) {
-		return proxy.deleteIntermediate(id);
-	}
-
-	@POST
-	@Path("/intermediates")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createIntermediate(
-		final Intermediate intermediate
-	) {
-		return proxy.createIntermediate(intermediate);
-	}
-
-	@GET
 	@Path("/descriptions")
 	public Response getDescriptions(
 		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
@@ -110,24 +73,6 @@ public class ModelResource {
 		@PathParam("id") final String id
 	) {
 		return proxy.getDescription(id);
-	}
-
-	@GET
-	@Path("/{id}/parameters")
-	public Response getParameters(
-		@PathParam("id") final String id
-	) {
-		return proxy.getParameters(id);
-	}
-
-	@PUT
-	@Path("/parameters/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateParameters(
-		@PathParam("id") final String id,
-		final Map<String, Object> parameters
-	) {
-		return proxy.updateParameters(id, parameters);
 	}
 
 	/**
@@ -159,60 +104,6 @@ public class ModelResource {
 			return Response.noContent().build();
 		}
 
-		// Resolve the ontology curies
-		final List<Species> species = model.getContent().getS();
-
-		if (species != null && !species.isEmpty()) {
-			// Get the curies from all species, as one string, comma separated without duplicate
-			final String curies = species.stream()
-				.flatMap(s -> Stream.concat(
-					s.getMiraIds().stream().map(Ontology::getCurie),
-					s.getMiraContext().stream().map(Ontology::getCurie)
-				))
-				.filter(Objects::nonNull)
-				.distinct()
-				.collect(Collectors.joining(","));
-
-			// Fetch the ontology information from the DKG
-			List<DKG> entities = new ArrayList<>();
-			try {
-				entities = dkgProxy.getEntities(curies);
-			} catch (RuntimeException e) {
-				log.error("Unable to get the ontology entity for curies: " + curies, e);
-			}
-
-			if (!entities.isEmpty()) {
-				entities.forEach(entity -> entity.setLink(metaRegistryURL + "/" + entity.getCurie()));
-
-				// Transform the entities to a Map
-				Map<String, DKG> ontologies =
-					entities.stream().collect(Collectors.toMap(DKG::getCurie, entity -> entity));
-
-				// Now add the ontologies to each species mira_ids and mira_context
-				species.forEach(s -> {
-					s.getMiraIds().forEach(miraId -> {
-						if (ontologies.containsKey(miraId.getCurie())) {
-							final DKG ontology = ontologies.get(miraId.getCurie());
-							miraId
-								.setTitle(ontology.getName())
-								.setDescription(ontology.getDescription())
-								.setLink(ontology.getLink());
-						}
-					});
-
-					s.getMiraContext().forEach(context -> {
-						if (ontologies.containsKey(context.getCurie())) {
-							final DKG ontology = ontologies.get(context.getCurie());
-							context
-								.setTitle(ontology.getName())
-								.setDescription(ontology.getDescription())
-								.setLink(ontology.getLink());
-						}
-					});
-				});
-			}
-		}
-
 		// Return the model
 		return Response
 			.status(Response.Status.OK)
@@ -220,12 +111,12 @@ public class ModelResource {
 			.build();
 	}
 
-	@POST
+	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateModel(
 		@PathParam("id") final String id,
-		final ModelStub model
+		final Model model
 	) {
 		return proxy.updateModel(id, model);
 	}
@@ -233,7 +124,7 @@ public class ModelResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createModel(
-		final ModelStub model
+		final Model model
 	) {
 		return proxy.createModel(model);
 	}
@@ -244,5 +135,17 @@ public class ModelResource {
 		@PathParam("id") final String id,
 		final ModelOperationCopy modelOperationCopy) {
 		return proxy.copyModel(modelOperationCopy);
+	}
+
+	@GET
+	@Path("/{id}/model_configurations")
+	public Response getModelConfigurations(
+			@PathParam("id") String id
+	) {
+		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id, 100);
+		return Response
+			.status(Response.Status.OK)
+			.entity(configs)
+			.build();
 	}
 }

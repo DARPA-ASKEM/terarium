@@ -3,19 +3,19 @@
 		<header v-for="(tab, index) in tabs" :key="index">
 			<div
 				class="tab"
-				@click="emit('select-tab', index)"
+				@click="activeTabIndex !== index && emit('select-tab', index)"
 				:active="activeTabIndex === index"
 				:loading="loadingTabIndex === index"
 			>
 				<vue-feather
-					v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
-					:type="getAssetIcon(tab.assetType ?? null)"
+					v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
+					:type="getAssetIcon(tab.pageType ?? null)"
 					size="1rem"
 					stroke="rgb(16, 24, 40)"
 				/>
 				<component
 					v-else
-					:is="getAssetIcon(tab.assetType ?? null)"
+					:is="getAssetIcon(tab.pageType ?? null)"
 					class="p-button-icon-left icon"
 				/>
 				<span class="name">
@@ -74,7 +74,8 @@ nav {
 	display: grid;
 	grid-auto-columns: min(calc(100% / var(--nb-tabs, 1)), 20%);
 	grid-auto-flow: column;
-	margin: 0.2rem 0.2rem 0 0.2rem;
+	padding: 0.2rem 0.2rem 0 0.2rem;
+	background-color: var(--surface-ground);
 }
 
 @keyframes show-tab {
@@ -119,6 +120,10 @@ i {
 	overflow: visible;
 }
 
+.tab {
+	border-bottom-width: 2px;
+}
+
 .tab:hover {
 	border-color: var(--surface-border-light);
 }
@@ -130,9 +135,11 @@ i {
 .tab[active='true'][loading='false'] {
 	border-bottom-color: var(--primary-color);
 }
-
-.tab[active='false']:hover {
+.tab[active='false'] {
 	background-color: var(--surface-secondary);
+}
+.tab[active='false']:hover {
+	background-color: var(--surface-highlight);
 }
 
 .tab:not(:hover) .p-button {
@@ -144,8 +151,8 @@ i {
 .tab + div {
 	width: calc(100% - 2px);
 	position: relative;
-	height: 1px;
-	top: -1px;
+	height: 2px;
+	top: -2px;
 	left: 1px;
 }
 

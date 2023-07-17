@@ -25,6 +25,7 @@ dependencies {
 	// REST server
 	implementation "io.quarkus:quarkus-resteasy-reactive"
 	implementation "io.quarkus:quarkus-resteasy-reactive-jackson"
+  implementation "io.quarkus:quarkus-resteasy-multipart"
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
@@ -32,6 +33,10 @@ dependencies {
 	// REST client
 	implementation "io.quarkus:quarkus-rest-client-reactive"
 	implementation "io.quarkus:quarkus-rest-client-reactive-jackson"
+
+	// Multipart file upload/download
+	implementation 'org.glassfish.jersey.media:jersey-media-multipart:3.1.2'
+	implementation 'org.glassfish.jersey.core:jersey-server:3.1.2'
 
 	// Persistence
 	implementation "io.quarkus:quarkus-hibernate-orm"
@@ -55,6 +60,8 @@ dependencies {
 	implementation "org.jsoup:jsoup:1.15.3"
 	implementation "com.google.guava:guava:31.1-jre"
 	implementation 'commons-io:commons-io:2.11.0'
+	implementation "org.apache.commons:commons-csv:1.10.0"
+	implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.12.3"
 
 	// Test
 	testImplementation "io.rest-assured:rest-assured"
@@ -72,6 +79,12 @@ dependencies {
 	implementation "org.elasticsearch:elasticsearch:${elasticsearchVersion}"
 	implementation "org.elasticsearch.client:elasticsearch-rest-client:${elasticsearchVersion}"
 	implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:${elasticsearchVersion}"
+
+	//aws
+	implementation platform('software.amazon.awssdk:bom:2.20.102')
+	implementation 'software.amazon.awssdk:s3'
+
+
 }
 
 group "software.uncharted"

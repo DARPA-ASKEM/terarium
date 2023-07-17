@@ -3,9 +3,12 @@
  */
 
 import API from '@/api/api';
-import { Dataset } from '@/types/Dataset';
 import { logger } from '@/utils/logger';
-import { CsvAsset } from '@/types/Types';
+import { CsvAsset, Dataset } from '@/types/Types';
+import { addAsset } from '@/services/project';
+import { ProjectAssetTypes } from '@/types/Project';
+import { Ref } from 'vue';
+import { AxiosResponse } from 'axios';
 
 /**
  * Get all datasets
@@ -52,14 +55,149 @@ async function getBulkDatasets(datasetIDs: string[]) {
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
-async function downloadRawFile(datasetId: string, binCount?: number): Promise<CsvAsset | null> {
-	// FIXME: review exposing the "wide_format" and "data_annotation_flag" later
-	let URL = `/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`;
-	if (binCount) URL += `&binCount=${binCount}`;
+async function downloadRawFile(datasetId: string, filename: string): Promise<CsvAsset | null> {
+	const URL = `/datasets/${datasetId}/downloadCSV?filename=${filename}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
 	return response?.data ?? null;
 }
 
-export { getAll, getDataset, getBulkDatasets, downloadRawFile };
+/**
+ * Creates a new dataset in TDS from the dataset given (required name, url, description).
+ * @param dataset the dataset with updated storage ID from tds
+ */
+async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
+	const resp = await API.post('/datasets', dataset);
+	if (resp && resp.status < 400 && resp.data) {
+		return resp.data;
+	}
+	console.log(`Error creating new dataset ${resp?.status}`);
+	return null;
+}
+
+async function createNewDatasetFromGithubFile(
+	repoOwnerAndName: string,
+	path: string,
+	userName: string,
+	projectId: string
+) {
+	// Find the file name by removing the path portion
+	const fileName: string | undefined = path.split('/').pop();
+
+	if (!fileName) return null;
+
+	// Remove the file extension from the name, if any
+	const name: string = fileName?.replace(/\.[^/.]+$/, '');
+
+	// Create a new dataset with the same name as the file, and post the metadata to TDS
+	const dataset: Dataset = {
+		name,
+		url: '',
+		description: path,
+		fileNames: [fileName],
+		username: userName
+	};
+
+	const newDataSet: Dataset | null = await createNewDataset(dataset);
+	if (!newDataSet || !newDataSet.id) return null;
+
+	const urlResponse = await API.put(
+		`/datasets/${newDataSet.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		{
+			timeout: 30000
+		}
+	);
+
+	if (!urlResponse || urlResponse.status >= 400) {
+		return null;
+	}
+
+	return addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+}
+
+/**
+ * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
+ * share the same name as the file and can optionally have a description
+ * @param progress reference to display in ui
+ * @param file the CSV file
+ * @param userName owner of this project
+ * @param projectId the project ID
+ * @param description? description of the file. Optional. If not given description will be just the csv name
+ */
+async function createNewDatasetFromCSV(
+	progress: Ref<number>,
+	file: File,
+	userName: string,
+	projectId: string,
+	description?: string
+): Promise<CsvAsset | null> {
+	// Remove the file extension from the name, if any
+	const name = file.name.replace(/\.[^/.]+$/, '');
+
+	// Create a new dataset with the same name as the file, and post the metadata to TDS
+	const dataset: Dataset = {
+		name,
+		url: '',
+		description: description || file.name,
+		fileNames: [file.name],
+		username: userName
+	};
+
+	const newDataSet: Dataset | null = await createNewDataset(dataset);
+	if (!newDataSet || !newDataSet.id) return null;
+
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const urlResponse = await API.put(`/datasets/${newDataSet.id}/uploadCSV`, formData, {
+		params: {
+			filename: file.name
+		},
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			progress.value = Math.min(
+				90,
+				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
+			);
+		},
+		timeout: 30000
+	});
+
+	if (!urlResponse || urlResponse.status >= 400) {
+		return null;
+	}
+
+	await addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+
+	// Now verify it all works and obtain a preview for the user.
+	return downloadRawFile(newDataSet.id, file.name);
+}
+
+async function createDatasetFromSimulationResult(
+	projectId: string,
+	simulationId: string
+): Promise<Dataset | null> {
+	const response: AxiosResponse<Dataset> = await API.put(
+		`/datasets/create-from-simulation-result?simulationId=${simulationId}`
+	);
+	if (!response || response.status >= 400) {
+		console.log(`Error creating new dataset ${response?.status}`);
+		return null;
+	}
+	await addAsset(projectId, ProjectAssetTypes.DATASETS, response.data.id);
+	return response.data;
+}
+
+export {
+	getAll,
+	getDataset,
+	getBulkDatasets,
+	downloadRawFile,
+	createNewDatasetFromCSV,
+	createNewDataset,
+	createNewDatasetFromGithubFile,
+	createDatasetFromSimulationResult
+};

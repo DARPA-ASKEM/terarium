@@ -9,6 +9,9 @@ import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import ResultsIcon from '@/assets/svg/icons/results.svg?component';
 import { Component } from 'vue';
+import useResourcesStore from '@/stores/resources';
+import * as EventService from '@/services/event';
+import { EventType } from '@/types/Types';
 
 /**
  * Create a project
@@ -40,6 +43,7 @@ async function update(project: IProject): Promise<IProject | null> {
 		if (status !== 200) {
 			return null;
 		}
+		useResourcesStore().setActiveProject(await get(project.id, true));
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);
@@ -80,6 +84,8 @@ async function getAll(): Promise<IProject[] | null> {
 
 /**
  * Get project assets for a given project per id
+ * @param projectId projet id to get assets for
+ * @param types optional list of types. If none are given we assume you want it all
  * @return ProjectAssets|null - the appropriate project, or null if none returned by API
  */
 async function getAssets(projectId: string, types?: string[]): Promise<ProjectAssets | null> {
@@ -90,6 +96,9 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 				// add URL with format: ...?types=A&types=B&types=C
 				url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
+		} else {
+			url +=
+				'?types=datasets&types=model_configurations&types=artifacts&types=models&types=publications&types=simulations&types=workflows';
 		}
 		const response = await API.get(url);
 		const { status, data } = response;
@@ -112,6 +121,19 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 	// FIXME: handle cases where assets is already added to the project
 	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 	const response = await API.post(url);
+
+	EventService.create(
+		EventType.AddResourcesToProject,
+		projectId,
+		JSON.stringify({
+			assetsType,
+			assetId
+		})
+	);
+
+	if (response.data) {
+		useResourcesStore().setActiveProject(await get(projectId, true));
+	}
 	return response?.data ?? null;
 }
 
@@ -130,6 +152,9 @@ async function deleteAsset(
 	try {
 		const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 		const { status } = await API.delete(url);
+		if (status >= 200 && status < 300) {
+			useResourcesStore().setActiveProject(await get(projectId, true));
+		}
 		return status >= 200 && status < 300;
 	} catch (error) {
 		logger.error(error);
@@ -190,6 +215,7 @@ const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.SIMULATIONS, 'settings'],
 	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'code'],
+	[ProjectAssetTypes.SIMULATION_WORKFLOW, 'git-merge'],
 	['overview', 'layout']
 ]);
 

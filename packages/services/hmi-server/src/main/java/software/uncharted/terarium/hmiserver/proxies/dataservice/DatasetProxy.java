@@ -1,18 +1,22 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
-import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/datasets")
 @Produces(MediaType.APPLICATION_JSON)
 public interface DatasetProxy {
+
+	@LogRestClientTime
 	@GET
 	@Path("/features")
 	Response getFeatures(
@@ -24,7 +28,7 @@ public interface DatasetProxy {
 	@Path("/features")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createFeatures(
-		Feature feature
+		JsonNode feature
 	);
 
 	@GET
@@ -44,7 +48,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateFeature(
 		@PathParam("id") String id,
-		Feature feature
+		JsonNode feature
 	);
 
 	@GET
@@ -58,7 +62,7 @@ public interface DatasetProxy {
 	@Path("/qualifiers")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createQualifiers(
-		Qualifier qualifier
+		JsonNode qualifier
 	);
 
 	@GET
@@ -78,11 +82,11 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateQualifier(
 		@PathParam("id") String id,
-		Qualifier qualifier
+		JsonNode qualifier
 	);
 
 	@GET
-	Response getDatasets(
+	List<Dataset> getDatasets(
 		@DefaultValue("500") @QueryParam("page_size") Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") Integer page
 	);
@@ -90,12 +94,12 @@ public interface DatasetProxy {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createDatasets(
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@GET
 	@Path("/{id}")
-	Response getDataset(
+	Dataset getDataset(
 		@PathParam("id") String id
 	);
 
@@ -110,7 +114,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateDataset(
 		@PathParam("id") String id,
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@POST
@@ -120,21 +124,17 @@ public interface DatasetProxy {
 		@PathParam("id") String id
 	);
 
+
 	@GET
-	@Path("/{id}/download/rawfile")
-	Response getCsv(
+	@Path("/{id}/upload-url")
+	PresignedURL getUploadUrl(
 		@PathParam("id") String id,
-		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("false") @QueryParam("data_annotation_flag") Boolean dataAnnotationFlag,
-		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
+		@QueryParam("filename") String filename
 	);
 
-	@POST
-	@Path("/{id}/upload/file")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	Response uploadFile(
-		@PathParam("id") String id,
-		@QueryParam("filename") String filename,
-		Byte[] file
+	@GET
+	@Path("/{id}/download-url")
+	PresignedURL getDownloadUrl(
+		@PathParam("id") String id, @QueryParam("filename") String filename
 	);
 }

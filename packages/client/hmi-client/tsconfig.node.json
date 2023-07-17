@@ -10,7 +10,8 @@
 			"vite/client",
 			"vue"
 		],
-		"allowSyntheticDefaultImports": true
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true
 	},
 	"include": [
 		"package.json",

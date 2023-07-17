@@ -1,9 +1,13 @@
 import API from '@/api/api';
-import { Model } from '@/types/Model';
+import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
-import { ResourceType } from '@/stores/resources';
+import useResourcesStore from '@/stores/resources';
+
+// TODO - to be removed after July 2023 Hackathon
+import { MATHMLMODEL } from '@/temp/models/mathml';
+import * as EventService from '@/services/event';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -15,6 +19,9 @@ export async function createModel(model): Promise<Model | null> {
  * @return Model|null - the model, or null if none returned by API
  */
 export async function getModel(modelId: string): Promise<Model | null> {
+	// TODO - to be removed after July 2023 Hackathon
+	if (modelId === 'mathml-model') return MATHMLMODEL;
+
 	const response = await API.get(`/models/${modelId}`);
 	return response?.data ?? null;
 }
@@ -48,30 +55,41 @@ export async function getAllModelDescriptions(): Promise<Model[] | null> {
 }
 
 export async function updateModel(model: Model) {
-	const response = await API.post(`/models/${model.id}`, {
-		name: model.name,
-		description: model.description,
-		framework: model.framework,
-		content: JSON.stringify(model.content)
-	});
+	const response = await API.put(`/models/${model.id}`, model);
+	EventService.create(
+		EventType.PersistModel,
+		useResourcesStore().activeProject?.id,
+		JSON.stringify({
+			id: model.id
+		})
+	);
 	return response?.data ?? null;
 }
 
-export async function addModelToProject(
-	projectId: string,
-	assetId: string,
-	resources: ResourceType
-) {
+export async function addModelToProject(projectId: string, assetId: string) {
 	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
 
 	if (resp) {
 		const model = await getModel(assetId);
 		if (model) {
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+			useResourcesStore().activeProject?.assets?.[ProjectAssetTypes.MODELS].push(model);
 		} else {
 			logger.warn(`Unable to find model id: ${assetId}`);
 		}
 	} else {
 		logger.warn('Could not add new model to project.');
 	}
+}
+
+export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[]> {
+	const response = await API.get(`/models/${modelId}/model_configurations`);
+	return response?.data ?? ([] as ModelConfiguration[]);
+}
+
+/**
+ * Reconstruct an petrinet AMR's ode semantics
+ */
+export async function reconstructAMR(amr: any) {
+	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
+	return response?.data;
 }

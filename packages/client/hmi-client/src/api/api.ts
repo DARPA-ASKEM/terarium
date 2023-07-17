@@ -33,18 +33,18 @@ API.interceptors.response.use(
 		const status = error.response.status;
 		switch (status) {
 			case 500:
-				logger.error(msg, {
+				logger.error(msg.toString(), {
 					showToast: false,
 					toastTitle: `${ToastSummaries.SERVICE_UNAVAILABLE} (${status})`
 				});
 				break;
 			default:
-				logger.error(msg, {
+				logger.error(msg.toString(), {
 					showToast: false,
 					toastTitle: `${ToastSummaries.NETWORK_ERROR} (${status})`
 				});
 		}
-		return null; // return null
+		return null;
 	}
 );
 
@@ -58,7 +58,7 @@ export enum PollerState {
 	Cancelled = 'Cancelled'
 }
 
-interface PollResponse<T> {
+export interface PollResponse<T> {
 	error: any;
 	progress?: any;
 	data: T | null;
@@ -67,7 +67,7 @@ interface PollResponse<T> {
 type PollerCallback<T> = (...args: any[]) => Promise<PollResponse<T>>;
 type ProgressCallback = (progressData: any, current: number, max: number) => void;
 
-interface PollerResult<T> {
+export interface PollerResult<T> {
 	state: PollerState;
 	data: T | null;
 }

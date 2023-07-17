@@ -11,6 +11,7 @@ module.exports = {
 	rules: {
 		'class-methods-use-this': 'off',
 		'func-names': 'off',
+		'no-alert': 'off',
 		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
 		'no-continue': 'off',
 		'no-param-reassign': 'off',
@@ -19,6 +20,8 @@ module.exports = {
 		'@typescript-eslint/no-use-before-define': 'off',
 		'prefer-destructuring': 'off',
 		'vuejs-accessibility/click-events-have-key-events': 'off',
+		'vuejs-accessibility/label-has-for': 'off',
+		'vuejs-accessibility/form-control-has-label': 'off',
 		'vue/multi-word-component-names': 'off',
 		'import/prefer-default-export': 'off'
 	},

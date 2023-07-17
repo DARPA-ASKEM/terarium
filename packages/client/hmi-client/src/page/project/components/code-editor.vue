@@ -36,7 +36,7 @@
 				Terarium can extract metadata about this model from related papers. Select the papers you
 				would like to use.
 			</h6>
-			<DataTable v-model:selection="selectedPaper" :value="resources" dataKey="id">
+			<DataTable v-model:selection="selectedPapers" :value="resources" dataKey="id">
 				<Column selectionMode="multiple"></Column>
 				<Column field="title" header="Title"></Column>
 				<!-- <Column field="authors" header="Authors"></Column> -->
@@ -51,12 +51,12 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, computed, PropType } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
-import { ref, watch, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Dialog from 'primevue/dialog';
@@ -64,23 +64,41 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import useResourcesStore from '@/stores/resources';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
-import { createModel } from '@/services/model';
-import { ProjectAssetTypes } from '@/types/Project';
+import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
-import { DocumentAsset } from '@/types/Types';
+import { DocumentAsset, EventType } from '@/types/Types';
+import { PDFExtractionResponseType } from '@/types/common';
 import { getDocumentDoi } from '@/utils/data-util';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { codeToAcset, findVarsFromText, getlinkedAnnotations } from '@/services/mit-askem';
+import {
+	codeToAcset,
+	findVarsFromText,
+	FindVarsFromTextResponseType,
+	getlinkedAnnotations
+} from '@/services/mit-askem';
+import { getPDFURL } from '@/services/generate-download-link';
+import API, { Poller } from '@/api/api';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
+import { createModel, addModelToProject } from '@/services/model';
+import * as EventService from '@/services/event';
 
 const props = defineProps({
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null,
+		required: false
+	},
 	initialCode: {
 		type: String,
 		default: '# Paste some python code here or import from the controls above'
 	}
 });
+
+const router = useRouter();
 
 const code = ref(props.initialCode);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
@@ -106,9 +124,8 @@ watch([graphElement], async () => {
 	await renderer?.setData(g);
 	await renderer?.render();
 });
-const emit = defineEmits(['on-model-created']);
 
-const selectedPaper = ref<DocumentAsset>();
+const selectedPapers = ref<DocumentAsset[]>();
 const createModelLoading = ref(false);
 const extractPetrinetLoading = ref(false);
 const resourcesStore = useResourcesStore();
@@ -147,6 +164,9 @@ async function onFileOpen(event) {
 async function onExtractModel() {
 	extractPetrinetLoading.value = true;
 	const response = await codeToAcset(selectedText.value);
+
+	EventService.create(EventType.ExtractModel, useResourcesStore().activeProject?.id);
+
 	extractPetrinetLoading.value = false;
 	acset.value = response;
 	codeExtractionDialogVisible.value = true;
@@ -169,34 +189,112 @@ async function initialize(editorInstance) {
 	editorInstance.setShowPrintMargin(false);
 }
 
+function extractMetadataElements(listOfObjects) {
+	return listOfObjects.reduce((newList, obj) => {
+		if (Array.isArray(obj.metadata)) {
+			newList.push(...obj.metadata);
+		}
+		return newList;
+	}, []);
+}
+
 async function createModelFromCode() {
 	createModelLoading.value = true;
-	if (selectedPaper.value) {
-		const paperToExtractMetadata = await getDocumentById(selectedPaper.value[0].xdd_uri);
-		if (paperToExtractMetadata) {
-			const info = { pdf_name: '', DOI: getDocumentDoi(paperToExtractMetadata) };
-			const metadata = await findVarsFromText(paperToExtractMetadata.abstract);
-			const linkAnnotationData = {
-				pyacset: JSON.stringify(acset.value),
-				annotations: JSON.stringify(metadata),
-				info: JSON.stringify(info)
-			};
-			const linkedMetadata = await getlinkedAnnotations(linkAnnotationData);
-			const newModelName = 'New model';
-			const newModel = {
-				name: newModelName,
-				framework: 'Petri Net',
-				content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
-			};
-			const model = await createModel(newModel);
-			if (model) {
-				emit('on-model-created', model.id, newModelName);
-			} else {
-				logger.error(`Something went wrong.`);
+	if (selectedPapers.value) {
+		const selectedDocs = await selectedPapers.value.map(async (dAsset) => {
+			const paperToExtractMetadata = await getDocumentById(dAsset.xdd_uri);
+			const doi = getDocumentDoi(paperToExtractMetadata);
+
+			const pdfURL = await getPDFURL(doi);
+
+			let text: string = '';
+			let metadata: FindVarsFromTextResponseType | null = null;
+			if (pdfURL !== '') {
+				const results = await getPDFContents(pdfURL);
+				text = results.text ? results.text : '';
+				metadata = await findVarsFromText(text);
 			}
+			return {
+				pdf_name: dAsset.title,
+				xdd_uri: dAsset.xdd_uri,
+				extracted_text: text || '',
+				doi,
+				metadata
+			};
+		});
+
+		const info = { pdf_name: '', DOI: '' };
+		const extractedMetadataElements = extractMetadataElements(selectedDocs);
+
+		const linkAnnotationData = {
+			pyacset: JSON.stringify(acset.value),
+			annotations: JSON.stringify(extractedMetadataElements),
+			info: JSON.stringify(info)
+		};
+
+		const linkedMetadata = await getlinkedAnnotations(linkAnnotationData);
+		const newModelName = 'New model';
+		const newModel = {
+			name: newModelName,
+			content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
+		};
+		const model = await createModel(newModel);
+		if (model && props.project && resourcesStore) {
+			await addModelToProject(props.project.id, model.id.toString());
+
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: {
+					assetName: newModelName,
+					assetId: model.id,
+					pageType: ProjectAssetTypes.MODELS
+				}
+			});
+		} else {
+			logger.error(`Something went wrong.`);
 		}
 	}
 	createModelLoading.value = false;
+}
+
+async function getPDFContents(url: string): Promise<PDFExtractionResponseType> {
+	const result = await API.get(`/extract/convertpdfurl/`, {
+		params: {
+			url,
+			extraction_method: 'pymupdf',
+			extract_images: 'false'
+		}
+	});
+
+	if (result) {
+		const taskID = result.data.task_id;
+
+		const poller = new Poller<object>()
+			.setInterval(2000)
+			.setThreshold(90)
+			.setPollAction(async () => {
+				const response = await API.get(`/extract/task-result/${taskID}`);
+
+				if (response.data.status === 'SUCCESS' && response.data.result) {
+					return {
+						data: response.data.result,
+						progress: null,
+						error: null
+					};
+				}
+				return {
+					data: null,
+					progress: null,
+					error: null
+				};
+			});
+		const pollerResults = await poller.start();
+
+		if (pollerResults.data) {
+			return pollerResults.data as PDFExtractionResponseType;
+		}
+	}
+	return { text: '', images: [] } as PDFExtractionResponseType;
 }
 </script>
 

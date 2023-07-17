@@ -13,13 +13,14 @@ import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
-import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
+import { DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import {
 	DocumentsResponseOK,
 	Document,
 	ProvenanceType,
 	XDDFacetsItemResponse,
-	Extraction
+	Extraction,
+	Dataset
 } from '@/types/Types';
 import {
 	XDDDictionary,
@@ -183,20 +184,6 @@ const searchXDDDocuments = async (
 	return undefined;
 };
 
-const searchXDDExtractions = async (term: string): Promise<Extraction[]> => {
-	// also, perform search across extractions
-	let extractionsSearchResults = [] as Extraction[];
-	if (term !== '') {
-		// Temporary call to get a sufficient amount of extractions
-		// (Every call is limited to providing 30 extractions)
-		extractionsSearchResults = [
-			...(await getXDDArtifacts(term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
-			...(await getXDDArtifacts(term, [XDDExtractionType.Doc]))
-		];
-	}
-	return extractionsSearchResults;
-};
-
 const filterAssets = <T extends Model | Dataset>(
 	allAssets: T[],
 	resourceType: ResourceType,
@@ -211,9 +198,11 @@ const filterAssets = <T extends Model | Dataset>(
 		let finalAssets: T[] = [];
 
 		AssetFilterAttributes.forEach((attribute) => {
-			finalAssets = allAssets.filter((d) =>
-				(d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase())
-			);
+			finalAssets = allAssets.filter((d) => {
+				if (d[attribute as keyof T])
+					return (d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase());
+				return '';
+			});
 		});
 
 		// if no assets match keyword search considering the AssetFilterAttributes
@@ -259,7 +248,6 @@ const getAssets = async (params: GetAssetsParams) => {
 	let assetList: Model[] | Dataset[] | Document[] = [];
 	let projectAssetType: ProjectAssetTypes;
 	let xddResults: DocumentsResponseOK | undefined;
-	let xddExtractions: Extraction[] | undefined;
 	let hits: number | undefined;
 
 	switch (resourceType) {
@@ -277,7 +265,6 @@ const getAssets = async (params: GetAssetsParams) => {
 				assetList = xddResults.data;
 				hits = xddResults.hits;
 			}
-			xddExtractions = await searchXDDExtractions(term);
 			projectAssetType = ProjectAssetTypes.DOCUMENTS;
 			break;
 		default:
@@ -289,9 +276,9 @@ const getAssets = async (params: GetAssetsParams) => {
 	//        should be added for datasets and other resource types
 	const allAssets = assetList.map((a) => ({
 		...a,
-		temporalResolution: a?.temporal_resolution, // Dataset attribute
-		geospatialResolution: a?.geospatial_resolution, // Dataset attribute
-		simulationRun: a?.simulation_run, // Dataset attribute
+		temporalResolution: a?.temporalResolution, // Dataset attribute
+		geospatialResolution: a?.geospatialResolution, // Dataset attribute
+		simulationRun: a?.simulationRun, // Dataset attribute
 		type: resourceType
 	}));
 
@@ -436,7 +423,6 @@ const getAssets = async (params: GetAssetsParams) => {
 		const newFacets: { [p: string]: XDDFacetsItemResponse } = xddResults ? xddResults.facets : {};
 		results.allDataFilteredWithFacets = {
 			results: xddResults ? xddResults.data : [],
-			xddExtractions,
 			searchSubsystem: resourceType,
 			facets: newFacets,
 			rawConceptFacets: conceptFacets
@@ -471,7 +457,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 			const documentsRaw = rawdata.data.map((a) => a.bibjson);
 			return documentsRaw.map((a) => ({
 				...a,
-				abstractText: a.abstract
+				abstractText: a.abstractText
 			}));
 		}
 	}
@@ -498,7 +484,7 @@ const getAutocomplete = async (searchTerm: string) => {
 const getDocumentById = async (docid: string): Promise<Document | null> => {
 	const searchParams: XDDSearchParams = {
 		docid,
-		known_entities: 'url_extractions,summaries'
+		known_entities: 'askem_object,url_extractions,summaries'
 	};
 	const xddRes: DocumentsResponseOK | undefined = await searchXDDDocuments('', searchParams);
 	if (xddRes) {

@@ -10,6 +10,49 @@ export interface Event {
     value?: string;
 }
 
+export interface EvaluationScenarioSummary {
+    name: string;
+    username: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
+}
+
+export interface GithubFile {
+    type: FileType;
+    encoding: string;
+    size: number;
+    name: string;
+    path: string;
+    content: string;
+    sha: string;
+    url: string;
+    gitUrl: string;
+    htmlUrl: string;
+    downloadUrl: string;
+    links: Links;
+    submoduleGitUrl: string;
+    target: string;
+    fileCategory: FileCategory;
+}
+
+export interface GithubRepo {
+    files: { [P in FileCategory]?: GithubFile[] };
+    totalFiles: number;
+}
+
+export interface Artifact {
+    id?: string;
+    timestamp?: any;
+    username: string;
+    name: string;
+    description?: string;
+    fileNames: string[];
+    metadata?: any;
+    concepts?: Concept[];
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -31,6 +74,27 @@ export interface DocumentAsset {
     xdd_uri: string;
 }
 
+export interface Model {
+    id: string;
+    name: string;
+    description: string;
+    model_version?: string;
+    schema: string;
+    schema_name?: string;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
+}
+
+export interface ModelConfiguration {
+    id: string;
+    name: string;
+    description?: string;
+    modelId: string;
+    configuration: any;
+}
+
 export interface ProvenanceQueryParam {
     rootId?: number;
     rootType?: ProvenanceType;
@@ -38,20 +102,137 @@ export interface ProvenanceQueryParam {
 }
 
 export interface Simulation {
-    id?: number;
-    name: string;
+    id: string;
+    executionPayload: any;
+    name?: string;
     description?: string;
-    simulationParams: SimulationParams;
-    result?: string;
-    modelId: number;
+    resultFiles?: string[];
+    type: string;
+    status: string;
+    startTime?: string;
+    completedTime?: string;
+    engine: string;
+    workflowId: string;
+    userId?: number;
+    projectId?: number;
 }
 
-export interface CalibrationParams {
-    petri: string;
-    initials: { [index: string]: number };
-    timesteps: number[];
-    params: { [index: string]: number };
-    data: { [index: string]: number[] };
+export interface Dataset {
+    id?: string;
+    timestamp?: any;
+    username?: string;
+    name: string;
+    description?: string;
+    dataSourceDate?: string;
+    fileNames?: string[];
+    url?: string;
+    columns?: DatasetColumn[];
+    metadata?: any;
+    source?: string;
+    grounding?: Grounding;
+}
+
+export interface DatasetColumn {
+    name: string;
+    dataType: ColumnType;
+    formatStr?: string;
+    annotations: string[];
+    metadata?: { [index: string]: any };
+    grounding?: Grounding;
+    description?: string;
+}
+
+export interface Grounding {
+    identifiers: { [index: string]: string };
+    context?: { [index: string]: any };
+}
+
+export interface PresignedURL {
+    url: string;
+    method: string;
+}
+
+export interface State {
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+    units?: ModelUnit;
+}
+
+export interface Transition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
+}
+
+export interface TypeSystem {
+    states: State[];
+    transitions: Transition[];
+}
+
+export interface TypeSystemExtended {
+    name: string;
+    description: string;
+    schema: string;
+    model_version: string;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
+}
+
+export interface TypingSemantics {
+    map: string[][];
+    system: any;
+}
+
+export interface PetriNetModel {
+    states: PetriNetState[];
+    transitions: PetriNetTransition[];
+}
+
+export interface DKG {
+    curie: string;
+    name: string;
+    description: string;
+    link: string;
+}
+
+export interface CalibrationRequestCiemss {
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
+}
+
+export interface CalibrationRequestJulia {
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
+}
+
+export interface DatasetLocation {
+    id: string;
+    filename: string;
+    mappings?: any;
+}
+
+export interface SimulationRequest {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+}
+
+export interface TimeSpan {
+    start: number;
+    end: number;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -62,16 +243,69 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     facets: { [index: string]: XDDFacetsItemResponse };
 }
 
-export interface SimulationParams {
-    petri: string;
-    initials: { [index: string]: number };
-    tspan: number[];
-    params: { [index: string]: number };
+export interface Links {
+    html: string;
+    git: string;
+    self: string;
+}
+
+export interface Concept {
+    id: string;
+    curie: string;
+    type: Type;
+    status: OntologicalField;
+    object_id: string;
+}
+
+export interface ModelSemantics {
+    ode: OdeSemantics;
+    span?: any[];
+    typing?: TypingSemantics;
+}
+
+export interface ModelMetadata {
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
+    attributes: any[];
+}
+
+export interface ModelGrounding {
+    identifiers: { [index: string]: any };
+    context?: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface Properties {
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
+}
+
+export interface PetriNetState {
+    id: string;
+    name: string;
+    grounding: ModelGrounding;
+    initial: ModelExpression;
+}
+
+export interface PetriNetTransition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties: PetriNetTransitionProperties;
 }
 
 export interface Document {
     gddId: string;
     title: string;
+    abstractText: string;
     journal: string;
     type: string;
     number: string;
@@ -90,7 +324,6 @@ export interface Document {
     knownEntities: KnownEntities;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
-    abstract: string;
 }
 
 export interface XDDFacetsItemResponse {
@@ -102,6 +335,47 @@ export interface XDDFacetsItemResponse {
 export interface XDDResponseOK {
     v: number;
     license: string;
+}
+
+export interface OdeSemantics {
+    rates: Rate[];
+    initials?: Initial[];
+    parameters?: ModelParameter[];
+    observables?: Observable[];
+    time?: any;
+}
+
+export interface VariableStatement {
+    id: string;
+    variable: Variable;
+    value?: StatementValue;
+    metadata?: VariableStatementMetadata[];
+    provenance?: ProvenanceInfo;
+}
+
+export interface Annotations {
+    license?: string;
+    authors?: string[];
+    references?: string[];
+    time_scale?: string;
+    time_start?: string;
+    time_end?: string;
+    locations?: string[];
+    pathogens?: string[];
+    diseases?: string[];
+    hosts?: string[];
+    model_types?: string[];
+}
+
+export interface ModelExpression {
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface PetriNetTransitionProperties {
+    name: string;
+    description: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Extraction {
@@ -116,7 +390,8 @@ export interface Extraction {
 
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
-    summaries: { [index: string]: { [index: string]: string } };
+    askemObjects: Extraction[];
+    summaries: string[];
 }
 
 export interface XDDFacetBucket {
@@ -124,9 +399,66 @@ export interface XDDFacetBucket {
     docCount: string;
 }
 
+export interface Rate {
+    target: string;
+    expression: string;
+    expression_mathml?: string;
+}
+
+export interface Initial {
+    target: string;
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface ModelParameter {
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+    unit?: ModelUnit;
+}
+
+export interface Observable {
+    id: string;
+    name?: string;
+    states: string[];
+    expression?: string;
+    expression_mathml?: string;
+}
+
+export interface Variable {
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: Equation[];
+    dkg_groundings: DKGConcept[];
+}
+
+export interface StatementValue {
+    value: string;
+    type: string;
+    dkg_grounding?: DKGConcept;
+}
+
+export interface VariableStatementMetadata {
+    type: string;
+    value: string;
+}
+
+export interface ProvenanceInfo {
+    method: string;
+    description: string;
+}
+
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
+    abstractText: string;
     xddId: string;
     documentId: string;
     documentTitle: string;
@@ -140,7 +472,6 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
-    abstract: string;
 }
 
 export interface XDDUrlExtraction {
@@ -149,8 +480,81 @@ export interface XDDUrlExtraction {
     extractedFrom: string[];
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
+export interface VariableMetadata {
+    type: string;
+    value: string;
+}
+
+export interface DataColumn {
+    id: string;
+    name: string;
+    dataset: MetadataDataset;
+}
+
+export interface Paper {
+    id: string;
+    doi: string;
+    file_directory: string;
+}
+
+export interface Equation {
+    id: string;
+    text: string;
+    image: string;
+}
+
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
+}
+
+export interface MetadataDataset {
+    id: string;
+    name: string;
+    metadata: string;
+}
+
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
+}
+
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
+    ProxyTiming = "PROXY_TIMING",
+    AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
+    ExtractModel = "EXTRACT_MODEL",
+    PersistModel = "PERSIST_MODEL",
+    TransformPrompt = "TRANSFORM_PROMPT",
+    AddCodeCell = "ADD_CODE_CELL",
+    RunSimulation = "RUN_SIMULATION",
+    RunCalibrate = "RUN_CALIBRATE",
+    GithubImport = "GITHUB_IMPORT",
+}
+
+export enum FileType {
+    File = "file",
+    Dir = "dir",
+    Symlink = "symlink",
+    Submodule = "submodule",
+}
+
+export enum FileCategory {
+    Directory = "Directory",
+    Code = "Code",
+    Data = "Data",
+    Documents = "Documents",
+    Other = "Other",
 }
 
 export enum ProvenanceType {
@@ -165,4 +569,34 @@ export enum ProvenanceType {
     Project = "Project",
     Concept = "Concept",
     SimulationRun = "SimulationRun",
+}
+
+export enum ColumnType {
+    Unknown = "UNKNOWN",
+    Boolean = "BOOLEAN",
+    String = "STRING",
+    Char = "CHAR",
+    Integer = "INTEGER",
+    Int = "INT",
+    Float = "FLOAT",
+    Double = "DOUBLE",
+    Timestamp = "TIMESTAMP",
+    Datetime = "DATETIME",
+    Date = "DATE",
+    Time = "TIME",
+}
+
+export enum Type {
+    Datasets = "DATASETS",
+    Extractions = "EXTRACTIONS",
+    Intermediates = "INTERMEDIATES",
+    Models = "MODELS",
+    Plans = "PLANS",
+    Publications = "PUBLICATIONS",
+    SimulationRuns = "SIMULATION_RUNS",
+}
+
+export enum OntologicalField {
+    Object = "OBJECT",
+    Unit = "UNIT",
 }

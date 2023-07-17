@@ -5,7 +5,7 @@
 				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span>
 				<span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
 				<span title="Datasets"
-					><dataset-icon fill="rgb(152, 154, 160)" /> {{ stats?.datasets }}</span
+					><dataset-icon fill="var(--text-color-secondary)" /> {{ stats?.datasets }}</span
 				>
 				<span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
 			</header>
@@ -123,7 +123,7 @@ const removeProject = async () => {
 }
 
 .project-stats {
-	color: var(--text-color-light);
+	color: var(--text-color-secondary);
 	display: flex;
 	justify-content: space-between;
 	font-size: var(--font-caption);
