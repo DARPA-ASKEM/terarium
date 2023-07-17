@@ -62,7 +62,7 @@ onMounted(async () => {
 	}
 
 	// If dataset is drag and dropped from resource panel
-	if (props.droppedDatasetId) {
+	else if (props.droppedDatasetId) {
 		dataset.value = props.datasets.find(({ id }) => id === props.droppedDatasetId) ?? null;
 	}
 });

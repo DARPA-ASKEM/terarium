@@ -56,7 +56,7 @@ onMounted(async () => {
 	}
 
 	// If model is drag and dropped from resource panel
-	if (props.droppedModelId) await getModelById(props.droppedModelId);
+	else if (props.droppedModelId) await getModelById(props.droppedModelId);
 });
 </script>
 
