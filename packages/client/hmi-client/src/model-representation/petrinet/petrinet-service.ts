@@ -415,7 +415,9 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 // FIXME - We need a proper way to update the model
 export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => ({
 	...amrOld,
-	...amr
+	...amr,
+	name: amrOld.name,
+	metadata: amrOld.metadata
 });
 
 export const modifyModelTypeSystemforStratification = (amr: Model) => {
