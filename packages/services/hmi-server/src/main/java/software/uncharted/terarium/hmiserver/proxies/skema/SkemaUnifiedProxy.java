@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
-import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 
 import javax.ws.rs.*;

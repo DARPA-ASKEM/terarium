@@ -1,8 +1,13 @@
 package software.uncharted.terarium.hmiserver.resources.extractionservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.util.List;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+
 
 import javax.inject.Inject;
 import software.uncharted.terarium.hmiserver.proxies.extractionservice.ExtractionServiceProxy;
@@ -66,17 +71,23 @@ public class ExtractionResource {
 	/**
 	 * Post LaTeX to SKEMA Unified service to get an AMR
 	 * @param	framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
-	 * @param LaTeXEquations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR mode.
-	 * @return AMR model
+	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR mode.
+	 * @return (Model): The AMR model
 	 */
 	@POST
 	@Path("/latex-to-amr/{framework}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response postLaTeXToAMR(
+	public Model postLaTeXToAMR(
 		@DefaultValue("petrinet") @PathParam("framework") String framework,
-		List<String> LaTeXEquations
+		List<String> equations
 	) {
-		return skemaUnifiedProxy.postLaTeXToAMR(LaTeXEquations, framework);
+		// Create a JsonNode from the equations and framework
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode request = mapper.createObjectNode();
+		JsonNode equationsNode = mapper.valueToTree(equations);
+		request.put("framework", framework);
+		request.putArray("equations").add(equationsNode);
+		return skemaUnifiedProxy.postLaTeXToAMR(request);
 	};
 
 
