@@ -70,6 +70,10 @@ section {
 	max-width: 400px;
 }
 
+.p-datatable-xsm {
+	margin-top: 0.5rem;
+	margin-bottom: 0.25rem;
+}
 span {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
