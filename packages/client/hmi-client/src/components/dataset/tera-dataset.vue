@@ -173,9 +173,9 @@
 						<header id="Source">Source</header>
 					</template>
 					This data is sourced from
-					{{ dataset.metadata.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
-					<a :href="dataset.metadata.documents ? dataset.metadata.documents[0].url : ''">{{
-						dataset.metadata.documents ? dataset.metadata.documents[0].url : ''
+					{{ dataset.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
+					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''">{{
+						dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''
 					}}</a>
 				</AccordionTab>
 				<AccordionTab>
