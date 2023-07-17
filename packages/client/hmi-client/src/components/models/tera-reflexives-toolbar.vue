@@ -91,7 +91,8 @@ function updateStatesToAddReflexives(
 				updateRateExpressionWithParam(
 					typedModel.value,
 					reflexive as PetriNetTransition,
-					reflexive.id
+					reflexive.id,
+					''
 				);
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
 					updatedTypeMap.push([newTransitionId, typeOfTransition]);
