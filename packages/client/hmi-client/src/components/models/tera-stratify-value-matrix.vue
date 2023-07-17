@@ -10,8 +10,8 @@
 						<Dropdown
 							v-if="i === 2"
 							placeholder="Select a variable"
-							v-model="chosenX"
-							:options="xDimensions"
+							v-model="chosenCol"
+							:options="colDimensions"
 						/>
 					</th>
 				</tr>
@@ -22,14 +22,14 @@
 						<Dropdown
 							v-if="i === 0"
 							placeholder="Select a variable"
-							v-model="chosenY"
-							:options="yDimensions"
+							v-model="chosenRow"
+							:options="rowDimensions"
 						/>
 					</td>
 					<td v-for="(cell, j) in row" :key="j">
-						<template v-if="cell?.value?.[chosenX] && cell?.value?.[chosenY]">
-							{{ cell?.value?.[chosenX] }}
-							{{ cell?.value?.[chosenY] }}
+						<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
+							{{ cell?.value?.[chosenCol] }}
+							{{ cell?.value?.[chosenRow] }}
 						</template>
 						<span class="not-allowed" v-else>N/A</span>
 					</td>
@@ -40,30 +40,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { matrixStrata } from '@/temp/models/matrix_strata';
-import { stratify_output } from '@/temp/models/stratify_output';
+import { ref, onMounted } from 'vue';
 import {
-	extractMapping,
-	extractStateMatrixData
+	// extractMapping,
+	// extractStateMatrixData,
+	extractTransitionMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
-// import { createMatrix } from '@/utils/pivot';
+import { createMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
+import { Model } from '@/types/Types';
 
-const { matrix, xDimensions, yDimensions } = matrixStrata;
+const props = defineProps<{
+	model: Model;
+}>();
 
-const chosenX = ref(xDimensions[0]);
-const chosenY = ref(yDimensions[0]);
+let colDimensions: string[] = [];
+let rowDimensions: string[] = [];
 
-const stateList = extractMapping(stratify_output, 'S_Rgn_1');
-const stateList2 = extractMapping(stratify_output, 'rec_Rgn1_dis');
-console.log(stateList, stateList2);
+const matrix = ref();
+const chosenCol = ref(colDimensions[0]);
+const chosenRow = ref(rowDimensions[0]);
 
-console.log(extractStateMatrixData(stratify_output, stateList));
+onMounted(() => {
+	const transitionMatrixData = extractTransitionMatrixData(
+		props.model,
+		props.model.model.transitions.map(({ id }) => id)
+	);
+	console.log(transitionMatrixData);
 
-// console.log(createMatrix(stratify_output.semantics.span, 'S_Rgn_1', 'S_Rgn_2'));
+	const matrixAttributes = createMatrix(transitionMatrixData, ['Pop'], ['id']); // colDimensions, rowDimensions);
+	matrix.value = matrixAttributes.matrix;
+	colDimensions = matrixAttributes.colDimensions;
+	rowDimensions = matrixAttributes.rowDimensions;
 
-// console.log(create)
+	chosenCol.value = colDimensions[0];
+	chosenRow.value = rowDimensions[0];
+
+	console.log(matrix.value);
+});
+
+// const stateList = extractMapping(props.model, 'S_Rgn_1');
+// const stateList2 = extractMapping(props.model, 'rec_Rgn1_dis');
+// console.log(stateList, stateList2);
+
+// const data = extractStateMatrixData(props.model, stateList)
+// console.log(data);
 </script>
 
 <style scoped>

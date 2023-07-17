@@ -91,7 +91,7 @@
 						</div>
 						<div>
 							<label for="name">Matrix</label>
-							<tera-stratify-value-matrix />
+							<tera-stratify-value-matrix :model="model" />
 							<!-- <InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" /> -->
 						</div>
 						<div v-if="modalVal.odeType === 'parameters'">

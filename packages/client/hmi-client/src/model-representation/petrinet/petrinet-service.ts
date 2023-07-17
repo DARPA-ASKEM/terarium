@@ -466,6 +466,7 @@ export const extractMapping = (amr: Model, id: string) => {
 	console.log(item);
 	if (!item) return [];
 	const result = typeMapList.filter((d) => d[1] === item[1]);
+	console.log(result);
 	return result.map((d) => d[0]);
 };
 

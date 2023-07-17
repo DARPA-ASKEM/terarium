@@ -212,6 +212,6 @@ export const matrixStrata = {
 			}
 		]
 	],
-	xDimensions: ['age', 'age', 'fruit'],
-	yDimensions: ['location', 'fruit']
+	colDimensions: ['age', 'age', 'fruit'],
+	rowDimensions: ['location', 'fruit']
 };
