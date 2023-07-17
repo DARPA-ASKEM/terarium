@@ -81,12 +81,10 @@ public class ExtractionResource {
 		@DefaultValue("petrinet") @PathParam("framework") String framework,
 		List<String> equations
 	) {
-		// Create a JsonNode from the equations and framework
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode request = mapper.createObjectNode();
-		JsonNode equationsNode = mapper.valueToTree(equations);
 		request.put("framework", framework);
-		request.putArray("equations").add(equationsNode);
+		request.set("equations", mapper.valueToTree(equations));
 		return skemaUnifiedProxy.postLaTeXToAMR(request);
 	};
 
