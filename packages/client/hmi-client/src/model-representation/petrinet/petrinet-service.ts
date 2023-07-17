@@ -271,29 +271,28 @@ export const updateRateExpression = (
 	transition: PetriNetTransition,
 	transitionExpression: string
 ) => {
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+	const param = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
 	if (!param) return;
 
-	updateRateExpressionWithParam(amr, transition, param.id, transitionExpression);
+	updateRateExpressionWithParam(amr, transition, param.target, transitionExpression);
 };
+
 export const updateRateExpressionWithParam = (
 	amr: Model,
 	transition: PetriNetTransition,
 	parameterId: string,
 	transitionExpression: string
 ) => {
-	console.log(transition.id);
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
-	if (!param) return;
-
-	const inputStr = transition.input.map((d) => `${d}`);
 	let expression = '';
 	let expressionMathml = '';
 
 	if (transitionExpression === '') {
+		const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
+		const inputStr = transition.input.map((d) => `${d}`);
+		if (!param) return;
 		// eslint-disable-next-line
 		expression = inputStr.join('*') + '*' + param.id;
 		// eslint-disable-next-line
@@ -403,9 +402,9 @@ export const updateTransition = (
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
-	// updateRateExpression(amr, transition, newExpression);
+
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t, newExpression);
+		if (t.id === id) updateRateExpression(amr, t, newExpression);
 	});
 };
 
