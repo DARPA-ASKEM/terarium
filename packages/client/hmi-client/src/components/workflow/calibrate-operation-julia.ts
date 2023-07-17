@@ -20,7 +20,7 @@ export const CalibrationOperationJulia: Operation = {
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model Configuration' },
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset' }
 	],
 	outputs: [{ type: 'number' }],

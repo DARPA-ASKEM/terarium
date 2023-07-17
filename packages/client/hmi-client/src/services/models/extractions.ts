@@ -1,5 +1,5 @@
 import API, { Poller, PollerState, PollResponse } from '@/api/api';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
@@ -30,6 +30,28 @@ async function fetchExtraction(id: string) {
 	});
 	return poller.start();
 }
+
+/**
+ * Transform a list of LaTeX strings to an AMR
+ * @param latex string[] - list of LaTeX strings representing a model
+ * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
+ * @return {Promise<Model | null>}
+ */
+const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Model | null> => {
+	try {
+		const response: AxiosResponse<Model> = await API.post(
+			`/extract/latex-to-amr/${framework}`,
+			latex
+		);
+		if (response && response?.status === 200 && response?.data) {
+			return response.data;
+		}
+		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - SKEMA Unified' });
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false, toastTitle: 'Error - SKEMA Unified' });
+	}
+	return null;
+};
 
 /**
  * Transform a MathML list of strings to an AMR
@@ -67,4 +89,4 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 	return null;
 };
 
-export { mathmlToAMR };
+export { mathmlToAMR, latexToAMR };
