@@ -63,12 +63,15 @@
 					<tera-model-node
 						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
+						:modelId="newAssetId"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
+						:modelId="newAssetId"
+						:datasetId="newAssetId"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
@@ -314,6 +317,7 @@ const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 async function selectModel(node: WorkflowNode, data: { id: string }) {
+	newAssetId.value = null;
 	node.state.modelId = data.id;
 
 	// FIXME: Need additional design to work out exactly what to show. June 2023
@@ -341,6 +345,7 @@ async function updateWorkflowName() {
 }
 
 async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
+	newAssetId.value = null;
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
@@ -412,7 +417,6 @@ const contextMenuItems = ref([
 	{
 		label: 'Model',
 		command: () => {
-			newAssetId.value = null;
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
 			workflowDirty = true;
 		}
@@ -420,7 +424,6 @@ const contextMenuItems = ref([
 	{
 		label: 'Dataset',
 		command: () => {
-			newAssetId.value = null;
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
 			workflowDirty = true;
 		}

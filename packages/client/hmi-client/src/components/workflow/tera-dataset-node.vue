@@ -36,6 +36,7 @@ import { WorkflowNode } from '@/types/workflow';
 const props = defineProps<{
 	node: WorkflowNode;
 	datasets: Dataset[];
+	datasetId: null | string;
 }>();
 
 const emit = defineEmits(['select-dataset']);
@@ -59,6 +60,9 @@ onMounted(async () => {
 	if (props.node.state.datasetId) {
 		dataset.value = await getDataset(props.node.state.datasetId);
 	}
+
+	// If dataset is drag and dropped from resource panel
+	if (props.datasetId) await getDataset(props.datasetId);
 });
 </script>
 
@@ -74,6 +78,7 @@ section {
 	margin-top: 0.5rem;
 	margin-bottom: 0.25rem;
 }
+
 span {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
