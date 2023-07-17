@@ -1,12 +1,17 @@
 package software.uncharted.terarium.hmiserver.resources.extractionservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.util.List;
-import java.util.Map;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+
 
 import javax.inject.Inject;
 import software.uncharted.terarium.hmiserver.proxies.extractionservice.ExtractionServiceProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -23,6 +28,10 @@ public class ExtractionResource {
 	@RestClient
 	ExtractionServiceProxy extractionProxy;
 
+	@Inject
+	@RestClient
+	SkemaUnifiedProxy skemaUnifiedProxy;
+
 	/**
 	 * Retrieve the status of a simulation
 	 *
@@ -31,16 +40,16 @@ public class ExtractionResource {
 	 * @return the status of the simulation
 	 */
 	@GET
-	@Path("/status/{simulation_id}")
+	@Path("/status/{simulation-id}")
 	public Response getTaskStatus(
-		@PathParam("simulation_id") final String simulationId) {
+		@PathParam("simulation-id") final String simulationId) {
 		return extractionProxy.getTaskStatus(simulationId);
 	}
 
 	/**
 	 * Post MathML to skema service to get AMR return
 	 *
-	 * @param		model (String) the id of the model
+	 * @param		framework (String) the id of the model
 	 *
 	 * Args:
 	 *     mathMLPayload (List<String>): A list of MathML strings representing the functions that are
@@ -50,14 +59,39 @@ public class ExtractionResource {
 	 * @return AMR model
 	 */
 	@POST
-	@Path("/mathml_to_amr")
+	@Path("/mathml-to-amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postMathMLToAMR(
-		@QueryParam("model") String model,
+		@DefaultValue("petrinet") @QueryParam("framework") String framework,
 		List<String> mathMLPayload
 	) {
-		return extractionProxy.postMathMLToAMR(model, mathMLPayload);
+		return extractionProxy.postMathMLToAMR(framework, mathMLPayload);
 	};
+
+	/**
+	 * Post LaTeX to SKEMA Unified service to get an AMR
+	 * @param	framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR mode.
+	 * @return (Model): The AMR model
+	 */
+	@POST
+	@Path("/latex-to-amr/{framework}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Model postLaTeXToAMR(
+		@DefaultValue("petrinet") @PathParam("framework") String framework,
+		List<String> equations
+	) {
+		/* Create the JSON request containing the LaTeX equations and model framework:
+		 * https://skema-unified.staging.terarium.ai/docs#/workflows/equations_to_amr_workflows_latex_equations_to_amr_post
+		 * ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
+		 */
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode request = mapper.createObjectNode();
+		request.put("model", framework);
+		request.set("equations", mapper.valueToTree(equations));
+		return skemaUnifiedProxy.postLaTeXToAMR(request);
+	};
+
 
 	/**
 	 * Post a PDF to the extraction service
@@ -73,7 +107,7 @@ public class ExtractionResource {
 	 * @return extractions of the pdf
 	 */
 	@POST
-	@Path("/pdf_extractions")
+	@Path("/pdf-extractions")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postPDFExtractions(
 		@DefaultValue("true") @QueryParam("annotate_skema") Boolean annotateSkema,
@@ -94,7 +128,7 @@ public class ExtractionResource {
 	 * @return the profiled dataset
 	 */
 	@POST
-	@Path("/profile_dataset")
+	@Path("/profile-dataset")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postProfileDataset(
 		@QueryParam("dataset_id") String datasetId,
