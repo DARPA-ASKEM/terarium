@@ -110,7 +110,7 @@
                 border: $tableBodyCellBorder;
                 border-width: $tableBodyCellBorderWidth;
                 padding: $tableBodyCellPadding;
-                vertical-align: top;
+                vertical-align: middle;
 
                 .p-row-toggler,
                 .p-row-editor-init,
@@ -276,21 +276,22 @@
 
     &.p-datatable-xsm {
         .p-datatable-wrapper {
-            font-size: xx-small;
-        }
-        
+            font-size: x-small;
+         }
+
         .p-datatable-thead > tr > th {
-            font-size: xx-small;
+            padding: 0.125rem 0;
+            font-size: x-small;
         }
         
         .p-datatable-tbody > tr > td {
-            padding: 0 5px 0 5px;
-            background-color: var(--gray-50);
+            padding: 0.125rem 0;
+            background-color: var(--surface-0);
             border: none;
         }
         
         .p-datatable-thead > tr > th {
-            background-color: var(--gray-50);
+            background-color: var(--surface-0);
         }
         
         .p-datatable-tbody > tr > t {

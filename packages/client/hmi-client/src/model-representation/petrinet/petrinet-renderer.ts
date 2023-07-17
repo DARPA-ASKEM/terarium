@@ -3,14 +3,13 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
-import { strataTypeColors } from '@/utils/color-schemes';
+import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import { Model } from '@/types/Types';
 import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
 
 export interface NodeData {
 	type: string;
 	strataType?: string;
-	expression?: string;
 }
 
 export interface EdgeData {
@@ -36,6 +35,8 @@ const EDGE_OPACITY = 0.5;
 
 const HANDLE_SIZE = 4;
 const HANDLE_SIZE_HOVER = 8;
+
+const { getNodeTypeColor } = useNodeTypeColorPalette();
 
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
@@ -113,9 +114,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('rx', '6')
 			.attr('ry', '6')
 			.style('fill', (d) =>
-				d.data.strataType
-					? strataTypeColors[strataTypes.indexOf(d.data.strataType)]
-					: 'var(--petri-nodeFill'
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
 			)
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
@@ -159,14 +158,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) =>
-				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-			)
-			.style('stroke-width', '3px')
-			.style('stroke-linecap', 'butt')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.html((d) => d.label);
+			.html((d) => d.id);
 
 		// transitions expression text
 		transitions
@@ -179,16 +173,21 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke-linecap', 'butt')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.html((d) => d.data.expression ?? null);
+			.html((d) => {
+				const rate = this.graph.amr.semantics.ode.rates.find((r) => r.target === d.id);
+				if (rate) {
+					return rate.expression;
+				}
+				return '';
+			});
+
 		// species
 		species
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
 			.attr('fill', (d) =>
-				d.data.strataType
-					? strataTypeColors[strataTypes.indexOf(d.data.strataType)]
-					: 'var(--petri-nodeFill)'
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'
 			)
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
@@ -218,14 +217,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) =>
-				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
-			)
-			.style('stroke-width', '3px')
-			.style('stroke-linecap', 'round')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.text((d) => d.label);
+			.text((d) => d.id);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
@@ -264,46 +258,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 	}
 
-	selectNodeEdit(selection: D3SelectionINode<NodeData>) {
-		selection.selectAll('.no-drag').attr('stroke-width', 3);
-		selection.select('text').style('fill-opacity', 0);
-
-		// Add in a input textbox to change the name
-		const w = selection.datum().width;
-		const h = selection.datum().width;
-
-		selection
-			.append('foreignObject')
-			.attr('x', -0.5 * w)
-			.attr('y', -0.5 * h)
-			.attr('width', w)
-			.attr('height', h)
-			.attr('style', 'position:relative')
-			.append('xhtml:input')
-			.attr('type', 'text')
-			.attr(
-				'style',
-				`width:${
-					w * 0.8
-				}px; height:30px; background: var(--petri-inputBox); border-radius:var(--border-radius); border: 2px solid transparent; text-align:center; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); padding-left:2px; padding-right:2px;`
-			)
-			.attr('value', selection.datum().label);
-	}
-
 	deselectNode(selection: D3SelectionINode<NodeData>) {
 		if (!this.editMode) return;
 		selection.selectAll('.no-drag').attr('stroke-width', 1);
-		const newLabel = (selection.select('input').node() as HTMLInputElement).value;
-
-		if (selection.datum().data.type === NodeType.State) {
-			petrinetService.updateStateId(this.graph.amr, selection.datum().label, newLabel);
-		} else {
-			petrinetService.updateTransitioneId(this.graph.amr, selection.datum().label, newLabel);
-		}
-
-		selection.datum().label = newLabel;
-		selection.select('text').text(newLabel).style('fill-opacity', 1.0);
-		selection.select('foreignObject').remove();
 	}
 
 	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
@@ -346,7 +303,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.duration(200)
 					.style('opacity', 1)
 					.style('visibility', 'visible');
-				this.selectNodeEdit(this.nodeSelection);
 			}
 		}
 
@@ -473,10 +429,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			this.nodeSelection = this.chart
 				.selectAll('.node-ui')
 				.filter((d: any) => d.id === id) as D3SelectionINode<NodeData>;
-
-			if (this.nodeSelection) {
-				this.selectNodeEdit(this.nodeSelection);
-			}
 		}
 	}
 
@@ -496,10 +448,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		}
 	}
 
-	addNode(type: string, name: string, pos: { x: number; y: number }) {
+	addNode(type: string, id: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
 		const size = type === NodeType.State ? 60 : 30;
-		const id = `${type}${this.graph.nodes.length + 1}`;
+		// const id = `${type}${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
 			id,
 			label: name,
@@ -522,11 +474,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.render();
 	}
 
-	addNodeCenter(type: string, name: string) {
+	addNodeCenter(type: string, id: string, name: string) {
 		// FIXME: hardwired sizing
 		const positionX = this.chartSize.width / 2;
 		const positionY = this.chartSize.height / 2;
-		this.addNode(type, name, { x: positionX, y: positionY });
+		this.addNode(type, id, name, { x: positionX, y: positionY });
 	}
 
 	removeNode(id: string) {
@@ -551,6 +503,26 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		} else {
 			petrinetService.removeTransition(amr, id);
 		}
+	}
+
+	updateNode(id: string, newId: string, newName: string) {
+		const node = this.graph.nodes.find((d) => d.id === id);
+		if (!node) return;
+		node.id = newId;
+		node.label = newName;
+
+		this.graph.edges.forEach((edge) => {
+			if (edge.source === id) edge.source = newId;
+			if (edge.target === id) edge.target = newId;
+		});
+
+		const amr = this.graph.amr;
+		if (node.data.type === NodeType.State) {
+			petrinetService.updateState(amr, id, newId, newName);
+		} else {
+			petrinetService.updateTransitione(amr, id, newId, newName);
+		}
+		this.render();
 	}
 
 	addEdge(source: any, target: any) {

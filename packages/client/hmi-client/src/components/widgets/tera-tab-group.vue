@@ -120,6 +120,10 @@ i {
 	overflow: visible;
 }
 
+.tab {
+	border-bottom-width: 2px;
+}
+
 .tab:hover {
 	border-color: var(--surface-border-light);
 }
@@ -131,9 +135,11 @@ i {
 .tab[active='true'][loading='false'] {
 	border-bottom-color: var(--primary-color);
 }
-
-.tab[active='false']:hover {
+.tab[active='false'] {
 	background-color: var(--surface-secondary);
+}
+.tab[active='false']:hover {
+	background-color: var(--surface-highlight);
 }
 
 .tab:not(:hover) .p-button {
@@ -145,8 +151,8 @@ i {
 .tab + div {
 	width: calc(100% - 2px);
 	position: relative;
-	height: 1px;
-	top: -1px;
+	height: 2px;
+	top: -2px;
 	left: 1px;
 }
 

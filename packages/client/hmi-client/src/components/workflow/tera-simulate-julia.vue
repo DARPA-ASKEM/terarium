@@ -38,6 +38,14 @@
 				label="Add Chart"
 				icon="pi pi-plus"
 			></Button>
+			<Button
+				class="add-chart"
+				text
+				:outlined="true"
+				@click="saveDataset"
+				label="Save as Dataset"
+				icon="pi pi-save"
+			></Button>
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -109,11 +117,16 @@ import { getModel } from '@/services/model';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
+import { IProject } from '@/types/Project';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
+import { SimulateJuliaOperationState } from './simulate-julia-operation';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperationState } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
+	project: IProject;
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
@@ -134,7 +147,7 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 // );
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -145,7 +158,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -153,6 +166,13 @@ const addChart = () => {
 		nodeId: props.node.id,
 		state
 	});
+};
+
+const saveDataset = async () => {
+	if (!props.node) return;
+	// @ts-ignore: Object is possibly 'null'.
+	await createDatasetFromSimulationResult(props.project.id, props.node.outputs[0].value[0]);
+	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 };
 
 onMounted(async () => {

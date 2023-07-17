@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { Model, ModelConfiguration } from '@/types/Types';
+import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
@@ -7,6 +7,7 @@ import useResourcesStore from '@/stores/resources';
 
 // TODO - to be removed after July 2023 Hackathon
 import { MATHMLMODEL } from '@/temp/models/mathml';
+import * as EventService from '@/services/event';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -55,6 +56,13 @@ export async function getAllModelDescriptions(): Promise<Model[] | null> {
 
 export async function updateModel(model: Model) {
 	const response = await API.put(`/models/${model.id}`, model);
+	EventService.create(
+		EventType.PersistModel,
+		useResourcesStore().activeProject?.id,
+		JSON.stringify({
+			id: model.id
+		})
+	);
 	return response?.data ?? null;
 }
 
@@ -73,7 +81,15 @@ export async function addModelToProject(projectId: string, assetId: string) {
 	}
 }
 
-export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[] | []> {
+export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[]> {
 	const response = await API.get(`/models/${modelId}/model_configurations`);
-	return response?.data ?? [];
+	return response?.data ?? ([] as ModelConfiguration[]);
+}
+
+/**
+ * Reconstruct an petrinet AMR's ode semantics
+ */
+export async function reconstructAMR(amr: any) {
+	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
+	return response?.data;
 }

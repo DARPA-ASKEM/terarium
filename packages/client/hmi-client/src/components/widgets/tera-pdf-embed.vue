@@ -7,8 +7,9 @@ import { ref, watch, onMounted } from 'vue';
 import API from '@/api/api';
 
 const props = defineProps<{
-	pdfLink: string;
+	pdfLink?: string;
 	title: string;
+	filePromise?: Promise<ArrayBuffer | null>;
 }>();
 
 const adobeDCView = ref();
@@ -42,14 +43,23 @@ watch(isAdobePdfApiReady, () => {
 			})
 		);
 
-		adobeDCView.value.previewFile({
-			content: {
-				location: {
-					url: props.pdfLink
-				}
-			},
-			metaData: { fileName: props.title }
-		});
+		if (props.pdfLink) {
+			adobeDCView.value.previewFile({
+				content: {
+					location: {
+						url: props.pdfLink
+					}
+				},
+				metaData: { fileName: props.title }
+			});
+		} else if (props.filePromise) {
+			adobeDCView.value.previewFile({
+				content: {
+					promise: props.filePromise
+				},
+				metaData: { fileName: props.title }
+			});
+		}
 	}
 });
 </script>

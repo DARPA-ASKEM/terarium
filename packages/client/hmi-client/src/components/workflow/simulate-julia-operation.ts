@@ -2,20 +2,21 @@ import { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { ChartConfig } from '@/types/SimulateConfig';
 
-export interface SimulateOperationState {
+export interface SimulateJuliaOperationState {
 	chartConfigs: ChartConfig[];
 	currentTimespan: TimeSpan;
 }
 
-export const SimulateOperation: Operation = {
-	name: WorkflowOperationTypes.SIMULATE,
+export const SimulateJuliaOperation: Operation = {
+	name: WorkflowOperationTypes.SIMULATE_JULIA,
+	displayName: 'Simulate (Deterministic)',
 	description: 'given a model id, and configuration id, run a simulation',
-	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
 	outputs: [{ type: 'simOutput' }],
 	isRunnable: true,
 
 	initState: () => {
-		const init: SimulateOperationState = {
+		const init: SimulateJuliaOperationState = {
 			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 }
 		};

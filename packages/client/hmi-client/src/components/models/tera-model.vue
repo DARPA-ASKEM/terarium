@@ -30,6 +30,13 @@
 					@click="modelView = ModelView.MODEL"
 					:active="modelView === ModelView.MODEL"
 				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Transform"
+					icon="pi pi-sync"
+					@click="modelView = ModelView.NOTEBOOK"
+					:active="modelView === ModelView.NOTEBOOK"
+				/>
 			</span>
 			<Button
 				v-if="isEditable"
@@ -45,6 +52,8 @@
 				class="p-button-sm"
 			/>
 		</template>
+		<!-- For testing dummy data -->
+		<!-- <tera-stratified-model-configuration :model="stratify_output" :is-editable="props.isEditable" /> -->
 		<template v-if="modelView === ModelView.DESCRIPTION">
 			<div class="container">
 				<Message class="inline-message" icon="none">
@@ -75,7 +84,11 @@
 					<td>{{ model?.metadata?.processed_by ?? '--' }}</td>
 				</tr>
 			</table>
-			<RelatedPublications :publications="publications" />
+			<tera-related-publications
+				:publications="publications"
+				:project="project"
+				:dialog-flavour="'model'"
+			/>
 			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editSection">
 				<!-- Description -->
 				<AccordionTab>
@@ -146,8 +159,9 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<main v-if="states.length > 0" class="datatable" style="--columns: 4">
+					<main v-if="states.length > 0" class="datatable" style="--columns: 5">
 						<header>
+							<div>Id</div>
 							<div>Name</div>
 							<div>Unit</div>
 							<div>Concept</div>
@@ -159,6 +173,7 @@
 							:class="[{ active: isSectionEditable === `state-${state.id}` }, `state-${state.id}`]"
 						>
 							<template v-if="isSectionEditable === `state-${state.id}`">
+								<div><input type="text" :value="state.id ?? '--'" /></div>
 								<div><input type="text" :value="state?.name ?? '--'" /></div>
 								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
 								<div>Identifiers</div>
@@ -172,6 +187,7 @@
 								</div>
 							</template>
 							<template v-else>
+								<div>{{ state.id ?? '--' }}</div>
 								<div>{{ state?.name ?? '--' }}</div>
 								<div>{{ state?.units?.expression ?? '--' }}</div>
 								<div>
@@ -229,7 +245,11 @@
 								<div>{{ observable.id ?? '--' }}</div>
 								<div>{{ observable.name ?? '--' }}</div>
 								<div>
-									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<katex-element
+										v-if="observable.expression"
+										:expression="observable.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -245,7 +265,11 @@
 								<div>{{ observable.id ?? '--' }}</div>
 								<div>{{ observable.name ?? '--' }}</div>
 								<div>
-									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<katex-element
+										v-if="observable.expression"
+										:expression="observable.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -264,9 +288,10 @@
 					<template #header>
 						Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 					</template>
-					<main v-if="transitions.length > 0" class="datatable" style="--columns: 5">
+					<main v-if="transitions.length > 0" class="datatable" style="--columns: 6">
 						<header>
-							<div>Label</div>
+							<div>Id</div>
+							<div>Name</div>
 							<div>Input</div>
 							<div>Output</div>
 							<div>Expression</div>
@@ -281,56 +306,45 @@
 							]"
 						>
 							<template v-if="isSectionEditable === `transition-${index}`">
-								<div>{{ transition?.properties?.name ?? '--' }}</div>
+								<div>{{ transition.id }}</div>
+								<div>{{ transition.name }}</div>
+								<div>{{ transition.input }}</div>
+								<div>{{ transition.output }}</div>
 								<div>
-									{{
-										transition?.input && transition.input?.length > 0
-											? transition.input.sort().join(', ')
-											: '--'
-									}}
-								</div>
-								<div>
-									{{
-										transition?.output && transition.output?.length > 0
-											? transition.output.sort().join(', ')
-											: '--'
-									}}
-								</div>
-								<div>
-									<katex-element :expression="getTransitionExpression(transition.id)" />
+									<katex-element
+										v-if="transition.expression"
+										:expression="transition.expression"
+										:throw-on-error="false"
+									/>
+									<template v-else>--</template>
 								</div>
 								<div>
 									<!-- TODO: needs to make those button active -->
 									<Button icon="pi pi-check" text rounded aria-label="Save" />
 									<Button icon="pi pi-times" text rounded aria-label="Discard" />
 								</div>
-								<div v-if="extractions?.[transition?.id]" style="grid-column: 1 / span 5">
-									<tera-model-extraction :extractions="extractions[transition.id]" />
+								<div v-if="transition?.extractions" style="grid-column: 1 / span 5">
+									<tera-model-extraction :extractions="transition?.extractions" />
 								</div>
 							</template>
 							<template v-else>
-								<div>{{ transition?.properties?.name ?? '--' }}</div>
+								<div>{{ transition.id }}</div>
+								<div>{{ transition.name }}</div>
+								<div>{{ transition.input }}</div>
+								<div>{{ transition.output }}</div>
 								<div>
-									{{
-										transition?.input && transition.input?.length > 0
-											? transition.input.sort().join(', ')
-											: '--'
-									}}
+									<katex-element
+										v-if="transition.expression"
+										:expression="transition.expression"
+										:throw-on-error="false"
+									/>
+									<template v-else>--</template>
 								</div>
 								<div>
-									{{
-										transition?.output && transition.output?.length > 0
-											? transition.output.sort().join(', ')
-											: '--'
-									}}
-								</div>
-								<div>
-									<katex-element :expression="getTransitionExpression(transition.id)" />
-								</div>
-								<div>
-									<template v-if="extractions?.[transition.id]">
-										<Tag :value="extractions?.[transition.id].length" />
-									</template>
+									<Tag
+										v-if="transition?.extractions"
+										:value="extractions?.[transition.id].length"
+									/>
 									<template v-else>--</template>
 								</div>
 							</template>
@@ -414,10 +428,16 @@
 				:model="model"
 				:is-editable="props.isEditable"
 				@update-model-content="updateModelContent"
+				@update-model-observables="updateModelObservables"
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
+					<tera-stratified-model-configuration
+						v-if="model.semantics?.span"
+						:model="model"
+						:is-editable="props.isEditable"
+					/>
+					<tera-model-configuration v-else :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -432,6 +452,18 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
+		<template v-if="modelView === ModelView.NOTEBOOK">
+			<Suspense>
+				<tera-model-jupyter-panel
+					:asset-id="props.assetId"
+					:project="props.project"
+					:model="model"
+					:show-kernels="false"
+					:show-chat-thoughts="false"
+				/>
+				<!-- @is-typing="updateScroll" -->
+			</Suspense>
+		</template>
 		<Teleport to="body">
 			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 				<template #header>
@@ -441,6 +473,37 @@
 					Terarium can extract information from papers and other resources to describe this model.
 				</p>
 				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
+			</tera-modal>
+		</Teleport>
+
+		<!-- Copy model modal -->
+		<Teleport to="body">
+			<tera-modal
+				v-if="isCopyModelModalVisible"
+				class="modal"
+				@modal-mask-clicked="isCopyModelModalVisible = false"
+			>
+				<template #header>
+					<h4>Make a copy</h4>
+				</template>
+				<template #default>
+					<form>
+						<label for="copy-model">{{ copyModelNameInputPrompt }}</label>
+						<InputText
+							v-bind:class="invalidInputStyle"
+							id="copy-model"
+							type="text"
+							v-model="copyModelName"
+							placeholder="Model name"
+						/>
+					</form>
+				</template>
+				<template #footer>
+					<Button @click="duplicateModel">Copy model</Button>
+					<Button class="p-button-secondary" @click="isCopyModelModalVisible = false">
+						Cancel
+					</Button>
+				</template>
 			</tera-modal>
 		</Teleport>
 	</tera-asset>
@@ -460,7 +523,7 @@ import Message from 'primevue/message';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
@@ -475,12 +538,17 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
+import { logger } from '@/utils/logger';
+import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
+// import { stratify_output } from '@/temp/models/stratify_output';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
+import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
 
 enum ModelView {
 	DESCRIPTION,
-	MODEL
+	MODEL,
+	NOTEBOOK
 }
 
 // TODO - Get rid of these emits
@@ -490,7 +558,7 @@ const props = defineProps({
 	project: {
 		type: Object as PropType<IProject> | null,
 		default: null,
-		required: false
+		required: true
 	},
 	assetId: {
 		type: String,
@@ -523,6 +591,21 @@ const newPetri = ref();
 const isRenamingModel = ref(false);
 const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
 
+const isCopyModelModalVisible = ref<boolean>(false);
+const copyModelNameInputPrompt = ref<string>('');
+const copyModelName = ref<string>('');
+
+const isValidName = ref<boolean>(true);
+const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
+
+const existingModelNames = computed(() => {
+	const modelNames: string[] = [];
+	props.project.assets?.models.forEach((item) => {
+		modelNames.push(item.name);
+	});
+	return modelNames;
+});
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
@@ -540,18 +623,67 @@ const optionsMenuItems = ref([
 			newModelName.value = model.value?.name ?? '';
 		}
 	},
-	{ icon: 'pi pi-clone', label: 'Make a copy', command: duplicateModel }
+	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
-async function duplicateModel() {
+function getJustModelName(modelName: string): string {
+	let potentialNum: string = '';
+	let completeParen: boolean = false;
+	let idx = modelName.length;
+	if (modelName.charAt(modelName.length - 1) === ')') {
+		for (let i = modelName.length - 2; i >= 0; i--) {
+			if (modelName.charAt(i) === '(') {
+				completeParen = true;
+				idx = i;
+				break;
+			}
+			potentialNum = modelName.charAt(i) + potentialNum;
+		}
+	}
+
+	if (completeParen && !Number.isNaN(potentialNum as any)) {
+		return modelName.substring(0, idx).trim();
+	}
+	return modelName.trim();
+}
+
+function getSuggestedModelName(currModelName: string, counter: number): string {
+	const suggestedName = `${currModelName} (${counter})`;
+
+	if (!existingModelNames.value.includes(suggestedName)) {
+		return suggestedName;
+	}
+	return getSuggestedModelName(currModelName, counter + 1);
+}
+
+function initiateModelDuplication() {
 	if (!model.value) {
-		console.log('Failed to duplicate model.');
+		logger.info('Failed to duplicate model.');
 		return;
 	}
-	const duplicateModelResponse = await createModel(model.value);
+	copyModelNameInputPrompt.value = 'What do you want to name it?';
+	const modelName = getJustModelName(model.value.name.trim());
+	copyModelName.value = getSuggestedModelName(modelName, 1);
+	isCopyModelModalVisible.value = true;
+}
+
+async function duplicateModel() {
+	if (existingModelNames.value.includes(copyModelName.value.trim())) {
+		copyModelNameInputPrompt.value = 'Duplicate model name - please enter a different name:';
+		isValidName.value = false;
+		logger.info('Duplicate model name - please enter a different name');
+		return;
+	}
+	copyModelNameInputPrompt.value = 'Creating a copy...';
+	isValidName.value = true;
+	const duplicateModelResponse = await createModel({
+		...model.value,
+		name: copyModelName.value.trim()
+	});
 	if (!duplicateModelResponse) {
-		console.log('Failed to duplicate model.');
+		logger.info('Failed to duplicate model.');
+		isCopyModelModalVisible.value = false;
 		return;
 	}
 	await ProjectService.addAsset(
@@ -559,6 +691,7 @@ async function duplicateModel() {
 		ProjectAssetTypes.MODELS,
 		duplicateModelResponse.id
 	);
+	isCopyModelModalVisible.value = false;
 }
 
 /* Model */
@@ -566,12 +699,34 @@ const name = computed(() => highlightSearchTerms(model.value?.name));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
 const time = computed(() =>
-	model.value?.semantics?.ode?.time ? [model.value.semantics.ode.time] : []
+	model.value?.semantics?.ode?.time ? [model.value?.semantics.ode.time] : []
 );
 const states = computed(() => model.value?.model?.states ?? []);
-const transitions = computed(() => model.value?.model?.transitions ?? []);
+
+// Model Transitions
+const transitions = computed(() => {
+	const results: any[] = [];
+	if (model.value?.model?.transitions) {
+		model.value.model.transitions.forEach((t) => {
+			results.push({
+				id: t.id,
+				name: t?.properties?.name ?? '--',
+				input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
+				output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
+				expression:
+					model?.value?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ??
+					null,
+				extractions: extractions?.[t.id] ?? null
+			});
+		});
+	}
+	return results;
+});
+
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
+
 const publications = computed(() => []);
+
 const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
@@ -599,11 +754,6 @@ const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
-// Get the mathematical expression of a transition
-function getTransitionExpression(id): string {
-	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '--';
-}
-
 /**
  * Concepts
  */
@@ -629,6 +779,14 @@ function updateModelContent(rendererGraph) {
 	if (model.value) model.value = convertToAMRModel(rendererGraph);
 }
 
+function updateModelObservables(observableMathMLList) {
+	// assign the new observables
+	if (model.value !== null && model.value.semantics?.ode?.observables) {
+		model.value.semantics.ode.observables = observableMathMLList;
+		updateModel(model.value);
+	}
+}
+
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -650,6 +808,8 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		// Reset view of model page
+		isRenamingModel.value = false;
 		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
@@ -801,26 +961,9 @@ function editSection(event: Event) {
 	margin-left: 0.5rem;
 }
 
-.p-toolbar {
-	position: absolute;
-	width: 100%;
-	z-index: 1;
-	isolation: isolate;
-	background: transparent;
-	padding: 0.5rem;
-}
-
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
-}
-
-.toolbar-button-saveModel {
-	margin: 0.25rem;
-}
-
-.toolbar-subgroup {
-	display: flex;
 }
 
 .floating-edit-button {
@@ -840,5 +983,10 @@ function editSection(event: Event) {
 	color: var(--text-color-light);
 	font-size: var(--font-caption);
 	text-transform: uppercase;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
 }
 </style>

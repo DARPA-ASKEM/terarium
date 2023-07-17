@@ -14,6 +14,9 @@ public class LoggingService {
 	private List<LogMessage> logs;
 
 	public void logMessage(LogMessage logObj, String name) {
+		if (logObj.message == null || logObj.message.trim().isEmpty()) {
+			return;
+		}
 		String level = logObj.level;
 		String message = "HMI_LOG | " + name + " | " + logObj.message;
 		switch (level) {

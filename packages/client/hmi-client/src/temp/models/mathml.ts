@@ -1,16 +1,15 @@
 /* @ts-nocheck
 /* eslint-disable */
-//This is a temp file just to be used for testing purposes while transitioning to AMR
 import { Model } from '@/types/Types';
 
 export const MATHMLMODEL: Model = {
-	id: 'e6347278-add0-440c-92ae-b52f24605bf9',
+	id: 'mathml model',
 	name: 'mathml model',
-	description: 'This is a model from mathml equations',
-	model_version: '0.1',
 	schema:
 		'https://github.com/DARPA-ASKEM/Model-Representations/blob/main/petrinet/petrinet_schema.json',
 	schema_name: 'PetriNet',
+	description: 'This is a model from mathml equations',
+	model_version: '0.1',
 	model: {
 		states: [
 			{
@@ -36,121 +35,129 @@ export const MATHMLMODEL: Model = {
 		],
 		transitions: [
 			{
-				id: '&#x03B2;',
+				id: 'β',
 				input: ['I', 'S'],
-				output: ['I', 'E']
+				output: ['E', 'I'],
+				grounding: null
 			},
 			{
-				id: '&#x03B3;',
+				id: 'γ',
 				input: ['I'],
-				output: ['R']
+				output: ['R'],
+				grounding: null
 			},
 			{
-				id: '&#x03B4;',
+				id: 'δ',
 				input: ['E'],
-				output: ['I']
+				output: ['I'],
+				grounding: null
 			},
 			{
-				id: '&#x03C1;',
+				id: 'ρ',
 				input: ['I'],
-				output: ['D']
+				output: ['D'],
+				grounding: null
 			}
-		],
-		semantics: {
-			ode: {
-				rates: [
-					{
-						target: '&#x03B2;',
-						expression: '&#x03B2;*I*S'
-					},
-					{
-						target: '&#x03B3;',
-						expression: '&#x03B3;*I'
-					},
-					{
-						target: '&#x03B4;',
-						expression: '&#x03B4;*E'
-					},
-					{
-						target: '&#x03C1;',
-						expression: '&#x03C1;*I'
-					}
-				],
-				initials: [
-					{
-						target: 'D',
-						expression: 'D0',
-						expression_mathml: ''
-					},
-					{
-						target: 'E',
-						expression: 'E0',
-						expression_mathml: ''
-					},
-					{
-						target: 'I',
-						expression: 'I0',
-						expression_mathml: ''
-					},
-					{
-						target: 'R',
-						expression: 'R0',
-						expression_mathml: ''
-					},
-					{
-						target: 'S',
-						expression: 'S0',
-						expression_mathml: ''
-					}
-				],
-				parameters: [
-					{
-						id: 'D0',
-						name: 'D0',
-						description: 'The total D population at timestep 0'
-					},
-					{
-						id: 'E0',
-						name: 'E0',
-						description: 'The total E population at timestep 0'
-					},
-					{
-						id: 'I0',
-						name: 'I0',
-						description: 'The total I population at timestep 0'
-					},
-					{
-						id: 'R0',
-						name: 'R0',
-						description: 'The total R population at timestep 0'
-					},
-					{
-						id: 'S0',
-						name: 'S0',
-						description: 'The total S population at timestep 0'
-					},
-					{
-						id: '&#x03B2;',
-						name: '&#x03B2;',
-						description: '&#x03B2; rate'
-					},
-					{
-						id: '&#x03B3;',
-						name: '&#x03B3;',
-						description: '&#x03B3; rate'
-					},
-					{
-						id: '&#x03B4;',
-						name: '&#x03B4;',
-						description: '&#x03B4; rate'
-					},
-					{
-						id: '&#x03C1;',
-						name: '&#x03C1;',
-						description: '&#x03C1; rate'
-					}
-				]
-			}
+		]
+	},
+	semantics: {
+		ode: {
+			rates: [
+				{
+					target: 'β',
+					expression: 'β*I*S',
+					expression_mathml: 'null'
+				},
+				{
+					target: 'γ',
+					expression: 'γ*I',
+					expression_mathml: 'null'
+				},
+				{
+					target: 'δ',
+					expression: 'δ*E',
+					expression_mathml: 'null'
+				},
+				{
+					target: 'ρ',
+					expression: 'ρ*I',
+					expression_mathml: 'null'
+				}
+			],
+			initials: [
+				{
+					target: 'D',
+					expression: 'D0',
+					expression_mathml: ''
+				},
+				{
+					target: 'E',
+					expression: 'E0',
+					expression_mathml: ''
+				},
+				{
+					target: 'I',
+					expression: 'I0',
+					expression_mathml: ''
+				},
+				{
+					target: 'R',
+					expression: 'R0',
+					expression_mathml: ''
+				},
+				{
+					target: 'S',
+					expression: 'S0',
+					expression_mathml: ''
+				}
+			],
+			parameters: [
+				{
+					id: 'D0',
+					name: 'D0',
+					description: 'The total D population at timestep 0'
+				},
+				{
+					id: 'E0',
+					name: 'E0',
+					description: 'The total E population at timestep 0'
+				},
+				{
+					id: 'I0',
+					name: 'I0',
+					description: 'The total I population at timestep 0'
+				},
+				{
+					id: 'R0',
+					name: 'R0',
+					description: 'The total R population at timestep 0'
+				},
+				{
+					id: 'S0',
+					name: 'S0',
+					description: 'The total S population at timestep 0'
+				},
+				{
+					id: 'β',
+					name: 'β',
+					description: 'β rate'
+				},
+				{
+					id: 'γ',
+					name: 'γ',
+					description: 'γ rate'
+				},
+				{
+					id: 'δ',
+					name: 'δ',
+					description: 'δ rate'
+				},
+				{
+					id: 'ρ',
+					name: 'ρ',
+					description: 'ρ rate'
+				}
+			]
 		}
 	},
 	metadata: {
@@ -281,7 +288,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'R:-1621439126'
@@ -459,7 +466,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B4;',
+				amr_element_id: 'δ',
 				payload: {
 					id: {
 						id: 'E:-582843307'
@@ -581,7 +588,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B3;',
+				amr_element_id: 'γ',
 				payload: {
 					id: {
 						id: 'E:1549850624'
@@ -842,7 +849,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'R:1863362492'
@@ -902,7 +909,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'R:-2131818727'
@@ -1041,7 +1048,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'R:-136675206'
@@ -1352,7 +1359,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'R:2011356353'
@@ -1418,7 +1425,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'E:1157924531'
@@ -1484,7 +1491,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'R:526915523'
@@ -2062,7 +2069,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'E:-1296333892'
@@ -2286,7 +2293,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B3;',
+				amr_element_id: 'γ',
 				payload: {
 					id: {
 						id: 'E:-98926741'
@@ -2556,7 +2563,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: '&#x03B2;',
+				amr_element_id: 'β',
 				payload: {
 					id: {
 						id: 'E:1157335987'
@@ -6024,7 +6031,7 @@ export const MATHMLMODEL: Model = {
 			},
 			{
 				type: 'anchored_extraction',
-				amr_element_id: null,
+				amr_element_id: 'R0',
 				payload: {
 					id: {
 						id: 'R:1390890090'

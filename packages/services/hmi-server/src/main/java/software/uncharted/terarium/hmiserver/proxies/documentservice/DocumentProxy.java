@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.proxies.documentservice;
 
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.*;
 
@@ -14,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 public interface DocumentProxy {
 	@GET
 	@Path("/api/v2/articles")
+	@LogRestClientTime
 	XDDResponse<DocumentsResponseOK> getDocuments(
 		@QueryParam("api_key") String apiKey,
 		@QueryParam("docid") String docid,

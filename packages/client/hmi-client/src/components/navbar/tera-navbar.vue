@@ -76,6 +76,9 @@
 
 						<label for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
+
+						<p>Status: {{ evaluationScenarioCurrentStatus }}</p>
+						<p>Runtime: {{ evaluationScenarioRuntimeString }}</p>
 					</form>
 				</template>
 				<template #footer>
@@ -84,17 +87,33 @@
 					>
 					<Button
 						class="p-button-danger"
+						v-if="
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
+						"
 						:disabled="!isEvaluationScenarioValid"
 						@click="stopEvaluationScenario"
 						>Stop</Button
 					>
 					<Button
 						class="p-button-warning"
-						:disabled="!isEvaluationScenarioValid"
+						v-if="
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
+						"
 						@click="pauseEvaluationScenario"
 						>Pause</Button
 					>
-					<Button :disabled="!isEvaluationScenarioValid" @click="beginEvaluationScenario"
+					<Button
+						class="p-button-warning"
+						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
+						@click="resumeEvaluationScenario"
+						>Resume</Button
+					>
+					<Button
+						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
+						@click="beginEvaluationScenario"
 						>Begin</Button
 					>
 				</template>
@@ -123,8 +142,9 @@ import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
-import { EventType } from '@/types/Types';
+import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
+import API from '@/api/api';
 
 const props = defineProps<{
 	active: boolean;
@@ -148,6 +168,21 @@ const evaluationScenarioName = ref('');
 const evaluationScenarioTask = ref('');
 const evaluationScenarioDescription = ref('');
 const evaluationScenarioNotes = ref('');
+const evaluationScenarioCurrentStatus = ref('');
+const evaluationScenarioRuntimeMillis = ref(0);
+let intervalId: number;
+
+const evaluationScenarioRuntimeString = computed(() => {
+	const h = Math.floor(evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60);
+	const m = Math.floor((evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60 - h) * 60);
+	const s = Math.floor(
+		((evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60 - h) * 60 - m) * 60
+	);
+	const hS = h < 10 ? `0${h}` : `${h}`;
+	const mS = m < 10 ? `0${m}` : `${m}`;
+	const sS = s < 10 ? `0${s}` : `${s}`;
+	return `${hS}:${mS}:${sS}`;
+});
 const isEvaluationScenarioValid = computed(
 	() =>
 		evaluationScenarioName.value !== '' &&
@@ -159,43 +194,59 @@ const isEvaluationScenarioValid = computed(
  * Logs an event to the server to begin an evaluation. Additionally, persists the evaluation
  * model to local storage
  */
-const beginEvaluationScenario = () => {
-	EventService.create(
+const beginEvaluationScenario = async () => {
+	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('start'))
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Started))
 	);
 	persistEvaluationScenario();
+	await refreshEvaluationScenario();
+	startEvaluationTimer();
 	isEvaluationScenarioModalVisible.value = false;
 };
 
 /**
- * Logs an event to the server to stop an evalation.  Clears the persisted model in local storage.
+ * Logs an event to the server to stop an evaluation.  Clears the persisted model in local storage.
  */
-const stopEvaluationScenario = () => {
-	EventService.create(
+const stopEvaluationScenario = async () => {
+	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('stop'))
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Stopped))
 	);
 	clearEvaluationScenario();
+	window.clearInterval(intervalId);
 	isEvaluationScenarioModalVisible.value = false;
 };
 
 /**
  * Logs an event to the server to pause an evaluation.
  */
-const pauseEvaluationScenario = () => {
-	EventService.create(
+const pauseEvaluationScenario = async () => {
+	await EventService.create(
 		EventType.EvaluationScenario,
 		resources.activeProject?.id,
-		JSON.stringify(getEvaluationScenarioData('pause'))
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
 	);
+	await refreshEvaluationScenario();
+	window.clearInterval(intervalId);
+	isEvaluationScenarioModalVisible.value = false;
+};
+
+const resumeEvaluationScenario = async () => {
+	await EventService.create(
+		EventType.EvaluationScenario,
+		resources.activeProject?.id,
+		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
+	);
+	await refreshEvaluationScenario();
+	startEvaluationTimer();
 	isEvaluationScenarioModalVisible.value = false;
 };
 
 /**
- * Returns the evaluation meta data model for the given action
+ * Returns the evaluation metadata model for the given action
  * @param action	the action name to log
  */
 
@@ -217,22 +268,49 @@ const persistEvaluationScenario = () => {
 	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
 };
 
-const loadEvaluationScenario = () => {
+const refreshEvaluationScenario = async () => {
+	evaluationScenarioCurrentStatus.value = (
+		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
+	).data;
+
+	evaluationScenarioRuntimeMillis.value = (
+		await API.get(`/evaluation/runtime?name=${evaluationScenarioName.value}`)
+	).data;
+};
+
+const loadEvaluationScenario = async () => {
 	evaluationScenarioName.value = window.localStorage.getItem('evaluationScenarioName') || '';
 	evaluationScenarioTask.value = window.localStorage.getItem('evaluationScenarioTask') || '';
 	evaluationScenarioDescription.value =
 		window.localStorage.getItem('evaluationScenarioDescription') || '';
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
+
+	if (evaluationScenarioName.value !== '') {
+		await refreshEvaluationScenario();
+	}
+};
+
+const startEvaluationTimer = () => {
+	if (
+		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Started ||
+		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Resumed
+	) {
+		intervalId = window.setInterval(() => {
+			evaluationScenarioRuntimeMillis.value += 1000;
+		}, 1000);
+	}
 };
 
 /**
- * Clears the model from local storage an memory
+ * Clears the model from local storage in memory
  */
 const clearEvaluationScenario = () => {
 	evaluationScenarioName.value = '';
 	evaluationScenarioTask.value = '';
 	evaluationScenarioDescription.value = '';
 	evaluationScenarioNotes.value = '';
+	evaluationScenarioCurrentStatus.value = '';
+	evaluationScenarioRuntimeMillis.value = 0;
 	persistEvaluationScenario();
 };
 
@@ -274,8 +352,9 @@ const userMenuItems = ref([
 	}
 ]);
 
-onMounted(() => {
-	loadEvaluationScenario();
+onMounted(async () => {
+	await loadEvaluationScenario();
+	startEvaluationTimer();
 });
 
 const showUserMenu = (event) => {
@@ -299,9 +378,7 @@ const searchBarRef = ref();
 const terms = ref<string[]>([]);
 
 async function updateRelatedTerms(query?: string) {
-	// Don't update related terms if the query is empty as we will stay in the previous one
-	// Accept the empty query once we get out of the data explorer route
-	if (!isEmpty(query) || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
+	if (query || query === '' || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
 }
 
 function searchByExampleModalToggled() {
@@ -465,7 +542,7 @@ i {
 </style>
 <style>
 /*
- * On it's own style, because the pop-up happend outside of this component.
+ * On it's own style, because the pop-up happened outside of this component.
  * To left align the content with the h1.
  */
 .navigation-menu {

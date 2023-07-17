@@ -9,16 +9,20 @@ export interface CalibrateMap {
 	datasetVariable: string;
 }
 
-export interface CalibrationOperationState {
+export interface CalibrationOperationStateCiemss {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
 }
 
-export const CalibrationOperation: Operation = {
-	name: WorkflowOperationTypes.CALIBRATION,
+export const CalibrationOperationCiemss: Operation = {
+	name: WorkflowOperationTypes.CALIBRATION_CIEMSS,
+	displayName: 'Calibrate & Simulate (Probabilistic)',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
-	inputs: [{ type: 'modelConfigId' }, { type: 'datasetId' }],
+	inputs: [
+		{ type: 'modelConfigId', label: 'Model configuration' },
+		{ type: 'datasetId', label: 'Dataset' }
+	],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 
@@ -46,7 +50,7 @@ export const CalibrationOperation: Operation = {
 	},
 
 	initState: () => {
-		const init: CalibrationOperationState = {
+		const init: CalibrationOperationStateCiemss = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }]
 		};
