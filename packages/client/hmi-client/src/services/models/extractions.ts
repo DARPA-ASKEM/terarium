@@ -32,6 +32,27 @@ async function fetchExtraction(id: string) {
 }
 
 /**
+ * Transform a list of LaTeX strings to an AMR
+ * @param latex string[] - list of LaTeX strings representing a model
+ * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
+ * @return {Promise<Model | null>}
+ */
+const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Model | null> => {
+	try {
+		const response = await API.post(`/extract/latex-to-amr/${framework}`, latex);
+		if (response && response?.status === 200) {
+			const model = response.data as Model;
+			if (model) return model;
+			logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - SKEMA Unified' });
+			return null;
+		}
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false, toastTitle: 'Error - SKEMA Unified' });
+	}
+	return null;
+};
+
+/**
  * Transform a MathML list of strings to an AMR
  * @param mathml string[] - list of MathML strings representing a model
  * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
@@ -67,4 +88,4 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 	return null;
 };
 
-export { mathmlToAMR };
+export { mathmlToAMR, latexToAMR };
