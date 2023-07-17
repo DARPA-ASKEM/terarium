@@ -571,7 +571,19 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 const onClickUpdateModel = async () => {
 	const model = (await latexToAMR(latexEquationList.value)) as Model;
 	if (model) {
-		await updatePetriNet(model);
+		if (props.model) {
+			const newModel = { ...props.model, ...model };
+			await updatePetriNet(newModel);
+			await updateModel(newModel);
+		} else {
+			await updatePetriNet(model);
+			// FIXME - I don't understand why props.model could be null; but for the hackthon this is a quick fix.
+			// createModel(model);
+		}
+
+		if (renderer) {
+			emit('update-model-content', renderer.graph);
+		}
 	}
 };
 
@@ -585,7 +597,7 @@ const toggleEditMode = () => {
 };
 
 // Cancel existing edits, currently this will:
-// - Resets changs to the model structure
+// - Resets changes to the model structure
 const cancelEdit = async () => {
 	isEditing.value = false;
 	if (!props.model) return;
