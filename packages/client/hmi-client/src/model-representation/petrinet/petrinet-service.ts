@@ -71,11 +71,6 @@ export const convertToIGraph = (amr: Model) => {
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-
-		console.log(amr.semantics);
-
-		// Changed stratify_output.ts to have the attribute type_map instead of map
-
 		const typeMap = amr.semantics?.typing?.map.find(
 			(map) => map.length === 2 && state.id === map[0]
 		);
@@ -467,7 +462,6 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 		baseModel,
 		fluxModel
 	});
-	console.log(response.status);
 	return response.data as Model;
 };
 
@@ -479,10 +473,8 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 export const extractMapping = (amr: Model, id: string) => {
 	const typeMapList = amr.semantics?.typing?.map as [string, string][];
 	const item = typeMapList.find((d) => d[0] === id);
-	console.log(item);
 	if (!item) return [];
 	const result = typeMapList.filter((d) => d[1] === item[1]);
-	console.log(result);
 	return result.map((d) => d[0]);
 };
 
