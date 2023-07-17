@@ -88,7 +88,6 @@
 							:is-editable="isEditable"
 							:latex-equation="eq"
 							:is-editing-eq="isEditingEQ"
-							:is-math-ml-valid="isMathMLValid"
 							@equation-updated="setNewEquation"
 							@delete="deleteEquation"
 							ref="equationsRef"
@@ -184,6 +183,7 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { cloneDeep } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -198,7 +198,6 @@ import {
 	updateExistingModelContent
 } from '@/model-representation/petrinet/petrinet-service';
 import { latexToAMR } from '@/services/models/extractions';
-import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
@@ -235,7 +234,6 @@ const isEditingObservables = ref<boolean>(false);
 const equationsRef = ref<any[]>([]);
 const latexEquationList = ref<string[]>([]);
 const latexEquationsOriginalList = ref<string[]>([]);
-const isMathMLValid = ref<boolean>(true);
 
 // Observable Equations
 const observablesRefs = ref<any[]>([]);
@@ -378,9 +376,6 @@ const updateObservables = () => {
 };
 
 const mathEditorSelected = computed(() => {
-	if (!isMathMLValid.value) {
-		return 'math-editor-error';
-	}
 	if (isEditingEQ.value) {
 		return 'math-editor-selected';
 	}
@@ -393,42 +388,21 @@ const updateLatexFormula = (equationsList: string[]) => {
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
 
-watch(
-	() => [latexEquationList.value],
-	() => {
-		const mathMLEquations = equationsRef.value.map((eq) =>
-			separateEquations(eq.mathLiveField.getValue('math-ml'))
+const cleanLatexEquations = (equations: Array<string>): Array<string> =>
+	cloneDeep(equations)
+		.filter((equation) => equation !== '')
+		.map((equation) =>
+			equation
+				// Refactor to make those replaceAll one regex change
+				.replaceAll('\\\\', '\\')
+				.replaceAll('\\begin', '')
+				.replaceAll('\\end', '')
+				.replaceAll('\\mathrm', '')
+				.replaceAll('\\right', '')
+				.replaceAll('\\left', '')
+				.replaceAll('{align}', '')
+				.trim()
 		);
-		validateMathML(mathMLEquations.flat(), false);
-	},
-	{ deep: true }
-);
-
-// Whenever selectedModelId changes, fetch model with that ID
-watch(
-	() => [props.model],
-	async () => {
-		updateLatexFormula([]);
-		if (props.model) {
-			const data = await petriToLatex(convertAMRToACSet(props.model));
-			const eqList = data
-				?.split(' \\\\')
-				.map(
-					(elem) =>
-						`\\begin{align} ${elem
-							.replace('\\\\', '\\')
-							.replace('\\begin{align}', '')
-							.replace('\\end{align}', '')
-							.trim()} \\end{align}`
-				);
-
-			if (data) {
-				updateLatexFormula(eqList || []);
-			}
-		}
-	},
-	{ immediate: true }
-);
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -527,21 +501,19 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
-		const eqList = latexFormula
-			?.split(' \\\\')
-			.map(
-				(elem) =>
-					`\\begin{align} ${elem
-						.replace('\\\\', '\\')
-						.replace('\\begin{align}', '')
-						.replace('\\end{align}', '')
-						.trim()} \\end{align}`
-			);
-		if (latexFormula) {
-			updateLatexFormula(eqList || []);
+
+		// Update the latex equations
+		if (latexEquationList.value.length > 0) {
+			/* TODO
+			    	We need to remedy the fact that the equations are not being updated;
+		        A proper merging of the equations is needed with a diff UI for the user.
+		        For now, we do nothing.
+			 */
 		} else {
-			updateLatexFormula([]);
+			const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
+			if (latexFormula) {
+				updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
+			}
 		}
 	},
 	{ deep: true }
@@ -557,15 +529,6 @@ const updatePetriNet = async (model: Model) => {
 		await renderer.render();
 	}
 	updateLatexFormula(latexEquationList.value);
-};
-
-const validateMathML = async (mathMLStringList: string[], editMode: boolean) => {
-	isMathMLValid.value = false;
-	if (mathMLStringList.length === 0) {
-		isMathMLValid.value = true;
-	} else if (editMode) {
-		isMathMLValid.value = true;
-	}
 };
 
 // Update the model from the new mathml equations
