@@ -41,54 +41,71 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import {
-	// extractMapping,
-	// extractStateMatrixData,
-	extractTransitionMatrixData
-} from '@/model-representation/petrinet/petrinet-service';
+import { extractTransitionMatrixData } from '@/model-representation/petrinet/petrinet-service';
 import { createMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
 
 const props = defineProps<{
 	model: Model;
+	id: string;
 }>();
 
 let colDimensions: string[] = [];
 let rowDimensions: string[] = [];
 
 const matrix = ref();
-const chosenCol = ref(colDimensions[0]);
-const chosenRow = ref(rowDimensions[0]);
+const chosenCol = ref('');
+const chosenRow = ref('');
 
 function configureMatrix() {
 	const transitionMatrixData = extractTransitionMatrixData(
 		props.model,
 		props.model.model.transitions.map(({ id }) => id)
 	);
-	console.log(transitionMatrixData);
 
-	const matrixAttributes = createMatrix(transitionMatrixData, ['Pop'], ['id']); // colDimensions, rowDimensions);
+	// Get stratified ids from the chosen base id
+	const rowAndCol = props.model?.semantics?.span?.[0]?.map
+		.filter((id: string) => id[1] === props.id)
+		.map((d) => d[0]);
+
+	// Assign dimensions relevant to the ids
+	const rowAndColDimensions = props.model.semantics?.typing?.map.filter((id) =>
+		rowAndCol.includes(id[0])
+	);
+
+	if (rowAndColDimensions) {
+		// Assuming column id is the first one
+		const colId = rowAndColDimensions[0][0];
+		let rowId: string | null = null;
+
+		for (let i = 0; i < rowAndColDimensions?.length; i++) {
+			// If other id is recognized it is the row id
+			if (!rowId && rowAndColDimensions[i][0] !== colId) {
+				rowId = rowAndColDimensions[i][0];
+			}
+
+			// Push dimension
+			if (colId === rowAndColDimensions[i][0]) {
+				colDimensions.push(rowAndColDimensions[i][1]);
+			} else if (rowId === rowAndColDimensions[i][0]) {
+				rowDimensions.push(rowAndColDimensions[i][1]);
+			}
+		}
+	}
+
+	const matrixAttributes = createMatrix(transitionMatrixData, colDimensions, rowDimensions);
 	matrix.value = matrixAttributes.matrix;
 	colDimensions = matrixAttributes.colDimensions;
 	rowDimensions = matrixAttributes.rowDimensions;
 
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
-
-	console.log(matrix.value);
 }
 
 onMounted(() => {
 	configureMatrix();
 });
-
-// const stateList = extractMapping(props.model, 'S_Rgn_1');
-// const stateList2 = extractMapping(props.model, 'rec_Rgn1_dis');
-// console.log(stateList, stateList2);
-
-// const data = extractStateMatrixData(props.model, stateList)
-// console.log(data);
 </script>
 
 <style scoped>
