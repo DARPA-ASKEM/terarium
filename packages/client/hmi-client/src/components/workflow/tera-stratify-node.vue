@@ -15,6 +15,7 @@ section {
 	margin-bottom: 1rem;
 	gap: 0.5rem;
 	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
 
 img {
