@@ -1,7 +1,9 @@
 <template>
 	<template v-if="model">
 		<h5>{{ model.name }}</h5>
-		<tera-model-diagram :model="model" :is-editable="false" nodePreview />
+		<div class="container">
+			<tera-model-diagram :model="model" :is-editable="false" nodePreview />
+		</div>
 	</template>
 	<Dropdown
 		v-else
@@ -56,6 +58,12 @@ onMounted(async () => {
 	padding-bottom: 0.5rem;
 }
 
+.container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: hidden;
+	margin-top: 0.5rem;
+}
 .p-button-sm.p-button-outlined {
 	border: 1px solid var(--surface-border);
 }
