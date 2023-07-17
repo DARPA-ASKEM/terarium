@@ -434,7 +434,7 @@
 				<AccordionTab v-if="model" header="Model configurations">
 					<tera-stratified-model-configuration
 						v-if="model.semantics?.span"
-						:model="stratify_output"
+						:model="model"
 						:is-editable="props.isEditable"
 					/>
 					<tera-model-configuration v-else :model="model" :is-editable="props.isEditable" />
@@ -540,7 +540,7 @@ import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
 import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
-import { stratify_output } from '@/temp/models/stratify_output';
+// import { stratify_output } from '@/temp/models/stratify_output';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
