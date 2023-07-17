@@ -408,6 +408,38 @@ export const updateTransition = (
 	});
 };
 
+// function to replace the content inside the tags of a mathml expression
+export const replaceValuesInMathML = (
+	mathmlExpression: string,
+	wordToReplace: string,
+	replaceWord: string
+): string => {
+
+	let expressionBuilder = '';
+	let isTag = false;
+	let content = '';
+
+	[...mathmlExpression].forEach((c) => {
+		if (!isTag && c === '<') {
+			isTag = true;
+		}
+		if (isTag && c === '>') {
+			isTag = false;
+		}
+
+		if (isTag) {
+			expressionBuilder += content.replaceAll(wordToReplace, replaceWord);
+			content = '';
+			expressionBuilder += c;
+		}
+		if (!isTag) {
+			content += c;
+		}
+	});
+
+	return expressionBuilder;
+};
+
 // Replace typing semantics
 export const addTyping = (amr: Model, typing: TypingSemantics) => {
 	if (amr.semantics) {
