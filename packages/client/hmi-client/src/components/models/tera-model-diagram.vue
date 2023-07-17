@@ -196,7 +196,7 @@ import {
 	convertAMRToACSet,
 	convertToIGraph
 } from '@/model-representation/petrinet/petrinet-service';
-import { mathmlToAMR } from '@/services/models/extractions';
+import { latexToAMR } from '@/services/models/extractions';
 import { separateEquations } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import Button from 'primevue/button';
@@ -578,7 +578,7 @@ const validateMathML = async (mathMLStringList: string[], editMode: boolean) => 
 
 // Update the model from the new mathml equations
 const onClickUpdateModel = async () => {
-	const model = (await mathmlToAMR(mathmlequations.value)) as Model;
+	const model = (await latexToAMR(mathmlequations.value)) as Model;
 	if (model) {
 		await updatePetriNet(model);
 	}
