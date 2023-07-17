@@ -332,8 +332,7 @@ const setNewObservables = (
 	emit('update-model-observables', observervablesList.value);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const updateRateEquation = (index: number, latexEquation: string, mathml: string) => {
+const updateRateEquation = (_index: number, latexEquation: string) => {
 	editNodeObj.value.expression = latexEquation;
 };
 
