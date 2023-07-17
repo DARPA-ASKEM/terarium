@@ -3,10 +3,10 @@ package software.uncharted.terarium.hmiserver.resources.extractionservice;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 import software.uncharted.terarium.hmiserver.proxies.extractionservice.ExtractionServiceProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -22,6 +22,10 @@ public class ExtractionResource {
 	@Inject
 	@RestClient
 	ExtractionServiceProxy extractionProxy;
+
+	@Inject
+	@RestClient
+	SkemaUnifiedProxy skemaUnifiedProxy;
 
 	/**
 	 * Retrieve the status of a simulation
@@ -58,6 +62,23 @@ public class ExtractionResource {
 	) {
 		return extractionProxy.postMathMLToAMR(framework, mathMLPayload);
 	};
+
+	/**
+	 * Post LaTeX to SKEMA Unified service to get an AMR
+	 * @param	framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param LaTeXEquations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR mode.
+	 * @return AMR model
+	 */
+	@POST
+	@Path("/latex-to-amr/{framework}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postLaTeXToAMR(
+		@DefaultValue("petrinet") @PathParam("framework") String framework,
+		List<String> LaTeXEquations
+	) {
+		return skemaUnifiedProxy.postLaTeXToAMR(LaTeXEquations, framework);
+	};
+
 
 	/**
 	 * Post a PDF to the extraction service
