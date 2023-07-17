@@ -243,7 +243,11 @@
 								<div>{{ observable.id ?? '--' }}</div>
 								<div>{{ observable.name ?? '--' }}</div>
 								<div>
-									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<katex-element
+										v-if="observable.expression"
+										:expression="observable.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -259,7 +263,11 @@
 								<div>{{ observable.id ?? '--' }}</div>
 								<div>{{ observable.name ?? '--' }}</div>
 								<div>
-									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<katex-element
+										v-if="observable.expression"
+										:expression="observable.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -301,7 +309,11 @@
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
 								<div>
-									<katex-element v-if="transition.expression" :expression="transition.expression" />
+									<katex-element
+										v-if="transition.expression"
+										:expression="transition.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -319,7 +331,11 @@
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
 								<div>
-									<katex-element v-if="transition.expression" :expression="transition.expression" />
+									<katex-element
+										v-if="transition.expression"
+										:expression="transition.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
