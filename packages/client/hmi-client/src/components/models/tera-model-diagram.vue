@@ -206,8 +206,14 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
+import {
+	NestedPetrinetRenderer,
+	extractNestedMap
+} from '@/model-representation/petrinet/nested-petrinet-renderer';
+
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
+	isStratifiedAMR,
 	convertAMRToACSet,
 	convertToIGraph,
 	updateExistingModelContent
@@ -481,16 +487,32 @@ watch(
 	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+		let graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+
+		console.log('is stratified', isStratifiedAMR(props.model));
 
 		// Create renderer
-		renderer = new PetrinetRenderer({
-			el: graphElement.value as HTMLDivElement,
-			useAStarRouting: false,
-			useStableZoomPan: true,
-			runLayout: runDagreLayout,
-			dragSelector: 'no-drag'
-		});
+		if (isStratifiedAMR(props.model)) {
+			console.log('hihi', extractNestedMap(props.model));
+			graphData = convertToIGraph(props.model.semantics?.span?.[0].system);
+
+			renderer = new NestedPetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dragSelector: 'no-drag',
+				nestedMap: extractNestedMap(props.model)
+			});
+		} else {
+			renderer = new PetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dragSelector: 'no-drag'
+			});
+		}
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
 			const data = selection.datum();
