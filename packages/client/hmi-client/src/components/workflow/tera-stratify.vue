@@ -22,6 +22,7 @@
 				class="stratify-button"
 				label="Stratify"
 				icon="pi pi-arrow-right"
+				iconPos="right"
 				@click="doStratify"
 				:disabled="stratifyStep !== 3"
 			/>
@@ -101,12 +102,11 @@
 							</div>
 							<div class="buttons">
 								<Button
-									class="p-button-sm p-button-outlined"
+									class="p-button-outlined"
 									label="Add another strata group"
 									icon="pi pi-plus"
 								/>
 								<Button
-									class="p-button-sm"
 									:disabled="!(strataType && labels)"
 									label="Generate strata"
 									@click="generateStrataModel"
