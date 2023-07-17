@@ -1,4 +1,6 @@
+import { ProjectPages } from '@/types/Project';
 import { Tab } from '@/types/common';
+import { isEqual } from 'lodash';
 import { defineStore } from 'pinia';
 
 export const useTabStore = defineStore('tabs', {
@@ -17,6 +19,11 @@ export const useTabStore = defineStore('tabs', {
 			// Create a new tab set for this context if there is none, otherwise add a new tab
 			if (!this.getTabs(context)) {
 				this.setTabs(context, [newTab]);
+			} else if (
+				isEqual(newTab, { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: '' })
+			) {
+				// Add overview tab as the first tab if it is added
+				this.getTabs(context).unshift(newTab);
 			} else this.getTabs(context).push(newTab);
 
 			// Go to last tab index
