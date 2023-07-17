@@ -45,7 +45,7 @@
 				<div class="instructions">
 					<div class="buttons" v-if="strataModel">
 						<Button
-							class="p-button-sm p-button-outlined"
+							class="p-button-outlined"
 							label="Go back"
 							icon="pi pi-arrow-left"
 							:disabled="stratifyStep === 0"
@@ -53,16 +53,16 @@
 						/>
 						<Button
 							v-if="stratifyStep === 1"
-							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
+							iconPos="right"
 							@click="stratifyStep = 2"
 						/>
 						<Button
 							v-if="typedBaseModel && stratifyStep === 2"
-							class="p-button-sm"
 							label="Continue to step 3: Manage interactions"
 							icon="pi pi-arrow-right"
+							iconPos="right"
 							@click="stratifyStep = 3"
 						/>
 					</div>
