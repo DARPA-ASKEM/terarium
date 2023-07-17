@@ -18,6 +18,13 @@
 					:active="stratifyView === StratifyView.Output"
 				/>
 			</span>
+			<Button
+				class="stratify-button"
+				label="Stratify"
+				icon="pi pi-arrow-right"
+				@click="doStratify"
+				:disabled="stratifyStep !== 3"
+			/>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -45,7 +52,7 @@
 							@click="goBack"
 						/>
 						<Button
-							v-if="!typedBaseModel"
+							v-if="stratifyStep === 1"
 							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
@@ -70,7 +77,7 @@
 								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
-								@all-nodes-typed="(typedModel) => onAllNodesTyped(typedModel)"
+								@model-updated="(value) => (typedBaseModel = value)"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -115,6 +122,7 @@
 									:base-model="typedBaseModel"
 									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
 									:show-reflexives-toolbar="stratifyStep === 3"
+									@model-updated="(value) => (typedStrataModel = value)"
 								/>
 							</AccordionTab>
 						</Accordion>
@@ -126,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
@@ -139,9 +148,14 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel } from '@/services/model';
+import { getModel, createModel, reconstructAMR } from '@/services/model';
+import { addAsset } from '@/services/project';
+import { stratify } from '@/model-representation/petrinet/petrinet-service';
+import useResourcesStore from '@/stores/resources';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+
+const resourceStore = useResourcesStore();
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -162,6 +176,7 @@ const strataModelTypeSystem = computed<TypeSystem | undefined>(
 	() => strataModel.value?.semantics?.typing?.system
 );
 const typedBaseModel = ref<Model | null>(null);
+const typedStrataModel = ref<Model | null>(null);
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -174,8 +189,23 @@ function generateStrataModel() {
 	}
 }
 
-function onAllNodesTyped(typedModel: Model) {
-	typedBaseModel.value = typedModel;
+async function doStratify() {
+	if (typedBaseModel.value && typedStrataModel.value) {
+		const amrBase = (await stratify(typedBaseModel.value, typedStrataModel.value)) as Model;
+		const amr = (await reconstructAMR({ model: amrBase })) as Model;
+
+		// Put typing and span back in
+		if (amr.semantics && amr.semantics.ode) {
+			amr.semantics.span = _.cloneDeep(amrBase.semantics?.span);
+			amr.semantics.typing = _.cloneDeep(amrBase.semantics?.typing);
+		}
+
+		// Create model and asssociate
+		const response = await createModel(amr);
+		const newModelId = response?.id;
+		const projectId = resourceStore.activeProject?.id as string;
+		await addAsset(projectId, 'models', newModelId);
+	}
 }
 
 function goBack() {
@@ -291,5 +321,9 @@ section {
 
 .generate-strata-model {
 	padding: 0 0.5rem 0 0.5rem;
+}
+
+.stratify-button {
+	margin-left: auto;
 }
 </style>
