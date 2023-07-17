@@ -138,6 +138,7 @@
 							:id="ob.id"
 							:name="ob.name"
 							:is-editing-eq="isEditingObservables"
+							:show-metadata="true"
 							@equation-updated="setNewObservables"
 							@delete="deleteObservable"
 							ref="observablesRefs"
@@ -167,12 +168,26 @@
 			<template #header>
 				<h4>Add/Edit {{ editNodeObj.nodeType }}</h4>
 			</template>
-			<div>
-				<InputText v-model="editNodeObj.id" placeholder="Id" />
+			<div class="modal-input-container">
+				<span class="modal-input-label">ID: </span>
+				<InputText class="modal-input" v-model="editNodeObj.id" placeholder="Id" />
 			</div>
-			<div>
-				<InputText v-model="editNodeObj.name" placeholder="Name" />
+			<div class="modal-input-container">
+				<span class="modal-input-label">Name: </span>
+				<InputText class="modal-input" v-model="editNodeObj.name" placeholder="Name" />
 			</div>
+			<template #math-editor>
+				<div class="modal-input-container">
+					<span class="modal-input-label">Transition Expression: </span>
+					<tera-math-editor
+						:keep-open="true"
+						:is-editing-eq="true"
+						:latex-equation="editNodeObj.expression"
+						@equation-updated="updateRateEquation"
+					>
+					</tera-math-editor>
+				</div>
+			</template>
 			<template #footer>
 				<Button label="Submit" :disabled="editNodeObj.id === ''" @click="addNode()" />
 				<Button label="Cancel" class="p-button-secondary" @click="openEditNode = false" />
@@ -246,10 +261,11 @@ interface AddStateObj {
 	id: string;
 	name: string;
 	nodeType: string;
+	expression: string;
 }
 
 const openEditNode = ref<boolean>(false);
-const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '' });
+const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '', expression: '' });
 let previousId: any = null;
 
 const addObservable = () => {
@@ -316,6 +332,11 @@ const setNewObservables = (
 	};
 	observervablesList.value[index] = obs;
 	emit('update-model-observables', observervablesList.value);
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const updateRateEquation = (index: number, latexEquation: string, mathml: string) => {
+	editNodeObj.value.expression = latexEquation;
 };
 
 const cancelEditEquations = () => {
@@ -508,10 +529,14 @@ watch(
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
 			const data = selection.datum();
+			const rate = props.model?.semantics?.ode.rates.find((d) => d.target === data.id);
+
+			// Find The EQ here.
 			editNodeObj.value = {
 				id: data.id,
 				name: data.label,
-				nodeType: data.data.type
+				nodeType: data.data.type,
+				expression: rate?.expression ? rate.expression : ''
 			};
 			previousId = data.id;
 			openEditNode.value = true;
@@ -615,12 +640,12 @@ const resetZoom = async () => {
 };
 
 const prepareStateEdit = () => {
-	editNodeObj.value = { id: '', name: '', nodeType: NodeType.State };
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.State, expression: '' };
 	openEditNode.value = true;
 };
 
 const prepareTransitionEdit = () => {
-	editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition };
+	editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition, expression: '' };
 	openEditNode.value = true;
 };
 
@@ -636,7 +661,7 @@ const addNode = async () => {
 			renderer.addNodeCenter(node.nodeType, node.id, node.name);
 		}
 	} else {
-		renderer.updateNode(previousId, node.id, node.name);
+		renderer.updateNode(previousId, node.id, node.name, node.expression);
 		previousId = null;
 	}
 
@@ -805,5 +830,25 @@ section math-editor {
 
 .edit-modal:deep(main) {
 	max-width: 50rem;
+}
+
+.modal-input-container {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.modal-input {
+	height: 25px;
+	padding-left: 5px;
+	margin: 5px;
+	align-items: baseline;
+}
+
+.modal-input-label {
+	margin-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	align-items: baseline;
 }
 </style>
