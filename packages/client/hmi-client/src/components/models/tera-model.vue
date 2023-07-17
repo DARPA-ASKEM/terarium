@@ -52,6 +52,8 @@
 				class="p-button-sm"
 			/>
 		</template>
+		<!-- For testing dummy data -->
+		<!-- <tera-stratified-model-configuration :model="stratify_output" :is-editable="props.isEditable" /> -->
 		<template v-if="modelView === ModelView.DESCRIPTION">
 			<div class="container">
 				<Message class="inline-message" icon="none">
@@ -430,7 +432,12 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
+					<tera-stratified-model-configuration
+						v-if="model.semantics?.span"
+						:model="model"
+						:is-editable="props.isEditable"
+					/>
+					<tera-model-configuration v-else :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -532,6 +539,8 @@ import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
+import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
+// import { stratify_output } from '@/temp/models/stratify_output';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
@@ -799,6 +808,8 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		// Reset view of model page
+		isRenamingModel.value = false;
 		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
