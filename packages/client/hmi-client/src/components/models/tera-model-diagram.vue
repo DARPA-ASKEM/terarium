@@ -394,13 +394,13 @@ const cleanLatexEquations = (equations: Array<string>): Array<string> =>
 		.map((equation) =>
 			equation
 				// Refactor to make those replaceAll one regex change
-				.replaceAll('\\\\', '\\')
 				.replaceAll('\\begin', '')
 				.replaceAll('\\end', '')
 				.replaceAll('\\mathrm', '')
 				.replaceAll('\\right', '')
 				.replaceAll('\\left', '')
 				.replaceAll('{align}', '')
+				.replaceAll('=&', '=')
 				.trim()
 		);
 
