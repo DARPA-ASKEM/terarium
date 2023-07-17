@@ -93,25 +93,7 @@
 					</template>
 					<section v-if="enriched">
 						<div class="dataset-detail">
-							<div class="full-width">
-								<div class="detail-list">
-									<h2 class="title">Dataset Details</h2>
-									<ul>
-										<li><strong>Dataset name:</strong> {{ dataset.name }}</li>
-										<li><strong>Dataset overview:</strong> {{ dataset.description }}</li>
-										<li>
-											<strong>Dataset URL:</strong>
-											<a :href="dataset.source">{{ dataset.source }}</a>
-										</li>
-										<li>
-											<strong>Data size:</strong> This dataset currently contains
-											{{ csvContent?.length || '-' }} rows.
-										</li>
-									</ul>
-								</div>
-							</div>
 							<div class="column">
-								<h3 class="title">{{ headers.DESCRIPTION }}</h3>
 								<p class="content">{{ enrichedData.DESCRIPTION }}</p>
 
 								<h3 class="subtitle">{{ headers.AUTHOR_NAME }}</h3>
@@ -139,15 +121,6 @@
 							<div class="column">
 								<h3 class="subtitle">{{ headers.LICENSE }}</h3>
 								<p class="content">{{ enrichedData.LICENSE }}</p>
-							</div>
-							<div class="full-width">
-								<h3 class="subtitle">{{ `Extraction Table` }}</h3>
-								<DataTable :value="pd">
-									<Column field="col_name" header="Column Name"></Column>
-									<Column field="concept" header="Concept"></Column>
-									<Column field="unit" header="Unit"></Column>
-									<Column field="description" header="Description"></Column>
-								</DataTable>
 							</div>
 						</div>
 					</section>
@@ -230,19 +203,20 @@
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
-								@focus="setSuggestedValue(index, '')"
+								v-model="column.metadata.unit"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].metadata?.unit)"
 							/>
-							<div class="variables-value" v-else>-</div>
-							<!-- grounding -->
+							<div class="variables-value" v-else>{{ column.metadata?.unit ?? '--' }}</div>
+							<!-- Concept -->
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
-								v-model="groundingValues[index][0]"
-								@focus="setSuggestedValue(index, originalGroundingValues[0])"
+								v-model="column.metadata.concept"
+								@focus="setSuggestedValue(index, column.metadata?.concept)"
 							/>
 							<div class="variables-value" v-else>
-								{{ groundingValues[index][0] }}
+								{{ column.metadata?.concept ?? '--' }}
 							</div>
 							<!-- extractions - field does not exist in tds yet -->
 							<InputText
@@ -251,7 +225,7 @@
 								v-if="rowEditList[index]"
 								@focus="setSuggestedValue(index, '')"
 							/>
-							<div class="variables-value" v-else></div>
+							<div class="variables-value" v-else>{{ column.metadata?.extraction ?? '--' }}</div>
 							<div v-if="rowEditList[index]" class="row-edit-buttons">
 								<Button
 									text
@@ -281,7 +255,7 @@
 								<span>Suggested value</span>
 								<div>
 									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata.documents[0].title }}
+										<i class="pi pi-file" />{{ dataset.metadata?.documents[0].title }}
 									</div>
 									<div class="suggested-value">{{ suggestedValues[index] }}</div>
 								</div>
@@ -301,6 +275,17 @@
 							</div>
 						</div>
 					</div>
+				</AccordionTab>
+				<AccordionTab v-if="pd.length > 0">
+					<template #header>
+						<header id="ExtractionTable">Extraction Table</header>
+					</template>
+					<DataTable :value="pd">
+						<Column field="col_name" header="Column Name"></Column>
+						<Column field="concept" header="Concept"></Column>
+						<Column field="unit" header="Unit"></Column>
+						<Column field="description" header="Description"></Column>
+					</DataTable>
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -346,6 +331,7 @@ import Menu from 'primevue/menu';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+// import { isEqual } from 'lodash';
 
 const enrichedData = ref();
 
@@ -364,6 +350,27 @@ const props = defineProps<{
 const gotEnrichedData = (payload) => {
 	enrichedData.value = payload;
 	enriched.value = true;
+	console.log(editableRows.value);
+	console.log(Object.keys(enrichedData.value.DATA_PROFILING_RESULT).length);
+	console.log(enrichedData.value.DATA_PROFILING_RESULT.length);
+
+	// Lets try to match to the variables:
+	// for (let i = 0; i < editableRows.value.length; i++){
+	// 	for (let j = 0; j < Object.keys(enrichedData.value.DATA_PROFILING_RESULT).length; j++){
+	// 		if (isEqual(editableRows.value[i].name.toLowerCase(), Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j].toLowerCase())){
+	// 			console.log("Found equiv");
+	// 			console.log(Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]);
+	// 			console.log(enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]]);
+	// 			editableRows.value[i].description = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].description; //enrichedData.value[j].description
+	// 			if (!editableRows.value[i].metadata){
+	// 				editableRows.value[i].metadata = {};
+	// 			}
+	// 			editableRows.value[i].metadata.unit = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].unit;
+	// 			editableRows.value[i].metadata.concept = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].concept;
+	// 			editableRows.value[i].metadata.groundings = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].groundings;
+	// 		}
+	// 	}
+	// }
 };
 
 const pd = computed(() =>
@@ -371,7 +378,6 @@ const pd = computed(() =>
 );
 
 const headers = ref({
-	DESCRIPTION: 'Project Description',
 	AUTHOR_NAME: 'Author Name',
 	AUTHOR_EMAIL: 'Author Email',
 	DATE: 'Date of Data',
