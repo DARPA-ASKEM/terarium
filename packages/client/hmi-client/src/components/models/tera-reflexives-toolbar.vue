@@ -11,7 +11,9 @@
 					:options="reflexiveNodeOptions[stateType]"
 					optionLabel="id"
 					:model-value="statesToAddReflexives[transition.id]"
-					@update:model-value="(newValue) => updateStatesToAddReflexives(newValue, transition.id)"
+					@update:model-value="
+						(newValue) => updateStatesToAddReflexives(newValue, transition, stateType)
+					"
 				/>
 			</div>
 		</div>
@@ -71,17 +73,29 @@ const stateId2NameMap = computed<{ [id: string]: string }>(() => {
 });
 
 function updateStatesToAddReflexives(
-	newValue: { id: string; name: string }[],
-	typeOfTransition: string
+	newValue: {
+		id: string; // id of the state to which to add reflexive
+		name: string; // name of the state to which to add reflexive
+	}[],
+	typeOfTransition: Transition, // e.g. infect, recover
+	typeIdOfState: string // e.g. pop
 ) {
-	statesToAddReflexives.value[typeOfTransition] = newValue;
+	statesToAddReflexives.value[typeOfTransition.id] = newValue;
 	const updatedTypeMap = typedModel.value.semantics?.typing?.map;
 	const updatedTypeSystem = typedModel.value.semantics?.typing?.system;
 
 	if (updatedTypeMap && updatedTypeSystem) {
 		newValue.forEach((state) => {
-			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition]}${state.id}${state.id}`;
-			addReflexives(typedModel.value, state.id, newTransitionId);
+			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition.id]}${state.id}${
+				state.id
+			}`;
+			// For the type of reflexive transition that we are adding, get the number of inputs and outputs that share the same type as the state that we are updating
+			// E.g. if we are adding an 'Infect' reflexive to a node of type 'Pop', get the number of 'Pop' inputs and outputs for 'Infect'
+			const numInputsOfStateType = typeOfTransition.input.filter((i) => i === typeIdOfState).length;
+			// const numOutputsOfStateType = typeOfTransition.input.filter(i => i === typeIdOfState).length;
+			// Assume for now that the number of inputs and outputs for a given type are always equal, though in general this may not be the case
+			// TODO: implement logic for more generalized case where the above assumption is not true
+			addReflexives(typedModel.value, state.id, newTransitionId, numInputsOfStateType);
 			const reflexive = typedModel.value.model.transitions.find((t) => t.id === newTransitionId);
 
 			const transition = props.modelToCompare?.semantics?.typing?.system.transitions.find(
@@ -94,7 +108,7 @@ function updateStatesToAddReflexives(
 					reflexive.id
 				);
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
-					updatedTypeMap.push([newTransitionId, typeOfTransition]);
+					updatedTypeMap.push([newTransitionId, typeOfTransition.id]);
 				}
 				if (!updatedTypeSystem.transitions.find((t) => t.id === typeOfTransition)) {
 					updatedTypeSystem.transitions.push(transition);
@@ -141,7 +155,7 @@ watch(
 				}
 			}
 			props.modelToUpdate.model.states.forEach((state) => {
-				// get type of state for each state in strata model
+				// get type of state for each state in model to update model
 				const type: string =
 					props.modelToUpdate.semantics?.typing?.map.find((m) => m[0] === state.id)?.[1] ?? '';
 				// for each unassigned transition type, check if inputs or ouputs have the type of this state
