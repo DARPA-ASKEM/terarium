@@ -63,15 +63,14 @@
 					<tera-model-node
 						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
-						:modelId="newAssetId"
+						:dropped-model-id="droppedAssetId"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
-						:modelId="newAssetId"
-						:datasetId="newAssetId"
+						:dropped-dataset-id="droppedAssetId"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
@@ -248,7 +247,7 @@ let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
 const newEdge = ref<WorkflowEdge | undefined>();
-const newAssetId = ref<string | null>(null);
+const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
@@ -317,7 +316,7 @@ const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 async function selectModel(node: WorkflowNode, data: { id: string }) {
-	newAssetId.value = null;
+	droppedAssetId.value = null;
 	node.state.modelId = data.id;
 
 	// FIXME: Need additional design to work out exactly what to show. June 2023
@@ -345,7 +344,7 @@ async function updateWorkflowName() {
 }
 
 async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
-	newAssetId.value = null;
+	droppedAssetId.value = null;
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
@@ -521,7 +520,7 @@ function onDrop(event) {
 		}
 
 		workflowService.addNode(wf.value, operation, newNodePosition);
-		newAssetId.value = assetId;
+		droppedAssetId.value = assetId;
 	}
 }
 

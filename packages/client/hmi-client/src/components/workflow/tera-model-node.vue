@@ -27,7 +27,7 @@ import { WorkflowNode } from '@/types/workflow';
 const props = defineProps<{
 	node: WorkflowNode;
 	models: Model[];
-	modelId: null | string;
+	droppedModelId: null | string;
 }>();
 
 const emit = defineEmits(['select-model']);
@@ -56,7 +56,7 @@ onMounted(async () => {
 	}
 
 	// If model is drag and dropped from resource panel
-	if (props.modelId) await getModelById(props.modelId);
+	if (props.droppedModelId) await getModelById(props.droppedModelId);
 });
 </script>
 
