@@ -67,7 +67,8 @@ const CHART_OPTIONS = {
 			ticks: {
 				color: '#aaa',
 				maxTicksLimit: 3,
-				includeBounds: true
+				includeBounds: true,
+				precision: 4
 			},
 			grid: {
 				color: '#fff',
