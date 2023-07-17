@@ -41,6 +41,9 @@ const CHART_OPTIONS = {
 	devicePixelRatio: 4,
 	maintainAspectRatio: false,
 	pointStyle: false,
+	animation: {
+		duration: 0
+	},
 	plugins: {
 		legend: {
 			display: false
@@ -64,7 +67,8 @@ const CHART_OPTIONS = {
 			ticks: {
 				color: '#aaa',
 				maxTicksLimit: 3,
-				includeBounds: true
+				includeBounds: true,
+				precision: 4
 			},
 			grid: {
 				color: '#fff',
