@@ -1,12 +1,17 @@
 package software.uncharted.terarium.hmiserver.resources.extractionservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.util.List;
-import java.util.Map;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+
 
 import javax.inject.Inject;
 import software.uncharted.terarium.hmiserver.proxies.extractionservice.ExtractionServiceProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -22,6 +27,10 @@ public class ExtractionResource {
 	@Inject
 	@RestClient
 	ExtractionServiceProxy extractionProxy;
+
+	@Inject
+	@RestClient
+	SkemaUnifiedProxy skemaUnifiedProxy;
 
 	/**
 	 * Retrieve the status of a simulation
@@ -58,6 +67,31 @@ public class ExtractionResource {
 	) {
 		return extractionProxy.postMathMLToAMR(framework, mathMLPayload);
 	};
+
+	/**
+	 * Post LaTeX to SKEMA Unified service to get an AMR
+	 * @param	framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR mode.
+	 * @return (Model): The AMR model
+	 */
+	@POST
+	@Path("/latex-to-amr/{framework}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Model postLaTeXToAMR(
+		@DefaultValue("petrinet") @PathParam("framework") String framework,
+		List<String> equations
+	) {
+		/* Create the JSON request containing the LaTeX equations and model framework:
+		 * https://skema-unified.staging.terarium.ai/docs#/workflows/equations_to_amr_workflows_latex_equations_to_amr_post
+		 * ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
+		 */
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode request = mapper.createObjectNode();
+		request.put("model", framework);
+		request.set("equations", mapper.valueToTree(equations));
+		return skemaUnifiedProxy.postLaTeXToAMR(request);
+	};
+
 
 	/**
 	 * Post a PDF to the extraction service

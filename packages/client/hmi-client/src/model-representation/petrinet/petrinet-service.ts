@@ -420,6 +420,14 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
 
+// FIXME - We need a proper way to update the model
+export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => ({
+	...amrOld,
+	...amr,
+	name: amrOld.name,
+	metadata: amrOld.metadata
+});
+
 export const modifyModelTypeSystemforStratification = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
