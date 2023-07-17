@@ -61,7 +61,7 @@ const matrix = ref();
 const chosenCol = ref(colDimensions[0]);
 const chosenRow = ref(rowDimensions[0]);
 
-onMounted(() => {
+function configureMatrix() {
 	const transitionMatrixData = extractTransitionMatrixData(
 		props.model,
 		props.model.model.transitions.map(({ id }) => id)
@@ -77,6 +77,10 @@ onMounted(() => {
 	chosenRow.value = rowDimensions[0];
 
 	console.log(matrix.value);
+}
+
+onMounted(() => {
+	configureMatrix();
 });
 
 // const stateList = extractMapping(props.model, 'S_Rgn_1');
