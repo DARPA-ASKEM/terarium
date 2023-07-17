@@ -52,9 +52,8 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<!-- For testing dummy data
-			 <tera-stratified-model-configuration :model="stratify_output" :is-editable="props.isEditable" /> 
-		-->
+		<!-- For testing dummy data -->
+		<!-- <tera-stratified-model-configuration :model="stratify_output" :is-editable="props.isEditable" /> -->
 		<template v-if="modelView === ModelView.DESCRIPTION">
 			<div class="container">
 				<Message class="inline-message" icon="none">
