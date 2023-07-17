@@ -294,22 +294,6 @@ watch(
 		);
 		modelConfig.value = modelConfiguration;
 		modelColumnNames.value = modelColumnNameOptions;
-		// Preset the mapping for all model columns:
-		mapping.value = [];
-		modelColumnNames.value?.map((columnName) =>
-			mapping.value.push({
-				modelVariable: columnName,
-				datasetVariable: ''
-			})
-		);
-		const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
-		state.mapping = mapping.value;
-
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
 	},
 	{ immediate: true }
 );
