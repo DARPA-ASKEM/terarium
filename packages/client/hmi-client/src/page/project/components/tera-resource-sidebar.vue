@@ -168,7 +168,6 @@ const assets = computed((): IProjectAssetTabs => {
 			tabs.set(projectAssetType, new Set(typeAssets));
 		}
 	});
-
 	return tabs;
 });
 
