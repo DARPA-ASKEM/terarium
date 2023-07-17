@@ -51,23 +51,25 @@
 					/>
 				</section>
 				<div class="controls">
-					<span class="meta-property">Name:</span>
-					<span class="meta-property-value" @dblclick="nameInput = false"
-						><InputText
-							v-model="name"
-							class="control-button"
-							:disabled="nameInput"
-							@blur="nameInput = true"
-						></InputText
-					></span>
-					<span class="meta-property">ID:</span>
-					<span class="meta-property-value" @dblclick="idInput = false"
-						><InputText
-							v-model="id"
-							class="control-button"
-							:disabled="idInput"
-							@blur="idInput = true"
-						></InputText>
+					<span v-if="showMetadata">
+						<span class="meta-property">Name:</span>
+						<span class="meta-property-value" @dblclick="nameInput = false"
+							><InputText
+								v-model="name"
+								class="control-button"
+								:disabled="nameInput"
+								@blur="nameInput = true"
+							></InputText
+						></span>
+						<span class="meta-property">ID:</span>
+						<span class="meta-property-value" @dblclick="idInput = false"
+							><InputText
+								v-model="id"
+								class="control-button"
+								:disabled="idInput"
+								@blur="idInput = true"
+							></InputText>
+						</span>
 					</span>
 					<Button
 						class="control-button"
@@ -128,23 +130,31 @@ const props = defineProps({
 	},
 	index: {
 		type: Number,
-		required: true
+		default: 0
 	},
 	id: {
 		type: String,
-		required: false,
 		default: 'New Id'
 	},
 	name: {
 		type: String,
-		required: false,
 		default: 'Name'
+	},
+	showMetadata: {
+		type: Boolean,
+		default: false
+	},
+	keepOpen: {
+		type: Boolean,
+		default: false
 	}
 });
 
 const id = ref(props.id);
 const name = ref(props.name);
-const expandedDiv = computed(() => (isEditingEquation.value ? `expanded-div` : ``));
+const expandedDiv = computed(() =>
+	props.keepOpen || isEditingEquation.value ? `expanded-div` : ``
+);
 
 defineExpose({
 	mathLiveField,
@@ -217,6 +227,10 @@ onMounted(() => {
 		isEditingEquation.value = true;
 	}
 	latexTextInput.value = props.latexEquation;
+	if (props.keepOpen) {
+		isEditingEquation.value = true;
+		hover.value = false;
+	}
 	renderEquations();
 });
 </script>
