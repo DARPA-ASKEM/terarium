@@ -148,7 +148,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		}
 	};
 	transitions.forEach((t, i) =>
-		updateRateExpressionWithParam(model, t as PetriNetTransition, parameters[i].id)
+		updateRateExpressionWithParam(model, t as PetriNetTransition, parameters[i].id, '')
 	);
 	return model;
 }
@@ -273,7 +273,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 		}
 	};
 	transitions.forEach((t, i) =>
-		updateRateExpressionWithParam(model, t as PetriNetTransition, parameters[i].id)
+		updateRateExpressionWithParam(model, t as PetriNetTransition, parameters[i].id, '')
 	);
 	return model;
 }
