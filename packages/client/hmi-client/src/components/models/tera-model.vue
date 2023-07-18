@@ -986,8 +986,8 @@ function cancelEdit() {
 function updateTable(tableType, idx, key, value) {
 	transientTableValue.value = {
 		...transientTableValue.value,
-		tableType: tableType,
-		idx: idx,
+		tableType,
+		idx,
 		updateProperty: {
 			...transientTableValue.value?.updateProperty,
 			[key]: value
