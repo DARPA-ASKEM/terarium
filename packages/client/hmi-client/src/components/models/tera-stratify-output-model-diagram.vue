@@ -7,7 +7,7 @@
 						<template #end>
 							<Button
 								@click="toggleCollapsedView"
-								label="Collapsed view"
+								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
 								class="p-button-sm p-button-outlined toolbar-button"
 							/>
 						</template>
@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	NodeData,
@@ -80,50 +80,55 @@ function getLegendKeyStyle(id: string) {
 		backgroundColor: getNodeTypeColor(id)
 	};
 }
-function toggleCollapsedView() {
+async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
+		isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
+	);
+	// Render graph
+	if (renderer) {
+		renderer.isGraphDirty = true;
+		await renderer.setData(graphData);
+		await renderer.render();
+	}
 }
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
-watch(
-	[() => props.model, graphElement, isCollapsed],
-	async () => {
-		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-			isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
-		);
+onMounted(async () => {
+	if (props.model === null || graphElement.value === null) return;
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
+		isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
+	);
 
-		const nestedMap = props.model.semantics?.span?.[0].map.reduce(
-			(childMap, [stratNode, baseNode]) => {
-				if (!childMap[baseNode]) {
-					childMap[baseNode] = [];
-				}
-				childMap[baseNode].push(stratNode);
-				return childMap;
-			},
-			{}
-		);
-		// Create renderer
-		if (!renderer) {
-			renderer = new NestedPetrinetRenderer({
-				el: graphElement.value as HTMLDivElement,
-				useAStarRouting: false,
-				useStableZoomPan: true,
-				runLayout: runDagreLayout,
-				dragSelector: 'no-drag',
-				nestedMap
-			});
-		} else {
-			renderer.isGraphDirty = true;
-		}
+	const nestedMap = props.model.semantics?.span?.[0].map.reduce(
+		(childMap, [stratNode, baseNode]) => {
+			if (!childMap[baseNode]) {
+				childMap[baseNode] = [];
+			}
+			childMap[baseNode].push(stratNode);
+			return childMap;
+		},
+		{}
+	);
+	// Create renderer
+	if (!renderer) {
+		renderer = new NestedPetrinetRenderer({
+			el: graphElement.value as HTMLDivElement,
+			useAStarRouting: false,
+			useStableZoomPan: true,
+			runLayout: runDagreLayout,
+			dragSelector: 'no-drag',
+			nestedMap
+		});
+	} else {
+		renderer.isGraphDirty = true;
+	}
 
-		// Render graph
-		await renderer?.setData(graphData);
-		await renderer?.render();
-	},
-	{ deep: true }
-);
+	// Render graph
+	await renderer?.setData(graphData);
+	await renderer?.render();
+});
 </script>
 
 <style scoped>
