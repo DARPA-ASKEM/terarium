@@ -1,27 +1,23 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
 	<tera-asset :name="'Calibrate'" is-editable stretch-content>
-		<template #nav>
-			<tera-asset-nav :show-header-links="false">
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Input"
-							icon="pi pi-sign-in"
-							@click="calibrationView = CalibrationView.INPUT"
-							:active="calibrationView === CalibrationView.INPUT"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Output"
-							icon="pi pi-sign-out"
-							@click="calibrationView = CalibrationView.OUTPUT"
-							:active="calibrationView === CalibrationView.OUTPUT"
-						/>
-					</span>
-				</template>
-			</tera-asset-nav>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Input"
+					icon="pi pi-sign-in"
+					@click="calibrationView = CalibrationView.INPUT"
+					:active="calibrationView === CalibrationView.INPUT"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Output"
+					icon="pi pi-sign-out"
+					@click="calibrationView = CalibrationView.OUTPUT"
+					:active="calibrationView === CalibrationView.OUTPUT"
+				/>
+			</span>
 		</template>
 		<Accordion
 			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
@@ -135,7 +131,6 @@ import { getRunResult } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { CsvAsset, ModelConfiguration } from '@/types/Types';
