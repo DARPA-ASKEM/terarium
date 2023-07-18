@@ -1,27 +1,23 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate & Simulate (Probabilistic)'" is-editable stretch-content>
-		<template #nav>
-			<tera-asset-nav :show-header-links="false">
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Input"
-							icon="pi pi-sign-in"
-							@click="calibrationView = CalibrationView.INPUT"
-							:active="calibrationView === CalibrationView.INPUT"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Output"
-							icon="pi pi-sign-out"
-							@click="calibrationView = CalibrationView.OUTPUT"
-							:active="calibrationView === CalibrationView.OUTPUT"
-						/>
-					</span>
-				</template>
-			</tera-asset-nav>
+	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" is-editable stretch-content>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Input"
+					icon="pi pi-sign-in"
+					@click="calibrationView = CalibrationView.INPUT"
+					:active="calibrationView === CalibrationView.INPUT"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Output"
+					icon="pi pi-sign-out"
+					@click="calibrationView = CalibrationView.OUTPUT"
+					:active="calibrationView === CalibrationView.OUTPUT"
+				/>
+			</span>
 		</template>
 		<Accordion
 			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
@@ -32,10 +28,10 @@
 				<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
 			</AccordionTab>
 			<AccordionTab header="Mapping">
-				<DataTable class="p-datatable-xsm" :value="mapping">
+				<DataTable class="mapping-table" :value="mapping">
 					<Column field="modelVariable">
 						<template #header>
-							<span class="column-header">MODEL VARIABLE</span>
+							<span class="column-header">Model variable</span>
 						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
@@ -49,7 +45,7 @@
 					</Column>
 					<Column field="datasetVariable">
 						<template #header>
-							<span class="column-header">DATASET VARIABLE</span>
+							<span class="column-header">Dataset variable</span>
 						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
@@ -64,7 +60,7 @@
 				</DataTable>
 				<div>
 					<Button
-						class="p-button-sm p-button-outlined"
+						class="p-button-sm p-button-text"
 						icon="pi pi-plus"
 						label="Add mapping"
 						@click="addMapping"
@@ -120,6 +116,10 @@
 				</table>
 			</AccordionTab>
 		</Accordion>
+		<section v-else-if="!modelConfig" class="emptyState">
+			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+			<p class="helpMessage">Connect a model configuration and dataset</p>
+		</section>
 	</tera-asset>
 </template>
 
@@ -134,7 +134,6 @@ import { getRunResult, getRunResultCiemss } from '@/services/models/simulation-s
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { CsvAsset, ModelConfiguration } from '@/types/Types';
@@ -266,6 +265,15 @@ watch(
 	padding-top: 1rem;
 }
 
+.mapping-table:deep(td) {
+	padding: 0rem 0.25rem 0.5rem 0rem !important;
+	border: none !important;
+}
+.mapping-table:deep(th) {
+	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
+	border: none !important;
+	width: 50%;
+}
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -287,8 +295,27 @@ th {
 	text-align: left;
 }
 .column-header {
+	color: var(--text-color-primary);
+	font-size: var(--font-body-small);
+	font-weight: var(--font-weight-semibold);
+}
+.emptyState {
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	margin-top: 15rem;
+	gap: 0.5rem;
+}
+
+.helpMessage {
 	color: var(--text-color-subdued);
-	font-size: 12px;
-	font-weight: 400;
+	font-size: var(--font-body-small);
+	width: 90%;
+	margin-top: 1rem;
+}
+img {
+	width: 20%;
 }
 </style>
