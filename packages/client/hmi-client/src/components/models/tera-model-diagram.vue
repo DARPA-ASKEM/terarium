@@ -118,9 +118,9 @@
 								class="p-button-sm p-button-outlined edit-button"
 							/>
 							<Button
-								v-if="observervablesList.length !== 0"
 								@click="updateObservables"
 								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
+								:disabled="observervablesList.filter((ob) => ob.id).length === 0"
 								:class="
 									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
 								"
