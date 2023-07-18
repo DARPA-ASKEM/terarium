@@ -116,7 +116,7 @@
 				</table>
 			</AccordionTab>
 		</Accordion>
-		<section v-else class="emptyState">
+		<section v-else-if="!modelConfig" class="emptyState">
 			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
 			<p class="helpMessage">Connect a model configuration and dataset</p>
 		</section>
