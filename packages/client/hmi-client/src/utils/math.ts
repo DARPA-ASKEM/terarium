@@ -1,6 +1,7 @@
 /* Collection of MATH/MATH-EDITOR utility functions */
 import { logger } from '@/utils/logger';
 import Mathml2latex from 'mathml-to-latex';
+import { cloneDeep } from 'lodash';
 
 export enum MathEditorModes {
 	LIVE = 'mathLIVE',
@@ -158,3 +159,96 @@ export function separateEquations(mathMLString: string): string[] {
 	}
 	return equations;
 }
+
+export enum EquationSide {
+	Left = 'left',
+	Right = 'right'
+}
+
+// extract identifiers in a mathml equation
+export const extractVariablesFromMathML = (mathML: string, side?: EquationSide): string[] => {
+	const parser = new DOMParser();
+	const xmlDoc = parser.parseFromString(mathML, 'text/xml');
+	const variables: string[] = [];
+
+	if (!side) {
+		const miElements = xmlDoc.getElementsByTagName('mi');
+		for (let i = 0; i < miElements.length; i++) {
+			const miElement = miElements[i];
+			const variable = miElement.textContent?.trim();
+			if (variable) {
+				variables.push(variable);
+			}
+		}
+	} else {
+		const moElements = xmlDoc.getElementsByTagName('mo');
+		for (let i = 0; i < moElements.length; i++) {
+			const moElement = moElements[i];
+			const isEqualsSign = moElement.textContent?.trim() === '=';
+			if (isEqualsSign) {
+				let currentNode: Element | null = moElement.previousElementSibling;
+				while (currentNode) {
+					if (currentNode.nodeName === 'mi') {
+						const variable = currentNode.textContent?.trim();
+						if (variable) {
+							variables.unshift(variable);
+						}
+					} else if (currentNode.nodeName === 'mrow') {
+						if (side === EquationSide.Left) {
+							break;
+						}
+						const innerVariables = extractVariablesFromMathML(currentNode.innerHTML, side);
+						variables.unshift(...innerVariables);
+						if (side === EquationSide.Right) {
+							break;
+						}
+					}
+					currentNode = currentNode.previousElementSibling;
+				}
+				if (side === EquationSide.Left) {
+					break;
+				}
+			}
+		}
+	}
+
+	return variables;
+};
+
+// clean a latex equation
+export const cleanLatexEquations = (equations: Array<string>): Array<string> =>
+	cloneDeep(equations)
+		.filter((equation) => equation !== '')
+		.map((equation) =>
+			equation
+				// Refactor to make those replaceAll one regex change
+				.replaceAll('\\begin', '')
+				.replaceAll('\\end', '')
+				.replaceAll('\\mathrm', '')
+				.replaceAll('\\right', '')
+				.replaceAll('\\left', '')
+				.replaceAll('{align}', '')
+				.replaceAll('=&', '=')
+				.trim()
+		);
+
+export const mergeUnique = (a: string[], b: string[]): string[] => {
+	const aUnique: string[] = [...new Set(a)];
+	const bSet = new Set(b);
+
+	aUnique.forEach((element) => {
+		if (![...bSet].some((item) => item.includes(element))) {
+			bSet.add(element);
+		}
+	});
+
+	return Array.from(bSet);
+};
+
+export const extractUniqueParameterStrings = (a: string[], b: string[]): string[] => {
+	const aUnique: string[] = [...new Set(a)];
+
+	return aUnique.filter(
+		(element) => !b.includes(element) && !b.some((item) => item.includes(element))
+	);
+};
