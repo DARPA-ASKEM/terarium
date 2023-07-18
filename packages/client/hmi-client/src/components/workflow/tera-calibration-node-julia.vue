@@ -1,83 +1,86 @@
 <template>
-	<Button class="p-button-sm" label="Run" @click="runCalibrate" :disabled="disableRunButton" />
-	<Accordion :multiple="true" :active-index="[0, 3]">
-		<AccordionTab header="Mapping">
-			<DataTable class="p-datatable-xsm" :value="mapping">
-				<Column field="modelVariable">
-					<template #header>
-						<span class="column-header">MODEL VARIABLE</span>
-					</template>
-					<template #body="{ data, field }">
-						<!-- Tom TODO: No v-model -->
-						<Dropdown
-							class="w-full"
-							placeholder="Select a variable"
-							v-model="data[field]"
-							:options="modelColumnNames"
-						/>
-					</template>
-				</Column>
-				<Column field="datasetVariable">
-					<template #header>
-						<span class="column-header">DATASET VARIABLE</span>
-					</template>
-					<template #body="{ data, field }">
-						<!-- Tom TODO: No v-model -->
-						<Dropdown
-							class="w-full"
-							placeholder="Select a variable"
-							v-model="data[field]"
-							:options="datasetColumnNames"
-						/>
-					</template>
-				</Column>
-			</DataTable>
-			<div>
-				<Button
-					class="p-button-sm p-button-outlined"
-					icon="pi pi-plus"
-					label="Add mapping"
-					@click="addMapping"
+	<section v-if="!showSpinner">
+		<Accordion
+			v-if="datasetColumnNames && modelColumnNames"
+			:multiple="true"
+			:active-index="[0, 3]"
+		>
+			<AccordionTab header="Mapping">
+				<DataTable class="mappingTable" :value="mapping">
+					<Column field="modelVariable">
+						<template #header>
+							<span class="column-header">Model variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<div class="mappingVariable">{{ data[field] }}</div>
+						</template>
+					</Column>
+					<Column field="datasetVariable">
+						<template #header>
+							<span class="column-header">Dataset variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
+								{{ data[field] ? data[field] : 'Not mapped' }}
+							</div>
+						</template>
+					</Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab header="Variables">
+				<tera-simulate-chart
+					v-for="(cfg, index) of node.state.chartConfigs"
+					:key="index"
+					:run-results="runResults"
+					:chartConfig="cfg"
+					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
-			</div>
-		</AccordionTab>
-		<AccordionTab header="Variables">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				@configuration-change="chartConfigurationChange(index, $event)"
-			/>
-			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add Chart"
-				icon="pi pi-plus"
-			></Button>
-		</AccordionTab>
-		<AccordionTab header="Calibrated parameter values">
-			<table class="p-datatable-table">
-				<thead class="p-datatable-thead">
-					<th>Parameter</th>
-					<th>Value</th>
-				</thead>
-				<tr v-for="(content, key) in parameterResult" :key="key">
-					<td>
-						<p>{{ key }}</p>
-					</td>
-					<td>
-						<p>{{ content }}</p>
-					</td>
-				</tr>
-			</table>
-		</AccordionTab>
-		<!-- <AccordionTab header="Loss"></AccordionTab>
-		<AccordionTab header="Parameters"></AccordionTab>
-		<AccordionTab header="Variables"></AccordionTab> -->
-	</Accordion>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="addChart"
+					label="Add Chart"
+					icon="pi pi-plus"
+				></Button>
+			</AccordionTab>
+			<AccordionTab header="Calibrated parameter values">
+				<table class="p-datatable-table">
+					<thead class="p-datatable-thead">
+						<th>Parameter</th>
+						<th>Value</th>
+					</thead>
+					<tr v-for="(content, key) in parameterResult" :key="key">
+						<td>
+							<p>{{ key }}</p>
+						</td>
+						<td>
+							<p>{{ content }}</p>
+						</td>
+					</tr>
+				</table>
+			</AccordionTab>
+			<!-- <AccordionTab header="Loss"></AccordionTab>
+			<AccordionTab header="Parameters"></AccordionTab>
+			<AccordionTab header="Variables"></AccordionTab> -->
+		</Accordion>
+		<section v-else class="emptyState">
+			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+			<p class="helpMessage">
+				Connect a model configuration and dataset, then configure in the side panel
+			</p>
+		</section>
+		<Button
+			class="p-button-sm run-button"
+			label="Run"
+			icon="pi pi-play"
+			@click="runCalibrate"
+			:disabled="disableRunButton"
+		/>
+	</section>
+	<section v-else>
+		<div><i class="pi pi-spin pi-spinner"></i> Loading...</div>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -85,7 +88,6 @@ import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -130,6 +132,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const showSpinner = ref(false);
 
 const disableRunButton = computed(
 	() =>
@@ -183,7 +186,7 @@ const runCalibrate = async () => {
 
 	startedRunId.value = response.simulationId;
 	getStatus();
-	// showSpinner.value = true;s
+	showSpinner.value = true;
 };
 // Retrieve run ids
 // FIXME: Replace with API.poller
@@ -196,13 +199,14 @@ const getStatus = async () => {
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
-		// showSpinner.value = false;
+		showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {
 		// throw if there are any failed runs for now
 		console.error('Failed', startedRunId.value);
+		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
 };
@@ -217,24 +221,6 @@ const updateOutputPorts = async (runId) => {
 		}
 	});
 };
-
-// Used from button to add new entry to the mapping object
-// Tom TODO: Make this generic, its copy paste from drilldown
-function addMapping() {
-	mapping.value.push({
-		modelVariable: '',
-		datasetVariable: ''
-	});
-
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
-	state.mapping = mapping.value;
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-}
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
@@ -269,22 +255,6 @@ watch(
 		);
 		modelConfig.value = modelConfiguration;
 		modelColumnNames.value = modelColumnNameOptions;
-		// Preset the mapping for all model columns:
-		mapping.value = [];
-		modelColumnNames.value?.map((columnName) =>
-			mapping.value.push({
-				modelVariable: columnName,
-				datasetVariable: ''
-			})
-		);
-		const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
-		state.mapping = mapping.value;
-
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
 	},
 	{ immediate: true }
 );
@@ -317,18 +287,54 @@ watch(
 </script>
 
 <style scoped>
-.dropdown-button {
-	width: 156px;
-	height: 25px;
-	border-radius: 6px;
+.emptyState {
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	margin-bottom: 1rem;
+	gap: 0.5rem;
 }
+
+.helpMessage {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	width: 90%;
+}
+img {
+	width: 20%;
+}
+
 th {
 	text-align: left;
 }
 
 .column-header {
+	color: var(--text-color-primary);
+	font-size: var(--font-caption);
+	font-weight: var(--font-semibold);
+}
+
+.mappingVariable {
+	font-size: var(--font-caption);
+}
+
+.unmappedVariable {
+	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	font-size: 12px;
-	font-weight: 400;
+}
+.p-datatable:deep(td) {
+	padding: 0.25rem 0rem !important;
+}
+.p-datatable:deep(th) {
+	padding: 0.25rem 0rem !important;
+}
+
+.run-button {
+	margin-top: 1rem;
+	margin-bottom: 0.5rem;
+	width: 5rem;
+	float: right;
 }
 </style>

@@ -505,7 +505,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		}
 	}
 
-	updateNode(id: string, newId: string, newName: string) {
+	updateNode(id: string, newId: string, newName: string, newExpression: string) {
 		const node = this.graph.nodes.find((d) => d.id === id);
 		if (!node) return;
 		node.id = newId;
@@ -520,7 +520,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		if (node.data.type === NodeType.State) {
 			petrinetService.updateState(amr, id, newId, newName);
 		} else {
-			petrinetService.updateTransitione(amr, id, newId, newName);
+			petrinetService.updateTransition(amr, id, newId, newName, newExpression);
 		}
 		this.render();
 	}

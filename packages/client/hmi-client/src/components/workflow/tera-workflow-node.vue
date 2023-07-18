@@ -271,8 +271,8 @@ header .p-button.p-button-text:enabled:hover {
 }
 
 section {
-	margin-left: 1rem;
-	margin-right: 1rem;
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
 }
 
 section,
@@ -294,6 +294,10 @@ ul li {
 	align-items: center;
 }
 
+.inputs,
+.outputs {
+	color: var(--text-color-secondary);
+}
 .input-port-container {
 	display: flex;
 	padding-top: 0.5rem;
@@ -318,11 +322,7 @@ ul li {
 	background-color: var(--surface-highlight);
 }
 
-.output-port-container[active='false'] {
-	color: var(--text-color-secondary);
-}
-
-.output-port-container[active='true'] {
+.port-connected {
 	color: var(--text-color-primary);
 }
 
@@ -341,6 +341,11 @@ ul li {
 	height: calc(var(--port-base-size) * 2);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--port-base-size);
+}
+
+.port-connected .input-port-container,
+.port-connected .output-port-container {
+	gap: initial;
 }
 
 .port-connected .input.port {
