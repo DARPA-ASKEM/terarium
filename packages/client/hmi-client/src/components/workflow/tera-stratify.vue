@@ -19,7 +19,7 @@
 				/>
 			</span>
 			<Button
-				v-if="stratifyView === StratifyView.Output"
+				v-if="stratifyView === StratifyView.Input"
 				class="stratify-button"
 				label="Stratify"
 				icon="pi pi-arrow-right"
@@ -149,10 +149,17 @@
 				Saved as:
 				<Button
 					class=".p-button-link"
-					:label="stratifiedModel.name"
+					:label="stratifiedModel?.name"
 					icon="pi pi-pencil"
 					iconPos="right"
 					text
+					@click="
+						emit('open-asset', {
+							assetName: `${stratifiedModel?.name}`,
+							pageType: ProjectAssetTypes.MODELS,
+							assetId: stratifiedModel?.id
+						})
+					"
 				/>
 			</div>
 		</section>
@@ -174,11 +181,11 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { stratify_output } from '@/temp/models/stratify_output';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import useResourcesStore from '@/stores/resources';
+import { ProjectAssetTypes } from '@/types/Project';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
 import TeraStratifyOutputModelDiagram from '../models/tera-stratify-output-model-diagram.vue';
@@ -188,6 +195,8 @@ const resourceStore = useResourcesStore();
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['open-asset']);
 
 enum StratifyView {
 	Input,
@@ -205,7 +214,7 @@ const strataModelTypeSystem = computed<TypeSystem | undefined>(
 );
 const typedBaseModel = ref<Model>();
 const typedStrataModel = ref<Model | null>(null);
-const stratifiedModel = ref<Model>(stratify_output);
+const stratifiedModel = ref<Model>();
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -231,6 +240,9 @@ async function doStratify() {
 		stratifiedModel.value = amr;
 		// Create model and asssociate
 		const response = await createModel(amr);
+		if (response) {
+			stratifiedModel.value.id = response.id;
+		}
 		const newModelId = response?.id;
 		const projectId = resourceStore.activeProject?.id as string;
 		await addAsset(projectId, 'models', newModelId);
@@ -365,7 +377,7 @@ section {
 	padding-left: 0.5rem;
 }
 
-.output div {
+.output div:not(.p-accordion) {
 	padding-left: 0.5rem;
 }
 

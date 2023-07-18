@@ -78,6 +78,7 @@
 				<tera-stratify
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
 					:node="workflowNode"
+					@open-asset="(asset) => openAssetFromSidebar(asset)"
 				/>
 				<tera-model-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
