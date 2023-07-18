@@ -2,12 +2,14 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 // import { EnsembleRequest } from '@/types/Types';
 // import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';
-import { EnsembleModelConfigs } from '@/types/Types';
+import { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
 export interface EnsembleCiemssOperationState {
 	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
 	mapping: EnsembleModelConfigs[];
+	timeSpan: TimeSpan;
+	numSamples: number;
 }
 
 export const EnsembleCiemssOperation: Operation = {
@@ -28,7 +30,9 @@ export const EnsembleCiemssOperation: Operation = {
 		const init: EnsembleCiemssOperationState = {
 			modelConfigIds: [],
 			chartConfigs: [],
-			mapping: []
+			mapping: [],
+			timeSpan: { start: 0, end: 40 },
+			numSamples: 40
 		};
 		return init;
 	}

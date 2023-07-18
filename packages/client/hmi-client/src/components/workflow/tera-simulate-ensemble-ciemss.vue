@@ -20,15 +20,12 @@
 			/>
 			<Button class="p-button-sm" label="Run" @click="runEnsemble" :disabled="disableRunButton" />
 		</div>
-		<div
-			v-if="activeTab === EnsembleTabs.output && node?.outputs.length"
-			class="simulate-container"
-		>
-			<p>Ensemble Output here</p>
+		<div v-if="activeTab === EnsembleTabs.output && runResults" class="simulate-container">
+			<p>Output here</p>
 		</div>
 
 		<div v-else-if="activeTab === EnsembleTabs.input && node" class="simulate-container">
-			<Accordion :multiple="true" :active-index="[0]">
+			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<AccordionTab header="Model Weights">
 					<div class="model-weights">
 						<section class="ensemble-calibration-mode">
@@ -85,7 +82,12 @@
 											{{ ensembleConfigs[i].weight }}
 										</td>
 										<td v-else>
-											<InputNumber v-model="ensembleConfigs[i].weight" />
+											<InputNumber
+												mode="decimal"
+												:min-fraction-digits="0"
+												:max-fraction-digits="7"
+												v-model="ensembleConfigs[i].weight"
+											/>
 										</td>
 									</tr>
 								</tbody>
@@ -140,11 +142,13 @@
 							<th>Units</th>
 							<th>Start Step</th>
 							<th>End Step</th>
+							<th>Number of Samples</th>
 						</thead>
 						<tbody class="p-datatable-tbody">
 							<td>Steps</td>
 							<td><InputNumber v-model="timeSpan.start" /></td>
 							<td><InputNumber v-model="timeSpan.end" /></td>
+							<td><InputNumber v-model="numSamples" /></td>
 						</tbody>
 					</table>
 				</AccordionTab>
@@ -159,7 +163,7 @@ import { ref, computed, watch } from 'vue';
 import {
 	getSimulation,
 	makeEnsembleCiemssSimulation,
-	getRunResultCiemss
+	getRunResult
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
@@ -179,7 +183,7 @@ import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { workflowEventBus } from '@/services/workflow';
 import InputText from 'primevue/inputtext';
-import { RunResults } from '@/types/SimulateConfig';
+import { csvParse } from 'd3';
 import {
 	EnsembleCiemssOperation,
 	EnsembleCiemssOperationState
@@ -221,7 +225,8 @@ const allModelConfigurations = ref<ModelConfiguration[]>([]);
 const allModelOptions = ref<string[][]>([]);
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
-const timeSpan = ref<TimeSpan>({ start: 0, end: 90 });
+const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
+const numSamples = ref<number>(props.node.state.numSamples);
 const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 
@@ -230,9 +235,7 @@ const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
 const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
-const runResults = ref<RunResults>({});
-const completedRunIdList = ref<string[]>([]);
-const runConfigs = ref<{ [paramKey: string]: number[] }>({});
+const runResults = ref<any[]>([]);
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -256,7 +259,7 @@ const runEnsemble = async () => {
 		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
 		engine: 'ciemss',
-		extra: { num_samples: 100 }
+		extra: { num_samples: numSamples.value }
 	};
 	console.log(params);
 	const response = await makeEnsembleCiemssSimulation(params);
@@ -368,17 +371,14 @@ const setChartOptions = () => {
 	};
 };
 // assume only one run for now
-const watchCompletedRunList = async (runIdList: string[]) => {
-	console.log('Start watch cimpleted run list');
-	if (runIdList.length === 0) return;
+const watchCompletedRunList = async () => {
+	if (!completedRunId.value) return;
 
-	console.log('Getting run results');
-	const output = await getRunResultCiemss(runIdList[0]);
-	runResults.value = output.runResults;
-	runConfigs.value = output.runConfigs;
+	const output = await getRunResult(completedRunId.value, 'eval.csv');
+	runResults.value = csvParse(output) as any;
 	console.log(runResults.value);
 };
-watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
+watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
 watch(
 	[() => ensembleCalibrationMode.value, listModelIds.value],
@@ -389,7 +389,7 @@ watch(
 );
 
 watch(
-	() => listModelIds.value,
+	() => listModelIds,
 	async () => {
 		allModelConfigurations.value = [];
 		// Fetch Model Configurations
@@ -412,6 +412,15 @@ watch(
 		}
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+
+		const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		state.mapping = ensembleConfigs.value;
+
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
 	},
 	{ immediate: true }
 );
