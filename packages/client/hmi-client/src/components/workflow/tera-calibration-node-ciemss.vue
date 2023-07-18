@@ -6,7 +6,7 @@
 			:active-index="[0, 3]"
 		>
 			<AccordionTab header="Mapping">
-				<DataTable class="p-datatable-xsm" :value="mapping">
+				<DataTable class="mappingTable" :value="mapping">
 					<Column field="modelVariable">
 						<template #header>
 							<span class="column-header">Model variable</span>
@@ -373,6 +373,14 @@ th {
 	width: 100%;
 	padding: 0.75rem;
 }
+
+.p-datatable:deep(td) {
+	padding: 0.25rem 0rem !important;
+}
+.p-datatable:deep(th) {
+	padding: 0.25rem 0rem !important;
+}
+
 .run-button {
 	margin-top: 1rem;
 	margin-bottom: 0.5rem;
