@@ -15,7 +15,9 @@
 						<span class="column-header">Dataset variable</span>
 					</template>
 					<template #body="{ data, field }">
-						<div class="mappingVariable">{{ data[field] ? data[field] : 'Not mapped' }}</div>
+						<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
+							{{ data[field] ? data[field] : 'Not mapped' }}
+						</div>
 					</template>
 				</Column>
 			</DataTable>
@@ -319,11 +321,15 @@ th {
 	font-size: var(--font-caption);
 }
 
+.unmappedVariable {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+}
 .p-datatable:deep(td) {
-	padding: 0.25rem !important;
+	padding: 0.25rem 0rem !important;
 }
 .p-datatable:deep(th) {
-	padding: 0.25rem !important;
+	padding: 0.25rem 0rem !important;
 }
 
 .run-button {
