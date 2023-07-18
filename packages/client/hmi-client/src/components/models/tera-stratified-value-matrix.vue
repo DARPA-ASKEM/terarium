@@ -1,41 +1,45 @@
 <template>
 	<div
 		v-if="matrix"
-		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header"
+		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
 	>
-		<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-			<thead class="p-datatable-thead">
-				<tr>
-					<th v-for="i in matrix[0].length + 1" :key="i">
-						<Dropdown
-							v-if="i === 2"
-							placeholder="Select a variable"
-							v-model="chosenCol"
-							:options="colDimensions"
-						/>
-					</th>
-				</tr>
-			</thead>
-			<tbody class="p-datatable-tbody">
-				<tr v-for="(row, i) in matrix" :key="i">
-					<td class="p-frozen-column">
-						<Dropdown
-							v-if="i === 0"
-							placeholder="Select a variable"
-							v-model="chosenRow"
-							:options="rowDimensions"
-						/>
-					</td>
-					<td v-for="(cell, j) in row" :key="j">
-						<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
-							{{ cell?.value?.[chosenCol] }}
-							{{ cell?.value?.[chosenRow] }}
-						</template>
-						<span class="not-allowed" v-else>N/A</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<div class="p-datatable-wrapper">
+			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
+				<thead class="p-datatable-thead">
+					<tr>
+						<th v-for="i in matrix[0].length + 1" :key="i">
+							<Dropdown
+								v-if="i === 2"
+								class="w-full"
+								placeholder="Select a variable"
+								v-model="chosenCol"
+								:options="colDimensions"
+							/>
+						</th>
+					</tr>
+				</thead>
+				<tbody class="p-datatable-tbody">
+					<tr v-for="(row, i) in matrix" :key="i">
+						<td class="p-frozen-column">
+							<Dropdown
+								v-if="i === 0"
+								class="w-full"
+								placeholder="Select a variable"
+								v-model="chosenRow"
+								:options="rowDimensions"
+							/>
+						</td>
+						<td v-for="(cell, j) in row" :key="j">
+							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
+								{{ cell?.value?.[chosenCol] }}
+								{{ cell?.value?.[chosenRow] }}
+							</template>
+							<span class="not-allowed" v-else>N/A</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 	</div>
 </template>
 
@@ -109,15 +113,26 @@ onMounted(() => {
 </script>
 
 <style scoped>
-td,
-th {
-	text-align: center;
-	width: 4rem;
+.p-datatable {
+	height: 10rem;
 }
 
-.p-frozen-column {
-	left: 0px;
-	white-space: nowrap;
+.p-datatable .p-datatable-thead > tr > th,
+.p-datatable-scrollable .p-frozen-column {
+	padding: 0;
+	background: var(--surface-ground);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+	padding-bottom: 1rem;
+}
+
+.p-datatable-scrollable .p-frozen-column {
+	padding-right: 1rem;
+}
+
+.p-dropdown {
+	min-width: 11rem;
 }
 
 .not-allowed {

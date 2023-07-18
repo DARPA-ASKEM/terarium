@@ -1,7 +1,7 @@
 <template>
 	<div
 		v-if="isConfigurationVisible"
-		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
+		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header"
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
@@ -83,7 +83,7 @@
 						</div>
 						<div>
 							<label for="name">Matrix</label>
-							<tera-stratify-value-matrix :model="model" :id="modalVal.id" />
+							<tera-stratified-value-matrix :model="model" :id="modalVal.id" />
 							<!-- <InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" /> -->
 						</div>
 					</TabPanel>
@@ -114,7 +114,7 @@ import {
 	addDefaultConfiguration
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
-import TeraStratifyValueMatrix from '@/components/models/tera-stratify-value-matrix.vue';
+import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 
 const props = defineProps<{
 	isEditable: boolean;
@@ -301,6 +301,11 @@ td:has(.cell-input) {
 	white-space: nowrap;
 }
 
+.p-frozen-column,
+th {
+	background: transparent;
+}
+
 .second-frozen {
 	left: 48px;
 }
@@ -319,7 +324,7 @@ td:hover .cell-menu {
 
 .p-tabview:deep(> *) {
 	width: 50vw;
-	height: 50vh;
+	height: 65vh;
 	overflow: auto;
 }
 
