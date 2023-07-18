@@ -19,6 +19,7 @@ export interface INode<T> {
 	label: string;
 	type?: string;
 	state?: string;
+	expression?: string;
 	x: number;
 	y: number;
 	width: number;
