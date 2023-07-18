@@ -37,7 +37,7 @@
 				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
-			></Button>
+			/>
 			<Button
 				class="add-chart"
 				text
@@ -45,7 +45,7 @@
 				@click="saveDataset"
 				label="Save as Dataset"
 				icon="pi pi-save"
-			></Button>
+			/>
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -99,11 +99,6 @@ import _ from 'lodash';
 import { ref, onMounted } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-// import Column from 'primevue/column';
-// import Row from 'primevue/row';
-// import ColumnGroup from 'primevue/columngroup';
-// import DataTable from 'primevue/datatable';
-// import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { ModelConfiguration, Model, TimeSpan } from '@/types/Types';
@@ -142,10 +137,6 @@ const model = ref<Model | null>(null);
 const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 
-// const TspanUnitList = computed(() =>
-// 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
-// );
-
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -169,10 +160,13 @@ const addChart = () => {
 };
 
 const saveDataset = async () => {
-	if (!props.node) return;
-	// @ts-ignore: Object is possibly 'null'.
-	await createDatasetFromSimulationResult(props.project.id, props.node.outputs[0].value[0]);
-	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+	const simulationId = props?.node?.outputs?.[0]?.value?.[0] as string;
+	if (simulationId) {
+		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
+			// TODO: See about getting rid of this - this refresh should preferably be within a service
+			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		}
+	}
 };
 
 onMounted(async () => {

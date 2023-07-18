@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import io.quarkus.security.identity.SecurityIdentity;
+import com.google.common.math.Quantiles;
+import com.google.common.math.Stats;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -17,39 +16,34 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.uncharted.terarium.hmiserver.models.dataservice.*;
+import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
+import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
+import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
+import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import software.uncharted.terarium.hmiserver.resources.DataStorageResource;
+import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
-import java.lang.Math;
-import com.google.common.math.Stats;
-import com.google.common.math.Quantiles;
-
-
-import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
-import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
-import software.uncharted.terarium.hmiserver.resources.DataStorageResource;
-import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
+import java.util.stream.Collectors;
 
 @Path("/api/datasets")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Dataset REST Endpoints")
 @Slf4j
 public class DatasetResource extends DataStorageResource implements SnakeCaseResource {
-	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
+	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text", "csv", "UTF-8");
 	private static final int DEFAULT_CSV_LIMIT = 100;
 
 	@ConfigProperty(name = "aws.bucket")
@@ -73,7 +67,6 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@ConfigProperty(name = "aws.region")
 	Optional<String> region;
 
-
 	@Inject
 	@RestClient
 	DatasetProxy datasetProxy;
@@ -81,13 +74,6 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@Inject
 	@RestClient
 	JsDelivrProxy githubProxy;
-
-	@Inject
-	@RestClient
-	SimulationProxy simulationProxy;
-
-	@Inject
-	SecurityIdentity securityIdentity;
 
 	@GET
 	@Path("/features")
@@ -234,7 +220,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	public Response getCsv(
 		@PathParam("datasetId") final String datasetId,
 		@QueryParam("filename") final String filename,
-		@QueryParam(value = "limit") final Integer limit		// -1 means no limit
+		@QueryParam(value = "limit") final Integer limit    // -1 means no limit
 	) throws IOException {
 
 		log.debug("Getting CSV content");
@@ -279,11 +265,11 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		List<List<String>> csv = csvToRecords(csvStringBuilder.toString());
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
-		for (int i = 0; i < csv.get(0).size(); i++){
-			List<String> column = getColumn(csv,i);
-			CsvColumnStats.add(getStats(column.subList(1,column.size()))); //remove first as it is header:
+		for (int i = 0; i < csv.get(0).size(); i++) {
+			List<String> column = getColumn(csv, i);
+			CsvColumnStats.add(getStats(column.subList(1, column.size()))); //remove first as it is header:
 		}
-		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
+		CsvAsset csvAsset = new CsvAsset(csv, CsvColumnStats, headers);
 		return Response
 			.status(Response.Status.OK)
 			.entity(csvAsset)
@@ -302,7 +288,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		@QueryParam("path") final String path,
 		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("filename") final String filename
-	){
+	) {
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
 		//verify that dataSetPath and bucket are set. If not, return an error
@@ -339,8 +325,9 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	/**
 	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS then push
 	 * the file to S3.
+	 *
 	 * @param datasetId ID of the dataset to upload to
-	 * @param filename CSV file to upload
+	 * @param filename  CSV file to upload
 	 * @return
 	 */
 	@PUT
@@ -383,91 +370,9 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 
 	}
 
-	/**
-	 * Creates a new dataset from a simulation result. This will create a new dataset, then copy the results
-	 * csv file from the simulate bucket to the dataset bucket
-	 * @param simulationId ID of the simulation to create a dataset from
-	 * @return Dataset the new dataset created
-	 */
-	@PUT
-	@Path("/create-from-simulation-result")
-	public Response createFromSimulationResult(@QueryParam("simulationId") String simulationId){
-
-		Simulation simulation = simulationProxy.getSimulation(simulationId);
-
-		if(simulation.getResultFiles() == null || simulation.getResultFiles().isEmpty()){
-			log.error("Simulation {} has no result files", simulationId);
-			return Response
-				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.type(MediaType.APPLICATION_JSON)
-				.build();
-		}
-
-		if (dataSetPath.isEmpty() || simulatePath.isEmpty()) {
-			log.error("dataSetPath or simulatePath information not set. Cannot transfer results");
-			return Response
-				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.type(MediaType.APPLICATION_JSON)
-				.build();
-		}
-
-
-
-		String datasetName = simulation.getName() != null? simulation.getName() + " Dataset" : "Simulation Dataset";
-		String datasetDescription = simulation.getDescription() != null? simulation.getDescription() : "Dataset created from simulation";
-		String userName = securityIdentity.getPrincipal().getName();
-		List<String> fileNames = new ArrayList<>();
-		//go through our list of files and copy just the file name, located after the last /
-		for(String fileName : simulation.getResultFiles()){
-			fileNames.add(fileName.substring(fileName.lastIndexOf('/') + 1));
-		}
-
-		Dataset dataset = new Dataset().setDescription(datasetDescription).setName(datasetName).setUsername(userName).setFileNames(fileNames);
-		try {
-			Response response = createDataset(dataset);
-			dataset = response.readEntity(Dataset.class);
-
-
-
-
-			for(String fileName : fileNames){
-				String datasetKey = String.format("%s/%s/%s", dataSetPath.get(), dataset.getId(), fileName);
-				String simulationKey = String.format("%s/%s/%s", simulatePath.get(), simulation.getId(), fileName);
-				SdkHttpResponse res = copyFile(simulationKey, datasetKey);
-				if(!res.isSuccessful()){
-					log.error("Failed to copy file {} to dataset {}", fileName, dataset.getId());
-					return Response
-						.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.type(MediaType.APPLICATION_JSON)
-						.build();
-				}
-
-			}
-		} catch (Exception e) {
-			log.error("Failed to create dataset from simulation {}", simulationId);
-			return Response
-				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.type(MediaType.APPLICATION_JSON)
-				.build();
-		}
-
-		//This line seems strange, but, our dataset is not correct from before because of the snake-case issue
-		dataset = getDataset(dataset.getId());
-
-		return Response
-			.status(Response.Status.OK)
-			.type(MediaType.APPLICATION_JSON)
-			.entity(dataset)
-			.build();
-
-	}
-
-
-
-
 	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
 	// warning this is not sufficient for the long term. Should likely use a library for this conversion formatting may break this.
-	private List<List<String>> csvToRecords(String rawCsvString){
+	private List<List<String>> csvToRecords(String rawCsvString) {
 		String[] csvRows = rawCsvString.split("\n");
 		String[] headers = csvRows[0].split(",");
 		List<List<String>> csv = new ArrayList<>();
@@ -477,11 +382,11 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 		return csv;
 	}
 
-	private List<String> getColumn(List<List<String>> matrix, int columnNumber){
+	private List<String> getColumn(List<List<String>> matrix, int columnNumber) {
 		List<String> column = new ArrayList<>();
-		for(int i = 0 ; i < matrix.size(); i++){
-			if(matrix.get(i).size() > columnNumber){
-					column.add(matrix.get(i).get(columnNumber));
+		for (int i = 0; i < matrix.size(); i++) {
+			if (matrix.get(i).size() > columnNumber) {
+				column.add(matrix.get(i).get(columnNumber));
 			}
 
 		}
@@ -490,10 +395,11 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 
 	/**
 	 * Given a column and an amount of bins create a CsvColumnStats object.
+	 *
 	 * @param aCol
 	 * @return
 	 */
-	private CsvColumnStats getStats(List<String> aCol){
+	private CsvColumnStats getStats(List<String> aCol) {
 		List<Integer> bins = new ArrayList<>();
 		try {
 			// set up row as numbers. may fail here.
@@ -507,7 +413,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 			double sdValue = Stats.of(numberList).populationStandardDeviation();
 			int binCount = 10;
 			//Set up bins
-			for (int i = 0; i < binCount; i++){
+			for (int i = 0; i < binCount; i++) {
 				bins.add(0);
 			}
 			double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
@@ -519,16 +425,17 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 				bins.set(index, value + 1);
 			}
 
-			return new CsvColumnStats(bins,minValue,maxValue,meanValue,medianValue,sdValue);
+			return new CsvColumnStats(bins, minValue, maxValue, meanValue, medianValue, sdValue);
 
-		}catch(Exception e){
+		} catch (Exception e) {
 			//Cannot convert column to double, just return empty list.
-			return new CsvColumnStats(bins,0,0,0,0,0);
+			return new CsvColumnStats(bins, 0, 0, 0, 0, 0);
 		}
 	}
 
 	/**
 	 * Get a signed url for uploading a file.
+	 *
 	 * @param id
 	 * @param fileName
 	 * @return signed URL
@@ -536,12 +443,13 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@GET
 	@Path("/{id}/upload-url")
 	@Tag(description = "Get a signed url for uploading a file")
-	public PresignedURL getUploadUrl(@PathParam("id") final String id, @QueryParam("filename") final String fileName){
+	public PresignedURL getUploadUrl(@PathParam("id") final String id, @QueryParam("filename") final String fileName) {
 		return datasetProxy.getUploadUrl(id, fileName);
 	}
 
 	/**
 	 * Get a download url for a file.
+	 *
 	 * @param id
 	 * @param filename
 	 * @return signed URL
@@ -549,9 +457,7 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@GET
 	@Path("/{id}/download-url")
 	@Tag(description = "Get a download url for a file")
-	public PresignedURL getDownloadUrl(@PathParam("id") final String id,  @QueryParam("filename") String filename) {
+	public PresignedURL getDownloadUrl(@PathParam("id") final String id, @QueryParam("filename") String filename) {
 		return datasetProxy.getDownloadUrl(id, filename);
 	}
-
-
 }
