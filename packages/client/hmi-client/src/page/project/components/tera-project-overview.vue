@@ -123,7 +123,7 @@
 								plain
 								text
 								size="small"
-								@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
+								@click="openResource(slotProps.data)"
 							>
 								<vue-feather
 									v-if="
@@ -154,14 +154,14 @@
 						headerStyle="width: 3rem; text-align: center"
 						bodyStyle="text-align: center; overflow: visible"
 					>
-						<template #body>
+						<template #body="slotProps">
 							<Button
 								class="row-action-button"
 								icon="pi pi-ellipsis-v"
 								plain
 								text
 								rounded
-								@click.stop="showRowActions"
+								@click.stop="(e) => showRowActions(e, slotProps.data)"
 							/>
 							<Menu ref="rowActionMenu" :model="rowActionMenuItems" :popup="true" />
 						</template>
@@ -333,6 +333,8 @@ const results = ref<
 >(null);
 const selectedResources = ref();
 
+const openedRow = ref(null);
+
 const isNewModelModalVisible = ref<boolean>(false);
 const newModelName = ref<string>('');
 
@@ -456,6 +458,10 @@ async function editProject() {
 	inputElement.value?.$el.focus();
 }
 
+async function openResource(data) {
+	router.push({ name: RouteName.ProjectRoute, params: data });
+}
+
 async function updateProjectName() {
 	isRenamingProject.value = false;
 	const updatedProject = props.project;
@@ -503,13 +509,18 @@ const tableActionMenuItems = [
 /* Row Action Menu */
 const rowActionMenu = ref();
 const rowActionMenuItems = ref([
-	{ label: 'Open' },
-	{ label: 'Rename' },
-	{ label: 'Make a copy' },
-	{ label: 'Delete' },
-	{ label: 'Download' }
+	{ label: 'Open', command: () => openResource(openedRow.value) }
+
+	// TODO add the follow commands
+	// { label: 'Rename' },
+	// { label: 'Make a copy' },
+	// { label: 'Delete' },
+	// { label: 'Download' }
 ]);
-const showRowActions = (event) => rowActionMenu.value.toggle(event);
+const showRowActions = (event, data) => {
+	openedRow.value = data;
+	rowActionMenu.value.toggle(event);
+};
 
 const isUploadResourcesModalVisible = ref(false);
 
