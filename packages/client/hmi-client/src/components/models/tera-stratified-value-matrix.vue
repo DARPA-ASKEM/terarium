@@ -31,8 +31,9 @@
 						</td>
 						<td v-for="(cell, j) in row" :key="j">
 							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
-								{{ cell?.value?.[chosenCol] }}
-								{{ cell?.value?.[chosenRow] }}
+								{{ findMatrixValue(cell?.value?.[chosenCol]) }}
+								<br />
+								{{ findMatrixValue(cell?.value?.[chosenRow]) }}
 							</template>
 							<span class="not-allowed" v-else>N/A</span>
 						</td>
@@ -45,6 +46,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { isEmpty } from 'lodash';
 import { extractTransitionMatrixData } from '@/model-representation/petrinet/petrinet-service';
 import { createMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
@@ -61,6 +63,26 @@ let rowDimensions: string[] = [];
 const matrix = ref();
 const chosenCol = ref('');
 const chosenRow = ref('');
+
+function findMatrixValue(variableName: string) {
+	const ode = props.model.semantics?.ode;
+
+	if (!ode) return variableName;
+
+	let matrixValue: string = '';
+	const odeFields = ['rates', 'initials', 'parameters'];
+
+	for (let i = 0; i < odeFields.length; i++) {
+		const odeFieldObject = ode[odeFields[i]].find(
+			({ target, id }) => target === variableName || id === variableName
+		);
+
+		matrixValue = odeFieldObject?.expression ?? odeFieldObject?.value ?? '';
+
+		if (!isEmpty(matrixValue)) break;
+	}
+	return matrixValue;
+}
 
 function configureMatrix() {
 	const transitionMatrixData = extractTransitionMatrixData(
