@@ -120,7 +120,7 @@
 							<Button
 								@click="updateObservables"
 								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
-								:disabled="observervablesList.filter((ob) => ob.id).length === 0"
+								:disabled="disableSaveObservable"
 								:class="
 									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
 								"
@@ -276,6 +276,7 @@ const editNodeObj = ref<AddStateObj>({
 let previousId: any = null;
 
 const addObservable = () => {
+	console.log('here');
 	isEditingObservables.value = true;
 	const obs: Observable = {
 		id: '',
@@ -336,6 +337,18 @@ const setNewObservables = (index: number, latexEq: string, mathmlEq: string) => 
 	emit('update-model-observables', observervablesList.value);
 };
 
+const disableSaveObservable = computed(() => {
+	const numEmptyObjservables = observervablesList.value.filter((ob) => ob.id === '').length;
+	if (observervablesList.value.length > 0 && numEmptyObjservables === 0) {
+		return false;
+	}
+	if (numEmptyObjservables > 0) {
+		return true;
+	}
+
+	return false;
+});
+
 // Updates the transition equations
 const updateRateEquation = (_index: number, latexEquation: string, mathml: string) => {
 	editNodeObj.value.expression = latexEquation;
@@ -365,11 +378,13 @@ const updateObservables = () => {
 		emit(
 			'update-model-observables',
 			observablesRefs.value.map((eq, index) => ({
-				id: eq.id || observablesRefs.value[index].id,
-				name: eq.name || observablesRefs.value[index].name,
-				expression: eq.mathLiveField.value,
-				expression_mathml: eq.mathLiveField.getValue('math-ml'),
-				states: extractVariablesFromMathML(eq.mathLiveField.getValue('math-ml'))
+				id: observablesRefs.value[index].id,
+				name: observablesRefs.value[index].name,
+				expression: observablesRefs.value[index].mathLiveField.value,
+				expression_mathml: observablesRefs.value[index].mathLiveField.getValue('math-ml'),
+				states: extractVariablesFromMathML(
+					observablesRefs.value[index].mathLiveField.getValue('math-ml')
+				)
 			}))
 		);
 		observablesRefs.value.forEach((eq) => {
