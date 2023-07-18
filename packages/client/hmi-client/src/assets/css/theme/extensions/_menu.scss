@@ -1,4 +1,6 @@
 .p-menu {
+    max-height: 400px;
+    overflow-y: auto;
     .p-menuitem {
         .p-menuitem-link {
             &:focus {
