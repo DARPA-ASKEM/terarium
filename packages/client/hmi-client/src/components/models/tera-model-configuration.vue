@@ -647,6 +647,7 @@ td:hover .cell-menu {
 }
 .distribution-range {
 	white-space: nowrap;
+	color: var(--text-color-subdued);
 }
 
 .invalid-message {
