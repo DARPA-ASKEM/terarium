@@ -1,5 +1,5 @@
 <template>
-	<Accordion :multiple="true" :active-index="[0, 3]">
+	<Accordion v-if="datasetColumnNames && modelColumnNames" :multiple="true" :active-index="[0, 3]">
 		<AccordionTab header="Mapping">
 			<DataTable class="mappingTable" :value="mapping">
 				<Column field="modelVariable">
@@ -19,14 +19,6 @@
 					</template>
 				</Column>
 			</DataTable>
-			<!-- <div>
-				<Button
-					class="p-button-sm p-button-outlined"
-					icon="pi pi-plus"
-					label="Add mapping"
-					@click="addMapping"
-				/>
-			</div> -->
 		</AccordionTab>
 		<AccordionTab header="Variables">
 			<tera-simulate-chart
@@ -65,6 +57,10 @@
 		<AccordionTab header="Parameters"></AccordionTab>
 		<AccordionTab header="Variables"></AccordionTab> -->
 	</Accordion>
+	<section v-else class="emptyState">
+		<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+		Connect a model configuration and dataset, then configure in the side panel
+	</section>
 	<Button
 		class="p-button-sm run-button"
 		label="Run"
@@ -292,11 +288,23 @@ watch(
 </script>
 
 <style scoped>
-.dropdown-button {
-	width: 156px;
-	height: 25px;
-	border-radius: 6px;
+.emptyState {
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	width: 80%;
+	margin-bottom: 1rem;
+	gap: 0.5rem;
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
+
+img {
+	width: 20%;
+}
+
 th {
 	text-align: left;
 }
