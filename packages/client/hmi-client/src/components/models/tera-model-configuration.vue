@@ -595,8 +595,7 @@ onMounted(() => {
 	min-width: 3rem;
 }
 td:has(.cell-input) {
-	padding: 2px !important;
-	max-width: 4rem;
+	padding: 0px !important;
 }
 
 .p-datatable:deep(td) {
@@ -613,6 +612,10 @@ td:has(.cell-input) {
 
 .second-frozen {
 	left: 48px;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+	padding-right: 0.5rem;
 }
 
 th:hover .cell-menu,
@@ -691,6 +694,7 @@ td:hover .cell-menu {
 }
 .distribution-range {
 	white-space: nowrap;
+	color: var(--text-color-subdued);
 }
 
 .invalid-message {
