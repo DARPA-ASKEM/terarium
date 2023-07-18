@@ -92,6 +92,8 @@
 					:key="index"
 					:run-results="runResults"
 					:chartConfig="cfg"
+					:line-color-array="lineColorArray"
+					:line-width-array="lineWidthArray"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
@@ -144,7 +146,7 @@ import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibra
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation-julia';
 
 const props = defineProps<{
@@ -175,6 +177,20 @@ const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.val
 const runResults = ref<RunResults>({});
 const parameterResult = ref<{ [index: string]: any }[]>();
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
+
+const lineColorArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
+		'#00000020'
+	);
+	output.push('#1b8073');
+	return output;
+});
+
+const lineWidthArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
+	output.push(5);
+	return output;
+});
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
@@ -255,7 +271,8 @@ watch(
 
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
 		runResults.value = output.runResults;
-		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'visualization.json');
+		console.log(parameterResult.value);
 	},
 	{ immediate: true }
 );

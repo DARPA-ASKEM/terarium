@@ -48,6 +48,8 @@
 					:key="index"
 					:run-results="runResults"
 					:chartConfig="cfg"
+					:line-color-array="lineColorArray"
+					:line-width-array="lineWidthArray"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
@@ -115,12 +117,12 @@ import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibra
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
+import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
 	CalibrateMap
 } from './calibrate-operation-ciemss';
-import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -146,6 +148,20 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
+
+const lineColorArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
+		'#00000020'
+	);
+	output.push('#1b8073');
+	return output;
+});
+
+const lineWidthArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
+	output.push(5);
+	return output;
+});
 
 // EXTRA section
 const numSamples = ref(100);
@@ -226,6 +242,7 @@ const getStatus = async () => {
 
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
+		console.log(completedRunId.value);
 		updateOutputPorts(completedRunId);
 		showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {

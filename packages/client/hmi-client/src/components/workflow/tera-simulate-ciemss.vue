@@ -280,7 +280,7 @@ const lineColorArray = computed(() => {
 
 const lineWidthArray = computed(() => {
 	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
+	output.push(5);
 	return output;
 });
 
