@@ -91,9 +91,7 @@
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
-					class="add-chart"
-					text
-					:outlined="true"
+					class="p-button-sm p-button-text"
 					@click="addChart"
 					label="Add chart"
 					icon="pi pi-plus"
@@ -267,7 +265,7 @@ watch(
 	border: none !important;
 }
 .mapping-table:deep(th) {
-	padding: 0rem 0.25rem 0.5rem 1rem !important;
+	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
 }
