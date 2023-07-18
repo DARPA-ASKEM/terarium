@@ -101,9 +101,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					.attr('r', () => childRadius) // FIXME: need to adjust edge from sqaure mapping to circle
 					.attr('cx', xPos)
 					.attr('cy', yPos)
-					.attr('fill', () => 'transparent')
-					.attr('stroke', '#999999')
-					.attr('stroke-width', 1)
+					.attr('fill', () => '#ffffffaa')
 					.style('cursor', 'pointer');
 
 				select(g[idx])
@@ -112,7 +110,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					.attr('y', 5 + yPos)
 					.style('text-anchor', 'middle')
 					.style('paint-order', 'stroke')
-					.style('fill', 'var(--text-color-primary')
+					.style('fill', 'var(--text-color-subdued')
 					.style('pointer-events', 'none')
 					.html(() => nodeId ?? '');
 			}
@@ -180,7 +178,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', 'var(--text-color-primary)')
 			.style('pointer-events', 'none')
 			.text((d) => d.id);
 	}
