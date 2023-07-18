@@ -1,45 +1,32 @@
 <template>
-	<Button class="p-button-sm" label="Run" @click="runCalibrate" :disabled="disableRunButton" />
 	<Accordion :multiple="true" :active-index="[0, 3]">
 		<AccordionTab header="Mapping">
-			<DataTable class="p-datatable-xsm" :value="mapping">
+			<DataTable class="mappingTable" :value="mapping">
 				<Column field="modelVariable">
 					<template #header>
-						<span class="column-header">MODEL VARIABLE</span>
+						<span class="column-header">Model variable</span>
 					</template>
 					<template #body="{ data, field }">
-						<!-- Tom TODO: No v-model -->
-						<Dropdown
-							class="w-full"
-							placeholder="Select a variable"
-							v-model="data[field]"
-							:options="modelColumnNames"
-						/>
+						<div class="mappingVariable">{{ data[field] }}</div>
 					</template>
 				</Column>
 				<Column field="datasetVariable">
 					<template #header>
-						<span class="column-header">DATASET VARIABLE</span>
+						<span class="column-header">Dataset variable</span>
 					</template>
 					<template #body="{ data, field }">
-						<!-- Tom TODO: No v-model -->
-						<Dropdown
-							class="w-full"
-							placeholder="Select a variable"
-							v-model="data[field]"
-							:options="datasetColumnNames"
-						/>
+						<div class="mappingVariable">{{ data[field] ? data[field] : 'Not mapped' }}</div>
 					</template>
 				</Column>
 			</DataTable>
-			<div>
+			<!-- <div>
 				<Button
 					class="p-button-sm p-button-outlined"
 					icon="pi pi-plus"
 					label="Add mapping"
 					@click="addMapping"
 				/>
-			</div>
+			</div> -->
 		</AccordionTab>
 		<AccordionTab header="Variables">
 			<tera-simulate-chart
@@ -78,6 +65,13 @@
 		<AccordionTab header="Parameters"></AccordionTab>
 		<AccordionTab header="Variables"></AccordionTab> -->
 	</Accordion>
+	<Button
+		class="p-button-sm run-button"
+		label="Run"
+		icon="pi pi-play"
+		@click="runCalibrate"
+		:disabled="disableRunButton"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -85,7 +79,6 @@ import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -218,24 +211,6 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-// Used from button to add new entry to the mapping object
-// Tom TODO: Make this generic, its copy paste from drilldown
-function addMapping() {
-	mapping.value.push({
-		modelVariable: '',
-		datasetVariable: ''
-	});
-
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
-	state.mapping = mapping.value;
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-}
-
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
@@ -327,8 +302,26 @@ th {
 }
 
 .column-header {
-	color: var(--text-color-subdued);
-	font-size: 12px;
-	font-weight: 400;
+	color: var(--text-color-primary);
+	font-size: var(--font-caption);
+	font-weight: var(--font-semibold);
+}
+
+.mappingVariable {
+	font-size: var(--font-caption);
+}
+
+.p-datatable:deep(td) {
+	padding: 0.25rem !important;
+}
+.p-datatable:deep(th) {
+	padding: 0.25rem !important;
+}
+
+.run-button {
+	margin-top: 1rem;
+	margin-bottom: 0.5rem;
+	width: 5rem;
+	align-self: end;
 }
 </style>
