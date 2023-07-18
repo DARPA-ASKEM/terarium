@@ -296,7 +296,7 @@ watch(
 	flex-direction: column;
 	align-items: center;
 	text-align: center;
-	width: 80%;
+	width: 90%;
 	margin-bottom: 1rem;
 	gap: 0.5rem;
 	color: var(--text-color-subdued);
