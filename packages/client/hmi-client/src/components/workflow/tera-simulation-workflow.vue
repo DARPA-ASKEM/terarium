@@ -95,7 +95,11 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
-
+					<tera-simulate-ensemble-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.ENSEMBLE_CIEMSS"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -208,6 +212,7 @@ import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
 import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
+import TeraSimulateEnsembleCiemssNode from '@/components/workflow/tera-simulate-ensemble-node-ciemss.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
@@ -488,7 +493,7 @@ const contextMenuItems = ref([
 			},
 			{
 				label: 'Calibrate & Simulate ensemble',
-				disabled: true,
+				disabled: false,
 				command: () => {
 					workflowService.addNode(wf.value, EnsembleCiemssOperation, newNodePosition, {
 						width: 420,
