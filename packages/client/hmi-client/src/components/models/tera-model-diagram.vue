@@ -276,7 +276,6 @@ const editNodeObj = ref<AddStateObj>({
 let previousId: any = null;
 
 const addObservable = () => {
-	console.log('here');
 	isEditingObservables.value = true;
 	const obs: Observable = {
 		id: '',
