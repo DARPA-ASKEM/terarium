@@ -151,5 +151,17 @@ public class SimulationRequestResource {
 		return res;
 	}
 
+	@POST
+	@Path("ciemss/ensemble-simulate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Create calibrate job")
+	public JobResponse makeEnsembleSimulateJob(
+		final CalibrationRequestCiemss request
+	) {
+		final JobResponse res = simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+		return res;
+	}
+
 
 }

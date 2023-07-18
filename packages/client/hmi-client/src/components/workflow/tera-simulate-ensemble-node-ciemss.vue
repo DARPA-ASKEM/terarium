@@ -43,7 +43,7 @@ watch(
 			for (let i = 0; i < modelConfigIds.value.length; i++) {
 				mapping.value[i] = {
 					id: modelConfigIds.value[i],
-					observables: [],
+					solutionMappings: [],
 					weight: 0
 				};
 			}

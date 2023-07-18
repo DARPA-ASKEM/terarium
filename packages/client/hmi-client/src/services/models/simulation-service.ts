@@ -154,7 +154,7 @@ export async function makeCalibrateJobCiemss(calibrationParams: CalibrationReque
 
 export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/calibrate', params);
+		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', params);
 		const output = resp.data;
 		return output;
 	} catch (err) {

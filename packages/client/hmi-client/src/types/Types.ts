@@ -225,7 +225,7 @@ export interface DatasetLocation {
 
 export interface EnsembleModelConfigs {
     id: string;
-    observables: { [index: string]: string }[];
+    solutionMappings: { [index: string]: string }[];
     weight: number;
 }
 

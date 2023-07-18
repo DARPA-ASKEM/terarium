@@ -15,7 +15,8 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 // Used to specify the location of a dataset for simulation-service
 public class EnsembleModelConfigs {
     private String id;
-    private List<Map<String, String>> observables;
+    @JsonAlias("solution_mappings")
+    private List<Map<String, String>> solutionMappings;
     private float weight;
 
 }

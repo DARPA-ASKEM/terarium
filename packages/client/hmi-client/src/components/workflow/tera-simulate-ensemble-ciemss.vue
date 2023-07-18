@@ -95,7 +95,7 @@
 				</AccordionTab>
 				<AccordionTab header="Mapping">
 					<template v-if="ensembleConfigs.length > 0">
-						<table v-if="ensembleConfigs[0].observables.length > 0">
+						<table v-if="ensembleConfigs[0].solutionMappings.length > 0">
 							<tr>
 								<th>Ensemble Variables</th>
 								<th v-for="(element, i) in ensembleConfigs" :key="i">
@@ -104,16 +104,16 @@
 							</tr>
 							<tr>
 								<div class="row-header">
-									<td v-for="(element, i) in ensembleConfigs[0].observables" :key="i">
-										{{ Object.keys(ensembleConfigs[0].observables[i]).pop() }}
+									<td v-for="(element, i) in ensembleConfigs[0].solutionMappings" :key="i">
+										{{ Object.keys(ensembleConfigs[0].solutionMappings[i]).pop() }}
 									</td>
 								</div>
 								<td v-for="(element, i) in ensembleConfigs" :key="i">
-									<template v-for="(element, j) in ensembleConfigs[i].observables" :key="j">
+									<template v-for="(element, j) in ensembleConfigs[i].solutionMappings" :key="j">
 										<Dropdown
-											v-for="(key, k) in Object.keys(ensembleConfigs[i].observables[j])"
+											v-for="(key, k) in Object.keys(ensembleConfigs[i].solutionMappings[j])"
 											:key="k"
-											v-model="ensembleConfigs[i].observables[j][key]"
+											v-model="ensembleConfigs[i].solutionMappings[j][key]"
 											:options="allModelOptions[i]"
 										/>
 									</template>
@@ -122,7 +122,7 @@
 						</table>
 					</template>
 
-					<InputText v-model="newObservableKey" placeholder="Variable Name" />
+					<InputText v-model="newSolutionMappingKey" placeholder="Variable Name" />
 					<Button
 						class="p-button-sm p-button-outlined"
 						icon="pi pi-plus"
@@ -220,7 +220,7 @@ const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
 const disabledCalibrationWeights = computed(() => true);
-const newObservableKey = ref<string>('');
+const newSolutionMappingKey = ref<string>('');
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -243,9 +243,10 @@ const runEnsemble = async () => {
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
-		engine: 'sciml',
+		engine: 'ciemss',
 		extra: { num_samples: 100 }
 	};
+	console.log(params);
 	const response = await makeEnsembleCiemssSimulation(params);
 	startedRunId.value = response.id;
 	getStatus();
@@ -284,7 +285,7 @@ const updateOutputPorts = async (runId) => {
 
 function addMapping() {
 	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].observables.push({ [newObservableKey.value]: '' });
+		ensembleConfigs.value[i].solutionMappings.push({ [newSolutionMappingKey.value]: '' });
 	}
 
 	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
