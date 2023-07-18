@@ -63,12 +63,14 @@
 					<tera-model-node
 						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
+						:dropped-model-id="droppedAssetId"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
+						:dropped-dataset-id="droppedAssetId"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
@@ -245,7 +247,7 @@ let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
 const newEdge = ref<WorkflowEdge | undefined>();
-const newAssetId = ref<string | null>(null);
+const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
@@ -314,6 +316,7 @@ const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 async function selectModel(node: WorkflowNode, data: { id: string }) {
+	droppedAssetId.value = null;
 	node.state.modelId = data.id;
 
 	// FIXME: Need additional design to work out exactly what to show. June 2023
@@ -341,6 +344,7 @@ async function updateWorkflowName() {
 }
 
 async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
+	droppedAssetId.value = null;
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
@@ -412,7 +416,6 @@ const contextMenuItems = ref([
 	{
 		label: 'Model',
 		command: () => {
-			newAssetId.value = null;
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
 			workflowDirty = true;
 		}
@@ -420,7 +423,6 @@ const contextMenuItems = ref([
 	{
 		label: 'Dataset',
 		command: () => {
-			newAssetId.value = null;
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
 			workflowDirty = true;
 		}
@@ -475,10 +477,7 @@ const contextMenuItems = ref([
 				label: 'Calibrate & Simulate',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
-						width: 420,
-						height: 220
-					});
+					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition);
 					workflowDirty = true;
 				}
 			},
@@ -518,7 +517,7 @@ function onDrop(event) {
 		}
 
 		workflowService.addNode(wf.value, operation, newNodePosition);
-		newAssetId.value = assetId;
+		droppedAssetId.value = assetId;
 	}
 }
 
@@ -650,6 +649,7 @@ const drawPath = (v: any) => pathFn(v) as string;
 watch(
 	() => [props.assetId],
 	async () => {
+		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
 		}

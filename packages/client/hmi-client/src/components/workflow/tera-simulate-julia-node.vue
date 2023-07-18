@@ -187,6 +187,6 @@ section {
 }
 
 .add-chart {
-	width: 9em;
+	width: 5rem;
 }
 </style>

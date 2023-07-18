@@ -37,11 +37,28 @@
 				>Reconnect</Button
 			>
 		</div>
+		<div>
+			<h4>Select a model configuration:</h4>
+			<h5 style="color: darkred">Changing this will clear and restart your session.</h5>
+			<div class="kernel-dropdown">
+				<Dropdown
+					v-model="selectedConfiguration"
+					:options="modelConfigurations"
+					empty-message="Select a configuration or leave blank to work directly on the model"
+					empty-selection-message="Hello"
+					optionLabel="name"
+					optionsValue="id"
+					:disabled="modelConfigurations.length === 0"
+					style="min-width: 100%; height: 30px; margin-bottom: 10px"
+				/>
+			</div>
+		</div>
 		<div class="gpt-header">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 			<span><header id="GPT">TGPT</header></span>
 		</div>
 		<tera-jupyter-chat
+			ref="chat"
 			:project="props.project"
 			:asset-id="props.assetId"
 			:show-jupyter-settings="true"
@@ -87,9 +104,10 @@ import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
+import { getModelConfigurations } from '@/services/model';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { CsvAsset, Model } from '@/types/Types';
+import { CsvAsset, Model, ModelConfiguration } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -122,8 +140,20 @@ const props = defineProps<{
 	showChatThoughts: boolean;
 }>();
 
+const noSelectionDefault = {
+	id: props.model?.id,
+	name: `Model "${props.model?.name}" (${props.model?.id}) -- (No configuration)`
+};
+
+const chat = ref();
 const kernelStatus = ref(<string>'');
 const showKernels = ref(<boolean>false);
+const modelConfigurations = ref(<
+	(ModelConfiguration | { id: string; name: string; type: string })[]
+>[noSelectionDefault]);
+const selectedConfiguration = ref(
+	<ModelConfiguration | { id: string; name: string }>noSelectionDefault
+);
 const emit = defineEmits(['is-typing']);
 
 const newCsvContent: any = ref(null);
@@ -185,7 +215,33 @@ watch(
 	}
 );
 
-onMounted(() => {
+watch(
+	() => [selectedConfiguration.value],
+	() => {
+		const kernel = jupyterSession.session?.kernel;
+		let contextInfo;
+		if (
+			selectedConfiguration.value.id === noSelectionDefault.id &&
+			selectedConfiguration.value.name === noSelectionDefault.name
+		) {
+			contextInfo = { id: props.assetId, type: 'model' };
+		} else {
+			contextInfo = { id: selectedConfiguration.value.id, type: 'model_config' };
+		}
+		chat.value.clearHistory();
+		setKernelContext(kernel as IKernelConnection, {
+			context: 'mira_model',
+			context_info: contextInfo
+		});
+	}
+);
+
+onMounted(async () => {
+	if (props.model) {
+		const tempConfigurations = await getModelConfigurations(props.model.id);
+		modelConfigurations.value = modelConfigurations.value.concat(tempConfigurations);
+	}
+
 	// for admin panel
 	jupyterSession.ready.then(() => {
 		if (jupyterSession.session) {
