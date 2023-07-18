@@ -62,6 +62,11 @@ const matrix = ref();
 const chosenCol = ref('');
 const chosenRow = ref('');
 
+// Makes cell inputs focus once they appear
+// const vFocus = {
+//     mounted: (el) => el.focus()
+// };
+
 function findMatrixValue(variableName: string) {
 	const ode = props.model.semantics?.ode;
 

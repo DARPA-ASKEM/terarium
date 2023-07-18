@@ -16,17 +16,17 @@
 					<tr>
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
-						<th v-for="({ id }, i) in configuration.states" :header="id" :key="i">
+						<th v-for="({ id }, i) in baseModelStates" :header="id" :key="i">
 							{{ id }}
 						</th>
-						<th v-for="({ id }, i) in configuration.transitions" :header="id" :key="i">
+						<th v-for="({ id }, i) in baseModelTransitions" :header="id" :key="i">
 							{{ id }}
 						</th>
 						<!--TODO: Insert new th loops for time and observables here-->
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr>
+					<tr v-for="i in modelConfigurations.length" :key="i">
 						<!--TODO: This td is a placeholder, row selection doesn't work-->
 						<td class="p-selection-column p-frozen-column">
 							<div class="p-checkbox p-component">
@@ -39,11 +39,8 @@
 							</div>
 						</td>
 						<td class="p-frozen-column second-frozen" tabindex="0">Default name</td>
-						<td
-							v-for="({ id }, i) in [...configuration.states, ...configuration.transitions]"
-							:key="i"
-						>
-							<section class="editable-cell" @click="openValueModal(id)">
+						<td v-for="({ id }, j) in [...baseModelStates, ...baseModelTransitions]" :key="j">
+							<section class="editable-cell" @click="openValueModal(id, i - 1)">
 								<span>{{ id }}<i class="pi pi-table"></i></span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -62,13 +59,11 @@
 		size="small"
 		icon="pi pi-plus"
 		:model="configItems"
-	></SplitButton>
+	/>
 	<Teleport to="body">
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
-				<h4>
-					{{ modalVal.id }}
-				</h4>
+				<h4>{{ modalVal.id }}</h4>
 				<span>Configure the matrix values</span>
 			</template>
 			<template #default>
@@ -83,14 +78,16 @@
 						</div>
 						<div>
 							<label for="name">Matrix</label>
-							<tera-stratified-value-matrix :model="model" :id="modalVal.id" />
-							<!-- <InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" /> -->
+							<tera-stratified-value-matrix
+								:model="configurations[modalVal.configIndex]"
+								:id="modalVal.id"
+							/>
 						</div>
 					</TabPanel>
 				</TabView>
 			</template>
 			<template #footer>
-				<Button label="OK" @click="() => {}" />
+				<Button label="OK" @click="openValueConfig = false" />
 				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
 			</template>
 		</tera-modal>
@@ -126,7 +123,7 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
-const modalVal = ref({ id: '' });
+const modalVal = ref({ id: '', configIndex: 0 });
 
 const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
@@ -135,22 +132,20 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const configuration = computed<any>(() => props.model?.semantics?.span?.[0].system.model);
+const baseModelStates = computed<any>(() => props.model?.semantics?.span?.[0].system.model.states);
+const baseModelTransitions = computed<any>(
+	() => props.model?.semantics?.span?.[0].system.model.transitions
+);
 
 // Decide if we should display the whole configuration table
 const isConfigurationVisible = computed(
 	() => !isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)
 );
 
-// Makes cell inputs focus once they appear
-// const vFocus = {
-//     mounted: (el) => el.focus()
-// };
-
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
-	{ name: 'initials', colspan: configuration.value.states.length },
-	{ name: 'parameters', colspan: configuration.value.transitions.length }
+	{ name: 'Initials', colspan: baseModelStates.value.length },
+	{ name: 'Parameters', colspan: baseModelTransitions.value.length }
 ]);
 
 async function addModelConfiguration(config: ModelConfiguration) {
@@ -165,27 +160,18 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	}, 800);
 }
 
-function openValueModal(id) {
+function openValueModal(id: string, configIndex: number) {
 	if (props.isEditable) {
 		activeIndex.value = 0;
 		openValueConfig.value = true;
-		modalVal.value = { id };
-		// const modelParameter = cloneDeep(
-		//     modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
-		// );
-		// extractions.value[0].value = modelParameter[valueName];
-		// extractions.value[0].name = modelParameter.name ?? 'Default';
-		// extractions.value[0].isDistribution = !!modelParameter.distribution;
-		// // we are only adding the ability to add one type of distribution for now...
-		// extractions.value[0].distribution = modelParameter.distribution ?? {
-		//     type: 'Uniform1',
-		//     parameters: { minimum: null, maximum: null }
-		// };
+		modalVal.value = { id, configIndex };
 	}
 }
 
 async function initializeConfigSpace() {
 	let tempConfigurations = await getModelConfigurations(props.model.id);
+
+	console.log(tempConfigurations);
 
 	configItems.value = tempConfigurations.map((config) => ({
 		label: config.name,
@@ -212,7 +198,7 @@ async function initializeConfigSpace() {
 	}
 
 	openValueConfig.value = false;
-	modalVal.value = { id: '' };
+	modalVal.value = { id: '', configIndex: 0 };
 	extractions.value = [{ name: '', value: '' }];
 }
 
