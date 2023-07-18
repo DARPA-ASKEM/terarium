@@ -230,6 +230,12 @@ const newJupyterMessage = (jupyterMessage) => {
 	}
 };
 
+const clearHistory = () => {
+	messagesHistory.value = [];
+	renderedMessages.value = new Set<any>();
+	notebookItems.value = [];
+};
+
 const scrollToLastCell = (element, msg) => {
 	if (msg === notebookItems.value[notebookItems.value.length - 1]) {
 		element.scrollIntoView(false);
@@ -279,6 +285,10 @@ watch(
 		console.log(props.project, props.assetId);
 	}
 );
+
+defineExpose({
+	clearHistory
+});
 </script>
 
 <style scoped>
