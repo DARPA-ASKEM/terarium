@@ -28,10 +28,10 @@
 				<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
 			</AccordionTab>
 			<AccordionTab header="Mapping">
-				<DataTable class="p-datatable-xsm" :value="mapping">
+				<DataTable class="mapping-table" :value="mapping">
 					<Column field="modelVariable">
 						<template #header>
-							<span class="column-header">MODEL VARIABLE</span>
+							<span class="column-header">Model variable</span>
 						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
@@ -45,7 +45,7 @@
 					</Column>
 					<Column field="datasetVariable">
 						<template #header>
-							<span class="column-header">DATASET VARIABLE</span>
+							<span class="column-header">Dataset variable</span>
 						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
@@ -262,6 +262,18 @@ watch(
 	padding-top: 1rem;
 }
 
+.mapping-table {
+	margin-bottom: 1rem;
+}
+.mapping-table:deep(td) {
+	padding: 0rem 0.25rem 0.5rem 0rem !important;
+	border: none !important;
+}
+.mapping-table:deep(th) {
+	padding: 0rem 0.25rem 0.5rem 0rem !important;
+	border: none !important;
+	width: 50%;
+}
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -283,9 +295,9 @@ th {
 	text-align: left;
 }
 .column-header {
-	color: var(--text-color-subdued);
-	font-size: 12px;
-	font-weight: 400;
+	color: var(--text-color-primary);
+	font-size: var(--font-body-small));
+	font-weight: var(--font-weight-semibold);
 }
 
 .emptyState {
