@@ -448,11 +448,6 @@ li {
 	width: 100%;
 }
 
-.p-multiselect-label-container {
-	min-width: 150px;
-	width: 100%;
-}
-
 .input-header {
 	min-width: 150px;
 }
