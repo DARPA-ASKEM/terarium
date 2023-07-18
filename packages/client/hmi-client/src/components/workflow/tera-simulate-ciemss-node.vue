@@ -1,5 +1,5 @@
 <template>
-	<section v-if="!showSpinner" class="result-container">
+	<section v-if="!showSpinner">
 		<div class="chart-container">
 			<SimulateChart
 				v-for="(cfg, index) of node.state.chartConfigs"
@@ -22,6 +22,16 @@
 			></Button>
 			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>
 		</div>
+		<Accordion :multiple="true" :active-index="[0]">
+			<AccordionTab header="EXTRAS">
+				<span class="extras">
+					<label>num_samples</label>
+					<InputNumber v-model="numSamples"></InputNumber>
+					<label>method</label>
+					<Dropdown :options="ciemssMethodOptions" v-model="method" />
+				</span>
+			</AccordionTab>
+		</Accordion>
 	</section>
 	<section v-else>
 		<div>loading...</div>
@@ -32,16 +42,18 @@
 import _ from 'lodash';
 import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
-
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import Dropdown from 'primevue/dropdown';
 import {
 	makeForecastJobCiemss as makeForecastJob,
 	getSimulation,
 	getRunResultCiemss
 } from '@/services/models/simulation-service';
+import InputNumber from 'primevue/inputnumber';
 import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
-
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
@@ -52,6 +64,10 @@ const emit = defineEmits(['append-output-port']);
 // const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
+// EXTRA section
+const numSamples = ref(props.node.state.num_samples);
+const method = ref(props.node.state.method);
+const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const startedRunIdList = ref<string[]>([]);
 const completedRunIdList = ref<string[]>([]);
@@ -86,7 +102,10 @@ const runSimulate = async () => {
 				start: state.currentTimespan.start,
 				end: state.currentTimespan.end
 			},
-			extra: { num_samples: state.numSamples },
+			extra: {
+				num_samples: numSamples.value,
+				method: method.value
+			},
 			engine: 'ciemss'
 		};
 		const response = await makeForecastJob(payload);
@@ -215,7 +234,6 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	padding: 10px;
 	background: var(--surface-overlay);
 }
 
@@ -225,6 +243,10 @@ section {
 
 .add-chart {
 	width: 9em;
+}
+
+.extras {
+	display: grid;
 }
 
 .button-container {
