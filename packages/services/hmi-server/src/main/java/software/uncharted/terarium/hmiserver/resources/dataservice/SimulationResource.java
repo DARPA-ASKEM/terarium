@@ -1,28 +1,26 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.commons.io.IOUtils;
-import java.nio.charset.StandardCharsets;
-
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
-import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.utils.Converter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 @Path("/api/simulations")
 @Produces(MediaType.APPLICATION_JSON)
@@ -104,11 +102,12 @@ public class SimulationResource {
 		@PathParam("projectId") final String projectId
 	) {
 		// Duplicate the simulation results to a new dataset
-		final Dataset dataset = proxy.copyResultsToDataset(id);
+		final JsonNode jsodnDatasetId = proxy.copyResultsToDataset(id);
 
 		// Test if dataset is null
-		if (dataset == null) {
-			log.error("Failed to copy simulation {} result as dataset", id);
+		if (jsodnDatasetId == null) {
+			final String datasetId = jsodnDatasetId.at("/id").asText();
+			log.error("Failed to copy simulation {} result as dataset", datasetId);
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.entity("Failed to copy simulation result as dataset")
@@ -118,7 +117,7 @@ public class SimulationResource {
 
 		// Add the dataset to the project as an asset
 		try {
-			Response response = projectProxy.createAsset(projectId, ResourceType.Type.DATASETS, dataset.getId());
+			final Response response = projectProxy.createAsset(projectId, ResourceType.Type.DATASETS, datasetId);
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
 				return response;
 			}
