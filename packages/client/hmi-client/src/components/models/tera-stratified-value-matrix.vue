@@ -32,8 +32,6 @@
 						<td v-for="(cell, j) in row" :key="j">
 							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
 								{{ findMatrixValue(cell?.value?.[chosenCol]) }}
-								<br />
-								{{ findMatrixValue(cell?.value?.[chosenRow]) }}
 							</template>
 							<span class="not-allowed" v-else>N/A</span>
 						</td>
