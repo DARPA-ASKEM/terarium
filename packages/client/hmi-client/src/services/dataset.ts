@@ -180,16 +180,26 @@ async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string
 ): Promise<boolean> {
-	const response: AxiosResponse<Response> = await API.get(
-		`/simulations/${simulationId}/create-from-simulation-result/${projectId}`
-	);
-	if (response && response.status === 200) {
-		return true;
+	try {
+		const response: AxiosResponse<Response> = await API.get(
+			`/simulations/${simulationId}/create-from-simulation-result/${projectId}`
+		);
+		if (response && response.status === 200) {
+			return true;
+		}
+		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
+			toastTitle: 'TDS - Simulation'
+		});
+		return false;
+	} catch (error) {
+		logger.error(
+			`/simulations/{id}/create-from-simulation-result/{projectId} not responding:  ${error}`,
+			{
+				toastTitle: 'TDS - Simulation'
+			}
+		);
+		return false;
 	}
-	logger.error(`Unable to create dataset from simulation result ${response.status}`, {
-		toastTitle: 'TDS - Simulation'
-	});
-	return false;
 }
 
 export {
