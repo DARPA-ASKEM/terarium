@@ -1,5 +1,5 @@
 <template>
-	<section v-if="!showSpinner">
+	<div v-if="!showSpinner">
 		<Accordion
 			v-if="datasetColumnNames && modelColumnNames"
 			:multiple="true"
@@ -66,7 +66,9 @@
 		</Accordion>
 		<section v-else class="emptyState">
 			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
-			Connect a model configuration and dataset, then configure in the side panel
+			<p class="helpMessage">
+				Connect a model configuration and dataset, then configure in the side panel
+			</p>
 		</section>
 		<Button
 			class="p-button-sm run-button"
@@ -75,7 +77,7 @@
 			@click="runCalibrate"
 			:disabled="disableRunButton"
 		/>
-	</section>
+	</div>
 	<section v-else>
 		<div><i class="pi pi-spin pi-spinner"></i> Loading...</div>
 	</section>
@@ -291,13 +293,15 @@ watch(
 	flex-direction: column;
 	align-items: center;
 	text-align: center;
-	width: 90%;
 	margin-bottom: 1rem;
 	gap: 0.5rem;
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
 }
 
+.helpMessage {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	width: 90%;
+}
 img {
 	width: 20%;
 }
