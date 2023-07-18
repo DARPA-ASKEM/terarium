@@ -568,6 +568,10 @@ td:has(.cell-input) {
 	left: 48px;
 }
 
+.p-datatable .p-datatable-tbody > tr > td {
+	padding-right: 0.5rem;
+}
+
 th:hover .cell-menu,
 td:hover .cell-menu {
 	visibility: visible;
