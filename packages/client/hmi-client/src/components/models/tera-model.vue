@@ -52,8 +52,6 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<!-- For testing dummy data -->
-		<tera-stratified-model-configuration :model="stratify_output" :is-editable="props.isEditable" />
 		<template v-if="modelView === ModelView.DESCRIPTION">
 			<div class="container">
 				<Message class="inline-message" icon="none">
@@ -540,7 +538,6 @@ import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
 import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
-import { stratify_output } from '@/temp/models/stratify_output';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
