@@ -499,7 +499,6 @@ watch(
 
 		// Create renderer
 		if (isStratifiedAMR(props.model)) {
-			console.log('hihi', extractNestedMap(props.model));
 			renderer = new NestedPetrinetRenderer({
 				el: graphElement.value as HTMLDivElement,
 				useAStarRouting: false,
