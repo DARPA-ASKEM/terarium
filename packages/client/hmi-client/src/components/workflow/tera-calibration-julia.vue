@@ -267,7 +267,7 @@ watch(
 	border: none !important;
 }
 .mapping-table:deep(th) {
-	padding: 0rem 0.25rem 0.5rem 0rem !important;
+	padding: 0rem 0.25rem 0.5rem 1rem !important;
 	border: none !important;
 	width: 50%;
 }
