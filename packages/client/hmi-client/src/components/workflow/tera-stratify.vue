@@ -20,7 +20,7 @@
 			</span>
 			<Button
 				v-if="stratifyView === StratifyView.Input"
-				class="stratify-button"
+				class="stratify-button p-button-sm"
 				label="Stratify"
 				icon="pi pi-arrow-right"
 				@click="doStratify"
@@ -162,6 +162,21 @@
 					"
 				/>
 			</div>
+			<div class="add-model-config">
+				<Button
+					class="p-button-sm"
+					label="Add configure model to the workflow"
+					icon="pi pi-plus"
+					@click="
+						workflowEventBus.emit('add-node', {
+							workflowId: node.workflowId,
+							operation: ModelOperation,
+							position: { x: node.x, y: node.y + node.height + 8 },
+							state: { modelId: stratifiedModel?.id }
+						})
+					"
+				/>
+			</div>
 		</section>
 	</main>
 </template>
@@ -186,6 +201,8 @@ import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import useResourcesStore from '@/stores/resources';
 import { ProjectAssetTypes } from '@/types/Project';
+import { workflowEventBus } from '@/services/workflow';
+import { ModelOperation } from '@/components/workflow/model-operation';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
 import TeraStratifyOutputModelDiagram from '../models/tera-stratify-output-model-diagram.vue';
@@ -196,7 +213,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['open-asset']);
+const emit = defineEmits(['open-asset', 'add-model-config']);
 
 enum StratifyView {
 	Input,
@@ -392,5 +409,9 @@ section {
 
 .p-button.p-button-text {
 	padding: 0;
+}
+
+.add-model-config {
+	display: flex;
 }
 </style>

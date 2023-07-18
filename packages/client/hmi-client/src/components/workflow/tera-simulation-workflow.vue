@@ -397,6 +397,14 @@ workflowEventBus.on('node-state-change', (payload: any) => {
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 });
 
+workflowEventBus.on(
+	'add-node',
+	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
+		workflowService.addNode(wf.value, payload.operation, payload.position, payload.state);
+		workflowDirty = true;
+	}
+);
+
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };

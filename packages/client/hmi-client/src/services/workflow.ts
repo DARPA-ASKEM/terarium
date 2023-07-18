@@ -38,6 +38,7 @@ export const addNode = (
 	wf: Workflow,
 	op: Operation,
 	pos: Position,
+	state: any = {},
 	size: Size = { width: 180, height: 220 }
 ) => {
 	const node: WorkflowNode = {
@@ -47,7 +48,7 @@ export const addNode = (
 		displayName: op.displayName,
 		x: pos.x,
 		y: pos.y,
-		state: {},
+		state,
 
 		inputs: op.inputs.map((port) => ({
 			id: uuidv4(),
@@ -73,7 +74,7 @@ export const addNode = (
 		height: size.height
 	};
 
-	if (op.initState) {
+	if (op.initState && !state) {
 		node.state = op.initState();
 	}
 
