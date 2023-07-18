@@ -49,19 +49,26 @@
 						<td
 							class="p-frozen-column second-frozen"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].name = true"
+							@keyup.enter="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+							@click="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
 						>
-							<span v-if="!cellEditStates[i].name" @click="cellEditStates[i].name = true">
+							<span v-if="!cellEditStates[i].name">
 								{{ name }}
 							</span>
 							<InputText
 								v-else
-								v-model.lazy="modelConfigurations[i].name"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].name = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].name = false;
-									updateModelConfigValue(i);
+									updateModelConfigName(i);
 								"
 								class="cell-input"
 							/>
@@ -69,9 +76,9 @@
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
-							@click="cellEditStates[i].initials[j] = true"
+							@click="onEnterValueCell('initials', 'expression', i, j)"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].initials[j] = true"
+							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
 							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
 								<span>{{ initial.expression }}</span>
@@ -83,14 +90,12 @@
 							</section>
 							<InputText
 								v-else
-								v-model.lazy="
-									modelConfigurations[i].configuration.semantics.ode.initials[j].expression
-								"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].initials[j] = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].initials[j] = false;
-									updateModelConfigValue(i);
+									updateModelConfigValue('initials', 'expression', i, j);
 								"
 								class="cell-input"
 							/>
@@ -101,7 +106,7 @@
 							@click="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										cellEditStates[i].parameters[j] = true;
+										onEnterValueCell('parameters', 'value', i, j);
 									}
 								}
 							"
@@ -109,7 +114,7 @@
 							@keyup.enter="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										cellEditStates[i].parameters[j] = true;
+										onEnterValueCell('parameters', 'value', i, j);
 									}
 								}
 							"
@@ -132,14 +137,12 @@
 							</section>
 							<InputText
 								v-else
-								v-model.lazy="
-									modelConfigurations[i].configuration.semantics.ode.parameters[j].value
-								"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].parameters[j] = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].parameters[j] = false;
-									updateModelConfigValue(i);
+									updateModelConfigValue('parameters', 'value', i, j);
 								"
 								class="cell-input"
 							/>
@@ -276,6 +279,7 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
@@ -336,6 +340,19 @@ function getValuePlaceholder(parameterType) {
 	return '';
 }
 
+function onEnterValueCell(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	modelConfigInputValue.value = cloneDeep(
+		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+			valueName
+		]
+	);
+	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
+}
 function openValueModal(
 	odeType: string,
 	valueName: string,
@@ -435,11 +452,28 @@ function setModelParameters() {
 			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
 
-		updateModelConfigValue();
+		updateModelConfig();
 	}
 }
 
-function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
+function updateModelConfigName(configIndex: number) {
+	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
+	updateModelConfig(configIndex);
+}
+
+function updateModelConfigValue(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+		valueName
+	] = modelConfigInputValue.value;
+	updateModelConfig(configIndex);
+}
+
+function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
