@@ -125,14 +125,14 @@
 									<input
 										type="text"
 										:value="parameter?.id ?? '--'"
-										@input="updateTable('parameters', i, 'id', $event.target?.value)"
+										@input="updateTable('parameters', i, 'id', $event.target?.['value'])"
 									/>
 								</div>
 								<div>
 									<input
 										type="text"
 										:value="parameter?.value ?? '--'"
-										@input="updateTable('parameters', i, 'value', $event.target?.value)"
+										@input="updateTable('parameters', i, 'value', $event.target?.['value'])"
 									/>
 								</div>
 								<div>--</div>
@@ -198,14 +198,14 @@
 									<input
 										type="text"
 										:value="state?.id ?? '--'"
-										@input="updateTable('states', i, 'id', $event.target?.value)"
+										@input="updateTable('states', i, 'id', $event.target?.['value'])"
 									/>
 								</div>
 								<div>
 									<input
 										type="text"
 										:value="state?.name ?? '--'"
-										@input="updateTable('states', i, 'name', $event.target?.value)"
+										@input="updateTable('states', i, 'name', $event.target?.['value'])"
 									/>
 								</div>
 								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
