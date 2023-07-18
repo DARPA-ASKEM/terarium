@@ -26,7 +26,7 @@
 			<AccordionTab header="EXTRAS">
 				<span class="extras">
 					<label>num_samples</label>
-					<InputNumber v-model="numSamples"></InputNumber>
+					<InputNumber v-model.lazy="numSamples" />
 					<label>method</label>
 					<Dropdown :options="ciemssMethodOptions" v-model="method" />
 				</span>
@@ -65,7 +65,7 @@ const emit = defineEmits(['append-output-port']);
 
 const showSpinner = ref(false);
 // EXTRA section
-const numSamples = ref(props.node.state.num_samples);
+const numSamples = ref(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
@@ -103,8 +103,8 @@ const runSimulate = async () => {
 				end: state.currentTimespan.end
 			},
 			extra: {
-				num_samples: numSamples.value,
-				method: method.value
+				num_samples: state.numSamples,
+				method: state.method
 			},
 			engine: 'ciemss'
 		};
@@ -194,6 +194,34 @@ watch(
 		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
 	},
 	{ immediate: true, deep: true }
+);
+
+watch(
+	() => numSamples.value,
+	() => {
+		const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+		state.numSamples = numSamples.value;
+
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
+	}
+);
+
+watch(
+	() => method.value,
+	() => {
+		const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+		state.method = method.value;
+
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
+	}
 );
 
 const configurationChange = (index: number, config: ChartConfig) => {
