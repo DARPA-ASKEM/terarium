@@ -19,6 +19,7 @@
 				/>
 			</span>
 			<Button
+				v-if="stratifyView === StratifyView.Output"
 				class="stratify-button"
 				label="Stratify"
 				icon="pi pi-arrow-right"
@@ -130,17 +131,30 @@
 				</div>
 			</section>
 		</section>
-		<section class="step-1" v-else-if="stratifyView === StratifyView.Output">
+		<section class="output" v-else-if="stratifyView === StratifyView.Output">
 			<div>If this is not what you expected, go back to the input page to make changes.</div>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Stratified model">
 					<tera-stratify-output-model-diagram v-if="stratifiedModel" :model="stratifiedModel" />
 				</AccordionTab>
 				<AccordionTab header="Strata model">
-					<tera-stratify-output-model-diagram v-if="strataModel" :model="strataModel" />
+					<tera-strata-model-diagram
+						v-if="typedStrataModel"
+						:strata-model="typedStrataModel"
+						:show-reflexives-toolbar="false"
+					/>
 				</AccordionTab>
 			</Accordion>
-			<div>Saved as: {{ stratify_output.name }}</div>
+			<div>
+				Saved as:
+				<Button
+					class=".p-button-link"
+					:label="stratifiedModel.name"
+					icon="pi pi-pencil"
+					iconPos="right"
+					text
+				/>
+			</div>
 		</section>
 	</main>
 </template>
@@ -189,7 +203,7 @@ const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
 	() => strataModel.value?.semantics?.typing?.system
 );
-const typedBaseModel = ref<Model | null>(null);
+const typedBaseModel = ref<Model>();
 const typedStrataModel = ref<Model | null>(null);
 const stratifiedModel = ref<Model>(stratify_output);
 
@@ -345,5 +359,26 @@ section {
 
 .stratify-button {
 	margin-left: auto;
+}
+
+.output {
+	padding-left: 0.5rem;
+}
+
+.output div {
+	padding-left: 0.5rem;
+}
+
+:deep(.p-accordion .p-accordion-content) {
+	padding: 0.5rem;
+}
+
+.saved-model-name {
+	color: var(--text-color-primary);
+	text-decoration: underline;
+}
+
+.p-button.p-button-text {
+	padding: 0;
 }
 </style>

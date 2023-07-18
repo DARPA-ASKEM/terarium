@@ -58,12 +58,18 @@ const props = defineProps<{
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const stateTypes = computed(() =>
-	props.model.semantics?.typing?.system?.model.states.map((s) => s.name)
-);
-const transitionTypes = computed(() =>
-	props.model.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name)
-);
+const stateTypes = computed(() => {
+	if (props.model.semantics?.typing?.system.states) {
+		return props.model.semantics.typing.system.states.map((s) => s.name);
+	}
+	return props.model.semantics?.typing?.system?.model.states.map((s) => s.name);
+});
+const transitionTypes = computed(() => {
+	if (props.model.semantics?.typing?.system.transitions) {
+		return props.model.semantics.typing.system.transitions.map((t) => t.properties?.name);
+	}
+	return props.model.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name);
+});
 
 const isCollapsed = ref(true);
 
