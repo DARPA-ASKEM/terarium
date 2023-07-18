@@ -1,5 +1,5 @@
 <template>
-	<div v-if="!showSpinner">
+	<section v-if="!showSpinner">
 		<Accordion
 			v-if="datasetColumnNames && modelColumnNames"
 			:multiple="true"
@@ -77,7 +77,7 @@
 			@click="runCalibrate"
 			:disabled="disableRunButton"
 		/>
-	</div>
+	</section>
 	<section v-else>
 		<div><i class="pi pi-spin pi-spinner"></i> Loading...</div>
 	</section>
@@ -335,6 +335,6 @@ th {
 	margin-top: 1rem;
 	margin-bottom: 0.5rem;
 	width: 5rem;
-	align-self: end;
+	float: right;
 }
 </style>
