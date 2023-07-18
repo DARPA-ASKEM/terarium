@@ -421,7 +421,6 @@ export const replaceValuesInMathML = (
 	wordToReplace: string,
 	replaceWord: string
 ): string => {
-
 	let expressionBuilder = '';
 	let isTag = false;
 	let content = '';
