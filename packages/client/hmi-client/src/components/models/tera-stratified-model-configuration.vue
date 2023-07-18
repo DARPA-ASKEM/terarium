@@ -43,7 +43,7 @@
 							v-for="({ id }, i) in [...configuration.states, ...configuration.transitions]"
 							:key="i"
 						>
-							<section class="editable-cell" @click="openValueModal">
+							<section class="editable-cell" @click="openValueModal(id)">
 								<span>{{ id }}<i class="pi pi-table"></i></span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -67,15 +67,7 @@
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
 				<h4>
-					Matrix
-					<!-- {{
-                        modelConfigurations[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-                        modalVal.odeObjIndex
-                        ]['id'] ??
-                        modelConfigurations[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-                            modalVal.odeObjIndex
-                        ]['target']
-                    }} -->
+					{{ modalVal.id }}
 				</h4>
 				<span>Configure the matrix values</span>
 			</template>
@@ -91,40 +83,14 @@
 						</div>
 						<div>
 							<label for="name">Matrix</label>
-							<tera-stratify-value-matrix :model="model" />
+							<tera-stratify-value-matrix :model="model" :id="modalVal.id" />
 							<!-- <InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" /> -->
-						</div>
-						<div v-if="modalVal.odeType === 'parameters'">
-							<label for="name">Distribution</label>
-							<Checkbox v-model="extraction.isDistribution" :binary="true"></Checkbox>
-							<div v-if="extraction.isDistribution">
-								<label for="name">Min</label>
-								<InputText
-									class="p-inputtext-sm"
-									:key="'min' + i"
-									v-model="extraction.distribution.parameters.minimum"
-								/>
-								<label for="name">Max</label>
-								<InputText
-									class="p-inputtext-sm"
-									:key="'max' + i"
-									v-model="extraction.distribution.parameters.maximum"
-								/>
-							</div>
 						</div>
 					</TabPanel>
 				</TabView>
 			</template>
 			<template #footer>
-				<Button
-					label="OK"
-					@click="
-						() => {
-							setModelParameters();
-							updateModelConfigValue();
-						}
-					"
-				/>
+				<Button label="OK" @click="() => {}" />
 				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
 			</template>
 		</tera-modal>
@@ -140,7 +106,7 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import Checkbox from 'primevue/checkbox';
+// import Checkbox from 'primevue/checkbox';
 import { ModelConfiguration, Model } from '@/types/Types';
 import {
 	createModelConfiguration,
@@ -160,7 +126,7 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
-const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
+const modalVal = ref({ id: '' });
 
 const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
@@ -199,11 +165,11 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	}, 800);
 }
 
-function openValueModal() {
+function openValueModal(id) {
 	if (props.isEditable) {
 		activeIndex.value = 0;
 		openValueConfig.value = true;
-		// modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
+		modalVal.value = { id };
 		// const modelParameter = cloneDeep(
 		//     modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
 		// );
@@ -216,28 +182,6 @@ function openValueModal() {
 		//     parameters: { minimum: null, maximum: null }
 		// };
 	}
-}
-
-// function to set the provided values from the modal
-function setModelParameters() {
-	const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
-	const modelParameter =
-		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
-	modelParameter[valueName] = extractions.value[activeIndex.value].value;
-	modelParameter.name = extractions.value[activeIndex.value].name;
-
-	// delete the distribution if the checkbox isn't selected
-	if (extractions.value[activeIndex.value].isDistribution) {
-		modelParameter.distribution = extractions.value[activeIndex.value].distribution;
-	} else {
-		delete modelParameter.distribution;
-	}
-}
-
-function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
-	const configToUpdate = modelConfigurations.value[configIndex];
-	updateModelConfiguration(configToUpdate);
-	openValueConfig.value = false;
 }
 
 async function initializeConfigSpace() {
@@ -268,7 +212,7 @@ async function initializeConfigSpace() {
 	}
 
 	openValueConfig.value = false;
-	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
+	modalVal.value = { id: '' };
 	extractions.value = [{ name: '', value: '' }];
 }
 

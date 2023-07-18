@@ -226,13 +226,6 @@ async function removeAsset(asset: Tab) {
 watch(
 	() => projectContext.value,
 	() => {
-		if (projectContext.value) {
-			// Automatically go to overview page when project is opened
-			router.push({
-				name: RouteName.ProjectRoute,
-				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
-			});
-		}
 		if (
 			tabs.value.length > 0 &&
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
@@ -240,6 +233,16 @@ watch(
 			openAsset();
 		} else if (openedAssetRoute.value && openedAssetRoute.value.assetName) {
 			tabStore.addTab(projectContext.value, openedAssetRoute.value);
+		}
+
+		const overviewResource = {
+			assetName: 'Overview',
+			pageType: ProjectPages.OVERVIEW,
+			assetId: ''
+		};
+		if (projectContext.value && !tabs.value.some((tab) => isEqual(tab, overviewResource))) {
+			// Automatically add overview tab if it does not exist
+			tabStore.addTab(projectContext.value, overviewResource);
 		}
 	}
 );

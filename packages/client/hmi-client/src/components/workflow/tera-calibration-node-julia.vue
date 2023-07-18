@@ -1,83 +1,88 @@
 <template>
-	<Button class="p-button-sm" label="Run" @click="runCalibrate" :disabled="disableRunButton" />
-	<Accordion :multiple="true" :active-index="[0, 3]">
-		<AccordionTab header="Mapping">
-			<DataTable class="p-datatable-xsm" :value="mapping">
-				<Column field="modelVariable">
-					<template #header>
-						<span class="column-header">MODEL VARIABLE</span>
-					</template>
-					<template #body="{ data, field }">
-						<!-- Tom TODO: No v-model -->
-						<Dropdown
-							class="w-full"
-							placeholder="Select a variable"
-							v-model="data[field]"
-							:options="modelColumnNames"
-						/>
-					</template>
-				</Column>
-				<Column field="datasetVariable">
-					<template #header>
-						<span class="column-header">DATASET VARIABLE</span>
-					</template>
-					<template #body="{ data, field }">
-						<!-- Tom TODO: No v-model -->
-						<Dropdown
-							class="w-full"
-							placeholder="Select a variable"
-							v-model="data[field]"
-							:options="datasetColumnNames"
-						/>
-					</template>
-				</Column>
-			</DataTable>
-			<div>
-				<Button
-					class="p-button-sm p-button-outlined"
-					icon="pi pi-plus"
-					label="Add mapping"
-					@click="addMapping"
+	<section v-if="!showSpinner">
+		<Button class="p-button-sm" label="Run" @click="runCalibrate" :disabled="disableRunButton" />
+		<Accordion :multiple="true" :active-index="[0, 3]">
+			<AccordionTab header="Mapping">
+				<DataTable class="p-datatable-xsm" :value="mapping">
+					<Column field="modelVariable">
+						<template #header>
+							<span class="column-header">MODEL VARIABLE</span>
+						</template>
+						<template #body="{ data, field }">
+							<!-- Tom TODO: No v-model -->
+							<Dropdown
+								class="w-full"
+								placeholder="Select a variable"
+								v-model="data[field]"
+								:options="modelColumnNames"
+							/>
+						</template>
+					</Column>
+					<Column field="datasetVariable">
+						<template #header>
+							<span class="column-header">DATASET VARIABLE</span>
+						</template>
+						<template #body="{ data, field }">
+							<!-- Tom TODO: No v-model -->
+							<Dropdown
+								class="w-full"
+								placeholder="Select a variable"
+								v-model="data[field]"
+								:options="datasetColumnNames"
+							/>
+						</template>
+					</Column>
+				</DataTable>
+				<div>
+					<Button
+						class="p-button-sm p-button-outlined"
+						icon="pi pi-plus"
+						label="Add mapping"
+						@click="addMapping"
+					/>
+				</div>
+			</AccordionTab>
+			<AccordionTab header="Variables">
+				<tera-simulate-chart
+					v-for="(cfg, index) of node.state.chartConfigs"
+					:key="index"
+					:run-results="runResults"
+					:chartConfig="cfg"
+					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
-			</div>
-		</AccordionTab>
-		<AccordionTab header="Variables">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				@configuration-change="chartConfigurationChange(index, $event)"
-			/>
-			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add Chart"
-				icon="pi pi-plus"
-			></Button>
-		</AccordionTab>
-		<AccordionTab header="Calibrated parameter values">
-			<table class="p-datatable-table">
-				<thead class="p-datatable-thead">
-					<th>Parameter</th>
-					<th>Value</th>
-				</thead>
-				<tr v-for="(content, key) in parameterResult" :key="key">
-					<td>
-						<p>{{ key }}</p>
-					</td>
-					<td>
-						<p>{{ content }}</p>
-					</td>
-				</tr>
-			</table>
-		</AccordionTab>
-		<!-- <AccordionTab header="Loss"></AccordionTab>
-		<AccordionTab header="Parameters"></AccordionTab>
-		<AccordionTab header="Variables"></AccordionTab> -->
-	</Accordion>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="addChart"
+					label="Add Chart"
+					icon="pi pi-plus"
+				></Button>
+			</AccordionTab>
+			<AccordionTab header="Calibrated parameter values">
+				<table class="p-datatable-table">
+					<thead class="p-datatable-thead">
+						<th>Parameter</th>
+						<th>Value</th>
+					</thead>
+					<tr v-for="(content, key) in parameterResult" :key="key">
+						<td>
+							<p>{{ key }}</p>
+						</td>
+						<td>
+							<p>{{ content }}</p>
+						</td>
+					</tr>
+				</table>
+			</AccordionTab>
+			<!-- <AccordionTab header="Loss"></AccordionTab>
+			<AccordionTab header="Parameters"></AccordionTab>
+			<AccordionTab header="Variables"></AccordionTab> -->
+		</Accordion>
+	</section>
+	<section v-else>
+		<div><i class="pi pi-spin pi-spinner"></i> loading...</div>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -130,6 +135,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const showSpinner = ref(false);
 
 const disableRunButton = computed(
 	() =>
@@ -183,7 +189,7 @@ const runCalibrate = async () => {
 
 	startedRunId.value = response.simulationId;
 	getStatus();
-	// showSpinner.value = true;s
+	showSpinner.value = true;
 };
 // Retrieve run ids
 // FIXME: Replace with API.poller
@@ -196,13 +202,14 @@ const getStatus = async () => {
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
-		// showSpinner.value = false;
+		showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {
 		// throw if there are any failed runs for now
 		console.error('Failed', startedRunId.value);
+		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
 };
@@ -269,22 +276,6 @@ watch(
 		);
 		modelConfig.value = modelConfiguration;
 		modelColumnNames.value = modelColumnNameOptions;
-		// Preset the mapping for all model columns:
-		mapping.value = [];
-		modelColumnNames.value?.map((columnName) =>
-			mapping.value.push({
-				modelVariable: columnName,
-				datasetVariable: ''
-			})
-		);
-		const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
-		state.mapping = mapping.value;
-
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
 	},
 	{ immediate: true }
 );
