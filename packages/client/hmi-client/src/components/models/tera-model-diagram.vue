@@ -376,14 +376,12 @@ const updateObservables = () => {
 		// update
 		emit(
 			'update-model-observables',
-			observablesRefs.value.map((eq, index) => ({
-				id: observablesRefs.value[index].id,
-				name: observablesRefs.value[index].name,
-				expression: observablesRefs.value[index].mathLiveField.value,
-				expression_mathml: observablesRefs.value[index].mathLiveField.getValue('math-ml'),
-				states: extractVariablesFromMathML(
-					observablesRefs.value[index].mathLiveField.getValue('math-ml')
-				)
+			observablesRefs.value.map((eq) => ({
+				id: eq.target.id,
+				name: eq.target.name,
+				expression: eq.target.mathLiveField.value,
+				expression_mathml: eq.target.mathLiveField.getValue('math-ml'),
+				states: extractVariablesFromMathML(eq.target.mathLiveField.getValue('math-ml'))
 			}))
 		);
 		observablesRefs.value.forEach((eq) => {
