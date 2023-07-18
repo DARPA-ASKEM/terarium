@@ -304,6 +304,7 @@ export const updateRateExpressionWithParam = (
 		expressionMathml = transitionExpression;
 	}
 
+	rate.target = transition.id;
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
 };
@@ -568,6 +569,13 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 /// /////////////////////////////////////////////////////////////////////////////
 // Stratification
 /// /////////////////////////////////////////////////////////////////////////////
+
+// Check if AMR is a stratified AMR
+export const isStratifiedAMR = (amr: Model) => {
+	// Catlab stratification: this will have "semantics.span" field
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return true;
+	return false;
+};
 
 // Returns a 1xN matrix describing state's initials
 export const extractMapping = (amr: Model, id: string) => {
