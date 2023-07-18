@@ -71,7 +71,7 @@
 						class="control-button"
 						label="Save"
 						aria-label="Save"
-						:disabled="props.id === ''"
+						:disabled="props.id === '' && showMetadata"
 						@click="isEditingEquation = false"
 					></Button>
 					<Button
