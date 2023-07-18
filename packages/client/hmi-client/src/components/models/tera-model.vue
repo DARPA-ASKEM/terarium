@@ -935,23 +935,24 @@ async function confirmEdit() {
 
 		switch (tableType) {
 			case 'parameters':
-				if (modelClone.semantics?.ode.parameters) {
+				if (model.value.semantics?.ode.parameters) {
 					Object.entries(updateProperty).forEach(([key, value]) => {
 						modelClone.semantics!.ode.parameters![idx][key] = value;
 
 						if (key === 'id') {
+							const ode = model.value!.semantics!.ode;
 							// if we update parameter id we also need to update rate expression and expression_mathml
-							const updatedRates = model.value!.semantics!.ode.rates.map((rate) => ({
+							const updatedRates = ode.rates.map((rate) => ({
 								...rate,
 								expression: replaceValuesInExpression(
 									rate.expression,
-									model.value!.semantics!.ode.parameters![idx][key],
+									ode.parameters![idx][key],
 									value as string
 								),
 								expression_mathml: rate.expression_mathml
 									? replaceValuesInMathML(
 											rate.expression_mathml,
-											model.value!.semantics!.ode.parameters![idx][key],
+											ode.parameters![idx][key],
 											value as string
 									  )
 									: undefined

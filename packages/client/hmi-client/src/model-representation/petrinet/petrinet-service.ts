@@ -477,7 +477,12 @@ export const replaceValuesInMathML = (
 			expressionBuilder += c;
 		}
 		if (!isTag) {
-			content += c;
+			// this only works if there is no '>' literal in the non-tag content
+			if (c !== '>') {
+				content += c;
+			} else {
+				expressionBuilder += c;
+			}
 		}
 	});
 
