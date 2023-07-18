@@ -492,7 +492,7 @@ const contextMenuItems = ref([
 				}
 			},
 			{
-				label: 'Calibrate & Simulate ensemble',
+				label: 'Simulate ensemble',
 				disabled: false,
 				command: () => {
 					workflowService.addNode(wf.value, EnsembleCiemssOperation, newNodePosition, {
