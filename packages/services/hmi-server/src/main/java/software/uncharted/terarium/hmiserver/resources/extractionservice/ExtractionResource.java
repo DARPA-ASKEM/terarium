@@ -1,6 +1,4 @@
 package software.uncharted.terarium.hmiserver.resources.extractionservice;
-
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;

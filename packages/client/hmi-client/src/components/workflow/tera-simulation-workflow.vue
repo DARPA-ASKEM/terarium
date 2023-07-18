@@ -477,10 +477,7 @@ const contextMenuItems = ref([
 				label: 'Calibrate & Simulate',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
-						width: 420,
-						height: 220
-					});
+					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition);
 					workflowDirty = true;
 				}
 			},
