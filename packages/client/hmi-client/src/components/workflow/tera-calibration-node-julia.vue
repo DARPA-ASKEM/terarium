@@ -1,75 +1,84 @@
 <template>
-	<Accordion v-if="datasetColumnNames && modelColumnNames" :multiple="true" :active-index="[0, 3]">
-		<AccordionTab header="Mapping">
-			<DataTable class="mappingTable" :value="mapping">
-				<Column field="modelVariable">
-					<template #header>
-						<span class="column-header">Model variable</span>
-					</template>
-					<template #body="{ data, field }">
-						<div class="mappingVariable">{{ data[field] }}</div>
-					</template>
-				</Column>
-				<Column field="datasetVariable">
-					<template #header>
-						<span class="column-header">Dataset variable</span>
-					</template>
-					<template #body="{ data, field }">
-						<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
-							{{ data[field] ? data[field] : 'Not mapped' }}
-						</div>
-					</template>
-				</Column>
-			</DataTable>
-		</AccordionTab>
-		<AccordionTab header="Variables">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				@configuration-change="chartConfigurationChange(index, $event)"
-			/>
-			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add Chart"
-				icon="pi pi-plus"
-			></Button>
-		</AccordionTab>
-		<AccordionTab header="Calibrated parameter values">
-			<table class="p-datatable-table">
-				<thead class="p-datatable-thead">
-					<th>Parameter</th>
-					<th>Value</th>
-				</thead>
-				<tr v-for="(content, key) in parameterResult" :key="key">
-					<td>
-						<p>{{ key }}</p>
-					</td>
-					<td>
-						<p>{{ content }}</p>
-					</td>
-				</tr>
-			</table>
-		</AccordionTab>
-		<!-- <AccordionTab header="Loss"></AccordionTab>
-		<AccordionTab header="Parameters"></AccordionTab>
-		<AccordionTab header="Variables"></AccordionTab> -->
-	</Accordion>
-	<section v-else class="emptyState">
-		<img src="@assets/svg/seed.svg" alt="" draggable="false" />
-		Connect a model configuration and dataset, then configure in the side panel
+	<section v-if="!showSpinner">
+		<Accordion
+			v-if="datasetColumnNames && modelColumnNames"
+			:multiple="true"
+			:active-index="[0, 3]"
+		>
+			<AccordionTab header="Mapping">
+				<DataTable class="mappingTable" :value="mapping">
+					<Column field="modelVariable">
+						<template #header>
+							<span class="column-header">Model variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<div class="mappingVariable">{{ data[field] }}</div>
+						</template>
+					</Column>
+					<Column field="datasetVariable">
+						<template #header>
+							<span class="column-header">Dataset variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
+								{{ data[field] ? data[field] : 'Not mapped' }}
+							</div>
+						</template>
+					</Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab header="Variables">
+				<tera-simulate-chart
+					v-for="(cfg, index) of node.state.chartConfigs"
+					:key="index"
+					:run-results="runResults"
+					:chartConfig="cfg"
+					@configuration-change="chartConfigurationChange(index, $event)"
+				/>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="addChart"
+					label="Add Chart"
+					icon="pi pi-plus"
+				></Button>
+			</AccordionTab>
+			<AccordionTab header="Calibrated parameter values">
+				<table class="p-datatable-table">
+					<thead class="p-datatable-thead">
+						<th>Parameter</th>
+						<th>Value</th>
+					</thead>
+					<tr v-for="(content, key) in parameterResult" :key="key">
+						<td>
+							<p>{{ key }}</p>
+						</td>
+						<td>
+							<p>{{ content }}</p>
+						</td>
+					</tr>
+				</table>
+			</AccordionTab>
+			<!-- <AccordionTab header="Loss"></AccordionTab>
+			<AccordionTab header="Parameters"></AccordionTab>
+			<AccordionTab header="Variables"></AccordionTab> -->
+		</Accordion>
+		<section v-else class="emptyState">
+			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+			Connect a model configuration and dataset, then configure in the side panel
+		</section>
+		<Button
+			class="p-button-sm run-button"
+			label="Run"
+			icon="pi pi-play"
+			@click="runCalibrate"
+			:disabled="disableRunButton"
+		/>
 	</section>
-	<Button
-		class="p-button-sm run-button"
-		label="Run"
-		icon="pi pi-play"
-		@click="runCalibrate"
-		:disabled="disableRunButton"
-	/>
+	<section v-else>
+		<div><i class="pi pi-spin pi-spinner"></i> Loading...</div>
+	</section>
 </template>
 
 <script setup lang="ts">
