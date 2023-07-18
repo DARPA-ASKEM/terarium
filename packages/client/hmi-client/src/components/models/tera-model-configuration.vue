@@ -50,11 +50,15 @@
 							class="p-frozen-column second-frozen"
 							tabindex="0"
 							@keyup.enter="
-								modelConfigInputValue = cloneDeep(modelConfigurations[i].configuration.name);
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+							@click="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
 								cellEditStates[i].name = true;
 							"
 						>
-							<span v-if="!cellEditStates[i].name" @click="cellEditStates[i].name = true">
+							<span v-if="!cellEditStates[i].name">
 								{{ name }}
 							</span>
 							<InputText
@@ -72,19 +76,9 @@
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
-							@click="
-								modelConfigInputValue = cloneDeep(
-									modelConfigurations[i].configuration.semantics.ode.initials[j].value
-								);
-								cellEditStates[i].initials[j] = true;
-							"
+							@click="onEnterValueCell('initials', 'expression', i, j)"
 							tabindex="0"
-							@keyup.enter="
-								modelConfigInputValue = cloneDeep(
-									modelConfigurations[i].configuration.semantics.ode.initials[j].value
-								);
-								cellEditStates[i].initials[j] = true;
-							"
+							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
 							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
 								<span>{{ initial.expression }}</span>
@@ -112,10 +106,7 @@
 							@click="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										modelConfigInputValue = cloneDeep(
-											modelConfigurations[i].configuration.semantics.ode.parameters[j].value
-										);
-										cellEditStates[i].parameters[j] = true;
+										onEnterValueCell('parameters', 'value', i, j);
 									}
 								}
 							"
@@ -123,10 +114,7 @@
 							@keyup.enter="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										modelConfigInputValue = cloneDeep(
-											modelConfigurations[i].configuration.semantics.ode.parameters[j].value
-										);
-										cellEditStates[i].parameters[j] = true;
+										onEnterValueCell('parameters', 'value', i, j);
 									}
 								}
 							"
@@ -352,6 +340,19 @@ function getValuePlaceholder(parameterType) {
 	return '';
 }
 
+function onEnterValueCell(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	modelConfigInputValue.value = cloneDeep(
+		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+			valueName
+		]
+	);
+	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
+}
 function openValueModal(
 	odeType: string,
 	valueName: string,
