@@ -1,23 +1,25 @@
 <template>
 	<section class="tera-simulate">
-		<div class="simulate-header p-buttonset">
-			<Button
-				label="Input"
-				severity="secondary"
-				icon="pi pi-sign-in"
-				size="small"
-				:active="activeTab === SimulateTabs.input"
-				@click="activeTab = SimulateTabs.input"
-			/>
-			<Button
-				label="Output"
-				severity="secondary"
-				icon="pi pi-sign-out"
-				size="small"
-				:active="activeTab === SimulateTabs.output"
-				@click="activeTab = SimulateTabs.output"
-			/>
+		<div class="simulate-header">
 			<span class="simulate-header-label">Simulate (probabilistic)</span>
+			<div class="simulate-header p-buttonset">
+				<Button
+					label="Input"
+					severity="secondary"
+					icon="pi pi-sign-in"
+					size="small"
+					:active="activeTab === SimulateTabs.input"
+					@click="activeTab = SimulateTabs.input"
+				/>
+				<Button
+					label="Output"
+					severity="secondary"
+					icon="pi pi-sign-out"
+					size="small"
+					:active="activeTab === SimulateTabs.output"
+					@click="activeTab = SimulateTabs.output"
+				/>
+			</div>
 		</div>
 		<div
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
@@ -357,15 +359,15 @@ const rawDataRenderedRows = computed(() =>
 
 .simulate-header {
 	display: flex;
-	margin: 1em;
+	margin: 0.5rem;
 }
 
 .simulate-header-label {
 	display: flex;
 	align-items: center;
-	margin: 0 1em;
-	font-weight: 700;
-	font-size: 1.75em;
+	font-weight: var(--font-weight-semibold);
+	font-size: 20px;
+	margin-right: 1rem;
 }
 
 .simulate-container {
