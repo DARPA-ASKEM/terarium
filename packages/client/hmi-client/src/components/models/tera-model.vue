@@ -132,7 +132,7 @@
 									<input
 										type="text"
 										:value="parameter?.value ?? '--'"
-										@input="updateTable('parameters', i, 'id', $event.target?.value)"
+										@input="updateTable('parameters', i, 'value', $event.target?.value)"
 									/>
 								</div>
 								<div>--</div>
