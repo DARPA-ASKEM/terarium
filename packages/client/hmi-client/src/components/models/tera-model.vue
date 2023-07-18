@@ -568,6 +568,7 @@ import TeraRelatedPublications from '@/components/widgets/tera-related-publicati
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import {
 	convertToAMRModel,
+	replaceValuesInExpression,
 	replaceValuesInMathML
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
@@ -942,7 +943,8 @@ async function confirmEdit() {
 							// if we update parameter id we also need to update rate expression and expression_mathml
 							const updatedRates = model.value!.semantics!.ode.rates.map((rate) => ({
 								...rate,
-								expression: rate.expression.replaceAll(
+								expression: replaceValuesInExpression(
+									rate.expression,
 									model.value!.semantics!.ode.parameters![idx][key],
 									value as string
 								),

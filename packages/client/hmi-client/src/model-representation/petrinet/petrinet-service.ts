@@ -415,6 +415,44 @@ export const updateTransition = (
 	});
 };
 
+const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
+	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
+
+export const replaceValuesInExpression = (
+	expression: string,
+	wordToReplace: string,
+	replaceWord: string
+): string => {
+	let expressionBuilder = '';
+	let isOperator = false;
+	let content = '';
+
+	[...expression].forEach((c) => {
+		// not sure if this is an exhaustive list of operators or if it includes any operators it shouldn't
+		if ([',', '(', ')', '+', '-', '*', '/', '^'].includes(c)) {
+			isOperator = true;
+		} else {
+			isOperator = false;
+		}
+
+		if (isOperator) {
+			expressionBuilder += replaceExactString(content, wordToReplace, replaceWord);
+			content = '';
+			expressionBuilder += c;
+		}
+		if (!isOperator) {
+			content += c;
+		}
+	});
+
+	// if we reach the end of an expression and it doesn't end with an operator, we need to add the updated content
+	if (!isOperator) {
+		expressionBuilder += replaceExactString(content, wordToReplace, replaceWord);
+	}
+
+	return expressionBuilder;
+};
+
 // function to replace the content inside the tags of a mathml expression
 export const replaceValuesInMathML = (
 	mathmlExpression: string,
@@ -434,7 +472,7 @@ export const replaceValuesInMathML = (
 		}
 
 		if (isTag) {
-			expressionBuilder += content.replaceAll(wordToReplace, replaceWord);
+			expressionBuilder += replaceExactString(content, wordToReplace, replaceWord);
 			content = '';
 			expressionBuilder += c;
 		}
