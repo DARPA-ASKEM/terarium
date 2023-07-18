@@ -397,7 +397,14 @@ export const updateTransition = (
 	const transition = model.transitions.find((d) => d.id === id);
 	if (!transition) return;
 	transition.id = newId;
-	transition.properties.name = newName;
+	if (transition.properties) {
+		transition.properties.name = newName;
+	} else {
+		transition.properties = {
+			name: newName,
+			description: newName
+		};
+	}
 
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
