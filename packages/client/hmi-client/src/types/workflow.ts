@@ -55,7 +55,7 @@ export interface WorkflowPort {
 	type: string;
 	status: WorkflowPortStatus;
 	label?: string;
-	value?: any[] | string | null;
+	value?: any[] | null;
 	acceptMultiple?: boolean;
 }
 
