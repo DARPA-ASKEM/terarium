@@ -116,6 +116,10 @@
 				</table>
 			</AccordionTab>
 		</Accordion>
+		<section v-else class="emptyState">
+			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+			<p class="helpMessage">Connect a model configuration and dataset</p>
+		</section>
 	</tera-asset>
 </template>
 
@@ -282,5 +286,25 @@ th {
 	color: var(--text-color-subdued);
 	font-size: 12px;
 	font-weight: 400;
+}
+
+.emptyState {
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	margin-top: 15rem;
+	gap: 0.5rem;
+}
+
+.helpMessage {
+	color: var(--text-color-subdued);
+	font-size: var(--font-body-small);
+	width: 90%;
+	margin-top: 1rem;
+}
+img {
+	width: 20%;
 }
 </style>
