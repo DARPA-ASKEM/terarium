@@ -67,7 +67,6 @@
 			:kernel-status="kernelStatus"
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
-			@is-typing="emit('is-typing')"
 		/>
 		<div>
 			<Button
@@ -154,7 +153,6 @@ const modelConfigurations = ref(<
 const selectedConfiguration = ref(
 	<ModelConfiguration | { id: string; name: string }>noSelectionDefault
 );
-const emit = defineEmits(['is-typing']);
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);

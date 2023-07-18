@@ -51,7 +51,6 @@
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
-			@is-typing="emit('is-typing')"
 		/>
 		<div>
 			<Button
@@ -134,7 +133,6 @@ const props = defineProps<{
 
 const kernelStatus = ref(<string>'');
 const showKernels = ref(<boolean>false);
-const emit = defineEmits(['is-typing']);
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
