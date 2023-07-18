@@ -304,6 +304,7 @@ export const updateRateExpressionWithParam = (
 		expressionMathml = transitionExpression;
 	}
 
+	rate.target = transition.id;
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
 };
