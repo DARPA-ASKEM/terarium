@@ -266,30 +266,43 @@ export const removeTransition = (amr: Model, id: string) => {
 
 // Update a transition's expression and expression_mathml fields based on
 // mass-kinetics
-export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+export const updateRateExpression = (
+	amr: Model,
+	transition: PetriNetTransition,
+	transitionExpression: string
+) => {
+	const param = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
 	if (!param) return;
 
-	updateRateExpressionWithParam(amr, transition, param.id);
+	updateRateExpressionWithParam(amr, transition, `${param.target}Param`, transitionExpression);
 };
+
 export const updateRateExpressionWithParam = (
 	amr: Model,
 	transition: PetriNetTransition,
-	parameterId: string
+	parameterId: string,
+	transitionExpression: string
 ) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
-	if (!param) return;
+	let expression = '';
+	let expressionMathml = '';
 
-	const inputStr = transition.input.map((d) => `${d}`);
-	// eslint-disable-next-line
-	const expression = inputStr.join('*') + '*' + param.id;
-	// eslint-disable-next-line
-	const expressionMathml =
-		`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
-		`</apply>`;
+	if (transitionExpression === '') {
+		const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
+		const inputStr = transition.input.map((d) => `${d}`);
+		if (!param) return;
+		// eslint-disable-next-line
+		expression = inputStr.join('*') + '*' + param.id;
+		// eslint-disable-next-line
+		expressionMathml =
+			`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
+			`</apply>`;
+	} else {
+		expression = transitionExpression;
+		expressionMathml = transitionExpression;
+	}
 
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
@@ -303,14 +316,14 @@ export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
 		const transition = model.transitions.find((d) => d.id === targetId);
 		if (transition) {
 			transition.input.push(sourceId);
-			updateRateExpression(amr, transition);
+			updateRateExpression(amr, transition, '');
 		}
 	} else {
 		// if source is a transition then the target is a state
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (transition) {
 			transition.output.push(targetId);
-			updateRateExpression(amr, transition);
+			updateRateExpression(amr, transition, '');
 		}
 	}
 };
@@ -330,7 +343,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition);
+		updateRateExpression(amr, transition, '');
 	} else {
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (!transition) return;
@@ -343,7 +356,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition);
+		updateRateExpression(amr, transition, '');
 	}
 };
 
@@ -369,23 +382,36 @@ export const updateState = (amr: Model, id: string, newId: string, newName: stri
 	});
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t);
+		updateRateExpression(amr, t, '');
 	});
 };
 
-export const updateTransitione = (amr: Model, id: string, newId: string, newName: string) => {
+export const updateTransition = (
+	amr: Model,
+	id: string,
+	newId: string,
+	newName: string,
+	newExpression: string
+) => {
 	const model = amr.model as PetriNetModel;
 	const transition = model.transitions.find((d) => d.id === id);
 	if (!transition) return;
 	transition.id = newId;
-	transition.properties.name = newName;
+	if (transition.properties) {
+		transition.properties.name = newName;
+	} else {
+		transition.properties = {
+			name: newName,
+			description: newName
+		};
+	}
 
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t);
+		if (t.id === id) updateRateExpression(amr, t, newExpression);
 	});
 };
 
@@ -479,7 +505,7 @@ export const extractMapping = (amr: Model, id: string) => {
 };
 
 // Flattens out transitions and their relationships/types into a 1-D vector
-export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]) => {
+export const extractTransitionMatrixData = (amr: Model, transitionIds: string[]) => {
 	const model = amr.model as PetriNetModel;
 	const transitions = model.transitions;
 

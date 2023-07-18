@@ -121,6 +121,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const showSpinner = ref(false);
 
 const disableRunButton = computed(
 	() =>
@@ -174,7 +175,7 @@ const runCalibrate = async () => {
 
 	startedRunId.value = response.simulationId;
 	getStatus();
-	// showSpinner.value = true;s
+	showSpinner.value = true;
 };
 // Retrieve run ids
 // FIXME: Replace with API.poller
@@ -187,13 +188,14 @@ const getStatus = async () => {
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
-		// showSpinner.value = false;
+		showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {
 		// throw if there are any failed runs for now
 		console.error('Failed', startedRunId.value);
+		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
 };
@@ -242,22 +244,6 @@ watch(
 		);
 		modelConfig.value = modelConfiguration;
 		modelColumnNames.value = modelColumnNameOptions;
-		// Preset the mapping for all model columns:
-		mapping.value = [];
-		modelColumnNames.value?.map((columnName) =>
-			mapping.value.push({
-				modelVariable: columnName,
-				datasetVariable: ''
-			})
-		);
-		const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
-		state.mapping = mapping.value;
-
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
 	},
 	{ immediate: true }
 );
