@@ -95,7 +95,7 @@
 				</AccordionTab>
 				<AccordionTab header="Mapping">
 					<template v-if="ensembleConfigs.length > 0">
-						<table v-if="ensembleConfigs[0].solutionMappings.length > 0">
+						<table>
 							<tr>
 								<th>Ensemble Variables</th>
 								<th v-for="(element, i) in ensembleConfigs" :key="i">
@@ -104,16 +104,20 @@
 							</tr>
 							<tr>
 								<div class="row-header">
-									<td v-for="(element, i) in ensembleConfigs[0].solutionMappings" :key="i">
-										{{ Object.keys(ensembleConfigs[0].solutionMappings[i]).pop() }}
+									<td
+										v-for="(element, i) in Object.keys(ensembleConfigs[0].solutionMappings)"
+										:key="i"
+									>
+										{{ element }}
 									</td>
 								</div>
-								<td v-for="(element, i) in ensembleConfigs" :key="i">
-									<template v-for="(element, j) in ensembleConfigs[i].solutionMappings" :key="j">
+								<td v-for="(ele, i) in ensembleConfigs.length" :key="i">
+									<template
+										v-for="(element, j) in Object.keys(ensembleConfigs[i].solutionMappings)"
+										:key="j"
+									>
 										<Dropdown
-											v-for="(key, k) in Object.keys(ensembleConfigs[i].solutionMappings[j])"
-											:key="k"
-											v-model="ensembleConfigs[i].solutionMappings[j][key]"
+											v-model="ensembleConfigs[i].solutionMappings[element]"
 											:options="allModelOptions[i]"
 										/>
 									</template>
@@ -152,7 +156,11 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { getSimulation, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
+import {
+	getSimulation,
+	makeEnsembleCiemssSimulation,
+	getRunResultCiemss
+} from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
@@ -171,6 +179,7 @@ import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { workflowEventBus } from '@/services/workflow';
 import InputText from 'primevue/inputtext';
+import { RunResults } from '@/types/SimulateConfig';
 import {
 	EnsembleCiemssOperation,
 	EnsembleCiemssOperationState
@@ -221,6 +230,9 @@ const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
 const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
+const runResults = ref<RunResults>({});
+const completedRunIdList = ref<string[]>([]);
+const runConfigs = ref<{ [paramKey: string]: number[] }>({});
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -248,7 +260,7 @@ const runEnsemble = async () => {
 	};
 	console.log(params);
 	const response = await makeEnsembleCiemssSimulation(params);
-	startedRunId.value = response.id;
+	startedRunId.value = response.simulationId;
 	getStatus();
 };
 
@@ -285,7 +297,7 @@ const updateOutputPorts = async (runId) => {
 
 function addMapping() {
 	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].solutionMappings.push({ [newSolutionMappingKey.value]: '' });
+		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
 	}
 
 	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
@@ -355,6 +367,18 @@ const setChartOptions = () => {
 		}
 	};
 };
+// assume only one run for now
+const watchCompletedRunList = async (runIdList: string[]) => {
+	console.log('Start watch cimpleted run list');
+	if (runIdList.length === 0) return;
+
+	console.log('Getting run results');
+	const output = await getRunResultCiemss(runIdList[0]);
+	runResults.value = output.runResults;
+	runConfigs.value = output.runConfigs;
+	console.log(runResults.value);
+};
+watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
 watch(
 	[() => ensembleCalibrationMode.value, listModelIds.value],

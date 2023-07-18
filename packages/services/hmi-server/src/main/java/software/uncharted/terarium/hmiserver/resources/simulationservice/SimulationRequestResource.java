@@ -156,10 +156,10 @@ public class SimulationRequestResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create calibrate job")
-	public JobResponse makeEnsembleSimulateJob(
+	public JobResponse makeEnsembleSimulateCiemssJob(
 		final CalibrationRequestCiemss request
 	) {
-		final JobResponse res = simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+		final JobResponse res = simulationCiemssServiceProxy.makeEnsembleSimulateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 		return res;
 	}
 
