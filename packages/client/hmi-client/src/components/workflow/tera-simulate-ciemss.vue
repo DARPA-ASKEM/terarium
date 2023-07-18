@@ -62,7 +62,7 @@
 				v-model:rows="paginatorRows"
 				:totalRecords="parsedRawData.length"
 				:rowsPerPageOptions="[5, 10, 20, 50]"
-			></Paginator>
+			/>
 			<simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -162,11 +162,6 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import MultiSelect from 'primevue/multiselect';
 import * as ProjectService from '@/services/project';
-// import Column from 'primevue/column';
-// import Row from 'primevue/row';
-// import ColumnGroup from 'primevue/columngroup';
-// import DataTable from 'primevue/datatable';
-// import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Paginator from 'primevue/paginator';
@@ -212,10 +207,6 @@ const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
 const paginatorFirst = ref(0);
 
-// const TspanUnitList = computed(() =>
-// 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
-// );
-
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -239,11 +230,13 @@ const addChart = () => {
 };
 
 const saveDataset = async () => {
-	if (!props.node) return;
-	// @ts-ignore: Object is possibly 'null'.
-	await createDatasetFromSimulationResult(props.project.id, props.node!.outputs[0].value[0]);
-	// TODO: See about getting rid of this - this refresh should preferably be within a service
-	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+	const simulationId = props?.node?.outputs?.[0]?.value?.[0] as string;
+	if (simulationId) {
+		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
+			// TODO: See about getting rid of this - this refresh should preferably be within a service
+			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		}
+	}
 };
 
 onMounted(async () => {
