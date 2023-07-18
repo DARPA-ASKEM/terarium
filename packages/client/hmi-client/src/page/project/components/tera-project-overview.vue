@@ -97,13 +97,6 @@
 						<i class="pi pi-search" />
 						<InputText placeholder="Keyword search" class="keyword-search" />
 					</span>
-					<SplitButton
-						class="resource-list-button"
-						icon="pi pi-plus"
-						label="New Resource"
-						:model="tableActionMenuItems"
-					>
-					</SplitButton>
 				</div>
 				<!-- resource list data table -->
 				<DataTable
@@ -300,7 +293,6 @@ import InputText from 'primevue/inputtext';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
-import SplitButton from 'primevue/splitbutton';
 import Menu from 'primevue/menu';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -495,16 +487,6 @@ function setRowHover() {
 		});
 	});
 }
-
-/* Table Action Menu */
-const tableActionMenuItems = [
-	{
-		label: 'Code file'
-	},
-	{
-		label: 'Make model from an equation'
-	}
-];
 
 /* Row Action Menu */
 const rowActionMenu = ref();
