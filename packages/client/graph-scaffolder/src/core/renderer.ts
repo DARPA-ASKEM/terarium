@@ -3,34 +3,16 @@ import EventEmitter from './event-emitter';
 import removeChildren from '../utils/dom-util';
 import { traverseGraph, getAStarPath } from './traverse';
 import { translate } from '../utils/svg-util';
-
-import { INode, IEdge, IGraph, IRect, IPoint, D3Selection, D3SelectionINode } from '../types';
-
-type AsyncFunction<A, O> = (args: A) => Promise<O>;
-type AsyncLayoutFunction<V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
-type LayoutFunction<V, E> = (args: IGraph<V, E>) => IGraph<V, E>;
-
-export interface Options {
-	el?: HTMLDivElement | null;
-	runLayout: AsyncLayoutFunction<any, any> | LayoutFunction<any, any>;
-
-	useZoom?: boolean;
-	zoomRange?: [number, number];
-	useStableLayout?: boolean;
-
-	// Attempt to use the same set of zoom parameters across layout changes
-	useStableZoomPan?: boolean;
-
-	// This is getting around algorithms that do not provide stand-alone routing capabilities, in
-	// which case we can internally route using A-star
-	useAStarRouting?: boolean;
-
-	// Whether to show grid
-	useGrid?: boolean;
-
-	// The css class for custom dragging event
-	dragSelector?: string;
-}
+import {
+	Options,
+	INode,
+	IEdge,
+	IGraph,
+	IRect,
+	IPoint,
+	D3Selection,
+	D3SelectionINode
+} from '../types';
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
@@ -41,7 +23,7 @@ export const pathFn = d3
 export abstract class Renderer<V, E> extends EventEmitter {
 	options: Options;
 
-	parentMap: Map<string, INode<V>>;
+	parentMap: Map<string, INode<V>> = new Map();
 
 	oldNodeMap: Map<string, IRect> = new Map();
 
@@ -75,7 +57,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	constructor(options: Options) {
 		super(); // Event emitter
-		this.parentMap = new Map();
 		this.options = options;
 
 		if (this.options.el) {
@@ -402,14 +383,25 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	setToDefaultZoom() {
 		const svg = d3.select(this.svgEl);
-		let scale = 1;
+		let scaleFactor = 1;
+		let translateX = 1;
+		let translateY = 100;
 		if (this.chart) {
-			scale = this.chartSize.width / (this.graph.width ?? 1);
+			const graphCenterX = (this.graph.width ?? 0) / 2;
+			const graphCenterY = (this.graph.height ?? 0) / 2;
+			scaleFactor = Math.min(
+				this.chartSize.width / (this.graph.width ?? 1),
+				this.chartSize.height / (this.graph.height ?? 1)
+			);
+
+			// Calculate the translation to center the graph
+			translateX = this.chartSize.width / 2 - scaleFactor * graphCenterX;
+			translateY = this.chartSize.height / 2 - scaleFactor * graphCenterY;
 		}
 
 		svg.call(
 			this.zoom?.transform as any,
-			d3.zoomIdentity.translate(1, 100).scale(scale).translate(0, 0)
+			d3.zoomIdentity.translate(translateX, translateY).scale(scaleFactor)
 		);
 	}
 

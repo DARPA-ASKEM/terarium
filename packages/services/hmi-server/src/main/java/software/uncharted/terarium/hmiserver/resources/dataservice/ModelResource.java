@@ -11,7 +11,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
-import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -33,10 +32,6 @@ public class ModelResource {
 	@Inject
 	@RestClient
 	ModelProxy proxy;
-
-	@Inject
-	@RestClient
-	DKGProxy dkgProxy;
 
 	@POST
 	@Path("/frameworks")

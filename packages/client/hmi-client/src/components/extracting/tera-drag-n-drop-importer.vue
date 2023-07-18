@@ -12,7 +12,7 @@
 				ref="fileInput"
 				@change="onFileChange"
 				multiple
-				accept=".pdf,.csv,.txt,.md"
+				accept=".pdf,.csv,.txt,.md,.py,.m,.js,.R"
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
@@ -35,19 +35,6 @@
 					</div>
 				</div>
 				<br />
-				<div v-if="hasPDF" class="options-container">
-					<Dropdown
-						v-model="extractionMode"
-						:options="modes"
-						optionLabel="name"
-						placeholder="Extraction Mode"
-						class="extraction-mode"
-					/>
-					<div class="flex align-items-center">
-						<Checkbox v-model="extractImages" value="Extract Images" :binary="true" />
-						<label for="extractImage" class="ml-2"> Extract Images </label>
-					</div>
-				</div>
 			</div>
 			<br />
 			<Button
@@ -64,10 +51,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import API from '@/api/api';
-import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import Checkbox from 'primevue/checkbox';
-import { AcceptedTypes } from '@/types/common';
+import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
 const emit = defineEmits(['import-completed']);
@@ -77,9 +62,6 @@ const dragOver = ref(false);
 const isProcessing = ref(false);
 const processResponse = ref(<{ file: string; response: { text: string } }[]>[]);
 
-const extractionMode = ref({ name: 'pymupdf' });
-const extractImages = ref(false);
-const modes = ref([{ name: 'pypdf2' }, { name: 'pdfminer' }, { name: 'pymupdf' }]);
 const csvDescription = ref('');
 
 const props = defineProps({
@@ -98,11 +80,31 @@ const props = defineProps({
 		required: true,
 		validator: (value: Array<string>) =>
 			[
-				AcceptedTypes.JPEG,
-				AcceptedTypes.JPG,
-				AcceptedTypes.PNG,
 				AcceptedTypes.PDF,
-				AcceptedTypes.CSV
+				AcceptedTypes.CSV,
+				AcceptedTypes.TXT,
+				AcceptedTypes.MD,
+				AcceptedTypes.PY,
+				AcceptedTypes.M,
+				AcceptedTypes.JS,
+				AcceptedTypes.R,
+				AcceptedTypes.JL
+			].every((v) => value.includes(v))
+	},
+	acceptExtensions: {
+		type: Array<AcceptedExtensions>,
+		required: true,
+		validator: (value: Array<string>) =>
+			[
+				AcceptedExtensions.PDF,
+				AcceptedExtensions.CSV,
+				AcceptedExtensions.TXT,
+				AcceptedExtensions.MD,
+				AcceptedExtensions.PY,
+				AcceptedExtensions.M,
+				AcceptedExtensions.JS,
+				AcceptedExtensions.R,
+				AcceptedExtensions.JL
 			].every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
@@ -141,13 +143,19 @@ const props = defineProps({
 const addFiles = (addedFiles: File[] | undefined) => {
 	if (addedFiles !== undefined && addedFiles.length > 0) {
 		for (let i = 0; i < addedFiles.length; i++) {
-			// only add files that weren't added before
-			if (props.acceptTypes.indexOf(addedFiles[i].type as AcceptedTypes) > -1) {
-				const index = importFiles.value.findIndex((item) => item.name === addedFiles[i].name);
+			// if we have a file type specified, check to see if it is an accepted type
+			// if we do not have a file type specified, check to see if the name ends with an accepted extension
+			const addedFile = addedFiles[i];
+			if (
+				props.acceptTypes.includes(addedFile.type as AcceptedTypes) ||
+				props.acceptExtensions.includes(addedFile.name.split('.').pop() as AcceptedExtensions)
+			) {
+				// only add files that weren't added before
+				const index = importFiles.value.findIndex((item) => item.name === addedFile.name);
 				if (index === -1) {
-					importFiles.value.push(addedFiles[i]);
+					importFiles.value.push(addedFile);
 				} else {
-					console.log(`${addedFiles[i].name} File already added!`);
+					console.log(`${addedFile.name} File already added!`);
 				}
 			}
 		}
@@ -207,34 +215,12 @@ const removeFile = (index: number) => {
 
 async function processFiles(files) {
 	isProcessing.value = true;
-	const r = await props.importAction(
-		files,
-		extractionMode.value.name,
-		extractImages.value,
-		csvDescription.value
-	);
+	const r = await props.importAction(files, csvDescription.value);
 	processResponse.value = await Promise.all(r);
 	isProcessing.value = false;
 	emit('import-completed', processResponse.value);
 	files.value = [];
 }
-const hasPDF = computed(() => {
-	if (importFiles.value.length === 0) return false;
-
-	for (let i = 0; i < importFiles.value.length; i++) {
-		const file: File = importFiles.value[i];
-		if ((file.type as AcceptedTypes) === AcceptedTypes.PDF) return true;
-	}
-
-	return false;
-});
-
-/* Apparently this is never used (?)
-const hasCSV = computed(() => {
-	if (importFiles.value.length === 0) return false;
-	return importFiles.value.some((file) => (file.type as AcceptedTypes) === AcceptedTypes.CSV);
-});
-*/
 
 const canImport = computed(() => importFiles.value.length > 0);
 </script>

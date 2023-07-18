@@ -152,7 +152,6 @@
 							:show-import-button="isEditable"
 							:project="project"
 							@open-code="openCode"
-							@update-project="updateProject"
 						/>
 					</li>
 				</ul>
@@ -268,15 +267,12 @@ const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded', 'update-project']);
+const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
 function openCode(codeRequests: CodeRequest[]) {
 	emit('open-code', codeRequests);
 }
 
-function updateProject(id: IProject['id']) {
-	emit('update-project', id);
-}
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -410,7 +406,7 @@ function downloadPDF() {
 */
 function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
-	return link.match(/^.*\.(pdf|PDF)$/);
+	return link.toLowerCase().endsWith('.pdf');
 }
 
 const openPDF = () => {
@@ -479,11 +475,6 @@ onUpdated(() => {
 	border-radius: var(--border-radius);
 	border: 4px solid var(--primary-color);
 	border-width: 0px 0px 0px 6px;
-}
-
-.p-buttonset {
-	white-space: nowrap;
-	margin-left: 0.5rem;
 }
 
 .extracted-item {

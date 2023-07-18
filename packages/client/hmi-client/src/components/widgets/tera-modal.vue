@@ -22,6 +22,7 @@
 					<slot name="header"></slot>
 				</header>
 				<slot></slot>
+				<section><slot name="math-editor"></slot></section>
 				<footer>
 					<slot name="footer"></slot>
 				</footer>
@@ -33,7 +34,7 @@
 <style scoped>
 aside {
 	position: fixed;
-	z-index: 9998;
+	z-index: 999;
 	top: 0;
 	left: 0;
 	width: 100%;

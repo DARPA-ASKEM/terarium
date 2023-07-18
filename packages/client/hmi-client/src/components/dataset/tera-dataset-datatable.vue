@@ -2,31 +2,56 @@
 <template>
 	<DataTable
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-		:rows="50"
 		:value="csvContent?.slice(1, csvContent.length)"
+		:rows="props.rows"
 		paginator
-		paginatorPosition="both"
+		:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"
+		:rowsPerPageOptions="[5, 10, 25, 50, 100]"
+		paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+		currentPageReportTemplate="{first} to {last} of {totalRecords}"
 		removableSort
-		resizable-columns
 		showGridlines
-		tableStyle="width:auto"
+		:tableStyle="tableStyle ? tableStyle : `width:auto`"
 	>
 		<Column
 			v-for="(colName, index) of csvHeaders"
 			:key="index"
 			:field="index.toString()"
 			:header="colName"
+			:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 			sortable
+			:frozen="index == 0"
 		>
-			<!-- column summary charts below -->
-			<template #header v-if="!previewMode">
-				<div class="histogram">
-					<div class="histogram-label-min">Min: {{ csvMinsToDisplay?.at(index) }}</div>
-					<Chart type="bar" :height="800" :data="chartData?.at(index)" :options="chartOptions" />
-					<div class="histogram-label-max">Max: {{ csvMaxsToDisplay?.at(index) }}</div>
-					<div class="histogram-label-other">Mean: {{ csvMeansToDisplay?.at(index) }}</div>
-					<div class="histogram-label-other">Median: {{ csvMedianToDisplay?.at(index) }}</div>
-					<div class="histogram-label-other">SD: {{ csvSdToDisplay?.at(index) }}</div>
+			<template #header>
+				<!-- column summary charts below -->
+				<div v-if="!previewMode && props.rawContent?.stats" class="column-summary">
+					<div class="column-summary-row">
+						<span class="column-summary-label">Max:</span>
+						<span class="column-summary-value">{{ csvMaxsToDisplay?.at(index) }}</span>
+					</div>
+					<Chart
+						class="histogram"
+						type="bar"
+						:height="480"
+						:data="chartData?.at(index)"
+						:options="chartOptions"
+					/>
+					<div class="column-summary-row max">
+						<span class="column-summary-label">Min:</span>
+						<span class="column-summary-value">{{ csvMinsToDisplay?.at(index) }}</span>
+					</div>
+					<div class="column-summary-row">
+						<span class="column-summary-label">Mean:</span>
+						<span class="column-summary-value">{{ csvMeansToDisplay?.at(index) }}</span>
+					</div>
+					<div class="column-summary-row">
+						<span class="column-summary-label">Median:</span>
+						<span class="column-summary-value">{{ csvMedianToDisplay?.at(index) }}</span>
+					</div>
+					<div class="column-summary-row">
+						<span class="column-summary-label">SD:</span>
+						<span class="column-summary-value">{{ csvSdToDisplay?.at(index) }}</span>
+					</div>
 				</div>
 			</template>
 		</Column>
@@ -42,7 +67,11 @@ import { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
+	rows?: number;
 	previewMode?: boolean;
+	previousHeaders?: String[] | null;
+	paginatorPosition?: 'bottom' | 'both' | 'top' | undefined;
+	tableStyle?: String;
 }>();
 
 const CATEGORYPERCENTAGE = 0.9;
@@ -75,16 +104,30 @@ const chartOptions = computed(() => setChartOptions());
 const setBarChartData = (bins: any[]) => {
 	const documentStyle = getComputedStyle(document.documentElement);
 	const dummyLabels: string[] = [];
+	// reverse the bins so that the chart is displayed in the correct order
+	bins.reverse();
 	for (let i = 0; i < bins.length; i++) {
 		dummyLabels.push(i.toString());
 	}
 	return {
-		labels: dummyLabels,
+		labels: [
+			'Bin 1',
+			'Bin 2',
+			'Bin 3',
+			'Bin 4',
+			'Bin 5',
+			'Bin 6',
+			'Bin 7',
+			'Bin 8',
+			'Bin 9',
+			'Bin 10'
+		].reverse(),
 		datasets: [
 			{
-				label: false,
+				label: 'Count',
 				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
-				borderColor: documentStyle.getPropertyValue('--primary-color'),
+				borderColor: '#FFF',
+				borderWidth: 1,
 				data: bins,
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
@@ -106,7 +149,11 @@ const setChartOptions = () => {
 				display: false
 			},
 			tooltip: {
-				enabled: false
+				enabled: true,
+				position: 'nearest',
+				displayColors: false,
+				beforeTitle: 'Count:',
+				backgroundColor: '#666666dd'
 			}
 		},
 		scales: {
@@ -135,46 +182,43 @@ const setChartOptions = () => {
 </script>
 
 <style scoped>
-/* Histograms & Charts  */
-.summary-chart-table {
-	width: max-content;
-	border-spacing: 0;
-	border-collapse: collapse;
-	/* position: sticky; */
-	/* top: -1rem; */
-	background: var(--surface-0);
-	border-bottom: 1px solid var(--surface-border-light);
+.p-datatable:deep(.p-column-header-content) {
+	display: grid;
+	grid-template-areas:
+		'name sortIcon'
+		'columnSummary columnSummary';
 }
 
-.summary-chart-column {
-	border-left: 1.111px solid transparent;
-	border-right: 1.111px solid transparent;
-	text-align: left;
-	padding-bottom: 1rem;
+.p-datatable:deep(.p-column-title) {
+	grid-area: name;
+	padding-left: 0.5rem;
+}
+.p-datatable:deep(.p-sortable-column-icon) {
+	grid-area: sortIcon;
+}
+/* Histograms & Charts  */
+.column-summary {
+	position: relative;
+	width: 100%;
+	margin-top: 0.5rem;
+	grid-area: columnSummary;
+}
+.column-summary-row {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	font-weight: lighter;
+}
+.column-summary-row.max {
+	position: relative;
+	top: -0.5rem;
 }
 
 .histogram {
-	width: 40px;
-}
-
-.histogram-label-max {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	padding-left: 0.5rem;
-}
-
-.histogram-label-other {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	padding-left: 0.5rem;
-	text-align: left;
-}
-
-.histogram-label-min {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	padding-left: 0.5rem;
-	position: relative;
-	top: -9px;
+	height: 100px;
 }
 </style>

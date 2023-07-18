@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5 class="truncate">{{ node.operationType }}</h5>
+			<h5 class="truncate">{{ node.displayName }}</h5>
 			<span>
 				<Button
 					icon="pi pi-sign-in"
@@ -33,6 +33,8 @@
 				>
 					<div class="input port" />
 					<div>
+						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
+						<span v-if="!input.label">{{ input.type }}</span>
 						<span
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"
@@ -164,7 +166,7 @@ const VIRIDIS_14 = [
 ];
 const getInputLabelColor = (edgeIdx: number) => {
 	const numRuns = props.node.inputs[0].value?.length ?? 0;
-	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE
+	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE_JULIA
 		? VIRIDIS_14[Math.floor((edgeIdx / numRuns) * VIRIDIS_14.length)]
 		: 'inherit';
 };
@@ -269,8 +271,8 @@ header .p-button.p-button-text:enabled:hover {
 }
 
 section {
-	margin-left: 1rem;
-	margin-right: 1rem;
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
 }
 
 section,
@@ -292,6 +294,10 @@ ul li {
 	align-items: center;
 }
 
+.inputs,
+.outputs {
+	color: var(--text-color-secondary);
+}
 .input-port-container {
 	display: flex;
 	padding-top: 0.5rem;
@@ -316,11 +322,7 @@ ul li {
 	background-color: var(--surface-highlight);
 }
 
-.output-port-container[active='false'] {
-	color: var(--text-color-secondary);
-}
-
-.output-port-container[active='true'] {
+.port-connected {
 	color: var(--text-color-primary);
 }
 
@@ -339,6 +341,11 @@ ul li {
 	height: calc(var(--port-base-size) * 2);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--port-base-size);
+}
+
+.port-connected .input-port-container,
+.port-connected .output-port-container {
+	gap: initial;
 }
 
 .port-connected .input.port {

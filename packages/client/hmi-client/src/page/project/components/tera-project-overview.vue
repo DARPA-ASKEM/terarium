@@ -1,254 +1,303 @@
 <template>
-	<tera-asset
-		:name="project?.name"
-		:authors="project?.username"
-		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
-		is-editable
-		class="overview-banner"
-	>
-		<template #name-input>
-			<InputText
-				v-if="isEditingProject"
-				v-model="newProjectName"
-				ref="inputElement"
-				class="project-name-input"
-				@keyup.enter="updateProjectName"
-			/>
-		</template>
-		<template #edit-buttons>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-		</template>
-		<section>
-			<section class="summary">
-				<!-- This div is so that child elements will automatically collapse margins -->
-				<div>
-					<!-- Description & Contributors -->
-					<section class="description">
-						<p>
-							{{ project?.description }}
-						</p>
-					</section>
-				</div>
-			</section>
-			<!-- Project summary KPIs -->
-			<section class="summary-KPI-bar">
-				<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
-					<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
-					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
-				</div>
-			</section>
-		</section>
-	</tera-asset>
-	<section class="content-container">
-		<h5>Quick links</h5>
-		<!-- Quick link buttons go here -->
-		<section>
-			<div class="quick-links">
-				<Button
-					label="Upload resources"
-					size="large"
-					icon="pi pi-cloud-upload"
-					class="p-button p-button-secondary quick-link-button"
-					@click="openImportModal"
+	<div class="scrollable">
+		<tera-asset
+			:name="project?.name"
+			:authors="project?.username"
+			:is-naming-asset="isRenamingProject"
+			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
+			is-editable
+			class="overview-banner"
+		>
+			<template #name-input>
+				<InputText
+					v-if="isRenamingProject"
+					v-model="newProjectName"
+					ref="inputElement"
+					@keyup.enter="updateProjectName"
 				/>
+			</template>
+			<template #edit-buttons>
 				<Button
-					label="New model"
-					size="large"
-					icon="pi pi-share-alt"
-					class="p-button p-button-secondary quick-link-button"
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="showProjectMenu"
 				/>
-				<Button
-					size="large"
-					class="p-button p-button-secondary quick-link-button"
-					@click="emit('open-workflow')"
-				>
-					<vue-feather
-						class="p-button-icon-left"
-						type="git-merge"
-						size="1.25rem"
-						stroke="rgb(16, 24, 40)"
-					/>
-					<span class="p-button-label">New workflow</span>
-				</Button>
-				<Button size="large" class="p-button p-button-secondary quick-link-button">
-					<compare-models-icon class="icon" />
-					<span class="p-button-label">Compare models</span>
-				</Button>
-				<Button
-					label="New simulation"
-					size="large"
-					icon="pi pi-play"
-					class="p-button p-button-secondary quick-link-button"
-				/>
-			</div>
-		</section>
-		<!-- Resources list table goes here -->
-		<section class="resource-list">
-			<div class="resource-list-section-header">
-				<h4>Resource Manager</h4>
-				<span class="p-input-icon-left">
-					<i class="pi pi-search" />
-					<InputText placeholder="Keyword search" class="keyword-search" />
-				</span>
-				<SplitButton
-					class="resource-list-button"
-					icon="pi pi-plus"
-					label="New Resource"
-					:model="tableActionMenuItems"
-				>
-				</SplitButton>
-			</div>
-			<!-- resource list data table -->
-			<DataTable
-				v-model:selection="selectedResources"
-				dataKey="assetId"
-				tableStyle="min-width: 50rem"
-				:value="assets"
-				row-hover
-				:row-class="() => 'p-selectable-row'"
-			>
-				<Column selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column field="assetName" header="Name" sortable style="width: 25%">
-					<template #body="slotProps">
-						<Button
-							:title="slotProps.data.assetName"
-							class="asset-button"
-							plain
-							text
-							size="small"
-							@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
-						>
-							<vue-feather
-								v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
-								:type="getAssetIcon(slotProps.data.pageType ?? null)"
-								size="1rem"
-								stroke="rgb(16, 24, 40)"
-								class="p-button-icon-left icon"
-							/>
-							<component
-								v-else
-								:is="getAssetIcon(slotProps.data.pageType ?? null)"
-								class="p-button-icon-left icon"
-							/>
-							<span class="p-button-label">{{ slotProps.data.assetName }}</span>
-						</Button>
-					</template>
-				</Column>
-				<Column field="" header="Modified" sortable style="width: 25%"></Column>
-				<Column field="tags" header="Tags" style="width: 25%"></Column>
-				<Column header="Type" style="width: 25%" sortable>
-					<template #body="slotProps">
-						{{ slotProps.data.pageType }}
-					</template>
-				</Column>
-				<Column
-					headerStyle="width: 3rem; text-align: center"
-					bodyStyle="text-align: center; overflow: visible"
-				>
-					<template #body>
-						<Button
-							class="row-action-button"
-							icon="pi pi-ellipsis-v"
-							plain
-							text
-							rounded
-							@click.stop="showRowActions"
-						/>
-						<Menu ref="rowActionMenu" :model="rowActionMenuItems" :popup="true" />
-					</template>
-				</Column>
-				<template #empty>
-					<div class="explorer-status">
-						<img src="@assets/svg/seed.svg" alt="Seed" />
-						<h2 class="no-results-found">No resources.</h2>
-						<span
-							>Add resources to your project with the quick link buttons, or use the explorer to
-							find documents, models and datasets of interest.</span
-						>
+				<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			</template>
+			<section>
+				<section class="summary">
+					<!-- This div is so that child elements will automatically collapse margins -->
+					<div>
+						<!-- Description & Contributors -->
+						<section class="description">
+							<p>
+								{{ project?.description }}
+							</p>
+						</section>
 					</div>
-				</template>
-			</DataTable>
+				</section>
+				<!-- Project summary KPIs -->
+				<section class="summary-KPI-bar">
+					<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
+						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
+						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
+					</div>
+				</section>
+			</section>
+		</tera-asset>
+		<section class="content-container">
+			<h5>Quick links</h5>
+			<!-- Quick link buttons go here -->
+			<section>
+				<div class="quick-links">
+					<Button
+						label="Upload resources"
+						size="large"
+						icon="pi pi-cloud-upload"
+						class="p-button p-button-secondary quick-link-button"
+						@click="openImportModal"
+					/>
+					<Button
+						label="New model"
+						size="large"
+						icon="pi pi-share-alt"
+						class="p-button p-button-secondary quick-link-button"
+						@click="isNewModelModalVisible = true"
+					/>
+					<Button
+						size="large"
+						class="p-button p-button-secondary quick-link-button"
+						@click="emit('open-workflow')"
+					>
+						<vue-feather
+							class="p-button-icon-left"
+							type="git-merge"
+							size="1.25rem"
+							stroke="rgb(16, 24, 40)"
+						/>
+						<span class="p-button-label">New workflow</span>
+					</Button>
+					<Button size="large" class="p-button p-button-secondary quick-link-button">
+						<compare-models-icon class="icon" />
+						<span class="p-button-label">Compare models</span>
+					</Button>
+					<Button
+						label="New simulation"
+						size="large"
+						icon="pi pi-play"
+						class="p-button p-button-secondary quick-link-button"
+					/>
+				</div>
+			</section>
+			<!-- Resources list table goes here -->
+			<section class="resource-list">
+				<div class="resource-list-section-header">
+					<h4>Resource Manager</h4>
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText placeholder="Keyword search" class="keyword-search" />
+					</span>
+					<SplitButton
+						class="resource-list-button"
+						icon="pi pi-plus"
+						label="New Resource"
+						:model="tableActionMenuItems"
+					>
+					</SplitButton>
+				</div>
+				<!-- resource list data table -->
+				<DataTable
+					v-model:selection="selectedResources"
+					dataKey="assetId"
+					tableStyle="min-width: 50rem"
+					:value="assets"
+					row-hover
+					:row-class="() => 'p-selectable-row'"
+				>
+					<Column selection-mode="multiple" headerStyle="width: 3rem" />
+					<Column field="assetName" header="Name" sortable style="width: 25%">
+						<template #body="slotProps">
+							<Button
+								:title="slotProps.data.assetName"
+								class="asset-button"
+								plain
+								text
+								size="small"
+								@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
+							>
+								<vue-feather
+									v-if="
+										typeof ProjectService.getAssetIcon(slotProps.data.pageType ?? null) === 'string'
+									"
+									:type="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									size="1rem"
+									stroke="rgb(16, 24, 40)"
+									class="p-button-icon-left icon"
+								/>
+								<component
+									v-else
+									:is="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									class="p-button-icon-left icon"
+								/>
+								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
+							</Button>
+						</template>
+					</Column>
+					<Column field="" header="Modified" sortable style="width: 25%"></Column>
+					<Column field="tags" header="Tags" style="width: 25%"></Column>
+					<Column header="Type" style="width: 25%" sortable>
+						<template #body="slotProps">
+							{{ slotProps.data.pageType }}
+						</template>
+					</Column>
+					<Column
+						headerStyle="width: 3rem; text-align: center"
+						bodyStyle="text-align: center; overflow: visible"
+					>
+						<template #body>
+							<Button
+								class="row-action-button"
+								icon="pi pi-ellipsis-v"
+								plain
+								text
+								rounded
+								@click.stop="showRowActions"
+							/>
+							<Menu ref="rowActionMenu" :model="rowActionMenuItems" :popup="true" />
+						</template>
+					</Column>
+					<template #empty>
+						<div class="explorer-status">
+							<img src="@assets/svg/seed.svg" alt="Seed" />
+							<h2 class="no-results-found">No resources.</h2>
+							<span
+								>Add resources to your project with the quick link buttons, or use the explorer to
+								find documents, models and datasets of interest.</span
+							>
+						</div>
+					</template>
+				</DataTable>
+			</section>
+			<section class="drag-n-drop">
+				<tera-modal
+					v-if="isUploadResourcesModalVisible"
+					class="modal"
+					@modal-mask-clicked="isUploadResourcesModalVisible = false"
+				>
+					<template #header>
+						<h4>Upload resources</h4>
+					</template>
+					<template #default>
+						<p class="subheader">Add resources to your project here</p>
+						<tera-drag-and-drop-importer
+							:show-preview="true"
+							:accept-types="[
+								AcceptedTypes.PDF,
+								AcceptedTypes.CSV,
+								AcceptedTypes.TXT,
+								AcceptedTypes.MD,
+								AcceptedTypes.PY,
+								AcceptedTypes.JS,
+								AcceptedTypes.M,
+								AcceptedTypes.R,
+								AcceptedTypes.JL
+							]"
+							:accept-extensions="[
+								AcceptedExtensions.PDF,
+								AcceptedExtensions.CSV,
+								AcceptedExtensions.TXT,
+								AcceptedExtensions.MD,
+								AcceptedExtensions.PY,
+								AcceptedExtensions.M,
+								AcceptedExtensions.JS,
+								AcceptedExtensions.R,
+								AcceptedExtensions.JL
+							]"
+							:import-action="processFiles"
+							:progress="progress"
+							@import-completed="importCompleted"
+						></tera-drag-and-drop-importer>
+
+						<section v-if="isUploadResourcesModalVisible">
+							<Card v-for="(item, i) in results" :key="i" class="card">
+								<template #title>
+									<div class="card-img"></div>
+								</template>
+								<template #content>
+									<div class="card-content">
+										<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+										<div v-if="item.response" class="file-content">
+											<br />
+											<div>Extracted Text</div>
+											<div>{{ item.response.text }}</div>
+											<br />
+											<div v-if="item.response.images">Images Found</div>
+											<div v-for="image in item.response.images" :key="image">
+												<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+											</div>
+											<br />
+											<i class="pi pi-plus"></i>
+										</div>
+									</div>
+								</template>
+							</Card>
+						</section>
+					</template>
+					<template #footer>
+						<Button
+							label="Upload"
+							class="p-button-primary"
+							@click="isUploadResourcesModalVisible = false"
+							:disabled="!results"
+						/>
+						<Button
+							label="Cancel"
+							class="p-button-secondary"
+							@click="isUploadResourcesModalVisible = false"
+						/>
+					</template>
+				</tera-modal>
+			</section>
 		</section>
-		<section class="drag-n-drop">
+
+		<!-- New model modal -->
+		<Teleport to="body">
 			<tera-modal
-				v-if="isUploadResourcesModalVisible"
+				v-if="isNewModelModalVisible"
 				class="modal"
-				@modal-mask-clicked="isUploadResourcesModalVisible = false"
+				@modal-mask-clicked="isNewModelModalVisible = false"
 			>
 				<template #header>
-					<h4>Upload resources</h4>
+					<h4>New model</h4>
 				</template>
 				<template #default>
-					<p class="subheader">Add resources to your project here</p>
-					<tera-drag-and-drop-importer
-						:show-preview="true"
-						:accept-types="[
-							AcceptedTypes.PDF,
-							AcceptedTypes.JPG,
-							AcceptedTypes.JPEG,
-							AcceptedTypes.PNG,
-							AcceptedTypes.CSV,
-							AcceptedTypes.TXT,
-							AcceptedTypes.MD
-						]"
-						:import-action="processFiles"
-						:progress="progress"
-						@import-completed="importCompleted"
-					></tera-drag-and-drop-importer>
-
-					<section v-if="isUploadResourcesModalVisible">
-						<Card v-for="(item, i) in results" :key="i" class="card">
-							<template #title>
-								<div class="card-img"></div>
-							</template>
-							<template #content>
-								<div class="card-content">
-									<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
-									<div v-if="item.response" class="file-content">
-										<br />
-										<div>Extracted Text</div>
-										<div>{{ item.response.text }}</div>
-										<br />
-										<div v-if="item.response.images">Images Found</div>
-										<div v-for="image in item.response.images" :key="image">
-											<img :src="`data:image/jpeg;base64,${image}`" alt="" />
-										</div>
-										<br />
-										<i class="pi pi-plus"></i>
-									</div>
-								</div>
-							</template>
-						</Card>
-					</section>
+					<form>
+						<label for="new-model">Enter a unique name for your model</label>
+						<InputText
+							v-bind:class="invalidInputStyle"
+							id="new-model"
+							type="text"
+							v-model="newModelName"
+							placeholder="new model"
+						/>
+					</form>
 				</template>
 				<template #footer>
-					<Button
-						label="Upload"
-						class="p-button-primary"
-						@click="isUploadResourcesModalVisible = false"
-						:disabled="!results"
-					/>
-					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isUploadResourcesModalVisible = false"
-					/>
+					<Button @click="createNewModel">Create model</Button>
+					<Button class="p-button-secondary" @click="isNewModelModalVisible = false">
+						Cancel
+					</Button>
 				</template>
 			</tera-modal>
-		</section>
-	</section>
+		</Teleport>
+	</div>
 </template>
 
 <script setup lang="ts">
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { nextTick, Ref, ref, computed, onMounted } from 'vue';
 import InputText from 'primevue/inputtext';
-import { getAssetIcon, update as updateProject } from '@/services/project';
+import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import SplitButton from 'primevue/splitbutton';
@@ -258,11 +307,10 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab, AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
+import { Tab, AcceptedTypes, AcceptedExtensions } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
-import API, { Poller } from '@/api/api';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
 import { CsvAsset } from '@/types/Types';
@@ -274,10 +322,9 @@ import { uploadArtifactToProject } from '@/services/artifact';
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'update-project', 'open-asset']);
+const emit = defineEmits(['open-workflow', 'open-asset', 'new-model']);
 const router = useRouter();
-const resources = useResourcesStore();
-const isEditingProject = ref(false);
+const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 const progress: Ref<number> = ref(0);
@@ -285,6 +332,20 @@ const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
 const selectedResources = ref();
+
+const isNewModelModalVisible = ref<boolean>(false);
+const newModelName = ref<string>('');
+
+const isValidName = ref<boolean>(true);
+const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
+
+const existingModelNames = computed(() => {
+	const modelNames: string[] = [];
+	props.project.assets?.models.forEach((item) => {
+		modelNames.push(item.name);
+	});
+	return modelNames;
+});
 
 const assets = computed(() => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -309,61 +370,7 @@ const assets = computed(() => {
 	return result;
 });
 
-async function getPDFContents(
-	file: string | Blob,
-	extractionMode: string,
-	extractImages: string
-): Promise<PDFExtractionResponseType> {
-	const formData = new FormData();
-	formData.append('file', file);
-
-	const result = await API.post(`/extract/convertpdftask/`, formData, {
-		params: {
-			extraction_method: extractionMode,
-			extract_images: extractImages
-		},
-		headers: {
-			'Content-Type': 'multipart/form-data'
-		}
-	});
-
-	if (result) {
-		const taskID = result.data.task_id;
-
-		const poller = new Poller<object>()
-			.setInterval(2000)
-			.setThreshold(90)
-			.setPollAction(async () => {
-				const response = await API.get(`/extract/task-result/${taskID}`);
-
-				if (response.data.status === 'SUCCESS' && response.data.result) {
-					return {
-						data: response.data.result,
-						progress: null,
-						error: null
-					};
-				}
-				return {
-					data: null,
-					progress: null,
-					error: null
-				};
-			});
-		const pollerResults = await poller.start();
-
-		if (pollerResults.data) {
-			return pollerResults.data as PDFExtractionResponseType;
-		}
-	}
-	return { text: '', images: [] } as PDFExtractionResponseType;
-}
-
-async function processFiles(
-	files: File[],
-	extractionMode: string,
-	extractImages: string,
-	csvDescription: string
-) {
+async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
 		if (file.type === AcceptedTypes.CSV) {
 			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
@@ -382,23 +389,34 @@ async function processFiles(
 			}
 			return { file, error: true, response: { text: '', images: [] } };
 		}
-		if (file.type === AcceptedTypes.TXT || file.type === AcceptedTypes.MD) {
-			const response = await uploadArtifactToProject(
-				progress,
-				file,
-				props.project.username ?? '',
-				props.project.id,
-				''
-			);
-			if (response?.data) return { file, error: false, response: { text: '', images: [] } };
-			return { file, error: true, response: { text: '', images: [] } };
-		}
-		// PDF
-		const resp = await getPDFContents(file, extractionMode, extractImages);
-		const text = resp.text ? resp.text : '';
-		const images = resp.images ? resp.images : [];
-		return { file, error: false, response: { text, images } };
+
+		// This is pdf, txt, md files
+		const response = await uploadArtifactToProject(
+			progress,
+			file,
+			props.project.username ?? '',
+			props.project.id,
+			''
+		);
+		if (response?.data) return { file, error: false, response: { text: '', images: [] } };
+		return { file, error: true, response: { text: '', images: [] } };
 	});
+}
+
+function createNewModel() {
+	if (newModelName.value.trim().length === 0) {
+		isValidName.value = false;
+		logger.info('Model name cannot be empty - please enter a different name');
+		return;
+	}
+	if (existingModelNames.value.includes(newModelName.value.trim())) {
+		isValidName.value = false;
+		logger.info('Duplicate model name - please enter a different name');
+		return;
+	}
+	isValidName.value = true;
+	emit('new-model', newModelName.value.trim());
+	isNewModelModalVisible.value = false;
 }
 
 async function openImportModal() {
@@ -406,7 +424,7 @@ async function openImportModal() {
 	results.value = null;
 }
 
-function importCompleted(
+async function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
 	// This is a hacky override for dealing with CSVs
@@ -421,8 +439,10 @@ function importCompleted(
 			logger.error('Failed to upload file. Is it too large?', { showToast: true });
 		}
 		results.value = null;
-		emit('update-project', props.project.id);
 		isUploadResourcesModalVisible.value = false;
+
+		// TODO: See about getting rid of this - this refresh should preferably be within a service
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
 	}
@@ -430,20 +450,17 @@ function importCompleted(
 
 async function editProject() {
 	newProjectName.value = props.project.name;
-	isEditingProject.value = true;
+	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
 
 async function updateProjectName() {
-	isEditingProject.value = false;
+	isRenamingProject.value = false;
 	const updatedProject = props.project;
 	updatedProject.name = newProjectName.value;
-	const id = await updateProject(updatedProject);
-	if (id) {
-		resources.setActiveProject(updatedProject);
-	}
+	await ProjectService.update(updatedProject);
 }
 
 const projectMenu = ref();
@@ -502,6 +519,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.scrollable {
+	overflow-y: auto;
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+.scrollable::-webkit-scrollbar {
+	display: none;
+}
+
 a {
 	text-decoration: underline;
 }
@@ -620,7 +646,6 @@ h3 {
 	padding: 0 0 0 1rem;
 	margin-left: -1rem;
 	border: 0;
-	visibility: hidden;
 	width: 33%;
 }
 

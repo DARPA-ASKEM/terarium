@@ -178,11 +178,10 @@
 import { computed, ComputedRef, ref, Ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
 import { FileCategory, GithubFile, GithubRepo } from '@/types/Types';
-import { CodeRequest, Tab } from '@/types/common';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
@@ -197,8 +196,6 @@ const props = defineProps<{
 	showImportButton: boolean;
 	project?: IProject;
 }>();
-
-const emit = defineEmits(['open-code', 'update-project']);
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -295,7 +292,7 @@ async function openSelectedFiles() {
 		await importDocumentFiles(selectedDocumentFiles);
 	}
 
-	emit('update-project', props.project?.id);
+	// FIXME: Files aren't opening
 	isModalVisible.value = false;
 }
 
@@ -358,23 +355,8 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
  * @param githubFiles The code files to open
  */
 async function openCodeFiles(githubFiles: GithubFile[]) {
-	const codeRequests: CodeRequest[] = [] as CodeRequest[];
-
-	// iterate through our files and fetch their contents
-	githubFiles.forEach(async (file) => {
-		const code = await getGithubCode(repoOwnerAndName.value, file.path);
-		const asset: Tab = {
-			assetName: file.name,
-			pageType: ProjectAssetTypes.CODE,
-			assetId: undefined
-		};
-		codeRequests.push({
-			asset,
-			code
-		});
-	});
-
-	emit('open-code', codeRequests);
+	// For now just throw to the document path as they're all artifacts
+	await importDocumentFiles(githubFiles);
 }
 </script>
 
@@ -431,6 +413,7 @@ ul li:hover {
 .file-checkboxes {
 	margin-left: 10px;
 }
+
 .t {
 	display: flex;
 	flex-direction: column;

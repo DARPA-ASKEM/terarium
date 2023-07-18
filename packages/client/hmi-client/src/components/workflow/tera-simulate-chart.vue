@@ -1,6 +1,6 @@
 <template>
 	<div class="simulate-chart">
-		<div class="multiselect-title">Select variables to plot</div>
+		<!-- <div class="multiselect-title">Select variables to plot</div> -->
 		<MultiSelect
 			v-model="selectedVariable"
 			:selection-limit="hasMultiRuns ? 1 : undefined"
@@ -11,11 +11,9 @@
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span
-						class="selected-label-item"
-						:style="{ color: hasMultiRuns ? 'black' : getVariableColorByVar(variable) }"
-						>{{ variable }}</span
-					>
+					<span :style="{ color: hasMultiRuns ? 'black' : getVariableColorByVar(variable) }">
+						{{ variable }}
+					</span>
 				</template>
 			</template>
 		</MultiSelect>
@@ -43,6 +41,9 @@ const CHART_OPTIONS = {
 	devicePixelRatio: 4,
 	maintainAspectRatio: false,
 	pointStyle: false,
+	animation: {
+		duration: 0
+	},
 	plugins: {
 		legend: {
 			display: false
@@ -66,7 +67,8 @@ const CHART_OPTIONS = {
 			ticks: {
 				color: '#aaa',
 				maxTicksLimit: 3,
-				includeBounds: true
+				includeBounds: true,
+				precision: 4
 			},
 			grid: {
 				color: '#fff',
@@ -79,6 +81,8 @@ const CHART_OPTIONS = {
 const props = defineProps<{
 	runResults: RunResults;
 	chartConfig: ChartConfig;
+	lineColorArray?: string[];
+	lineWidthArray?: string[];
 }>();
 
 // data for rendering ui
@@ -120,6 +124,17 @@ const hasMultiRuns = computed(() => {
 	return runIdList.length > 1;
 });
 
+const getLineColor = (variableName: string, runIdx: number) => {
+	if (props.lineColorArray) {
+		return props.lineColorArray[runIdx];
+	}
+	return hasMultiRuns.value
+		? getVariableColorByRunIdx(runIdx)
+		: getVariableColorByVar(variableName);
+};
+
+const getLineWidth = (runIdx: number) => (props.lineWidthArray ? props.lineWidthArray[runIdx] : 2);
+
 const watchRunResults = async (runResults) => {
 	const runIdList = Object.keys(props.runResults) as string[];
 	if (!runIdList.length || _.isEmpty(runResults)) {
@@ -158,9 +173,8 @@ const renderGraph = () => {
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
 					tension: 0.4,
-					borderColor: hasMultiRuns.value
-						? getVariableColorByRunIdx(runIdx)
-						: getVariableColorByVar(variable)
+					borderColor: getLineColor(variable, runIdx),
+					borderWidth: getLineWidth(runIdx)
 				};
 				datasets.push(dataset);
 			})
@@ -197,10 +211,6 @@ onMounted(() => {
 .multiselect-title {
 	font-size: smaller;
 	font-weight: 700;
-}
-
-.selected-label-item {
-	font-weight: bold;
 }
 
 .p-chart {

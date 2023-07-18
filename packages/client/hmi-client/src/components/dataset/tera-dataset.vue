@@ -5,6 +5,7 @@
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
+		ref="assetPanel"
 	>
 		<template #edit-buttons>
 			<span class="p-buttonset">
@@ -22,6 +23,18 @@
 					@click="datasetView = DatasetView.DATA"
 					:active="datasetView === DatasetView.DATA"
 				/>
+				<Button
+					v-if="isEditable"
+					class="p-button-secondary p-button-sm"
+					label="Transform"
+					icon="pi pi-sync"
+					@click="openDatesetChatTab"
+					:active="datasetView === DatasetView.LLM"
+				/>
+			</span>
+			<span v-if="datasetView === DatasetView.LLM && isEditable">
+				<i class="pi pi-cog" @click="toggleSettingsMenu" />
+				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
@@ -31,7 +44,7 @@
 					transformation tools.</Message
 				>
 			</div>
-			<section class="metadata data-row" v-if="!metadata">
+			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
 					<section>{{ csvContent?.length || '-' }}</section>
@@ -39,8 +52,6 @@
 				<section>
 					<header>Columns</header>
 					<section>{{ rawContent?.stats?.length || '-' }}</section>
-					<header>Metadata</header>
-					<section>{{ dataset?.metadata || '-' }}</section>
 				</section>
 				<section>
 					<header>Date uploaded</header>
@@ -53,10 +64,13 @@
 					<section>{{ dataset?.username || '-' }}</section>
 				</section>
 			</section>
-			<section class="metadata data-row" v-if="!metadata">
+			<section class="metadata data-row">
 				<section>
 					<header>Source Name</header>
-					<section>{{ dataset?.source || '-' }}</section>
+					<section v-if="dataset.url === 'https://github.com/reichlab/covid19-forecast-hub/'">
+						The Reich Lab at UMass-Amherst
+					</section>
+					<section v-else>{{ dataset?.source || '-' }}</section>
 				</section>
 				<section>
 					<header>Source URL</header>
@@ -66,34 +80,105 @@
 					</section>
 				</section>
 			</section>
-			<RelatedPublications
-				@extracted-metadata="(extract) => (metadata = extract)"
-				:publications="[metadata?.source]"
+			<tera-related-publications
+				@extracted-metadata="gotEnrichedData"
+				:dialog-flavour="'dataset'"
+				:publications="props.project?.assets?.publications"
+				:project="project"
 			/>
-			<Accordion :multiple="true" :activeIndex="showAccordion">
+			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<section v-if="metadata">
-						<ul>
-							<li>Dataset name: {{ metadata.name }}</li>
-							<li>Dataset overview: {{ metadata.description }}</li>
-							<li>Dataset URL: {{ metadata.source }}</li>
-							<li>
-								Data size: This dataset currently contains {{ csvContent?.length || '-' }} rows.
-							</li>
-						</ul>
+					<section v-if="enriched">
+						<div class="dataset-detail">
+							<div class="full-width">
+								<div class="detail-list">
+									<h2 class="title">Dataset Details</h2>
+									<ul>
+										<li><strong>Dataset name:</strong> {{ dataset.name }}</li>
+										<li><strong>Dataset overview:</strong> {{ dataset.description }}</li>
+										<li>
+											<strong>Dataset URL:</strong>
+											<a :href="dataset.source">{{ dataset.source }}</a>
+										</li>
+										<li>
+											<strong>Data size:</strong> This dataset currently contains
+											{{ csvContent?.length || '-' }} rows.
+										</li>
+									</ul>
+								</div>
+							</div>
+							<div class="column">
+								<h3 class="title">{{ headers.DESCRIPTION }}</h3>
+								<p class="content">{{ enrichedData.DESCRIPTION }}</p>
+
+								<h3 class="subtitle">{{ headers.AUTHOR_NAME }}</h3>
+								<p class="content">{{ enrichedData.AUTHOR_NAME }}</p>
+
+								<h3 class="subtitle">{{ headers.AUTHOR_EMAIL }}</h3>
+								<p class="content">{{ enrichedData.AUTHOR_EMAIL }}</p>
+							</div>
+
+							<div class="column">
+								<h3 class="subtitle">{{ headers.DATE }}</h3>
+								<p class="content">{{ enrichedData.DATE }}</p>
+
+								<h3 class="subtitle">{{ headers.SCHEMA }}</h3>
+								<p class="content">{{ enrichedData.SCHEMA }}</p>
+
+								<h3 class="subtitle">{{ headers.PROVENANCE }}</h3>
+								<p class="content">{{ enrichedData.PROVENANCE }}</p>
+							</div>
+
+							<div class="column">
+								<h3 class="subtitle">{{ headers.SENSITIVITY }}</h3>
+								<p class="content">{{ enrichedData.SENSITIVITY }}</p>
+							</div>
+							<div class="column">
+								<h3 class="subtitle">{{ headers.LICENSE }}</h3>
+								<p class="content">{{ enrichedData.LICENSE }}</p>
+							</div>
+							<div class="full-width">
+								<h3 class="subtitle">{{ headers.EXAMPLES }}</h3>
+								<ul class="example-list" v-if="enrichedData.EXAMPLES">
+									<li
+										class="example-item"
+										v-for="(value, key) in JSON.parse(enrichedData.EXAMPLES)"
+										:key="key"
+									>
+										<strong>{{ key }}:</strong>{{ value }}
+									</li>
+								</ul>
+							</div>
+							<div class="full-width">
+								<h3 class="subtitle">{{ `Extraction Table` }}</h3>
+								<DataTable :value="pd">
+									<Column field="col_name" header="Column Name"></Column>
+									<Column field="concept" header="Concept"></Column>
+									<Column field="unit" header="Unit"></Column>
+									<Column field="description" header="Description"></Column>
+								</DataTable>
+							</div>
+						</div>
 					</section>
-					<p v-else v-html="dataset?.description" />
+					<p v-else>
+						No information available. Add resources to generate a description. Or click edit icon to
+						edit this field directly.
+					</p>
 				</AccordionTab>
-				<AccordionTab v-if="metadata">
+				<AccordionTab v-if="enriched">
 					<template #header>
 						<header id="Source">Source</header>
 					</template>
-					This data is sourced from {{ metadata.source }}
+					This data is sourced from
+					{{ dataset.metadata.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
+					<a :href="dataset.metadata.documents ? dataset.metadata.documents[0].url : ''">{{
+						dataset.metadata.documents ? dataset.metadata.documents[0].url : ''
+					}}</a>
 				</AccordionTab>
-				<AccordionTab v-if="metadata">
+				<AccordionTab>
 					<template #header>
 						<header id="Variables">Variables</header>
 					</template>
@@ -105,7 +190,7 @@
 									'NAME',
 									'DATA TYPE',
 									'UNITS',
-									'GROUNDING',
+									'CONCEPTS',
 									'EXTRACTIONS'
 								]"
 								:key="index"
@@ -113,76 +198,149 @@
 								{{ title }}
 							</div>
 						</div>
-						<div v-for="(column, index) in metadata.columns" class="variables-row" :key="index">
-							<div>{{ column.name }}</div>
-							<div>{{ formatName(column.name) }}</div>
-							<div>{{ column.data_type }}</div>
-							<div>-</div>
-							<div>
-								{{ column.grounding.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
+						<div
+							v-for="(column, index) in editableRows"
+							class="variables-row"
+							:key="index"
+							@click="
+								() => {
+									rowEditList[index] = true;
+									setUnsavedRowValues();
+								}
+							"
+							:active="rowEditList[index]"
+						>
+							<!-- id -->
+							<InputText
+								class="p-inputtext-sm"
+								type="text"
+								v-if="rowEditList[index]"
+								v-model="column.name"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
+							/>
+							<div class="variables-value" v-else>{{ column.name }}</div>
+							<!-- name - currently just a formatted id -->
+							<InputText
+								class="p-inputtext-sm"
+								type="text"
+								v-if="rowEditList[index]"
+								v-model="column.name"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
+							/>
+							<div class="variables-value" v-else>{{ formatName(column.name) }}</div>
+							<!-- data type -->
+							<InputText
+								class="p-inputtext-sm"
+								type="text"
+								v-if="rowEditList[index]"
+								v-model="column.dataType"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].dataType)"
+							/>
+							<div class="variables-value" v-else>{{ column.dataType }}</div>
+							<!-- units - field does not exist in tds yet -->
+							<InputText
+								class="p-inputtext-sm"
+								type="text"
+								v-if="rowEditList[index]"
+								@focus="setSuggestedValue(index, '')"
+							/>
+							<div class="variables-value" v-else>-</div>
+							<!-- grounding -->
+							<InputText
+								class="p-inputtext-sm"
+								type="text"
+								v-if="rowEditList[index]"
+								v-model="groundingValues[index][0]"
+								@focus="setSuggestedValue(index, originalGroundingValues[0])"
+							/>
+							<div class="variables-value" v-else>
+								{{ groundingValues[index][0] }}
 							</div>
-							<div></div>
-							<div class="variables-description">{{ column.description }}</div>
+							<!-- extractions - field does not exist in tds yet -->
+							<InputText
+								class="p-inputtext-sm"
+								type="text"
+								v-if="rowEditList[index]"
+								@focus="setSuggestedValue(index, '')"
+							/>
+							<div class="variables-value" v-else></div>
+							<div v-if="rowEditList[index]" class="row-edit-buttons">
+								<Button
+									text
+									icon="pi pi-times"
+									@click.stop="
+										() => {
+											rowEditList[index] = false;
+											cancelRowEdits(index);
+										}
+									"
+								/>
+								<Button text icon="pi pi-check" @click.stop="rowEditList[index] = false" />
+							</div>
+							<!-- description -->
+							<InputText
+								class="p-inputtext-sm variables-description"
+								type="text"
+								v-if="rowEditList[index]"
+								v-model="column.description"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].description)"
+							/>
+							<div class="variables-description variables-value" v-else>
+								{{ column.description }}
+							</div>
+							<!-- suggested values -->
+							<div v-if="rowEditList[index]" class="variables-suggested">
+								<span>Suggested value</span>
+								<div>
+									<div class="suggested-value-source">
+										<i class="pi pi-file" />{{ dataset.metadata.documents[0].title }}
+									</div>
+									<div class="suggested-value">{{ suggestedValues[index] }}</div>
+								</div>
+								<span>Other possible values</span>
+								<div>
+									<div class="suggested-value-source">
+										<i class="pi pi-file" />{{ dataset.metadata.documents[0].title }}
+									</div>
+									<div class="suggested-value">
+										<ul>
+											<li v-for="(grounding, g) in groundingValues[index].slice(1, 5)" :key="g">
+												{{ grounding }}
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="(annotations?.length || 0) > 0">
-					<template #header>
-						<header id="Annotations">
-							Annotations
-							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
-						</header>
-					</template>
-					<section v-if="annotations">
-						<header class="annotation-subheader">Annotations</header>
-						<section class="annotation-group">
-							<section
-								v-for="name in annotations.map((annotation) => annotation['name'])"
-								:key="name"
-								class="annotation-row data-row"
-							>
-								<section>
-									<header>Name</header>
-									<section>{{ name }}</section>
-								</section>
-								<section>
-									<header>Description</header>
-									<section>{{ annotations[name] }}</section>
-								</section>
-							</section>
-						</section>
-					</section>
-				</AccordionTab>
 			</Accordion>
+		</template>
+		<template v-else-if="datasetView === DatasetView.DATA">
 			<Accordion :multiple="true" :activeIndex="[0, 1]">
-				<AccordionTab v-if="(annotations?.['feature']?.length || 0) > 0">
+				<AccordionTab>
 					<template #header>
-						<header id="Variables">
-							Variables<span class="artifact-amount">({{ annotations?.['feature']?.length }})</span>
-						</header>
+						Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 					</template>
-					<DataTable :value="annotations?.['feature']">
-						<Column field="name" header="Name"></Column>
-						<Column field="featureType" header="Type"></Column>
-						<Column field="description" header="Definition"></Column>
-						<Column field="units" header="Units"></Column>
-						<Column field="concept" header="Concept"></Column>
-					</DataTable>
+					<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<Accordion v-else-if="DatasetView.DATA" :activeIndex="0">
-			<AccordionTab>
-				<template #header>
-					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-				</template>
-				<tera-dataset-datatable :raw-content="rawContent" />
-			</AccordionTab>
-		</Accordion>
+		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
+			<Suspense>
+				<tera-dataset-jupyter-panel
+					:asset-id="props.assetId"
+					:project="props.project"
+					:dataset="dataset"
+					:show-kernels="showKernels"
+					:show-chat-thoughts="showChatThoughts"
+					@is-typing="updateScroll"
+				/>
+			</Suspense>
+		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { downloadRawFile, getDataset } from '@/services/dataset';
 import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
@@ -190,25 +348,112 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import { CsvAsset, Dataset } from '@/types/Types';
+import { downloadRawFile, getDataset } from '@/services/dataset';
+import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import { IProject } from '@/types/Project';
+import Menu from 'primevue/menu';
+import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import RelatedPublications from '../widgets/tera-related-publications.vue';
+
+const enrichedData = ref();
 
 enum DatasetView {
 	DESCRIPTION = 'description',
-	DATA = 'data'
+	DATA = 'data',
+	LLM = 'llm'
 }
-
 const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
+	project?: IProject;
 }>();
 
+const gotEnrichedData = (payload) => {
+	enrichedData.value = payload;
+	enriched.value = true;
+};
+
+const pd = computed(() =>
+	enrichedData.value ? Object.values(enrichedData.value.DATA_PROFILING_RESULT) : []
+);
+
+const headers = ref({
+	DESCRIPTION: 'Project Description',
+	AUTHOR_NAME: 'Author Name',
+	AUTHOR_EMAIL: 'Author Email',
+	DATE: 'Date of Data',
+	SCHEMA: 'Data Schema',
+	PROVENANCE: 'Data Provenance',
+	SENSITIVITY: 'Data Sensitivity',
+	EXAMPLES: 'Example Data',
+	LICENSE: 'License Information'
+});
+
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+const showKernels = ref(<boolean>false);
+const showChatThoughts = ref(<boolean>false);
+const menu = ref();
+const newCsvContent: any = ref(null);
+const newCsvHeader: any = ref(null);
+const oldCsvHeaders: any = ref(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
+const jupyterCsv: Ref<CsvAsset | null> = ref(null);
+
+const assetPanel = ref({ assetContainer: HTMLElement });
+
+const updateScroll = () => {
+	const el = assetPanel.value.assetContainer;
+	if (el) {
+		// @ts-ignore
+		el.scrollTop = el.scrollHeight;
+	}
+};
+
+const toggleSettingsMenu = (event: Event) => {
+	menu.value.toggle(event);
+};
+
+function formatName(name: string) {
+	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
+}
+
+const datasetView = ref(DatasetView.DESCRIPTION);
+
+const chatThoughtLabel = computed(() =>
+	showChatThoughts.value ? 'Auto hide chat thoughts' : 'Do not auto hide chat thoughts'
+);
+
+const kernelSettingsLabel = computed(() =>
+	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
+);
+
+const csvContent = computed(() => rawContent.value?.csv);
+
+const items = ref([
+	{
+		label: 'Chat Options',
+		items: [
+			{
+				label: kernelSettingsLabel,
+				command: () => {
+					showKernels.value = !showKernels.value;
+				}
+			},
+			{
+				label: chatThoughtLabel,
+				command: () => {
+					showChatThoughts.value = !showChatThoughts.value;
+				}
+			}
+		]
+	}
+]);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -218,34 +463,78 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const dataset: Ref<Dataset | null> = ref(null);
-const rawContent: Ref<CsvAsset | null> = ref(null);
-const datasetView = ref(DatasetView.DESCRIPTION);
+// temporary variable to allow user to click through related publications modal and simulate "getting" enriched data back
+const enriched = ref(false);
 
-const csvContent = computed(() => rawContent.value?.csv);
+const groundingValues = ref<string[][]>([]);
+// groundingValuesUnsaved is set to the value of the grounding value being edited, and is the value that is reverted back to if the user does not save their changes
+const groundingValuesUnsaved = ref<string[][]>([]);
+// originaGroundingValues are displayed as the first suggested value for concepts
+const originalGroundingValues = ref<string[]>([]);
+const suggestedValues = ref<string[]>([]);
 
-function formatName(name: string) {
-	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
+function setUnsavedRowValues() {
+	editableRowsUnsaved.value = editableRows.value.map((row) => ({ ...row }));
+	groundingValuesUnsaved.value = groundingValues.value.map((g) => [...g]);
 }
 
-const metadata = ref();
-
-/*
-// apparently this isn't used?
-const datasetContent = computed(() => [
-	{ key: 'Description', value: dataset.value?.description },
-	{
-		key: 'Annotations',
-		value: [...(annotations.value ?? [])]
+// quick and dirty function to populate one suggested value per column, based on what column field user clicked; possible refactor
+function setSuggestedValue(index: number, suggestedValue: string | undefined) {
+	if (suggestedValues.value.length > index && suggestedValue) {
+		suggestedValues.value[index] = suggestedValue;
 	}
-]);
-*/
+}
+
+const rowEditList = ref<boolean[]>([]);
+// editableRows is are the dataset columns that can be edited by the user; transient data
+const editableRows = ref<DatasetColumn[]>([]);
+// editableRowsUnsaved is set to the value of the row being edited, and is the value that is reverted back to if the user does not save their changes
+const editableRowsUnsaved = ref<DatasetColumn[]>([]);
+
+function cancelRowEdits(index: number) {
+	if (dataset.value?.columns) {
+		editableRows.value[index] = { ...editableRowsUnsaved.value[index] };
+		groundingValues.value[index] = [...groundingValuesUnsaved.value[index]];
+	}
+}
+const openDatesetChatTab = () => {
+	datasetView.value = DatasetView.LLM;
+	jupyterCsv.value = null;
+};
 
 onUpdated(() => {
 	if (dataset.value) {
+		console.log(dataset.value);
 		emit('asset-loaded');
+
+		// setting values related to editing rows in the variables table
+		if (dataset.value.columns) {
+			rowEditList.value = dataset.value.columns.map(() => false);
+			suggestedValues.value = dataset.value.columns.map(() => '');
+			editableRows.value = dataset.value.columns.map((c) => ({ ...c }));
+			groundingValues.value = editableRows.value.map((row) => {
+				const grounding = row.grounding;
+				if (grounding) {
+					const keys = Object.keys(grounding.identifiers);
+					return keys.map((k) => grounding.identifiers[k]);
+				}
+				return [];
+			});
+			originalGroundingValues.value = groundingValues.value.map((g) => g[0]);
+		}
 	}
 });
+
+watch(
+	() => [jupyterCsv.value?.csv],
+	() => {
+		if (jupyterCsv.value?.csv) {
+			oldCsvHeaders.value = newCsvHeader.value;
+			newCsvContent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
+			newCsvHeader.value = jupyterCsv.value.headers;
+		}
+	}
+);
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
@@ -263,7 +552,6 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
-				console.log(dataset.value);
 			}
 		} else {
 			dataset.value = null;
@@ -272,20 +560,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
-const showAccordion = computed(() => {
-	if (metadata.value) {
-		return [0, 1, 2];
-	}
-	if (dataset.value?.columns) {
-		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
-			? [1]
-			: [0];
-	}
-
-	return [0];
-});
 </script>
 
 <style scoped>
@@ -341,9 +615,39 @@ const showAccordion = computed(() => {
 	max-width: var(--constrain-width);
 }
 
-.layout-topbar {
-	top: 20px;
-	background-color: red;
+main .annotation-group {
+	padding: 0.25rem;
+	border: solid 1px var(--surface-border-light);
+	background-color: var(--gray-50);
+	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	max-width: var(--constrain-width);
+}
+
+.annotation-subheader {
+	font-weight: var(--font-weight-semibold);
+}
+
+.annotation-row {
+	display: flex;
+	flex-direction: row;
+	gap: 3rem;
+}
+
+.tera-dataset-datatable {
+	width: 100%;
+}
+
+.kernel-status {
+	margin-right: 10px;
+}
+
+.gpt-header {
+	display: flex;
+	width: 90%;
 }
 
 .variables-table {
@@ -357,14 +661,14 @@ const showAccordion = computed(() => {
 
 .variables-header {
 	display: grid;
-	grid-template-columns: repeat(6, 1fr);
+	grid-template-columns: repeat(6, 1fr) 0.5fr;
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 }
 
 .variables-row {
 	display: grid;
-	grid-template-columns: repeat(6, 1fr);
+	grid-template-columns: repeat(6, 1fr) 0.5fr;
 	grid-template-rows: 1fr 1fr;
 	border-top: 1px solid var(--surface-border);
 }
@@ -373,9 +677,116 @@ const showAccordion = computed(() => {
 	background-color: var(--surface-highlight);
 }
 
+.variables-row[active='true'] {
+	background-color: var(--surface-highlight);
+	grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+}
+
 .variables-description {
 	grid-row: 2;
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
+}
+
+.variables-suggested {
+	grid-row: 3 / span 3;
+	grid-column: 1 / span 6;
+}
+
+.variables-suggested div {
+	display: flex;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.variables-suggested span {
+	font-weight: bold;
+}
+
+.variables-suggested i {
+	margin-right: 0.5rem;
+}
+
+.suggested-value-source {
+	margin-right: 2rem;
+}
+
+.suggested-value {
+	color: var(--text-color-subdued);
+}
+
+.variables-suggested .suggested-value ul {
+	flex-direction: row;
+}
+
+main :deep(.p-inputtext.p-inputtext-sm) {
+	padding-left: 0.65rem;
+}
+
+.row-edit-buttons {
+	display: flex;
+	justify-content: space-evenly;
+}
+.dataset-detail {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	font-family: var(--font-family);
+	transition: all 0.3s ease;
+	padding: 20px;
+}
+
+.column,
+.detail-list {
+	margin-bottom: 20px;
+}
+
+.full-width {
+	width: 100%;
+}
+
+.detail-list {
+	padding: 10px;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.detail-list ul {
+	list-style: none;
+	padding: 0;
+}
+
+.detail-list ul li {
+	margin-bottom: 10px;
+}
+
+.title {
+	font-size: 16px;
+	margin-bottom: 20px;
+}
+
+.subtitle {
+	font-size: 14px;
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+.content {
+	font-size: 12px;
+	margin-bottom: 10px;
+}
+
+.example-list {
+	list-style-type: none;
+	padding: 0;
+}
+
+.example-item {
+	margin-bottom: 10px;
+}
+
+.example-item:hover {
+	color: #f78c6c;
+	transition: all 0.3s ease;
 }
 </style>

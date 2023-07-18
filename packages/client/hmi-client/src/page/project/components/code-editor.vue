@@ -69,7 +69,7 @@ import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/p
 import { IGraph } from '@graph-scaffolder/index';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
-import { DocumentAsset } from '@/types/Types';
+import { DocumentAsset, EventType } from '@/types/Types';
 import { PDFExtractionResponseType } from '@/types/common';
 import { getDocumentDoi } from '@/utils/data-util';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -84,6 +84,7 @@ import API, { Poller } from '@/api/api';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject } from '@/services/model';
+import * as EventService from '@/services/event';
 
 const props = defineProps({
 	project: {
@@ -163,6 +164,9 @@ async function onFileOpen(event) {
 async function onExtractModel() {
 	extractPetrinetLoading.value = true;
 	const response = await codeToAcset(selectedText.value);
+
+	EventService.create(EventType.ExtractModel, useResourcesStore().activeProject?.id);
+
 	extractPetrinetLoading.value = false;
 	acset.value = response;
 	codeExtractionDialogVisible.value = true;
@@ -235,8 +239,8 @@ async function createModelFromCode() {
 			content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
 		};
 		const model = await createModel(newModel);
-		if (model && props.project) {
-			await addModelToProject(props.project.id, model.id.toString(), resourcesStore);
+		if (model && props.project && resourcesStore) {
+			await addModelToProject(props.project.id, model.id.toString());
 
 			router.push({
 				name: RouteName.ProjectRoute,

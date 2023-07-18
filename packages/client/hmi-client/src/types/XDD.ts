@@ -76,7 +76,7 @@ export type XDDSearchParams = {
 	githubUrls?: string;
 };
 
-export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
+export const XDD_RESULT_DEFAULT_PAGE_SIZE = 20;
 
 //
 // XDD Field names

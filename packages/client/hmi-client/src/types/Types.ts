@@ -10,6 +10,15 @@ export interface Event {
     value?: string;
 }
 
+export interface EvaluationScenarioSummary {
+    name: string;
+    username: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
+}
+
 export interface GithubFile {
     type: FileType;
     encoding: string;
@@ -95,6 +104,8 @@ export interface ProvenanceQueryParam {
 export interface Simulation {
     id: string;
     executionPayload: any;
+    name?: string;
+    description?: string;
     resultFiles?: string[];
     type: string;
     status: string;
@@ -128,6 +139,7 @@ export interface DatasetColumn {
     annotations: string[];
     metadata?: { [index: string]: any };
     grounding?: Grounding;
+    description?: string;
 }
 
 export interface Grounding {
@@ -140,12 +152,64 @@ export interface PresignedURL {
     method: string;
 }
 
+export interface State {
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+    units?: ModelUnit;
+}
+
+export interface Transition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
+}
+
+export interface TypeSystem {
+    states: State[];
+    transitions: Transition[];
+}
+
+export interface TypeSystemExtended {
+    name: string;
+    description: string;
+    schema: string;
+    model_version: string;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
+}
+
+export interface TypingSemantics {
+    map: string[][];
+    system: any;
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
 }
 
-export interface CalibrationRequest {
+export interface DKG {
+    curie: string;
+    name: string;
+    description: string;
+    link: string;
+}
+
+export interface CalibrationRequestCiemss {
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
+}
+
+export interface CalibrationRequestJulia {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
@@ -195,15 +259,32 @@ export interface Concept {
 
 export interface ModelSemantics {
     ode: OdeSemantics;
+    span?: any[];
     typing?: TypingSemantics;
 }
 
 export interface ModelMetadata {
-    processed_at: number;
-    processed_by: string;
-    variable_statements: VariableStatement[];
-    annotations: Annotations;
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
     attributes: any[];
+}
+
+export interface ModelGrounding {
+    identifiers: { [index: string]: any };
+    context?: { [index: string]: any };
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface Properties {
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface PetriNetState {
@@ -217,7 +298,7 @@ export interface PetriNetTransition {
     id: string;
     input: string[];
     output: string[];
-    grounding: ModelGrounding;
+    grounding?: ModelGrounding;
     properties: PetriNetTransitionProperties;
 }
 
@@ -264,11 +345,6 @@ export interface OdeSemantics {
     time?: any;
 }
 
-export interface TypingSemantics {
-    type_system: TypeSystem;
-    type_map: string[][];
-}
-
 export interface VariableStatement {
     id: string;
     variable: Variable;
@@ -291,11 +367,6 @@ export interface Annotations {
     model_types?: string[];
 }
 
-export interface ModelGrounding {
-    identifiers: { [index: string]: any };
-    context?: { [index: string]: any };
-}
-
 export interface ModelExpression {
     expression: string;
     expression_mathml: string;
@@ -303,8 +374,8 @@ export interface ModelExpression {
 
 export interface PetriNetTransitionProperties {
     name: string;
-    grounding: ModelGrounding;
-    rate: ModelExpression;
+    description: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Extraction {
@@ -331,7 +402,7 @@ export interface XDDFacetBucket {
 export interface Rate {
     target: string;
     expression: string;
-    expression_mathml: string;
+    expression_mathml?: string;
 }
 
 export interface Initial {
@@ -356,11 +427,6 @@ export interface Observable {
     states: string[];
     expression?: string;
     expression_mathml?: string;
-}
-
-export interface TypeSystem {
-    states: State[];
-    transitions: Transition[];
 }
 
 export interface Variable {
@@ -419,27 +485,6 @@ export interface ModelDistribution {
     parameters: { [index: string]: any };
 }
 
-export interface ModelUnit {
-    expression: string;
-    expression_mathml: string;
-}
-
-export interface State {
-    id: string;
-    name?: string;
-    description?: string;
-    grounding?: ModelGrounding;
-    units?: ModelUnit;
-}
-
-export interface Transition {
-    id: string;
-    input: string[];
-    output: string[];
-    grounding?: ModelGrounding;
-    properties?: Properties;
-}
-
 export interface VariableMetadata {
     type: string;
     value: string;
@@ -469,21 +514,32 @@ export interface DKGConcept {
     score: number;
 }
 
-export interface Properties {
-    name: string;
-    grounding?: ModelGrounding;
-    description?: string;
-}
-
 export interface MetadataDataset {
     id: string;
     name: string;
     metadata: string;
 }
 
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
+}
+
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
+    ProxyTiming = "PROXY_TIMING",
+    AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
+    ExtractModel = "EXTRACT_MODEL",
+    PersistModel = "PERSIST_MODEL",
+    TransformPrompt = "TRANSFORM_PROMPT",
+    AddCodeCell = "ADD_CODE_CELL",
+    RunSimulation = "RUN_SIMULATION",
+    RunCalibrate = "RUN_CALIBRATE",
+    GithubImport = "GITHUB_IMPORT",
 }
 
 export enum FileType {

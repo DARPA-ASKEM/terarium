@@ -19,12 +19,15 @@ public class RequestLoggingResponseFilter implements ContainerResponseFilter {
 
 	@Override
 	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
-		final String user = requestContext.getSecurityContext().getUserPrincipal() != null ? requestContext.getSecurityContext().getUserPrincipal().getName() : "Anonymous";
-		final long durationMs = Instant.now().toEpochMilli() - (long)requestContext.getProperty(RequestLoggingRequestFilter.REQUEST_START_TIMESTAMP_MS);
-		structuredLog.log(StructuredLog.Type.REQUEST_COMPLETED, user,
-			"uri", requestContext.getUriInfo().getPath(),
-			"method", requestContext.getRequest().getMethod(),
-			"duration", durationMs
-		);
+		final boolean shouldLog = requestContext.getProperty(RequestLoggingRequestFilter.REQUEST_START_TIMESTAMP_MS) != null;
+		if (shouldLog) {
+			final String user = requestContext.getSecurityContext().getUserPrincipal() != null ? requestContext.getSecurityContext().getUserPrincipal().getName() : "Anonymous";
+			final long durationMs = Instant.now().toEpochMilli() - (long) requestContext.getProperty(RequestLoggingRequestFilter.REQUEST_START_TIMESTAMP_MS);
+			structuredLog.log(StructuredLog.Type.REQUEST_COMPLETED, user,
+				"uri", requestContext.getUriInfo().getPath(),
+				"method", requestContext.getRequest().getMethod(),
+				"duration", durationMs
+			);
+		}
 	}
 }
