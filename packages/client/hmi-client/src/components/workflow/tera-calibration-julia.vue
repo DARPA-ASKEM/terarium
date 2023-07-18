@@ -60,7 +60,7 @@
 				</DataTable>
 				<div>
 					<Button
-						class="p-button-sm p-button-outlined"
+						class="p-button-sm p-button-text"
 						icon="pi pi-plus"
 						label="Add mapping"
 						@click="addMapping"
@@ -95,7 +95,7 @@
 					text
 					:outlined="true"
 					@click="addChart"
-					label="Add Chart"
+					label="Add chart"
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
@@ -262,9 +262,6 @@ watch(
 	padding-top: 1rem;
 }
 
-.mapping-table {
-	margin-bottom: 1rem;
-}
 .mapping-table:deep(td) {
 	padding: 0rem 0.25rem 0.5rem 0rem !important;
 	border: none !important;
