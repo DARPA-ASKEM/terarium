@@ -274,7 +274,7 @@ export const updateRateExpression = (
 	const param = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
 	if (!param) return;
 
-	updateRateExpressionWithParam(amr, transition, param.target, transitionExpression);
+	updateRateExpressionWithParam(amr, transition, `${param.target}Param`, transitionExpression);
 };
 
 export const updateRateExpressionWithParam = (
