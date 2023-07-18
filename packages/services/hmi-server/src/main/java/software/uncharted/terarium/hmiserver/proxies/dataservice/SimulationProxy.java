@@ -5,11 +5,10 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Map;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/simulations")
@@ -58,5 +57,12 @@ public interface SimulationProxy {
 	PresignedURL getDownloadURL(
 		@PathParam("id") String id,
 		@QueryParam("filename") String filename
+	);
+
+	@GET
+	@Path("/{id}/copy_results")
+	@LogRestClientTime
+	Dataset copyResultsToDataset(
+		@PathParam("id") String id
 	);
 }
