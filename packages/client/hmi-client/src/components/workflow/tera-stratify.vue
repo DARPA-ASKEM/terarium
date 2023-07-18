@@ -22,6 +22,7 @@
 				class="stratify-button"
 				label="Stratify"
 				icon="pi pi-arrow-right"
+				iconPos="right"
 				@click="doStratify"
 				:disabled="stratifyStep !== 3"
 			/>
@@ -45,7 +46,7 @@
 				<div class="instructions">
 					<div class="buttons" v-if="strataModel">
 						<Button
-							class="p-button-sm p-button-outlined"
+							class="p-button-outlined"
 							label="Go back"
 							icon="pi pi-arrow-left"
 							:disabled="stratifyStep === 0"
@@ -53,16 +54,16 @@
 						/>
 						<Button
 							v-if="stratifyStep === 1"
-							class="p-button-sm"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
+							iconPos="right"
 							@click="stratifyStep = 2"
 						/>
 						<Button
 							v-if="typedBaseModel && stratifyStep === 2"
-							class="p-button-sm"
 							label="Continue to step 3: Manage interactions"
 							icon="pi pi-arrow-right"
+							iconPos="right"
 							@click="stratifyStep = 3"
 						/>
 					</div>
@@ -101,12 +102,11 @@
 							</div>
 							<div class="buttons">
 								<Button
-									class="p-button-sm p-button-outlined"
+									class="p-button-outlined"
 									label="Add another strata group"
 									icon="pi pi-plus"
 								/>
 								<Button
-									class="p-button-sm"
 									:disabled="!(strataType && labels)"
 									label="Generate strata"
 									@click="generateStrataModel"
@@ -130,6 +130,18 @@
 				</div>
 			</section>
 		</section>
+		<section class="step-1" v-else-if="stratifyView === StratifyView.Output">
+			<div>If this is not what you expected, go back to the input page to make changes.</div>
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Stratified model">
+					<div class="step-1-inner"></div>
+				</AccordionTab>
+				<AccordionTab header="Strata model">
+					<div class="step-1-inner"></div>
+				</AccordionTab>
+			</Accordion>
+			<div>Saved as: {{ stratify_output.name }}</div>
+		</section>
 	</main>
 </template>
 
@@ -148,6 +160,7 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { stratify_output } from '@/temp/models/stratify_output';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
@@ -247,6 +260,10 @@ header {
 	align-items: center;
 }
 
+.stratify-button {
+	margin-left: auto;
+}
+
 nav {
 	padding-left: 1rem;
 	display: flex;
@@ -255,7 +272,7 @@ nav {
 section {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.5rem;
 }
 
 .step-header {
@@ -306,7 +323,7 @@ section {
 }
 
 #strata-type {
-	width: 50%;
+	width: 24rem;
 }
 
 .buttons {

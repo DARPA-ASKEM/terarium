@@ -16,11 +16,7 @@
 					@click="isEditingEq ? (isEditingEquation = true) : null"
 					@focus="showKeyboard"
 					@blur="hideKeyboard"
-					@keyup="
-						latexTextInput = mathLiveField?.getValue('latex-unstyled')
-							? mathLiveField?.getValue('latex-unstyled')
-							: ''
-					"
+					@keyup="updateEquationMathField"
 				>
 				</math-field>
 				<section class="menu">
@@ -46,33 +42,36 @@
 						type="text"
 						aria-label="latexInput"
 						:unstyled="true"
-						@keyup="updateEquation"
+						@keyup="updateEquationLatex"
 						@click="isEditingEq ? (isEditingEquation = true) : null"
 					/>
 				</section>
 				<div class="controls">
-					<span class="meta-property">Name:</span>
-					<span class="meta-property-value" @dblclick="nameInput = false"
-						><InputText
-							v-model="name"
-							class="control-button"
-							:disabled="nameInput"
-							@blur="nameInput = true"
-						></InputText
-					></span>
-					<span class="meta-property">ID:</span>
-					<span class="meta-property-value" @dblclick="idInput = false"
-						><InputText
-							v-model="id"
-							class="control-button"
-							:disabled="idInput"
-							@blur="idInput = true"
-						></InputText>
+					<span v-if="showMetadata">
+						<span class="meta-property">Name:</span>
+						<span class="meta-property-value" @dblclick="nameInput = false"
+							><InputText
+								v-model="name"
+								class="control-button"
+								:disabled="nameInput"
+								@blur="nameInput = true"
+							></InputText
+						></span>
+						<span class="meta-property">ID:</span>
+						<span class="meta-property-value" @dblclick="idInput = false"
+							><InputText
+								v-model="id"
+								class="control-button"
+								:disabled="idInput"
+								@blur="idInput = true"
+							></InputText>
+						</span>
 					</span>
 					<Button
 						class="control-button"
 						label="Save"
 						aria-label="Save"
+						:disabled="props.id === ''"
 						@click="isEditingEquation = false"
 					></Button>
 					<Button
@@ -128,23 +127,31 @@ const props = defineProps({
 	},
 	index: {
 		type: Number,
-		required: true
+		default: 0
 	},
 	id: {
 		type: String,
-		required: false,
-		default: 'New Id'
+		default: ''
 	},
 	name: {
 		type: String,
-		required: false,
-		default: 'Name'
+		default: ''
+	},
+	showMetadata: {
+		type: Boolean,
+		default: false
+	},
+	keepOpen: {
+		type: Boolean,
+		default: false
 	}
 });
 
 const id = ref(props.id);
 const name = ref(props.name);
-const expandedDiv = computed(() => (isEditingEquation.value ? `expanded-div` : ``));
+const expandedDiv = computed(() =>
+	props.keepOpen || isEditingEquation.value ? `expanded-div` : ``
+);
 
 defineExpose({
 	mathLiveField,
@@ -179,7 +186,14 @@ const mathFieldStyle = computed(() => {
 	return props.isEditingEq ? `mathlive-equation editing` : `mathlive-equation`;
 });
 
-const updateEquation = () => {
+const updateEquationMathField = () => {
+	latexTextInput.value = mathLiveField.value?.getValue('latex-unstyled')
+		? mathLiveField.value?.getValue('latex-unstyled')
+		: '';
+	updateEquationLatex();
+};
+
+const updateEquationLatex = () => {
 	emit(
 		'equation-updated',
 		props.index,
@@ -208,6 +222,8 @@ watch(
 		if (props.latexEquation === '') {
 			isEditingEquation.value = true;
 		}
+		name.value = props.name;
+		id.value = props.id;
 		renderEquations();
 	}
 );
@@ -217,6 +233,10 @@ onMounted(() => {
 		isEditingEquation.value = true;
 	}
 	latexTextInput.value = props.latexEquation;
+	if (props.keepOpen) {
+		isEditingEquation.value = true;
+		hover.value = false;
+	}
 	renderEquations();
 });
 </script>
