@@ -102,18 +102,20 @@ public class SimulationResource {
 		@PathParam("projectId") final String projectId
 	) {
 		// Duplicate the simulation results to a new dataset
-		final JsonNode jsodnDatasetId = proxy.copyResultsToDataset(id);
+		final JsonNode jsonDatasetId = proxy.copyResultsToDataset(id);
 
 		// Test if dataset is null
-		if (jsodnDatasetId == null) {
-			final String datasetId = jsodnDatasetId.at("/id").asText();
-			log.error("Failed to copy simulation {} result as dataset", datasetId);
+		if (jsonDatasetId == null) {
+			log.error("Failed to copy simulation {} result as dataset", id);
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.entity("Failed to copy simulation result as dataset")
 				.type("text/plain")
 				.build();
 		}
+
+		// Get the Dataset Id returned by the dataservice
+		final String datasetId = jsonDatasetId.at("/id").asText();
 
 		// Add the dataset to the project as an asset
 		try {
