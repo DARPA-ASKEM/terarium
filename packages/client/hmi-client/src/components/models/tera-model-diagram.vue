@@ -484,7 +484,7 @@ const contextMenuItems = ref([
 const convertToIGraphHelper = (amr: Model) => {
 	if (isStratifiedAMR(amr)) {
 		// FIXME: wont' work for MIRA
-		return convertToIGraph(props.model.semantics?.span?.[0].system);
+		return convertToIGraph(props.model?.semantics?.span?.[0].system);
 	}
 	return convertToIGraph(amr);
 };
