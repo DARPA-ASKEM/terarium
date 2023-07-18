@@ -291,7 +291,7 @@ th {
 }
 .column-header {
 	color: var(--text-color-primary);
-	font-size: var(--font-body-small));
+	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
 }
 
