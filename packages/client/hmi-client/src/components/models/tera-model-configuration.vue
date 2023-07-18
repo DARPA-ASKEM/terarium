@@ -549,8 +549,7 @@ onMounted(() => {
 	min-width: 3rem;
 }
 td:has(.cell-input) {
-	padding: 2px !important;
-	max-width: 4rem;
+	padding: 0px !important;
 }
 
 .p-datatable:deep(td) {
