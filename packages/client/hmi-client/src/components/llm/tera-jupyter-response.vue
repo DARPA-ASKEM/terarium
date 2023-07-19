@@ -54,22 +54,32 @@
 					</div>
 
 					<!-- Show dataset preview if available -->
-					<tera-dataset-datatable
-						v-else-if="m.header.msg_type === 'dataset'"
-						class="tera-dataset-datatable"
-						paginatorPosition="bottom"
-						:rows="10"
-						:raw-content="(m.content as CsvAsset)"
-						:preview-mode="true"
-						:showGridlines="true"
-						table-style="width: 100%; font-size: small;"
-					/>
-					<!-- Show preview image if available -->
-					<img
-						v-else-if="m.header.msg_type === 'model_preview' && m.content.data['image/png']"
-						:src="`data:image/png;base64,${m.content.data['image/png']}`"
-						alt="Preview of model network graph"
-					/>
+					<Accordion
+						:active-index="props.autoExpandPreview ? 0 : -1"
+						v-if="
+							m.header.msg_type === 'dataset' ||
+							(m.header.msg_type === 'model_preview' && m.content.data['image/png'])
+						"
+					>
+						<AccordionTab header="Preview (click to collapse/expand)">
+							<tera-dataset-datatable
+								v-if="m.header.msg_type === 'dataset'"
+								class="tera-dataset-datatable"
+								paginatorPosition="bottom"
+								:rows="10"
+								:raw-content="(m.content as CsvAsset)"
+								:preview-mode="true"
+								:showGridlines="true"
+								table-style="width: 100%; font-size: small;"
+							/>
+							<!-- Show preview image if available -->
+							<img
+								v-else-if="m.header.msg_type === 'model_preview' && m.content.data['image/png']"
+								:src="`data:image/png;base64,${m.content.data['image/png']}`"
+								alt="Preview of model network graph"
+							/>
+						</AccordionTab>
+					</Accordion>
 				</div>
 			</div>
 		</section>
@@ -79,6 +89,8 @@
 <script setup lang="ts">
 import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import TeraChattyCodeCell from '@/components/llm/tera-chatty-response-code-cell.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-thought.vue';
 import Button from 'primevue/button';
@@ -101,6 +113,7 @@ const props = defineProps<{
 	showChatThoughts: boolean;
 	isExecutingCode: boolean;
 	assetId?: string;
+	autoExpandPreview?: boolean;
 }>();
 
 const resp = ref(<HTMLElement | null>null);

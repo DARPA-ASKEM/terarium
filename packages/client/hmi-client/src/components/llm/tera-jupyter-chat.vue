@@ -11,6 +11,7 @@
 				:msg="msg"
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
+				:auto-expand-preview="autoExpandPreview"
 				@cell-updated="scrollToLastCell"
 			/>
 
@@ -79,6 +80,7 @@ const props = defineProps<{
 	showChatThoughts?: boolean;
 	jupyterSession: SessionContext;
 	kernelStatus: String;
+	autoExpandPreview?: boolean;
 }>();
 
 onMounted(() => {
