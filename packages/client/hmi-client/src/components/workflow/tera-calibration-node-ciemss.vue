@@ -1,46 +1,33 @@
 <template>
 	<section v-if="!showSpinner">
-		<Button class="p-button-sm" label="Run" @click="runCalibrate" :disabled="disableRunButton" />
-		<Accordion :multiple="true" :active-index="[0, 3]">
+		<Accordion
+			v-if="datasetColumnNames && modelColumnNames"
+			:multiple="true"
+			:active-index="[0, 3]"
+		>
 			<AccordionTab header="Mapping">
 				<DataTable class="p-datatable-xsm" :value="mapping">
 					<Column field="modelVariable">
 						<template #header>
-							<span class="column-header">MODEL VARIABLE</span>
+							<span class="column-header">Model variable</span>
 						</template>
 						<template #body="{ data, field }">
-							<!-- Tom TODO: No v-model -->
-							<Dropdown
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="data[field]"
-								:options="modelColumnNames"
-							/>
+							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
+								{{ data[field] ? data[field] : '-' }}
+							</div>
 						</template>
 					</Column>
 					<Column field="datasetVariable">
 						<template #header>
-							<span class="column-header">DATASET VARIABLE</span>
+							<span class="column-header">Dataset variable</span>
 						</template>
 						<template #body="{ data, field }">
-							<!-- Tom TODO: No v-model -->
-							<Dropdown
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="data[field]"
-								:options="datasetColumnNames"
-							/>
+							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
+								{{ data[field] ? data[field] : 'Not mapped' }}
+							</div>
 						</template>
 					</Column>
 				</DataTable>
-				<div>
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-plus"
-						label="Add mapping"
-						@click="addMapping"
-					/>
-				</div>
 			</AccordionTab>
 			<AccordionTab header="Variables">
 				<tera-simulate-chart
@@ -75,20 +62,39 @@
 					</tr>
 				</table>
 			</AccordionTab>
-			<AccordionTab header="EXTRAS">
-				<span class="extras">
-					<label>num_samples</label>
-					<InputNumber v-model="numSamples"></InputNumber>
-					<label>num_iterations</label>
-					<InputNumber v-model="numIterations"></InputNumber>
-					<label>method</label>
-					<Dropdown :options="ciemssMethodOptions" v-model="method" />
-				</span>
+			<AccordionTab header="Extras">
+				<div class="extras w-full">
+					<div class="flex flex-column gap-2 w-full">
+						<label class="extras-label" for="numSamples">Number of samples</label>
+						<InputNumber id="numSamples" v-model="numSamples"></InputNumber>
+					</div>
+					<div class="flex flex-column gap-2 w-full">
+						<label class="extras-label" for="numIterations">Number of solver iterations</label>
+						<InputNumber id="numIterations" v-model="numIterations"></InputNumber>
+					</div>
+				</div>
+				<div class="flex flex-column gap-2 w-full">
+					<label class="extras-label" for="method">Solver method</label>
+					<Dropdown id="method" :options="ciemssMethodOptions" v-model="method" />
+				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Loss"></AccordionTab>
 			<AccordionTab header="Parameters"></AccordionTab>
 			<AccordionTab header="Variables"></AccordionTab> -->
 		</Accordion>
+		<section v-else class="emptyState">
+			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+			<p class="helpMessage">
+				Connect a model configuration and dataset, then configure in the side panel
+			</p>
+		</section>
+		<Button
+			class="p-button-sm run-button"
+			label="Run"
+			icon="pi pi-play"
+			@click="runCalibrate"
+			:disabled="disableRunButton"
+		/>
 	</section>
 	<section v-else>
 		<div><i class="pi pi-spin pi-spinner"></i> loading...</div>
@@ -111,7 +117,7 @@ import {
 	getSimulation,
 	getRunResultCiemss
 } from '@/services/models/simulation-service';
-import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
+import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
@@ -209,7 +215,6 @@ const runCalibrate = async () => {
 		},
 		engine: 'ciemss'
 	};
-	console.log(calibrationRequest);
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	startedRunId.value = response.simulationId;
@@ -250,24 +255,6 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-// Used from button to add new entry to the mapping object
-// Tom TODO: Make this generic, its copy paste from drilldown
-function addMapping() {
-	mapping.value.push({
-		modelVariable: '',
-		datasetVariable: ''
-	});
-
-	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
-	state.mapping = mapping.value;
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-}
-
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
@@ -296,7 +283,7 @@ const addChart = () => {
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -310,7 +297,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
@@ -336,20 +323,59 @@ watch(
 </script>
 
 <style scoped>
-.dropdown-button {
-	width: 156px;
-	height: 25px;
-	border-radius: 6px;
+.emptyState {
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	margin-bottom: 1rem;
+	gap: 0.5rem;
 }
+.helpMessage {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	width: 90%;
+}
+img {
+	width: 20%;
+}
+
 th {
 	text-align: left;
 }
 .column-header {
+	color: var(--text-color-primary);
+	font-size: var(--font-caption);
+	font-weight: var(--font-semibold);
+}
+.mappingVariable {
+	font-size: var(--font-caption);
+}
+.unmappedVariable {
+	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	font-size: 12px;
-	font-weight: 400;
 }
 .extras {
-	display: grid;
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.extras-label {
+	font-size: var(--font-caption);
+}
+#numSamples:deep(.p-inputnumber-input),
+#numIterations:deep(.p-inputnumber-input),
+#method:deep(.p-dropdown-label) {
+	width: 100%;
+	padding: 0.75rem;
+}
+.run-button {
+	margin-top: 1rem;
+	margin-bottom: 0.5rem;
+	width: 5rem;
+	float: right;
 }
 </style>

@@ -34,11 +34,12 @@ export const emptyWorkflow = (name: string = 'test', description: string = '') =
 	return workflow;
 };
 
+const defaultNodeSize: Size = { width: 180, height: 220 };
 export const addNode = (
 	wf: Workflow,
 	op: Operation,
 	pos: Position,
-	size: Size = { width: 180, height: 220 }
+	options: { size?: Size; state?: any } = { size: defaultNodeSize, state: {} }
 ) => {
 	const node: WorkflowNode = {
 		id: uuidv4(),
@@ -47,7 +48,7 @@ export const addNode = (
 		displayName: op.displayName,
 		x: pos.x,
 		y: pos.y,
-		state: {},
+		state: options.state,
 
 		inputs: op.inputs.map((port) => ({
 			id: uuidv4(),
@@ -69,11 +70,10 @@ export const addNode = (
 	  */
 		statusCode: WorkflowStatus.INVALID,
 
-		width: size.width,
-		height: size.height
+		width: options?.size?.width ?? defaultNodeSize.width,
+		height: options?.size?.height ?? defaultNodeSize.height
 	};
-
-	if (op.initState) {
+	if (op.initState && _.isEmpty(node.state)) {
 		node.state = op.initState();
 	}
 

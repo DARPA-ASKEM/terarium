@@ -95,6 +95,11 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
+					<tera-simulate-ensemble-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.ENSEMBLE_CIEMSS"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -207,6 +212,7 @@ import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
 import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
+import TeraSimulateEnsembleCiemssNode from '@/components/workflow/tera-simulate-ensemble-node-ciemss.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
@@ -230,6 +236,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
+import { EnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -401,6 +408,16 @@ workflowEventBus.on('node-state-change', (payload: any) => {
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 });
 
+workflowEventBus.on(
+	'add-node',
+	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
+		workflowService.addNode(wf.value, payload.operation, payload.position, {
+			state: payload.state
+		});
+		workflowDirty = true;
+	}
+);
+
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
@@ -440,8 +457,10 @@ const contextMenuItems = ref([
 				label: 'Simulate',
 				command: () => {
 					workflowService.addNode(wf.value, SimulateJuliaOperation, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}
@@ -467,8 +486,10 @@ const contextMenuItems = ref([
 				label: 'Simulate',
 				command: () => {
 					workflowService.addNode(wf.value, SimulateCiemssOperation, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}
@@ -478,16 +499,26 @@ const contextMenuItems = ref([
 				disabled: false,
 				command: () => {
 					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}
 			},
 			{
-				label: 'Calibrate & Simulate ensemble',
-				disabled: true,
-				command: () => {}
+				label: 'Simulate ensemble',
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, EnsembleCiemssOperation, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
+					workflowDirty = true;
+				}
 			}
 		]
 	}

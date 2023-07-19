@@ -78,6 +78,14 @@
 				<tera-stratify
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
 					:node="workflowNode"
+					@open-asset="(asset) => openAssetFromSidebar(asset)"
+				/>
+				<tera-simulate-ensemble-ciemss
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.ENSEMBLE_CIEMSS
+					"
+					:node="workflowNode"
+					:project="project"
 				/>
 				<tera-model-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
@@ -128,6 +136,7 @@ import TeraCalibrationCiemss from '@/components/workflow/tera-calibration-ciemss
 import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
+import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import { workflowEventBus } from '@/services/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
@@ -220,13 +229,6 @@ async function removeAsset(asset: Tab) {
 watch(
 	() => projectContext.value,
 	() => {
-		if (projectContext.value) {
-			// Automatically go to overview page when project is opened
-			router.push({
-				name: RouteName.ProjectRoute,
-				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
-			});
-		}
 		if (
 			tabs.value.length > 0 &&
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
@@ -234,6 +236,16 @@ watch(
 			openAsset();
 		} else if (openedAssetRoute.value && openedAssetRoute.value.assetName) {
 			tabStore.addTab(projectContext.value, openedAssetRoute.value);
+		}
+
+		const overviewResource = {
+			assetName: 'Overview',
+			pageType: ProjectPages.OVERVIEW,
+			assetId: ''
+		};
+		if (projectContext.value && !tabs.value.some((tab) => isEqual(tab, overviewResource))) {
+			// Automatically add overview tab if it does not exist
+			tabStore.addTab(projectContext.value, overviewResource);
 		}
 	}
 );
