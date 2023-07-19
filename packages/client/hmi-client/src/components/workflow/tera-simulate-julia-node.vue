@@ -156,6 +156,15 @@ onMounted(async () => {
 		runIdList.map(async (runId) => {
 			const resultCsv = await getRunResult(runId, 'result.csv');
 			const csvData = csvParse(resultCsv);
+
+			if (modelConfiguration.value) {
+				const parameters = modelConfiguration.value.configuration.semantics.ode.parameters;
+				csvData.forEach((row) =>
+					parameters.forEach((parameter) => {
+						row[parameter.id] = parameter.value;
+					})
+				);
+			}
 			runResults.value[runId] = csvData as any;
 		})
 	);
