@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
+import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSimulationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
@@ -148,6 +149,18 @@ public class SimulationRequestResource {
 		// JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
 		// return simulationProxy.createSimulation(jn);
 
+		return res;
+	}
+
+	@POST
+	@Path("ciemss/ensemble-simulate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Create calibrate job")
+	public JobResponse makeEnsembleSimulateCiemssJob(
+		final EnsembleSimulationCiemssRequest request
+	) {
+		final JobResponse res = simulationCiemssServiceProxy.makeEnsembleSimulateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 		return res;
 	}
 
