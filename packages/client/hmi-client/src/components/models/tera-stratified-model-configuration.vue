@@ -177,8 +177,6 @@ function openValueModal(id: string, configIndex: number) {
 async function initializeConfigSpace() {
 	let tempConfigurations = await getModelConfigurations(props.model.id);
 
-	console.log(tempConfigurations);
-
 	configItems.value = tempConfigurations.map((config) => ({
 		label: config.name,
 		command: () => {
