@@ -25,7 +25,7 @@
 				:key="index"
 				:run-results="renderedRuns"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
+				has-mean-line
 				:line-width-array="lineWidthArray"
 				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
@@ -177,11 +177,21 @@
 						</thead>
 						<tbody class="p-datatable-tbody">
 							<td>Steps</td>
-							<td><InputNumber v-model="timeSpan.start" /></td>
-							<td><InputNumber v-model="timeSpan.end" /></td>
-							<td><InputNumber v-model="extra.numSamples" /></td>
-							<td><InputNumber v-model="extra.numIterations" /></td>
-							<td><InputNumber v-model="extra.totalPopulation" /></td>
+							<td>
+								<InputNumber v-model="timeSpan.start" />
+							</td>
+							<td>
+								<InputNumber v-model="timeSpan.end" />
+							</td>
+							<td>
+								<InputNumber v-model="extra.numSamples" />
+							</td>
+							<td>
+								<InputNumber v-model="extra.numIterations" />
+							</td>
+							<td>
+								<InputNumber v-model="extra.totalPopulation" />
+							</td>
 						</tbody>
 					</table>
 				</AccordionTab>
@@ -276,14 +286,6 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 		state
 	});
 };
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
 
 const lineWidthArray = computed(() => {
 	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
@@ -573,6 +575,7 @@ watch(
 	height: 200px;
 	/* width: 80%; */
 }
+
 .model-weights {
 	display: flex;
 }
@@ -581,6 +584,7 @@ watch(
 	display: flex;
 	margin: 1em;
 }
+
 th {
 	text-align: left;
 }

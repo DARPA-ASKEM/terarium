@@ -15,7 +15,7 @@
 				:key="index"
 				:run-results="renderedRuns"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
+				has-mean-line
 				:line-width-array="lineWidthArray"
 				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
@@ -156,14 +156,6 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
 const lineWidthArray = computed(() => {
 	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
 	output.push(2);
@@ -260,6 +252,7 @@ section {
 .result-container {
 	align-items: center;
 }
+
 .image {
 	height: 8.75rem;
 	margin-bottom: 0.5rem;
@@ -267,9 +260,11 @@ section {
 	border-radius: 1rem;
 	background-color: rgb(0, 0, 0, 0);
 }
+
 .invalid-block {
 	display: contents;
 }
+
 .simulate-chart {
 	margin: 1em 0em;
 }

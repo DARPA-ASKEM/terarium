@@ -81,7 +81,7 @@ const CHART_OPTIONS = {
 const props = defineProps<{
 	runResults: RunResults;
 	chartConfig: ChartConfig;
-	lineColorArray?: string[] | string[][];
+	hasMeanLine?: boolean;
 	lineWidthArray?: string[];
 	colorByRun?: boolean;
 }>();
@@ -127,7 +127,7 @@ const hasMultiRuns = computed(() => {
 
 const getLineColor = (variableName: string, runIdx: number) => {
 	const runIdList = Object.keys(props.runResults) as string[];
-	if (props.lineColorArray) {
+	if (props.hasMeanLine) {
 		const lastRun = runIdList.length - 1;
 		return runIdx === lastRun
 			? getVariableColorByVar(variableName)
