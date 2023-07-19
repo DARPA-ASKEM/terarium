@@ -7,14 +7,23 @@
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead class="p-datatable-thead">
 					<tr>
-						<th v-for="i in matrix[0].length + 1" :key="i">
+						<th class="choose-criteria"></th>
+						<th class="choose-criteria"></th>
+						<th v-for="i in matrix[0].length + 1" :key="i" class="choose-criteria">
 							<Dropdown
-								v-if="i === 2"
+								v-if="i === 1"
 								class="w-full"
 								placeholder="Select a variable"
 								v-model="chosenCol"
 								:options="colDimensions"
 							/>
+						</th>
+					</tr>
+					<tr>
+						<th class="choose-criteria"></th>
+						<th class="choose-criteria"></th>
+						<th v-for="(row, i) in matrix[0]" :key="i">
+							{{ row.colCriteria?.[chosenCol] }}
 						</th>
 					</tr>
 				</thead>
@@ -29,6 +38,7 @@
 								:options="rowDimensions"
 							/>
 						</td>
+						<td class="p-frozen-column second-frozen">{{ row[0].rowCriteria?.[chosenRow] }}</td>
 						<td v-for="(cell, j) in row" :key="j">
 							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
 								{{ findMatrixValue(cell?.value?.[chosenCol]) }}
@@ -128,6 +138,8 @@ function configureMatrix() {
 	colDimensions = matrixAttributes.colDimensions;
 	rowDimensions = matrixAttributes.rowDimensions;
 
+	console.log(matrix.value);
+
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 }
@@ -142,15 +154,34 @@ onMounted(() => {
 	height: 10rem;
 }
 
-.p-datatable .p-datatable-thead > tr > th,
+.p-datatable .p-datatable-thead > tr > th.choose-criteria,
 .p-datatable-scrollable .p-frozen-column {
 	padding: 0;
 	background: var(--surface-ground);
 }
 
+.p-datatable-scrollable .p-frozen-column.second-frozen {
+	background: var(--surface-section);
+	font-weight: bold;
+}
+
 .p-datatable .p-datatable-thead > tr > th {
 	padding-bottom: 1rem;
 }
+
+/* .p-frozen-column {
+	left: 0px;
+	white-space: nowrap;
+}
+
+.second-frozen {
+	left: 12rem;
+}
+
+.p-frozen-column,
+th {
+	background: transparent;
+} */
 
 .p-datatable-scrollable .p-frozen-column {
 	padding-right: 1rem;
