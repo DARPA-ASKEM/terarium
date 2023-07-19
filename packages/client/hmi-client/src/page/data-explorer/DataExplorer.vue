@@ -602,7 +602,7 @@ onUnmounted(() => {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	height: var(--nav-bar-height);
+	height: var(--navbar-outer-height);
 }
 
 .facets-panel {

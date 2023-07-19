@@ -87,7 +87,7 @@ public interface DatasetProxy {
 
 	@GET
 	List<Dataset> getDatasets(
-		@DefaultValue("500") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("1000") @QueryParam("page_size") Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
