@@ -110,14 +110,7 @@
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
 					<Column field="assetName" header="Name" sortable style="width: 25%">
 						<template #body="slotProps">
-							<Button
-								:title="slotProps.data.assetName"
-								class="asset-button"
-								plain
-								text
-								size="small"
-								@click="openResource(slotProps.data)"
-							>
+							<div class="asset-button" @click="openResource(slotProps.data)">
 								<vue-feather
 									v-if="
 										typeof ProjectService.getAssetIcon(slotProps.data.pageType ?? null) === 'string'
@@ -133,7 +126,7 @@
 									class="p-button-icon-left icon"
 								/>
 								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
-							</Button>
+							</div>
 						</template>
 					</Column>
 					<Column field="" header="Modified" sortable style="width: 25%"></Column>
@@ -678,6 +671,9 @@ ul {
 
 .asset-button {
 	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
 }
 
 :deep(.asset-button.p-button) {
