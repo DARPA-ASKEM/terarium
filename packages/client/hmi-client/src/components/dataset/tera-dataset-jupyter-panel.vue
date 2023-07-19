@@ -40,6 +40,9 @@
 		<div class="gpt-header">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 			<span><header id="GPT">TGPT</header></span>
+			<span style="margin-left: 2rem">
+				<label>Auto expand previews:</label><input v-model="autoExpandPreview" type="checkbox" />
+			</span>
 		</div>
 		<tera-jupyter-chat
 			:project="props.project"
@@ -48,6 +51,7 @@
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
+			:auto-expand-preview="autoExpandPreview"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
@@ -133,6 +137,7 @@ const props = defineProps<{
 
 const kernelStatus = ref(<string>'');
 const showKernels = ref(<boolean>false);
+const autoExpandPreview = ref(<boolean>true);
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
