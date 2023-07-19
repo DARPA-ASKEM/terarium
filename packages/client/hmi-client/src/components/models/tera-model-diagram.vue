@@ -1,6 +1,7 @@
 <template>
 	<main>
 		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1, 2]">
+			<!-- Model diagram -->
 			<AccordionTab header="Model diagram">
 				<TeraResizablePanel class="diagram-container">
 					<section class="graph-element">
@@ -53,10 +54,9 @@
 					</section>
 				</TeraResizablePanel>
 			</AccordionTab>
+			<!-- Model equations -->
 			<AccordionTab header="Model equations">
-				<TeraResizablePanel
-					:class="isEditingEQ ? `diagram-container-editing` : `diagram-container`"
-				>
+				<section :class="isEditingEQ ? `diagram-container-editing` : `diagram-container`">
 					<section class="controls">
 						<span v-if="props.isEditable" class="equation-edit-button">
 							<Button
@@ -102,10 +102,11 @@
 							text
 						/>
 					</section>
-				</TeraResizablePanel>
+				</section>
 			</AccordionTab>
+			<!-- Model observables -->
 			<AccordionTab header="Model observables">
-				<TeraResizablePanel
+				<section
 					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
 					:start-height="300"
 				>
@@ -152,7 +153,7 @@
 							text
 						/>
 					</section>
-				</TeraResizablePanel>
+				</section>
 			</AccordionTab>
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
@@ -691,6 +692,8 @@ main {
 .diagram-container {
 	border: 1px solid var(--surface-border);
 	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
 }
 
 .diagram-container-editing {
@@ -755,38 +758,26 @@ section math-editor {
 
 .math-editor-container {
 	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
 	flex-direction: column;
 	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
+	border-radius: var(--border-radius);
+	position: relative;
+	top: -1rem;
 }
 
 .observable-editor-container {
 	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
 	flex-direction: column;
 	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
+	border-radius: var(--border-radius);
+	position: relative;
+	top: -1rem;
 }
 
 .controls {
 	display: flex;
 	flex-direction: row;
-	margin: 0.5rem 2.5rem 0px 10px;
+	margin: 0rem 1rem;
 	justify-content: flex-end;
 	position: relative;
 	z-index: 20;
@@ -801,6 +792,7 @@ section math-editor {
 	width: 10rem;
 	margin-left: 1rem;
 	margin-top: 0.5rem;
+	margin-bottom: 1rem;
 	border: none;
 	outline: none;
 }
