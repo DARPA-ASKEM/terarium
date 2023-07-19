@@ -21,16 +21,14 @@ import javax.ws.rs.core.Response;
 public interface ExtractionServiceProxy {
 
 	/**
-	 * Retrieve the status of a simulation
-	 *
-	 * @param simulationId the id of the simulation
-	 *
-	 * @return the status of the simulation
+	 * Retrieve the status of an extraction job
+	 * @param id (String) the id of the extraction job
+	 * @return the status of the extraction job
 	 */
 	@GET
-	@Path("/status/{simulation_id}")
+	@Path("/status/{id}")
 	Response getTaskStatus(
-		@PathParam("simulation_id") String simulationId
+		@PathParam("id") String id
 	);
 
 	/**

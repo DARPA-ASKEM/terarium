@@ -31,17 +31,15 @@ public class ExtractionResource {
 	SkemaUnifiedProxy skemaUnifiedProxy;
 
 	/**
-	 * Retrieve the status of a simulation
-	 *
-	 * @param simulationId the id of the simulation
-	 *
-	 * @return the status of the simulation
+	 * Retrieve the status of an extraction job
+	 * @param id (String) the id of the extraction job
+	 * @return the status of the extraction job
 	 */
 	@GET
-	@Path("/status/{simulation-id}")
+	@Path("/status/{id}")
 	public Response getTaskStatus(
-		@PathParam("simulation-id") final String simulationId) {
-		return extractionProxy.getTaskStatus(simulationId);
+		@PathParam("id") final String id) {
+		return extractionProxy.getTaskStatus(id);
 	}
 
 	/**
