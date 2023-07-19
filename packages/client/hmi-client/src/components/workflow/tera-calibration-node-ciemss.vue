@@ -215,7 +215,6 @@ const runCalibrate = async () => {
 		},
 		engine: 'ciemss'
 	};
-	console.log(calibrationRequest);
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	startedRunId.value = response.simulationId;
