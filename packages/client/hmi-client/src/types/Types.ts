@@ -223,6 +223,14 @@ export interface DatasetLocation {
     mappings?: any;
 }
 
+export interface EnsembleCalibrationCiemssRequest {
+    modelConfigs: EnsembleModelConfigs[];
+    dataset: DatasetLocation;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+}
+
 export interface EnsembleModelConfigs {
     id: string;
     solutionMappings: { [index: string]: string };
