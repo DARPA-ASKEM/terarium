@@ -85,6 +85,7 @@
 				:dialog-flavour="'dataset'"
 				:publications="props.project?.assets?.publications"
 				:project="project"
+				:assetId="assetId"
 			/>
 			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
 				<AccordionTab>
@@ -318,6 +319,7 @@ import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
+import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { downloadRawFile, getDataset } from '@/services/dataset';

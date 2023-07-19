@@ -59,6 +59,7 @@ import { AcceptedExtensions } from '@/types/common';
 import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
 import { Artifact, DocumentAsset } from '@/types/Types';
+import { profileDataset, fetchExtraction } from '@/services/models/extractions';
 
 const visible = ref(false);
 const selectedResources = ref();
@@ -96,6 +97,7 @@ const props = defineProps<{
 	project?: IProject;
 	publications?: Array<DocumentAsset>;
 	dialogFlavour: string;
+	assetId: string;
 }>();
 const emit = defineEmits(['extracted-metadata']);
 
@@ -104,12 +106,21 @@ const addResources = () => {
 	// do something
 };
 
-function sendForEnrichments(_selectedResources) {
+const sendForEnrichments = async (_selectedResources) => {
 	console.log('sending these resources for enrichment:', _selectedResources);
+
+	// 1. Send dataset profile request
+	const resp = await profileDataset(props.assetId);
+	console.log('sendForEnrichments', resp);
+
+	// 2. Poll
+	const pollResult = await fetchExtraction(resp);
+
+	console.log('>>>>>>>>>>>>>>>>>', pollResult);
 
 	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
 	/* TODO: send selected resources to backend for enrichment */
-}
+};
 </script>
 
 <style scoped>

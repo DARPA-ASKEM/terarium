@@ -8,26 +8,28 @@ import { logger } from '@/utils/logger';
  * @param id
  * @return {Promise<PollerResult>}
  */
-async function fetchExtraction(id: string) {
+export async function fetchExtraction(id: string) {
 	const pollerResult: PollResponse<any> = { data: null, progress: null, error: null };
-	const poller = new Poller<object>().setPollAction(async () => {
-		const response = await API.get(`/extract/status/${id}`);
+	const poller = new Poller<object>()
+		.setPollAction(async () => {
+			const response = await API.get(`/extract/status/${id}`);
 
-		// Finished
-		if (response?.status === 200 && response?.data?.status === 'finished') {
-			pollerResult.data = response.data.result;
+			// Finished
+			if (response?.status === 200 && response?.data?.status === 'finished') {
+				pollerResult.data = response.data.result;
+				return pollerResult;
+			}
+
+			// Failed
+			if (response?.status === 200 && response?.data?.status === 'failed') {
+				pollerResult.error = true;
+				return pollerResult;
+			}
+
+			// Queued
 			return pollerResult;
-		}
-
-		// Failed
-		if (response?.status === 200 && response?.data?.status === 'failed') {
-			pollerResult.error = true;
-			return pollerResult;
-		}
-
-		// Queued
-		return pollerResult;
-	});
+		})
+		.setThreshold(30);
 	return poller.start();
 }
 

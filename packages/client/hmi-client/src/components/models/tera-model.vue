@@ -88,6 +88,7 @@
 				:publications="publications"
 				:project="project"
 				:dialog-flavour="'model'"
+				:assetId="assetId"
 			/>
 			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editSection">
 				<!-- Description -->
