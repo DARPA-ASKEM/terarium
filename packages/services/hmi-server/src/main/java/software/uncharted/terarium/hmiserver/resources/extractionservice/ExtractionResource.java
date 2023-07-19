@@ -134,4 +134,24 @@ public class ExtractionResource {
 	) {
 		return extractionProxy.postProfileDataset(datasetId, documentText);
 	};
+
+	@POST
+	@Path("/pdf_to_text")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postPDFtoText(
+		@QueryParam("artifact_id") String artifactId
+	) {
+		return extractionProxy.postPDFtoText(artifactId);
+	}
+
+	@POST
+	@Path("/profile_model")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postProfileModel(
+		@QueryParam("model_id") String modelId,
+		@QueryParam("document_text") String documentText,
+		@QueryParam("code") String code
+	){
+		return extractionProxy.postProfileModel(modelId, documentText, code);
+	}
 }

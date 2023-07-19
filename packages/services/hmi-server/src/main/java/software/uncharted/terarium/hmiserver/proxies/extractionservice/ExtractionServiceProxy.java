@@ -76,6 +76,22 @@ public interface ExtractionServiceProxy {
 		Object pdf
 	);
 
+	@POST
+	@Path("/pdf_to_text")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response postPDFtoText(
+		@QueryParam("artifact_id") String artifactId
+	);
+
+	@POST
+	@Path("/profile_model")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response postProfileModel(
+		@QueryParam("model_id") String modelId,
+		@QueryParam("document_text") String documentText,
+		@QueryParam("code") String code
+	);
+
 	/**
 	 * Profile a dataset
 	 *
