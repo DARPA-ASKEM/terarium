@@ -1,20 +1,23 @@
 package software.uncharted.terarium.hmiserver.resources.extractionservice;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import java.util.List;
+import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-
-
-import javax.inject.Inject;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.extractionservice.ExtractionServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
+
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
 @Path("/api/extract")
 @Slf4j
@@ -29,6 +32,10 @@ public class ExtractionResource {
 	@Inject
 	@RestClient
 	SkemaUnifiedProxy skemaUnifiedProxy;
+
+	@Inject
+	@RestClient
+	ArtifactProxy artifactProxy;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -87,6 +94,29 @@ public class ExtractionResource {
 		request.set("equations", mapper.valueToTree(equations));
 		return skemaUnifiedProxy.postLaTeXToAMR(request);
 	};
+
+	/**
+	 * Transform source code to AMR
+	 * @param 	artifactId (String): id of the code artifact
+	 * @param 	name (String): the name to set on the newly created model
+	 * @param 	description (String): the description to set on the newly created model
+	 * @return  (ExtractionResponse)
+	 */
+	@POST
+	@Path("/code-to-amr/{artifactId}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public ExtractionResponse postCodeToAMR(
+		@PathParam("artifactId") String artifactId,
+		@QueryParam("name") String name,
+		@QueryParam("description") String description
+	) {
+		// Fetch the related artifact to fill potential missing name and description
+		final Artifact artifact = artifactProxy.getArtifact(artifactId);
+		if (name == null) {	name = artifact.getName(); }
+		if (description == null) { description = artifact.getDescription();	}
+
+		return extractionProxy.postCodeToAMR(artifactId, name, description);
+	}
 
 
 	/**
