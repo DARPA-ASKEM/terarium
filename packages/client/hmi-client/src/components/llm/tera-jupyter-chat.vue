@@ -12,6 +12,7 @@
 				:has-been-drawn="renderedMessages.has(msg.query_id)"
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
+				:auto-expand-preview="autoExpandPreview"
 				@has-been-drawn="hasBeenDrawn(msg.query_id)"
 				@is-typing="emit('is-typing')"
 				@cell-updated="scrollToLastCell"
@@ -84,6 +85,7 @@ const props = defineProps<{
 	showChatThoughts?: boolean;
 	jupyterSession: SessionContext;
 	kernelStatus: String;
+	autoExpandPreview?: boolean;
 }>();
 
 onMounted(() => {

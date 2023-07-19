@@ -56,6 +56,9 @@
 		<div class="gpt-header">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 			<span><header id="GPT">TGPT</header></span>
+			<span style="margin-left: 2rem">
+				<label>Auto expand previews:</label><input v-model="autoExpandPreview" type="checkbox" />
+			</span>
 		</div>
 		<tera-jupyter-chat
 			ref="chat"
@@ -65,6 +68,7 @@
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
+			:auto-expand-preview="autoExpandPreview"
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
 			@is-typing="emit('is-typing')"
@@ -148,6 +152,7 @@ const noSelectionDefault = {
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const showKernels = ref(<boolean>false);
+const autoExpandPreview = ref(<boolean>true);
 const modelConfigurations = ref(<
 	(ModelConfiguration | { id: string; name: string; type: string })[]
 >[noSelectionDefault]);
