@@ -89,14 +89,12 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const renderedRuns = ref<RunResults>({});
 
 const runEnsemble = async () => {
-	console.log('Running ensemble');
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
 		engine: 'ciemss',
 		extra: { num_samples: numSamples.value }
 	};
-	console.log(params);
 	const response = await makeEnsembleCiemssSimulation(params);
 	startedRunId.value = response.simulationId;
 
@@ -245,7 +243,6 @@ watch(
 		}
 
 		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-		console.log(renderedRuns.value);
 	},
 	{ immediate: true, deep: true }
 );

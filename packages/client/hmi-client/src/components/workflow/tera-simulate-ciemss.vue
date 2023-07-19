@@ -314,7 +314,6 @@ watch(
 		}
 
 		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-		console.log(renderedRuns.value);
 	},
 	{ immediate: true, deep: true }
 );
