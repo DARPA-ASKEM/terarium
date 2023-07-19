@@ -136,7 +136,7 @@ public class ExtractionResource {
 	};
 
 	@POST
-	@Path("/pdf_to_text")
+	@Path("/pdf-to-text")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postPDFtoText(
 		@QueryParam("artifact_id") String artifactId
@@ -145,13 +145,13 @@ public class ExtractionResource {
 	}
 
 	@POST
-	@Path("/profile_model")
+	@Path("/enrich-model")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postProfileModel(
 		@QueryParam("model_id") String modelId,
-		@QueryParam("document_text") String documentText,
-		@QueryParam("code") String code
+		@QueryParam("document_id") String documentId,
+		@QueryParam("code_id") String codeId
 	){
-		return extractionProxy.postProfileModel(modelId, documentText, code);
+		return extractionProxy.postEnrichModel(modelId, documentId, codeId);
 	}
 }

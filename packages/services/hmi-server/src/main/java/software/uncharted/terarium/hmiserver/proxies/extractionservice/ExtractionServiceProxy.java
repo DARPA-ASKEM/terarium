@@ -84,12 +84,12 @@ public interface ExtractionServiceProxy {
 	);
 
 	@POST
-	@Path("/profile_model")
+	@Path("/enrich_model")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response postProfileModel(
+	Response postEnrichModel(
 		@QueryParam("model_id") String modelId,
-		@QueryParam("document_text") String documentText,
-		@QueryParam("code") String code
+		@QueryParam("document_id") String document_id,
+		@QueryParam("code_id") String code_id
 	);
 
 	/**

@@ -372,7 +372,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const gotEnrichedData = (payload) => {
+const gotEnrichedData = ({ payload }) => {
 	enrichedData.value = payload;
 	enriched.value = true;
 };

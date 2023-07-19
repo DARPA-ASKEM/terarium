@@ -85,10 +85,19 @@
 				</tr>
 			</table>
 			<tera-related-publications
-				:publications="publications"
+				:publications="extractedPublications"
+				:artifacts="extractedArtifacts"
 				:project="project"
 				:dialog-flavour="'model'"
+				:asset-id="props.assetId"
+				@extracted-metadata="gotEnrichedData"
 			/>
+			<Accordion v-if="enrichedData" :active-index="0">
+				<AccordionTab>
+					<template #header>Enriched metadata</template>
+					<span>{{ enrichedData }}</span>
+				</AccordionTab>
+			</Accordion>
 			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]">
 				<!-- Description -->
 				<AccordionTab>
@@ -577,7 +586,7 @@ import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { ResultType } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
+import { Model, Document, Dataset, ProvenanceType, DocumentAsset, Artifact } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
@@ -777,7 +786,9 @@ const transitions = computed(() => {
 
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 
-const publications = computed(() => []);
+const enrichedData = ref();
+const extractedPublications = ref<DocumentAsset[]>();
+const extractedArtifacts = ref<Artifact[]>();
 
 const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
@@ -856,6 +867,12 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
+const gotEnrichedData = ({ payload, publications, artifacts }) => {
+	enrichedData.value = payload;
+	extractedPublications.value = publications;
+	extractedArtifacts.value = artifacts;
+};
+
 // TODO: Get model configurations
 
 watch(
@@ -870,6 +887,9 @@ watch(
 		} else {
 			model.value = null;
 		}
+		enrichedData.value = null;
+		extractedPublications.value = [];
+		extractedArtifacts.value = [];
 	},
 	{ immediate: true }
 );

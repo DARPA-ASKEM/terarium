@@ -8,7 +8,10 @@
 			</p>
 			<ul>
 				<li v-for="(publication, index) in publications" :key="index">
-					<a :href="publication.xdd_uri">{{ publication.title }}</a>
+					<a :href="publication.xdd_uri">{{ publication.name }}</a>
+				</li>
+				<li v-for="(artifact, index) in artifacts" :key="index">
+					<span>{{ artifact.name }}</span>
 				</li>
 			</ul>
 			<Button icon="pi pi-plus" label="Add resources" text @click="addResources" />
@@ -35,10 +38,7 @@
 					<Button class="secondary-button" label="Cancel" @click="visible = false" />
 					<Button
 						label="Use these resources to enrich descriptions"
-						@click="
-							sendForEnrichments(selectedResources);
-							visible = false;
-						"
+						@click="sendForEnrichments(selectedResources)"
 					/>
 				</template>
 			</Dialog>
@@ -56,7 +56,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
-import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
 import { Artifact, DocumentAsset } from '@/types/Types';
 
@@ -69,9 +68,12 @@ const allResources: ComputedRef<
 	if (props.project?.assets) {
 		const artifactResources = props.project?.assets.artifacts
 			.filter((artifact: Artifact) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
-					artifact.name.endsWith(extension)
-				)
+				[
+					AcceptedExtensions.PDF,
+					AcceptedExtensions.TXT,
+					AcceptedExtensions.MD,
+					AcceptedExtensions.PY
+				].some((extension) => artifact.name.endsWith(extension))
 			)
 			.map((artifact: Artifact) => ({
 				name: artifact.name,
@@ -94,8 +96,10 @@ const allResources: ComputedRef<
 
 const props = defineProps<{
 	project?: IProject;
-	publications?: Array<DocumentAsset>;
+	publications?: any[];
+	artifacts?: any[];
 	dialogFlavour: string;
+	assetId?: string;
 }>();
 const emit = defineEmits(['extracted-metadata']);
 
@@ -104,11 +108,39 @@ const addResources = () => {
 	// do something
 };
 
-function sendForEnrichments(_selectedResources) {
+async function sendForEnrichments(_selectedResources) {
 	console.log('sending these resources for enrichment:', _selectedResources);
-
-	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
-	/* TODO: send selected resources to backend for enrichment */
+	if (props.assetId && _selectedResources.length > 1) {
+		// const metadata = await enrichModel(props.assetId, _selectedResources[0].id, _selectedResources[1].id);
+		// mocked extraction
+		const metadata = {
+			DESCRIPTION:
+				'Understanding the dynamics of SARS‑CoV‑2 variants of concern in Ontario, Canada: a modeling study',
+			AUTHOR_INST: 'University of Waterloo',
+			AUTHOR_AUTHOR: 'Anita T. Layton, Mehrshad Sadria',
+			AUTHOR_EMAIL: 'anita.layton@uwaterloo.ca',
+			DATE: 'UNKNOWN',
+			SCHEMA: 'UNKNOWN',
+			PROVENANCE:
+				'The model was developed and applied to better understand the spread of multiple variants of concern (VOC) of SARS-CoV-2 in Ontario, Canada. The model incorporates competition among VOC and assesses the effectiveness of vaccination and non-pharmaceutical interventions (NPI) in controlling the spread of the virus.',
+			DATASET: 'UNKNOWN',
+			COMPLEXITY: 'The complexity of the model is not specified.',
+			USAGE:
+				'The model should be used to understand the dynamics of SARS-CoV-2 variants of concern and to assess the effectiveness of vaccination and NPI in controlling the spread of the virus.',
+			LICENSE: 'UNKNOWN'
+		};
+		const selectedPublications = _selectedResources.filter((resource) =>
+			props.project?.assets?.publications.find((doc) => doc.id === resource.id)
+		);
+		const selectedArtifacts = _selectedResources.filter((resource) =>
+			props.project?.assets?.artifacts.find((a) => a.id === resource.id)
+		);
+		emit('extracted-metadata', {
+			payload: metadata,
+			publications: selectedPublications,
+			artifacts: selectedArtifacts
+		});
+	}
 }
 </script>
 

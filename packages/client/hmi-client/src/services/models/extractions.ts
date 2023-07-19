@@ -89,4 +89,30 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 	return null;
 };
 
-export { mathmlToAMR, latexToAMR };
+const pdfToText = async (artifactId: string) => {
+	try {
+		const response = await API.post(`/extract/pdf_to_text?artifact_id=${artifactId}`);
+		if (response && response?.status === 200) {
+			return response.data;
+		}
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false, toastTitle: 'Error - extraction-service' });
+	}
+	return null;
+};
+
+const enrichModel = async (modelId: string, documentArtifactId: string, codeArtifactId: string) => {
+	try {
+		const response = await API.post(`/extract/enrich-model?model_id=${modelId}&
+			document_id=${documentArtifactId}&
+			code_id=${codeArtifactId}`);
+		if (response && response?.status === 200) {
+			return response.data;
+		}
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false, toastTitle: 'Error - extraction-service' });
+	}
+	return null;
+};
+
+export { mathmlToAMR, latexToAMR, enrichModel, pdfToText };
