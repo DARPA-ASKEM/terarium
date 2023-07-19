@@ -512,8 +512,10 @@ const contextMenuItems = ref([
 				disabled: false,
 				command: () => {
 					workflowService.addNode(wf.value, EnsembleCiemssOperation, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}

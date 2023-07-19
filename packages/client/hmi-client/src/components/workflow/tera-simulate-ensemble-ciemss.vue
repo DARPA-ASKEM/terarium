@@ -137,14 +137,14 @@
 										{{ element }}
 									</td>
 								</div>
-								<td v-for="(ele, i) in ensembleConfigs.length" :key="i">
+								<td v-for="i in ensembleConfigs.length" :key="i">
 									<template
-										v-for="(element, j) in Object.keys(ensembleConfigs[i].solutionMappings)"
-										:key="j"
+										v-for="element in Object.keys(ensembleConfigs[i - 1].solutionMappings)"
+										:key="element"
 									>
 										<Dropdown
-											v-model="ensembleConfigs[i].solutionMappings[element]"
-											:options="allModelOptions[i]"
+											v-model="ensembleConfigs[i - 1].solutionMappings[element]"
+											:options="allModelOptions[i - 1]"
 										/>
 									</template>
 								</td>
