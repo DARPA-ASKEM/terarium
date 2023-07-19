@@ -114,9 +114,7 @@ const runEnsemble = async () => {
 			total_population: extra.value.totalPopulation
 		}
 	};
-	console.log(params);
 	const response = await makeEnsembleCiemssCalibration(params);
-	console.log(response);
 	startedRunId.value = response.simulationId;
 
 	showSpinner.value = true;
