@@ -203,7 +203,7 @@ import useResourcesStore from '@/stores/resources';
 import * as ProjectService from '@/services/project';
 import { IProject } from '@/types/Project';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
 
 const dataLabelPlugin = [ChartDataLabels];
 
@@ -250,7 +250,7 @@ const renderedRuns = ref<RunResults>({});
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -306,7 +306,7 @@ function addMapping() {
 		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
 	}
 
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -375,7 +375,7 @@ const setChartOptions = () => {
 };
 
 const addChart = () => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -428,7 +428,7 @@ watch(
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -443,7 +443,7 @@ watch(
 watch(
 	() => timeSpan.value,
 	async () => {
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.timeSpan = timeSpan.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -458,7 +458,7 @@ watch(
 watch(
 	() => numSamples.value,
 	async () => {
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.numSamples = numSamples.value;
 
 		workflowEventBus.emitNodeStateChange({

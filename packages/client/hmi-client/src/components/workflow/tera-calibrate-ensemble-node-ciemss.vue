@@ -63,9 +63,9 @@ import {
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import {
-	SimulateEnsembleCiemssOperationState,
-	SimulateEnsembleCiemssOperation
-} from './simulate-ensemble-ciemss-operation';
+	CalibrateEnsembleCiemssOperationState,
+	CalibrateEnsembleCiemssOperation
+} from './calibrate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -104,7 +104,7 @@ const runEnsemble = async () => {
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -116,7 +116,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 
 // TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
 const addChart = () => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -150,7 +150,7 @@ const getStatus = async () => {
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
-		type: SimulateEnsembleCiemssOperation.outputs[0].type,
+		type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: { runId }
 	});
@@ -184,7 +184,7 @@ watch(
 				};
 			}
 
-			const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+			const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 			state.modelConfigIds = modelConfigIds.value;
 			state.mapping = mapping;
 			workflowEventBus.emitNodeStateChange({

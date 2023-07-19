@@ -4,7 +4,7 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { ChartConfig } from '@/types/SimulateConfig';
 import { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
-export interface SimulateEnsembleCiemssOperationState {
+export interface CalibrateEnsembleCiemssOperationState {
 	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
 	mapping: EnsembleModelConfigs[];
@@ -12,8 +12,8 @@ export interface SimulateEnsembleCiemssOperationState {
 	numSamples: number;
 }
 
-export const SimulateEnsembleCiemssOperation: Operation = {
-	name: WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS,
+export const CalibrateEnsembleCiemssOperation: Operation = {
+	name: WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS,
 	displayName: 'Simulate ensemble (probabilistic)',
 	description: '',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
@@ -27,7 +27,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	},
 
 	initState: () => {
-		const init: SimulateEnsembleCiemssOperationState = {
+		const init: CalibrateEnsembleCiemssOperationState = {
 			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: [],
