@@ -287,7 +287,7 @@ const calculateWeights = () => {
 		customWeights.value = true;
 	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
 		customWeights.value = false;
-		console.log('TODO: Get weights from AMRs');
+		// TODO: Get weights from AMR
 	}
 };
 
@@ -391,7 +391,6 @@ const watchCompletedRunList = async () => {
 
 	const output = await getRunResultCiemss(completedRunId.value, 'simulation.csv');
 	runResults.value = output.runResults;
-	console.log(runResults.value);
 };
 
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
@@ -407,7 +406,6 @@ watch(
 watch(
 	() => listModelIds,
 	async () => {
-		console.log('Updating everything');
 		allModelConfigurations.value = [];
 		// Fetch Model Configurations
 		await Promise.all(
@@ -430,7 +428,6 @@ watch(
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-		console.log('Drill down updating state');
 		const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
@@ -508,7 +505,6 @@ watch(
 		}
 
 		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-		console.log(renderedRuns.value);
 	},
 	{ immediate: true, deep: true }
 );
