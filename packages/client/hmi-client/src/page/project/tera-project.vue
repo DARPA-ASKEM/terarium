@@ -80,6 +80,13 @@
 					:node="workflowNode"
 					@open-asset="(asset) => openAssetFromSidebar(asset)"
 				/>
+				<tera-simulate-ensemble-ciemss
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.ENSEMBLE_CIEMSS
+					"
+					:node="workflowNode"
+					:project="project"
+				/>
 				<tera-model-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
 					:project="project"
@@ -129,6 +136,7 @@ import TeraCalibrationCiemss from '@/components/workflow/tera-calibration-ciemss
 import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
+import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import { workflowEventBus } from '@/services/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
