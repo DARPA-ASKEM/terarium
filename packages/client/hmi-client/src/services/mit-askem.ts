@@ -1,10 +1,5 @@
 import API, { Poller } from '@/api/api';
 
-export async function codeToAcset(code: string) {
-	const response = await API.post(`code/to-acset`, code);
-	return response.data ?? null;
-}
-
 export async function findVarsFromText(text: string): Promise<FindVarsFromTextResponseType | null> {
 	const id = await API.post(`/code/annotation/find-text-vars`, text);
 	const poller = new Poller<object>()

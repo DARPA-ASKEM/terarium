@@ -89,4 +89,11 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 	return null;
 };
 
+/**
+ * Transform a source code to an AMR
+ * @param sourceCode string - source code representing a model
+ * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
+ *
+ */
+
 export { mathmlToAMR, latexToAMR };

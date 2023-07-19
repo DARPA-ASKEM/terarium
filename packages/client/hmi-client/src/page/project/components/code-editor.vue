@@ -159,6 +159,9 @@ async function onFileOpen(event) {
 	};
 }
 
+/**
+ * Event handler for the create model button in the code extraction dialog
+ */
 async function onExtractModel() {
 	isExtractModelLoading.value = true;
 	const response = await codeToAcset(selectedText.value);
