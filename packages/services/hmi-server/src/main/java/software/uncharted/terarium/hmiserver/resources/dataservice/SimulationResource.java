@@ -119,7 +119,7 @@ public class SimulationResource {
 
 		// Add the dataset to the project as an asset
 		try {
-			final Response response = projectProxy.createAsset(projectId, ResourceType.Type.DATASETS, datasetId);
+			final Response response = projectProxy.createAsset(projectId, ResourceType.Type.DATASETS.toString(), datasetId);
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
 				return response;
 			}
