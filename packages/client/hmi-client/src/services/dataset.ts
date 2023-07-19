@@ -179,16 +179,27 @@ async function createNewDatasetFromCSV(
 async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string
-): Promise<Dataset | null> {
-	const response: AxiosResponse<Dataset> = await API.put(
-		`/datasets/create-from-simulation-result?simulationId=${simulationId}`
-	);
-	if (!response || response.status >= 400) {
-		console.log(`Error creating new dataset ${response?.status}`);
-		return null;
+): Promise<boolean> {
+	try {
+		const response: AxiosResponse<Response> = await API.get(
+			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}`
+		);
+		if (response && response.status === 200) {
+			return true;
+		}
+		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
+			toastTitle: 'TDS - Simulation'
+		});
+		return false;
+	} catch (error) {
+		logger.error(
+			`/simulations/{id}/add-result-as-dataset-to-project/{projectId} not responding:  ${error}`,
+			{
+				toastTitle: 'TDS - Simulation'
+			}
+		);
+		return false;
 	}
-	await addAsset(projectId, ProjectAssetTypes.DATASETS, response.data.id);
-	return response.data;
 }
 
 export {

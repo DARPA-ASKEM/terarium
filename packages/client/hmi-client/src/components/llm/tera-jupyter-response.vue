@@ -15,16 +15,10 @@
 				<section class="query-title">
 					<div class="query">{{ msg.query }}</div>
 					<div class="date">
-						<span>
-							<!-- Show eye icon if the message has been drawn and there's a query -->
-							<i
-								v-if="props.hasBeenDrawn && msg.query"
-								class="pi pi-eye thought-icon"
-								v-tooltip="`Show/Hide Thought`"
-								@click="showHideThought"
-							></i>
-							<!-- Show spinning icon if the message is still being drawn -->
-							<i v-else-if="!props.hasBeenDrawn" class="pi pi-spin pi-spinner thought-icon"></i>
+						<!-- Show eye icon if the message has a related query -->
+						<span class="show-hide-thought" v-if="msg.query" @click="showHideThought">
+							<i class="pi pi-eye thought-icon"></i>
+							Show/Hide Thought
 						</span>
 						{{ msg.timestamp }}
 					</div>
@@ -43,10 +37,7 @@
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stdout'">
 						<tera-jupyter-response-thought
 							:thought="formattedThought(m.content['text'].trim())"
-							:has-been-drawn="props.hasBeenDrawn"
-							:show-thought="!msg.query || showThought || props.showChatThoughts"
-							@has-been-drawn="thoughtHasBeenDrawn"
-							@is-typing="emit('is-typing')"
+							:show-thought="showThought || props.showChatThoughts"
 						/>
 					</div>
 					<!-- Handle code_cell type -->
@@ -63,22 +54,32 @@
 					</div>
 
 					<!-- Show dataset preview if available -->
-					<tera-dataset-datatable
-						v-else-if="m.header.msg_type === 'dataset'"
-						class="tera-dataset-datatable"
-						paginatorPosition="bottom"
-						:rows="10"
-						:raw-content="(m.content as CsvAsset)"
-						:preview-mode="true"
-						:showGridlines="true"
-						table-style="width: 100%; font-size: small;"
-					/>
-					<!-- Show preview image if available -->
-					<img
-						v-else-if="m.header.msg_type === 'model_preview' && m.content.data['image/png']"
-						:src="`data:image/png;base64,${m.content.data['image/png']}`"
-						alt="Preview of model network graph"
-					/>
+					<Accordion
+						:active-index="props.autoExpandPreview ? 0 : -1"
+						v-if="
+							m.header.msg_type === 'dataset' ||
+							(m.header.msg_type === 'model_preview' && m.content.data['image/png'])
+						"
+					>
+						<AccordionTab header="Preview (click to collapse/expand)">
+							<tera-dataset-datatable
+								v-if="m.header.msg_type === 'dataset'"
+								class="tera-dataset-datatable"
+								paginatorPosition="bottom"
+								:rows="10"
+								:raw-content="(m.content as CsvAsset)"
+								:preview-mode="true"
+								:showGridlines="true"
+								table-style="width: 100%; font-size: small;"
+							/>
+							<!-- Show preview image if available -->
+							<img
+								v-else-if="m.header.msg_type === 'model_preview' && m.content.data['image/png']"
+								:src="`data:image/png;base64,${m.content.data['image/png']}`"
+								alt="Preview of model network graph"
+							/>
+						</AccordionTab>
+					</Accordion>
 				</div>
 			</div>
 		</section>
@@ -88,15 +89,17 @@
 <script setup lang="ts">
 import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import TeraChattyCodeCell from '@/components/llm/tera-chatty-response-code-cell.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-thought.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { ref, computed, onUpdated, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { CsvAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
-const emit = defineEmits(['has-been-drawn', 'is-typing', 'cell-updated']);
+const emit = defineEmits(['cell-updated']);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
@@ -108,9 +111,9 @@ const props = defineProps<{
 		resultingCsv: CsvAsset | null;
 	};
 	showChatThoughts: boolean;
-	hasBeenDrawn: boolean;
 	isExecutingCode: boolean;
 	assetId?: string;
+	autoExpandPreview?: boolean;
 }>();
 
 const resp = ref(<HTMLElement | null>null);
@@ -125,7 +128,6 @@ const showHideIcon = computed(() =>
 
 const showHideThought = () => {
 	showThought.value = !showThought.value;
-	resp.value?.scrollTo();
 };
 
 // Reference for the chat window menu and its items
@@ -172,17 +174,16 @@ function toTitleCase(str: string): string {
 		.join(' ');
 }
 
-// emit when the thought has been drawn
-const thoughtHasBeenDrawn = () => {
-	emit('has-been-drawn');
-};
-
 onMounted(() => {
 	emit('cell-updated', resp.value, props.msg);
 });
-onUpdated(() => {
-	emit('cell-updated', resp.value, props.msg);
-});
+
+watch(
+	() => props.msg.messages,
+	() => {
+		emit('cell-updated', resp.value, props.msg);
+	}
+);
 </script>
 
 <style scoped>
@@ -236,6 +237,11 @@ onUpdated(() => {
 
 .date {
 	font-family: var(--font-family);
+}
+
+.show-hide-thought {
+	font-size: small;
+	color: gray;
 }
 
 .thought-icon {
