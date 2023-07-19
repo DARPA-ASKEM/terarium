@@ -277,6 +277,8 @@
 			</tera-modal>
 		</Teleport>
 	</div>
+	<!-- empty white div to fill bottom of screen -->
+	<div class="bottom-white-patch"></div>
 </template>
 
 <script setup lang="ts">
@@ -529,7 +531,8 @@ a {
 	overflow-y: auto;
 	padding: 1rem;
 	background: var(--surface-0);
-	flex: 1;
+	display: flex;
+	flex-direction: column;
 }
 
 .description {
@@ -726,5 +729,10 @@ ul {
 	flex-grow: 1;
 	font-size: var(--font-body-small);
 	color: var(--text-color-subdued);
+}
+
+.bottom-white-patch {
+	background-color: var(--surface-0);
+	flex: 1;
 }
 </style>
