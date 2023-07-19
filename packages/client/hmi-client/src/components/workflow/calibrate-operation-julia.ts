@@ -16,7 +16,7 @@ export interface CalibrationOperationStateJulia {
 
 export const CalibrationOperationJulia: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION_JULIA,
-	displayName: 'Calibrate (Deterministic)',
+	displayName: 'Calibrate (deterministic)',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [
