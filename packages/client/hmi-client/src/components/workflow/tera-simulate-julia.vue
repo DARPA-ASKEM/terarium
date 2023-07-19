@@ -200,6 +200,14 @@ onMounted(async () => {
 		port.value.map(async (runId) => {
 			const resultCsv = await getRunResult(runId, 'result.csv');
 			const csvData = csvParse(resultCsv);
+			if (modelConfigurationObj) {
+				const parameters = modelConfigurationObj.configuration.semantics.ode.parameters;
+				csvData.forEach((row) =>
+					parameters.forEach((parameter) => {
+						row[parameter.id] = parameter.value;
+					})
+				);
+			}
 			runResults.value[runId] = csvData as any;
 		})
 	);
