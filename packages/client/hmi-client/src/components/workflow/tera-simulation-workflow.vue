@@ -95,6 +95,16 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
+					<tera-simulate-ensemble-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibrate-ensemble-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -207,6 +217,8 @@ import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
 import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
+import TeraSimulateEnsembleCiemssNode from '@/components/workflow/tera-simulate-ensemble-node-ciemss.vue';
+import TeraCalibrateEnsembleCiemssNode from '@/components/workflow/tera-calibrate-ensemble-node-ciemss.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
@@ -218,6 +230,7 @@ import {
 } from '@/components/workflow/simulate-julia-operation';
 import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
+import { CalibrateEnsembleCiemssOperation } from '@/components/workflow/calibrate-ensemble-ciemss-operation';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -230,6 +243,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
+import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -501,9 +515,30 @@ const contextMenuItems = ref([
 				}
 			},
 			{
-				label: 'Calibrate & Simulate ensemble',
-				disabled: true,
-				command: () => {}
+				label: 'Simulate ensemble',
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, SimulateEnsembleCiemssOperation, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
+					workflowDirty = true;
+				}
+			},
+			{
+				label: 'Calibrate ensemble',
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOperation, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
+					workflowDirty = true;
+				}
 			}
 		]
 	}

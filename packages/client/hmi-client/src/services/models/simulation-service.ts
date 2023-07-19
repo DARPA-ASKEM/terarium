@@ -7,7 +7,9 @@ import {
 	SimulationRequest,
 	CalibrationRequestJulia,
 	CalibrationRequestCiemss,
-	EventType
+	EventType,
+	EnsembleSimulationCiemssRequest,
+	EnsembleCalibrationCiemssRequest
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
@@ -143,6 +145,28 @@ export async function makeCalibrateJobJulia(calibrationParams: CalibrationReques
 export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/calibrate', calibrationParams);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest) {
+	try {
+		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', params);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationCiemssRequest) {
+	try {
+		const resp = await API.post('simulation-request/ciemss/ensemble-calibrate', params);
 		const output = resp.data;
 		return output;
 	} catch (err) {

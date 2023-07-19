@@ -7,6 +7,7 @@ import lombok.experimental.Accessors;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Map;
 
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
@@ -33,4 +34,8 @@ public class ModelMetadata {
 
 	@JsonProperty("attributes")
 	private List<JsonNode> attributes;
+
+	@JsonProperty("timeseries")
+	@TSOptional
+	private Map<String, Object> timeseries;
 }

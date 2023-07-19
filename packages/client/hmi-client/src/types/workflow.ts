@@ -7,7 +7,9 @@ export enum WorkflowOperationTypes {
 	MODEL = 'ModelOperation',
 	SIMULATE_JULIA = 'SimulateJuliaOperation',
 	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
-	STRATIFY = 'Stratify'
+	STRATIFY = 'Stratify',
+	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
+	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms'
 }
 
 export enum WorkflowStatus {
