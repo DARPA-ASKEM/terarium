@@ -113,6 +113,8 @@ function configureMatrix() {
 		rowAndCol.includes(id[0])
 	);
 
+	console.log(rowAndColDimensions);
+
 	if (rowAndColDimensions) {
 		// Assuming column id is the first one
 		const colId = rowAndColDimensions[0][0];
@@ -135,11 +137,11 @@ function configureMatrix() {
 
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
-		props.nodeType === 'state'
-			? extractStateMatrixData(props.model, rowAndCol)
+		props.nodeType === NodeType.State
+			? extractStateMatrixData(props.model, rowAndCol, [...colDimensions, ...rowDimensions])
 			: extractTransitionMatrixData(props.model, rowAndCol);
 
-	console.log(colDimensions, rowDimensions);
+	console.log(colDimensions, rowDimensions, rowAndColDimensions);
 	console.log(matrixData);
 	console.log(rowAndCol);
 
@@ -147,8 +149,6 @@ function configureMatrix() {
 	matrix.value = matrixAttributes.matrix;
 	colDimensions = matrixAttributes.colDimensions;
 	rowDimensions = matrixAttributes.rowDimensions;
-
-	console.log(matrix.value, colDimensions, rowDimensions);
 
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
