@@ -38,7 +38,7 @@
 								:options="rowDimensions"
 							/>
 						</td>
-						<td class="p-frozen-column second-frozen">{{ row[0].rowCriteria?.[chosenRow] }}</td>
+						<td class="p-frozen-column">{{ row[0].rowCriteria?.[chosenRow] }}</td>
 						<td v-for="(cell, j) in row" :key="j">
 							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
 								{{ findMatrixValue(cell?.value?.[chosenCol]) }}
@@ -155,13 +155,21 @@ onMounted(() => {
 }
 
 .p-datatable .p-datatable-thead > tr > th.choose-criteria,
-.p-datatable-scrollable .p-frozen-column {
+.p-datatable-scrollable .p-frozen-column:first-child {
 	padding: 0;
 	background: var(--surface-ground);
+	border: none;
 }
 
-.p-datatable-scrollable .p-frozen-column.second-frozen {
-	background: var(--surface-section);
+.p-datatable .p-datatable-thead > tr > th.choose-criteria {
+	padding-bottom: 1rem;
+}
+
+.p-datatable-scrollable .p-frozen-column:first-child {
+	padding-right: 1rem;
+}
+
+.p-datatable-scrollable .p-frozen-column {
 	font-weight: bold;
 }
 
