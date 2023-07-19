@@ -153,6 +153,7 @@
 					</template>
 
 					<Dropdown
+						style="width: 50%"
 						v-model="newSolutionMappingKey"
 						:options="datasetColumnNames"
 						placeholder="Variable Name"
