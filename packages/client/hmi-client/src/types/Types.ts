@@ -290,6 +290,7 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
     attributes: any[];
+    timeseries?: { [index: string]: any };
 }
 
 export interface ModelGrounding {
