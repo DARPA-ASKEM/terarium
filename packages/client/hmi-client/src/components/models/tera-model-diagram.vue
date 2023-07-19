@@ -690,7 +690,7 @@ main {
 }
 
 .diagram-container {
-	border: 1px solid var(--surface-border);
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	display: flex;
 	flex-direction: column;
