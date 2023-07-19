@@ -334,7 +334,6 @@
 					:dataset="dataset"
 					:show-kernels="showKernels"
 					:show-chat-thoughts="showChatThoughts"
-					@is-typing="updateScroll"
 				/>
 			</Suspense>
 		</template>
@@ -406,14 +405,6 @@ const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 
 const assetPanel = ref({ assetContainer: HTMLElement });
-
-const updateScroll = () => {
-	const el = assetPanel.value.assetContainer;
-	if (el) {
-		// @ts-ignore
-		el.scrollTop = el.scrollHeight;
-	}
-};
 
 const toggleSettingsMenu = (event: Event) => {
 	menu.value.toggle(event);
