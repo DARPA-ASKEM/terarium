@@ -9,9 +9,23 @@ export interface CalibrateMap {
 	datasetVariable: string;
 }
 
+export interface CalibrateExtraJulia {
+	numChains: number;
+	numIterations: number;
+	odeMethod: string;
+	calibrateMethod: string;
+}
+
+export enum CalibrateMethodOptions {
+	BAYESIAN = 'bayesian',
+	LOCAL = 'local',
+	GLOBAL = 'global'
+}
+
 export interface CalibrationOperationStateJulia {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
+	extra: CalibrateExtraJulia;
 }
 
 export const CalibrationOperationJulia: Operation = {
@@ -52,7 +66,13 @@ export const CalibrationOperationJulia: Operation = {
 	initState: () => {
 		const init: CalibrationOperationStateJulia = {
 			chartConfigs: [],
-			mapping: [{ modelVariable: '', datasetVariable: '' }]
+			mapping: [{ modelVariable: '', datasetVariable: '' }],
+			extra: {
+				numChains: 4,
+				numIterations: 50,
+				odeMethod: 'default',
+				calibrateMethod: CalibrateMethodOptions.GLOBAL
+			}
 		};
 		return init;
 	}
