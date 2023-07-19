@@ -194,6 +194,16 @@ export interface PetriNetModel {
     transitions: PetriNetTransition[];
 }
 
+export interface ExtractionResponse {
+    id: string;
+    created_at: Date;
+    enqueued_at: Date;
+    started_at: Date;
+    status: string;
+    extraction_error: string;
+    result: any;
+}
+
 export interface DKG {
     curie: string;
     name: string;
@@ -221,6 +231,14 @@ export interface DatasetLocation {
     id: string;
     filename: string;
     mappings?: any;
+}
+
+export interface EnsembleCalibrationCiemssRequest {
+    modelConfigs: EnsembleModelConfigs[];
+    dataset: DatasetLocation;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
 }
 
 export interface EnsembleModelConfigs {

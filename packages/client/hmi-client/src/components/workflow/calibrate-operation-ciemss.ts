@@ -3,6 +3,7 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { ChartConfig } from '@/types/SimulateConfig';
+import { TimeSpan } from '@/types/Types';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -12,6 +13,7 @@ export interface CalibrateMap {
 export interface CalibrationOperationStateCiemss {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
+	timeSpan: TimeSpan;
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -52,7 +54,8 @@ export const CalibrationOperationCiemss: Operation = {
 	initState: () => {
 		const init: CalibrationOperationStateCiemss = {
 			chartConfigs: [],
-			mapping: [{ modelVariable: '', datasetVariable: '' }]
+			mapping: [{ modelVariable: '', datasetVariable: '' }],
+			timeSpan: { start: 0, end: 90 }
 		};
 		return init;
 	}

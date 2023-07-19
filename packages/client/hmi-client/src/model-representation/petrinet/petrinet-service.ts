@@ -666,7 +666,7 @@ export const extractTransitionMatrixData = (amr: Model, transitionIds: string[])
 };
 
 // Returns state list as a 1D vector for pivot matrix
-export const extractStateMatrixData = (amr: Model, stateIds: string[]) => {
+export const extractStateMatrixData = (amr: Model, stateIds: string[], dimensions: string[]) => {
 	const model = amr.model as PetriNetModel;
 	const states = model.states;
 	const results: any[] = [];
@@ -676,8 +676,8 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[]) => {
 		if (!stateIds.includes(id)) return;
 		const obj: any = {};
 
-		// FIXME: not sure what we need
-		obj.id = state.id;
+		// FIXME: This only works for 2 dimensions now, may have to handle more than 2 differently
+		obj[dimensions[results.length]] = state.id;
 		results.push(obj);
 	});
 	return results;
