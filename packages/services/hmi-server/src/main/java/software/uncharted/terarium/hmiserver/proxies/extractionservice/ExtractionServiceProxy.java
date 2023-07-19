@@ -6,6 +6,7 @@ import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import javax.ws.rs.core.MediaType;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -21,9 +22,7 @@ public interface ExtractionServiceProxy {
 
 	/**
 	 * Retrieve the status of a simulation
-	 *
 	 * @param simulationId the id of the simulation
-	 *
 	 * @return the status of the simulation
 	 */
 	@GET
@@ -90,5 +89,21 @@ public interface ExtractionServiceProxy {
 	Response postProfileDataset(
 		@QueryParam("dataset_id") String datasetId,
 		@QueryParam("document_text") String documentText
+	);
+
+	/**
+	 * Transform source code to AMR
+	 * @param 	artifactId (String): id of the code artifact
+	 * @param 	name (String): the name to set on the newly created model
+	 * @param 	description (String): the description to set on the newly created model
+	 * @return  (ExtractionResponse)
+	 */
+	@POST
+	@Path("/code_to_amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	ExtractionResponse postCodeToAMR(
+		@QueryParam("artifact_id") String artifactId,
+		@QueryParam("name") String name,
+		@QueryParam("description") String description
 	);
 }
