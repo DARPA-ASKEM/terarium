@@ -3,48 +3,21 @@
 		<div
 			ref="responseThought"
 			class="thought"
-			:class="{ hide: hasBeenDrawn && !props.showThought, show: props.showThought }"
+			:class="{ hide: !props.showThought, show: props.showThought }"
 		>
-			{{ displayedText }}<span v-if="!hasBeenDrawn" class="blinking-cursor">|</span>
+			{{ thought }}
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, watchEffect, computed } from 'vue';
-// import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import { ref } from 'vue';
 
-const emit = defineEmits(['has-been-drawn', 'delete', 'is-typing']);
 const responseThought = ref(<HTMLElement | null>null);
-const hasBeenDrawn = ref(false);
 
 const props = defineProps<{
 	thought: string;
 	showThought?: boolean;
-	hasBeenDrawn?: boolean;
 }>();
-
-const charIndex = ref(0);
-
-watchEffect(() => {
-	if (hasBeenDrawn.value) {
-		return;
-	}
-	const typing = setInterval(() => {
-		emit('is-typing');
-		charIndex.value++;
-		if (charIndex.value > props.thought.length) {
-			clearInterval(typing);
-			hasBeenDrawn.value = true;
-			emit('has-been-drawn');
-		}
-	}, 10); // adjust speed here
-});
-
-const displayedText = computed(() =>
-	charIndex.value < props.thought.length
-		? `${props.thought.slice(0, charIndex.value)}`
-		: props.thought
-);
 </script>
 
 <style scoped>
@@ -56,34 +29,18 @@ const displayedText = computed(() =>
 	overflow: hidden;
 	padding: 5px;
 }
+
 .hide {
 	max-height: 0;
 	overflow: hidden;
 	margin: 0;
 	opacity: 0;
 	padding: 0;
-	transition: opacity 2s, margin 3s ease-in, padding 3s ease-in, max-height 2.2s ease-in;
+	transition: opacity 0.3s, margin 0.5s ease-in, padding 0.5s ease-in, max-height 0.4s ease-in;
 }
 
 .show {
-	transition: margin 2.5s ease-in, opacity 1s ease-in, max-height 2s ease-in;
-}
-
-.blinking-cursor {
-	margin-left: 5px;
-	width: 8px;
-	animation: blink 1s infinite;
-}
-
-@keyframes blink {
-	0%,
-	50% {
-		opacity: 1;
-	}
-	50.1%,
-	100% {
-		opacity: 0;
-	}
+	transition: margin 0.5s ease-in, opacity 0.3s ease-in, max-height 0.5s ease-in;
 }
 
 .response-thought-container {

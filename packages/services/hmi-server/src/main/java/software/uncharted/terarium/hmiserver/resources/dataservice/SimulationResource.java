@@ -119,19 +119,14 @@ public class SimulationResource {
 
 		// Add the dataset to the project as an asset
 		try {
-			final Response response = projectProxy.createAsset(projectId, ResourceType.Type.DATASETS, datasetId);
-			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-				return response;
-			}
+			return projectProxy.createAsset(projectId, "datasets", datasetId);
 		} catch (Exception ignored) {
-			// We can ignore this error
+			log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.entity("Failed to add simulation result as dataset to project")
+				.type("text/plain")
+				.build();
 		}
-
-		log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
-		return Response
-			.status(Response.Status.INTERNAL_SERVER_ERROR)
-			.entity("Failed to add simulation result as dataset to project")
-			.type("text/plain")
-			.build();
 	}
 }
