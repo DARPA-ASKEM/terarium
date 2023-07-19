@@ -3,9 +3,9 @@
 		<template #edit-buttons>
 			<Button
 				label="Extract model"
-				:class="`p-button-sm ${selectedText.length === 0 ? 'p-disabled' : ''}`"
+				:class="['p-button-sm', { 'p-disabled': selectedText.length === 0 }]"
+				:loading="isExtractModelLoading"
 				@click="onExtractModel"
-				:loading="extractPetrinetLoading"
 			/>
 			<FileUpload
 				name="demo[]"
@@ -127,7 +127,7 @@ watch([graphElement], async () => {
 
 const selectedPapers = ref<DocumentAsset[]>();
 const createModelLoading = ref(false);
-const extractPetrinetLoading = ref(false);
+const isExtractModelLoading = ref(false);
 const resourcesStore = useResourcesStore();
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
@@ -162,12 +162,12 @@ async function onFileOpen(event) {
 }
 
 async function onExtractModel() {
-	extractPetrinetLoading.value = true;
+	isExtractModelLoading.value = true;
 	const response = await codeToAcset(selectedText.value);
 
 	EventService.create(EventType.ExtractModel, useResourcesStore().activeProject?.id);
 
-	extractPetrinetLoading.value = false;
+	isExtractModelLoading.value = false;
 	acset.value = response;
 	codeExtractionDialogVisible.value = true;
 }
