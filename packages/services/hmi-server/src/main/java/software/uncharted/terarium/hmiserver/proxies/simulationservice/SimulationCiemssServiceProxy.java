@@ -28,9 +28,9 @@ public interface SimulationCiemssServiceProxy {
 	);
 
 	@POST
-	@Path("/ensemble")
+	@Path("/ensemble-simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
-	JobResponse makeEnsembleJob(
+	JobResponse makeEnsembleSimulateCiemssJob(
 		JsonNode request
 	);
 
