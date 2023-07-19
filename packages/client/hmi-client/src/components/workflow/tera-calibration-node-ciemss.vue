@@ -190,6 +190,8 @@ const runCalibrate = async () => {
 	const initialsObj = {};
 	const paramsObj = {};
 
+	const state = props.node.state;
+
 	initials.forEach((d) => {
 		initialsObj[d] = Math.random() * 100;
 	});
@@ -210,8 +212,8 @@ const runCalibrate = async () => {
 			method: method.value
 		},
 		timespan: {
-			start: 0,
-			end: 90
+			start: state.timeSpan.start,
+			end: state.timeSpan.end
 		},
 		engine: 'ciemss'
 	};
