@@ -3,6 +3,8 @@ import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
+import { getModelConfigurations } from '@/services/model';
+import { updateModelConfiguration } from '@/services/model-configurations';
 
 export interface NodeData {
 	type: string;
@@ -419,7 +421,7 @@ export const updateTransition = (
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
 
-export const replaceValuesInExpression = (
+const replaceValuesInExpression = (
 	expression: string,
 	wordToReplace: string,
 	replaceWord: string
@@ -455,7 +457,7 @@ export const replaceValuesInExpression = (
 };
 
 // function to replace the content inside the tags of a mathml expression
-export const replaceValuesInMathML = (
+const replaceValuesInMathML = (
 	mathmlExpression: string,
 	wordToReplace: string,
 	replaceWord: string
@@ -488,6 +490,40 @@ export const replaceValuesInMathML = (
 	});
 
 	return expressionBuilder;
+};
+
+export const updateParameterId = (amr: Model, id: string, newId: string) => {
+	if (amr.semantics?.ode.parameters) {
+		amr.semantics.ode.parameters.forEach((param) => {
+			if (param.id === id) {
+				param.id = newId;
+			}
+		});
+
+		// update the expression and expression_mathml fields
+		amr.semantics.ode.rates.forEach((rate) => {
+			rate.expression = replaceValuesInExpression(rate.expression, id, newId);
+			if (rate.expression_mathml) {
+				rate.expression_mathml = replaceValuesInMathML(rate.expression_mathml, id, newId);
+			}
+		});
+
+		// if there's a timeseries field with the old parameter id then update it to the new id
+		if (amr.metadata?.timeseries) {
+			delete Object.assign(amr.metadata.timeseries, { [newId]: amr.metadata.timeseries[id] })[id];
+		}
+	}
+};
+
+export const updateConfigFields = async (modelId: string, id: string, newId: string) => {
+	const modelConfigs = await getModelConfigurations(modelId);
+
+	modelConfigs.forEach((config) => {
+		updateParameterId(config.configuration, id, newId);
+		// note that this is making an async call but we don't need to wait for it to finish
+		// since we don't immediately need the updated configs
+		updateModelConfiguration(config);
+	});
 };
 
 // Replace typing semantics

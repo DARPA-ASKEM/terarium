@@ -568,8 +568,8 @@ import TeraRelatedPublications from '@/components/widgets/tera-related-publicati
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import {
 	convertToAMRModel,
-	replaceValuesInExpression,
-	replaceValuesInMathML
+	updateConfigFields,
+	updateParameterId
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
@@ -747,7 +747,14 @@ const time = computed(() =>
 	model.value?.semantics?.ode?.time ? [model.value?.semantics.ode.time] : []
 );
 const states = computed(() => model.value?.model?.states ?? []);
-const transientTableValue = ref();
+
+// Used to keep track of the values of the current row being edited
+interface ModelTableTypes {
+	tableType: string;
+	idx: number;
+	updateProperty: { [key: string]: string };
+}
+const transientTableValue = ref<ModelTableTypes | null>(null);
 
 // Model Transitions
 const transitions = computed(() => {
@@ -941,23 +948,12 @@ async function confirmEdit() {
 
 						if (key === 'id') {
 							const ode = model.value!.semantics!.ode;
-							// if we update parameter id we also need to update rate expression and expression_mathml
-							const updatedRates = ode.rates.map((rate) => ({
-								...rate,
-								expression: replaceValuesInExpression(
-									rate.expression,
-									ode.parameters![idx][key],
-									value as string
-								),
-								expression_mathml: rate.expression_mathml
-									? replaceValuesInMathML(
-											rate.expression_mathml,
-											ode.parameters![idx][key],
-											value as string
-									  )
-									: undefined
-							}));
-							modelClone.semantics!.ode.rates = updatedRates;
+							// update the parameter id in the model (as well as rate expression and expression_mathml)
+							updateParameterId(modelClone, ode.parameters![idx][key], value as string);
+
+							// note that this is making a call to an async function to update the different model configs
+							// but we don't need to wait for it to finish because we don't need immediate access to the model configs
+							updateConfigFields(model.value!.id, ode.parameters![idx][key], value as string);
 						}
 					});
 				}
@@ -965,7 +961,7 @@ async function confirmEdit() {
 			case 'states':
 				Object.entries(updateProperty).forEach(([key, value]) => {
 					if (key !== 'unit') {
-						// TODO: remove this condition when we proper editing of unit
+						// TODO: remove this condition when we have proper editing of unit
 						modelClone.model.states[idx][key] = value;
 					}
 					// TODO: update all of the properties affected by state id
@@ -974,19 +970,21 @@ async function confirmEdit() {
 			default:
 				logger.info(`${tableType} not recognized`);
 		}
+
 		await updateModel(modelClone);
 		model.value = await getModel(props.assetId);
 	}
+
 	isRowEditable.value = null;
-	transientTableValue.value = {};
+	transientTableValue.value = null;
 }
 
 function cancelEdit() {
 	isRowEditable.value = null;
-	transientTableValue.value = {};
+	transientTableValue.value = null;
 }
 
-function updateTable(tableType, idx, key, value) {
+function updateTable(tableType: string, idx: number, key: string, value: string) {
 	transientTableValue.value = {
 		...transientTableValue.value,
 		tableType,
