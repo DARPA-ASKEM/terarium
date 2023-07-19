@@ -18,10 +18,26 @@
 				:active="activeTab === EnsembleTabs.output"
 				@click="activeTab = EnsembleTabs.output"
 			/>
-			<Button class="p-button-sm" label="Run" @click="runEnsemble" :disabled="disableRunButton" />
 		</div>
 		<div v-if="activeTab === EnsembleTabs.output && runResults" class="simulate-container">
 			<p>Output here</p>
+			<tera-simulate-chart
+				v-for="(cfg, index) of node.state.chartConfigs"
+				:key="index"
+				:run-results="renderedRuns"
+				:chartConfig="cfg"
+				:line-color-array="lineColorArray"
+				:line-width-array="lineWidthArray"
+				@configuration-change="chartConfigurationChange(index, $event)"
+			/>
+			<Button
+				class="add-chart"
+				text
+				:outlined="true"
+				@click="addChart"
+				label="Add Chart"
+				icon="pi pi-plus"
+			/>
 		</div>
 
 		<div v-else-if="activeTab === EnsembleTabs.input && node" class="simulate-container">
@@ -160,42 +176,29 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import {
-	getSimulation,
-	makeEnsembleCiemssSimulation,
-	getRunResult
-} from '@/services/models/simulation-service';
+import { getRunResult } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
+import { workflowEventBus } from '@/services/workflow';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
-import {
-	ModelConfiguration,
-	EnsembleSimulationCiemssRequest,
-	Simulation,
-	TimeSpan,
-	EnsembleModelConfigs
-} from '@/types/Types';
+import { ModelConfiguration, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { workflowEventBus } from '@/services/workflow';
 import InputText from 'primevue/inputtext';
 import { csvParse } from 'd3';
-import {
-	EnsembleCiemssOperation,
-	EnsembleCiemssOperationState
-} from './simulate-ensemble-ciemss-operation';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { EnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-
-const emit = defineEmits(['append-output-port']);
 
 enum EnsembleTabs {
 	input,
@@ -205,11 +208,6 @@ enum EnsembleCalibrationMode {
 	EQUALWEIGHTS = 'equalWeights',
 	CALIBRATIONWEIGHTS = 'calibrationWeights',
 	CUSTOM = 'custom'
-}
-export interface Mapping {
-	modelId: string;
-	compartmentName: string;
-	value: string;
 }
 
 const CATEGORYPERCENTAGE = 0.9;
@@ -227,15 +225,40 @@ const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
-const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 
-const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
 const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
-const runResults = ref<any[]>([]);
+const runResults = ref<RunResults>({});
+const renderedRuns = ref<RunResults>({});
+
+// Tom TODO: Make this generic... its copy paste from node.
+const chartConfigurationChange = (index: number, config: ChartConfig) => {
+	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const lineColorArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
+		'#00000020'
+	);
+	output.push('#1b8073');
+	return output;
+});
+
+const lineWidthArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
+	output.push(2);
+	return output;
+});
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -252,50 +275,6 @@ const calculateWeights = () => {
 		customWeights.value = false;
 		console.log('TODO: Get weights from AMRs');
 	}
-};
-
-const runEnsemble = async () => {
-	const params: EnsembleSimulationCiemssRequest = {
-		modelConfigs: ensembleConfigs.value,
-		timespan: timeSpan.value,
-		engine: 'ciemss',
-		extra: { num_samples: numSamples.value }
-	};
-	console.log(params);
-	const response = await makeEnsembleCiemssSimulation(params);
-	startedRunId.value = response.simulationId;
-	getStatus();
-};
-
-const getStatus = async () => {
-	if (!startedRunId.value) return;
-
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
-
-	if (currentSimulation && currentSimulation.status === 'complete') {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
-		// showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
-		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
-		throw Error('Failed Runs');
-	}
-};
-
-const updateOutputPorts = async (runId) => {
-	const portLabel = props.node.inputs[0].label;
-	emit('append-output-port', {
-		type: EnsembleCiemssOperation.outputs[0].type,
-		label: `${portLabel} Result`,
-		value: {
-			runId
-		}
-	});
 };
 
 function addMapping() {
@@ -370,14 +349,27 @@ const setChartOptions = () => {
 		}
 	};
 };
+
+const addChart = () => {
+	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
 // assume only one run for now
 const watchCompletedRunList = async () => {
 	if (!completedRunId.value) return;
 
-	const output = await getRunResult(completedRunId.value, 'eval.csv');
+	const output = await getRunResult(completedRunId.value, 'simulation.csv');
 	runResults.value = csvParse(output) as any;
 	console.log(runResults.value);
 };
+
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
 watch(
@@ -391,6 +383,7 @@ watch(
 watch(
 	() => listModelIds,
 	async () => {
+		console.log('Updating everything');
 		allModelConfigurations.value = [];
 		// Fetch Model Configurations
 		await Promise.all(
@@ -413,6 +406,7 @@ watch(
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
+		console.log('Drill down updating state');
 		const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
@@ -423,6 +417,76 @@ watch(
 		});
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => timeSpan.value,
+	async () => {
+		const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		state.timeSpan = timeSpan.value;
+
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => numSamples.value,
+	async () => {
+		const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		state.numSamples = numSamples.value;
+
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
+	},
+	{ immediate: true }
+);
+
+// process run result data to create mean run line
+watch(
+	() => runResults.value,
+	(input) => {
+		const runResult: RunResults = JSON.parse(JSON.stringify(input));
+
+		// convert to array from array-like object
+		const parsedSimProbData = Object.values(runResult);
+
+		const numRuns = parsedSimProbData.length;
+		if (!numRuns) {
+			renderedRuns.value = runResult;
+			return;
+		}
+
+		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
+		const aggregateRun: { [key: string]: number }[] = [];
+
+		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
+			for (let run = 0; run < numRuns; run++) {
+				if (!aggregateRun[timestamp]) {
+					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
+					Object.keys(aggregateRun[timestamp]).forEach((key) => {
+						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
+					});
+				} else {
+					const datum = parsedSimProbData[run][timestamp];
+					Object.keys(datum).forEach((key) => {
+						aggregateRun[timestamp][key] += datum[key] / numRuns;
+					});
+				}
+			}
+		}
+
+		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
+		console.log(renderedRuns.value);
+	},
+	{ immediate: true, deep: true }
 );
 </script>
 

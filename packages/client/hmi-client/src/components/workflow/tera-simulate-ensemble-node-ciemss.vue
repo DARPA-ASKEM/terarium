@@ -9,10 +9,32 @@
 		></Button>
 	</div>
 	<section v-if="!showSpinner" class="result-container">
-		<div class="invalid-block" v-if="props.node.statusCode === WorkflowStatus.INVALID">
-			<img class="image" src="@assets/svg/plants.svg" alt="" />
-			<p>Configure in side panel</p>
-		</div>
+		<section v-if="simulationIds">
+			<p>Output here</p>
+			<tera-simulate-chart
+				v-for="(cfg, index) of node.state.chartConfigs"
+				:key="index"
+				:run-results="renderedRuns"
+				:chartConfig="cfg"
+				:line-color-array="lineColorArray"
+				:line-width-array="lineWidthArray"
+				@configuration-change="chartConfigurationChange(index, $event)"
+			/>
+			<Button
+				class="add-chart"
+				text
+				:outlined="true"
+				@click="addChart"
+				label="Add Chart"
+				icon="pi pi-plus"
+			/>
+		</section>
+		<section v-else class="result-container">
+			<div class="invalid-block" v-if="props.node.statusCode === WorkflowStatus.INVALID">
+				<img class="image" src="@assets/svg/plants.svg" alt="" />
+				<p>Configure in side panel</p>
+			</div>
+		</section>
 	</section>
 	<section v-else>
 		<div>loading...</div>
@@ -21,12 +43,11 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, ComputedRef } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
-// import { RunResults } from '@/types/SimulateConfig';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import {
@@ -35,12 +56,18 @@ import {
 	TimeSpan,
 	EnsembleModelConfigs
 } from '@/types/Types';
-import { getSimulation, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
+import {
+	getSimulation,
+	makeEnsembleCiemssSimulation,
+	getRunResultCiemss
+} from '@/services/models/simulation-service';
 import Button from 'primevue/button';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import {
 	EnsembleCiemssOperationState,
 	EnsembleCiemssOperation
 } from './simulate-ensemble-ciemss-operation';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -52,22 +79,54 @@ const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as st
 const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
-const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
-const timeSpan = ref<TimeSpan>(props.node.state.timespan);
+const ensembleConfigs = computed<EnsembleModelConfigs[]>(() => props.node.state.mapping);
+const timeSpan = computed<TimeSpan>(() => props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
+const runResults = ref<RunResults>({});
+const simulationIds: ComputedRef<any | undefined> = computed(
+	<any | undefined>(() => props.node.outputs[0]?.value)
+);
+// TODO Post hackathon, this entire thing should be computed or even just thrown into run result.
+const renderedRuns = ref<RunResults>({});
 
 const runEnsemble = async () => {
+	console.log('Running ensemble');
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
 		engine: 'ciemss',
 		extra: { num_samples: numSamples.value }
 	};
+	console.log(params);
 	const response = await makeEnsembleCiemssSimulation(params);
 	startedRunId.value = response.simulationId;
 
 	showSpinner.value = true;
 	getStatus();
+};
+
+// Tom TODO: Make this generic, its copy paste from drilldown
+const chartConfigurationChange = (index: number, config: ChartConfig) => {
+	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+// TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
+const addChart = () => {
+	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
 };
 
 const getStatus = async () => {
@@ -101,6 +160,20 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
+const lineColorArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
+		'#00000020'
+	);
+	output.push('#1b8073');
+	return output;
+});
+
+const lineWidthArray = computed(() => {
+	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
+	output.push(2);
+	return output;
+});
+
 watch(
 	() => modelConfigIds.value,
 	async () => {
@@ -127,6 +200,57 @@ watch(
 		}
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => simulationIds.value,
+	async () => {
+		if (!simulationIds.value) return;
+
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		runResults.value = output.runResults;
+	},
+	{ immediate: true }
+);
+
+// TODO Post hackathon, this entire thing should be computed or even just thrown into run result.
+watch(
+	() => runResults.value,
+	(input) => {
+		const runResult: RunResults = JSON.parse(JSON.stringify(input));
+
+		// convert to array from array-like object
+		const parsedSimProbData = Object.values(runResult);
+
+		const numRuns = parsedSimProbData.length;
+		if (!numRuns) {
+			renderedRuns.value = runResult;
+			return;
+		}
+
+		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
+		const aggregateRun: { [key: string]: number }[] = [];
+
+		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
+			for (let run = 0; run < numRuns; run++) {
+				if (!aggregateRun[timestamp]) {
+					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
+					Object.keys(aggregateRun[timestamp]).forEach((key) => {
+						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
+					});
+				} else {
+					const datum = parsedSimProbData[run][timestamp];
+					Object.keys(datum).forEach((key) => {
+						aggregateRun[timestamp][key] += datum[key] / numRuns;
+					});
+				}
+			}
+		}
+
+		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
+		console.log(renderedRuns.value);
+	},
+	{ immediate: true, deep: true }
 );
 </script>
 
