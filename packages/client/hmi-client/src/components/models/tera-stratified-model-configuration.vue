@@ -203,7 +203,7 @@ async function initializeConfigSpace() {
 
 	openValueConfig.value = false;
 	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
-	extractions.value = [{ name: '', value: '' }];
+	extractions.value = [{ name: 'Default', value: '' }];
 }
 
 function resetCellEditing() {
