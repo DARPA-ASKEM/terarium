@@ -108,7 +108,7 @@
 					:row-class="() => 'p-selectable-row'"
 				>
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
-					<Column field="assetName" header="Name" sortable style="width: 25%">
+					<Column field="assetName" header="Name" sortable style="width: 50%">
 						<template #body="slotProps">
 							<div class="asset-button" @click="openResource(slotProps.data)">
 								<vue-feather
@@ -155,8 +155,8 @@
 					<template #empty>
 						<div class="explorer-status">
 							<img src="@assets/svg/seed.svg" alt="Seed" />
-							<h2 class="no-results-found">No resources.</h2>
-							<span
+							<h4 class="no-results-found">This is an empty project</h4>
+							<span class="no-results-found-message"
 								>Add resources to your project with the quick link buttons, or use the explorer to
 								find documents, models and datasets of interest.</span
 							>
@@ -725,14 +725,23 @@ ul {
 	justify-content: center;
 	gap: 1rem;
 	align-items: center;
-	margin-bottom: 8rem;
+	margin-top: 8rem;
+	margin-bottom: 12rem;
 	flex-grow: 1;
 	font-size: var(--font-body-small);
 	color: var(--text-color-subdued);
 }
 
+.no-results-found-message {
+	text-align: center;
+	width: 40%;
+}
 .bottom-white-patch {
 	background-color: var(--surface-0);
 	flex: 1;
+}
+
+:deep(.p-datatable-emptymessage > td) {
+	border-bottom: none !important;
 }
 </style>
