@@ -97,14 +97,14 @@
 							v-if="isEditingEQ"
 							class="p-button-sm add-equation-button"
 							icon="pi pi-plus"
-							label="Add Equation"
+							label="Add equation"
 							@click="latexEquationList.push('')"
 							text
 						/>
 					</section>
 				</TeraResizablePanel>
 			</AccordionTab>
-			<AccordionTab header="Model Observables">
+			<AccordionTab header="Model observables">
 				<TeraResizablePanel
 					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
 					:start-height="300"
@@ -147,7 +147,7 @@
 							v-if="observablesList.length === 0 || isEditingObservables"
 							class="p-button-sm add-equation-button"
 							icon="pi pi-plus"
-							label="Add Observable"
+							label="Add observable"
 							@click="addObservable"
 							text
 						/>
@@ -798,10 +798,9 @@ section math-editor {
 }
 
 .add-equation-button {
-	width: 150px;
-	min-height: 30px;
-	margin-left: 5px;
-	margin-top: 5px;
+	width: 10rem;
+	margin-left: 1rem;
+	margin-top: 0.5rem;
 	border: none;
 	outline: none;
 }

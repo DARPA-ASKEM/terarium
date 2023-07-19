@@ -401,6 +401,16 @@ workflowEventBus.on('node-state-change', (payload: any) => {
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 });
 
+workflowEventBus.on(
+	'add-node',
+	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
+		workflowService.addNode(wf.value, payload.operation, payload.position, {
+			state: payload.state
+		});
+		workflowDirty = true;
+	}
+);
+
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
@@ -440,8 +450,10 @@ const contextMenuItems = ref([
 				label: 'Simulate',
 				command: () => {
 					workflowService.addNode(wf.value, SimulateJuliaOperation, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}
@@ -467,8 +479,10 @@ const contextMenuItems = ref([
 				label: 'Simulate',
 				command: () => {
 					workflowService.addNode(wf.value, SimulateCiemssOperation, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}
@@ -477,7 +491,12 @@ const contextMenuItems = ref([
 				label: 'Calibrate & Simulate',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition);
+					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
 					workflowDirty = true;
 				}
 			},
