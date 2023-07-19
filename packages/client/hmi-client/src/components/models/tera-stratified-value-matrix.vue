@@ -113,8 +113,6 @@ function configureMatrix() {
 		rowAndCol.includes(id[0])
 	);
 
-	console.log(rowAndColDimensions);
-
 	if (rowAndColDimensions) {
 		// Assuming column id is the first one
 		const colId = rowAndColDimensions[0][0];
@@ -140,10 +138,6 @@ function configureMatrix() {
 		props.nodeType === NodeType.State
 			? extractStateMatrixData(props.model, rowAndCol, [...colDimensions, ...rowDimensions])
 			: extractTransitionMatrixData(props.model, rowAndCol);
-
-	console.log(colDimensions, rowDimensions, rowAndColDimensions);
-	console.log(matrixData);
-	console.log(rowAndCol);
 
 	const matrixAttributes = createMatrix(matrixData, colDimensions, rowDimensions);
 	matrix.value = matrixAttributes.matrix;
