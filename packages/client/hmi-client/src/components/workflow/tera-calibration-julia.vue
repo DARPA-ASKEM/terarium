@@ -138,7 +138,7 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
-import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
+import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
@@ -219,7 +219,7 @@ function addMapping() {
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -233,7 +233,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
