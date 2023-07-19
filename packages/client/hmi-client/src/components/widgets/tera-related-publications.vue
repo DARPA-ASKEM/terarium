@@ -111,12 +111,10 @@ const sendForEnrichments = async (_selectedResources) => {
 
 	// 1. Send dataset profile request
 	const resp = await profileDataset(props.assetId);
-	console.log('sendForEnrichments', resp);
 
 	// 2. Poll
 	const pollResult = await fetchExtraction(resp);
-
-	console.log('>>>>>>>>>>>>>>>>>', pollResult);
+	console.log('enrichment poll', pollResult);
 
 	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
 	/* TODO: send selected resources to backend for enrichment */

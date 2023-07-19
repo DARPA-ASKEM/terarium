@@ -203,7 +203,7 @@
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
-								v-if="rowEditList[index]"
+								v-if="rowEditList[index] && column.metadata"
 								v-model="column.metadata.unit"
 								@focus="setSuggestedValue(index, dataset.columns?.[index].metadata?.unit)"
 							/>
@@ -212,7 +212,7 @@
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
-								v-if="rowEditList[index]"
+								v-if="rowEditList[index] && column.metadata"
 								v-model="column.metadata.concept"
 								@focus="setSuggestedValue(index, column.metadata?.concept)"
 							/>
