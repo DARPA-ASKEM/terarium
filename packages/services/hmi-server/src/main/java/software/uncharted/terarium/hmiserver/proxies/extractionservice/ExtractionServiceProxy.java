@@ -22,7 +22,9 @@ public interface ExtractionServiceProxy {
 
 	/**
 	 * Retrieve the status of a simulation
+	 *
 	 * @param simulationId the id of the simulation
+	 *
 	 * @return the status of the simulation
 	 */
 	@GET
