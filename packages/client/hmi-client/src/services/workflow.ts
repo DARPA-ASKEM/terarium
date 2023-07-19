@@ -73,8 +73,7 @@ export const addNode = (
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
 	};
-
-	if (op.initState && !options.state) {
+	if (op.initState && _.isEmpty(node.state)) {
 		node.state = op.initState();
 	}
 
