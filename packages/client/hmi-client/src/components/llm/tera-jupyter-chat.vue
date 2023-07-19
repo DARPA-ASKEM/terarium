@@ -185,7 +185,6 @@ const updateNotebookCells = (message) => {
 		notebookItem.messages = notebookItem.messages.filter(
 			(msg) => msg.header.msg_type !== 'model_preview'
 		);
-		notebookItem.resultingCsv = message.content;
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
 		notebookItem.executions.push(executionParent);
