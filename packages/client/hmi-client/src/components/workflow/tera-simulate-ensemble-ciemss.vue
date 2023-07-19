@@ -170,9 +170,15 @@
 						</thead>
 						<tbody class="p-datatable-tbody">
 							<td>Steps</td>
-							<td><InputNumber v-model="timeSpan.start" /></td>
-							<td><InputNumber v-model="timeSpan.end" /></td>
-							<td><InputNumber v-model="numSamples" /></td>
+							<td>
+								<InputNumber v-model="timeSpan.start" />
+							</td>
+							<td>
+								<InputNumber v-model="timeSpan.end" />
+							</td>
+							<td>
+								<InputNumber v-model="numSamples" />
+							</td>
 						</tbody>
 					</table>
 				</AccordionTab>
@@ -546,6 +552,7 @@ watch(
 	height: 200px;
 	/* width: 80%; */
 }
+
 .model-weights {
 	display: flex;
 }
@@ -554,6 +561,7 @@ watch(
 	display: flex;
 	margin: 1em;
 }
+
 th {
 	text-align: left;
 }

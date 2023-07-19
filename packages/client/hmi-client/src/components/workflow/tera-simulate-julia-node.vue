@@ -8,6 +8,7 @@
 				:run-results="runResults"
 				:chartConfig="cfg"
 				@configuration-change="configurationChange(index, $event)"
+				:colorByRun="true"
 			/>
 		</div>
 		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>

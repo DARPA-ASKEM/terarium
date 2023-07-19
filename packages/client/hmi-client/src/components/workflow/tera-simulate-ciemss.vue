@@ -65,7 +65,7 @@
 				:totalRecords="parsedRawData.length"
 				:rowsPerPageOptions="[5, 10, 20, 50]"
 			/>
-			<simulate-chart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="renderedRuns"
@@ -175,7 +175,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
-import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
+import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 
 import { WorkflowNode } from '@/types/workflow';
@@ -395,9 +395,11 @@ const rawDataRenderedRows = computed(() =>
 	margin: 0.5em;
 	position: relative;
 }
+
 .datatable-header-select-container {
 	min-width: 0;
 }
+
 .datatable-header-title {
 	white-space: nowrap;
 	margin-right: 1em;

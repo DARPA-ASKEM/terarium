@@ -1,7 +1,7 @@
 <template>
 	<section v-if="!showSpinner">
 		<div class="chart-container">
-			<SimulateChart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="renderedRuns"
@@ -54,7 +54,7 @@ import InputNumber from 'primevue/inputnumber';
 import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
-import SimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{

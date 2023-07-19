@@ -11,7 +11,7 @@
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span :style="{ color: hasMultiRuns ? 'black' : getVariableColorByVar(variable) }">
+					<span :style="{ color: getVariableColorByVar(variable) }">
 						{{ variable }}
 					</span>
 				</template>
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -81,8 +81,9 @@ const CHART_OPTIONS = {
 const props = defineProps<{
 	runResults: RunResults;
 	chartConfig: ChartConfig;
-	lineColorArray?: string[];
+	lineColorArray?: string[] | string[][];
 	lineWidthArray?: string[];
+	colorByRun?: boolean;
 }>();
 
 // data for rendering ui
@@ -121,13 +122,18 @@ const getVariableColorByRunIdx = (runIdx: number) => {
 
 const hasMultiRuns = computed(() => {
 	const runIdList = Object.keys(props.runResults) as string[];
-	return runIdList.length > 1;
+	return props.colorByRun && runIdList.length > 1;
 });
 
 const getLineColor = (variableName: string, runIdx: number) => {
+	const runIdList = Object.keys(props.runResults) as string[];
 	if (props.lineColorArray) {
-		return props.lineColorArray[runIdx];
+		const lastRun = runIdList.length - 1;
+		return runIdx === lastRun
+			? getVariableColorByVar(variableName)
+			: `${getVariableColorByVar(variableName)}10`;
 	}
+
 	return hasMultiRuns.value
 		? getVariableColorByRunIdx(runIdx)
 		: getVariableColorByVar(variableName);

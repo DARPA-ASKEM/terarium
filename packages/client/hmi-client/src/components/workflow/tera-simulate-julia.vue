@@ -25,12 +25,13 @@
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
 			class="simulate-container"
 		>
-			<simulate-chart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
 				:chartConfig="cfg"
 				@configuration-change="configurationChange(index, $event)"
+				color-by-run
 			/>
 			<Button
 				class="add-chart"
@@ -119,7 +120,7 @@ import { createDatasetFromSimulationResult } from '@/services/dataset';
 import useResourcesStore from '@/stores/resources';
 import * as ProjectService from '@/services/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
-import SimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
