@@ -509,8 +509,9 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 		});
 
 		// if there's a timeseries field with the old parameter id then update it to the new id
-		if (amr.metadata?.timeseries) {
-			delete Object.assign(amr.metadata.timeseries, { [newId]: amr.metadata.timeseries[id] })[id];
+		if (amr.metadata?.timeseries && amr.metadata.timeseries[id]) {
+			amr.metadata.timeseries[newId] = amr.metadata.timeseries[id];
+			delete amr.metadata.timeseries[id];
 		}
 	}
 };
