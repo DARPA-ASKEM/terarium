@@ -16,10 +16,10 @@
 					<tr>
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
-						<th v-for="({ id }, i) in baseModelStates" :header="id" :key="i">
+						<th v-for="(id, i) in baseModelStates" :header="id" :key="i">
 							{{ id }}
 						</th>
-						<th v-for="({ id }, i) in baseModelTransitions" :header="id" :key="i">
+						<th v-for="(id, i) in baseModelTransitions" :header="id" :key="i">
 							{{ id }}
 						</th>
 						<!--TODO: Insert new th loops for time and observables here-->
@@ -39,7 +39,7 @@
 							</div>
 						</td>
 						<td class="p-frozen-column second-frozen" tabindex="0">Default name</td>
-						<td v-for="({ id }, j) in [...baseModelStates, ...baseModelTransitions]" :key="j">
+						<td v-for="(id, j) in [...baseModelStates, ...baseModelTransitions]" :key="j">
 							<section class="editable-cell" @click="openValueModal(id, i - 1)">
 								<span>{{ id }}<i class="pi pi-table"></i></span>
 								<Button
@@ -81,6 +81,7 @@
 							<tera-stratified-value-matrix
 								:model="configurations[modalVal.configIndex]"
 								:id="modalVal.id"
+								:node-type="modalVal.nodeType"
 							/>
 						</div>
 					</TabPanel>
@@ -112,6 +113,7 @@ import {
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
+import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 
 const props = defineProps<{
 	isEditable: boolean;
@@ -123,7 +125,7 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
-const modalVal = ref({ id: '', configIndex: 0 });
+const modalVal = ref({ id: '', configIndex: 0, nodeType: NodeType.State });
 
 const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
@@ -132,9 +134,11 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const baseModelStates = computed<any>(() => props.model?.semantics?.span?.[0].system.model.states);
-const baseModelTransitions = computed<any>(
-	() => props.model?.semantics?.span?.[0].system.model.transitions
+const baseModelStates = computed<any>(() =>
+	props.model?.semantics?.span?.[0].system.model.states.map(({ id }) => id)
+);
+const baseModelTransitions = computed<any>(() =>
+	props.model?.semantics?.span?.[0].system.model.transitions.map(({ id }) => id)
 );
 
 // Decide if we should display the whole configuration table
@@ -162,9 +166,11 @@ async function addModelConfiguration(config: ModelConfiguration) {
 
 function openValueModal(id: string, configIndex: number) {
 	if (props.isEditable) {
+		const nodeType = baseModelStates.value.includes(id) ? NodeType.State : NodeType.Transition;
+
 		activeIndex.value = 0;
 		openValueConfig.value = true;
-		modalVal.value = { id, configIndex };
+		modalVal.value = { id, configIndex, nodeType };
 	}
 }
 
@@ -198,7 +204,7 @@ async function initializeConfigSpace() {
 	}
 
 	openValueConfig.value = false;
-	modalVal.value = { id: '', configIndex: 0 };
+	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
 	extractions.value = [{ name: '', value: '' }];
 }
 

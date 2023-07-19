@@ -55,14 +55,19 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { isEmpty } from 'lodash';
-import { extractTransitionMatrixData } from '@/model-representation/petrinet/petrinet-service';
+import {
+	extractStateMatrixData,
+	extractTransitionMatrixData
+} from '@/model-representation/petrinet/petrinet-service';
 import { createMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
+import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 
 const props = defineProps<{
 	model: Model;
 	id: string;
+	nodeType: NodeType;
 }>();
 
 let colDimensions: string[] = [];
@@ -98,11 +103,6 @@ function findMatrixValue(variableName: string) {
 }
 
 function configureMatrix() {
-	const transitionMatrixData = extractTransitionMatrixData(
-		props.model,
-		props.model.model.transitions.map(({ id }) => id)
-	);
-
 	// Get stratified ids from the chosen base id
 	const rowAndCol = props.model?.semantics?.span?.[0]?.map
 		.filter((id: string) => id[1] === props.id)
@@ -133,12 +133,22 @@ function configureMatrix() {
 		}
 	}
 
-	const matrixAttributes = createMatrix(transitionMatrixData, colDimensions, rowDimensions);
+	// Get only the states/transitions that are mapped to the base model
+	const matrixData =
+		props.nodeType === 'state'
+			? extractStateMatrixData(props.model, rowAndCol)
+			: extractTransitionMatrixData(props.model, rowAndCol);
+
+	console.log(colDimensions, rowDimensions);
+	console.log(matrixData);
+	console.log(rowAndCol);
+
+	const matrixAttributes = createMatrix(matrixData, colDimensions, rowDimensions);
 	matrix.value = matrixAttributes.matrix;
 	colDimensions = matrixAttributes.colDimensions;
 	rowDimensions = matrixAttributes.rowDimensions;
 
-	console.log(matrix.value);
+	console.log(matrix.value, colDimensions, rowDimensions);
 
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
