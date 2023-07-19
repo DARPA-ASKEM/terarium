@@ -2,102 +2,90 @@
 	<main>
 		<TeraResizablePanel>
 			<div ref="splitterContainer" class="splitter-container">
-				<Splitter :gutterSize="5" :layout="layout">
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="equationPanelSize"
-						:minSize="equationPanelMinSize"
-						:maxSize="equationPanelMaxSize"
-					>
-						<section class="graph-element">
-							<section v-if="showTypingToolbar" class="typingSection">
-								<div class="typing-row">
-									<div>COLOR</div>
-									<div class="input-header">NODE TYPE</div>
-									<div class="input-header">NAME OF TYPE</div>
-									<div class="input-header">ASSIGN TO</div>
-									<div>
-										<div class="empty-spacer" :style="{ width: `28px` }"></div>
-									</div>
-								</div>
-								<div class="typing-row" v-for="(row, index) in typedRows" :key="index">
-									<!-- legend key -->
-									<div>
-										<div
-											:class="getLegendKeyClass(row.nodeType ?? '')"
-											:style="
-												getLegendKeyStyle(
-													row.assignTo && row.nodeType && row.typeName ? row.typeName : ''
-												)
-											"
-										/>
-									</div>
-									<div>
-										<!-- node type -->
-										<Dropdown
-											:options="Object.keys(assignToOptions[index])"
-											v-model="row.nodeType"
-										/>
-									</div>
-									<div>
-										<!-- name of type -->
-										<InputText
-											:model-value="row.typeName"
-											@update:model-value="(newValue) => setTypeNameBuffer(newValue, index)"
-											@change="updateRowTypeName(index)"
-										/>
-									</div>
-									<div>
-										<!-- assign to -->
-										<MultiSelect
-											placeholder="Select nodes"
-											:options="assignToOptions[index][row.nodeType ?? '']"
-											v-model="row.assignTo"
-											:maxSelectedLabels="1"
-										/>
-									</div>
-									<!-- cancel row  -->
-									<div>
-										<Button icon="pi pi-times" text rounded />
-									</div>
-								</div>
-								<Button
-									label="Add type"
-									icon="pi pi-plus"
-									class="p-button-sm"
-									text
-									@click="addTypedRow"
+				<section class="graph-element">
+					<section v-if="showTypingToolbar" class="typingSection">
+						<div class="typing-row">
+							<div>COLOR</div>
+							<div class="input-header">NODE TYPE</div>
+							<div class="input-header">NAME OF TYPE</div>
+							<div class="input-header">ASSIGN TO</div>
+							<div>
+								<div class="empty-spacer" :style="{ width: `28px` }"></div>
+							</div>
+						</div>
+						<div class="typing-row" v-for="(row, index) in typedRows" :key="index">
+							<!-- legend key -->
+							<div>
+								<div
+									:class="getLegendKeyClass(row.nodeType ?? '')"
+									:style="
+										getLegendKeyStyle(
+											row.assignTo && row.nodeType && row.typeName ? row.typeName : ''
+										)
+									"
 								/>
-							</section>
-							<tera-reflexives-toolbar
-								v-if="showReflexivesToolbar && model && strataModel"
-								:model-to-update="model"
-								:model-to-compare="strataModel"
-								@model-updated="
-									(value) => {
-										typedModel = value;
-										emit('model-updated', value);
-									}
-								"
-							/>
-							<section class="legend">
-								<ul>
-									<li v-for="(type, i) in stateTypes" :key="i">
-										<div class="legend-key-circle" :style="getLegendKeyStyle(type ?? '')" />
-										{{ type }}
-									</li>
-								</ul>
-								<ul>
-									<li v-for="(type, i) in transitionTypes" :key="i">
-										<div class="legend-key-square" :style="getLegendKeyStyle(type ?? '')" />
-										{{ type }}
-									</li>
-								</ul>
-							</section>
-							<div v-if="typedModel" ref="graphElement" class="graph-element" />
-						</section>
-					</SplitterPanel>
-				</Splitter>
+							</div>
+							<div>
+								<!-- node type -->
+								<Dropdown :options="Object.keys(assignToOptions[index])" v-model="row.nodeType" />
+							</div>
+							<div>
+								<!-- name of type -->
+								<InputText
+									:model-value="row.typeName"
+									@update:model-value="(newValue) => setTypeNameBuffer(newValue, index)"
+									@change="updateRowTypeName(index)"
+								/>
+							</div>
+							<div>
+								<!-- assign to -->
+								<MultiSelect
+									placeholder="Select nodes"
+									:options="assignToOptions[index][row.nodeType ?? '']"
+									v-model="row.assignTo"
+									:maxSelectedLabels="1"
+								/>
+							</div>
+							<!-- cancel row  -->
+							<div>
+								<Button icon="pi pi-times" text rounded />
+							</div>
+						</div>
+						<Button
+							label="Add type"
+							icon="pi pi-plus"
+							class="p-button-sm"
+							text
+							@click="addTypedRow"
+						/>
+					</section>
+					<tera-reflexives-toolbar
+						v-if="showReflexivesToolbar && model && strataModel"
+						:model-to-update="model"
+						:model-to-compare="strataModel"
+						@model-updated="
+							(value) => {
+								typedModel = value;
+								emit('model-updated', value);
+							}
+						"
+					/>
+					<section class="legend">
+						<ul>
+							<li v-for="(type, i) in stateTypes" :key="i">
+								<div class="legend-key-circle" :style="getLegendKeyStyle(type ?? '')" />
+								{{ type }}
+							</li>
+						</ul>
+						<ul>
+							<li v-for="(type, i) in transitionTypes" :key="i">
+								<div class="legend-key-square" :style="getLegendKeyStyle(type ?? '')" />
+								{{ type }}
+							</li>
+						</ul>
+					</section>
+					<div v-if="typedModel" ref="graphElement" class="graph-element" />
+				</section>
 			</div>
 		</TeraResizablePanel>
 	</main>
@@ -105,22 +93,15 @@
 
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
+import { watch, ref, computed } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
 	NodeData,
 	EdgeData
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { petriToLatex } from '@/petrinet/petrinet-service';
-import {
-	convertAMRToACSet,
-	convertToIGraph,
-	addTyping
-} from '@/model-representation/petrinet/petrinet-service';
+import { convertToIGraph, addTyping } from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import Dropdown from 'primevue/dropdown';
@@ -145,17 +126,7 @@ const props = defineProps<{
 
 const typedModel = ref<Model>(props.model);
 
-const equationLatex = ref<string>('');
-const equationLatexOriginal = ref<string>('');
-
 const splitterContainer = ref<HTMLElement | null>(null);
-const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
-
-const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
-
-const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(0);
-const equationPanelMaxSize = ref<number>(100);
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
@@ -227,44 +198,11 @@ function getLegendKeyStyle(id: string) {
 	};
 }
 
-const updateLayout = () => {
-	if (splitterContainer.value) {
-		layout.value =
-			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
-			window.innerWidth < 800
-				? 'vertical'
-				: 'horizontal';
-	}
-};
-
-const handleResize = () => {
-	updateLayout();
-};
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
-
-const updateLatexFormula = (formulaString: string) => {
-	equationLatex.value = formulaString;
-	equationLatexOriginal.value = formulaString;
-};
-
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.model],
 	async () => {
-		updateLatexFormula('');
 		typedModel.value = props.model;
-		const data = await petriToLatex(convertAMRToACSet(props.model));
-		if (data) {
-			updateLatexFormula(data);
-		}
 	},
 	{ immediate: true }
 );
@@ -447,11 +385,6 @@ li {
 	gap: 0.5rem;
 }
 
-.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
-	background-color: var(--surface-0);
-	margin: 0.25rem;
-}
-
 .splitter-container {
 	height: 100%;
 }
@@ -464,19 +397,6 @@ li {
 	overflow: hidden;
 	border: none;
 	position: relative;
-}
-
-.p-splitter {
-	border: none;
-	height: 100%;
-}
-
-.tera-split-panel {
-	position: relative;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	width: 100%;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */

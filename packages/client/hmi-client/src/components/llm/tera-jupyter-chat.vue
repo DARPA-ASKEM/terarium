@@ -9,11 +9,9 @@
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
 				:msg="msg"
-				:has-been-drawn="renderedMessages.has(msg.query_id)"
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
-				@has-been-drawn="hasBeenDrawn(msg.query_id)"
-				@is-typing="emit('is-typing')"
+				:auto-expand-preview="autoExpandPreview"
 				@cell-updated="scrollToLastCell"
 			/>
 
@@ -47,7 +45,6 @@ import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
-const renderedMessages = ref(new Set<any>());
 const messageContainer = ref(<HTMLElement | null>null);
 const activeSessions = ref(null);
 const runningSessions = ref();
@@ -70,8 +67,7 @@ const emit = defineEmits([
 	'download-response',
 	'update-kernel-status',
 	'new-dataset-saved',
-	'new-model-saved',
-	'is-typing'
+	'new-model-saved'
 ]);
 
 const props = defineProps<{
@@ -84,16 +80,12 @@ const props = defineProps<{
 	showChatThoughts?: boolean;
 	jupyterSession: SessionContext;
 	kernelStatus: String;
+	autoExpandPreview?: boolean;
 }>();
 
 onMounted(() => {
 	activeSessions.value = getSessionManager().running();
 });
-
-const hasBeenDrawn = (message_id: string) => {
-	renderedMessages.value.add(message_id);
-	messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
-};
 
 const queryString = ref('');
 
@@ -125,6 +117,7 @@ const submitQuery = (inputStr: string | undefined) => {
 		});
 		kernel?.sendJupyterMessage(message);
 		newJupyterMessage(message);
+		isExecutingCode.value = true;
 		queryString.value = '';
 	}
 };
@@ -151,7 +144,6 @@ const addCodeCell = () => {
 	};
 	messagesHistory.value.push(emptyCell);
 	updateNotebookCells(emptyCell);
-	hasBeenDrawn(msgId);
 };
 
 // const nestedMessages = computed(() => {
@@ -188,6 +180,11 @@ const updateNotebookCells = (message) => {
 			(msg) => msg.header.msg_type !== 'dataset'
 		);
 		notebookItem.resultingCsv = message.content;
+	} else if (message.header.msg_type === 'model_preview') {
+		// If we get a new model preview, remove any old previews
+		notebookItem.messages = notebookItem.messages.filter(
+			(msg) => msg.header.msg_type !== 'model_preview'
+		);
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
 		notebookItem.executions.push(executionParent);
@@ -202,14 +199,11 @@ const updateKernelStatus = (kernelStatus) => {
 };
 
 const newJupyterMessage = (jupyterMessage) => {
-	if (
-		['stream', 'code_cell', 'llm_request', 'chatty_response', 'dataset'].indexOf(
-			jupyterMessage.header.msg_type
-		) > -1
-	) {
+	const msgType = jupyterMessage.header.msg_type;
+	if (['stream', 'code_cell', 'llm_request', 'chatty_response', 'dataset'].indexOf(msgType) > -1) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
-		isExecutingCode.value = false;
+		isExecutingCode.value = msgType === 'llm_request' || msgType === 'code_cell';
 		emit('new-message', messagesHistory.value);
 	} else if (jupyterMessage.header.msg_type === 'save_dataset_response') {
 		emit('new-dataset-saved', jupyterMessage.content);
@@ -222,9 +216,9 @@ const newJupyterMessage = (jupyterMessage) => {
 		isExecutingCode.value = false;
 	} else if (jupyterMessage.header.msg_type === 'execute_input') {
 		updateNotebookCells(jupyterMessage);
-		isExecutingCode.value = true;
 	} else if (jupyterMessage.header.msg_type === 'model_preview') {
 		updateNotebookCells(jupyterMessage);
+		isExecutingCode.value = false;
 	} else {
 		console.log('Unknown Jupyter event', jupyterMessage);
 	}
@@ -232,13 +226,12 @@ const newJupyterMessage = (jupyterMessage) => {
 
 const clearHistory = () => {
 	messagesHistory.value = [];
-	renderedMessages.value = new Set<any>();
 	notebookItems.value = [];
 };
 
 const scrollToLastCell = (element, msg) => {
 	if (msg === notebookItems.value[notebookItems.value.length - 1]) {
-		element.scrollIntoView(false);
+		element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 	}
 };
 

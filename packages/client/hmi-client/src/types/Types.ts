@@ -223,6 +223,19 @@ export interface DatasetLocation {
     mappings?: any;
 }
 
+export interface EnsembleModelConfigs {
+    id: string;
+    solutionMappings: { [index: string]: string };
+    weight: number;
+}
+
+export interface EnsembleSimulationCiemssRequest {
+    modelConfigs: EnsembleModelConfigs[];
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+}
+
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;

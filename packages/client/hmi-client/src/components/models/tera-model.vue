@@ -502,7 +502,6 @@
 					:show-kernels="false"
 					:show-chat-thoughts="false"
 				/>
-				<!-- @is-typing="updateScroll" -->
 			</Suspense>
 		</template>
 		<Teleport to="body">

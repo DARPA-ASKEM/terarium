@@ -19,7 +19,8 @@
 				/>
 			</span>
 			<Button
-				class="stratify-button"
+				v-if="stratifyView === StratifyView.Input"
+				class="stratify-button p-button-sm"
 				label="Stratify"
 				icon="pi pi-arrow-right"
 				iconPos="right"
@@ -130,17 +131,52 @@
 				</div>
 			</section>
 		</section>
-		<section class="step-1" v-else-if="stratifyView === StratifyView.Output">
+		<section class="output" v-else-if="stratifyView === StratifyView.Output">
 			<div>If this is not what you expected, go back to the input page to make changes.</div>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Stratified model">
-					<div class="step-1-inner"></div>
+					<tera-stratify-output-model-diagram v-if="stratifiedModel" :model="stratifiedModel" />
 				</AccordionTab>
 				<AccordionTab header="Strata model">
-					<div class="step-1-inner"></div>
+					<tera-strata-model-diagram
+						v-if="typedStrataModel"
+						:strata-model="typedStrataModel"
+						:show-reflexives-toolbar="false"
+					/>
 				</AccordionTab>
 			</Accordion>
-			<div>Saved as: {{ stratify_output.name }}</div>
+			<div>
+				Saved as:
+				<Button
+					class=".p-button-link"
+					:label="stratifiedModel?.name"
+					icon="pi pi-pencil"
+					iconPos="right"
+					text
+					@click="
+						emit('open-asset', {
+							assetName: `${stratifiedModel?.name}`,
+							pageType: ProjectAssetTypes.MODELS,
+							assetId: stratifiedModel?.id
+						})
+					"
+				/>
+			</div>
+			<div class="add-model-config">
+				<Button
+					class="p-button-sm"
+					label="Add configure model to the workflow"
+					icon="pi pi-plus"
+					@click="
+						workflowEventBus.emit('add-node', {
+							workflowId: node.workflowId,
+							operation: ModelOperation,
+							position: { x: node.x, y: node.y + node.height + 8 },
+							state: { modelId: stratifiedModel?.id }
+						})
+					"
+				/>
+			</div>
 		</section>
 	</main>
 </template>
@@ -160,19 +196,24 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { stratify_output } from '@/temp/models/stratify_output';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import useResourcesStore from '@/stores/resources';
+import { ProjectAssetTypes } from '@/types/Project';
+import { workflowEventBus } from '@/services/workflow';
+import { ModelOperation } from '@/components/workflow/model-operation';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+import TeraStratifyOutputModelDiagram from '../models/tera-stratify-output-model-diagram.vue';
 
 const resourceStore = useResourcesStore();
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['open-asset', 'add-model-config']);
 
 enum StratifyView {
 	Input,
@@ -188,8 +229,9 @@ const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
 	() => strataModel.value?.semantics?.typing?.system
 );
-const typedBaseModel = ref<Model | null>(null);
+const typedBaseModel = ref<Model>();
 const typedStrataModel = ref<Model | null>(null);
+const stratifiedModel = ref<Model>();
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -212,12 +254,16 @@ async function doStratify() {
 			amr.semantics.span = _.cloneDeep(amrBase.semantics?.span);
 			amr.semantics.typing = _.cloneDeep(amrBase.semantics?.typing);
 		}
-
+		stratifiedModel.value = amr;
 		// Create model and asssociate
 		const response = await createModel(amr);
+		if (response) {
+			stratifiedModel.value.id = response.id;
+		}
 		const newModelId = response?.id;
 		const projectId = resourceStore.activeProject?.id as string;
 		await addAsset(projectId, 'models', newModelId);
+		stratifyView.value = StratifyView.Output;
 	}
 }
 
@@ -342,5 +388,30 @@ section {
 
 .stratify-button {
 	margin-left: auto;
+}
+
+.output {
+	padding-left: 0.5rem;
+}
+
+.output div:not(.p-accordion) {
+	padding-left: 0.5rem;
+}
+
+:deep(.p-accordion .p-accordion-content) {
+	padding: 0.5rem;
+}
+
+.saved-model-name {
+	color: var(--text-color-primary);
+	text-decoration: underline;
+}
+
+.p-button.p-button-text {
+	padding: 0;
+}
+
+.add-model-config {
+	display: flex;
 }
 </style>

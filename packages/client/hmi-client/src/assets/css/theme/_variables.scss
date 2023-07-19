@@ -14,7 +14,7 @@ $colors: (
 
 $emphasis-high: rgba(16, 24, 40, 1) !default;
 $emphasis-medium: rgba(0, 0, 0, .60) !default;
-$emphasis-low: rgba(102, 112, 133, 1) !default;
+$emphasis-low: var(--surface-border) !default;
 $emphasis-lower: rgba(208, 213, 221, 1) !default;
 $overlayColor: #000000 !default;
 
