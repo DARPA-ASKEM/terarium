@@ -132,6 +132,6 @@ public class ExtractionResource {
 		@PathParam("dataset_id") String datasetId,
 		@QueryParam("artifact_id") String artifactId
 	) {
-		return extractionProxy.postProfileDataset(datasetId, documentText);
+		return extractionProxy.postProfileDataset(datasetId, artifactId);
 	};
 }
