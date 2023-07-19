@@ -4,19 +4,28 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { ChartConfig } from '@/types/SimulateConfig';
 import { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
-export interface SimulateEnsembleCiemssOperationState {
+export interface EnsembleCalibrateExtraCiemss {
+	numSamples: number;
+	totalPopulation: number;
+	numIterations: number;
+}
+
+export interface CalibrateEnsembleCiemssOperationState {
 	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
-	numSamples: number;
+	extra: EnsembleCalibrateExtraCiemss;
 }
 
-export const SimulateEnsembleCiemssOperation: Operation = {
-	name: WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS,
+export const CalibrateEnsembleCiemssOperation: Operation = {
+	name: WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS,
 	displayName: 'Simulate ensemble (probabilistic)',
 	description: '',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
+	inputs: [
+		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true },
+		{ type: 'datasetId', label: 'Dataset' }
+	],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 
@@ -27,12 +36,16 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	},
 
 	initState: () => {
-		const init: SimulateEnsembleCiemssOperationState = {
+		const init: CalibrateEnsembleCiemssOperationState = {
 			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
-			numSamples: 40
+			extra: {
+				numSamples: 50,
+				totalPopulation: 1000,
+				numIterations: 10
+			}
 		};
 		return init;
 	}
