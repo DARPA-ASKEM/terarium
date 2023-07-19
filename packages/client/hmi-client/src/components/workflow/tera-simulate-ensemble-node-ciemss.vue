@@ -30,7 +30,7 @@
 			/>
 		</section>
 		<section v-else class="result-container">
-			<div class="invalid-block" v-if="props.node.statusCode === WorkflowStatus.INVALID">
+			<div class="invalid-block" v-if="node.statusCode === WorkflowStatus.INVALID">
 				<img class="image" src="@assets/svg/plants.svg" alt="" />
 				<p>Configure in side panel</p>
 			</div>
@@ -120,7 +120,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 // TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
 const addChart = () => {
 	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,

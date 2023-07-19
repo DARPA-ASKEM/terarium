@@ -176,7 +176,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { getRunResult } from '@/services/models/simulation-service';
+import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
@@ -189,7 +189,6 @@ import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import InputText from 'primevue/inputtext';
-import { csvParse } from 'd3';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { EnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
@@ -352,7 +351,7 @@ const setChartOptions = () => {
 
 const addChart = () => {
 	const state: EnsembleCiemssOperationState = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -365,8 +364,8 @@ const addChart = () => {
 const watchCompletedRunList = async () => {
 	if (!completedRunId.value) return;
 
-	const output = await getRunResult(completedRunId.value, 'simulation.csv');
-	runResults.value = csvParse(output) as any;
+	const output = await getRunResultCiemss(completedRunId.value, 'simulation.csv');
+	runResults.value = output.runResults;
 	console.log(runResults.value);
 };
 

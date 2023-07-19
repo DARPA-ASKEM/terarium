@@ -254,7 +254,7 @@ watch(
 
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
 		runResults.value = output.runResults;
-		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'visualization.json');
 	},
 	{ immediate: true }
 );
