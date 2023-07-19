@@ -65,16 +65,16 @@
 			<AccordionTab header="Extras">
 				<div class="extras w-full">
 					<div class="flex flex-column gap-2 w-full">
-						<label class="extras-label" for="numSamples">Samples</label>
+						<label class="extras-label" for="numSamples">Number of samples</label>
 						<InputNumber id="numSamples" v-model="numSamples"></InputNumber>
 					</div>
 					<div class="flex flex-column gap-2 w-full">
-						<label class="extras-label" for="numIterations">Iterations</label>
+						<label class="extras-label" for="numIterations">Number of solver iterations</label>
 						<InputNumber id="numIterations" v-model="numIterations"></InputNumber>
 					</div>
 				</div>
 				<div class="flex flex-column gap-2 w-full">
-					<label class="extras-label" for="method">Method</label>
+					<label class="extras-label" for="method">Solver method</label>
 					<Dropdown id="method" :options="ciemssMethodOptions" v-model="method" />
 				</div>
 			</AccordionTab>
