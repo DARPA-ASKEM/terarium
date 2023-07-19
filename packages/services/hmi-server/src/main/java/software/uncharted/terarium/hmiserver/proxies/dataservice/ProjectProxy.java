@@ -6,6 +6,7 @@ import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -71,6 +72,15 @@ public interface ProjectProxy {
 	Response createAsset(
 		@PathParam("project_id") String projectId,
 		@PathParam("resource_type") String type, // ResourceType
+		@PathParam("resource_id") String resourceId
+	);
+
+	@POST
+	@Path("/{id}/assets/{resource_type}/{resource_id}")
+	@LogRestClientTime
+	Response createAsset(
+		@PathParam("id") String id,
+		@PathParam("resource_type") ResourceType.Type type,
 		@PathParam("resource_id") String resourceId
 	);
 
