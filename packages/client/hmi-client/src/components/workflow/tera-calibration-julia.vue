@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate'" is-editable stretch-content>
+	<tera-asset :name="'Calibrate (deterministic)'" is-editable stretch-content>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button

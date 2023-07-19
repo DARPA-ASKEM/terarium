@@ -1,23 +1,25 @@
 <template>
 	<section class="tera-simulate">
-		<div class="simulate-header p-buttonset">
-			<Button
-				label="Input"
-				severity="secondary"
-				icon="pi pi-sign-in"
-				size="small"
-				:active="activeTab === SimulateTabs.input"
-				@click="activeTab = SimulateTabs.input"
-			/>
-			<Button
-				label="Ouput"
-				severity="secondary"
-				icon="pi pi-sign-out"
-				size="small"
-				:active="activeTab === SimulateTabs.output"
-				@click="activeTab = SimulateTabs.output"
-			/>
+		<div class="simulate-header">
 			<span class="simulate-header-label">Simulate (deterministic)</span>
+			<div class="simulate-header p-buttonset">
+				<Button
+					label="Input"
+					severity="secondary"
+					icon="pi pi-sign-in"
+					size="small"
+					:active="activeTab === SimulateTabs.input"
+					@click="activeTab = SimulateTabs.input"
+				/>
+				<Button
+					label="Ouput"
+					severity="secondary"
+					icon="pi pi-sign-out"
+					size="small"
+					:active="activeTab === SimulateTabs.output"
+					@click="activeTab = SimulateTabs.output"
+				/>
+			</div>
 		</div>
 		<div
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
@@ -55,7 +57,7 @@
 						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
-						<template #header> Simulation Time Range </template>
+						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
 							<!--
 							<div class="sim-tspan-group">
@@ -218,15 +220,15 @@ onMounted(async () => {
 
 .simulate-header {
 	display: flex;
-	margin: 1em;
+	margin: 0.5rem;
 }
 
 .simulate-header-label {
 	display: flex;
 	align-items: center;
-	margin: 0 1em;
-	font-weight: 700;
-	font-size: 1.75em;
+	font-weight: var(--font-weight-semibold);
+	font-size: 20px;
+	margin-right: 1rem;
 }
 
 .simulate-container {
