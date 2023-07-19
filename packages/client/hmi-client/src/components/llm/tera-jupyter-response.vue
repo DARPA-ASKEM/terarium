@@ -24,7 +24,7 @@
 					</div>
 					<div v-if="props.isExecutingCode">Executing....</div>
 				</section>
-				<div v-for="(m, index) in msg.messages" :key="index">
+				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_response type -->
 					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
 						<div class="llm-response">{{ m.content['chatty_response'] }}</div>
