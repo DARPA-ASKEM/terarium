@@ -687,7 +687,12 @@ ul {
 	padding: 0.375rem 1rem;
 }
 :deep(.p-datatable .p-datatable-thead > tr > th) {
-	background: var(--gray-300);
+	background: var(--gray-100);
+	padding: 1rem;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+	padding: 0.5rem 1rem;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th:first-child .p-column-header-content) {
