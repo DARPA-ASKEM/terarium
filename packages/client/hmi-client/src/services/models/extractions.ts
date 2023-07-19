@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Model } from '@/types/Types';
+import { Artifact, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -91,9 +91,18 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 
 /**
  * Transform a source code to an AMR
- * @param sourceCode string - source code representing a model
- * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
- *
+ * @param artifactId Artifact.id - the artifact id to extract
+ * @param name [Model.name] - the name to give to the extracted model
+ * @param description [Model.description] - the description to give to the extracted model
+ * @return {Promise<Model | null>}
  */
+const codeToAMR = async (
+	artifactId: Artifact['id'],
+	name: Model['name'],
+	description: Model['description']
+): Promise<Model | null> => {
+	console.log({ artifactId, name, description });
+	return API.post(`/extract/code-to-amr`, { artifactId, name, description });
+};
 
-export { mathmlToAMR, latexToAMR };
+export { mathmlToAMR, latexToAMR, codeToAMR };

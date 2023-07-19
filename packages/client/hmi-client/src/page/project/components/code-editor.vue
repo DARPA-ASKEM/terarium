@@ -72,7 +72,6 @@ import { PDFExtractionResponseType } from '@/types/common';
 import { getDocumentDoi } from '@/utils/data-util';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import {
-	codeToAcset,
 	findVarsFromText,
 	FindVarsFromTextResponseType,
 	getlinkedAnnotations
@@ -83,6 +82,7 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject } from '@/services/model';
 import * as EventService from '@/services/event';
+import { codeToAMR } from '@/services/models/extractions';
 
 const props = defineProps({
 	project: {
@@ -164,7 +164,7 @@ async function onFileOpen(event) {
  */
 async function onExtractModel() {
 	isExtractModelLoading.value = true;
-	const response = await codeToAcset(selectedText.value);
+	const response = await codeToAMR(selectedText.value);
 
 	EventService.create(EventType.ExtractModel, useResourcesStore().activeProject?.id);
 
