@@ -14,7 +14,7 @@ export interface EnsembleCiemssOperationState {
 
 export const EnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.ENSEMBLE_CIEMSS,
-	displayName: 'Simulate ensemble (deterministic)',
+	displayName: 'Simulate ensemble (probabilistic)',
 	description: '',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
 	outputs: [{ type: 'number' }],
