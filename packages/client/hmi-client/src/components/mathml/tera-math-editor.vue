@@ -16,11 +16,7 @@
 					@click="isEditingEq ? (isEditingEquation = true) : null"
 					@focus="showKeyboard"
 					@blur="hideKeyboard"
-					@keyup="
-						latexTextInput = mathLiveField?.getValue('latex-unstyled')
-							? mathLiveField?.getValue('latex-unstyled')
-							: ''
-					"
+					@keyup="updateEquationMathField"
 				>
 				</math-field>
 				<section class="menu">
@@ -46,7 +42,7 @@
 						type="text"
 						aria-label="latexInput"
 						:unstyled="true"
-						@keyup="updateEquation"
+						@keyup="updateEquationLatex"
 						@click="isEditingEq ? (isEditingEquation = true) : null"
 					/>
 				</section>
@@ -75,6 +71,7 @@
 						class="control-button"
 						label="Save"
 						aria-label="Save"
+						:disabled="props.id === '' && showMetadata"
 						@click="isEditingEquation = false"
 					></Button>
 					<Button
@@ -134,11 +131,11 @@ const props = defineProps({
 	},
 	id: {
 		type: String,
-		default: 'New Id'
+		default: ''
 	},
 	name: {
 		type: String,
-		default: 'Name'
+		default: ''
 	},
 	showMetadata: {
 		type: Boolean,
@@ -189,7 +186,14 @@ const mathFieldStyle = computed(() => {
 	return props.isEditingEq ? `mathlive-equation editing` : `mathlive-equation`;
 });
 
-const updateEquation = () => {
+const updateEquationMathField = () => {
+	latexTextInput.value = mathLiveField.value?.getValue('latex-unstyled')
+		? mathLiveField.value?.getValue('latex-unstyled')
+		: '';
+	updateEquationLatex();
+};
+
+const updateEquationLatex = () => {
 	emit(
 		'equation-updated',
 		props.index,
@@ -218,6 +222,8 @@ watch(
 		if (props.latexEquation === '') {
 			isEditingEquation.value = true;
 		}
+		name.value = props.name;
+		id.value = props.id;
 		renderEquations();
 	}
 );

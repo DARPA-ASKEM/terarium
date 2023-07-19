@@ -97,17 +97,17 @@
 							v-if="isEditingEQ"
 							class="p-button-sm add-equation-button"
 							icon="pi pi-plus"
-							label="Add Equation"
+							label="Add equation"
 							@click="latexEquationList.push('')"
 							text
 						/>
 					</section>
 				</TeraResizablePanel>
 			</AccordionTab>
-			<AccordionTab header="Model Observables">
+			<AccordionTab header="Model observables">
 				<TeraResizablePanel
 					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
-					:start-height="200"
+					:start-height="300"
 				>
 					<section class="controls">
 						<span v-if="props.isEditable" class="equation-edit-button">
@@ -118,9 +118,9 @@
 								class="p-button-sm p-button-outlined edit-button"
 							/>
 							<Button
-								v-if="observervablesList.length !== 0"
 								@click="updateObservables"
 								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
+								:disabled="disableSaveObservable"
 								:class="
 									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
 								"
@@ -147,7 +147,7 @@
 							v-if="observablesList.length === 0 || isEditingObservables"
 							class="p-button-sm add-equation-button"
 							icon="pi pi-plus"
-							label="Add Observable"
+							label="Add observable"
 							@click="addObservable"
 							text
 						/>
@@ -183,6 +183,7 @@
 						:is-editing-eq="true"
 						:latex-equation="editNodeObj.expression"
 						@equation-updated="updateRateEquation"
+						ref="editNodeMathEditor"
 					>
 					</tera-math-editor>
 				</div>
@@ -198,7 +199,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
-import { cloneDeep } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -206,8 +206,14 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
+import {
+	NestedPetrinetRenderer,
+	extractNestedMap
+} from '@/model-representation/petrinet/nested-petrinet-renderer';
+
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
+	isStratifiedAMR,
 	convertAMRToACSet,
 	convertToIGraph,
 	updateExistingModelContent
@@ -217,6 +223,7 @@ import { updateModel } from '@/services/model';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import { cleanLatexEquations, extractVariablesFromMathML, EquationSide } from '@/utils/math';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Toolbar from 'primevue/toolbar';
@@ -260,10 +267,18 @@ interface AddStateObj {
 	name: string;
 	nodeType: string;
 	expression: string;
+	expression_mathml?: string;
 }
 
 const openEditNode = ref<boolean>(false);
-const editNodeObj = ref<AddStateObj>({ id: '', name: '', nodeType: '', expression: '' });
+const editNodeMathEditor = ref<typeof TeraMathEditor | null>(null);
+const editNodeObj = ref<AddStateObj>({
+	id: '',
+	name: '',
+	nodeType: '',
+	expression: '',
+	expression_mathml: ''
+});
 let previousId: any = null;
 
 const addObservable = () => {
@@ -314,16 +329,11 @@ const deleteObservable = (index) => {
 	observervablesList.value.splice(index, 1);
 };
 
-const setNewObservables = (
-	index: number,
-	latexEq: string,
-	mathmlEq: string,
-	name: string,
-	id: string
-) => {
+const setNewObservables = (index: number, latexEq: string, mathmlEq: string) => {
+	const id = extractVariablesFromMathML(mathmlEq, EquationSide.Left).join('_');
 	const obs: Observable = {
 		id,
-		name,
+		name: id,
 		states: [],
 		expression: latexEq,
 		expression_mathml: mathmlEq
@@ -332,8 +342,22 @@ const setNewObservables = (
 	emit('update-model-observables', observervablesList.value);
 };
 
-const updateRateEquation = (_index: number, latexEquation: string) => {
+const disableSaveObservable = computed(() => {
+	const numEmptyObjservables = observervablesList.value.filter((ob) => ob.id === '').length;
+	if (observervablesList.value.length > 0 && numEmptyObjservables === 0) {
+		return false;
+	}
+	if (numEmptyObjservables > 0) {
+		return true;
+	}
+
+	return false;
+});
+
+// Updates the transition equations
+const updateRateEquation = (_index: number, latexEquation: string, mathml: string) => {
 	editNodeObj.value.expression = latexEquation;
+	editNodeObj.value.expression_mathml = mathml;
 };
 
 const cancelEditEquations = () => {
@@ -352,40 +376,19 @@ const cancelEditObservables = () => {
 	});
 };
 
-function extractVariablesFromMathML(mathML: string): string[] {
-	const parser = new DOMParser();
-	const xmlDoc = parser.parseFromString(mathML, 'text/xml');
-
-	const variables: string[] = [];
-
-	const miElements = xmlDoc.getElementsByTagName('mi');
-	for (let i = 0; i < miElements.length; i++) {
-		const miElement = miElements[i];
-		const variable = miElement.textContent?.trim();
-		if (variable) {
-			variables.push(variable);
-		}
-	}
-
-	return variables;
-}
-
 const updateObservables = () => {
 	if (isEditingObservables.value) {
 		isEditingObservables.value = false;
 		// update
 		emit(
 			'update-model-observables',
-			observablesRefs.value.map((eq, index) => {
-				console.log(eq);
-				return {
-					id: eq.id || observablesRefs.value[index].id,
-					name: eq.name || observablesRefs.value[index].name,
-					expression: eq.mathLiveField.value,
-					expression_mathml: eq.mathLiveField.getValue('math-ml'),
-					states: extractVariablesFromMathML(eq.mathLiveField.getValue('math-ml'))
-				};
-			})
+			observablesRefs.value.map((eq) => ({
+				id: eq.target.id,
+				name: eq.target.name,
+				expression: eq.target.mathLiveField.value,
+				expression_mathml: eq.target.mathLiveField.getValue('math-ml'),
+				states: extractVariablesFromMathML(eq.target.mathLiveField.getValue('math-ml'))
+			}))
 		);
 		observablesRefs.value.forEach((eq) => {
 			eq.isEditingEquation = false;
@@ -407,22 +410,6 @@ const updateLatexFormula = (equationsList: string[]) => {
 	if (latexEquationsOriginalList.value.length === 0)
 		latexEquationsOriginalList.value = equationsList.map((eq) => eq);
 };
-
-const cleanLatexEquations = (equations: Array<string>): Array<string> =>
-	cloneDeep(equations)
-		.filter((equation) => equation !== '')
-		.map((equation) =>
-			equation
-				// Refactor to make those replaceAll one regex change
-				.replaceAll('\\begin', '')
-				.replaceAll('\\end', '')
-				.replaceAll('\\mathrm', '')
-				.replaceAll('\\right', '')
-				.replaceAll('\\left', '')
-				.replaceAll('{align}', '')
-				.replaceAll('=&', '=')
-				.trim()
-		);
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -475,36 +462,55 @@ const contextMenuItems = ref([
 	}
 ]);
 
+const convertToIGraphHelper = (amr: Model) => {
+	if (isStratifiedAMR(amr)) {
+		// FIXME: wont' work for MIRA
+		return convertToIGraph(props.model?.semantics?.span?.[0].system);
+	}
+	return convertToIGraph(amr);
+};
+
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
 	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
 
 		// Create renderer
-		renderer = new PetrinetRenderer({
-			el: graphElement.value as HTMLDivElement,
-			useAStarRouting: false,
-			useStableZoomPan: true,
-			runLayout: runDagreLayout,
-			dragSelector: 'no-drag'
-		});
+		if (isStratifiedAMR(props.model)) {
+			renderer = new NestedPetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dragSelector: 'no-drag',
+				nestedMap: extractNestedMap(props.model)
+			});
+		} else {
+			renderer = new PetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dragSelector: 'no-drag'
+			});
+		}
 
-		renderer.on('node-dbl-click', (_eventName, _event, selection) => {
-			const data = selection.datum();
-			const rate = props.model?.semantics?.ode.rates.find((d) => d.target === data.id);
-
-			// Find The EQ here.
-			editNodeObj.value = {
-				id: data.id,
-				name: data.label,
-				nodeType: data.data.type,
-				expression: rate?.expression ? rate.expression : ''
-			};
-			previousId = data.id;
-			openEditNode.value = true;
+		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
+			if (isEditing.value === true) {
+				const data = selection.datum();
+				const rate = thisRenderer.graph.amr.semantics?.ode?.rates.find((d) => d.target === data.id);
+				editNodeObj.value = {
+					id: data.id,
+					name: data.label,
+					nodeType: data.data.type,
+					expression: rate?.expression ? rate.expression : ''
+				};
+				previousId = data.id;
+				openEditNode.value = true;
+			}
 		});
 
 		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
@@ -545,7 +551,7 @@ watch(
 
 const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(model);
+	const graphData = convertToIGraphHelper(model);
 
 	if (renderer) {
 		await renderer.setData(graphData);
@@ -606,19 +612,31 @@ const resetZoom = async () => {
 };
 
 const prepareStateEdit = () => {
-	editNodeObj.value = { id: '', name: '', nodeType: NodeType.State, expression: '' };
+	editNodeObj.value = {
+		id: '',
+		name: '',
+		nodeType: NodeType.State,
+		expression: '',
+		expression_mathml: ''
+	};
 	openEditNode.value = true;
 };
 
 const prepareTransitionEdit = () => {
-	editNodeObj.value = { id: '', name: '', nodeType: NodeType.Transition, expression: '' };
+	editNodeObj.value = {
+		id: '',
+		name: '',
+		nodeType: NodeType.Transition,
+		expression: '',
+		expression_mathml: ''
+	};
 	openEditNode.value = true;
 };
 
 const addNode = async () => {
 	if (!renderer) return;
-
 	const node = editNodeObj.value;
+	node.expression_mathml = editNodeMathEditor.value?.mathLiveField.getValue('math-ml');
 
 	if (!previousId) {
 		if (eventX && eventY) {
@@ -780,10 +798,9 @@ section math-editor {
 }
 
 .add-equation-button {
-	width: 150px;
-	min-height: 30px;
-	margin-left: 5px;
-	margin-top: 5px;
+	width: 10rem;
+	margin-left: 1rem;
+	margin-top: 0.5rem;
 	border: none;
 	outline: none;
 }
