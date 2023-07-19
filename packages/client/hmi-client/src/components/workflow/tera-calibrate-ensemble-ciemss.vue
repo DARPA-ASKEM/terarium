@@ -152,7 +152,12 @@
 						</table>
 					</template>
 
-					<InputText v-model="newSolutionMappingKey" placeholder="Variable Name" />
+					<Dropdown
+						style="width: 50%"
+						v-model="newSolutionMappingKey"
+						:options="datasetColumnNames"
+						placeholder="Variable Name"
+					/>
 					<Button
 						class="p-button-sm p-button-outlined"
 						icon="pi pi-plus"
@@ -167,12 +172,16 @@
 							<th>Start Step</th>
 							<th>End Step</th>
 							<th>Number of Samples</th>
+							<th>Number of iterations</th>
+							<th>Total Population</th>
 						</thead>
 						<tbody class="p-datatable-tbody">
 							<td>Steps</td>
 							<td><InputNumber v-model="timeSpan.start" /></td>
 							<td><InputNumber v-model="timeSpan.end" /></td>
-							<td><InputNumber v-model="numSamples" /></td>
+							<td><InputNumber v-model="extra.numSamples" /></td>
+							<td><InputNumber v-model="extra.numIterations" /></td>
+							<td><InputNumber v-model="extra.totalPopulation" /></td>
 						</tbody>
 					</table>
 				</AccordionTab>
@@ -196,14 +205,17 @@ import { ModelConfiguration, TimeSpan, EnsembleModelConfigs } from '@/types/Type
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import useResourcesStore from '@/stores/resources';
 import * as ProjectService from '@/services/project';
 import { IProject } from '@/types/Project';
+import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import {
+	CalibrateEnsembleCiemssOperationState,
+	EnsembleCalibrateExtraCiemss
+} from './calibrate-ensemble-ciemss-operation';
 
 const dataLabelPlugin = [ChartDataLabels];
 
@@ -228,6 +240,10 @@ const MINBARLENGTH = 1;
 
 const activeTab = ref(EnsembleTabs.input);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
+const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
+const currentDatasetFileName = ref<string>();
+const datasetColumnNames = ref<string[]>();
+
 const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
@@ -236,7 +252,8 @@ const allModelOptions = ref<string[][]>([]);
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
-const numSamples = ref<number>(props.node.state.numSamples);
+const extra = ref<EnsembleCalibrateExtraCiemss>(props.node.state.extra);
+
 const completedRunId = computed<string>(
 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 );
@@ -250,7 +267,7 @@ const renderedRuns = ref<RunResults>({});
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -306,7 +323,7 @@ function addMapping() {
 		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
 	}
 
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -375,7 +392,7 @@ const setChartOptions = () => {
 };
 
 const addChart = () => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -392,6 +409,16 @@ const watchCompletedRunList = async () => {
 	const output = await getRunResultCiemss(completedRunId.value, 'simulation.csv');
 	runResults.value = output.runResults;
 };
+
+watch(
+	() => datasetId.value,
+	async () => {
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		currentDatasetFileName.value = filename;
+		datasetColumnNames.value = csv?.headers;
+	},
+	{ immediate: true }
+);
 
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
@@ -428,7 +455,7 @@ watch(
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -443,7 +470,7 @@ watch(
 watch(
 	() => timeSpan.value,
 	async () => {
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.timeSpan = timeSpan.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -456,10 +483,10 @@ watch(
 );
 
 watch(
-	() => numSamples.value,
+	() => extra.value,
 	async () => {
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
-		state.numSamples = numSamples.value;
+		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		state.extra = extra.value;
 
 		workflowEventBus.emitNodeStateChange({
 			workflowId: props.node.workflowId,

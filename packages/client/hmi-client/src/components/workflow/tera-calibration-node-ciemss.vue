@@ -65,16 +65,16 @@
 			<AccordionTab header="Extras">
 				<div class="extras w-full">
 					<div class="flex flex-column gap-2 w-full">
-						<label class="extras-label" for="numSamples">Samples</label>
+						<label class="extras-label" for="numSamples">Number of samples</label>
 						<InputNumber id="numSamples" v-model="numSamples"></InputNumber>
 					</div>
 					<div class="flex flex-column gap-2 w-full">
-						<label class="extras-label" for="numIterations">Iterations</label>
+						<label class="extras-label" for="numIterations">Number of solver iterations</label>
 						<InputNumber id="numIterations" v-model="numIterations"></InputNumber>
 					</div>
 				</div>
 				<div class="flex flex-column gap-2 w-full">
-					<label class="extras-label" for="method">Method</label>
+					<label class="extras-label" for="method">Solver method</label>
 					<Dropdown id="method" :options="ciemssMethodOptions" v-model="method" />
 				</div>
 			</AccordionTab>
@@ -117,7 +117,7 @@ import {
 	getSimulation,
 	getRunResultCiemss
 } from '@/services/models/simulation-service';
-import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
+import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
@@ -190,6 +190,8 @@ const runCalibrate = async () => {
 	const initialsObj = {};
 	const paramsObj = {};
 
+	const state = props.node.state;
+
 	initials.forEach((d) => {
 		initialsObj[d] = Math.random() * 100;
 	});
@@ -210,8 +212,8 @@ const runCalibrate = async () => {
 			method: method.value
 		},
 		timespan: {
-			start: 0,
-			end: 90
+			start: state.timeSpan.start,
+			end: state.timeSpan.end
 		},
 		engine: 'ciemss'
 	};
@@ -283,7 +285,7 @@ const addChart = () => {
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -297,7 +299,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
