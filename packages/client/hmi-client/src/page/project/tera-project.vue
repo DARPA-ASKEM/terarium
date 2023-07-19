@@ -84,6 +84,7 @@
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.ENSEMBLE_CIEMSS
 					"
 					:node="workflowNode"
+					:project="project"
 				/>
 				<tera-model-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"

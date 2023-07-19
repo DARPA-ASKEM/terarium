@@ -10,7 +10,6 @@
 	</div>
 	<section v-if="!showSpinner" class="result-container">
 		<section v-if="simulationIds">
-			<p>Output here</p>
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -138,6 +137,7 @@ const getStatus = async () => {
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
+		addChart();
 		showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
@@ -154,9 +154,7 @@ const updateOutputPorts = async (runId) => {
 	emit('append-output-port', {
 		type: EnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
-		value: {
-			runId
-		}
+		value: { runId }
 	});
 };
 
@@ -178,7 +176,6 @@ watch(
 	() => modelConfigIds.value,
 	async () => {
 		if (modelConfigIds.value) {
-			console.log(modelConfigIds.value);
 			const mapping: EnsembleModelConfigs[] = [];
 			// Init ensemble Configs:
 			for (let i = 0; i < modelConfigIds.value.length; i++) {

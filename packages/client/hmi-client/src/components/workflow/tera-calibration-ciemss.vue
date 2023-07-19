@@ -99,7 +99,7 @@
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
-			<AccordionTab header="Calibrated parameter values">
+			<!-- <AccordionTab header="Calibrated parameter values">
 				<table class="p-datatable-table">
 					<thead class="p-datatable-thead">
 						<th>Parameter</th>
@@ -114,7 +114,7 @@
 						</td>
 					</tr>
 				</table>
-			</AccordionTab>
+			</AccordionTab> -->
 		</Accordion>
 		<section v-else-if="!modelConfig" class="emptyState">
 			<img src="@assets/svg/seed.svg" alt="" draggable="false" />

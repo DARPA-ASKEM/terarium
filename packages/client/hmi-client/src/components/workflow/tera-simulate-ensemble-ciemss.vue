@@ -20,7 +20,6 @@
 			/>
 		</div>
 		<div v-if="activeTab === EnsembleTabs.output && runResults" class="simulate-container">
-			<p>Output here</p>
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -37,6 +36,15 @@
 				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
+			/>
+			<Button
+				class="add-chart"
+				text
+				:outlined="true"
+				@click="saveDataset"
+				:disabled="true"
+				label="Save as Dataset"
+				icon="pi pi-save"
 			/>
 		</div>
 
@@ -190,13 +198,18 @@ import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { EnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
+import { IProject } from '@/types/Project';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+import { EnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
+	project: IProject;
 }>();
 
 enum EnsembleTabs {
@@ -224,7 +237,9 @@ const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
-const completedRunId = ref<string>();
+const completedRunId = computed<string>(
+	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
+);
 
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
@@ -273,6 +288,16 @@ const calculateWeights = () => {
 	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
 		customWeights.value = false;
 		console.log('TODO: Get weights from AMRs');
+	}
+};
+
+const saveDataset = async () => {
+	const simulationId = props?.node?.outputs?.[0]?.value?.[0].runId as string;
+	if (simulationId) {
+		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
+			// TODO: See about getting rid of this - this refresh should preferably be within a service
+			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		}
 	}
 };
 
