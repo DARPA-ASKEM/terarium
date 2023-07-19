@@ -689,6 +689,11 @@ ul {
 :deep(.p-datatable .p-datatable-thead > tr > th) {
 	background: var(--gray-300);
 }
+
+:deep(.p-datatable .p-datatable-thead > tr > th:first-child .p-column-header-content) {
+	justify-content: center;
+}
+
 :deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
 }
@@ -698,7 +703,7 @@ ul {
 	text-align: left;
 }
 
-:deep(.asset-button .p-button-icon-left .icon) {
+:deep(.asset-button .p-button-icon-left) {
 	overflow: visible;
 }
 
