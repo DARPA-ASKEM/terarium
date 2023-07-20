@@ -11,7 +11,7 @@
 				:xdd-uri="previewItemId"
 				:previewLineLimit="3"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:is-in-project="false"
 				@close-preview="closePreview"
 			/>
 			<tera-dataset

@@ -48,7 +48,6 @@
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			:project="project"
-			is-editable
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>

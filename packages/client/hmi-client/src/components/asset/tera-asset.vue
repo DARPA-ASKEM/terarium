@@ -73,6 +73,8 @@ defineExpose({
 	assetContainer
 });
 
+// TODO: Look into getting rid of vue rule vue/require-default-prop - don't think its necessary
+// (Booleans default to false)
 const props = defineProps({
 	name: {
 		type: String,

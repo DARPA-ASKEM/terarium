@@ -38,13 +38,14 @@
 					:active="modelView === ModelView.NOTEBOOK"
 				/>
 			</span>
-			<Button
-				v-if="isEditable"
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="toggleOptionsMenu"
-			/>
-			<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<template v-if="isEditable">
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleOptionsMenu"
+				/>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			</template>
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
@@ -605,16 +606,12 @@ const props = defineProps({
 		type: String,
 		required: true
 	},
-	isEditable: {
-		type: Boolean,
-		default: false,
-		required: false
-	},
 	highlight: {
 		type: String,
 		default: '',
 		required: false
-	}
+	},
+	isEditable: Boolean
 });
 
 const openValueConfig = ref(false);

@@ -13,15 +13,13 @@
 								/>
 							</template>
 							<template #center>
-								<span class="toolbar-subgroup">
+								<span v-if="isEditing" class="toolbar-subgroup">
 									<Button
-										v-if="isEditing"
 										@click="prepareStateEdit()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
-										v-if="isEditing"
 										@click="prepareTransitionEdit()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
@@ -29,7 +27,7 @@
 								</span>
 							</template>
 							<template #end>
-								<span class="toolbar-subgroup">
+								<span v-if="isEditable" class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
 										@click="cancelEdit"
@@ -57,28 +55,26 @@
 				<TeraResizablePanel
 					:class="isEditingEQ ? `diagram-container-editing` : `diagram-container`"
 				>
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingEQ"
-								@click="cancelEditEquations"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-								style="background-color: white"
-							/>
-							<Button
-								v-if="isEditingEQ"
-								@click="onClickUpdateModel"
-								label="Update model"
-								class="p-button-sm"
-							/>
-							<Button
-								v-else
-								@click="isEditingEQ = true"
-								label="Edit equation"
-								class="p-button-sm p-button-outlined edit-button"
-							/>
-						</span>
+					<section v-if="isEditable" class="controls">
+						<Button
+							v-if="isEditingEQ"
+							@click="cancelEditEquations"
+							label="Cancel"
+							class="p-button-sm p-button-outlined edit-button"
+							style="background-color: white"
+						/>
+						<Button
+							v-if="isEditingEQ"
+							@click="onClickUpdateModel"
+							label="Update model"
+							class="p-button-sm"
+						/>
+						<Button
+							v-else
+							@click="isEditingEQ = true"
+							label="Edit equation"
+							class="p-button-sm p-button-outlined edit-button"
+						/>
 					</section>
 					<section class="math-editor-container" :class="mathEditorSelected">
 						<tera-math-editor
@@ -109,23 +105,21 @@
 					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
 					:start-height="300"
 				>
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingObservables"
-								@click="cancelEditObservables"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-							/>
-							<Button
-								@click="updateObservables"
-								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
-								:disabled="disableSaveObservable"
-								:class="
-									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
-								"
-							/>
-						</span>
+					<section v-if="isEditable" class="controls">
+						<Button
+							v-if="isEditingObservables"
+							@click="cancelEditObservables"
+							label="Cancel"
+							class="p-button-sm p-button-outlined edit-button"
+						/>
+						<Button
+							@click="updateObservables"
+							:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
+							:disabled="disableSaveObservable"
+							:class="
+								isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
+							"
+						/>
 					</section>
 					<section class="observable-editor-container">
 						<tera-math-editor
@@ -535,9 +529,9 @@ watch(
 		// Update the latex equations
 		if (latexEquationList.value.length > 0) {
 			/* TODO
-			    	We need to remedy the fact that the equations are not being updated;
-		        A proper merging of the equations is needed with a diff UI for the user.
-		        For now, we do nothing.
+					We need to remedy the fact that the equations are not being updated;
+				A proper merging of the equations is needed with a diff UI for the user.
+				For now, we do nothing.
 			 */
 		} else {
 			const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
