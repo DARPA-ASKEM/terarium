@@ -74,12 +74,23 @@
 					<Accordion :active-index="0">
 						<AccordionTab header="Model">
 							<tera-typed-model-diagram
-								v-if="model"
+								v-if="model && !isStratifiedAMR(model)"
 								:model="model"
 								:strata-model="strataModel"
-								:show-typing-toolbar="stratifyStep === 2"
+								:show-typing-toolbar="stratifyStep === 2 && !allNodesTyped"
 								:type-system="strataModelTypeSystem"
 								@model-updated="(value) => (typedBaseModel = value)"
+								@all-nodes-typed="(value) => onAllNodesTyped(value)"
+								:show-reflexives-toolbar="stratifyStep === 3"
+							/>
+							<tera-typed-stratified-model-diagram
+								v-else-if="model && isStratifiedAMR(model)"
+								:model="model"
+								:strata-model="strataModel"
+								:show-typing-toolbar="stratifyStep === 2 && !allNodesTyped"
+								:type-system="strataModelTypeSystem"
+								@model-updated="(value) => (typedBaseModel = value)"
+								@all-nodes-typed="(value) => onAllNodesTyped(value)"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -121,7 +132,11 @@
 								<tera-strata-model-diagram
 									:strata-model="strataModel"
 									:base-model="typedBaseModel"
-									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
+									:base-model-type-system="
+										typedBaseModel && isStratifiedAMR(typedBaseModel)
+											? typedBaseModel?.semantics?.typing?.system.model
+											: typedBaseModel?.semantics?.typing?.system
+									"
 									:show-reflexives-toolbar="stratifyStep === 3"
 									@model-updated="(value) => (typedStrataModel = value)"
 								/>
@@ -198,13 +213,14 @@ import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { addAsset } from '@/services/project';
-import { stratify } from '@/model-representation/petrinet/petrinet-service';
+import { isStratifiedAMR, stratify } from '@/model-representation/petrinet/petrinet-service';
 import useResourcesStore from '@/stores/resources';
 import { ProjectAssetTypes } from '@/types/Project';
 import { workflowEventBus } from '@/services/workflow';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+import TeraTypedStratifiedModelDiagram from '../models/tera-typed-stratified-model-diagram.vue';
 import TeraStratifyOutputModelDiagram from '../models/tera-stratify-output-model-diagram.vue';
 
 const resourceStore = useResourcesStore();
@@ -232,6 +248,12 @@ const strataModelTypeSystem = computed<TypeSystem | undefined>(
 const typedBaseModel = ref<Model>();
 const typedStrataModel = ref<Model | null>(null);
 const stratifiedModel = ref<Model>();
+const allNodesTyped = ref(false);
+
+function onAllNodesTyped(value) {
+	typedBaseModel.value = value;
+	allNodesTyped.value = true;
+}
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {

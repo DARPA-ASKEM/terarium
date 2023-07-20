@@ -1,12 +1,12 @@
 <template>
 	<main>
 		<TeraResizablePanel>
-			<div ref="splitterContainer" class="splitter-container">
+			<div class="splitter-container">
 				<section class="graph-element">
 					<tera-reflexives-toolbar
-						v-if="showReflexivesToolbar && strataModel && baseModel"
+						v-if="showReflexivesToolbar && strataModel && modelWithSimplifiedTypeSystem"
 						:model-to-update="strataModel"
-						:model-to-compare="baseModel"
+						:model-to-compare="modelWithSimplifiedTypeSystem"
 						@model-updated="
 							(value) => {
 								typedModel = value;
@@ -44,7 +44,10 @@ import {
 	NodeData,
 	EdgeData
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { convertToIGraph } from '@/model-representation/petrinet/petrinet-service';
+import {
+	cloneModelWithSimplifiedTypeSystem,
+	convertToIGraph
+} from '@/model-representation/petrinet/petrinet-service';
 import { Model, TypeSystem } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
@@ -59,9 +62,15 @@ const props = defineProps<{
 
 const emit = defineEmits(['model-updated']);
 
+/* 'tera-reflexives-toolbar' assumes both its inputs are in the "pre-stratification" format.
+	It's probably simpler to transform the inputs into that format rather than update the logic of 'tera - reflexives - toolbar'
+	to accomodate two different model formats. 'props.baseModel', may be stratified model;
+	if so, transform it into the pre-stratification format and save as 'modelWithSimplifiedTypeSystem'
+	*/
+const modelWithSimplifiedTypeSystem = computed<Model | null>(() =>
+	props.baseModel ? cloneModelWithSimplifiedTypeSystem(props.baseModel) : null
+);
 const typedModel = ref<Model>(props.strataModel); // this is the object being edited
-
-const splitterContainer = ref<HTMLElement | null>(null);
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;

@@ -455,7 +455,7 @@ export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => 
 	metadata: amrOld.metadata
 });
 
-export const modifyModelTypeSystemforStratification = (amr: Model) => {
+export const cloneModelWithExpandedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
 		const { name, description, schema, semantics } = amrCopy;
@@ -471,6 +471,14 @@ export const modifyModelTypeSystemforStratification = (amr: Model) => {
 	return amrCopy;
 };
 
+export const cloneModelWithSimplifiedTypeSystem = (amr: Model) => {
+	const amrCopy = cloneDeep(amr);
+	if (amrCopy.semantics?.typing) {
+		amrCopy.semantics.typing.system = amrCopy.semantics.typing.system.model;
+	}
+	return amrCopy;
+};
+
 function unifyModelTypeSystems(baseAMR: Model, fluxAMR: Model) {
 	// Entries in type system need to be in the same order for stratification
 	// They should contain the same state and transition entries for both baseAMR and fluxAMR, just in a different order
@@ -482,8 +490,8 @@ function unifyModelTypeSystems(baseAMR: Model, fluxAMR: Model) {
 }
 
 export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
-	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
-	const fluxModel = modifyModelTypeSystemforStratification(fluxAMR);
+	const baseModel = isStratifiedAMR(baseAMR) ? baseAMR : cloneModelWithExpandedTypeSystem(baseAMR);
+	const fluxModel = cloneModelWithExpandedTypeSystem(fluxAMR);
 	unifyModelTypeSystems(baseModel, fluxModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,

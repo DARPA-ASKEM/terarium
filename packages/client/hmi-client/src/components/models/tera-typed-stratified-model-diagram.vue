@@ -1,8 +1,17 @@
 <template>
 	<main>
 		<TeraResizablePanel>
-			<div ref="splitterContainer" class="splitter-container">
+			<div class="splitter-container">
 				<section class="graph-element">
+					<Toolbar>
+						<template #end>
+							<Button
+								@click="toggleCollapsedView"
+								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
+								class="p-button-sm p-button-outlined toolbar-button"
+							/>
+						</template>
+					</Toolbar>
 					<section v-if="showTypingToolbar" class="typingSection">
 						<div class="typing-row">
 							<div>COLOR</div>
@@ -61,14 +70,9 @@
 					</section>
 					<tera-reflexives-toolbar
 						v-if="showReflexivesToolbar && model && strataModel"
-						:model-to-update="model"
+						:model-to-update="modelWithSimplifiedTypeSystem"
 						:model-to-compare="strataModel"
-						@model-updated="
-							(value) => {
-								typedModel = value;
-								emit('model-updated', value);
-							}
-						"
+						@model-updated="onModelUpdatedWithReflexives"
 					/>
 					<section class="legend">
 						<ul>
@@ -100,7 +104,12 @@ import {
 	NodeData,
 	EdgeData
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { convertToIGraph, addTyping } from '@/model-representation/petrinet/petrinet-service';
+import {
+	convertToIGraph,
+	addTyping,
+	cloneModelWithSimplifiedTypeSystem,
+	cloneModelWithExpandedTypeSystem
+} from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
@@ -111,6 +120,8 @@ import {
 	generateTypeTransition,
 	generateTypeState
 } from '@/services/models/stratification-service';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+import Toolbar from 'primevue/toolbar';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
@@ -124,17 +135,29 @@ const props = defineProps<{
 	showReflexivesToolbar: boolean;
 }>();
 
+/* 'tera-reflexives-toolbar' assumes both its inputs are in the "pre-stratification" format.
+	It's probably simpler to transform the inputs into that format rather than update the logic of 'tera - reflexives - toolbar'
+	to accomodate two different model formats. Transform 'props.model', which is assumed to be a stratified model,
+	into the pre-stratification format and save as 'modelWithSimplifiedTypeSystem' */
+const modelWithSimplifiedTypeSystem = computed<Model>(() =>
+	cloneModelWithSimplifiedTypeSystem(props.model)
+);
 const typedModel = ref<Model>(props.model);
-
-const splitterContainer = ref<HTMLElement | null>(null);
+function onModelUpdatedWithReflexives(value) {
+	typedModel.value = cloneModelWithExpandedTypeSystem(value);
+	emit('model-updated', typedModel.value);
+}
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const stateTypes = computed(() => props.model.semantics?.typing?.system?.states.map((s) => s.name));
-const transitionTypes = computed(() =>
-	props.model.semantics?.typing?.system?.transitions.map((t) => t.properties?.name)
+const stateTypes = computed(() =>
+	props.model.semantics?.typing?.system?.model.states.map((s) => s.name)
 );
+const transitionTypes = computed(() =>
+	props.model.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name)
+);
+
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
 	{
@@ -143,14 +166,12 @@ const typedRows = ref<
 		assignTo?: string[];
 	}[]
 >([]);
-
+// 'typedRows.typeName' is assigned the value of 'typeNameBuffer' when the user focuses away from the associated 'InputText'
 let typeNameBuffer: string[] = [];
-
 const numberNodes = computed(
 	() => typedModel.value.model.states.length + typedModel.value.model.transitions.length
 );
 const numberTypedRows = computed(() => typedModel.value.semantics?.typing?.map.length ?? 0);
-
 // TODO: don't allow user to assign a variable or transition twice
 const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	const options: { [s: string]: string[] }[] = [];
@@ -240,7 +261,15 @@ watch(
 	() => {
 		const stateTypedMap: string[][] = [];
 		const transitionTypedMap: string[][] = [];
-		const updatedTypeSystem: TypeSystem = { states: [], transitions: [] };
+		const { name, description, schema } = typedModel.value;
+		const typeSystem: TypeSystem = { states: [], transitions: [] };
+		const updatedTypeSystem = {
+			name,
+			description,
+			schema,
+			model_version: typedModel.value.model_version,
+			model: typeSystem
+		};
 		let typingSemantics: TypingSemantics;
 		typedRows.value.forEach((row) =>
 			row.assignTo?.forEach((parameter) => {
@@ -263,13 +292,13 @@ watch(
 			let state: State | undefined | null;
 			state =
 				props.typeSystem?.states.find((s) => typeId === s.id) ||
-				typedModel.value.semantics?.typing?.system.states.find((s) => typeId === s.id);
-			if (state && !updatedTypeSystem.states.find((s) => s.id === state!.id)) {
-				updatedTypeSystem.states.push(state);
-			} else if (!updatedTypeSystem.states.find((s) => s.id === typeId)) {
+				typedModel.value.semantics?.typing?.system.model.states.find((s) => typeId === s.id);
+			if (state && !updatedTypeSystem.model.states.find((s) => s.id === state!.id)) {
+				updatedTypeSystem.model.states.push(state);
+			} else if (!updatedTypeSystem.model.states.find((s) => s.id === typeId)) {
 				state = generateTypeState(typedModel.value, stateId, typeId);
 				if (state) {
-					updatedTypeSystem.states.push(state);
+					updatedTypeSystem.model.states.push(state);
 				}
 			}
 		});
@@ -288,12 +317,12 @@ watch(
 			transition =
 				props.typeSystem?.transitions.find((t) => map[1] === t.id) ||
 				typedModel.value.semantics?.typing?.system.transitions.find((t) => typeId === t.id);
-			if (transition && !updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
-				updatedTypeSystem.transitions.push(transition);
-			} else if (!updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
+			if (transition && !updatedTypeSystem.model.transitions.find((t) => t.id === typeId)) {
+				updatedTypeSystem.model.transitions.push(transition);
+			} else if (!updatedTypeSystem.model.transitions.find((t) => t.id === typeId)) {
 				transition = generateTypeTransition(typedModel.value, transitionId, typeId);
 				if (transition) {
-					updatedTypeSystem.transitions.push(transition);
+					updatedTypeSystem.model.transitions.push(transition);
 				}
 			}
 		});
@@ -306,11 +335,30 @@ watch(
 	{ deep: true }
 );
 
-watch(numberTypedRows, () => {
-	if (numberTypedRows.value === numberNodes.value) {
-		emit('all-nodes-typed', typedModel.value);
+watch(
+	numberTypedRows,
+	() => {
+		if (numberTypedRows.value === numberNodes.value) {
+			emit('all-nodes-typed', typedModel.value);
+		}
+	},
+	{ immediate: true }
+);
+
+const isCollapsed = ref(true);
+
+async function toggleCollapsedView() {
+	isCollapsed.value = !isCollapsed.value;
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
+		isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
+	);
+	// Render graph
+	if (renderer) {
+		renderer.isGraphDirty = true;
+		await renderer.setData(graphData);
+		await renderer.render();
 	}
-});
+}
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
@@ -318,16 +366,28 @@ watch(
 	[() => typedModel, graphElement],
 	async () => {
 		if (typedModel.value === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(typedModel.value);
-
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
+			isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
+		);
+		const nestedMap = props.model.semantics?.span?.[0].map.reduce(
+			(childMap, [stratNode, baseNode]) => {
+				if (!childMap[baseNode]) {
+					childMap[baseNode] = [];
+				}
+				childMap[baseNode].push(stratNode);
+				return childMap;
+			},
+			{}
+		);
 		// Create renderer
 		if (!renderer) {
-			renderer = new PetrinetRenderer({
+			renderer = new NestedPetrinetRenderer({
 				el: graphElement.value as HTMLDivElement,
 				useAStarRouting: false,
 				useStableZoomPan: true,
 				runLayout: runDagreLayout,
-				dragSelector: 'no-drag'
+				dragSelector: 'no-drag',
+				nestedMap
 			});
 		} else {
 			renderer.isGraphDirty = true;
