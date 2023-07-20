@@ -106,10 +106,9 @@ const addResources = () => {
 	// do something
 };
 
-const sendForEnrichments = async (_selectedResources) => {
-	console.log('sending these resources for enrichment:', _selectedResources);
-
+const sendForEnrichments = async (/* _selectedResources */) => {
 	// 1. Send dataset profile request
+	/* TODO: send selected resources along with dataset to backend for enrichment */
 	const resp = await profileDataset(props.assetId);
 
 	// 2. Poll
@@ -117,7 +116,6 @@ const sendForEnrichments = async (_selectedResources) => {
 	console.log('enrichment poll', pollResult);
 
 	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
-	/* TODO: send selected resources to backend for enrichment */
 };
 </script>
 

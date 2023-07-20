@@ -332,7 +332,6 @@ import Menu from 'primevue/menu';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-// import { isEqual } from 'lodash';
 
 const enrichedData = ref();
 
@@ -351,27 +350,6 @@ const props = defineProps<{
 const gotEnrichedData = (payload) => {
 	enrichedData.value = payload;
 	enriched.value = true;
-	console.log(editableRows.value);
-	console.log(Object.keys(enrichedData.value.DATA_PROFILING_RESULT).length);
-	console.log(enrichedData.value.DATA_PROFILING_RESULT.length);
-
-	// Lets try to match to the variables:
-	// for (let i = 0; i < editableRows.value.length; i++){
-	// 	for (let j = 0; j < Object.keys(enrichedData.value.DATA_PROFILING_RESULT).length; j++){
-	// 		if (isEqual(editableRows.value[i].name.toLowerCase(), Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j].toLowerCase())){
-	// 			console.log("Found equiv");
-	// 			console.log(Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]);
-	// 			console.log(enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]]);
-	// 			editableRows.value[i].description = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].description; //enrichedData.value[j].description
-	// 			if (!editableRows.value[i].metadata){
-	// 				editableRows.value[i].metadata = {};
-	// 			}
-	// 			editableRows.value[i].metadata.unit = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].unit;
-	// 			editableRows.value[i].metadata.concept = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].concept;
-	// 			editableRows.value[i].metadata.groundings = enrichedData.value.DATA_PROFILING_RESULT[Object.keys(enrichedData.value.DATA_PROFILING_RESULT)[j]].groundings;
-	// 		}
-	// 	}
-	// }
 };
 
 const pd = computed(() =>
