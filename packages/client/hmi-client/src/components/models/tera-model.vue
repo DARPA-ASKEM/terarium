@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		:name="name"
-		:is-editable="isEditable"
+		:is-explorer-preview="!isEditable"
 		:is-naming-asset="isNamingModel"
 		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"

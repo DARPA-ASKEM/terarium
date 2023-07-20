@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		v-if="doc"
-		:is-editable="isEditable"
+		:is-explorer-preview="!isEditable"
 		:name="highlightSearchTerms(doc.title)"
 		:overline="highlightSearchTerms(doc.journal)"
 		:authors="formatDocumentAuthors(doc)"

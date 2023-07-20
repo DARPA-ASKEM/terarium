@@ -6,7 +6,7 @@
 			<aside class="spread-out">
 				<slot name="edit-buttons" />
 				<Button
-					v-if="!isEditable"
+					v-if="isExplorerPreview"
 					icon="pi pi-times"
 					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 					@click="emit('close-preview')"
@@ -49,7 +49,7 @@
 				</section>
 				<aside class="spread-out">
 					<Button
-						v-if="!isEditable"
+						v-if="isExplorerPreview"
 						icon="pi pi-times"
 						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						@click="emit('close-preview')"
@@ -73,18 +73,33 @@ defineExpose({
 	assetContainer
 });
 
-const props = defineProps<{
-	name: string;
-	overline?: string;
-	isEditable: boolean;
-	isNamingAsset?: boolean;
-	authors?: string;
-	doi?: string;
-	publisher?: string;
-	hideIntro?: boolean;
-	showStickyHeader?: boolean;
-	stretchContent?: boolean;
-}>();
+const props = defineProps({
+	name: {
+		type: String,
+		default: ''
+	},
+	overline: {
+		type: String,
+		default: ''
+	},
+	authors: {
+		type: String,
+		default: ''
+	},
+	doi: {
+		type: String,
+		default: ''
+	},
+	publisher: {
+		type: String,
+		default: ''
+	},
+	isExplorerPreview: Boolean,
+	isNamingAsset: Boolean,
+	hideIntro: Boolean,
+	showStickyHeader: Boolean,
+	stretchContent: Boolean
+});
 
 const emit = defineEmits(['close-preview']);
 

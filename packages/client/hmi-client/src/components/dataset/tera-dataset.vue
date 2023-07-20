@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:is-editable="isEditable"
+		:is-explorer-preview="!isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"
@@ -718,6 +718,7 @@ main :deep(.p-inputtext.p-inputtext-sm) {
 	display: flex;
 	justify-content: space-evenly;
 }
+
 .dataset-detail {
 	display: flex;
 	flex-wrap: wrap;
