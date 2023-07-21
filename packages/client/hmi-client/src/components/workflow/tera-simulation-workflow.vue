@@ -767,7 +767,7 @@ function resetZoom() {
 	gap: 1rem;
 }
 
-/* FIXME: We should make a proper secondary outline button. Until then this works. */
+/* TODO: We should make a proper secondary outline button. Until then this works. */
 .toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
