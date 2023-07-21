@@ -588,6 +588,7 @@ button .icon {
 	gap: 1rem;
 }
 
+/* TODO: We should make a proper secondary outline button. Until then this works. */
 .quick-links .p-button.p-button-secondary {
 	background-color: var(--surface);
 	color: var(--text-color-primary);
@@ -740,9 +741,5 @@ ul {
 .bottom-white-patch {
 	background-color: var(--surface-0);
 	flex: 1;
-}
-
-:deep(.p-datatable-emptymessage > td) {
-	border-bottom: none !important;
 }
 </style>

@@ -141,6 +141,7 @@ onMounted(async () => {
 	color: white;
 }
 
+/* TODO: We should make a proper secondary outline button. Until then this works. */
 .p-button.p-button-secondary {
 	box-shadow: none;
 	color: var(--text-color-subdued);
@@ -152,8 +153,8 @@ onMounted(async () => {
 	height: 3rem;
 }
 
-.p-button.p-button-secondary:hover {
-	background-color: var(--surface-highlight) !important;
+.p-button.p-button-secondary:enabled:hover {
+	background-color: var(--surface-highlight);
 }
 
 .spacer {
