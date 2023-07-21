@@ -185,15 +185,15 @@ public class EvaluationResource {
 			.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
 			.toList();
 
-//		final String jsonStr = mapper.writeValueAsString(filteredEvents);
-//		JFlat flatMe = new JFlat(jsonStr);
-//		List<Object[]> json2csv = flatMe.json2Sheet().getJsonAsSheet();
-
 		final List<String> headers = new ArrayList<>(Arrays.asList("timestamp", "projectId", "username", "type", "value"));
 
 		// Iterate through the events and calculate the top level field access for the value type in jackson format
 		final Set<String> topLevelFields = new HashSet<>();
 		filteredEvents.forEach(event -> {
+			if (event == null || event.getValue() == null) {
+				return;
+			}
+
 			final JsonNode node;
 			try {
 				node = mapper.readTree(event.getValue());
