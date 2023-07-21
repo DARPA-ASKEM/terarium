@@ -260,18 +260,20 @@ const props = defineProps({
 		type: String,
 		required: true
 	},
+	highlight: {
+		type: String,
+		default: null
+	},
+	previewLineLimit: {
+		type: Number,
+		default: null
+	},
+
 	isInProject: {
 		type: Boolean,
 		default: true
 	},
-	highlight: {
-		type: [String, null],
-		default: null
-	},
-	previewLineLimit: {
-		type: [Number, null],
-		default: null
-	},
+
 	project: {
 		type: Object as PropType<IProject> | null,
 		default: null
