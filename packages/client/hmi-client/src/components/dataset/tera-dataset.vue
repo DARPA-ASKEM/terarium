@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:is-explorer-preview="!isEditable"
+		:is-explorer-preview="!isInProject"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"
@@ -24,7 +24,7 @@
 					:active="datasetView === DatasetView.DATA"
 				/>
 				<Button
-					v-if="isEditable"
+					v-if="isInProject"
 					class="p-button-secondary p-button-sm"
 					label="Transform"
 					icon="pi pi-sync"
@@ -32,7 +32,7 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
-			<span v-if="datasetView === DatasetView.LLM && isEditable">
+			<span v-if="datasetView === DatasetView.LLM && isInProject">
 				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
@@ -326,7 +326,7 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
+		<template v-else-if="datasetView === DatasetView.LLM && isInProject">
 			<Suspense>
 				<tera-dataset-jupyter-panel
 					:asset-id="props.assetId"
@@ -340,7 +340,7 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onUpdated, Ref } from 'vue';
+import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
@@ -365,12 +365,24 @@ enum DatasetView {
 	DATA = 'data',
 	LLM = 'llm'
 }
-const props = defineProps<{
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-	project?: IProject;
-}>();
+const props = defineProps({
+	assetId: {
+		type: String,
+		required: true
+	},
+	isInProject: {
+		type: Boolean,
+		default: true
+	},
+	highlight: {
+		type: String,
+		default: null
+	},
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null
+	}
+});
 
 const gotEnrichedData = (payload) => {
 	enrichedData.value = payload;

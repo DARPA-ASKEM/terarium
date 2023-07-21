@@ -18,7 +18,7 @@
 				v-else-if="previewItemResourceType === ResourceType.DATASET"
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:is-in-project="false"
 				@close-preview="closePreview"
 			/>
 			<tera-model
