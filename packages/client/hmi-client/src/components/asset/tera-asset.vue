@@ -6,7 +6,7 @@
 			<aside class="spread-out">
 				<slot name="edit-buttons" />
 				<Button
-					v-if="isExplorerPreview"
+					v-if="!isInProject"
 					icon="pi pi-times"
 					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 					@click="emit('close-preview')"
@@ -49,7 +49,7 @@
 				</section>
 				<aside class="spread-out">
 					<Button
-						v-if="isExplorerPreview"
+						v-if="!isInProject"
 						icon="pi pi-times"
 						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						@click="emit('close-preview')"
@@ -96,7 +96,10 @@ const props = defineProps({
 		type: String,
 		default: ''
 	},
-	isExplorerPreview: Boolean,
+	isInProject: {
+		type: Boolean,
+		default: true
+	},
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,

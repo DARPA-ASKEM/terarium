@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:is-explorer-preview="!isInProject"
+		:is-in-project="isInProject"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"

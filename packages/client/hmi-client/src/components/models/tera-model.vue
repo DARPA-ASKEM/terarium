@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		:name="name"
-		:is-explorer-preview="!isInProject"
+		:is-in-project="isInProject"
 		:is-naming-asset="isNamingModel"
 		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"

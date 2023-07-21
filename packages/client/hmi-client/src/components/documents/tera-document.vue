@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		v-if="doc"
-		:is-explorer-preview="!isInProject"
+		:is-in-project="isInProject"
 		:name="highlightSearchTerms(doc.title)"
 		:overline="highlightSearchTerms(doc.journal)"
 		:authors="formatDocumentAuthors(doc)"

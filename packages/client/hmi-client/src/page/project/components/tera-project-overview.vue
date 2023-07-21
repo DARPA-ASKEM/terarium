@@ -5,7 +5,6 @@
 			:authors="project?.username"
 			:is-naming-asset="isRenamingProject"
 			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
-			is-in-project
 			class="overview-banner"
 		>
 			<template #name-input>
