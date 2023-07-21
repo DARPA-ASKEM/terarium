@@ -73,7 +73,6 @@ defineExpose({
 	assetContainer
 });
 
-// Booleans default to false if not specified
 const props = defineProps({
 	name: {
 		type: String,
@@ -81,24 +80,25 @@ const props = defineProps({
 	},
 	overline: {
 		type: String,
-		default: ''
+		default: null
 	},
 	authors: {
 		type: String,
-		default: ''
+		default: null
 	},
 	doi: {
 		type: String,
-		default: ''
+		default: null
 	},
 	publisher: {
 		type: String,
-		default: ''
+		default: null
 	},
 	isInProject: {
 		type: Boolean,
 		default: true
 	},
+	// Booleans default to false if not specified
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,
