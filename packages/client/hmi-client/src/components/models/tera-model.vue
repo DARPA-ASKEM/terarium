@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		:name="name"
-		:is-explorer-preview="!isEditable"
+		:is-explorer-preview="!isInProject"
 		:is-naming-asset="isNamingModel"
 		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
@@ -38,7 +38,7 @@
 					:active="modelView === ModelView.NOTEBOOK"
 				/>
 			</span>
-			<template v-if="isEditable">
+			<template v-if="isInProject">
 				<Button
 					icon="pi pi-ellipsis-v"
 					class="p-button-icon-only p-button-text p-button-rounded"
@@ -466,7 +466,7 @@
 		<template v-if="modelView === ModelView.MODEL">
 			<tera-model-diagram
 				:model="model"
-				:is-editable="props.isEditable"
+				:is-editable="isInProject"
 				@update-model-content="updateModelContent"
 				@update-model-observables="updateModelObservables"
 			/>
@@ -475,9 +475,9 @@
 					<tera-stratified-model-configuration
 						v-if="model.semantics?.span"
 						:model="model"
-						:is-editable="props.isEditable"
+						:is-editable="isInProject"
 					/>
-					<tera-model-configuration v-else :model="model" :is-editable="props.isEditable" />
+					<tera-model-configuration v-else :model="model" :is-editable="isInProject" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -611,7 +611,10 @@ const props = defineProps({
 		default: '',
 		required: false
 	},
-	isEditable: Boolean
+	isInProject: {
+		type: Boolean,
+		default: true
+	}
 });
 
 const openValueConfig = ref(false);

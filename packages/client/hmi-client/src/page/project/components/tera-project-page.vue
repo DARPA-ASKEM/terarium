@@ -5,7 +5,6 @@
 		:project="project"
 		@update-tab-name="updateTabName"
 		@asset-loaded="emit('asset-loaded')"
-		is-editable
 	/>
 	<code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"

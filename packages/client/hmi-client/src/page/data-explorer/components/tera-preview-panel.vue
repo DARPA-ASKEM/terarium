@@ -26,7 +26,7 @@
 				:asset-id="previewItemId"
 				:project="(resources.activeProject as IProject)"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:is-in-project="false"
 				@close-preview="closePreview"
 			/>
 		</template>
