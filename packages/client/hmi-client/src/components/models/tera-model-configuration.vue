@@ -580,6 +580,7 @@ onMounted(() => {
 	margin-bottom: 1rem;
 }
 
+/** TODO: Apply to all tables in theme or create second table rules?  */
 .p-datatable-thead th {
 	text-transform: none !important;
 	color: var(--text-color-primary) !important;
@@ -598,6 +599,7 @@ onMounted(() => {
 	visibility: visible;
 	width: 100%;
 }
+
 .editable-cell-hidden {
 	display: flex;
 	justify-content: space-between;
@@ -626,6 +628,7 @@ td:has(.cell-input) {
 .p-datatable:deep(td) {
 	cursor: pointer;
 }
+
 .p-datatable:deep(td:focus) {
 	background-color: var(--primary-color-lighter);
 }
@@ -721,6 +724,7 @@ td:hover .cell-menu {
 	display: flex;
 	flex-direction: column;
 }
+
 .distribution-range {
 	white-space: nowrap;
 	color: var(--text-color-subdued);

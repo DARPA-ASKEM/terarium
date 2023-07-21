@@ -767,16 +767,16 @@ function resetZoom() {
 	gap: 1rem;
 }
 
-/* We should make a proper secondary outline button. Until then this works. */
+/* FIXME: We should make a proper secondary outline button. Until then this works. */
 .toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 }
 
-.toolbar .button-group .secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.toolbar .button-group .secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 .toolbar .button-group .primary-dropdown {

@@ -509,9 +509,12 @@ onMounted(() => {
 <style scoped>
 .scrollable {
 	overflow-y: auto;
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none;
+	/* IE and Edge */
+	scrollbar-width: none;
+	/* Firefox */
 }
+
 .scrollable::-webkit-scrollbar {
 	display: none;
 }
@@ -614,10 +617,6 @@ button .icon {
 	padding-bottom: 0.5rem;
 }
 
-.keyword-search:hover {
-	border-color: var(--surface-border) !important;
-}
-
 .related {
 	font-weight: var(--font-weight-semibold);
 }
@@ -685,6 +684,7 @@ ul {
 	padding: 0;
 	padding: 0.375rem 1rem;
 }
+
 :deep(.p-datatable .p-datatable-thead > tr > th) {
 	background: var(--gray-100);
 	padding: 1rem;
@@ -736,6 +736,7 @@ ul {
 	text-align: center;
 	width: 40%;
 }
+
 .bottom-white-patch {
 	background-color: var(--surface-0);
 	flex: 1;

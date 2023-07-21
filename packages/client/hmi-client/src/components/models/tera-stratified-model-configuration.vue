@@ -246,6 +246,7 @@ onMounted(() => {
 	margin-bottom: 1rem;
 }
 
+/** TODO: Apply to all tables in theme or create second table rules?  */
 .p-datatable-thead th {
 	text-transform: none !important;
 	color: var(--text-color-primary) !important;

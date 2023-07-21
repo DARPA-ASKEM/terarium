@@ -117,22 +117,25 @@ function sendForEnrichments(_selectedResources) {
 	margin: 1rem;
 	max-width: 50rem;
 }
+
 .container h5 {
 	margin-bottom: 0.5rem;
 }
+
 .constrain-width {
 	max-width: 50rem;
 }
 
+/* TODO: We should make a proper secondary outline button. Until then this works. */
 .secondary-button {
 	color: var(--text-color-primary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 }
 
-.secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 ul {
