@@ -115,7 +115,7 @@
 							v-for="(parameter, i) in parameters"
 							:key="parameter.id"
 							:class="[
-								{ active: isSectionEditable === `parameter-${parameter.id}` },
+								{ active: isRowEditable === `parameter-${parameter.id}` },
 								`parameter-${parameter.id}`
 							]"
 						>
@@ -179,7 +179,7 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<main v-if="states.length > 0" class="datatable" style="--columns: 6">
+					<main v-if="states.length > 0" class="datatable" style="--columns: 5">
 						<header>
 							<div>Id</div>
 							<div>Name</div>
@@ -250,13 +250,13 @@
 									<template v-else>--</template>
 								</div>
 							</template>
-							<div v-if="!isRowEditable">
+							<!-- <div v-if="!isRowEditable">
 								<Button icon="pi pi-file-edit" text @click="editRow" />
 							</div>
 							<div v-else-if="isRowEditable === `state-${state.id}`">
 								<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
 								<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
-							</div>
+							</div> -->
 						</section>
 					</main>
 				</AccordionTab>
