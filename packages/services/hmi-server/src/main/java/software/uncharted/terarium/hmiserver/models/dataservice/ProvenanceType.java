@@ -25,9 +25,7 @@ public enum ProvenanceType {
 	@JsonAlias("Project")
 	PROJECT("Project"),
 	@JsonAlias("Concept")
-	CONCEPT("Concept"),
-	@JsonAlias("SimulationRun")
-	SIMULATION_RUN("SimulationRun");
+	CONCEPT("Concept");
 
 	public final String type;
 
