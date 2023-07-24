@@ -18,8 +18,6 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
-import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
-import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
@@ -75,93 +73,6 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	@RestClient
 	JsDelivrProxy githubProxy;
 
-	@GET
-	@Path("/features")
-	public Response getFeatures(
-		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") final Integer page
-	) {
-		return datasetProxy.getFeatures(pageSize, page);
-	}
-
-	@POST
-	@Path("/features")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createFeatures(
-		final Feature feature
-	) {
-		return datasetProxy.createFeatures(convertObjectToSnakeCaseJsonNode(feature));
-	}
-
-	@GET
-	@Path("/features/{id}")
-	public Response getFeature(
-		@PathParam("id") final String id
-	) {
-		return datasetProxy.getFeature(id);
-	}
-
-	@DELETE
-	@Path("/features/{id}")
-	public Response deleteFeature(
-		@PathParam("id") final String id
-	) {
-		return datasetProxy.deleteFeature(id);
-	}
-
-	@PATCH
-	@Path("/features/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateFeature(
-		@PathParam("id") final String id,
-		final Feature feature
-	) {
-		return datasetProxy.updateFeature(id, convertObjectToSnakeCaseJsonNode(feature));
-	}
-
-	@GET
-	@Path("/qualifiers")
-	public Response getQualifiers(
-		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") final Integer page
-	) {
-		return datasetProxy.getQualifiers(pageSize, page);
-	}
-
-	@POST
-	@Path("/qualifiers")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createQualifiers(
-		final Qualifier qualifier
-	) {
-		return datasetProxy.createQualifiers(convertObjectToSnakeCaseJsonNode(qualifier));
-	}
-
-	@GET
-	@Path("/qualifiers/{id}")
-	public Response getQualifier(
-		@PathParam("id") final String id
-	) {
-		return datasetProxy.getQualifier(id);
-	}
-
-	@DELETE
-	@Path("/qualifiers/{id}")
-	public Response deleteQualifier(
-		@PathParam("id") final String id
-	) {
-		return datasetProxy.deleteQualifier(id);
-	}
-
-	@PATCH
-	@Path("/qualifiers/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateQualifier(
-		@PathParam("id") final String id,
-		final Qualifier qualifier
-	) {
-		return datasetProxy.updateQualifier(id, convertObjectToSnakeCaseJsonNode(qualifier));
-	}
 
 	@GET
 	public List<Dataset> getDatasets(
