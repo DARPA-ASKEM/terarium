@@ -400,7 +400,4 @@ ul li {
 .input-label:last-child::after {
 	content: '';
 }
-
-.active-node {
-}
 </style>
