@@ -36,7 +36,7 @@
 					<Button
 						label="Use these resources to enrich descriptions"
 						@click="
-							sendForEnrichments(selectedResources);
+							sendForEnrichments();
 							visible = false;
 						"
 					/>
@@ -59,6 +59,7 @@ import { AcceptedExtensions } from '@/types/common';
 import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
 import { Artifact, DocumentAsset } from '@/types/Types';
+import { profileDataset, fetchExtraction } from '@/services/models/extractions';
 
 const visible = ref(false);
 const selectedResources = ref();
@@ -96,6 +97,7 @@ const props = defineProps<{
 	project?: IProject;
 	publications?: Array<DocumentAsset>;
 	dialogFlavour: string;
+	assetId: string;
 }>();
 const emit = defineEmits(['extracted-metadata']);
 
@@ -104,12 +106,17 @@ const addResources = () => {
 	// do something
 };
 
-function sendForEnrichments(_selectedResources) {
-	console.log('sending these resources for enrichment:', _selectedResources);
+const sendForEnrichments = async (/* _selectedResources */) => {
+	// 1. Send dataset profile request
+	/* TODO: send selected resources along with dataset to backend for enrichment */
+	const resp = await profileDataset(props.assetId);
+
+	// 2. Poll
+	const pollResult = await fetchExtraction(resp);
+	console.log('enrichment poll', pollResult);
 
 	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
-	/* TODO: send selected resources to backend for enrichment */
-}
+};
 </script>
 
 <style scoped>
