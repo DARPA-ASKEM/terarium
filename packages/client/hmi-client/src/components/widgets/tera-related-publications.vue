@@ -126,7 +126,7 @@ function sendForEnrichments(_selectedResources) {
 	max-width: 50rem;
 }
 
-/* TODO: We should make a proper secondary outline button. Until then this works. */
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .secondary-button {
 	color: var(--text-color-primary);
 	background-color: var(--surface-0);

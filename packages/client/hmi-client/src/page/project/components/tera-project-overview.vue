@@ -588,7 +588,7 @@ button .icon {
 	gap: 1rem;
 }
 
-/* TODO: We should make a proper secondary outline button. Until then this works. */
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .quick-links .p-button.p-button-secondary {
 	background-color: var(--surface);
 	color: var(--text-color-primary);

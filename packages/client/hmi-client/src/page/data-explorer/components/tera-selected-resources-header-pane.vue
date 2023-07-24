@@ -141,7 +141,7 @@ onMounted(async () => {
 	color: white;
 }
 
-/* TODO: We should make a proper secondary outline button. Until then this works. */
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .p-button.p-button-secondary {
 	box-shadow: none;
 	color: var(--text-color-subdued);

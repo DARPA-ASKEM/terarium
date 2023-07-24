@@ -147,7 +147,7 @@ subheader {
 	color: white;
 }
 
-/* TODO: We should make a proper secondary outline button. Until then this works. */
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .p-button.p-button-secondary {
 	border: 1px solid var(--surface-border);
 	box-shadow: none;
