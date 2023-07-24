@@ -30,6 +30,13 @@
 					@click="modelView = ModelView.MODEL"
 					:active="modelView === ModelView.MODEL"
 				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Transform"
+					icon="pi pi-sync"
+					@click="modelView = ModelView.NOTEBOOK"
+					:active="modelView === ModelView.NOTEBOOK"
+				/>
 			</span>
 			<Button
 				v-if="isEditable"
@@ -75,12 +82,13 @@
 					<td>{{ model?.metadata?.processed_by ?? '--' }}</td>
 				</tr>
 			</table>
-			<RelatedPublications
+			<tera-related-publications
 				:publications="publications"
 				:project="project"
 				:dialog-flavour="'model'"
+				:assetId="assetId"
 			/>
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editSection">
+			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]">
 				<!-- Description -->
 				<AccordionTab>
 					<template #header>Description</template>
@@ -96,7 +104,7 @@
 					<template #header>
 						Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 					</template>
-					<main v-if="parameters.length > 0" class="datatable" style="--columns: 4">
+					<main v-if="parameters.length > 0" class="datatable" style="--columns: 5">
 						<header>
 							<div>ID</div>
 							<div>Value</div>
@@ -104,21 +112,35 @@
 							<div>Extractions</div>
 						</header>
 						<section
-							v-for="parameter in parameters"
+							v-for="(parameter, i) in parameters"
 							:key="parameter.id"
 							:class="[
-								{ active: isSectionEditable === `parameter-${parameter.id}` },
+								{ active: isRowEditable === `parameter-${parameter.id}` },
 								`parameter-${parameter.id}`
 							]"
 						>
-							<template v-if="isSectionEditable === `parameter-${parameter.id}`">
-								<div><input type="text" :value="parameter?.name ?? '--'" /></div>
-								<div><input type="text" :value="parameter?.value ?? '--'" /></div>
+							<template v-if="isRowEditable === `parameter-${parameter.id}`">
+								<div>
+									<input
+										type="text"
+										:value="parameter?.id ?? '--'"
+										@input="updateTable('parameters', i, 'id', $event.target?.['value'])"
+									/>
+								</div>
+								<div>
+									<input
+										type="text"
+										:value="parameter?.value ?? '--'"
+										@input="updateTable('parameters', i, 'value', $event.target?.['value'])"
+									/>
+								</div>
 								<div>--</div>
 								<div>
-									<!-- TODO: needs to make those button active -->
-									<Button icon="pi pi-check" text rounded aria-label="Save" />
-									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+									<template v-if="parameter?.distribution?.parameters">
+										[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
+										{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
+									</template>
+									<template v-else>--</template>
 								</div>
 								<div v-if="extractions?.[parameter?.id]" style="grid-column: 1 / span 4">
 									<tera-model-extraction :extractions="extractions[parameter.id]" />
@@ -141,6 +163,13 @@
 									<template v-else>--</template>
 								</div>
 							</template>
+							<div v-if="!isRowEditable">
+								<Button icon="pi pi-file-edit" text @click="editRow" />
+							</div>
+							<div v-else-if="isRowEditable === `parameter-${parameter.id}`">
+								<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
+								<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
+							</div>
 						</section>
 					</main>
 				</AccordionTab>
@@ -159,19 +188,32 @@
 							<div>Extractions</div>
 						</header>
 						<section
-							v-for="state in states"
+							v-for="(state, i) in states"
 							:key="state.id"
-							:class="[{ active: isSectionEditable === `state-${state.id}` }, `state-${state.id}`]"
+							:class="[{ active: isRowEditable === `state-${state.id}` }, `state-${state.id}`]"
 						>
-							<template v-if="isSectionEditable === `state-${state.id}`">
-								<div><input type="text" :value="state.id ?? '--'" /></div>
-								<div><input type="text" :value="state?.name ?? '--'" /></div>
+							<template v-if="isRowEditable === `state-${state.id}`">
+								<div>
+									<input
+										type="text"
+										:value="state?.id ?? '--'"
+										@input="updateTable('states', i, 'id', $event.target?.['value'])"
+									/>
+								</div>
+								<div>
+									<input
+										type="text"
+										:value="state?.name ?? '--'"
+										@input="updateTable('states', i, 'name', $event.target?.['value'])"
+									/>
+								</div>
 								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
 								<div>Identifiers</div>
 								<div>
-									<!-- TODO: needs to make those button active -->
-									<Button icon="pi pi-check" text rounded aria-label="Save" />
-									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+									<template v-if="extractions?.[state?.id]">
+										<Tag :value="extractions?.[state?.id].length" />
+									</template>
+									<template v-else>--</template>
 								</div>
 								<div v-if="extractions?.[state?.id]" style="grid-column: 1 / span 4">
 									<tera-model-extraction :extractions="extractions[state.id]" />
@@ -208,6 +250,13 @@
 									<template v-else>--</template>
 								</div>
 							</template>
+							<!-- <div v-if="!isRowEditable">
+								<Button icon="pi pi-file-edit" text @click="editRow" />
+							</div>
+							<div v-else-if="isRowEditable === `state-${state.id}`">
+								<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
+								<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
+							</div> -->
 						</section>
 					</main>
 				</AccordionTab>
@@ -236,7 +285,11 @@
 								<div>{{ observable.id ?? '--' }}</div>
 								<div>{{ observable.name ?? '--' }}</div>
 								<div>
-									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<katex-element
+										v-if="observable.expression"
+										:expression="observable.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -252,7 +305,11 @@
 								<div>{{ observable.id ?? '--' }}</div>
 								<div>{{ observable.name ?? '--' }}</div>
 								<div>
-									<katex-element v-if="observable.expression" :expression="observable.expression" />
+									<katex-element
+										v-if="observable.expression"
+										:expression="observable.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -294,7 +351,11 @@
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
 								<div>
-									<katex-element v-if="transition.expression" :expression="transition.expression" />
+									<katex-element
+										v-if="transition.expression"
+										:expression="transition.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -312,7 +373,11 @@
 								<div>{{ transition.input }}</div>
 								<div>{{ transition.output }}</div>
 								<div>
-									<katex-element v-if="transition.expression" :expression="transition.expression" />
+									<katex-element
+										v-if="transition.expression"
+										:expression="transition.expression"
+										:throw-on-error="false"
+									/>
 									<template v-else>--</template>
 								</div>
 								<div>
@@ -407,7 +472,12 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
+					<tera-stratified-model-configuration
+						v-if="model.semantics?.span"
+						:model="model"
+						:is-editable="props.isEditable"
+					/>
+					<tera-model-configuration v-else :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -421,6 +491,17 @@
 					</DataTable>
 				</AccordionTab>
 			</Accordion>
+		</template>
+		<template v-if="modelView === ModelView.NOTEBOOK">
+			<Suspense>
+				<tera-model-jupyter-panel
+					:asset-id="props.assetId"
+					:project="props.project"
+					:model="model"
+					:show-kernels="false"
+					:show-chat-thoughts="false"
+				/>
+			</Suspense>
 		</template>
 		<Teleport to="body">
 			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
@@ -481,9 +562,13 @@ import Message from 'primevue/message';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { convertToAMRModel } from '@/model-representation/petrinet/petrinet-service';
+import {
+	convertToAMRModel,
+	updateConfigFields,
+	updateParameterId
+} from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
@@ -497,12 +582,15 @@ import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
+import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
+import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
 
 enum ModelView {
 	DESCRIPTION,
-	MODEL
+	MODEL,
+	NOTEBOOK
 }
 
 // TODO - Get rid of these emits
@@ -657,6 +745,14 @@ const time = computed(() =>
 );
 const states = computed(() => model.value?.model?.states ?? []);
 
+// Used to keep track of the values of the current row being edited
+interface ModelTableTypes {
+	tableType: string;
+	idx: number;
+	updateProperty: { [key: string]: string };
+}
+const transientTableValue = ref<ModelTableTypes | null>(null);
+
 // Model Transitions
 const transitions = computed(() => {
 	const results: any[] = [];
@@ -697,6 +793,7 @@ const otherConcepts = computed(() => {
 	return [];
 });
 const isSectionEditable = ref<string | null>();
+const isRowEditable = ref<string | null>();
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -737,6 +834,7 @@ function updateModelObservables(observableMathMLList) {
 	// assign the new observables
 	if (model.value !== null && model.value.semantics?.ode?.observables) {
 		model.value.semantics.ode.observables = observableMathMLList;
+		updateModel(model.value);
 	}
 }
 
@@ -761,6 +859,8 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		// Reset view of model page
+		isRenamingModel.value = false;
 		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
@@ -817,20 +917,80 @@ async function updateModelName() {
 	if (model.value) {
 		const modelClone = cloneDeep(model.value);
 		modelClone.name = newModelName.value;
-		updateModel(modelClone);
-		isRenamingModel.value = false;
+		await updateModel(modelClone);
 		model.value = await getModel(props.assetId);
 		// FIXME: Names aren't updated in sidebar
 	}
+	isRenamingModel.value = false;
 }
 
-// Toggle rows to become editable, display extractions to choose from.
-function editSection(event: Event) {
+// Toggle rows to become editable
+function editRow(event: Event) {
 	if (!event?.target) return;
-	const section = (event.target as HTMLElement).closest('.datatable section');
-	if (!section) return;
-	isSectionEditable.value =
-		isSectionEditable.value === section.className ? null : section.className;
+	const row = (event.target as HTMLElement).closest('.datatable section');
+	if (!row) return;
+	isRowEditable.value = isRowEditable.value === row.className ? null : row.className;
+}
+
+async function confirmEdit() {
+	if (model.value && transientTableValue.value) {
+		const { tableType, idx, updateProperty } = transientTableValue.value;
+		const modelClone = cloneDeep(model.value);
+
+		switch (tableType) {
+			case 'parameters':
+				if (model.value.semantics?.ode.parameters) {
+					Object.entries(updateProperty).forEach(([key, value]) => {
+						modelClone.semantics!.ode.parameters![idx][key] = value;
+
+						if (key === 'id') {
+							const ode = model.value!.semantics!.ode;
+							// update the parameter id in the model (as well as rate expression and expression_mathml)
+							updateParameterId(modelClone, ode.parameters![idx][key], value as string);
+
+							// note that this is making a call to an async function to update the different model configs
+							// but we don't need to wait for it to finish because we don't need immediate access to the model configs
+							updateConfigFields(model.value!.id, ode.parameters![idx][key], value as string);
+						}
+					});
+				}
+				break;
+			case 'states':
+				Object.entries(updateProperty).forEach(([key, value]) => {
+					if (key !== 'unit') {
+						// TODO: remove this condition when we have proper editing of unit
+						modelClone.model.states[idx][key] = value;
+					}
+					// TODO: update all of the properties affected by state id
+				});
+				break;
+			default:
+				logger.info(`${tableType} not recognized`);
+		}
+
+		await updateModel(modelClone);
+		model.value = await getModel(props.assetId);
+	}
+
+	isRowEditable.value = null;
+	transientTableValue.value = null;
+}
+
+function cancelEdit() {
+	isRowEditable.value = null;
+	transientTableValue.value = null;
+}
+
+function updateTable(tableType: string, idx: number, key: string, value: string) {
+	transientTableValue.value = {
+		...transientTableValue.value,
+		tableType,
+		idx,
+		updateProperty: {
+			...transientTableValue.value?.updateProperty,
+			[key]: value
+		}
+	};
 }
 </script>
 
@@ -912,26 +1072,9 @@ function editSection(event: Event) {
 	margin-left: 0.5rem;
 }
 
-.p-toolbar {
-	position: absolute;
-	width: 100%;
-	z-index: 1;
-	isolation: isolate;
-	background: transparent;
-	padding: 0.5rem;
-}
-
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
-}
-
-.toolbar-button-saveModel {
-	margin: 0.25rem;
-}
-
-.toolbar-subgroup {
-	display: flex;
 }
 
 .floating-edit-button {

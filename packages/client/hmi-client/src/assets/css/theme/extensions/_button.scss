@@ -47,7 +47,7 @@
 
 	&:disabled {
 		background-color: $emphasis-lower !important;
-		color: $emphasis-low !important;
+		color: var(--surface-0) !important;
 		opacity: 1;
 
 		&.p-button-text {

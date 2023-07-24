@@ -49,8 +49,16 @@
 					:loading-tab-index="null"
 					@close-tab="workflowNode = null"
 				/>
-				<tera-calibration
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION"
+				<tera-calibration-julia
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
+					"
+					:node="workflowNode"
+				/>
+				<tera-calibration-ciemss
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
+					"
 					:node="workflowNode"
 				/>
 				<tera-simulate-julia
@@ -70,6 +78,23 @@
 				<tera-stratify
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
 					:node="workflowNode"
+					@open-asset="(asset) => openAssetFromSidebar(asset)"
+				/>
+				<tera-simulate-ensemble-ciemss
+					v-if="
+						workflowNode &&
+						workflowNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS
+					"
+					:node="workflowNode"
+					:project="project"
+				/>
+				<tera-calibrate-ensemble-ciemss
+					v-if="
+						workflowNode &&
+						workflowNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS
+					"
+					:node="workflowNode"
+					:project="project"
 				/>
 				<tera-model-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
@@ -115,10 +140,13 @@ import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '
 import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraCalibrationJulia from '@/components/workflow/tera-calibration-julia.vue';
+import TeraCalibrationCiemss from '@/components/workflow/tera-calibration-ciemss.vue';
 import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
+import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
+import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { workflowEventBus } from '@/services/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
@@ -211,13 +239,6 @@ async function removeAsset(asset: Tab) {
 watch(
 	() => projectContext.value,
 	() => {
-		if (projectContext.value) {
-			// Automatically go to overview page when project is opened
-			router.push({
-				name: RouteName.ProjectRoute,
-				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
-			});
-		}
 		if (
 			tabs.value.length > 0 &&
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
@@ -225,6 +246,16 @@ watch(
 			openAsset();
 		} else if (openedAssetRoute.value && openedAssetRoute.value.assetName) {
 			tabStore.addTab(projectContext.value, openedAssetRoute.value);
+		}
+
+		const overviewResource = {
+			assetName: 'Overview',
+			pageType: ProjectPages.OVERVIEW,
+			assetId: ''
+		};
+		if (projectContext.value && !tabs.value.some((tab) => isEqual(tab, overviewResource))) {
+			// Automatically add overview tab if it does not exist
+			tabStore.addTab(projectContext.value, overviewResource);
 		}
 	}
 );

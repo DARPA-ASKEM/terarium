@@ -1,12 +1,15 @@
 export enum WorkflowOperationTypes {
 	ADD = 'add', // temp for test to work
 	TEST = 'TestOperation',
-	CALIBRATION = 'CalibrationOperation',
+	CALIBRATION_JULIA = 'CalibrationOperationJulia',
+	CALIBRATION_CIEMSS = 'CalibrationOperationCiemss',
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',
 	SIMULATE_JULIA = 'SimulateJuliaOperation',
 	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
-	STRATIFY = 'Stratify'
+	STRATIFY = 'Stratify',
+	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
+	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms'
 }
 
 export enum WorkflowStatus {
@@ -33,6 +36,7 @@ export interface OperationData {
 export interface Operation {
 	name: WorkflowOperationTypes;
 	description: string;
+	displayName: string; // Human readable name for each node.
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -61,6 +65,7 @@ export interface WorkflowPort {
 // This is the graphical operation of the operation defined in operationType
 export interface WorkflowNode {
 	id: string;
+	displayName: string;
 	workflowId: string;
 	operationType: string;
 

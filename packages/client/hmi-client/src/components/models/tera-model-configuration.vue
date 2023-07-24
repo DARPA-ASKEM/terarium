@@ -6,13 +6,15 @@
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead class="p-datatable-thead">
+					<!-- Table header 1st row: Column groups such asInitials, Parameters, Observables, etc. -->
 					<tr v-if="isEditable">
 						<th class="p-frozen-column"></th>
 						<th class="p-frozen-column second-frozen"></th>
 						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
-							{{ name }}
+							<span class="capitalize">{{ name }}</span>
 						</th>
 					</tr>
+					<!-- Table header 2nd row: Actual column headers -->
 					<tr>
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
@@ -33,9 +35,11 @@
 						<!--TODO: Insert new th loops for time and observables here-->
 					</tr>
 				</thead>
+				<!-- Table body -->
 				<tbody class="p-datatable-tbody">
 					<tr v-for="({ configuration, name }, i) in modelConfigurations" :key="i">
 						<!--TODO: This td is a placeholder, row selection doesn't work-->
+						<!-- Checkbox -->
 						<td class="p-selection-column p-frozen-column">
 							<div class="p-checkbox p-component">
 								<div class="p-hidden-accessible">
@@ -46,33 +50,46 @@
 								</div>
 							</div>
 						</td>
+						<!-- 1st column: Configuration name -->
 						<td
 							class="p-frozen-column second-frozen"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].name = true"
+							@keyup.enter="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+							@click="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
 						>
-							<span v-if="!cellEditStates[i].name" @click="cellEditStates[i].name = true">
+							<span :class="!cellEditStates[i].name ? 'editable-cell' : 'editable-cell-hidden'">
 								{{ name }}
 							</span>
 							<InputText
-								v-else
-								v-model.lazy="modelConfigurations[i].name"
+								v-if="cellEditStates[i].name"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].name = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].name = false;
-									updateModelConfigValue(i);
+									updateModelConfigName(i);
 								"
+								class="cell-input"
 							/>
 						</td>
+						<!-- Additional columns -->
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
-							@click="cellEditStates[i].initials[j] = true"
+							@click="onEnterValueCell('initials', 'expression', i, j)"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].initials[j] = true"
+							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
-							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
+							<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
+							<section
+								:class="!cellEditStates[i].initials[j] ? 'editable-cell' : 'editable-cell-hidden'"
+							>
 								<span>{{ initial.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -81,28 +98,43 @@
 								/>
 							</section>
 							<InputText
-								v-else
-								v-model.lazy="
-									modelConfigurations[i].configuration.semantics.ode.initials[j].expression
-								"
+								v-if="cellEditStates[i].initials[j]"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].initials[j] = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].initials[j] = false;
-									updateModelConfigValue(i);
+									updateModelConfigValue('initials', 'expression', i, j);
 								"
+								class="cell-input"
 							/>
 						</td>
 						<td
 							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
 							:key="j"
-							@click="cellEditStates[i].parameters[j] = true"
+							@click="
+								() => {
+									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
+										onEnterValueCell('parameters', 'value', i, j);
+									}
+								}
+							"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].parameters[j] = true"
+							@keyup.enter="
+								() => {
+									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
+										onEnterValueCell('parameters', 'value', i, j);
+									}
+								}
+							"
 						>
-							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
+							<section
+								:class="!cellEditStates[i].parameters[j] ? 'editable-cell' : 'editable-cell-hidden'"
+							>
 								<div class="distribution-cell">
-									<span>{{ parameter.value }}</span>
+									<!-- To represent a time series variable -->
+									<span v-if="configuration?.metadata?.timeseries?.[parameter.id]">TS</span>
+									<span v-else>{{ parameter.value }}</span>
 									<span class="distribution-range" v-if="parameter.distribution"
 										>Min: {{ parameter.distribution.parameters.minimum }} Max:
 										{{ parameter.distribution.parameters.maximum }}</span
@@ -115,16 +147,15 @@
 								/>
 							</section>
 							<InputText
-								v-else
-								v-model.lazy="
-									modelConfigurations[i].configuration.semantics.ode.parameters[j].value
-								"
+								v-if="cellEditStates[i].parameters[j]"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].parameters[j] = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].parameters[j] = false;
-									updateModelConfigValue(i);
+									updateModelConfigValue('parameters', 'value', i, j);
 								"
+								class="cell-input"
 							/>
 						</td>
 					</tr>
@@ -164,14 +195,30 @@
 							<label for="name">Name</label>
 							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
 						</div>
+						<div v-if="modalVal.odeType === 'parameters'">
+							<label for="type">Type</label>
+							<Dropdown
+								v-model="extraction.type"
+								:options="typeOptions"
+								optionLabel="label"
+								optionValue="value"
+								placeholder="Select a parameter type"
+							></Dropdown>
+						</div>
 						<div>
 							<label for="name">Value</label>
-							<InputText class="p-inputtext-sm" :key="'value' + i" v-model="extraction.value" />
+							<InputText
+								class="p-inputtext-sm"
+								:class="{ 'p-invalid': errorMessage }"
+								:key="'value' + i"
+								v-model="extraction.value"
+								:placeholder="getValuePlaceholder(extraction.type)"
+								@keydown="clearError()"
+							/>
+							<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
 						</div>
 						<div v-if="modalVal.odeType === 'parameters'">
-							<label for="name">Distribution</label>
-							<Checkbox v-model="extraction.isDistribution" :binary="true"></Checkbox>
-							<div v-if="extraction.isDistribution">
+							<div v-if="extraction.type === ParamType.DISTRIBUTION">
 								<label for="name">Min</label>
 								<InputText
 									class="p-inputtext-sm"
@@ -186,6 +233,14 @@
 								/>
 							</div>
 						</div>
+						<label for="equation">Equation</label>
+						<tera-math-editor
+							:is-editing-eq="true"
+							:latex-equation="''"
+							:keep-open="true"
+							@equation-updated="console.log('equation udpated from configuration')"
+						>
+						</tera-math-editor>
 					</TabPanel>
 				</TabView>
 			</template>
@@ -195,7 +250,6 @@
 					@click="
 						() => {
 							setModelParameters();
-							updateModelConfigValue();
 						}
 					"
 				/>
@@ -214,7 +268,7 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import Checkbox from 'primevue/checkbox';
+import Dropdown from 'primevue/dropdown';
 import { ModelConfiguration, Model } from '@/types/Types';
 import {
 	createModelConfiguration,
@@ -222,6 +276,13 @@ import {
 	addDefaultConfiguration
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+
+enum ParamType {
+	CONSTANT = 'constant',
+	DISTRIBUTION = 'distribution',
+	TIME_SERIES = 'time_series'
+}
 
 const props = defineProps<{
 	isEditable: boolean;
@@ -229,6 +290,7 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
@@ -237,10 +299,17 @@ const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 
 
 const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
+const errorMessage = ref('');
 
 const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
+
+const typeOptions = ref([
+	{ label: 'A constant', value: ParamType.CONSTANT },
+	{ label: 'A distibution', value: ParamType.DISTRIBUTION },
+	{ label: 'A value that changes over time', value: ParamType.TIME_SERIES }
+]);
 
 // Decide if we should display the whole configuration table
 const isConfigurationVisible = computed(
@@ -275,6 +344,26 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	}, 800);
 }
 
+function getValuePlaceholder(parameterType) {
+	if (parameterType === ParamType.TIME_SERIES) {
+		return 'Enter values here as a list of time:value pairs (e.g., 0:500, 10:550, 25:700 etc)';
+	}
+	return '';
+}
+
+function onEnterValueCell(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	modelConfigInputValue.value = cloneDeep(
+		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+			valueName
+		]
+	);
+	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
+}
 function openValueModal(
 	odeType: string,
 	valueName: string,
@@ -282,15 +371,21 @@ function openValueModal(
 	odeObjIndex: number
 ) {
 	if (props.isEditable) {
+		clearError();
 		activeIndex.value = 0;
 		openValueConfig.value = true;
 		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
 		const modelParameter = cloneDeep(
 			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
 		);
-		extractions.value[0].value = modelParameter[valueName];
+
+		// sticking the timeseries values on the metadata, temporary solution for now
+		const modelTimeSeries =
+			cloneDeep(modelConfigurations.value[configIndex].configuration?.metadata?.timeseries) ?? {};
+
+		extractions.value[0].value = getParameterValue(modelParameter, valueName, modelTimeSeries);
 		extractions.value[0].name = modelParameter.name ?? 'Default';
-		extractions.value[0].isDistribution = !!modelParameter.distribution;
+		extractions.value[0].type = getParameterType(modelParameter, modelTimeSeries);
 		// we are only adding the ability to add one type of distribution for now...
 		extractions.value[0].distribution = modelParameter.distribution ?? {
 			type: 'Uniform1',
@@ -299,26 +394,118 @@ function openValueModal(
 	}
 }
 
+function clearError() {
+	errorMessage.value = '';
+}
+
+function validateTimeSeries(values) {
+	let isValid = true;
+	if (typeof values !== 'string') {
+		isValid = false;
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+		return isValid;
+	}
+	const timeValuePairs = values.split(',');
+
+	timeValuePairs.forEach((pair) => {
+		const [time, value] = pair.trim().split(/\s*:\s*/);
+		if (!time || !value) {
+			isValid = false;
+		}
+	});
+
+	clearError();
+	if (!isValid) {
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+	}
+	return isValid;
+}
+
+// to validate input
+function checkModelParameters() {
+	const { type, value } = extractions.value[activeIndex.value];
+
+	if (type === ParamType.TIME_SERIES) {
+		return validateTimeSeries(value);
+	}
+
+	clearError();
+	return true;
+}
+
 // function to set the provided values from the modal
 function setModelParameters() {
-	const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
-	const modelParameter =
-		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
-	modelParameter[valueName] = extractions.value[activeIndex.value].value;
-	modelParameter.name = extractions.value[activeIndex.value].name;
+	if (checkModelParameters()) {
+		const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
+		const modelParameter =
+			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
+		modelParameter[valueName] = extractions.value[activeIndex.value].value;
 
-	// delete the distribution if the checkbox isn't selected
-	if (extractions.value[activeIndex.value].isDistribution) {
-		modelParameter.distribution = extractions.value[activeIndex.value].distribution;
-	} else {
-		delete modelParameter.distribution;
+		if (!modelConfigurations.value[configIndex].configuration.metadata) {
+			modelConfigurations.value[configIndex].configuration.metadata = {};
+		}
+		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
+
+		modelParameter.name = extractions.value[activeIndex.value].name;
+
+		if (extractions.value[activeIndex.value].type === ParamType.TIME_SERIES) {
+			if (!modelMetadata.timeseries) modelMetadata.timeseries = {};
+			if (!modelMetadata.timeseries[modelParameter.id])
+				modelMetadata.timeseries[modelParameter.id] = {};
+			modelMetadata.timeseries[modelParameter.id] = extractions.value[activeIndex.value].value;
+			delete modelParameter.distribution;
+		} else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
+			modelParameter.distribution = extractions.value[activeIndex.value].distribution;
+			delete modelMetadata.timeseries?.[modelParameter.id];
+		} else {
+			// A constant
+			delete modelParameter.distribution;
+			delete modelMetadata.timeseries?.[modelParameter.id];
+		}
+
+		updateModelConfig();
 	}
 }
 
-function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
+function updateModelConfigName(configIndex: number) {
+	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
+	updateModelConfig(configIndex);
+}
+
+function updateModelConfigValue(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+		valueName
+	] = modelConfigInputValue.value;
+	updateModelConfig(configIndex);
+}
+
+function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
+}
+
+function getParameterValue(parameter, valueName, timeseries) {
+	if (parameter.id in timeseries) {
+		return timeseries[parameter.id];
+	}
+	return parameter[valueName];
+}
+function getParameterType(parameter, timeseries) {
+	if (parameter.id in timeseries) {
+		return ParamType.TIME_SERIES;
+	}
+
+	if (parameter.distribution) {
+		return ParamType.DISTRIBUTION;
+	}
+
+	return ParamType.CONSTANT;
 }
 
 async function initializeConfigSpace() {
@@ -394,22 +581,46 @@ onMounted(() => {
 }
 
 .p-datatable-thead th {
-	text-transform: capitalize;
+	text-transform: none !important;
+	color: var(--text-color-primary) !important;
+	font-size: var(--font-size-small) !important;
+	padding-left: 1rem !important;
 }
 
 .model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
 	content: '--';
 }
 
-.cell-menu {
-	visibility: hidden;
-}
-
 .editable-cell {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	min-width: 3rem;
+	visibility: visible;
+	width: 100%;
+}
+.editable-cell-hidden {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	visibility: hidden;
+	width: 100%;
+	height: 0px;
+	border-left: 12px solid transparent;
+	border-right: 11px solid transparent;
+}
+
+.cell-menu {
+	visibility: hidden;
+}
+
+.cell-input {
+	height: 4rem;
+	width: 100%;
+	padding-left: 12px;
+}
+
+td:has(.cell-input) {
+	padding: 0px !important;
 }
 
 .p-datatable:deep(td) {
@@ -421,16 +632,89 @@ onMounted(() => {
 
 .p-frozen-column {
 	left: 0px;
-	white-space: nowrap;
 }
 
 .second-frozen {
 	left: 48px;
 }
 
+.p-datatable .p-datatable-tbody > tr > td {
+	padding-right: 0.5rem;
+	white-space: nowrap;
+}
+
 th:hover .cell-menu,
 td:hover .cell-menu {
 	visibility: visible;
+}
+
+.editable-cell-hidden .cell-menu {
+	visibility: hidden !important;
+}
+
+.p-tabview {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.p-tabview:deep(> *) {
+	width: 50vw;
+	overflow: auto;
+}
+
+.p-tabview:deep(.p-tabview-nav) {
+	flex-direction: column;
+}
+
+.p-tabview:deep(label) {
+	display: block;
+	font-size: var(--font-caption);
+	margin-bottom: 0.25rem;
+	width: 20%;
+}
+
+.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
+	width: 20%;
+}
+
+.p-tabview:deep(.p-tabview-panels) {
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	background-color: var(--surface-ground);
+	width: 100%;
+	height: 100%;
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.p-tabview:deep(.p-tabview-nav li) {
+	border-left: 3px solid transparent;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
+	border-bottom: 1px solid var(--surface-border-light);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight) {
+	border-left: 3px solid var(--primary-color);
+	background: var(--surface-highlight);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+	background: none;
+}
+
+.p-tabview:deep(.p-inputtext) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
+	display: none;
 }
 
 .distribution-cell {
@@ -439,5 +723,36 @@ td:hover .cell-menu {
 }
 .distribution-range {
 	white-space: nowrap;
+	color: var(--text-color-subdued);
+}
+
+.invalid-message {
+	color: var(--text-color-danger);
+	font-size: var(--font-caption);
+}
+
+.capitalize {
+	text-transform: capitalize !important;
+	font-size: var(--font-body-medium) !important;
+}
+
+.modal-input-container {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.modal-input {
+	height: 25px;
+	padding-left: 5px;
+	margin: 5px;
+	align-items: baseline;
+}
+
+.modal-input-label {
+	margin-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	align-items: baseline;
 }
 </style>

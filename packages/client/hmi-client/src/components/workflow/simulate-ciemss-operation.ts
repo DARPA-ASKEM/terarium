@@ -6,12 +6,14 @@ export interface SimulateCiemssOperationState {
 	chartConfigs: ChartConfig[];
 	currentTimespan: TimeSpan;
 	numSamples: number;
+	method: string;
 }
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
+	displayName: 'Simulate (probabilistic)',
 	description: 'given a model id, and configuration id, run a simulation',
-	inputs: [{ type: 'modelConfigId', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
 	outputs: [{ type: 'simOutput' }],
 	isRunnable: true,
 
@@ -19,7 +21,8 @@ export const SimulateCiemssOperation: Operation = {
 		const init: SimulateCiemssOperationState = {
 			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 },
-			numSamples: 100
+			numSamples: 100,
+			method: 'dopri5'
 		};
 		return init;
 	},

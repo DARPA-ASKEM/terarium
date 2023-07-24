@@ -61,33 +61,50 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
+						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
+						:dropped-model-id="droppedAssetId"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset' && datasets"
+						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
+						:dropped-dataset-id="droppedAssetId"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
 					<tera-simulate-julia-node
-						v-else-if="node.operationType === 'SimulateJuliaOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-ciemss-node
-						v-else-if="node.operationType === 'SimulateCiemssOperation'"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
+					<tera-calibration-julia-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibration-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
+					<tera-simulate-ensemble-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibrate-ensemble-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -198,17 +215,22 @@ import {
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
-import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
+import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
+import TeraSimulateEnsembleCiemssNode from '@/components/workflow/tera-simulate-ensemble-node-ciemss.vue';
+import TeraCalibrateEnsembleCiemssNode from '@/components/workflow/tera-calibrate-ensemble-node-ciemss.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
-import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
+import { CalibrationOperationJulia } from '@/components/workflow/calibrate-operation-julia';
+import { CalibrationOperationCiemss } from '@/components/workflow/calibrate-operation-ciemss';
 import {
 	SimulateJuliaOperation,
 	SimulateJuliaOperationState
 } from '@/components/workflow/simulate-julia-operation';
 import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
+import { CalibrateEnsembleCiemssOperation } from '@/components/workflow/calibrate-ensemble-ciemss-operation';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -221,6 +243,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
+import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -238,7 +261,7 @@ let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
 const newEdge = ref<WorkflowEdge | undefined>();
-const newAssetId = ref<string | null>(null);
+const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
@@ -291,6 +314,7 @@ const isEdgeTargetSim = (edge) =>
 
 const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
+	displayName: 'Test Operation',
 	description: 'A test operation',
 	inputs: [
 		{ type: 'number', label: 'Number input', acceptMultiple: false },
@@ -306,6 +330,7 @@ const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 async function selectModel(node: WorkflowNode, data: { id: string }) {
+	droppedAssetId.value = null;
 	node.state.modelId = data.id;
 
 	// FIXME: Need additional design to work out exactly what to show. June 2023
@@ -333,6 +358,7 @@ async function updateWorkflowName() {
 }
 
 async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
+	droppedAssetId.value = null;
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
@@ -360,7 +386,8 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	if (
 		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
 		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
-		node.operationType === WorkflowOperationTypes.CALIBRATION
+		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
+		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 	) {
 		const state = node.state as SimulateJuliaOperationState;
 		if (state.chartConfigs.length === 0) {
@@ -388,6 +415,16 @@ workflowEventBus.on('node-state-change', (payload: any) => {
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 });
 
+workflowEventBus.on(
+	'add-node',
+	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
+		workflowService.addNode(wf.value, payload.operation, payload.position, {
+			state: payload.state
+		});
+		workflowDirty = true;
+	}
+);
+
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
@@ -403,7 +440,6 @@ const contextMenuItems = ref([
 	{
 		label: 'Model',
 		command: () => {
-			newAssetId.value = null;
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
 			workflowDirty = true;
 		}
@@ -411,7 +447,6 @@ const contextMenuItems = ref([
 	{
 		label: 'Dataset',
 		command: () => {
-			newAssetId.value = null;
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
 			workflowDirty = true;
 		}
@@ -429,8 +464,10 @@ const contextMenuItems = ref([
 				label: 'Simulate',
 				command: () => {
 					workflowService.addNode(wf.value, SimulateJuliaOperation, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}
@@ -443,7 +480,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Calibrate',
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+					workflowService.addNode(wf.value, CalibrationOperationJulia, newNodePosition);
 					workflowDirty = true;
 				}
 			}
@@ -456,21 +493,52 @@ const contextMenuItems = ref([
 				label: 'Simulate',
 				command: () => {
 					workflowService.addNode(wf.value, SimulateCiemssOperation, newNodePosition, {
-						width: 420,
-						height: 220
+						size: {
+							width: 420,
+							height: 220
+						}
 					});
 					workflowDirty = true;
 				}
 			},
 			{
 				label: 'Calibrate & Simulate',
-				disabled: true,
-				command: () => {}
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
+					workflowDirty = true;
+				}
 			},
 			{
-				label: 'Calibrate & Simulate ensemble',
-				disabled: true,
-				command: () => {}
+				label: 'Simulate ensemble',
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, SimulateEnsembleCiemssOperation, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
+					workflowDirty = true;
+				}
+			},
+			{
+				label: 'Calibrate ensemble',
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOperation, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
+					workflowDirty = true;
+				}
 			}
 		]
 	}
@@ -503,7 +571,7 @@ function onDrop(event) {
 		}
 
 		workflowService.addNode(wf.value, operation, newNodePosition);
-		newAssetId.value = assetId;
+		droppedAssetId.value = assetId;
 	}
 }
 
@@ -635,6 +703,7 @@ const drawPath = (v: any) => pathFn(v) as string;
 watch(
 	() => [props.assetId],
 	async () => {
+		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
 		}

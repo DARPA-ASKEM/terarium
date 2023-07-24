@@ -37,21 +37,30 @@
 				>Reconnect</Button
 			>
 		</div>
-		<div class="gpt-header">
+		<div class="gpt-header flex">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 			<span><header id="GPT">TGPT</header></span>
+			<span style="margin-left: 2rem">
+				<label>Auto expand previews:</label><input v-model="autoExpandPreview" type="checkbox" />
+			</span>
+			<span class="flex-auto"></span>
+			<Button label="Reset" class="p-button p-button-sm" @click="confirmReset">
+				<span class="pi pi-replay p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Reset</span>
+			</Button>
 		</div>
 		<tera-jupyter-chat
+			ref="chat"
 			:project="props.project"
 			:asset-id="props.assetId"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
+			:auto-expand-preview="autoExpandPreview"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
-			@is-typing="emit('is-typing')"
 		/>
 		<div>
 			<Button
@@ -132,9 +141,10 @@ const props = defineProps<{
 	showChatThoughts: boolean;
 }>();
 
+const chat = ref();
 const kernelStatus = ref(<string>'');
 const showKernels = ref(<boolean>false);
-const emit = defineEmits(['is-typing']);
+const autoExpandPreview = ref(<boolean>true);
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
@@ -168,7 +178,7 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 		channel: 'shell',
 		content: context_info,
 		msgType: 'context_setup_request',
-		msgId: createMessageId('context_setup_request')
+		msgId: 'tgpt-context_setup_request'
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
@@ -257,6 +267,14 @@ const saveAsNewDataset = async () => {
 	kernel?.sendJupyterMessage(message);
 };
 
+const resetKernel = async () => {
+	const session = jupyterSession.session;
+	const kernel = session?.kernel as IKernelConnection;
+
+	chat.value.clearOutputs();
+	await session?.changeKernel({ name: kernel.name });
+};
+
 const killKernel = () => {
 	shutdownKernel(selectedKernel.value.kernelId, getServerSettings());
 	updateKernelList();
@@ -267,6 +285,20 @@ const deleteAllKernels = () => {
 		shutdownKernel(k.kernelId, getServerSettings());
 	});
 	updateKernelList();
+};
+
+const confirmReset = () => {
+	confirm.require({
+		message: `Are you sure you want to rese the kernel?
+
+This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
+The code cells will need to be rerun.`,
+		header: 'Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			resetKernel();
+		}
+	});
 };
 
 // Kernel Confirmation dialogs

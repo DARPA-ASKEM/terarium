@@ -10,6 +10,15 @@ export interface Event {
     value?: string;
 }
 
+export interface EvaluationScenarioSummary {
+    name: string;
+    username: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
+}
+
 export interface GithubFile {
     type: FileType;
     encoding: string;
@@ -185,6 +194,16 @@ export interface PetriNetModel {
     transitions: PetriNetTransition[];
 }
 
+export interface ExtractionResponse {
+    id: string;
+    created_at: Date;
+    enqueued_at: Date;
+    started_at: Date;
+    status: string;
+    extraction_error: string;
+    result: any;
+}
+
 export interface DKG {
     curie: string;
     name: string;
@@ -192,7 +211,15 @@ export interface DKG {
     link: string;
 }
 
-export interface CalibrationRequest {
+export interface CalibrationRequestCiemss {
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
+}
+
+export interface CalibrationRequestJulia {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
@@ -204,6 +231,27 @@ export interface DatasetLocation {
     id: string;
     filename: string;
     mappings?: any;
+}
+
+export interface EnsembleCalibrationCiemssRequest {
+    modelConfigs: EnsembleModelConfigs[];
+    dataset: DatasetLocation;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+}
+
+export interface EnsembleModelConfigs {
+    id: string;
+    solutionMappings: { [index: string]: string };
+    weight: number;
+}
+
+export interface EnsembleSimulationCiemssRequest {
+    modelConfigs: EnsembleModelConfigs[];
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
 }
 
 export interface SimulationRequest {
@@ -252,6 +300,7 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
     attributes: any[];
+    timeseries?: { [index: string]: any };
 }
 
 export interface ModelGrounding {
@@ -509,10 +558,26 @@ export interface MetadataDataset {
     metadata: string;
 }
 
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
+}
+
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
     RouteTiming = "ROUTE_TIMING",
+    ProxyTiming = "PROXY_TIMING",
+    AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
+    ExtractModel = "EXTRACT_MODEL",
+    PersistModel = "PERSIST_MODEL",
+    TransformPrompt = "TRANSFORM_PROMPT",
+    AddCodeCell = "ADD_CODE_CELL",
+    RunSimulation = "RUN_SIMULATION",
+    RunCalibrate = "RUN_CALIBRATE",
+    GithubImport = "GITHUB_IMPORT",
 }
 
 export enum FileType {

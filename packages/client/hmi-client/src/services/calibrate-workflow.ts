@@ -11,7 +11,16 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 		const modelColumnNameOptions: string[] = modelConfiguration.configuration.model.states.map(
 			(state) => state.id
 		);
+
+		// add observables
+		if (modelConfiguration.configuration.semantics?.ode?.observables) {
+			modelConfiguration.configuration.semantics.ode.observables.forEach((o) => {
+				modelColumnNameOptions.push(o.id);
+			});
+		}
+
 		modelColumnNameOptions.push('timestep');
+		modelColumnNameOptions.push('timestamp');
 		return { modelConfiguration, modelColumnNameOptions };
 	}
 	return {};

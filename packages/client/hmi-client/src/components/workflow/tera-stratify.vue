@@ -18,6 +18,15 @@
 					:active="stratifyView === StratifyView.Output"
 				/>
 			</span>
+			<Button
+				v-if="stratifyView === StratifyView.Input"
+				class="stratify-button p-button-sm"
+				label="Stratify"
+				icon="pi pi-arrow-right"
+				iconPos="right"
+				@click="doStratify"
+				:disabled="stratifyStep !== 3"
+			/>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -38,24 +47,24 @@
 				<div class="instructions">
 					<div class="buttons" v-if="strataModel">
 						<Button
-							class="p-button-sm p-button-outlined"
+							class="p-button-outlined"
 							label="Go back"
 							icon="pi pi-arrow-left"
 							:disabled="stratifyStep === 0"
 							@click="goBack"
 						/>
 						<Button
-							v-if="!typedBaseModel"
-							class="p-button-sm"
+							v-if="stratifyStep === 1"
 							label="Continue to step 2: Assign types"
 							icon="pi pi-arrow-right"
+							iconPos="right"
 							@click="stratifyStep = 2"
 						/>
 						<Button
 							v-if="typedBaseModel && stratifyStep === 2"
-							class="p-button-sm"
 							label="Continue to step 3: Manage interactions"
 							icon="pi pi-arrow-right"
+							iconPos="right"
 							@click="stratifyStep = 3"
 						/>
 					</div>
@@ -70,7 +79,7 @@
 								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
 								:type-system="strataModelTypeSystem"
-								@all-nodes-typed="(typedModel) => onAllNodesTyped(typedModel)"
+								@model-updated="(value) => (typedBaseModel = value)"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -94,12 +103,11 @@
 							</div>
 							<div class="buttons">
 								<Button
-									class="p-button-sm p-button-outlined"
+									class="p-button-outlined"
 									label="Add another strata group"
 									icon="pi pi-plus"
 								/>
 								<Button
-									class="p-button-sm"
 									:disabled="!(strataType && labels)"
 									label="Generate strata"
 									@click="generateStrataModel"
@@ -115,6 +123,7 @@
 									:base-model="typedBaseModel"
 									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
 									:show-reflexives-toolbar="stratifyStep === 3"
+									@model-updated="(value) => (typedStrataModel = value)"
 								/>
 							</AccordionTab>
 						</Accordion>
@@ -122,10 +131,58 @@
 				</div>
 			</section>
 		</section>
+		<section class="output" v-else-if="stratifyView === StratifyView.Output">
+			<div>If this is not what you expected, go back to the input page to make changes.</div>
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Stratified model">
+					<tera-stratify-output-model-diagram v-if="stratifiedModel" :model="stratifiedModel" />
+				</AccordionTab>
+				<AccordionTab header="Strata model">
+					<tera-strata-model-diagram
+						v-if="typedStrataModel"
+						:strata-model="typedStrataModel"
+						:show-reflexives-toolbar="false"
+					/>
+				</AccordionTab>
+			</Accordion>
+			<div>
+				Saved as:
+				<Button
+					class=".p-button-link"
+					:label="stratifiedModel?.name"
+					icon="pi pi-pencil"
+					iconPos="right"
+					text
+					@click="
+						emit('open-asset', {
+							assetName: `${stratifiedModel?.name}`,
+							pageType: ProjectAssetTypes.MODELS,
+							assetId: stratifiedModel?.id
+						})
+					"
+				/>
+			</div>
+			<div class="add-model-config">
+				<Button
+					class="p-button-sm"
+					label="Add configure model to the workflow"
+					icon="pi pi-plus"
+					@click="
+						workflowEventBus.emit('add-node', {
+							workflowId: node.workflowId,
+							operation: ModelOperation,
+							position: { x: node.x, y: node.y + node.height + 8 },
+							state: { modelId: stratifiedModel?.id }
+						})
+					"
+				/>
+			</div>
+		</section>
 	</main>
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
@@ -139,13 +196,24 @@ import {
 import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel } from '@/services/model';
+import { getModel, createModel, reconstructAMR } from '@/services/model';
+import { addAsset } from '@/services/project';
+import { stratify } from '@/model-representation/petrinet/petrinet-service';
+import useResourcesStore from '@/stores/resources';
+import { ProjectAssetTypes } from '@/types/Project';
+import { workflowEventBus } from '@/services/workflow';
+import { ModelOperation } from '@/components/workflow/model-operation';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
+import TeraStratifyOutputModelDiagram from '../models/tera-stratify-output-model-diagram.vue';
+
+const resourceStore = useResourcesStore();
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['open-asset', 'add-model-config']);
 
 enum StratifyView {
 	Input,
@@ -161,7 +229,9 @@ const model = ref<Model | null>(null);
 const strataModelTypeSystem = computed<TypeSystem | undefined>(
 	() => strataModel.value?.semantics?.typing?.system
 );
-const typedBaseModel = ref<Model | null>(null);
+const typedBaseModel = ref<Model>();
+const typedStrataModel = ref<Model | null>(null);
+const stratifiedModel = ref<Model>();
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -174,8 +244,27 @@ function generateStrataModel() {
 	}
 }
 
-function onAllNodesTyped(typedModel: Model) {
-	typedBaseModel.value = typedModel;
+async function doStratify() {
+	if (typedBaseModel.value && typedStrataModel.value) {
+		const amrBase = (await stratify(typedBaseModel.value, typedStrataModel.value)) as Model;
+		const amr = (await reconstructAMR({ model: amrBase })) as Model;
+
+		// Put typing and span back in
+		if (amr.semantics && amr.semantics.ode) {
+			amr.semantics.span = _.cloneDeep(amrBase.semantics?.span);
+			amr.semantics.typing = _.cloneDeep(amrBase.semantics?.typing);
+		}
+		stratifiedModel.value = amr;
+		// Create model and asssociate
+		const response = await createModel(amr);
+		if (response) {
+			stratifiedModel.value.id = response.id;
+		}
+		const newModelId = response?.id;
+		const projectId = resourceStore.activeProject?.id as string;
+		await addAsset(projectId, 'models', newModelId);
+		stratifyView.value = StratifyView.Output;
+	}
 }
 
 function goBack() {
@@ -217,6 +306,10 @@ header {
 	align-items: center;
 }
 
+.stratify-button {
+	margin-left: auto;
+}
+
 nav {
 	padding-left: 1rem;
 	display: flex;
@@ -225,7 +318,7 @@ nav {
 section {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.5rem;
 }
 
 .step-header {
@@ -276,7 +369,7 @@ section {
 }
 
 #strata-type {
-	width: 50%;
+	width: 24rem;
 }
 
 .buttons {
@@ -291,5 +384,34 @@ section {
 
 .generate-strata-model {
 	padding: 0 0.5rem 0 0.5rem;
+}
+
+.stratify-button {
+	margin-left: auto;
+}
+
+.output {
+	padding-left: 0.5rem;
+}
+
+.output div:not(.p-accordion) {
+	padding-left: 0.5rem;
+}
+
+:deep(.p-accordion .p-accordion-content) {
+	padding: 0.5rem;
+}
+
+.saved-model-name {
+	color: var(--text-color-primary);
+	text-decoration: underline;
+}
+
+.p-button.p-button-text {
+	padding: 0;
+}
+
+.add-model-config {
+	display: flex;
 }
 </style>

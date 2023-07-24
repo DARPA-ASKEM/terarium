@@ -9,11 +9,9 @@
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
 				:msg="msg"
-				:has-been-drawn="renderedMessages.has(msg.query_id)"
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
-				@has-been-drawn="hasBeenDrawn(msg.query_id)"
-				@is-typing="emit('is-typing')"
+				:auto-expand-preview="autoExpandPreview"
 				@cell-updated="scrollToLastCell"
 			/>
 
@@ -47,7 +45,6 @@ import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
-const renderedMessages = ref(new Set<any>());
 const messageContainer = ref(<HTMLElement | null>null);
 const activeSessions = ref(null);
 const runningSessions = ref();
@@ -59,17 +56,18 @@ const notebookItems = ref(
 			timestamp: string;
 			messages: JupyterMessage[];
 			resultingCsv: CsvAsset | null;
+			executions: any[];
 		}[]
 	>[]
 );
-const notebookCells = ref([]);
+const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
 
 const emit = defineEmits([
 	'new-message',
 	'download-response',
 	'update-kernel-status',
 	'new-dataset-saved',
-	'is-typing'
+	'new-model-saved'
 ]);
 
 const props = defineProps<{
@@ -82,16 +80,12 @@ const props = defineProps<{
 	showChatThoughts?: boolean;
 	jupyterSession: SessionContext;
 	kernelStatus: String;
+	autoExpandPreview?: boolean;
 }>();
 
 onMounted(() => {
 	activeSessions.value = getSessionManager().running();
 });
-
-const hasBeenDrawn = (message_id: string) => {
-	renderedMessages.value.add(message_id);
-	messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
-};
 
 const queryString = ref('');
 
@@ -123,6 +117,7 @@ const submitQuery = (inputStr: string | undefined) => {
 		});
 		kernel?.sendJupyterMessage(message);
 		newJupyterMessage(message);
+		isExecutingCode.value = true;
 		queryString.value = '';
 	}
 };
@@ -149,7 +144,6 @@ const addCodeCell = () => {
 	};
 	messagesHistory.value.push(emptyCell);
 	updateNotebookCells(emptyCell);
-	hasBeenDrawn(msgId);
 };
 
 // const nestedMessages = computed(() => {
@@ -157,12 +151,16 @@ const updateNotebookCells = (message) => {
 	// This computed property groups Jupyter messages into queries
 	// and stores resulting csv after each query.
 	let notebookItem;
-	const parentId: String | null = message.parent_header?.msg_id || message.header?.msg_id || null;
+	const parentId: String | null =
+		message.metadata?.notebook_item ||
+		message.parent_header?.msg_id ||
+		message.header?.msg_id ||
+		null;
 
-	if (parentId) {
-		// Update existing cell
-		notebookItem = notebookItems.value.find((val) => val.query_id === parentId);
-	}
+	// Update existing cell
+	notebookItem = notebookItems.value.find(
+		(val) => val.executions.indexOf(message.parent_header.msg_id) > -1 || val.query_id === parentId
+	);
 	if (!notebookItem) {
 		const query = message.header.msg_type === 'llm_request' ? message.content.request : null;
 		// New cell
@@ -171,7 +169,8 @@ const updateNotebookCells = (message) => {
 			query,
 			timestamp: message.parent_header.date,
 			messages: [],
-			resultingCsv: null
+			resultingCsv: null,
+			executions: []
 		};
 		notebookItems.value.push(notebookItem);
 	}
@@ -181,7 +180,17 @@ const updateNotebookCells = (message) => {
 			(msg) => msg.header.msg_type !== 'dataset'
 		);
 		notebookItem.resultingCsv = message.content;
+	} else if (message.header.msg_type === 'model_preview') {
+		// If we get a new model preview, remove any old previews
+		notebookItem.messages = notebookItem.messages.filter(
+			(msg) => msg.header.msg_type !== 'model_preview'
+		);
+	} else if (message.header.msg_type === 'execute_input') {
+		const executionParent = message.parent_header.msg_id;
+		notebookItem.executions.push(executionParent);
+		return;
 	}
+
 	notebookItem.messages.push(message);
 };
 
@@ -190,31 +199,68 @@ const updateKernelStatus = (kernelStatus) => {
 };
 
 const newJupyterMessage = (jupyterMessage) => {
+	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'chatty_response', 'dataset'].indexOf(
-			jupyterMessage.header.msg_type
+		['stream', 'code_cell', 'llm_request', 'llm_response', 'chatty_response', 'dataset'].indexOf(
+			msgType
 		) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
-		isExecutingCode.value = false;
+		isExecutingCode.value = msgType === 'llm_request' || msgType === 'code_cell';
 		emit('new-message', messagesHistory.value);
 	} else if (jupyterMessage.header.msg_type === 'save_dataset_response') {
 		emit('new-dataset-saved', jupyterMessage.content);
+		isExecutingCode.value = false;
+	} else if (jupyterMessage.header.msg_type === 'save_model_response') {
+		emit('new-model-saved', jupyterMessage.content);
 		isExecutingCode.value = false;
 	} else if (jupyterMessage.header.msg_type === 'download_response') {
 		emit('download-response', jupyterMessage.content);
 		isExecutingCode.value = false;
 	} else if (jupyterMessage.header.msg_type === 'execute_input') {
-		isExecutingCode.value = true;
+		updateNotebookCells(jupyterMessage);
+	} else if (jupyterMessage.header.msg_type === 'model_preview') {
+		updateNotebookCells(jupyterMessage);
+		isExecutingCode.value = false;
 	} else {
 		console.log('Unknown Jupyter event', jupyterMessage);
 	}
 };
 
+const clearHistory = () => {
+	messagesHistory.value = [];
+	notebookItems.value = [];
+};
+
+// Clear all the outputs in the chat, without clearing the code/prompts/etc.
+const clearOutputs = () => {
+	for (let i = 0; i < notebookItems.value.length; i++) {
+		const item = notebookItems.value[i];
+		for (let j = item.messages.length - 1; j >= 0; j--) {
+			const message = item.messages[j];
+			const msgType = message.header.msg_type;
+			if (msgType === 'model_preview' || msgType === 'dataset') {
+				item.messages.splice(j, 1);
+			}
+			if (msgType === 'code_cell') {
+				console.log(message);
+			}
+		}
+	}
+	for (let i = 0; i < notebookCells.value.length; i++) {
+		const el = notebookCells.value[i];
+		if (el.codeCell) {
+			for (let j = 0; j < el.codeCell.length; j++) {
+				el.codeCell[j].clear();
+			}
+		}
+	}
+};
+
 const scrollToLastCell = (element, msg) => {
 	if (msg === notebookItems.value[notebookItems.value.length - 1]) {
-		element.scrollIntoView(false);
+		element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 	}
 };
 
@@ -261,6 +307,11 @@ watch(
 		console.log(props.project, props.assetId);
 	}
 );
+
+defineExpose({
+	clearHistory,
+	clearOutputs
+});
 </script>
 
 <style scoped>

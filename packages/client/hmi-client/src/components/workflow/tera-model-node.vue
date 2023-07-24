@@ -1,7 +1,9 @@
 <template>
 	<template v-if="model">
 		<h5>{{ model.name }}</h5>
-		<tera-model-diagram :model="model" :is-editable="false" nodePreview />
+		<div class="container">
+			<tera-model-diagram :model="model" :is-editable="false" nodePreview />
+		</div>
 	</template>
 	<Dropdown
 		v-else
@@ -21,9 +23,11 @@ import { Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import { WorkflowNode } from '@/types/workflow';
 
+//
 const props = defineProps<{
 	node: WorkflowNode;
 	models: Model[];
+	droppedModelId: null | string;
 }>();
 
 const emit = defineEmits(['select-model']);
@@ -31,12 +35,16 @@ const emit = defineEmits(['select-model']);
 const model = ref<Model | null>();
 const selectedModel = ref<Model>();
 
+async function getModelById(modelId: string) {
+	model.value = await getModel(modelId);
+	emit('select-model', { id: model.value?.id });
+}
+
 watch(
 	() => selectedModel.value,
 	async () => {
 		if (selectedModel.value) {
-			model.value = await getModel(selectedModel.value.id.toString());
-			emit('select-model', { id: model.value?.id });
+			await getModelById(selectedModel.value.id.toString());
 		}
 	}
 );
@@ -46,6 +54,9 @@ onMounted(async () => {
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
 	}
+
+	// If model is drag and dropped from resource panel
+	else if (props.droppedModelId) await getModelById(props.droppedModelId);
 });
 </script>
 
@@ -54,6 +65,13 @@ onMounted(async () => {
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
 	padding-bottom: 0.5rem;
+}
+
+.container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: hidden;
+	margin-top: 0.5rem;
 }
 
 .p-button-sm.p-button-outlined {

@@ -7,7 +7,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 
@@ -29,9 +28,16 @@ public interface SimulationCiemssServiceProxy {
 	);
 
 	@POST
-	@Path("/ensemble")
+	@Path("/ensemble-simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
-	JobResponse makeEnsembleJob(
+	JobResponse makeEnsembleSimulateCiemssJob(
+		JsonNode request
+	);
+
+	@POST
+	@Path("/ensemble-calibrate")
+	@Consumes(MediaType.APPLICATION_JSON)
+	JobResponse makeEnsembleCalibrateCiemssJob(
 		JsonNode request
 	);
 
