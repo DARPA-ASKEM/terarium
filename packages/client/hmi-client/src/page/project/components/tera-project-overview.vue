@@ -107,7 +107,7 @@
 					:row-class="() => 'p-selectable-row'"
 				>
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
-					<Column field="assetName" header="Name" sortable style="width: 50%">
+					<Column field="assetName" header="Name" sortable style="width: 75%">
 						<template #body="slotProps">
 							<div class="asset-button" @click="openResource(slotProps.data)">
 								<vue-feather
@@ -129,8 +129,8 @@
 						</template>
 					</Column>
 					<Column field="" header="Modified" sortable style="width: 25%"></Column>
-					<Column field="tags" header="Tags" style="width: 25%"></Column>
-					<Column header="Type" style="width: 25%" sortable>
+					<!-- <Column field="tags" header="Tags" style="width: 25%"></Column> -->
+					<Column header="Type" style="width: 25%" sortable field="pageType">
 						<template #body="slotProps">
 							{{ slotProps.data.pageType }}
 						</template>

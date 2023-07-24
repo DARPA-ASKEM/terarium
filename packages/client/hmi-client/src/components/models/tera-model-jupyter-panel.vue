@@ -53,12 +53,17 @@
 				/>
 			</div>
 		</div>
-		<div class="gpt-header">
+		<div class="gpt-header flex">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 			<span><header id="GPT">TGPT</header></span>
 			<span style="margin-left: 2rem">
 				<label>Auto expand previews:</label><input v-model="autoExpandPreview" type="checkbox" />
 			</span>
+			<span class="flex-auto"></span>
+			<Button label="Reset" class="p-button p-button-sm" @click="confirmReset">
+				<span class="pi pi-replay p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Reset</span>
+			</Button>
 		</div>
 		<tera-jupyter-chat
 			ref="chat"
@@ -191,7 +196,7 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 		channel: 'shell',
 		content: context_info,
 		msgType: 'context_setup_request',
-		msgId: createMessageId('context_setup_request')
+		msgId: 'tgpt-context_setup_request'
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
@@ -306,6 +311,14 @@ const saveAsNewModel = async () => {
 	kernel?.sendJupyterMessage(message);
 };
 
+const resetKernel = async () => {
+	const session = jupyterSession.session;
+	const kernel = session?.kernel as IKernelConnection;
+
+	chat.value.clearOutputs();
+	await session?.changeKernel({ name: kernel.name });
+};
+
 const killKernel = () => {
 	shutdownKernel(selectedKernel.value.kernelId, getServerSettings());
 	updateKernelList();
@@ -316,6 +329,20 @@ const deleteAllKernels = () => {
 		shutdownKernel(k.kernelId, getServerSettings());
 	});
 	updateKernelList();
+};
+
+const confirmReset = () => {
+	confirm.require({
+		message: `Are you sure you want to rese the kernel?
+
+This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
+The code cells will need to be rerun.`,
+		header: 'Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			resetKernel();
+		}
+	});
 };
 
 // Kernel Confirmation dialogs
@@ -374,12 +401,10 @@ const updateKernelList = () => {
 };
 
 const onNewModelSaved = async (payload) => {
-	console.log('saved');
 	if (!props.project) {
 		toast.error('Unable to save dataset', "Can't find active an project");
 		return;
 	}
-	console.log(payload);
 	const modelId = payload.model_id;
 	await addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 	toast.success('Model saved successfully', 'Refresh to see the dataset in the resource explorer');
@@ -515,5 +540,12 @@ main .annotation-group {
 	grid-row: 2;
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
+}
+</style>
+
+// Overwrite style on primevue dialog message to allow line breaks
+<style>
+.p-confirm-dialog-message {
+	white-space: pre-wrap;
 }
 </style>
