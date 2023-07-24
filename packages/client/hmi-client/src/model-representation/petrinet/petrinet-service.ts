@@ -3,6 +3,8 @@ import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
+import { getModelConfigurations } from '@/services/model';
+import { updateModelConfiguration } from '@/services/model-configurations';
 
 export interface NodeData {
 	type: string;
@@ -266,31 +268,45 @@ export const removeTransition = (amr: Model, id: string) => {
 
 // Update a transition's expression and expression_mathml fields based on
 // mass-kinetics
-export const updateRateExpression = (amr: Model, transition: PetriNetTransition) => {
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === `${transition.id}Param`);
+export const updateRateExpression = (
+	amr: Model,
+	transition: PetriNetTransition,
+	transitionExpression: string
+) => {
+	const param = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
 	if (!param) return;
 
-	updateRateExpressionWithParam(amr, transition, param.id);
+	updateRateExpressionWithParam(amr, transition, `${param.target}Param`, transitionExpression);
 };
+
 export const updateRateExpressionWithParam = (
 	amr: Model,
 	transition: PetriNetTransition,
-	parameterId: string
+	parameterId: string,
+	transitionExpression: string
 ) => {
 	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
 	if (!rate) return;
 
-	const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
-	if (!param) return;
+	let expression = '';
+	let expressionMathml = '';
 
-	const inputStr = transition.input.map((d) => `${d}`);
-	// eslint-disable-next-line
-	const expression = inputStr.join('*') + '*' + param.id;
-	// eslint-disable-next-line
-	const expressionMathml =
-		`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
-		`</apply>`;
+	if (transitionExpression === '') {
+		const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
+		const inputStr = transition.input.map((d) => `${d}`);
+		if (!param) return;
+		// eslint-disable-next-line
+		expression = inputStr.join('*') + '*' + param.id;
+		// eslint-disable-next-line
+		expressionMathml =
+			`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
+			`</apply>`;
+	} else {
+		expression = transitionExpression;
+		expressionMathml = transitionExpression;
+	}
 
+	rate.target = transition.id;
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
 };
@@ -303,14 +319,14 @@ export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
 		const transition = model.transitions.find((d) => d.id === targetId);
 		if (transition) {
 			transition.input.push(sourceId);
-			updateRateExpression(amr, transition);
+			updateRateExpression(amr, transition, '');
 		}
 	} else {
 		// if source is a transition then the target is a state
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (transition) {
 			transition.output.push(targetId);
-			updateRateExpression(amr, transition);
+			updateRateExpression(amr, transition, '');
 		}
 	}
 };
@@ -330,7 +346,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition);
+		updateRateExpression(amr, transition, '');
 	} else {
 		const transition = model.transitions.find((d) => d.id === sourceId);
 		if (!transition) return;
@@ -343,7 +359,7 @@ export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
 			}
 			return true;
 		});
-		updateRateExpression(amr, transition);
+		updateRateExpression(amr, transition, '');
 	}
 };
 
@@ -369,23 +385,145 @@ export const updateState = (amr: Model, id: string, newId: string, newName: stri
 	});
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t);
+		updateRateExpression(amr, t, '');
 	});
 };
 
-export const updateTransitione = (amr: Model, id: string, newId: string, newName: string) => {
+export const updateTransition = (
+	amr: Model,
+	id: string,
+	newId: string,
+	newName: string,
+	newExpression: string
+) => {
 	const model = amr.model as PetriNetModel;
 	const transition = model.transitions.find((d) => d.id === id);
 	if (!transition) return;
 	transition.id = newId;
-	transition.properties.name = newName;
+	if (transition.properties) {
+		transition.properties.name = newName;
+	} else {
+		transition.properties = {
+			name: newName,
+			description: newName
+		};
+	}
 
 	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
 
 	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t);
+		if (t.id === id) updateRateExpression(amr, t, newExpression);
+	});
+};
+
+const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
+	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
+
+const replaceValuesInExpression = (
+	expression: string,
+	wordToReplace: string,
+	replaceWord: string
+): string => {
+	let expressionBuilder = '';
+	let isOperator = false;
+	let content = '';
+
+	[...expression].forEach((c) => {
+		// not sure if this is an exhaustive list of operators or if it includes any operators it shouldn't
+		if ([',', '(', ')', '+', '-', '*', '/', '^'].includes(c)) {
+			isOperator = true;
+		} else {
+			isOperator = false;
+		}
+
+		if (isOperator) {
+			expressionBuilder += replaceExactString(content, wordToReplace, replaceWord);
+			content = '';
+			expressionBuilder += c;
+		}
+		if (!isOperator) {
+			content += c;
+		}
+	});
+
+	// if we reach the end of an expression and it doesn't end with an operator, we need to add the updated content
+	if (!isOperator) {
+		expressionBuilder += replaceExactString(content, wordToReplace, replaceWord);
+	}
+
+	return expressionBuilder;
+};
+
+// function to replace the content inside the tags of a mathml expression
+const replaceValuesInMathML = (
+	mathmlExpression: string,
+	wordToReplace: string,
+	replaceWord: string
+): string => {
+	let expressionBuilder = '';
+	let isTag = false;
+	let content = '';
+
+	[...mathmlExpression].forEach((c) => {
+		if (!isTag && c === '<') {
+			isTag = true;
+		}
+		if (isTag && c === '>') {
+			isTag = false;
+		}
+
+		if (isTag) {
+			expressionBuilder += replaceExactString(content, wordToReplace, replaceWord);
+			content = '';
+			expressionBuilder += c;
+		}
+		if (!isTag) {
+			// this only works if there is no '>' literal in the non-tag content
+			if (c !== '>') {
+				content += c;
+			} else {
+				expressionBuilder += c;
+			}
+		}
+	});
+
+	return expressionBuilder;
+};
+
+export const updateParameterId = (amr: Model, id: string, newId: string) => {
+	if (amr.semantics?.ode.parameters) {
+		amr.semantics.ode.parameters.forEach((param) => {
+			if (param.id === id) {
+				param.id = newId;
+			}
+		});
+
+		// update the expression and expression_mathml fields
+		amr.semantics.ode.rates.forEach((rate) => {
+			rate.expression = replaceValuesInExpression(rate.expression, id, newId);
+			if (rate.expression_mathml) {
+				rate.expression_mathml = replaceValuesInMathML(rate.expression_mathml, id, newId);
+			}
+		});
+
+		// if there's a timeseries field with the old parameter id then update it to the new id
+		if (amr.metadata?.timeseries && amr.metadata.timeseries[id]) {
+			amr.metadata.timeseries[newId] = amr.metadata.timeseries[id];
+			delete amr.metadata.timeseries[id];
+		}
+	}
+};
+
+export const updateConfigFields = async (modelId: string, id: string, newId: string) => {
+	const modelConfigs = await getModelConfigurations(modelId);
+
+	modelConfigs.forEach((config) => {
+		updateParameterId(config.configuration, id, newId);
+		// note that this is making an async call but we don't need to wait for it to finish
+		// since we don't immediately need the updated configs
+		updateModelConfiguration(config);
 	});
 };
 
@@ -399,18 +537,34 @@ export const addTyping = (amr: Model, typing: TypingSemantics) => {
 // Add a reflexive transition loop to the state
 // This is a special type of addTransition that creates a self loop
 const DEFAULT_REFLEXIVE_PARAM_VALUE = 1.0;
-export const addReflexives = (amr: Model, stateId: string, reflexiveId: string) => {
+
+export const addReflexives = (
+	amr: Model,
+	stateId: string,
+	reflexiveId: string,
+	numLoops: number = 1
+) => {
 	addTransition(amr, reflexiveId, reflexiveId, DEFAULT_REFLEXIVE_PARAM_VALUE);
 	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
 	if (transition) {
-		transition.input = [stateId];
-		transition.output = [stateId];
+		for (let i = 0; i < numLoops; i++) {
+			transition.input.push(stateId);
+			transition.output.push(stateId);
+		}
 	}
 };
 
 export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
+
+// FIXME - We need a proper way to update the model
+export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => ({
+	...amrOld,
+	...amr,
+	name: amrOld.name,
+	metadata: amrOld.metadata
+});
 
 export const modifyModelTypeSystemforStratification = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
@@ -428,23 +582,23 @@ export const modifyModelTypeSystemforStratification = (amr: Model) => {
 	return amrCopy;
 };
 
-function unifyModelTypeSystems(baseAMR: Model, fluxAMR: Model) {
+function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
 	// Entries in type system need to be in the same order for stratification
-	// They should contain the same state and transition entries for both baseAMR and fluxAMR, just in a different order
+	// They should contain the same state and transition entries for both baseAMR and strataAMR, just in a different order
 	// So just overwrite one with the other instead of sorting
 	const typeSystem = baseAMR.semantics?.typing?.system;
-	if (fluxAMR.semantics?.typing?.system) {
-		fluxAMR.semantics.typing.system.model = typeSystem.model;
+	if (strataAMR.semantics?.typing?.system) {
+		strataAMR.semantics.typing.system.model = typeSystem.model;
 	}
 }
 
-export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
+export const stratify = async (baseAMR: Model, strataAMR: Model) => {
 	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
-	const fluxModel = modifyModelTypeSystemforStratification(fluxAMR);
-	unifyModelTypeSystems(baseModel, fluxModel);
+	const strataModel = modifyModelTypeSystemforStratification(strataAMR);
+	unifyModelTypeSystems(baseModel, strataModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,
-		fluxModel
+		strataModel
 	});
 	return response.data as Model;
 };
@@ -452,6 +606,13 @@ export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
 /// /////////////////////////////////////////////////////////////////////////////
 // Stratification
 /// /////////////////////////////////////////////////////////////////////////////
+
+// Check if AMR is a stratified AMR
+export const isStratifiedAMR = (amr: Model) => {
+	// Catlab stratification: this will have "semantics.span" field
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return true;
+	return false;
+};
 
 // Returns a 1xN matrix describing state's initials
 export const extractMapping = (amr: Model, id: string) => {
@@ -463,7 +624,7 @@ export const extractMapping = (amr: Model, id: string) => {
 };
 
 // Flattens out transitions and their relationships/types into a 1-D vector
-export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]) => {
+export const extractTransitionMatrixData = (amr: Model, transitionIds: string[]) => {
 	const model = amr.model as PetriNetModel;
 	const transitions = model.transitions;
 
@@ -505,7 +666,7 @@ export const extractTransitiontMatrixData = (amr: Model, transitionIds: string[]
 };
 
 // Returns state list as a 1D vector for pivot matrix
-export const extractStateMatrixData = (amr: Model, stateIds: string[]) => {
+export const extractStateMatrixData = (amr: Model, stateIds: string[], dimensions: string[]) => {
 	const model = amr.model as PetriNetModel;
 	const states = model.states;
 	const results: any[] = [];
@@ -515,8 +676,8 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[]) => {
 		if (!stateIds.includes(id)) return;
 		const obj: any = {};
 
-		// FIXME: not sure what we need
-		obj.id = state.id;
+		// FIXME: This only works for 2 dimensions now, may have to handle more than 2 differently
+		obj[dimensions[results.length]] = state.id;
 		results.push(obj);
 	});
 	return results;

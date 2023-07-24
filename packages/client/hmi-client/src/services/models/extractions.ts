@@ -1,5 +1,5 @@
 import API, { Poller, PollerState, PollResponse } from '@/api/api';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
@@ -8,28 +8,52 @@ import { logger } from '@/utils/logger';
  * @param id
  * @return {Promise<PollerResult>}
  */
-async function fetchExtraction(id: string) {
+export async function fetchExtraction(id: string) {
 	const pollerResult: PollResponse<any> = { data: null, progress: null, error: null };
-	const poller = new Poller<object>().setPollAction(async () => {
-		const response = await API.get(`/extract/status/${id}`);
+	const poller = new Poller<object>()
+		.setPollAction(async () => {
+			const response = await API.get(`/extract/status/${id}`);
 
-		// Finished
-		if (response?.status === 200 && response?.data?.status === 'finished') {
-			pollerResult.data = response.data.result;
+			// Finished
+			if (response?.status === 200 && response?.data?.status === 'finished') {
+				pollerResult.data = response.data.result;
+				return pollerResult;
+			}
+
+			// Failed
+			if (response?.status === 200 && response?.data?.status === 'failed') {
+				pollerResult.error = true;
+				return pollerResult;
+			}
+
+			// Queued
 			return pollerResult;
-		}
-
-		// Failed
-		if (response?.status === 200 && response?.data?.status === 'failed') {
-			pollerResult.error = true;
-			return pollerResult;
-		}
-
-		// Queued
-		return pollerResult;
-	});
+		})
+		.setThreshold(30);
 	return poller.start();
 }
+
+/**
+ * Transform a list of LaTeX strings to an AMR
+ * @param latex string[] - list of LaTeX strings representing a model
+ * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
+ * @return {Promise<Model | null>}
+ */
+const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Model | null> => {
+	try {
+		const response: AxiosResponse<Model> = await API.post(
+			`/extract/latex-to-amr/${framework}`,
+			latex
+		);
+		if (response && response?.status === 200 && response?.data) {
+			return response.data;
+		}
+		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - SKEMA Unified' });
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false, toastTitle: 'Error - SKEMA Unified' });
+	}
+	return null;
+};
 
 /**
  * Transform a MathML list of strings to an AMR
@@ -67,4 +91,19 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 	return null;
 };
 
-export { mathmlToAMR };
+/**
+ * Given a dataset, enrich its metadata
+ * Returns a runId used to poll for result
+ */
+export const profileDataset = async (datasetId: string, artifactId: string | null = null) => {
+	let response: any = null;
+	if (artifactId) {
+		response = await API.post(`/extract/profile-dataset/${datasetId}?artifact_id=${artifactId}`);
+	} else {
+		response = await API.post(`/extract/profile-dataset/${datasetId}`);
+	}
+	console.log('data profile response', response.data);
+	return response.data.id;
+};
+
+export { mathmlToAMR, latexToAMR };

@@ -16,17 +16,13 @@
 					@click="isEditingEq ? (isEditingEquation = true) : null"
 					@focus="showKeyboard"
 					@blur="hideKeyboard"
-					@keyup="
-						latexTextInput = mathLiveField?.getValue('latex-unstyled')
-							? mathLiveField?.getValue('latex-unstyled')
-							: ''
-					"
+					@keyup="updateEquationMathField"
 				>
 				</math-field>
 				<section class="menu">
 					<Button
 						type="button"
-						class="delete"
+						class="p-button-secondary p-button-sm p-button-outlined delete"
 						label="Delete"
 						@click="toggleMenu"
 						aria-haspopup="true"
@@ -37,7 +33,7 @@
 				</section>
 			</div>
 			<div v-if="isEditingEquation">
-				<div class="input-label">LaTeX</div>
+				<div class="input-label spacer">LaTeX</div>
 				<section class="latex-input" v-if="isEditingEquation">
 					<InputText
 						v-model="latexTextInput"
@@ -46,39 +42,42 @@
 						type="text"
 						aria-label="latexInput"
 						:unstyled="true"
-						@keyup="updateEquation"
+						@keyup="updateEquationLatex"
 						@click="isEditingEq ? (isEditingEquation = true) : null"
 					/>
 				</section>
 				<div class="controls">
-					<span class="meta-property">Name:</span>
-					<span class="meta-property-value" @dblclick="nameInput = false"
-						><InputText
-							v-model="name"
-							class="control-button"
-							:disabled="nameInput"
-							@blur="nameInput = true"
-						></InputText
-					></span>
-					<span class="meta-property">ID:</span>
-					<span class="meta-property-value" @dblclick="idInput = false"
-						><InputText
-							v-model="id"
-							class="control-button"
-							:disabled="idInput"
-							@blur="idInput = true"
-						></InputText>
+					<span v-if="showMetadata">
+						<span class="meta-property">Name:</span>
+						<span class="meta-property-value" @dblclick="nameInput = false"
+							><InputText
+								v-model="name"
+								class="control-button"
+								:disabled="nameInput"
+								@blur="nameInput = true"
+							></InputText
+						></span>
+						<span class="meta-property">ID:</span>
+						<span class="meta-property-value" @dblclick="idInput = false"
+							><InputText
+								v-model="id"
+								class="control-button"
+								:disabled="idInput"
+								@blur="idInput = true"
+							></InputText>
+						</span>
 					</span>
 					<Button
-						class="control-button"
-						label="Save"
-						aria-label="Save"
+						class="p-button-secondary p-button-sm p-button-outlined cancel-button"
+						label="Cancel"
+						aria-label="Cancel"
 						@click="isEditingEquation = false"
 					></Button>
 					<Button
-						class="control-button"
-						label="Cancel"
-						aria-label="Cancel"
+						class="p-button-sm"
+						label="Save"
+						aria-label="Save"
+						:disabled="props.id === '' && showMetadata"
 						@click="isEditingEquation = false"
 					></Button>
 				</div>
@@ -128,23 +127,31 @@ const props = defineProps({
 	},
 	index: {
 		type: Number,
-		required: true
+		default: 0
 	},
 	id: {
 		type: String,
-		required: false,
-		default: 'New Id'
+		default: ''
 	},
 	name: {
 		type: String,
-		required: false,
-		default: 'Name'
+		default: ''
+	},
+	showMetadata: {
+		type: Boolean,
+		default: false
+	},
+	keepOpen: {
+		type: Boolean,
+		default: false
 	}
 });
 
 const id = ref(props.id);
 const name = ref(props.name);
-const expandedDiv = computed(() => (isEditingEquation.value ? `expanded-div` : ``));
+const expandedDiv = computed(() =>
+	props.keepOpen || isEditingEquation.value ? `expanded-div` : ``
+);
 
 defineExpose({
 	mathLiveField,
@@ -157,7 +164,13 @@ const menuItems = ref([
 	{
 		items: [
 			{
-				label: 'Confirm Delete?',
+				label: 'Cancel',
+				command: () => {
+					/* do nothing */
+				}
+			},
+			{
+				label: 'Confirm delete?',
 				command: () => {
 					emit('delete', props.index);
 				}
@@ -179,7 +192,14 @@ const mathFieldStyle = computed(() => {
 	return props.isEditingEq ? `mathlive-equation editing` : `mathlive-equation`;
 });
 
-const updateEquation = () => {
+const updateEquationMathField = () => {
+	latexTextInput.value = mathLiveField.value?.getValue('latex-unstyled')
+		? mathLiveField.value?.getValue('latex-unstyled')
+		: '';
+	updateEquationLatex();
+};
+
+const updateEquationLatex = () => {
 	emit(
 		'equation-updated',
 		props.index,
@@ -208,6 +228,8 @@ watch(
 		if (props.latexEquation === '') {
 			isEditingEquation.value = true;
 		}
+		name.value = props.name;
+		id.value = props.id;
 		renderEquations();
 	}
 );
@@ -217,6 +239,10 @@ onMounted(() => {
 		isEditingEquation.value = true;
 	}
 	latexTextInput.value = props.latexEquation;
+	if (props.keepOpen) {
+		isEditingEquation.value = true;
+		hover.value = false;
+	}
 	renderEquations();
 });
 </script>
@@ -229,7 +255,7 @@ onMounted(() => {
 }
 
 math-field {
-	border-radius: 4px;
+	border-radius: var(--border-radius);
 	border: none;
 	outline: none;
 	font-size: 1em;
@@ -255,8 +281,6 @@ math-field[disabled] {
 .math-editor {
 	display: flex;
 	flex-direction: column;
-	resize: horizontal;
-	justify-content: center;
 }
 
 .input-label {
@@ -270,9 +294,9 @@ math-field[disabled] {
 	background-color: var(--gray-0);
 	padding: 10px;
 	margin: 10px;
-	box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
-	border: 1px solid var(--surface-border);
-	border-radius: 3px;
+	box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-big);
 }
 
 .editing {
@@ -299,11 +323,14 @@ math-field[disabled] {
 	border: 1px solid var(--gray-300);
 }
 
+.spacer {
+	padding-top: 1rem;
+}
 .latex-input-text {
 	flex-direction: row;
 	background-color: var(--gray-0);
 	border-color: var(--gray-300);
-	padding: 10px;
+	padding: 1rem;
 	height: auto;
 	resize: none;
 	overflow-y: hidden;
@@ -328,46 +355,33 @@ math-field[disabled] {
 	transform: translateY(-50%);
 	margin: auto 0;
 }
-
 .delete {
-	background-color: white;
-	height: 30px;
 	color: black;
-	background-color: var(--gray-0);
+	background-color: var(--gray-0) !important;
 	justify-content: flex-end;
-	width: 70px;
 	border: 1px solid var(--surface-border);
 	display: none;
 }
 
+.delete:hover {
+	border: 1px solid var(--surface-border-warning) !important;
+}
+
+.delete:hover:deep(.p-button-label) {
+	color: var(--surface-border-warning);
+}
 .controls {
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-end;
-	padding-right: 15px;
+	gap: 0.5rem;
 }
 
-.control-button {
-	background-color: white;
-	height: 30px;
-	color: var(--gray-1000);
-	background-color: var(--gray-0);
-	justify-content: flex-end;
-	width: 70px;
-	margin-left: 10px;
+.cancel-button:hover {
 	border: 1px solid var(--surface-border);
-	border-radius: 6px;
-	font-family: Figtree;
-	font-size: 10px;
-	font-weight: 500;
-	line-height: 16px;
-	letter-spacing: 0.75px;
 }
-
-.control-button:disabled {
-	color: var(--gray-1000);
-	opacity: 100%;
-	border: none;
+.cancel-button:hover:deep(.p-button-label) {
+	color: var(--primary-color);
 }
 
 .meta-data {

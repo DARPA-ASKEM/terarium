@@ -1,27 +1,23 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate & Simulate (Probabilistic)'" is-editable stretch-content>
-		<template #nav>
-			<tera-asset-nav :show-header-links="false">
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Input"
-							icon="pi pi-sign-in"
-							@click="calibrationView = CalibrationView.INPUT"
-							:active="calibrationView === CalibrationView.INPUT"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Output"
-							icon="pi pi-sign-out"
-							@click="calibrationView = CalibrationView.OUTPUT"
-							:active="calibrationView === CalibrationView.OUTPUT"
-						/>
-					</span>
-				</template>
-			</tera-asset-nav>
+	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" is-editable stretch-content>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Input"
+					icon="pi pi-sign-in"
+					@click="calibrationView = CalibrationView.INPUT"
+					:active="calibrationView === CalibrationView.INPUT"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Output"
+					icon="pi pi-sign-out"
+					@click="calibrationView = CalibrationView.OUTPUT"
+					:active="calibrationView === CalibrationView.OUTPUT"
+				/>
+			</span>
 		</template>
 		<Accordion
 			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
@@ -32,10 +28,10 @@
 				<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
 			</AccordionTab>
 			<AccordionTab header="Mapping">
-				<DataTable class="p-datatable-xsm" :value="mapping">
+				<DataTable class="mapping-table" :value="mapping">
 					<Column field="modelVariable">
 						<template #header>
-							<span class="column-header">MODEL VARIABLE</span>
+							<span class="column-header">Model variable</span>
 						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
@@ -49,7 +45,7 @@
 					</Column>
 					<Column field="datasetVariable">
 						<template #header>
-							<span class="column-header">DATASET VARIABLE</span>
+							<span class="column-header">Dataset variable</span>
 						</template>
 						<template #body="{ data, field }">
 							<!-- Tom TODO: No v-model -->
@@ -64,7 +60,7 @@
 				</DataTable>
 				<div>
 					<Button
-						class="p-button-sm p-button-outlined"
+						class="p-button-sm p-button-text"
 						icon="pi pi-plus"
 						label="Add mapping"
 						@click="addMapping"
@@ -79,6 +75,19 @@
 					<InputNumber v-model="trainTestValue" />
 					<Slider v-model="trainTestValue" />
 				</section>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header> Simulation time range </template>
+				<div class="sim-tspan-container">
+					<div class="sim-tspan-group">
+						<label for="2">Start date</label>
+						<InputNumber id="2" class="p-inputtext-sm" v-model="timespan.start" />
+					</div>
+					<div class="sim-tspan-group">
+						<label for="3">End date</label>
+						<InputNumber id="3" class="p-inputtext-sm" v-model="timespan.end" />
+					</div>
+				</div>
 			</AccordionTab>
 		</Accordion>
 		<Accordion
@@ -103,7 +112,7 @@
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
-			<AccordionTab header="Calibrated parameter values">
+			<!-- <AccordionTab header="Calibrated parameter values">
 				<table class="p-datatable-table">
 					<thead class="p-datatable-thead">
 						<th>Parameter</th>
@@ -118,8 +127,12 @@
 						</td>
 					</tr>
 				</table>
-			</AccordionTab>
+			</AccordionTab> -->
 		</Accordion>
+		<section v-else-if="!modelConfig" class="emptyState">
+			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+			<p class="helpMessage">Connect a model configuration and dataset</p>
+		</section>
 	</tera-asset>
 </template>
 
@@ -134,18 +147,17 @@ import { getRunResult, getRunResultCiemss } from '@/services/models/simulation-s
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import { CsvAsset, ModelConfiguration } from '@/types/Types';
+import { CsvAsset, ModelConfiguration, TimeSpan } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
-import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
+import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation-julia';
+import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation-ciemss';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -160,6 +172,7 @@ enum CalibrationView {
 const modelColumnNames = ref<string[] | undefined>();
 
 const calibrationView = ref(CalibrationView.INPUT);
+const timespan = ref<TimeSpan>(props.node.state.timeSpan);
 
 const trainTestValue = ref(80);
 
@@ -178,7 +191,7 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -189,7 +202,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -207,7 +220,7 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -221,7 +234,7 @@ function addMapping() {
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -235,7 +248,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
@@ -255,7 +268,7 @@ watch(
 
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
 		runResults.value = output.runResults;
-		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'visualization.json');
 	},
 	{ immediate: true }
 );
@@ -266,6 +279,15 @@ watch(
 	padding-top: 1rem;
 }
 
+.mapping-table:deep(td) {
+	padding: 0rem 0.25rem 0.5rem 0rem !important;
+	border: none !important;
+}
+.mapping-table:deep(th) {
+	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
+	border: none !important;
+	width: 50%;
+}
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -287,8 +309,40 @@ th {
 	text-align: left;
 }
 .column-header {
+	color: var(--text-color-primary);
+	font-size: var(--font-body-small);
+	font-weight: var(--font-weight-semibold);
+}
+.emptyState {
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	margin-top: 15rem;
+	gap: 0.5rem;
+}
+
+.helpMessage {
 	color: var(--text-color-subdued);
-	font-size: 12px;
-	font-weight: 400;
+	font-size: var(--font-body-small);
+	width: 90%;
+	margin-top: 1rem;
+}
+
+.sim-tspan-container {
+	display: flex;
+	gap: 1em;
+}
+
+.sim-tspan-group {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	flex-basis: 0;
+}
+
+img {
+	width: 20%;
 }
 </style>

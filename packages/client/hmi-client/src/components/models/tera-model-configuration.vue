@@ -6,6 +6,7 @@
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead class="p-datatable-thead">
+					<!-- Table header 1st row: Column groups such asInitials, Parameters, Observables, etc. -->
 					<tr v-if="isEditable">
 						<th class="p-frozen-column"></th>
 						<th class="p-frozen-column second-frozen"></th>
@@ -13,6 +14,7 @@
 							<span class="capitalize">{{ name }}</span>
 						</th>
 					</tr>
+					<!-- Table header 2nd row: Actual column headers -->
 					<tr>
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
@@ -33,9 +35,11 @@
 						<!--TODO: Insert new th loops for time and observables here-->
 					</tr>
 				</thead>
+				<!-- Table body -->
 				<tbody class="p-datatable-tbody">
 					<tr v-for="({ configuration, name }, i) in modelConfigurations" :key="i">
 						<!--TODO: This td is a placeholder, row selection doesn't work-->
+						<!-- Checkbox -->
 						<td class="p-selection-column p-frozen-column">
 							<div class="p-checkbox p-component">
 								<div class="p-hidden-accessible">
@@ -46,34 +50,46 @@
 								</div>
 							</div>
 						</td>
+						<!-- 1st column: Configuration name -->
 						<td
 							class="p-frozen-column second-frozen"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].name = true"
+							@keyup.enter="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+							@click="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
 						>
-							<span v-if="!cellEditStates[i].name" @click="cellEditStates[i].name = true">
+							<span :class="!cellEditStates[i].name ? 'editable-cell' : 'editable-cell-hidden'">
 								{{ name }}
 							</span>
 							<InputText
-								v-else
-								v-model.lazy="modelConfigurations[i].name"
+								v-if="cellEditStates[i].name"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].name = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].name = false;
-									updateModelConfigValue(i);
+									updateModelConfigName(i);
 								"
 								class="cell-input"
 							/>
 						</td>
+						<!-- Additional columns -->
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
-							@click="cellEditStates[i].initials[j] = true"
+							@click="onEnterValueCell('initials', 'expression', i, j)"
 							tabindex="0"
-							@keyup.enter="cellEditStates[i].initials[j] = true"
+							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
-							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
+							<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
+							<section
+								:class="!cellEditStates[i].initials[j] ? 'editable-cell' : 'editable-cell-hidden'"
+							>
 								<span>{{ initial.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -82,15 +98,13 @@
 								/>
 							</section>
 							<InputText
-								v-else
-								v-model.lazy="
-									modelConfigurations[i].configuration.semantics.ode.initials[j].expression
-								"
+								v-if="cellEditStates[i].initials[j]"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].initials[j] = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].initials[j] = false;
-									updateModelConfigValue(i);
+									updateModelConfigValue('initials', 'expression', i, j);
 								"
 								class="cell-input"
 							/>
@@ -101,7 +115,7 @@
 							@click="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										cellEditStates[i].parameters[j] = true;
+										onEnterValueCell('parameters', 'value', i, j);
 									}
 								}
 							"
@@ -109,12 +123,14 @@
 							@keyup.enter="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										cellEditStates[i].parameters[j] = true;
+										onEnterValueCell('parameters', 'value', i, j);
 									}
 								}
 							"
 						>
-							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
+							<section
+								:class="!cellEditStates[i].parameters[j] ? 'editable-cell' : 'editable-cell-hidden'"
+							>
 								<div class="distribution-cell">
 									<!-- To represent a time series variable -->
 									<span v-if="configuration?.metadata?.timeseries?.[parameter.id]">TS</span>
@@ -131,15 +147,13 @@
 								/>
 							</section>
 							<InputText
-								v-else
-								v-model.lazy="
-									modelConfigurations[i].configuration.semantics.ode.parameters[j].value
-								"
+								v-if="cellEditStates[i].parameters[j]"
+								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].parameters[j] = false"
-								@keyup.enter="
+								@keyup.stop.enter="
 									cellEditStates[i].parameters[j] = false;
-									updateModelConfigValue(i);
+									updateModelConfigValue('parameters', 'value', i, j);
 								"
 								class="cell-input"
 							/>
@@ -219,6 +233,14 @@
 								/>
 							</div>
 						</div>
+						<label for="equation">Equation</label>
+						<tera-math-editor
+							:is-editing-eq="true"
+							:latex-equation="''"
+							:keep-open="true"
+							@equation-updated="console.log('equation udpated from configuration')"
+						>
+						</tera-math-editor>
 					</TabPanel>
 				</TabView>
 			</template>
@@ -254,6 +276,7 @@ import {
 	addDefaultConfiguration
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 
 enum ParamType {
 	CONSTANT = 'constant',
@@ -267,6 +290,7 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
@@ -327,6 +351,19 @@ function getValuePlaceholder(parameterType) {
 	return '';
 }
 
+function onEnterValueCell(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	modelConfigInputValue.value = cloneDeep(
+		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+			valueName
+		]
+	);
+	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
+}
 function openValueModal(
 	odeType: string,
 	valueName: string,
@@ -404,6 +441,9 @@ function setModelParameters() {
 			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
 		modelParameter[valueName] = extractions.value[activeIndex.value].value;
 
+		if (!modelConfigurations.value[configIndex].configuration.metadata) {
+			modelConfigurations.value[configIndex].configuration.metadata = {};
+		}
 		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
 
 		modelParameter.name = extractions.value[activeIndex.value].name;
@@ -416,18 +456,35 @@ function setModelParameters() {
 			delete modelParameter.distribution;
 		} else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
 			modelParameter.distribution = extractions.value[activeIndex.value].distribution;
-			delete modelMetadata.timeseries[modelParameter.id];
+			delete modelMetadata.timeseries?.[modelParameter.id];
 		} else {
 			// A constant
 			delete modelParameter.distribution;
-			delete modelMetadata.timeseries[modelParameter.id];
+			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
 
-		updateModelConfigValue();
+		updateModelConfig();
 	}
 }
 
-function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
+function updateModelConfigName(configIndex: number) {
+	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
+	updateModelConfig(configIndex);
+}
+
+function updateModelConfigValue(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+		valueName
+	] = modelConfigInputValue.value;
+	updateModelConfig(configIndex);
+}
+
+function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
@@ -534,23 +591,36 @@ onMounted(() => {
 	content: '--';
 }
 
+.editable-cell {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	visibility: visible;
+	width: 100%;
+}
+.editable-cell-hidden {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	visibility: hidden;
+	width: 100%;
+	height: 0px;
+	border-left: 12px solid transparent;
+	border-right: 11px solid transparent;
+}
+
 .cell-menu {
 	visibility: hidden;
 }
 
 .cell-input {
-	width: calc(100%);
 	height: 4rem;
+	width: 100%;
+	padding-left: 12px;
 }
-.editable-cell {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	min-width: 3rem;
-}
+
 td:has(.cell-input) {
-	padding: 2px !important;
-	max-width: 4rem;
+	padding: 0px !important;
 }
 
 .p-datatable:deep(td) {
@@ -562,11 +632,15 @@ td:has(.cell-input) {
 
 .p-frozen-column {
 	left: 0px;
-	white-space: nowrap;
 }
 
 .second-frozen {
 	left: 48px;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+	padding-right: 0.5rem;
+	white-space: nowrap;
 }
 
 th:hover .cell-menu,
@@ -574,16 +648,18 @@ td:hover .cell-menu {
 	visibility: visible;
 }
 
+.editable-cell-hidden .cell-menu {
+	visibility: hidden !important;
+}
+
 .p-tabview {
 	display: flex;
 	gap: 1rem;
 	margin-bottom: 1rem;
-	justify-content: space-between;
 }
 
 .p-tabview:deep(> *) {
 	width: 50vw;
-	height: 50vh;
 	overflow: auto;
 }
 
@@ -595,16 +671,19 @@ td:hover .cell-menu {
 	display: block;
 	font-size: var(--font-caption);
 	margin-bottom: 0.25rem;
+	width: 20%;
 }
 
 .p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
-	width: 100%;
+	width: 20%;
 }
 
 .p-tabview:deep(.p-tabview-panels) {
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	background-color: var(--surface-ground);
+	width: 100%;
+	height: 100%;
 }
 
 .p-tabview:deep(.p-tabview-panel) {
@@ -644,6 +723,7 @@ td:hover .cell-menu {
 }
 .distribution-range {
 	white-space: nowrap;
+	color: var(--text-color-subdued);
 }
 
 .invalid-message {
@@ -654,5 +734,25 @@ td:hover .cell-menu {
 .capitalize {
 	text-transform: capitalize !important;
 	font-size: var(--font-body-medium) !important;
+}
+
+.modal-input-container {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.modal-input {
+	height: 25px;
+	padding-left: 5px;
+	margin: 5px;
+	align-items: baseline;
+}
+
+.modal-input-label {
+	margin-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	align-items: baseline;
 }
 </style>

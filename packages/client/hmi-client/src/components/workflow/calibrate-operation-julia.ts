@@ -3,24 +3,40 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { ChartConfig } from '@/types/SimulateConfig';
+import { TimeSpan } from '@/types/Types';
 
 export interface CalibrateMap {
 	modelVariable: string;
 	datasetVariable: string;
 }
 
+export interface CalibrateExtraJulia {
+	numChains: number;
+	numIterations: number;
+	odeMethod: string;
+	calibrateMethod: string;
+}
+
+export enum CalibrateMethodOptions {
+	BAYESIAN = 'bayesian',
+	LOCAL = 'local',
+	GLOBAL = 'global'
+}
+
 export interface CalibrationOperationStateJulia {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
+	extra: CalibrateExtraJulia;
+	timeSpan: TimeSpan;
 }
 
 export const CalibrationOperationJulia: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION_JULIA,
-	displayName: 'Calibrate (Deterministic)',
+	displayName: 'Calibrate (deterministic)',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model Configuration' },
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset' }
 	],
 	outputs: [{ type: 'number' }],
@@ -52,7 +68,14 @@ export const CalibrationOperationJulia: Operation = {
 	initState: () => {
 		const init: CalibrationOperationStateJulia = {
 			chartConfigs: [],
-			mapping: [{ modelVariable: '', datasetVariable: '' }]
+			mapping: [{ modelVariable: '', datasetVariable: '' }],
+			extra: {
+				numChains: 4,
+				numIterations: 50,
+				odeMethod: 'default',
+				calibrateMethod: CalibrateMethodOptions.GLOBAL
+			},
+			timeSpan: { start: 0, end: 90 }
 		};
 		return init;
 	}

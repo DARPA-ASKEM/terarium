@@ -8,8 +8,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Map;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/simulations")
@@ -58,5 +56,12 @@ public interface SimulationProxy {
 	PresignedURL getDownloadURL(
 		@PathParam("id") String id,
 		@QueryParam("filename") String filename
+	);
+
+	@GET
+	@Path("/{id}/copy_results")
+	@LogRestClientTime
+	JsonNode copyResultsToDataset(
+		@PathParam("id") String id
 	);
 }
