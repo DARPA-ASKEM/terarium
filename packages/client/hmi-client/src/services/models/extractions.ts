@@ -8,26 +8,28 @@ import { logger } from '@/utils/logger';
  * @param id
  * @return {Promise<PollerResult>}
  */
-async function fetchExtraction(id: string) {
+export async function fetchExtraction(id: string) {
 	const pollerResult: PollResponse<any> = { data: null, progress: null, error: null };
-	const poller = new Poller<object>().setPollAction(async () => {
-		const response = await API.get(`/extract/status/${id}`);
+	const poller = new Poller<object>()
+		.setPollAction(async () => {
+			const response = await API.get(`/extract/status/${id}`);
 
-		// Finished
-		if (response?.status === 200 && response?.data?.status === 'finished') {
-			pollerResult.data = response.data.result;
+			// Finished
+			if (response?.status === 200 && response?.data?.status === 'finished') {
+				pollerResult.data = response.data.result;
+				return pollerResult;
+			}
+
+			// Failed
+			if (response?.status === 200 && response?.data?.status === 'failed') {
+				pollerResult.error = true;
+				return pollerResult;
+			}
+
+			// Queued
 			return pollerResult;
-		}
-
-		// Failed
-		if (response?.status === 200 && response?.data?.status === 'failed') {
-			pollerResult.error = true;
-			return pollerResult;
-		}
-
-		// Queued
-		return pollerResult;
-	});
+		})
+		.setThreshold(30);
 	return poller.start();
 }
 
@@ -87,6 +89,21 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 		}
 	}
 	return null;
+};
+
+/**
+ * Given a dataset, enrich its metadata
+ * Returns a runId used to poll for result
+ */
+export const profileDataset = async (datasetId: string, artifactId: string | null = null) => {
+	let response: any = null;
+	if (artifactId) {
+		response = await API.post(`/extract/profile-dataset/${datasetId}?artifact_id=${artifactId}`);
+	} else {
+		response = await API.post(`/extract/profile-dataset/${datasetId}`);
+	}
+	console.log('data profile response', response.data);
+	return response.data.id;
 };
 
 export { mathmlToAMR, latexToAMR };
