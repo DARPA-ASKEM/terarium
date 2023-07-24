@@ -84,11 +84,11 @@ public interface ExtractionServiceProxy {
 	 * @return the profiled dataset
 	 */
 	@POST
-	@Path("/profile_dataset")
+	@Path("/profile_dataset/{dataset_id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response postProfileDataset(
-		@QueryParam("dataset_id") String datasetId,
-		@QueryParam("document_text") String documentText
+		@PathParam("dataset_id") String datasetId,
+		@QueryParam("artifact_id") String artifactId
 	);
 
 	/**
