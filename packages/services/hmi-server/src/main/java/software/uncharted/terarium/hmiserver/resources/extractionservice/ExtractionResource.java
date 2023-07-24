@@ -154,12 +154,12 @@ public class ExtractionResource {
 	 * @return the profiled dataset
 	 */
 	@POST
-	@Path("/profile-dataset")
+	@Path("/profile-dataset/{dataset_id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postProfileDataset(
-		@QueryParam("dataset_id") String datasetId,
-		@QueryParam("document_text") String documentText
+		@PathParam("dataset_id") String datasetId,
+		@QueryParam("artifact_id") String artifactId
 	) {
-		return extractionProxy.postProfileDataset(datasetId, documentText);
+		return extractionProxy.postProfileDataset(datasetId, artifactId);
 	};
 }
