@@ -96,11 +96,15 @@
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
 						<template #header> Model </template>
-						<model-diagram v-if="model" :model="model" :is-editable="false" />
+						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configuration </template>
-						<tera-model-configuration v-if="model" :model="model" :is-editable="false" />
+						<tera-model-configuration
+							v-if="model"
+							:model="model"
+							:feature-config="{ isPreview: true }"
+						/>
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation time range </template>
@@ -173,7 +177,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
-import ModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
@@ -395,9 +399,11 @@ const rawDataRenderedRows = computed(() =>
 	margin: 0.5em;
 	position: relative;
 }
+
 .datatable-header-select-container {
 	min-width: 0;
 }
+
 .datatable-header-title {
 	white-space: nowrap;
 	margin-right: 1em;
