@@ -618,6 +618,10 @@ button .icon {
 	padding-bottom: 0.5rem;
 }
 
+.keyword-search:enabled:hover {
+	border-color: var(--surface-border);
+}
+
 .related {
 	font-weight: var(--font-weight-semibold);
 }
