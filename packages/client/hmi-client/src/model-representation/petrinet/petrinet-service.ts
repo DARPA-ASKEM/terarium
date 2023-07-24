@@ -582,23 +582,23 @@ export const modifyModelTypeSystemforStratification = (amr: Model) => {
 	return amrCopy;
 };
 
-function unifyModelTypeSystems(baseAMR: Model, fluxAMR: Model) {
+function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
 	// Entries in type system need to be in the same order for stratification
-	// They should contain the same state and transition entries for both baseAMR and fluxAMR, just in a different order
+	// They should contain the same state and transition entries for both baseAMR and strataAMR, just in a different order
 	// So just overwrite one with the other instead of sorting
 	const typeSystem = baseAMR.semantics?.typing?.system;
-	if (fluxAMR.semantics?.typing?.system) {
-		fluxAMR.semantics.typing.system.model = typeSystem.model;
+	if (strataAMR.semantics?.typing?.system) {
+		strataAMR.semantics.typing.system.model = typeSystem.model;
 	}
 }
 
-export const stratify = async (baseAMR: Model, fluxAMR: Model) => {
+export const stratify = async (baseAMR: Model, strataAMR: Model) => {
 	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
-	const fluxModel = modifyModelTypeSystemforStratification(fluxAMR);
-	unifyModelTypeSystems(baseModel, fluxModel);
+	const strataModel = modifyModelTypeSystemforStratification(strataAMR);
+	unifyModelTypeSystems(baseModel, strataModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,
-		fluxModel
+		strataModel
 	});
 	return response.data as Model;
 };

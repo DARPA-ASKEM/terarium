@@ -14,8 +14,8 @@ export const WASTE_WATER_SURVEILLANCE = {
 		'{"dates": "2021-05-14", "VAX_count": 236, "day": 430, "sdm": 0.4, "events": 0.1, "I_1": 85, "I_2": 49, "I_3": 62, "Y_1": 3, "Y_2": 0, "Y_3": 2, "V_1": 113192.37284202829, "V_2": 81612.73344185714, "V_3": 78832.64723781461, "Infected": 196, "Y": 5, "V": 87568.41792704807, "logV": 11.38017568597244}',
 	LICENSE: 'UNKNOWN',
 	DATA_PROFILING_RESULT: {
-		dates: {
-			col_name: 'dates',
+		date: {
+			col_name: 'date',
 			concept: 'Time',
 			unit: 'YYYY-MM-DD',
 			description: 'The date when the data was recorded',

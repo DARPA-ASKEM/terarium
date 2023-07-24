@@ -108,16 +108,9 @@
 					:row-class="() => 'p-selectable-row'"
 				>
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
-					<Column field="assetName" header="Name" sortable style="width: 25%">
+					<Column field="assetName" header="Name" sortable style="width: 75%">
 						<template #body="slotProps">
-							<Button
-								:title="slotProps.data.assetName"
-								class="asset-button"
-								plain
-								text
-								size="small"
-								@click="openResource(slotProps.data)"
-							>
+							<div class="asset-button" @click="openResource(slotProps.data)">
 								<vue-feather
 									v-if="
 										typeof ProjectService.getAssetIcon(slotProps.data.pageType ?? null) === 'string'
@@ -133,12 +126,12 @@
 									class="p-button-icon-left icon"
 								/>
 								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
-							</Button>
+							</div>
 						</template>
 					</Column>
 					<Column field="" header="Modified" sortable style="width: 25%"></Column>
-					<Column field="tags" header="Tags" style="width: 25%"></Column>
-					<Column header="Type" style="width: 25%" sortable>
+					<!-- <Column field="tags" header="Tags" style="width: 25%"></Column> -->
+					<Column header="Type" style="width: 25%" sortable field="pageType">
 						<template #body="slotProps">
 							{{ slotProps.data.pageType }}
 						</template>
@@ -162,8 +155,8 @@
 					<template #empty>
 						<div class="explorer-status">
 							<img src="@assets/svg/seed.svg" alt="Seed" />
-							<h2 class="no-results-found">No resources.</h2>
-							<span
+							<h4 class="no-results-found">This is an empty project</h4>
+							<span class="no-results-found-message"
 								>Add resources to your project with the quick link buttons, or use the explorer to
 								find documents, models and datasets of interest.</span
 							>
@@ -284,6 +277,8 @@
 			</tera-modal>
 		</Teleport>
 	</div>
+	<!-- empty white div to fill bottom of screen -->
+	<div class="bottom-white-patch"></div>
 </template>
 
 <script setup lang="ts">
@@ -536,7 +531,8 @@ a {
 	overflow-y: auto;
 	padding: 1rem;
 	background: var(--surface-0);
-	flex: 1;
+	display: flex;
+	flex-direction: column;
 }
 
 .description {
@@ -678,6 +674,9 @@ ul {
 
 .asset-button {
 	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
 }
 
 :deep(.asset-button.p-button) {
@@ -687,7 +686,12 @@ ul {
 	padding: 0.375rem 1rem;
 }
 :deep(.p-datatable .p-datatable-thead > tr > th) {
-	background: var(--gray-300);
+	background: var(--gray-100);
+	padding: 1rem;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+	padding: 0.5rem 1rem;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th:first-child .p-column-header-content) {
@@ -721,9 +725,23 @@ ul {
 	justify-content: center;
 	gap: 1rem;
 	align-items: center;
-	margin-bottom: 8rem;
+	margin-top: 8rem;
+	margin-bottom: 12rem;
 	flex-grow: 1;
 	font-size: var(--font-body-small);
 	color: var(--text-color-subdued);
+}
+
+.no-results-found-message {
+	text-align: center;
+	width: 40%;
+}
+.bottom-white-patch {
+	background-color: var(--surface-0);
+	flex: 1;
+}
+
+:deep(.p-datatable-emptymessage > td) {
+	border-bottom: none !important;
 }
 </style>
