@@ -12,5 +12,5 @@ import java.util.Map;
 @Accessors(chain = true)
 public class StratifyRequest implements Serializable {
 	private Object baseModel;
-	private Object fluxModel;
+	private Object strataModel;
 }

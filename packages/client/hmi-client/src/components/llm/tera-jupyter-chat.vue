@@ -60,7 +60,7 @@ const notebookItems = ref(
 		}[]
 	>[]
 );
-const notebookCells = ref([]);
+const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
 
 const emit = defineEmits([
 	'new-message',
@@ -200,7 +200,11 @@ const updateKernelStatus = (kernelStatus) => {
 
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
-	if (['stream', 'code_cell', 'llm_request', 'chatty_response', 'dataset'].indexOf(msgType) > -1) {
+	if (
+		['stream', 'code_cell', 'llm_request', 'llm_response', 'chatty_response', 'dataset'].indexOf(
+			msgType
+		) > -1
+	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
 		isExecutingCode.value = msgType === 'llm_request' || msgType === 'code_cell';
@@ -227,6 +231,31 @@ const newJupyterMessage = (jupyterMessage) => {
 const clearHistory = () => {
 	messagesHistory.value = [];
 	notebookItems.value = [];
+};
+
+// Clear all the outputs in the chat, without clearing the code/prompts/etc.
+const clearOutputs = () => {
+	for (let i = 0; i < notebookItems.value.length; i++) {
+		const item = notebookItems.value[i];
+		for (let j = item.messages.length - 1; j >= 0; j--) {
+			const message = item.messages[j];
+			const msgType = message.header.msg_type;
+			if (msgType === 'model_preview' || msgType === 'dataset') {
+				item.messages.splice(j, 1);
+			}
+			if (msgType === 'code_cell') {
+				console.log(message);
+			}
+		}
+	}
+	for (let i = 0; i < notebookCells.value.length; i++) {
+		const el = notebookCells.value[i];
+		if (el.codeCell) {
+			for (let j = 0; j < el.codeCell.length; j++) {
+				el.codeCell[j].clear();
+			}
+		}
+	}
 };
 
 const scrollToLastCell = (element, msg) => {
@@ -280,7 +309,8 @@ watch(
 );
 
 defineExpose({
-	clearHistory
+	clearHistory,
+	clearOutputs
 });
 </script>
 
