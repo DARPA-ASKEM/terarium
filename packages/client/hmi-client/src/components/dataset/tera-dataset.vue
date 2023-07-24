@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:is-in-project="isInProject"
+		:feature-config="featureConfig"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"
@@ -24,7 +24,7 @@
 					:active="datasetView === DatasetView.DATA"
 				/>
 				<Button
-					v-if="isInProject"
+					v-if="!featureConfig.isPreview"
 					class="p-button-secondary p-button-sm"
 					label="Transform"
 					icon="pi pi-sync"
@@ -32,7 +32,7 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
-			<span v-if="datasetView === DatasetView.LLM && isInProject">
+			<span v-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
@@ -300,7 +300,7 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.LLM && isInProject">
+		<template v-else-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 			<Suspense>
 				<tera-dataset-jupyter-panel
 					:asset-id="props.assetId"
@@ -332,6 +332,7 @@ import Menu from 'primevue/menu';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { FeatureConfig } from '@/types/common';
 
 const enrichedData = ref();
 
@@ -345,9 +346,9 @@ const props = defineProps({
 		type: String,
 		required: true
 	},
-	isInProject: {
-		type: Boolean,
-		default: true
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
 	},
 	highlight: {
 		type: String,

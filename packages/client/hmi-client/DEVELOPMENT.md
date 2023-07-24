@@ -77,17 +77,17 @@ Basic rules to write organised code.
     </style>
     ```
 
-- Asset components such as `tera-model.vue` will showcase an asset's attributes and allows users to edit them. However there are cases where we want a more read-only version these components as the user is outside of a working project (e.g. Explorer preview). In these cases assign the flag `:is-in-project="false"` for these components:
+- Asset components such as `tera-model.vue` will showcase an asset's attributes and allows users to edit them. However there are cases where we want a more read-only version these components as the user is outside of a working project (e.g. Explorer preview). In these cases assign the `feature-config` object for these components:
 
     ```html
     <tera-model 
         :asset-id="previewItemId"
         :project="resources.activeProject" 
         :highlight="searchTerm"
-        :is-in-project="false"
+        :feature-config="{ isPreview: true }"
     />
     ```
-- By default components with the `is-in-project` prop is set to `true`. So this prop only has to specified if we want it to be `false`.
+- By default components with the `isPreview` attribute is set to `false`. So this prop only has to specified if we want it to `true`. Feel free to add other attributes to the `feature-config` to further customize the component's features. 
 
 ## Logging & Toasts
 

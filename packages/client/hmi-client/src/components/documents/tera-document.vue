@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		v-if="doc"
-		:is-in-project="isInProject"
+		:feature-config="featureConfig"
 		:name="highlightSearchTerms(doc.title)"
 		:overline="highlightSearchTerms(doc.journal)"
 		:authors="formatDocumentAuthors(doc)"
@@ -14,7 +14,7 @@
 	>
 		<template #bottom-header-buttons>
 			<Button
-				v-if="!isInProject"
+				v-if="featureConfig.isPreview"
 				class="p-button-sm p-button-outlined"
 				icon="pi pi-external-link"
 				label="Open PDF"
@@ -149,7 +149,7 @@
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
 						<tera-import-github-file
 							:urlString="url"
-							:show-import-button="isInProject"
+							:show-import-button="!featureConfig.isPreview"
 							:project="project"
 							@open-code="openCode"
 						/>
@@ -238,7 +238,7 @@ import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { CodeRequest, ResultType } from '@/types/common';
+import { CodeRequest, ResultType, FeatureConfig } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
@@ -268,12 +268,10 @@ const props = defineProps({
 		type: Number,
 		default: null
 	},
-
-	isInProject: {
-		type: Boolean,
-		default: true
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
 	},
-
 	project: {
 		type: Object as PropType<IProject> | null,
 		default: null

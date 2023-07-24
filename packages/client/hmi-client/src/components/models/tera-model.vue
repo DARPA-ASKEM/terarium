@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		:name="name"
-		:is-in-project="isInProject"
+		:feature-config="featureConfig"
 		:is-naming-asset="isNamingModel"
 		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
@@ -38,7 +38,7 @@
 					:active="modelView === ModelView.NOTEBOOK"
 				/>
 			</span>
-			<template v-if="isInProject">
+			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
 					class="p-button-icon-only p-button-text p-button-rounded"
@@ -467,7 +467,7 @@
 		<template v-if="modelView === ModelView.MODEL">
 			<tera-model-diagram
 				:model="model"
-				:is-editable="isInProject"
+				:isEditable="!featureConfig.isPreview"
 				@update-model-content="updateModelContent"
 				@update-model-observables="updateModelObservables"
 			/>
@@ -476,9 +476,9 @@
 					<tera-stratified-model-configuration
 						v-if="model.semantics?.span"
 						:model="model"
-						:is-editable="isInProject"
+						:feature-config="featureConfig"
 					/>
-					<tera-model-configuration v-else :model="model" :is-editable="isInProject" />
+					<tera-model-configuration v-else :model="model" :feature-config="featureConfig" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -575,7 +575,7 @@ import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
-import { ResultType } from '@/types/common';
+import { ResultType, FeatureConfig } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
@@ -612,9 +612,9 @@ const props = defineProps({
 		default: '',
 		required: false
 	},
-	isInProject: {
-		type: Boolean,
-		default: true
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
 	}
 });
 

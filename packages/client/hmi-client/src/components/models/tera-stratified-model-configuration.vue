@@ -6,7 +6,7 @@
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead class="p-datatable-thead">
-					<tr v-if="isEditable">
+					<tr v-if="!featureConfig.isPreview">
 						<th class="p-frozen-column"></th>
 						<th class="p-frozen-column second-frozen"></th>
 						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
@@ -114,9 +114,10 @@ import {
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
-	isEditable: boolean;
+	featureConfig: FeatureConfig;
 	model: Model;
 	calibrationConfig?: boolean;
 }>();
@@ -165,7 +166,7 @@ async function addModelConfiguration(config: ModelConfiguration) {
 }
 
 function openValueModal(id: string, configIndex: number) {
-	if (props.isEditable) {
+	if (!props.featureConfig.isPreview) {
 		const nodeType = baseModelStates.value.includes(id) ? NodeType.State : NodeType.Transition;
 
 		activeIndex.value = 0;

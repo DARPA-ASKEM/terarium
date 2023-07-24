@@ -6,7 +6,7 @@
 			<aside class="spread-out">
 				<slot name="edit-buttons" />
 				<Button
-					v-if="!isInProject"
+					v-if="featureConfig.isPreview"
 					icon="pi pi-times"
 					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 					@click="emit('close-preview')"
@@ -49,7 +49,7 @@
 				</section>
 				<aside class="spread-out">
 					<Button
-						v-if="!isInProject"
+						v-if="featureConfig.isPreview"
 						icon="pi pi-times"
 						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						@click="emit('close-preview')"
@@ -64,8 +64,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, PropType } from 'vue';
 import Button from 'primevue/button';
+import { FeatureConfig } from '@/types/common';
 
 const assetContainer = ref();
 
@@ -94,9 +95,9 @@ const props = defineProps({
 		type: String,
 		default: null
 	},
-	isInProject: {
-		type: Boolean,
-		default: true
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
 	},
 	// Booleans default to false if not specified
 	isNamingAsset: Boolean,
