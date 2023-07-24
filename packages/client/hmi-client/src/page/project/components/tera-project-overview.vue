@@ -1,11 +1,10 @@
 <template>
-	<div class="scrollable">
+	<main>
 		<tera-asset
 			:name="project?.name"
 			:authors="project?.username"
 			:is-naming-asset="isRenamingProject"
 			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
-			is-editable
 			class="overview-banner"
 		>
 			<template #name-input>
@@ -276,9 +275,7 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-	</div>
-	<!-- empty white div to fill bottom of screen -->
-	<div class="bottom-white-patch"></div>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -507,12 +504,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.scrollable {
+main {
 	overflow-y: auto;
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none;
+	/* IE and Edge */
+	scrollbar-width: none;
+	/* Firefox */
 }
-.scrollable::-webkit-scrollbar {
+
+main::-webkit-scrollbar {
 	display: none;
 }
 
@@ -685,6 +685,7 @@ ul {
 	padding: 0;
 	padding: 0.375rem 1rem;
 }
+
 :deep(.p-datatable .p-datatable-thead > tr > th) {
 	background: var(--gray-100);
 	padding: 1rem;
@@ -735,10 +736,6 @@ ul {
 .no-results-found-message {
 	text-align: center;
 	width: 40%;
-}
-.bottom-white-patch {
-	background-color: var(--surface-0);
-	flex: 1;
 }
 
 :deep(.p-datatable-emptymessage > td) {
