@@ -25,7 +25,7 @@ dependencies {
 	// REST server
 	implementation "io.quarkus:quarkus-resteasy-reactive"
 	implementation "io.quarkus:quarkus-resteasy-reactive-jackson"
-  implementation "io.quarkus:quarkus-resteasy-multipart"
+  	implementation "io.quarkus:quarkus-resteasy-multipart"
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
@@ -83,8 +83,6 @@ dependencies {
 	//aws
 	implementation platform('software.amazon.awssdk:bom:2.20.102')
 	implementation 'software.amazon.awssdk:s3'
-
-
 }
 
 group "software.uncharted"
