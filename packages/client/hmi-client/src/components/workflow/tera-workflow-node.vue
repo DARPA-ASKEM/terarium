@@ -1,6 +1,6 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
-		<header>
+		<header :class="{ 'active-node': isActive }">
 			<h5 class="truncate">{{ node.displayName }}</h5>
 			<span>
 				<Button
@@ -87,6 +87,7 @@ import Menu from 'primevue/menu';
 const props = defineProps<{
 	node: WorkflowNode;
 	canDrag: boolean;
+	isActive: boolean;
 }>();
 
 const emit = defineEmits([
@@ -233,7 +234,7 @@ main:hover {
 	z-index: 2;
 }
 
-main:hover > header {
+main:hover > header:not(.active-node) {
 	background-color: var(--node-header-hover);
 }
 
@@ -249,9 +250,8 @@ header {
 	border-top-left-radius: var(--border-radius);
 }
 
-header:hover {
-	background-color: var(--node-header-hover);
-	cursor: move;
+header.active-node {
+	background-color: var(--primary-color);
 }
 
 .truncate {
