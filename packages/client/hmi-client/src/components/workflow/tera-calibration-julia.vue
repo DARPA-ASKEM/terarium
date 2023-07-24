@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate (deterministic)'" is-editable stretch-content>
+	<tera-asset :name="'Calibrate (deterministic)'" stretch-content>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -264,11 +264,13 @@ watch(
 	padding: 0rem 0.25rem 0.5rem 0rem !important;
 	border: none !important;
 }
+
 .mapping-table:deep(th) {
 	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
 }
+
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -289,6 +291,7 @@ watch(
 th {
 	text-align: left;
 }
+
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
@@ -311,6 +314,7 @@ th {
 	width: 90%;
 	margin-top: 1rem;
 }
+
 img {
 	width: 20%;
 }

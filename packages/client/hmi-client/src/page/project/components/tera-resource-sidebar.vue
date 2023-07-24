@@ -3,7 +3,7 @@
 		<header class="resource-panel-toolbar">
 			<span class="p-input-icon-left">
 				<i class="pi pi-search" />
-				<InputText v-model="value1" class="resource-panel-search" placeholder="Find" />
+				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
 			</span>
 			<Button
 				icon="pi pi-plus"
@@ -149,6 +149,7 @@ const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 const assetToDelete = ref<Tab | null>(null);
+const searchAsset = ref<string | null>('');
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
