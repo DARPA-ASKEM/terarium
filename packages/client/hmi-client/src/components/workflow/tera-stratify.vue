@@ -50,7 +50,6 @@
 							class="p-button-outlined"
 							label="Go back"
 							icon="pi pi-arrow-left"
-							:disabled="stratifyStep === 0"
 							@click="goBack"
 						/>
 						<Button
@@ -290,11 +289,10 @@ async function doStratify() {
 }
 
 function goBack() {
-	if (stratifyStep.value > 0) {
-		if (stratifyStep.value === 1) {
-			strataModel.value = null;
-		}
+	if (stratifyStep.value > 1) {
 		stratifyStep.value--;
+	} else {
+		strataModel.value = null;
 	}
 }
 

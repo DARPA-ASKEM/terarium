@@ -138,7 +138,8 @@ const props = defineProps<{
 /* 'tera-reflexives-toolbar' assumes both its inputs are in the "pre-stratification" format.
 	It's probably simpler to transform the inputs into that format rather than update the logic of 'tera - reflexives - toolbar'
 	to accomodate two different model formats. Transform 'props.model', which is assumed to be a stratified model,
-	into the pre-stratification format and save as 'modelWithSimplifiedTypeSystem' */
+	into the pre-stratification format and save as 'modelWithSimplifiedTypeSystem'
+	*/
 const modelWithSimplifiedTypeSystem = computed<Model>(() =>
 	cloneModelWithSimplifiedTypeSystem(props.model)
 );

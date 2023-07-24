@@ -46,7 +46,8 @@ import {
 } from '@/model-representation/petrinet/petrinet-renderer';
 import {
 	cloneModelWithSimplifiedTypeSystem,
-	convertToIGraph
+	convertToIGraph,
+	isStratifiedAMR
 } from '@/model-representation/petrinet/petrinet-service';
 import { Model, TypeSystem } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
@@ -67,9 +68,14 @@ const emit = defineEmits(['model-updated']);
 	to accomodate two different model formats. 'props.baseModel', may be stratified model;
 	if so, transform it into the pre-stratification format and save as 'modelWithSimplifiedTypeSystem'
 	*/
-const modelWithSimplifiedTypeSystem = computed<Model | null>(() =>
-	props.baseModel ? cloneModelWithSimplifiedTypeSystem(props.baseModel) : null
-);
+const modelWithSimplifiedTypeSystem = computed<Model | null>(() => {
+	if (props.baseModel) {
+		return isStratifiedAMR(props.baseModel)
+			? cloneModelWithSimplifiedTypeSystem(props.baseModel)
+			: props.baseModel;
+	}
+	return null;
+});
 const typedModel = ref<Model>(props.strataModel); // this is the object being edited
 
 const graphElement = ref<HTMLDivElement | null>(null);
