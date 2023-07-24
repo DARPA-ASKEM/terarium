@@ -77,16 +77,17 @@ Basic rules to write organised code.
     </style>
     ```
 
-- Some components (e.g. `Model.vue`) will showcase an asset's attributes and allows users to edit them. However there are cases where we just want to show a more compact read-only version of these components. In these cases assign the flag `:is-editable="false"` for these components:
+- Asset components such as `tera-model.vue` will showcase an asset's attributes and allows users to edit them. However there are cases where we want a more read-only version these components as the user is outside of a working project (e.g. Explorer preview). In these cases assign the `feature-config` object for these components:
 
     ```html
-    <model 
+    <tera-model 
         :asset-id="previewItemId"
         :project="resources.activeProject" 
         :highlight="searchTerm"
-        :is-editable="false"
+        :feature-config="{ isPreview: true }"
     />
     ```
+- By default components with the `isPreview` attribute is set to `false`. So this prop only has to specified if we want it to `true`. Feel free to add other attributes to the `feature-config` to further customize the component's features. 
 
 ## Logging & Toasts
 

@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:is-editable="isEditable"
+		:feature-config="featureConfig"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"
@@ -24,7 +24,7 @@
 					:active="datasetView === DatasetView.DATA"
 				/>
 				<Button
-					v-if="isEditable"
+					v-if="!featureConfig.isPreview"
 					class="p-button-secondary p-button-sm"
 					label="Transform"
 					icon="pi pi-sync"
@@ -32,7 +32,7 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
-			<span v-if="datasetView === DatasetView.LLM && isEditable">
+			<span v-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
@@ -300,7 +300,7 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
+		<template v-else-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 			<Suspense>
 				<tera-dataset-jupyter-panel
 					:asset-id="props.assetId"
@@ -314,7 +314,7 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onUpdated, Ref } from 'vue';
+import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
@@ -332,6 +332,7 @@ import Menu from 'primevue/menu';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { FeatureConfig } from '@/types/common';
 
 const enrichedData = ref();
 
@@ -340,12 +341,24 @@ enum DatasetView {
 	DATA = 'data',
 	LLM = 'llm'
 }
-const props = defineProps<{
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-	project?: IProject;
-}>();
+const props = defineProps({
+	assetId: {
+		type: String,
+		required: true
+	},
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
+	},
+	highlight: {
+		type: String,
+		default: null
+	},
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null
+	}
+});
 
 const gotEnrichedData = (payload) => {
 	enrichedData.value = payload;
@@ -691,6 +704,7 @@ main :deep(.p-inputtext.p-inputtext-sm) {
 	display: flex;
 	justify-content: space-evenly;
 }
+
 .dataset-detail {
 	display: flex;
 	flex-wrap: wrap;

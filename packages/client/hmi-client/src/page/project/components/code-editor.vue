@@ -1,5 +1,5 @@
 <template>
-	<tera-asset name="New file" overline="Python" is-editable>
+	<tera-asset name="New file" overline="Python">
 		<template #edit-buttons>
 			<Button
 				label="Extract model"
