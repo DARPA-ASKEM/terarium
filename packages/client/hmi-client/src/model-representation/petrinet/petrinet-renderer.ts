@@ -67,7 +67,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.classed('edge-marker-end', true)
 			.attr('id', 'arrowhead')
 			.attr('viewBox', MARKER_VIEWBOX)
-			.attr('refX', 6)
+			.attr('refX', 1)
 			.attr('refY', 0)
 			.attr('orient', 'auto')
 			.attr('markerWidth', 20)
@@ -76,8 +76,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('xoverflow', 'visible')
 			.append('svg:path')
 			.attr('d', ARROW)
-			.style('fill', EDGE_COLOR)
-			.style('fill-opacity', EDGE_OPACITY)
+			.style('fill', '#B0B0B0')
 			.style('stroke', 'none');
 	}
 
@@ -230,6 +229,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke', EDGE_COLOR)
 			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 3)
+			.style('stroke-linecap', 'round')
 			.attr('marker-end', 'url(#arrowhead)');
 
 		this.updateMultiEdgeLabels();
