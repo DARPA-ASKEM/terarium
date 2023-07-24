@@ -58,6 +58,7 @@
 				@remove-node="(event) => removeNode(event)"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
+				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
 					<tera-model-node
@@ -260,6 +261,12 @@ let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
+const currentActiveNode = ref<WorkflowNode | null>();
+
+workflowEventBus.on('clearActiveNode', () => {
+	currentActiveNode.value = null;
+});
+
 const newEdge = ref<WorkflowEdge | undefined>();
 const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
@@ -407,6 +414,7 @@ const testNode = (node: WorkflowNode) => {
 };
 
 const drilldown = (event: WorkflowNode) => {
+	currentActiveNode.value = event;
 	workflowEventBus.emit('drilldown', event);
 };
 
