@@ -36,7 +36,7 @@
 					<Button
 						label="Use these resources to enrich descriptions"
 						@click="
-							sendForEnrichments(selectedResources);
+							sendForEnrichments();
 							visible = false;
 						"
 					/>
