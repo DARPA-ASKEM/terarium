@@ -244,8 +244,6 @@
 				</tera-modal>
 			</section>
 		</section>
-		<!-- empty white div to fill bottom of screen -->
-		<div class="bottom-white-patch"></div>
 	</main>
 </template>
 

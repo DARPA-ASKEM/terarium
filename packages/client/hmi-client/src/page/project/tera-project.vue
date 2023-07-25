@@ -124,37 +124,11 @@
 			</template>
 		</tera-slider-panel>
 		<!-- New model modal -->
-		<template>
-			<Teleport to="body">
-				<tera-modal
-					v-if="isNewModelModalVisible"
-					class="modal"
-					@modal-mask-clicked="isNewModelModalVisible = false"
-				>
-					<template #header>
-						<h4>New model</h4>
-					</template>
-					<template #default>
-						<form>
-							<label for="new-model">Enter a unique name for your model</label>
-							<InputText
-								v-bind:class="invalidInputStyle"
-								id="new-model"
-								type="text"
-								v-model="newModelName"
-								placeholder="new model"
-							/>
-						</form>
-					</template>
-					<template #footer>
-						<Button @click="createNewModel">Create model</Button>
-						<Button class="p-button-secondary" @click="isNewModelModalVisible = false">
-							Cancel
-						</Button>
-					</template>
-				</tera-modal>
-			</Teleport>
-		</template>
+		<tera-model-modal
+			:project="project"
+			:is-visible="isNewModelModalVisible"
+			@close-modal="onCloseModelModal"
+		/>
 	</main>
 </template>
 
@@ -185,11 +159,8 @@ import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
-import { createModel } from '@/services/model';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraModelModal from './components/tera-model-modal.vue';
+
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -215,20 +186,7 @@ workflowEventBus.on('drilldown', (payload: any) => {
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 
-// New Model Modal
-const isNewModelModalVisible = ref<boolean>(false);
-const newModelName = ref<string>('');
-const isValidName = ref<boolean>(true);
-const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
-
-const existingModelNames = computed(() => {
-	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
-	});
-	return modelNames;
-});
-
+const isNewModelModalVisible = ref(false);
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
@@ -292,44 +250,6 @@ async function removeAsset(asset: Tab) {
 	logger.error(`Failed to remove ${assetName}`, { showToast: true });
 }
 
-function createNewModel() {
-	if (newModelName.value.trim().length === 0) {
-		isValidName.value = false;
-		logger.info('Model name cannot be empty - please enter a different name');
-		return;
-	}
-	if (existingModelNames.value.includes(newModelName.value.trim())) {
-		isValidName.value = false;
-		logger.info('Duplicate model name - please enter a different name');
-		return;
-	}
-	isValidName.value = true;
-	newModel(newModelName.value.trim());
-	isNewModelModalVisible.value = false;
-}
-
-const newModel = async (modelName: string) => {
-	// 1. Load an empty AMR
-	const amr = newAMR(modelName);
-	(amr as any).id = undefined; // FIXME: id hack
-
-	const response = await createModel(amr);
-	const modelId = response?.id;
-
-	// 2. Add the model to the project
-	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-
-	// 3. Reroute
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: 'Model',
-			pageType: ProjectAssetTypes.MODELS,
-			assetId: modelId
-		}
-	});
-};
-
 const openWorkflow = async () => {
 	// Create a new workflow
 	let wfName = 'workflow';
@@ -372,6 +292,10 @@ const openNewAsset = (assetType: string) => {
 		default:
 			break;
 	}
+};
+
+const onCloseModelModal = () => {
+	isNewModelModalVisible.value = false;
 };
 watch(
 	() => projectContext.value,
@@ -479,9 +403,5 @@ section,
 	display: inline-block;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.modal:deep(main) {
-	width: 50rem;
 }
 </style>
