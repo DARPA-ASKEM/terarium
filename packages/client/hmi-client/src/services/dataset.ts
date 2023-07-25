@@ -9,6 +9,8 @@ import { addAsset } from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
+import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
 
 /**
  * Get all datasets
@@ -201,6 +203,13 @@ async function createDatasetFromSimulationResult(
 		return false;
 	}
 }
+
+export const saveDataset = async (projectId: string, simulationId: string | undefined) => {
+	if (!simulationId) return;
+	if (await createDatasetFromSimulationResult(projectId, simulationId)) {
+		useResourcesStore().setActiveProject(await ProjectService.get(projectId, true));
+	}
+};
 
 export {
 	getAll,
