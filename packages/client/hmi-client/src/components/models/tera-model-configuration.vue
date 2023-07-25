@@ -6,13 +6,15 @@
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead class="p-datatable-thead">
-					<tr v-if="isEditable">
+					<!-- Table header 1st row: Column groups such asInitials, Parameters, Observables, etc. -->
+					<tr v-if="!featureConfig.isPreview">
 						<th class="p-frozen-column"></th>
 						<th class="p-frozen-column second-frozen"></th>
 						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
 							<span class="capitalize">{{ name }}</span>
 						</th>
 					</tr>
+					<!-- Table header 2nd row: Actual column headers -->
 					<tr>
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
@@ -33,9 +35,11 @@
 						<!--TODO: Insert new th loops for time and observables here-->
 					</tr>
 				</thead>
+				<!-- Table body -->
 				<tbody class="p-datatable-tbody">
 					<tr v-for="({ configuration, name }, i) in modelConfigurations" :key="i">
 						<!--TODO: This td is a placeholder, row selection doesn't work-->
+						<!-- Checkbox -->
 						<td class="p-selection-column p-frozen-column">
 							<div class="p-checkbox p-component">
 								<div class="p-hidden-accessible">
@@ -46,6 +50,7 @@
 								</div>
 							</div>
 						</td>
+						<!-- 1st column: Configuration name -->
 						<td
 							class="p-frozen-column second-frozen"
 							tabindex="0"
@@ -58,11 +63,11 @@
 								cellEditStates[i].name = true;
 							"
 						>
-							<span v-if="!cellEditStates[i].name">
+							<span :class="!cellEditStates[i].name ? 'editable-cell' : 'editable-cell-hidden'">
 								{{ name }}
 							</span>
 							<InputText
-								v-else
+								v-if="cellEditStates[i].name"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].name = false"
@@ -73,6 +78,7 @@
 								class="cell-input"
 							/>
 						</td>
+						<!-- Additional columns -->
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
@@ -80,7 +86,10 @@
 							tabindex="0"
 							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
-							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
+							<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
+							<section
+								:class="!cellEditStates[i].initials[j] ? 'editable-cell' : 'editable-cell-hidden'"
+							>
 								<span>{{ initial.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -89,7 +98,7 @@
 								/>
 							</section>
 							<InputText
-								v-else
+								v-if="cellEditStates[i].initials[j]"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].initials[j] = false"
@@ -119,7 +128,9 @@
 								}
 							"
 						>
-							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
+							<section
+								:class="!cellEditStates[i].parameters[j] ? 'editable-cell' : 'editable-cell-hidden'"
+							>
 								<div class="distribution-cell">
 									<!-- To represent a time series variable -->
 									<span v-if="configuration?.metadata?.timeseries?.[parameter.id]">TS</span>
@@ -136,7 +147,7 @@
 								/>
 							</section>
 							<InputText
-								v-else
+								v-if="cellEditStates[i].parameters[j]"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
 								@focusout="cellEditStates[i].parameters[j] = false"
@@ -266,6 +277,7 @@ import {
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import { FeatureConfig } from '@/types/common';
 
 enum ParamType {
 	CONSTANT = 'constant',
@@ -274,7 +286,7 @@ enum ParamType {
 }
 
 const props = defineProps<{
-	isEditable: boolean;
+	featureConfig: FeatureConfig;
 	model: Model;
 	calibrationConfig?: boolean;
 }>();
@@ -359,7 +371,7 @@ function openValueModal(
 	configIndex: number,
 	odeObjIndex: number
 ) {
-	if (props.isEditable) {
+	if (!props.featureConfig.isPreview) {
 		clearError();
 		activeIndex.value = 0;
 		openValueConfig.value = true;
@@ -569,6 +581,7 @@ onMounted(() => {
 	margin-bottom: 1rem;
 }
 
+/** TODO: Apply to all tables in theme or create second table rules?  */
 .p-datatable-thead th {
 	text-transform: none !important;
 	color: var(--text-color-primary) !important;
@@ -580,20 +593,35 @@ onMounted(() => {
 	content: '--';
 }
 
+.editable-cell {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	visibility: visible;
+	width: 100%;
+}
+
+.editable-cell-hidden {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	visibility: hidden;
+	width: 100%;
+	height: 0px;
+	border-left: 12px solid transparent;
+	border-right: 11px solid transparent;
+}
+
 .cell-menu {
 	visibility: hidden;
 }
 
 .cell-input {
-	width: calc(100%);
 	height: 4rem;
+	width: 100%;
+	padding-left: 12px;
 }
-.editable-cell {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	min-width: 3rem;
-}
+
 td:has(.cell-input) {
 	padding: 0px !important;
 }
@@ -601,13 +629,13 @@ td:has(.cell-input) {
 .p-datatable:deep(td) {
 	cursor: pointer;
 }
+
 .p-datatable:deep(td:focus) {
 	background-color: var(--primary-color-lighter);
 }
 
 .p-frozen-column {
 	left: 0px;
-	white-space: nowrap;
 }
 
 .second-frozen {
@@ -616,11 +644,16 @@ td:has(.cell-input) {
 
 .p-datatable .p-datatable-tbody > tr > td {
 	padding-right: 0.5rem;
+	white-space: nowrap;
 }
 
 th:hover .cell-menu,
 td:hover .cell-menu {
 	visibility: visible;
+}
+
+.editable-cell-hidden .cell-menu {
+	visibility: hidden !important;
 }
 
 .p-tabview {
@@ -692,6 +725,7 @@ td:hover .cell-menu {
 	display: flex;
 	flex-direction: column;
 }
+
 .distribution-range {
 	white-space: nowrap;
 	color: var(--text-color-subdued);

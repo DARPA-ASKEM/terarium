@@ -1,20 +1,23 @@
 package software.uncharted.terarium.hmiserver.resources.extractionservice;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import java.util.List;
+import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-
-
-import javax.inject.Inject;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.extractionservice.ExtractionServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
+
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
 @Path("/api/extract")
 @Slf4j
@@ -30,18 +33,20 @@ public class ExtractionResource {
 	@RestClient
 	SkemaUnifiedProxy skemaUnifiedProxy;
 
+	@Inject
+	@RestClient
+	ArtifactProxy artifactProxy;
+
 	/**
-	 * Retrieve the status of a simulation
-	 *
-	 * @param simulationId the id of the simulation
-	 *
-	 * @return the status of the simulation
+	 * Retrieve the status of an extraction job
+	 * @param id (String) the id of the extraction job
+	 * @return the status of the extraction job
 	 */
 	@GET
-	@Path("/status/{simulation-id}")
+	@Path("/status/{id}")
 	public Response getTaskStatus(
-		@PathParam("simulation-id") final String simulationId) {
-		return extractionProxy.getTaskStatus(simulationId);
+		@PathParam("id") final String id) {
+		return extractionProxy.getTaskStatus(id);
 	}
 
 	/**
@@ -90,6 +95,29 @@ public class ExtractionResource {
 		return skemaUnifiedProxy.postLaTeXToAMR(request);
 	};
 
+	/**
+	 * Transform source code to AMR
+	 * @param 	artifactId (String): id of the code artifact
+	 * @param 	name (String): the name to set on the newly created model
+	 * @param 	description (String): the description to set on the newly created model
+	 * @return  (ExtractionResponse)
+	 */
+	@POST
+	@Path("/code-to-amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public ExtractionResponse postCodeToAMR(
+		String artifactId,
+		String name,
+		String description
+	) {
+		// Fetch the related artifact to fill potential missing name and description
+		final Artifact artifact = artifactProxy.getArtifact(artifactId);
+		if (name == null) {	name = artifact.getName(); }
+		if (description == null) { description = artifact.getDescription();	}
+
+		return extractionProxy.postCodeToAMR(artifactId, name, description);
+	}
+
 
 	/**
 	 * Post a PDF to the extraction service
@@ -126,12 +154,12 @@ public class ExtractionResource {
 	 * @return the profiled dataset
 	 */
 	@POST
-	@Path("/profile-dataset")
+	@Path("/profile-dataset/{dataset_id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postProfileDataset(
-		@QueryParam("dataset_id") String datasetId,
-		@QueryParam("document_text") String documentText
+		@PathParam("dataset_id") String datasetId,
+		@QueryParam("artifact_id") String artifactId
 	) {
-		return extractionProxy.postProfileDataset(datasetId, documentText);
+		return extractionProxy.postProfileDataset(datasetId, artifactId);
 	};
 }

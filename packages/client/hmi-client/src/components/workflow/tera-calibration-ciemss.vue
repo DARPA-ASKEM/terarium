@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" is-editable stretch-content>
+	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" stretch-content>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -76,6 +76,19 @@
 					<Slider v-model="trainTestValue" />
 				</section>
 			</AccordionTab>
+			<AccordionTab>
+				<template #header> Simulation time range </template>
+				<div class="sim-tspan-container">
+					<div class="sim-tspan-group">
+						<label for="2">Start date</label>
+						<InputNumber id="2" class="p-inputtext-sm" v-model="timespan.start" />
+					</div>
+					<div class="sim-tspan-group">
+						<label for="3">End date</label>
+						<InputNumber id="3" class="p-inputtext-sm" v-model="timespan.end" />
+					</div>
+				</div>
+			</AccordionTab>
 		</Accordion>
 		<Accordion
 			v-if="calibrationView === CalibrationView.OUTPUT && modelConfig"
@@ -136,15 +149,15 @@ import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import { CsvAsset, ModelConfiguration } from '@/types/Types';
+import { CsvAsset, ModelConfiguration, TimeSpan } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
-import { setupModelInputJulia, setupDatasetInputJulia } from '@/services/calibrate-workflow';
+import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation-julia';
+import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation-ciemss';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -159,6 +172,7 @@ enum CalibrationView {
 const modelColumnNames = ref<string[] | undefined>();
 
 const calibrationView = ref(CalibrationView.INPUT);
+const timespan = ref<TimeSpan>(props.node.state.timeSpan);
 
 const trainTestValue = ref(80);
 
@@ -177,7 +191,7 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -188,7 +202,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -206,7 +220,7 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -220,7 +234,7 @@ function addMapping() {
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInputJulia(
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
@@ -234,7 +248,7 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInputJulia(datasetId.value);
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
@@ -269,11 +283,13 @@ watch(
 	padding: 0rem 0.25rem 0.5rem 0rem !important;
 	border: none !important;
 }
+
 .mapping-table:deep(th) {
 	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
 }
+
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -294,11 +310,13 @@ watch(
 th {
 	text-align: left;
 }
+
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
 }
+
 .emptyState {
 	align-self: center;
 	display: flex;
@@ -315,6 +333,19 @@ th {
 	width: 90%;
 	margin-top: 1rem;
 }
+
+.sim-tspan-container {
+	display: flex;
+	gap: 1em;
+}
+
+.sim-tspan-group {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	flex-basis: 0;
+}
+
 img {
 	width: 20%;
 }

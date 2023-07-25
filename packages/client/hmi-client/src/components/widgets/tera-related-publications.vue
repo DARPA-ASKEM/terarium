@@ -36,7 +36,7 @@
 					<Button
 						label="Use these resources to enrich descriptions"
 						@click="
-							sendForEnrichments(selectedResources);
+							sendForEnrichments();
 							visible = false;
 						"
 					/>
@@ -56,9 +56,9 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
-import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
 import { Artifact, DocumentAsset } from '@/types/Types';
+import { profileDataset, fetchExtraction } from '@/services/models/extractions';
 
 const visible = ref(false);
 const selectedResources = ref();
@@ -96,6 +96,7 @@ const props = defineProps<{
 	project?: IProject;
 	publications?: Array<DocumentAsset>;
 	dialogFlavour: string;
+	assetId: string;
 }>();
 const emit = defineEmits(['extracted-metadata']);
 
@@ -104,12 +105,17 @@ const addResources = () => {
 	// do something
 };
 
-function sendForEnrichments(_selectedResources) {
-	console.log('sending these resources for enrichment:', _selectedResources);
+const sendForEnrichments = async (/* _selectedResources */) => {
+	// 1. Send dataset profile request
+	/* TODO: send selected resources along with dataset to backend for enrichment */
+	const resp = await profileDataset(props.assetId);
 
-	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
-	/* TODO: send selected resources to backend for enrichment */
-}
+	// 2. Poll
+	const pollResult = await fetchExtraction(resp);
+	console.log('enrichment poll', pollResult);
+
+	emit('extracted-metadata', pollResult);
+};
 </script>
 
 <style scoped>
@@ -117,22 +123,25 @@ function sendForEnrichments(_selectedResources) {
 	margin: 1rem;
 	max-width: 50rem;
 }
+
 .container h5 {
 	margin-bottom: 0.5rem;
 }
+
 .constrain-width {
 	max-width: 50rem;
 }
 
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .secondary-button {
 	color: var(--text-color-primary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 }
 
-.secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 ul {

@@ -1,6 +1,7 @@
 <template>
 	<main>
 		<Accordion v-if="!nodePreview" multiple :activeIndex="[0, 1, 2]">
+			<!-- Model diagram -->
 			<AccordionTab header="Model diagram">
 				<TeraResizablePanel class="diagram-container">
 					<section class="graph-element">
@@ -13,15 +14,13 @@
 								/>
 							</template>
 							<template #center>
-								<span class="toolbar-subgroup">
+								<span v-if="isEditing" class="toolbar-subgroup">
 									<Button
-										v-if="isEditing"
 										@click="prepareStateEdit()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
-										v-if="isEditing"
 										@click="prepareTransitionEdit()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
@@ -29,7 +28,7 @@
 								</span>
 							</template>
 							<template #end>
-								<span class="toolbar-subgroup">
+								<span v-if="isEditable" class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
 										@click="cancelEdit"
@@ -53,32 +52,29 @@
 					</section>
 				</TeraResizablePanel>
 			</AccordionTab>
+			<!-- Model equations -->
 			<AccordionTab header="Model equations">
-				<TeraResizablePanel
-					:class="isEditingEQ ? `diagram-container-editing` : `diagram-container`"
-				>
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingEQ"
-								@click="cancelEditEquations"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-								style="background-color: white"
-							/>
-							<Button
-								v-if="isEditingEQ"
-								@click="onClickUpdateModel"
-								label="Update model"
-								class="p-button-sm"
-							/>
-							<Button
-								v-else
-								@click="isEditingEQ = true"
-								label="Edit equation"
-								class="p-button-sm p-button-outlined edit-button"
-							/>
-						</span>
+				<section :class="isEditingEQ ? `diagram-container-editing` : `diagram-container`">
+					<section v-if="props.isEditable" class="controls">
+						<Button
+							v-if="isEditingEQ"
+							@click="cancelEditEquations"
+							label="Cancel"
+							class="p-button-sm p-button-outlined edit-button"
+							style="background-color: white"
+						/>
+						<Button
+							v-if="isEditingEQ"
+							@click="onClickUpdateModel"
+							label="Update model"
+							class="p-button-sm"
+						/>
+						<Button
+							v-else
+							@click="isEditingEQ = true"
+							label="Edit equation"
+							class="p-button-sm p-button-outlined edit-button"
+						/>
 					</section>
 					<section class="math-editor-container" :class="mathEditorSelected">
 						<tera-math-editor
@@ -102,30 +98,29 @@
 							text
 						/>
 					</section>
-				</TeraResizablePanel>
+				</section>
 			</AccordionTab>
+			<!-- Model observables -->
 			<AccordionTab header="Model observables">
-				<TeraResizablePanel
+				<section
 					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
 					:start-height="300"
 				>
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingObservables"
-								@click="cancelEditObservables"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-							/>
-							<Button
-								@click="updateObservables"
-								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
-								:disabled="disableSaveObservable"
-								:class="
-									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
-								"
-							/>
-						</span>
+					<section v-if="isEditable" class="controls">
+						<Button
+							v-if="isEditingObservables"
+							@click="cancelEditObservables"
+							label="Cancel"
+							class="p-button-sm p-button-outlined edit-button"
+						/>
+						<Button
+							@click="updateObservables"
+							:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
+							:disabled="disableSaveObservable"
+							:class="
+								isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
+							"
+						/>
 					</section>
 					<section class="observable-editor-container">
 						<tera-math-editor
@@ -152,7 +147,7 @@
 							text
 						/>
 					</section>
-				</TeraResizablePanel>
+				</section>
 			</AccordionTab>
 		</Accordion>
 		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
@@ -535,9 +530,9 @@ watch(
 		// Update the latex equations
 		if (latexEquationList.value.length > 0) {
 			/* TODO
-			    	We need to remedy the fact that the equations are not being updated;
-		        A proper merging of the equations is needed with a diff UI for the user.
-		        For now, we do nothing.
+					We need to remedy the fact that the equations are not being updated;
+				A proper merging of the equations is needed with a diff UI for the user.
+				For now, we do nothing.
 			 */
 		} else {
 			const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
@@ -689,8 +684,10 @@ main {
 }
 
 .diagram-container {
-	border: 1px solid var(--surface-border);
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
 }
 
 .diagram-container-editing {
@@ -755,38 +752,26 @@ section math-editor {
 
 .math-editor-container {
 	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
 	flex-direction: column;
 	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
+	border-radius: var(--border-radius);
+	position: relative;
+	top: -1rem;
 }
 
 .observable-editor-container {
 	display: flex;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
 	flex-direction: column;
 	border: 4px solid transparent;
-	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
-	overflow: auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
+	border-radius: var(--border-radius);
+	position: relative;
+	top: -1rem;
 }
 
 .controls {
 	display: flex;
 	flex-direction: row;
-	margin: 0.5rem 2.5rem 0px 10px;
+	margin: 0rem 1rem;
 	justify-content: flex-end;
 	position: relative;
 	z-index: 20;
@@ -801,6 +786,7 @@ section math-editor {
 	width: 10rem;
 	margin-left: 1rem;
 	margin-top: 0.5rem;
+	margin-bottom: 1rem;
 	border: none;
 	outline: none;
 }

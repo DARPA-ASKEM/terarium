@@ -50,22 +50,24 @@ import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import {
-	EnsembleSimulationCiemssRequest,
+	EnsembleCalibrationCiemssRequest,
 	Simulation,
 	TimeSpan,
 	EnsembleModelConfigs
 } from '@/types/Types';
 import {
 	getSimulation,
-	makeEnsembleCiemssSimulation,
+	makeEnsembleCiemssCalibration,
 	getRunResultCiemss
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { setupDatasetInput } from '@/services/calibrate-workflow';
 import {
-	SimulateEnsembleCiemssOperationState,
-	SimulateEnsembleCiemssOperation
-} from './simulate-ensemble-ciemss-operation';
+	CalibrateEnsembleCiemssOperationState,
+	CalibrateEnsembleCiemssOperation,
+	EnsembleCalibrateExtraCiemss
+} from './calibrate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -75,55 +77,48 @@ const emit = defineEmits(['append-output-port']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
+const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
+const currentDatasetFileName = ref<string>();
+
 const startedRunId = ref<string>();
 const completedRunId = ref<string>();
-const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
+const disableRunButton = computed(
+	() => !ensembleConfigs?.value[0]?.weight || !datasetId.value || !currentDatasetFileName.value
+);
 const ensembleConfigs = computed<EnsembleModelConfigs[]>(() => props.node.state.mapping);
 const timeSpan = computed<TimeSpan>(() => props.node.state.timeSpan);
-const numSamples = ref<number>(props.node.state.numSamples);
+const extra = ref<EnsembleCalibrateExtraCiemss>(props.node.state.extra);
+
 const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
 // TODO Post hackathon, this entire thing should be computed or even just thrown into run result.
 const renderedRuns = ref<RunResults>({});
+const datasetColumnNames = ref<string[]>();
 
 const runEnsemble = async () => {
-	const params: EnsembleSimulationCiemssRequest = {
+	if (!datasetId.value || !currentDatasetFileName.value) return;
+
+	const params: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
+		dataset: {
+			id: datasetId.value,
+			filename: currentDatasetFileName.value
+		},
 		engine: 'ciemss',
-		extra: { num_samples: numSamples.value }
+		extra: {
+			num_samples: extra.value.numSamples,
+			num_iterations: extra.value.numIterations,
+			total_population: extra.value.totalPopulation
+		}
 	};
-	const response = await makeEnsembleCiemssSimulation(params);
+	const response = await makeEnsembleCiemssCalibration(params);
 	startedRunId.value = response.simulationId;
 
 	showSpinner.value = true;
 	getStatus();
-};
-
-// Tom TODO: Make this generic, its copy paste from drilldown
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-};
-
-// TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
-const addChart = () => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
-	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
 };
 
 const getStatus = async () => {
@@ -150,9 +145,33 @@ const getStatus = async () => {
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
-		type: SimulateEnsembleCiemssOperation.outputs[0].type,
+		type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: { runId }
+	});
+};
+
+// Tom TODO: Make this generic, its copy paste from drilldown
+const chartConfigurationChange = (index: number, config: ChartConfig) => {
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+// TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
+const addChart = () => {
+	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
 	});
 };
 
@@ -170,6 +189,18 @@ const lineWidthArray = computed(() => {
 	return output;
 });
 
+// Set up csv + dropdown names
+// Note: Same as calibrate side panel
+watch(
+	() => datasetId.value,
+	async () => {
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		currentDatasetFileName.value = filename;
+		datasetColumnNames.value = csv?.headers;
+	},
+	{ immediate: true }
+);
+
 watch(
 	() => modelConfigIds.value,
 	async () => {
@@ -184,7 +215,7 @@ watch(
 				};
 			}
 
-			const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+			const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 			state.modelConfigIds = modelConfigIds.value;
 			state.mapping = mapping;
 			workflowEventBus.emitNodeStateChange({

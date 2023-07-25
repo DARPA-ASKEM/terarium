@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:is-editable="isEditable"
+		:feature-config="featureConfig"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"
@@ -24,7 +24,7 @@
 					:active="datasetView === DatasetView.DATA"
 				/>
 				<Button
-					v-if="isEditable"
+					v-if="!featureConfig.isPreview"
 					class="p-button-secondary p-button-sm"
 					label="Transform"
 					icon="pi pi-sync"
@@ -32,7 +32,7 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
-			<span v-if="datasetView === DatasetView.LLM && isEditable">
+			<span v-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
@@ -85,6 +85,7 @@
 				:dialog-flavour="'dataset'"
 				:publications="props.project?.assets?.publications"
 				:project="project"
+				:assetId="assetId"
 			/>
 			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
 				<AccordionTab>
@@ -93,25 +94,7 @@
 					</template>
 					<section v-if="enriched">
 						<div class="dataset-detail">
-							<div class="full-width">
-								<div class="detail-list">
-									<h2 class="title">Dataset Details</h2>
-									<ul>
-										<li><strong>Dataset name:</strong> {{ dataset.name }}</li>
-										<li><strong>Dataset overview:</strong> {{ dataset.description }}</li>
-										<li>
-											<strong>Dataset URL:</strong>
-											<a :href="dataset.source">{{ dataset.source }}</a>
-										</li>
-										<li>
-											<strong>Data size:</strong> This dataset currently contains
-											{{ csvContent?.length || '-' }} rows.
-										</li>
-									</ul>
-								</div>
-							</div>
 							<div class="column">
-								<h3 class="title">{{ headers.DESCRIPTION }}</h3>
 								<p class="content">{{ enrichedData.DESCRIPTION }}</p>
 
 								<h3 class="subtitle">{{ headers.AUTHOR_NAME }}</h3>
@@ -140,27 +123,6 @@
 								<h3 class="subtitle">{{ headers.LICENSE }}</h3>
 								<p class="content">{{ enrichedData.LICENSE }}</p>
 							</div>
-							<div class="full-width">
-								<h3 class="subtitle">{{ headers.EXAMPLES }}</h3>
-								<ul class="example-list" v-if="enrichedData.EXAMPLES">
-									<li
-										class="example-item"
-										v-for="(value, key) in JSON.parse(enrichedData.EXAMPLES)"
-										:key="key"
-									>
-										<strong>{{ key }}:</strong>{{ value }}
-									</li>
-								</ul>
-							</div>
-							<div class="full-width">
-								<h3 class="subtitle">{{ `Extraction Table` }}</h3>
-								<DataTable :value="pd">
-									<Column field="col_name" header="Column Name"></Column>
-									<Column field="concept" header="Concept"></Column>
-									<Column field="unit" header="Unit"></Column>
-									<Column field="description" header="Description"></Column>
-								</DataTable>
-							</div>
 						</div>
 					</section>
 					<p v-else>
@@ -173,9 +135,9 @@
 						<header id="Source">Source</header>
 					</template>
 					This data is sourced from
-					{{ dataset.metadata.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
-					<a :href="dataset.metadata.documents ? dataset.metadata.documents[0].url : ''">{{
-						dataset.metadata.documents ? dataset.metadata.documents[0].url : ''
+					{{ dataset.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
+					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''">{{
+						dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''
 					}}</a>
 				</AccordionTab>
 				<AccordionTab>
@@ -241,20 +203,21 @@
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
-								v-if="rowEditList[index]"
-								@focus="setSuggestedValue(index, '')"
+								v-if="rowEditList[index] && column.metadata"
+								v-model="column.metadata.unit"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].metadata?.unit)"
 							/>
-							<div class="variables-value" v-else>-</div>
-							<!-- grounding -->
+							<div class="variables-value" v-else>{{ column.metadata?.unit ?? '--' }}</div>
+							<!-- Concept -->
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
-								v-if="rowEditList[index]"
-								v-model="groundingValues[index][0]"
-								@focus="setSuggestedValue(index, originalGroundingValues[0])"
+								v-if="rowEditList[index] && column.metadata"
+								v-model="column.metadata.concept"
+								@focus="setSuggestedValue(index, column.metadata?.concept)"
 							/>
 							<div class="variables-value" v-else>
-								{{ groundingValues[index][0] }}
+								{{ column.metadata?.concept ?? '--' }}
 							</div>
 							<!-- extractions - field does not exist in tds yet -->
 							<InputText
@@ -263,7 +226,7 @@
 								v-if="rowEditList[index]"
 								@focus="setSuggestedValue(index, '')"
 							/>
-							<div class="variables-value" v-else></div>
+							<div class="variables-value" v-else>{{ column.metadata?.extraction ?? '--' }}</div>
 							<div v-if="rowEditList[index]" class="row-edit-buttons">
 								<Button
 									text
@@ -293,7 +256,7 @@
 								<span>Suggested value</span>
 								<div>
 									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata.documents[0].title }}
+										<i class="pi pi-file" />{{ dataset.metadata?.documents[0].title }}
 									</div>
 									<div class="suggested-value">{{ suggestedValues[index] }}</div>
 								</div>
@@ -314,6 +277,17 @@
 						</div>
 					</div>
 				</AccordionTab>
+				<AccordionTab v-if="pd.length > 0">
+					<template #header>
+						<header id="ExtractionTable">Extraction Table</header>
+					</template>
+					<DataTable :value="pd">
+						<Column field="col_name" header="Column Name"></Column>
+						<Column field="concept" header="Concept"></Column>
+						<Column field="unit" header="Unit"></Column>
+						<Column field="description" header="Description"></Column>
+					</DataTable>
+				</AccordionTab>
 			</Accordion>
 		</template>
 		<template v-else-if="datasetView === DatasetView.DATA">
@@ -326,7 +300,7 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
+		<template v-else-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 			<Suspense>
 				<tera-dataset-jupyter-panel
 					:asset-id="props.assetId"
@@ -340,11 +314,12 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onUpdated, Ref } from 'vue';
+import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
+import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { downloadRawFile, getDataset } from '@/services/dataset';
@@ -357,6 +332,7 @@ import Menu from 'primevue/menu';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { FeatureConfig } from '@/types/common';
 
 const enrichedData = ref();
 
@@ -365,12 +341,24 @@ enum DatasetView {
 	DATA = 'data',
 	LLM = 'llm'
 }
-const props = defineProps<{
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-	project?: IProject;
-}>();
+const props = defineProps({
+	assetId: {
+		type: String,
+		required: true
+	},
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
+	},
+	highlight: {
+		type: String,
+		default: null
+	},
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null
+	}
+});
 
 const gotEnrichedData = (payload) => {
 	enrichedData.value = payload;
@@ -382,14 +370,12 @@ const pd = computed(() =>
 );
 
 const headers = ref({
-	DESCRIPTION: 'Project Description',
 	AUTHOR_NAME: 'Author Name',
 	AUTHOR_EMAIL: 'Author Email',
 	DATE: 'Date of Data',
 	SCHEMA: 'Data Schema',
 	PROVENANCE: 'Data Provenance',
 	SENSITIVITY: 'Data Sensitivity',
-	EXAMPLES: 'Example Data',
 	LICENSE: 'License Information'
 });
 
@@ -718,6 +704,7 @@ main :deep(.p-inputtext.p-inputtext-sm) {
 	display: flex;
 	justify-content: space-evenly;
 }
+
 .dataset-detail {
 	display: flex;
 	flex-wrap: wrap;

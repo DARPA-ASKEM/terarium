@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		v-if="doc"
-		:is-editable="isEditable"
+		:feature-config="featureConfig"
 		:name="highlightSearchTerms(doc.title)"
 		:overline="highlightSearchTerms(doc.journal)"
 		:authors="formatDocumentAuthors(doc)"
@@ -14,7 +14,7 @@
 	>
 		<template #bottom-header-buttons>
 			<Button
-				v-if="!isEditable"
+				v-if="featureConfig.isPreview"
 				class="p-button-sm p-button-outlined"
 				icon="pi pi-external-link"
 				label="Open PDF"
@@ -149,7 +149,7 @@
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
 						<tera-import-github-file
 							:urlString="url"
-							:show-import-button="isEditable"
+							:show-import-button="!featureConfig.isPreview"
 							:project="project"
 							@open-code="openCode"
 						/>
@@ -227,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch, onUpdated } from 'vue';
+import { computed, onMounted, ref, watch, onUpdated, PropType } from 'vue';
 import { isEmpty, isEqual, uniqWith } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -238,7 +238,7 @@ import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { CodeRequest, ResultType } from '@/types/common';
+import { CodeRequest, ResultType, FeatureConfig } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
@@ -255,13 +255,28 @@ enum DocumentView {
 	PDF = 'pdf'
 }
 
-const props = defineProps<{
-	xddUri: string;
-	isEditable: boolean;
-	highlight?: string;
-	previewLineLimit?: number;
-	project?: IProject;
-}>();
+const props = defineProps({
+	xddUri: {
+		type: String,
+		required: true
+	},
+	highlight: {
+		type: String,
+		default: null
+	},
+	previewLineLimit: {
+		type: Number,
+		default: null
+	},
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
+	},
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null
+	}
+});
 
 const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);

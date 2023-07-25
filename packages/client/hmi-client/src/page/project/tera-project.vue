@@ -47,7 +47,10 @@
 					:tabs="[{ assetName: workflowNode.operationType }]"
 					:active-tab-index="0"
 					:loading-tab-index="null"
-					@close-tab="workflowNode = null"
+					@close-tab="
+						workflowEventBus.emit('clearActiveNode');
+						workflowNode = null;
+					"
 				/>
 				<tera-calibration-julia
 					v-if="
@@ -82,7 +85,16 @@
 				/>
 				<tera-simulate-ensemble-ciemss
 					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.ENSEMBLE_CIEMSS
+						workflowNode &&
+						workflowNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS
+					"
+					:node="workflowNode"
+					:project="project"
+				/>
+				<tera-calibrate-ensemble-ciemss
+					v-if="
+						workflowNode &&
+						workflowNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS
 					"
 					:node="workflowNode"
 					:project="project"
@@ -137,6 +149,7 @@ import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
+import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { workflowEventBus } from '@/services/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 

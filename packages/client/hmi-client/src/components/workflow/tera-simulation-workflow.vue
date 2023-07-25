@@ -58,6 +58,7 @@
 				@remove-node="(event) => removeNode(event)"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
+				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
 					<tera-model-node
@@ -96,7 +97,12 @@
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<tera-simulate-ensemble-ciemss-node
-						v-else-if="node.operationType === WorkflowOperationTypes.ENSEMBLE_CIEMSS"
+						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibrate-ensemble-ciemss-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -213,6 +219,7 @@ import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
 import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
 import TeraSimulateEnsembleCiemssNode from '@/components/workflow/tera-simulate-ensemble-node-ciemss.vue';
+import TeraCalibrateEnsembleCiemssNode from '@/components/workflow/tera-calibrate-ensemble-node-ciemss.vue';
 import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
 import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
@@ -224,6 +231,7 @@ import {
 } from '@/components/workflow/simulate-julia-operation';
 import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
+import { CalibrateEnsembleCiemssOperation } from '@/components/workflow/calibrate-ensemble-ciemss-operation';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -236,7 +244,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
-import { EnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
+import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -252,6 +260,12 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
+
+const currentActiveNode = ref<WorkflowNode | null>();
+
+workflowEventBus.on('clearActiveNode', () => {
+	currentActiveNode.value = null;
+});
 
 const newEdge = ref<WorkflowEdge | undefined>();
 const droppedAssetId = ref<string | null>(null);
@@ -400,6 +414,7 @@ const testNode = (node: WorkflowNode) => {
 };
 
 const drilldown = (event: WorkflowNode) => {
+	currentActiveNode.value = event;
 	workflowEventBus.emit('drilldown', event);
 };
 
@@ -511,7 +526,20 @@ const contextMenuItems = ref([
 				label: 'Simulate ensemble',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, EnsembleCiemssOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateEnsembleCiemssOperation, newNodePosition, {
+						size: {
+							width: 420,
+							height: 220
+						}
+					});
+					workflowDirty = true;
+				}
+			},
+			{
+				label: 'Calibrate ensemble',
+				disabled: false,
+				command: () => {
+					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOperation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -747,16 +775,16 @@ function resetZoom() {
 	gap: 1rem;
 }
 
-/* We should make a proper secondary outline button. Until then this works. */
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 }
 
-.toolbar .button-group .secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.toolbar .button-group .secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 .toolbar .button-group .primary-dropdown {

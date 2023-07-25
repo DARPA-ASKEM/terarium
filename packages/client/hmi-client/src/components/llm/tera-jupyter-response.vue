@@ -24,10 +24,13 @@
 					</div>
 					<div v-if="props.isExecutingCode">Executing....</div>
 				</section>
-				<div v-for="(m, index) in msg.messages" :key="index">
+				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_response type -->
 					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
-						<div class="llm-response">{{ m.content['chatty_response'] }}</div>
+						<div style="padding-top: 1rem">
+							<h5>Agent's response:</h5>
+							<div class="llm-response">{{ m.content['text'] }}</div>
+						</div>
 					</div>
 					<!-- Handle stream type for stderr -->
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stderr'">
@@ -43,6 +46,7 @@
 					<!-- Handle code_cell type -->
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
 						<tera-chatty-code-cell
+							ref="codeCell"
 							:jupyter-session="jupyterSession"
 							:language="m.content['language']"
 							:code="m.content['code']"
@@ -116,6 +120,7 @@ const props = defineProps<{
 	autoExpandPreview?: boolean;
 }>();
 
+const codeCell = ref(null);
 const resp = ref(<HTMLElement | null>null);
 // Reference for showThought, initially set to false
 const showThought = ref(false);
@@ -184,6 +189,10 @@ watch(
 		emit('cell-updated', resp.value, props.msg);
 	}
 );
+
+defineExpose({
+	codeCell
+});
 </script>
 
 <style scoped>
@@ -232,7 +241,9 @@ watch(
 }
 
 .llm-response {
-	color: green;
+	padding-top: 0.7rem;
+	white-space: pre-wrap;
+	color: black;
 }
 
 .date {

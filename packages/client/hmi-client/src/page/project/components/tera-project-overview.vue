@@ -1,11 +1,10 @@
 <template>
-	<div class="scrollable">
+	<main>
 		<tera-asset
 			:name="project?.name"
 			:authors="project?.username"
 			:is-naming-asset="isRenamingProject"
 			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
-			is-editable
 			class="overview-banner"
 		>
 			<template #name-input>
@@ -101,32 +100,67 @@
 				<!-- resource list data table -->
 				<DataTable
 					v-model:selection="selectedResources"
-					dataKey="id"
+					dataKey="assetId"
 					tableStyle="min-width: 50rem"
 					:value="assets"
+					row-hover
+					:row-class="() => 'p-selectable-row'"
 				>
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
-					<Column field="assetName" header="Name" sortable style="width: 45%">
+					<Column field="assetName" header="Name" sortable style="width: 75%">
+						<template #body="slotProps">
+							<div class="asset-button" @click="openResource(slotProps.data)">
+								<vue-feather
+									v-if="
+										typeof ProjectService.getAssetIcon(slotProps.data.pageType ?? null) === 'string'
+									"
+									:type="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									size="1rem"
+									stroke="rgb(16, 24, 40)"
+									class="p-button-icon-left icon"
+								/>
+								<component
+									v-else
+									:is="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									class="p-button-icon-left icon"
+								/>
+								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
+							</div>
+						</template>
+					</Column>
+					<Column field="" header="Modified" sortable style="width: 25%"></Column>
+					<!-- <Column field="tags" header="Tags" style="width: 25%"></Column> -->
+					<Column header="Type" style="width: 25%" sortable field="pageType">
+						<template #body="slotProps">
+							{{ slotProps.data.pageType }}
+						</template>
+					</Column>
+					<Column
+						headerStyle="width: 3rem; text-align: center"
+						bodyStyle="text-align: center; overflow: visible"
+					>
 						<template #body="slotProps">
 							<Button
-								:title="slotProps.data.assetName"
-								class="asset-button"
+								class="row-action-button"
+								icon="pi pi-ellipsis-v"
 								plain
 								text
-								size="small"
-								@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
+								rounded
+								@click.stop="(e) => showRowActions(e, slotProps.data)"
+							/>
+							<Menu ref="rowActionMenu" :model="rowActionMenuItems" :popup="true" />
+						</template>
+					</Column>
+					<template #empty>
+						<div class="explorer-status">
+							<img src="@assets/svg/seed.svg" alt="Seed" />
+							<h4 class="no-results-found">This is an empty project</h4>
+							<span class="no-results-found-message"
+								>Add resources to your project with the quick link buttons, or use the explorer to
+								find documents, models and datasets of interest.</span
 							>
-								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
-							</Button>
-						</template>
-					</Column>
-					<Column field="" header="Modified" sortable style="width: 15%"></Column>
-					<Column field="tags" header="Tags"></Column>
-					<Column header="Resource Type" sortable>
-						<template #body="slotProps">
-							<Tag :value="slotProps.data.pageType" />
-						</template>
-					</Column>
+						</div>
+					</template>
 				</DataTable>
 			</section>
 			<section class="drag-n-drop">
@@ -241,14 +275,13 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-	</div>
+	</main>
 </template>
 
 <script setup lang="ts">
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
-import { nextTick, Ref, ref, computed } from 'vue';
+import { nextTick, Ref, ref, computed, onMounted } from 'vue';
 import InputText from 'primevue/inputtext';
-import Tag from 'primevue/tag';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
@@ -283,6 +316,8 @@ const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
 const selectedResources = ref();
+
+const openedRow = ref(null);
 
 const isNewModelModalVisible = ref<boolean>(false);
 const newModelName = ref<string>('');
@@ -407,6 +442,10 @@ async function editProject() {
 	inputElement.value?.$el.focus();
 }
 
+async function openResource(data) {
+	router.push({ name: RouteName.ProjectRoute, params: data });
+}
+
 async function updateProjectName() {
 	isRenamingProject.value = false;
 	const updatedProject = props.project;
@@ -426,16 +465,54 @@ function showProjectMenu(event: any) {
 	projectMenu.value.toggle(event);
 }
 
+/* hacky way of listening to row hover events to display/hide the action button, prime vue unfortunately doesn't have the capability to listen to row hover */
+function setRowHover() {
+	const tableRows = document.querySelectorAll('.p-selectable-row');
+	tableRows.forEach((tableRow) => {
+		const buttonBar = tableRow.querySelector('.row-action-button .pi-ellipsis-v') as HTMLElement;
+		buttonBar.style.display = 'none';
+		tableRow.addEventListener('mouseover', () => {
+			buttonBar.style.removeProperty('display');
+		});
+		tableRow.addEventListener('mouseleave', () => {
+			buttonBar.style.display = 'none';
+		});
+	});
+}
+
+/* Row Action Menu */
+const rowActionMenu = ref();
+const rowActionMenuItems = ref([
+	{ label: 'Open', command: () => openResource(openedRow.value) }
+
+	// TODO add the follow commands
+	// { label: 'Rename' },
+	// { label: 'Make a copy' },
+	// { label: 'Delete' },
+	// { label: 'Download' }
+]);
+const showRowActions = (event, data) => {
+	openedRow.value = data;
+	rowActionMenu.value.toggle(event);
+};
+
 const isUploadResourcesModalVisible = ref(false);
+
+onMounted(() => {
+	setRowHover();
+});
 </script>
 
 <style scoped>
-.scrollable {
+main {
 	overflow-y: auto;
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none;
+	/* IE and Edge */
+	scrollbar-width: none;
+	/* Firefox */
 }
-.scrollable::-webkit-scrollbar {
+
+main::-webkit-scrollbar {
 	display: none;
 }
 
@@ -454,7 +531,8 @@ a {
 	overflow-y: auto;
 	padding: 1rem;
 	background: var(--surface-0);
-	flex: 1;
+	display: flex;
+	flex-direction: column;
 }
 
 .description {
@@ -507,6 +585,7 @@ button .icon {
 	gap: 1rem;
 }
 
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .quick-links .p-button.p-button-secondary {
 	background-color: var(--surface);
 	color: var(--text-color-primary);
@@ -536,8 +615,8 @@ button .icon {
 	padding-bottom: 0.5rem;
 }
 
-.keyword-search:hover {
-	border-color: var(--surface-border) !important;
+.keyword-search:enabled:hover {
+	border-color: var(--surface-border);
 }
 
 .related {
@@ -594,17 +673,31 @@ ul {
 	width: 50rem;
 }
 
+.asset-button {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
+}
+
 :deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
+	padding: 0.375rem 1rem;
 }
 
-:deep(.asset-button.p-button > span) {
-	display: inline-flex;
-	width: 100%;
-	padding: 0.375rem 1rem;
-	overflow: hidden;
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+	background: var(--gray-100);
+	padding: 1rem;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+	padding: 0.5rem 1rem;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th:first-child .p-column-header-content) {
+	justify-content: center;
 }
 
 :deep(.asset-button.p-button[active='true']) {
@@ -614,7 +707,35 @@ ul {
 :deep(.asset-button.p-button .p-button-label) {
 	overflow: hidden;
 	text-align: left;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+}
+
+:deep(.asset-button .p-button-icon-left) {
+	overflow: visible;
+}
+
+.resource-list-button {
+	margin-left: auto;
+}
+
+:deep(.resource-list-button .p-button.p-button-icon-only) {
+	color: #ffffff;
+}
+
+.explorer-status {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1rem;
+	align-items: center;
+	margin-top: 8rem;
+	margin-bottom: 12rem;
+	flex-grow: 1;
+	font-size: var(--font-body-small);
+	color: var(--text-color-subdued);
+}
+
+.no-results-found-message {
+	text-align: center;
+	width: 40%;
 }
 </style>
