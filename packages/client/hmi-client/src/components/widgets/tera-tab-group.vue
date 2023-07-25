@@ -19,7 +19,7 @@
 					class="p-button-icon-left icon"
 				/>
 				<span class="name">
-					{{ tab.assetName }}
+					{{ getTabnameById(tab.assetId ?? '') }}
 				</span>
 				<Button
 					icon="pi pi-times"
@@ -51,6 +51,11 @@ const props = defineProps<{
 
 const emit = defineEmits(['select-tab', 'close-tab']);
 const loadingTabIndex = ref();
+
+const getTabnameById = (id: string) => {
+	if (!id || id === '') return 'Overview';
+	return `${id}`;
+};
 
 function endAnimationIfTabIsLoaded() {
 	if (props.loadingTabIndex === null) {

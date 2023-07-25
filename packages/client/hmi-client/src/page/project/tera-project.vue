@@ -195,14 +195,7 @@ function setActiveTab() {
 async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (
-		!(
-			asset &&
-			asset.assetId === props.assetId &&
-			asset.assetName === props.assetName &&
-			asset.pageType === props.pageType
-		)
-	) {
+	if (!(asset && asset.assetId === props.assetId && asset.pageType === props.pageType)) {
 		loadingTabIndex.value = index;
 		router.push({ name: RouteName.ProjectRoute, params: asset });
 	}
@@ -219,7 +212,7 @@ function removeClosedTab(tabIndexToRemove: number) {
 }
 
 async function removeAsset(asset: Tab) {
-	const { assetName, assetId, pageType } = asset;
+	const { assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
 	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
@@ -231,12 +224,12 @@ async function removeAsset(asset: Tab) {
 
 		if (isRemoved) {
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isEqual(tab, asset)));
-			logger.info(`${assetName} was removed.`, { showToast: true });
+			logger.info(`${assetId} was removed.`, { showToast: true });
 			return;
 		}
 	}
 
-	logger.error(`Failed to remove ${assetName}`, { showToast: true });
+	logger.error(`Failed to remove ${assetId}`, { showToast: true });
 }
 
 watch(
@@ -247,12 +240,11 @@ watch(
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
 		) {
 			openAsset();
-		} else if (openedAssetRoute.value && openedAssetRoute.value.assetName) {
+		} else if (openedAssetRoute.value && openedAssetRoute.value.assetId) {
 			tabStore.addTab(projectContext.value, openedAssetRoute.value);
 		}
 
 		const overviewResource = {
-			assetName: 'Overview',
 			pageType: ProjectPages.OVERVIEW,
 			assetId: ''
 		};
@@ -265,25 +257,19 @@ watch(
 
 watch(
 	() => openedAssetRoute.value, // Once route attributes change, add/switch to another tab
-	(newOpenedAssetRoute) => {
-		if (newOpenedAssetRoute.assetName) {
-			// If name isn't recognized, its a new asset so add a new tab
-			if (
-				props.assetName &&
-				props.pageType &&
-				!tabs.value.some((tab) => isEqual(tab, newOpenedAssetRoute))
-			) {
-				tabStore.addTab(projectContext.value, newOpenedAssetRoute);
-			}
-			// Tab switch
-			else if (props.assetName) {
-				const index = tabs.value.findIndex((tab) => isEqual(tab, newOpenedAssetRoute));
+	() => {
+		if (openedAssetRoute.value.assetId) {
+			// If id isn't recognized, its a new asset so add a new tab
+			if (props.pageType && !tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value))) {
+				tabStore.addTab(projectContext.value, openedAssetRoute.value);
+			} else if (props.assetId) {
+				// Tab switch
+				const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
+		} else {
 			// Goes to tab from previous session
-			else {
-				openAsset(tabStore.getActiveTabIndex(projectContext.value));
-			}
+			openAsset(tabStore.getActiveTabIndex(projectContext.value));
 		}
 	}
 );

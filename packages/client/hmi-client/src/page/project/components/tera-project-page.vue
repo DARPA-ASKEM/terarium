@@ -131,7 +131,6 @@ const openWorkflow = async () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetName: 'Workflow',
 			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
 			assetId: workflowId
 		}
@@ -153,7 +152,6 @@ const newModel = async (modelName: string) => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetName: 'Model',
 			pageType: ProjectAssetTypes.MODELS,
 			assetId: modelId
 		}
@@ -163,7 +161,7 @@ const newModel = async (modelName: string) => {
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
 async function openCode(codeRequests: CodeRequest[]) {
