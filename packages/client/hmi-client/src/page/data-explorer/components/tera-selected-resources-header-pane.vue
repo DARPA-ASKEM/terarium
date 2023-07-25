@@ -80,10 +80,6 @@ const addResourcesToProject = async (projectId: string) => {
 			// then, link and store in the project assets
 			const assetsType = ProjectAssetTypes.MODELS;
 			await ProjectService.addAsset(projectId, assetsType, modelId);
-
-			// update local copy of project assets
-			// @ts-ignore
-			resources.activeProject?.assets?.[ProjectAssetTypes.MODELS].push(modelId, selectedItem);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
@@ -93,9 +89,6 @@ const addResourcesToProject = async (projectId: string) => {
 			if (datasetId) {
 				await ProjectService.addAsset(projectId, assetsType, datasetId);
 			}
-			// update local copy of project assets
-			// @ts-ignore
-			resources.activeProject?.assets?.[ProjectAssetTypes.DATASETS].push(datasetId, selectedItem);
 		}
 	});
 };
