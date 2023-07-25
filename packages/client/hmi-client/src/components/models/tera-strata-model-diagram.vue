@@ -116,6 +116,9 @@ watch(
 			nodeIds.push(t.id);
 		});
 		setNodeTypeColor(nodeIds);
+		if (renderer) {
+			renderer.isGraphDirty = true;
+		}
 	}
 );
 

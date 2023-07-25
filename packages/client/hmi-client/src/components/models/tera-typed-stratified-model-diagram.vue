@@ -220,11 +220,30 @@ function getLegendKeyStyle(id: string) {
 	};
 }
 
+function setNodeColors() {
+	const nodeIds: string[] = [];
+	props.typeSystem?.states.forEach((s) => {
+		nodeIds.push(s.id);
+	});
+	props.typeSystem?.transitions.forEach((t) => {
+		nodeIds.push(t.id);
+	});
+	props.model.semantics?.typing?.system.model.states.forEach((s) => {
+		nodeIds.push(s.id);
+	});
+	props.model.semantics?.typing?.system.model.transitions.forEach((t) => {
+		nodeIds.push(t.id);
+	});
+	console.log(nodeIds);
+	setNodeTypeColor(nodeIds);
+}
+
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.model],
 	async () => {
 		typedModel.value = props.model;
+		setNodeColors();
 	},
 	{ immediate: true }
 );
@@ -232,14 +251,7 @@ watch(
 watch(
 	() => props.typeSystem,
 	() => {
-		const nodeIds: string[] = [];
-		props.typeSystem?.states.forEach((s) => {
-			nodeIds.push(s.id);
-		});
-		props.typeSystem?.transitions.forEach((t) => {
-			nodeIds.push(t.id);
-		});
-		setNodeTypeColor(nodeIds);
+		setNodeColors();
 		if (typedRows.value.length === 0) {
 			typedRows.value.push(
 				{
