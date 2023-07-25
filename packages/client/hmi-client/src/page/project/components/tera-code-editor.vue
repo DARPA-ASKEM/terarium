@@ -104,6 +104,7 @@ const selectedText = ref('');
 const codeExtractionDialogVisible = ref(false);
 const acset = ref<PetriNet | null>(null);
 const graphElement = ref<HTMLDivElement | null>(null);
+
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch([graphElement], async () => {
