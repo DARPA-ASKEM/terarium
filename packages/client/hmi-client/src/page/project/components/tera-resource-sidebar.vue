@@ -12,6 +12,7 @@
 				@click="toggleOptionsMenu"
 			/>
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
+				<!-- A way to use vue feather icons in the MenuItem component, it might be better to try to use 1 icon library for easier integration -->
 				<template #item="slotProps">
 					<a class="p-menuitem-link">
 						<vue-feather
