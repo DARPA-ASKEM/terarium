@@ -41,7 +41,7 @@
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="saveDataset"
+				@click="saveDataset(projectId, completedRunId)"
 				:disabled="true"
 				label="Save as Dataset"
 				icon="pi pi-save"
@@ -195,6 +195,7 @@ import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { saveDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import Button from 'primevue/button';
@@ -206,9 +207,6 @@ import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
-import useResourcesStore from '@/stores/resources';
-import * as ProjectService from '@/services/project';
 import { IProject } from '@/types/Project';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
@@ -257,6 +255,7 @@ const extra = ref<EnsembleCalibrateExtraCiemss>(props.node.state.extra);
 const completedRunId = computed<string>(
 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 );
+const projectId = ref<string>(props.project.id);
 
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
@@ -305,16 +304,6 @@ const calculateWeights = () => {
 	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
 		customWeights.value = false;
 		// TODO: Get weights from AMR
-	}
-};
-
-const saveDataset = async () => {
-	const simulationId = props?.node?.outputs?.[0]?.value?.[0].runId as string;
-	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
-			// TODO: See about getting rid of this - this refresh should preferably be within a service
-			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
-		}
 	}
 };
 
