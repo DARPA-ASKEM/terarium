@@ -58,6 +58,7 @@
 				@remove-node="(event) => removeNode(event)"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
+				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
 					<tera-model-node
@@ -260,6 +261,12 @@ let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
+const currentActiveNode = ref<WorkflowNode | null>();
+
+workflowEventBus.on('clearActiveNode', () => {
+	currentActiveNode.value = null;
+});
+
 const newEdge = ref<WorkflowEdge | undefined>();
 const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
@@ -407,6 +414,7 @@ const testNode = (node: WorkflowNode) => {
 };
 
 const drilldown = (event: WorkflowNode) => {
+	currentActiveNode.value = event;
 	workflowEventBus.emit('drilldown', event);
 };
 
@@ -767,16 +775,16 @@ function resetZoom() {
 	gap: 1rem;
 }
 
-/* We should make a proper secondary outline button. Until then this works. */
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 }
 
-.toolbar .button-group .secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.toolbar .button-group .secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 .toolbar .button-group .primary-dropdown {

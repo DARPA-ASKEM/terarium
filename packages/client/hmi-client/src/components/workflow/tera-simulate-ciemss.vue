@@ -86,7 +86,7 @@
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="saveDataset"
+				@click="saveDataset(projectId, completedRunId)"
 				label="Save as Dataset"
 				icon="pi pi-save"
 			/>
@@ -96,26 +96,19 @@
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
 						<template #header> Model </template>
-						<model-diagram v-if="model" :model="model" :is-editable="false" />
+						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configuration </template>
-						<tera-model-configuration v-if="model" :model="model" :is-editable="false" />
+						<tera-model-configuration
+							v-if="model"
+							:model="model"
+							:feature-config="{ isPreview: true }"
+						/>
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
-							<!--
-							<div class="sim-tspan-group">
-								<label for="1">Units</label>
-								<Dropdown
-									id="1"
-									class="p-inputtext-sm"
-									v-model=""
-									:options="TspanUnitList"
-								/>
-							</div>
-							-->
 							<div class="sim-tspan-group">
 								<label for="2">Start date</label>
 								<InputNumber
@@ -163,26 +156,22 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import MultiSelect from 'primevue/multiselect';
-import * as ProjectService from '@/services/project';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Paginator from 'primevue/paginator';
 import { Model, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-
 import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
-import ModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
-
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { IProject } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
+import { saveDataset } from '@/services/dataset';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -208,6 +197,8 @@ const renderedRuns = ref<RunResults>({});
 const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
 const paginatorFirst = ref(0);
+const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
+const projectId = ref<string>(props.project.id);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
@@ -229,16 +220,6 @@ const addChart = () => {
 		nodeId: props.node.id,
 		state
 	});
-};
-
-const saveDataset = async () => {
-	const simulationId = props?.node?.outputs?.[0]?.value?.[0] as string;
-	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
-			// TODO: See about getting rid of this - this refresh should preferably be within a service
-			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
-		}
-	}
 };
 
 onMounted(async () => {
@@ -395,9 +376,11 @@ const rawDataRenderedRows = computed(() =>
 	margin: 0.5em;
 	position: relative;
 }
+
 .datatable-header-select-container {
 	min-width: 0;
 }
+
 .datatable-header-title {
 	white-space: nowrap;
 	margin-right: 1em;
