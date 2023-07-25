@@ -258,10 +258,6 @@ const openWorkflow = async () => {
 	}
 	const wf = emptyWorkflow(wfName, '');
 
-	// FIXME: TDS bug thinks that k is z, June 2023
-	// @ts-ignore
-	wf.transform.z = 1;
-
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;

@@ -20,7 +20,7 @@ export interface CalibrateEnsembleCiemssOperationState {
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS,
-	displayName: 'Simulate ensemble (probabilistic)',
+	displayName: 'Calibrate ensemble (probabilistic)',
 	description: '',
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true },
