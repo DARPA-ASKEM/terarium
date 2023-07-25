@@ -4,9 +4,7 @@ import { DocumentAsset, Document, Dataset, Model, Artifact } from '@/types/Types
 export enum ProjectAssetTypes {
 	DOCUMENTS = 'publications',
 	MODELS = 'models',
-	PLANS = 'plans',
 	SIMULATIONS = 'simulations',
-	SIMULATION_RUNS = 'simulation_runs',
 	SIMULATION_WORKFLOW = 'workflows',
 	DATASETS = 'datasets',
 	CODE = 'code',
@@ -26,8 +24,6 @@ export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =
 export type ProjectAssets = {
 	[ProjectAssetTypes.DOCUMENTS]: DocumentAsset[];
 	[ProjectAssetTypes.MODELS]: Model[];
-	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.DATASETS]: Dataset[];
 	[ProjectAssetTypes.CODE]: any[];
 	[ProjectAssetTypes.ARTIFACTS]: Artifact[];
