@@ -180,8 +180,9 @@ import TeraModelConfiguration from '@/components/models/tera-model-configuration
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus, saveDataset } from '@/services/workflow';
+import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
+import { saveDataset } from '@/services/dataset';
 
 const props = defineProps<{
 	node: WorkflowNode;

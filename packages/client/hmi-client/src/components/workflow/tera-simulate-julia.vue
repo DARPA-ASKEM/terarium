@@ -111,9 +111,10 @@ import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
+import { saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus, saveDataset } from '@/services/workflow';
+import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 import SimulateChart from './tera-simulate-chart.vue';
