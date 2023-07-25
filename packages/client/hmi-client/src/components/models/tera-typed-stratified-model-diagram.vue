@@ -373,7 +373,7 @@ async function toggleCollapsedView() {
 	}
 }
 
-// Render graph whenever a new model is fetched or whenever the HTML element
+// Render graph whenever a the model is updated or whenever the HTML element
 //	that we render the graph to changes.
 watch(
 	[() => typedModel, graphElement],
