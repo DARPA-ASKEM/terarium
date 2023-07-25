@@ -30,6 +30,13 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 const emit = defineEmits(['configuration-change']);
 
+const props = defineProps<{
+	runResults: RunResults;
+	chartConfig: ChartConfig;
+	lineColorArray?: string[];
+	lineWidthArray?: string[];
+}>();
+
 type DatasetType = {
 	data: number[];
 	label: string;
@@ -77,13 +84,6 @@ const CHART_OPTIONS = {
 		}
 	}
 };
-
-const props = defineProps<{
-	runResults: RunResults;
-	chartConfig: ChartConfig;
-	lineColorArray?: string[];
-	lineWidthArray?: string[];
-}>();
 
 // data for rendering ui
 let stateVariablesList: string[] = [];
