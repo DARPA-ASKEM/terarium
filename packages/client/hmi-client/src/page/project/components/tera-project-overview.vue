@@ -61,12 +61,12 @@
 						size="large"
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
-						@click="isNewModelModalVisible = true"
+						@click="emit('open-new-asset', ProjectAssetTypes.MODELS)"
 					/>
 					<Button
 						size="large"
 						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-workflow')"
+						@click="emit('open-new-asset', ProjectAssetTypes.SIMULATION_WORKFLOW)"
 					>
 						<vue-feather
 							class="p-button-icon-left"
@@ -244,37 +244,8 @@
 				</tera-modal>
 			</section>
 		</section>
-
-		<!-- New model modal -->
-		<Teleport to="body">
-			<tera-modal
-				v-if="isNewModelModalVisible"
-				class="modal"
-				@modal-mask-clicked="isNewModelModalVisible = false"
-			>
-				<template #header>
-					<h4>New model</h4>
-				</template>
-				<template #default>
-					<form>
-						<label for="new-model">Enter a unique name for your model</label>
-						<InputText
-							v-bind:class="invalidInputStyle"
-							id="new-model"
-							type="text"
-							v-model="newModelName"
-							placeholder="new model"
-						/>
-					</form>
-				</template>
-				<template #footer>
-					<Button @click="createNewModel">Create model</Button>
-					<Button class="p-button-secondary" @click="isNewModelModalVisible = false">
-						Cancel
-					</Button>
-				</template>
-			</tera-modal>
-		</Teleport>
+		<!-- empty white div to fill bottom of screen -->
+		<div class="bottom-white-patch"></div>
 	</main>
 </template>
 
@@ -306,7 +277,7 @@ import { uploadArtifactToProject } from '@/services/artifact';
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'open-asset', 'new-model']);
+const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
 const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -318,20 +289,6 @@ const results = ref<
 const selectedResources = ref();
 
 const openedRow = ref(null);
-
-const isNewModelModalVisible = ref<boolean>(false);
-const newModelName = ref<string>('');
-
-const isValidName = ref<boolean>(true);
-const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
-
-const existingModelNames = computed(() => {
-	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
-	});
-	return modelNames;
-});
 
 const assets = computed(() => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -387,22 +344,6 @@ async function processFiles(files: File[], csvDescription: string) {
 		if (response?.data) return { file, error: false, response: { text: '', images: [] } };
 		return { file, error: true, response: { text: '', images: [] } };
 	});
-}
-
-function createNewModel() {
-	if (newModelName.value.trim().length === 0) {
-		isValidName.value = false;
-		logger.info('Model name cannot be empty - please enter a different name');
-		return;
-	}
-	if (existingModelNames.value.includes(newModelName.value.trim())) {
-		isValidName.value = false;
-		logger.info('Duplicate model name - please enter a different name');
-		return;
-	}
-	isValidName.value = true;
-	emit('new-model', newModelName.value.trim());
-	isNewModelModalVisible.value = false;
 }
 
 async function openImportModal() {
