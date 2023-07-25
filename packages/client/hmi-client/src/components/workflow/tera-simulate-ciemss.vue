@@ -70,8 +70,6 @@
 				:key="index"
 				:run-results="renderedRuns"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
 				@configuration-change="configurationChange(index, $event)"
 			/>
 			<Button
@@ -267,20 +265,6 @@ onMounted(async () => {
 	parsedRawData.value = output.parsedRawData;
 	runResults.value = output.runResults;
 	runConfigs.value = output.runConfigs;
-});
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
 });
 
 // process run result data to create mean run line

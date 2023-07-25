@@ -25,8 +25,6 @@
 				:key="index"
 				:run-results="renderedRuns"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
 				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
 			<Button
@@ -259,20 +257,6 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 		state
 	});
 };
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;

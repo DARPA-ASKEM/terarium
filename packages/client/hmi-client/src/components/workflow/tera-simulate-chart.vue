@@ -37,6 +37,24 @@ const props = defineProps<{
 	lineWidthArray?: string[];
 }>();
 
+const lineColorArray = computed(() => {
+	if (props.lineColorArray) return props.lineColorArray;
+
+	const output = Array(Math.max(Object.keys(props.runResults.value).length ?? 0 - 1, 0)).fill(
+		'#00000020'
+	);
+	output.push('#1b8073');
+	return output;
+});
+
+const lineWidthArray = computed(() => {
+	if (props.lineWidthArray) return props.lineWidthArray;
+
+	const output = Array(Math.max(Object.keys(props.runResults.value).length ?? 0 - 1, 0)).fill(1);
+	output.push(2);
+	return output;
+});
+
 type DatasetType = {
 	data: number[];
 	label: string;
@@ -114,26 +132,10 @@ const getVariableColorByVar = (variableName: string) => {
 	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.value.length) * VIRIDIS_14.length)];
 };
 
-const getVariableColorByRunIdx = (runIdx: number) => {
-	const runIdList = Object.keys(props.runResults) as string[];
-	return VIRIDIS_14[Math.floor((runIdx / runIdList.length) * VIRIDIS_14.length)];
-};
-
 const hasMultiRuns = computed(() => {
 	const runIdList = Object.keys(props.runResults) as string[];
 	return runIdList.length > 1;
 });
-
-const getLineColor = (variableName: string, runIdx: number) => {
-	if (props.lineColorArray) {
-		return props.lineColorArray[runIdx];
-	}
-	return hasMultiRuns.value
-		? getVariableColorByRunIdx(runIdx)
-		: getVariableColorByVar(variableName);
-};
-
-const getLineWidth = (runIdx: number) => (props.lineWidthArray ? props.lineWidthArray[runIdx] : 2);
 
 const watchRunResults = async (runResults) => {
 	const runIdList = Object.keys(props.runResults) as string[];
@@ -173,8 +175,8 @@ const renderGraph = () => {
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
 					tension: 0.4,
-					borderColor: getLineColor(variable, runIdx),
-					borderWidth: getLineWidth(runIdx)
+					borderColor: lineColorArray[runIdx],
+					borderWidth: lineWidthArray[runIdx]
 				};
 				datasets.push(dataset);
 			})
