@@ -471,6 +471,8 @@ export const cloneModelWithExpandedTypeSystem = (amr: Model) => {
 	return amrCopy;
 };
 
+/* Function to clone an AMR with the stratified type system to the pre-stratified type system
+   Just a temporary helper function until AMR formats are reconciled. */
 export const cloneModelWithSimplifiedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
