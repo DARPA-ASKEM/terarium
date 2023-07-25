@@ -3,15 +3,6 @@
 		<TeraResizablePanel>
 			<div class="splitter-container">
 				<section class="graph-element">
-					<Toolbar>
-						<template #end>
-							<Button
-								@click="toggleCollapsedView"
-								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
-								class="p-button-sm p-button-outlined toolbar-button"
-							/>
-						</template>
-					</Toolbar>
 					<section v-if="showTypingToolbar" class="typingSection">
 						<div class="typing-row">
 							<div>COLOR</div>
@@ -74,6 +65,7 @@
 						:model-to-compare="strataModel"
 						@model-updated="onModelUpdatedWithReflexives"
 					/>
+
 					<section class="legend">
 						<ul>
 							<li v-for="(type, i) in stateTypes" :key="i">
@@ -88,6 +80,15 @@
 							</li>
 						</ul>
 					</section>
+					<Toolbar>
+						<template #end>
+							<Button
+								@click="toggleCollapsedView"
+								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
+								class="p-button-sm p-button-outlined toolbar-button"
+							/>
+						</template>
+					</Toolbar>
 					<div v-if="typedModel" ref="graphElement" class="graph-element" />
 				</section>
 			</div>
@@ -234,7 +235,6 @@ function setNodeColors() {
 	props.model.semantics?.typing?.system.model.transitions.forEach((t) => {
 		nodeIds.push(t.id);
 	});
-	console.log(nodeIds);
 	setNodeTypeColor(nodeIds);
 }
 
@@ -363,7 +363,7 @@ const isCollapsed = ref(true);
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
 	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-		isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
+		isCollapsed.value ? props.model.semantics?.span?.[0].system : typedModel.value
 	);
 	// Render graph
 	if (renderer) {
@@ -380,7 +380,7 @@ watch(
 	async () => {
 		if (typedModel.value === null || graphElement.value === null) return;
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-			isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
+			isCollapsed.value ? props.model.semantics?.span?.[0].system : typedModel.value
 		);
 		const nestedMap = props.model.semantics?.span?.[0].map.reduce(
 			(childMap, [stratNode, baseNode]) => {
