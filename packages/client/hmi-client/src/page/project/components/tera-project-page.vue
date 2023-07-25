@@ -108,7 +108,6 @@ const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
-// These 3 open functions can potentially make use of openAssetFromSidebar in tera-project.vue
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
