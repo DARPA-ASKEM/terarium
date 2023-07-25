@@ -48,7 +48,7 @@
 							</div>
 							<!-- cancel row  -->
 							<div>
-								<Button icon="pi pi-times" text rounded />
+								<Button icon="pi pi-times" text rounded @click="cancelTypedRow(index)" />
 							</div>
 						</div>
 						<Button
@@ -177,6 +177,10 @@ function updateRowTypeName(rowIndex: number) {
 	typedRows.value[rowIndex].typeName = typeNameBuffer[rowIndex];
 }
 
+function cancelTypedRow(rowIndex: number) {
+	typedRows.value.splice(rowIndex, 1);
+}
+
 function getLegendKeyClass(type: string) {
 	if (type === 'Variable') {
 		return 'legend-key-circle';
@@ -273,11 +277,8 @@ watch(
 				}
 			}
 		});
-
-		if (stateTypedMap.length > 0) {
-			typingSemantics = { map: stateTypedMap, system: updatedTypeSystem };
-			addTyping(typedModel.value, typingSemantics);
-		}
+		typingSemantics = { map: stateTypedMap, system: updatedTypeSystem };
+		addTyping(typedModel.value, typingSemantics);
 
 		transitionTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
