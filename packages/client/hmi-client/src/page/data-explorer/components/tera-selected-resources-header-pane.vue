@@ -90,8 +90,9 @@ const addResourcesToProject = async (projectId: string) => {
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
 			const assetsType = ProjectAssetTypes.DATASETS;
-			await ProjectService.addAsset(projectId, assetsType, datasetId);
-
+			if (datasetId) {
+				await ProjectService.addAsset(projectId, assetsType, datasetId);
+			}
 			// update local copy of project assets
 			// @ts-ignore
 			resources.activeProject?.assets?.[ProjectAssetTypes.DATASETS].push(datasetId, selectedItem);
