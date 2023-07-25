@@ -1,18 +1,17 @@
 <template>
 	<nav>
-		<header>
+		<header class="resource-panel-toolbar">
+			<span class="p-input-icon-left">
+				<i class="pi pi-search" />
+				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
+			</span>
 			<Button
-				icon="pi pi-code"
-				v-tooltip="`New code file`"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="
-					emit('open-asset', {
-						assetName: 'New file',
-						pageType: ProjectAssetTypes.CODE,
-						assetId: undefined
-					})
-				"
+				icon="pi pi-plus"
+				label="New"
+				class="p-button-sm secondary-button"
+				@click="toggleOptionsMenu"
 			/>
+			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</header>
 		<Button
 			class="asset-button"
@@ -133,6 +132,8 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
+import InputText from 'primevue/inputtext';
+import Menu from 'primevue/menu';
 
 type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
@@ -148,6 +149,7 @@ const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 const assetToDelete = ref<Tab | null>(null);
+const searchAsset = ref<string | null>('');
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -190,6 +192,25 @@ function endDrag() {
 	deleteDragData('assetNode');
 	draggedAsset.value = null;
 }
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-code',
+		label: 'Code editor',
+		command() {
+			emit('open-asset', {
+				assetName: 'New file',
+				pageType: ProjectAssetTypes.CODE,
+				assetId: undefined
+			});
+		}
+	}
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
 </script>
 
 <style scoped>
@@ -287,5 +308,32 @@ header {
 
 .remove-modal em {
 	font-weight: var(--font-weight-semibold);
+}
+
+.resource-panel-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.resource-panel-search {
+	padding: 0.51rem 0.5rem;
+	width: 100%;
+	font-size: var(--font-caption);
+}
+
+/* We should make a proper secondary outline button. Until then this works. */
+.secondary-button {
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	width: 6rem;
+}
+
+.secondary-button:hover {
+	color: var(--text-color-secondary) !important;
+	background-color: var(--surface-highlight) !important;
 }
 </style>

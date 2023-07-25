@@ -1,6 +1,5 @@
 <template>
-	<tera-dataset :project="props.project" :asset-id="props.node.state.datasetId" :is-editable="true">
-	</tera-dataset>
+	<tera-dataset :project="props.project" :asset-id="props.node.state.datasetId" />
 </template>
 
 <script setup lang="ts">
