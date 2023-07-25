@@ -6,7 +6,7 @@
 		@update-tab-name="updateTabName"
 		@asset-loaded="emit('asset-loaded')"
 	/>
-	<code-editor
+	<tera-code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"
 		:initial-code="code"
 		@vue:mounted="
@@ -14,7 +14,7 @@
 			openNextCodeFile();
 		"
 	/>
-	<code-editor
+	<tera-code-editor
 		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && !assetName?.endsWith('.pdf')"
 		:initial-code="code"
 		@vue:mounted="
@@ -40,23 +40,20 @@
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 	/>
-	<!--Add new process/asset views here-->
-	<template v-else-if="assetId && !isEmpty(tabs)">
-		<tera-document
-			v-if="pageType === ProjectAssetTypes.DOCUMENTS"
-			:xdd-uri="getXDDuri(assetId)"
-			:previewLineLimit="10"
-			:project="project"
-			@open-code="openCode"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<tera-dataset
-			v-else-if="pageType === ProjectAssetTypes.DATASETS"
-			:project="project"
-			:asset-id="assetId"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-	</template>
+	<tera-document
+		v-else-if="pageType === ProjectAssetTypes.DOCUMENTS"
+		:xdd-uri="getXDDuri(assetId)"
+		:previewLineLimit="10"
+		:project="project"
+		@open-code="openCode"
+		@asset-loaded="emit('asset-loaded')"
+	/>
+	<tera-dataset
+		v-else-if="pageType === ProjectAssetTypes.DATASETS"
+		:project="project"
+		:asset-id="assetId ?? ''"
+		@asset-loaded="emit('asset-loaded')"
+	/>
 	<section v-else>
 		<img src="@assets/svg/seed.svg" alt="Seed" />
 		<p>You can open resources from the resource panel.</p>
@@ -69,13 +66,13 @@ import { ref, Ref } from 'vue';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { CodeRequest, Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/models/tera-model.vue';
-import CodeEditor from '@/page/project/components/tera-code-editor.vue';
+import TeraCodeEditor from '@/page/project/components/tera-code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
