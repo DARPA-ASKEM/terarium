@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div v-if="!disableRunButton">
 		<Button
 			size="small"
 			label="Run"
@@ -31,7 +31,7 @@
 		<section v-else class="result-container">
 			<div class="invalid-block" v-if="node.statusCode === WorkflowStatus.INVALID">
 				<img class="image" src="@assets/svg/plants.svg" alt="" />
-				<p>Configure in side panel</p>
+				<p class="helpMessage">Configure in side panel</p>
 			</div>
 		</section>
 	</section>
@@ -287,7 +287,10 @@ section {
 	padding: 10px;
 	background: var(--surface-overlay);
 }
-
+.helpMessage {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+}
 .result-container {
 	align-items: center;
 }
