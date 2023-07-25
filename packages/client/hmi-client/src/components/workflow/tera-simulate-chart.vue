@@ -34,24 +34,25 @@ const props = defineProps<{
 	runResults: RunResults;
 	chartConfig: ChartConfig;
 	lineColorArray?: string[];
-	lineWidthArray?: string[];
+	lineWidthArray?: number[];
 }>();
 
-const lineColorArray = computed(() => {
-	if (props.lineColorArray) return props.lineColorArray;
-
-	const output = Array(Math.max(Object.keys(props.runResults.value).length ?? 0 - 1, 0)).fill(
+const lineColorArray = computed<string[]>(() => {
+	if (props.lineColorArray !== undefined) {
+		return props.lineColorArray;
+	}
+	const output = Array(Math.max(Object.keys(props.runResults).length - 1 ?? 0 - 1, 0)).fill(
 		'#00000020'
 	);
 	output.push('#1b8073');
 	return output;
 });
 
-const lineWidthArray = computed(() => {
+const lineWidthArray = computed<number[]>(() => {
 	if (props.lineWidthArray) return props.lineWidthArray;
 
-	const output = Array(Math.max(Object.keys(props.runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
+	const output = Array(Math.max(Object.keys(props.runResults).length - 1 ?? 0 - 1, 0)).fill(1);
+	output.push(3);
 	return output;
 });
 
@@ -175,8 +176,8 @@ const renderGraph = () => {
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
 					tension: 0.4,
-					borderColor: lineColorArray[runIdx],
-					borderWidth: lineWidthArray[runIdx]
+					borderColor: lineColorArray.value[runIdx],
+					borderWidth: lineWidthArray.value[runIdx]
 				};
 				datasets.push(dataset);
 			})
