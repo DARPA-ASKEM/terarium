@@ -56,7 +56,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
-import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
 import { Artifact, DocumentAsset } from '@/types/Types';
 import { profileDataset, fetchExtraction } from '@/services/models/extractions';
@@ -115,7 +114,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	const pollResult = await fetchExtraction(resp);
 	console.log('enrichment poll', pollResult);
 
-	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
+	emit('extracted-metadata', pollResult);
 };
 </script>
 

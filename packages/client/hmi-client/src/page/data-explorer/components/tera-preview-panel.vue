@@ -11,14 +11,14 @@
 				:xdd-uri="previewItemId"
 				:previewLineLimit="3"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
 			<tera-dataset
 				v-else-if="previewItemResourceType === ResourceType.DATASET"
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
 			<tera-model
@@ -26,7 +26,7 @@
 				:asset-id="previewItemId"
 				:project="(resources.activeProject as IProject)"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
 		</template>

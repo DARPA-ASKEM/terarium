@@ -5,7 +5,6 @@
 		:project="project"
 		@update-tab-name="updateTabName"
 		@asset-loaded="emit('asset-loaded')"
-		is-editable
 	/>
 	<code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"
@@ -48,7 +47,6 @@
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			:project="project"
-			is-editable
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>
@@ -56,7 +54,6 @@
 			v-else-if="pageType === ProjectAssetTypes.DATASETS"
 			:project="project"
 			:asset-id="assetId"
-			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
 	</template>
