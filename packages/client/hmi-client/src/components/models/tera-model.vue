@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		:name="name"
-		:is-editable="isEditable"
+		:feature-config="featureConfig"
 		:is-naming-asset="isNamingModel"
 		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
@@ -38,13 +38,14 @@
 					:active="modelView === ModelView.NOTEBOOK"
 				/>
 			</span>
-			<Button
-				v-if="isEditable"
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="toggleOptionsMenu"
-			/>
-			<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<template v-if="!featureConfig.isPreview">
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleOptionsMenu"
+				/>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			</template>
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
@@ -466,7 +467,7 @@
 		<template v-if="modelView === ModelView.MODEL">
 			<tera-model-diagram
 				:model="model"
-				:is-editable="props.isEditable"
+				:isEditable="!featureConfig.isPreview"
 				@update-model-content="updateModelContent"
 				@update-model-observables="updateModelObservables"
 			/>
@@ -475,9 +476,9 @@
 					<tera-stratified-model-configuration
 						v-if="model.semantics?.span"
 						:model="model"
-						:is-editable="props.isEditable"
+						:feature-config="featureConfig"
 					/>
-					<tera-model-configuration v-else :model="model" :is-editable="props.isEditable" />
+					<tera-model-configuration v-else :model="model" :feature-config="featureConfig" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -574,7 +575,7 @@ import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
-import { ResultType } from '@/types/common';
+import { ResultType, FeatureConfig } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
@@ -606,15 +607,14 @@ const props = defineProps({
 		type: String,
 		required: true
 	},
-	isEditable: {
-		type: Boolean,
-		default: false,
-		required: false
-	},
 	highlight: {
 		type: String,
 		default: '',
 		required: false
+	},
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
 	}
 });
 

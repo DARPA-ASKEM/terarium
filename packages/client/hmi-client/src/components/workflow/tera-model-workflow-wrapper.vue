@@ -1,6 +1,5 @@
 <template>
-	<tera-model :project="props.project" :asset-id="props.node.state.modelId" :is-editable="true">
-	</tera-model>
+	<tera-model :project="props.project" :asset-id="props.node.state.modelId" />
 </template>
 
 <script setup lang="ts">
