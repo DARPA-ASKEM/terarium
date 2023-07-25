@@ -585,6 +585,7 @@ button .icon {
 	gap: 1rem;
 }
 
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .quick-links .p-button.p-button-secondary {
 	background-color: var(--surface);
 	color: var(--text-color-primary);
@@ -614,8 +615,8 @@ button .icon {
 	padding-bottom: 0.5rem;
 }
 
-.keyword-search:hover {
-	border-color: var(--surface-border) !important;
+.keyword-search:enabled:hover {
+	border-color: var(--surface-border);
 }
 
 .related {
@@ -736,9 +737,5 @@ ul {
 .no-results-found-message {
 	text-align: center;
 	width: 40%;
-}
-
-:deep(.p-datatable-emptymessage > td) {
-	border-bottom: none !important;
 }
 </style>
