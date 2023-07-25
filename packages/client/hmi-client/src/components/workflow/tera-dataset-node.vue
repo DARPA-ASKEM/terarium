@@ -2,10 +2,24 @@
 	<template v-if="dataset">
 		<h5>{{ dataset.name }}</h5>
 		<section v-if="csvContent">
-			<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
+			<div class="datatable-toolbar">
+				<span class="datatable-toolbar-item"
+					>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }}
+				</span>
+				<span class="datatable-toolbar-item">
+					<MultiSelect
+						:modelValue="selectedColumns"
+						:options="csvHeaders"
+						@update:modelValue="onToggle"
+						:maxSelectedLabels="1"
+						placeholder="Select columns"
+					/>
+				</span>
+			</div>
+
 			<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
 				<Column
-					v-for="(colName, index) of csvHeaders"
+					v-for="(colName, index) of selectedColumns"
 					:key="index"
 					:field="index.toString()"
 					:header="colName"
@@ -32,6 +46,7 @@ import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
+import MultiSelect from 'primevue/multiselect';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -45,6 +60,11 @@ const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
+
+const selectedColumns = ref(csvHeaders?.value);
+const onToggle = (val) => {
+	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
+};
 
 watch(
 	() => dataset.value,
@@ -76,6 +96,23 @@ section {
 	max-width: 400px;
 }
 
+.datatable-toolbar {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+.datatable-toolbar-item {
+	display: flex;
+	flex-direction: row;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	align-items: center;
+}
+.datatable-toolbar:deep(.p-multiselect .p-multiselect-label) {
+	padding: 0.5rem;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+}
 .p-datatable-xsm {
 	margin-top: 0.5rem;
 	margin-bottom: 0.25rem;
