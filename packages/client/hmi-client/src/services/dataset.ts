@@ -207,7 +207,6 @@ async function createDatasetFromSimulationResult(
 export const saveDataset = async (projectId: string, simulationId: string | undefined) => {
 	if (!simulationId) return;
 	if (await createDatasetFromSimulationResult(projectId, simulationId)) {
-		// TODO: See about getting rid of this - this refresh should preferably be within a service
 		useResourcesStore().setActiveProject(await ProjectService.get(projectId, true));
 	}
 };
