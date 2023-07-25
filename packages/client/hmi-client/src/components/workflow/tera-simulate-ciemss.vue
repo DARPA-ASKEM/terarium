@@ -109,17 +109,6 @@
 					<AccordionTab>
 						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
-							<!--
-							<div class="sim-tspan-group">
-								<label for="1">Units</label>
-								<Dropdown
-									id="1"
-									class="p-inputtext-sm"
-									v-model=""
-									:options="TspanUnitList"
-								/>
-							</div>
-							-->
 							<div class="sim-tspan-group">
 								<label for="2">Start date</label>
 								<InputNumber
