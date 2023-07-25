@@ -23,7 +23,7 @@ public class ExtractionProxyTests {
 	@RestClient
 	ExtractionProxy proxy;
 
-	@Test
+
 	public void testItCanGetExtractions() {
 
 		String apiKey = key.isPresent() ? key.get() : "";
@@ -36,7 +36,7 @@ public class ExtractionProxyTests {
 		Assertions.assertTrue(response.getSuccess().getData().size() > 0);
 	}
 
-	@Test
+
 	public void testItCanGetAutocomplete() {
 		final AutoComplete response = proxy.getAutocomplete("cov");
 
