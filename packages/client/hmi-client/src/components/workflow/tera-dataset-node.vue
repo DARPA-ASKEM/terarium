@@ -61,7 +61,7 @@ const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
-const selectedColumns = ref(csvHeaders?.value);
+let selectedColumns = ref(csvHeaders?.value);
 const onToggle = (val) => {
 	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
 };
@@ -71,6 +71,7 @@ watch(
 	async () => {
 		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
+			selectedColumns = ref(csvHeaders?.value);
 			emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
 		}
 	}
