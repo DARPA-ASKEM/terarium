@@ -1,8 +1,5 @@
 import API from '@/api/api';
 import { EventType, Model, ModelConfiguration } from '@/types/Types';
-import { logger } from '@/utils/logger';
-import * as ProjectService from '@/services/project';
-import { ProjectAssetTypes } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
 
@@ -58,21 +55,6 @@ export async function updateModel(model: Model) {
 		})
 	);
 	return response?.data ?? null;
-}
-
-export async function addModelToProject(projectId: string, assetId: string) {
-	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
-
-	if (resp) {
-		const model = await getModel(assetId);
-		if (model) {
-			useResourcesStore().activeProject?.assets?.[ProjectAssetTypes.MODELS].push(model);
-		} else {
-			logger.warn(`Unable to find model id: ${assetId}`);
-		}
-	} else {
-		logger.warn('Could not add new model to project.');
-	}
 }
 
 export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[]> {

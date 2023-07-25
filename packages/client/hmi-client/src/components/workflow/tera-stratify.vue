@@ -262,8 +262,10 @@ async function doStratify() {
 		}
 		const newModelId = response?.id;
 		const projectId = resourceStore.activeProject?.id as string;
-		await addAsset(projectId, 'models', newModelId);
-		stratifyView.value = StratifyView.Output;
+		if (newModelId) {
+			await addAsset(projectId, 'models', newModelId);
+			stratifyView.value = StratifyView.Output;
+		}
 	}
 }
 
