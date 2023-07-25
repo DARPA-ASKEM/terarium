@@ -56,7 +56,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
-import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
 import { Artifact, DocumentAsset } from '@/types/Types';
 import { profileDataset, fetchExtraction } from '@/services/models/extractions';
@@ -115,7 +114,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	const pollResult = await fetchExtraction(resp);
 	console.log('enrichment poll', pollResult);
 
-	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
+	emit('extracted-metadata', pollResult);
 };
 </script>
 
@@ -124,22 +123,25 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	margin: 1rem;
 	max-width: 50rem;
 }
+
 .container h5 {
 	margin-bottom: 0.5rem;
 }
+
 .constrain-width {
 	max-width: 50rem;
 }
 
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .secondary-button {
 	color: var(--text-color-primary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 }
 
-.secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 ul {

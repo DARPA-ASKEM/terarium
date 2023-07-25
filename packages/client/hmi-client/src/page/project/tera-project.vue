@@ -47,7 +47,10 @@
 					:tabs="[{ assetName: workflowNode.operationType }]"
 					:active-tab-index="0"
 					:loading-tab-index="null"
-					@close-tab="workflowNode = null"
+					@close-tab="
+						workflowEventBus.emit('clearActiveNode');
+						workflowNode = null;
+					"
 				/>
 				<tera-calibration-julia
 					v-if="

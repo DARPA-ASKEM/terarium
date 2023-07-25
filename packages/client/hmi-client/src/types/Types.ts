@@ -600,7 +600,6 @@ export enum ProvenanceType {
     Publication = "Publication",
     Project = "Project",
     Concept = "Concept",
-    SimulationRun = "SimulationRun",
 }
 
 export enum ColumnType {

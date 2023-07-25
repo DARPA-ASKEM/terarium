@@ -133,6 +133,10 @@ commands.addKeyBinding({
 // 	console.log('save-as-new-dataset emitted');
 // };
 
+const clear = () => {
+	cellWidget.model.clearExecution();
+};
+
 onMounted(() => {
 	props.jupyterSession.ready.then(() => {
 		props.jupyterSession.session?.kernel?.info.then((info) => {
@@ -165,6 +169,11 @@ const run = () => {
 };
 
 cellWidget.activate();
+
+defineExpose({
+	cellWidget,
+	clear
+});
 </script>
 
 <style lang="scss" global>

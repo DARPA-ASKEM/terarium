@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" is-editable stretch-content>
+	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" stretch-content>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -283,11 +283,13 @@ watch(
 	padding: 0rem 0.25rem 0.5rem 0rem !important;
 	border: none !important;
 }
+
 .mapping-table:deep(th) {
 	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
 }
+
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -308,11 +310,13 @@ watch(
 th {
 	text-align: left;
 }
+
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
 }
+
 .emptyState {
 	align-self: center;
 	display: flex;
