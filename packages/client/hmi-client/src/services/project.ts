@@ -7,7 +7,6 @@ import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import ResultsIcon from '@/assets/svg/icons/results.svg?component';
 import { Component } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
@@ -213,7 +212,6 @@ const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.MODELS, 'share-2'],
 	[ProjectAssetTypes.DATASETS, DatasetIcon],
 	[ProjectAssetTypes.SIMULATIONS, 'settings'],
-	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'code'],
 	[ProjectAssetTypes.SIMULATION_WORKFLOW, 'git-merge'],
 	['overview', 'layout']
