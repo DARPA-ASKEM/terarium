@@ -11,6 +11,9 @@ import {
 	WorkflowPortStatus,
 	WorkflowStatus
 } from '@/types/workflow';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -260,5 +263,13 @@ class EventEmitter {
 		this.emit('node-state-change', payload);
 	}
 }
+
+export const saveDataset = async (projectId: string, simulationId: string | undefined) => {
+	if (!simulationId) return;
+	if (await createDatasetFromSimulationResult(projectId, simulationId)) {
+		// TODO: See about getting rid of this - this refresh should preferably be within a service
+		useResourcesStore().setActiveProject(await ProjectService.get(projectId, true));
+	}
+};
 
 export const workflowEventBus = new EventEmitter();

@@ -86,7 +86,7 @@
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="saveDataset"
+				@click="saveDataset(projectId, completedRunId)"
 				label="Save as Dataset"
 				icon="pi pi-save"
 			/>
@@ -167,13 +167,11 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import MultiSelect from 'primevue/multiselect';
-import * as ProjectService from '@/services/project';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Paginator from 'primevue/paginator';
 import { Model, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-
 import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
@@ -181,12 +179,9 @@ import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
-
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { workflowEventBus, saveDataset } from '@/services/workflow';
 import { IProject } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -212,6 +207,8 @@ const renderedRuns = ref<RunResults>({});
 const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
 const paginatorFirst = ref(0);
+const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
+const projectId = ref<string>(props.project.id);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
@@ -233,16 +230,6 @@ const addChart = () => {
 		nodeId: props.node.id,
 		state
 	});
-};
-
-const saveDataset = async () => {
-	const simulationId = props?.node?.outputs?.[0]?.value?.[0] as string;
-	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
-			// TODO: See about getting rid of this - this refresh should preferably be within a service
-			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
-		}
-	}
 };
 
 onMounted(async () => {
