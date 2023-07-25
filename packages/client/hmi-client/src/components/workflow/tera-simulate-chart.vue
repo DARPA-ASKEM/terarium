@@ -34,7 +34,6 @@ const props = defineProps<{
 	runResults: RunResults;
 	chartConfig: ChartConfig;
 	hasMeanLine?: boolean;
-	lineWidthArray?: string[];
 	colorByRun?: boolean;
 }>();
 
@@ -44,6 +43,17 @@ type DatasetType = {
 	fill: boolean;
 	tension: number;
 };
+
+const lineWidthArray = computed(() => {
+	// If we have a meanline, make it bigger
+	if (props.hasMeanLine) {
+		const output = Array(Math.max(Object.keys(props.runResults).length - 1 ?? 0 - 1, 0)).fill(1);
+		output.push(3);
+		return output;
+	}
+	// Otherwise all widths are 1
+	return Array(Math.max(Object.keys(props.runResults).length ?? 0 - 1, 0)).fill(1);
+});
 
 const CHART_OPTIONS = {
 	devicePixelRatio: 4,
@@ -139,8 +149,6 @@ const getLineColor = (variableName: string, runIdx: number) => {
 		: getVariableColorByVar(variableName);
 };
 
-const getLineWidth = (runIdx: number) => (props.lineWidthArray ? props.lineWidthArray[runIdx] : 2);
-
 const watchRunResults = async (runResults) => {
 	const runIdList = Object.keys(props.runResults) as string[];
 	if (!runIdList.length || _.isEmpty(runResults)) {
@@ -180,7 +188,7 @@ const renderGraph = () => {
 					fill: false,
 					tension: 0.4,
 					borderColor: getLineColor(variable, runIdx),
-					borderWidth: getLineWidth(runIdx)
+					borderWidth: lineWidthArray.value[runIdx]
 				};
 				datasets.push(dataset);
 			})

@@ -7,7 +7,6 @@
 				:run-results="renderedRuns"
 				:chartConfig="cfg"
 				has-mean-line
-				:line-width-array="lineWidthArray"
 				@configuration-change="configurationChange(index, $event)"
 			/>
 		</div>
@@ -40,7 +39,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -74,12 +73,6 @@ const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
 const renderedRuns = ref<RunResults>({});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;

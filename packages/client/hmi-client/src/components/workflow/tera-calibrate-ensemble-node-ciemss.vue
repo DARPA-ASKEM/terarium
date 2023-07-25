@@ -16,7 +16,6 @@
 				:run-results="renderedRuns"
 				:chartConfig="cfg"
 				has-mean-line
-				:line-width-array="lineWidthArray"
 				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
 			<Button
@@ -174,12 +173,6 @@ const addChart = () => {
 		state
 	});
 };
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
 
 // Set up csv + dropdown names
 // Note: Same as calibrate side panel
