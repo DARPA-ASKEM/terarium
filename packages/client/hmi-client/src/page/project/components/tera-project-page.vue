@@ -147,11 +147,11 @@ async function openNextCodeFile() {
 }
 
 function getPDFBytes(): Promise<ArrayBuffer | null> {
-	return getArtifactArrayBuffer(props.assetId!, props.assetName!);
+	return getArtifactArrayBuffer(props.assetId!, assetName.value!);
 }
 
 async function openTextArtifact() {
-	const res: string | null = await getArtifactFileAsText(props.assetId!, props.assetName!);
+	const res: string | null = await getArtifactFileAsText(props.assetId!, assetName.value!);
 	if (!res) return;
 	code.value = res;
 }

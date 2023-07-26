@@ -11,7 +11,7 @@
 				<tera-resource-sidebar
 					:project="project"
 					:active-tab="openedAssetRoute"
-					@open-asset="openAssetFromSidebar"
+					@open-asset="(asset) => openAssetFromSidebar(asset)"
 					@remove-asset="removeAsset"
 					@open-new-asset="openNewAsset"
 				/>
@@ -211,7 +211,7 @@ async function openAsset(index: number = tabStore.getActiveTabIndex(projectConte
 	}
 }
 
-function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value!]) {
+function openAssetFromSidebar(asset: Tab) {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: { assetId: asset.assetId, pageType: asset.pageType }
