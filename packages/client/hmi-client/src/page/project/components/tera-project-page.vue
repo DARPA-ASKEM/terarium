@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref } from 'vue';
+import { ref, Ref, computed } from 'vue';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -79,11 +79,11 @@ import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workfl
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import useResoureStore from '@/stores/resources';
 
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
-	assetName?: string;
 	pageType?: ProjectAssetTypes | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
@@ -97,11 +97,25 @@ const emit = defineEmits([
 	'open-new-asset'
 ]);
 
+const resourceStore = useResoureStore();
+
 const router = useRouter();
 
 const code = ref<string>();
 
 const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
+
+const assetName = computed<string>(() => {
+	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
+	if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
+	const assets = resourceStore.activeProjectAssets;
+
+	if (assets) {
+		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
+		return asset.name ?? 'n/a';
+	}
+	return 'n/a';
+});
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>

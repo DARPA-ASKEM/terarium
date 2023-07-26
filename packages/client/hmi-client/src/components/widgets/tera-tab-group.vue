@@ -19,7 +19,7 @@
 					class="p-button-icon-left icon"
 				/>
 				<span class="name">
-					{{ getTabnameById(tab.assetId ?? '') }}
+					{{ getTabName(tab) }}
 				</span>
 				<Button
 					icon="pi pi-times"
@@ -42,6 +42,8 @@ import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import { getAssetIcon } from '@/services/project';
 import { ref, watch } from 'vue';
+import useResoureStore from '@/stores/resources';
+import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
 
 const props = defineProps<{
 	tabs: Tab[];
@@ -49,12 +51,21 @@ const props = defineProps<{
 	loadingTabIndex: number | null;
 }>();
 
+const resourceStore = useResoureStore();
+
 const emit = defineEmits(['select-tab', 'close-tab']);
 const loadingTabIndex = ref();
 
-const getTabnameById = (id: string) => {
-	if (!id || id === '') return 'Overview';
-	return `${id}`;
+const getTabName = (tab: Tab) => {
+	if (tab.pageType === ProjectPages.OVERVIEW) return 'Overview';
+	if (tab.pageType === ProjectAssetTypes.CODE) return 'New File';
+	const assets = resourceStore.activeProjectAssets;
+
+	if (assets) {
+		const asset: any = assets[tab.pageType as string].find((d: any) => d.id === tab.assetId);
+		return asset.name ?? 'n/a';
+	}
+	return 'n/a';
 };
 
 function endAnimationIfTabIsLoaded() {

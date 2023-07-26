@@ -33,7 +33,6 @@
 					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
-					:asset-name="assetName"
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
@@ -164,7 +163,6 @@ import TeraProjectPage from './components/tera-project-page.vue';
 // Asset props are extracted from route
 const props = defineProps<{
 	project: IProject;
-	assetName?: string;
 	assetId?: string;
 	pageType?: ProjectAssetTypes | ProjectPages;
 }>();
@@ -174,10 +172,8 @@ const tabStore = useTabStore();
 const router = useRouter();
 
 const workflowNode = ref<WorkflowNode | null>(null);
-// const workflowOperation = ref<string>('');
 
 workflowEventBus.on('drilldown', (payload: any) => {
-	console.log('listener', payload);
 	workflowNode.value = payload;
 });
 
@@ -192,7 +188,7 @@ const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
 	pageType: props.pageType,
 	assetId: props.assetId,
-	assetName: undefined
+	assetName: undefined // not used
 }));
 const loadingTabIndex = ref<number | null>(null);
 
@@ -269,7 +265,6 @@ const openWorkflow = async () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetName: 'Workflow',
 			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
 			assetId: workflowId
 		}
@@ -295,6 +290,10 @@ const onCloseModelModal = () => {
 
 const overviewResource = {
 	pageType: ProjectPages.OVERVIEW,
+	assetId: ''
+};
+const codeResource = {
+	pageType: ProjectAssetTypes.CODE,
 	assetId: ''
 };
 
@@ -329,10 +328,13 @@ watch(
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
 		} else if (!tabExist) {
-			tabStore.addTab(projectContext.value, overviewResource);
+			if (openedAssetRoute.value.pageType === ProjectAssetTypes.CODE) {
+				tabStore.addTab(projectContext.value, codeResource);
+			} else {
+				tabStore.addTab(projectContext.value, overviewResource);
+			}
 		} else {
 			const index = tabs.value.findIndex((tab) => isSameTab(tab, openedAssetRoute.value));
-			console.log('I am here', index);
 			tabStore.setActiveTabIndex(projectContext.value, index);
 		}
 	}
