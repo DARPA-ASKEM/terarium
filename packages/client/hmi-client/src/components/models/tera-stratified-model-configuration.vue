@@ -79,7 +79,7 @@
 						<div>
 							<label for="name">Matrix</label>
 							<tera-stratified-value-matrix
-								:model="configurations[modalVal.configIndex]"
+								:model-configuration="modelConfigurations[modalVal.configIndex]"
 								:id="modalVal.id"
 								:node-type="modalVal.nodeType"
 							/>
@@ -123,7 +123,6 @@ const props = defineProps<{
 }>();
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const modalVal = ref({ id: '', configIndex: 0, nodeType: NodeType.State });
@@ -143,9 +142,7 @@ const baseModelTransitions = computed<any>(() =>
 );
 
 // Decide if we should display the whole configuration table
-const isConfigurationVisible = computed(
-	() => !isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)
-);
+const isConfigurationVisible = computed(() => !isEmpty(configurations) && !isEmpty(tableHeaders));
 
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
@@ -193,6 +190,8 @@ async function initializeConfigSpace() {
 
 	modelConfigurations.value = tempConfigurations;
 
+	console.log(modelConfigurations.value);
+
 	// Refresh the datastore with whatever we currently have
 	const defaultConfig = modelConfigurations.value.find(
 		(d) => d.name === 'Default config'
@@ -206,27 +205,6 @@ async function initializeConfigSpace() {
 	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
 	extractions.value = [{ name: 'Default', value: '' }];
 }
-
-function resetCellEditing() {
-	const row = { name: false };
-
-	for (let i = 0; i < tableHeaders.value.length; i++) {
-		const { name, colspan } = tableHeaders.value[i];
-		row[name] = Array(colspan).fill(false);
-	}
-
-	// Can't use fill here because the same row object would be referenced throughout the array
-	const cellEditStatesArr = new Array(modelConfigurations.value.length);
-	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
-	cellEditStates.value = cellEditStatesArr;
-}
-
-watch(
-	() => tableHeaders.value,
-	() => {
-		resetCellEditing();
-	}
-);
 
 watch(
 	() => props.model.id,

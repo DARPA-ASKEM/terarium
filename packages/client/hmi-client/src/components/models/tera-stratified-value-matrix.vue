@@ -5,7 +5,7 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead class="p-datatable-thead">
+				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
 						<th class="choose-criteria"></th>
@@ -39,11 +39,31 @@
 							/>
 						</td>
 						<td class="p-frozen-column">{{ row[0].rowCriteria?.[chosenRow] }}</td>
-						<td v-for="(cell, j) in row" :key="j">
+						<td
+							v-for="(cell, j) in row"
+							:key="j"
+							@click="
+								valueToEdit = {
+									value: findMatrixValue(cell?.value?.[chosenCol]),
+									rowIdx: i,
+									colIdx: j
+								}
+							"
+						>
 							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
-								{{ findMatrixValue(cell?.value?.[chosenCol]) }}
+								<InputText
+									v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
+									class="cell-input"
+									v-model.lazy="valueToEdit.value"
+									v-focus
+									@focusout="valueToEdit = { value: '', rowIdx: -1, colIdx: -1 }"
+									@keyup.stop.enter="updateModelConfigValue(cell?.value?.[chosenRow])"
+								/>
+								<span v-else class="editable-cell">
+									{{ findMatrixValue(cell?.value?.[chosenCol]) }}
+								</span>
 							</template>
-							<span class="not-allowed" v-else>N/A</span>
+							<span v-else class="not-allowed">N/A</span>
 						</td>
 					</tr>
 				</tbody>
@@ -54,36 +74,39 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import {
 	extractStateMatrixData,
 	extractTransitionMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
-import { createMatrix } from '@/utils/pivot';
+import { createStateMatrix, createTransitionMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
-import { Model } from '@/types/Types';
+import { ModelConfiguration } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import InputText from 'primevue/inputtext';
+import { updateModelConfiguration } from '@/services/model-configurations';
 
 const props = defineProps<{
-	model: Model;
+	modelConfiguration: ModelConfiguration;
 	id: string;
 	nodeType: NodeType;
 }>();
 
-let colDimensions: string[] = [];
-let rowDimensions: string[] = [];
+const colDimensions: string[] = [];
+const rowDimensions: string[] = [];
 
 const matrix = ref();
 const chosenCol = ref('');
 const chosenRow = ref('');
+const valueToEdit = ref({ value: '', rowIdx: -1, colIdx: -1 });
 
 // Makes cell inputs focus once they appear
-// const vFocus = {
-//     mounted: (el) => el.focus()
-// };
+const vFocus = {
+	mounted: (el) => el.focus()
+};
 
 function findMatrixValue(variableName: string) {
-	const ode = props.model.semantics?.ode;
+	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 
 	if (!ode) return variableName;
 
@@ -102,15 +125,51 @@ function findMatrixValue(variableName: string) {
 	return matrixValue;
 }
 
+function updateModelConfigValue(variableName: string) {
+	const ode = props.modelConfiguration.configuration?.semantics?.ode;
+
+	if (!ode) return;
+
+	const odeFields = ['rates', 'initials', 'parameters'];
+
+	for (let i = 0; i < odeFields.length; i++) {
+		const odeFieldObject = ode[odeFields[i]].find(
+			({ target, id }) => target === variableName || id === variableName
+		);
+
+		const indexToChange = ode[odeFields[i]].findIndex(
+			({ target, id }) => target === variableName || id === variableName
+		);
+
+		if (!odeFieldObject) continue;
+
+		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.value;
+		else if (odeFieldObject.value) odeFieldObject.value = valueToEdit.value.value;
+
+		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
+
+		modelConfigurationClone.configuration.semantics.ode[odeFields[i]][indexToChange] =
+			odeFieldObject;
+
+		updateModelConfiguration(modelConfigurationClone);
+
+		console.log(props.modelConfiguration, modelConfigurationClone);
+
+		break;
+	}
+
+	valueToEdit.value = { value: '', rowIdx: -1, colIdx: -1 };
+}
+
 function configureMatrix() {
 	// Get stratified ids from the chosen base id
-	const rowAndCol = props.model?.semantics?.span?.[0]?.map
+	const rowAndCol = props.modelConfiguration.configuration?.semantics?.span?.[0]?.map
 		.filter((id: string) => id[1] === props.id)
 		.map((d) => d[0]);
 
 	// Assign dimensions relevant to the ids
-	const rowAndColDimensions = props.model.semantics?.typing?.map.filter((id) =>
-		rowAndCol.includes(id[0])
+	const rowAndColDimensions = props.modelConfiguration.configuration.semantics?.typing?.map.filter(
+		(id) => rowAndCol.includes(id[0])
 	);
 
 	if (rowAndColDimensions) {
@@ -136,13 +195,18 @@ function configureMatrix() {
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
-			? extractStateMatrixData(props.model, rowAndCol, [...colDimensions, ...rowDimensions])
-			: extractTransitionMatrixData(props.model, rowAndCol);
+			? extractStateMatrixData(props.modelConfiguration.configuration, rowAndCol, [
+					...colDimensions,
+					...rowDimensions
+			  ])
+			: extractTransitionMatrixData(props.modelConfiguration.configuration, rowAndCol);
 
-	const matrixAttributes = createMatrix(matrixData, colDimensions, rowDimensions);
+	const matrixAttributes =
+		props.nodeType === NodeType.State
+			? createStateMatrix(matrixData)
+			: createTransitionMatrix(matrixData, colDimensions, rowDimensions);
+
 	matrix.value = matrixAttributes.matrix;
-	colDimensions = matrixAttributes.colDimensions;
-	rowDimensions = matrixAttributes.rowDimensions;
 
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
@@ -179,6 +243,20 @@ onMounted(() => {
 
 .p-datatable .p-datatable-thead > tr > th {
 	padding-bottom: 1rem;
+}
+
+.editable-cell {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	visibility: visible;
+	width: 100%;
+}
+
+.cell-input {
+	height: 4rem;
+	width: 100%;
+	padding-left: 12px;
 }
 
 /* .p-frozen-column {
