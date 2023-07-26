@@ -159,7 +159,7 @@ type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
-	activeTab: { assetId?: string; pageType: string };
+	activeTab: Tab;
 	tabs: Tab[];
 }>();
 

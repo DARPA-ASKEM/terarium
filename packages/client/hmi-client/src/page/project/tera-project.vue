@@ -189,9 +189,10 @@ const isNewModelModalVisible = ref(false);
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
-const openedAssetRoute = computed<any>(() => ({
+const openedAssetRoute = computed<Tab>(() => ({
 	pageType: props.pageType,
-	assetId: props.assetId
+	assetId: props.assetId,
+	assetName: undefined
 }));
 const loadingTabIndex = ref<number | null>(null);
 
