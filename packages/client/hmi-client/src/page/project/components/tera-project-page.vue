@@ -5,7 +5,6 @@
 		:project="project"
 		@update-tab-name="updateTabName"
 		@asset-loaded="emit('asset-loaded')"
-		is-editable
 	/>
 	<code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"
@@ -48,7 +47,6 @@
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			:project="project"
-			is-editable
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>
@@ -56,7 +54,6 @@
 			v-else-if="pageType === ProjectAssetTypes.DATASETS"
 			:project="project"
 			:asset-id="assetId"
-			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
 	</template>
@@ -118,10 +115,6 @@ const openWorkflow = async () => {
 	}
 	const wf = emptyWorkflow(wfName, '');
 
-	// FIXME: TDS bug thinks that k is z, June 2023
-	// @ts-ignore
-	wf.transform.z = 1;
-
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
@@ -150,17 +143,18 @@ const newModel = async (modelName: string) => {
 	const modelId = response?.id;
 
 	// 2. Add the model to the project
-	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-
-	// 3. Reroute
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: 'Model',
-			pageType: ProjectAssetTypes.MODELS,
-			assetId: modelId
-		}
-	});
+	if (modelId) {
+		await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+		// 3. Reroute
+		router.push({
+			name: RouteName.ProjectRoute,
+			params: {
+				assetName: 'Model',
+				pageType: ProjectAssetTypes.MODELS,
+				assetId: modelId
+			}
+		});
+	}
 };
 
 const openOverview = () => {
