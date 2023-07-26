@@ -38,8 +38,32 @@
 								</div>
 							</div>
 						</td>
-						<td class="p-frozen-column second-frozen" tabindex="0">
-							{{ name }}
+						<td
+							class="p-frozen-column second-frozen"
+							tabindex="0"
+							@keyup.enter="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+							@click="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+						>
+							<InputText
+								v-if="cellEditStates[i]?.name"
+								v-model.lazy="modelConfigInputValue"
+								v-focus
+								@focusout="cellEditStates[i].name = false"
+								@keyup.stop.enter="
+									cellEditStates[i].name = false;
+									updateModelConfigName(i);
+								"
+								class="cell-input"
+							/>
+							<span v-else class="editable-cell">
+								{{ name }}
+							</span>
 						</td>
 						<td v-for="(id, j) in [...baseModelStates, ...baseModelTransitions]" :key="j">
 							<section class="editable-cell" @click="openValueModal(id, i)">
@@ -124,7 +148,9 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
+const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const modalVal = ref({ id: '', configIndex: 0, nodeType: NodeType.State });
@@ -152,6 +178,16 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
 	{ name: 'Parameters', colspan: baseModelTransitions.value.length }
 ]);
 
+// Makes cell inputs focus once they appear
+const vFocus = {
+	mounted: (el) => el.focus()
+};
+
+function updateModelConfigName(configIndex: number) {
+	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
+	updateModelConfiguration(modelConfigurations.value[configIndex]);
+}
+
 async function addModelConfiguration(config: ModelConfiguration) {
 	await createModelConfiguration(
 		props.model.id,
@@ -172,6 +208,15 @@ function openValueModal(id: string, configIndex: number) {
 		openValueConfig.value = true;
 		modalVal.value = { id, configIndex, nodeType };
 	}
+}
+
+function resetCellEditing() {
+	const row = { name: false };
+
+	// Can't use fill here because the same row object would be referenced throughout the array
+	const cellEditStatesArr = new Array(modelConfigurations.value.length);
+	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
+	cellEditStates.value = cellEditStatesArr;
 }
 
 async function initializeConfigSpace() {
@@ -200,6 +245,8 @@ async function initializeConfigSpace() {
 		defaultConfig.configuration = cloneDeep(props.model);
 		updateModelConfiguration(defaultConfig);
 	}
+
+	resetCellEditing();
 
 	openValueConfig.value = false;
 	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
