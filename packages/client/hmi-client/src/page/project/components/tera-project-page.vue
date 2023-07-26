@@ -145,7 +145,7 @@ const newModel = async (modelName: string) => {
 	if (modelId) {
 		await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 		// 3. Reroute
-		router.push({
+		await router.push({
 			name: RouteName.ProjectRoute,
 			params: {
 				assetName: 'Model',
