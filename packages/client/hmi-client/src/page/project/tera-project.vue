@@ -10,7 +10,6 @@
 			<template v-slot:content>
 				<tera-resource-sidebar
 					:project="project"
-					:tabs="tabs"
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
 					@remove-asset="removeAsset"

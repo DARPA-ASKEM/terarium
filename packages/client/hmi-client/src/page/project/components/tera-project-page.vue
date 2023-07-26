@@ -3,7 +3,6 @@
 		v-if="pageType === ProjectAssetTypes.MODELS"
 		:asset-id="assetId ?? ''"
 		:project="project"
-		@update-tab-name="updateTabName"
 		@asset-loaded="emit('asset-loaded')"
 	/>
 	<code-editor
@@ -69,7 +68,7 @@ import { ref, Ref } from 'vue';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty } from 'lodash';
 import { CodeRequest, Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
@@ -189,20 +188,6 @@ async function openTextArtifact() {
 	if (!res) return;
 	code.value = res;
 }
-
-// Just preserving this as this didn't even work when it was in tera-project.vue - same error occurs on staging
-// I think this is meant to make the tab name and the model name to be the same as you're editing it which isn't important/necessary
-const updateTabName = (tabName: string) => {
-	const tabsClone = cloneDeep(props.tabs);
-
-	// FIXME: Active tab index is undefined so tab name doesn't get updated when model or workflow name get updated
-	// console.log(tabName, tabsClone, props.activeTabIndex)
-
-	if (tabsClone?.[props.activeTabIndex!]?.assetName) {
-		tabsClone[props.activeTabIndex!].assetName = tabName;
-		emit('update:tabs', tabsClone);
-	}
-};
 </script>
 
 <style scoped>
