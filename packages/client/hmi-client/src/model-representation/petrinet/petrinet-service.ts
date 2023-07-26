@@ -665,3 +665,27 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[], dimension
 	});
 	return results;
 };
+
+export function newAMR(modelName: string) {
+	const amr: Model = {
+		id: '',
+		name: modelName,
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
+}

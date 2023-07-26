@@ -3,9 +3,8 @@ import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import router from '@/router';
-import { RouteName } from '@/router/routes';
 import * as ProjectService from '@/services/project';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -85,38 +84,7 @@ export async function addNewModelToProject(modelName: string, project: IProject)
 	// 2. Add the model to the project
 	if (modelId) {
 		await ProjectService.addAsset(project.id, ProjectAssetTypes.MODELS, modelId);
-		// 3. Reroute
-		router.push({
-			name: RouteName.ProjectRoute,
-			params: {
-				assetName: 'Model',
-				pageType: ProjectAssetTypes.MODELS,
-				assetId: modelId
-			}
-		});
+		return modelId;
 	}
-}
-
-function newAMR(modelName: string) {
-	const amr: Model = {
-		id: '',
-		name: modelName,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
-		model: {
-			states: [],
-			transitions: []
-		},
-		semantics: {
-			ode: {
-				rates: [],
-				initials: [],
-				parameters: []
-			}
-		}
-	};
-	return amr;
+	return null;
 }

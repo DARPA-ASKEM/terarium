@@ -29,9 +29,11 @@ import { computed, ref } from 'vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import { IProject } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { addNewModelToProject } from '@/services/model';
+import router from '@/router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	project: IProject;
@@ -64,7 +66,17 @@ async function createNewModel() {
 		return;
 	}
 	isValidName.value = true;
-	await addNewModelToProject(newModelName.value.trim(), props.project);
+	const modelId = await addNewModelToProject(newModelName.value.trim(), props.project);
+	if (modelId) {
+		router.push({
+			name: RouteName.ProjectRoute,
+			params: {
+				assetName: 'Model',
+				pageType: ProjectAssetTypes.MODELS,
+				assetId: modelId
+			}
+		});
+	}
 	emit('close-modal');
 }
 </script>
