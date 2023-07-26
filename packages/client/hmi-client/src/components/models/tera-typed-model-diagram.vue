@@ -87,6 +87,7 @@
 					<Toolbar>
 						<template #end>
 							<Button
+								v-if="isStratifiedAMR(model)"
 								@click="toggleCollapsedView"
 								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
 								class="p-button-sm p-button-outlined toolbar-button"
@@ -109,7 +110,11 @@ import {
 	NodeData,
 	EdgeData
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { convertToIGraph, addTyping } from '@/model-representation/petrinet/petrinet-service';
+import {
+	convertToIGraph,
+	addTyping,
+	isStratifiedAMR
+} from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
@@ -373,7 +378,9 @@ watch(
 	async () => {
 		if (typedModel.value === null || graphElement.value === null) return;
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-			isCollapsed.value ? props.model.semantics?.span?.[0].system : typedModel.value
+			isCollapsed.value && isStratifiedAMR(props.model)
+				? props.model.semantics?.span?.[0].system
+				: typedModel.value
 		);
 		const nestedMap = props.model.semantics?.span?.[0].map.reduce(
 			(childMap, [stratNode, baseNode]) => {
@@ -388,14 +395,24 @@ watch(
 
 		// Create renderer
 		if (!renderer) {
-			renderer = new NestedPetrinetRenderer({
-				el: graphElement.value as HTMLDivElement,
-				useAStarRouting: false,
-				useStableZoomPan: true,
-				runLayout: runDagreLayout,
-				dragSelector: 'no-drag',
-				nestedMap
-			});
+			if (isStratifiedAMR(props.model)) {
+				renderer = new NestedPetrinetRenderer({
+					el: graphElement.value as HTMLDivElement,
+					useAStarRouting: false,
+					useStableZoomPan: true,
+					runLayout: runDagreLayout,
+					dragSelector: 'no-drag',
+					nestedMap
+				});
+			} else {
+				renderer = new PetrinetRenderer({
+					el: graphElement.value as HTMLDivElement,
+					useAStarRouting: false,
+					useStableZoomPan: true,
+					runLayout: runDagreLayout,
+					dragSelector: 'no-drag'
+				});
+			}
 		} else {
 			renderer.isGraphDirty = true;
 		}
@@ -517,5 +534,19 @@ li {
 
 .input-header {
 	min-width: 150px;
+}
+
+.p-toolbar {
+	position: absolute;
+	width: 100%;
+	z-index: 1;
+	isolation: isolate;
+	background: transparent;
+	padding: 0.5rem;
+}
+
+.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
+	background-color: var(--surface-0);
+	margin: 0.25rem;
 }
 </style>
