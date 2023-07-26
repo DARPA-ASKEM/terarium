@@ -1,9 +1,14 @@
 import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
+import {
+	PetriNetModel,
+	Model,
+	PetriNetTransition,
+	TypingSemantics,
+	ModelConfiguration
+} from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
-import { getModelConfigurations } from '@/services/model';
 import { updateModelConfiguration } from '@/services/model-configurations';
 
 export interface NodeData {
@@ -516,9 +521,11 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 	}
 };
 
-export const updateConfigFields = async (modelId: string, id: string, newId: string) => {
-	const modelConfigs = await getModelConfigurations(modelId);
-
+export const updateConfigFields = async (
+	modelConfigs: ModelConfiguration[],
+	id: string,
+	newId: string
+) => {
 	modelConfigs.forEach((config) => {
 		updateParameterId(config.configuration, id, newId);
 		// note that this is making an async call but we don't need to wait for it to finish
