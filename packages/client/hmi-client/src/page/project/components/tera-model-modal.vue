@@ -29,13 +29,9 @@ import { computed, ref } from 'vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
-import { createModel } from '@/services/model';
-import router from '@/router';
-import { RouteName } from '@/router/routes';
-import * as ProjectService from '@/services/project';
+import { addNewModelToProject } from '@/services/model';
 
 const props = defineProps<{
 	project: IProject;
@@ -56,7 +52,7 @@ const existingModelNames = computed(() => {
 	return modelNames;
 });
 
-function createNewModel() {
+async function createNewModel() {
 	if (newModelName.value.trim().length === 0) {
 		isValidName.value = false;
 		logger.info('Model name cannot be empty - please enter a different name');
@@ -68,36 +64,9 @@ function createNewModel() {
 		return;
 	}
 	isValidName.value = true;
-	newModel(newModelName.value.trim());
+	await addNewModelToProject(newModelName.value.trim(), props.project);
 	emit('close-modal');
 }
-
-const newModel = async (modelName: string) => {
-	// 1. Load an empty AMR
-	const amr = newAMR(modelName);
-	(amr as any).id = undefined; // FIXME: id hack
-
-	const response = await createModel(amr);
-	const modelId = response?.id;
-
-	// 2. Add the model to the project
-	if (modelId) {
-		await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-		// 3. Reroute
-		router.push({
-			name: RouteName.ProjectRoute,
-			params: {
-				assetName: 'Model',
-				pageType: ProjectAssetTypes.MODELS,
-				assetId: modelId
-			}
-		});
-	}
-};
 </script>
 
-<style>
-.modal main {
-	width: 50rem;
-}
-</style>
+<style></style>
