@@ -27,7 +27,8 @@ import { Model, PetriNetTransition, Transition, TypeSystem, TypingSemantics } fr
 import {
 	addReflexives,
 	addTyping,
-	updateRateExpression
+	updateRateExpression,
+	removeTransition
 } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
@@ -63,7 +64,6 @@ const reflexiveNodeOptions = computed<{ [id: string]: { id: string; name: string
 	});
 	return options;
 });
-
 const stateId2NameMap = computed<{ [id: string]: string }>(() => {
 	const map: { [id: string]: string } = {};
 	props.modelToUpdate.model.states.forEach((state) => {
@@ -71,29 +71,36 @@ const stateId2NameMap = computed<{ [id: string]: string }>(() => {
 	});
 	return map;
 });
+// save a list of what reflexives we have added so that if the user undoes any of their selections, we can remove the transitions they de-selected
+const addedReflexivesHistory: Set<string> = new Set();
 
 function updateStatesToAddReflexives(
 	newValue: {
-		id: string; // id of the state to which to add reflexive
-		name: string; // name of the state to which to add reflexive
-	}[],
+		id: string;
+		name: string;
+	}[], // list of id+name of state to which to add reflexives
 	typeOfTransition: Transition, // e.g. infect, recover
 	typeIdOfState: string // e.g. pop
 ) {
 	statesToAddReflexives.value[typeOfTransition.id] = newValue;
 	const updatedTypeMap = typedModel.value.semantics?.typing?.map;
 	const updatedTypeSystem = typedModel.value.semantics?.typing?.system;
+	const reflexivesAddedForCurrentSelection: Set<string> = new Set();
 
 	if (updatedTypeMap && updatedTypeSystem) {
 		newValue.forEach((state) => {
-			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition.id]}${state.id}`;
 			// For the type of reflexive transition that we are adding, get the number of inputs and outputs that share the same type as the state that we are updating
 			// E.g. if we are adding an 'Infect' reflexive to a node of type 'Pop', get the number of 'Pop' inputs and outputs for 'Infect'
-			const numInputsOfStateType = typeOfTransition.input.filter((i) => i === typeIdOfState).length;
-			// const numOutputsOfStateType = typeOfTransition.input.filter(i => i === typeIdOfState).length;
+			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition.id]}${state.id}`;
+
 			// Assume for now that the number of inputs and outputs for a given type are always equal, though in general this may not be the case
 			// TODO: implement logic for more generalized case where the above assumption is not true
-			addReflexives(typedModel.value, state.id, newTransitionId, numInputsOfStateType);
+			const numInputsOfStateType = typeOfTransition.input.filter((i) => i === typeIdOfState).length;
+			// const numOutputsOfStateType = typeOfTransition.input.filter(i => i === typeIdOfState).length;
+
+			if (!typedModel.value.model.transitions.find((t) => t.id === newTransitionId)) {
+				addReflexives(typedModel.value, state.id, newTransitionId, numInputsOfStateType);
+			}
 			const reflexive = typedModel.value.model.transitions.find((t) => t.id === newTransitionId);
 
 			const transition = props.modelToCompare?.semantics?.typing?.system.model.transitions.find(
@@ -108,6 +115,20 @@ function updateStatesToAddReflexives(
 					updatedTypeSystem.model.transitions.push(transition);
 				}
 			}
+
+			// Every time the user updates their selection of which states to add reflexives to, we iterate through each selected state and add the reflexive.
+			// If the user deselects any states, we don't know about it. As far as I'm aware this is a limitation of the PrimeVue MultiSelect component.
+			// So we have to store a history of what reflexive transitions the user has previously added, store a list of what reflexive transitions the user is adding for the current selection
+			// and compare them to remove any previously added transitions if they aren't supposed to be added based on the user selection.
+			// E.g. if the user previously added reflexives to states S, I, and R, and the user's current selection is [S, I] then remove the transition added to R
+			addedReflexivesHistory.add(reflexive.id);
+			reflexivesAddedForCurrentSelection.add(reflexive.id);
+		});
+		const reflexiveIdsToRemove: string[] = [...addedReflexivesHistory].filter(
+			(r) => !reflexivesAddedForCurrentSelection.has(r)
+		);
+		reflexiveIdsToRemove.forEach((r) => {
+			removeTransition(typedModel.value, r);
 		});
 		const updatedTyping: TypingSemantics = {
 			map: updatedTypeMap,
