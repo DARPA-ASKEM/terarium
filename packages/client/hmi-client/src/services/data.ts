@@ -454,7 +454,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	// dataset=xdd-covid-19
 	// doi=10.1002/pbc.28600
 	// docid=5ebd1de8998e17af826e810e
-	const url = `/document/related/document?docid=${docid}&set=${dataset}`;
+	const url = `/document/related/document?docid=${docid}&set=${dataset || 'xdd-covid-19'}`;
 
 	const res = await API.get(url);
 	if (res) {
