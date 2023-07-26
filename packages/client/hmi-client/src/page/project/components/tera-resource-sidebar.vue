@@ -160,7 +160,6 @@ type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 const props = defineProps<{
 	project: IProject;
 	activeTab: Tab;
-	tabs: Tab[];
 }>();
 
 const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
