@@ -159,8 +159,8 @@ const searchXDDDocuments = async (
 		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
 	}
 
-	if (xddSearchParam?.similar_docs) {
-		searchParams += `&similar_docs=${xddSearchParam?.similar_docs}`;
+	if (xddSearchParam?.similar_to) {
+		searchParams += `&similar_to=${xddSearchParam?.similar_to}`;
 	}
 
 	//
@@ -443,7 +443,7 @@ const getAssets = async (params: GetAssetsParams) => {
  *  semantic similarity (i.e., document embedding) from XDD via the HMI server
  *
  * TODO: this should probably be deprecated at some point now that we're using
- * the "/documents?docid=<id>&similar_docs=true" endpoint as an alternative
+ * the "/documents?similar_to=<id>" endpoint as an alternative
  */
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (docid === '' || dataset === null) {
@@ -576,18 +576,17 @@ const fetchData = async (
 			// (i.e., to find similar documents or related artifacts for a given document)?
 			if (searchParam.xdd && searchParam?.xdd.dataset) {
 				if (searchParam?.xdd.similar_search_enabled && searchParam?.xdd.related_search_id) {
-					const xddDocuments = await searchXDDDocuments('', {
-						docid: searchParam.xdd.related_search_id as string,
-						similar_docs: true
+					const response = await fetchResource('', resourceType as ResourceType, {
+						...searchParamWithFacetFilters,
+						xdd: {
+							...searchParamWithFacetFilters?.xdd,
+							similar_to: searchParam.xdd.related_search_id as string,
+							max: 100,
+							perPage: 100
+						}
 					});
-					const similarDocuments = xddDocuments?.data[0].similarDocuments;
-					const similarDocumentsSearchResults = {
-						results: similarDocuments?.documents ?? [],
-						facets: similarDocuments?.facets ?? {},
-						searchSubsystem: ResourceType.XDD
-					};
-					finalResponse.allData.push(similarDocumentsSearchResults);
-					finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
+					finalResponse.allData.push(response.allData);
+					finalResponse.allDataFilteredWithFacets.push(response.allDataFilteredWithFacets);
 				}
 				if (searchParam?.xdd.related_search_enabled) {
 					// FIXME:

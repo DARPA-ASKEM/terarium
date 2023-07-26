@@ -356,7 +356,6 @@ export interface Document {
     knownEntities: KnownEntities;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
-    similarDocuments: SimilarDocuments;
 }
 
 export interface XDDFacetsItemResponse {
@@ -425,11 +424,6 @@ export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
     summaries: string[];
-}
-
-export interface SimilarDocuments {
-    documents: Document[];
-    facets: { [index: string]: XDDFacetsItemResponse };
 }
 
 export interface XDDFacetBucket {

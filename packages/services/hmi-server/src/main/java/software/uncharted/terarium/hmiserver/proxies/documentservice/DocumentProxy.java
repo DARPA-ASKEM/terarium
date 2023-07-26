@@ -17,30 +17,29 @@ public interface DocumentProxy {
 	@Path("/api/v2/articles")
 	@LogRestClientTime
 	XDDResponse<DocumentsResponseOK> getDocuments(
-		@QueryParam("api_key") String apiKey,
-		@QueryParam("docid") String docid,
-		@QueryParam("doi") String doi,
-		@QueryParam("title") String title,
-		@QueryParam("term") String term,
-		@QueryParam("dataset") String dataset,
-		@QueryParam("include_score") String include_score,
-		@QueryParam("include_highlights") String include_highlights,
-		@QueryParam("inclusive") String inclusive,
-		@QueryParam("full_results") String full_results,
-		@QueryParam("max") String max,
-		@QueryParam("per_page") String per_page,
-		@QueryParam("dict") String dict,
-		@QueryParam("facets") String facets,
-		@QueryParam("min_published") String min_published,
-		@QueryParam("max_published") String max_published,
-		@QueryParam("pubname") String pubname,
-		@QueryParam("publisher") String publisher,
-		@QueryParam("additional_fields") String additional_fields,
-		@QueryParam("match") String match,
-		@QueryParam("known_entities") String known_entities,
-		@QueryParam("github_url") String github_url,
-		@QueryParam("similar_docs") String similar_docs
-	);
+			@QueryParam("api_key") String apiKey,
+			@QueryParam("docid") String docid,
+			@QueryParam("doi") String doi,
+			@QueryParam("title") String title,
+			@QueryParam("term") String term,
+			@QueryParam("dataset") String dataset,
+			@QueryParam("include_score") String include_score,
+			@QueryParam("include_highlights") String include_highlights,
+			@QueryParam("inclusive") String inclusive,
+			@QueryParam("full_results") String full_results,
+			@QueryParam("max") String max,
+			@QueryParam("per_page") String per_page,
+			@QueryParam("dict") String dict,
+			@QueryParam("facets") String facets,
+			@QueryParam("min_published") String min_published,
+			@QueryParam("max_published") String max_published,
+			@QueryParam("pubname") String pubname,
+			@QueryParam("publisher") String publisher,
+			@QueryParam("additional_fields") String additional_fields,
+			@QueryParam("match") String match,
+			@QueryParam("known_entities") String known_entities,
+			@QueryParam("github_url") String github_url,
+			@QueryParam("similar_to") String similar_to);
 
 	@GET
 	@Path("/sets")
@@ -53,15 +52,13 @@ public interface DocumentProxy {
 	@GET
 	@Path("/sets/{set}/doc2vec/api/similar")
 	XDDRelatedDocumentsResponse getRelatedDocuments(
-		@PathParam("set") String set,
-		@QueryParam("docid") String docid
-	);
+			@PathParam("set") String set,
+			@QueryParam("docid") String docid);
 
 	@GET
 	@Path("/sets/{set}/word2vec/api/most_similar")
 	XDDRelatedWordsResponse getRelatedWords(
-		@PathParam("set") String set,
-		@QueryParam("word") String word
-	);
+			@PathParam("set") String set,
+			@QueryParam("word") String word);
 
 }

@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.documentservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -69,7 +68,4 @@ public class Document implements Serializable {
 
 	@JsonAlias("cited_by")
 	private List<Map<String, Object>> citedBy;
-
-	@JsonAlias("similar_docs")
-	private SimilarDocuments similarDocuments;
 }
