@@ -143,7 +143,7 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset']);
+const emit = defineEmits(['open-asset', 'remove-asset']);
 
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);

@@ -13,7 +13,6 @@
 					:tabs="tabs"
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
-					@close-tab="removeClosedTab"
 					@remove-asset="removeAsset"
 				/>
 			</template>
@@ -181,7 +180,6 @@ const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
-	assetName: props.assetName ?? '',
 	pageType: props.pageType,
 	assetId: props.assetId
 }));
@@ -232,6 +230,11 @@ async function removeAsset(asset: Tab) {
 	logger.error(`Failed to remove ${assetId}`, { showToast: true });
 }
 
+const overviewResource = {
+	pageType: ProjectPages.OVERVIEW,
+	assetId: ''
+};
+
 watch(
 	() => projectContext.value,
 	() => {
@@ -244,10 +247,6 @@ watch(
 			tabStore.addTab(projectContext.value, openedAssetRoute.value);
 		}
 
-		const overviewResource = {
-			pageType: ProjectPages.OVERVIEW,
-			assetId: ''
-		};
 		if (projectContext.value && !tabs.value.some((tab) => isEqual(tab, overviewResource))) {
 			// Automatically add overview tab if it does not exist
 			tabStore.addTab(projectContext.value, overviewResource);
@@ -258,18 +257,17 @@ watch(
 watch(
 	() => openedAssetRoute.value, // Once route attributes change, add/switch to another tab
 	() => {
+		console.log('hihi', openedAssetRoute.value, tabs.value);
+		const tabExist = tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value));
 		if (openedAssetRoute.value.assetId) {
-			// If id isn't recognized, its a new asset so add a new tab
-			if (props.pageType && !tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value))) {
+			if (props.pageType && !tabExist) {
 				tabStore.addTab(projectContext.value, openedAssetRoute.value);
-			} else if (props.assetId) {
-				// Tab switch
+			} else {
 				const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
-		} else {
-			// Goes to tab from previous session
-			openAsset(tabStore.getActiveTabIndex(projectContext.value));
+		} else if (!tabExist) {
+			tabStore.addTab(projectContext.value, overviewResource);
 		}
 	}
 );
