@@ -8,6 +8,7 @@
 	/>
 	<tera-code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"
+		:asset-id="assetId"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');
@@ -16,6 +17,7 @@
 	/>
 	<tera-code-editor
 		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && !assetName?.endsWith('.pdf')"
+		:asset-id="assetId"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');

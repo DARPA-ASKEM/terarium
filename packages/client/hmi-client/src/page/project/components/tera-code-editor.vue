@@ -85,6 +85,7 @@ import * as EventService from '@/services/event';
 import { codeToAMR } from '@/services/models/extractions';
 
 const props = defineProps({
+	assetId: { type: String, default: null, required: false },
 	project: {
 		type: Object as PropType<IProject> | null,
 		default: null,
