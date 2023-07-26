@@ -2,6 +2,9 @@ import API from '@/api/api';
 import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import * as ProjectService from '@/services/project';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -68,4 +71,24 @@ export async function getModelConfigurations(modelId: string): Promise<ModelConf
 export async function reconstructAMR(amr: any) {
 	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
 	return response?.data;
+}
+
+// function adds model to project, returns modelId if successful otherwise null
+export async function addNewModelToProject(
+	modelName: string,
+	project: IProject
+): Promise<string | null> {
+	// 1. Load an empty AMR
+	const amr = newAMR(modelName);
+	(amr as any).id = undefined; // FIXME: id hack
+
+	const response = await createModel(amr);
+	const modelId = response?.id;
+
+	// 2. Add the model to the project
+	if (modelId) {
+		await ProjectService.addAsset(project.id, ProjectAssetTypes.MODELS, modelId);
+		return modelId;
+	}
+	return null;
 }
