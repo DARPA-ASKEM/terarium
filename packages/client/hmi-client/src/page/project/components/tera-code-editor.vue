@@ -80,9 +80,10 @@ import { getPDFURL } from '@/services/generate-download-link';
 import API, { Poller } from '@/api/api';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { createModel, addModelToProject } from '@/services/model';
+import { createModel } from '@/services/model';
 import * as EventService from '@/services/event';
 import { codeToAMR } from '@/services/models/extractions';
+import * as ProjectService from '@/services/project';
 
 const props = defineProps({
 	assetId: { type: String, default: null, required: false },
@@ -243,7 +244,11 @@ async function createModelFromCode() {
 		};
 		const model = await createModel(newModel);
 		if (model && props.project && resourcesStore) {
-			await addModelToProject(props.project.id, model.id.toString());
+			await ProjectService.addAsset(
+				props.project.id,
+				ProjectAssetTypes.MODELS,
+				model.id.toString()
+			);
 
 			router.push({
 				name: RouteName.ProjectRoute,

@@ -138,6 +138,7 @@ onUnmounted(() => {
 }
 .tera-context-menu:deep(.p-menu) {
 	width: fit-content;
+	max-height: fit-content;
 }
 .tera-context-menu:deep(.p-submenu-header .p-menuitem-link) {
 	padding-left: 0px;
