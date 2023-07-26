@@ -122,7 +122,14 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 			parameters
 		},
 		typing: {
-			system: typeSystem,
+			system: {
+				name: 'Age-contact strata model',
+				description: 'Age-contact strata model',
+				schema:
+					'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+				model_version: '0.1',
+				model: typeSystem
+			},
 			map: typeMap
 		}
 	};
@@ -247,7 +254,14 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 			parameters
 		},
 		typing: {
-			system: typeSystem,
+			system: {
+				name: 'Location-travel strata model',
+				description: 'Location-travel strata model',
+				schema:
+					'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+				model_version: '0.1',
+				model: typeSystem
+			},
 			map: typeMap
 		}
 	};
