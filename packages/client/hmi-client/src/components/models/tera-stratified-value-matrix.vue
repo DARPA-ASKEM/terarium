@@ -44,7 +44,7 @@
 							:key="j"
 							@click="
 								valueToEdit = {
-									value: findMatrixValue(cell?.value?.[chosenCol]),
+									val: getMatrixValue(cell?.value?.[chosenCol]),
 									rowIdx: i,
 									colIdx: j
 								}
@@ -54,13 +54,13 @@
 								<InputText
 									v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
 									class="cell-input"
-									v-model.lazy="valueToEdit.value"
+									v-model.lazy="valueToEdit.val"
 									v-focus
-									@focusout="valueToEdit = { value: '', rowIdx: -1, colIdx: -1 }"
+									@focusout="valueToEdit = { val: '', rowIdx: -1, colIdx: -1 }"
 									@keyup.stop.enter="updateModelConfigValue(cell?.value?.[chosenRow])"
 								/>
 								<span v-else class="editable-cell">
-									{{ findMatrixValue(cell?.value?.[chosenCol]) }}
+									{{ getMatrixValue(cell?.value?.[chosenCol]) }}
 								</span>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import {
 	extractStateMatrixData,
 	extractTransitionMatrixData
@@ -98,67 +98,60 @@ const rowDimensions: string[] = [];
 const matrix = ref();
 const chosenCol = ref('');
 const chosenRow = ref('');
-const valueToEdit = ref({ value: '', rowIdx: -1, colIdx: -1 });
+const valueToEdit = ref({ val: '', rowIdx: -1, colIdx: -1 });
 
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
 
-function findMatrixValue(variableName: string) {
+function findOdeObject(variableName: string) {
 	const ode = props.modelConfiguration.configuration?.semantics?.ode;
+	if (!ode) return null;
 
-	if (!ode) return variableName;
+	const odeFieldNames = ['rates', 'initials', 'parameters'];
 
-	let matrixValue: string = '';
-	const odeFields = ['rates', 'initials', 'parameters'];
-
-	for (let i = 0; i < odeFields.length; i++) {
-		const odeFieldObject = ode[odeFields[i]].find(
+	for (let i = 0; i < odeFieldNames.length; i++) {
+		const odeFieldIndex = ode[odeFieldNames[i]].findIndex(
 			({ target, id }) => target === variableName || id === variableName
 		);
+		if (odeFieldIndex === -1) continue;
 
-		matrixValue = odeFieldObject?.expression ?? odeFieldObject?.value ?? '';
-
-		if (!isEmpty(matrixValue)) break;
+		return {
+			odeFieldObject: ode[odeFieldNames[i]][odeFieldIndex],
+			odeFieldIndex,
+			odeFieldName: odeFieldNames[i]
+		};
 	}
-	return matrixValue;
+	return null;
+}
+
+function getMatrixValue(variableName: string) {
+	const valueLocation = findOdeObject(variableName);
+	if (valueLocation) {
+		const { odeFieldObject } = valueLocation;
+		return odeFieldObject?.expression ?? odeFieldObject?.value;
+	}
+	return variableName;
 }
 
 function updateModelConfigValue(variableName: string) {
-	const ode = props.modelConfiguration.configuration?.semantics?.ode;
+	const valueLocation = findOdeObject(variableName);
+	if (valueLocation) {
+		const { odeFieldObject, odeFieldIndex, odeFieldName } = valueLocation;
 
-	if (!ode) return;
-
-	const odeFields = ['rates', 'initials', 'parameters'];
-
-	for (let i = 0; i < odeFields.length; i++) {
-		const odeFieldObject = ode[odeFields[i]].find(
-			({ target, id }) => target === variableName || id === variableName
-		);
-
-		const indexToChange = ode[odeFields[i]].findIndex(
-			({ target, id }) => target === variableName || id === variableName
-		);
-
-		if (!odeFieldObject) continue;
-
-		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.value;
-		else if (odeFieldObject.value) odeFieldObject.value = valueToEdit.value.value;
+		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.val;
+		else if (odeFieldObject.value) odeFieldObject.value = valueToEdit.value.val;
 
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 
-		modelConfigurationClone.configuration.semantics.ode[odeFields[i]][indexToChange] =
+		modelConfigurationClone.configuration.semantics.ode[odeFieldName][odeFieldIndex] =
 			odeFieldObject;
 
 		updateModelConfiguration(modelConfigurationClone);
 
-		console.log(props.modelConfiguration, modelConfigurationClone);
-
-		break;
+		valueToEdit.value = { val: '', rowIdx: -1, colIdx: -1 };
 	}
-
-	valueToEdit.value = { value: '', rowIdx: -1, colIdx: -1 };
 }
 
 function configureMatrix() {

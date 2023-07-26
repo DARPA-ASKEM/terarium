@@ -26,7 +26,7 @@
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr v-for="i in modelConfigurations.length" :key="i">
+					<tr v-for="({ name }, i) in modelConfigurations" :key="i">
 						<!--TODO: This td is a placeholder, row selection doesn't work-->
 						<td class="p-selection-column p-frozen-column">
 							<div class="p-checkbox p-component">
@@ -38,10 +38,12 @@
 								</div>
 							</div>
 						</td>
-						<td class="p-frozen-column second-frozen" tabindex="0">Default name</td>
+						<td class="p-frozen-column second-frozen" tabindex="0">
+							{{ name }}
+						</td>
 						<td v-for="(id, j) in [...baseModelStates, ...baseModelTransitions]" :key="j">
-							<section class="editable-cell" @click="openValueModal(id, i - 1)">
-								<span>{{ id }}<i class="pi pi-table"></i></span>
+							<section class="editable-cell" @click="openValueModal(id, i)">
+								<span>{{ id }}<i class="pi pi-table" /></span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
@@ -189,8 +191,6 @@ async function initializeConfigSpace() {
 	}
 
 	modelConfigurations.value = tempConfigurations;
-
-	console.log(modelConfigurations.value);
 
 	// Refresh the datastore with whatever we currently have
 	const defaultConfig = modelConfigurations.value.find(
