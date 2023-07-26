@@ -74,6 +74,7 @@ export type XDDSearchParams = {
 	similar_search_enabled?: boolean; // if true, then perform a search by example by finding similar documents
 	related_search_id?: string | number;
 	githubUrls?: string;
+	similar_to?: string;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 20;
