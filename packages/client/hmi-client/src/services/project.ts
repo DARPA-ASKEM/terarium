@@ -191,20 +191,6 @@ async function get(
 }
 
 /**
- * Get all informations for the homepage
- */
-async function home(): Promise<IProject[] | null> {
-	try {
-		const { status, data } = await API.get('/home');
-		if (status !== 200 || !data) return null;
-		return data;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
-/**
  * Get the icon associated with an Asset
  */
 const icons = new Map<string | ProjectAssetTypes, string | Component>([
