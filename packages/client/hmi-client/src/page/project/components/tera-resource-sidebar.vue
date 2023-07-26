@@ -135,17 +135,12 @@ import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 
-interface ResourceTab {
-	assetName?: string;
-	pageType?: string;
-	assetId?: string;
-}
-
-type IProjectAssetTabs = Map<ProjectAssetTypes, Set<ResourceTab>>;
+type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
 	activeTab: Tab;
+	tabs: Tab[];
 }>();
 
 const emit = defineEmits(['open-asset', 'remove-asset']);
