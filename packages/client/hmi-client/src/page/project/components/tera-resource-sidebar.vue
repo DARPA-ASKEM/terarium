@@ -135,7 +135,13 @@ import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 
-type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
+interface ResourceTab {
+	assetName?: string;
+	pageType?: string;
+	assetId?: string;
+}
+
+type IProjectAssetTabs = Map<ProjectAssetTypes, Set<ResourceTab>>;
 
 const props = defineProps<{
 	project: IProject;
