@@ -31,8 +31,7 @@
 		v-else-if="pageType === ProjectPages.OVERVIEW"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
-		@open-workflow="openWorkflow"
-		@new-model="newModel"
+		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
@@ -78,11 +77,8 @@ import TeraModel from '@/components/models/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
-import { emptyWorkflow, createWorkflow } from '@/services/workflow';
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
-import { createModel } from '@/services/model';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 
 const props = defineProps<{
@@ -94,7 +90,13 @@ const props = defineProps<{
 	activeTabIndex?: number;
 }>();
 
-const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
+const emit = defineEmits([
+	'update:tabs',
+	'asset-loaded',
+	'update-tab-name',
+	'close-current-tab',
+	'open-new-asset'
+]);
 
 const router = useRouter();
 
@@ -105,57 +107,6 @@ const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
-
-// These 3 open functions can potentially make use of openAssetFromSidebar in tera-project.vue
-const openWorkflow = async () => {
-	// Create a new workflow
-	let wfName = 'workflow';
-	if (props.project && props.project.assets) {
-		wfName = `workflow ${props.project.assets[ProjectAssetTypes.SIMULATION_WORKFLOW].length + 1}`;
-	}
-	const wf = emptyWorkflow(wfName, '');
-
-	// Add the workflow to the project
-	const response = await createWorkflow(wf);
-	const workflowId = response.id;
-	await ProjectService.addAsset(
-		props.project.id,
-		ProjectAssetTypes.SIMULATION_WORKFLOW,
-		workflowId
-	);
-
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: 'Workflow',
-			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
-			assetId: workflowId
-		}
-	});
-};
-
-const newModel = async (modelName: string) => {
-	// 1. Load an empty AMR
-	const amr = newAMR(modelName);
-	(amr as any).id = undefined; // FIXME: id hack
-
-	const response = await createModel(amr);
-	const modelId = response?.id;
-
-	// 2. Add the model to the project
-	if (modelId) {
-		await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-		// 3. Reroute
-		router.push({
-			name: RouteName.ProjectRoute,
-			params: {
-				assetName: 'Model',
-				pageType: ProjectAssetTypes.MODELS,
-				assetId: modelId
-			}
-		});
-	}
-};
 
 const openOverview = () => {
 	router.push({
