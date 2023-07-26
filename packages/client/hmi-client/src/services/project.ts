@@ -230,7 +230,6 @@ export {
 	addAsset,
 	deleteAsset,
 	getAssets,
-	home,
 	getAssetIcon,
 	getDocumentAssetXddUri
 };
