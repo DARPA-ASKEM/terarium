@@ -105,49 +105,46 @@ const vFocus = {
 	mounted: (el) => el.focus()
 };
 
-function findOdeObject(variableName: string) {
+function findOdeObjectLocation(variableName: string) {
 	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 	if (!ode) return null;
 
-	const odeFieldNames = ['rates', 'initials', 'parameters'];
+	const fieldNames = ['rates', 'initials', 'parameters'];
 
-	for (let i = 0; i < odeFieldNames.length; i++) {
-		const odeFieldIndex = ode[odeFieldNames[i]].findIndex(
+	for (let i = 0; i < fieldNames.length; i++) {
+		const fieldIndex = ode[fieldNames[i]].findIndex(
 			({ target, id }) => target === variableName || id === variableName
 		);
-		if (odeFieldIndex === -1) continue;
+		if (fieldIndex === -1) continue;
 
 		return {
-			odeFieldObject: ode[odeFieldNames[i]][odeFieldIndex],
-			odeFieldIndex,
-			odeFieldName: odeFieldNames[i]
+			odeFieldObject: ode[fieldNames[i]][fieldIndex],
+			fieldName: fieldNames[i],
+			fieldIndex
 		};
 	}
 	return null;
 }
 
 function getMatrixValue(variableName: string) {
-	const valueLocation = findOdeObject(variableName);
-	if (valueLocation) {
-		const { odeFieldObject } = valueLocation;
+	const odeObjectLocation = findOdeObjectLocation(variableName);
+	if (odeObjectLocation) {
+		const { odeFieldObject } = odeObjectLocation;
 		return odeFieldObject?.expression ?? odeFieldObject?.value;
 	}
 	return variableName;
 }
 
 function updateModelConfigValue(variableName: string) {
-	const valueLocation = findOdeObject(variableName);
-	if (valueLocation) {
-		const { odeFieldObject, odeFieldIndex, odeFieldName } = valueLocation;
+	const odeObjectLocation = findOdeObjectLocation(variableName);
+	if (odeObjectLocation) {
+		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
 
 		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.val;
 		else if (odeFieldObject.value) odeFieldObject.value = valueToEdit.value.val;
 
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
-
-		modelConfigurationClone.configuration.semantics.ode[odeFieldName][odeFieldIndex] =
-			odeFieldObject;
-
+		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 		updateModelConfiguration(modelConfigurationClone);
 
 		valueToEdit.value = { val: '', rowIdx: -1, colIdx: -1 };
@@ -200,7 +197,6 @@ function configureMatrix() {
 			: createTransitionMatrix(matrixData, colDimensions, rowDimensions);
 
 	matrix.value = matrixAttributes.matrix;
-
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 }
