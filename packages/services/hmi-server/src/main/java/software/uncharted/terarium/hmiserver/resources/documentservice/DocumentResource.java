@@ -85,7 +85,6 @@ public class DocumentResource {
 			}
 
 			try {
-
 				String apiKey = "";
 				if (this.apiKey.isPresent())
 					apiKey = this.apiKey.get();
@@ -95,8 +94,8 @@ public class DocumentResource {
 				}
 
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(apiKey,
-						docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-						min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_to);
+					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
+					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_to);
 
 				if (doc.getErrorMessage() != null) {
 					return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
