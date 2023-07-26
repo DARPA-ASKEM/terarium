@@ -256,7 +256,6 @@ watch(
 watch(
 	() => openedAssetRoute.value, // Once route attributes change, add/switch to another tab
 	() => {
-		console.log('hihi', openedAssetRoute.value, tabs.value);
 		const tabExist = tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value));
 		if (openedAssetRoute.value.assetId) {
 			if (props.pageType && !tabExist) {
