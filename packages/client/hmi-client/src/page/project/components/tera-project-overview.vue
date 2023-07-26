@@ -105,6 +105,7 @@
 					:value="assets"
 					row-hover
 					:row-class="() => 'p-selectable-row'"
+					@update:selection="onRowSelect"
 				>
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
 					<Column field="assetName" header="Name" sortable style="width: 75%">
@@ -245,6 +246,21 @@
 			</section>
 		</section>
 
+		<Dialog
+			:visible="showToast"
+			:show-header="false"
+			:style="{ maxWidth: '50vw', backgroundColor: '#E3EFE480', marginBottom: '5rem' }"
+			position="bottom"
+			:modal="false"
+			:draggable="false"
+			:closable="false"
+		>
+			<div class="flex align-items-center justify-content-center gap-2 selection-toast">
+				<span> {{ selectedResources.length }} items selected. </span>
+				<Button class="p-button p-button-secondary" icon="">Open</Button>
+			</div>
+		</Dialog>
+
 		<!-- New model modal -->
 		<Teleport to="body">
 			<tera-modal
@@ -302,6 +318,7 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import { uploadArtifactToProject } from '@/services/artifact';
+import Dialog from 'primevue/dialog';
 
 const props = defineProps<{
 	project: IProject;
@@ -333,6 +350,7 @@ const existingModelNames = computed(() => {
 	return modelNames;
 });
 
+const showToast = ref<boolean>(false);
 const assets = computed(() => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
 
@@ -389,6 +407,16 @@ async function processFiles(files: File[], csvDescription: string) {
 	});
 }
 
+const onRowSelect = (selectedRows) => {
+	console.log(selectedRows);
+	if (!showToast.value && selectedRows.length > 0) {
+		showToast.value = true;
+		// toast.add({ group: "data-table" })
+	} else if (selectedRows.length === 0) {
+		showToast.value = false;
+		// toast.removeAllGroups()
+	}
+};
 function createNewModel() {
 	if (newModelName.value.trim().length === 0) {
 		isValidName.value = false;
@@ -737,5 +765,11 @@ ul {
 .no-results-found-message {
 	text-align: center;
 	width: 40%;
+}
+
+.selection-toast {
+	opacity: 0.9;
+	background-color: inherit;
+	padding-top: 1.33rem;
 }
 </style>
