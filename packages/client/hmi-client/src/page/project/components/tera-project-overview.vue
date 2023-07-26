@@ -246,21 +246,11 @@
 			</section>
 		</section>
 
-		<Dialog
-			:visible="showToast"
-			:show-header="false"
-			:style="{ maxWidth: '50vw', backgroundColor: '#E3EFE480', marginBottom: '5rem' }"
-			position="bottom"
-			:modal="false"
-			:draggable="false"
-			:closable="false"
-		>
-			<div class="flex align-items-center justify-content-center gap-2 selection-toast">
-				<span> {{ selectedResources.length }} items selected. </span>
-				<Button class="p-button p-button-secondary" icon="">Open</Button>
-			</div>
-		</Dialog>
-
+		<tera-multi-select-modal
+			:is-visible="showToast"
+			:selected-resources="selectedResources"
+			:buttons="multiSelectButtons"
+		></tera-multi-select-modal>
 		<!-- New model modal -->
 		<Teleport to="body">
 			<tera-modal
@@ -296,7 +286,7 @@
 
 <script setup lang="ts">
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
-import { nextTick, Ref, ref, computed, onMounted } from 'vue';
+import { nextTick, Ref, ref, computed, onMounted, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
@@ -318,7 +308,8 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import { uploadArtifactToProject } from '@/services/artifact';
-import Dialog from 'primevue/dialog';
+import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
+import { useTabStore } from '@/stores/tabs';
 
 const props = defineProps<{
 	project: IProject;
@@ -349,6 +340,19 @@ const existingModelNames = computed(() => {
 	});
 	return modelNames;
 });
+const tabStore = useTabStore();
+
+const multiSelectButtons = [
+	{
+		label: 'Open',
+		callback: (e) => {
+			console.log(e);
+			selectedResources.value.forEach((resource) => {
+				tabStore.addTab(props.project.id.toString(), toRaw(resource), false);
+			});
+		}
+	}
+];
 
 const showToast = ref<boolean>(false);
 const assets = computed(() => {
@@ -765,11 +769,5 @@ ul {
 .no-results-found-message {
 	text-align: center;
 	width: 40%;
-}
-
-.selection-toast {
-	opacity: 0.9;
-	background-color: inherit;
-	padding-top: 1.33rem;
 }
 </style>
