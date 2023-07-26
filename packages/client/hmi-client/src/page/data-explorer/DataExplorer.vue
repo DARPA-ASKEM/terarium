@@ -148,7 +148,8 @@ const route = useRoute();
 const queryStore = useQueryStore();
 const resources = useResourcesStore();
 
-const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
+const { searchByExampleOptions, searchByExampleItem, searchByExampleAssetCardProp } =
+	useSearchByExampleOptions();
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -275,12 +276,20 @@ const executeSearch = async () => {
 	};
 
 	// handle the search-by-example for finding related documents, models, and/or datasets
-	if (executeSearchByExample.value && searchByExampleItem.value) {
-		const id = getResourceID(searchByExampleItem.value) as string;
+	if (
+		executeSearchByExample.value &&
+		(searchByExampleItem.value || searchByExampleAssetCardProp.value)
+	) {
+		const id = getResourceID(
+			searchByExampleItem.value ?? searchByExampleAssetCardProp.value
+		) as string;
 		//
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
-		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
+		if (
+			isDocument(searchByExampleItem.value ?? searchByExampleAssetCardProp.value) &&
+			searchParams.xdd
+		) {
 			searchParams.xdd.dataset = xddDataset.value;
 			if (searchByExampleOptions.value.similarContent) {
 				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
@@ -294,7 +303,10 @@ const executeSearch = async () => {
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (isModel(searchByExampleItem.value) && searchParams.model) {
+		if (
+			isModel(searchByExampleItem.value ?? searchByExampleAssetCardProp.value) &&
+			searchParams.model
+		) {
 			searchParams.model.related_search_enabled = executeSearchByExample.value;
 			searchParams.model.related_search_id = id;
 			searchType = ResourceType.MODEL;
@@ -302,7 +314,10 @@ const executeSearch = async () => {
 		//
 		// find related datasets (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
+		if (
+			isDataset(searchByExampleItem.value ?? searchByExampleAssetCardProp.value) &&
+			searchParams.dataset
+		) {
 			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
 			searchParams.dataset.related_search_id = id;
 			searchType = ResourceType.DATASET;
@@ -419,7 +434,6 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	// REVIEW: executing a related content search means to find related artifacts to the one selected:
 	//         if a model/dataset/document is selected then find related artifacts from TDS
 	if (searchOptions.similarContent || searchOptions.relatedContent) {
-		isSliderFacetsOpen.value = false;
 		// NOTE the executeSearch will set proper search-by-example search parameters
 		//  and let the data service handles the fetch
 		executeSearchByExample.value = true;
@@ -546,7 +560,10 @@ async function executeNewQuery() {
 watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
 
-	disableSearchByExample();
+	// We support facet filters for search by example for documents but not for models or datasets
+	if (resourceType.value !== ResourceType.XDD) {
+		disableSearchByExample();
+	}
 
 	// user has changed some of the facet filter, so re-fetch data
 	dirtyResults.value[resourceType.value] = true;
