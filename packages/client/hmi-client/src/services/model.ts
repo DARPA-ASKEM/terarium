@@ -2,6 +2,10 @@ import API from '@/api/api';
 import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import router from '@/router';
+import { RouteName } from '@/router/routes';
+import * as ProjectService from '@/services/project';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -68,4 +72,51 @@ export async function getModelConfigurations(modelId: string): Promise<ModelConf
 export async function reconstructAMR(amr: any) {
 	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
 	return response?.data;
+}
+
+export async function addNewModelToProject(modelName: string, project: IProject) {
+	// 1. Load an empty AMR
+	const amr = newAMR(modelName);
+	(amr as any).id = undefined; // FIXME: id hack
+
+	const response = await createModel(amr);
+	const modelId = response?.id;
+
+	// 2. Add the model to the project
+	if (modelId) {
+		await ProjectService.addAsset(project.id, ProjectAssetTypes.MODELS, modelId);
+		// 3. Reroute
+		router.push({
+			name: RouteName.ProjectRoute,
+			params: {
+				assetName: 'Model',
+				pageType: ProjectAssetTypes.MODELS,
+				assetId: modelId
+			}
+		});
+	}
+}
+
+function newAMR(modelName: string) {
+	const amr: Model = {
+		id: '',
+		name: modelName,
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
 }
