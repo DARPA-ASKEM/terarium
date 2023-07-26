@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -78,16 +78,18 @@ const emit = defineEmits<{
 	(e: 'removed', projectId: IProject['id']): void;
 }>();
 
-const stats = !props.project
-	? null
-	: {
-			contributors: 1,
-			models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
-			datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
-			papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
-	  };
+const stats = computed(() =>
+	!props.project
+		? null
+		: {
+				contributors: 1,
+				models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
+				datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
+				papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
+		  }
+);
 
-const image = stats ? placeholder(stats) : undefined;
+const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
 
 /*
  * User Menu
