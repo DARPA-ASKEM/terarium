@@ -67,7 +67,7 @@
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
-					:active="isEqual(tab, activeTab)"
+					:active="tab.assetId === activeTab.assetId"
 					:title="tab.assetName"
 					class="asset-button"
 					plain

@@ -133,7 +133,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { isEmpty, isEqual } from 'lodash';
+import { isEmpty } from 'lodash';
 import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
 import TeraDatasetWorkflowWrapper from '@/components/workflow/tera-dataset-workflow-wrapper.vue';
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
@@ -196,6 +196,8 @@ const openedAssetRoute = computed<Tab>(() => ({
 }));
 const loadingTabIndex = ref<number | null>(null);
 
+const isSameTab = (a: Tab, b: Tab) => a.assetId === b.assetId && a.pageType === b.pageType;
+
 function setActiveTab() {
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 	loadingTabIndex.value = null;
@@ -206,12 +208,18 @@ async function openAsset(index: number = tabStore.getActiveTabIndex(projectConte
 	const asset: Tab = tabs.value[index];
 	if (!(asset && asset.assetId === props.assetId && asset.pageType === props.pageType)) {
 		loadingTabIndex.value = index;
-		router.push({ name: RouteName.ProjectRoute, params: asset });
+		router.push({
+			name: RouteName.ProjectRoute,
+			params: { assetId: asset.assetId, pageType: asset.pageType }
+		});
 	}
 }
 
 function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value!]) {
-	router.push({ name: RouteName.ProjectRoute, params: asset });
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: { assetId: asset.assetId, pageType: asset.pageType }
+	});
 	loadingTabIndex.value = tabs.value.length;
 }
 
@@ -232,7 +240,7 @@ async function removeAsset(asset: Tab) {
 		);
 
 		if (isRemoved) {
-			removeClosedTab(tabs.value.findIndex((tab: Tab) => isEqual(tab, asset)));
+			removeClosedTab(tabs.value.findIndex((tab: Tab) => isSameTab(tab, asset)));
 			logger.info(`${assetId} was removed.`, { showToast: true });
 			return;
 		}
@@ -302,7 +310,7 @@ watch(
 			tabStore.addTab(projectContext.value, openedAssetRoute.value);
 		}
 
-		if (projectContext.value && !tabs.value.some((tab) => isEqual(tab, overviewResource))) {
+		if (projectContext.value && !tabs.value.some((tab) => isSameTab(tab, overviewResource))) {
 			// Automatically add overview tab if it does not exist
 			tabStore.addTab(projectContext.value, overviewResource);
 		}
@@ -312,16 +320,20 @@ watch(
 watch(
 	() => openedAssetRoute.value, // Once route attributes change, add/switch to another tab
 	() => {
-		const tabExist = tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value));
+		const tabExist = tabs.value.some((tab) => isSameTab(tab, openedAssetRoute.value));
 		if (openedAssetRoute.value.assetId) {
 			if (props.pageType && !tabExist) {
 				tabStore.addTab(projectContext.value, openedAssetRoute.value);
 			} else {
-				const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
+				const index = tabs.value.findIndex((tab) => isSameTab(tab, openedAssetRoute.value));
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
 		} else if (!tabExist) {
 			tabStore.addTab(projectContext.value, overviewResource);
+		} else {
+			const index = tabs.value.findIndex((tab) => isSameTab(tab, openedAssetRoute.value));
+			console.log('I am here', index);
+			tabStore.setActiveTabIndex(projectContext.value, index);
 		}
 	}
 );
