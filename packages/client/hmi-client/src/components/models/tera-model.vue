@@ -572,7 +572,7 @@ import {
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
-import { createModel, addModelToProject, getModel, updateModel } from '@/services/model';
+import { createModel, getModel, updateModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { ResultType, FeatureConfig } from '@/types/common';
@@ -898,7 +898,7 @@ const createNewModel = async () => {
 		if (newModelResp) {
 			const modelId = newModelResp.id.toString();
 			emit('close-current-tab');
-			await addModelToProject(props.project.id, modelId);
+			await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 
 			// Go to the model you just created
 			router.push({
