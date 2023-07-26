@@ -73,7 +73,11 @@ export async function reconstructAMR(amr: any) {
 	return response?.data;
 }
 
-export async function addNewModelToProject(modelName: string, project: IProject) {
+// function adds model to project, returns modelId if successful otherwise null
+export async function addNewModelToProject(
+	modelName: string,
+	project: IProject
+): Promise<string | null> {
 	// 1. Load an empty AMR
 	const amr = newAMR(modelName);
 	(amr as any).id = undefined; // FIXME: id hack
