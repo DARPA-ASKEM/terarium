@@ -170,7 +170,9 @@ const baseModelTransitions = computed<any>(() =>
 );
 
 // Decide if we should display the whole configuration table
-const isConfigurationVisible = computed(() => !isEmpty(configurations) && !isEmpty(tableHeaders));
+const isConfigurationVisible = computed(
+	() => !isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)
+);
 
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
