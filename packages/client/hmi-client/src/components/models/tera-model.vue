@@ -572,7 +572,7 @@ import {
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
-import { createModel, getModel, updateModel } from '@/services/model';
+import { createModel, getModel, getModelConfigurations, updateModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { ResultType, FeatureConfig } from '@/types/common';
@@ -936,6 +936,7 @@ async function confirmEdit() {
 	if (model.value && transientTableValue.value) {
 		const { tableType, idx, updateProperty } = transientTableValue.value;
 		const modelClone = cloneDeep(model.value);
+		const modelConfigs = await getModelConfigurations(model?.value?.id);
 
 		switch (tableType) {
 			case 'parameters':
@@ -950,7 +951,9 @@ async function confirmEdit() {
 
 							// note that this is making a call to an async function to update the different model configs
 							// but we don't need to wait for it to finish because we don't need immediate access to the model configs
-							updateConfigFields(model.value!.id, ode.parameters![idx][key], value as string);
+							if (modelConfigs) {
+								updateConfigFields(modelConfigs, ode.parameters![idx][key], value as string);
+							}
 						}
 					});
 				}
