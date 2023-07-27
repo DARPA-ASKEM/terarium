@@ -5,7 +5,7 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
+				<thead class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
 						<th class="choose-criteria"></th>
@@ -79,9 +79,9 @@ import {
 	extractStateMatrixData,
 	extractTransitionMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
-import { createStateMatrix, createTransitionMatrix } from '@/utils/pivot';
+import { createTransitionMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
-import { ModelConfiguration } from '@/types/Types';
+import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { updateModelConfiguration } from '@/services/model-configurations';
@@ -105,7 +105,12 @@ const vFocus = {
 	mounted: (el) => el.focus()
 };
 
-function findOdeObjectLocation(variableName: string) {
+// Finds where to get the value within the AMR based on the variable name
+function findOdeObjectLocation(variableName: string): {
+	odeFieldObject: Rate & Initial & ModelParameter;
+	fieldName: string;
+	fieldIndex: number;
+} | null {
 	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 	if (!ode) return null;
 
@@ -141,7 +146,7 @@ function updateModelConfigValue(variableName: string) {
 		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
 
 		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.val;
-		else if (odeFieldObject.value) odeFieldObject.value = valueToEdit.value.val;
+		else if (odeFieldObject.value) odeFieldObject.value = Number(valueToEdit.value.val);
 
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
@@ -191,10 +196,12 @@ function configureMatrix() {
 			  ])
 			: extractTransitionMatrixData(props.modelConfiguration.configuration, rowAndCol);
 
-	const matrixAttributes =
-		props.nodeType === NodeType.State
-			? createStateMatrix(matrixData)
-			: createTransitionMatrix(matrixData, colDimensions, rowDimensions);
+	const matrixAttributes = createTransitionMatrix(matrixData, colDimensions, rowDimensions);
+
+	// const matrixAttributes =
+	// 	props.nodeType === NodeType.State
+	// 		? createStateMatrix(matrixData)
+	// 		: createTransitionMatrix(matrixData, colDimensions, rowDimensions);
 
 	matrix.value = matrixAttributes.matrix;
 	chosenCol.value = colDimensions[0];
