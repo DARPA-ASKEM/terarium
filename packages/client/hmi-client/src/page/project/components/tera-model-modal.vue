@@ -71,7 +71,6 @@ async function createNewModel() {
 		router.push({
 			name: RouteName.ProjectRoute,
 			params: {
-				assetName: 'Model',
 				pageType: ProjectAssetTypes.MODELS,
 				assetId: modelId
 			}
