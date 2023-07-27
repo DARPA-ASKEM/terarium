@@ -89,13 +89,7 @@ const props = defineProps<{
 	activeTabIndex?: number;
 }>();
 
-const emit = defineEmits([
-	'update:tabs',
-	'asset-loaded',
-	'update-tab-name',
-	'close-current-tab',
-	'open-new-asset'
-]);
+const emit = defineEmits(['asset-loaded', 'open-new-asset']);
 
 const resourceStore = useResoureStore();
 

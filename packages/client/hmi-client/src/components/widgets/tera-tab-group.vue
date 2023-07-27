@@ -57,6 +57,7 @@ const emit = defineEmits(['select-tab', 'close-tab']);
 const loadingTabIndex = ref();
 
 const getTabName = (tab: Tab) => {
+	if (tab.assetName) return tab.assetName;
 	if (tab.pageType === ProjectPages.OVERVIEW) return 'Overview';
 	if (tab.pageType === ProjectAssetTypes.CODE) return 'New File';
 	const assets = resourceStore.activeProjectAssets;
