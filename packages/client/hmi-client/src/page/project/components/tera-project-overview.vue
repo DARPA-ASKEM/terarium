@@ -369,7 +369,7 @@ async function processFiles(files: File[], csvDescription: string) {
 }
 
 const onRowSelect = (selectedRows) => {
-	// show multi select modal when selectedRows exist
+	// show multi select modal when there are selectedRows otherwise hide
 	showMultiSelect.value = selectedRows.length !== 0;
 };
 async function openImportModal() {
