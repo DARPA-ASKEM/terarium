@@ -76,12 +76,12 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 			}
 		}
 	});
-	return { colAxis, rowAxis };
+	return { colAxis, rowAxis, termsMap: cardinality };
 };
 
 // Creates a M x 1 matrix where
 // M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
-export const createStateMatrix = (data: any[]) => {
+export const creatmMatrix1D = (data: any[]) => {
 	const rows: any[] = [];
 
 	// Construct 1D matrix for state data
@@ -103,11 +103,7 @@ export const createStateMatrix = (data: any[]) => {
 // Creates a M x N matrix where
 // M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
 // N =  cardinality(colDimensions[0]) * cardinality(colDimensions[1]) * ... * cardinality(colDimensions[n])
-export const createTransitionMatrix = (
-	data: any[],
-	rowDimensions: string[],
-	colDimensions: string[]
-) => {
+export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensions: string[]) => {
 	const axes = pivotAxes(data, colDimensions, rowDimensions);
 	const rows: any[] = [];
 
