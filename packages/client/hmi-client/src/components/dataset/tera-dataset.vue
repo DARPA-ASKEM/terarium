@@ -256,14 +256,18 @@
 								<span>Suggested value</span>
 								<div>
 									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata?.documents[0].title }}
+										<i class="pi pi-file" />{{
+											dataset.metadata?.documents ? dataset.metadata?.documents[0].title : ''
+										}}
 									</div>
 									<div class="suggested-value">{{ suggestedValues[index] }}</div>
 								</div>
 								<span>Other possible values</span>
 								<div>
 									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata.documents[0].title }}
+										<i class="pi pi-file" />{{
+											dataset.metadata?.documents ? dataset.metadata.documents[0].title : ''
+										}}
 									</div>
 									<div class="suggested-value">
 										<ul>
@@ -277,7 +281,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="pd.length > 0">
+				<AccordionTab v-if="pd && pd.length > 0">
 					<template #header>
 						<header id="ExtractionTable">Extraction Table</header>
 					</template>
@@ -366,7 +370,11 @@ const gotEnrichedData = (payload) => {
 };
 
 const pd = computed(() =>
-	enrichedData.value ? Object.values(enrichedData.value.DATA_PROFILING_RESULT) : []
+	enrichedData.value
+		? Object.values(
+				enrichedData.value.DATA_PROFILING_RESULT ? enrichedData.value.DATA_PROFILING_RESULT : {}
+		  )
+		: []
 );
 
 const headers = ref({
@@ -481,7 +489,6 @@ const openDatesetChatTab = () => {
 
 onUpdated(() => {
 	if (dataset.value) {
-		console.log(dataset.value);
 		emit('asset-loaded');
 
 		// setting values related to editing rows in the variables table
