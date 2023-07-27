@@ -15,6 +15,7 @@
 					@open-asset="openAssetFromSidebar"
 					@close-tab="removeClosedTab"
 					@remove-asset="removeAsset"
+					@open-new-asset="openNewAsset"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -38,6 +39,7 @@
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
+					@open-new-asset="openNewAsset"
 				/>
 			</SplitterPanel>
 			<SplitterPanel class="project-page top-z-index" v-if="workflowNode" :size="20">
@@ -121,6 +123,12 @@
 				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
 			</template>
 		</tera-slider-panel>
+		<!-- New model modal -->
+		<tera-model-modal
+			:project="project"
+			:is-visible="isNewModelModalVisible"
+			@close-modal="onCloseModelModal"
+		/>
 	</main>
 </template>
 
@@ -150,7 +158,9 @@ import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
-import { workflowEventBus } from '@/services/workflow';
+import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
+import TeraModelModal from './components/tera-model-modal.vue';
+
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -176,6 +186,7 @@ workflowEventBus.on('drilldown', (payload: any) => {
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 
+const isNewModelModalVisible = ref(false);
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
@@ -239,6 +250,49 @@ async function removeAsset(asset: Tab) {
 	logger.error(`Failed to remove ${assetName}`, { showToast: true });
 }
 
+const openWorkflow = async () => {
+	// Create a new workflow
+	let wfName = 'workflow';
+	if (props.project && props.project.assets) {
+		wfName = `workflow ${props.project.assets[ProjectAssetTypes.SIMULATION_WORKFLOW].length + 1}`;
+	}
+	const wf = emptyWorkflow(wfName, '');
+
+	// Add the workflow to the project
+	const response = await createWorkflow(wf);
+	const workflowId = response.id;
+	await ProjectService.addAsset(
+		props.project.id,
+		ProjectAssetTypes.SIMULATION_WORKFLOW,
+		workflowId
+	);
+
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: {
+			assetName: 'Workflow',
+			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
+			assetId: workflowId
+		}
+	});
+};
+
+const openNewAsset = (assetType: string) => {
+	switch (assetType) {
+		case ProjectAssetTypes.MODELS:
+			isNewModelModalVisible.value = true;
+			break;
+		case ProjectAssetTypes.SIMULATION_WORKFLOW:
+			openWorkflow();
+			break;
+		default:
+			break;
+	}
+};
+
+const onCloseModelModal = () => {
+	isNewModelModalVisible.value = false;
+};
 watch(
 	() => projectContext.value,
 	() => {
