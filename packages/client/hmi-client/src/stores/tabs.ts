@@ -26,7 +26,7 @@ export const useTabStore = defineStore('tabs', {
 				this.getTabs(context).push(newTab);
 			}
 
-			// Go to last tab index if
+			// Go to last tab index if we are re-routing
 			if (reroute) {
 				const lastTabIndex = this.getTabs(context).length - 1;
 				this.setActiveTabIndex(context, lastTabIndex);

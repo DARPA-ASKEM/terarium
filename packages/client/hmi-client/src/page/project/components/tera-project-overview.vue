@@ -246,7 +246,7 @@
 			</section>
 		</section>
 		<tera-multi-select-modal
-			:is-visible="showToast"
+			:is-visible="showMultiSelect"
 			:selected-resources="selectedResources"
 			:buttons="multiSelectButtons"
 		></tera-multi-select-modal>
@@ -310,7 +310,7 @@ const multiSelectButtons = [
 	}
 ];
 
-const showToast = ref<boolean>(false);
+const showMultiSelect = ref<boolean>(false);
 
 const assets = computed(() => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -369,13 +369,10 @@ async function processFiles(files: File[], csvDescription: string) {
 }
 
 const onRowSelect = (selectedRows) => {
-	console.log(selectedRows);
-	if (!showToast.value && selectedRows.length > 0) {
-		showToast.value = true;
-		// toast.add({ group: "data-table" })
+	if (!showMultiSelect.value && selectedRows.length > 0) {
+		showMultiSelect.value = true;
 	} else if (selectedRows.length === 0) {
-		showToast.value = false;
-		// toast.removeAllGroups()
+		showMultiSelect.value = false;
 	}
 };
 async function openImportModal() {
