@@ -47,8 +47,7 @@ type DatasetType = {
 const renderedRuns = computed<RunResults>(() => {
 	if (!props.hasMeanLine) return props.runResults;
 
-	const runResult: RunResults = JSON.parse(JSON.stringify(props.runResults));
-	// convert to array from array-like object
+	const runResult: RunResults = _.cloneDeep(props.runResults);
 	const parsedSimProbData = Object.values(runResult);
 
 	const numRuns = parsedSimProbData.length;
