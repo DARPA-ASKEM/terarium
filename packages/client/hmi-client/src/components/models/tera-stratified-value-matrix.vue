@@ -5,7 +5,7 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead class="p-datatable-thead">
+				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
 						<th class="choose-criteria"></th>
@@ -79,7 +79,7 @@ import {
 	extractStateMatrixData,
 	extractTransitionMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
-import { createTransitionMatrix } from '@/utils/pivot';
+import { createStateMatrix, createTransitionMatrix } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
@@ -196,12 +196,10 @@ function configureMatrix() {
 			  ])
 			: extractTransitionMatrixData(props.modelConfiguration.configuration, rowAndCol);
 
-	const matrixAttributes = createTransitionMatrix(matrixData, colDimensions, rowDimensions);
-
-	// const matrixAttributes =
-	// 	props.nodeType === NodeType.State
-	// 		? createStateMatrix(matrixData)
-	// 		: createTransitionMatrix(matrixData, colDimensions, rowDimensions);
+	const matrixAttributes =
+		props.nodeType === NodeType.State
+			? createStateMatrix(matrixData)
+			: createTransitionMatrix(matrixData, colDimensions, rowDimensions);
 
 	matrix.value = matrixAttributes.matrix;
 	chosenCol.value = colDimensions[0];
