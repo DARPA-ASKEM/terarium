@@ -657,7 +657,7 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[], dimension
 		if (!stateIds.includes(id)) return;
 		const obj: any = {};
 
-		// FIXME: This only works for 2 dimensions now, may have to handle more than 2 differently
+		// State matrices are always 1D
 		obj[dimensions[results.length]] = state.id;
 		results.push(obj);
 	});
