@@ -42,7 +42,7 @@ import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import { getAssetIcon } from '@/services/project';
 import { ref, watch } from 'vue';
-import useResoureStore from '@/stores/resources';
+import useResourceStore from '@/stores/resources';
 import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
 
 const props = defineProps<{
@@ -51,7 +51,7 @@ const props = defineProps<{
 	loadingTabIndex: number | null;
 }>();
 
-const resourceStore = useResoureStore();
+const resourceStore = useResourceStore();
 
 const emit = defineEmits(['select-tab', 'close-tab']);
 const loadingTabIndex = ref();

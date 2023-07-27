@@ -79,7 +79,7 @@ import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workfl
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import useResoureStore from '@/stores/resources';
+import useResourceStore from '@/stores/resources';
 
 const props = defineProps<{
 	project: IProject;
@@ -91,7 +91,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['asset-loaded', 'open-new-asset']);
 
-const resourceStore = useResoureStore();
+const resourceStore = useResourceStore();
 
 const router = useRouter();
 
