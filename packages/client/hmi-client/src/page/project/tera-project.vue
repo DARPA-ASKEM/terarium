@@ -187,8 +187,7 @@ const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
 	pageType: props.pageType,
-	assetId: props.assetId,
-	assetName: undefined // not used
+	assetId: props.assetId
 }));
 const loadingTabIndex = ref<number | null>(null);
 

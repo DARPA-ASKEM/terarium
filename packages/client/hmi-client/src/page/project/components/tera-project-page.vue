@@ -104,6 +104,12 @@ const assetName = computed<string>(() => {
 	if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
 	const assets = resourceStore.activeProjectAssets;
 
+	/**
+	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
+	 *
+	 *   const list = assets[ props.pageType as string] as IdetifiableAsset[]
+	 *   const asset = list.find(...)
+	 */
 	if (assets) {
 		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
 		return asset.name ?? 'n/a';
