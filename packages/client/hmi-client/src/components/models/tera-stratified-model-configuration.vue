@@ -26,7 +26,7 @@
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr v-for="i in modelConfigurations.length" :key="i">
+					<tr v-for="({ name }, i) in modelConfigurations" :key="i">
 						<!--TODO: This td is a placeholder, row selection doesn't work-->
 						<td class="p-selection-column p-frozen-column">
 							<div class="p-checkbox p-component">
@@ -38,10 +38,36 @@
 								</div>
 							</div>
 						</td>
-						<td class="p-frozen-column second-frozen" tabindex="0">Default name</td>
+						<td
+							class="p-frozen-column second-frozen"
+							tabindex="0"
+							@keyup.enter="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+							@click="
+								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
+								cellEditStates[i].name = true;
+							"
+						>
+							<InputText
+								v-if="cellEditStates[i]?.name"
+								v-model.lazy="modelConfigInputValue"
+								v-focus
+								@focusout="cellEditStates[i].name = false"
+								@keyup.stop.enter="
+									cellEditStates[i].name = false;
+									updateModelConfigName(i);
+								"
+								class="cell-input"
+							/>
+							<span v-else class="editable-cell">
+								{{ name }}
+							</span>
+						</td>
 						<td v-for="(id, j) in [...baseModelStates, ...baseModelTransitions]" :key="j">
-							<section class="editable-cell" @click="openValueModal(id, i - 1)">
-								<span>{{ id }}<i class="pi pi-table"></i></span>
+							<section class="editable-cell" @click="openValueModal(id, i)">
+								<span>{{ id }}<i class="pi pi-table" /></span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 									icon="pi pi-ellipsis-v"
@@ -79,7 +105,7 @@
 						<div>
 							<label for="name">Matrix</label>
 							<tera-stratified-value-matrix
-								:model="configurations[modalVal.configIndex]"
+								:model-configuration="modelConfigurations[modalVal.configIndex]"
 								:id="modalVal.id"
 								:node-type="modalVal.nodeType"
 							/>
@@ -122,6 +148,7 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
@@ -153,6 +180,16 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
 	{ name: 'Parameters', colspan: baseModelTransitions.value.length }
 ]);
 
+// Makes cell inputs focus once they appear
+const vFocus = {
+	mounted: (el) => el.focus()
+};
+
+function updateModelConfigName(configIndex: number) {
+	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
+	updateModelConfiguration(modelConfigurations.value[configIndex]);
+}
+
 async function addModelConfiguration(config: ModelConfiguration) {
 	await createModelConfiguration(
 		props.model.id,
@@ -173,6 +210,15 @@ function openValueModal(id: string, configIndex: number) {
 		openValueConfig.value = true;
 		modalVal.value = { id, configIndex, nodeType };
 	}
+}
+
+function resetCellEditing() {
+	const row = { name: false };
+
+	// Can't use fill here because the same row object would be referenced throughout the array
+	const cellEditStatesArr = new Array(modelConfigurations.value.length);
+	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
+	cellEditStates.value = cellEditStatesArr;
 }
 
 async function initializeConfigSpace() {
@@ -202,31 +248,12 @@ async function initializeConfigSpace() {
 		updateModelConfiguration(defaultConfig);
 	}
 
+	resetCellEditing();
+
 	openValueConfig.value = false;
 	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
 	extractions.value = [{ name: 'Default', value: '' }];
 }
-
-function resetCellEditing() {
-	const row = { name: false };
-
-	for (let i = 0; i < tableHeaders.value.length; i++) {
-		const { name, colspan } = tableHeaders.value[i];
-		row[name] = Array(colspan).fill(false);
-	}
-
-	// Can't use fill here because the same row object would be referenced throughout the array
-	const cellEditStatesArr = new Array(modelConfigurations.value.length);
-	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
-	cellEditStates.value = cellEditStatesArr;
-}
-
-watch(
-	() => tableHeaders.value,
-	() => {
-		resetCellEditing();
-	}
-);
 
 watch(
 	() => props.model.id,
