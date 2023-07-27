@@ -446,7 +446,7 @@ const getAssets = async (params: GetAssetsParams) => {
  * the "/documents?similar_to=<id>" endpoint as an alternative
  */
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
-	if (docid === '' || dataset === null) {
+	if (docid === '') {
 		return [] as Document[];
 	}
 

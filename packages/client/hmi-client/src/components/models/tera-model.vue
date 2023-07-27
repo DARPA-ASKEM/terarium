@@ -510,7 +510,7 @@
 					<header>Related publications</header>
 				</template>
 				<p>
-					Terarium can extract information from papers and other resources to describe this model.
+					Terarium can extract information from papers and other artifacts to describe this model.
 				</p>
 				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
 			</tera-modal>
