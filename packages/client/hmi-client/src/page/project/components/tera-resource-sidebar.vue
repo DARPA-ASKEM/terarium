@@ -67,7 +67,7 @@
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
-					:active="isEqual(tab, activeTab)"
+					:active="tab.assetId === activeTab.assetId"
 					:title="tab.assetName"
 					class="asset-button"
 					plain
@@ -160,10 +160,9 @@ type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 const props = defineProps<{
 	project: IProject;
 	activeTab: Tab;
-	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'open-new-asset']);
+const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
 
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
