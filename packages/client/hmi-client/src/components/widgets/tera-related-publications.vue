@@ -32,7 +32,7 @@
 					<Column field="name" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
 				</DataTable>
-				<div v-else class="no-artifacts">
+				<div v-else>
 					<div class="no-artifacts">
 						<img class="no-artifacts-img" src="@assets/svg/plants.svg" alt="" />
 						<div class="no-artifacts-text">

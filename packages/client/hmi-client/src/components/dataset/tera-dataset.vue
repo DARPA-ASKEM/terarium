@@ -256,9 +256,7 @@
 								<span>Suggested value</span>
 								<div>
 									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{
-											dataset.metadata?.documents ? dataset.metadata?.documents[0].title : ''
-										}}
+										<i class="pi pi-file" />{{ dataset.metadata?.documents?.[0].title ?? '' }}
 									</div>
 									<div class="suggested-value">{{ suggestedValues[index] }}</div>
 								</div>
@@ -281,7 +279,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="pd && pd.length > 0">
+				<AccordionTab v-if="!isEmpty(pd)">
 					<template #header>
 						<header id="ExtractionTable">Extraction Table</header>
 					</template>
@@ -325,7 +323,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
-import { isString } from 'lodash';
+import { isString, isEmpty } from 'lodash';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
