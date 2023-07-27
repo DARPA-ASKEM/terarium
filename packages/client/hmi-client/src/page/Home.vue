@@ -222,7 +222,7 @@ onMounted(async () => {
 
 	projects.value.forEach(async (project) => {
 		project.assets = await ProjectService.getAssets(project.id);
-		project.relatedDocuments = await getRelatedDocuments(project.id, 'xdd-covid-19');
+		project.relatedDocuments = await getRelatedDocuments(project.id, null);
 	});
 
 	// Get all relevant documents (latest on section)
