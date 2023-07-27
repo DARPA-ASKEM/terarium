@@ -301,8 +301,7 @@ const tabStore = useTabStore();
 const multiSelectButtons = [
 	{
 		label: 'Open',
-		callback: (e) => {
-			console.log(e);
+		callback: () => {
 			selectedResources.value.forEach((resource) => {
 				tabStore.addTab(props.project.id.toString(), toRaw(resource), false);
 			});
