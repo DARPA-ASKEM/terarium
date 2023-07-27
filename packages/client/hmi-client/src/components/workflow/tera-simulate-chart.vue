@@ -45,7 +45,7 @@ type DatasetType = {
 };
 
 const renderedRuns = computed<RunResults>(() => {
-	if (!props.hasMeanLine) return props.runResults;
+	if (!props.hasMeanLine) return _.cloneDeep(props.runResults);
 
 	const runResult: RunResults = _.cloneDeep(props.runResults);
 	const parsedSimProbData = Object.values(runResult);
