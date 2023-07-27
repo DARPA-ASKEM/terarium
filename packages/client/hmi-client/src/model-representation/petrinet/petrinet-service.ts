@@ -549,7 +549,7 @@ export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => 
 	metadata: amrOld.metadata
 });
 
-export const modifyModelTypeSystemforStratification = (amr: Model) => {
+export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
 		const { name, description, schema, semantics } = amrCopy;
@@ -575,9 +575,7 @@ function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
 	}
 }
 
-export const stratify = async (baseAMR: Model, strataAMR: Model) => {
-	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
-	const strataModel = modifyModelTypeSystemforStratification(strataAMR);
+export const stratify = async (baseModel: Model, strataModel: Model) => {
 	unifyModelTypeSystems(baseModel, strataModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,

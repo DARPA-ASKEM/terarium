@@ -78,8 +78,9 @@
 								:model="model"
 								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
-								:type-system="strataModelTypeSystem"
+								:type-system="strataModel?.semantics?.typing?.system.model"
 								@model-updated="(value) => (typedBaseModel = value)"
+								@all-nodes-typed="(value) => onAllNodesTyped(value)"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -121,7 +122,7 @@
 								<tera-strata-model-diagram
 									:strata-model="strataModel"
 									:base-model="typedBaseModel"
-									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
+									:base-model-type-system="typedBaseModel?.semantics?.typing?.system.model"
 									:show-reflexives-toolbar="stratifyStep === 3"
 									@model-updated="(value) => (typedStrataModel = value)"
 								/>
@@ -183,7 +184,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -193,7 +194,7 @@ import {
 	generateAgeStrataModel,
 	generateLocationStrataModel
 } from '@/services/models/stratification-service';
-import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
@@ -226,12 +227,14 @@ const labels = ref();
 const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
-const strataModelTypeSystem = computed<TypeSystem | undefined>(
-	() => strataModel.value?.semantics?.typing?.system
-);
 const typedBaseModel = ref<Model>();
 const typedStrataModel = ref<Model | null>(null);
 const stratifiedModel = ref<Model>();
+
+function onAllNodesTyped(value: Model) {
+	console.log(value);
+	typedBaseModel.value = value;
+}
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
