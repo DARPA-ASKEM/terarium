@@ -65,13 +65,12 @@
 				:totalRecords="parsedRawData.length"
 				:rowsPerPageOptions="[5, 10, 20, 50]"
 			/>
-			<simulate-chart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
-				:run-results="renderedRuns"
+				:run-results="runResults"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
+				has-mean-line
 				@configuration-change="configurationChange(index, $event)"
 			/>
 			<Button
@@ -166,7 +165,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
-import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
+import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
@@ -192,7 +191,6 @@ const model = ref<Model | null>(null);
 const parsedRawData = ref<any>();
 const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
-const renderedRuns = ref<RunResults>({});
 
 const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
@@ -245,59 +243,6 @@ onMounted(async () => {
 	runResults.value = output.runResults;
 	runConfigs.value = output.runConfigs;
 });
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
-
-// process run result data to create mean run line
-watch(
-	() => runResults.value,
-	(input) => {
-		const runResult: RunResults = JSON.parse(JSON.stringify(input));
-
-		// convert to array from array-like object
-		const parsedSimProbData = Object.values(runResult);
-
-		const numRuns = parsedSimProbData.length;
-		if (!numRuns) {
-			renderedRuns.value = runResult;
-			return;
-		}
-
-		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
-		const aggregateRun: { [key: string]: number }[] = [];
-
-		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
-			for (let run = 0; run < numRuns; run++) {
-				if (!aggregateRun[timestamp]) {
-					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
-					Object.keys(aggregateRun[timestamp]).forEach((key) => {
-						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
-					});
-				} else {
-					const datum = parsedSimProbData[run][timestamp];
-					Object.keys(datum).forEach((key) => {
-						aggregateRun[timestamp][key] += datum[key] / numRuns;
-					});
-				}
-			}
-		}
-
-		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-	},
-	{ immediate: true, deep: true }
-);
 
 watch(
 	() => numSamples.value,
