@@ -73,7 +73,7 @@ import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/models/tera-model.vue';
-import TeraCodeEditor from '@/page/project/components/tera-code-editor.vue';
+import TeraCodeEditor from '@/components/code/tera-code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import * as ProjectService from '@/services/project';
