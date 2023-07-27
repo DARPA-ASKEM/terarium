@@ -130,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty } from 'lodash';
 import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
@@ -222,6 +222,13 @@ function openAssetFromSidebar(asset: Tab) {
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
+
+	if (tabs.value.length > 0) {
+		openAsset();
+	} else {
+		tabStore.addTab(projectContext.value, overviewResource);
+		openAsset();
+	}
 }
 
 async function removeAsset(asset: Tab) {
@@ -297,51 +304,74 @@ const codeResource = {
 	assetId: ''
 };
 
+const adjustTabsProjectChange = () => {
+	const pageType = openedAssetRoute.value.pageType;
+	const projectId = projectContext.value;
+
+	if (pageType || !projectContext.value) return;
+
+	if (tabs.value.length > 0) {
+		openAsset();
+		return;
+	}
+
+	// If there aren't anything, push in overview
+	if (tabs.value.length === 0) {
+		tabStore.addTab(projectId, overviewResource);
+		openAsset(0);
+	}
+};
+
+const adjustTabs = () => {
+	const projectId = projectContext.value;
+	const assetId = openedAssetRoute.value.assetId;
+	const pageType = openedAssetRoute.value.pageType;
+
+	if (!pageType) return;
+
+	// Handle new regular tab
+	const tabExist = tabs.value.some((tab) => isSameTab(tab, openedAssetRoute.value));
+	if (!tabExist && assetId) {
+		tabStore.addTab(projectContext.value, openedAssetRoute.value);
+		return;
+	}
+
+	// Handle existing tab
+	if (tabExist) {
+		const index = tabs.value.findIndex((tab) => isSameTab(tab, openedAssetRoute.value));
+		tabStore.setActiveTabIndex(projectContext.value, index);
+		return;
+	}
+
+	/** Quirky special logic for this that are not really assets * */
+
+	// If new code or overview
+	if (!tabExist && !assetId) {
+		if (pageType === ProjectAssetTypes.CODE) {
+			tabStore.addTab(projectId, codeResource);
+			openAsset();
+		} else if (pageType === ProjectPages.OVERVIEW) {
+			tabStore.addTab(projectId, overviewResource);
+			openAsset(0);
+		}
+	}
+};
+
 watch(
 	() => projectContext.value,
-	() => {
-		if (
-			tabs.value.length > 0 &&
-			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
-		) {
-			openAsset();
-		} else if (openedAssetRoute.value && openedAssetRoute.value.assetId) {
-			tabStore.addTab(projectContext.value, openedAssetRoute.value);
-		}
-
-		if (projectContext.value && !tabs.value.some((tab) => isSameTab(tab, overviewResource))) {
-			// Automatically add overview tab if it does not exist
-			tabStore.addTab(projectContext.value, overviewResource);
-		}
-	}
+	() => adjustTabsProjectChange()
 );
 
 watch(
-	() => openedAssetRoute.value, // Once route attributes change, add/switch to another tab
-	() => {
-		const tabExist = tabs.value.some((tab) => isSameTab(tab, openedAssetRoute.value));
-		if (openedAssetRoute.value.assetId) {
-			if (props.pageType && !tabExist) {
-				tabStore.addTab(projectContext.value, openedAssetRoute.value);
-			} else {
-				const index = tabs.value.findIndex((tab) => isSameTab(tab, openedAssetRoute.value));
-				tabStore.setActiveTabIndex(projectContext.value, index);
-			}
-		} else if (!tabExist) {
-			if (openedAssetRoute.value.pageType === ProjectAssetTypes.CODE) {
-				tabStore.addTab(projectContext.value, codeResource);
-			} else {
-				tabStore.addTab(projectContext.value, overviewResource);
-			}
-		} else {
-			const index = tabs.value.findIndex((tab) => isSameTab(tab, openedAssetRoute.value));
-			tabStore.setActiveTabIndex(projectContext.value, index);
-		}
-	}
+	() => openedAssetRoute.value,
+	() => adjustTabs()
 );
 
-tabStore.$subscribe(() => {
-	openAsset(tabStore.getActiveTabIndex(projectContext.value));
+onMounted(() => {
+	setTimeout(() => {
+		adjustTabsProjectChange();
+		adjustTabs();
+	}, 400);
 });
 </script>
 
