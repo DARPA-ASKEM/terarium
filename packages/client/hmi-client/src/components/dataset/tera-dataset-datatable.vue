@@ -94,7 +94,7 @@ const props = defineProps<{
 	tableStyle?: String;
 }>();
 
-const CATEGORYPERCENTAGE = 0.9;
+const CATEGORYPERCENTAGE = 1.0;
 const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
 
@@ -154,8 +154,7 @@ const setBarChartData = (bins: any[]) => {
 			{
 				label: 'Count',
 				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
-				borderColor: '#FFF',
-				borderWidth: 1,
+				hoverBackgroundColor: documentStyle.getPropertyValue('--primary-color-light'),
 				data: bins,
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
