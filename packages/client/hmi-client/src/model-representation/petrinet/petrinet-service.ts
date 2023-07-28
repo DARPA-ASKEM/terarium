@@ -674,7 +674,7 @@ export const getCatlabStratasDataPoint = (amr: Model, id: string) => {
 	let span: any = amr.semantics?.span;
 	let key = id;
 	let c = 0;
-	const result = {};
+	const result: any = {};
 
 	// Recursively crawl up the strata provenance chain
 	while (c < MAX_DEPTH) {
@@ -715,7 +715,7 @@ export const getCatlabTransitionsMatrixData = (amr: Model) => {
 	const results: any[] = [];
 	for (let i = 0; i < transitions.length; i++) {
 		const transition = transitions[i];
-		let result = {};
+		let result: any = {};
 
 		// Scan both inut and outut
 		transition.input.forEach((stateId: string) => {
