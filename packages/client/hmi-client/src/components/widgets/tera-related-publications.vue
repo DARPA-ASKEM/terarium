@@ -3,7 +3,7 @@
 		<AccordionTab>
 			<template #header> Related publications </template>
 			<p>
-				Terarium can extract information from papers and other resources to add relevant information
+				Terarium can extract information from papers and other artifacts to add relevant information
 				to this resource.
 			</p>
 			<ul>
@@ -19,10 +19,11 @@
 				:style="{ width: '50vw' }"
 			>
 				<p class="constrain-width">
-					Terarium can extract information from papers and other resources to describe this
+					Terarium can extract information from papers and other artifacts to describe this
 					{{ dialogFlavour }}. Select the resources you would like to use.
 				</p>
 				<DataTable
+					v-if="allResources.length > 0"
 					:value="allResources"
 					v-model:selection="selectedResources"
 					tableStyle="min-width: 50rem"
@@ -31,6 +32,17 @@
 					<Column field="name" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
 				</DataTable>
+				<div v-else>
+					<div class="no-artifacts">
+						<img class="no-artifacts-img" src="@assets/svg/plants.svg" alt="" />
+						<div class="no-artifacts-text">
+							You don't have any resources that can be used. Try adding some artifacts.
+						</div>
+						<div class="no-artifacts-text">
+							Would you like to generate descriptions without attaching additional context?
+						</div>
+					</div>
+				</div>
 				<template #footer>
 					<Button class="secondary-button" label="Cancel" @click="visible = false" />
 					<Button
@@ -56,7 +68,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
-import { WASTE_WATER_SURVEILLANCE } from '@/temp/datasets/wasteWaterSurveillance';
 
 import { Artifact, DocumentAsset } from '@/types/Types';
 import { profileDataset, fetchExtraction } from '@/services/models/extractions';
@@ -115,34 +126,44 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	const pollResult = await fetchExtraction(resp);
 	console.log('enrichment poll', pollResult);
 
-	emit('extracted-metadata', WASTE_WATER_SURVEILLANCE);
+	emit('extracted-metadata', pollResult);
 };
 </script>
 
 <style scoped>
-.container {
-	margin: 1rem;
-	max-width: 50rem;
-}
-.container h5 {
-	margin-bottom: 0.5rem;
-}
-.constrain-width {
-	max-width: 50rem;
-}
-
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .secondary-button {
 	color: var(--text-color-primary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 }
 
-.secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 ul {
 	margin: 1rem 0;
+}
+
+.no-artifacts {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.no-artifacts-img {
+	width: 30%;
+	padding: 10px;
+}
+
+.no-artifacts-text {
+	padding: 5px;
+	font-size: var(--font-body);
+	font-family: var(--font-family);
+	font-weight: 500;
+	color: var(--text-color-secondary);
+	text-align: left;
 }
 </style>

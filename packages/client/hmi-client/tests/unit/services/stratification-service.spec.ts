@@ -151,25 +151,32 @@ describe('test generate age strata model', () => {
 				},
 				typing: {
 					system: {
-						states: [
-							{
-								id: 'Pop',
-								name: 'Pop',
-								description: 'Compartment of individuals in a human population.'
-							}
-						],
-						transitions: [
-							{
-								id: 'Infect',
-								input: ['Pop', 'Pop'],
-								output: ['Pop', 'Pop'],
-								properties: {
-									name: 'Infect',
-									description:
-										'2-to-2 interaction that represents infectious contact between two human individuals.'
+						name: 'Age-contact strata model',
+						description: 'Age-contact strata model',
+						schema:
+							'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+						model_version: '0.1',
+						model: {
+							states: [
+								{
+									id: 'Pop',
+									name: 'Pop',
+									description: 'Compartment of individuals in a human population.'
 								}
-							}
-						]
+							],
+							transitions: [
+								{
+									id: 'Infect',
+									input: ['Pop', 'Pop'],
+									output: ['Pop', 'Pop'],
+									properties: {
+										name: 'Infect',
+										description:
+											'2-to-2 interaction that represents infectious contact between two human individuals.'
+									}
+								}
+							]
+						}
 					},
 					map: [
 						['A1', 'Pop'],
@@ -299,25 +306,32 @@ describe('test generate location strata model', () => {
 				},
 				typing: {
 					system: {
-						states: [
-							{
-								id: 'Pop',
-								name: 'Pop',
-								description: 'Compartment of individuals in a human population.'
-							}
-						],
-						transitions: [
-							{
-								id: 'Strata',
-								input: ['Pop'],
-								output: ['Pop'],
-								properties: {
-									name: 'Strata',
-									description:
-										'1-to-1 process that represents a change in the demographic division of a human individual.'
+						name: 'Location-travel strata model',
+						description: 'Location-travel strata model',
+						schema:
+							'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+						model_version: '0.1',
+						model: {
+							states: [
+								{
+									id: 'Pop',
+									name: 'Pop',
+									description: 'Compartment of individuals in a human population.'
 								}
-							}
-						]
+							],
+							transitions: [
+								{
+									id: 'Strata',
+									input: ['Pop'],
+									output: ['Pop'],
+									properties: {
+										name: 'Strata',
+										description:
+											'1-to-1 process that represents a change in the demographic division of a human individual.'
+									}
+								}
+							]
+						}
 					},
 					map: [
 						['L1', 'Pop'],

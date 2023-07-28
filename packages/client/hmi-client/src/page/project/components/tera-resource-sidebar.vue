@@ -1,18 +1,37 @@
 <template>
 	<nav>
-		<header>
+		<header class="resource-panel-toolbar">
+			<span class="p-input-icon-left">
+				<i class="pi pi-search" />
+				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
+			</span>
 			<Button
-				icon="pi pi-code"
-				v-tooltip="`New code file`"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="
-					emit('open-asset', {
-						assetName: 'New file',
-						pageType: ProjectAssetTypes.CODE,
-						assetId: undefined
-					})
-				"
+				icon="pi pi-plus"
+				label="New"
+				class="p-button-sm secondary-button"
+				@click="toggleOptionsMenu"
 			/>
+			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
+				<!-- A way to use vue feather icons in the MenuItem component, it might be better to try to use 1 icon library for easier integration -->
+				<template #item="slotProps">
+					<a class="p-menuitem-link">
+						<vue-feather
+							v-if="typeof getAssetIcon(slotProps.item.key ?? null) === 'string'"
+							class="p-button-icon-left icon"
+							:type="getAssetIcon(slotProps.item.key ?? null)"
+							size="1rem"
+						/>
+						<component
+							v-else
+							:is="getAssetIcon(slotProps.item.key ?? null)"
+							class="p-button-icon-left icon"
+						/>
+						<span class="p-menuitem-text">
+							{{ slotProps.item.label }}
+						</span>
+					</a>
+				</template>
+			</Menu>
 		</header>
 		<Button
 			class="asset-button"
@@ -48,7 +67,7 @@
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
-					:active="isEqual(tab, activeTab)"
+					:active="tab.assetId === activeTab.assetId"
 					:title="tab.assetName"
 					class="asset-button"
 					plain
@@ -133,21 +152,23 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
+import InputText from 'primevue/inputtext';
+import Menu from 'primevue/menu';
 
 type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
 	activeTab: Tab;
-	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset']);
+const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
 
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 const assetToDelete = ref<Tab | null>(null);
+const searchAsset = ref<string | null>('');
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -159,13 +180,24 @@ const assets = computed((): IProjectAssetTabs => {
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
 			const projectAssetType = type as ProjectAssetTypes;
-			const typeAssets = projectAssets[projectAssetType].map((asset) => {
-				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const pageType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id?.toString();
-				return { assetName, pageType, assetId };
-			}) as Tab[];
-			tabs.set(projectAssetType, new Set(typeAssets));
+			const typeAssets = projectAssets[projectAssetType]
+				.map((asset) => {
+					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+					const pageType = asset?.type ?? projectAssetType;
+					const assetId = asset?.id?.toString();
+					return { assetName, pageType, assetId };
+				})
+				.filter((asset) => {
+					// filter assets
+					if (!searchAsset.value?.trim()) {
+						return true;
+					}
+					const searchTermLower = searchAsset.value?.trim().toLowerCase();
+					return asset.assetName.toLowerCase().includes(searchTermLower);
+				}) as Tab[];
+			if (!isEmpty(typeAssets)) {
+				tabs.set(projectAssetType, new Set(typeAssets));
+			}
 		}
 	});
 	return tabs;
@@ -190,6 +222,39 @@ function endDrag() {
 	deleteDragData('assetNode');
 	draggedAsset.value = null;
 }
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		key: ProjectAssetTypes.CODE,
+		label: 'Code editor',
+		command() {
+			emit('open-asset', {
+				assetName: 'New file',
+				pageType: ProjectAssetTypes.CODE,
+				assetId: undefined
+			});
+		}
+	},
+	{
+		key: ProjectAssetTypes.MODELS,
+		label: 'New Model',
+		command() {
+			emit('open-new-asset', ProjectAssetTypes.MODELS);
+		}
+	},
+	{
+		key: ProjectAssetTypes.SIMULATION_WORKFLOW,
+		label: 'New Workflow',
+		command() {
+			emit('open-new-asset', ProjectAssetTypes.SIMULATION_WORKFLOW);
+		}
+	}
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
 </script>
 
 <style scoped>
@@ -287,5 +352,36 @@ header {
 
 .remove-modal em {
 	font-weight: var(--font-weight-semibold);
+}
+
+.resource-panel-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.resource-panel-search {
+	padding: 0.51rem 0.5rem;
+	width: 100%;
+	font-size: var(--font-caption);
+}
+
+/* We should make a proper secondary outline button. Until then this works. */
+.secondary-button {
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	width: 6rem;
+}
+
+.secondary-button:hover {
+	color: var(--text-color-secondary) !important;
+	background-color: var(--surface-highlight) !important;
+}
+
+:deep(.p-button-icon-left.icon) {
+	margin-right: 0.5rem;
 }
 </style>

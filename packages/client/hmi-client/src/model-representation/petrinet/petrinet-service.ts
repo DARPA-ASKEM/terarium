@@ -1,9 +1,14 @@
 import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
+import {
+	PetriNetModel,
+	Model,
+	PetriNetTransition,
+	TypingSemantics,
+	ModelConfiguration
+} from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
-import { getModelConfigurations } from '@/services/model';
 import { updateModelConfiguration } from '@/services/model-configurations';
 
 export interface NodeData {
@@ -159,30 +164,6 @@ export const convertToIGraph = (amr: Model) => {
 
 const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
-
-export const newAMR = (modelName: string) => {
-	const amr: Model = {
-		id: '',
-		name: modelName,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
-		model: {
-			states: [],
-			transitions: []
-		},
-		semantics: {
-			ode: {
-				rates: [],
-				initials: [],
-				parameters: []
-			}
-		}
-	};
-	return amr;
-};
 
 export const addState = (amr: Model, id: string, name: string) => {
 	if (amr.model.states.find((s) => s.id === id)) {
@@ -516,9 +497,11 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 	}
 };
 
-export const updateConfigFields = async (modelId: string, id: string, newId: string) => {
-	const modelConfigs = await getModelConfigurations(modelId);
-
+export const updateConfigFields = async (
+	modelConfigs: ModelConfiguration[],
+	id: string,
+	newId: string
+) => {
 	modelConfigs.forEach((config) => {
 		updateParameterId(config.configuration, id, newId);
 		// note that this is making an async call but we don't need to wait for it to finish
@@ -566,7 +549,7 @@ export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => 
 	metadata: amrOld.metadata
 });
 
-export const modifyModelTypeSystemforStratification = (amr: Model) => {
+export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
 		const { name, description, schema, semantics } = amrCopy;
@@ -592,9 +575,7 @@ function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
 	}
 }
 
-export const stratify = async (baseAMR: Model, strataAMR: Model) => {
-	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
-	const strataModel = modifyModelTypeSystemforStratification(strataAMR);
+export const stratify = async (baseModel: Model, strataModel: Model) => {
 	unifyModelTypeSystems(baseModel, strataModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,
@@ -676,9 +657,33 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[], dimension
 		if (!stateIds.includes(id)) return;
 		const obj: any = {};
 
-		// FIXME: This only works for 2 dimensions now, may have to handle more than 2 differently
+		// State matrices are always 1D
 		obj[dimensions[results.length]] = state.id;
 		results.push(obj);
 	});
 	return results;
 };
+
+export function newAMR(modelName: string) {
+	const amr: Model = {
+		id: '',
+		name: modelName,
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
+}

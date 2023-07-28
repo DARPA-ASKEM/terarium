@@ -7,6 +7,15 @@
 		<span class="datatable-toolbar-item"
 			>Show column summaries<InputSwitch v-model="showSummaries"
 		/></span>
+		<span class="datatable-toolbar-item">
+			<MultiSelect
+				:modelValue="selectedColumns"
+				:options="csvHeaders"
+				@update:modelValue="onToggle"
+				:maxSelectedLabels="1"
+				placeholder="Select columns"
+			/>
+		</span>
 	</div>
 	<!-- Datable -->
 	<DataTable
@@ -23,7 +32,7 @@
 		:tableStyle="tableStyle ? tableStyle : `width:auto`"
 	>
 		<Column
-			v-for="(colName, index) of csvHeaders"
+			v-for="(colName, index) of selectedColumns"
 			:key="index"
 			:field="index.toString()"
 			:header="colName"
@@ -74,6 +83,7 @@ import Column from 'primevue/column';
 import Chart from 'primevue/chart';
 import { CsvAsset } from '@/types/Types';
 import InputSwitch from 'primevue/inputswitch';
+import MultiSelect from 'primevue/multiselect';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
@@ -84,7 +94,7 @@ const props = defineProps<{
 	tableStyle?: String;
 }>();
 
-const CATEGORYPERCENTAGE = 0.9;
+const CATEGORYPERCENTAGE = 1.0;
 const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
 
@@ -95,6 +105,12 @@ const csvHeaders = computed(() => props.rawContent?.headers);
 const chartData = computed(() =>
 	props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))
 );
+
+const selectedColumns = ref(csvHeaders?.value);
+const onToggle = (val) => {
+	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
+};
+
 const csvMinsToDisplay = computed(() =>
 	props.rawContent?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
 );
@@ -138,8 +154,7 @@ const setBarChartData = (bins: any[]) => {
 			{
 				label: 'Count',
 				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
-				borderColor: '#FFF',
-				borderWidth: 1,
+				hoverBackgroundColor: documentStyle.getPropertyValue('--primary-color-light'),
 				data: bins,
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
@@ -207,6 +222,12 @@ const setChartOptions = () => {
 	color: var(--text-color-subdued);
 	align-items: center;
 	gap: 0.5rem;
+}
+
+
+.datatable-toolbar:deep(.p-multiselect .p-multiselect-label) {
+	padding: 0.5rem;
+	font-size: var(--font-caption);
 }
 
 .p-datatable:deep(.p-column-header-content) {

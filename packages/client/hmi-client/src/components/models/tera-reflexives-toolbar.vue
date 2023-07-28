@@ -38,14 +38,14 @@ const props = defineProps<{
 const emit = defineEmits(['model-updated']);
 
 const modelToCompareTypeSystem = computed<TypeSystem | undefined>(
-	() => props.modelToCompare.semantics?.typing?.system
+	() => props.modelToCompare.semantics?.typing?.system.model
 );
 const typedModel = ref<Model>(props.modelToUpdate); // this is the object that is being edited
 let unassignedTransitionTypes: Transition[] = [];
 const statesToAddReflexives = ref<{ [id: string]: { id: string; name: string }[] }>({});
 const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
 	const map: { [id: string]: string } = {};
-	props.modelToCompare?.semantics?.typing?.system.transitions.forEach((type) => {
+	props.modelToCompare?.semantics?.typing?.system.model.transitions.forEach((type) => {
 		const transitionId =
 			props.modelToCompare?.semantics?.typing?.map.find((m) => m[1] === type.id)?.[0] ?? '';
 		map[type.id] = transitionId;
@@ -98,7 +98,7 @@ function updateStatesToAddReflexives(
 			addReflexives(typedModel.value, state.id, newTransitionId, numInputsOfStateType);
 			const reflexive = typedModel.value.model.transitions.find((t) => t.id === newTransitionId);
 
-			const transition = props.modelToCompare?.semantics?.typing?.system.transitions.find(
+			const transition = props.modelToCompare?.semantics?.typing?.system.model.transitions.find(
 				(t) => t.id === typeOfTransition.id
 			);
 			if (transition) {
@@ -106,8 +106,8 @@ function updateStatesToAddReflexives(
 				if (!updatedTypeMap.find((m) => m[0] === newTransitionId)) {
 					updatedTypeMap.push([newTransitionId, typeOfTransition.id]);
 				}
-				if (!updatedTypeSystem.transitions.find((t) => t.id === typeOfTransition.id)) {
-					updatedTypeSystem.transitions.push(transition);
+				if (!updatedTypeSystem.model.transitions.find((t) => t.id === typeOfTransition.id)) {
+					updatedTypeSystem.model.transitions.push(transition);
 				}
 			}
 		});
@@ -136,7 +136,7 @@ watch(
 	() => {
 		if (modelToCompareTypeSystem.value) {
 			const modelToUpdateTransitionIds =
-				props.modelToUpdate.semantics?.typing?.system.transitions.map((t) => t.id);
+				props.modelToUpdate.semantics?.typing?.system.model.transitions.map((t) => t.id);
 			const modelToCompareTypeTransitionIds = modelToCompareTypeSystem.value?.transitions.map(
 				(t) => t.id
 			);

@@ -25,12 +25,13 @@
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
 			class="simulate-container"
 		>
-			<simulate-chart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
 				:chartConfig="cfg"
 				@configuration-change="configurationChange(index, $event)"
+				color-by-run
 			/>
 			<Button
 				class="add-chart"
@@ -44,7 +45,7 @@
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="saveDataset"
+				@click="saveDataset(projectId, completedRunId)"
 				label="Save as Dataset"
 				icon="pi pi-save"
 			/>
@@ -59,17 +60,6 @@
 					<AccordionTab>
 						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
-							<!--
-							<div class="sim-tspan-group">
-								<label for="1">Units</label>
-								<Dropdown
-									id="1"
-									class="p-inputtext-sm"
-									v-model=""
-									:options="TspanUnitList"
-								/>
-							</div>
-							-->
 							<div class="sim-tspan-group">
 								<label for="2">Start date</label>
 								<InputNumber
@@ -98,7 +88,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -111,15 +101,13 @@ import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
+import { saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
-import useResourcesStore from '@/stores/resources';
-import * as ProjectService from '@/services/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
-import SimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -138,6 +126,8 @@ const activeTab = ref(SimulateTabs.input);
 const model = ref<Model | null>(null);
 const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
+const projectId = ref<string>(props.project.id);
+const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
@@ -159,16 +149,6 @@ const addChart = () => {
 		nodeId: props.node.id,
 		state
 	});
-};
-
-const saveDataset = async () => {
-	const simulationId = props?.node?.outputs?.[0]?.value?.[0] as string;
-	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
-			// TODO: See about getting rid of this - this refresh should preferably be within a service
-			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
-		}
-	}
 };
 
 onMounted(async () => {
