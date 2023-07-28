@@ -2,12 +2,13 @@
 	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate">Run</Button>
 		<div class="chart-container" v-if="runResults">
-			<SimulateChart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
 				:chartConfig="cfg"
 				@configuration-change="configurationChange(index, $event)"
+				:colorByRun="true"
 			/>
 		</div>
 		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>
@@ -30,7 +31,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
-import SimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{

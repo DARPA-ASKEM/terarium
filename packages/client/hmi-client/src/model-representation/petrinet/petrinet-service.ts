@@ -549,7 +549,7 @@ export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => 
 	metadata: amrOld.metadata
 });
 
-export const modifyModelTypeSystemforStratification = (amr: Model) => {
+export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
 		const { name, description, schema, semantics } = amrCopy;
@@ -575,9 +575,7 @@ function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
 	}
 }
 
-export const stratify = async (baseAMR: Model, strataAMR: Model) => {
-	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
-	const strataModel = modifyModelTypeSystemforStratification(strataAMR);
+export const stratify = async (baseModel: Model, strataModel: Model) => {
 	unifyModelTypeSystems(baseModel, strataModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,
@@ -659,7 +657,7 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[], dimension
 		if (!stateIds.includes(id)) return;
 		const obj: any = {};
 
-		// FIXME: This only works for 2 dimensions now, may have to handle more than 2 differently
+		// State matrices are always 1D
 		obj[dimensions[results.length]] = state.id;
 		results.push(obj);
 	});

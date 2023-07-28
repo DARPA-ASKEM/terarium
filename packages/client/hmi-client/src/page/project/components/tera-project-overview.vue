@@ -105,6 +105,7 @@
 					:value="assets"
 					row-hover
 					:row-class="() => 'p-selectable-row'"
+					@update:selection="onRowSelect"
 				>
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
 					<Column field="assetName" header="Name" sortable style="width: 75%">
@@ -244,12 +245,17 @@
 				</tera-modal>
 			</section>
 		</section>
+		<tera-multi-select-modal
+			:is-visible="showMultiSelect"
+			:selected-resources="selectedResources"
+			:buttons="multiSelectButtons"
+		></tera-multi-select-modal>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
-import { nextTick, Ref, ref, computed, onMounted } from 'vue';
+import { nextTick, Ref, ref, computed, onMounted, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
@@ -271,6 +277,8 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import { uploadArtifactToProject } from '@/services/artifact';
+import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
+import { useTabStore } from '@/stores/tabs';
 
 const props = defineProps<{
 	project: IProject;
@@ -287,6 +295,21 @@ const results = ref<
 const selectedResources = ref();
 
 const openedRow = ref(null);
+
+const tabStore = useTabStore();
+
+const multiSelectButtons = [
+	{
+		label: 'Open',
+		callback: () => {
+			selectedResources.value.forEach((resource) => {
+				tabStore.addTab(props.project.id.toString(), toRaw(resource), false);
+			});
+		}
+	}
+];
+
+const showMultiSelect = ref<boolean>(false);
 
 const assets = computed(() => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -344,6 +367,10 @@ async function processFiles(files: File[], csvDescription: string) {
 	});
 }
 
+const onRowSelect = (selectedRows) => {
+	// show multi select modal when there are selectedRows otherwise hide
+	showMultiSelect.value = selectedRows.length !== 0;
+};
 async function openImportModal() {
 	isUploadResourcesModalVisible.value = true;
 	results.value = null;

@@ -33,7 +33,7 @@
 		>
 			<div ref="graphElement" class="graph-element" />
 			<h6>
-				Terarium can extract metadata about this model from related papers. Select the papers you
+				Terarium can extract metadata about this code from related papers. Select the artifacts you
 				would like to use.
 			</h6>
 			<DataTable v-model:selection="selectedPapers" :value="resources" dataKey="id">

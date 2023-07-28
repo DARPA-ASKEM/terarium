@@ -3,7 +3,6 @@
 		v-if="pageType === ProjectAssetTypes.MODELS"
 		:asset-id="assetId ?? ''"
 		:project="project"
-		@update-tab-name="updateTabName"
 		@asset-loaded="emit('asset-loaded')"
 	/>
 	<tera-code-editor
@@ -63,11 +62,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref } from 'vue';
+import { ref, Ref, computed } from 'vue';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { cloneDeep } from 'lodash';
 import { CodeRequest, Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
@@ -79,29 +77,43 @@ import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workfl
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import useResourceStore from '@/stores/resources';
 
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
-	assetName?: string;
 	pageType?: ProjectAssetTypes | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
 }>();
 
-const emit = defineEmits([
-	'update:tabs',
-	'asset-loaded',
-	'update-tab-name',
-	'close-current-tab',
-	'open-new-asset'
-]);
+const emit = defineEmits(['asset-loaded', 'open-new-asset']);
+
+const resourceStore = useResourceStore();
 
 const router = useRouter();
 
 const code = ref<string>();
 
 const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
+
+const assetName = computed<string>(() => {
+	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
+	if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
+	const assets = resourceStore.activeProjectAssets;
+
+	/**
+	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
+	 *
+	 *   const list = assets[ props.pageType as string] as IdetifiableAsset[]
+	 *   const asset = list.find(...)
+	 */
+	if (assets) {
+		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
+		return asset.name ?? 'n/a';
+	}
+	return 'n/a';
+});
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
@@ -110,7 +122,7 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
 async function openCode(codeRequests: CodeRequest[]) {
@@ -133,28 +145,14 @@ async function openNextCodeFile() {
 }
 
 function getPDFBytes(): Promise<ArrayBuffer | null> {
-	return getArtifactArrayBuffer(props.assetId!, props.assetName!);
+	return getArtifactArrayBuffer(props.assetId!, assetName.value!);
 }
 
 async function openTextArtifact() {
-	const res: string | null = await getArtifactFileAsText(props.assetId!, props.assetName!);
+	const res: string | null = await getArtifactFileAsText(props.assetId!, assetName.value!);
 	if (!res) return;
 	code.value = res;
 }
-
-// Just preserving this as this didn't even work when it was in tera-project.vue - same error occurs on staging
-// I think this is meant to make the tab name and the model name to be the same as you're editing it which isn't important/necessary
-const updateTabName = (tabName: string) => {
-	const tabsClone = cloneDeep(props.tabs);
-
-	// FIXME: Active tab index is undefined so tab name doesn't get updated when model or workflow name get updated
-	// console.log(tabName, tabsClone, props.activeTabIndex)
-
-	if (tabsClone?.[props.activeTabIndex!]?.assetName) {
-		tabsClone[props.activeTabIndex!].assetName = tabName;
-		emit('update:tabs', tabsClone);
-	}
-};
 </script>
 
 <style scoped>

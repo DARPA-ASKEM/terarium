@@ -1,4 +1,5 @@
 import { DocumentAsset, Document, Dataset, Model, Artifact } from '@/types/Types';
+import { Workflow } from '@/types/workflow';
 
 // TODO: this should be an enum driven by our back end.
 export enum ProjectAssetTypes {
@@ -27,6 +28,7 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.DATASETS]: Dataset[];
 	[ProjectAssetTypes.CODE]: any[];
 	[ProjectAssetTypes.ARTIFACTS]: Artifact[];
+	[ProjectAssetTypes.SIMULATION_WORKFLOW]: Workflow[];
 };
 
 export interface IProject {
