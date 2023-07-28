@@ -94,7 +94,7 @@
 					<h4>Resource Manager</h4>
 					<span class="p-input-icon-left">
 						<i class="pi pi-search" />
-						<InputText placeholder="Keyword search" class="keyword-search" />
+						<InputText v-model="searchTable" placeholder="Keyword search" class="keyword-search" />
 					</span>
 				</div>
 				<!-- resource list data table -->
@@ -309,6 +309,7 @@ const multiSelectButtons = [
 	}
 ];
 
+const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
 const assets = computed(() => {
@@ -322,12 +323,20 @@ const assets = computed(() => {
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
 			const projectAssetType: ProjectAssetTypes = type as ProjectAssetTypes;
-			const typeAssets = projectAssets[projectAssetType].map((asset) => {
-				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const pageType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id ?? '';
-				return { assetName, pageType, assetId };
-			});
+			const typeAssets = projectAssets[projectAssetType]
+				.map((asset) => {
+					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+					const pageType = asset?.type ?? projectAssetType;
+					const assetId = asset?.id ?? '';
+					return { assetName, pageType, assetId };
+				})
+				.filter((asset) => {
+					if (!searchTable.value?.trim()) {
+						return true;
+					}
+					const searchTermLower = searchTable.value?.trim().toLowerCase();
+					return asset.assetName.toLowerCase().includes(searchTermLower);
+				});
 			result.push(...typeAssets);
 		}
 	});
