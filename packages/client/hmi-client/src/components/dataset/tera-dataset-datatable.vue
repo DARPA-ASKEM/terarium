@@ -1,12 +1,12 @@
 <template>
 	<!-- Toggle histograms & column summary charts -->
 	<div class="datatable-toolbar">
-		<span class="datatable-toolbar-item"
-			>{{ csvHeaders?.length || 'No' }} columns | {{ csvContent?.length || 'No' }} rows</span
-		>
-		<span class="datatable-toolbar-item"
-			>Show column summaries<InputSwitch v-model="showSummaries"
-		/></span>
+		<span class="datatable-toolbar-item">
+			{{ csvHeaders?.length || 'No' }} columns | {{ csvContent?.length || 'No' }} rows
+		</span>
+		<span class="datatable-toolbar-item">
+			Show column summaries<InputSwitch v-model="showSummaries" />
+		</span>
 		<span class="datatable-toolbar-item">
 			<MultiSelect
 				:modelValue="selectedColumns"
