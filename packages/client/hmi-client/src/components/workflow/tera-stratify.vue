@@ -81,6 +81,7 @@
 								:type-system="strataModel?.semantics?.typing?.system.model"
 								@model-updated="(value) => (typedBaseModel = value)"
 								@all-nodes-typed="(value) => onAllNodesTyped(value)"
+								@not-all-nodes-typed="typedBaseModel = null"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -227,12 +228,11 @@ const labels = ref();
 const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
-const typedBaseModel = ref<Model>();
+const typedBaseModel = ref<Model | null>(null);
 const typedStrataModel = ref<Model | null>(null);
 const stratifiedModel = ref<Model>();
 
 function onAllNodesTyped(value: Model) {
-	console.log(value);
 	typedBaseModel.value = value;
 }
 
@@ -273,11 +273,10 @@ async function doStratify() {
 }
 
 function goBack() {
-	if (stratifyStep.value > 0) {
-		if (stratifyStep.value === 1) {
-			strataModel.value = null;
-		}
+	if (stratifyStep.value > 1) {
 		stratifyStep.value--;
+	} else {
+		strataModel.value = null;
 	}
 }
 

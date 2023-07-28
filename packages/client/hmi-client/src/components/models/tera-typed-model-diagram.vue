@@ -48,7 +48,7 @@
 							</div>
 							<!-- cancel row  -->
 							<div>
-								<Button icon="pi pi-times" text rounded />
+								<Button icon="pi pi-times" text rounded @click="cancelTypedRow(index)" />
 							</div>
 						</div>
 						<Button
@@ -130,7 +130,7 @@ import Toolbar from 'primevue/toolbar';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
-const emit = defineEmits(['model-updated', 'all-nodes-typed']);
+const emit = defineEmits(['model-updated', 'all-nodes-typed', 'not-all-nodes-typed']);
 
 const props = defineProps<{
 	model: Model;
@@ -173,9 +173,13 @@ const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	});
 	return options;
 });
+const allNodesTyped = computed(() => numberTypedNodes.value === numberNodes.value);
 
 function addTypedRow() {
 	typedRows.value.push({});
+}
+function cancelTypedRow(rowIndex: number) {
+	typedRows.value.splice(rowIndex, 1);
 }
 // 'typedRows.typeName' is assigned the value of 'typeNameBuffer' when the user focuses away from the associated InputText
 let typeNameBuffer: string[] = [];
@@ -307,21 +311,19 @@ watch(
 			}
 		});
 
-		if (stateTypedMap.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/naming-convention
-			const { name, description, schema, model_version } = typedModel.value;
-			typingSemantics = {
-				map: stateTypedMap,
-				system: {
-					name,
-					description,
-					schema,
-					model_version,
-					model: updatedTypeSystem
-				}
-			};
-			addTyping(typedModel.value, typingSemantics);
-		}
+		// eslint-disable-next-line @typescript-eslint/naming-convention
+		const { name, description, schema, model_version } = typedModel.value;
+		typingSemantics = {
+			map: stateTypedMap,
+			system: {
+				name,
+				description,
+				schema,
+				model_version,
+				model: updatedTypeSystem
+			}
+		};
+		addTyping(typedModel.value, typingSemantics);
 
 		transitionTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
@@ -343,7 +345,6 @@ watch(
 		});
 		if (transitionTypedMap.length > 0) {
 			// eslint-disable-next-line @typescript-eslint/naming-convention
-			const { name, description, schema, model_version } = typedModel.value;
 			const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
 			typingSemantics = {
 				map: typeMap,
@@ -362,10 +363,12 @@ watch(
 );
 
 watch(
-	numberTypedNodes,
+	allNodesTyped,
 	() => {
-		if (numberTypedNodes.value === numberNodes.value) {
+		if (allNodesTyped.value) {
 			emit('all-nodes-typed', typedModel.value);
+		} else {
+			emit('not-all-nodes-typed');
 		}
 	},
 	{ immediate: true }
