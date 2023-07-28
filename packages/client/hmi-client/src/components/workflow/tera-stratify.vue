@@ -16,17 +16,40 @@
 					icon="pi pi-sign-out"
 					@click="stratifyView = StratifyView.Output"
 					:active="stratifyView === StratifyView.Output"
+					:disabled="!stratifiedModel"
 				/>
 			</span>
-			<Button
-				v-if="stratifyView === StratifyView.Input"
-				class="stratify-button p-button-sm"
-				label="Stratify"
-				icon="pi pi-arrow-right"
-				iconPos="right"
-				@click="doStratify"
-				:disabled="stratifyStep !== 3"
-			/>
+			<div class="buttons" v-if="strataModel">
+				<Button
+					class="p-button-outlined"
+					label="Go back"
+					icon="pi pi-arrow-left"
+					:disabled="stratifyStep === 0"
+					@click="goBack"
+				/>
+				<Button
+					v-if="stratifyStep === 1"
+					label="Continue to step 2: Assign types"
+					icon="pi pi-arrow-right"
+					iconPos="right"
+					@click="stratifyStep = 2"
+				/>
+				<Button
+					v-if="typedBaseModel && stratifyStep === 2"
+					label="Continue to step 3: Manage interactions"
+					icon="pi pi-arrow-right"
+					iconPos="right"
+					@click="stratifyStep = 3"
+				/>
+				<Button
+					v-if="stratifyStep === 3"
+					class="stratify-button p-button-sm"
+					label="Stratify"
+					icon="pi pi-arrow-right"
+					iconPos="right"
+					@click="doStratify"
+				/>
+			</div>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -45,30 +68,20 @@
 			</nav>
 			<section class="step-1">
 				<div class="instructions">
-					<div class="buttons" v-if="strataModel">
-						<Button
-							class="p-button-outlined"
-							label="Go back"
-							icon="pi pi-arrow-left"
-							:disabled="stratifyStep === 0"
-							@click="goBack"
-						/>
-						<Button
-							v-if="stratifyStep === 1"
-							label="Continue to step 2: Assign types"
-							icon="pi pi-arrow-right"
-							iconPos="right"
-							@click="stratifyStep = 2"
-						/>
-						<Button
-							v-if="typedBaseModel && stratifyStep === 2"
-							label="Continue to step 3: Manage interactions"
-							icon="pi pi-arrow-right"
-							iconPos="right"
-							@click="stratifyStep = 3"
-						/>
-					</div>
-					<span v-else>Define the groups you want to stratify your model with.</span>
+					<span v-if="stratifyStep === 1"
+						>Define the groups you want to stratify your model with.</span
+					>
+					<span v-if="stratifyStep === 2 && numUntypedNodes > 0"
+						>Assign types to each of the nodes in your model.
+					</span>
+					<span v-if="stratifyStep === 2 && numUntypedNodes > 0" class="nodes-require-types"
+						>{{ numUntypedNodes }} nodes require types</span
+					>
+					<span v-if="stratifyStep === 2 && numUntypedNodes === 0">All nodes have types.</span>
+					<span v-if="stratifyStep === 3"
+						>Make sure all behaviour in the original model are in the stratified model in order for
+						them to be part of the final model.</span
+					>
 				</div>
 				<div class="step-1-inner">
 					<Accordion :active-index="0">
@@ -81,7 +94,12 @@
 								:type-system="strataModel?.semantics?.typing?.system.model"
 								@model-updated="(value) => (typedBaseModel = value)"
 								@all-nodes-typed="(value) => onAllNodesTyped(value)"
-								@not-all-nodes-typed="typedBaseModel = null"
+								@not-all-nodes-typed="
+									(value) => {
+										typedBaseModel = null;
+										numUntypedNodes = value;
+									}
+								"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -231,9 +249,11 @@ const model = ref<Model | null>(null);
 const typedBaseModel = ref<Model | null>(null);
 const typedStrataModel = ref<Model | null>(null);
 const stratifiedModel = ref<Model>();
+const numUntypedNodes = ref();
 
 function onAllNodesTyped(value: Model) {
 	typedBaseModel.value = value;
+	numUntypedNodes.value = 0;
 }
 
 function generateStrataModel() {
@@ -379,6 +399,8 @@ section {
 .buttons {
 	display: flex;
 	justify-content: space-between;
+	margin-left: auto;
+	gap: 1rem;
 }
 
 :deep(.p-button.p-button-outlined) {
@@ -388,10 +410,6 @@ section {
 
 .generate-strata-model {
 	padding: 0 0.5rem 0 0.5rem;
-}
-
-.stratify-button {
-	margin-left: auto;
 }
 
 .output {
@@ -417,5 +435,9 @@ section {
 
 .add-model-config {
 	display: flex;
+}
+
+.nodes-require-types {
+	font-weight: var(--font-weight-semibold);
 }
 </style>

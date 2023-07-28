@@ -52,7 +52,7 @@ import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 
 const props = defineProps<{
 	strataModel: Model;
-	baseModel: Model | null;
+	baseModel?: Model | null;
 	baseModelTypeSystem?: TypeSystem;
 	showReflexivesToolbar: boolean;
 }>();
