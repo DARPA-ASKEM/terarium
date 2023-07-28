@@ -254,8 +254,10 @@ watch(
 watch(
 	() => props.typeSystem,
 	() => {
+		console.log('test');
 		setNodeColors();
 		if (typedModel.value.semantics?.typing) {
+			// pre-populate 'typedRows' if 'typedModel' already has typing
 			const typedRowsToPopulate: {
 				nodeType: string;
 				typeName: string;
