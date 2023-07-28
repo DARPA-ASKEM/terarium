@@ -224,10 +224,12 @@ const setChartOptions = () => {
 	gap: 0.5rem;
 }
 
+
 .datatable-toolbar:deep(.p-multiselect .p-multiselect-label) {
 	padding: 0.5rem;
 	font-size: var(--font-caption);
 }
+
 .p-datatable:deep(.p-column-header-content) {
 	display: grid;
 	grid-template-areas:
