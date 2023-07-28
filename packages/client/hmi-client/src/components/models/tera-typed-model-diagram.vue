@@ -252,59 +252,61 @@ watch(
 );
 
 watch(
-	() => props.typeSystem,
+	() => [props.typeSystem, props.showTypingToolbar],
 	() => {
-		console.log('test');
-		setNodeColors();
-		if (typedModel.value.semantics?.typing) {
-			// pre-populate 'typedRows' if 'typedModel' already has typing
-			const typedRowsToPopulate: {
-				nodeType: string;
-				typeName: string;
-				assignTo: string[];
-			}[] = [];
-			const typedRowsTypeNames: Set<string> = new Set();
-			typedModel.value.semantics.typing.map.forEach((m) => {
-				const nodeId = m[0];
-				const typeId = m[1];
-				const state = typedModel.value.model.states.find((s) => s.id === nodeId);
-				const transition = typedModel.value.model.transitions.find((t) => t.id === nodeId);
-				const typeState = typedModel.value.semantics!.typing!.system.model.states.find(
-					(s) => s.id === typeId
+		if (props.showTypingToolbar) {
+			setNodeColors();
+			if (typedModel.value.semantics?.typing) {
+				// pre-populate 'typedRows' if 'typedModel' already has typing
+				const typedRowsToPopulate: {
+					nodeType: string;
+					typeName: string;
+					assignTo: string[];
+				}[] = [];
+				const typedRowsTypeNames: Set<string> = new Set();
+				typedModel.value.semantics.typing.map.forEach((m) => {
+					const nodeId = m[0];
+					const typeId = m[1];
+					const state = typedModel.value.model.states.find((s) => s.id === nodeId);
+					const transition = typedModel.value.model.transitions.find((t) => t.id === nodeId);
+					const typeState = typedModel.value.semantics!.typing!.system.model.states.find(
+						(s) => s.id === typeId
+					);
+					const typeTransition = typedModel.value.semantics!.typing!.system.model.transitions.find(
+						(t) => t.id === typeId
+					);
+					const node = state || transition;
+					const nodeType = state ? 'Variable' : 'Transition';
+					const typeName = typeState ? typeState.id : typeTransition.properties?.name;
+					if (!typedRowsTypeNames.has(typeName)) {
+						typedRowsTypeNames.add(typeName);
+						typedRowsToPopulate.push({
+							nodeType,
+							typeName,
+							assignTo: [node.id]
+						});
+					} else {
+						const assignTo = typedRowsToPopulate.find((row) => row.typeName === typeName)?.assignTo;
+						assignTo?.push(node.id);
+					}
+				});
+				typedRows.value = typedRowsToPopulate;
+			} else if (typedRows.value.length === 0) {
+				typedRows.value.push(
+					{
+						nodeType: 'Variable',
+						typeName: props.typeSystem?.states[0].name
+					},
+					{
+						nodeType: 'Transition',
+						typeName: props.typeSystem?.transitions[0].properties?.name
+					}
 				);
-				const typeTransition = typedModel.value.semantics!.typing!.system.model.transitions.find(
-					(t) => t.id === typeId
-				);
-				const node = state || transition;
-				const nodeType = state ? 'Variable' : 'Transition';
-				const typeName = typeState ? typeState.id : typeTransition.properties?.name;
-				if (!typedRowsTypeNames.has(typeName)) {
-					typedRowsTypeNames.add(typeName);
-					typedRowsToPopulate.push({
-						nodeType,
-						typeName,
-						assignTo: [node.id]
-					});
-				} else {
-					const assignTo = typedRowsToPopulate.find((row) => row.typeName === typeName)?.assignTo;
-					assignTo?.push(node.id);
-				}
-			});
-			typedRows.value = typedRowsToPopulate;
-		} else if (typedRows.value.length === 0) {
-			typedRows.value.push(
-				{
-					nodeType: 'Variable',
-					typeName: props.typeSystem?.states[0].name
-				},
-				{
-					nodeType: 'Transition',
-					typeName: props.typeSystem?.transitions[0].properties?.name
-				}
-			);
+			}
+			typeNameBuffer = typedRows.value.map((r) => r.typeName ?? '');
 		}
-		typeNameBuffer = typedRows.value.map((r) => r.typeName ?? '');
-	}
+	},
+	{ immediate: true }
 );
 
 // construct TypingSemantics data structure when user updates variable/transition assignments

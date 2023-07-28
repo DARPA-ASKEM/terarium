@@ -19,7 +19,7 @@
 					:disabled="!stratifiedModel"
 				/>
 			</span>
-			<div class="buttons" v-if="strataModel">
+			<div class="buttons" v-if="strataModel && stratifyView === StratifyView.Input">
 				<Button
 					class="p-button-outlined"
 					label="Go back"
