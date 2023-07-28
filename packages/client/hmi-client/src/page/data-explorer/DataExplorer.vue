@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import { fetchData, getXDDSets } from '@/services/data';
+import { fetchData, getDocumentById, getXDDSets } from '@/services/data';
 import {
 	ResourceType,
 	ResultType,
@@ -148,8 +148,7 @@ const route = useRoute();
 const queryStore = useQueryStore();
 const resources = useResourcesStore();
 
-const { searchByExampleOptions, searchByExampleItem, searchByExampleAssetCardProp } =
-	useSearchByExampleOptions();
+const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -276,20 +275,12 @@ const executeSearch = async () => {
 	};
 
 	// handle the search-by-example for finding related documents, models, and/or datasets
-	if (
-		executeSearchByExample.value &&
-		(searchByExampleItem.value || searchByExampleAssetCardProp.value)
-	) {
-		const id = getResourceID(
-			searchByExampleItem.value ?? searchByExampleAssetCardProp.value
-		) as string;
+	if (executeSearchByExample.value && searchByExampleItem.value) {
+		const id = getResourceID(searchByExampleItem.value) as string;
 		//
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
-		if (
-			isDocument(searchByExampleItem.value ?? searchByExampleAssetCardProp.value) &&
-			searchParams.xdd
-		) {
+		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
 			searchParams.xdd.dataset = xddDataset.value;
 			if (searchByExampleOptions.value.similarContent) {
 				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
@@ -303,10 +294,7 @@ const executeSearch = async () => {
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (
-			isModel(searchByExampleItem.value ?? searchByExampleAssetCardProp.value) &&
-			searchParams.model
-		) {
+		if (isModel(searchByExampleItem.value) && searchParams.model) {
 			searchParams.model.related_search_enabled = executeSearchByExample.value;
 			searchParams.model.related_search_id = id;
 			searchType = ResourceType.MODEL;
@@ -314,10 +302,7 @@ const executeSearch = async () => {
 		//
 		// find related datasets (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (
-			isDataset(searchByExampleItem.value ?? searchByExampleAssetCardProp.value) &&
-			searchParams.dataset
-		) {
+		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
 			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
 			searchParams.dataset.related_search_id = id;
 			searchType = ResourceType.DATASET;
@@ -406,7 +391,7 @@ const executeSearch = async () => {
 };
 
 const clearSearchByExampleSelections = () => {
-	// clear out the serch by example option selections
+	// clear out the search by example option selections
 	searchByExampleOptions.value = {
 		similarContent: false,
 		forwardCitation: false,
@@ -440,7 +425,7 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 
 		await executeSearch();
 
-		searchByExampleItem.value = null;
+		// searchByExampleItem.value = null;
 		dirtyResults.value[resourceType.value] = false;
 	}
 };
@@ -556,6 +541,16 @@ async function executeNewQuery() {
 	dirtyResults.value[resourceType.value] = false;
 }
 
+async function searchByExampleOnPageRefresh(resourceId: string) {
+	if (!searchByExampleItem.value) {
+		searchByExampleItem.value = await getDocumentById(resourceId);
+	}
+	if (!Object.values(searchByExampleOptions.value).some((v) => v)) {
+		searchByExampleOptions.value.similarContent = true;
+	}
+	onSearchByExample(searchByExampleOptions.value);
+}
+
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
@@ -579,14 +574,18 @@ watch(clientFilters, async (n, o) => {
 watch(
 	() => route.query,
 	() => {
-		// Adding another query param 'byExample' for what should be a better way to determine whether we are searching by example or not.
-		// For now this is just a boolean string but this can be looked into further to maybe add additional parameters when searching by example.
-		// i.e. refreshing will land the user on the page with the example resource type already populated and used to search
-		if (route.query.byExample !== 'true') executeNewQuery();
+		// The query changes in the following cases:
+		// - when a user does a normal search - there is no `resourceId`
+		// - when a user does a search by example - there is a `resourceId`
+		// - when a user navigates back and forth using the <- and -> buttons
+
+		if (route.query.resourceId) {
+			searchByExampleOnPageRefresh(route.query.resourceId.toString());
+		} else {
+			executeNewQuery();
+		}
 	}
 );
-
-watch(searchByExampleOptions, () => onSearchByExample(searchByExampleOptions.value));
 
 // Default query on reload
 onMounted(async () => {
@@ -597,7 +596,14 @@ onMounted(async () => {
 	} else {
 		resources.setXDDDataset('xdd-covid-19'); // give xdd dataset a default value
 	}
-	executeNewQuery();
+
+	// On reload, if the url has a resourceId, we know that a user just did a search by example
+	// so we want to preserve the search by example so we perform a search by example instead of a normal search
+	if (route.query.resourceId) {
+		searchByExampleOnPageRefresh(route.query.resourceId.toString());
+	} else {
+		executeNewQuery();
+	}
 });
 
 onUnmounted(() => {
