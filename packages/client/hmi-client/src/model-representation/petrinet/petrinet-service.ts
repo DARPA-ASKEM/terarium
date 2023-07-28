@@ -595,7 +595,6 @@ export const isStratifiedAMR = (amr: Model) => {
 	return false;
 };
 
-// Returns a 1xN matrix describing state's initials
 export const extractMapping = (amr: Model, id: string) => {
 	const typeMapList = amr.semantics?.typing?.map as [string, string][];
 	const item = typeMapList.find((d) => d[0] === id);

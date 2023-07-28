@@ -81,7 +81,7 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 
 // Creates a M x 1 matrix where
 // M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
-export const creatmMatrix1D = (data: any[]) => {
+export const createMatrix1D = (data: any[]) => {
 	const rows: any[] = [];
 
 	// Construct 1D matrix for state data
