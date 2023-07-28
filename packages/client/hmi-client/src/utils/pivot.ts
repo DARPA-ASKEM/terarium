@@ -158,6 +158,7 @@ export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensio
 
 	return {
 		matrix: rows,
+		termsMap: axes.termsMap,
 		colDimensions,
 		rowDimensions
 	};

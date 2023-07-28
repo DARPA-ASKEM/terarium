@@ -36,7 +36,10 @@ const result = createMatrix2D(
 );
 const rows = ref<any>(result.matrix);
 
+console.log('###############');
 console.log(result);
+console.log('###############');
+console.log(result.termsMap);
 </script>
 
 <style scoped>
