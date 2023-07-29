@@ -79,7 +79,7 @@ import {
 	extractStateMatrixData,
 	extractTransitionMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
-import { createStateMatrix, createTransitionMatrix } from '@/utils/pivot';
+import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
@@ -198,8 +198,8 @@ function configureMatrix() {
 
 	const matrixAttributes =
 		props.nodeType === NodeType.State
-			? createStateMatrix(matrixData)
-			: createTransitionMatrix(matrixData, colDimensions, rowDimensions);
+			? createMatrix1D(matrixData)
+			: createMatrix2D(matrixData, colDimensions, rowDimensions);
 
 	matrix.value = matrixAttributes.matrix;
 	chosenCol.value = colDimensions[0];
