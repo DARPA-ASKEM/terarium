@@ -2,10 +2,7 @@
 	<div class="breakdown-pane-container">
 		<ul>
 			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
-				<tera-asset-card
-					:asset="(asset as Document & Model & Dataset)"
-					:resourceType="(getType(asset) as ResourceType)"
-				>
+				<tera-asset-card :asset="asset" :resourceType="(getType(asset) as ResourceType)">
 					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
 						<i class="pi pi-ellipsis-v" />
 					</button>
@@ -20,7 +17,6 @@
 import { onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
-import { Document, Dataset, Model } from '@/types/Types';
 import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import Menu from 'primevue/menu';
