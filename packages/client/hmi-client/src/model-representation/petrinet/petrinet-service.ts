@@ -595,7 +595,6 @@ export const isStratifiedAMR = (amr: Model) => {
 	return false;
 };
 
-// Returns a 1xN matrix describing state's initials
 export const extractMapping = (amr: Model, id: string) => {
 	const typeMapList = amr.semantics?.typing?.map as [string, string][];
 	const item = typeMapList.find((d) => d[0] === id);
@@ -661,6 +660,88 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[], dimension
 		obj[dimensions[results.length]] = state.id;
 		results.push(obj);
 	});
+	return results;
+};
+
+const MAX_DEPTH = 10;
+
+/**
+ * Given an identifier string id, recursiviely lookup mapping information
+ * to find out where the id originated. At eash iteration record the term
+ * and type/model that was added.
+ */
+export const getCatlabStratasDataPoint = (amr: Model, id: string) => {
+	let span: any = amr.semantics?.span;
+	let key = id;
+	let c = 0;
+	const result: any = {};
+
+	// Recursively crawl up the strata provenance chain
+	while (c < MAX_DEPTH) {
+		c++;
+		// Name of strata dimension, Catlab doesn't actually track it
+		// so the cloest thing is the strata model name
+		const dimension = span[1].system.name;
+
+		// The strata
+		// eslint-disable-next-line
+		const term = span[1].map.find((d: any) => d[0] === key)[1];
+		result[dimension] = term;
+
+		// eslint-disable-next-line
+		key = span[0].map.find((d: any) => d[0] === key)[1];
+		span = span[0].system.semantics.span;
+		if (!span) {
+			result.id = id;
+			result['@base'] = key;
+			break;
+		}
+	}
+	return result;
+};
+
+export const getCatlabStatesMatrixData = (amr: Model) => {
+	const stateIds = amr.model.states.map((d: any) => d.id);
+	const results: any[] = [];
+	for (let i = 0; i < stateIds.length; i++) {
+		const result = getCatlabStratasDataPoint(amr as any, stateIds[i]);
+		results.push(result);
+	}
+	return results;
+};
+
+export const getCatlabTransitionsMatrixData = (amr: Model) => {
+	const transitions = amr.model.transitions as PetriNetTransition[];
+	const results: any[] = [];
+	for (let i = 0; i < transitions.length; i++) {
+		const transition = transitions[i];
+		let result: any = {};
+
+		// Scan both inut and outut
+		transition.input.forEach((stateId: string) => {
+			result = Object.assign(result, getCatlabStratasDataPoint(amr as any, stateId));
+		});
+		transition.output.forEach((stateId: string) => {
+			result = Object.assign(result, getCatlabStratasDataPoint(amr as any, stateId));
+		});
+
+		// Build the @base/id for a transition
+		let c = 0;
+		let key = transition.id;
+		let span: any = amr.semantics?.span;
+		while (c < MAX_DEPTH) {
+			c++;
+			// eslint-disable-next-line
+			key = span[0].map.find((d: any) => d[0] === key)[1];
+			span = span[0].system.semantics.span;
+			if (!span) {
+				result['@base'] = key;
+				result.id = transition.id;
+				break;
+			}
+		}
+		results.push(result);
+	}
 	return results;
 };
 
