@@ -425,7 +425,6 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 
 		await executeSearch();
 
-		// searchByExampleItem.value = null;
 		dirtyResults.value[resourceType.value] = false;
 	}
 };
@@ -577,7 +576,7 @@ watch(
 		// The query changes in the following cases:
 		// - when a user does a normal search - there is no `resourceId`
 		// - when a user does a search by example - there is a `resourceId`
-		// - when a user navigates back and forth using the <- and -> buttons
+		// - when a user navigates back and forth on a page
 
 		if (route.query.resourceId) {
 			searchByExampleOnPageRefresh(route.query.resourceId.toString());

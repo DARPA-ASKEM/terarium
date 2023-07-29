@@ -7,7 +7,7 @@
 				<span v-if="searchByExampleOptionsStr.length === 0"> "{{ props.searchTerm }}" </span>
 				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
 					<tera-asset-card
-						:asset="searchByExampleItem as Document & Model & Dataset"
+						:asset="searchByExampleItem!"
 						:resource-type="(resultType as ResourceType)"
 					/>
 				</div>
