@@ -191,6 +191,8 @@ function configureMatrix() {
 	matrix.value = matrixAttributes.matrix;
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
+
+	console.log(matrix.value);
 }
 
 onMounted(() => {
@@ -236,6 +238,7 @@ onMounted(() => {
 
 .cell-input {
 	height: 4rem;
+	min-width: 8rem;
 	width: 100%;
 	padding-left: 12px;
 }
