@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import {
 	getCatlabStatesMatrixData,
 	getCatlabTransitionsMatrixData
@@ -157,6 +157,8 @@ function updateModelConfigValue(variableName: string) {
 }
 
 function configureMatrix() {
+	console.log(props.modelConfiguration.configuration);
+
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
@@ -166,6 +168,10 @@ function configureMatrix() {
 			: getCatlabTransitionsMatrixData(props.modelConfiguration.configuration).filter(
 					(d) => d['@base'] === props.id
 			  );
+
+	console.log(matrixData);
+
+	if (isEmpty(matrixData)) return;
 
 	// Grab dimension names from the first matrix row
 	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {

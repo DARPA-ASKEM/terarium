@@ -162,12 +162,24 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const baseModelStates = computed<any>(() =>
-	props.model?.semantics?.span?.[0].system.model.states.map(({ id }) => id)
-);
-const baseModelTransitions = computed<any>(() =>
-	props.model?.semantics?.span?.[0].system.model.transitions.map(({ id }) => id)
-);
+const MAX_DEPTH = 10;
+const baseModel = computed<any>(() => {
+	let level = props.model?.semantics?.span?.[0].system;
+	let c = 0;
+
+	while (c < MAX_DEPTH) {
+		c++;
+		if (level.semantics.span) {
+			level = level.semantics.span[0].system;
+		} else {
+			return level.model;
+		}
+	}
+	return level.model;
+});
+
+const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));
+const baseModelTransitions = computed<any>(() => baseModel.value.transitions.map(({ id }) => id));
 
 // Decide if we should display the whole configuration table
 const isConfigurationVisible = computed(
