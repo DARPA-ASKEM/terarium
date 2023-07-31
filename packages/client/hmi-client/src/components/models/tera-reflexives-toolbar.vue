@@ -30,6 +30,7 @@ import {
 	updateRateExpression,
 	removeTransition
 } from '@/model-representation/petrinet/petrinet-service';
+import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	modelToUpdate: Model; // the model to which we will add reflexives
@@ -41,7 +42,7 @@ const emit = defineEmits(['model-updated']);
 const modelToCompareTypeSystem = computed<TypeSystem | undefined>(
 	() => props.modelToCompare.semantics?.typing?.system.model
 );
-const typedModel = ref<Model>(props.modelToUpdate); // this is the object that is being edited
+const typedModel = ref<Model>(cloneDeep(props.modelToUpdate)); // this is the object that is being edited
 let unassignedTransitionTypes: Transition[] = [];
 const statesToAddReflexives = ref<{ [id: string]: { id: string; name: string }[] }>({});
 const typeIdToTransitionIdMap = computed<{ [id: string]: string }>(() => {
@@ -143,8 +144,8 @@ watch(
 	() => props.modelToUpdate,
 	() => {
 		if (props.modelToCompare) {
-			typedModel.value = props.modelToUpdate;
-			emit('model-updated', typedModel.value);
+			// typedModel.value = props.modelToUpdate;
+			// emit('model-updated', typedModel.value);
 		}
 	},
 	{ immediate: true }
