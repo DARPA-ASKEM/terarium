@@ -440,4 +440,8 @@ section {
 .nodes-require-types {
 	font-weight: var(--font-weight-semibold);
 }
+
+.buttons .p-button {
+	white-space: nowrap;
+}
 </style>
