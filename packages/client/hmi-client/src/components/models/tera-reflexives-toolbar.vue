@@ -86,9 +86,7 @@ function updateStatesToAddReflexives(
 
 	if (updatedTypeMap && updatedTypeSystem) {
 		newValue.forEach((state) => {
-			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition.id]}${state.id}${
-				state.id
-			}`;
+			const newTransitionId = `${typeIdToTransitionIdMap.value[typeOfTransition.id]}${state.id}`;
 			// For the type of reflexive transition that we are adding, get the number of inputs and outputs that share the same type as the state that we are updating
 			// E.g. if we are adding an 'Infect' reflexive to a node of type 'Pop', get the number of 'Pop' inputs and outputs for 'Infect'
 			const numInputsOfStateType = typeOfTransition.input.filter((i) => i === typeIdOfState).length;
@@ -131,38 +129,43 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	[() => modelToCompareTypeSystem],
-	() => {
-		if (modelToCompareTypeSystem.value) {
-			const modelToUpdateTransitionIds =
-				props.modelToUpdate.semantics?.typing?.system.model.transitions.map((t) => t.id);
-			const modelToCompareTypeTransitionIds = modelToCompareTypeSystem.value?.transitions.map(
-				(t) => t.id
+function populateReflexiveOptions() {
+	if (modelToCompareTypeSystem.value) {
+		const modelToUpdateTransitionIds =
+			props.modelToUpdate.semantics?.typing?.system.model.transitions.map((t) => t.id);
+		const modelToCompareTypeTransitionIds = modelToCompareTypeSystem.value?.transitions.map(
+			(t) => t.id
+		);
+		if (modelToUpdateTransitionIds && modelToCompareTypeTransitionIds) {
+			const unassignedIds = modelToCompareTypeTransitionIds.filter(
+				(id) => !modelToUpdateTransitionIds.includes(id)
 			);
-			if (modelToUpdateTransitionIds && modelToCompareTypeTransitionIds) {
-				const unassignedIds = modelToCompareTypeTransitionIds.filter(
-					(id) => !modelToUpdateTransitionIds.includes(id)
-				);
-				const unassignedTransitions: Transition[] =
-					modelToCompareTypeSystem.value?.transitions.filter((t) => unassignedIds.includes(t.id));
-				if (unassignedTransitions.length > 0) {
-					unassignedTransitionTypes = unassignedTransitionTypes.concat(unassignedTransitions);
-				}
+
+			const unassignedTransitions: Transition[] =
+				modelToCompareTypeSystem.value?.transitions.filter((t) => unassignedIds.includes(t.id));
+			if (unassignedTransitions.length > 0) {
+				unassignedTransitionTypes = unassignedTransitionTypes.concat(unassignedTransitions);
 			}
-			props.modelToUpdate.model.states.forEach((state) => {
-				// get type of state for each state in model to update model
-				const type: string =
-					props.modelToUpdate.semantics?.typing?.map.find((m) => m[0] === state.id)?.[1] ?? '';
-				// for each unassigned transition type, check if inputs or ouputs have the type of this state
-				const allowedTransitionsForState: Transition[] = unassignedTransitionTypes.filter(
-					(unassigned) => unassigned.input.includes(type) || unassigned.output.includes(type)
-				);
-				if (!reflexiveOptions.value[type]) {
-					reflexiveOptions.value[type] = allowedTransitionsForState;
-				}
-			});
 		}
+		props.modelToUpdate.model.states.forEach((state) => {
+			// get type of state for each state in model to update model
+			const type: string =
+				props.modelToUpdate.semantics?.typing?.map.find((m) => m[0] === state.id)?.[1] ?? '';
+			// for each unassigned transition type, check if inputs or ouputs have the type of this state
+			const allowedTransitionsForState: Transition[] = unassignedTransitionTypes.filter(
+				(unassigned) => unassigned.input.includes(type) || unassigned.output.includes(type)
+			);
+			if (!reflexiveOptions.value[type]) {
+				reflexiveOptions.value[type] = allowedTransitionsForState;
+			}
+		});
+	}
+}
+
+watch(
+	[() => props.modelToCompare],
+	() => {
+		populateReflexiveOptions();
 	},
 	{ immediate: true }
 );
