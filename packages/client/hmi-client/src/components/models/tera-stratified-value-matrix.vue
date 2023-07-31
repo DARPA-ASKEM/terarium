@@ -44,23 +44,23 @@
 							:key="j"
 							@click="
 								valueToEdit = {
-									val: getMatrixValue(cell?.value?.[chosenCol]),
+									val: getMatrixValue(cell?.value?.id),
 									rowIdx: i,
 									colIdx: j
 								}
 							"
 						>
-							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
+							<template v-if="cell?.value?.id">
 								<InputText
 									v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
 									class="cell-input"
 									v-model.lazy="valueToEdit.val"
 									v-focus
 									@focusout="valueToEdit = { val: '', rowIdx: -1, colIdx: -1 }"
-									@keyup.stop.enter="updateModelConfigValue(cell?.value?.[chosenRow])"
+									@keyup.stop.enter="updateModelConfigValue(cell?.value?.id)"
 								/>
 								<span v-else class="editable-cell">
-									{{ getMatrixValue(cell?.value?.[chosenCol]) }}
+									{{ getMatrixValue(cell?.value?.id) }}
 								</span>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
@@ -76,8 +76,8 @@
 import { ref, onMounted } from 'vue';
 import { cloneDeep } from 'lodash';
 import {
-	extractStateMatrixData,
-	extractTransitionMatrixData
+	getCatlabStatesMatrixData,
+	getCatlabTransitionsMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
@@ -157,44 +157,25 @@ function updateModelConfigValue(variableName: string) {
 }
 
 function configureMatrix() {
-	// Get stratified ids from the chosen base id
-	const rowAndCol = props.modelConfiguration.configuration?.semantics?.span?.[0]?.map
-		.filter((id: string) => id[1] === props.id)
-		.map((d) => d[0]);
-
-	// Assign dimensions relevant to the ids
-	const rowAndColDimensions = props.modelConfiguration.configuration.semantics?.typing?.map.filter(
-		(id) => rowAndCol.includes(id[0])
-	);
-
-	if (rowAndColDimensions) {
-		// Assuming column id is the first one
-		const colId = rowAndColDimensions[0][0];
-		let rowId: string | null = null;
-
-		for (let i = 0; i < rowAndColDimensions?.length; i++) {
-			// If other id is recognized it is the row id
-			if (!rowId && rowAndColDimensions[i][0] !== colId) {
-				rowId = rowAndColDimensions[i][0];
-			}
-
-			// Push dimension
-			if (colId === rowAndColDimensions[i][0]) {
-				colDimensions.push(rowAndColDimensions[i][1]);
-			} else if (rowId === rowAndColDimensions[i][0]) {
-				rowDimensions.push(rowAndColDimensions[i][1]);
-			}
-		}
-	}
-
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
-			? extractStateMatrixData(props.modelConfiguration.configuration, rowAndCol, [
-					...colDimensions,
-					...rowDimensions
-			  ])
-			: extractTransitionMatrixData(props.modelConfiguration.configuration, rowAndCol);
+			? getCatlabStatesMatrixData(props.modelConfiguration.configuration).filter(
+					(d) => d['@base'] === props.id
+			  )
+			: getCatlabTransitionsMatrixData(props.modelConfiguration.configuration).filter(
+					(d) => d['@base'] === props.id
+			  );
+
+	// Grab dimension names from the first matrix row
+	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
+		delete d.id;
+		delete d['@base'];
+		return Object.keys(d);
+	})[0];
+
+	rowDimensions.push(...dimensions);
+	colDimensions.push(...dimensions);
 
 	const matrixAttributes =
 		props.nodeType === NodeType.State
