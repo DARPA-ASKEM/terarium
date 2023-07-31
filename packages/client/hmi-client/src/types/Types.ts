@@ -299,7 +299,7 @@ export interface ModelMetadata {
     processed_by?: string;
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
-    attributes: any[];
+    attributes?: any[];
     timeseries?: { [index: string]: any };
 }
 
@@ -456,7 +456,7 @@ export interface ModelParameter {
 export interface Observable {
     id: string;
     name?: string;
-    states: string[];
+    states?: string[];
     expression?: string;
     expression_mathml?: string;
 }

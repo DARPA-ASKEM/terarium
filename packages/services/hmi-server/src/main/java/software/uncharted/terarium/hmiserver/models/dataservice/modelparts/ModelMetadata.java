@@ -33,6 +33,7 @@ public class ModelMetadata {
 	private Annotations annotations;
 
 	@JsonProperty("attributes")
+	@TSOptional
 	private List<JsonNode> attributes;
 
 	@JsonProperty("timeseries")
