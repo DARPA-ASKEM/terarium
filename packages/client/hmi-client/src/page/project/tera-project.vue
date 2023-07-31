@@ -43,7 +43,7 @@
 				<tera-tab-group
 					v-if="workflowNode"
 					class="tab-group"
-					:tabs="[]"
+					:tabs="[{ assetName: workflowNode.displayName }]"
 					:active-tab-index="0"
 					:loading-tab-index="null"
 					@close-tab="
