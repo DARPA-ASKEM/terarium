@@ -2,13 +2,13 @@
 	<section class="legend" v-if="stateTypes || transitionTypes">
 		<ul>
 			<li v-for="(type, i) in stateTypes" :key="i">
-				<div class="legend-key-circle" :style="getLegendKeyStyle(type ?? '')" />
+				<div class="legend-key-circle" :style="getLegendKeyStyle(type)" />
 				{{ type }}
 			</li>
 		</ul>
 		<ul>
 			<li v-for="(type, i) in transitionTypes" :key="i">
-				<div class="legend-key-square" :style="getLegendKeyStyle(type ?? '')" />
+				<div class="legend-key-square" :style="getLegendKeyStyle(type)" />
 				{{ type }}
 			</li>
 		</ul>
@@ -26,10 +26,10 @@ const props = defineProps<{
 
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 
-const stateTypes = computed(() =>
+const stateTypes = computed<string[]>(() =>
 	props.model.semantics?.typing?.system?.model.states.map((s) => s.name)
 );
-const transitionTypes = computed(() =>
+const transitionTypes = computed<string[]>(() =>
 	props.model.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name)
 );
 
