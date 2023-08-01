@@ -535,4 +535,16 @@ main {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
 }
+
+.legend-key-circle {
+	height: 24px;
+	width: 24px;
+	border-radius: 12px;
+}
+
+.legend-key-square {
+	height: 24px;
+	width: 24px;
+	border-radius: 4px;
+}
 </style>
