@@ -89,6 +89,7 @@
 			</p>
 		</section>
 		<Button
+			v-if="modelConfigId && datasetId"
 			class="p-button-sm run-button"
 			label="Run"
 			icon="pi pi-play"

@@ -2,9 +2,8 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.util.List;
 
@@ -12,7 +11,6 @@ import java.util.List;
 @Accessors(chain = true)
 public class Annotations {
 	@TSOptional
-	@JsonSetter(nulls = Nulls.SKIP)
 	private String license;
 
 	@TSOptional
@@ -22,15 +20,12 @@ public class Annotations {
 	private List<String> references;
 
 	@TSOptional
-	@JsonSetter(nulls = Nulls.SKIP)
 	private String time_scale;
 
 	@TSOptional
-	@JsonSetter(nulls = Nulls.SKIP)
 	private String time_start;
 
 	@TSOptional
-	@JsonSetter(nulls = Nulls.SKIP)
 	private String time_end;
 
 	@TSOptional

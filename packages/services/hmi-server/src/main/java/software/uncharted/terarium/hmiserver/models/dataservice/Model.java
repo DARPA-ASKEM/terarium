@@ -42,6 +42,6 @@ public class Model implements Serializable {
 	private ModelSemantics semantics;
 
 	@TSOptional
-	private ModelMetadata metadata;
+	private Object metadata;
 
 }

@@ -84,7 +84,7 @@ export interface Model {
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
+    metadata?: any;
 }
 
 export interface ModelConfiguration {
@@ -294,15 +294,6 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
-export interface ModelMetadata {
-    processed_at?: number;
-    processed_by?: string;
-    variable_statements?: VariableStatement[];
-    annotations?: Annotations;
-    attributes?: any[];
-    timeseries?: { [index: string]: any };
-}
-
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
@@ -317,6 +308,15 @@ export interface Properties {
     name: string;
     grounding?: ModelGrounding;
     description?: string;
+}
+
+export interface ModelMetadata {
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
+    attributes?: any[];
+    timeseries?: { [index: string]: any };
 }
 
 export interface PetriNetState {
