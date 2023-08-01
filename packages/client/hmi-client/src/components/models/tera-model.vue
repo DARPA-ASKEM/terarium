@@ -479,7 +479,7 @@
 						:feature-config="featureConfig"
 					/>
 					<tera-stratified-model-configuration
-						v-if="model.semantics?.span"
+						v-if="isStratifiedAMR(model)"
 						:model="model"
 						:feature-config="featureConfig"
 					/>
@@ -573,7 +573,8 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import {
 	convertToAMRModel,
 	updateConfigFields,
-	updateParameterId
+	updateParameterId,
+	isStratifiedAMR
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';

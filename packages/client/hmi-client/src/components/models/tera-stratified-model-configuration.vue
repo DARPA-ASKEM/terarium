@@ -140,7 +140,7 @@ import {
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
-import { getBaseAMR } from '@/model-representation/petrinet/petrinet-service';
+import { getBaseAMR, isStratifiedAMR } from '@/model-representation/petrinet/petrinet-service';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
@@ -163,7 +163,9 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const baseModel = computed<any>(() => getBaseAMR(props.model));
+const baseModel = computed<any>(
+	() => (isStratifiedAMR(props.model) ? getBaseAMR(props.model) : props.model.model) // temporary way of reading mira stratified models
+);
 const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));
 const baseModelTransitions = computed<any>(() => baseModel.value.transitions.map(({ id }) => id));
 
