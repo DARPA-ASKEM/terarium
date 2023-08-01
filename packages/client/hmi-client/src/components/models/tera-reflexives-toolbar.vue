@@ -173,9 +173,7 @@ function populateReflexiveOptions() {
 			const allowedTransitionsForState: Transition[] = unassignedTransitions.filter(
 				(unassigned) => unassigned.input.includes(type) || unassigned.output.includes(type)
 			);
-			if (!reflexiveOptions.value[type]) {
-				reflexiveOptions.value[type] = allowedTransitionsForState;
-			}
+			reflexiveOptions.value[type] = allowedTransitionsForState;
 		});
 	}
 }
