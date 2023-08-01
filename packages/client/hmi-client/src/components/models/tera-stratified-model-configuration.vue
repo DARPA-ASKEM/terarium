@@ -107,6 +107,7 @@
 							<tera-stratified-value-matrix
 								:model-configuration="modelConfigurations[modalVal.configIndex]"
 								:id="modalVal.id"
+								:stratified-model-type="stratifiedModelType"
 								:node-type="modalVal.nodeType"
 							/>
 						</div>
@@ -140,12 +141,13 @@ import {
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
-import { getBaseAMR, isStratifiedAMR } from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedModelType, getBaseAMR } from '@/model-representation/petrinet/petrinet-service';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	featureConfig: FeatureConfig;
 	model: Model;
+	stratifiedModelType: StratifiedModelType;
 	calibrationConfig?: boolean;
 }>();
 
@@ -163,8 +165,10 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const baseModel = computed<any>(
-	() => (isStratifiedAMR(props.model) ? getBaseAMR(props.model) : props.model.model) // temporary way of reading mira stratified models
+const baseModel = computed<any>(() =>
+	props.stratifiedModelType === StratifiedModelType.Catlab
+		? getBaseAMR(props.model)
+		: props.model.model
 );
 const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));
 const baseModelTransitions = computed<any>(() => baseModel.value.transitions.map(({ id }) => id));

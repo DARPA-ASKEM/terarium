@@ -74,8 +74,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, xor } from 'lodash';
 import {
+	StratifiedModelType,
 	getCatlabStatesMatrixData,
 	getCatlabTransitionsMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
@@ -89,6 +90,7 @@ import { updateModelConfiguration } from '@/services/model-configurations';
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
+	stratifiedModelType: StratifiedModelType;
 	nodeType: NodeType;
 }>();
 
@@ -157,42 +159,66 @@ function updateModelConfigValue(variableName: string) {
 }
 
 function configureMatrix() {
-	console.log(props.modelConfiguration.configuration);
+	if (props.stratifiedModelType === StratifiedModelType.Catlab) {
+		// Get only the states/transitions that are mapped to the base model
+		const matrixData =
+			props.nodeType === NodeType.State
+				? getCatlabStatesMatrixData(props.modelConfiguration.configuration).filter(
+						(d) => d['@base'] === props.id
+				  )
+				: getCatlabTransitionsMatrixData(props.modelConfiguration.configuration).filter(
+						(d) => d['@base'] === props.id
+				  );
 
-	// Get only the states/transitions that are mapped to the base model
-	const matrixData =
-		props.nodeType === NodeType.State
-			? getCatlabStatesMatrixData(props.modelConfiguration.configuration).filter(
-					(d) => d['@base'] === props.id
-			  )
-			: getCatlabTransitionsMatrixData(props.modelConfiguration.configuration).filter(
-					(d) => d['@base'] === props.id
-			  );
+		if (isEmpty(matrixData)) return;
 
-	console.log(matrixData);
+		// Grab dimension names from the first matrix row
+		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
+			delete d.id;
+			delete d['@base'];
+			return Object.keys(d);
+		})[0];
+		rowDimensions.push(...dimensions);
+		colDimensions.push(...dimensions);
 
-	if (isEmpty(matrixData)) return;
+		const matrixAttributes =
+			props.nodeType === NodeType.State
+				? createMatrix1D(matrixData)
+				: createMatrix2D(matrixData, colDimensions, rowDimensions);
 
-	// Grab dimension names from the first matrix row
-	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-		delete d.id;
-		delete d['@base'];
-		return Object.keys(d);
-	})[0];
+		matrix.value = matrixAttributes.matrix;
+	} else if (props.stratifiedModelType === StratifiedModelType.Mira) {
+		const modifiers = props.modelConfiguration.configuration.model.states.map(
+			({ grounding }) => grounding.modifiers
+		);
 
-	rowDimensions.push(...dimensions);
-	colDimensions.push(...dimensions);
+		const dimensionsAndTerms = {};
+		for (let i = 0; i < modifiers.length; i++) {
+			const dimensions = Object.keys(dimensionsAndTerms);
+			const modifierDims = Object.keys(modifiers[i]);
 
-	const matrixAttributes =
-		props.nodeType === NodeType.State
-			? createMatrix1D(matrixData)
-			: createMatrix2D(matrixData, colDimensions, rowDimensions);
+			const newDimensions = xor(dimensions, modifierDims);
+			if (!isEmpty(newDimensions)) {
+				for (let j = 0; j < modifierDims.length; j++) dimensionsAndTerms[newDimensions[j]] = [];
+			}
 
-	matrix.value = matrixAttributes.matrix;
+			// Append terms
+			for (let j = 0; j < modifierDims.length; j++) {
+				// if (!dimensionsAndTerms[modifierDims[j]].includes(modifiers[i][modifierDims[j]])) {
+				dimensionsAndTerms[modifierDims[j]].push(modifiers[i][modifierDims[j]]);
+				// }÷
+				console.log(modifierDims[j], modifiers[i][modifierDims[j]]);
+			}
+
+			console.log(dimensionsAndTerms);
+		}
+
+		const dimensions = Object.keys(dimensionsAndTerms);
+		rowDimensions.push(...dimensions);
+		colDimensions.push(...dimensions);
+	}
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
-
-	console.log(matrix.value);
 }
 
 onMounted(() => {

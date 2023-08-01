@@ -1,4 +1,4 @@
-import _, { cloneDeep } from 'lodash';
+import _, { cloneDeep, isEmpty } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import {
@@ -19,6 +19,11 @@ export interface NodeData {
 
 export interface EdgeData {
 	numEdges: number;
+}
+
+export enum StratifiedModelType {
+	Mira = 'mira',
+	Catlab = 'catlab'
 }
 
 // Used to derive equations
@@ -591,7 +596,8 @@ export const stratify = async (baseModel: Model, strataModel: Model) => {
 // Check if AMR is a stratified AMR
 export const isStratifiedAMR = (amr: Model) => {
 	// Catlab stratification: this will have "semantics.span" field
-	if (amr.semantics?.span && amr.semantics.span.length > 1) return true;
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModelType.Catlab;
+	if (!isEmpty(amr.model.states[0].grounding.modifiers)) return StratifiedModelType.Mira;
 	return false;
 };
 
