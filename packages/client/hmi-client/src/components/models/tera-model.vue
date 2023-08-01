@@ -473,6 +473,7 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
+					<!--Testing dummy data here - appears when you choose any stratified model-->
 					<tera-stratified-model-configuration
 						v-if="stratifiedModelType"
 						:stratified-model-type="StratifiedModelType.Mira"

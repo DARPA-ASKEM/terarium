@@ -1,80 +1,105 @@
 <template>
-	<div
-		v-if="matrix"
-		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
-	>
-		<div class="p-datatable-wrapper">
-			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
-					<tr>
-						<th class="choose-criteria"></th>
-						<th class="choose-criteria"></th>
-						<th v-for="i in matrix[0].length + 1" :key="i" class="choose-criteria">
-							<Dropdown
-								v-if="i === 1"
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="chosenCol"
-								:options="colDimensions"
-							/>
-						</th>
-					</tr>
-					<tr>
-						<th class="choose-criteria"></th>
-						<th class="choose-criteria"></th>
-						<th v-for="(row, i) in matrix[0]" :key="i">
-							{{ row.colCriteria?.[chosenCol] }}
-						</th>
-					</tr>
-				</thead>
-				<tbody class="p-datatable-tbody">
-					<tr v-for="(row, i) in matrix" :key="i">
-						<td class="p-frozen-column">
-							<Dropdown
-								v-if="i === 0"
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="chosenRow"
-								:options="rowDimensions"
-							/>
-						</td>
-						<td class="p-frozen-column">{{ row[0].rowCriteria?.[chosenRow] }}</td>
-						<td
-							v-for="(cell, j) in row"
-							:key="j"
-							@click="
-								valueToEdit = {
-									val: getMatrixValue(cell?.value?.id),
-									rowIdx: i,
-									colIdx: j
-								}
-							"
-						>
-							<template v-if="cell?.value?.id">
-								<InputText
-									v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
-									class="cell-input"
-									v-model.lazy="valueToEdit.val"
-									v-focus
-									@focusout="valueToEdit = { val: '', rowIdx: -1, colIdx: -1 }"
-									@keyup.stop.enter="updateModelConfigValue(cell?.value?.id)"
+	<main>
+		<div
+			v-if="matrix"
+			class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
+		>
+			<div class="p-datatable-wrapper">
+				<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
+					<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
+						<tr>
+							<th class="choose-criteria"></th>
+							<th class="choose-criteria"></th>
+							<th v-for="i in matrix[0].length + 1" :key="i" class="choose-criteria">
+								<Dropdown
+									v-if="i === 1"
+									class="w-full"
+									placeholder="Select a variable"
+									v-model="chosenCol"
+									:options="colDimensions"
 								/>
-								<span v-else class="editable-cell">
-									{{ getMatrixValue(cell?.value?.id) }}
-								</span>
-							</template>
-							<span v-else class="not-allowed">N/A</span>
-						</td>
-					</tr>
-				</tbody>
-			</table>
+							</th>
+						</tr>
+						<tr>
+							<th class="choose-criteria"></th>
+							<th class="choose-criteria"></th>
+							<th v-for="(row, i) in matrix[0]" :key="i">
+								{{ row.colCriteria?.[chosenCol] }}
+							</th>
+						</tr>
+					</thead>
+					<tbody class="p-datatable-tbody">
+						<tr v-for="(row, i) in matrix" :key="i">
+							<td class="p-frozen-column">
+								<Dropdown
+									v-if="i === 0"
+									class="w-full"
+									placeholder="Select a variable"
+									v-model="chosenRow"
+									:options="rowDimensions"
+								/>
+							</td>
+							<td class="p-frozen-column">{{ row[0].rowCriteria?.[chosenRow] }}</td>
+							<td
+								v-for="(cell, j) in row"
+								:key="j"
+								@click="
+									valueToEdit = {
+										val: getMatrixValue(cell?.value?.id),
+										rowIdx: i,
+										colIdx: j
+									}
+								"
+							>
+								<template v-if="cell?.value?.id">
+									<InputText
+										v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
+										class="cell-input"
+										v-model.lazy="valueToEdit.val"
+										v-focus
+										@focusout="valueToEdit = { val: '', rowIdx: -1, colIdx: -1 }"
+										@keyup.stop.enter="updateModelConfigValue(cell?.value?.id)"
+									/>
+									<span v-else class="editable-cell">
+										{{ getMatrixValue(cell?.value?.id) }}
+									</span>
+								</template>
+								<span v-else class="not-allowed">N/A</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</div>
-	</div>
+		<!--
+			Temporary - just showing the mira dimensions and terms that are generated. 
+			Will put these with matrix once the matrix is generated (don't want to modify table logic above)
+		-->
+		<div v-if="stratifiedModelType === StratifiedModelType.Mira">
+			Column dimensions
+			<Dropdown
+				class="w-full"
+				placeholder="Select a variable"
+				v-model="chosenCol"
+				:options="colDimensions"
+			/>
+			Row dimensions
+			<Dropdown
+				class="w-full"
+				placeholder="Select a variable"
+				v-model="chosenRow"
+				:options="rowDimensions"
+			/>
+			Terms / Headers
+			<br />
+			{{ miraHeaders }}
+		</div>
+	</main>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { cloneDeep, isEmpty, xor } from 'lodash';
+import { cloneDeep, isEmpty, isEqual, union } from 'lodash';
 import {
 	StratifiedModelType,
 	getCatlabStatesMatrixData,
@@ -101,6 +126,8 @@ const matrix = ref();
 const chosenCol = ref('');
 const chosenRow = ref('');
 const valueToEdit = ref({ val: '', rowIdx: -1, colIdx: -1 });
+
+const miraHeaders = ref(); // temp
 
 // Makes cell inputs focus once they appear
 const vFocus = {
@@ -197,22 +224,24 @@ function configureMatrix() {
 			const dimensions = Object.keys(dimensionsAndTerms);
 			const modifierDims = Object.keys(modifiers[i]);
 
-			const newDimensions = xor(dimensions, modifierDims);
-			if (!isEmpty(newDimensions)) {
+			// Update dimensions
+			const newDimensions = union(dimensions, modifierDims);
+			if (!isEqual(dimensions, newDimensions)) {
 				for (let j = 0; j < modifierDims.length; j++) dimensionsAndTerms[newDimensions[j]] = [];
 			}
 
 			// Append terms
 			for (let j = 0; j < modifierDims.length; j++) {
-				// if (!dimensionsAndTerms[modifierDims[j]].includes(modifiers[i][modifierDims[j]])) {
-				dimensionsAndTerms[modifierDims[j]].push(modifiers[i][modifierDims[j]]);
-				// }÷
-				console.log(modifierDims[j], modifiers[i][modifierDims[j]]);
-			}
+				const dimension = modifierDims[j];
+				const term = modifiers[i][dimension];
 
-			console.log(dimensionsAndTerms);
+				if (!dimensionsAndTerms[dimension].includes(term)) {
+					dimensionsAndTerms[dimension].push(term);
+				}
+			}
 		}
 
+		miraHeaders.value = dimensionsAndTerms;
 		const dimensions = Object.keys(dimensionsAndTerms);
 		rowDimensions.push(...dimensions);
 		colDimensions.push(...dimensions);
