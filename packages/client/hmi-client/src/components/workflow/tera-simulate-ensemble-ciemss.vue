@@ -23,10 +23,9 @@
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
-				:run-results="renderedRuns"
+				:run-results="runResults"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
+				has-mean-line
 				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
 			<Button
@@ -170,9 +169,15 @@
 						</thead>
 						<tbody class="p-datatable-tbody">
 							<td>Steps</td>
-							<td><InputNumber v-model="timeSpan.start" /></td>
-							<td><InputNumber v-model="timeSpan.end" /></td>
-							<td><InputNumber v-model="numSamples" /></td>
+							<td>
+								<InputNumber v-model="timeSpan.start" />
+							</td>
+							<td>
+								<InputNumber v-model="timeSpan.end" />
+							</td>
+							<td>
+								<InputNumber v-model="numSamples" />
+							</td>
 						</tbody>
 					</table>
 				</AccordionTab>
@@ -245,7 +250,6 @@ const customWeights = ref<boolean>(false);
 const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
-const renderedRuns = ref<RunResults>({});
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
@@ -258,20 +262,6 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 		state
 	});
 };
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -458,45 +448,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-// process run result data to create mean run line
-watch(
-	() => runResults.value,
-	(input) => {
-		const runResult: RunResults = JSON.parse(JSON.stringify(input));
-
-		// convert to array from array-like object
-		const parsedSimProbData = Object.values(runResult);
-
-		const numRuns = parsedSimProbData.length;
-		if (!numRuns) {
-			renderedRuns.value = runResult;
-			return;
-		}
-
-		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
-		const aggregateRun: { [key: string]: number }[] = [];
-
-		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
-			for (let run = 0; run < numRuns; run++) {
-				if (!aggregateRun[timestamp]) {
-					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
-					Object.keys(aggregateRun[timestamp]).forEach((key) => {
-						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
-					});
-				} else {
-					const datum = parsedSimProbData[run][timestamp];
-					Object.keys(datum).forEach((key) => {
-						aggregateRun[timestamp][key] += datum[key] / numRuns;
-					});
-				}
-			}
-		}
-
-		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-	},
-	{ immediate: true, deep: true }
-);
 </script>
 
 <style scoped>
@@ -535,6 +486,7 @@ watch(
 	height: 200px;
 	/* width: 80%; */
 }
+
 .model-weights {
 	display: flex;
 }
@@ -543,6 +495,7 @@ watch(
 	display: flex;
 	margin: 1em;
 }
+
 th {
 	text-align: left;
 }

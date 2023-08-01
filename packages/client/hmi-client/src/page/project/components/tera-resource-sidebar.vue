@@ -11,7 +11,27 @@
 				class="p-button-sm secondary-button"
 				@click="toggleOptionsMenu"
 			/>
-			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
+				<!-- A way to use vue feather icons in the MenuItem component, it might be better to try to use 1 icon library for easier integration -->
+				<template #item="slotProps">
+					<a class="p-menuitem-link">
+						<vue-feather
+							v-if="typeof getAssetIcon(slotProps.item.key ?? null) === 'string'"
+							class="p-button-icon-left icon"
+							:type="getAssetIcon(slotProps.item.key ?? null)"
+							size="1rem"
+						/>
+						<component
+							v-else
+							:is="getAssetIcon(slotProps.item.key ?? null)"
+							class="p-button-icon-left icon"
+						/>
+						<span class="p-menuitem-text">
+							{{ slotProps.item.label }}
+						</span>
+					</a>
+				</template>
+			</Menu>
 		</header>
 		<Button
 			class="asset-button"
@@ -47,7 +67,7 @@
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
-					:active="isEqual(tab, activeTab)"
+					:active="tab.assetId === activeTab.assetId"
 					:title="tab.assetName"
 					class="asset-button"
 					plain
@@ -140,10 +160,9 @@ type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 const props = defineProps<{
 	project: IProject;
 	activeTab: Tab;
-	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset']);
+const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
 
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
@@ -161,13 +180,24 @@ const assets = computed((): IProjectAssetTabs => {
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
 			const projectAssetType = type as ProjectAssetTypes;
-			const typeAssets = projectAssets[projectAssetType].map((asset) => {
-				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const pageType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id?.toString();
-				return { assetName, pageType, assetId };
-			}) as Tab[];
-			tabs.set(projectAssetType, new Set(typeAssets));
+			const typeAssets = projectAssets[projectAssetType]
+				.map((asset) => {
+					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+					const pageType = asset?.type ?? projectAssetType;
+					const assetId = asset?.id?.toString();
+					return { assetName, pageType, assetId };
+				})
+				.filter((asset) => {
+					// filter assets
+					if (!searchAsset.value?.trim()) {
+						return true;
+					}
+					const searchTermLower = searchAsset.value?.trim().toLowerCase();
+					return asset.assetName.toLowerCase().includes(searchTermLower);
+				}) as Tab[];
+			if (!isEmpty(typeAssets)) {
+				tabs.set(projectAssetType, new Set(typeAssets));
+			}
 		}
 	});
 	return tabs;
@@ -196,7 +226,7 @@ function endDrag() {
 const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
-		icon: 'pi pi-code',
+		key: ProjectAssetTypes.CODE,
 		label: 'Code editor',
 		command() {
 			emit('open-asset', {
@@ -204,6 +234,20 @@ const optionsMenuItems = ref([
 				pageType: ProjectAssetTypes.CODE,
 				assetId: undefined
 			});
+		}
+	},
+	{
+		key: ProjectAssetTypes.MODELS,
+		label: 'New Model',
+		command() {
+			emit('open-new-asset', ProjectAssetTypes.MODELS);
+		}
+	},
+	{
+		key: ProjectAssetTypes.SIMULATION_WORKFLOW,
+		label: 'New Workflow',
+		command() {
+			emit('open-new-asset', ProjectAssetTypes.SIMULATION_WORKFLOW);
 		}
 	}
 ]);
@@ -335,5 +379,9 @@ header {
 .secondary-button:hover {
 	color: var(--text-color-secondary) !important;
 	background-color: var(--surface-highlight) !important;
+}
+
+:deep(.p-button-icon-left.icon) {
+	margin-right: 0.5rem;
 }
 </style>

@@ -2833,14 +2833,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pinia/testing@npm:0.1.2":
-  version: 0.1.2
-  resolution: "@pinia/testing@npm:0.1.2"
+"@pinia/testing@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@pinia/testing@npm:0.1.3"
   dependencies:
     vue-demi: ">=0.14.5"
   peerDependencies:
-    pinia: ">=2.1.2"
-  checksum: 18f24860175bda02a3c0a20946137b93b12e72dad5843a9707f9dfc323dee369b58d31f2fa426e7af51389500ca074e04c70016143464d338c2745e558033e8a
+    pinia: ">=2.1.5"
+  checksum: 02df818686f63b8f7b2521f05ecbf5f7fea1ab934d3dec8575a8d5146ebfcfb0605c61b64474271e6a954586f60510fba83dadd1a9498f7765c1187e58954c26
   languageName: node
   linkType: hard
 
@@ -9237,7 +9237,7 @@ cors@latest:
     "@lumino/commands": 2.1.0
     "@lumino/coreutils": 2.1.1
     "@lumino/widgets": 2.1.0
-    "@pinia/testing": 0.1.2
+    "@pinia/testing": 0.1.3
     "@playwright/experimental-ct-vue": 1.31.2
     "@playwright/test": 1.31.2
     "@rushstack/eslint-patch": 1.3.2

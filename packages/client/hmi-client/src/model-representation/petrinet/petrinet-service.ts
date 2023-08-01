@@ -1,9 +1,14 @@
 import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
+import {
+	PetriNetModel,
+	Model,
+	PetriNetTransition,
+	TypingSemantics,
+	ModelConfiguration
+} from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
-import { getModelConfigurations } from '@/services/model';
 import { updateModelConfiguration } from '@/services/model-configurations';
 
 export interface NodeData {
@@ -159,30 +164,6 @@ export const convertToIGraph = (amr: Model) => {
 
 const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
-
-export const newAMR = (modelName: string) => {
-	const amr: Model = {
-		id: '',
-		name: modelName,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
-		model: {
-			states: [],
-			transitions: []
-		},
-		semantics: {
-			ode: {
-				rates: [],
-				initials: [],
-				parameters: []
-			}
-		}
-	};
-	return amr;
-};
 
 export const addState = (amr: Model, id: string, name: string) => {
 	amr.model.states.push({
@@ -510,9 +491,11 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 	}
 };
 
-export const updateConfigFields = async (modelId: string, id: string, newId: string) => {
-	const modelConfigs = await getModelConfigurations(modelId);
-
+export const updateConfigFields = async (
+	modelConfigs: ModelConfiguration[],
+	id: string,
+	newId: string
+) => {
 	modelConfigs.forEach((config) => {
 		updateParameterId(config.configuration, id, newId);
 		// note that this is making an async call but we don't need to wait for it to finish
@@ -606,7 +589,6 @@ export const isStratifiedAMR = (amr: Model) => {
 	return false;
 };
 
-// Returns a 1xN matrix describing state's initials
 export const extractMapping = (amr: Model, id: string) => {
 	const typeMapList = amr.semantics?.typing?.map as [string, string][];
 	const item = typeMapList.find((d) => d[0] === id);
@@ -668,9 +650,115 @@ export const extractStateMatrixData = (amr: Model, stateIds: string[], dimension
 		if (!stateIds.includes(id)) return;
 		const obj: any = {};
 
-		// FIXME: This only works for 2 dimensions now, may have to handle more than 2 differently
+		// State matrices are always 1D
 		obj[dimensions[results.length]] = state.id;
 		results.push(obj);
 	});
 	return results;
 };
+
+const MAX_DEPTH = 10;
+
+/**
+ * Given an identifier string id, recursiviely lookup mapping information
+ * to find out where the id originated. At eash iteration record the term
+ * and type/model that was added.
+ */
+export const getCatlabStratasDataPoint = (amr: Model, id: string) => {
+	let span: any = amr.semantics?.span;
+	let key = id;
+	let c = 0;
+	const result: any = {};
+
+	// Recursively crawl up the strata provenance chain
+	while (c < MAX_DEPTH) {
+		c++;
+		// Name of strata dimension, Catlab doesn't actually track it
+		// so the cloest thing is the strata model name
+		const dimension = span[1].system.name;
+
+		// The strata
+		// eslint-disable-next-line
+		const term = span[1].map.find((d: any) => d[0] === key)[1];
+		result[dimension] = term;
+
+		// eslint-disable-next-line
+		key = span[0].map.find((d: any) => d[0] === key)[1];
+		span = span[0].system.semantics.span;
+		if (!span) {
+			result.id = id;
+			result['@base'] = key;
+			break;
+		}
+	}
+	return result;
+};
+
+export const getCatlabStatesMatrixData = (amr: Model) => {
+	const stateIds = amr.model.states.map((d: any) => d.id);
+	const results: any[] = [];
+	for (let i = 0; i < stateIds.length; i++) {
+		const result = getCatlabStratasDataPoint(amr as any, stateIds[i]);
+		results.push(result);
+	}
+	return results;
+};
+
+export const getCatlabTransitionsMatrixData = (amr: Model) => {
+	const transitions = amr.model.transitions as PetriNetTransition[];
+	const results: any[] = [];
+	for (let i = 0; i < transitions.length; i++) {
+		const transition = transitions[i];
+		let result: any = {};
+
+		// Scan both inut and outut
+		transition.input.forEach((stateId: string) => {
+			result = Object.assign(result, getCatlabStratasDataPoint(amr as any, stateId));
+		});
+		transition.output.forEach((stateId: string) => {
+			result = Object.assign(result, getCatlabStratasDataPoint(amr as any, stateId));
+		});
+
+		// Build the @base/id for a transition
+		let c = 0;
+		let key = transition.id;
+		let span: any = amr.semantics?.span;
+		while (c < MAX_DEPTH) {
+			c++;
+			// eslint-disable-next-line
+			key = span[0].map.find((d: any) => d[0] === key)[1];
+			span = span[0].system.semantics.span;
+			if (!span) {
+				result['@base'] = key;
+				result.id = transition.id;
+				break;
+			}
+		}
+		results.push(result);
+	}
+	return results;
+};
+
+export function newAMR(modelName: string) {
+	const amr: Model = {
+		id: '',
+		name: modelName,
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
+}

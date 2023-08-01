@@ -99,9 +99,9 @@ export type SidePanelTab = {
 
 // Tabs
 export type Tab = {
-	assetName: string;
 	icon?: string;
 	assetId?: string;
+	assetName?: string;
 	pageType?: ProjectAssetTypes | ProjectPages;
 };
 

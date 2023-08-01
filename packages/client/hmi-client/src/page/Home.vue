@@ -174,7 +174,7 @@ import TeraSelectedDocumentPane from '@/components/documents/tera-selected-docum
 import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { Document } from '@/types/Types';
-import { searchXDDDocuments } from '@/services/data';
+import { searchXDDDocuments, getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import TeraDocumentCard from '@/components/home/tera-document-card.vue';
@@ -218,7 +218,12 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = ((await ProjectService.home()) ?? []).slice().reverse();
+	projects.value = ((await ProjectService.getAll()) ?? []).slice().reverse();
+
+	projects.value.forEach(async (project) => {
+		project.assets = await ProjectService.getAssets(project.id);
+		project.relatedDocuments = await getRelatedDocuments(project.id, null);
+	});
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);

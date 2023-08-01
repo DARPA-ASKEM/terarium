@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -15,7 +14,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
-
 
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,7 +36,7 @@ public class DocumentResource {
 	@APIResponses({
 		@APIResponse(responseCode = "500", description = "An error occurred retrieving documents"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are documents"),
-		@APIResponse(responseCode = "400", description = "Query must contain one of docid, doi or term")})
+		@APIResponse(responseCode = "400", description = "Query must contain one of docid, doi or term") })
 	public Response getDocuments(
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
@@ -60,11 +58,12 @@ public class DocumentResource {
 		@QueryParam("additional_fields") String additional_fields,
 		@QueryParam("match") String match,
 		@QueryParam("known_entities") String known_entities,
-		@QueryParam("github_url") String github_url
+		@QueryParam("github_url") String github_url,
+		@QueryParam("similar_to") String similar_to
 	) {
 
 		// only go ahead with the query if at least one param is present
-		if (docid != null || doi != null || term != null || github_url != null) {
+		if (docid != null || doi != null || term != null || github_url != null || similar_to != null) {
 			// for a more direct search, if doi is valid, then make sure other params are null
 			if (docid != null || doi != null) {
 				title = null;
@@ -84,9 +83,8 @@ public class DocumentResource {
 				additional_fields = null;
 				match = null;
 			}
+
 			try {
-
-
 				String apiKey = "";
 				if (this.apiKey.isPresent())
 					apiKey = this.apiKey.get();
@@ -97,10 +95,7 @@ public class DocumentResource {
 
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(apiKey,
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url);
-
-
-
+					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_to);
 
 				if (doc.getErrorMessage() != null) {
 					return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -119,9 +114,7 @@ public class DocumentResource {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 			}
 
-
 		}
 		return Response.status(Response.Status.BAD_REQUEST).build();
 	}
-
 }

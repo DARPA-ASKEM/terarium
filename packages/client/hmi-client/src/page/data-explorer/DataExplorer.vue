@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import { fetchData, getXDDSets } from '@/services/data';
+import { fetchData, getDocumentById, getXDDSets } from '@/services/data';
 import {
 	ResourceType,
 	ResultType,
@@ -391,7 +391,7 @@ const executeSearch = async () => {
 };
 
 const clearSearchByExampleSelections = () => {
-	// clear out the serch by example option selections
+	// clear out the search by example option selections
 	searchByExampleOptions.value = {
 		similarContent: false,
 		forwardCitation: false,
@@ -419,14 +419,12 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	// REVIEW: executing a related content search means to find related artifacts to the one selected:
 	//         if a model/dataset/document is selected then find related artifacts from TDS
 	if (searchOptions.similarContent || searchOptions.relatedContent) {
-		isSliderFacetsOpen.value = false;
 		// NOTE the executeSearch will set proper search-by-example search parameters
 		//  and let the data service handles the fetch
 		executeSearchByExample.value = true;
 
 		await executeSearch();
 
-		searchByExampleItem.value = null;
 		dirtyResults.value[resourceType.value] = false;
 	}
 };
@@ -542,11 +540,24 @@ async function executeNewQuery() {
 	dirtyResults.value[resourceType.value] = false;
 }
 
+async function searchByExampleOnPageRefresh(resourceId: string) {
+	if (!searchByExampleItem.value) {
+		searchByExampleItem.value = await getDocumentById(resourceId);
+	}
+	if (!Object.values(searchByExampleOptions.value).some((v) => v)) {
+		searchByExampleOptions.value.similarContent = true;
+	}
+	onSearchByExample(searchByExampleOptions.value);
+}
+
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
 
-	disableSearchByExample();
+	// We support facet filters for search by example for documents but not for models or datasets
+	if (resourceType.value !== ResourceType.XDD) {
+		disableSearchByExample();
+	}
 
 	// user has changed some of the facet filter, so re-fetch data
 	dirtyResults.value[resourceType.value] = true;
@@ -562,14 +573,18 @@ watch(clientFilters, async (n, o) => {
 watch(
 	() => route.query,
 	() => {
-		// Adding another query param 'byExample' for what should be a better way to determine whether we are searching by example or not.
-		// For now this is just a boolean string but this can be looked into further to maybe add additional parameters when searching by example.
-		// i.e. refreshing will land the user on the page with the example resource type already populated and used to search
-		if (route.query.byExample !== 'true') executeNewQuery();
+		// The query changes in the following cases:
+		// - when a user does a normal search - there is no `resourceId`
+		// - when a user does a search by example - there is a `resourceId`
+		// - when a user navigates back and forth on a page
+
+		if (route.query.resourceId) {
+			searchByExampleOnPageRefresh(route.query.resourceId.toString());
+		} else {
+			executeNewQuery();
+		}
 	}
 );
-
-watch(searchByExampleOptions, () => onSearchByExample(searchByExampleOptions.value));
 
 // Default query on reload
 onMounted(async () => {
@@ -580,7 +595,14 @@ onMounted(async () => {
 	} else {
 		resources.setXDDDataset('xdd-covid-19'); // give xdd dataset a default value
 	}
-	executeNewQuery();
+
+	// On reload, if the url has a resourceId, we know that a user just did a search by example
+	// so we want to preserve the search by example so we perform a search by example instead of a normal search
+	if (route.query.resourceId) {
+		searchByExampleOnPageRefresh(route.query.resourceId.toString());
+	} else {
+		executeNewQuery();
+	}
 });
 
 onUnmounted(() => {
