@@ -49,4 +49,8 @@ public class Simulation {
 	@TSOptional
 	private Integer projectId;
 
+	@JsonAlias("progress")
+	@TSOptional
+	private Number progress;
+
 }

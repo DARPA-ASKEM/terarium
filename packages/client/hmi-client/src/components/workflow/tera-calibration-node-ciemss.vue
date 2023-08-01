@@ -98,7 +98,7 @@
 		/>
 	</section>
 	<section v-else>
-		<div><i class="pi pi-spin pi-spinner"></i> loading...</div>
+		<div><i class="pi pi-spin pi-spinner"></i> loading... {{ '(' + progress + '%)' }}</div>
 	</section>
 </template>
 
@@ -153,6 +153,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
+const progress = ref<number | undefined>(0);
 
 // EXTRA section
 const numSamples = ref(100);
@@ -239,6 +240,7 @@ const getStatus = async () => {
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
+		progress.value = progress.value! + 5;
 	} else {
 		// throw if there are any failed runs for now
 		console.error('Failed', startedRunId.value);
