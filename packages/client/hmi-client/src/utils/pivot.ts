@@ -76,13 +76,34 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 			}
 		}
 	});
-	return { colAxis, rowAxis };
+	return { colAxis, rowAxis, termsMap: cardinality };
+};
+
+// Creates a M x 1 matrix where
+// M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
+export const createMatrix1D = (data: any[]) => {
+	const rows: any[] = [];
+
+	// Construct 1D matrix for state data
+	for (let rowIdx = 0; rowIdx < data.length; rowIdx++) {
+		const row: PivotMatrixCell[] = [];
+		row.push({
+			row: rowIdx,
+			col: 0,
+			rowCriteria: data[rowIdx],
+			colCriteria: null,
+			value: data[rowIdx]
+		});
+		rows.push(row);
+	}
+
+	return { matrix: rows };
 };
 
 // Creates a M x N matrix where
 // M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
 // N =  cardinality(colDimensions[0]) * cardinality(colDimensions[1]) * ... * cardinality(colDimensions[n])
-export const createMatrix = (data: any[], rowDimensions: string[], colDimensions: string[]) => {
+export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensions: string[]) => {
 	const axes = pivotAxes(data, colDimensions, rowDimensions);
 	const rows: any[] = [];
 
@@ -137,6 +158,7 @@ export const createMatrix = (data: any[], rowDimensions: string[], colDimensions
 
 	return {
 		matrix: rows,
+		termsMap: axes.termsMap,
 		colDimensions,
 		rowDimensions
 	};

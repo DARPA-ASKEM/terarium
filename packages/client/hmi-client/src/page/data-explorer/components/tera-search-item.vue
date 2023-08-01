@@ -23,7 +23,7 @@ import { ResultType, ResourceType } from '@/types/common';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 
 const props = defineProps<{
-	asset: Document & Model & Dataset;
+	asset: ResultType;
 	isPreviewed: boolean;
 	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
@@ -36,15 +36,15 @@ const isSelected = () =>
 	props.selectedSearchItems.find((item) => {
 		if (isDocument(item)) {
 			const itemAsDocument = item as Document;
-			return itemAsDocument.title === props.asset.title;
+			return itemAsDocument.title === (props.asset as Document).title;
 		}
 		if (isDataset(item)) {
 			const itemAsDataset = item as Dataset;
-			return itemAsDataset.id === props.asset.id;
+			return itemAsDataset.id === (props.asset as Dataset).id;
 		}
 		if (isModel(item)) {
 			const itemAsModel = item as Model;
-			return itemAsModel.id === props.asset.id;
+			return itemAsModel.id === (props.asset as Model).id;
 		}
 		return false;
 	});

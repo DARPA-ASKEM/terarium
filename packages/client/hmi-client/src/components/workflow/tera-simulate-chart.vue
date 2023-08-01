@@ -11,7 +11,7 @@
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span :style="{ color: hasMultiRuns ? 'black' : getVariableColorByVar(variable) }">
+					<span :style="{ color: getVariableColorByVar(variable) }">
 						{{ variable }}
 					</span>
 				</template>
@@ -23,12 +23,19 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 const emit = defineEmits(['configuration-change']);
+
+const props = defineProps<{
+	runResults: RunResults;
+	chartConfig: ChartConfig;
+	hasMeanLine?: boolean;
+	colorByRun?: boolean;
+}>();
 
 type DatasetType = {
 	data: number[];
@@ -36,6 +43,50 @@ type DatasetType = {
 	fill: boolean;
 	tension: number;
 };
+
+const renderedRuns = computed<RunResults>(() => {
+	if (!props.hasMeanLine) return _.cloneDeep(props.runResults);
+
+	const runResult: RunResults = _.cloneDeep(props.runResults);
+	const parsedSimProbData = Object.values(runResult);
+
+	const numRuns = parsedSimProbData.length;
+	if (!numRuns) {
+		return props.runResults;
+	}
+
+	const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
+	const aggregateRun: { [key: string]: number }[] = [];
+
+	for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
+		for (let run = 0; run < numRuns; run++) {
+			if (!aggregateRun[timestamp]) {
+				aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
+				Object.keys(aggregateRun[timestamp]).forEach((key) => {
+					aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
+				});
+			} else {
+				const datum = parsedSimProbData[run][timestamp];
+				Object.keys(datum).forEach((key) => {
+					aggregateRun[timestamp][key] += datum[key] / numRuns;
+				});
+			}
+		}
+	}
+
+	return { ...runResult, [numRuns]: aggregateRun };
+});
+
+const lineWidthArray = computed(() => {
+	// If we have a meanline, make it bigger
+	if (props.hasMeanLine) {
+		const output = Array(Math.max(Object.keys(renderedRuns.value).length - 1 ?? 0 - 1, 0)).fill(1);
+		output.push(3);
+		return output;
+	}
+	// Otherwise all widths are 1
+	return Array(Math.max(Object.keys(renderedRuns.value).length ?? 0 - 1, 0)).fill(1);
+});
 
 const CHART_OPTIONS = {
 	devicePixelRatio: 4,
@@ -78,13 +129,6 @@ const CHART_OPTIONS = {
 	}
 };
 
-const props = defineProps<{
-	runResults: RunResults;
-	chartConfig: ChartConfig;
-	lineColorArray?: string[];
-	lineWidthArray?: string[];
-}>();
-
 // data for rendering ui
 let stateVariablesList: string[] = [];
 const chartData = ref({});
@@ -115,28 +159,31 @@ const getVariableColorByVar = (variableName: string) => {
 };
 
 const getVariableColorByRunIdx = (runIdx: number) => {
-	const runIdList = Object.keys(props.runResults) as string[];
+	const runIdList = Object.keys(renderedRuns.value) as string[];
 	return VIRIDIS_14[Math.floor((runIdx / runIdList.length) * VIRIDIS_14.length)];
 };
 
 const hasMultiRuns = computed(() => {
-	const runIdList = Object.keys(props.runResults) as string[];
-	return runIdList.length > 1;
+	const runIdList = Object.keys(renderedRuns.value) as string[];
+	return props.colorByRun && runIdList.length > 1;
 });
 
 const getLineColor = (variableName: string, runIdx: number) => {
-	if (props.lineColorArray) {
-		return props.lineColorArray[runIdx];
+	const runIdList = Object.keys(renderedRuns.value) as string[];
+	if (props.hasMeanLine) {
+		const lastRun = runIdList.length - 1;
+		return runIdx === lastRun
+			? getVariableColorByVar(variableName)
+			: `${getVariableColorByVar(variableName)}10`;
 	}
+
 	return hasMultiRuns.value
 		? getVariableColorByRunIdx(runIdx)
 		: getVariableColorByVar(variableName);
 };
 
-const getLineWidth = (runIdx: number) => (props.lineWidthArray ? props.lineWidthArray[runIdx] : 2);
-
 const watchRunResults = async (runResults) => {
-	const runIdList = Object.keys(props.runResults) as string[];
+	const runIdList = Object.keys(renderedRuns.value) as string[];
 	if (!runIdList.length || _.isEmpty(runResults)) {
 		return;
 	}
@@ -146,25 +193,24 @@ const watchRunResults = async (runResults) => {
 	// assume that the state variables for all runs will be identical
 	// take first run and parse it for state variables
 	if (!stateVariablesList.length) {
-		stateVariablesList = Object.keys(props.runResults[Object.keys(props.runResults)[0]][0]).filter(
-			(key) => key !== 'timestep' && key !== 'timestamp' && key !== 'date'
-		);
+		stateVariablesList = Object.keys(
+			renderedRuns.value[Object.keys(renderedRuns.value)[0]][0]
+		).filter((key) => key !== 'timestep' && key !== 'timestamp' && key !== 'date');
 	}
 	renderGraph();
 };
 
 const renderGraph = () => {
-	const { runResults } = props;
-	const runIdList = Object.keys(props.runResults) as string[];
+	const runIdList = Object.keys(renderedRuns.value) as string[];
 
-	if (!runIdList.length || _.isEmpty(runResults)) {
+	if (!runIdList.length || _.isEmpty(renderedRuns.value)) {
 		return;
 	}
 
 	const datasets: DatasetType[] = [];
 	selectedVariable.value.forEach((variable) =>
 		runIdList
-			.map((runId) => runResults[runId])
+			.map((runId) => renderedRuns.value[runId])
 			.forEach((run, runIdx) => {
 				const dataset = {
 					data: run.map(
@@ -174,13 +220,15 @@ const renderGraph = () => {
 					fill: false,
 					tension: 0.4,
 					borderColor: getLineColor(variable, runIdx),
-					borderWidth: getLineWidth(runIdx)
+					borderWidth: lineWidthArray.value[runIdx]
 				};
 				datasets.push(dataset);
 			})
 	);
 	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestamp)),
+		labels: renderedRuns.value[Object.keys(renderedRuns.value)[0]].map((datum) =>
+			Number(datum.timestamp)
+		),
 		datasets
 	};
 };
@@ -194,7 +242,7 @@ const updateSelectedVariable = () => {
 
 onMounted(() => {
 	// FIXME: Should use deep, need to rewire the dependencies
-	watch(() => props.runResults, watchRunResults, { immediate: true, deep: true });
+	watch(() => renderedRuns.value, watchRunResults, { immediate: true, deep: true });
 
 	watch(
 		() => props.chartConfig,

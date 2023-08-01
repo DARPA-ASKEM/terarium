@@ -246,7 +246,7 @@ class EventEmitter {
 		}
 	}
 
-	emit(eventName: EventName, args: any): boolean {
+	emit(eventName: EventName, args?: any): boolean {
 		const fns = this.listeners.get(eventName);
 		if (!fns) return false;
 

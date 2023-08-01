@@ -7,7 +7,6 @@ import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import ResultsIcon from '@/assets/svg/icons/results.svg?component';
 import { Component } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
@@ -117,7 +116,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
  * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return any|null - some result if success, or null if none returned by API
  */
-async function addAsset(projectId: string, assetsType: string, assetId) {
+async function addAsset(projectId: string, assetsType: string, assetId: string) {
 	// FIXME: handle cases where assets is already added to the project
 	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 	const response = await API.post(url);
@@ -146,11 +145,11 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
  */
 async function deleteAsset(
 	projectId: IProject['id'],
-	assetsType: ProjectAssetTypes,
+	assetType: ProjectAssetTypes,
 	assetId: string | number
 ): Promise<boolean> {
 	try {
-		const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
+		const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 		const { status } = await API.delete(url);
 		if (status >= 200 && status < 300) {
 			useResourcesStore().setActiveProject(await get(projectId, true));
@@ -192,20 +191,6 @@ async function get(
 }
 
 /**
- * Get all informations for the homepage
- */
-async function home(): Promise<IProject[] | null> {
-	try {
-		const { status, data } = await API.get('/home');
-		if (status !== 200 || !data) return null;
-		return data;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
-/**
  * Get the icon associated with an Asset
  */
 const icons = new Map<string | ProjectAssetTypes, string | Component>([
@@ -213,7 +198,6 @@ const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.MODELS, 'share-2'],
 	[ProjectAssetTypes.DATASETS, DatasetIcon],
 	[ProjectAssetTypes.SIMULATIONS, 'settings'],
-	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'code'],
 	[ProjectAssetTypes.SIMULATION_WORKFLOW, 'git-merge'],
 	['overview', 'layout']
@@ -246,7 +230,6 @@ export {
 	addAsset,
 	deleteAsset,
 	getAssets,
-	home,
 	getAssetIcon,
 	getDocumentAssetXddUri
 };

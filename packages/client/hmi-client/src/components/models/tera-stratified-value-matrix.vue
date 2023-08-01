@@ -5,7 +5,7 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead class="p-datatable-thead">
+				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
 						<th class="choose-criteria"></th>
@@ -39,11 +39,31 @@
 							/>
 						</td>
 						<td class="p-frozen-column">{{ row[0].rowCriteria?.[chosenRow] }}</td>
-						<td v-for="(cell, j) in row" :key="j">
+						<td
+							v-for="(cell, j) in row"
+							:key="j"
+							@click="
+								valueToEdit = {
+									val: getMatrixValue(cell?.value?.[chosenCol]),
+									rowIdx: i,
+									colIdx: j
+								}
+							"
+						>
 							<template v-if="cell?.value?.[chosenCol] && cell?.value?.[chosenRow]">
-								{{ findMatrixValue(cell?.value?.[chosenCol]) }}
+								<InputText
+									v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
+									class="cell-input"
+									v-model.lazy="valueToEdit.val"
+									v-focus
+									@focusout="valueToEdit = { val: '', rowIdx: -1, colIdx: -1 }"
+									@keyup.stop.enter="updateModelConfigValue(cell?.value?.[chosenRow])"
+								/>
+								<span v-else class="editable-cell">
+									{{ getMatrixValue(cell?.value?.[chosenCol]) }}
+								</span>
 							</template>
-							<span class="not-allowed" v-else>N/A</span>
+							<span v-else class="not-allowed">N/A</span>
 						</td>
 					</tr>
 				</tbody>
@@ -54,63 +74,97 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { isEmpty } from 'lodash';
+import { cloneDeep } from 'lodash';
 import {
 	extractStateMatrixData,
 	extractTransitionMatrixData
 } from '@/model-representation/petrinet/petrinet-service';
-import { createMatrix } from '@/utils/pivot';
+import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
-import { Model } from '@/types/Types';
+import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import InputText from 'primevue/inputtext';
+import { updateModelConfiguration } from '@/services/model-configurations';
 
 const props = defineProps<{
-	model: Model;
+	modelConfiguration: ModelConfiguration;
 	id: string;
 	nodeType: NodeType;
 }>();
 
-let colDimensions: string[] = [];
-let rowDimensions: string[] = [];
+const colDimensions: string[] = [];
+const rowDimensions: string[] = [];
 
 const matrix = ref();
 const chosenCol = ref('');
 const chosenRow = ref('');
+const valueToEdit = ref({ val: '', rowIdx: -1, colIdx: -1 });
 
 // Makes cell inputs focus once they appear
-// const vFocus = {
-//     mounted: (el) => el.focus()
-// };
+const vFocus = {
+	mounted: (el) => el.focus()
+};
 
-function findMatrixValue(variableName: string) {
-	const ode = props.model.semantics?.ode;
+// Finds where to get the value within the AMR based on the variable name
+function findOdeObjectLocation(variableName: string): {
+	odeFieldObject: Rate & Initial & ModelParameter;
+	fieldName: string;
+	fieldIndex: number;
+} | null {
+	const ode = props.modelConfiguration.configuration?.semantics?.ode;
+	if (!ode) return null;
 
-	if (!ode) return variableName;
+	const fieldNames = ['rates', 'initials', 'parameters'];
 
-	let matrixValue: string = '';
-	const odeFields = ['rates', 'initials', 'parameters'];
-
-	for (let i = 0; i < odeFields.length; i++) {
-		const odeFieldObject = ode[odeFields[i]].find(
+	for (let i = 0; i < fieldNames.length; i++) {
+		const fieldIndex = ode[fieldNames[i]].findIndex(
 			({ target, id }) => target === variableName || id === variableName
 		);
+		if (fieldIndex === -1) continue;
 
-		matrixValue = odeFieldObject?.expression ?? odeFieldObject?.value ?? '';
-
-		if (!isEmpty(matrixValue)) break;
+		return {
+			odeFieldObject: ode[fieldNames[i]][fieldIndex],
+			fieldName: fieldNames[i],
+			fieldIndex
+		};
 	}
-	return matrixValue;
+	return null;
+}
+
+function getMatrixValue(variableName: string) {
+	const odeObjectLocation = findOdeObjectLocation(variableName);
+	if (odeObjectLocation) {
+		const { odeFieldObject } = odeObjectLocation;
+		return odeFieldObject?.expression ?? odeFieldObject?.value;
+	}
+	return variableName;
+}
+
+function updateModelConfigValue(variableName: string) {
+	const odeObjectLocation = findOdeObjectLocation(variableName);
+	if (odeObjectLocation) {
+		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
+
+		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.val;
+		else if (odeFieldObject.value) odeFieldObject.value = Number(valueToEdit.value.val);
+
+		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
+		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
+		updateModelConfiguration(modelConfigurationClone);
+
+		valueToEdit.value = { val: '', rowIdx: -1, colIdx: -1 };
+	}
 }
 
 function configureMatrix() {
 	// Get stratified ids from the chosen base id
-	const rowAndCol = props.model?.semantics?.span?.[0]?.map
+	const rowAndCol = props.modelConfiguration.configuration?.semantics?.span?.[0]?.map
 		.filter((id: string) => id[1] === props.id)
 		.map((d) => d[0]);
 
 	// Assign dimensions relevant to the ids
-	const rowAndColDimensions = props.model.semantics?.typing?.map.filter((id) =>
-		rowAndCol.includes(id[0])
+	const rowAndColDimensions = props.modelConfiguration.configuration.semantics?.typing?.map.filter(
+		(id) => rowAndCol.includes(id[0])
 	);
 
 	if (rowAndColDimensions) {
@@ -136,14 +190,18 @@ function configureMatrix() {
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
-			? extractStateMatrixData(props.model, rowAndCol, [...colDimensions, ...rowDimensions])
-			: extractTransitionMatrixData(props.model, rowAndCol);
+			? extractStateMatrixData(props.modelConfiguration.configuration, rowAndCol, [
+					...colDimensions,
+					...rowDimensions
+			  ])
+			: extractTransitionMatrixData(props.modelConfiguration.configuration, rowAndCol);
 
-	const matrixAttributes = createMatrix(matrixData, colDimensions, rowDimensions);
+	const matrixAttributes =
+		props.nodeType === NodeType.State
+			? createMatrix1D(matrixData)
+			: createMatrix2D(matrixData, colDimensions, rowDimensions);
+
 	matrix.value = matrixAttributes.matrix;
-	colDimensions = matrixAttributes.colDimensions;
-	rowDimensions = matrixAttributes.rowDimensions;
-
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 }
@@ -179,6 +237,20 @@ onMounted(() => {
 
 .p-datatable .p-datatable-thead > tr > th {
 	padding-bottom: 1rem;
+}
+
+.editable-cell {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	visibility: visible;
+	width: 100%;
+}
+
+.cell-input {
+	height: 4rem;
+	width: 100%;
+	padding-left: 12px;
 }
 
 /* .p-frozen-column {
