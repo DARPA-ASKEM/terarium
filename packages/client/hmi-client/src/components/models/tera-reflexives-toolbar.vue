@@ -80,6 +80,10 @@ const addedReflexivesRows: {
 	typeIdOfState: string;
 }[] = [];
 
+/* Every time the user changes their selection of what states to add reflexives to, overwrite the previous changes with the current ones.
+   Since there can be multiple MultiSelect components, the selections for all MultiSelect components are combined in 'addedReflexivesRows'.
+   Iterate through 'addedReflexivesRows' and add reflexives according to the selections. 
+*/
 function updateStatesToAddReflexives(
 	selection: {
 		states: {
@@ -138,6 +142,11 @@ function updateStatesToAddReflexives(
 	emit('model-updated', typedModel.value);
 }
 
+/* Compare the type systems of 'modelToUpdate' and 'modelToCompare' to determine what options the user has for adding reflexives.
+   Allow the user to add transitions types that are present in 'modelToCompare' but not in 'modelToUpdate'.
+   E.g. if 'modelToUpdate' has ['Pop','Infect'] transitions and 'modelToCompare' has ['Pop,'Infect','Recover'] transitions, 
+   user should be prompted to add 'Recover' transitions to 'modelToUpdate'
+*/
 function populateReflexiveOptions() {
 	if (modelToCompareTypeSystem.value) {
 		let unassignedTransitions: Transition[];
@@ -150,7 +159,7 @@ function populateReflexiveOptions() {
 			const unassignedIds = modelToCompareTypeTransitionIds.filter(
 				(id) => !modelToUpdateTransitionIds.includes(id)
 			);
-
+			// get the transition types that are in 'modelToCompare' but not 'modelToUpdate'
 			unassignedTransitions = modelToCompareTypeSystem.value?.transitions.filter((t) =>
 				unassignedIds.includes(t.id)
 			);
@@ -160,6 +169,7 @@ function populateReflexiveOptions() {
 			const type: string =
 				props.modelToUpdate.semantics?.typing?.map.find((m) => m[0] === state.id)?.[1] ?? '';
 			// for each unassigned transition type, check if inputs or ouputs have the type of this state
+			// you should only be allowed to add a transition to a state, if the transition has inputs or outputs of the same type as the state
 			const allowedTransitionsForState: Transition[] = unassignedTransitions.filter(
 				(unassigned) => unassigned.input.includes(type) || unassigned.output.includes(type)
 			);
