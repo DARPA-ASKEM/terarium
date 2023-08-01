@@ -60,7 +60,8 @@
 						/>
 					</section>
 					<tera-reflexives-toolbar
-						v-if="showReflexivesToolbar && model && strataModel"
+						v-if="model && strataModel"
+						v-show="showReflexivesToolbar"
 						:model-to-update="model"
 						:model-to-compare="strataModel"
 						@model-updated="

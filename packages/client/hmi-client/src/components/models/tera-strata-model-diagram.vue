@@ -4,7 +4,8 @@
 			<div ref="splitterContainer" class="splitter-container">
 				<section class="graph-element">
 					<tera-reflexives-toolbar
-						v-if="showReflexivesToolbar && strataModel && baseModel"
+						v-if="strataModel && baseModel"
+						v-show="showReflexivesToolbar"
 						:model-to-update="strataModel"
 						:model-to-compare="baseModel"
 						@model-updated="
