@@ -42,13 +42,29 @@
 				icon="pi pi-plus"
 			/>
 			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="saveDataset(projectId, completedRunId)"
-				label="Save as Dataset"
-				icon="pi pi-save"
-			/>
+				class="save-button p-button p-button-secondary p-button-sm"
+				title="Saves the current version of the model as a new Terarium asset"
+				@click="showSaveInput = !showSaveInput"
+			>
+				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Save as</span>
+			</Button>
+			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<i
+					class="pi pi-times i"
+					:class="{ clear: hasValidDatasetName }"
+					@click="saveAsName = ''"
+				></i>
+				<i
+					class="pi pi-check i"
+					:class="{ save: hasValidDatasetName }"
+					@click="
+						saveDataset(projectId, completedRunId, saveAsName);
+						showSaveInput = false;
+					"
+				></i>
+			</span>
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -106,6 +122,7 @@ import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
+import InputText from 'primevue/inputtext';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
@@ -128,6 +145,9 @@ const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const projectId = ref<string>(props.project.id);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
+const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
+const showSaveInput = ref(<boolean>false);
+const saveAsName = ref(<string | null>'');
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
