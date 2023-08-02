@@ -56,7 +56,7 @@ import {
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { Poller } from '@/api/api';
+import { Poller, PollerState } from '@/api/api';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleCiemssOperation
@@ -141,12 +141,16 @@ const getStatus = async () => {
 		});
 	const pollerResults = await poller.start();
 
-	if (pollerResults.data) {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
-		addChart();
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunId.value);
 		showSpinner.value = false;
+		throw Error('Failed Runs');
 	}
+	completedRunId.value = startedRunId.value;
+	updateOutputPorts(completedRunId);
+	addChart();
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {

@@ -122,7 +122,7 @@ import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflo
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
-import { Poller } from '@/api/api';
+import { Poller, PollerState } from '@/api/api';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -252,11 +252,15 @@ const getStatus = async () => {
 		});
 	const pollerResults = await poller.start();
 
-	if (pollerResults.data) {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunId.value);
 		showSpinner.value = false;
+		throw Error('Failed Runs');
 	}
+	completedRunId.value = startedRunId.value;
+	updateOutputPorts(completedRunId);
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {

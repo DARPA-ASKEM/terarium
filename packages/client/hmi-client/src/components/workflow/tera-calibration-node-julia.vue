@@ -127,7 +127,7 @@ import _ from 'lodash';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
-import { Poller } from '@/api/api';
+import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import {
 	CalibrationOperationJulia,
@@ -243,11 +243,15 @@ const getStatus = async () => {
 		});
 	const pollerResults = await poller.start();
 
-	if (pollerResults.data) {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunId.value);
 		showSpinner.value = false;
+		throw Error('Failed Runs');
 	}
+	completedRunId.value = startedRunId.value;
+	updateOutputPorts(completedRunId);
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {

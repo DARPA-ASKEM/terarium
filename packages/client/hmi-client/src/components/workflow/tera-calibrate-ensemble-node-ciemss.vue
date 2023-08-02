@@ -57,7 +57,7 @@ import {
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { Poller } from '@/api/api';
+import { Poller, PollerState } from '@/api/api';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleCiemssOperation,
@@ -137,12 +137,17 @@ const getStatus = async () => {
 		});
 	const pollerResults = await poller.start();
 
-	if (pollerResults.data) {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
-		addChart();
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// handle error
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunId.value);
 		showSpinner.value = false;
+		throw Error('Failed Runs');
 	}
+	completedRunId.value = startedRunId.value;
+	updateOutputPorts(completedRunId);
+	addChart();
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {

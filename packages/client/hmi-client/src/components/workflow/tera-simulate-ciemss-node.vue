@@ -54,7 +54,7 @@ import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import { Simulation } from '@/types/Types';
-import { Poller } from '@/api/api';
+import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
@@ -128,10 +128,14 @@ const getStatus = async () => {
 		});
 	const pollerResults = await poller.start();
 
-	if (pollerResults.data) {
-		completedRunIdList.value = startedRunIdList.value;
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunIdList.value);
 		showSpinner.value = false;
+		throw Error('Failed Runs');
 	}
+	completedRunIdList.value = startedRunIdList.value;
+	showSpinner.value = false;
 };
 
 // assume only one run for now
