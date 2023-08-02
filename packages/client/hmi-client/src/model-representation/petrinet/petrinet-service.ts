@@ -171,9 +171,6 @@ const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
 export const addState = (amr: Model, id: string, name: string) => {
-	if (amr.model.states.find((s) => s.id === id)) {
-		return;
-	}
 	amr.model.states.push({
 		id,
 		name,
@@ -193,9 +190,6 @@ export const addState = (amr: Model, id: string, name: string) => {
 };
 
 export const addTransition = (amr: Model, id: string, name: string, value?: number) => {
-	if (amr.model.transitions.find((t) => t.id === id)) {
-		return;
-	}
 	amr.model.transitions.push({
 		id,
 		input: [],
