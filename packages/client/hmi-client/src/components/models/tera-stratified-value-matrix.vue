@@ -72,7 +72,7 @@
 			</div>
 		</div>
 		<!--
-			Temporary - just showing the mira dimensions and terms that are generated. 
+			Temporary - just showing the mira dimensions and terms that are generated.
 			Will put these with matrix once the matrix is generated (don't want to modify table logic above)
 		-->
 		<div v-if="stratifiedModelType === StratifiedModelType.Mira">
@@ -107,7 +107,7 @@ import {
 } from '@/model-representation/petrinet/petrinet-service';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
-import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
+import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { updateModelConfiguration } from '@/services/model-configurations';
@@ -186,16 +186,14 @@ function updateModelConfigValue(variableName: string) {
 }
 
 function configureMatrix() {
+	const amr: Model = props.modelConfiguration.configuration;
+
 	if (props.stratifiedModelType === StratifiedModelType.Catlab) {
 		// Get only the states/transitions that are mapped to the base model
 		const matrixData =
 			props.nodeType === NodeType.State
-				? getCatlabStatesMatrixData(props.modelConfiguration.configuration).filter(
-						(d) => d['@base'] === props.id
-				  )
-				: getCatlabTransitionsMatrixData(props.modelConfiguration.configuration).filter(
-						(d) => d['@base'] === props.id
-				  );
+				? getCatlabStatesMatrixData(amr).filter((d) => d['@base'] === props.id)
+				: getCatlabTransitionsMatrixData(amr).filter((d) => d['@base'] === props.id);
 
 		if (isEmpty(matrixData)) return;
 
@@ -215,9 +213,7 @@ function configureMatrix() {
 
 		matrix.value = matrixAttributes.matrix;
 	} else if (props.stratifiedModelType === StratifiedModelType.Mira) {
-		const modifiers = props.modelConfiguration.configuration.model.states.map(
-			({ grounding }) => grounding.modifiers
-		);
+		const modifiers = amr.model.states.map(({ grounding }) => grounding.modifiers);
 
 		const dimensionsAndTerms = {};
 		for (let i = 0; i < modifiers.length; i++) {

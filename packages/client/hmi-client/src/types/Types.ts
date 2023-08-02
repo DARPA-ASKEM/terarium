@@ -181,7 +181,7 @@ export interface TypeSystemExtended {
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
+    metadata?: any;
 }
 
 export interface TypingSemantics {
@@ -310,15 +310,6 @@ export interface Properties {
     description?: string;
 }
 
-export interface ModelMetadata {
-    processed_at?: number;
-    processed_by?: string;
-    variable_statements?: VariableStatement[];
-    annotations?: Annotations;
-    attributes?: any[];
-    timeseries?: { [index: string]: any };
-}
-
 export interface PetriNetState {
     id: string;
     name: string;
@@ -375,28 +366,6 @@ export interface OdeSemantics {
     parameters?: ModelParameter[];
     observables?: Observable[];
     time?: any;
-}
-
-export interface VariableStatement {
-    id: string;
-    variable: Variable;
-    value?: StatementValue;
-    metadata?: VariableStatementMetadata[];
-    provenance?: ProvenanceInfo;
-}
-
-export interface Annotations {
-    license?: string;
-    authors?: string[];
-    references?: string[];
-    time_scale?: string;
-    time_start?: string;
-    time_end?: string;
-    locations?: string[];
-    pathogens?: string[];
-    diseases?: string[];
-    hosts?: string[];
-    model_types?: string[];
 }
 
 export interface ModelExpression {
@@ -461,32 +430,6 @@ export interface Observable {
     expression_mathml?: string;
 }
 
-export interface Variable {
-    id: string;
-    name: string;
-    metadata: VariableMetadata[];
-    column: DataColumn[];
-    paper: Paper;
-    equations: Equation[];
-    dkg_groundings: DKGConcept[];
-}
-
-export interface StatementValue {
-    value: string;
-    type: string;
-    dkg_grounding?: DKGConcept;
-}
-
-export interface VariableStatementMetadata {
-    type: string;
-    value: string;
-}
-
-export interface ProvenanceInfo {
-    method: string;
-    description: string;
-}
-
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
@@ -515,41 +458,6 @@ export interface XDDUrlExtraction {
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
-}
-
-export interface VariableMetadata {
-    type: string;
-    value: string;
-}
-
-export interface DataColumn {
-    id: string;
-    name: string;
-    dataset: MetadataDataset;
-}
-
-export interface Paper {
-    id: string;
-    doi: string;
-    file_directory: string;
-}
-
-export interface Equation {
-    id: string;
-    text: string;
-    image: string;
-}
-
-export interface DKGConcept {
-    id: string;
-    name: string;
-    score: number;
-}
-
-export interface MetadataDataset {
-    id: string;
-    name: string;
-    metadata: string;
 }
 
 export enum EvaluationScenarioStatus {
