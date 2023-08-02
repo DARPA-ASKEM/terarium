@@ -53,6 +53,8 @@ import InputNumber from 'primevue/inputnumber';
 import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
+import { Simulation } from '@/types/Types';
+import { Poller } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
@@ -101,27 +103,34 @@ const runSimulate = async () => {
 	showSpinner.value = true;
 };
 
-// Retrieve run ids
-// FIXME: Replace with API.poller
 const getStatus = async () => {
-	const requestList: any[] = [];
-	startedRunIdList.value.forEach((id) => {
-		requestList.push(getSimulation(id));
-	});
+	const poller = new Poller<object>()
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => {
+			const requestList: Promise<Simulation | null>[] = [];
+			startedRunIdList.value.forEach((id) => {
+				requestList.push(getSimulation(id));
+			});
+			const response = await Promise.all(requestList);
+			if (response.every((simulation) => simulation!.status === 'complete')) {
+				return {
+					data: response,
+					progress: null,
+					error: null
+				};
+			}
+			return {
+				data: null,
+				progress: null,
+				error: null
+			};
+		});
+	const pollerResults = await poller.start();
 
-	const currentSimulations = await Promise.all(requestList);
-	const ongoingStatusList = ['running', 'queued'];
-
-	if (currentSimulations.every(({ status }) => status === 'complete')) {
+	if (pollerResults.data) {
 		completedRunIdList.value = startedRunIdList.value;
 		showSpinner.value = false;
-	} else if (currentSimulations.some(({ status }) => ongoingStatusList.includes(status))) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
-		// throw if there are any failed runs for now
-		console.error('Failed', startedRunIdList.value);
-		throw Error('Failed Runs');
 	}
 };
 

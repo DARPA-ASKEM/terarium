@@ -113,13 +113,7 @@ import Button from 'primevue/button';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import {
-	CalibrationRequestJulia,
-	CsvAsset,
-	Simulation,
-	ModelConfiguration,
-	TimeSpan
-} from '@/types/Types';
+import { CalibrationRequestJulia, CsvAsset, ModelConfiguration, TimeSpan } from '@/types/Types';
 import {
 	makeCalibrateJobJulia,
 	getSimulation,
@@ -133,6 +127,7 @@ import _ from 'lodash';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import { Poller } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import {
 	CalibrationOperationJulia,
@@ -225,26 +220,33 @@ const runCalibrate = async () => {
 	getStatus();
 	showSpinner.value = true;
 };
-// Retrieve run ids
-// FIXME: Replace with API.poller
+
 const getStatus = async () => {
 	if (!startedRunId.value) return;
+	const poller = new Poller<object>()
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => {
+			const response = await getSimulation(startedRunId.value!);
+			if (response?.status === 'complete') {
+				return {
+					data: response,
+					progress: null,
+					error: null
+				};
+			}
+			return {
+				data: null,
+				progress: null,
+				error: null
+			};
+		});
+	const pollerResults = await poller.start();
 
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
-
-	if (currentSimulation && currentSimulation.status === 'complete') {
+	if (pollerResults.data) {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
 		showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
-		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
-		showSpinner.value = false;
-		throw Error('Failed Runs');
 	}
 };
 

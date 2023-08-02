@@ -98,7 +98,7 @@
 		/>
 	</section>
 	<section v-else>
-		<div><i class="pi pi-spin pi-spinner"></i> loading... {{ '(' + progress + '%)' }}</div>
+		<div><i class="pi pi-spin pi-spinner"></i> loading...</div>
 	</section>
 </template>
 
@@ -112,7 +112,7 @@ import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import InputNumber from 'primevue/inputnumber';
-import { CalibrationRequestCiemss, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
+import { CalibrationRequestCiemss, CsvAsset, ModelConfiguration } from '@/types/Types';
 import {
 	makeCalibrateJobCiemss,
 	getSimulation,
@@ -122,6 +122,7 @@ import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflo
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
+import { Poller } from '@/api/api';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -153,7 +154,6 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
-const progress = ref<number | undefined>(0);
 
 // EXTRA section
 const numSamples = ref(100);
@@ -225,27 +225,37 @@ const runCalibrate = async () => {
 	getStatus();
 	showSpinner.value = true;
 };
-// Retrieve run ids
-// FIXME: Replace with API.poller
+
 const getStatus = async () => {
 	if (!startedRunId.value) return;
 
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
+	const poller = new Poller<object>()
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => {
+			const response = await getSimulation(startedRunId.value!);
+			if (response?.status === 'complete') {
+				return {
+					data: response,
+					progress: null,
+					error: null
+				};
+			}
+			if (response?.status === 'running') {
+				// handle intermediate data here
+			}
+			return {
+				data: null,
+				progress: null,
+				error: null
+			};
+		});
+	const pollerResults = await poller.start();
 
-	if (currentSimulation && currentSimulation.status === 'complete') {
+	if (pollerResults.data) {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
 		showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-		progress.value = progress.value! + 5;
-	} else {
-		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
-		showSpinner.value = false;
-		throw Error('Failed Runs');
 	}
 };
 

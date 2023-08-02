@@ -48,12 +48,7 @@ import { ref, watch, computed, ComputedRef } from 'vue';
 import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
-import {
-	EnsembleSimulationCiemssRequest,
-	Simulation,
-	TimeSpan,
-	EnsembleModelConfigs
-} from '@/types/Types';
+import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
 	getSimulation,
 	makeEnsembleCiemssSimulation,
@@ -61,6 +56,7 @@ import {
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { Poller } from '@/api/api';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleCiemssOperation
@@ -125,22 +121,31 @@ const addChart = () => {
 
 const getStatus = async () => {
 	if (!startedRunId.value) return;
+	const poller = new Poller<object>()
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => {
+			const response = await getSimulation(startedRunId.value!);
+			if (response?.status === 'complete') {
+				return {
+					data: response,
+					progress: null,
+					error: null
+				};
+			}
+			return {
+				data: null,
+				progress: null,
+				error: null
+			};
+		});
+	const pollerResults = await poller.start();
 
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
-
-	if (currentSimulation && currentSimulation.status === 'complete') {
+	if (pollerResults.data) {
 		completedRunId.value = startedRunId.value;
 		updateOutputPorts(completedRunId);
 		addChart();
 		showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
-		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
-		throw Error('Failed Runs');
 	}
 };
 
