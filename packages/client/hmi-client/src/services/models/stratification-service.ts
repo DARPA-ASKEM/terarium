@@ -33,12 +33,10 @@ export async function fetchStratificationResult(modelA: string, modelB: string, 
 }
 
 export function generateAgeStrataModel(stateNames: string[]): Model {
-	const states: State[] = stateNames.map((name, index) => ({
-		id: `A${index + 1}`,
+	const states: State[] = stateNames.map((name) => ({
+		id: name,
 		name,
-		description: `Number of individuals relative to the total population that are in age group A${
-			index + 1
-		}.`,
+		description: `Number of individuals relative to the total population that are in age group ${name}.`,
 		units: {
 			expression: 'person',
 			expression_mathml: '<ci>person</ci>'
@@ -161,12 +159,10 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 }
 
 export function generateLocationStrataModel(stateNames: string[]): Model {
-	const states: State[] = stateNames.map((name, index) => ({
-		id: `L${index + 1}`,
+	const states: State[] = stateNames.map((name) => ({
+		id: name,
 		name,
-		description: `Number of individuals relative to the total population that are in location L${
-			index + 1
-		}.`,
+		description: `Number of individuals relative to the total population that are in location ${name}.`,
 		units: {
 			expression: 'person',
 			expression_mathml: '<ci>person</ci>'
@@ -183,7 +179,7 @@ export function generateLocationStrataModel(stateNames: string[]): Model {
 					output: [innerState.id],
 					properties: {
 						name: `t&#832${i + 1}&#832${j + 1}`,
-						description: `Travel of an individual from location L${i + 1} and L${j + 1}.`
+						description: `Travel of an individual from location ${states[i].name} and ${states[j].name}.`
 					}
 				});
 			}

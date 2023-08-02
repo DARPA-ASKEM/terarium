@@ -4,30 +4,18 @@
 			<div ref="splitterContainer" class="splitter-container">
 				<section class="graph-element">
 					<tera-reflexives-toolbar
-						v-if="showReflexivesToolbar && strataModel && baseModel"
+						v-if="strataModel && baseModel"
+						v-show="showReflexivesToolbar"
 						:model-to-update="strataModel"
 						:model-to-compare="baseModel"
 						@model-updated="
 							(value) => {
 								typedModel = value;
-								emit('model-updated', value);
+								emit('model-updated', typedModel);
 							}
 						"
 					/>
-					<section class="legend">
-						<ul>
-							<li v-for="(type, i) in stateTypes" :key="i">
-								<div class="legend-key-circle" :style="getLegendKeyStyle(type ?? '')" />
-								{{ type }}
-							</li>
-						</ul>
-						<ul>
-							<li v-for="(type, i) in transitionTypes" :key="i">
-								<div class="legend-key-square" :style="getLegendKeyStyle(type ?? '')" />
-								{{ type }}
-							</li>
-						</ul>
-					</section>
+					<tera-model-type-legend :model="typedModel" />
 					<div v-if="typedModel" ref="graphElement" class="graph-element" />
 				</section>
 			</div>
@@ -37,7 +25,7 @@
 
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed } from 'vue';
+import { watch, ref } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
@@ -49,10 +37,11 @@ import { Model, TypeSystem } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
+import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
 const props = defineProps<{
 	strataModel: Model;
-	baseModel?: Model;
+	baseModel?: Model | null;
 	baseModelTypeSystem?: TypeSystem;
 	showReflexivesToolbar: boolean;
 }>();
@@ -66,20 +55,7 @@ const splitterContainer = ref<HTMLElement | null>(null);
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const stateTypes = computed(() =>
-	typedModel.value.semantics?.typing?.system?.model.states.map((s) => s.name)
-);
-const transitionTypes = computed(() =>
-	typedModel.value.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name)
-);
-
-const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();
-
-function getLegendKeyStyle(id: string) {
-	return {
-		backgroundColor: getNodeTypeColor(id)
-	};
-}
+const { setNodeTypeColor } = useNodeTypeColorPalette();
 
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
@@ -140,42 +116,6 @@ main {
 	overflow: auto;
 }
 
-.legend {
-	position: absolute;
-	bottom: 0;
-	z-index: 1;
-	margin-bottom: 1rem;
-	margin-left: 1rem;
-	display: flex;
-	gap: 1rem;
-	background-color: var(--surface-section);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-}
-
-.legend-key-circle {
-	height: 24px;
-	width: 24px;
-	border-radius: 12px;
-}
-
-.legend-key-square {
-	height: 24px;
-	width: 24px;
-	border-radius: 4px;
-}
-
-ul {
-	display: flex;
-	gap: 0.5rem;
-	list-style-type: none;
-}
-
-li {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
 .splitter-container {
 	height: 100%;
 }
