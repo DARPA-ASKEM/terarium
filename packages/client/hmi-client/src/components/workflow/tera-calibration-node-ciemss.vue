@@ -35,6 +35,7 @@
 					:key="index"
 					:run-results="runResults"
 					:chartConfig="cfg"
+					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
