@@ -110,27 +110,16 @@ public class SimulationResource implements SnakeCaseResource {
 		@QueryParam("datasetName") final String datasetName
 	) {
 		// Duplicate the simulation results to a new dataset
-		final JsonNode jsonDatasetId = proxy.copyResultsToDataset(id);
-
-		// Test if dataset is null
-		if (jsonDatasetId == null) {
-			log.error("Failed to copy simulation {} result as dataset", id);
-			return Response
-				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.entity("Failed to copy simulation result as dataset")
-				.type("text/plain")
-				.build();
-		}
-
-		// Get the Dataset Id returned by the dataservice
-		final String datasetId = jsonDatasetId.at("/id").asText();
+		final Dataset dataset = proxy.copyResultsToDataset(id);
 
 		if(datasetName != null){
 			try {
-				Dataset updatedDataset = new Dataset().setId(datasetId).setName(datasetName);
-				datasetProxy.updateDataset(id, convertObjectToSnakeCaseJsonNode(updatedDataset));
+				dataset.setName(datasetName);
+				JsonNode updatedDataset = convertObjectToSnakeCaseJsonNode(dataset);
+				datasetProxy.updateDataset(dataset.getId(), updatedDataset);
+
 			} catch (Exception e) {
-				log.error("Failed to update dataset {} name", datasetId);
+				log.error("Failed to update dataset {} name", dataset.getId());
 				return Response
 					.status(Response.Status.INTERNAL_SERVER_ERROR)
 					.entity("Failed to update dataset name")
@@ -140,12 +129,9 @@ public class SimulationResource implements SnakeCaseResource {
 		}
 
 
-
-
-
 		// Add the dataset to the project as an asset
 		try {
-			return projectProxy.createAsset(projectId, "datasets", datasetId);
+			return projectProxy.createAsset(projectId, ResourceType.Type.DATASETS.type, dataset.getId());
 		} catch (Exception ignored) {
 			log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
 			return Response
