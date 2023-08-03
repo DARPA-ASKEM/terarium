@@ -10,6 +10,7 @@ import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import SSE from '@/temp/sse.vue';
 import EvaluationScenarios from '@/temp/EvaluationScenarios.vue';
+import NestedRederer from '@/temp/NestedRenderer.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -45,7 +46,8 @@ const routes = [
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.EvaluationScenariosPath, component: EvaluationScenarios },
-	{ path: '/sse', component: SSE }
+	{ path: '/sse', component: SSE },
+	{ path: '/nested', component: NestedRederer }
 ];
 
 const router = createRouter({
