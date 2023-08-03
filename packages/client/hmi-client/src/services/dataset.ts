@@ -203,17 +203,6 @@ async function createDatasetFromSimulationResult(
 	}
 }
 
-export const saveDataset = async (
-	projectId: string,
-	simulationId: string | undefined,
-	datasetName: string | null
-) => {
-	if (!simulationId) return;
-	if (await createDatasetFromSimulationResult(projectId, simulationId, datasetName)) {
-		useResourcesStore().setActiveProject(await ProjectService.get(projectId, true));
-	}
-};
-
 export {
 	getAll,
 	getDataset,
