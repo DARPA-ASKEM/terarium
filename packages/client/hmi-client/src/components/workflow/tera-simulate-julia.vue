@@ -42,7 +42,7 @@
 				icon="pi pi-plus"
 			/>
 			<Button
-				class="save-button p-button p-button-secondary p-button-sm"
+				class="add-chart"
 				title="Saves the current version of the model as a new Terarium asset"
 				@click="showSaveInput = !showSaveInput"
 			>
