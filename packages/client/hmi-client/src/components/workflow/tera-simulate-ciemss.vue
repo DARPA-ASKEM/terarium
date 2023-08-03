@@ -83,12 +83,28 @@
 			/>
 			<Button
 				class="add-chart"
-				text
-				:outlined="true"
-				@click="saveDataset"
-				label="Save as Dataset"
-				icon="pi pi-save"
-			/>
+				title="Saves the current version of the model as a new Terarium asset"
+				@click="showSaveInput = !showSaveInput"
+			>
+				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Save as</span>
+			</Button>
+			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<i
+					class="pi pi-times i"
+					:class="{ clear: hasValidDatasetName }"
+					@click="saveAsName = ''"
+				></i>
+				<i
+					class="pi pi-check i"
+					:class="{ save: hasValidDatasetName }"
+					@click="
+						saveDataset();
+						showSaveInput = false;
+					"
+				></i>
+			</span>
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -181,12 +197,15 @@ import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { IProject } from '@/types/Project';
+import InputText from 'primevue/inputtext';
 import useResourcesStore from '@/stores/resources';
 
 const props = defineProps<{
 	node: WorkflowNode;
 	project: IProject;
 }>();
+
+const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -202,7 +221,8 @@ const model = ref<Model | null>(null);
 const parsedRawData = ref<any>();
 const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
-
+const showSaveInput = ref(<boolean>false);
+const saveAsName = ref(<string | null>'');
 const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
 const paginatorFirst = ref(0);
@@ -232,7 +252,7 @@ const addChart = () => {
 const saveDataset = async () => {
 	const simulationId = props?.node?.outputs?.[0]?.value?.[0] as string;
 	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
+		if (await createDatasetFromSimulationResult(props.project.id, simulationId, saveAsName.value)) {
 			// TODO: See about getting rid of this - this refresh should preferably be within a service
 			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 		}

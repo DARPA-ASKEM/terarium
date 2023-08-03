@@ -38,13 +38,28 @@
 			/>
 			<Button
 				class="add-chart"
-				text
-				:outlined="true"
-				@click="saveDataset"
-				:disabled="true"
-				label="Save as Dataset"
-				icon="pi pi-save"
-			/>
+				title="Saves the current version of the model as a new Terarium asset"
+				@click="showSaveInput = !showSaveInput"
+			>
+				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Save as</span>
+			</Button>
+			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<i
+					class="pi pi-times i"
+					:class="{ clear: hasValidDatasetName }"
+					@click="saveAsName = ''"
+				></i>
+				<i
+					class="pi pi-check i"
+					:class="{ save: hasValidDatasetName }"
+					@click="
+						saveDataset();
+						showSaveInput = false;
+					"
+				></i>
+			</span>
 		</div>
 
 		<div v-else-if="activeTab === EnsembleTabs.input && node" class="simulate-container">
@@ -247,6 +262,10 @@ const CATEGORYPERCENTAGE = 0.9;
 const BARPERCENTAGE = 0.6;
 const MINBARLENGTH = 1;
 
+const showSaveInput = ref(<boolean>false);
+const saveAsName = ref(<string | null>'');
+const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
+
 const activeTab = ref(EnsembleTabs.input);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -305,7 +324,7 @@ const calculateWeights = () => {
 const saveDataset = async () => {
 	const simulationId = props?.node?.outputs?.[0]?.value?.[0].runId as string;
 	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
+		if (await createDatasetFromSimulationResult(props.project.id, simulationId, saveAsName.value)) {
 			// TODO: See about getting rid of this - this refresh should preferably be within a service
 			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 		}
