@@ -4,7 +4,7 @@ import { Model, PetriNetTransition } from '@/types/Types';
 export const getStates = (amr: Model) => {
 	const model = amr.model;
 	const lookup = new Map();
-	const stateMatrixData: object[] = [];
+	const matrixData: object[] = [];
 
 	const dupe: Set<string> = new Set();
 	const uniqueStates: any[] = []; // FIXME: grounding typing incorrect
@@ -46,15 +46,15 @@ export const getStates = (amr: Model) => {
 			}
 			dupe.add(state.id);
 		}
-		stateMatrixData.push(obj);
+		matrixData.push(obj);
 	}
-	return { uniqueStates, lookup, stateMatrixData };
+	return { uniqueStates, lookup, matrixData };
 };
 
 export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	const model = amr.model;
 	const uniqueTransitions: Partial<PetriNetTransition>[] = [];
-	const transitinMatrixData: object[] = [];
+	const matrixData: object[] = [];
 
 	// Cache state-modifiers for faster fetch
 	const stateModifierMap = new Map();
@@ -97,9 +97,9 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 		} else {
 			obj._base = existingTransition.id;
 		}
-		transitinMatrixData.push(obj);
+		matrixData.push(obj);
 	}
-	return { uniqueTransitions, transitinMatrixData };
+	return { uniqueTransitions, matrixData };
 };
 
 /*
@@ -142,4 +142,23 @@ export const runExtraction = (matrixData: any[], stratas: string[]) => {
 		}
 	});
 	return result;
+};
+
+/**
+ * Given an MIRA AMR, compute
+ */
+export const getAMRPresentationData = (amr: Model) => {
+	const statesData = getStates(amr);
+	const transitionsData = getTransitions(amr, statesData.lookup);
+
+	const baseModel = {
+		states: statesData.uniqueStates,
+		transitions: transitionsData.uniqueTransitions
+	};
+
+	return {
+		baseModel,
+		stateMatrixData: statesData.matrixData,
+		transitionMatrixData: transitionsData.matrixData
+	};
 };
