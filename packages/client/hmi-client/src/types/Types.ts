@@ -115,7 +115,6 @@ export interface Simulation {
     workflowId: string;
     userId?: number;
     projectId?: number;
-    progress?: number;
 }
 
 export interface Dataset {

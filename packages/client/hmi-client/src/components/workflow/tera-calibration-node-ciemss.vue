@@ -104,8 +104,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { computed, shallowRef, watch, ref, ComputedRef, onMounted } from 'vue';
+import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -117,32 +117,32 @@ import { CalibrationRequestCiemss, CsvAsset, ModelConfiguration } from '@/types/
 import {
 	makeCalibrateJobCiemss,
 	getSimulation,
-	getRunResultCiemss
+	getRunResultCiemss,
+	handleSimulationsInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
-import TeraProgressBar from '../widgets/tera-progress-bar.vue';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
 	CalibrateMap
 } from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraProgressBar from '../widgets/tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const modelConfig = ref<ModelConfiguration>();
-const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 const parameterResult = ref<{ [index: string]: any }>();
 
@@ -172,6 +172,13 @@ const disableRunButton = computed(
 		!modelConfigId.value ||
 		!datasetId.value
 );
+
+onMounted(() => {
+	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
 
 const runCalibrate = async () => {
 	if (
@@ -224,37 +231,62 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
-	startedRunId.value = response.simulationId;
-	getStatus();
-	showSpinner.value = true;
+	if (response.simulationId) {
+		getStatus(response.simulationId);
+	}
 };
 
-const getStatus = async () => {
-	if (!startedRunId.value) return;
+const getStatus = async (simulationId: string) => {
+	showSpinner.value = true;
+	if (!simulationId) return;
 
 	const poller = new Poller<object>()
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => {
-			const response = await getSimulation(startedRunId.value!);
-			if (response?.status === 'complete') {
+			const response = await getSimulation(simulationId);
+			if (response?.status === ProgressState.COMPLETE) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.DELETE,
+					props.node,
+					simulationId
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 				return {
 					data: response,
 					progress: null,
 					error: null
 				};
 			}
-			if (response?.status === 'running') {
+			if (response?.status === ProgressState.RUNNING) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.ADD,
+					props.node,
+					simulationId
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 				progress.value = {
 					status: ProgressState.RUNNING,
 					value: progress.value.value + 5
 				};
 			}
 
-			if (response?.status === 'queued') {
+			if (response?.status === ProgressState.QUEUED) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.ADD,
+					props.node,
+					simulationId
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 				progress.value = {
 					status: ProgressState.QUEUED,
-					value: 50
+					value: 0
 				};
 			}
 
@@ -268,11 +300,11 @@ const getStatus = async () => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
+		console.error('Failed', simulationId);
 		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
-	completedRunId.value = startedRunId.value;
+	completedRunId.value = simulationId;
 	updateOutputPorts(completedRunId);
 	showSpinner.value = false;
 };

@@ -47,10 +47,11 @@ import Dropdown from 'primevue/dropdown';
 import {
 	makeForecastJobCiemss as makeForecastJob,
 	getSimulation,
-	getRunResultCiemss
+	getRunResultCiemss,
+	handleSimulationsInProgress
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
-import { WorkflowNode } from '@/types/workflow';
+import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import { Simulation } from '@/types/Types';
@@ -61,7 +62,7 @@ import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulat
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 // const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
@@ -70,7 +71,6 @@ const numSamples = ref(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
-const startedRunIdList = ref<string[]>([]);
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
@@ -98,27 +98,59 @@ const runSimulate = async () => {
 		return response.id;
 	});
 
-	startedRunIdList.value = await Promise.all(simulationRequests);
-	getStatus();
-	showSpinner.value = true;
+	const response = await Promise.all(simulationRequests);
+	getStatus(response);
 };
 
-const getStatus = async () => {
+onMounted(() => {
+	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds);
+	}
+});
+
+const getStatus = async (simulationIds: string[]) => {
+	showSpinner.value = true;
 	const poller = new Poller<object>()
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => {
 			const requestList: Promise<Simulation | null>[] = [];
-			startedRunIdList.value.forEach((id) => {
+			simulationIds.forEach((id) => {
 				requestList.push(getSimulation(id));
 			});
 			const response = await Promise.all(requestList);
-			if (response.every((simulation) => simulation!.status === 'complete')) {
+
+			if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.DELETE,
+					props.node,
+					simulationIds
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 				return {
 					data: response,
 					progress: null,
 					error: null
 				};
+			}
+			if (
+				response.find(
+					(simulation) =>
+						simulation?.status === ProgressState.QUEUED ||
+						simulation?.status === ProgressState.RUNNING
+				)
+			) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.ADD,
+					props.node,
+					simulationIds
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 			}
 			return {
 				data: null,
@@ -130,11 +162,11 @@ const getStatus = async () => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunIdList.value);
+		console.error('Failed', simulationIds);
 		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
-	completedRunIdList.value = startedRunIdList.value;
+	completedRunIdList.value = simulationIds;
 	showSpinner.value = false;
 };
 

@@ -13,6 +13,8 @@ import {
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
+import { SimulationStateOperation, WorkflowNode } from '@/types/workflow';
+import { cloneDeep } from 'lodash';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -194,4 +196,83 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 		logger.error(err);
 		return null;
 	}
+}
+
+// add a simulation in progress if it does not exist
+const addSimulationInProgress = (node: WorkflowNode, runIds: string | string[]) => {
+	const state = cloneDeep(node.state);
+
+	if (!state.simulationsInProgress) {
+		state.simulationsInProgress = [];
+	}
+
+	if (typeof runIds === 'string') {
+		// single run id
+		if (!state.simulationsInProgress.find((simulation) => simulation === runIds)) {
+			state.simulationsInProgress.push(runIds);
+			return state;
+		}
+		return null;
+	}
+
+	// array of run ids
+	let allExist = false;
+	runIds.forEach((runId) => {
+		if (!state.simulationsInProgress.includes(runId)) {
+			state.simulationsInProgress.push(runId);
+			allExist = true;
+		}
+	});
+	return allExist ? state : null;
+};
+
+// delete a simulation in progress
+const deleteSimulationInProgress = (node: WorkflowNode, runIds: string | string[]) => {
+	const state = cloneDeep(node.state);
+
+	if (state.simulationsInProgress) {
+		if (typeof runIds === 'string') {
+			state.simulationsInProgress = state.simulationsInProgress.filter(
+				(simulation) => simulation !== runIds
+			);
+			return state;
+		}
+		runIds.forEach((runId) => {
+			const index = state.simulationsInProgress.indexOf(runId);
+			if (index !== -1) {
+				state.simulationsInProgress.splice(index, 1);
+			}
+		});
+		return state;
+	}
+
+	return null;
+};
+
+const querySimulationInProgress = (node: WorkflowNode): string[] => {
+	const state = node.state;
+	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
+		return state.simulationsInProgress; // getStatus(state.simulationsInProgress[0])
+	}
+
+	return [];
+};
+
+// handle all simulation in progress operations
+export function handleSimulationsInProgress(
+	operation: SimulationStateOperation,
+	node: WorkflowNode,
+	runId: string | string[] = ''
+) {
+	switch (operation) {
+		case SimulationStateOperation.ADD:
+			return addSimulationInProgress(node, runId);
+		case SimulationStateOperation.DELETE:
+			return deleteSimulationInProgress(node, runId);
+		case SimulationStateOperation.QUERY:
+			return querySimulationInProgress(node);
+		default:
+			break;
+	}
+	return null;
 }

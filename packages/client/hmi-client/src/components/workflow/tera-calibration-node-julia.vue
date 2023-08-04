@@ -101,13 +101,13 @@
 		/>
 	</section>
 	<section v-else>
-		<div><i class="pi pi-spin pi-spinner"></i> Loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status"></tera-progress-bar>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
-import { WorkflowNode } from '@/types/workflow';
+import { computed, shallowRef, watch, ref, ComputedRef, onMounted } from 'vue';
+import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
@@ -117,7 +117,8 @@ import { CalibrationRequestJulia, CsvAsset, ModelConfiguration, TimeSpan } from 
 import {
 	makeCalibrateJobJulia,
 	getSimulation,
-	getRunResultJulia
+	getRunResultJulia,
+	handleSimulationsInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -129,6 +130,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraProgressBar from '../widgets/tera-progress-bar.vue';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -141,7 +143,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -164,6 +166,14 @@ const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+
+onMounted(() => {
+	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
 
 const disableRunButton = computed(
 	() =>
@@ -216,24 +226,65 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	startedRunId.value = response.simulationId;
-	getStatus();
-	showSpinner.value = true;
+	if (response.simulationId) {
+		getStatus(response.simulationId);
+	}
 };
 
-const getStatus = async () => {
-	if (!startedRunId.value) return;
+const getStatus = async (simulationId: string) => {
+	showSpinner.value = true;
+	if (!simulationId) return;
+
 	const poller = new Poller<object>()
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => {
-			const response = await getSimulation(startedRunId.value!);
-			if (response?.status === 'complete') {
+			const response = await getSimulation(simulationId);
+			if (response?.status === ProgressState.COMPLETE) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.DELETE,
+					props.node,
+					simulationId
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 				return {
 					data: response,
 					progress: null,
 					error: null
 				};
 			}
+			if (response?.status === ProgressState.RUNNING) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.ADD,
+					props.node,
+					simulationId
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
+				progress.value = {
+					status: ProgressState.RUNNING,
+					value: progress.value.value + 5
+				};
+			}
+
+			if (response?.status === ProgressState.QUEUED) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.ADD,
+					props.node,
+					simulationId
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
+				progress.value = {
+					status: ProgressState.QUEUED,
+					value: 0
+				};
+			}
+
 			return {
 				data: null,
 				progress: null,

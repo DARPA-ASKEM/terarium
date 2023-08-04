@@ -25,8 +25,13 @@ import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { ModelConfiguration, Simulation } from '@/types/Types';
 
-import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/simulation-service';
-import { WorkflowNode } from '@/types/workflow';
+import {
+	makeForecastJob,
+	getSimulation,
+	getRunResult,
+	handleSimulationsInProgress
+} from '@/services/models/simulation-service';
+import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -38,16 +43,21 @@ import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const showSpinner = ref(false);
-
-const startedRunIdList = ref<string[]>([]);
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
+
+onMounted(() => {
+	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds);
+	}
+});
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
@@ -69,29 +79,53 @@ const runSimulate = async () => {
 		return response.id;
 	});
 
-	startedRunIdList.value = await Promise.all(simulationRequests);
-	getStatus();
+	const response = await Promise.all(simulationRequests);
+	getStatus(response);
 	showSpinner.value = true;
 };
 
-// Retrieve run ids
-// FIXME: Replace with API.poller
-const getStatus = async () => {
+const getStatus = async (simulationIds: string[]) => {
+	showSpinner.value = true;
 	const poller = new Poller<object>()
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => {
 			const requestList: Promise<Simulation | null>[] = [];
-			startedRunIdList.value.forEach((id) => {
+			simulationIds.forEach((id) => {
 				requestList.push(getSimulation(id));
 			});
 			const response = await Promise.all(requestList);
-			if (response.every((simulation) => simulation!.status === 'complete')) {
+
+			if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.DELETE,
+					props.node,
+					simulationIds
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 				return {
 					data: response,
 					progress: null,
 					error: null
 				};
+			}
+			if (
+				response.find(
+					(simulation) =>
+						simulation?.status === ProgressState.QUEUED ||
+						simulation?.status === ProgressState.RUNNING
+				)
+			) {
+				const newState = handleSimulationsInProgress(
+					SimulationStateOperation.ADD,
+					props.node,
+					simulationIds
+				);
+				if (newState) {
+					emit('update-state', newState);
+				}
 			}
 			return {
 				data: null,
@@ -103,11 +137,11 @@ const getStatus = async () => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunIdList.value);
+		console.error('Failed', simulationIds);
 		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
-	completedRunIdList.value = startedRunIdList.value;
+	completedRunIdList.value = simulationIds;
 	showSpinner.value = false;
 };
 
