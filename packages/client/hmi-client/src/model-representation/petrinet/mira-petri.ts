@@ -102,28 +102,6 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	return { uniqueTransitions, matrixData };
 };
 
-/*
-export const runExtraction_bak = (matrixData: any[], stratas: string[]) => {
-  if (stratas.length === 0) {
-    return { nestedVals: [] };
-  }
-  let result: any = _.groupBy(matrixData, stratas[0]);
-  let nextStratas = _.clone(stratas)
-  nextStratas.shift();
-
-  Object.keys(result).forEach(key => {
-	if (key === 'undefined') {
-	  // No result, skip and start on the next
-	  result = runExtraction(matrixData, nextStratas);
-	} else {
-	  // Go down to the next depth
-	  result[key] = runExtraction(result[key], nextStratas);
-	}
-  })
-  result.nestedVals = Object.keys(result).filter(k => k !== 'nestedVals');
-}
-*/
-
 export const runExtraction = (matrixData: any[], stratas: string[]) => {
 	if (stratas.length === 0) {
 		return {};
@@ -145,19 +123,19 @@ export const runExtraction = (matrixData: any[], stratas: string[]) => {
 };
 
 /**
- * Given an MIRA AMR, compute
+ * Given an MIRA AMR, extract and compute a presentation-layer data format
  */
 export const getAMRPresentationData = (amr: Model) => {
 	const statesData = getStates(amr);
 	const transitionsData = getTransitions(amr, statesData.lookup);
 
-	const baseModel = {
+	const compactModel = {
 		states: statesData.uniqueStates,
 		transitions: transitionsData.uniqueTransitions
 	};
 
 	return {
-		baseModel,
+		compactModel,
 		stateMatrixData: statesData.matrixData,
 		transitionMatrixData: transitionsData.matrixData
 	};
