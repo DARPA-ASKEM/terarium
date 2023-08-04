@@ -98,13 +98,13 @@
 		/>
 	</section>
 	<section v-else>
-		<div><i class="pi pi-spin pi-spinner"></i> loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status"></tera-progress-bar>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
-import { WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -123,6 +123,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
+import TeraProgressBar from '../widgets/tera-progress-bar.vue';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -154,6 +155,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 // EXTRA section
 const numSamples = ref(100);
@@ -242,8 +244,19 @@ const getStatus = async () => {
 				};
 			}
 			if (response?.status === 'running') {
-				// handle intermediate data here
+				progress.value = {
+					status: ProgressState.RUNNING,
+					value: progress.value.value + 5
+				};
 			}
+
+			if (response?.status === 'queued') {
+				progress.value = {
+					status: ProgressState.QUEUED,
+					value: 50
+				};
+			}
+
 			return {
 				data: null,
 				progress: null,
