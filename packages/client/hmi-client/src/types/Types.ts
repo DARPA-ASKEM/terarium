@@ -306,6 +306,7 @@ export interface ModelMetadata {
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
+    modifiers?: any;
 }
 
 export interface ModelUnit {

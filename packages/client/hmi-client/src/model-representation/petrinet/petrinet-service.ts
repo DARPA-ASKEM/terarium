@@ -583,10 +583,16 @@ export const stratify = async (baseModel: Model, strataModel: Model) => {
 /// /////////////////////////////////////////////////////////////////////////////
 
 // Check if AMR is a stratified AMR
-export const isStratifiedAMR = (amr: Model) => {
+export const getStratificationType = (amr: Model): string | null => {
 	// Catlab stratification: this will have "semantics.span" field
-	if (amr.semantics?.span && amr.semantics.span.length > 1) return true;
-	return false;
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return 'catlab';
+
+	const hasModifiers = _.some(
+		(amr.model as PetriNetModel).states,
+		(s) => s.grounding && s.grounding.modifiers && Object.keys(s.grounding.modifiers).length > 0
+	);
+	if (hasModifiers) return 'mira';
+	return null;
 };
 
 export function newAMR(modelName: string) {

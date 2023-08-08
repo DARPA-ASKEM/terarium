@@ -101,6 +101,18 @@ export const getCatlabTransitionsMatrixData = (amr: Model) => {
 	return results;
 };
 
+// Extract a single layer for Catlab
+export const extractNestedMap = (amr: Model) => {
+	const nestedMap = amr.semantics?.span?.[0].map.reduce((childMap: any, [stratNode, baseNode]) => {
+		if (!childMap[baseNode]) {
+			childMap[baseNode] = [];
+		}
+		childMap[baseNode].push(stratNode);
+		return childMap;
+	}, {});
+	return nestedMap;
+};
+
 /**
  * Given an CAT AMR, extract and compute a presentation-layer data format.
  */

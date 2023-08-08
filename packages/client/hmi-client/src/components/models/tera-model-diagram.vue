@@ -46,7 +46,7 @@
 									/>
 								</span>
 								<Button
-									v-if="model && isStratifiedAMR(model) && !isEditing"
+									v-if="model && getStratificationType(model) && !isEditing"
 									@click="toggleCollapsedView"
 									:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
 									class="p-button-sm p-button-outlined toolbar-button"
@@ -208,14 +208,12 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
-import {
-	NestedPetrinetRenderer,
-	extractNestedMap
-} from '@/model-representation/petrinet/nested-petrinet-renderer';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
 
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
-	isStratifiedAMR,
+	getStratificationType,
 	convertAMRToACSet,
 	convertToIGraph,
 	updateExistingModelContent
@@ -480,7 +478,7 @@ async function toggleCollapsedView() {
 }
 
 const convertToIGraphHelper = (amr: Model) => {
-	if (isStratifiedAMR(amr) && isCollapsed.value) {
+	if (getStratificationType(amr) && isCollapsed.value) {
 		// FIXME: wont' work for MIRA
 		return convertToIGraph(props.model?.semantics?.span?.[0].system);
 	}
@@ -496,7 +494,7 @@ watch(
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
 
 		// Create renderer
-		if (isStratifiedAMR(props.model)) {
+		if (getStratificationType(props.model)) {
 			renderer = new NestedPetrinetRenderer({
 				el: graphElement.value as HTMLDivElement,
 				useAStarRouting: false,
