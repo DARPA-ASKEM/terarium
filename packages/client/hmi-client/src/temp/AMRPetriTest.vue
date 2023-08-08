@@ -1,6 +1,16 @@
 <template>
 	<div style="display: flex; flex-direction: row; padding: 1rem">
-		<textarea style="width: 550px; height: 550px; margin: 0 10px" v-model="jsonStr"> </textarea>
+		<div style="display: flex; flex-direction: column">
+			<textarea style="width: 550px; height: 550px; margin: 0 10px" v-model="jsonStr"> </textarea>
+			<div>
+				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapse = true">
+					Collapse
+				</button>
+				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapse = false">
+					Expand
+				</button>
+			</div>
+		</div>
 		<div>
 			<div style="position: fixed; padding: 2px">
 				{{ strataType === null ? 'No strata' : strataType }}
@@ -31,20 +41,22 @@ import {
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
 const strataType = ref<string | null>(null);
+const isCollapse = ref(true);
 
 onMounted(async () => {
 	jsonStr.value = JSON.stringify(amrExample, null, 2);
 
 	watch(
-		() => jsonStr.value,
+		() => [jsonStr.value, isCollapse.value],
 		async () => {
-			let renderer: BasicRenderer;
+			let renderer: BasicRenderer<any, any>;
 			let data: any;
 
 			const amr = JSON.parse(jsonStr.value);
 			strataType.value = getStratificationType(amr);
 
-			if (strataType.value === null) {
+			if (strataType.value === null || isCollapse.value === false) {
+				console.log('hihihhi');
 				renderer = new PetrinetRenderer({
 					el: graphElement.value as HTMLDivElement,
 					useAStarRouting: false,
