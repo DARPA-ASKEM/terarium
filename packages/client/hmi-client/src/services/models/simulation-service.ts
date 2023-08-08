@@ -13,7 +13,7 @@ import {
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import { SimulationStateOperation, WorkflowNode } from '@/types/workflow';
+import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
 import { cloneDeep } from 'lodash';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
@@ -278,4 +278,53 @@ export function handleSimulationsInProgress(
 			break;
 	}
 	return null;
+}
+
+export async function simulationPollAction(
+	simulationIds: string[],
+	node: WorkflowNode,
+	progress,
+	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
+) {
+	const requestList: Promise<Simulation | null>[] = [];
+	simulationIds.forEach((id) => {
+		requestList.push(getSimulation(id));
+	});
+	const response = await Promise.all(requestList);
+	if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
+		const newState = handleSimulationsInProgress(
+			SimulationStateOperation.DELETE,
+			node,
+			simulationIds
+		);
+		if (newState) {
+			emitFn('update-state', newState);
+		}
+		return {
+			data: response,
+			progress: null,
+			error: null
+		};
+	}
+	if (
+		response.find(
+			(simulation) =>
+				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
+		)
+	) {
+		const newState = handleSimulationsInProgress(SimulationStateOperation.ADD, node, simulationIds);
+		if (newState) {
+			emitFn('update-state', newState);
+		}
+		progress.value = {
+			status: ProgressState.RUNNING,
+			value: 0
+		};
+	}
+
+	return {
+		data: null,
+		progress: null,
+		error: null
+	};
 }

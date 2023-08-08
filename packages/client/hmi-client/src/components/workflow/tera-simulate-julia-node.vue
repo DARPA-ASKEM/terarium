@@ -23,13 +23,13 @@ import _ from 'lodash';
 import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
-import { ModelConfiguration, Simulation } from '@/types/Types';
+import { ModelConfiguration } from '@/types/Types';
 
 import {
 	makeForecastJob,
-	getSimulation,
 	getRunResult,
-	handleSimulationsInProgress
+	handleSimulationsInProgress,
+	simulationPollAction
 } from '@/services/models/simulation-service';
 import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -86,68 +86,21 @@ const runSimulate = async () => {
 	showSpinner.value = true;
 };
 
-const getStatus = async (simulationIds: string[]) => {
+const getStatus = async (runIds: string[]) => {
 	showSpinner.value = true;
 	const poller = new Poller<object>()
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => {
-			const requestList: Promise<Simulation | null>[] = [];
-			simulationIds.forEach((id) => {
-				requestList.push(getSimulation(id));
-			});
-			const response = await Promise.all(requestList);
-
-			if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
-				const newState = handleSimulationsInProgress(
-					SimulationStateOperation.DELETE,
-					props.node,
-					simulationIds
-				);
-				if (newState) {
-					emit('update-state', newState);
-				}
-				return {
-					data: response,
-					progress: null,
-					error: null
-				};
-			}
-			if (
-				response.find(
-					(simulation) =>
-						simulation?.status === ProgressState.QUEUED ||
-						simulation?.status === ProgressState.RUNNING
-				)
-			) {
-				const newState = handleSimulationsInProgress(
-					SimulationStateOperation.ADD,
-					props.node,
-					simulationIds
-				);
-				if (newState) {
-					emit('update-state', newState);
-				}
-				progress.value = {
-					status: ProgressState.RUNNING,
-					value: 0
-				};
-			}
-			return {
-				data: null,
-				progress: null,
-				error: null
-			};
-		});
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', simulationIds);
+		console.error('Failed', runIds);
 		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
-	completedRunIdList.value = simulationIds;
+	completedRunIdList.value = runIds;
 	showSpinner.value = false;
 };
 
