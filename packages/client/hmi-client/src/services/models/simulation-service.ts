@@ -13,8 +13,8 @@ import {
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
-import { cloneDeep } from 'lodash';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { cloneDeep, isEqual } from 'lodash';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -199,86 +199,48 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 }
 
 // add a simulation in progress if it does not exist
-const addSimulationInProgress = (node: WorkflowNode, runIds: string | string[]) => {
+const addSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
 	const state = cloneDeep(node.state);
 
 	if (!state.simulationsInProgress) {
 		state.simulationsInProgress = [];
 	}
-
-	if (typeof runIds === 'string') {
-		// single run id
-		if (!state.simulationsInProgress.find((simulation) => simulation === runIds)) {
-			state.simulationsInProgress.push(runIds);
-			return state;
-		}
-		return null;
-	}
-
-	// array of run ids
-	let allExist = false;
 	runIds.forEach((runId) => {
 		if (!state.simulationsInProgress.includes(runId)) {
 			state.simulationsInProgress.push(runId);
-			allExist = true;
 		}
 	});
-	return allExist ? state : null;
+
+	return state;
 };
 
-// delete a simulation in progress
-const deleteSimulationInProgress = (node: WorkflowNode, runIds: string | string[]) => {
+// delete a simulation in progress if it exists
+const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
 	const state = cloneDeep(node.state);
 
 	if (state.simulationsInProgress) {
-		// handle single run id
-		if (typeof runIds === 'string') {
-			state.simulationsInProgress = state.simulationsInProgress.filter(
-				(simulation) => simulation !== runIds
-			);
-			return state;
-		}
-
-		// handle array of run ids
 		runIds.forEach((runId) => {
 			const index = state.simulationsInProgress.indexOf(runId);
 			if (index !== -1) {
 				state.simulationsInProgress.splice(index, 1);
 			}
 		});
-		return state;
 	}
 
-	return null;
+	return state;
 };
 
-const querySimulationInProgress = (node: WorkflowNode): string[] => {
+// This function returns a string array of run ids.
+export const querySimulationInProgress = (node: WorkflowNode): string[] => {
 	const state = node.state;
 	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
-		return state.simulationsInProgress; // getStatus(state.simulationsInProgress[0])
+		// return all run ids on the node
+		return state.simulationsInProgress;
 	}
 
+	// return an empty array if no run ids are present
 	return [];
 };
-
-// handle all simulation in progress operations
-export function handleSimulationsInProgress(
-	operation: SimulationStateOperation,
-	node: WorkflowNode,
-	runId: string | string[] = ''
-) {
-	switch (operation) {
-		case SimulationStateOperation.ADD:
-			return addSimulationInProgress(node, runId);
-		case SimulationStateOperation.DELETE:
-			return deleteSimulationInProgress(node, runId);
-		case SimulationStateOperation.QUERY:
-			return querySimulationInProgress(node);
-		default:
-			break;
-	}
-	return null;
-}
 
 export async function simulationPollAction(
 	simulationIds: string[],
@@ -292,12 +254,9 @@ export async function simulationPollAction(
 	});
 	const response = await Promise.all(requestList);
 	if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
-		const newState = handleSimulationsInProgress(
-			SimulationStateOperation.DELETE,
-			node,
-			simulationIds
-		);
-		if (newState) {
+		const newState = deleteSimulationInProgress(node, simulationIds);
+		// only update state if it is different from the current one
+		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
 		}
 		return {
@@ -312,8 +271,9 @@ export async function simulationPollAction(
 				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
 		)
 	) {
-		const newState = handleSimulationsInProgress(SimulationStateOperation.ADD, node, simulationIds);
-		if (newState) {
+		const newState = addSimulationInProgress(node, simulationIds);
+		// only update state if it is different from the current one
+		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
 		}
 		progress.value = {

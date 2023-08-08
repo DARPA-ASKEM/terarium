@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch, ref, ComputedRef, onMounted } from 'vue';
-import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
@@ -117,8 +117,8 @@ import { CalibrationRequestJulia, CsvAsset, ModelConfiguration, TimeSpan } from 
 import {
 	makeCalibrateJobJulia,
 	getRunResultJulia,
-	handleSimulationsInProgress,
-	simulationPollAction
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -130,7 +130,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from '../widgets/tera-progress-bar.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -169,7 +169,7 @@ const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 onMounted(() => {
-	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds[0]);
 	}

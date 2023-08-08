@@ -45,20 +45,15 @@ import { ref, watch, computed, ComputedRef, onMounted } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import {
-	ProgressState,
-	SimulationStateOperation,
-	WorkflowNode,
-	WorkflowStatus
-} from '@/types/workflow';
+import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
 	makeEnsembleCiemssSimulation,
 	getRunResultCiemss,
-	handleSimulationsInProgress,
-	simulationPollAction
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -68,7 +63,7 @@ import {
 	SimulateEnsembleCiemssOperation
 } from './simulate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from '../widgets/tera-progress-bar.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -89,7 +84,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 onMounted(() => {
-	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds[0]);
 	}

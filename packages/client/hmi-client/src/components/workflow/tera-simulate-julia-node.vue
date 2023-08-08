@@ -28,10 +28,10 @@ import { ModelConfiguration } from '@/types/Types';
 import {
 	makeForecastJob,
 	getRunResult,
-	handleSimulationsInProgress,
-	simulationPollAction
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
-import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -39,7 +39,7 @@ import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
-import TeraProgressBar from '../widgets/tera-progress-bar.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -55,7 +55,7 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].va
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 onMounted(() => {
-	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
 	}

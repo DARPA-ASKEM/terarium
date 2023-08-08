@@ -137,9 +137,3 @@ export enum ProgressState {
 	RUNNING = 'running',
 	COMPLETE = 'complete'
 }
-
-export enum SimulationStateOperation {
-	DELETE = 'delete',
-	ADD = 'add',
-	QUERY = 'query'
-}

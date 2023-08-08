@@ -47,17 +47,17 @@ import Dropdown from 'primevue/dropdown';
 import {
 	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
-	handleSimulationsInProgress,
-	simulationPollAction
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
-import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
-import TeraProgressBar from '../widgets/tera-progress-bar.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -104,7 +104,7 @@ const runSimulate = async () => {
 };
 
 onMounted(() => {
-	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
 	}

@@ -105,7 +105,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch, ref, ComputedRef, onMounted } from 'vue';
-import { ProgressState, SimulationStateOperation, WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -117,8 +117,8 @@ import { CalibrationRequestCiemss, CsvAsset, ModelConfiguration } from '@/types/
 import {
 	makeCalibrateJobCiemss,
 	getRunResultCiemss,
-	handleSimulationsInProgress,
-	simulationPollAction
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -131,7 +131,7 @@ import {
 	CalibrateMap
 } from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from '../widgets/tera-progress-bar.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -174,7 +174,7 @@ const disableRunButton = computed(
 );
 
 onMounted(() => {
-	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
+	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds[0]);
 	}
