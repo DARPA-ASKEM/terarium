@@ -231,12 +231,15 @@ const deleteSimulationInProgress = (node: WorkflowNode, runIds: string | string[
 	const state = cloneDeep(node.state);
 
 	if (state.simulationsInProgress) {
+		// handle single run id
 		if (typeof runIds === 'string') {
 			state.simulationsInProgress = state.simulationsInProgress.filter(
 				(simulation) => simulation !== runIds
 			);
 			return state;
 		}
+
+		// handle array of run ids
 		runIds.forEach((runId) => {
 			const index = state.simulationsInProgress.indexOf(runId);
 			if (index !== -1) {

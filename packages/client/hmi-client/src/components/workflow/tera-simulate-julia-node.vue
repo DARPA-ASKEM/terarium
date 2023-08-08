@@ -14,7 +14,7 @@
 		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
-		<div>loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status"></tera-progress-bar>
 	</section>
 </template>
 
@@ -39,6 +39,7 @@ import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
+import TeraProgressBar from '../widgets/tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -51,6 +52,7 @@ const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 onMounted(() => {
 	const runIds = handleSimulationsInProgress(SimulationStateOperation.QUERY, props.node);
@@ -126,6 +128,10 @@ const getStatus = async (simulationIds: string[]) => {
 				if (newState) {
 					emit('update-state', newState);
 				}
+				progress.value = {
+					status: ProgressState.RUNNING,
+					value: 0
+				};
 			}
 			return {
 				data: null,

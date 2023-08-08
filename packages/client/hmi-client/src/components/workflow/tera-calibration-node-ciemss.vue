@@ -271,7 +271,7 @@ const getStatus = async (simulationId: string) => {
 				}
 				progress.value = {
 					status: ProgressState.RUNNING,
-					value: progress.value.value + 5
+					value: 0
 				};
 			}
 

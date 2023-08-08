@@ -33,7 +33,7 @@
 		</Accordion>
 	</section>
 	<section v-else>
-		<div>loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status"></tera-progress-bar>
 	</section>
 </template>
 
@@ -58,6 +58,7 @@ import { Simulation } from '@/types/Types';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import TeraProgressBar from '../widgets/tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -74,6 +75,7 @@ const ciemssMethodOptions = ref(['dopri5', 'euler']);
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
@@ -148,6 +150,10 @@ const getStatus = async (simulationIds: string[]) => {
 					props.node,
 					simulationIds
 				);
+				progress.value = {
+					status: ProgressState.RUNNING,
+					value: 0
+				};
 				if (newState) {
 					emit('update-state', newState);
 				}
