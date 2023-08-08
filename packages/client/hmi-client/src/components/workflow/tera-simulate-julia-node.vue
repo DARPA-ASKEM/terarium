@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { ModelConfiguration } from '@/types/Types';
@@ -54,11 +54,17 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
+const poller = new Poller();
+
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
 	}
+});
+
+onUnmounted(() => {
+	poller.stop();
 });
 
 const runSimulate = async () => {
@@ -88,7 +94,7 @@ const runSimulate = async () => {
 
 const getStatus = async (runIds: string[]) => {
 	showSpinner.value = true;
-	const poller = new Poller<object>()
+	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));

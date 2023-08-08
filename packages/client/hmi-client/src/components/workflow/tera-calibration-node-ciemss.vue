@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, ComputedRef, onMounted } from 'vue';
+import { computed, shallowRef, watch, ref, ComputedRef, onMounted, onUnmounted } from 'vue';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
@@ -164,6 +164,8 @@ const numIterations = ref(100);
 const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
+const poller = new Poller();
+
 const disableRunButton = computed(
 	() =>
 		!currentDatasetFileName.value ||
@@ -178,6 +180,10 @@ onMounted(() => {
 	if (runIds.length > 0) {
 		getStatus(runIds[0]);
 	}
+});
+
+onUnmounted(() => {
+	poller.stop();
 });
 
 const runCalibrate = async () => {
@@ -241,7 +247,7 @@ const getStatus = async (simulationId: string) => {
 	if (!simulationId) return;
 
 	const runIds = [simulationId];
-	const poller = new Poller<object>()
+	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));

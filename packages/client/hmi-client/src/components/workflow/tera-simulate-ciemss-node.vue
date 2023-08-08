@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -76,6 +76,8 @@ const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
+const poller = new Poller();
+
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
@@ -110,9 +112,13 @@ onMounted(() => {
 	}
 });
 
+onUnmounted(() => {
+	poller.stop();
+});
+
 const getStatus = async (runIds: string[]) => {
 	showSpinner.value = true;
-	const poller = new Poller<object>()
+	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));

@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, ComputedRef, onMounted } from 'vue';
+import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
@@ -83,11 +83,17 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 );
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
+const poller = new Poller();
+
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds[0]);
 	}
+});
+
+onUnmounted(() => {
+	poller.stop();
 });
 
 const runEnsemble = async () => {
@@ -132,7 +138,7 @@ const getStatus = async (simulationId: string) => {
 	if (!simulationId) return;
 
 	const runIds = [simulationId];
-	const poller = new Poller<object>()
+	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));

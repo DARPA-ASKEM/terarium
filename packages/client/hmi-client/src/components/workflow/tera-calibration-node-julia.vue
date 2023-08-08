@@ -106,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, ComputedRef, onMounted } from 'vue';
+import { computed, shallowRef, watch, ref, ComputedRef, onMounted, onUnmounted } from 'vue';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
@@ -168,11 +168,17 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
+const poller = new Poller();
+
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds[0]);
 	}
+});
+
+onUnmounted(() => {
+	poller.stop();
 });
 
 const disableRunButton = computed(
@@ -236,7 +242,7 @@ const getStatus = async (simulationId: string) => {
 	if (!simulationId) return;
 
 	const runIds = [simulationId];
-	const poller = new Poller<object>()
+	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
