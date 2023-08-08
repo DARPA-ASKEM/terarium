@@ -45,8 +45,15 @@
 										"
 									/>
 								</span>
+								<Button
+									v-if="model && isStratifiedAMR(model) && !isEditing"
+									@click="toggleCollapsedView"
+									:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
+									class="p-button-sm p-button-outlined toolbar-button"
+								/>
 							</template>
 						</Toolbar>
+						<tera-model-type-legend v-if="model" :model="model" />
 						<div v-if="model" ref="graphElement" class="graph-element" />
 						<ContextMenu ref="menu" :model="contextMenuItems" />
 					</section>
@@ -226,6 +233,7 @@ import { Model, Observable } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
 // Get rid of these emits
 const emit = defineEmits([
@@ -457,8 +465,22 @@ const contextMenuItems = ref([
 	}
 ]);
 
+const isCollapsed = ref(true);
+async function toggleCollapsedView() {
+	isCollapsed.value = !isCollapsed.value;
+	if (props.model) {
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+		// Render graph
+		if (renderer) {
+			renderer.isGraphDirty = true;
+			await renderer.setData(graphData);
+			await renderer.render();
+		}
+	}
+}
+
 const convertToIGraphHelper = (amr: Model) => {
-	if (isStratifiedAMR(amr)) {
+	if (isStratifiedAMR(amr) && isCollapsed.value) {
 		// FIXME: wont' work for MIRA
 		return convertToIGraph(props.model?.semantics?.span?.[0].system);
 	}
@@ -592,7 +614,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
 
 	if (renderer) {
 		renderer.setEditMode(false);

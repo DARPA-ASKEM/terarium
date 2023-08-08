@@ -35,6 +35,7 @@
 					:key="index"
 					:run-results="runResults"
 					:chartConfig="cfg"
+					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
@@ -89,6 +90,7 @@
 			</p>
 		</section>
 		<Button
+			v-if="modelConfigId && datasetId"
 			class="p-button-sm run-button"
 			label="Run"
 			icon="pi pi-play"

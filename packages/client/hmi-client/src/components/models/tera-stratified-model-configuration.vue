@@ -140,6 +140,7 @@ import {
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { getBaseAMR } from '@/model-representation/petrinet/petrinet-service';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
@@ -162,12 +163,9 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const baseModelStates = computed<any>(() =>
-	props.model?.semantics?.span?.[0].system.model.states.map(({ id }) => id)
-);
-const baseModelTransitions = computed<any>(() =>
-	props.model?.semantics?.span?.[0].system.model.transitions.map(({ id }) => id)
-);
+const baseModel = computed<any>(() => getBaseAMR(props.model));
+const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));
+const baseModelTransitions = computed<any>(() => baseModel.value.transitions.map(({ id }) => id));
 
 // Decide if we should display the whole configuration table
 const isConfigurationVisible = computed(
