@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { onMounted, ref, watch } from 'vue';
-import { BasicRenderer } from 'graph-scaffolder/src/core/basic-renderer';
+import BasicRenderer from 'graph-scaffolder/src/core/basic-renderer';
 import { runDagreLayout } from '@/services/graph';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
@@ -21,7 +21,7 @@ import {
 	convertToIGraph,
 	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
-import { amr as amrExample } from './sir.ts';
+import { amr as amrExample } from './sir';
 import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
 import {
 	getAMRPresentationData,
@@ -67,7 +67,7 @@ onMounted(async () => {
 
 				// 1. Find what are the strata dimensions
 				const stateMatrixData = presentationData.stateMatrixData.map((d) => {
-					const temp = _.cloneDeep(d);
+					const temp: any = _.cloneDeep(d);
 					delete temp._id;
 					delete temp._base;
 					return Object.keys(temp);
@@ -83,7 +83,7 @@ onMounted(async () => {
 					runLayout: runDagreLayout,
 					nestedMap: nestedMap
 				});
-				data = convertToIGraph(presentationData.compactModel);
+				data = convertToIGraph(presentationData.compactModel as any);
 			}
 
 			await renderer.setData(data);

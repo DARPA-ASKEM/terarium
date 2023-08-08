@@ -1,4 +1,4 @@
-import { Model } from '@/types/Types';
+import { Model, PetriNetTransition } from '@/types/Types';
 
 const MAX_DEPTH = 10;
 
