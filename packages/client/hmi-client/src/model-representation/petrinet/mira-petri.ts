@@ -102,7 +102,7 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	return { uniqueTransitions, matrixData };
 };
 
-export const runExtraction = (matrixData: any[], stratas: string[]) => {
+export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 	if (stratas.length === 0) {
 		return {};
 	}
@@ -113,10 +113,10 @@ export const runExtraction = (matrixData: any[], stratas: string[]) => {
 	Object.keys(result).forEach((key) => {
 		if (key === 'undefined') {
 			// No result, skip and start on the next
-			result = runExtraction(matrixData, nextStratas);
+			result = extractNestedStratas(matrixData, nextStratas);
 		} else {
 			// Go down to the next depth
-			result[key] = runExtraction(result[key], nextStratas);
+			result[key] = extractNestedStratas(result[key], nextStratas);
 		}
 	});
 	return result;
@@ -130,8 +130,13 @@ export const getAMRPresentationData = (amr: Model) => {
 	const transitionsData = getTransitions(amr, statesData.lookup);
 
 	const compactModel = {
-		states: statesData.uniqueStates,
-		transitions: transitionsData.uniqueTransitions
+		model: {
+			states: statesData.uniqueStates,
+			transitions: transitionsData.uniqueTransitions
+		},
+		semantics: {
+			ode: {}
+		}
 	};
 
 	return {
