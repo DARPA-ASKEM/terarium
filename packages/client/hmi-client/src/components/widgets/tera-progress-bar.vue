@@ -1,8 +1,8 @@
 <template>
 	<div>
 		<i class="pi pi-spin pi-spinner"></i>
-		<span>{{ props.status }}...{{ '(' + props.value + '%)' }}</span>
-		<ProgressBar class="progress-bar" :value="props.value"></ProgressBar>
+		<span>{{ props.status }}...{{ props.value ? '(' + props.value + '%)' : null }}</span>
+		<ProgressBar v-if="props.value" class="progress-bar" :value="props.value"></ProgressBar>
 	</div>
 </template>
 
