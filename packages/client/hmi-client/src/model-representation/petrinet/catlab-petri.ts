@@ -119,5 +119,5 @@ export const extractNestedMap = (amr: Model) => {
 export const getAMRPresentationData = (amr: Model) => ({
 	compactModel: getBaseAMR(amr),
 	stateMatrixData: getCatlabStatesMatrixData(amr),
-	transitionMatrixData: getCatlabStatesMatrixData(amr)
+	transitionMatrixData: getCatlabTransitionsMatrixData(amr)
 });

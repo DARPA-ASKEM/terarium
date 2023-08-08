@@ -164,8 +164,6 @@ function configureMatrix() {
 			? result.stateMatrixData.filter((d) => d._base === props.id)
 			: result.transitionMatrixData.filter((d) => d._base === props.id);
 
-	console.log(matrixData);
-
 	if (isEmpty(matrixData)) return;
 
 	// Grab dimension names from the first matrix row
@@ -174,6 +172,11 @@ function configureMatrix() {
 		delete d._base;
 		return Object.keys(d);
 	})[0];
+
+	// FIXME: resolve id vs _id
+	matrixData.forEach((d) => {
+		d.id = d._id;
+	});
 
 	rowDimensions.push(...dimensions);
 	colDimensions.push(...dimensions);
@@ -187,7 +190,7 @@ function configureMatrix() {
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 
-	console.log(matrix.value);
+	console.log('!!!!!', matrix.value);
 }
 
 onMounted(() => {
