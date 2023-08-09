@@ -281,7 +281,7 @@ async function createNewProject() {
 		newProjectDescription.value,
 		author
 	);
-	if (project) {
+	if (project?.id) {
 		openProject(project.id);
 		isNewProjectModalVisible.value = false;
 	}
