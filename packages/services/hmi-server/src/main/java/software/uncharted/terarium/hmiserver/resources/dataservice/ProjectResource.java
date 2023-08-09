@@ -36,11 +36,14 @@ public class ProjectResource {
 			.toList();
 
 		projects.forEach(project -> {
-			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList("dataset", "model", "publication"));
+			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList("datasets", "models", "publications"));
 			Map metadata = new HashMap();
-			metadata.put("datasets", assets.getDatasets().size());
-			metadata.put("models", assets.getModels().size());
-			metadata.put("publications", assets.getPublications().size());
+			metadata.put("datasets", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
+			metadata.put("extractions", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
+			metadata.put("models", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
+			metadata.put("publications", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
+			metadata.put("workflows", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
+			metadata.put("artifacts", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
 			project.setMetadata(metadata);
 		});
 
