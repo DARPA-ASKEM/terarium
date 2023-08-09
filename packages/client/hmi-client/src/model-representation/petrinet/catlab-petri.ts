@@ -48,8 +48,8 @@ export const getCatlabStratasDataPoint = (amr: Model, id: string) => {
 		key = span[0].map.find((d: any) => d[0] === key)[1];
 		span = span[0].system.semantics.span;
 		if (!span) {
-			result._id = id;
-			result._base = key;
+			result.id = id;
+			result.base = key;
 			break;
 		}
 	}
@@ -91,8 +91,8 @@ export const getCatlabTransitionsMatrixData = (amr: Model) => {
 			key = span[0].map.find((d: any) => d[0] === key)[1];
 			span = span[0].system.semantics.span;
 			if (!span) {
-				result._base = key;
-				result._id = transition.id;
+				result.base = key;
+				result.id = transition.id;
 				break;
 			}
 		}
