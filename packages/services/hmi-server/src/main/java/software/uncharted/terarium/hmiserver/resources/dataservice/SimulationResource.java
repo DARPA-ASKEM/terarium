@@ -12,8 +12,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
+import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.utils.Converter;
 
 import javax.inject.Inject;
@@ -26,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation REST Endpoints")
 @Slf4j
-public class SimulationResource {
+public class SimulationResource implements SnakeCaseResource {
 
 	@Inject
 	@RestClient
@@ -35,6 +38,10 @@ public class SimulationResource {
 	@Inject
 	@RestClient
 	ProjectProxy projectProxy;
+
+	@Inject
+	@RestClient
+	DatasetProxy datasetProxy;
 
 	@POST
 	public Simulation createSimulation(final Simulation simulation){
@@ -99,27 +106,32 @@ public class SimulationResource {
 	@Path("/{id}/add-result-as-dataset-to-project/{projectId}")
 	public Response createFromSimulationResult(
 		@PathParam("id") final String id,
-		@PathParam("projectId") final String projectId
+		@PathParam("projectId") final String projectId,
+		@QueryParam("datasetName") final String datasetName
 	) {
 		// Duplicate the simulation results to a new dataset
-		final JsonNode jsonDatasetId = proxy.copyResultsToDataset(id);
+		final Dataset dataset = proxy.copyResultsToDataset(id);
 
-		// Test if dataset is null
-		if (jsonDatasetId == null) {
-			log.error("Failed to copy simulation {} result as dataset", id);
-			return Response
-				.status(Response.Status.INTERNAL_SERVER_ERROR)
-				.entity("Failed to copy simulation result as dataset")
-				.type("text/plain")
-				.build();
+		if(datasetName != null){
+			try {
+				dataset.setName(datasetName);
+				JsonNode updatedDataset = convertObjectToSnakeCaseJsonNode(dataset);
+				datasetProxy.updateDataset(dataset.getId(), updatedDataset);
+
+			} catch (Exception e) {
+				log.error("Failed to update dataset {} name", dataset.getId());
+				return Response
+					.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity("Failed to update dataset name")
+					.type("text/plain")
+					.build();
+			}
 		}
 
-		// Get the Dataset Id returned by the dataservice
-		final String datasetId = jsonDatasetId.at("/id").asText();
 
 		// Add the dataset to the project as an asset
 		try {
-			return projectProxy.createAsset(projectId, "datasets", datasetId);
+			return projectProxy.createAsset(projectId, ResourceType.Type.DATASETS.type, dataset.getId());
 		} catch (Exception ignored) {
 			log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
 			return Response

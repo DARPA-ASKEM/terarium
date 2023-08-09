@@ -180,13 +180,14 @@ async function createNewDatasetFromCSV(
 
 async function createDatasetFromSimulationResult(
 	projectId: string,
-	simulationId: string
+	simulationId: string,
+	datasetName: string | null
 ): Promise<boolean> {
 	try {
 		const response: AxiosResponse<Response> = await API.get(
-			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}`
+			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?datasetName=${datasetName}`
 		);
-		if (response && response.status === 200) {
+		if (response && response.status === 201) {
 			return true;
 		}
 		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
@@ -204,9 +205,13 @@ async function createDatasetFromSimulationResult(
 	}
 }
 
-export const saveDataset = async (projectId: string, simulationId: string | undefined) => {
+export const saveDataset = async (
+	projectId: string,
+	simulationId: string | undefined,
+	datasetName: string | null
+) => {
 	if (!simulationId) return;
-	if (await createDatasetFromSimulationResult(projectId, simulationId)) {
+	if (await createDatasetFromSimulationResult(projectId, simulationId, datasetName)) {
 		useResourcesStore().setActiveProject(await ProjectService.get(projectId, true));
 	}
 };

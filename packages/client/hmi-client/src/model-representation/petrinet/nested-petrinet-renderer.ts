@@ -4,7 +4,6 @@ import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 
 import { NodeType, PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { NodeData } from '@/model-representation/petrinet/petrinet-service';
-import { Model } from '@/types/Types';
 
 // packing data sourced from https://hydra.nat.uni-magdeburg.de/packing/cci for up to n=200
 import CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS from '@/model-representation/petrinet/circle-packing-vectors.json';
@@ -16,17 +15,6 @@ export interface NestedPetrinetOptions extends Options {
 
 const CIRCLE_MARGIN_CONST = 1;
 const { getNodeTypeColor } = useNodeTypeColorPalette();
-
-export const extractNestedMap = (amr: Model) => {
-	const nestedMap = amr.semantics?.span?.[0].map.reduce((childMap: any, [stratNode, baseNode]) => {
-		if (!childMap[baseNode]) {
-			childMap[baseNode] = [];
-		}
-		childMap[baseNode].push(stratNode);
-		return childMap;
-	}, {});
-	return nestedMap;
-};
 
 export class NestedPetrinetRenderer extends PetrinetRenderer {
 	nestedMap: any;
