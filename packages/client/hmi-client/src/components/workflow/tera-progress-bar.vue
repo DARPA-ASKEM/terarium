@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<i class="pi pi-spin pi-spinner"></i>
-		<span>{{ props.status }}...{{ props.value ? '(' + props.value + '%)' : null }}</span>
+		<p>{{ message }}</p>
 		<ProgressBar v-if="props.value" class="progress-bar" :value="props.value"></ProgressBar>
 	</div>
 </template>
@@ -9,6 +9,9 @@
 <script setup lang="ts">
 import { ProgressState } from '@/types/workflow';
 import ProgressBar from 'primevue/progressbar';
+import { computed } from 'vue';
+
+const message = computed(() => `${props.status}...${props.value ? `(${props.value}%)` : ''}`);
 
 const props = defineProps<{
 	status: ProgressState;

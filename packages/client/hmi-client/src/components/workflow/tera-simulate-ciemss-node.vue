@@ -33,7 +33,7 @@
 		</Accordion>
 	</section>
 	<section v-else>
-		<tera-progress-bar :value="progress.value" :status="progress.status"></tera-progress-bar>
+		<tera-progress-bar :value="progress.value" :status="progress.status" />
 	</section>
 </template>
 
