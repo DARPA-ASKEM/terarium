@@ -1,6 +1,9 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
 
+/**
+ * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
+ */
 export const getStates = (amr: Model) => {
 	const model = amr.model;
 	const lookup = new Map();
@@ -14,7 +17,7 @@ export const getStates = (amr: Model) => {
 		const grounding = state.grounding;
 
 		const obj: any = {};
-		obj._id = state.id;
+		obj.id = state.id;
 
 		if (grounding && grounding.modifiers) {
 			const modifierKeys = Object.keys(grounding.modifiers);
@@ -23,7 +26,7 @@ export const getStates = (amr: Model) => {
 				str = str.replace(`_${grounding.modifiers[key]}`, '');
 				obj[key] = grounding.modifiers[key];
 			});
-			obj._base = str;
+			obj.base = str;
 
 			lookup.set(state.id, str);
 			if (!dupe.has(str)) {
@@ -35,7 +38,7 @@ export const getStates = (amr: Model) => {
 			}
 			dupe.add(str);
 		} else {
-			obj._base = state.id;
+			obj.base = state.id;
 			lookup.set(state.id, state.id);
 			if (!dupe.has(state.id)) {
 				uniqueStates.push({
@@ -51,6 +54,9 @@ export const getStates = (amr: Model) => {
 	return { uniqueStates, lookup, matrixData };
 };
 
+/**
+ * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
+ */
 export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	const model = amr.model;
 	const uniqueTransitions: Partial<PetriNetTransition>[] = [];
@@ -77,7 +83,7 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 		const newTransition = { id: '', input, output };
 
 		// Build matrixData array
-		obj._id = transition.id;
+		obj.id = transition.id;
 		transition.input.forEach((sid) => {
 			const modifiers = stateModifierMap.get(sid);
 			if (modifiers) {
@@ -93,9 +99,9 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 			const newId = `T${c++}`;
 			newTransition.id = newId;
 			uniqueTransitions.push(_.cloneDeep(newTransition));
-			obj._base = newId;
+			obj.base = newId;
 		} else {
-			obj._base = existingTransition.id;
+			obj.base = existingTransition.id;
 		}
 		matrixData.push(obj);
 	}
