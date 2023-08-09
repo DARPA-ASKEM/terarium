@@ -65,13 +65,12 @@
 				:totalRecords="parsedRawData.length"
 				:rowsPerPageOptions="[5, 10, 20, 50]"
 			/>
-			<simulate-chart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
-				:run-results="renderedRuns"
+				:run-results="runResults"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
+				has-mean-line
 				@configuration-change="configurationChange(index, $event)"
 			/>
 			<Button
@@ -84,38 +83,47 @@
 			/>
 			<Button
 				class="add-chart"
-				text
-				:outlined="true"
-				@click="saveDataset"
-				label="Save as Dataset"
-				icon="pi pi-save"
-			/>
+				title="Saves the current version of the model as a new Terarium asset"
+				@click="showSaveInput = !showSaveInput"
+			>
+				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Save as</span>
+			</Button>
+			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<i
+					class="pi pi-times i"
+					:class="{ clear: hasValidDatasetName }"
+					@click="saveAsName = ''"
+				></i>
+				<i
+					class="pi pi-check i"
+					:class="{ save: hasValidDatasetName }"
+					@click="
+						saveDataset(projectId, completedRunId, saveAsName);
+						showSaveInput = false;
+					"
+				></i>
+			</span>
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
 						<template #header> Model </template>
-						<model-diagram v-if="model" :model="model" :is-editable="false" />
+						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configuration </template>
-						<tera-model-configuration v-if="model" :model="model" :is-editable="false" />
+						<tera-model-configuration
+							v-if="model"
+							:model="model"
+							:feature-config="{ isPreview: true }"
+						/>
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation time range </template>
 						<div class="sim-tspan-container">
-							<!--
-							<div class="sim-tspan-group">
-								<label for="1">Units</label>
-								<Dropdown
-									id="1"
-									class="p-inputtext-sm"
-									v-model=""
-									:options="TspanUnitList"
-								/>
-							</div>
-							-->
 							<div class="sim-tspan-group">
 								<label for="2">Start date</label>
 								<InputNumber
@@ -163,31 +171,30 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import MultiSelect from 'primevue/multiselect';
-import * as ProjectService from '@/services/project';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Paginator from 'primevue/paginator';
 import { Model, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-
 import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
-import ModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
-import SimulateChart from '@/components/workflow/tera-simulate-chart.vue';
+import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
-
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { IProject } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
+import { saveDataset } from '@/services/dataset';
+import InputText from 'primevue/inputtext';
 
 const props = defineProps<{
 	node: WorkflowNode;
 	project: IProject;
 }>();
+
+const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -203,11 +210,13 @@ const model = ref<Model | null>(null);
 const parsedRawData = ref<any>();
 const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
-const renderedRuns = ref<RunResults>({});
-
+const showSaveInput = ref(<boolean>false);
+const saveAsName = ref(<string | null>'');
 const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
 const paginatorFirst = ref(0);
+const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
+const projectId = ref<string>(props.project.id);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
@@ -229,16 +238,6 @@ const addChart = () => {
 		nodeId: props.node.id,
 		state
 	});
-};
-
-const saveDataset = async () => {
-	const simulationId = props?.node?.outputs?.[0]?.value?.[0] as string;
-	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
-			// TODO: See about getting rid of this - this refresh should preferably be within a service
-			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
-		}
-	}
 };
 
 onMounted(async () => {
@@ -264,59 +263,6 @@ onMounted(async () => {
 	runResults.value = output.runResults;
 	runConfigs.value = output.runConfigs;
 });
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
-
-// process run result data to create mean run line
-watch(
-	() => runResults.value,
-	(input) => {
-		const runResult: RunResults = JSON.parse(JSON.stringify(input));
-
-		// convert to array from array-like object
-		const parsedSimProbData = Object.values(runResult);
-
-		const numRuns = parsedSimProbData.length;
-		if (!numRuns) {
-			renderedRuns.value = runResult;
-			return;
-		}
-
-		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
-		const aggregateRun: { [key: string]: number }[] = [];
-
-		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
-			for (let run = 0; run < numRuns; run++) {
-				if (!aggregateRun[timestamp]) {
-					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
-					Object.keys(aggregateRun[timestamp]).forEach((key) => {
-						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
-					});
-				} else {
-					const datum = parsedSimProbData[run][timestamp];
-					Object.keys(datum).forEach((key) => {
-						aggregateRun[timestamp][key] += datum[key] / numRuns;
-					});
-				}
-			}
-		}
-
-		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-	},
-	{ immediate: true, deep: true }
-);
 
 watch(
 	() => numSamples.value,
@@ -395,9 +341,11 @@ const rawDataRenderedRows = computed(() =>
 	margin: 0.5em;
 	position: relative;
 }
+
 .datatable-header-select-container {
 	min-width: 0;
 }
+
 .datatable-header-title {
 	white-space: nowrap;
 	margin-right: 1em;

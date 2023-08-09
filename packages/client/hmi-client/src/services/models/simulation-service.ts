@@ -1,5 +1,4 @@
 import { csvParse } from 'd3';
-
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
@@ -47,6 +46,28 @@ export async function makeForecastJobCiemss(simulationParam: SimulationRequest) 
 		);
 		const output = resp.data;
 		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+// TODO: Add typing to julia's output: https://github.com/DARPA-ASKEM/Terarium/issues/1655
+export async function getRunResultJulia(runId: string, filename = 'result.json') {
+	try {
+		const resp = await API.get(`simulations/${runId}/result`, {
+			params: { filename }
+		});
+		const output = resp.data;
+		const columnNames = (output[0].colindex.names as string[]).join(',');
+		let csvData: string = columnNames as string;
+		for (let j = 0; j < output[0].columns[0].length; j++) {
+			csvData += '\n';
+			for (let i = 0; i < output[0].columns.length; i++) {
+				csvData += `${output[0].columns[i][j]},`;
+			}
+		}
+		return csvData;
 	} catch (err) {
 		logger.error(err);
 		return null;

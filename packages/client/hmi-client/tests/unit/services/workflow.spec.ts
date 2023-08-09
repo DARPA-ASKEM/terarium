@@ -4,9 +4,10 @@ import {
 	WorkflowPort,
 	Operation,
 	WorkflowNode,
-	WorkflowEdge,
 	WorkflowOperationTypes
 } from '@/types/workflow';
+import * as workflowService from '@/services/workflow';
+
 import { describe, expect, it } from 'vitest';
 
 const addOperation: Operation = {
@@ -34,39 +35,6 @@ const workflow: Workflow = {
 	transform: { x: 0, y: 0, k: 1 },
 	nodes: [],
 	edges: []
-};
-
-const addEdge = (
-	wf: Workflow,
-	source: string,
-	sourcePortId: string,
-	target: string,
-	targetPortId: string
-) => {
-	const d = wf.nodes.find((n) => n.id === source)?.outputs.find((o) => o.id === sourcePortId);
-	if (d) {
-		const targetNode = wf.nodes.find((n) => n.id === target);
-		if (targetNode) {
-			const targetNodePort = targetNode.inputs.find((o) => o.id === targetPortId);
-			if (targetNodePort) {
-				targetNodePort.type = d.type;
-				targetNodePort.value = d.value;
-			}
-		}
-	}
-
-	const key = `${source}:${sourcePortId}-${target}:${targetPortId}`;
-	const edge: WorkflowEdge = {
-		id: key,
-		workflowId: '0',
-		points: [],
-
-		source,
-		sourcePortId,
-		target,
-		targetPortId
-	};
-	wf.edges.push(edge);
 };
 
 const operationLib = new Map<string, Operation>();
@@ -136,8 +104,9 @@ describe('basic tests to make sure it all works', () => {
 		runNode(X); // should be 3
 		runNode(Y); // should be 7
 
-		addEdge(workflow, 'X', '0', 'Z', '0');
-		addEdge(workflow, 'Y', '0', 'Z', '1');
+		workflowService.addEdge(workflow, 'X', '0', 'Z', '0', []);
+		workflowService.addEdge(workflow, 'Y', '0', 'Z', '1', []);
+
 		runNode(Z); // should be 10
 
 		// Run

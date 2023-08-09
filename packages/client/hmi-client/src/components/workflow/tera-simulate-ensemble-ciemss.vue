@@ -23,10 +23,9 @@
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
-				:run-results="renderedRuns"
+				:run-results="runResults"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
+				has-mean-line
 				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
 			<Button
@@ -39,13 +38,28 @@
 			/>
 			<Button
 				class="add-chart"
-				text
-				:outlined="true"
-				@click="saveDataset"
-				:disabled="true"
-				label="Save as Dataset"
-				icon="pi pi-save"
-			/>
+				title="Saves the current version of the model as a new Terarium asset"
+				@click="showSaveInput = !showSaveInput"
+			>
+				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Save as</span>
+			</Button>
+			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<i
+					class="pi pi-times i"
+					:class="{ clear: hasValidDatasetName }"
+					@click="saveAsName = ''"
+				></i>
+				<i
+					class="pi pi-check i"
+					:class="{ save: hasValidDatasetName }"
+					@click="
+						saveDataset(projectId, completedRunId, saveAsName);
+						showSaveInput = false;
+					"
+				></i>
+			</span>
 		</div>
 
 		<div v-else-if="activeTab === EnsembleTabs.input && node" class="simulate-container">
@@ -170,9 +184,15 @@
 						</thead>
 						<tbody class="p-datatable-tbody">
 							<td>Steps</td>
-							<td><InputNumber v-model="timeSpan.start" /></td>
-							<td><InputNumber v-model="timeSpan.end" /></td>
-							<td><InputNumber v-model="numSamples" /></td>
+							<td>
+								<InputNumber v-model="timeSpan.start" />
+							</td>
+							<td>
+								<InputNumber v-model="timeSpan.end" />
+							</td>
+							<td>
+								<InputNumber v-model="numSamples" />
+							</td>
 						</tbody>
 					</table>
 				</AccordionTab>
@@ -188,6 +208,7 @@ import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
+import { saveDataset } from '@/services/dataset';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
@@ -198,9 +219,6 @@ import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
-import useResourcesStore from '@/stores/resources';
-import * as ProjectService from '@/services/project';
 import { IProject } from '@/types/Project';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
@@ -240,13 +258,17 @@ const numSamples = ref<number>(props.node.state.numSamples);
 const completedRunId = computed<string>(
 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 );
+const projectId = ref<string>(props.project.id);
+
+const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
+const showSaveInput = ref(<boolean>false);
+const saveAsName = ref(<string | null>'');
 
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
 const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
-const renderedRuns = ref<RunResults>({});
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
@@ -259,20 +281,6 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 		state
 	});
 };
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -288,16 +296,6 @@ const calculateWeights = () => {
 	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
 		customWeights.value = false;
 		// TODO: Get weights from AMR
-	}
-};
-
-const saveDataset = async () => {
-	const simulationId = props?.node?.outputs?.[0]?.value?.[0].runId as string;
-	if (simulationId) {
-		if (await createDatasetFromSimulationResult(props.project.id, simulationId)) {
-			// TODO: See about getting rid of this - this refresh should preferably be within a service
-			useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
-		}
 	}
 };
 
@@ -469,45 +467,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-// process run result data to create mean run line
-watch(
-	() => runResults.value,
-	(input) => {
-		const runResult: RunResults = JSON.parse(JSON.stringify(input));
-
-		// convert to array from array-like object
-		const parsedSimProbData = Object.values(runResult);
-
-		const numRuns = parsedSimProbData.length;
-		if (!numRuns) {
-			renderedRuns.value = runResult;
-			return;
-		}
-
-		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
-		const aggregateRun: { [key: string]: number }[] = [];
-
-		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
-			for (let run = 0; run < numRuns; run++) {
-				if (!aggregateRun[timestamp]) {
-					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
-					Object.keys(aggregateRun[timestamp]).forEach((key) => {
-						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
-					});
-				} else {
-					const datum = parsedSimProbData[run][timestamp];
-					Object.keys(datum).forEach((key) => {
-						aggregateRun[timestamp][key] += datum[key] / numRuns;
-					});
-				}
-			}
-		}
-
-		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-	},
-	{ immediate: true, deep: true }
-);
 </script>
 
 <style scoped>
@@ -546,6 +505,7 @@ watch(
 	height: 200px;
 	/* width: 80%; */
 }
+
 .model-weights {
 	display: flex;
 }
@@ -554,6 +514,7 @@ watch(
 	display: flex;
 	margin: 1em;
 }
+
 th {
 	text-align: left;
 }

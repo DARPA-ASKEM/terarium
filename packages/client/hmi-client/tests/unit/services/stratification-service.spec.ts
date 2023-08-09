@@ -21,20 +21,20 @@ describe('test generate age strata model', () => {
 			model: {
 				states: [
 					{
-						id: 'A1',
+						id: 'Young',
 						name: 'Young',
 						description:
-							'Number of individuals relative to the total population that are in age group A1.',
+							'Number of individuals relative to the total population that are in age group Young.',
 						units: {
 							expression: 'person',
 							expression_mathml: '<ci>person</ci>'
 						}
 					},
 					{
-						id: 'A2',
+						id: 'Old',
 						name: 'Old',
 						description:
-							'Number of individuals relative to the total population that are in age group A2.',
+							'Number of individuals relative to the total population that are in age group Old.',
 						units: {
 							expression: 'person',
 							expression_mathml: '<ci>person</ci>'
@@ -44,8 +44,8 @@ describe('test generate age strata model', () => {
 				transitions: [
 					{
 						id: 'c11',
-						input: ['A1', 'A1'],
-						output: ['A1', 'A1'],
+						input: ['Young', 'Young'],
+						output: ['Young', 'Young'],
 						properties: {
 							name: 'c&#8321&#8321',
 							description: 'Infective interaction between individuals.'
@@ -53,8 +53,8 @@ describe('test generate age strata model', () => {
 					},
 					{
 						id: 'c12',
-						input: ['A1', 'A2'],
-						output: ['A1', 'A2'],
+						input: ['Young', 'Old'],
+						output: ['Young', 'Old'],
 						properties: {
 							name: 'c&#8321&#8322',
 							description: 'Infective interaction between individuals.'
@@ -62,8 +62,8 @@ describe('test generate age strata model', () => {
 					},
 					{
 						id: 'c21',
-						input: ['A2', 'A1'],
-						output: ['A2', 'A1'],
+						input: ['Old', 'Young'],
+						output: ['Old', 'Young'],
 						properties: {
 							name: 'c&#8322&#8321',
 							description: 'Infective interaction between individuals.'
@@ -71,8 +71,8 @@ describe('test generate age strata model', () => {
 					},
 					{
 						id: 'c22',
-						input: ['A2', 'A2'],
-						output: ['A2', 'A2'],
+						input: ['Old', 'Old'],
+						output: ['Old', 'Old'],
 						properties: {
 							name: 'c&#8322&#8322',
 							description: 'Infective interaction between individuals.'
@@ -85,35 +85,36 @@ describe('test generate age strata model', () => {
 					rates: [
 						{
 							target: 'c11',
-							expression: 'A1*A1*beta11',
-							expression_mathml: '<apply><times/><ci>A1</ci><ci>A1</ci><ci>beta11</ci></apply>'
+							expression: 'Young*Young*beta11',
+							expression_mathml:
+								'<apply><times/><ci>Young</ci><ci>Young</ci><ci>beta11</ci></apply>'
 						},
 						{
 							target: 'c12',
-							expression: 'A1*A2*beta12',
-							expression_mathml: '<apply><times/><ci>A1</ci><ci>A2</ci><ci>beta12</ci></apply>'
+							expression: 'Young*Old*beta12',
+							expression_mathml: '<apply><times/><ci>Young</ci><ci>Old</ci><ci>beta12</ci></apply>'
 						},
 						{
 							target: 'c21',
-							expression: 'A2*A1*beta21',
-							expression_mathml: '<apply><times/><ci>A2</ci><ci>A1</ci><ci>beta21</ci></apply>'
+							expression: 'Old*Young*beta21',
+							expression_mathml: '<apply><times/><ci>Old</ci><ci>Young</ci><ci>beta21</ci></apply>'
 						},
 						{
 							target: 'c22',
-							expression: 'A2*A2*beta22',
-							expression_mathml: '<apply><times/><ci>A2</ci><ci>A2</ci><ci>beta22</ci></apply>'
+							expression: 'Old*Old*beta22',
+							expression_mathml: '<apply><times/><ci>Old</ci><ci>Old</ci><ci>beta22</ci></apply>'
 						}
 					],
 					initials: [
 						{
-							target: 'A1',
-							expression: 'A1init',
-							expression_mathml: '<ci>A1init</ci>'
+							target: 'Young',
+							expression: 'Younginit',
+							expression_mathml: '<ci>Younginit</ci>'
 						},
 						{
-							target: 'A2',
-							expression: 'A2init',
-							expression_mathml: '<ci>A2init</ci>'
+							target: 'Old',
+							expression: 'Oldinit',
+							expression_mathml: '<ci>Oldinit</ci>'
 						}
 					],
 					parameters: [
@@ -138,12 +139,12 @@ describe('test generate age strata model', () => {
 							value: 0.25
 						},
 						{
-							id: 'A1init',
+							id: 'Younginit',
 							description: "Proportion of population in age group 'Young' at timestep 0",
 							value: 0.5
 						},
 						{
-							id: 'A2init',
+							id: 'Oldinit',
 							description: "Proportion of population in age group 'Old' at timestep 0",
 							value: 0.5
 						}
@@ -151,29 +152,36 @@ describe('test generate age strata model', () => {
 				},
 				typing: {
 					system: {
-						states: [
-							{
-								id: 'Pop',
-								name: 'Pop',
-								description: 'Compartment of individuals in a human population.'
-							}
-						],
-						transitions: [
-							{
-								id: 'Infect',
-								input: ['Pop', 'Pop'],
-								output: ['Pop', 'Pop'],
-								properties: {
-									name: 'Infect',
-									description:
-										'2-to-2 interaction that represents infectious contact between two human individuals.'
+						name: 'Age-contact strata model',
+						description: 'Age-contact strata model',
+						schema:
+							'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+						model_version: '0.1',
+						model: {
+							states: [
+								{
+									id: 'Pop',
+									name: 'Pop',
+									description: 'Compartment of individuals in a human population.'
 								}
-							}
-						]
+							],
+							transitions: [
+								{
+									id: 'Infect',
+									input: ['Pop', 'Pop'],
+									output: ['Pop', 'Pop'],
+									properties: {
+										name: 'Infect',
+										description:
+											'2-to-2 interaction that represents infectious contact between two human individuals.'
+									}
+								}
+							]
+						}
 					},
 					map: [
-						['A1', 'Pop'],
-						['A2', 'Pop'],
+						['Young', 'Pop'],
+						['Old', 'Pop'],
 						['c11', 'Infect'],
 						['c12', 'Infect'],
 						['c21', 'Infect'],
@@ -207,20 +215,20 @@ describe('test generate location strata model', () => {
 			model: {
 				states: [
 					{
-						id: 'L1',
+						id: 'Toronto',
 						name: 'Toronto',
 						description:
-							'Number of individuals relative to the total population that are in location L1.',
+							'Number of individuals relative to the total population that are in location Toronto.',
 						units: {
 							expression: 'person',
 							expression_mathml: '<ci>person</ci>'
 						}
 					},
 					{
-						id: 'L2',
+						id: 'Montreal',
 						name: 'Montreal',
 						description:
-							'Number of individuals relative to the total population that are in location L2.',
+							'Number of individuals relative to the total population that are in location Montreal.',
 						units: {
 							expression: 'person',
 							expression_mathml: '<ci>person</ci>'
@@ -230,20 +238,20 @@ describe('test generate location strata model', () => {
 				transitions: [
 					{
 						id: 't12',
-						input: ['L1'],
-						output: ['L2'],
+						input: ['Toronto'],
+						output: ['Montreal'],
 						properties: {
 							name: 't&#8321&#8322',
-							description: 'Travel of an individual from location L1 and L2.'
+							description: 'Travel of an individual from location Toronto and Montreal.'
 						}
 					},
 					{
 						id: 't21',
-						input: ['L2'],
-						output: ['L1'],
+						input: ['Montreal'],
+						output: ['Toronto'],
 						properties: {
 							name: 't&#8322&#8321',
-							description: 'Travel of an individual from location L2 and L1.'
+							description: 'Travel of an individual from location Montreal and Toronto.'
 						}
 					}
 				]
@@ -253,25 +261,25 @@ describe('test generate location strata model', () => {
 					rates: [
 						{
 							target: 't12',
-							expression: 'L1*tau12',
-							expression_mathml: '<apply><times/><ci>L1</ci><ci>tau12</ci></apply>'
+							expression: 'Toronto*tau12',
+							expression_mathml: '<apply><times/><ci>Toronto</ci><ci>tau12</ci></apply>'
 						},
 						{
 							target: 't21',
-							expression: 'L2*tau21',
-							expression_mathml: '<apply><times/><ci>L2</ci><ci>tau21</ci></apply>'
+							expression: 'Montreal*tau21',
+							expression_mathml: '<apply><times/><ci>Montreal</ci><ci>tau21</ci></apply>'
 						}
 					],
 					initials: [
 						{
-							target: 'L1',
-							expression: 'L1init',
-							expression_mathml: '<ci>L1init</ci>'
+							target: 'Toronto',
+							expression: 'Torontoinit',
+							expression_mathml: '<ci>Torontoinit</ci>'
 						},
 						{
-							target: 'L2',
-							expression: 'L2init',
-							expression_mathml: '<ci>L2init</ci>'
+							target: 'Montreal',
+							expression: 'Montrealinit',
+							expression_mathml: '<ci>Montrealinit</ci>'
 						}
 					],
 					parameters: [
@@ -286,12 +294,12 @@ describe('test generate location strata model', () => {
 							value: 0.5
 						},
 						{
-							id: 'L1init',
+							id: 'Torontoinit',
 							description: "Proportion of population in location 'Toronto' at timestep 0",
 							value: 0.5
 						},
 						{
-							id: 'L2init',
+							id: 'Montrealinit',
 							description: "Proportion of population in location 'Montreal' at timestep 0",
 							value: 0.5
 						}
@@ -299,29 +307,36 @@ describe('test generate location strata model', () => {
 				},
 				typing: {
 					system: {
-						states: [
-							{
-								id: 'Pop',
-								name: 'Pop',
-								description: 'Compartment of individuals in a human population.'
-							}
-						],
-						transitions: [
-							{
-								id: 'Strata',
-								input: ['Pop'],
-								output: ['Pop'],
-								properties: {
-									name: 'Strata',
-									description:
-										'1-to-1 process that represents a change in the demographic division of a human individual.'
+						name: 'Location-travel strata model',
+						description: 'Location-travel strata model',
+						schema:
+							'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+						model_version: '0.1',
+						model: {
+							states: [
+								{
+									id: 'Pop',
+									name: 'Pop',
+									description: 'Compartment of individuals in a human population.'
 								}
-							}
-						]
+							],
+							transitions: [
+								{
+									id: 'Strata',
+									input: ['Pop'],
+									output: ['Pop'],
+									properties: {
+										name: 'Strata',
+										description:
+											'1-to-1 process that represents a change in the demographic division of a human individual.'
+									}
+								}
+							]
+						}
 					},
 					map: [
-						['L1', 'Pop'],
-						['L2', 'Pop'],
+						['Toronto', 'Pop'],
+						['Montreal', 'Pop'],
 						['t12', 'Strata'],
 						['t21', 'Strata']
 					]

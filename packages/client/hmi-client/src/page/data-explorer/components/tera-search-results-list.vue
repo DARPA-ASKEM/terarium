@@ -2,12 +2,12 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else-if="props.searchTerm">
+			<template v-else-if="props.searchTerm || searchByExampleOptionsStr">
 				{{ resultsText }}
 				<span v-if="searchByExampleOptionsStr.length === 0"> "{{ props.searchTerm }}" </span>
 				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
 					<tera-asset-card
-						:asset="searchByExampleAssetCardProp"
+						:asset="searchByExampleItem!"
 						:resource-type="(resultType as ResourceType)"
 					/>
 				</div>
@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType, onUnmounted } from 'vue';
+import { ref, computed, PropType } from 'vue';
 import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
@@ -66,7 +66,7 @@ import {
 } from '@/page/data-explorer/search-by-example';
 import TeraSearchItem from './tera-search-item.vue';
 
-const { searchByExampleAssetCardProp } = useSearchByExampleOptions();
+const { searchByExampleItem } = useSearchByExampleOptions();
 
 const props = defineProps({
 	dataItems: {
@@ -181,10 +181,6 @@ const itemsText = computed(() => {
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
 	return `Showing ${resultsCount.value} ${truncated}item${s}.`;
-});
-
-onUnmounted(() => {
-	searchByExampleAssetCardProp.value = null;
 });
 </script>
 

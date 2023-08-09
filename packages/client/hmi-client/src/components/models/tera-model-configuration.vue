@@ -7,7 +7,7 @@
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead class="p-datatable-thead">
 					<!-- Table header 1st row: Column groups such asInitials, Parameters, Observables, etc. -->
-					<tr v-if="isEditable">
+					<tr v-if="!featureConfig.isPreview">
 						<th class="p-frozen-column"></th>
 						<th class="p-frozen-column second-frozen"></th>
 						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
@@ -277,6 +277,7 @@ import {
 } from '@/services/model-configurations';
 import { getModelConfigurations } from '@/services/model';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import { FeatureConfig } from '@/types/common';
 
 enum ParamType {
 	CONSTANT = 'constant',
@@ -285,7 +286,7 @@ enum ParamType {
 }
 
 const props = defineProps<{
-	isEditable: boolean;
+	featureConfig: FeatureConfig;
 	model: Model;
 	calibrationConfig?: boolean;
 }>();
@@ -370,7 +371,7 @@ function openValueModal(
 	configIndex: number,
 	odeObjIndex: number
 ) {
-	if (props.isEditable) {
+	if (!props.featureConfig.isPreview) {
 		clearError();
 		activeIndex.value = 0;
 		openValueConfig.value = true;
@@ -580,6 +581,7 @@ onMounted(() => {
 	margin-bottom: 1rem;
 }
 
+/** TODO: Apply to all tables in theme or create second table rules?  */
 .p-datatable-thead th {
 	text-transform: none !important;
 	color: var(--text-color-primary) !important;
@@ -598,6 +600,7 @@ onMounted(() => {
 	visibility: visible;
 	width: 100%;
 }
+
 .editable-cell-hidden {
 	display: flex;
 	justify-content: space-between;
@@ -626,6 +629,7 @@ td:has(.cell-input) {
 .p-datatable:deep(td) {
 	cursor: pointer;
 }
+
 .p-datatable:deep(td:focus) {
 	background-color: var(--primary-color-lighter);
 }
@@ -721,6 +725,7 @@ td:hover .cell-menu {
 	display: flex;
 	flex-direction: column;
 }
+
 .distribution-range {
 	white-space: nowrap;
 	color: var(--text-color-subdued);

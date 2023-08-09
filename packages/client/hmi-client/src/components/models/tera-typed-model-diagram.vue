@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<TeraResizablePanel>
-			<div ref="splitterContainer" class="splitter-container">
+			<div class="splitter-container">
 				<section class="graph-element">
 					<section v-if="showTypingToolbar" class="typingSection">
 						<div class="typing-row">
@@ -48,7 +48,7 @@
 							</div>
 							<!-- cancel row  -->
 							<div>
-								<Button icon="pi pi-times" text rounded />
+								<Button icon="pi pi-times" text rounded @click="cancelTypedRow(index)" />
 							</div>
 						</div>
 						<Button
@@ -60,7 +60,8 @@
 						/>
 					</section>
 					<tera-reflexives-toolbar
-						v-if="showReflexivesToolbar && model && strataModel"
+						v-if="model && strataModel"
+						v-show="showReflexivesToolbar"
 						:model-to-update="model"
 						:model-to-compare="strataModel"
 						@model-updated="
@@ -70,20 +71,17 @@
 							}
 						"
 					/>
-					<section class="legend">
-						<ul>
-							<li v-for="(type, i) in stateTypes" :key="i">
-								<div class="legend-key-circle" :style="getLegendKeyStyle(type ?? '')" />
-								{{ type }}
-							</li>
-						</ul>
-						<ul>
-							<li v-for="(type, i) in transitionTypes" :key="i">
-								<div class="legend-key-square" :style="getLegendKeyStyle(type ?? '')" />
-								{{ type }}
-							</li>
-						</ul>
-					</section>
+					<tera-model-type-legend :model="typedModel" />
+					<Toolbar>
+						<template #end>
+							<Button
+								v-if="getStratificationType(model)"
+								@click="toggleCollapsedView"
+								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
+								class="p-button-sm p-button-outlined toolbar-button"
+							/>
+						</template>
+					</Toolbar>
 					<div v-if="typedModel" ref="graphElement" class="graph-element" />
 				</section>
 			</div>
@@ -100,7 +98,11 @@ import {
 	NodeData,
 	EdgeData
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { convertToIGraph, addTyping } from '@/model-representation/petrinet/petrinet-service';
+import {
+	convertToIGraph,
+	addTyping,
+	getStratificationType
+} from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
@@ -111,10 +113,13 @@ import {
 	generateTypeTransition,
 	generateTypeState
 } from '@/services/models/stratification-service';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+import Toolbar from 'primevue/toolbar';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
+import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
-const emit = defineEmits(['model-updated']);
+const emit = defineEmits(['model-updated', 'all-nodes-typed', 'not-all-nodes-typed']);
 
 const props = defineProps<{
 	model: Model;
@@ -124,17 +129,10 @@ const props = defineProps<{
 	showReflexivesToolbar: boolean;
 }>();
 
-const typedModel = ref<Model>(props.model);
-
-const splitterContainer = ref<HTMLElement | null>(null);
-
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const stateTypes = computed(() => props.model.semantics?.typing?.system?.states.map((s) => s.name));
-const transitionTypes = computed(() =>
-	props.model.semantics?.typing?.system?.transitions.map((t) => t.properties?.name)
-);
+const typedModel = ref<Model>(props.model);
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
 	{
@@ -143,14 +141,10 @@ const typedRows = ref<
 		assignTo?: string[];
 	}[]
 >([]);
-
-let typeNameBuffer: string[] = [];
-
 const numberNodes = computed(
 	() => typedModel.value.model.states.length + typedModel.value.model.transitions.length
 );
-const numberTypedRows = computed(() => typedModel.value.semantics?.typing?.map.length ?? 0);
-
+const numberTypedNodes = computed(() => typedModel.value.semantics?.typing?.map.length ?? 0);
 // TODO: don't allow user to assign a variable or transition twice
 const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	const options: { [s: string]: string[] }[] = [];
@@ -162,21 +156,24 @@ const assignToOptions = computed<{ [s: string]: string[] }[]>(() => {
 	});
 	return options;
 });
-
-const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();
+const allNodesTyped = computed(() => numberTypedNodes.value === numberNodes.value);
 
 function addTypedRow() {
 	typedRows.value.push({});
 }
-
+function cancelTypedRow(rowIndex: number) {
+	typedRows.value.splice(rowIndex, 1);
+}
+// 'typedRows.typeName' is assigned the value of 'typeNameBuffer' when the user focuses away from the associated InputText
+let typeNameBuffer: string[] = [];
 function setTypeNameBuffer(newValue, row) {
 	typeNameBuffer[row] = newValue;
 }
-
 function updateRowTypeName(rowIndex: number) {
 	typedRows.value[rowIndex].typeName = typeNameBuffer[rowIndex];
 }
 
+const { getNodeTypeColor, setNodeTypeColor } = useNodeTypeColorPalette();
 function getLegendKeyClass(type: string) {
 	if (type === 'Variable') {
 		return 'legend-key-circle';
@@ -186,7 +183,6 @@ function getLegendKeyClass(type: string) {
 	}
 	return '';
 }
-
 function getLegendKeyStyle(id: string) {
 	if (!id) {
 		return {
@@ -197,41 +193,103 @@ function getLegendKeyStyle(id: string) {
 		backgroundColor: getNodeTypeColor(id)
 	};
 }
+function setNodeColors() {
+	const nodeIds: string[] = [];
+	props.typeSystem?.states.forEach((s) => {
+		nodeIds.push(s.id);
+	});
+	props.typeSystem?.transitions.forEach((t) => {
+		nodeIds.push(t.id);
+	});
+	props.model.semantics?.typing?.system.model.states.forEach((s) => {
+		nodeIds.push(s.id);
+	});
+	props.model.semantics?.typing?.system.model.transitions.forEach((t) => {
+		nodeIds.push(t.id);
+	});
+	setNodeTypeColor(nodeIds);
+}
+
+const isCollapsed = ref(true);
+async function toggleCollapsedView() {
+	isCollapsed.value = !isCollapsed.value;
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
+		isCollapsed.value ? props.model.semantics?.span?.[0].system : typedModel.value
+	);
+	// Render graph
+	if (renderer) {
+		renderer.isGraphDirty = true;
+		await renderer.setData(graphData);
+		await renderer.render();
+	}
+}
 
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.model],
 	async () => {
 		typedModel.value = props.model;
+		setNodeColors();
 	},
 	{ immediate: true }
 );
 
 watch(
-	() => props.typeSystem,
+	() => [props.typeSystem, props.showTypingToolbar],
 	() => {
-		const nodeIds: string[] = [];
-		props.typeSystem?.states.forEach((s) => {
-			nodeIds.push(s.id);
-		});
-		props.typeSystem?.transitions.forEach((t) => {
-			nodeIds.push(t.id);
-		});
-		setNodeTypeColor(nodeIds);
-		if (typedRows.value.length === 0) {
-			typedRows.value.push(
-				{
-					nodeType: 'Variable',
-					typeName: props.typeSystem?.states[0].name
-				},
-				{
-					nodeType: 'Transition',
-					typeName: props.typeSystem?.transitions[0].properties?.name
-				}
-			);
+		if (props.showTypingToolbar) {
+			setNodeColors();
+			if (typedModel.value.semantics?.typing) {
+				// pre-populate 'typedRows' if 'typedModel' already has typing
+				const typedRowsToPopulate: {
+					nodeType: string;
+					typeName: string;
+					assignTo: string[];
+				}[] = [];
+				const typedRowsTypeNames: Set<string> = new Set();
+				typedModel.value.semantics.typing.map.forEach((m) => {
+					const nodeId = m[0];
+					const typeId = m[1];
+					const state = typedModel.value.model.states.find((s) => s.id === nodeId);
+					const transition = typedModel.value.model.transitions.find((t) => t.id === nodeId);
+					const typeState = typedModel.value.semantics!.typing!.system.model.states.find(
+						(s) => s.id === typeId
+					);
+					const typeTransition = typedModel.value.semantics!.typing!.system.model.transitions.find(
+						(t) => t.id === typeId
+					);
+					const node = state || transition;
+					const nodeType = state ? 'Variable' : 'Transition';
+					const typeName = typeState ? typeState.id : typeTransition.properties?.name;
+					if (!typedRowsTypeNames.has(typeName)) {
+						typedRowsTypeNames.add(typeName);
+						typedRowsToPopulate.push({
+							nodeType,
+							typeName,
+							assignTo: [node.id]
+						});
+					} else {
+						const assignTo = typedRowsToPopulate.find((row) => row.typeName === typeName)?.assignTo;
+						assignTo?.push(node.id);
+					}
+				});
+				typedRows.value = typedRowsToPopulate;
+			} else if (typedRows.value.length === 0) {
+				typedRows.value.push(
+					{
+						nodeType: 'Variable',
+						typeName: props.typeSystem?.states[0].name
+					},
+					{
+						nodeType: 'Transition',
+						typeName: props.typeSystem?.transitions[0].properties?.name
+					}
+				);
+			}
+			typeNameBuffer = typedRows.value.map((r) => r.typeName ?? '');
 		}
-		typeNameBuffer = typedRows.value.map((r) => r.typeName ?? '');
-	}
+	},
+	{ immediate: true }
 );
 
 // construct TypingSemantics data structure when user updates variable/transition assignments
@@ -263,7 +321,7 @@ watch(
 			let state: State | undefined | null;
 			state =
 				props.typeSystem?.states.find((s) => typeId === s.id) ||
-				typedModel.value.semantics?.typing?.system.states.find((s) => typeId === s.id);
+				typedModel.value.semantics?.typing?.system.model.states.find((s) => typeId === s.id);
 			if (state && !updatedTypeSystem.states.find((s) => s.id === state!.id)) {
 				updatedTypeSystem.states.push(state);
 			} else if (!updatedTypeSystem.states.find((s) => s.id === typeId)) {
@@ -274,10 +332,19 @@ watch(
 			}
 		});
 
-		if (stateTypedMap.length > 0) {
-			typingSemantics = { map: stateTypedMap, system: updatedTypeSystem };
-			addTyping(typedModel.value, typingSemantics);
-		}
+		// eslint-disable-next-line @typescript-eslint/naming-convention
+		const { name, description, schema, model_version } = typedModel.value;
+		typingSemantics = {
+			map: stateTypedMap,
+			system: {
+				name,
+				description,
+				schema,
+				model_version,
+				model: updatedTypeSystem
+			}
+		};
+		addTyping(typedModel.value, typingSemantics);
 
 		transitionTypedMap.forEach((map) => {
 			// See if there is a corresponding type defined in the strata model's type system
@@ -287,7 +354,7 @@ watch(
 			let transition: Transition | undefined | null;
 			transition =
 				props.typeSystem?.transitions.find((t) => map[1] === t.id) ||
-				typedModel.value.semantics?.typing?.system.transitions.find((t) => typeId === t.id);
+				typedModel.value.semantics?.typing?.system.model.transitions.find((t) => typeId === t.id);
 			if (transition && !updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
 				updatedTypeSystem.transitions.push(transition);
 			} else if (!updatedTypeSystem.transitions.find((t) => t.id === typeId)) {
@@ -298,37 +365,78 @@ watch(
 			}
 		});
 		if (transitionTypedMap.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/naming-convention
 			const typeMap: string[][] = [...stateTypedMap, ...transitionTypedMap];
-			typingSemantics = { map: typeMap, system: updatedTypeSystem };
+			typingSemantics = {
+				map: typeMap,
+				system: {
+					name,
+					description,
+					schema,
+					model_version,
+					model: updatedTypeSystem
+				}
+			};
 			addTyping(typedModel.value, typingSemantics);
 		}
 	},
 	{ deep: true }
 );
 
-watch(numberTypedRows, () => {
-	if (numberTypedRows.value === numberNodes.value) {
-		emit('model-updated', typedModel.value);
-	}
-});
+watch(
+	numberTypedNodes,
+	() => {
+		if (allNodesTyped.value) {
+			emit('all-nodes-typed', typedModel.value);
+		} else {
+			emit('not-all-nodes-typed', numberNodes.value - numberTypedNodes.value);
+		}
+	},
+	{ immediate: true }
+);
 
-// Render graph whenever a new model is fetched or whenever the HTML element
+// Render graph whenever a model is updated or whenever the HTML element
 //	that we render the graph to changes.
 watch(
 	[() => typedModel, graphElement],
 	async () => {
 		if (typedModel.value === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(typedModel.value);
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
+			isCollapsed.value && getStratificationType(props.model)
+				? props.model.semantics?.span?.[0].system
+				: typedModel.value
+		);
+		const nestedMap = props.model.semantics?.span?.[0].map.reduce(
+			(childMap, [stratNode, baseNode]) => {
+				if (!childMap[baseNode]) {
+					childMap[baseNode] = [];
+				}
+				childMap[baseNode].push(stratNode);
+				return childMap;
+			},
+			{}
+		);
 
 		// Create renderer
 		if (!renderer) {
-			renderer = new PetrinetRenderer({
-				el: graphElement.value as HTMLDivElement,
-				useAStarRouting: false,
-				useStableZoomPan: true,
-				runLayout: runDagreLayout,
-				dragSelector: 'no-drag'
-			});
+			if (getStratificationType(props.model)) {
+				renderer = new NestedPetrinetRenderer({
+					el: graphElement.value as HTMLDivElement,
+					useAStarRouting: false,
+					useStableZoomPan: true,
+					runLayout: runDagreLayout,
+					dragSelector: 'no-drag',
+					nestedMap
+				});
+			} else {
+				renderer = new PetrinetRenderer({
+					el: graphElement.value as HTMLDivElement,
+					useAStarRouting: false,
+					useStableZoomPan: true,
+					runLayout: runDagreLayout,
+					dragSelector: 'no-drag'
+				});
+			}
 		} else {
 			renderer.isGraphDirty = true;
 		}
@@ -347,44 +455,6 @@ main {
 	border-radius: var(--border-radius);
 	overflow: auto;
 }
-
-.legend {
-	position: absolute;
-	bottom: 0;
-	z-index: 1;
-	margin-bottom: 1rem;
-	margin-left: 1rem;
-	display: flex;
-	gap: 1rem;
-	background-color: var(--surface-section);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-}
-
-.legend-key-circle {
-	height: 24px;
-	width: 24px;
-	border-radius: 12px;
-}
-
-.legend-key-square {
-	height: 24px;
-	width: 24px;
-	border-radius: 4px;
-}
-
-ul {
-	display: flex;
-	gap: 0.5rem;
-	list-style-type: none;
-}
-
-li {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
 .splitter-container {
 	height: 100%;
 }
@@ -450,5 +520,31 @@ li {
 
 .input-header {
 	min-width: 150px;
+}
+
+.p-toolbar {
+	position: absolute;
+	width: 100%;
+	z-index: 1;
+	isolation: isolate;
+	background: transparent;
+	padding: 0.5rem;
+}
+
+.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
+	background-color: var(--surface-0);
+	margin: 0.25rem;
+}
+
+.legend-key-circle {
+	height: 24px;
+	width: 24px;
+	border-radius: 12px;
+}
+
+.legend-key-square {
+	height: 24px;
+	width: 24px;
+	border-radius: 4px;
 }
 </style>

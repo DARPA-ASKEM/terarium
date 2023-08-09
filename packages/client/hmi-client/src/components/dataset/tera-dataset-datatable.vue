@@ -1,5 +1,23 @@
-<!-- column summary charts below -->
 <template>
+	<!-- Toggle histograms & column summary charts -->
+	<div class="datatable-toolbar">
+		<span class="datatable-toolbar-item">
+			{{ csvHeaders?.length || 'No' }} columns | {{ csvContent?.length || 'No' }} rows
+		</span>
+		<span class="datatable-toolbar-item">
+			Show column summaries<InputSwitch v-model="showSummaries" />
+		</span>
+		<span class="datatable-toolbar-item">
+			<MultiSelect
+				:modelValue="selectedColumns"
+				:options="csvHeaders"
+				@update:modelValue="onToggle"
+				:maxSelectedLabels="1"
+				placeholder="Select columns"
+			/>
+		</span>
+	</div>
+	<!-- Datable -->
 	<DataTable
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
 		:value="csvContent?.slice(1, csvContent.length)"
@@ -14,7 +32,7 @@
 		:tableStyle="tableStyle ? tableStyle : `width:auto`"
 	>
 		<Column
-			v-for="(colName, index) of csvHeaders"
+			v-for="(colName, index) of selectedColumns"
 			:key="index"
 			:field="index.toString()"
 			:header="colName"
@@ -24,7 +42,7 @@
 		>
 			<template #header>
 				<!-- column summary charts below -->
-				<div v-if="!previewMode && props.rawContent?.stats" class="column-summary">
+				<div v-if="!previewMode && props.rawContent?.stats && showSummaries" class="column-summary">
 					<div class="column-summary-row">
 						<span class="column-summary-label">Max:</span>
 						<span class="column-summary-value">{{ csvMaxsToDisplay?.at(index) }}</span>
@@ -59,11 +77,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Chart from 'primevue/chart';
 import { CsvAsset } from '@/types/Types';
+import InputSwitch from 'primevue/inputswitch';
+import MultiSelect from 'primevue/multiselect';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
@@ -74,15 +94,23 @@ const props = defineProps<{
 	tableStyle?: String;
 }>();
 
-const CATEGORYPERCENTAGE = 0.9;
+const CATEGORYPERCENTAGE = 1.0;
 const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
+
+const showSummaries = ref(true);
 
 const csvContent = computed(() => props.rawContent?.csv);
 const csvHeaders = computed(() => props.rawContent?.headers);
 const chartData = computed(() =>
 	props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))
 );
+
+const selectedColumns = ref(csvHeaders?.value);
+const onToggle = (val) => {
+	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
+};
+
 const csvMinsToDisplay = computed(() =>
 	props.rawContent?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
 );
@@ -126,8 +154,7 @@ const setBarChartData = (bins: any[]) => {
 			{
 				label: 'Count',
 				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
-				borderColor: '#FFF',
-				borderWidth: 1,
+				hoverBackgroundColor: documentStyle.getPropertyValue('--primary-color-light'),
 				data: bins,
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
@@ -182,6 +209,26 @@ const setChartOptions = () => {
 </script>
 
 <style scoped>
+.datatable-toolbar {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+.datatable-toolbar-item {
+	display: flex;
+	flex-direction: row;
+	padding: 0 0.5rem 0.5rem 0.5rem;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.datatable-toolbar:deep(.p-multiselect .p-multiselect-label) {
+	padding: 0.5rem;
+	font-size: var(--font-caption);
+}
+
 .p-datatable:deep(.p-column-header-content) {
 	display: grid;
 	grid-template-areas:

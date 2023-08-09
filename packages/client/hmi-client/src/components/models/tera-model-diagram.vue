@@ -14,15 +14,13 @@
 								/>
 							</template>
 							<template #center>
-								<span class="toolbar-subgroup">
+								<span v-if="isEditing" class="toolbar-subgroup">
 									<Button
-										v-if="isEditing"
 										@click="prepareStateEdit()"
 										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 									<Button
-										v-if="isEditing"
 										@click="prepareTransitionEdit()"
 										label="Add transition"
 										class="p-button-sm p-button-outlined toolbar-button"
@@ -30,7 +28,7 @@
 								</span>
 							</template>
 							<template #end>
-								<span class="toolbar-subgroup">
+								<span v-if="isEditable" class="toolbar-subgroup">
 									<Button
 										v-if="isEditing"
 										@click="cancelEdit"
@@ -47,8 +45,15 @@
 										"
 									/>
 								</span>
+								<Button
+									v-if="model && getStratificationType(model) && !isEditing"
+									@click="toggleCollapsedView"
+									:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
+									class="p-button-sm p-button-outlined toolbar-button"
+								/>
 							</template>
 						</Toolbar>
+						<tera-model-type-legend v-if="model" :model="model" />
 						<div v-if="model" ref="graphElement" class="graph-element" />
 						<ContextMenu ref="menu" :model="contextMenuItems" />
 					</section>
@@ -57,28 +62,26 @@
 			<!-- Model equations -->
 			<AccordionTab header="Model equations">
 				<section :class="isEditingEQ ? `diagram-container-editing` : `diagram-container`">
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingEQ"
-								@click="cancelEditEquations"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-								style="background-color: white"
-							/>
-							<Button
-								v-if="isEditingEQ"
-								@click="onClickUpdateModel"
-								label="Update model"
-								class="p-button-sm"
-							/>
-							<Button
-								v-else
-								@click="isEditingEQ = true"
-								label="Edit equation"
-								class="p-button-sm p-button-outlined edit-button"
-							/>
-						</span>
+					<section v-if="props.isEditable" class="controls">
+						<Button
+							v-if="isEditingEQ"
+							@click="cancelEditEquations"
+							label="Cancel"
+							class="p-button-sm p-button-outlined edit-button"
+							style="background-color: white"
+						/>
+						<Button
+							v-if="isEditingEQ"
+							@click="onClickUpdateModel"
+							label="Update model"
+							class="p-button-sm"
+						/>
+						<Button
+							v-else
+							@click="isEditingEQ = true"
+							label="Edit equation"
+							class="p-button-sm p-button-outlined edit-button"
+						/>
 					</section>
 					<section class="math-editor-container" :class="mathEditorSelected">
 						<tera-math-editor
@@ -110,23 +113,21 @@
 					:class="isEditingObservables ? `diagram-container-editing` : `diagram-container`"
 					:start-height="300"
 				>
-					<section class="controls">
-						<span v-if="props.isEditable" class="equation-edit-button">
-							<Button
-								v-if="isEditingObservables"
-								@click="cancelEditObservables"
-								label="Cancel"
-								class="p-button-sm p-button-outlined edit-button"
-							/>
-							<Button
-								@click="updateObservables"
-								:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
-								:disabled="disableSaveObservable"
-								:class="
-									isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
-								"
-							/>
-						</span>
+					<section v-if="isEditable" class="controls">
+						<Button
+							v-if="isEditingObservables"
+							@click="cancelEditObservables"
+							label="Cancel"
+							class="p-button-sm p-button-outlined edit-button"
+						/>
+						<Button
+							@click="updateObservables"
+							:label="isEditingObservables ? 'Update observable' : 'Edit observables'"
+							:disabled="disableSaveObservable"
+							:class="
+								isEditingObservables ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'
+							"
+						/>
 					</section>
 					<section class="observable-editor-container">
 						<tera-math-editor
@@ -207,14 +208,12 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
-import {
-	NestedPetrinetRenderer,
-	extractNestedMap
-} from '@/model-representation/petrinet/nested-petrinet-renderer';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
 
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
-	isStratifiedAMR,
+	getStratificationType,
 	convertAMRToACSet,
 	convertToIGraph,
 	updateExistingModelContent
@@ -232,6 +231,7 @@ import { Model, Observable } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
 // Get rid of these emits
 const emit = defineEmits([
@@ -463,8 +463,22 @@ const contextMenuItems = ref([
 	}
 ]);
 
+const isCollapsed = ref(true);
+async function toggleCollapsedView() {
+	isCollapsed.value = !isCollapsed.value;
+	if (props.model) {
+		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+		// Render graph
+		if (renderer) {
+			renderer.isGraphDirty = true;
+			await renderer.setData(graphData);
+			await renderer.render();
+		}
+	}
+}
+
 const convertToIGraphHelper = (amr: Model) => {
-	if (isStratifiedAMR(amr)) {
+	if (getStratificationType(amr) && isCollapsed.value) {
 		// FIXME: wont' work for MIRA
 		return convertToIGraph(props.model?.semantics?.span?.[0].system);
 	}
@@ -480,7 +494,7 @@ watch(
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
 
 		// Create renderer
-		if (isStratifiedAMR(props.model)) {
+		if (getStratificationType(props.model)) {
 			renderer = new NestedPetrinetRenderer({
 				el: graphElement.value as HTMLDivElement,
 				useAStarRouting: false,
@@ -536,9 +550,9 @@ watch(
 		// Update the latex equations
 		if (latexEquationList.value.length > 0) {
 			/* TODO
-			    	We need to remedy the fact that the equations are not being updated;
-		        A proper merging of the equations is needed with a diff UI for the user.
-		        For now, we do nothing.
+					We need to remedy the fact that the equations are not being updated;
+				A proper merging of the equations is needed with a diff UI for the user.
+				For now, we do nothing.
 			 */
 		} else {
 			const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
@@ -598,7 +612,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(props.model);
+	const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
 
 	if (renderer) {
 		renderer.setEditMode(false);
