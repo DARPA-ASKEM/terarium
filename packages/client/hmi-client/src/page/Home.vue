@@ -170,9 +170,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
-import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
-import { Document } from '@/types/Types';
+import { Document, Project } from '@/types/Types';
 import { searchXDDDocuments, getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
@@ -191,14 +190,14 @@ import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 
-const projects = ref<IProject[]>();
+const projects = ref<Project[]>();
 // Only display first 2 projects with at least one related document
 const projectsToDisplay = computed(() =>
 	projects.value?.filter((project) => !isEmpty(project.relatedDocuments)).slice(0, 2)
 );
 const relevantDocuments = ref<Document[]>([]);
 const relevantSearchTerm = 'COVID-19';
-const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
+const relevantSearchParams: XDDSearchParams = { perPage: 15 };
 const selectedDocument = ref<Document>();
 
 const resourcesStore = useResourcesStore();
@@ -280,8 +279,8 @@ async function createNewProject() {
 		author
 	);
 	if (project?.id) {
-		openProject(project.id);
 		isNewProjectModalVisible.value = false;
+		openProject(project.id);
 	}
 }
 
@@ -289,7 +288,7 @@ function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
 
-const removeProject = (projectId: IProject['id']) => {
+const removeProject = (projectId: Project['id']) => {
 	projects.value = projects.value?.filter((project) => project.id !== projectId);
 };
 </script>
