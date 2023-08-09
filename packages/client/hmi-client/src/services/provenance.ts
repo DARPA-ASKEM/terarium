@@ -64,12 +64,10 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 		const modelRevisionIDs: string[] = [];
 		const documentIDs: string[] = [];
 		const datasetIDs: string[] = [];
-		const simulationRunIDs: string[] = [];
 
 		// For a model/dataset root type:
 		//  	Find other model revisions
 		//	 	Find document(s) used to referencing the model
-		//	 	Find datasets used in the simulation of the model
 		//	 	Find datasets that represent the simulation runs of the model
 
 		// For a document root type:
@@ -79,12 +77,6 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.result.nodes.forEach((node) => {
 			if (rootType !== ProvenanceType.Publication) {
-				if (
-					node.type === ProvenanceType.SimulationRun &&
-					simulationRunIDs.length < MAX_RELATED_ARTIFACT_COUNT
-				) {
-					simulationRunIDs.push(node.id.toString());
-				}
 				if (
 					node.type === ProvenanceType.Publication &&
 					documentIDs.length < MAX_RELATED_ARTIFACT_COUNT
@@ -123,8 +115,6 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 		// FIXME: xdd_uri
 		const documents = await getBulkDocuments(documentAssets.map((p) => p.xdd_uri));
 		response.push(...documents);
-
-		// FIXME: fetch simulation runs and append them to the result
 	}
 
 	// NOTE: performing a provenance search returns
