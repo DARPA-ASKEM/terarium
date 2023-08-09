@@ -161,22 +161,17 @@ function configureMatrix() {
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
-			? result.stateMatrixData.filter((d) => d._base === props.id)
-			: result.transitionMatrixData.filter((d) => d._base === props.id);
+			? result.stateMatrixData.filter((d) => d.base === props.id)
+			: result.transitionMatrixData.filter((d) => d.base === props.id);
 
 	if (isEmpty(matrixData)) return;
 
 	// Grab dimension names from the first matrix row
 	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-		delete d._id;
-		delete d._base;
+		delete d.id;
+		delete d.base;
 		return Object.keys(d);
 	})[0];
-
-	// FIXME: resolve id vs _id
-	matrixData.forEach((d) => {
-		d.id = d._id;
-	});
 
 	rowDimensions.push(...dimensions);
 	colDimensions.push(...dimensions);
