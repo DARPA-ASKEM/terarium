@@ -95,6 +95,18 @@ export interface ModelConfiguration {
     configuration: any;
 }
 
+export interface Project {
+    name: string;
+    description?: string;
+    timestamp?: Date;
+    active: boolean;
+    concept?: Concept;
+    assets?: Assets;
+    username: string;
+    id?: string;
+    relatedDocuments?: Document[];
+}
+
 export interface ProvenanceQueryParam {
     rootId?: number;
     rootType?: ProvenanceType;
@@ -294,6 +306,39 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
+export interface Assets {
+    datasets: Dataset[];
+    extractions: Extraction[];
+    models: Model[];
+    publications: DocumentAsset[];
+    workflows: Workflow[];
+    artifacts: Artifact[];
+}
+
+export interface Document {
+    gddId: string;
+    title: string;
+    abstractText: string;
+    journal: string;
+    type: string;
+    number: string;
+    pages: string;
+    publisher: string;
+    volume: string;
+    year: string;
+    link: { [index: string]: string }[];
+    author: { [index: string]: string }[];
+    identifier: { [index: string]: string }[];
+    githubUrls: string[];
+    knownTerms: { [index: string]: string[] };
+    highlight: string[];
+    relatedDocuments: Document[];
+    relatedExtractions: Extraction[];
+    knownEntities: KnownEntities;
+    citationList: { [index: string]: string }[];
+    citedBy: { [index: string]: any }[];
+}
+
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
@@ -326,30 +371,6 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
-export interface Document {
-    gddId: string;
-    title: string;
-    abstractText: string;
-    journal: string;
-    type: string;
-    number: string;
-    pages: string;
-    publisher: string;
-    volume: string;
-    year: string;
-    link: { [index: string]: string }[];
-    author: { [index: string]: string }[];
-    identifier: { [index: string]: string }[];
-    githubUrls: string[];
-    knownTerms: { [index: string]: string[] };
-    highlight: string[];
-    relatedDocuments: Document[];
-    relatedExtractions: Extraction[];
-    knownEntities: KnownEntities;
-    citationList: { [index: string]: string }[];
-    citedBy: { [index: string]: any }[];
-}
-
 export interface XDDFacetsItemResponse {
     buckets: XDDFacetBucket[];
     doc_count_error_upper_bound: number;
@@ -369,17 +390,6 @@ export interface OdeSemantics {
     time?: any;
 }
 
-export interface ModelExpression {
-    expression: string;
-    expression_mathml: string;
-}
-
-export interface PetriNetTransitionProperties {
-    name: string;
-    description: string;
-    grounding?: ModelGrounding;
-}
-
 export interface Extraction {
     id: number;
     askemClass: string;
@@ -390,10 +400,30 @@ export interface Extraction {
     highlight: string[];
 }
 
+export interface Workflow {
+    id: string;
+    name: string;
+    description: string;
+    transform: any;
+    nodes: any[];
+    edges: any[];
+}
+
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
     summaries: string[];
+}
+
+export interface ModelExpression {
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface PetriNetTransitionProperties {
+    name: string;
+    description: string;
+    grounding?: ModelGrounding;
 }
 
 export interface XDDFacetBucket {
