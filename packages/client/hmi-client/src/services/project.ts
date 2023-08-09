@@ -77,12 +77,12 @@ async function remove(projectId: IProject['id']): Promise<boolean> {
  * Get all projects
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
-async function getAll(): Promise<IProject[] | null> {
+async function getAll(): Promise<Project[] | null> {
 	try {
 		const response = await API.get('/projects');
 		const { status, data } = response;
 		if (status !== 200 || !data) return null;
-		return data;
+		return (data as Project[]).reverse();
 	} catch (error) {
 		logger.error(error);
 		return null;
