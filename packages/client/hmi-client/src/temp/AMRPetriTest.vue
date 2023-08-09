@@ -80,12 +80,12 @@ onMounted(async () => {
 				// 1. Find what are the strata dimensions
 				const stateMatrixData = presentationData.stateMatrixData.map((d) => {
 					const temp: any = _.cloneDeep(d);
-					delete temp._id;
-					delete temp._base;
+					delete temp.id;
+					delete temp.base;
 					return Object.keys(temp);
 				});
 				const dims = _.uniq(_.flatten(stateMatrixData));
-				dims.unshift('_base');
+				dims.unshift('base');
 				const nestedMap = extractNestedStratas(presentationData.stateMatrixData, dims);
 
 				renderer = new NestedPetrinetRenderer({
