@@ -23,7 +23,8 @@ module.exports = {
 		'vuejs-accessibility/label-has-for': 'off',
 		'vuejs-accessibility/form-control-has-label': 'off',
 		'vue/multi-word-component-names': 'off',
-		'import/prefer-default-export': 'off'
+		'import/prefer-default-export': 'off',
+		'no-underscore-dangle': 'off'
 	},
 	"ignorePatterns": [
 		"**/src/temp/*"
