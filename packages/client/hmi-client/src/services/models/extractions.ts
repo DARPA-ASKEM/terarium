@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Model } from '@/types/Types';
+import { Artifact, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -104,6 +104,36 @@ export const profileDataset = async (datasetId: string, artifactId: string | nul
 	}
 	console.log('data profile response', response.data);
 	return response.data.id;
+};
+
+const extractTextFromPDFArtifact = async (artifactId: string) => {
+	const response = await API.post(`/extract/pdf-to-text?artifact_id=${artifactId}`);
+	return response.data.id;
+};
+
+const pdfExtractions = async (artifactId: string, pdfName?: string, description?: string) => {
+	// I've purposefully excluded the MIT and SKEMA options here, so they're always
+	// defaulted to true.
+
+	let url = `/extract/pdf-extractions?artifact_id=${artifactId}`;
+	if (pdfName) {
+		url += `&pdf_name=${pdfName}`;
+	}
+	if (description) {
+		url += `&description=${description}`;
+	}
+	const response = await API.post(url);
+	return response.data.id;
+};
+
+export const extractPDF = async (artifact: Artifact) => {
+	if (artifact.id) {
+		const resp = await extractTextFromPDFArtifact(artifact.id);
+		const pollResult = await fetchExtraction(resp);
+		if (pollResult?.state === PollerState.Done) {
+			await pdfExtractions(artifact.id); // we don't care now. fire and forget.
+		}
+	}
 };
 
 export { mathmlToAMR, latexToAMR };
