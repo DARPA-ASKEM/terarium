@@ -248,8 +248,33 @@ const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const typedBaseModel = ref<Model | null>(null);
 const typedStrataModel = ref<Model | null>(null);
-const stratifiedModel = ref<Model>();
+const stratifiedModel = ref<Model | null>();
 const numUntypedNodes = ref();
+const initialState = {
+	stratifyView: StratifyView.Input,
+	stratifyStep: 1,
+	strataType: null,
+	labels: null,
+	strataModel: null,
+	model: null,
+	typedBaseModel: null,
+	typedStrataModel: null,
+	stratifiedModel: null,
+	numUntypedNodes: -1
+};
+
+function setState(state) {
+	stratifyView.value = state.stratifyView;
+	stratifyStep.value = state.stratifyStep;
+	strataModel.value = state.strataModel;
+	strataType.value = state.strataType;
+	labels.value = state.labels;
+	model.value = state.model;
+	typedBaseModel.value = state.typedBaseModel;
+	typedStrataModel.value = state.typedStrataModel;
+	stratifiedModel.value = state.stratifiedModel;
+	numUntypedNodes.value = state.numUntypedNodes;
+}
 
 function onAllNodesTyped(value: Model) {
 	typedBaseModel.value = value;
@@ -264,6 +289,12 @@ function generateStrataModel() {
 		} else if (strataType.value === 'Location-travel') {
 			strataModel.value = generateLocationStrataModel(stateNames);
 		}
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state: { ...props.node.state, strataModel: strataModel.value }
+		});
+		setState(props.node.state);
 	}
 }
 
@@ -297,8 +328,22 @@ function goBack() {
 		stratifyStep.value--;
 	} else {
 		strataModel.value = null;
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state: { ...props.node.state, strataModel: strataModel.value }
+		});
 	}
 }
+
+watch(stratifyStep, () => {
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state: { ...props.node.state, stratifyStep: stratifyStep.value }
+	});
+	console.log(props.node.state);
+});
 
 watch(
 	() => props.node.inputs[0],
@@ -310,6 +355,16 @@ watch(
 				model.value = await getModel(modelConfiguration.value.modelId);
 			}
 		}
+		console.log(`set state ${props.node.id}`);
+		console.log(props.node.state);
+		if (!props.node.state) {
+			workflowEventBus.emitNodeStateChange({
+				workflowId: props.node.workflowId,
+				nodeId: props.node.id,
+				state: { ...initialState, model: model.value }
+			});
+		}
+		setState(props.node.state);
 	},
 	{ immediate: true }
 );
