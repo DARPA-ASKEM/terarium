@@ -215,7 +215,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = ((await ProjectService.getAll()) ?? []).slice().reverse();
+	projects.value = (await ProjectService.getAll()) ?? [];
 
 	projects.value.forEach(async (project) => {
 		project.assets = await ProjectService.getAssets(project.id);
