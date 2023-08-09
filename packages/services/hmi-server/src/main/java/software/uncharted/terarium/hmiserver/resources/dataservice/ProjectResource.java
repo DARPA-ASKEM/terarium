@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 
@@ -10,6 +11,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Path("/api/projects")
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,12 +29,20 @@ public class ProjectResource {
 	) {
 		List<Project> projects = proxy.getProjects(pageSize, page);
 
-		// Remove non active (soft-deleted) projects
-		// TODO - this should be done in the data-service
+		// Remove non-active (soft-deleted) projects
 		projects = projects
 			.stream()
 			.filter(Project::getActive)
 			.toList();
+
+		projects.forEach(project -> {
+			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList("dataset", "model", "publication"));
+			Map metadata = new HashMap();
+			metadata.put("datasets", assets.getDatasets().size());
+			metadata.put("models", assets.getModels().size());
+			metadata.put("publications", assets.getPublications().size());
+			project.setMetadata(metadata);
+		});
 
 		return Response
 			.status(Response.Status.OK)
