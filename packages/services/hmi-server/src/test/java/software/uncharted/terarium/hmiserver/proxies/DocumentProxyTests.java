@@ -42,7 +42,7 @@ public class DocumentProxyTests {
 		final String TARGET_ID = "607182f63f2ac7e701921c92";
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments("",
 			TARGET_ID, null, null, null, null, null, null, null, null, null, null, null, null,
-			null, null, null, null, null, null, "url_extractions,summaries", null);
+			null, null, null, null, null, null, "url_extractions,summaries", null, null);
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());
@@ -56,7 +56,7 @@ public class DocumentProxyTests {
 	public void testItCanSearchForADocByTerm() {
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments("",
 			null, null, null, "COVID-19", "xdd-covid-19", "true", "true", null, null, "100", "2", null, "true",
-			null, null, null, null, "title,abstract", "true", "url_extractions", null);
+			null, null, null, null, "title,abstract", "true", "url_extractions", null, null);
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());
@@ -81,7 +81,7 @@ public class DocumentProxyTests {
 	public void testItCanSearchForGithubURL() {
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments("",
 			null, null, null, null, null, null, null, null, null, "100", "2", null, "true",
-			null, null, null, null, null, null, null, "https://github.com/ieee8023/covid-chestxray-dataset");
+			null, null, null, null, null, null, null, "https://github.com/ieee8023/covid-chestxray-dataset", null);
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());

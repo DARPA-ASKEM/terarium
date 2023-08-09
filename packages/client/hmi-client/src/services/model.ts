@@ -1,13 +1,10 @@
 import API from '@/api/api';
 import { EventType, Model, ModelConfiguration } from '@/types/Types';
-import { logger } from '@/utils/logger';
-import * as ProjectService from '@/services/project';
-import { ProjectAssetTypes } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
-
-// TODO - to be removed after July 2023 Hackathon
-import { MATHMLMODEL } from '@/temp/models/mathml';
 import * as EventService from '@/services/event';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import * as ProjectService from '@/services/project';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -19,9 +16,6 @@ export async function createModel(model): Promise<Model | null> {
  * @return Model|null - the model, or null if none returned by API
  */
 export async function getModel(modelId: string): Promise<Model | null> {
-	// TODO - to be removed after July 2023 Hackathon
-	if (modelId === 'mathml-model') return MATHMLMODEL;
-
 	const response = await API.get(`/models/${modelId}`);
 	return response?.data ?? null;
 }
@@ -66,21 +60,6 @@ export async function updateModel(model: Model) {
 	return response?.data ?? null;
 }
 
-export async function addModelToProject(projectId: string, assetId: string) {
-	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
-
-	if (resp) {
-		const model = await getModel(assetId);
-		if (model) {
-			useResourcesStore().activeProject?.assets?.[ProjectAssetTypes.MODELS].push(model);
-		} else {
-			logger.warn(`Unable to find model id: ${assetId}`);
-		}
-	} else {
-		logger.warn('Could not add new model to project.');
-	}
-}
-
 export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[]> {
 	const response = await API.get(`/models/${modelId}/model_configurations`);
 	return response?.data ?? ([] as ModelConfiguration[]);
@@ -92,4 +71,24 @@ export async function getModelConfigurations(modelId: string): Promise<ModelConf
 export async function reconstructAMR(amr: any) {
 	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
 	return response?.data;
+}
+
+// function adds model to project, returns modelId if successful otherwise null
+export async function addNewModelToProject(
+	modelName: string,
+	project: IProject
+): Promise<string | null> {
+	// 1. Load an empty AMR
+	const amr = newAMR(modelName);
+	(amr as any).id = undefined; // FIXME: id hack
+
+	const response = await createModel(amr);
+	const modelId = response?.id;
+
+	// 2. Add the model to the project
+	if (modelId) {
+		await ProjectService.addAsset(project.id, ProjectAssetTypes.MODELS, modelId);
+		return modelId;
+	}
+	return null;
 }
