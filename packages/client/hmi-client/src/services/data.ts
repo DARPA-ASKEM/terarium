@@ -159,6 +159,10 @@ const searchXDDDocuments = async (
 		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
 	}
 
+	if (xddSearchParam?.similar_to) {
+		searchParams += `&similar_to=${xddSearchParam?.similar_to}`;
+	}
+
 	//
 	// "max": "Maximum number of documents to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
@@ -308,7 +312,7 @@ const getAssets = async (params: GetAssetsParams) => {
 			break;
 		case ResourceType.XDD:
 			assetResults = assetResults as Document[];
-			assetFacets = xddResults?.facets ? xddResults?.facets : {};
+			assetFacets = xddResults?.facets ?? {};
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -437,9 +441,12 @@ const getAssets = async (params: GetAssetsParams) => {
 /**
  * fetch list of related documented utilizing
  *  semantic similarity (i.e., document embedding) from XDD via the HMI server
+ *
+ * TODO: this should probably be deprecated at some point now that we're using
+ * the "/documents?similar_to=<id>" endpoint as an alternative
  */
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
-	if (docid === '' || dataset === null) {
+	if (docid === '') {
 		return [] as Document[];
 	}
 
@@ -447,7 +454,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	// dataset=xdd-covid-19
 	// doi=10.1002/pbc.28600
 	// docid=5ebd1de8998e17af826e810e
-	const url = `/document/related/document?docid=${docid}&set=${dataset}`;
+	const url = `/document/related/document?docid=${docid}&set=${dataset || 'xdd-covid-19'}`;
 
 	const res = await API.get(url);
 	if (res) {
@@ -568,17 +575,18 @@ const fetchData = async (
 			// are we executing a search-by-example
 			// (i.e., to find similar documents or related artifacts for a given document)?
 			if (searchParam.xdd && searchParam?.xdd.dataset) {
-				if (searchParam?.xdd.similar_search_enabled) {
-					const relatedDocuments = await getRelatedDocuments(
-						searchParam?.xdd.related_search_id as string,
-						searchParam?.xdd.dataset
-					);
-					const similarDocumentsSearchResults = {
-						results: relatedDocuments,
-						searchSubsystem: ResourceType.XDD
-					};
-					finalResponse.allData.push(similarDocumentsSearchResults);
-					finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
+				if (searchParam?.xdd.similar_search_enabled && searchParam?.xdd.related_search_id) {
+					const response = await fetchResource('', resourceType as ResourceType, {
+						...searchParamWithFacetFilters,
+						xdd: {
+							...searchParamWithFacetFilters?.xdd,
+							similar_to: searchParam.xdd.related_search_id as string,
+							max: 100,
+							perPage: 100
+						}
+					});
+					finalResponse.allData.push(response.allData);
+					finalResponse.allDataFilteredWithFacets.push(response.allDataFilteredWithFacets);
 				}
 				if (searchParam?.xdd.related_search_enabled) {
 					// FIXME:
