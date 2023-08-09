@@ -140,7 +140,7 @@ import {
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
-import { getBaseAMR } from '@/model-representation/petrinet/petrinet-service';
+import { getBaseAMR } from '@/model-representation/petrinet/catlab-petri';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
