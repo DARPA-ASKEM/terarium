@@ -9,7 +9,7 @@
 						label="New project"
 						size="large"
 						@click="isNewProjectModalVisible = true"
-					></Button>
+					/>
 				</header>
 				<TabView>
 					<TabPanel header="My projects">
@@ -69,7 +69,6 @@
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
-
 				<div v-for="(project, index) in projectsToDisplay" :key="index">
 					<p>{{ project.name }}</p>
 					<div class="carousel">
@@ -193,10 +192,9 @@ import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 
 const projects = ref<IProject[]>();
-// Only display projects with at least one related document
-// Only display at most 5 projects
+// Only display first 2 projects with at least one related document
 const projectsToDisplay = computed(() =>
-	projects.value?.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
+	projects.value?.filter((project) => !isEmpty(project.relatedDocuments)).slice(0, 2)
 );
 const relevantDocuments = ref<Document[]>([]);
 const relevantSearchTerm = 'COVID-19';
