@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { Project } from '@/types/Types';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Dialog from 'primevue/dialog';
@@ -73,9 +73,9 @@ import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
-const props = defineProps<{ project?: IProject }>();
+const props = defineProps<{ project?: Project }>();
 const emit = defineEmits<{
-	(e: 'removed', projectId: IProject['id']): void;
+	(e: 'removed', projectId: Project['id']): void;
 }>();
 
 const stats = computed(() =>
@@ -83,9 +83,9 @@ const stats = computed(() =>
 		? null
 		: {
 				contributors: 1,
-				models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
-				datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
-				papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
+				models: props.project?.metadata['models-count'],
+				datasets: props.project?.metadata['datasets-count'],
+				papers: props.project?.metadata['publications-count']
 		  }
 );
 

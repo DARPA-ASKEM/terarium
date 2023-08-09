@@ -38,12 +38,12 @@ public class ProjectResource {
 		projects.forEach(project -> {
 			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList("datasets", "models", "publications"));
 			Map metadata = new HashMap();
-			metadata.put("datasets", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
-			metadata.put("extractions", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
-			metadata.put("models", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
-			metadata.put("publications", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
-			metadata.put("workflows", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
-			metadata.put("artifacts", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
+			metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
+			metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
+			metadata.put("models-count", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
+			metadata.put("publications-count", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
+			metadata.put("workflows-count", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
+			metadata.put("artifacts-count", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
 			project.setMetadata(metadata);
 		});
 
