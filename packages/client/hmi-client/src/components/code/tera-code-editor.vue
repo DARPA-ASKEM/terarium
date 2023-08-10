@@ -1,13 +1,8 @@
 <template>
-	<tera-asset name="New file" overline="Python">
+	<tera-asset :name="artifactName || `New file`" overline="Python">
 		<template #edit-buttons>
-			<Button
-				label="Extract model"
-				:class="['p-button-sm', { 'p-disabled': selectedText.length === 0 }]"
-				:loading="isExtractModelLoading"
-				@click="onExtractModel"
-			/>
 			<FileUpload
+				v-if="!artifactName"
 				name="demo[]"
 				:customUpload="true"
 				@uploader="onFileOpen"
@@ -17,14 +12,85 @@
 				class="p-button-sm p-button-secondary outline-upload-button"
 			/>
 		</template>
-		<v-ace-editor
-			v-model:value="code"
-			@init="initialize"
-			lang="python"
-			theme="chrome"
-			style="height: 100%; width: 100%"
-			class="ace-editor"
-		/>
+
+		<div class="code-content" :style="{ height: !artifactName ? `100%` : `74%`, width: `100%` }">
+			<section class="model-metadata">
+				<InputText v-model="modelName" placeholder="Name" class="name"></InputText>
+				<InputText
+					v-model="modelDescription"
+					placeholder="Description"
+					class="description"
+				></InputText>
+			</section>
+			<div>
+				<Button
+					v-if="!artifactName"
+					label="Create Model from Code"
+					:class="[
+						'p-button-sm',
+						'extract-button',
+						{
+							'p-disabled': editor?.getValue().length === 0
+						}
+					]"
+					:loading="isExtractModelLoading"
+					@click="onExtractModel"
+				/>
+				<Button
+					v-else
+					label="Extract All Code"
+					:class="[
+						'p-button-sm',
+						'extract-button',
+						{
+							'p-disabled': selectedText !== selectionTextDefault
+						}
+					]"
+					:loading="isExtractModelLoading"
+					@click="onExtractModel"
+				/>
+				<div></div>
+			</div>
+			<v-ace-editor
+				v-model:value="code"
+				@init="initialize"
+				lang="python"
+				theme="chrome"
+				:style="{ height: !artifactName ? `100%` : `100%`, width: `100%` }"
+				class="ace-editor"
+				:readonly="artifactName !== '' && artifactName !== null"
+			/>
+		</div>
+		<div class="selection-content" v-if="artifactName">
+			<div>
+				<Button
+					v-if="artifactName"
+					label="Extract Selected Code"
+					:class="[
+						'p-button-sm',
+						'extract-button',
+						{
+							'p-disabled': selectedText.length === 0 || selectedText === selectionTextDefault
+						}
+					]"
+					:loading="isExtractModelLoading"
+					@click="onExtractModel"
+				/>
+			</div>
+			<v-ace-editor
+				v-model:value="selectedText"
+				lang="python"
+				theme="github"
+				class="ace-editor2"
+				:style="{
+					height: `${
+						selectedText.split('\n').length > 1 ? selectedText.split('\n').length * 17 : 30
+					}px`,
+					maxHeight: `27%`
+				}"
+				:readonly="artifactName !== ''"
+			/>
+		</div>
 		<Dialog
 			v-model:visible="codeExtractionDialogVisible"
 			modal
@@ -36,8 +102,9 @@
 				Terarium can extract metadata about this code from related papers. Select the artifacts you
 				would like to use.
 			</h6>
+
 			<DataTable v-model:selection="selectedPapers" :value="resources" dataKey="id">
-				<Column selectionMode="multiple" />
+				<Column selectide="multiple" />
 				<Column field="title" header="Title" />
 			</DataTable>
 			<template #footer>
@@ -55,6 +122,7 @@ import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
+import '@node_modules/ace-builds/src-noconflict/theme-github';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Dialog from 'primevue/dialog';
@@ -84,9 +152,13 @@ import { createModel } from '@/services/model';
 import * as EventService from '@/services/event';
 import { codeToAMR } from '@/services/models/extractions';
 import * as ProjectService from '@/services/project';
+import InputText from 'primevue/inputtext';
+import { CodeArtifactExtractionMetaData } from '@/types/Code';
+import { convertAMRToACSet } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps({
 	assetId: { type: String, default: null, required: false },
+	artifactName: { type: String, default: null, required: false },
 	project: {
 		type: Object as PropType<IProject> | null,
 		default: null,
@@ -100,12 +172,19 @@ const props = defineProps({
 
 const router = useRouter();
 
+const selectionTextDefault = 'Select some code above to convert a block of code into a Model.';
 const code = ref(props.initialCode);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
-const selectedText = ref('');
+const selectedText = ref(selectionTextDefault);
+const selectedRange = ref();
+const selectedTextMetaData = ref<CodeArtifactExtractionMetaData | null>(null);
 const codeExtractionDialogVisible = ref(false);
 const acset = ref<PetriNet | null>(null);
 const graphElement = ref<HTMLDivElement | null>(null);
+const modelName = ref<string>(props.artifactName || 'NewFile.py');
+const modelDescription = ref<string>(
+	`This model was created from ${modelName.value || 'the code editor'}`
+);
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
@@ -125,6 +204,20 @@ watch([graphElement], async () => {
 	await renderer?.setData(g);
 	await renderer?.render();
 });
+
+watch(
+	() => modelName.value,
+	() => {
+		modelDescription.value = `This model was created from ${modelName.value}`;
+	}
+);
+
+watch(
+	() => props.initialCode,
+	() => {
+		code.value = props.initialCode;
+	}
+);
 
 const selectedPapers = ref<DocumentAsset[]>();
 const createModelLoading = ref(false);
@@ -167,12 +260,19 @@ async function onFileOpen(event) {
  */
 async function onExtractModel() {
 	isExtractModelLoading.value = true;
-	const response = await codeToAMR(selectedText.value);
+	const amr = await codeToAMR(
+		props.assetId,
+		modelName.value,
+		modelDescription.value,
+		selectedTextMetaData.value
+	);
 
 	EventService.create(EventType.ExtractModel, useResourcesStore().activeProject?.id);
 
 	isExtractModelLoading.value = false;
-	acset.value = response;
+	if (amr) {
+		acset.value = convertAMRToACSet(amr);
+	}
 	codeExtractionDialogVisible.value = true;
 }
 
@@ -180,7 +280,17 @@ async function onExtractModel() {
  * Event handler for selected text change in the code editor
  */
 function onSelectedTextChange() {
-	selectedText.value = editor.value?.getSelectedText() ?? '';
+	selectedText.value =
+		editor.value?.getSelectedText() === undefined || editor.value?.getSelectedText() === ''
+			? selectionTextDefault
+			: editor.value?.getSelectedText();
+	selectedRange.value = editor.value?.getSelectionRange();
+	const block = `L${selectedRange.value.start.row}-L${selectedRange.value.end.row}`;
+	selectedTextMetaData.value = <CodeArtifactExtractionMetaData>{
+		metadata: {
+			dynamics: [{ name: props.artifactName, filename: props.artifactName, block }]
+		}
+	};
 }
 
 /**
@@ -320,8 +430,35 @@ async function getPDFContents(url: string): Promise<PDFExtractionResponseType> {
 	color: var(--text-color-primary);
 }
 
+.code-content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	margin-bottom: 5px;
+	transition: height 2s ease-out;
+}
+
 .ace-editor {
 	border-top: 1px solid var(--surface-border-light);
+	margin-bottom: 5px;
+	border-radius: 5px;
+}
+
+.selection-content {
+	display: flex;
+	flex-direction: column;
+	max-height: 25%;
+	margin-bottom: 5px;
+	transition: height 1s ease-out;
+}
+
+.ace-editor2 {
+	margin-bottom: 5px;
+	border-radius: 5px;
+	transition: height 1s ease-out;
+}
+.extract-button {
+	margin-bottom: 5px;
 }
 
 .graph-element {
@@ -335,5 +472,23 @@ async function getPDFContents(url: string): Promise<PDFExtractionResponseType> {
 
 .p-dialog .p-dialog-content h6 {
 	margin: 1rem 0 1rem 0;
+}
+
+.model-metadata {
+	display: flex;
+	flex-direction: row;
+	margin-bottom: 5px;
+}
+
+.name {
+	padding: 0.51rem 0.5rem;
+	width: 300px;
+	font-size: var(--font-caption);
+}
+
+.description {
+	padding: 0.51rem 0.5rem;
+	width: 500px;
+	font-size: var(--font-caption);
 }
 </style>

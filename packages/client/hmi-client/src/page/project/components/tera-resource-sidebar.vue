@@ -232,7 +232,7 @@ const optionsMenuItems = ref([
 			emit('open-asset', {
 				assetName: 'New file',
 				pageType: ProjectAssetTypes.CODE,
-				assetId: undefined
+				assetId: 'New file'
 			});
 		}
 	},

@@ -2,6 +2,7 @@ import API, { Poller, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
 import { Artifact, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { CodeArtifactExtractionMetaData } from '@/types/Code';
 
 /**
  * Fetch information from the extraction service via the Poller utility
@@ -101,11 +102,10 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 const codeToAMR = async (
 	artifactId: Artifact['id'],
 	name: Model['name'],
-	description: Model['description']
-): Promise<Model | null> => {
-	console.log({ artifactId, name, description });
-	return API.post(`/extract/code-to-amr`, { artifactId, name, description });
-};
+	description: Model['description'],
+	metadata?: CodeArtifactExtractionMetaData | null
+): Promise<Model | null> =>
+	API.post(`/extract/code-to-amr`, { artifactId, name, description, metadata });
 
 /**
  * Given a dataset, enrich its metadata

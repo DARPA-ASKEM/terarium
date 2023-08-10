@@ -400,7 +400,7 @@ ul li:hover {
 	background-color: rgb(231, 231, 231);
 	border-radius: 5px;
 	padding: 15px;
-	height: 90%;
+	height: 100%;
 }
 
 .code-editor {

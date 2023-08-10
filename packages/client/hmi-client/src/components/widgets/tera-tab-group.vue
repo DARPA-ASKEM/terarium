@@ -64,7 +64,7 @@ const getTabName = (tab: Tab) => {
 
 	if (assets) {
 		const asset: any = assets[tab.pageType as string].find((d: any) => d.id === tab.assetId);
-		return asset.name ?? 'n/a';
+		return asset?.name ?? 'n/a';
 	}
 	return 'n/a';
 };

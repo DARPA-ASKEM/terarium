@@ -18,9 +18,10 @@
 		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && !assetName?.endsWith('.pdf')"
 		:asset-id="assetId"
 		:initial-code="code"
+		:artifact-name="assetName"
 		@vue:mounted="
-			emit('asset-loaded');
 			openTextArtifact();
+			emit('asset-loaded');
 		"
 	/>
 	<tera-pdf-embed
@@ -62,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed } from 'vue';
+import { ref, Ref, computed, watch } from 'vue';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -153,6 +154,13 @@ async function openTextArtifact() {
 	if (!res) return;
 	code.value = res;
 }
+
+watch(
+	() => props.assetId,
+	() => {
+		code.value = '';
+	}
+);
 </script>
 
 <style scoped>

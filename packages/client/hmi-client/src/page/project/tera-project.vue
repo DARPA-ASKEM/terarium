@@ -201,7 +201,7 @@ function setActiveTab() {
 async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (!(asset && asset.assetId === props.assetId && asset.pageType === props.pageType)) {
+	if (asset && !(asset && asset.assetId === props.assetId && asset.pageType === props.pageType)) {
 		loadingTabIndex.value = index;
 		router.push({
 			name: RouteName.ProjectRoute,
@@ -213,7 +213,7 @@ async function openAsset(index: number = tabStore.getActiveTabIndex(projectConte
 function openAssetFromSidebar(asset: Tab) {
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { assetId: asset.assetId, pageType: asset.pageType }
+		params: { assetName: asset.assetName, assetId: asset.assetId, pageType: asset.pageType }
 	});
 	loadingTabIndex.value = tabs.value.length;
 }

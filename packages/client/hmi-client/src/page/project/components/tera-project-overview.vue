@@ -247,7 +247,7 @@
 		</section>
 		<tera-multi-select-modal
 			:is-visible="showMultiSelect"
-			:selected-resources="selectedResources"
+			:selected-resources="selectedResources || []"
 			:buttons="multiSelectButtons"
 		></tera-multi-select-modal>
 	</main>
