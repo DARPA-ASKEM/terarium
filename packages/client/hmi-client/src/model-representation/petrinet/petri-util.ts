@@ -1,8 +1,16 @@
 import _ from 'lodash';
-import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
+import { IGraph } from '@graph-scaffolder/index';
+import {
+	EdgeData,
+	NodeData,
+	PetrinetRenderer
+} from '@/model-representation/petrinet/petrinet-renderer';
 import { runDagreLayout } from '@/services/graph';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
+import {
+	convertToIGraph,
+	getStratificationType
+} from '@/model-representation/petrinet/petrinet-service';
 import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
 import {
 	getAMRPresentationData,
@@ -64,4 +72,16 @@ export const getPetrinetRenderer = (
 		runLayout: runDagreLayout,
 		dragSelector: 'no-drag'
 	});
+};
+
+export const getGraphData = (model: Model, isCollapsed: boolean): IGraph<NodeData, EdgeData> => {
+	const strataType = getStratificationType(model);
+	if (strataType && isCollapsed) {
+		if (strataType === 'mira') {
+			const presentationData = getAMRPresentationData(model);
+			return convertToIGraph(presentationData.compactModel as any);
+		}
+		return convertToIGraph(model.semantics?.span?.[0].system);
+	}
+	return convertToIGraph(model);
 };

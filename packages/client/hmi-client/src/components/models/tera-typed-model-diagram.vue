@@ -97,11 +97,7 @@ import {
 	NodeData,
 	EdgeData
 } from '@/model-representation/petrinet/petrinet-renderer';
-import {
-	convertToIGraph,
-	addTyping,
-	getStratificationType
-} from '@/model-representation/petrinet/petrinet-service';
+import { addTyping, getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
@@ -113,7 +109,7 @@ import {
 	generateTypeState
 } from '@/services/models/stratification-service';
 import Toolbar from 'primevue/toolbar';
-import { getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
@@ -212,9 +208,7 @@ function setNodeColors() {
 const isCollapsed = ref(true);
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-		isCollapsed.value ? props.model.semantics?.span?.[0].system : typedModel.value
-	);
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 	// Render graph
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -400,11 +394,7 @@ watch(
 	[() => typedModel, graphElement],
 	async () => {
 		if (typedModel.value === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-			isCollapsed.value && getStratificationType(props.model)
-				? props.model.semantics?.span?.[0].system
-				: typedModel.value
-		);
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 		// Create renderer
 		if (!renderer) {

@@ -212,7 +212,6 @@ import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	getStratificationType,
 	convertAMRToACSet,
-	convertToIGraph,
 	updateExistingModelContent
 } from '@/model-representation/petrinet/petrinet-service';
 import { latexToAMR } from '@/services/models/extractions';
@@ -227,7 +226,7 @@ import Toolbar from 'primevue/toolbar';
 import { Model, Observable } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
-import { getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
@@ -465,7 +464,7 @@ const isCollapsed = ref(true);
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
 	if (props.model) {
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 		// Render graph
 		if (renderer) {
 			renderer.isGraphDirty = true;
@@ -475,21 +474,13 @@ async function toggleCollapsedView() {
 	}
 }
 
-const convertToIGraphHelper = (amr: Model) => {
-	if (getStratificationType(amr) && isCollapsed.value) {
-		// FIXME: wont' work for MIRA
-		return convertToIGraph(props.model?.semantics?.span?.[0].system);
-	}
-	return convertToIGraph(amr);
-};
-
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
 	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 		// Create renderer
 		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
@@ -547,7 +538,7 @@ watch(
 
 const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
-	const graphData = convertToIGraphHelper(model);
+	const graphData = getGraphData(model, isCollapsed.value);
 
 	if (renderer) {
 		await renderer.setData(graphData);
@@ -593,7 +584,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 	if (renderer) {
 		renderer.setEditMode(false);

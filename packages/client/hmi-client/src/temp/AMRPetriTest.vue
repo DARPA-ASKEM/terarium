@@ -25,13 +25,9 @@ import { onMounted, ref, watch } from 'vue';
 import BasicRenderer from 'graph-scaffolder/src/core/basic-renderer';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import {
-	convertToIGraph,
-	getStratificationType
-} from '@/model-representation/petrinet/petrinet-service';
+import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { amr as amrExample } from './sir';
-import { getAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
-import { getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
@@ -50,12 +46,7 @@ onMounted(async () => {
 			const amr = JSON.parse(jsonStr.value);
 			strataType.value = getStratificationType(amr);
 
-			if (strataType.value === 'mira' && isCollapse.value !== false) {
-				const presentationData = getAMRPresentationData(amr);
-				data = convertToIGraph(presentationData.compactModel as any);
-			} else {
-				data = convertToIGraph(amr);
-			}
+			data = getGraphData(amr, isCollapse.value);
 
 			if (isCollapse.value === false) {
 				renderer = new PetrinetRenderer({
