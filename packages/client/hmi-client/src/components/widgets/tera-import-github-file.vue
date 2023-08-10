@@ -336,7 +336,8 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 			repoOwnerAndName.value,
 			githubFile.path,
 			auth.name ?? '',
-			props.project?.id ?? ''
+			props.project?.id ?? '',
+			githubFile.htmlUrl
 		);
 	});
 }

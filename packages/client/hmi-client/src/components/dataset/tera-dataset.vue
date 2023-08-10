@@ -67,7 +67,9 @@
 			<section class="metadata data-row">
 				<section>
 					<header>Source Name</header>
-					<section v-if="dataset.url === 'https://github.com/reichlab/covid19-forecast-hub/'">
+					<section
+						v-if="dataset.datasetUrl === 'https://github.com/reichlab/covid19-forecast-hub/'"
+					>
 						The Reich Lab at UMass-Amherst
 					</section>
 					<section v-else>{{ dataset?.source || '-' }}</section>
@@ -75,7 +77,9 @@
 				<section>
 					<header>Source URL</header>
 					<section>
-						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						<a v-if="dataset?.datasetUrl" :href="dataset?.datasetUrl">{{
+							dataset?.datasetUrl || '-'
+						}}</a>
 						<span v-else>-</span>
 					</section>
 				</section>
@@ -136,8 +140,8 @@
 					</template>
 					This data is sourced from
 					{{ dataset.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
-					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''">{{
-						dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''
+					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''">{{
+						dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''
 					}}</a>
 				</AccordionTab>
 				<AccordionTab>

@@ -85,12 +85,14 @@ async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
  * @param path
  * @param userName
  * @param projectId
+ * @param url the source url of the file
  */
 async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userName: string,
-	projectId: string
+	projectId: string,
+	url: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -103,7 +105,7 @@ async function createNewDatasetFromGithubFile(
 	// Create a new dataset with the same name as the file, and post the metadata to TDS
 	const dataset: Dataset = {
 		name,
-		url: '',
+		datasetUrl: url,
 		description: path,
 		fileNames: [fileName],
 		username: userName
@@ -148,7 +150,7 @@ async function createNewDatasetFromCSV(
 	// Create a new dataset with the same name as the file, and post the metadata to TDS
 	const dataset: Dataset = {
 		name,
-		url: '',
+		datasetUrl: '',
 		description: description || file.name,
 		fileNames: [file.name],
 		username: userName

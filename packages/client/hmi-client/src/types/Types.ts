@@ -137,7 +137,7 @@ export interface Dataset {
     description?: string;
     dataSourceDate?: string;
     fileNames?: string[];
-    url?: string;
+    datasetUrl?: string;
     columns?: DatasetColumn[];
     metadata?: any;
     source?: string;
