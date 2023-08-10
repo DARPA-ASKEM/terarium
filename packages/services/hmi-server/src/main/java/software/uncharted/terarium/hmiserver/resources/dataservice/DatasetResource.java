@@ -4,18 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.math.Quantiles;
 import com.google.common.math.Stats;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.http.SdkHttpResponse;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -29,10 +26,9 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,26 +40,8 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text", "csv", "UTF-8");
 	private static final int DEFAULT_CSV_LIMIT = 100;
 
-	@ConfigProperty(name = "aws.bucket")
-	Optional<String> bucket;
-
 	@ConfigProperty(name = "aws.data_set_path")
 	Optional<String> dataSetPath;
-
-	@ConfigProperty(name = "aws.simulate_path")
-	Optional<String> simulatePath;
-
-	@ConfigProperty(name = "aws.access_key_id")
-	Optional<String> accessKeyId;
-
-	@ConfigProperty(name = "aws.secret_access_key")
-	Optional<String> secretAccessKey;
-
-	@ConfigProperty(name = "storage.host")
-	Optional<String> storageHost;
-
-	@ConfigProperty(name = "aws.region")
-	Optional<String> region;
 
 	@Inject
 	@RestClient
@@ -136,51 +114,36 @@ public class DatasetResource extends DataStorageResource implements SnakeCaseRes
 
 		log.debug("Getting CSV content");
 
-		//verify that dataSetPath and bucket are set. If not, return an error
-		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
-			log.error("S3 information not set. Cannot download CSV.");
+		String rawCSV = "";
+
+		try (CloseableHttpClient httpclient = HttpClients.custom()
+			.disableRedirectHandling()
+			.build()) {
+
+			final PresignedURL presignedURL = datasetProxy.getDownloadUrl(datasetId, filename);
+			final HttpGet get = new HttpGet(presignedURL.getUrl());
+			final HttpResponse response = httpclient.execute(get);
+			rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+
+		} catch (Exception e) {
+			log.error("Unable to GET csv data", e);
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
 				.build();
 		}
 
-		AwsCredentialsProvider awsCredentials = StaticCredentialsProvider.create(
-			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
-
-		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
-
-		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(awsCredentials).build();
-
-		GetObjectRequest request = GetObjectRequest.builder()
-			.bucket(bucket.get()).key(objectKey).build();
-
-		ResponseInputStream<GetObjectResponse> s3objectResponse = client
-			.getObject(request);
-
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(s3objectResponse));
-
-		// Read the specified amount of lines, or the default (including the header)
-		String line;
-		final StringBuilder csvStringBuilder = new StringBuilder();
-		long lineCount = 0;
-		final long linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
-		while ((line = reader.readLine()) != null) {
-			csvStringBuilder.append(line).append(System.getProperty("line.separator"));
-			lineCount++;
-			if (linesToRead != -1 && lineCount >= linesToRead) {
-				break;
-			}
-		}
-
-		List<List<String>> csv = csvToRecords(csvStringBuilder.toString());
+		final int linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
+		List<List<String>> csv = csvToRecords(rawCSV);
 		List<String> headers = csv.get(0);
-		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
+		List<CsvColumnStats> csvColumnStats = new ArrayList<>();
 		for (int i = 0; i < csv.get(0).size(); i++) {
 			List<String> column = getColumn(csv, i);
-			CsvColumnStats.add(getStats(column.subList(1, column.size()))); //remove first as it is header:
+			csvColumnStats.add(getStats(column.subList(1, column.size()))); //remove first as it is header:
 		}
-		CsvAsset csvAsset = new CsvAsset(csv, CsvColumnStats, headers);
+
+
+		CsvAsset csvAsset = new CsvAsset(csv.subList(0,Math.min(linesToRead, csv.size()-1)), csvColumnStats, headers, csv.size());
 		return Response
 			.status(Response.Status.OK)
 			.entity(csvAsset)

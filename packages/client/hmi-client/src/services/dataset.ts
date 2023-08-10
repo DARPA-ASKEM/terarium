@@ -150,7 +150,6 @@ async function createNewDatasetFromCSV(
 	// Create a new dataset with the same name as the file, and post the metadata to TDS
 	const dataset: Dataset = {
 		name,
-		datasetUrl: '',
 		description: description || file.name,
 		fileNames: [file.name],
 		username: userName

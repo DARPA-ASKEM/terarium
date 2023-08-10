@@ -47,7 +47,7 @@
 			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
-					<section>{{ csvContent?.length || '-' }}</section>
+					<section>{{ rawContent?.rowCount || '-' }}</section>
 				</section>
 				<section>
 					<header>Columns</header>

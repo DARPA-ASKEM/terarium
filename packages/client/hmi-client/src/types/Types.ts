@@ -57,6 +57,7 @@ export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
     headers: string[];
+    rowCount: number;
 }
 
 export interface CsvColumnStats {
