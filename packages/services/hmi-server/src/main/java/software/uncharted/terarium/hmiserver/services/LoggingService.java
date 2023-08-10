@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.services;
 
 import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
