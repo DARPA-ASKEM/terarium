@@ -254,8 +254,8 @@
 </template>
 
 <script setup lang="ts">
-import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
-import { nextTick, Ref, ref, computed, onMounted, toRaw } from 'vue';
+import { IProject, isProjectAssetTypes, ProjectAssetTypes } from '@/types/Project';
+import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
@@ -266,19 +266,20 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab, AcceptedTypes, AcceptedExtensions } from '@/types/common';
+import { AcceptedExtensions, AcceptedTypes, Tab } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
-import { CsvAsset } from '@/types/Types';
+import { Artifact, CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import { uploadArtifactToProject } from '@/services/artifact';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
+import { extractPDF } from '@/services/models/extractions';
 
 const props = defineProps<{
 	project: IProject;
@@ -364,14 +365,17 @@ async function processFiles(files: File[], csvDescription: string) {
 		}
 
 		// This is pdf, txt, md files
-		const response = await uploadArtifactToProject(
+		const artifact: Artifact | null = await uploadArtifactToProject(
 			progress,
 			file,
 			props.project.username ?? '',
 			props.project.id,
 			''
 		);
-		if (response?.data) return { file, error: false, response: { text: '', images: [] } };
+		if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
+			extractPDF(artifact);
+			return { file, error: false, response: { text: '', images: [] } };
+		}
 		return { file, error: true, response: { text: '', images: [] } };
 	});
 }
