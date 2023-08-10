@@ -78,6 +78,14 @@ async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
 	return null;
 }
 
+/**
+ * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
+ * share the same name as the file and can optionally have a description
+ * @param repoOwnerAndName
+ * @param path
+ * @param userName
+ * @param projectId
+ */
 async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
@@ -123,9 +131,9 @@ async function createNewDatasetFromGithubFile(
  * share the same name as the file and can optionally have a description
  * @param progress reference to display in ui
  * @param file the CSV file
- * @param userName owner of this project
+ * @param userName uploader of this dataset
  * @param projectId the project ID
- * @param description? description of the file. Optional. If not given description will be just the csv name
+ * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromCSV(
 	progress: Ref<number>,
@@ -222,7 +230,6 @@ export {
 	getBulkDatasets,
 	downloadRawFile,
 	createNewDatasetFromCSV,
-	createNewDataset,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult
 };

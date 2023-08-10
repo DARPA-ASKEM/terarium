@@ -191,6 +191,7 @@ import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
 import { extractPDF } from '@/services/models/extractions';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{
 	urlString: string;
@@ -207,7 +208,7 @@ const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
 const selectedText: Ref<string> = ref('');
 const displayCode: Ref<string> = ref('');
-
+const auth = useAuthStore();
 // Breadcrumb home setup
 const home = ref({
 	icon: 'pi pi-home',
@@ -334,7 +335,7 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
+			auth.name ?? '',
 			props.project?.id ?? ''
 		);
 	});
