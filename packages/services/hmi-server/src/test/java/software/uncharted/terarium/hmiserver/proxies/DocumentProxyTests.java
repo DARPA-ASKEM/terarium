@@ -52,7 +52,6 @@ public class DocumentProxyTests {
 		Assertions.assertEquals(TARGET_ID, response.getSuccess().getData().get(0).getGddId());
 	}
 
-
 	@Test
 	public void testItCanSearchForADocByTerm() {
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments("",
