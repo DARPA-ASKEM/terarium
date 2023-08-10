@@ -6,10 +6,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
 
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @Path("/api/provenance")
 @Produces(MediaType.APPLICATION_JSON)
