@@ -66,13 +66,23 @@ public interface ExtractionServiceProxy {
 	 */
 	@POST
 	@Path("/pdf_extractions")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	Response postPDFExtractions(
+		@QueryParam("artifact_id") String artifactId,
 		@DefaultValue("true") @QueryParam("annotate_skema") Boolean annotateSkema,
-		@DefaultValue("true") @QueryParam("annotate_amr") Boolean annotateMIT,
+		@DefaultValue("true") @QueryParam("annotate_mit") Boolean annotateMIT,
 		@QueryParam("name") String name,
-		@QueryParam("description") String description,
-		Object pdf
+		@QueryParam("description") String description
+	);
+
+	/**
+	 * Post a PDF to the extraction service to get text
+	 * @param artifactId (String): The ID of the artifact to extract text from
+	 * @return
+	 */
+	@POST
+	@Path("/pdf_to_text")
+	Response postPDFToText(
+		@QueryParam("artifact_id") String artifactId
 	);
 
 	/**
