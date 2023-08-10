@@ -113,6 +113,7 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 		return {};
 	}
 	let result: any = _.groupBy(matrixData, stratas[0]);
+	// console.log('RESULT', result);
 	const nextStratas = _.clone(stratas);
 	nextStratas.shift();
 

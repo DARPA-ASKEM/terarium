@@ -201,15 +201,12 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
-import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
 	NodeData,
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
-import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
 
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
@@ -230,6 +227,7 @@ import Toolbar from 'primevue/toolbar';
 import { Model, Observable } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
+import { getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
@@ -494,24 +492,7 @@ watch(
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
 
 		// Create renderer
-		if (getStratificationType(props.model)) {
-			renderer = new NestedPetrinetRenderer({
-				el: graphElement.value as HTMLDivElement,
-				useAStarRouting: false,
-				useStableZoomPan: true,
-				runLayout: runDagreLayout,
-				dragSelector: 'no-drag',
-				nestedMap: extractNestedMap(props.model)
-			});
-		} else {
-			renderer = new PetrinetRenderer({
-				el: graphElement.value as HTMLDivElement,
-				useAStarRouting: false,
-				useStableZoomPan: true,
-				runLayout: runDagreLayout,
-				dragSelector: 'no-drag'
-			});
-		}
+		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
 			if (isEditing.value === true) {

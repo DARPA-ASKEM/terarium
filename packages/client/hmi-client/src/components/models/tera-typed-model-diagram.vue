@@ -92,7 +92,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed } from 'vue';
-import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
 	NodeData,
@@ -113,8 +112,8 @@ import {
 	generateTypeTransition,
 	generateTypeState
 } from '@/services/models/stratification-service';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import Toolbar from 'primevue/toolbar';
+import { getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
@@ -406,37 +405,10 @@ watch(
 				? props.model.semantics?.span?.[0].system
 				: typedModel.value
 		);
-		const nestedMap = props.model.semantics?.span?.[0].map.reduce(
-			(childMap, [stratNode, baseNode]) => {
-				if (!childMap[baseNode]) {
-					childMap[baseNode] = [];
-				}
-				childMap[baseNode].push(stratNode);
-				return childMap;
-			},
-			{}
-		);
 
 		// Create renderer
 		if (!renderer) {
-			if (getStratificationType(props.model)) {
-				renderer = new NestedPetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag',
-					nestedMap
-				});
-			} else {
-				renderer = new PetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag'
-				});
-			}
+			renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
 		} else {
 			renderer.isGraphDirty = true;
 		}

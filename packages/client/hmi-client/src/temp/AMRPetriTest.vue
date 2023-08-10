@@ -37,6 +37,7 @@ import {
 	getAMRPresentationData,
 	extractNestedStratas
 } from '@/model-representation/petrinet/mira-petri';
+import { createMatrix2D } from '@/utils/pivot';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
@@ -53,6 +54,7 @@ onMounted(async () => {
 			let data: any;
 
 			const amr = JSON.parse(jsonStr.value);
+			console.log(amr);
 			strataType.value = getStratificationType(amr);
 
 			if (strataType.value === null || isCollapse.value === false) {
@@ -88,12 +90,21 @@ onMounted(async () => {
 				dims.unshift('base');
 				const nestedMap = extractNestedStratas(presentationData.stateMatrixData, dims);
 
+				const groupedTransitions = _.groupBy(presentationData.transitionMatrixData, 'base');
+				const transitionMatrixMap = {};
+				Object.entries(groupedTransitions).forEach(([key, value]) => {
+					const dimensions = Object.keys(value[0]).filter((k) => !['id', 'base'].includes(k));
+					const matrixAttributes = createMatrix2D(value, dimensions, dimensions);
+					transitionMatrixMap[key] = matrixAttributes.matrix;
+				});
+
 				renderer = new NestedPetrinetRenderer({
 					el: graphElement.value as HTMLDivElement,
 					useAStarRouting: false,
 					useStableZoomPan: true,
 					runLayout: runDagreLayout,
-					nestedMap: nestedMap
+					nestedMap: nestedMap,
+					transitionMatrices: transitionMatrixMap
 				});
 				data = convertToIGraph(presentationData.compactModel as any);
 			}
