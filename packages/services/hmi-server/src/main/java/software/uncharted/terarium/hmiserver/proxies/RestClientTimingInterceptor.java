@@ -10,11 +10,11 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.services.EventService;
 import software.uncharted.terarium.hmiserver.services.StructuredLog;
 
-import javax.annotation.Priority;
-import javax.inject.Inject;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
+import jakarta.annotation.Priority;
+import jakarta.inject.Inject;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
@@ -90,19 +90,19 @@ public class RestClientTimingInterceptor {
 	 * @return				The method type (GET, POST, etc)
 	 */
 	private String getType(InvocationContext context) {
-		if (context.getMethod().getAnnotation(javax.ws.rs.GET.class) != null) {
+		if (context.getMethod().getAnnotation(jakarta.ws.rs.GET.class) != null) {
 			return "GET";
-		} else if (context.getMethod().getAnnotation(javax.ws.rs.POST.class) != null) {
+		} else if (context.getMethod().getAnnotation(jakarta.ws.rs.POST.class) != null) {
 			return "POST";
-		} else if (context.getMethod().getAnnotation(javax.ws.rs.PUT.class) != null) {
+		} else if (context.getMethod().getAnnotation(jakarta.ws.rs.PUT.class) != null) {
 			return "PUT";
-		} else if (context.getMethod().getAnnotation(javax.ws.rs.DELETE.class) != null) {
+		} else if (context.getMethod().getAnnotation(jakarta.ws.rs.DELETE.class) != null) {
 			return "DELETE";
-		} else if (context.getMethod().getAnnotation(javax.ws.rs.HEAD.class) != null) {
+		} else if (context.getMethod().getAnnotation(jakarta.ws.rs.HEAD.class) != null) {
 			return "HEAD";
-		} else if (context.getMethod().getAnnotation(javax.ws.rs.OPTIONS.class) != null) {
+		} else if (context.getMethod().getAnnotation(jakarta.ws.rs.OPTIONS.class) != null) {
 			return "OPTIONS";
-		} else if (context.getMethod().getAnnotation(javax.ws.rs.PATCH.class) != null) {
+		} else if (context.getMethod().getAnnotation(jakarta.ws.rs.PATCH.class) != null) {
 			return "PATCH";
 		}
 		return null;
@@ -128,8 +128,8 @@ public class RestClientTimingInterceptor {
 	 * @return			The value of the annotation or an empty string if it doesn't exist
 	 */
 	private String getPath(Class<?> clazz) {
-		if (clazz.getAnnotation(javax.ws.rs.Path.class) != null) {
-			return clazz.getAnnotation(javax.ws.rs.Path.class).value();
+		if (clazz.getAnnotation(jakarta.ws.rs.Path.class) != null) {
+			return clazz.getAnnotation(jakarta.ws.rs.Path.class).value();
 		}
 		return "";
 	}
@@ -140,8 +140,8 @@ public class RestClientTimingInterceptor {
 	 * @return				The value of the annotation or an empty string if it doesn't exist
 	 */
 	private String getPath(Method method) {
-		if (method.getAnnotation(javax.ws.rs.Path.class) != null) {
-			return method.getAnnotation(javax.ws.rs.Path.class).value();
+		if (method.getAnnotation(jakarta.ws.rs.Path.class) != null) {
+			return method.getAnnotation(jakarta.ws.rs.Path.class).value();
 		}
 		return "";
 	}

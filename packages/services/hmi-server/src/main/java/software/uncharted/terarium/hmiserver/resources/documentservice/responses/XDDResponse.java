@@ -3,7 +3,7 @@ package software.uncharted.terarium.hmiserver.resources.documentservice.response
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.Serializable;
 
 @Data

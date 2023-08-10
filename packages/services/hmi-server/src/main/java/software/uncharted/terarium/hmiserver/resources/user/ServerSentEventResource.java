@@ -1,20 +1,24 @@
 package software.uncharted.terarium.hmiserver.resources.user;
 
 
-import com.oracle.svm.core.annotate.Inject;
+
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Multi;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.jboss.resteasy.annotations.SseElementType;
-import org.reactivestreams.Publisher;
+
 import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import java.util.concurrent.Flow;
+
 
 @Path("/api/user/")
 @ApplicationScoped
@@ -25,7 +29,8 @@ public class ServerSentEventResource {
 	SecurityIdentity securityIdentity;
 
 	@Inject
-	@Channel("user-event") Publisher<UserEvent> userEvents;
+	@Channel("user-event")
+	Flow.Publisher<UserEvent> userEvents;
 
 	/**
 	 * Gets all user events
@@ -34,7 +39,7 @@ public class ServerSentEventResource {
 	@Path("/server-sent-events")
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
-	public Publisher<UserEvent> stream() {
+	public Flow.Publisher<UserEvent> stream() {
 		return Multi.createFrom().publisher(userEvents);
 	}
 }
