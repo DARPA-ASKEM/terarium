@@ -161,6 +161,6 @@ public class SimulationResource implements SnakeCaseResource {
 		@PathParam("jobId") final String jobId
 	) {
 		// return Multi.createFrom().publisher(events);
-		return Multi.createFrom().publisher(events).select().where(event -> "123" == "123"); //event.getJobId() == jobId);
+		return Multi.createFrom().publisher(events).select().where(event -> event.getJobId == jobId);
 	}
 }
