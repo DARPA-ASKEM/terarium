@@ -99,13 +99,13 @@
 		/>
 	</section>
 	<section v-else>
-		<div><i class="pi pi-spin pi-spinner"></i> loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status" />
 	</section>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
-import { WorkflowNode } from '@/types/workflow';
+import { computed, shallowRef, watch, ref, ComputedRef, onMounted, onUnmounted } from 'vue';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -113,34 +113,36 @@ import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import InputNumber from 'primevue/inputnumber';
-import { CalibrationRequestCiemss, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
+import { CalibrationRequestCiemss, CsvAsset, ModelConfiguration } from '@/types/Types';
 import {
 	makeCalibrateJobCiemss,
-	getSimulation,
-	getRunResultCiemss
+	getRunResultCiemss,
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
+import { Poller, PollerState } from '@/api/api';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
 	CalibrateMap
 } from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const modelConfig = ref<ModelConfiguration>();
-const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 const parameterResult = ref<{ [index: string]: any }>();
 
@@ -154,12 +156,15 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 // EXTRA section
 const numSamples = ref(100);
 const numIterations = ref(100);
 const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
+
+const poller = new Poller();
 
 const disableRunButton = computed(
 	() =>
@@ -169,6 +174,17 @@ const disableRunButton = computed(
 		!modelConfigId.value ||
 		!datasetId.value
 );
+
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 const runCalibrate = async () => {
 	if (
@@ -221,31 +237,31 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
-	startedRunId.value = response.simulationId;
-	getStatus();
-	showSpinner.value = true;
+	if (response.simulationId) {
+		getStatus(response.simulationId);
+	}
 };
-// Retrieve run ids
-// FIXME: Replace with API.poller
-const getStatus = async () => {
-	if (!startedRunId.value) return;
 
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
+const getStatus = async (simulationId: string) => {
+	showSpinner.value = true;
+	if (!simulationId) return;
 
-	if (currentSimulation && currentSimulation.status === 'complete') {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
-		showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
+	const runIds = [simulationId];
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
+		console.error('Failed', simulationId);
 		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
+	completedRunId.value = simulationId;
+	updateOutputPorts(completedRunId);
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {
