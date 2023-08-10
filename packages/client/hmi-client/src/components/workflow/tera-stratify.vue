@@ -337,12 +337,12 @@ function goBack() {
 }
 
 watch(stratifyStep, () => {
+	const state = { ...props.node.state, stratifyStep: stratifyStep.value };
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id,
-		state: { ...props.node.state, stratifyStep: stratifyStep.value }
+		state
 	});
-	console.log(props.node.state);
 });
 
 watch(
@@ -355,8 +355,6 @@ watch(
 				model.value = await getModel(modelConfiguration.value.modelId);
 			}
 		}
-		console.log(`set state ${props.node.id}`);
-		console.log(props.node.state);
 		if (!props.node.state) {
 			workflowEventBus.emitNodeStateChange({
 				workflowId: props.node.workflowId,
