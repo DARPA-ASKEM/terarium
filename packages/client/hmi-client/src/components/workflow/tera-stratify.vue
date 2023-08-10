@@ -319,6 +319,17 @@ async function doStratify() {
 		if (newModelId) {
 			await addAsset(projectId, 'models', newModelId);
 			stratifyView.value = StratifyView.Output;
+
+			workflowEventBus.emitNodeStateChange({
+				workflowId: props.node.workflowId,
+				nodeId: props.node.id,
+				state: {
+					...props.node.state,
+					stratifyView: stratifyView.value,
+					stratifiedModel: stratifiedModel.value,
+					typedStrataModel: typedStrataModel.value
+				}
+			});
 		}
 	}
 }
