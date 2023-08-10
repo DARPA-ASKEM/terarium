@@ -15,6 +15,7 @@ import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEqual } from 'lodash';
+import { Ref } from 'vue';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -245,7 +246,7 @@ export const querySimulationInProgress = (node: WorkflowNode): string[] => {
 export async function simulationPollAction(
 	simulationIds: string[],
 	node: WorkflowNode,
-	progress,
+	progress: Ref<{ status: ProgressState; value: number }>,
 	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
 ) {
 	const requestList: Promise<Simulation | null>[] = [];
