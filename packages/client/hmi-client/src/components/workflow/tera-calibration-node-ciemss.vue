@@ -118,7 +118,8 @@ import {
 	makeCalibrateJobCiemss,
 	getRunResultCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	EventSourceManager
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -165,6 +166,7 @@ const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const poller = new Poller();
+const eventSourceManager = new EventSourceManager();
 
 const disableRunButton = computed(
 	() =>
@@ -250,7 +252,9 @@ const getStatus = async (simulationId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+		.setPollAction(async () =>
+			simulationPollAction(runIds, props.node, progress, emit, eventSourceManager)
+		);
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {

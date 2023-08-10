@@ -16,6 +16,8 @@ import useResourcesStore from '@/stores/resources';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEqual } from 'lodash';
 import { Ref } from 'vue';
+import useAuthStore from '@/stores/auth';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -200,7 +202,11 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 }
 
 // add a simulation in progress if it does not exist
-const addSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
+const addSimulationInProgress = (
+	node: WorkflowNode,
+	runIds: string[],
+	eventSourceManager: EventSourceManager
+) => {
 	const state = cloneDeep(node.state);
 
 	if (!state.simulationsInProgress) {
@@ -209,6 +215,10 @@ const addSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
 	runIds.forEach((runId) => {
 		if (!state.simulationsInProgress.includes(runId)) {
 			state.simulationsInProgress.push(runId);
+			eventSourceManager.openConnection(runId);
+			eventSourceManager.setMessageHandler(runId, (message) => {
+				console.log(message);
+			});
 		}
 	});
 
@@ -216,7 +226,7 @@ const addSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
 };
 
 // delete a simulation in progress if it exists
-const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
+const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[], eventSourceManager) => {
 	const state = cloneDeep(node.state);
 
 	if (state.simulationsInProgress) {
@@ -224,6 +234,7 @@ const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
 			const index = state.simulationsInProgress.indexOf(runId);
 			if (index !== -1) {
 				state.simulationsInProgress.splice(index, 1);
+				eventSourceManager.closeConnection(runId);
 			}
 		});
 	}
@@ -247,7 +258,8 @@ export async function simulationPollAction(
 	simulationIds: string[],
 	node: WorkflowNode,
 	progress: Ref<{ status: ProgressState; value: number }>,
-	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
+	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void,
+	eventSourceManager
 ) {
 	const requestList: Promise<Simulation | null>[] = [];
 	simulationIds.forEach((id) => {
@@ -255,7 +267,7 @@ export async function simulationPollAction(
 	});
 	const response = await Promise.all(requestList);
 	if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
-		const newState = deleteSimulationInProgress(node, simulationIds);
+		const newState = deleteSimulationInProgress(node, simulationIds, eventSourceManager);
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
@@ -272,7 +284,7 @@ export async function simulationPollAction(
 				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
 		)
 	) {
-		const newState = addSimulationInProgress(node, simulationIds);
+		const newState = addSimulationInProgress(node, simulationIds, eventSourceManager);
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
@@ -288,4 +300,57 @@ export async function simulationPollAction(
 		progress: null,
 		error: null
 	};
+}
+
+type MessageHandler = (message: any) => void;
+
+export class EventSourceManager {
+	private connections: Map<string, EventSourcePolyfill> = new Map();
+
+	public messageHandlers: Map<string, MessageHandler> = new Map();
+
+	public openConnection(id: string) {
+		if (!this.connections.has(id)) {
+			const auth = useAuthStore();
+			const eventSource = new EventSourcePolyfill('/api/user/server-sent-events', {
+				headers: {
+					Authorization: `Bearer ${auth.token}`
+				}
+			});
+
+			eventSource.onopen = () => {
+				console.log(`EventSource opened for ID: ${id}`);
+			};
+
+			eventSource.onmessage = (event) => {
+				const handler = this.messageHandlers.get(id);
+				if (handler) {
+					handler(event.data);
+				}
+			};
+
+			eventSource.onerror = (error) => {
+				console.error(`EventSource error for ID ${id}: ${error}`);
+			};
+
+			this.connections.set(id, eventSource);
+		} else {
+			console.log(`EventSource already open for ID: ${id}`);
+		}
+	}
+
+	public setMessageHandler(id: string, handler: MessageHandler) {
+		this.messageHandlers.set(id, handler);
+	}
+
+	public closeConnection(id: string) {
+		const eventSource = this.connections.get(id);
+
+		if (eventSource) {
+			eventSource.close();
+			console.log(`EventSource closed for ID: ${id}`);
+			this.messageHandlers.delete(id);
+			this.connections.delete(id);
+		}
+	}
 }

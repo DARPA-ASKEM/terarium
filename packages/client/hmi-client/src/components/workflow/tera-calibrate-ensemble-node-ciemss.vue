@@ -53,7 +53,8 @@ import {
 	makeEnsembleCiemssCalibration,
 	getRunResultCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	EventSourceManager
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -94,6 +95,7 @@ const datasetColumnNames = ref<string[]>();
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 const poller = new Poller();
+const eventSourceManager = new EventSourceManager();
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
@@ -138,7 +140,9 @@ const getStatus = async (simulationId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+		.setPollAction(async () =>
+			simulationPollAction(runIds, props.node, progress, emit, eventSourceManager)
+		);
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {

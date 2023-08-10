@@ -48,7 +48,8 @@ import {
 	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	EventSourceManager
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
@@ -77,6 +78,7 @@ const runConfigs = ref<{ [paramKey: string]: number[] }>({});
 const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
 const poller = new Poller();
+const eventSourceManager = new EventSourceManager();
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
@@ -121,7 +123,9 @@ const getStatus = async (runIds: string[]) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+		.setPollAction(async () =>
+			simulationPollAction(runIds, props.node, progress, emit, eventSourceManager)
+		);
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
