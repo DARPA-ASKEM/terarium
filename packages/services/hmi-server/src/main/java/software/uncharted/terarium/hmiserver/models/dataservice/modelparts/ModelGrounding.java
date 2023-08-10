@@ -10,7 +10,11 @@ import java.util.Map;
 @Accessors(chain = true)
 public class ModelGrounding {
 	private Map<String, Object> identifiers;
+
 	@TSOptional
 	private Map<String, Object> context;
+
+	@TSOptional
+	private Object modifiers;
 }
 

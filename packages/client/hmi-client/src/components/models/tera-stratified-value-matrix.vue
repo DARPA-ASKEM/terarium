@@ -75,10 +75,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import {
-	getCatlabStatesMatrixData,
-	getCatlabTransitionsMatrixData
-} from '@/model-representation/petrinet/petrinet-service';
+import { getAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
@@ -159,24 +156,20 @@ function updateModelConfigValue(variableName: string) {
 function configureMatrix() {
 	console.log(props.modelConfiguration.configuration);
 
+	const result = getAMRPresentationData(props.modelConfiguration.configuration);
+
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
-			? getCatlabStatesMatrixData(props.modelConfiguration.configuration).filter(
-					(d) => d['@base'] === props.id
-			  )
-			: getCatlabTransitionsMatrixData(props.modelConfiguration.configuration).filter(
-					(d) => d['@base'] === props.id
-			  );
-
-	console.log(matrixData);
+			? result.stateMatrixData.filter((d) => d.base === props.id)
+			: result.transitionMatrixData.filter((d) => d.base === props.id);
 
 	if (isEmpty(matrixData)) return;
 
 	// Grab dimension names from the first matrix row
 	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
 		delete d.id;
-		delete d['@base'];
+		delete d.base;
 		return Object.keys(d);
 	})[0];
 
@@ -192,7 +185,7 @@ function configureMatrix() {
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 
-	console.log(matrix.value);
+	console.log('!!!!!', matrix.value);
 }
 
 onMounted(() => {

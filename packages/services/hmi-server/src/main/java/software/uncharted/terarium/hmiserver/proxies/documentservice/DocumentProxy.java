@@ -6,8 +6,8 @@ import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.*;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 
 @RegisterRestClient(configKey = "xdd-dev-service")
 @Produces(MediaType.APPLICATION_JSON)

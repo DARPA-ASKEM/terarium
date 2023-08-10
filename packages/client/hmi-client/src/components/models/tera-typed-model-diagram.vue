@@ -75,7 +75,7 @@
 					<Toolbar>
 						<template #end>
 							<Button
-								v-if="isStratifiedAMR(model)"
+								v-if="getStratificationType(model)"
 								@click="toggleCollapsedView"
 								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
 								class="p-button-sm p-button-outlined toolbar-button"
@@ -101,7 +101,7 @@ import {
 import {
 	convertToIGraph,
 	addTyping,
-	isStratifiedAMR
+	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
@@ -402,7 +402,7 @@ watch(
 	async () => {
 		if (typedModel.value === null || graphElement.value === null) return;
 		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-			isCollapsed.value && isStratifiedAMR(props.model)
+			isCollapsed.value && getStratificationType(props.model)
 				? props.model.semantics?.span?.[0].system
 				: typedModel.value
 		);
@@ -419,7 +419,7 @@ watch(
 
 		// Create renderer
 		if (!renderer) {
-			if (isStratifiedAMR(props.model)) {
+			if (getStratificationType(props.model)) {
 				renderer = new NestedPetrinetRenderer({
 					el: graphElement.value as HTMLDivElement,
 					useAStarRouting: false,
