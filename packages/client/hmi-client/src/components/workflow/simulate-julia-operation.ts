@@ -5,6 +5,7 @@ import { ChartConfig } from '@/types/SimulateConfig';
 export interface SimulateJuliaOperationState {
 	chartConfigs: ChartConfig[];
 	currentTimespan: TimeSpan;
+	simulationsInProgress: string[];
 }
 
 export const SimulateJuliaOperation: Operation = {
@@ -18,7 +19,8 @@ export const SimulateJuliaOperation: Operation = {
 	initState: () => {
 		const init: SimulateJuliaOperationState = {
 			chartConfigs: [],
-			currentTimespan: { start: 1, end: 100 }
+			currentTimespan: { start: 1, end: 100 },
+			simulationsInProgress: []
 		};
 		return init;
 	},
