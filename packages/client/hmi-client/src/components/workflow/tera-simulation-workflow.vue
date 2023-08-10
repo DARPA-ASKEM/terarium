@@ -241,6 +241,8 @@ import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
+import { EventSourcePolyfill } from 'event-source-polyfill';
+import useAuthStore from '@/stores/auth';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
@@ -411,6 +413,27 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
+
+	console.log('Checking MQ');
+	const auth = useAuthStore();
+	const ttt = new EventSourcePolyfill('/api/simulations/123/partial-result', {
+		headers: {
+			Authorization: `Bearer ${auth.token}`
+		}
+	});
+	ttt.onerror = (e) => {
+		console.log('An error occurred while attempting to connect.');
+		console.log(e);
+		ttt.close();
+		console.log('Closing ttt');
+	};
+	ttt.onmessage = (event) => {
+		console.log(event);
+		const json = event.data;
+		console.log(json);
+		ttt.close();
+		console.log('Closing ttt');
+	};
 };
 
 const drilldown = (event: WorkflowNode) => {

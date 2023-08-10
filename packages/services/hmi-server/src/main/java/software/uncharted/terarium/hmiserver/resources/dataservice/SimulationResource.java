@@ -8,7 +8,13 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.groups.MultiSelect;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.reactivestreams.Publisher;
+import org.jboss.resteasy.annotations.SseElementType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
@@ -18,6 +24,7 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.utils.Converter;
+import software.uncharted.terarium.hmiserver.models.CalibrationIntermediateResults;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -42,6 +49,9 @@ public class SimulationResource implements SnakeCaseResource {
 	@Inject
 	@RestClient
 	DatasetProxy datasetProxy;
+
+	@Inject
+	@Channel("simulations") Publisher<CalibrationIntermediateResults> events;
 
 	@POST
 	public Simulation createSimulation(final Simulation simulation){
@@ -140,5 +150,17 @@ public class SimulationResource implements SnakeCaseResource {
 				.type("text/plain")
 				.build();
 		}
+	}
+
+	@GET
+	@Path("/{jobId}/partial-result")
+	@Produces(MediaType.SERVER_SENT_EVENTS)
+	@SseElementType(MediaType.APPLICATION_JSON)
+	@Tag(name = "Stream partial/intermediate simulation result associated with run ID")
+	public Publisher<CalibrationIntermediateResults> stream(
+		@PathParam("jobId") final String jobId
+	) {
+		// return Multi.createFrom().publisher(events);
+		return Multi.createFrom().publisher(events).select().where(event -> "123" == "123"); //event.getJobId() == jobId);
 	}
 }
