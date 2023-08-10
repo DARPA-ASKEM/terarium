@@ -101,29 +101,24 @@
 		/>
 	</section>
 	<section v-else>
-		<div><i class="pi pi-spin pi-spinner"></i> Loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status" />
 	</section>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
-import { WorkflowNode } from '@/types/workflow';
+import { computed, shallowRef, watch, ref, ComputedRef, onMounted, onUnmounted } from 'vue';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import {
-	CalibrationRequestJulia,
-	CsvAsset,
-	Simulation,
-	ModelConfiguration,
-	TimeSpan
-} from '@/types/Types';
+import { CalibrationRequestJulia, CsvAsset, ModelConfiguration, TimeSpan } from '@/types/Types';
 import {
 	makeCalibrateJobJulia,
-	getSimulation,
-	getRunResultJulia
+	getRunResultJulia,
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -133,7 +128,9 @@ import _ from 'lodash';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -146,7 +143,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -169,6 +166,20 @@ const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+
+const poller = new Poller();
+
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 const disableRunButton = computed(
 	() =>
@@ -221,30 +232,31 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	startedRunId.value = response.simulationId;
-	getStatus();
-	showSpinner.value = true;
+	if (response.simulationId) {
+		getStatus(response.simulationId);
+	}
 };
-// Retrieve run ids
-// FIXME: Replace with API.poller
-const getStatus = async () => {
-	if (!startedRunId.value) return;
 
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
+const getStatus = async (simulationId: string) => {
+	showSpinner.value = true;
+	if (!simulationId) return;
 
-	if (currentSimulation && currentSimulation.status === 'complete') {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
-		showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
+	const runIds = [simulationId];
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		console.error('Failed', startedRunId.value);
 		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
+	completedRunId.value = startedRunId.value;
+	updateOutputPorts(completedRunId);
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {
