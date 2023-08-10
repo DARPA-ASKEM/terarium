@@ -189,6 +189,7 @@ import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import { ProjectAssetTypes } from '@/types/Project';
 
 const projects = ref<Project[]>();
 // Only display first 2 projects with at least one related document
@@ -218,8 +219,14 @@ onMounted(async () => {
 	projects.value = (await ProjectService.getAll()) ?? [];
 
 	projects.value.forEach(async (project) => {
-		project.assets = await ProjectService.getAssets(project.id);
-		project.relatedDocuments = await getRelatedDocuments(project.id, null);
+		if (project.id) {
+			const publications = await ProjectService.getAssets(project.id, ['publications'])?.[
+				ProjectAssetTypes.DOCUMENTS
+			];
+			if (!isEmpty(publications)) {
+				project.relatedDocuments = await getRelatedDocuments(publications[0].id);
+			}
+		}
 	});
 
 	// Get all relevant documents (latest on section)
