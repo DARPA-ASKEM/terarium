@@ -10,6 +10,7 @@ export interface SimulateEnsembleCiemssOperationState {
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	numSamples: number;
+	simulationsInProgress: string[];
 }
 
 export const SimulateEnsembleCiemssOperation: Operation = {
@@ -32,7 +33,8 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			chartConfigs: [],
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
-			numSamples: 40
+			numSamples: 40,
+			simulationsInProgress: []
 		};
 		return init;
 	}

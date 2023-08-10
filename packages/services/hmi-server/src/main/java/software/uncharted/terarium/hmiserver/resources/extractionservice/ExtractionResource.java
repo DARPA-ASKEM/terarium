@@ -13,10 +13,10 @@ import software.uncharted.terarium.hmiserver.proxies.extractionservice.Extractio
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/api/extract")
@@ -130,26 +130,37 @@ public class ExtractionResource {
 	 * Args:
 	 *     pdf (Object): The PDF file to upload
 	 *
-	 * @return extractions of the pdf
+	 * @return response status of queueing this operation
 	 */
 	@POST
 	@Path("/pdf-extractions")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postPDFExtractions(
+		@QueryParam("artifact_id") String artifactId,
 		@DefaultValue("true") @QueryParam("annotate_skema") Boolean annotateSkema,
-		@DefaultValue("true") @QueryParam("annotate_amr") Boolean annotateMIT,
+		@DefaultValue("true") @QueryParam("annotate_mit") Boolean annotateMIT,
 		@QueryParam("name") String name,
-		@QueryParam("model") String description,
-		Object pdf
+		@QueryParam("description") String description
 	) {
-		return extractionProxy.postPDFExtractions(annotateSkema, annotateMIT, name, description, pdf);
+		return extractionProxy.postPDFExtractions(artifactId, annotateSkema, annotateMIT, name, description);
 	};
+
+	/**
+	 * Post a PDF to the extraction service to get text
+	 * @param artifactId (String): The ID of the artifact to extract text from
+	 * @return response status of queueing this operation
+	 */
+	@POST
+	@Path("/pdf-to-text")
+	public Response postPDFToText(@QueryParam("artifact_id") String artifactId){
+		return extractionProxy.postPDFToText(artifactId);
+	}
 
 	/**
 	 * Profile a dataset
 	 *
 	 * @param		datasetId (String): The ID of the dataset to profile
-	 * @param		documentText (String): The text of the document to profile
+	 * @param		artifactId (String): The ID of the artifact to profile
 	 *
 	 * @return the profiled dataset
 	 */

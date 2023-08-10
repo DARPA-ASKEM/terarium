@@ -35,46 +35,43 @@
 		</section>
 	</section>
 	<section v-else>
-		<div>loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status" />
 	</section>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, ComputedRef } from 'vue';
+import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
+import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
-	EnsembleSimulationCiemssRequest,
-	Simulation,
-	TimeSpan,
-	EnsembleModelConfigs
-} from '@/types/Types';
-import {
-	getSimulation,
 	makeEnsembleCiemssSimulation,
-	getRunResultCiemss
+	getRunResultCiemss,
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { Poller, PollerState } from '@/api/api';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleCiemssOperation
 } from './simulate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
-const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const ensembleConfigs = computed<EnsembleModelConfigs[]>(() => props.node.state.mapping);
@@ -84,6 +81,20 @@ const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+
+const poller = new Poller();
+
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 const runEnsemble = async () => {
 	const params: EnsembleSimulationCiemssRequest = {
@@ -93,10 +104,9 @@ const runEnsemble = async () => {
 		extra: { num_samples: numSamples.value }
 	};
 	const response = await makeEnsembleCiemssSimulation(params);
-	startedRunId.value = response.simulationId;
-
-	showSpinner.value = true;
-	getStatus();
+	if (response.simulationId) {
+		getStatus(response.simulationId);
+	}
 };
 
 // Tom TODO: Make this generic, its copy paste from drilldown
@@ -123,25 +133,27 @@ const addChart = () => {
 	});
 };
 
-const getStatus = async () => {
-	if (!startedRunId.value) return;
+const getStatus = async (simulationId: string) => {
+	showSpinner.value = true;
+	if (!simulationId) return;
 
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
+	const runIds = [simulationId];
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	const pollerResults = await poller.start();
 
-	if (currentSimulation && currentSimulation.status === 'complete') {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
-		addChart();
-		showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
+		console.error('Failed', simulationId);
+		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
+	completedRunId.value = simulationId;
+	updateOutputPorts(completedRunId);
+	addChart();
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {
