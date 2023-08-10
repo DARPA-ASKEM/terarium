@@ -16,7 +16,7 @@ public class DocumentProxyTests {
 	@RestClient
 	DocumentProxy documentProxy;
 
-
+	@Test
 	public void testItCanFetchSets() {
 		final XDDSetsResponse response = documentProxy.getAvailableSets();
 
@@ -26,7 +26,7 @@ public class DocumentProxyTests {
 		Assertions.assertTrue(response.getAvailableSets().size() > 0);
 	}
 
-
+	@Test
 	public void testItCanGetAllAvailableDictionaries() {
 		final XDDResponse<XDDDictionariesResponseOK> response = documentProxy.getAvailableDictionaries("");
 
@@ -37,7 +37,7 @@ public class DocumentProxyTests {
 		Assertions.assertTrue(response.getSuccess().getData().size() > 0);
 	}
 
-
+	@Test
 	public void testItCanGetADocumentById() {
 		final String TARGET_ID = "607182f63f2ac7e701921c92";
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments("",
@@ -53,6 +53,7 @@ public class DocumentProxyTests {
 	}
 
 
+	@Test
 	public void testItCanSearchForADocByTerm() {
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments("",
 			null, null, null, "COVID-19", "xdd-covid-19", "true", "true", null, null, "100", "2", null, "true",
@@ -77,7 +78,7 @@ public class DocumentProxyTests {
 		Assertions.assertTrue(response.getSuccess().getFacets().size() > 0);
 	}
 
-
+	@Test
 	public void testItCanSearchForGithubURL() {
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments("",
 			null, null, null, null, null, null, null, null, null, "100", "2", null, "true",
