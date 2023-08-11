@@ -83,9 +83,9 @@ const stats = computed(() =>
 		? null
 		: {
 				contributors: 1,
-				models: props.project?.metadata?.['models-count'] ?? 0,
-				datasets: props.project?.metadata?.['datasets-count'] ?? 0,
-				papers: props.project?.metadata?.['publications-count'] ?? 0
+				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10),
+				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
+				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10)
 		  }
 );
 
@@ -106,8 +106,8 @@ const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
 const showProjectMenu = (event) => projectMenu.value.toggle(event);
 
 const removeProject = async () => {
-	if (!props.project) return;
-	const isDeleted = await ProjectService.remove(props.project?.id);
+	if (!props.project || !props.project?.id) return;
+	const isDeleted = await ProjectService.remove(props.project.id);
 	closeRemoveDialog();
 	if (isDeleted) {
 		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
