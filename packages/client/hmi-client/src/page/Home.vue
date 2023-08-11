@@ -170,7 +170,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
-import { Document, DocumentAsset, Project } from '@/types/Types';
+import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
@@ -188,14 +188,15 @@ import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
-import { ProjectAssetTypes } from '@/types/Project';
 
 const projects = ref<Project[]>();
 
-/** Display Related Documents for the latest 3 project with at least one publication */
+/**
+ * Display Related Documents for the latest 3 project with at least one publication.
+ */
 type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Document[] };
 const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
-watch(projects, async (newProjects) => {
+async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 	projectsWithRelatedDocuments.value = await Promise.all(
 		newProjects
 			// filter out the ones with no publications
@@ -204,11 +205,10 @@ watch(projects, async (newProjects) => {
 			.slice(0, 3)
 			// get the related documents for each project first publication
 			.map(async (project) => {
-				let { relatedDocuments = [] as Document[] } = project;
+				let relatedDocuments = [] as Document[];
 				if (project.id) {
 					// Fetch the publications for the project
-					const assets = await ProjectService.getAssets(project.id, [ProjectAssetTypes.DOCUMENTS]);
-					const publications = assets?.[ProjectAssetTypes.DOCUMENTS] ?? ([] as DocumentAsset[]);
+					const publications = await ProjectService.getPublicationAssets(project.id);
 					if (!isEmpty(publications)) {
 						// Fetch the related documents for the first publication
 						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
@@ -217,7 +217,8 @@ watch(projects, async (newProjects) => {
 				return { name: project.name, relatedDocuments } as RelatedDocumentFromProject;
 			}) ?? ([] as RelatedDocumentFromProject[])
 	);
-});
+}
+watch(projects, (newProjects) => newProjects && updateProjectsWithRelatedDocuments(newProjects));
 
 const selectedDocument = ref<Document>();
 const resourcesStore = useResourcesStore();
