@@ -127,7 +127,6 @@ const props = defineProps<{
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-// const stratificationType = computed<string | null>(() => getStratificationType(props.model));
 const typedModel = ref<Model>(props.model);
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
