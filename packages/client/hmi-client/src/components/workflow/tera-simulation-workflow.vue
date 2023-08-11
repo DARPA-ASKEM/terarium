@@ -262,6 +262,8 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
+const emit = defineEmits(['page-loaded']);
+
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
@@ -752,6 +754,7 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
+		emit('page-loaded');
 	},
 	{ immediate: true }
 );
