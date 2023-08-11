@@ -29,6 +29,7 @@ import {
 	XDDExtractionType,
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '@/types/XDD';
+import { logger } from '@/utils/logger';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
@@ -439,33 +440,20 @@ const getAssets = async (params: GetAssetsParams) => {
 };
 
 /**
- * fetch list of related documented utilizing
- *  semantic similarity (i.e., document embedding) from XDD via the HMI server
- *
- * TODO: this should probably be deprecated at some point now that we're using
- * the "/documents?similar_to=<id>" endpoint as an alternative
+ * fetch list of related documented based on the given document ID
  */
-const getRelatedDocuments = async (docid: string, dataset: string | null) => {
-	if (docid === '') {
-		return [] as Document[];
-	}
-
-	// https://xdd.wisc.edu/sets/xdd-covid-19/doc2vec/api/similar?doi=10.1002/pbc.28600
-	// dataset=xdd-covid-19
-	// doi=10.1002/pbc.28600
-	// docid=5ebd1de8998e17af826e810e
-	const url = `/document/related/document?docid=${docid}&set=${dataset || 'xdd-covid-19'}`;
-
-	const res = await API.get(url);
-	if (res) {
-		const rawdata: XDDResult = res.data;
-
-		if (rawdata && rawdata.data) {
-			const documentsRaw = rawdata.data.map((a) => a.bibjson);
-			return documentsRaw.map((a) => ({
-				...a,
-				abstractText: a.abstractText
-			}));
+const getRelatedDocuments = async (docid: string): Promise<Document[]> => {
+	if (docid !== '') {
+		const { status, data } = await API.get(`/documents?max=8&similar_to=${docid}`);
+		if (status === 200 && data) {
+			return data?.success?.data ?? ([] as Document[]);
+		}
+		if (status === 204) {
+			logger.error('Request received successfully, but there are no documents');
+		} else if (status === 400) {
+			logger.error('Query must contain a docid');
+		} else if (status === 500) {
+			logger.error('An error occurred retrieving documents');
 		}
 	}
 	return [] as Document[];

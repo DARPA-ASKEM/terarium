@@ -102,6 +102,7 @@ export interface Project {
     active: boolean;
     concept?: Concept;
     assets?: Assets;
+    metadata?: { [index: string]: string };
     username: string;
     id?: string;
     relatedDocuments?: Document[];
