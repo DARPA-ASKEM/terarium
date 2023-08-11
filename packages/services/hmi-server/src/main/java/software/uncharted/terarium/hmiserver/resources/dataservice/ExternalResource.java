@@ -9,10 +9,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Software;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ExternalProxy;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Path("/api/external")
 @Produces(MediaType.APPLICATION_JSON)

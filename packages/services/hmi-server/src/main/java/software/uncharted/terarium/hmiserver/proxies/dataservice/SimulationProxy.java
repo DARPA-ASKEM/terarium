@@ -7,8 +7,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/simulations")
