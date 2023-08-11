@@ -69,7 +69,7 @@
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
-				<div v-for="(project, index) in projectsToDisplay" :key="index">
+				<div v-for="project in projectsWithRelatedDocuments" :key="project.name">
 					<p>{{ project.name }}</p>
 					<div class="carousel">
 						<div class="chevron-left" @click="scroll('left', $event)">
@@ -79,7 +79,7 @@
 							<i class="pi pi-chevron-right" />
 						</div>
 						<ul>
-							<li v-for="(document, j) in project.relatedDocuments" :key="j">
+							<li v-for="document in project.relatedDocuments" :key="document.gddId">
 								<tera-document-card :document="document" @click="selectDocument(document)" />
 							</li>
 						</ul>
@@ -168,11 +168,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
-import { XDDSearchParams } from '@/types/XDD';
-import { Document, Project } from '@/types/Types';
-import { searchXDDDocuments, getRelatedDocuments } from '@/services/data';
+import { Document, DocumentAsset, Project } from '@/types/Types';
+import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import TeraDocumentCard from '@/components/home/tera-document-card.vue';
@@ -192,15 +191,35 @@ import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 
 const projects = ref<Project[]>();
-// Only display first 2 projects with at least one related document
-const projectsToDisplay = computed(() =>
-	projects.value?.filter((project) => !isEmpty(project.relatedDocuments)).slice(0, 2)
-);
-const relevantDocuments = ref<Document[]>([]);
-const relevantSearchTerm = 'COVID-19';
-const relevantSearchParams: XDDSearchParams = { perPage: 15 };
-const selectedDocument = ref<Document>();
 
+/** Display Related Documents for the latest 3 project with at least one publication */
+type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Document[] };
+const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
+watch(projects, async (newProjects) => {
+	projectsWithRelatedDocuments.value = await Promise.all(
+		newProjects
+			// filter out the ones with no publications
+			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
+			// get the first three project with a publication
+			.slice(0, 3)
+			// get the related documents for each project first publication
+			.map(async (project) => {
+				let { relatedDocuments = [] as Document[] } = project;
+				if (project.id) {
+					// Fetch the publications for the project
+					const assets = await ProjectService.getAssets(project.id, [ProjectAssetTypes.DOCUMENTS]);
+					const publications = assets?.[ProjectAssetTypes.DOCUMENTS] ?? ([] as DocumentAsset[]);
+					if (!isEmpty(publications)) {
+						// Fetch the related documents for the first publication
+						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
+					}
+				}
+				return { name: project.name, relatedDocuments } as RelatedDocumentFromProject;
+			}) ?? ([] as RelatedDocumentFromProject[])
+	);
+});
+
+const selectedDocument = ref<Document>();
 const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
 const router = useRouter();
@@ -217,23 +236,6 @@ onMounted(async () => {
 	queryStore.reset(); // Facets queries.
 
 	projects.value = (await ProjectService.getAll()) ?? [];
-
-	projects.value.forEach(async (project) => {
-		if (project.id) {
-			const publications = await ProjectService.getAssets(project.id, ['publications'])?.[
-				ProjectAssetTypes.DOCUMENTS
-			];
-			if (!isEmpty(publications)) {
-				project.relatedDocuments = await getRelatedDocuments(publications[0].id);
-			}
-		}
-	});
-
-	// Get all relevant documents (latest on section)
-	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
-	if (allDocuments) {
-		relevantDocuments.value = allDocuments.data;
-	}
 });
 
 const selectDocument = (item: Document) => {
