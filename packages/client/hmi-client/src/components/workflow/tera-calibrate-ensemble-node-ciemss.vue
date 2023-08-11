@@ -35,42 +35,44 @@
 		</section>
 	</section>
 	<section v-else>
-		<tera-progress-bar :value="progress.value" :status="progress.status" />
+		<div>loading...</div>
 	</section>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, ComputedRef } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
-import { EnsembleCalibrationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
+	EnsembleCalibrationCiemssRequest,
+	Simulation,
+	TimeSpan,
+	EnsembleModelConfigs
+} from '@/types/Types';
+import {
+	getSimulation,
 	makeEnsembleCiemssCalibration,
-	getRunResultCiemss,
-	simulationPollAction,
-	querySimulationInProgress
+	getRunResultCiemss
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { Poller, PollerState } from '@/api/api';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleCiemssOperation,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
+const emit = defineEmits(['append-output-port']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
@@ -91,20 +93,6 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
 const datasetColumnNames = ref<string[]>();
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
-
-const poller = new Poller();
-
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
 
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
@@ -125,32 +113,30 @@ const runEnsemble = async () => {
 	};
 	const response = await makeEnsembleCiemssCalibration(params);
 	startedRunId.value = response.simulationId;
-	if (response.simulationId) {
-		getStatus(response.simulationId);
-	}
+
+	showSpinner.value = true;
+	getStatus();
 };
 
-const getStatus = async (simulationId: string) => {
-	showSpinner.value = true;
-	if (!simulationId) return;
+const getStatus = async () => {
+	if (!startedRunId.value) return;
 
-	const runIds = [simulationId];
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
-	const pollerResults = await poller.start();
+	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
+	const ongoingStatusList = ['running', 'queued'];
 
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		console.error('Failed', simulationId);
+	if (currentSimulation && currentSimulation.status === 'complete') {
+		completedRunId.value = startedRunId.value;
+		updateOutputPorts(completedRunId);
+		addChart();
 		showSpinner.value = false;
+	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
+		// recursively call until all runs retrieved
+		setTimeout(getStatus, 3000);
+	} else {
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunId.value);
 		throw Error('Failed Runs');
 	}
-	completedRunId.value = simulationId;
-	updateOutputPorts(completedRunId);
-	addChart();
-	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {

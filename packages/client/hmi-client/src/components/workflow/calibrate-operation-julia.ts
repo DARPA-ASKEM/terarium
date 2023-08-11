@@ -28,7 +28,6 @@ export interface CalibrationOperationStateJulia {
 	mapping: CalibrateMap[];
 	extra: CalibrateExtraJulia;
 	timeSpan: TimeSpan;
-	simulationsInProgress: string[];
 }
 
 export const CalibrationOperationJulia: Operation = {
@@ -76,8 +75,7 @@ export const CalibrationOperationJulia: Operation = {
 				odeMethod: 'default',
 				calibrateMethod: CalibrateMethodOptions.GLOBAL
 			},
-			timeSpan: { start: 0, end: 90 },
-			simulationsInProgress: []
+			timeSpan: { start: 0, end: 90 }
 		};
 		return init;
 	}

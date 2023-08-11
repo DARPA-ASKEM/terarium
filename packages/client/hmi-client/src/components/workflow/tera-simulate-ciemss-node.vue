@@ -33,36 +33,33 @@
 		</Accordion>
 	</section>
 	<section v-else>
-		<tera-progress-bar :value="progress.value" :status="progress.status" />
+		<div>loading...</div>
 	</section>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import {
 	makeForecastJobCiemss as makeForecastJob,
-	getRunResultCiemss,
-	simulationPollAction,
-	querySimulationInProgress
+	getSimulation,
+	getRunResultCiemss
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
-import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
-import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
+const emit = defineEmits(['append-output-port']);
 // const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
@@ -71,12 +68,10 @@ const numSamples = ref(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
+const startedRunIdList = ref<string[]>([]);
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
-
-const poller = new Poller();
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
@@ -101,37 +96,33 @@ const runSimulate = async () => {
 		return response.id;
 	});
 
-	const response = await Promise.all(simulationRequests);
-	getStatus(response);
+	startedRunIdList.value = await Promise.all(simulationRequests);
+	getStatus();
+	showSpinner.value = true;
 };
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds);
-	}
-});
+// Retrieve run ids
+// FIXME: Replace with API.poller
+const getStatus = async () => {
+	const requestList: any[] = [];
+	startedRunIdList.value.forEach((id) => {
+		requestList.push(getSimulation(id));
+	});
 
-onUnmounted(() => {
-	poller.stop();
-});
+	const currentSimulations = await Promise.all(requestList);
+	const ongoingStatusList = ['running', 'queued'];
 
-const getStatus = async (runIds: string[]) => {
-	showSpinner.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
-	const pollerResults = await poller.start();
-
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		console.error('Failed', runIds);
+	if (currentSimulations.every(({ status }) => status === 'complete')) {
+		completedRunIdList.value = startedRunIdList.value;
 		showSpinner.value = false;
+	} else if (currentSimulations.some(({ status }) => ongoingStatusList.includes(status))) {
+		// recursively call until all runs retrieved
+		setTimeout(getStatus, 3000);
+	} else {
+		// throw if there are any failed runs for now
+		console.error('Failed', startedRunIdList.value);
 		throw Error('Failed Runs');
 	}
-	completedRunIdList.value = runIds;
-	showSpinner.value = false;
 };
 
 // assume only one run for now

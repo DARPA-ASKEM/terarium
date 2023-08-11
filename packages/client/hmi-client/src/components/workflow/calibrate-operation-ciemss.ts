@@ -14,7 +14,6 @@ export interface CalibrationOperationStateCiemss {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
 	timeSpan: TimeSpan;
-	simulationsInProgress: string[];
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -56,8 +55,7 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
-			timeSpan: { start: 0, end: 90 },
-			simulationsInProgress: []
+			timeSpan: { start: 0, end: 90 }
 		};
 		return init;
 	}

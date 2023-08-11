@@ -79,38 +79,32 @@
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-simulate-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-calibration-julia-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-calibration-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<tera-simulate-ensemble-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-calibrate-ensemble-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
@@ -410,11 +404,6 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 			});
 		}
 	}
-	workflowDirty = true;
-}
-
-function updateWorkflowNodeState(node: WorkflowNode, state: any) {
-	workflowService.updateNodeState(wf.value, node.id, state);
 	workflowDirty = true;
 }
 

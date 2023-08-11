@@ -7,7 +7,6 @@ export interface SimulateCiemssOperationState {
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	method: string;
-	simulationsInProgress: string[];
 }
 
 export const SimulateCiemssOperation: Operation = {
@@ -23,8 +22,7 @@ export const SimulateCiemssOperation: Operation = {
 			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 },
 			numSamples: 100,
-			method: 'dopri5',
-			simulationsInProgress: []
+			method: 'dopri5'
 		};
 		return init;
 	},

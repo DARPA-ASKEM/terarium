@@ -181,7 +181,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { IProject } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { Artifact, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import { FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
@@ -190,7 +190,6 @@ import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
-import { extractPDF } from '@/services/models/extractions';
 
 const props = defineProps<{
 	urlString: string;
@@ -342,16 +341,12 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 
 async function importDocumentFiles(githubFiles: GithubFile[]) {
 	githubFiles.forEach(async (githubFile) => {
-		const artifact: Artifact | null = await createNewArtifactFromGithubFile(
+		await createNewArtifactFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
 			props.project?.username ?? '',
 			props.project?.id ?? ''
 		);
-
-		if (artifact && githubFile.name?.toLowerCase().endsWith('.pdf')) {
-			extractPDF(artifact);
-		}
 	});
 }
 

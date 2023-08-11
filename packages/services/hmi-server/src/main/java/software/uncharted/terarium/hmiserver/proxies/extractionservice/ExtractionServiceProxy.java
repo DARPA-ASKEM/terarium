@@ -4,15 +4,15 @@ package software.uncharted.terarium.hmiserver.proxies.extractionservice;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import jakarta.ws.rs.core.MediaType;
+import javax.ws.rs.core.MediaType;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 
 import java.util.List;
 import java.util.Map;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "extraction-service-api")
 @Produces(MediaType.APPLICATION_JSON)
@@ -66,23 +66,13 @@ public interface ExtractionServiceProxy {
 	 */
 	@POST
 	@Path("/pdf_extractions")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	Response postPDFExtractions(
-		@QueryParam("artifact_id") String artifactId,
 		@DefaultValue("true") @QueryParam("annotate_skema") Boolean annotateSkema,
-		@DefaultValue("true") @QueryParam("annotate_mit") Boolean annotateMIT,
+		@DefaultValue("true") @QueryParam("annotate_amr") Boolean annotateMIT,
 		@QueryParam("name") String name,
-		@QueryParam("description") String description
-	);
-
-	/**
-	 * Post a PDF to the extraction service to get text
-	 * @param artifactId (String): The ID of the artifact to extract text from
-	 * @return
-	 */
-	@POST
-	@Path("/pdf_to_text")
-	Response postPDFToText(
-		@QueryParam("artifact_id") String artifactId
+		@QueryParam("description") String description,
+		Object pdf
 	);
 
 	/**

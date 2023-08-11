@@ -16,7 +16,6 @@ export interface CalibrateEnsembleCiemssOperationState {
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	extra: EnsembleCalibrateExtraCiemss;
-	simulationsInProgress: string[];
 }
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
@@ -46,8 +45,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 				numSamples: 50,
 				totalPopulation: 1000,
 				numIterations: 10
-			},
-			simulationsInProgress: []
+			}
 		};
 		return init;
 	}

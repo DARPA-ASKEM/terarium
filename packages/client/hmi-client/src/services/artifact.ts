@@ -46,11 +46,7 @@ async function createNewArtifactFromGithubFile(
 		return null;
 	}
 
-	const resp = addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
-
-	if (!resp) return null;
-
-	return newArtifact;
+	return addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
 }
 
 /**
@@ -67,7 +63,7 @@ async function uploadArtifactToProject(
 	userName: string,
 	projectId: string,
 	description?: string
-): Promise<Artifact | null> {
+): Promise<any> {
 	// Create a new artifact with the same name as the file, and post the metadata to TDS
 	const artifact: Artifact = {
 		name: file.name,
@@ -82,10 +78,7 @@ async function uploadArtifactToProject(
 	const successfulUpload = await addFileToArtifact(newArtifact.id, file, progress);
 	if (!successfulUpload) return null;
 
-	const resp = addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
-	if (!resp) return null;
-
-	return newArtifact;
+	return addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
 }
 
 /**

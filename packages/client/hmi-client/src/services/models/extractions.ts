@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Artifact, Model } from '@/types/Types';
+import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -104,79 +104,6 @@ export const profileDataset = async (datasetId: string, artifactId: string | nul
 	}
 	console.log('data profile response', response.data);
 	return response.data.id;
-};
-
-const extractTextFromPDFArtifact = async (artifactId: string): Promise<string | null> => {
-	try {
-		const response = await API.post(`/extract/pdf-to-text?artifact_id=${artifactId}`);
-		if (response?.status === 200 && response?.data?.id) return response.data.id;
-		logger.error('pdf text extraction request failed', {
-			showToast: false,
-			toastTitle: 'Error - pdfExtractions'
-		});
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('[pdfExtractions]', axiosError.response?.data || axiosError.message, {
-				showToast: false,
-				toastTitle: 'Error - pdf text extraction'
-			});
-		} else {
-			logger.error(error, { showToast: false, toastTitle: 'Error - pdf text extraction' });
-		}
-	}
-
-	return null;
-};
-
-const pdfExtractions = async (
-	artifactId: string,
-	pdfName?: string,
-	description?: string
-): Promise<string | null> => {
-	// I've purposefully excluded the MIT and SKEMA options here, so they're always
-	// defaulted to true.
-
-	let url = `/extract/pdf-extractions?artifact_id=${artifactId}`;
-	if (pdfName) {
-		url += `&pdf_name=${pdfName}`;
-	}
-	if (description) {
-		url += `&description=${description}`;
-	}
-
-	try {
-		const response = await API.post(url);
-		if (response?.status === 200 && response?.data?.id) return response.data.id;
-		logger.error('pdf Extractions request failed', {
-			showToast: false,
-			toastTitle: 'Error - pdfExtractions'
-		});
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('[pdfExtractions]', axiosError.response?.data || axiosError.message, {
-				showToast: false,
-				toastTitle: 'Error - pdfExtractions'
-			});
-		} else {
-			logger.error(error, { showToast: false, toastTitle: 'Error - pdfExtractions' });
-		}
-	}
-
-	return null;
-};
-
-export const extractPDF = async (artifact: Artifact) => {
-	if (artifact.id) {
-		const resp: string | null = await extractTextFromPDFArtifact(artifact.id);
-		if (resp) {
-			const pollResult = await fetchExtraction(resp);
-			if (pollResult?.state === PollerState.Done) {
-				await pdfExtractions(artifact.id); // we don't care now. fire and forget.
-			}
-		}
-	}
 };
 
 export { mathmlToAMR, latexToAMR };

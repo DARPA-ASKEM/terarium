@@ -7,8 +7,8 @@ import io.quarkus.scheduler.ScheduledExecution;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

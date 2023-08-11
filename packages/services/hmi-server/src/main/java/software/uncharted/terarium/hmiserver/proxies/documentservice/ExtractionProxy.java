@@ -8,8 +8,8 @@ import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 
 @RegisterRestClient(configKey = "xdd-document-service")
 @Produces(MediaType.APPLICATION_JSON)
