@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.annotations;
 
-import jakarta.interceptor.InterceptorBinding;
+import javax.interceptor.InterceptorBinding;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

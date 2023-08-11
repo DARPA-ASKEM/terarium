@@ -4,15 +4,15 @@ package software.uncharted.terarium.hmiserver.proxies.extractionservice;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import jakarta.ws.rs.core.MediaType;
+import javax.ws.rs.core.MediaType;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 
 import java.util.List;
 import java.util.Map;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "ta1-service-api")
 @Produces(MediaType.APPLICATION_JSON)
