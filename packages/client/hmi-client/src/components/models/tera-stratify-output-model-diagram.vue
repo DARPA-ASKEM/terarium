@@ -37,18 +37,16 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { ref, computed, onMounted } from 'vue';
-import { runDagreLayout } from '@/services/graph';
 import {
 	NodeData,
 	EdgeData,
 	PetrinetRenderer
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
-import { convertToIGraph } from '@/model-representation/petrinet/petrinet-service';
 import { Model } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 const props = defineProps<{
@@ -82,9 +80,7 @@ function getLegendKeyStyle(id: string) {
 }
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-		isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
-	);
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 	// Render graph
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -97,30 +93,11 @@ async function toggleCollapsedView() {
 //	that we render the graph to changes.
 onMounted(async () => {
 	if (props.model === null || graphElement.value === null) return;
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-		isCollapsed.value ? props.model.semantics?.span?.[0].system : props.model
-	);
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
-	const nestedMap = props.model.semantics?.span?.[0].map.reduce(
-		(childMap, [stratNode, baseNode]) => {
-			if (!childMap[baseNode]) {
-				childMap[baseNode] = [];
-			}
-			childMap[baseNode].push(stratNode);
-			return childMap;
-		},
-		{}
-	);
 	// Create renderer
 	if (!renderer) {
-		renderer = new NestedPetrinetRenderer({
-			el: graphElement.value as HTMLDivElement,
-			useAStarRouting: false,
-			useStableZoomPan: true,
-			runLayout: runDagreLayout,
-			dragSelector: 'no-drag',
-			nestedMap
-		});
+		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
 	} else {
 		renderer.isGraphDirty = true;
 	}

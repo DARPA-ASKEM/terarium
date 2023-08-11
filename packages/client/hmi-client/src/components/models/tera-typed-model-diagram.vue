@@ -92,17 +92,12 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed } from 'vue';
-import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
 	NodeData,
 	EdgeData
 } from '@/model-representation/petrinet/petrinet-renderer';
-import {
-	convertToIGraph,
-	addTyping,
-	getStratificationType
-} from '@/model-representation/petrinet/petrinet-service';
+import { addTyping, getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import { Model, State, Transition, TypeSystem, TypingSemantics } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
@@ -113,8 +108,8 @@ import {
 	generateTypeTransition,
 	generateTypeState
 } from '@/services/models/stratification-service';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import Toolbar from 'primevue/toolbar';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
@@ -214,9 +209,7 @@ function setNodeColors() {
 const isCollapsed = ref(true);
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-		isCollapsed.value ? props.model.semantics?.span?.[0].system : typedModel.value
-	);
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 	// Render graph
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -418,42 +411,11 @@ watch(
 	[() => typedModel, graphElement],
 	async () => {
 		if (typedModel.value === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraph(
-			isCollapsed.value && getStratificationType(props.model)
-				? props.model.semantics?.span?.[0].system
-				: typedModel.value
-		);
-		const nestedMap = props.model.semantics?.span?.[0].map.reduce(
-			(childMap, [stratNode, baseNode]) => {
-				if (!childMap[baseNode]) {
-					childMap[baseNode] = [];
-				}
-				childMap[baseNode].push(stratNode);
-				return childMap;
-			},
-			{}
-		);
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 		// Create renderer
 		if (!renderer) {
-			if (getStratificationType(props.model)) {
-				renderer = new NestedPetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag',
-					nestedMap
-				});
-			} else {
-				renderer = new PetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag'
-				});
-			}
+			renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
 		} else {
 			if (!stratificationType.value && renderer instanceof NestedPetrinetRenderer) {
 				renderer = new PetrinetRenderer({
