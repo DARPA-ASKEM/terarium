@@ -18,9 +18,9 @@ const CIRCLE_MARGIN_CONST = 1;
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 
 export class NestedPetrinetRenderer extends PetrinetRenderer {
-	nestedMap: any;
+	nestedMap?: { [baseNodeId: string]: any };
 
-	transitionMatrices: any;
+	transitionMatrices?: { [baseTransitionId: string]: any[] };
 
 	// override type of constructor argument
 	constructor(options: NestedPetrinetOptions) {
@@ -48,8 +48,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('height', (d) => d.height)
 			.attr('y', (d) => -d.height * 0.5)
 			.attr('x', (d) => -d.width * 0.5)
-			.attr('rx', '6')
-			.attr('ry', '6')
+			.attr('rx', 6)
+			.attr('ry', 6)
 			.style('fill', (d) =>
 				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
 			)
@@ -69,7 +69,17 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
 
-		const renderNestedNodes = (node, parentRadius, parentX, parentY, g, idx) => {
+		const renderNestedNodes = (
+			node: { [baseNodeId: string]: any },
+			parentRadius: number,
+			parentX: number,
+			parentY: number,
+			g: any[] | ArrayLike<any>,
+			idx: number
+		) => {
+			// this function recursively iterates through the nested object representation of the
+			// stratified model states and draws the corresponding circles in post-order
+
 			if (Object.keys(node).length === 0) {
 				return;
 			}
@@ -151,11 +161,11 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 							.attr('height', d.width / transitionMatrixLen)
 							.attr('x', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.row)
 							.attr('y', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.col)
-							.attr('rx', '2')
-							.attr('ry', '2')
-							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#7fffd4aa')
+							.attr('rx', 2)
+							.attr('ry', 2)
+							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#7fffd4')
 							.style('cursor', 'pointer')
-							.attr('stroke', '#ffffffcf')
+							.attr('stroke', '#ffffff')
 							.attr('stroke-width', 1);
 					}
 				});
