@@ -127,7 +127,6 @@ const props = defineProps<{
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const stratificationType = computed<string | null>(() => getStratificationType(props.model));
 const typedModel = ref<Model>(props.model);
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
@@ -414,30 +413,7 @@ watch(
 		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 		// Create renderer
-		if (!renderer) {
-			renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
-		} else {
-			if (!stratificationType.value && renderer instanceof NestedPetrinetRenderer) {
-				renderer = new PetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag'
-				});
-			}
-			if (stratificationType.value && !(renderer instanceof NestedPetrinetRenderer)) {
-				renderer = new NestedPetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag',
-					nestedMap
-				});
-			}
-			renderer.isGraphDirty = true;
-		}
+		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
 
 		// Render graph
 		await renderer?.setData(graphData);
