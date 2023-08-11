@@ -155,7 +155,7 @@ watch(
 		}
 
 		// Refetch the list of all projects
-		projects.value = await ProjectService.getAll();
+		projects.value = (await ProjectService.getAll()) as unknown as IProject[];
 	},
 	{ immediate: true }
 );
