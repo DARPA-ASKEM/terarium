@@ -263,7 +263,7 @@ const initialState = {
 	numUntypedNodes: -1
 };
 
-function setState(state) {
+function restoreState(state) {
 	stratifyView.value = state.stratifyView;
 	stratifyStep.value = state.stratifyStep;
 	strataModel.value = state.strataModel;
@@ -294,7 +294,7 @@ function generateStrataModel() {
 			nodeId: props.node.id,
 			state: { ...props.node.state, strataModel: strataModel.value }
 		});
-		setState(props.node.state);
+		restoreState(props.node.state);
 	}
 }
 
@@ -373,7 +373,7 @@ watch(
 				state: { ...initialState, model: model.value }
 			});
 		}
-		setState(props.node.state);
+		restoreState(props.node.state);
 	},
 	{ immediate: true }
 );
