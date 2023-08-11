@@ -201,21 +201,17 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
-import { runDagreLayout } from '@/services/graph';
 import {
 	PetrinetRenderer,
 	NodeData,
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
-import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
 
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	getStratificationType,
 	convertAMRToACSet,
-	convertToIGraph,
 	updateExistingModelContent
 } from '@/model-representation/petrinet/petrinet-service';
 import { latexToAMR } from '@/services/models/extractions';
@@ -230,6 +226,7 @@ import Toolbar from 'primevue/toolbar';
 import { Model, Observable } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
@@ -467,7 +464,7 @@ const isCollapsed = ref(true);
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
 	if (props.model) {
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 		// Render graph
 		if (renderer) {
 			renderer.isGraphDirty = true;
@@ -477,41 +474,16 @@ async function toggleCollapsedView() {
 	}
 }
 
-const convertToIGraphHelper = (amr: Model) => {
-	if (getStratificationType(amr) && isCollapsed.value) {
-		// FIXME: wont' work for MIRA
-		return convertToIGraph(props.model?.semantics?.span?.[0].system);
-	}
-	return convertToIGraph(amr);
-};
-
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
 	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 		// Create renderer
-		if (getStratificationType(props.model)) {
-			renderer = new NestedPetrinetRenderer({
-				el: graphElement.value as HTMLDivElement,
-				useAStarRouting: false,
-				useStableZoomPan: true,
-				runLayout: runDagreLayout,
-				dragSelector: 'no-drag',
-				nestedMap: extractNestedMap(props.model)
-			});
-		} else {
-			renderer = new PetrinetRenderer({
-				el: graphElement.value as HTMLDivElement,
-				useAStarRouting: false,
-				useStableZoomPan: true,
-				runLayout: runDagreLayout,
-				dragSelector: 'no-drag'
-			});
-		}
+		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
 			if (isEditing.value === true) {
@@ -566,7 +538,7 @@ watch(
 
 const updatePetriNet = async (model: Model) => {
 	// Convert PetriNet into a graph
-	const graphData = convertToIGraphHelper(model);
+	const graphData = getGraphData(model, isCollapsed.value);
 
 	if (renderer) {
 		await renderer.setData(graphData);
@@ -612,7 +584,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = convertToIGraphHelper(props.model);
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 	if (renderer) {
 		renderer.setEditMode(false);
@@ -651,6 +623,12 @@ const prepareTransitionEdit = () => {
 const addNode = async () => {
 	if (!renderer) return;
 	const node = editNodeObj.value;
+	if (props.model?.model.states.find((s) => s.id === node.id)) {
+		return;
+	}
+	if (props.model?.model.transitions.find((t) => t.id === node.id)) {
+		return;
+	}
 	node.expression_mathml = editNodeMathEditor.value?.mathLiveField.getValue('math-ml');
 
 	if (!previousId) {
