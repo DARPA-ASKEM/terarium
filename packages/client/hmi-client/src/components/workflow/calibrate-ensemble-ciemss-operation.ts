@@ -16,11 +16,12 @@ export interface CalibrateEnsembleCiemssOperationState {
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	extra: EnsembleCalibrateExtraCiemss;
+	simulationsInProgress: string[];
 }
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS,
-	displayName: 'Simulate ensemble (probabilistic)',
+	displayName: 'Calibrate ensemble (probabilistic)',
 	description: '',
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true },
@@ -45,7 +46,8 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 				numSamples: 50,
 				totalPopulation: 1000,
 				numIterations: 10
-			}
+			},
+			simulationsInProgress: []
 		};
 		return init;
 	}

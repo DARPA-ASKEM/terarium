@@ -1,13 +1,12 @@
 <template>
 	<section v-if="!showSpinner">
 		<div class="chart-container">
-			<SimulateChart
+			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
-				:run-results="renderedRuns"
+				:run-results="runResults"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
+				has-mean-line
 				@configuration-change="configurationChange(index, $event)"
 			/>
 		</div>
@@ -34,33 +33,36 @@
 		</Accordion>
 	</section>
 	<section v-else>
-		<div>loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status" />
 	</section>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import {
 	makeForecastJobCiemss as makeForecastJob,
-	getSimulation,
-	getRunResultCiemss
+	getRunResultCiemss,
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
-import { WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
-import SimulateChart from './tera-simulate-chart.vue';
+import { Poller, PollerState } from '@/api/api';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 // const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
@@ -69,25 +71,12 @@ const numSamples = ref(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
-const startedRunIdList = ref<string[]>([]);
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
-const renderedRuns = ref<RunResults>({});
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
 
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
+const poller = new Poller();
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
@@ -112,33 +101,37 @@ const runSimulate = async () => {
 		return response.id;
 	});
 
-	startedRunIdList.value = await Promise.all(simulationRequests);
-	getStatus();
-	showSpinner.value = true;
+	const response = await Promise.all(simulationRequests);
+	getStatus(response);
 };
 
-// Retrieve run ids
-// FIXME: Replace with API.poller
-const getStatus = async () => {
-	const requestList: any[] = [];
-	startedRunIdList.value.forEach((id) => {
-		requestList.push(getSimulation(id));
-	});
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds);
+	}
+});
 
-	const currentSimulations = await Promise.all(requestList);
-	const ongoingStatusList = ['running', 'queued'];
+onUnmounted(() => {
+	poller.stop();
+});
 
-	if (currentSimulations.every(({ status }) => status === 'complete')) {
-		completedRunIdList.value = startedRunIdList.value;
-		showSpinner.value = false;
-	} else if (currentSimulations.some(({ status }) => ongoingStatusList.includes(status))) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
+const getStatus = async (runIds: string[]) => {
+	showSpinner.value = true;
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunIdList.value);
+		console.error('Failed', runIds);
+		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
+	completedRunIdList.value = runIds;
+	showSpinner.value = false;
 };
 
 // assume only one run for now
@@ -157,44 +150,6 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	});
 };
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
-
-watch(
-	() => runResults.value,
-	(input) => {
-		const runResult: RunResults = JSON.parse(JSON.stringify(input));
-
-		// convert to array from array-like object
-		const parsedSimProbData = Object.values(runResult);
-
-		const numRuns = parsedSimProbData.length;
-		if (!numRuns) {
-			renderedRuns.value = runResult;
-			return;
-		}
-
-		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
-		const aggregateRun: { [key: string]: number }[] = [];
-
-		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
-			for (let run = 0; run < numRuns; run++) {
-				if (!aggregateRun[timestamp]) {
-					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
-					Object.keys(aggregateRun[timestamp]).forEach((key) => {
-						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
-					});
-				} else {
-					const datum = parsedSimProbData[run][timestamp];
-					Object.keys(datum).forEach((key) => {
-						aggregateRun[timestamp][key] += datum[key] / numRuns;
-					});
-				}
-			}
-		}
-
-		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-	},
-	{ immediate: true, deep: true }
-);
 
 watch(
 	() => numSamples.value,

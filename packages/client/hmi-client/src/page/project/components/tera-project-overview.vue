@@ -1,11 +1,10 @@
 <template>
-	<div class="scrollable">
+	<main>
 		<tera-asset
 			:name="project?.name"
 			:authors="project?.username"
 			:is-naming-asset="isRenamingProject"
 			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
-			is-editable
 			class="overview-banner"
 		>
 			<template #name-input>
@@ -62,12 +61,12 @@
 						size="large"
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
-						@click="isNewModelModalVisible = true"
+						@click="emit('open-new-asset', ProjectAssetTypes.MODELS)"
 					/>
 					<Button
 						size="large"
 						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-workflow')"
+						@click="emit('open-new-asset', ProjectAssetTypes.SIMULATION_WORKFLOW)"
 					>
 						<vue-feather
 							class="p-button-icon-left"
@@ -95,7 +94,7 @@
 					<h4>Resource Manager</h4>
 					<span class="p-input-icon-left">
 						<i class="pi pi-search" />
-						<InputText placeholder="Keyword search" class="keyword-search" />
+						<InputText v-model="searchTable" placeholder="Keyword search" class="keyword-search" />
 					</span>
 				</div>
 				<!-- resource list data table -->
@@ -106,6 +105,7 @@
 					:value="assets"
 					row-hover
 					:row-class="() => 'p-selectable-row'"
+					@update:selection="onRowSelect"
 				>
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
 					<Column field="assetName" header="Name" sortable style="width: 75%">
@@ -245,45 +245,17 @@
 				</tera-modal>
 			</section>
 		</section>
-
-		<!-- New model modal -->
-		<Teleport to="body">
-			<tera-modal
-				v-if="isNewModelModalVisible"
-				class="modal"
-				@modal-mask-clicked="isNewModelModalVisible = false"
-			>
-				<template #header>
-					<h4>New model</h4>
-				</template>
-				<template #default>
-					<form>
-						<label for="new-model">Enter a unique name for your model</label>
-						<InputText
-							v-bind:class="invalidInputStyle"
-							id="new-model"
-							type="text"
-							v-model="newModelName"
-							placeholder="new model"
-						/>
-					</form>
-				</template>
-				<template #footer>
-					<Button @click="createNewModel">Create model</Button>
-					<Button class="p-button-secondary" @click="isNewModelModalVisible = false">
-						Cancel
-					</Button>
-				</template>
-			</tera-modal>
-		</Teleport>
-	</div>
-	<!-- empty white div to fill bottom of screen -->
-	<div class="bottom-white-patch"></div>
+		<tera-multi-select-modal
+			:is-visible="showMultiSelect"
+			:selected-resources="selectedResources"
+			:buttons="multiSelectButtons"
+		></tera-multi-select-modal>
+	</main>
 </template>
 
 <script setup lang="ts">
-import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
-import { nextTick, Ref, ref, computed, onMounted } from 'vue';
+import { IProject, isProjectAssetTypes, ProjectAssetTypes } from '@/types/Project';
+import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
@@ -294,22 +266,25 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab, AcceptedTypes, AcceptedExtensions } from '@/types/common';
+import { AcceptedExtensions, AcceptedTypes, Tab } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
-import { CsvAsset } from '@/types/Types';
+import { Artifact, CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import { uploadArtifactToProject } from '@/services/artifact';
+import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
+import { useTabStore } from '@/stores/tabs';
+import { extractPDF } from '@/services/models/extractions';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'open-asset', 'new-model']);
+const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
 const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -322,19 +297,21 @@ const selectedResources = ref();
 
 const openedRow = ref(null);
 
-const isNewModelModalVisible = ref<boolean>(false);
-const newModelName = ref<string>('');
+const tabStore = useTabStore();
 
-const isValidName = ref<boolean>(true);
-const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
+const multiSelectButtons = [
+	{
+		label: 'Open',
+		callback: () => {
+			selectedResources.value.forEach((resource) => {
+				tabStore.addTab(props.project.id.toString(), toRaw(resource), false);
+			});
+		}
+	}
+];
 
-const existingModelNames = computed(() => {
-	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
-	});
-	return modelNames;
-});
+const searchTable = ref('');
+const showMultiSelect = ref<boolean>(false);
 
 const assets = computed(() => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -347,12 +324,20 @@ const assets = computed(() => {
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
 			const projectAssetType: ProjectAssetTypes = type as ProjectAssetTypes;
-			const typeAssets = projectAssets[projectAssetType].map((asset) => {
-				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const pageType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id ?? '';
-				return { assetName, pageType, assetId };
-			});
+			const typeAssets = projectAssets[projectAssetType]
+				.map((asset) => {
+					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+					const pageType = asset?.type ?? projectAssetType;
+					const assetId = asset?.id ?? '';
+					return { assetName, pageType, assetId };
+				})
+				.filter((asset) => {
+					if (!searchTable.value?.trim()) {
+						return true;
+					}
+					const searchTermLower = searchTable.value?.trim().toLowerCase();
+					return asset.assetName.toLowerCase().includes(searchTermLower);
+				});
 			result.push(...typeAssets);
 		}
 	});
@@ -380,34 +365,25 @@ async function processFiles(files: File[], csvDescription: string) {
 		}
 
 		// This is pdf, txt, md files
-		const response = await uploadArtifactToProject(
+		const artifact: Artifact | null = await uploadArtifactToProject(
 			progress,
 			file,
 			props.project.username ?? '',
 			props.project.id,
 			''
 		);
-		if (response?.data) return { file, error: false, response: { text: '', images: [] } };
+		if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
+			extractPDF(artifact);
+			return { file, error: false, response: { text: '', images: [] } };
+		}
 		return { file, error: true, response: { text: '', images: [] } };
 	});
 }
 
-function createNewModel() {
-	if (newModelName.value.trim().length === 0) {
-		isValidName.value = false;
-		logger.info('Model name cannot be empty - please enter a different name');
-		return;
-	}
-	if (existingModelNames.value.includes(newModelName.value.trim())) {
-		isValidName.value = false;
-		logger.info('Duplicate model name - please enter a different name');
-		return;
-	}
-	isValidName.value = true;
-	emit('new-model', newModelName.value.trim());
-	isNewModelModalVisible.value = false;
-}
-
+const onRowSelect = (selectedRows) => {
+	// show multi select modal when there are selectedRows otherwise hide
+	showMultiSelect.value = selectedRows.length !== 0;
+};
 async function openImportModal() {
 	isUploadResourcesModalVisible.value = true;
 	results.value = null;
@@ -507,12 +483,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.scrollable {
+main {
 	overflow-y: auto;
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none;
+	/* IE and Edge */
+	scrollbar-width: none;
+	/* Firefox */
 }
-.scrollable::-webkit-scrollbar {
+
+main::-webkit-scrollbar {
 	display: none;
 }
 
@@ -585,6 +564,7 @@ button .icon {
 	gap: 1rem;
 }
 
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .quick-links .p-button.p-button-secondary {
 	background-color: var(--surface);
 	color: var(--text-color-primary);
@@ -614,8 +594,8 @@ button .icon {
 	padding-bottom: 0.5rem;
 }
 
-.keyword-search:hover {
-	border-color: var(--surface-border) !important;
+.keyword-search:enabled:hover {
+	border-color: var(--surface-border);
 }
 
 .related {
@@ -685,6 +665,7 @@ ul {
 	padding: 0;
 	padding: 0.375rem 1rem;
 }
+
 :deep(.p-datatable .p-datatable-thead > tr > th) {
 	background: var(--gray-100);
 	padding: 1rem;
@@ -735,13 +716,5 @@ ul {
 .no-results-found-message {
 	text-align: center;
 	width: 40%;
-}
-.bottom-white-patch {
-	background-color: var(--surface-0);
-	flex: 1;
-}
-
-:deep(.p-datatable-emptymessage > td) {
-	border-bottom: none !important;
 }
 </style>

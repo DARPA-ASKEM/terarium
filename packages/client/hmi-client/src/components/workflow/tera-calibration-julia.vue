@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate (deterministic)'" is-editable stretch-content>
+	<tera-asset :name="'Calibrate (deterministic)'" stretch-content>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -129,7 +129,7 @@ import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-import { getRunResult } from '@/services/models/simulation-service';
+import { getRunResultJulia } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -246,10 +246,13 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		const resultCsv = (await getRunResultJulia(
+			simulationIds.value[0].runId,
+			'result.json'
+		)) as string;
 		const csvData = csvParse(resultCsv);
 		runResults.value[simulationIds.value[0].runId] = csvData as any;
-		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 	},
 	{ immediate: true }
 );
@@ -264,11 +267,13 @@ watch(
 	padding: 0rem 0.25rem 0.5rem 0rem !important;
 	border: none !important;
 }
+
 .mapping-table:deep(th) {
 	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
 }
+
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -289,6 +294,7 @@ watch(
 th {
 	text-align: left;
 }
+
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
@@ -311,6 +317,7 @@ th {
 	width: 90%;
 	margin-top: 1rem;
 }
+
 img {
 	width: 20%;
 }

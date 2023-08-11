@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 import lombok.Data;
@@ -16,21 +18,27 @@ import lombok.Setter;
 
 @Data
 @Accessors(chain = true)
+@TSModel
 public class Project implements Serializable {
 
 	@JsonProperty("id")
+	@TSOptional
 	private String projectID;
 
 	private String name;
 
+	@TSOptional
 	private String description;
 
+	@TSOptional
 	private LocalDateTime timestamp;
 
 	private Boolean active;
 
+	@TSOptional
 	private Concept concept;
 
+	@TSOptional
 	private Assets assets;
 
 	private String username;
@@ -38,6 +46,7 @@ public class Project implements Serializable {
 	@JsonAlias("relatedArticles")
 	@JsonProperty("relatedDocuments")
 	@Setter
+	@TSOptional
 	private List<Document> relatedDocuments;
 
 	@Override
@@ -49,6 +58,4 @@ public class Project implements Serializable {
 			" Related Documents: " + this.relatedDocuments +
 			" }";
 	}
-
-
 }

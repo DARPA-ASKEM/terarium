@@ -14,18 +14,23 @@ export const useTabStore = defineStore('tabs', {
 		setTabs(context: string, newTabs: Tab[]) {
 			this.tabMap.set(context, newTabs);
 		},
-		addTab(context: string, newTab: Tab) {
+		addTab(context: string, newTab: Tab, reroute: boolean = true) {
 			// Create a new tab set for this context if there is none, otherwise add a new tab
 			if (!this.getTabs(context)) {
 				this.setTabs(context, [newTab]);
 			} else if (newTab.pageType === ProjectPages.OVERVIEW) {
 				// Add overview tab as the first tab if it is added
 				this.getTabs(context).unshift(newTab);
-			} else this.getTabs(context).push(newTab);
+			} else if (!this.tabExists(context, newTab)) {
+				// Add a tab only if it does not already exist
+				this.getTabs(context).push(newTab);
+			}
 
-			// Go to last tab index
-			const lastTabIndex = this.getTabs(context).length - 1;
-			this.setActiveTabIndex(context, lastTabIndex);
+			// Go to last tab index if we are re-routing
+			if (reroute) {
+				const lastTabIndex = this.getTabs(context).length - 1;
+				this.setActiveTabIndex(context, lastTabIndex);
+			}
 		},
 		removeTab(context: string, indexToRemove: number) {
 			const activeTabIndex = this.getActiveTabIndex(context);
@@ -48,6 +53,13 @@ export const useTabStore = defineStore('tabs', {
 		},
 		setActiveTabIndex(context: string, index: number) {
 			this.activeTabIndexMap.set(context, index);
+		},
+		tabExists(context: string, newTab: Tab): boolean {
+			const foundTab = this.getTabs(context).find((tab) => tab.assetId === newTab.assetId);
+			if (foundTab) {
+				return true;
+			}
+			return false;
 		}
 	}
 });

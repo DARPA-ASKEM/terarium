@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div v-if="!disableRunButton">
 		<Button
 			size="small"
 			label="Run"
@@ -13,10 +13,9 @@
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
-				:run-results="renderedRuns"
+				:run-results="runResults"
 				:chartConfig="cfg"
-				:line-color-array="lineColorArray"
-				:line-width-array="lineWidthArray"
+				has-mean-line
 				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
 			<Button
@@ -31,51 +30,48 @@
 		<section v-else class="result-container">
 			<div class="invalid-block" v-if="node.statusCode === WorkflowStatus.INVALID">
 				<img class="image" src="@assets/svg/plants.svg" alt="" />
-				<p>Configure in side panel</p>
+				<p class="helpMessage">Configure in side panel</p>
 			</div>
 		</section>
 	</section>
 	<section v-else>
-		<div>loading...</div>
+		<tera-progress-bar :value="progress.value" :status="progress.status" />
 	</section>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, ComputedRef } from 'vue';
+import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
+import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
-	EnsembleSimulationCiemssRequest,
-	Simulation,
-	TimeSpan,
-	EnsembleModelConfigs
-} from '@/types/Types';
-import {
-	getSimulation,
 	makeEnsembleCiemssSimulation,
-	getRunResultCiemss
+	getRunResultCiemss,
+	simulationPollAction,
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { Poller, PollerState } from '@/api/api';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleCiemssOperation
 } from './simulate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
-const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const ensembleConfigs = computed<EnsembleModelConfigs[]>(() => props.node.state.mapping);
@@ -85,8 +81,20 @@ const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
-// TODO Post hackathon, this entire thing should be computed or even just thrown into run result.
-const renderedRuns = ref<RunResults>({});
+const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+
+const poller = new Poller();
+
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 const runEnsemble = async () => {
 	const params: EnsembleSimulationCiemssRequest = {
@@ -96,10 +104,9 @@ const runEnsemble = async () => {
 		extra: { num_samples: numSamples.value }
 	};
 	const response = await makeEnsembleCiemssSimulation(params);
-	startedRunId.value = response.simulationId;
-
-	showSpinner.value = true;
-	getStatus();
+	if (response.simulationId) {
+		getStatus(response.simulationId);
+	}
 };
 
 // Tom TODO: Make this generic, its copy paste from drilldown
@@ -126,25 +133,27 @@ const addChart = () => {
 	});
 };
 
-const getStatus = async () => {
-	if (!startedRunId.value) return;
+const getStatus = async (simulationId: string) => {
+	showSpinner.value = true;
+	if (!simulationId) return;
 
-	const currentSimulation: Simulation | null = await getSimulation(startedRunId.value); // get TDS's simulation object
-	const ongoingStatusList = ['running', 'queued'];
+	const runIds = [simulationId];
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	const pollerResults = await poller.start();
 
-	if (currentSimulation && currentSimulation.status === 'complete') {
-		completedRunId.value = startedRunId.value;
-		updateOutputPorts(completedRunId);
-		addChart();
-		showSpinner.value = false;
-	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
-	} else {
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
+		console.error('Failed', simulationId);
+		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
+	completedRunId.value = simulationId;
+	updateOutputPorts(completedRunId);
+	addChart();
+	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {
@@ -155,20 +164,6 @@ const updateOutputPorts = async (runId) => {
 		value: { runId }
 	});
 };
-
-const lineColorArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(
-		'#00000020'
-	);
-	output.push('#1b8073');
-	return output;
-});
-
-const lineWidthArray = computed(() => {
-	const output = Array(Math.max(Object.keys(runResults.value).length ?? 0 - 1, 0)).fill(1);
-	output.push(2);
-	return output;
-});
 
 watch(
 	() => modelConfigIds.value,
@@ -207,45 +202,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-// TODO Post hackathon, this entire thing should be computed or even just thrown into run result.
-watch(
-	() => runResults.value,
-	(input) => {
-		const runResult: RunResults = JSON.parse(JSON.stringify(input));
-
-		// convert to array from array-like object
-		const parsedSimProbData = Object.values(runResult);
-
-		const numRuns = parsedSimProbData.length;
-		if (!numRuns) {
-			renderedRuns.value = runResult;
-			return;
-		}
-
-		const numTimestamps = (parsedSimProbData as { [key: string]: number }[][])[0].length;
-		const aggregateRun: { [key: string]: number }[] = [];
-
-		for (let timestamp = 0; timestamp < numTimestamps; timestamp++) {
-			for (let run = 0; run < numRuns; run++) {
-				if (!aggregateRun[timestamp]) {
-					aggregateRun[timestamp] = parsedSimProbData[run][timestamp];
-					Object.keys(aggregateRun[timestamp]).forEach((key) => {
-						aggregateRun[timestamp][key] = Number(aggregateRun[timestamp][key]) / numRuns;
-					});
-				} else {
-					const datum = parsedSimProbData[run][timestamp];
-					Object.keys(datum).forEach((key) => {
-						aggregateRun[timestamp][key] += datum[key] / numRuns;
-					});
-				}
-			}
-		}
-
-		renderedRuns.value = { ...runResult, [numRuns]: aggregateRun };
-	},
-	{ immediate: true, deep: true }
-);
 </script>
 
 <style scoped>
@@ -257,9 +213,14 @@ section {
 	background: var(--surface-overlay);
 }
 
+.helpMessage {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+}
 .result-container {
 	align-items: center;
 }
+
 .image {
 	height: 8.75rem;
 	margin-bottom: 0.5rem;
@@ -267,9 +228,11 @@ section {
 	border-radius: 1rem;
 	background-color: rgb(0, 0, 0, 0);
 }
+
 .invalid-block {
 	display: contents;
 }
+
 .simulate-chart {
 	margin: 1em 0em;
 }

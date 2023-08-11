@@ -16,17 +16,40 @@
 					icon="pi pi-sign-out"
 					@click="stratifyView = StratifyView.Output"
 					:active="stratifyView === StratifyView.Output"
+					:disabled="!stratifiedModel"
 				/>
 			</span>
-			<Button
-				v-if="stratifyView === StratifyView.Input"
-				class="stratify-button p-button-sm"
-				label="Stratify"
-				icon="pi pi-arrow-right"
-				iconPos="right"
-				@click="doStratify"
-				:disabled="stratifyStep !== 3"
-			/>
+			<div class="buttons" v-if="strataModel && stratifyView === StratifyView.Input">
+				<Button
+					class="p-button-outlined"
+					label="Go back"
+					icon="pi pi-arrow-left"
+					:disabled="stratifyStep === 0"
+					@click="goBack"
+				/>
+				<Button
+					v-if="stratifyStep === 1"
+					label="Continue to step 2: Assign types"
+					icon="pi pi-arrow-right"
+					iconPos="right"
+					@click="stratifyStep = 2"
+				/>
+				<Button
+					v-if="typedBaseModel && stratifyStep === 2"
+					label="Continue to step 3: Manage interactions"
+					icon="pi pi-arrow-right"
+					iconPos="right"
+					@click="stratifyStep = 3"
+				/>
+				<Button
+					v-if="stratifyStep === 3"
+					class="stratify-button p-button-sm"
+					label="Stratify"
+					icon="pi pi-arrow-right"
+					iconPos="right"
+					@click="doStratify"
+				/>
+			</div>
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
@@ -45,30 +68,20 @@
 			</nav>
 			<section class="step-1">
 				<div class="instructions">
-					<div class="buttons" v-if="strataModel">
-						<Button
-							class="p-button-outlined"
-							label="Go back"
-							icon="pi pi-arrow-left"
-							:disabled="stratifyStep === 0"
-							@click="goBack"
-						/>
-						<Button
-							v-if="stratifyStep === 1"
-							label="Continue to step 2: Assign types"
-							icon="pi pi-arrow-right"
-							iconPos="right"
-							@click="stratifyStep = 2"
-						/>
-						<Button
-							v-if="typedBaseModel && stratifyStep === 2"
-							label="Continue to step 3: Manage interactions"
-							icon="pi pi-arrow-right"
-							iconPos="right"
-							@click="stratifyStep = 3"
-						/>
-					</div>
-					<span v-else>Define the groups you want to stratify your model with.</span>
+					<span v-if="stratifyStep === 1"
+						>Define the groups you want to stratify your model with.</span
+					>
+					<span v-if="stratifyStep === 2 && numUntypedNodes > 0"
+						>Assign types to each of the nodes in your model.
+					</span>
+					<span v-if="stratifyStep === 2 && numUntypedNodes > 0" class="nodes-require-types"
+						>{{ numUntypedNodes }} nodes require types</span
+					>
+					<span v-if="stratifyStep === 2 && numUntypedNodes === 0">All nodes have types.</span>
+					<span v-if="stratifyStep === 3"
+						>Make sure all behaviour in the original model are in the stratified model in order for
+						them to be part of the final model.</span
+					>
 				</div>
 				<div class="step-1-inner">
 					<Accordion :active-index="0">
@@ -78,8 +91,15 @@
 								:model="model"
 								:strata-model="strataModel"
 								:show-typing-toolbar="stratifyStep === 2"
-								:type-system="strataModelTypeSystem"
+								:type-system="strataModel?.semantics?.typing?.system.model"
 								@model-updated="(value) => (typedBaseModel = value)"
+								@all-nodes-typed="(value) => onAllNodesTyped(value)"
+								@not-all-nodes-typed="
+									(value) => {
+										typedBaseModel = null;
+										numUntypedNodes = value;
+									}
+								"
 								:show-reflexives-toolbar="stratifyStep === 3"
 							/>
 						</AccordionTab>
@@ -121,7 +141,7 @@
 								<tera-strata-model-diagram
 									:strata-model="strataModel"
 									:base-model="typedBaseModel"
-									:base-model-type-system="typedBaseModel?.semantics?.typing?.system"
+									:base-model-type-system="typedBaseModel?.semantics?.typing?.system.model"
 									:show-reflexives-toolbar="stratifyStep === 3"
 									@model-updated="(value) => (typedStrataModel = value)"
 								/>
@@ -183,7 +203,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -193,7 +213,7 @@ import {
 	generateAgeStrataModel,
 	generateLocationStrataModel
 } from '@/services/models/stratification-service';
-import { Model, ModelConfiguration, TypeSystem } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
@@ -226,12 +246,40 @@ const labels = ref();
 const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
-const strataModelTypeSystem = computed<TypeSystem | undefined>(
-	() => strataModel.value?.semantics?.typing?.system
-);
-const typedBaseModel = ref<Model>();
+const typedBaseModel = ref<Model | null>(null);
 const typedStrataModel = ref<Model | null>(null);
-const stratifiedModel = ref<Model>();
+const stratifiedModel = ref<Model | null>();
+const numUntypedNodes = ref();
+const initialState = {
+	stratifyView: StratifyView.Input,
+	stratifyStep: 1,
+	strataType: null,
+	labels: null,
+	strataModel: null,
+	model: null,
+	typedBaseModel: null,
+	typedStrataModel: null,
+	stratifiedModel: null,
+	numUntypedNodes: -1
+};
+
+function restoreState(state) {
+	stratifyView.value = state.stratifyView;
+	stratifyStep.value = state.stratifyStep;
+	strataModel.value = state.strataModel;
+	strataType.value = state.strataType;
+	labels.value = state.labels;
+	model.value = state.model;
+	typedBaseModel.value = state.typedBaseModel;
+	typedStrataModel.value = state.typedStrataModel;
+	stratifiedModel.value = state.stratifiedModel;
+	numUntypedNodes.value = state.numUntypedNodes;
+}
+
+function onAllNodesTyped(value: Model) {
+	typedBaseModel.value = value;
+	numUntypedNodes.value = 0;
+}
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -241,6 +289,12 @@ function generateStrataModel() {
 		} else if (strataType.value === 'Location-travel') {
 			strataModel.value = generateLocationStrataModel(stateNames);
 		}
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state: { ...props.node.state, strataModel: strataModel.value }
+		});
+		restoreState(props.node.state);
 	}
 }
 
@@ -262,19 +316,45 @@ async function doStratify() {
 		}
 		const newModelId = response?.id;
 		const projectId = resourceStore.activeProject?.id as string;
-		await addAsset(projectId, 'models', newModelId);
-		stratifyView.value = StratifyView.Output;
+		if (newModelId) {
+			await addAsset(projectId, 'models', newModelId);
+			stratifyView.value = StratifyView.Output;
+
+			workflowEventBus.emitNodeStateChange({
+				workflowId: props.node.workflowId,
+				nodeId: props.node.id,
+				state: {
+					...props.node.state,
+					stratifyView: stratifyView.value,
+					stratifiedModel: stratifiedModel.value,
+					typedStrataModel: typedStrataModel.value
+				}
+			});
+		}
 	}
 }
 
 function goBack() {
-	if (stratifyStep.value > 0) {
-		if (stratifyStep.value === 1) {
-			strataModel.value = null;
-		}
+	if (stratifyStep.value > 1) {
 		stratifyStep.value--;
+	} else {
+		strataModel.value = null;
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state: { ...props.node.state, strataModel: strataModel.value }
+		});
 	}
 }
+
+watch(stratifyStep, () => {
+	const state = { ...props.node.state, stratifyStep: stratifyStep.value };
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+});
 
 watch(
 	() => props.node.inputs[0],
@@ -286,6 +366,14 @@ watch(
 				model.value = await getModel(modelConfiguration.value.modelId);
 			}
 		}
+		if (!props.node.state) {
+			workflowEventBus.emitNodeStateChange({
+				workflowId: props.node.workflowId,
+				nodeId: props.node.id,
+				state: { ...initialState, model: model.value }
+			});
+		}
+		restoreState(props.node.state);
 	},
 	{ immediate: true }
 );
@@ -375,6 +463,8 @@ section {
 .buttons {
 	display: flex;
 	justify-content: space-between;
+	margin-left: auto;
+	gap: 1rem;
 }
 
 :deep(.p-button.p-button-outlined) {
@@ -384,10 +474,6 @@ section {
 
 .generate-strata-model {
 	padding: 0 0.5rem 0 0.5rem;
-}
-
-.stratify-button {
-	margin-left: auto;
 }
 
 .output {
@@ -413,5 +499,13 @@ section {
 
 .add-model-config {
 	display: flex;
+}
+
+.nodes-require-types {
+	font-weight: var(--font-weight-semibold);
+}
+
+.buttons .p-button {
+	white-space: nowrap;
 }
 </style>

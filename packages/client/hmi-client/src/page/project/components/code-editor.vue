@@ -1,5 +1,5 @@
 <template>
-	<tera-asset name="New file" overline="Python" is-editable>
+	<tera-asset name="New file" overline="Python">
 		<template #edit-buttons>
 			<Button
 				label="Extract model"
@@ -33,7 +33,7 @@
 		>
 			<div ref="graphElement" class="graph-element" />
 			<h6>
-				Terarium can extract metadata about this model from related papers. Select the papers you
+				Terarium can extract metadata about this code from related papers. Select the artifacts you
 				would like to use.
 			</h6>
 			<DataTable v-model:selection="selectedPapers" :value="resources" dataKey="id">
@@ -83,8 +83,9 @@ import { getPDFURL } from '@/services/generate-download-link';
 import API, { Poller } from '@/api/api';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { createModel, addModelToProject } from '@/services/model';
+import { createModel } from '@/services/model';
 import * as EventService from '@/services/event';
+import * as ProjectService from '@/services/project';
 
 const props = defineProps({
 	project: {
@@ -240,7 +241,11 @@ async function createModelFromCode() {
 		};
 		const model = await createModel(newModel);
 		if (model && props.project && resourcesStore) {
-			await addModelToProject(props.project.id, model.id.toString());
+			await ProjectService.addAsset(
+				props.project.id,
+				ProjectAssetTypes.MODELS,
+				model.id.toString()
+			);
 
 			router.push({
 				name: RouteName.ProjectRoute,

@@ -3,9 +3,7 @@
 		v-if="pageType === ProjectAssetTypes.MODELS"
 		:asset-id="assetId ?? ''"
 		:project="project"
-		@update-tab-name="updateTabName"
 		@asset-loaded="emit('asset-loaded')"
-		is-editable
 	/>
 	<code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"
@@ -32,14 +30,14 @@
 		v-else-if="pageType === ProjectPages.OVERVIEW"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
-		@open-workflow="openWorkflow"
-		@new-model="newModel"
+		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
+		@page-loaded="emit('asset-loaded')"
 	/>
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && !isEmpty(tabs)">
@@ -48,7 +46,6 @@
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			:project="project"
-			is-editable
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>
@@ -56,7 +53,6 @@
 			v-else-if="pageType === ProjectAssetTypes.DATASETS"
 			:project="project"
 			:asset-id="assetId"
-			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
 	</template>
@@ -68,11 +64,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref } from 'vue';
+import { ref, Ref, computed } from 'vue';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty } from 'lodash';
 import { CodeRequest, Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
@@ -81,23 +77,22 @@ import TeraModel from '@/components/models/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
-import { emptyWorkflow, createWorkflow } from '@/services/workflow';
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
-import { createModel } from '@/services/model';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import useResourceStore from '@/stores/resources';
 
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
-	assetName?: string;
 	pageType?: ProjectAssetTypes | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
 }>();
 
-const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
+const emit = defineEmits(['asset-loaded', 'open-new-asset']);
+
+const resourceStore = useResourceStore();
 
 const router = useRouter();
 
@@ -105,68 +100,32 @@ const code = ref<string>();
 
 const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
 
+const assetName = computed<string>(() => {
+	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
+	if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
+	const assets = resourceStore.activeProjectAssets;
+
+	/**
+	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
+	 *
+	 *   const list = assets[ props.pageType as string] as IdetifiableAsset[]
+	 *   const asset = list.find(...)
+	 */
+	if (assets) {
+		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
+		return asset.name ?? 'n/a';
+	}
+	return 'n/a';
+});
+
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
-// These 3 open functions can potentially make use of openAssetFromSidebar in tera-project.vue
-const openWorkflow = async () => {
-	// Create a new workflow
-	let wfName = 'workflow';
-	if (props.project && props.project.assets) {
-		wfName = `workflow ${props.project.assets[ProjectAssetTypes.SIMULATION_WORKFLOW].length + 1}`;
-	}
-	const wf = emptyWorkflow(wfName, '');
-
-	// FIXME: TDS bug thinks that k is z, June 2023
-	// @ts-ignore
-	wf.transform.z = 1;
-
-	// Add the workflow to the project
-	const response = await createWorkflow(wf);
-	const workflowId = response.id;
-	await ProjectService.addAsset(
-		props.project.id,
-		ProjectAssetTypes.SIMULATION_WORKFLOW,
-		workflowId
-	);
-
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: 'Workflow',
-			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
-			assetId: workflowId
-		}
-	});
-};
-
-const newModel = async (modelName: string) => {
-	// 1. Load an empty AMR
-	const amr = newAMR(modelName);
-	(amr as any).id = undefined; // FIXME: id hack
-
-	const response = await createModel(amr);
-	const modelId = response?.id;
-
-	// 2. Add the model to the project
-	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-
-	// 3. Reroute
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: 'Model',
-			pageType: ProjectAssetTypes.MODELS,
-			assetId: modelId
-		}
-	});
-};
-
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
 async function openCode(codeRequests: CodeRequest[]) {
@@ -189,28 +148,14 @@ async function openNextCodeFile() {
 }
 
 function getPDFBytes(): Promise<ArrayBuffer | null> {
-	return getArtifactArrayBuffer(props.assetId!, props.assetName!);
+	return getArtifactArrayBuffer(props.assetId!, assetName.value!);
 }
 
 async function openTextArtifact() {
-	const res: string | null = await getArtifactFileAsText(props.assetId!, props.assetName!);
+	const res: string | null = await getArtifactFileAsText(props.assetId!, assetName.value!);
 	if (!res) return;
 	code.value = res;
 }
-
-// Just preserving this as this didn't even work when it was in tera-project.vue - same error occurs on staging
-// I think this is meant to make the tab name and the model name to be the same as you're editing it which isn't important/necessary
-const updateTabName = (tabName: string) => {
-	const tabsClone = cloneDeep(props.tabs);
-
-	// FIXME: Active tab index is undefined so tab name doesn't get updated when model or workflow name get updated
-	// console.log(tabName, tabsClone, props.activeTabIndex)
-
-	if (tabsClone?.[props.activeTabIndex!]?.assetName) {
-		tabsClone[props.activeTabIndex!].assetName = tabName;
-		emit('update:tabs', tabsClone);
-	}
-};
 </script>
 
 <style scoped>

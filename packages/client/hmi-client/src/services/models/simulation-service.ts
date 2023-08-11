@@ -1,5 +1,4 @@
 import { csvParse } from 'd3';
-
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
@@ -14,6 +13,9 @@ import {
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { cloneDeep, isEqual } from 'lodash';
+import { Ref } from 'vue';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -47,6 +49,28 @@ export async function makeForecastJobCiemss(simulationParam: SimulationRequest) 
 		);
 		const output = resp.data;
 		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+// TODO: Add typing to julia's output: https://github.com/DARPA-ASKEM/Terarium/issues/1655
+export async function getRunResultJulia(runId: string, filename = 'result.json') {
+	try {
+		const resp = await API.get(`simulations/${runId}/result`, {
+			params: { filename }
+		});
+		const output = resp.data;
+		const columnNames = (output[0].colindex.names as string[]).join(',');
+		let csvData: string = columnNames as string;
+		for (let j = 0; j < output[0].columns[0].length; j++) {
+			csvData += '\n';
+			for (let i = 0; i < output[0].columns.length; i++) {
+				csvData += `${output[0].columns[i][j]},`;
+			}
+		}
+		return csvData;
 	} catch (err) {
 		logger.error(err);
 		return null;
@@ -173,4 +197,95 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 		logger.error(err);
 		return null;
 	}
+}
+
+// add a simulation in progress if it does not exist
+const addSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
+	const state = cloneDeep(node.state);
+
+	if (!state.simulationsInProgress) {
+		state.simulationsInProgress = [];
+	}
+	runIds.forEach((runId) => {
+		if (!state.simulationsInProgress.includes(runId)) {
+			state.simulationsInProgress.push(runId);
+		}
+	});
+
+	return state;
+};
+
+// delete a simulation in progress if it exists
+const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
+	const state = cloneDeep(node.state);
+
+	if (state.simulationsInProgress) {
+		runIds.forEach((runId) => {
+			const index = state.simulationsInProgress.indexOf(runId);
+			if (index !== -1) {
+				state.simulationsInProgress.splice(index, 1);
+			}
+		});
+	}
+
+	return state;
+};
+
+// This function returns a string array of run ids.
+export const querySimulationInProgress = (node: WorkflowNode): string[] => {
+	const state = node.state;
+	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
+		// return all run ids on the node
+		return state.simulationsInProgress;
+	}
+
+	// return an empty array if no run ids are present
+	return [];
+};
+
+export async function simulationPollAction(
+	simulationIds: string[],
+	node: WorkflowNode,
+	progress: Ref<{ status: ProgressState; value: number }>,
+	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
+) {
+	const requestList: Promise<Simulation | null>[] = [];
+	simulationIds.forEach((id) => {
+		requestList.push(getSimulation(id));
+	});
+	const response = await Promise.all(requestList);
+	if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
+		const newState = deleteSimulationInProgress(node, simulationIds);
+		// only update state if it is different from the current one
+		if (!isEqual(node.state, newState)) {
+			emitFn('update-state', newState);
+		}
+		return {
+			data: response,
+			progress: null,
+			error: null
+		};
+	}
+	if (
+		response.find(
+			(simulation) =>
+				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
+		)
+	) {
+		const newState = addSimulationInProgress(node, simulationIds);
+		// only update state if it is different from the current one
+		if (!isEqual(node.state, newState)) {
+			emitFn('update-state', newState);
+		}
+		progress.value = {
+			status: ProgressState.RUNNING,
+			value: 0
+		};
+	}
+
+	return {
+		data: null,
+		progress: null,
+		error: null
+	};
 }

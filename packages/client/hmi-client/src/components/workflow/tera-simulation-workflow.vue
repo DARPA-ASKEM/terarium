@@ -58,6 +58,7 @@
 				@remove-node="(event) => removeNode(event)"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
+				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
 					<tera-model-node
@@ -78,32 +79,38 @@
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-simulate-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-calibration-julia-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-calibration-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<tera-simulate-ensemble-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-calibrate-ensemble-ciemss-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
@@ -253,12 +260,20 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
+const emit = defineEmits(['page-loaded']);
+
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
+
+const currentActiveNode = ref<WorkflowNode | null>();
+
+workflowEventBus.on('clearActiveNode', () => {
+	currentActiveNode.value = null;
+});
 
 const newEdge = ref<WorkflowEdge | undefined>();
 const droppedAssetId = ref<string | null>(null);
@@ -400,6 +415,11 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	workflowDirty = true;
 }
 
+function updateWorkflowNodeState(node: WorkflowNode, state: any) {
+	workflowService.updateNodeState(wf.value, node.id, state);
+	workflowDirty = true;
+}
+
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
@@ -407,12 +427,14 @@ const testNode = (node: WorkflowNode) => {
 };
 
 const drilldown = (event: WorkflowNode) => {
+	currentActiveNode.value = event;
 	workflowEventBus.emit('drilldown', event);
 };
 
 workflowEventBus.on('node-state-change', (payload: any) => {
 	if (wf.value.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
+	workflowDirty = true;
 });
 
 workflowEventBus.on(
@@ -454,7 +476,8 @@ const contextMenuItems = ref([
 	{
 		label: 'Stratify',
 		command: () => {
-			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition, { state: null });
+			workflowDirty = true;
 		}
 	},
 	{
@@ -710,6 +733,7 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
+		emit('page-loaded');
 	},
 	{ immediate: true }
 );
@@ -767,16 +791,16 @@ function resetZoom() {
 	gap: 1rem;
 }
 
-/* We should make a proper secondary outline button. Until then this works. */
+/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 }
 
-.toolbar .button-group .secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
+.toolbar .button-group .secondary-button:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-highlight);
 }
 
 .toolbar .button-group .primary-dropdown {
