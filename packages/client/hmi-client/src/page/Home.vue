@@ -40,6 +40,7 @@
 							<ul v-else>
 								<li v-for="project in projects" :key="project.id">
 									<tera-project-card
+										v-if="project.id"
 										:project="project"
 										@click="openProject(project.id)"
 										@removed="removeProject"
