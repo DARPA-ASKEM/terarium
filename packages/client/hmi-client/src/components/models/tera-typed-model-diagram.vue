@@ -132,7 +132,6 @@ const props = defineProps<{
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 
-const stratificationType = computed<string | null>(() => getStratificationType(props.model));
 const typedModel = ref<Model>(props.model);
 // these are values that user will edit/select that correspond to each row in the model typing editor
 const typedRows = ref<
@@ -225,86 +224,70 @@ async function toggleCollapsedView() {
 	}
 }
 
+// Whenever selectedModelId changes, fetch model with that ID
 watch(
-	() => props.model,
+	() => [props.model],
 	async () => {
 		typedModel.value = props.model;
-		typedRows.value = [];
-		populateTypingRows();
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => props.showTypingToolbar,
-	async () => {
-		populateTypingRows();
-	},
-	{ immediate: true }
-);
-
-function populateTypingRows() {
-	if (props.showTypingToolbar) {
 		setNodeColors();
-		if (
-			typedModel.value.semantics?.typing?.map &&
-			typedModel.value.semantics.typing.map.length > 0
-		) {
-			// pre-populate 'typedRows' if 'typedModel' already has typing
-			const typedRowsToPopulate: {
-				nodeType: string;
-
-				typeName: string;
-				assignTo: string[];
-			}[] = [];
-			const typedRowsTypeNames: Set<string> = new Set();
-			typedModel.value.semantics.typing.map.forEach((m) => {
-				const nodeId = m[0];
-				const typeId = m[1];
-				const state = typedModel.value.model.states.find((s) => s.id === nodeId);
-				const transition = typedModel.value.model.transitions.find((t) => t.id === nodeId);
-				const typeState = typedModel.value.semantics!.typing!.system.model.states.find(
-					(s) => s.id === typeId
-				);
-				const typeTransition = typedModel.value.semantics!.typing!.system.model.transitions.find(
-					(t) => t.id === typeId
-				);
-				const node = state || transition;
-				const nodeType = state ? 'Variable' : 'Transition';
-				const typeName = typeState ? typeState.id : typeTransition.properties?.name;
-				if (!typedRowsTypeNames.has(typeName)) {
-					typedRowsTypeNames.add(typeName);
-					typedRowsToPopulate.push({
-						nodeType,
-						typeName,
-						assignTo: [node.id]
-					});
-				} else {
-					const assignTo = typedRowsToPopulate.find((row) => row.typeName === typeName)?.assignTo;
-					assignTo?.push(node.id);
-				}
-			});
-			typedRows.value = typedRowsToPopulate;
-		} else if (typedRows.value.length === 0) {
-			typedRows.value.push(
-				{
-					nodeType: 'Variable',
-					typeName: props.typeSystem?.states[0].name
-				},
-				{
-					nodeType: 'Transition',
-					typeName: props.typeSystem?.transitions[0].properties?.name
-				}
-			);
-		}
-		typeNameBuffer = typedRows.value.map((r) => r.typeName ?? '');
-	}
-}
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => [props.typeSystem, props.showTypingToolbar],
 	() => {
-		populateTypingRows();
+		if (props.showTypingToolbar) {
+			setNodeColors();
+			if (typedModel.value.semantics?.typing) {
+				// pre-populate 'typedRows' if 'typedModel' already has typing
+				const typedRowsToPopulate: {
+					nodeType: string;
+					typeName: string;
+					assignTo: string[];
+				}[] = [];
+				const typedRowsTypeNames: Set<string> = new Set();
+				typedModel.value.semantics.typing.map.forEach((m) => {
+					const nodeId = m[0];
+					const typeId = m[1];
+					const state = typedModel.value.model.states.find((s) => s.id === nodeId);
+					const transition = typedModel.value.model.transitions.find((t) => t.id === nodeId);
+					const typeState = typedModel.value.semantics!.typing!.system.model.states.find(
+						(s) => s.id === typeId
+					);
+					const typeTransition = typedModel.value.semantics!.typing!.system.model.transitions.find(
+						(t) => t.id === typeId
+					);
+					const node = state || transition;
+					const nodeType = state ? 'Variable' : 'Transition';
+					const typeName = typeState ? typeState.id : typeTransition.properties?.name;
+					if (!typedRowsTypeNames.has(typeName)) {
+						typedRowsTypeNames.add(typeName);
+						typedRowsToPopulate.push({
+							nodeType,
+							typeName,
+							assignTo: [node.id]
+						});
+					} else {
+						const assignTo = typedRowsToPopulate.find((row) => row.typeName === typeName)?.assignTo;
+						assignTo?.push(node.id);
+					}
+				});
+				typedRows.value = typedRowsToPopulate;
+			} else if (typedRows.value.length === 0) {
+				typedRows.value.push(
+					{
+						nodeType: 'Variable',
+						typeName: props.typeSystem?.states[0].name
+					},
+					{
+						nodeType: 'Transition',
+						typeName: props.typeSystem?.transitions[0].properties?.name
+					}
+				);
+			}
+			typeNameBuffer = typedRows.value.map((r) => r.typeName ?? '');
+		}
 	},
 	{ immediate: true }
 );
@@ -455,25 +438,6 @@ watch(
 				});
 			}
 		} else {
-			if (!stratificationType.value && renderer instanceof NestedPetrinetRenderer) {
-				renderer = new PetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag'
-				});
-			}
-			if (stratificationType.value && !(renderer instanceof NestedPetrinetRenderer)) {
-				renderer = new NestedPetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					dragSelector: 'no-drag',
-					nestedMap
-				});
-			}
 			renderer.isGraphDirty = true;
 		}
 

@@ -80,7 +80,6 @@
 				<tera-stratify
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
 					:node="workflowNode"
-					:key="workflowNode.id"
 					@open-asset="(asset) => openAssetFromSidebar(asset)"
 				/>
 				<tera-simulate-ensemble-ciemss
