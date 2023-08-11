@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
 
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.core.Response;
 
 public class HmiResponseExceptionMapper implements ResponseExceptionMapper<RuntimeException> {
 
