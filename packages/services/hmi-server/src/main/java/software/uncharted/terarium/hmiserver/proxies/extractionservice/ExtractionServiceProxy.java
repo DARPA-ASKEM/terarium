@@ -14,7 +14,7 @@ import java.util.Map;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "extraction-service-api")
+@RegisterRestClient(configKey = "ta1-service-api")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Extraction Service")
 @RegisterProvider(HmiResponseExceptionMapper.class)
