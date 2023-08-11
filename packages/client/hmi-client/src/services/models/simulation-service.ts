@@ -203,43 +203,43 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 
 // add a simulation in progress if it does not exist
 const addSimulationInProgress = (
-	node: WorkflowNode,
+	state: any,
 	runIds: string[],
 	eventSourceManager: EventSourceManager
 ) => {
-	const state = cloneDeep(node.state);
-
 	if (!state.simulationsInProgress) {
 		state.simulationsInProgress = [];
 	}
 	runIds.forEach((runId) => {
 		if (!state.simulationsInProgress.includes(runId)) {
 			state.simulationsInProgress.push(runId);
-			eventSourceManager.openConnection(runId);
-			eventSourceManager.setMessageHandler(runId, (message) => {
-				console.log(message);
-			});
+			if (eventSourceManager) {
+				// eventSourceManager.openConnection(runId);
+				// eventSourceManager.setMessageHandler(runId, (message) => {
+				// 	console.log(message);
+				// });
+			}
 		}
 	});
-
-	return state;
 };
 
 // delete a simulation in progress if it exists
-const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[], eventSourceManager) => {
-	const state = cloneDeep(node.state);
-
+const deleteSimulationInProgress = (
+	state: any,
+	runIds: string[],
+	eventSourceManager: EventSourceManager
+) => {
 	if (state.simulationsInProgress) {
 		runIds.forEach((runId) => {
 			const index = state.simulationsInProgress.indexOf(runId);
 			if (index !== -1) {
 				state.simulationsInProgress.splice(index, 1);
-				eventSourceManager.closeConnection(runId);
+				if (eventSourceManager) {
+					// eventSourceManager.closeConnection(runId);
+				}
 			}
 		});
 	}
-
-	return state;
 };
 
 // This function returns a string array of run ids.
@@ -259,15 +259,28 @@ export async function simulationPollAction(
 	node: WorkflowNode,
 	progress: Ref<{ status: ProgressState; value: number }>,
 	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void,
-	eventSourceManager
+	eventSourceManager: EventSourceManager
 ) {
 	const requestList: Promise<Simulation | null>[] = [];
 	simulationIds.forEach((id) => {
 		requestList.push(getSimulation(id));
 	});
 	const response = await Promise.all(requestList);
-	if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
-		const newState = deleteSimulationInProgress(node, simulationIds, eventSourceManager);
+
+	const completedSimulationIds = response
+		.filter((simulation) => simulation?.status === ProgressState.COMPLETE)
+		.map((simulation) => simulation!.id);
+	const inProgressSimulationIds = response
+		.filter(
+			(simulation) =>
+				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
+		)
+		.map((simulation) => simulation!.id);
+
+	// all simulations complete
+	if (inProgressSimulationIds.length === 0) {
+		const newState = cloneDeep(node.state);
+		deleteSimulationInProgress(newState, completedSimulationIds, eventSourceManager);
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
@@ -278,13 +291,13 @@ export async function simulationPollAction(
 			error: null
 		};
 	}
-	if (
-		response.find(
-			(simulation) =>
-				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
-		)
-	) {
-		const newState = addSimulationInProgress(node, simulationIds, eventSourceManager);
+
+	// handle any in progress simulations
+	if (inProgressSimulationIds.length > 0) {
+		const newState = cloneDeep(node.state);
+		addSimulationInProgress(newState, inProgressSimulationIds, eventSourceManager);
+		deleteSimulationInProgress(newState, completedSimulationIds, eventSourceManager);
+
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
@@ -312,7 +325,7 @@ export class EventSourceManager {
 	public openConnection(id: string) {
 		if (!this.connections.has(id)) {
 			const auth = useAuthStore();
-			const eventSource = new EventSourcePolyfill('/api/user/server-sent-events', {
+			const eventSource = new EventSourcePolyfill(`/api/simulations/${id}/partial-result`, {
 				headers: {
 					Authorization: `Bearer ${auth.token}`
 				}
