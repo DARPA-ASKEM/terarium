@@ -10,9 +10,9 @@ import software.uncharted.terarium.hmiserver.resources.documentservice.responses
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 @Produces(MediaType.APPLICATION_JSON)

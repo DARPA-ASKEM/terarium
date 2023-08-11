@@ -2,8 +2,8 @@ package software.uncharted.terarium.hmiserver.services;
 
 import software.uncharted.terarium.hmiserver.entities.Event;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
+import javax.enterprise.context.ApplicationScoped;
+import javax.transaction.Transactional;
 
 @ApplicationScoped
 public class EventService {

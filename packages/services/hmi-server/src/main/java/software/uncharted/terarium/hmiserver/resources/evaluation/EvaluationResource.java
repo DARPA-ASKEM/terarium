@@ -21,10 +21,10 @@ import software.uncharted.terarium.hmiserver.models.EvaluationScenarioStatus;
 import software.uncharted.terarium.hmiserver.models.EvaluationScenarioSummary;
 import software.uncharted.terarium.hmiserver.models.EventType;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.QueryParam;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;

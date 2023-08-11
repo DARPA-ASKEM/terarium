@@ -6,9 +6,9 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "model-service")
 @Produces(MediaType.APPLICATION_JSON)
