@@ -21,22 +21,13 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
 import { onMounted, ref, watch } from 'vue';
 import BasicRenderer from 'graph-scaffolder/src/core/basic-renderer';
 import { runDagreLayout } from '@/services/graph';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import {
-	convertToIGraph,
-	getStratificationType
-} from '@/model-representation/petrinet/petrinet-service';
+import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { amr as amrExample } from './sir';
-import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
-import {
-	getAMRPresentationData,
-	extractNestedStratas
-} from '@/model-representation/petrinet/mira-petri';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
@@ -55,47 +46,17 @@ onMounted(async () => {
 			const amr = JSON.parse(jsonStr.value);
 			strataType.value = getStratificationType(amr);
 
-			if (strataType.value === null || isCollapse.value === false) {
-				console.log('hihihhi');
+			data = getGraphData(amr, isCollapse.value);
+
+			if (isCollapse.value === false) {
 				renderer = new PetrinetRenderer({
 					el: graphElement.value as HTMLDivElement,
 					useAStarRouting: false,
 					useStableZoomPan: true,
 					runLayout: runDagreLayout
 				});
-				data = convertToIGraph(amr);
-			} else if (strataType.value === 'catlab') {
-				const nestedMap = extractNestedMap(amr);
-				renderer = new NestedPetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					nestedMap: nestedMap
-				});
-				data = convertToIGraph(amr);
 			} else {
-				const presentationData = getAMRPresentationData(amr);
-
-				// 1. Find what are the strata dimensions
-				const stateMatrixData = presentationData.stateMatrixData.map((d) => {
-					const temp: any = _.cloneDeep(d);
-					delete temp.id;
-					delete temp.base;
-					return Object.keys(temp);
-				});
-				const dims = _.uniq(_.flatten(stateMatrixData));
-				dims.unshift('base');
-				const nestedMap = extractNestedStratas(presentationData.stateMatrixData, dims);
-
-				renderer = new NestedPetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout,
-					nestedMap: nestedMap
-				});
-				data = convertToIGraph(presentationData.compactModel as any);
+				renderer = getPetrinetRenderer(amr, graphElement.value as HTMLDivElement);
 			}
 
 			await renderer.setData(data);
