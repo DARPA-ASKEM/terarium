@@ -29,6 +29,7 @@ import {
 	XDDExtractionType,
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '@/types/XDD';
+import { logger } from '@/utils/logger';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
@@ -441,23 +442,18 @@ const getAssets = async (params: GetAssetsParams) => {
 /**
  * fetch list of related documented based on the given document ID
  */
-const getRelatedDocuments = async (docid: string) => {
-	if (docid === '') {
-		return [] as Document[];
-	}
-
-	const url = `/documents?max=10&similar_to=${docid}`;
-
-	const res = await API.get(url);
-	if (res) {
-		const rawdata: XDDResult = res.data;
-
-		if (rawdata && rawdata.data) {
-			const documentsRaw = rawdata.data.map((a) => a.bibjson);
-			return documentsRaw.map((a) => ({
-				...a,
-				abstractText: a.abstractText
-			}));
+const getRelatedDocuments = async (docid: string): Promise<Document[]> => {
+	if (docid !== '') {
+		const { status, data } = await API.get(`/documents?max=8&similar_to=${docid}`);
+		if (status === 200 && data) {
+			return data?.success?.data ?? ([] as Document[]);
+		}
+		if (status === 204) {
+			logger.error('Request received successfully, but there are no documents');
+		} else if (status === 400) {
+			logger.error('Query must contain a docid');
+		} else if (status === 500) {
+			logger.error('An error occurred retrieving documents');
 		}
 	}
 	return [] as Document[];
