@@ -105,9 +105,9 @@ export const getCatlabTransitionsMatrixData = (amr: Model) => {
 export const extractNestedMap = (amr: Model) => {
 	const nestedMap = amr.semantics?.span?.[0].map.reduce((childMap: any, [stratNode, baseNode]) => {
 		if (!childMap[baseNode]) {
-			childMap[baseNode] = {};
+			childMap[baseNode] = [];
 		}
-		childMap[baseNode][stratNode] = {};
+		childMap[baseNode].push(stratNode);
 		return childMap;
 	}, {});
 	return nestedMap;

@@ -10,23 +10,19 @@ import CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS from '@/model-representation/petr
 import CIRCLE_PACKING_CHILD_NORMALIZED_RADII from '@/model-representation/petrinet/circle-packing-radii.json';
 
 export interface NestedPetrinetOptions extends Options {
-	nestedMap?: { [baseNodeId: string]: any };
-	transitionMatrices?: { [baseTransitionId: string]: any[] };
+	nestedMap?: { [baseNodeId: string]: string[] };
 }
 
 const CIRCLE_MARGIN_CONST = 1;
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 
 export class NestedPetrinetRenderer extends PetrinetRenderer {
-	nestedMap?: { [baseNodeId: string]: any };
-
-	transitionMatrices?: { [baseTransitionId: string]: any[] };
+	nestedMap: any;
 
 	// override type of constructor argument
 	constructor(options: NestedPetrinetOptions) {
 		super(options as Options);
 		this.nestedMap = options.nestedMap;
-		this.transitionMatrices = options.transitionMatrices;
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
@@ -48,8 +44,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('height', (d) => d.height)
 			.attr('y', (d) => -d.height * 0.5)
 			.attr('x', (d) => -d.width * 0.5)
-			.attr('rx', 6)
-			.attr('ry', 6)
+			.attr('rx', '6')
+			.attr('ry', '6')
 			.style('fill', (d) =>
 				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
 			)
@@ -69,40 +65,28 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
 
-		const renderNestedNodes = (
-			node: { [baseNodeId: string]: any },
-			parentRadius: number,
-			parentX: number,
-			parentY: number,
-			g: any[] | ArrayLike<any>,
-			idx: number
-		) => {
-			// this function recursively iterates through the nested object representation of the
-			// stratified model states and draws the corresponding circles in post-order
-
-			if (Object.keys(node).length === 0) {
-				return;
-			}
-
-			const nestedNodesLen = Object.keys(node).length;
-
-			Object.entries(node).forEach(([key, value], i) => {
+		species.each((d, idx, g) => {
+			const nestedNodes = this.nestedMap[d.id] ?? [];
+			const nestedNodesLen = nestedNodes.length;
+			for (let i = 0; i < nestedNodesLen; i++) {
+				// skip nodes that can't be laid out for now
+				if (nestedNodesLen >= CIRCLE_PACKING_CHILD_NORMALIZED_RADII.length) {
+					continue;
+				}
+				const nodeId = nestedNodes[i];
+				const parentRadius = 0.55 * d.width;
 				const childRadius =
 					CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] *
 					CIRCLE_MARGIN_CONST *
 					parentRadius;
 
-				const xPos =
-					parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0] + parentX;
-				const yPos =
-					parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1] + parentY;
-
-				renderNestedNodes(value, childRadius, xPos, yPos, g, idx);
+				const xPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0];
+				const yPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1];
 
 				select(g[idx])
 					.append('circle')
 					.classed('shape', true)
-					.attr('r', () => childRadius)
+					.attr('r', () => childRadius) // FIXME: need to adjust edge from sqaure mapping to circle
 					.attr('cx', xPos)
 					.attr('cy', yPos)
 					.attr('fill', () => '#ffffffaa')
@@ -116,23 +100,17 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					.style('paint-order', 'stroke')
 					.style('fill', 'var(--text-color-subdued')
 					.style('pointer-events', 'none')
-					.html(() => key ?? '');
-			});
-		};
-
-		species.each((d, idx, g) => {
-			const nestedMap = this.nestedMap?.[d.id] ?? {};
-			const parentRadius = 0.55 * d.width;
-			renderNestedNodes(nestedMap, parentRadius, 0, 0, g, idx);
+					.html(() => nodeId ?? '');
+			}
 		});
 
 		transitions.each((d, idx, g) => {
-			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
-			const transitionMatrixLen = transitionMatrix.length;
+			const nestedNodes = this.nestedMap[d.id] ?? [];
+			const nestedNodesLen = nestedNodes.length;
 			const transitionNode = select(g[idx]);
 
-			for (let i = 1; i < transitionMatrixLen; i++) {
-				const position = (d.width / transitionMatrixLen) * i;
+			for (let i = 1; i < nestedNodesLen; i++) {
+				const position = (d.width / nestedNodesLen) * i;
 
 				transitionNode
 					.append('line')
@@ -151,25 +129,6 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					.attr('x2', -d.width * 0.5 + position)
 					.attr('stroke', '#ffffffcf');
 			}
-
-			transitionMatrix.forEach((row) => {
-				row.forEach((col) => {
-					if (col.value) {
-						transitionNode
-							.append('rect')
-							.attr('width', d.width / transitionMatrixLen)
-							.attr('height', d.width / transitionMatrixLen)
-							.attr('x', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.row)
-							.attr('y', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.col)
-							.attr('rx', 2)
-							.attr('ry', 2)
-							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#7fffd4')
-							.style('cursor', 'pointer')
-							.attr('stroke', '#ffffff')
-							.attr('stroke-width', 1);
-					}
-				});
-			});
 		});
 
 		// transitions label text
