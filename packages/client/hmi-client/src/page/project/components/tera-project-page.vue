@@ -37,7 +37,6 @@
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
-		@page-loaded="emit('asset-loaded')"
 	/>
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && !isEmpty(tabs)">

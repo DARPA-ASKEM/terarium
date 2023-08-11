@@ -651,12 +651,6 @@ const prepareTransitionEdit = () => {
 const addNode = async () => {
 	if (!renderer) return;
 	const node = editNodeObj.value;
-	if (props.model?.model.states.find((s) => s.id === node.id)) {
-		return;
-	}
-	if (props.model?.model.transitions.find((t) => t.id === node.id)) {
-		return;
-	}
 	node.expression_mathml = editNodeMathEditor.value?.mathLiveField.getValue('math-ml');
 
 	if (!previousId) {
