@@ -83,9 +83,9 @@ const stats = computed(() =>
 		? null
 		: {
 				contributors: 1,
-				models: props.project?.metadata['models-count'],
-				datasets: props.project?.metadata['datasets-count'],
-				papers: props.project?.metadata['publications-count']
+				models: props.project?.metadata?.['models-count'] ?? 0,
+				datasets: props.project?.metadata?.['datasets-count'] ?? 0,
+				papers: props.project?.metadata?.['publications-count'] ?? 0
 		  }
 );
 
