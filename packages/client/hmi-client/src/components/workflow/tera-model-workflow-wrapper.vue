@@ -21,7 +21,6 @@ const props = defineProps<{
 
 // Send refresh event onto the eventBus
 const refreshModelNode = () => {
-	console.log('refreshing node emitter...');
 	workflowEventBus.emitNodeRefresh({
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id

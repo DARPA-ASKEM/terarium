@@ -204,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep } from 'lodash';
+import { isArray, cloneDeep, isEqual } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
@@ -346,9 +346,15 @@ const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? [])
 
 const refreshModelNode = async (node: WorkflowNode) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023
-	const configurationList = await getModelConfigurations(node.state.id);
-	node.outputs = [];
+	const configurationList = await getModelConfigurations(node.state.modelId);
 	configurationList.forEach((configuration) => {
+		// Only add new configurations
+		const existingConfig = node.outputs.find((d) => isEqual(d.value, [configuration.id]));
+		if (existingConfig) {
+			existingConfig.label = configuration.name;
+			return;
+		}
+
 		node.outputs.push({
 			id: uuidv4(),
 			type: 'modelConfigId',
