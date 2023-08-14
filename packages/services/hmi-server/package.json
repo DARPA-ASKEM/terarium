@@ -4,8 +4,8 @@
   "description": "This project uses Quarkus, the Supersonic Subatomic Java Framework.",
   "main": "index.js",
   "scripts": {
-    "dev": "../../../gradlew -t generateTypeScript",
-    "generateTypes": "../../../gradlew -t generateTypeScript"
+    "dev": "../../.././mvnw typescript-generator:generate",
+    "generateTypes": ".../../.././mvnw typescript-generator:generate"
   },
   "author": "",
   "license": "ISC"
