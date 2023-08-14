@@ -11,7 +11,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Path("/api/projects")
 @Produces(MediaType.APPLICATION_JSON)
@@ -37,7 +36,7 @@ public class ProjectResource {
 
 		projects.forEach(project -> {
 			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList("datasets", "models", "publications"));
-			Map metadata = new HashMap();
+			Map<String, String> metadata = new HashMap<>();
 			metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
 			metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
 			metadata.put("models-count", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
