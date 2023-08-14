@@ -9,7 +9,7 @@
 						label="New project"
 						size="large"
 						@click="isNewProjectModalVisible = true"
-					></Button>
+					/>
 				</header>
 				<TabView>
 					<TabPanel header="My projects">
@@ -40,6 +40,7 @@
 							<ul v-else>
 								<li v-for="project in projects" :key="project.id">
 									<tera-project-card
+										v-if="project.id"
 										:project="project"
 										@click="openProject(project.id)"
 										@removed="removeProject"
@@ -69,8 +70,7 @@
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
-
-				<div v-for="(project, index) in projectsToDisplay" :key="index">
+				<div v-for="project in projectsWithRelatedDocuments" :key="project.name">
 					<p>{{ project.name }}</p>
 					<div class="carousel">
 						<div class="chevron-left" @click="scroll('left', $event)">
@@ -80,7 +80,7 @@
 							<i class="pi pi-chevron-right" />
 						</div>
 						<ul>
-							<li v-for="(document, j) in project.relatedDocuments" :key="j">
+							<li v-for="document in project.relatedDocuments" :key="document.gddId">
 								<tera-document-card :document="document" @click="selectDocument(document)" />
 							</li>
 						</ul>
@@ -169,12 +169,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
-import { IProject } from '@/types/Project';
-import { XDDSearchParams } from '@/types/XDD';
-import { Document } from '@/types/Types';
-import { searchXDDDocuments, getRelatedDocuments } from '@/services/data';
+import { Document, Project } from '@/types/Types';
+import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import TeraDocumentCard from '@/components/home/tera-document-card.vue';
@@ -192,17 +190,38 @@ import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 
-const projects = ref<IProject[]>();
-// Only display projects with at least one related document
-// Only display at most 5 projects
-const projectsToDisplay = computed(() =>
-	projects.value?.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
-);
-const relevantDocuments = ref<Document[]>([]);
-const relevantSearchTerm = 'COVID-19';
-const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
-const selectedDocument = ref<Document>();
+const projects = ref<Project[]>();
 
+/**
+ * Display Related Documents for the latest 3 project with at least one publication.
+ */
+type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Document[] };
+const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
+async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
+	projectsWithRelatedDocuments.value = await Promise.all(
+		newProjects
+			// filter out the ones with no publications
+			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
+			// get the first three project with a publication
+			.slice(0, 3)
+			// get the related documents for each project first publication
+			.map(async (project) => {
+				let relatedDocuments = [] as Document[];
+				if (project.id) {
+					// Fetch the publications for the project
+					const publications = await ProjectService.getPublicationAssets(project.id);
+					if (!isEmpty(publications)) {
+						// Fetch the related documents for the first publication
+						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
+					}
+				}
+				return { name: project.name, relatedDocuments } as RelatedDocumentFromProject;
+			}) ?? ([] as RelatedDocumentFromProject[])
+	);
+}
+watch(projects, (newProjects) => newProjects && updateProjectsWithRelatedDocuments(newProjects));
+
+const selectedDocument = ref<Document>();
 const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
 const router = useRouter();
@@ -218,18 +237,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = ((await ProjectService.getAll()) ?? []).slice().reverse();
-
-	projects.value.forEach(async (project) => {
-		project.assets = await ProjectService.getAssets(project.id);
-		project.relatedDocuments = await getRelatedDocuments(project.id, null);
-	});
-
-	// Get all relevant documents (latest on section)
-	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
-	if (allDocuments) {
-		relevantDocuments.value = allDocuments.data;
-	}
+	projects.value = (await ProjectService.getAll()) ?? [];
 });
 
 const selectDocument = (item: Document) => {
@@ -282,8 +290,8 @@ async function createNewProject() {
 		author
 	);
 	if (project?.id) {
-		openProject(project.id);
 		isNewProjectModalVisible.value = false;
+		openProject(project.id);
 	}
 }
 
@@ -291,7 +299,7 @@ function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
 
-const removeProject = (projectId: IProject['id']) => {
+const removeProject = (projectId: Project['id']) => {
 	projects.value = projects.value?.filter((project) => project.id !== projectId);
 };
 </script>

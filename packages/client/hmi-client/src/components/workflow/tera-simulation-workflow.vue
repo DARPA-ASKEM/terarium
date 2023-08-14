@@ -260,6 +260,8 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
+const emit = defineEmits(['page-loaded']);
+
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
@@ -432,6 +434,7 @@ const drilldown = (event: WorkflowNode) => {
 workflowEventBus.on('node-state-change', (payload: any) => {
 	if (wf.value.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
+	workflowDirty = true;
 });
 
 workflowEventBus.on(
@@ -473,7 +476,8 @@ const contextMenuItems = ref([
 	{
 		label: 'Stratify',
 		command: () => {
-			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition, { state: null });
+			workflowDirty = true;
 		}
 	},
 	{
@@ -729,6 +733,7 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
+		emit('page-loaded');
 	},
 	{ immediate: true }
 );

@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 
@@ -10,6 +11,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Path("/api/projects")
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,12 +29,23 @@ public class ProjectResource {
 	) {
 		List<Project> projects = proxy.getProjects(pageSize, page);
 
-		// Remove non active (soft-deleted) projects
-		// TODO - this should be done in the data-service
+		// Remove non-active (soft-deleted) projects
 		projects = projects
 			.stream()
 			.filter(Project::getActive)
 			.toList();
+
+		projects.forEach(project -> {
+			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList("datasets", "models", "publications"));
+			Map metadata = new HashMap();
+			metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
+			metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
+			metadata.put("models-count", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
+			metadata.put("publications-count", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
+			metadata.put("workflows-count", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
+			metadata.put("artifacts-count", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
+			project.setMetadata(metadata);
+		});
 
 		return Response
 			.status(Response.Status.OK)

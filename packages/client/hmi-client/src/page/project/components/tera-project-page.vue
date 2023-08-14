@@ -40,6 +40,7 @@
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
+		@page-loaded="emit('asset-loaded')"
 	/>
 	<tera-document
 		v-else-if="pageType === ProjectAssetTypes.DOCUMENTS"
