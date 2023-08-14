@@ -3,9 +3,9 @@ package software.uncharted.terarium.hmiserver.proxies.simulationservice;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 

@@ -457,6 +457,7 @@ const drilldown = (event: WorkflowNode) => {
 workflowEventBus.on('node-state-change', (payload: any) => {
 	if (wf.value.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
+	workflowDirty = true;
 });
 
 workflowEventBus.on(
@@ -498,7 +499,8 @@ const contextMenuItems = ref([
 	{
 		label: 'Stratify',
 		command: () => {
-			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition, { state: null });
+			workflowDirty = true;
 		}
 	},
 	{

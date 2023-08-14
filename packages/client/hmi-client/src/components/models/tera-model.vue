@@ -584,6 +584,7 @@ import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
 import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
+import useResourcesStore from '@/stores/resources';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
@@ -595,7 +596,7 @@ enum ModelView {
 }
 
 // TODO - Get rid of these emits
-const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
+const emit = defineEmits(['close-preview', 'asset-loaded', 'close-current-tab']);
 
 const props = defineProps({
 	project: {
@@ -872,15 +873,6 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
-);
-
 onUpdated(() => {
 	if (model.value) {
 		emit('asset-loaded');
@@ -914,14 +906,16 @@ const createNewModel = async () => {
 };
 
 async function updateModelName() {
-	if (model.value) {
+	if (model.value && newModelName.value !== '') {
 		const modelClone = cloneDeep(model.value);
 		modelClone.name = newModelName.value;
 		await updateModel(modelClone);
 		model.value = await getModel(props.assetId);
-		// FIXME: Names aren't updated in sidebar
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		isRenamingModel.value = false;
+	} else if (newModelName.value !== '') {
+		isRenamingModel.value = false;
 	}
-	isRenamingModel.value = false;
 }
 
 // Toggle rows to become editable

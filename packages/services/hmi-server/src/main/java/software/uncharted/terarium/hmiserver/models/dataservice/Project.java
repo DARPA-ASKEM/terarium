@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
@@ -40,6 +41,10 @@ public class Project implements Serializable {
 
 	@TSOptional
 	private Assets assets;
+
+	@TSOptional
+	// Metadata that can be useful for the UI
+	private Map<String, String> metadata;
 
 	private String username;
 
