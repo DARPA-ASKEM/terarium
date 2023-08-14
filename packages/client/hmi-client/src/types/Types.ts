@@ -84,7 +84,7 @@ export interface Model {
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
-    metadata?: any;
+    metadata?: ModelMetadata;
 }
 
 export interface ModelConfiguration {
@@ -194,7 +194,7 @@ export interface TypeSystemExtended {
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
-    metadata?: any;
+    metadata?: ModelMetadata;
 }
 
 export interface TypingSemantics {
@@ -400,31 +400,6 @@ export interface OdeSemantics {
     time?: any;
 }
 
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
-}
-
-export interface Workflow {
-    id: string;
-    name: string;
-    description: string;
-    transform: any;
-    nodes: any[];
-    edges: any[];
-}
-
-export interface KnownEntities {
-    urlExtractions: XDDUrlExtraction[];
-    askemObjects: Extraction[];
-    summaries: string[];
-}
-
 export interface VariableStatement {
     id: string;
     variable: Variable;
@@ -513,34 +488,9 @@ export interface ModelParameter {
 export interface Observable {
     id: string;
     name?: string;
-    states?: string[];
+    states: string[];
     expression?: string;
     expression_mathml?: string;
-}
-
-export interface ExtractionProperties {
-    title: string;
-    trustScore: string;
-    abstractText: string;
-    xddId: string;
-    documentId: string;
-    documentTitle: string;
-    contentText: string;
-    indexInDocument: number;
-    contentJSON: any;
-    image: string;
-    relevantSentences: string;
-    sectionID: string;
-    sectionTitle: string;
-    caption: string;
-    documentBibjson: Document;
-    doi: string;
-}
-
-export interface XDDUrlExtraction {
-    url: string;
-    resourceTitle: string;
-    extractedFrom: string[];
 }
 
 export interface Variable {
@@ -569,9 +519,69 @@ export interface ProvenanceInfo {
     description: string;
 }
 
+export interface ExtractionProperties {
+    title: string;
+    trustScore: string;
+    abstractText: string;
+    xddId: string;
+    documentId: string;
+    documentTitle: string;
+    contentText: string;
+    indexInDocument: number;
+    contentJSON: any;
+    image: string;
+    relevantSentences: string;
+    sectionID: string;
+    sectionTitle: string;
+    caption: string;
+    documentBibjson: Document;
+    doi: string;
+}
+
+export interface XDDUrlExtraction {
+    url: string;
+    resourceTitle: string;
+    extractedFrom: string[];
+}
+
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
+}
+
+export interface VariableMetadata {
+    type: string;
+    value: string;
+}
+
+export interface DataColumn {
+    id: string;
+    name: string;
+    dataset: MetadataDataset;
+}
+
+export interface Paper {
+    id: string;
+    doi: string;
+    file_directory: string;
+}
+
+export interface Equation {
+    id: string;
+    text: string;
+    image: string;
+}
+
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
+}
+
+export interface MetadataDataset {
+    id: string;
+    name: string;
+    metadata: string;
 }
 
 export enum EvaluationScenarioStatus {
