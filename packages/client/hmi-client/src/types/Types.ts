@@ -307,6 +307,15 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
+export interface ModelMetadata {
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
+    attributes: any[];
+    timeseries?: { [index: string]: any };
+}
+
 export interface Assets {
     datasets: Dataset[];
     extractions: Extraction[];
@@ -355,15 +364,6 @@ export interface Properties {
     name: string;
     grounding?: ModelGrounding;
     description?: string;
-}
-
-export interface ModelMetadata {
-    processed_at?: number;
-    processed_by?: string;
-    variable_statements?: VariableStatement[];
-    annotations?: Annotations;
-    attributes?: any[];
-    timeseries?: { [index: string]: any };
 }
 
 export interface PetriNetState {
@@ -445,6 +445,31 @@ export interface Annotations {
     diseases?: string[];
     hosts?: string[];
     model_types?: string[];
+}
+
+export interface Extraction {
+    id: number;
+    askemClass: string;
+    properties: ExtractionProperties;
+    askemId: string;
+    xddCreated: Date;
+    xddRegistrant: number;
+    highlight: string[];
+}
+
+export interface Workflow {
+    id: string;
+    name: string;
+    description: string;
+    transform: any;
+    nodes: any[];
+    edges: any[];
+}
+
+export interface KnownEntities {
+    urlExtractions: XDDUrlExtraction[];
+    askemObjects: Extraction[];
+    summaries: string[];
 }
 
 export interface ModelExpression {
