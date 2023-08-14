@@ -11,13 +11,10 @@
 		<Teleport to="body">
 			<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="!isModalVisible">
 				<template #header>
-					<h2>
-						https://github.com/{{ repoOwnerAndName
-						}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
-					</h2>
+					<h2>{{ modalTitle }}</h2>
 					<b>({{ directoryContent?.totalFiles }}) files found in: </b>
 					<div class="flex justify-content-left">
-						<Breadcrumb :home="home" :model="directories" style="color: black" />
+						<Breadcrumb :home="home" :model="directories" />
 					</div>
 				</template>
 				<template #default>
@@ -160,10 +157,10 @@
 					</div>
 				</template>
 				<template #footer>
-					<Button class="p-button-outlined" label="Cancel" @click="isModalVisible = false" />
 					<Button :disabled="isEmpty(filesSelection)" @click="openSelectedFiles">
 						{{ filesSelectionButton }}
 					</Button>
+					<Button class="p-button-outlined" label="Cancel" @click="isModalVisible = false" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -171,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ComputedRef, ref, Ref } from 'vue';
+import { computed, ComputedRef, ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { IProject } from '@/types/Project';
@@ -194,16 +191,22 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const repoOwnerAndName: Ref<string> = ref('');
-const currentDirectory: Ref<string> = ref('');
-const directoryContent: Ref<GithubRepo | null> = ref(null);
-const isModalVisible: Ref<boolean> = ref(false);
-const selectedFiles: Ref<GithubFile[]> = ref([]);
-const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
-const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
-const selectedText: Ref<string> = ref('');
-const displayCode: Ref<string> = ref('');
+const repoOwnerAndName = ref<string>('');
+const currentDirectory = ref<string>('');
+const directoryContent = ref<GithubRepo | null>(null);
+const isModalVisible = ref<boolean>(false);
+const selectedFiles = ref<GithubFile[]>([]);
+const selectedUnknownFiles = ref<GithubFile[]>([]);
+const editor = ref<VAceEditorInstance['_editor'] | null>(null);
+const selectedText = ref<string>('');
+const displayCode = ref<string>('');
 
+const modalTitle = computed(
+	() =>
+		`https://github.com/${repoOwnerAndName.value}/${
+			isInDirectory.value ? currentDirectory.value : ''
+		}`
+);
 // Breadcrumb home setup
 const home = ref({
 	icon: 'pi pi-home',
