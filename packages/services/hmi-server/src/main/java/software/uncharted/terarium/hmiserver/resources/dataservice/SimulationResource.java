@@ -9,7 +9,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.groups.MultiSelect;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -160,7 +159,6 @@ public class SimulationResource implements SnakeCaseResource {
 	public Publisher<CalibrationIntermediateResults> stream(
 		@PathParam("jobId") final String jobId
 	) {
-		// return Multi.createFrom().publisher(events);
-		return Multi.createFrom().publisher(events).select().where(event -> event.getJobId == jobId);
+		return Multi.createFrom().publisher(events).select().where(event -> event.getJobId() == jobId);
 	}
 }

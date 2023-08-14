@@ -12,4 +12,13 @@ public class CalibrationIntermediateResults implements Serializable {
 	@JsonAlias("job_id")
 	private String jobId;
 	private float progress;
+
+	public String getJobId(){
+		return this.jobId;
+	}
+
+	@Override
+    public String toString() {
+        return "{ job_id:'" + jobId + "', progress:" + progress + "}";
+    }
 }
