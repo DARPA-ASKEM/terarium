@@ -16,7 +16,7 @@
 
 <template>
 	<Transition name="modal">
-		<aside @click.self="$emit('modalMaskClicked')">
+		<aside @mousedown.self="$emit('modalMaskClicked')">
 			<main>
 				<header>
 					<slot name="header"></slot>
