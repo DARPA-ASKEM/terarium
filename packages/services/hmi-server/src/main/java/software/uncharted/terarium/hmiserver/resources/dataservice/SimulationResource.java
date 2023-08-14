@@ -23,7 +23,10 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.utils.Converter;
-import software.uncharted.terarium.hmiserver.models.CalibrationIntermediateResults;
+import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResults;
+import io.smallrye.reactive.messaging.annotations.Broadcast;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -50,7 +53,11 @@ public class SimulationResource implements SnakeCaseResource {
 	DatasetProxy datasetProxy;
 
 	@Inject
-	@Channel("simulations") Publisher<CalibrationIntermediateResults> events;
+	@Channel("simulationStatus") Publisher<SimulationIntermediateResults> partialSimulationResults;
+
+	@Broadcast
+	@Channel("simulationStatus")
+	Emitter<SimulationIntermediateResults> partialSimulationEmitter;
 
 	@POST
 	public Simulation createSimulation(final Simulation simulation){
@@ -156,9 +163,22 @@ public class SimulationResource implements SnakeCaseResource {
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	@Tag(name = "Stream partial/intermediate simulation result associated with run ID")
-	public Publisher<CalibrationIntermediateResults> stream(
+	public Publisher<SimulationIntermediateResults> stream(
 		@PathParam("jobId") final String jobId
 	) {
-		return Multi.createFrom().publisher(events).select().where(event -> event.getJobId() == jobId);
+		return Multi.createFrom().publisher(partialSimulationResults).select().where(event -> event.getJobId().equals(jobId));
+	}
+
+	@PUT
+	@Path("/create-dummy-partial-result")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createPartialResult() {
+		final String jobId = "123";
+		final float progress = 0.1f;
+		final SimulationIntermediateResults event = new SimulationIntermediateResults();
+		event.setJobId(jobId);
+		event.setProgress(progress);
+		partialSimulationEmitter.send(event);
+		return Response.ok(Map.of("id", jobId.toString())).build();
 	}
 }

@@ -8,10 +8,18 @@ import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class CalibrationIntermediateResults implements Serializable {
+public class SimulationIntermediateResults implements Serializable {
 	@JsonAlias("job_id")
 	private String jobId;
 	private float progress;
+
+	public void setJobId(String jobId){
+		this.jobId = jobId;
+	}
+
+	public void setProgress(float progress){
+		this.progress = progress;
+	}
 
 	public String getJobId(){
 		return this.jobId;

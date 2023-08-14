@@ -37,6 +37,7 @@ function listen() {
 
 async function createEmptyModel() {
 	await API.put('/dev-tests/user-event');
+	await API.put('/simulations/create-dummy-partial-result');
 }
 </script>
 
