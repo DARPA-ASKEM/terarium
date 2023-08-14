@@ -86,7 +86,7 @@ const addAssetsToProject = async (projectName) => {
 };
 
 onMounted(async () => {
-	const all = await ProjectService.getAll();
+	const all = (await ProjectService.getAll()) as unknown as IProject[];
 	if (all !== null) {
 		projectsList.value = all;
 	}
