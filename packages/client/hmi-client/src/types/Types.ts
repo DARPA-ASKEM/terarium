@@ -357,6 +357,15 @@ export interface Properties {
     description?: string;
 }
 
+export interface ModelMetadata {
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
+    attributes?: any[];
+    timeseries?: { [index: string]: any };
+}
+
 export interface PetriNetState {
     id: string;
     name: string;
@@ -414,6 +423,28 @@ export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
     summaries: string[];
+}
+
+export interface VariableStatement {
+    id: string;
+    variable: Variable;
+    value?: StatementValue;
+    metadata?: VariableStatementMetadata[];
+    provenance?: ProvenanceInfo;
+}
+
+export interface Annotations {
+    license?: string;
+    authors?: string[];
+    references?: string[];
+    time_scale?: string;
+    time_start?: string;
+    time_end?: string;
+    locations?: string[];
+    pathogens?: string[];
+    diseases?: string[];
+    hosts?: string[];
+    model_types?: string[];
 }
 
 export interface ModelExpression {
@@ -485,6 +516,32 @@ export interface XDDUrlExtraction {
     url: string;
     resourceTitle: string;
     extractedFrom: string[];
+}
+
+export interface Variable {
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: Equation[];
+    dkg_groundings: DKGConcept[];
+}
+
+export interface StatementValue {
+    value: string;
+    type: string;
+    dkg_grounding?: DKGConcept;
+}
+
+export interface VariableStatementMetadata {
+    type: string;
+    value: string;
+}
+
+export interface ProvenanceInfo {
+    method: string;
+    description: string;
 }
 
 export interface ModelDistribution {
