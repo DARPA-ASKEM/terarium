@@ -18,143 +18,130 @@
 					</div>
 				</template>
 				<template #default>
-					<div style="display: flex; flex-direction: row">
-						<div style="max-width: 90%; width: 30%">
-							<ul>
-								<li v-if="isInDirectory" @click="openDirectory('')">
-									<i class="pi pi-folder-open" />
-									<b> ..</b>
-								</li>
-								<li v-if="hasDirectories">
-									<header>
-										<b>Directories</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Directory?.length }})</span
-										>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Directory"
-									:key="index"
-									@click="openDirectory(content.path)"
-								>
-									<i class="pi pi-folder" />
-									{{ content.name }}
-								</li>
-								<li v-if="hasCode">
-									<header>
-										<b>Code</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Code?.length }})</span
-										>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Code"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<Checkbox
-										class="file-checkboxes"
-										v-model="selectedFiles"
-										:inputId="content.name"
-										:value="content"
-									/>
-									<i class="pi pi-file file-checkboxes" />
-									<label :for="content.name">{{ content.name }}</label>
-								</li>
-								<li v-if="hasData">
-									<header>
-										<b>Data</b>
-										<span class="artifact-amount">
-											({{ directoryContent?.files.Data?.length }})
-										</span>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Data"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<Checkbox
-										class="file-checkboxes"
-										v-model="selectedFiles"
-										:inputId="content.name"
-										:value="content"
-									/>
-									<i class="pi pi-file file-checkboxes" />
-									<label :for="content.name">{{ content.name }}</label>
-								</li>
-								<li v-if="hasDocuments">
-									<header>
-										<b>Documents</b>
-										<span class="artifact-amount">
-											({{ directoryContent?.files.Documents?.length }})
-										</span>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Documents"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<Checkbox
-										class="file-checkboxes"
-										v-model="selectedFiles"
-										:inputId="content.name"
-										:value="content"
-									/>
-									<i class="pi pi-file file-checkboxes" />
-									<label :for="content.name">{{ content.name }}</label>
-								</li>
-								<li v-if="hasOther">
-									<header>
-										<b>Unknown File Types</b>
-										<span class="artifact-amount">
-											({{ directoryContent?.files.Other?.length }})
-										</span>
-									</header>
-								</li>
-								<li
-									class="t"
-									v-for="(content, index) in directoryContent?.files.Other"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<div class="unknown-check">
+					<section>
+						<nav>
+							<span v-if="isInDirectory" @click="openDirectory('')">
+								<i class="pi pi-folder-open" />
+								<b> ..</b>
+							</span>
+							<template v-if="hasDirectories">
+								<header :style="{ '--count': `'${directoryContent?.files.Directory?.length}'` }">
+									Directories
+								</header>
+								<ul>
+									<li
+										v-for="(content, index) in directoryContent?.files.Directory"
+										:key="index"
+										@click="openDirectory(content.path)"
+									>
+										<i class="pi pi-folder" />
+										{{ content.name }}
+									</li>
+								</ul>
+							</template>
+							<template v-if="hasCode">
+								<header :style="{ '--count': `'${directoryContent?.files.Code?.length}'` }">
+									Code
+								</header>
+								<ul>
+									<li
+										v-for="(content, index) in directoryContent?.files.Code"
+										:key="index"
+										@click="previewTextFile(content)"
+									>
 										<Checkbox
-											v-model="selectedUnknownFiles"
+											class="file-checkboxes"
+											v-model="selectedFiles"
 											:inputId="content.name"
 											:value="content"
 										/>
-										<i class="pi pi-file unknown-icon" />
-										{{ content.name }}
-									</div>
-									<div>
-										<Dropdown
-											v-model="content.fileCategory"
-											:options="asDocumentTypes"
-											optionLabel="name"
-											placeholder="Select a document type"
-											style="width: 90%; margin: 2px"
+										<i class="pi pi-file file-checkboxes" />
+										<label :for="content.name">{{ content.name }}</label>
+									</li>
+								</ul>
+							</template>
+							<template v-if="hasData">
+								<header :style="{ '--count': `'${directoryContent?.files.Data?.length}'` }">
+									Data
+								</header>
+								<ul>
+									<li
+										v-for="(content, index) in directoryContent?.files.Data"
+										:key="index"
+										@click="previewTextFile(content)"
+									>
+										<Checkbox
+											class="file-checkboxes"
+											v-model="selectedFiles"
+											:inputId="content.name"
+											:value="content"
 										/>
-									</div>
-								</li>
-							</ul>
-						</div>
-						<section class="preview-container" style="width: 70%">
-							<div class="code-editor-container">
-								<h4 class="preview-title">Preview</h4>
-								<v-ace-editor
-									v-model:value="displayCode"
-									@init="initialize"
-									lang="python"
-									theme="chrome"
-									class="code-editor"
-								/>
-							</div>
-						</section>
-					</div>
+										<i class="pi pi-file file-checkboxes" />
+										<label :for="content.name">{{ content.name }}</label>
+									</li>
+								</ul>
+							</template>
+							<template v-if="hasDocuments">
+								<header :style="{ '--count': `'${directoryContent?.files.Documents?.length}'` }">
+									<b>Documents</b>
+								</header>
+								<ul>
+									<li
+										v-for="(content, index) in directoryContent?.files.Documents"
+										:key="index"
+										@click="previewTextFile(content)"
+									>
+										<Checkbox
+											class="file-checkboxes"
+											v-model="selectedFiles"
+											:inputId="content.name"
+											:value="content"
+										/>
+										<i class="pi pi-file file-checkboxes" />
+										<label :for="content.name">{{ content.name }}</label>
+									</li>
+								</ul>
+							</template>
+							<template v-if="hasOther">
+								<header :style="{ '--count': `'${directoryContent?.files.Other?.length}'` }">
+									Unknown File Types
+								</header>
+								<ul>
+									<li
+										v-for="(content, index) in directoryContent?.files.Other"
+										:key="index"
+										@click="previewTextFile(content)"
+									>
+										<div class="unknown-check">
+											<Checkbox
+												v-model="selectedUnknownFiles"
+												:inputId="content.name"
+												:value="content"
+											/>
+											<i class="pi pi-file unknown-icon" />
+											{{ content.name }}
+										</div>
+										<div>
+											<Dropdown
+												v-model="content.fileCategory"
+												:options="asDocumentTypes"
+												optionLabel="name"
+												placeholder="Select a document type"
+												style="width: 90%"
+											/>
+										</div>
+									</li>
+								</ul>
+							</template>
+						</nav>
+
+						<v-ace-editor
+							v-model:value="displayCode"
+							@init="initialize"
+							lang="python"
+							class="code-editor"
+						/>
+					</section>
 				</template>
 				<template #footer>
 					<Button :disabled="isEmpty(filesSelection)" @click="openSelectedFiles">
@@ -207,6 +194,7 @@ const modalTitle = computed(
 			isInDirectory.value ? currentDirectory.value : ''
 		}`
 );
+
 // Breadcrumb home setup
 const home = ref({
 	icon: 'pi pi-home',
@@ -373,67 +361,47 @@ async function openCodeFiles(githubFiles: GithubFile[]) {
 main {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
 }
 
-ul {
-	list-style: none;
+section {
 	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	height: 50vh;
+	flex-direction: row;
+	gap: 1rem;
+	justify-content: space-between;
+	max-height: 66vh;
+}
+
+nav {
+	flex-grow: 1;
+	list-style: none;
 	overflow-y: auto;
 }
 
-ul li {
-	padding: 0.25rem;
-	cursor: pointer;
-	border-radius: 0.5rem;
-	max-width: 90%;
+nav header {
+	font-weight: var(--font-weight-semibold);
+	margin-bottom: 1rem;
 }
 
-ul li:hover {
+nav header::after {
+	content: '(' var(--count) ')';
+}
+
+nav header:not(:first-of-type) {
+	margin-top: 2rem;
+}
+
+li {
+	cursor: pointer;
+	border-radius: 0.5rem;
+}
+
+li:hover {
 	background-color: var(--surface-hover);
 }
 
-.preview-container {
-	width: 70%;
-	margin: 10px;
-}
-
-.preview-title {
-	padding-bottom: 10px;
-}
-
-.code-editor-container {
-	background-color: rgb(231, 231, 231);
-	border-radius: 5px;
-	padding: 15px;
-	height: 100%;
-}
-
 .code-editor {
-	border-top: 1px solid var(--surface-border-light);
-	width: 100%;
-	height: 95%;
-	border-radius: 5px;
-}
-
-.file-checkboxes {
-	margin-left: 10px;
-}
-
-.t {
-	display: flex;
-	flex-direction: column;
-	margin-left: 10px;
-}
-
-.unknown-check {
-	padding-bottom: 8px;
-}
-
-.unknown-icon {
-	padding-left: 10px;
+	flex-grow: 5;
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
 }
 </style>
