@@ -16,7 +16,8 @@
 
 <template>
 	<Transition name="modal">
-		<aside @mousedown.self="$emit('modalMaskClicked')">
+		<div>
+			<aside @click.self="$emit('modalMaskClicked')" />
 			<main>
 				<header>
 					<slot name="header"></slot>
@@ -27,7 +28,7 @@
 					<slot name="footer"></slot>
 				</footer>
 			</main>
-		</aside>
+		</div>
 	</Transition>
 </template>
 
@@ -55,6 +56,11 @@ main {
 	transition: all 0.1s ease;
 	min-width: max-content;
 	width: 80vw;
+	position: absolute;
+	z-index: 1001;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 header {
