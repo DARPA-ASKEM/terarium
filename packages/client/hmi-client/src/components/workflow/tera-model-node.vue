@@ -23,7 +23,6 @@ import { Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import { WorkflowNode } from '@/types/workflow';
 
-//
 const props = defineProps<{
 	node: WorkflowNode;
 	models: Model[];
@@ -57,6 +56,9 @@ onMounted(async () => {
 
 	// If model is drag and dropped from resource panel
 	else if (props.droppedModelId) await getModelById(props.droppedModelId);
+
+	// Force refresh of configs in the workflow node - August 2023
+	emit('select-model', { id: model.value?.id });
 });
 </script>
 

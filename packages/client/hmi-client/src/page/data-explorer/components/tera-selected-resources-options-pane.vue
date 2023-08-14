@@ -68,7 +68,7 @@ const getType = (item: ResultType) => {
 };
 
 onMounted(async () => {
-	const all = await ProjectService.getAll();
+	const all = (await ProjectService.getAll()) as unknown as IProject[];
 	if (all !== null) {
 		projectsList.value = all;
 	}

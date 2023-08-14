@@ -204,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep } from 'lodash';
+import { isArray, cloneDeep, isEqual } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
@@ -259,6 +259,8 @@ const props = defineProps<{
 	project: IProject;
 	assetId: string;
 }>();
+
+const emit = defineEmits(['page-loaded']);
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -347,10 +349,12 @@ async function selectModel(node: WorkflowNode, data: { id: string }) {
 	node.state.modelId = data.id;
 
 	// FIXME: Need additional design to work out exactly what to show. June 2023
-	// FIXME: Need to merge with any existing output-port results (e.g. new configs are added)
 	const configurationList = await getModelConfigurations(data.id);
 	node.outputs = [];
 	configurationList.forEach((configuration) => {
+		// Only add new configurations
+		if (node.outputs.find((d) => isEqual(d.value, [configuration.id]))) return;
+
 		node.outputs.push({
 			id: uuidv4(),
 			type: 'modelConfigId',
@@ -432,6 +436,7 @@ const drilldown = (event: WorkflowNode) => {
 workflowEventBus.on('node-state-change', (payload: any) => {
 	if (wf.value.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
+	workflowDirty = true;
 });
 
 workflowEventBus.on(
@@ -473,7 +478,8 @@ const contextMenuItems = ref([
 	{
 		label: 'Stratify',
 		command: () => {
-			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition, { state: null });
+			workflowDirty = true;
 		}
 	},
 	{
@@ -729,6 +735,7 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
+		emit('page-loaded');
 	},
 	{ immediate: true }
 );
