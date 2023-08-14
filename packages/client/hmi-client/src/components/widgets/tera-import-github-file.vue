@@ -69,9 +69,9 @@
 								<li v-if="hasData">
 									<header>
 										<b>Data</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Data?.length }})</span
-										>
+										<span class="artifact-amount">
+											({{ directoryContent?.files.Data?.length }})
+										</span>
 									</header>
 								</li>
 								<li
@@ -91,9 +91,9 @@
 								<li v-if="hasDocuments">
 									<header>
 										<b>Documents</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Documents?.length }})</span
-										>
+										<span class="artifact-amount">
+											({{ directoryContent?.files.Documents?.length }})
+										</span>
 									</header>
 								</li>
 								<li
@@ -113,9 +113,9 @@
 								<li v-if="hasOther">
 									<header>
 										<b>Unknown File Types</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Other?.length }})</span
-										>
+										<span class="artifact-amount">
+											({{ directoryContent?.files.Other?.length }})
+										</span>
 									</header>
 								</li>
 								<li
@@ -160,14 +160,10 @@
 					</div>
 				</template>
 				<template #footer>
-					<Button
-						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
-						@click="openSelectedFiles()"
-						>Import {{ selectedFiles.length + selectedUnknownFiles.length }} file{{
-							selectedFiles.length == 1 ? '' : 's'
-						}}</Button
-					>
 					<Button class="p-button-outlined" label="Cancel" @click="isModalVisible = false" />
+					<Button :disabled="isEmpty(filesSelection)" @click="openSelectedFiles">
+						{{ filesSelectionButton }}
+					</Button>
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -236,6 +232,11 @@ const hasDocuments: ComputedRef<boolean> = computed(
 );
 const hasOther: ComputedRef<boolean> = computed(
 	() => !isEmpty(directoryContent?.value?.files?.Other)
+);
+
+const filesSelection = computed(() => [...selectedFiles.value, ...selectedUnknownFiles.value]);
+const filesSelectionButton = computed(
+	() => `Import ${filesSelection.value.length} file${filesSelection.value.length > 1 ? 's' : ''}`
 );
 
 async function initializeCodeBrowser() {
