@@ -24,7 +24,7 @@ public class ProjectResource {
 
 	@GET
 	public Response getProjects(
-		@DefaultValue("50") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("250") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		List<Project> projects = proxy.getProjects(pageSize, page);
