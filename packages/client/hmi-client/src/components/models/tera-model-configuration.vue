@@ -291,6 +291,8 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const emit = defineEmits(['new-model-configuration']);
+
 const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
@@ -341,6 +343,7 @@ async function addModelConfiguration(config: ModelConfiguration) {
 		config.configuration
 	);
 	setTimeout(() => {
+		emit('new-model-configuration');
 		initializeConfigSpace();
 	}, 800);
 }

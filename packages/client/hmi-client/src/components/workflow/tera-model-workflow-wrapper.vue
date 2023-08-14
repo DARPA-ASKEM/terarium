@@ -1,5 +1,9 @@
 <template>
-	<tera-model :project="props.project" :asset-id="props.node.state.modelId" />
+	<tera-model
+		:project="props.project"
+		:asset-id="props.node.state.modelId"
+		@new-model-configuration="refreshModelNode"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -8,9 +12,19 @@
 import { IProject } from '@/types/Project';
 import { WorkflowNode } from '@/types/workflow';
 import TeraModel from '@/components/models/tera-model.vue';
+import { workflowEventBus } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode;
 	project: IProject;
 }>();
+
+// Send refresh event onto the eventBus
+const refreshModelNode = () => {
+	console.log('refreshing node emitter...');
+	workflowEventBus.emitNodeRefresh({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id
+	});
+};
 </script>

@@ -344,13 +344,9 @@ const testOperation: Operation = {
 const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
-async function selectModel(node: WorkflowNode, data: { id: string }) {
-	droppedAssetId.value = null;
-	node.state.modelId = data.id;
-
+const refreshModelNode = async (node: WorkflowNode) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023
-	// FIXME: Need to merge with any existing output-port results (e.g. new configs are added)
-	const configurationList = await getModelConfigurations(data.id);
+	const configurationList = await getModelConfigurations(node.state.id);
 	node.outputs = [];
 	configurationList.forEach((configuration) => {
 		node.outputs.push({
@@ -361,6 +357,12 @@ async function selectModel(node: WorkflowNode, data: { id: string }) {
 			status: WorkflowPortStatus.NOT_CONNECTED
 		});
 	});
+};
+
+async function selectModel(node: WorkflowNode, data: { id: string }) {
+	droppedAssetId.value = null;
+	node.state.modelId = data.id;
+	await refreshModelNode(node);
 }
 
 async function updateWorkflowName() {
@@ -435,6 +437,16 @@ workflowEventBus.on('node-state-change', (payload: any) => {
 	if (wf.value.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 	workflowDirty = true;
+});
+
+workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
+	if (wf.value.id !== payload.workflowId) return;
+	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
+	if (!node) return;
+
+	if (node.operationType === WorkflowOperationTypes.MODEL) {
+		refreshModelNode(node);
+	}
 });
 
 workflowEventBus.on(
