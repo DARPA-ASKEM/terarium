@@ -100,11 +100,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual, union } from 'lodash';
-import {
-	StratifiedModelType,
-	getCatlabStatesMatrixData,
-	getCatlabTransitionsMatrixData
-} from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
+import { getAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
@@ -189,22 +186,15 @@ function configureMatrix() {
 	const amr: Model = props.modelConfiguration.configuration;
 
 	if (props.stratifiedModelType === StratifiedModelType.Catlab) {
+		const result = getAMRPresentationData(amr);
+
 		// Get only the states/transitions that are mapped to the base model
 		const matrixData =
 			props.nodeType === NodeType.State
-				? getCatlabStatesMatrixData(amr).filter((d) => d['@base'] === props.id)
-				: getCatlabTransitionsMatrixData(amr).filter((d) => d['@base'] === props.id);
+				? result.stateMatrixData.filter((d) => d._base === props.id)
+				: result.transitionMatrixData.filter((d) => d._base === props.id);
 
 		if (isEmpty(matrixData)) return;
-
-		// Grab dimension names from the first matrix row
-		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-			delete d.id;
-			delete d['@base'];
-			return Object.keys(d);
-		})[0];
-		rowDimensions.push(...dimensions);
-		colDimensions.push(...dimensions);
 
 		const matrixAttributes =
 			props.nodeType === NodeType.State
@@ -212,6 +202,21 @@ function configureMatrix() {
 				: createMatrix2D(matrixData, colDimensions, rowDimensions);
 
 		matrix.value = matrixAttributes.matrix;
+
+		// Grab dimension names from the first matrix row
+		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
+			delete d._id;
+			delete d._base;
+			return Object.keys(d);
+		})[0];
+
+		// FIXME: resolve id vs _id
+		matrixData.forEach((d) => {
+			d.id = d._id;
+		});
+
+		rowDimensions.push(...dimensions);
+		colDimensions.push(...dimensions);
 	} else if (props.stratifiedModelType === StratifiedModelType.Mira) {
 		const modifiers = amr.model.states.map(({ grounding }) => grounding.modifiers);
 
@@ -244,6 +249,8 @@ function configureMatrix() {
 	}
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
+
+	console.log('!!!!!', matrix.value);
 }
 
 onMounted(() => {

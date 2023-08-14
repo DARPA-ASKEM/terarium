@@ -141,7 +141,8 @@ import {
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
-import { StratifiedModelType, getBaseAMR } from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
+import { getAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
@@ -167,7 +168,7 @@ const configurations = computed<Model[]>(
 
 const baseModel = computed<any>(() =>
 	props.stratifiedModelType === StratifiedModelType.Catlab
-		? getBaseAMR(props.model)
+		? getAMRPresentationData(props.model).compactModel
 		: props.model.model
 );
 const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));

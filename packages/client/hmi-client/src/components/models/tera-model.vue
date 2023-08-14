@@ -577,8 +577,8 @@ import {
 	convertToAMRModel,
 	updateConfigFields,
 	updateParameterId,
-	isStratifiedAMR,
-	StratifiedModelType
+	StratifiedModelType,
+	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
@@ -659,7 +659,7 @@ const existingModelNames = computed(() => {
 	return modelNames;
 });
 
-const stratifiedModelType = computed(() => model.value && isStratifiedAMR(model.value));
+const stratifiedModelType = computed(() => model.value && getStratificationType(model.value));
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
