@@ -266,6 +266,7 @@ export async function simulationPollAction(
 			error: null
 		};
 	}
+
 	if (
 		response.find(
 			(simulation) =>
@@ -281,27 +282,23 @@ export async function simulationPollAction(
 			status: ProgressState.RUNNING,
 			value: 0
 		};
-	}
-
-	// check if there's a simulation job that does not include these statuses, for now we will throw an error whenever there is at least 1 job that is not in the queued, running, complete statuses
-	if (
-		response.find(
-			(simulation) =>
-				simulation?.status !== ProgressState.QUEUED &&
-				simulation?.status !== ProgressState.RUNNING &&
-				simulation?.status !== ProgressState.COMPLETE
-		)
-	) {
+		// keep polling
 		return {
-			data: response,
+			data: null,
 			progress: null,
-			error: true
+			error: null
 		};
 	}
 
+	// remove all simulations for now if there is an unhandled state
+	const newState = deleteSimulationInProgress(node, simulationIds);
+	if (!isEqual(node.state, newState)) {
+		emitFn('update-state', newState);
+	}
+
 	return {
-		data: null,
+		data: response,
 		progress: null,
-		error: null
+		error: true
 	};
 }
