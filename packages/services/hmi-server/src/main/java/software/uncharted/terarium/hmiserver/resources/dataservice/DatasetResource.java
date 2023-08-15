@@ -335,32 +335,4 @@ public class DatasetResource implements SnakeCaseResource {
 			return new CsvColumnStats(bins, 0, 0, 0, 0, 0);
 		}
 	}
-
-	/**
-	 * Get a signed url for uploading a file.
-	 *
-	 * @param id 		 dataset id
-	 * @param fileName file name
-	 * @return signed URL
-	 */
-	@GET
-	@Path("/{id}/upload-url")
-	@Tag(description = "Get a signed url for uploading a file")
-	public PresignedURL getUploadUrl(@PathParam("id") final String id, @QueryParam("filename") final String fileName) {
-		return datasetProxy.getUploadUrl(id, fileName);
-	}
-
-	/**
-	 * Get a download url for a file.
-	 *
-	 * @param id 		 dataset id
-	 * @param filename file name
-	 * @return signed URL
-	 */
-	@GET
-	@Path("/{id}/download-url")
-	@Tag(description = "Get a download url for a file")
-	public PresignedURL getDownloadUrl(@PathParam("id") final String id, @QueryParam("filename") String filename) {
-		return datasetProxy.getDownloadUrl(id, filename);
-	}
 }

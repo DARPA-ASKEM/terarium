@@ -70,11 +70,8 @@
 								v-if="cellEditStates[i].name"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
-								@focusout="cellEditStates[i].name = false"
-								@keyup.stop.enter="
-									cellEditStates[i].name = false;
-									updateModelConfigName(i);
-								"
+								@focusout="updateModelConfigName(i)"
+								@keyup.stop.enter="updateModelConfigName(i)"
 								class="cell-input"
 							/>
 						</td>
@@ -101,11 +98,8 @@
 								v-if="cellEditStates[i].initials[j]"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
-								@focusout="cellEditStates[i].initials[j] = false"
-								@keyup.stop.enter="
-									cellEditStates[i].initials[j] = false;
-									updateModelConfigValue('initials', 'expression', i, j);
-								"
+								@focusout="updateModelConfigValue('initials', 'expression', i, j)"
+								@keyup.stop.enter="updateModelConfigValue('initials', 'expression', i, j)"
 								class="cell-input"
 							/>
 						</td>
@@ -150,11 +144,8 @@
 								v-if="cellEditStates[i].parameters[j]"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
-								@focusout="cellEditStates[i].parameters[j] = false"
-								@keyup.stop.enter="
-									cellEditStates[i].parameters[j] = false;
-									updateModelConfigValue('parameters', 'value', i, j);
-								"
+								@focusout="updateModelConfigValue('parameters', 'value', i, j)"
+								@keyup.stop.enter="updateModelConfigValue('parameters', 'value', i, j)"
 								class="cell-input"
 							/>
 						</td>
@@ -472,6 +463,7 @@ function setModelParameters() {
 }
 
 function updateModelConfigName(configIndex: number) {
+	cellEditStates.value[configIndex].name = false;
 	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
 	updateModelConfig(configIndex);
 }
@@ -482,6 +474,7 @@ function updateModelConfigValue(
 	configIndex: number,
 	odeObjIndex: number
 ) {
+	cellEditStates.value[configIndex][odeType][odeObjIndex] = false;
 	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
 		valueName
 	] = modelConfigInputValue.value;
