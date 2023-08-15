@@ -3,6 +3,7 @@
 		:project="props.project"
 		:asset-id="props.node.state.modelId"
 		@new-model-configuration="refreshModelNode"
+		@update-model-configuration="refreshModelNode"
 	/>
 </template>
 
