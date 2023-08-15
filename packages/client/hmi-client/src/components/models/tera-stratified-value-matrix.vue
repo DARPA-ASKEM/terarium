@@ -57,8 +57,8 @@
 										class="cell-input"
 										v-model.lazy="valueToEdit.val"
 										v-focus
-										@focusout="updateModelConfigValue(cell?.value?.id)"
-										@keyup.stop.enter="updateModelConfigValue(cell?.value?.id)"
+										@focusout="updateModelConfigValue(cell.value.id)"
+										@keyup.stop.enter="updateModelConfigValue(cell.value.id)"
 									/>
 									<span v-else class="editable-cell">
 										{{ getMatrixValue(cell?.value?.id) }}
@@ -142,19 +142,23 @@ function getMatrixValue(variableName: string) {
 	return variableName;
 }
 
-function updateModelConfigValue(variableName: string) {
+async function updateModelConfigValue(variableName: string) {
+	const newValue = valueToEdit.value.val;
+	// valueToEdit.value = { val: '', rowIdx: -1, colIdx: -1 };
+
 	const odeObjectLocation = findOdeObjectLocation(variableName);
+
 	if (odeObjectLocation) {
 		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
 
-		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.val;
-		else if (odeFieldObject.value) odeFieldObject.value = Number(valueToEdit.value.val);
+		if (odeFieldObject.expression) odeFieldObject.expression = newValue;
+		else if (odeFieldObject.value) odeFieldObject.value = Number(newValue);
 
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
-		updateModelConfiguration(modelConfigurationClone);
+		await updateModelConfiguration(modelConfigurationClone);
 
-		valueToEdit.value = { val: '', rowIdx: -1, colIdx: -1 };
+		console.log(0);
 	}
 }
 
