@@ -12,21 +12,4 @@ public class SimulationIntermediateResults implements Serializable {
 	@JsonAlias("job_id")
 	private String jobId;
 	private float progress;
-
-	public void setJobId(String jobId){
-		this.jobId = jobId;
-	}
-
-	public void setProgress(float progress){
-		this.progress = progress;
-	}
-
-	public String getJobId(){
-		return this.jobId;
-	}
-
-	@Override
-    public String toString() {
-        return "{ job_id:'" + jobId + "', progress:" + progress + "}";
-    }
 }
