@@ -169,9 +169,11 @@ public class SimulationResource implements SnakeCaseResource {
 		return Multi.createFrom().publisher(partialSimulationResults).select().where(event -> event.getJobId().equals(jobId));
 	}
 
+	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
 	@PUT
-	@Path("/{jobId}/create-dummy-partial-result")
+	@Path("/{jobId}/create-partial-result")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Tag(name = "Used to write to the simulation status channel providing a job ID")
 	public Response createPartialResult(
 		@PathParam("jobId") final String jobId
 	) {
