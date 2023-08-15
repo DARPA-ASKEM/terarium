@@ -453,7 +453,7 @@ workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: stri
 	if (node.operationType === WorkflowOperationTypes.MODEL) {
 		// This part is a bit hacky and slow. Because we allow multiple instances of the
 		// same model across many nodes in a workflow, they ALL need to be updated. However
-		// this multi-models setup is also somewaht uncommon so I don't want to go out of the way
+		// this multi-models setup is also somewhat uncommon so I don't want to go out of the way
 		// to communicate "model change" instead of "node change", the former seemingly out of
 		// place when using the WorkflowEventBus mechanism. DC - Aug 2023
 		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
