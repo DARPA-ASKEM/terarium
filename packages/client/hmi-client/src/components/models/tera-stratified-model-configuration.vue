@@ -150,6 +150,8 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const emit = defineEmits(['new-model-configuration', 'update-model-configuration']);
+
 const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
@@ -196,6 +198,9 @@ function updateModelConfigName(configIndex: number) {
 	cellEditStates.value[configIndex].name = false;
 	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
 	updateModelConfiguration(modelConfigurations.value[configIndex]);
+	setTimeout(() => {
+		emit('update-model-configuration');
+	}, 800);
 }
 
 async function addModelConfiguration(config: ModelConfiguration) {
@@ -206,6 +211,7 @@ async function addModelConfiguration(config: ModelConfiguration) {
 		config.configuration
 	);
 	setTimeout(() => {
+		emit('new-model-configuration');
 		initializeConfigSpace();
 	}, 800);
 }

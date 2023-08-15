@@ -478,8 +478,14 @@
 						:stratified-model-type="stratifiedModelType"
 						:model="model"
 						:feature-config="featureConfig"
+						@new-model-configuration="emit('new-model-configuration')"
 					/>
-					<tera-model-configuration v-else :model="model" :feature-config="featureConfig" />
+					<tera-model-configuration
+						v-else
+						:model="model"
+						:feature-config="featureConfig"
+						@new-model-configuration="emit('new-model-configuration')"
+					/>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -598,7 +604,12 @@ enum ModelView {
 }
 
 // TODO - Get rid of these emits
-const emit = defineEmits(['close-preview', 'asset-loaded', 'close-current-tab']);
+const emit = defineEmits([
+	'close-preview',
+	'asset-loaded',
+	'close-current-tab',
+	'new-model-configuration'
+]);
 
 const props = defineProps({
 	project: {
