@@ -379,7 +379,7 @@ nav {
 
 nav header {
 	font-weight: var(--font-weight-semibold);
-	margin-bottom: 1rem;
+	margin-bottom: 0.5rem;
 }
 
 nav header::after {
@@ -387,12 +387,19 @@ nav header::after {
 }
 
 nav header:not(:first-of-type) {
-	margin-top: 2rem;
+	margin-top: 1rem;
 }
 
 li {
 	cursor: pointer;
 	border-radius: 0.5rem;
+	display: flex;
+	gap: 0.3rem;
+	align-items: center;
+}
+
+li + li {
+	margin-top: 0.33rem;
 }
 
 li:hover {

@@ -47,7 +47,7 @@
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
-				class="modal"
+				class="evaluation-modal"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
 			>
 				<template #header>
@@ -550,13 +550,13 @@ i {
 	min-width: fit-content !important;
 }
 
-.modal label {
+.evaluation-modal label {
 	display: block;
 	margin-bottom: 0.5em;
 }
 
-.modal input,
-.modal textarea {
+.evaluation-modal input,
+.evaluation-modal textarea {
 	display: block;
 	margin-bottom: 2rem;
 	width: 100%;
