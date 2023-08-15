@@ -32,6 +32,7 @@ import java.util.Map;
 
 @Path("/api/artifacts")
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Artifacts")
 @Slf4j
 public class ArtifactResource implements SnakeCaseResource {
