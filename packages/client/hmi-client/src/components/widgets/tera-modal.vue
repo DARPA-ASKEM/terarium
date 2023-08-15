@@ -13,17 +13,14 @@
  * <modal @modal-mask-clicked="closeModal"></modal>
  */
 
-defineProps({
-	zIndex: {
-		type: String || Number,
-		default: 'var(--z-index-modal)'
-	}
-});
+defineProps<{
+	zIndex?: number;
+}>();
 </script>
 
 <template>
 	<Transition name="modal">
-		<main :style="{ 'z-index': zIndex }">
+		<main :style="{ '--z-index': zIndex }">
 			<section>
 				<header>
 					<slot name="header" />
@@ -42,6 +39,7 @@ defineProps({
 <style scoped>
 main {
 	isolation: isolate;
+	z-index: var(--z-index, var(--z-index-modal));
 }
 
 main > * {
