@@ -283,6 +283,22 @@ export async function simulationPollAction(
 		};
 	}
 
+	// check if there's a simulation job that does not include these statuses, for now we will throw an error whenever there is at least 1 job that is not in the queued, running, complete statuses
+	if (
+		response.find(
+			(simulation) =>
+				simulation?.status !== ProgressState.QUEUED &&
+				simulation?.status !== ProgressState.RUNNING &&
+				simulation?.status !== ProgressState.COMPLETE
+		)
+	) {
+		return {
+			data: response,
+			progress: null,
+			error: true
+		};
+	}
+
 	return {
 		data: null,
 		progress: null,
