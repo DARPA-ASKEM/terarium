@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<div
-			v-if="matrix"
+			v-if="!isEmpty(matrix)"
 			class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
 		>
 			<div class="p-datatable-wrapper">
@@ -71,29 +71,6 @@
 				</table>
 			</div>
 		</div>
-		<!--
-			Temporary - just showing the mira dimensions and terms that are generated.
-			Will put these with matrix once the matrix is generated (don't want to modify table logic above)
-		-->
-		<div v-if="stratifiedModelType === StratifiedModelType.Mira">
-			Column dimensions
-			<Dropdown
-				class="w-full"
-				placeholder="Select a variable"
-				v-model="chosenCol"
-				:options="colDimensions"
-			/>
-			Row dimensions
-			<Dropdown
-				class="w-full"
-				placeholder="Select a variable"
-				v-model="chosenRow"
-				:options="rowDimensions"
-			/>
-			Terms / Headers
-			<br />
-			{{ miraHeaders }}
-		</div>
 	</main>
 </template>
 
@@ -120,12 +97,10 @@ const props = defineProps<{
 const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
 
-const matrix = ref();
+const matrix = ref<any>([]);
 const chosenCol = ref('');
 const chosenRow = ref('');
 const valueToEdit = ref({ val: '', rowIdx: -1, colIdx: -1 });
-
-const miraHeaders = ref(); // temp
 
 // Makes cell inputs focus once they appear
 const vFocus = {
@@ -185,7 +160,6 @@ function updateModelConfigValue(variableName: string) {
 
 function configureMatrix() {
 	const amr: Model = props.modelConfiguration.configuration;
-	console.log(props.id);
 
 	const result =
 		props.stratifiedModelType === StratifiedModelType.Catlab
@@ -195,19 +169,10 @@ function configureMatrix() {
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
-			? result.stateMatrixData.filter((d) => d.base === props.id)
-			: result.transitionMatrixData.filter((d) => d.base === props.id);
-
-	console.log(result.stateMatrixData);
+			? result.stateMatrixData.filter(({ base }) => base === props.id)
+			: result.transitionMatrixData.filter(({ base }) => base === props.id);
 
 	if (isEmpty(matrixData)) return;
-
-	const matrixAttributes =
-		props.nodeType === NodeType.State
-			? createMatrix1D(matrixData)
-			: createMatrix2D(matrixData, colDimensions, rowDimensions);
-
-	matrix.value = matrixAttributes.matrix;
 
 	// Grab dimension names from the first matrix row
 	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
@@ -219,9 +184,16 @@ function configureMatrix() {
 	rowDimensions.push(...dimensions);
 	colDimensions.push(...dimensions);
 
+	const matrixAttributes =
+		props.nodeType === NodeType.State
+			? createMatrix1D(matrixData)
+			: createMatrix2D(matrixData, colDimensions, rowDimensions);
+
+	matrix.value = matrixAttributes.matrix;
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 
+	console.log(props.id, result);
 	console.log('!!!!!', matrix.value);
 }
 

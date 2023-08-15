@@ -54,11 +54,8 @@
 								v-if="cellEditStates[i]?.name"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
-								@focusout="cellEditStates[i].name = false"
-								@keyup.stop.enter="
-									cellEditStates[i].name = false;
-									updateModelConfigName(i);
-								"
+								@focusout="updateModelConfigName(i)"
+								@keyup.stop.enter="updateModelConfigName(i)"
 								class="cell-input"
 							/>
 							<span v-else class="editable-cell">
@@ -196,6 +193,7 @@ const vFocus = {
 };
 
 function updateModelConfigName(configIndex: number) {
+	cellEditStates.value[configIndex].name = false;
 	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
 	updateModelConfiguration(modelConfigurations.value[configIndex]);
 }

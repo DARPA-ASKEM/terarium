@@ -304,6 +304,8 @@ async function doStratify() {
 		const amrBase = (await stratify(typedBaseModel.value, typedStrataModel.value)) as Model;
 		const amr = (await reconstructAMR({ model: amrBase })) as Model;
 
+		console.log(amrBase, amr);
+
 		// Put typing and span back in
 		if (amr.semantics && amr.semantics.ode) {
 			amr.semantics.span = _.cloneDeep(amrBase.semantics?.span);
