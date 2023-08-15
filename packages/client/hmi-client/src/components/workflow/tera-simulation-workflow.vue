@@ -205,7 +205,6 @@
 
 <script setup lang="ts">
 import { isArray, cloneDeep, isEqual } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
@@ -349,14 +348,14 @@ const refreshModelNode = async (node: WorkflowNode) => {
 	const configurationList = await getModelConfigurations(node.state.modelId);
 	configurationList.forEach((configuration) => {
 		// Only add new configurations
-		const existingConfig = node.outputs.find((d) => isEqual(d.value, [configuration.id]));
+		const existingConfig = node.outputs.find((port) => isEqual(port.value, [configuration.id]));
 		if (existingConfig) {
 			existingConfig.label = configuration.name;
 			return;
 		}
 
 		node.outputs.push({
-			id: uuidv4(),
+			id: crypto.randomUUID(),
 			type: 'modelConfigId',
 			label: configuration.name,
 			value: [configuration.id],
@@ -385,7 +384,7 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
-			id: uuidv4(),
+			id: crypto.randomUUID(),
 			type: 'datasetId',
 			label: data.name,
 			value: [data.id],
@@ -396,7 +395,7 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
-		id: uuidv4(),
+		id: crypto.randomUUID(),
 		type: port.type,
 		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
@@ -457,9 +456,7 @@ workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: stri
 		// to communicate "model change" instead of "node change", the former seemingly out of
 		// place when using the WorkflowEventBus mechanism. DC - Aug 2023
 		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
-		nodesToRefresh.forEach((n2) => {
-			refreshModelNode(n2);
-		});
+		nodesToRefresh.forEach(refreshModelNode);
 	}
 });
 
