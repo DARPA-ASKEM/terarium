@@ -57,6 +57,7 @@ export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
     headers: string[];
+    rowCount: number;
 }
 
 export interface CsvColumnStats {
@@ -138,7 +139,7 @@ export interface Dataset {
     description?: string;
     dataSourceDate?: string;
     fileNames?: string[];
-    url?: string;
+    datasetUrl?: string;
     columns?: DatasetColumn[];
     metadata?: any;
     source?: string;

@@ -78,11 +78,21 @@ async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
 	return null;
 }
 
+/**
+ * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
+ * share the same name as the file and can optionally have a description
+ * @param repoOwnerAndName
+ * @param path
+ * @param userName
+ * @param projectId
+ * @param url the source url of the file
+ */
 async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userName: string,
-	projectId: string
+	projectId: string,
+	url: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -95,7 +105,7 @@ async function createNewDatasetFromGithubFile(
 	// Create a new dataset with the same name as the file, and post the metadata to TDS
 	const dataset: Dataset = {
 		name,
-		url: '',
+		datasetUrl: url,
 		description: path,
 		fileNames: [fileName],
 		username: userName
@@ -123,9 +133,9 @@ async function createNewDatasetFromGithubFile(
  * share the same name as the file and can optionally have a description
  * @param progress reference to display in ui
  * @param file the CSV file
- * @param userName owner of this project
+ * @param userName uploader of this dataset
  * @param projectId the project ID
- * @param description? description of the file. Optional. If not given description will be just the csv name
+ * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromCSV(
 	progress: Ref<number>,
@@ -140,7 +150,6 @@ async function createNewDatasetFromCSV(
 	// Create a new dataset with the same name as the file, and post the metadata to TDS
 	const dataset: Dataset = {
 		name,
-		url: '',
 		description: description || file.name,
 		fileNames: [file.name],
 		username: userName
@@ -222,7 +231,6 @@ export {
 	getBulkDatasets,
 	downloadRawFile,
 	createNewDatasetFromCSV,
-	createNewDataset,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult
 };
