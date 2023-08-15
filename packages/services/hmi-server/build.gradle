@@ -70,10 +70,6 @@ dependencies {
 	// Annotations
 	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-	//aws
-	implementation platform('software.amazon.awssdk:bom:2.20.102')
-	implementation 'software.amazon.awssdk:s3'
-
 
 }
 
