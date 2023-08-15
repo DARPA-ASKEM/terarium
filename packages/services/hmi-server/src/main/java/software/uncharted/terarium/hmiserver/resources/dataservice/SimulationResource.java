@@ -8,7 +8,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.mutiny.Multi;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.reactivestreams.Publisher;
+import org.jboss.resteasy.annotations.SseElementType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
@@ -18,6 +23,10 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.utils.Converter;
+import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResults;
+import io.smallrye.reactive.messaging.annotations.Broadcast;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -42,6 +51,13 @@ public class SimulationResource implements SnakeCaseResource {
 	@Inject
 	@RestClient
 	DatasetProxy datasetProxy;
+
+	@Inject
+	@Channel("simulationStatus") Publisher<SimulationIntermediateResults> partialSimulationResults;
+
+	@Broadcast
+	@Channel("simulationStatus")
+	Emitter<SimulationIntermediateResults> partialSimulationEmitter;
 
 	@POST
 	public Simulation createSimulation(final Simulation simulation){
@@ -140,5 +156,32 @@ public class SimulationResource implements SnakeCaseResource {
 				.type("text/plain")
 				.build();
 		}
+	}
+
+	@GET
+	@Path("/{jobId}/partial-result")
+	@Produces(MediaType.SERVER_SENT_EVENTS)
+	@SseElementType(MediaType.APPLICATION_JSON)
+	@Tag(name = "Stream partial/intermediate simulation result associated with run ID")
+	public Publisher<SimulationIntermediateResults> stream(
+		@PathParam("jobId") final String jobId
+	) {
+		return Multi.createFrom().publisher(partialSimulationResults).select().where(event -> event.getJobId().equals(jobId));
+	}
+
+	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
+	@PUT
+	@Path("/{jobId}/create-partial-result")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Tag(name = "Used to write to the simulation status channel providing a job ID")
+	public Response createPartialResult(
+		@PathParam("jobId") final String jobId
+	) {
+		float progress = 0.1f;
+		final SimulationIntermediateResults event = new SimulationIntermediateResults();
+		event.setJobId(jobId);
+		event.setProgress(progress);
+		partialSimulationEmitter.send(event);
+		return Response.ok(Map.of("id", jobId.toString())).build();
 	}
 }
