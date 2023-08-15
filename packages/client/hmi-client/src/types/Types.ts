@@ -83,9 +83,9 @@ export interface Model {
     schema: string;
     schema_name?: string;
     model: { [index: string]: any };
-    properties?: ModelMetadata;
+    properties?: any;
     semantics?: ModelSemantics;
-    metadata?: any;
+    metadata?: ModelMetadata;
 }
 
 export interface ModelConfiguration {
@@ -193,9 +193,9 @@ export interface TypeSystemExtended {
     schema: string;
     model_version: string;
     model: { [index: string]: any };
-    properties?: ModelMetadata;
+    properties?: any;
     semantics?: ModelSemantics;
-    metadata?: any;
+    metadata?: ModelMetadata;
 }
 
 export interface TypingSemantics {
@@ -302,6 +302,12 @@ export interface Concept {
     object_id: string;
 }
 
+export interface ModelSemantics {
+    ode: OdeSemantics;
+    span?: any[];
+    typing?: TypingSemantics;
+}
+
 /**
  * @deprecated
  */
@@ -312,12 +318,6 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
-}
-
-export interface ModelSemantics {
-    ode: OdeSemantics;
-    span?: any[];
-    typing?: TypingSemantics;
 }
 
 export interface Assets {
@@ -396,6 +396,14 @@ export interface XDDResponseOK {
     license: string;
 }
 
+export interface OdeSemantics {
+    rates: Rate[];
+    initials?: Initial[];
+    parameters?: ModelParameter[];
+    observables?: Observable[];
+    time?: any;
+}
+
 export interface VariableStatement {
     id: string;
     variable: Variable;
@@ -416,14 +424,6 @@ export interface Annotations {
     diseases?: string[];
     hosts?: string[];
     model_types?: string[];
-}
-
-export interface OdeSemantics {
-    rates: Rate[];
-    initials?: Initial[];
-    parameters?: ModelParameter[];
-    observables?: Observable[];
-    time?: any;
 }
 
 export interface Extraction {
@@ -467,32 +467,6 @@ export interface XDDFacetBucket {
     docCount: string;
 }
 
-export interface Variable {
-    id: string;
-    name: string;
-    metadata: VariableMetadata[];
-    column: DataColumn[];
-    paper: Paper;
-    equations: Equation[];
-    dkg_groundings: DKGConcept[];
-}
-
-export interface StatementValue {
-    value: string;
-    type: string;
-    dkg_grounding?: DKGConcept;
-}
-
-export interface VariableStatementMetadata {
-    type: string;
-    value: string;
-}
-
-export interface ProvenanceInfo {
-    method: string;
-    description: string;
-}
-
 export interface Rate {
     target: string;
     expression: string;
@@ -523,6 +497,32 @@ export interface Observable {
     expression_mathml?: string;
 }
 
+export interface Variable {
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: Equation[];
+    dkg_groundings: DKGConcept[];
+}
+
+export interface StatementValue {
+    value: string;
+    type: string;
+    dkg_grounding?: DKGConcept;
+}
+
+export interface VariableStatementMetadata {
+    type: string;
+    value: string;
+}
+
+export interface ProvenanceInfo {
+    method: string;
+    description: string;
+}
+
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
@@ -546,6 +546,11 @@ export interface XDDUrlExtraction {
     url: string;
     resourceTitle: string;
     extractedFrom: string[];
+}
+
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
 }
 
 export interface VariableMetadata {
@@ -575,11 +580,6 @@ export interface DKGConcept {
     id: string;
     name: string;
     score: number;
-}
-
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
 }
 
 export interface MetadataDataset {

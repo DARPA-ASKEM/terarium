@@ -36,12 +36,12 @@ public class Model implements Serializable {
 	private Map<String, Object> model;
 
 	@TSOptional
-	private ModelMetadata properties;
+	private Object properties;
 
 	@TSOptional
 	private ModelSemantics semantics;
 
 	@TSOptional
-	private Object metadata;
+	private ModelMetadata metadata;
 
 }
