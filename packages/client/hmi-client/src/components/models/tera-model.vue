@@ -473,13 +473,6 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
-					<!--Testing dummy data here - appears when you choose any stratified model-->
-					<tera-stratified-model-configuration
-						v-if="stratifiedModelType"
-						:stratified-model-type="StratifiedModelType.Mira"
-						:model="mira_model"
-						:feature-config="featureConfig"
-					/>
 					<tera-stratified-model-configuration
 						v-if="stratifiedModelType"
 						:stratified-model-type="stratifiedModelType"
@@ -577,7 +570,6 @@ import {
 	convertToAMRModel,
 	updateConfigFields,
 	updateParameterId,
-	StratifiedModelType,
 	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
@@ -594,7 +586,6 @@ import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
 import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
-import { mira_model } from '@/temp/scenario1_2c_age_diag';
 import useResourcesStore from '@/stores/resources';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';

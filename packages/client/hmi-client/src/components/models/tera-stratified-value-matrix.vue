@@ -57,7 +57,7 @@
 										class="cell-input"
 										v-model.lazy="valueToEdit.val"
 										v-focus
-										@focusout="valueToEdit = { val: '', rowIdx: -1, colIdx: -1 }"
+										@focusout="updateModelConfigValue(cell?.value?.id)"
 										@keyup.stop.enter="updateModelConfigValue(cell?.value?.id)"
 									/>
 									<span v-else class="editable-cell">
@@ -99,9 +99,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { cloneDeep, isEmpty, isEqual, union } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
-import { getAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
+import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
+import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import Dropdown from 'primevue/dropdown';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
@@ -184,69 +185,40 @@ function updateModelConfigValue(variableName: string) {
 
 function configureMatrix() {
 	const amr: Model = props.modelConfiguration.configuration;
+	console.log(props.id);
 
-	if (props.stratifiedModelType === StratifiedModelType.Catlab) {
-		const result = getAMRPresentationData(amr);
+	const result =
+		props.stratifiedModelType === StratifiedModelType.Catlab
+			? getCatlabAMRPresentationData(amr)
+			: getMiraAMRPresentationData(amr);
 
-		// Get only the states/transitions that are mapped to the base model
-		const matrixData =
-			props.nodeType === NodeType.State
-				? result.stateMatrixData.filter((d) => d._base === props.id)
-				: result.transitionMatrixData.filter((d) => d._base === props.id);
+	// Get only the states/transitions that are mapped to the base model
+	const matrixData =
+		props.nodeType === NodeType.State
+			? result.stateMatrixData.filter((d) => d.base === props.id)
+			: result.transitionMatrixData.filter((d) => d.base === props.id);
 
-		if (isEmpty(matrixData)) return;
+	console.log(result.stateMatrixData);
 
-		const matrixAttributes =
-			props.nodeType === NodeType.State
-				? createMatrix1D(matrixData)
-				: createMatrix2D(matrixData, colDimensions, rowDimensions);
+	if (isEmpty(matrixData)) return;
 
-		matrix.value = matrixAttributes.matrix;
+	const matrixAttributes =
+		props.nodeType === NodeType.State
+			? createMatrix1D(matrixData)
+			: createMatrix2D(matrixData, colDimensions, rowDimensions);
 
-		// Grab dimension names from the first matrix row
-		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-			delete d._id;
-			delete d._base;
-			return Object.keys(d);
-		})[0];
+	matrix.value = matrixAttributes.matrix;
 
-		// FIXME: resolve id vs _id
-		matrixData.forEach((d) => {
-			d.id = d._id;
-		});
+	// Grab dimension names from the first matrix row
+	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
+		delete d.id;
+		delete d.base;
+		return Object.keys(d);
+	})[0];
 
-		rowDimensions.push(...dimensions);
-		colDimensions.push(...dimensions);
-	} else if (props.stratifiedModelType === StratifiedModelType.Mira) {
-		const modifiers = amr.model.states.map(({ grounding }) => grounding.modifiers);
+	rowDimensions.push(...dimensions);
+	colDimensions.push(...dimensions);
 
-		const dimensionsAndTerms = {};
-		for (let i = 0; i < modifiers.length; i++) {
-			const dimensions = Object.keys(dimensionsAndTerms);
-			const modifierDims = Object.keys(modifiers[i]);
-
-			// Update dimensions
-			const newDimensions = union(dimensions, modifierDims);
-			if (!isEqual(dimensions, newDimensions)) {
-				for (let j = 0; j < modifierDims.length; j++) dimensionsAndTerms[newDimensions[j]] = [];
-			}
-
-			// Append terms
-			for (let j = 0; j < modifierDims.length; j++) {
-				const dimension = modifierDims[j];
-				const term = modifiers[i][dimension];
-
-				if (!dimensionsAndTerms[dimension].includes(term)) {
-					dimensionsAndTerms[dimension].push(term);
-				}
-			}
-		}
-
-		miraHeaders.value = dimensionsAndTerms;
-		const dimensions = Object.keys(dimensionsAndTerms);
-		rowDimensions.push(...dimensions);
-		colDimensions.push(...dimensions);
-	}
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 

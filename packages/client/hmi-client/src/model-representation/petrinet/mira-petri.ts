@@ -131,7 +131,7 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 /**
  * Given an MIRA AMR, extract and compute a presentation-layer data format
  */
-export const getAMRPresentationData = (amr: Model) => {
+export const getMiraAMRPresentationData = (amr: Model) => {
 	const statesData = getStates(amr);
 	const transitionsData = getTransitions(amr, statesData.lookup);
 

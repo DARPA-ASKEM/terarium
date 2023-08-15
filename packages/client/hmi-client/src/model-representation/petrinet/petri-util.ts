@@ -13,7 +13,7 @@ import {
 } from '@/model-representation/petrinet/petrinet-service';
 import { extractNestedMap } from '@/model-representation/petrinet/catlab-petri';
 import {
-	getAMRPresentationData,
+	getMiraAMRPresentationData,
 	extractNestedStratas
 } from '@/model-representation/petrinet/mira-petri';
 import { createMatrix2D } from '@/utils/pivot';
@@ -35,7 +35,7 @@ export const getPetrinetRenderer = (
 		});
 	}
 	if (strataType === 'mira') {
-		const presentationData = getAMRPresentationData(model);
+		const presentationData = getMiraAMRPresentationData(model);
 
 		const stateMatrixData = presentationData.stateMatrixData.map((d) => {
 			const temp: any = _.cloneDeep(d);
@@ -78,7 +78,7 @@ export const getGraphData = (model: Model, isCollapsed: boolean): IGraph<NodeDat
 	const strataType = getStratificationType(model);
 	if (strataType && isCollapsed) {
 		if (strataType === 'mira') {
-			const presentationData = getAMRPresentationData(model);
+			const presentationData = getMiraAMRPresentationData(model);
 			return convertToIGraph(presentationData.compactModel as any);
 		}
 		return convertToIGraph(model.semantics?.span?.[0].system);

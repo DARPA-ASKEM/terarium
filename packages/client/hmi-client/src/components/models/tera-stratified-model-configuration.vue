@@ -142,7 +142,8 @@ import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
-import { getAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
+import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
+import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
@@ -166,11 +167,15 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const baseModel = computed<any>(() =>
-	props.stratifiedModelType === StratifiedModelType.Catlab
-		? getAMRPresentationData(props.model).compactModel
-		: props.model.model
-);
+const baseModel = computed<any>(() => {
+	if (props.stratifiedModelType === StratifiedModelType.Catlab) {
+		return getCatlabAMRPresentationData(props.model).compactModel;
+	}
+	if (props.stratifiedModelType === StratifiedModelType.Mira) {
+		return getMiraAMRPresentationData(props.model).compactModel.model;
+	}
+	return props.model.model;
+});
 const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));
 const baseModelTransitions = computed<any>(() => baseModel.value.transitions.map(({ id }) => id));
 

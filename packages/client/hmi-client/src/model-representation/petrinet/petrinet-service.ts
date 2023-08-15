@@ -1,4 +1,4 @@
-import _, { cloneDeep, isEmpty } from 'lodash';
+import _, { cloneDeep, isEmpty, some } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import {
@@ -591,12 +591,12 @@ export const stratify = async (baseModel: Model, strataModel: Model) => {
 export const getStratificationType = (amr: Model) => {
 	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModelType.Catlab;
 
-	const hasModifiers = _.some(
+	const hasModifiers = some(
 		(amr.model as PetriNetModel).states,
-		(s) =>
-			s.grounding && s.grounding.modifiers && !isEmpty(Object.keys(s.grounding.modifiers).length)
+		(s) => s.grounding && s.grounding.modifiers && !isEmpty(Object.keys(s.grounding.modifiers))
 	);
 	if (hasModifiers) return StratifiedModelType.Mira;
+
 	return null;
 };
 
