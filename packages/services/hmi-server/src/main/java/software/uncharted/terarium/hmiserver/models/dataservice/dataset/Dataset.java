@@ -50,7 +50,7 @@ public class Dataset {
 	/** (Optional) Url from which the dataset can be downloaded/fetched **/
 	@TSOptional
 	@JsonAlias("dataset_url")
-	private String url;
+	private String datasetUrl;
 
 	/** Information regarding the columns that make up the dataset **/
 	@TSOptional
