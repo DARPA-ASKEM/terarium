@@ -164,8 +164,8 @@
 					</template>
 				</DataTable>
 			</section>
-			<Teleport to="body">
-				<section class="drag-n-drop">
+			<section class="drag-n-drop">
+				<Teleport to="body">
 					<tera-modal
 						v-if="isUploadResourcesModalVisible"
 						class="modal"
@@ -244,8 +244,8 @@
 							/>
 						</template>
 					</tera-modal>
-				</section>
-			</Teleport>
+				</Teleport>
+			</section>
 		</section>
 		<tera-multi-select-modal
 			:is-visible="showMultiSelect"
