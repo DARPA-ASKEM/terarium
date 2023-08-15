@@ -66,6 +66,8 @@ const getTabName = (tab: Tab) => {
 		const asset: any = assets[tab.pageType as string].find(
 			(assetItem: any) => assetItem.id?.toString() === tab.assetId?.toString()
 		);
+		// FIXME: remove this check for title/name once the following github issue has been addressed
+		// https://github.com/DARPA-ASKEM/data-service/issues/299
 		return (tab.pageType === ProjectAssetTypes.DOCUMENTS ? asset?.title : asset?.name) ?? 'n/a';
 	}
 	return 'n/a';
