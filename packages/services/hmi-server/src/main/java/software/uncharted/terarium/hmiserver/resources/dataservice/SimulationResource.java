@@ -170,11 +170,12 @@ public class SimulationResource implements SnakeCaseResource {
 	}
 
 	@PUT
-	@Path("/create-dummy-partial-result")
+	@Path("/{jobId}/create-dummy-partial-result")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response createPartialResult() {
-		final String jobId = "123";
-		final float progress = 0.1f;
+	public Response createPartialResult(
+		@PathParam("jobId") final String jobId
+	) {
+		float progress = 0.1f;
 		final SimulationIntermediateResults event = new SimulationIntermediateResults();
 		event.setJobId(jobId);
 		event.setProgress(progress);
