@@ -940,4 +940,5 @@ $petri-inputBox: var(--surface-0);
 	--overlayMenuShadowHover: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 8px 0 rgba(0, 0, 0, 0.3);
 	--node-header: #7b8498;
 	--node-header-hover: var(--text-color-subdued);
+	--z-index-modal: 1000
 }
