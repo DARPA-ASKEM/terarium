@@ -1865,16 +1865,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/completer@npm:3.6.3":
-  version: 3.6.3
-  resolution: "@jupyterlab/completer@npm:3.6.3"
+"@jupyterlab/completer@npm:3.6.5":
+  version: 3.6.5
+  resolution: "@jupyterlab/completer@npm:3.6.5"
   dependencies:
-    "@jupyterlab/apputils": ^3.6.3
-    "@jupyterlab/codeeditor": ^3.6.3
-    "@jupyterlab/coreutils": ^5.6.3
-    "@jupyterlab/services": ^6.6.3
-    "@jupyterlab/statedb": ^3.6.3
-    "@jupyterlab/ui-components": ^3.6.3
+    "@jupyterlab/apputils": ^3.6.5
+    "@jupyterlab/codeeditor": ^3.6.5
+    "@jupyterlab/coreutils": ^5.6.5
+    "@jupyterlab/services": ^6.6.5
+    "@jupyterlab/statedb": ^3.6.5
+    "@jupyterlab/ui-components": ^3.6.5
     "@lumino/algorithm": ^1.9.0
     "@lumino/coreutils": ^1.11.0
     "@lumino/disposable": ^1.10.0
@@ -1882,7 +1882,7 @@ __metadata:
     "@lumino/messaging": ^1.10.0
     "@lumino/signaling": ^1.10.0
     "@lumino/widgets": ^1.37.2
-  checksum: 542579ec2849d081c812a0cf952ce1e2e3e6ffd8317a87003ba97f4ac3193ad6f862f96d20ccb6ddbf6820300572758a5b30b0d96563c320f4edeebffc47ffa3
+  checksum: 02f5c434571e1bb99ee4ac09994ca8344870e5c2105dcc34ddad644b857da688f156d8f6ec3114dff01ef0d75ecd01ab3cf20634b5e9fe27771caa494aceddde
   languageName: node
   linkType: hard
 
@@ -9225,7 +9225,7 @@ cors@latest:
     "@jupyterlab/apputils": 3.6.3
     "@jupyterlab/cells": 3.6.3
     "@jupyterlab/codemirror": 3.6.5
-    "@jupyterlab/completer": 3.6.3
+    "@jupyterlab/completer": 3.6.5
     "@jupyterlab/coreutils": 5.6.3
     "@jupyterlab/rendermime": 3.6.3
     "@jupyterlab/services": 6.6.3
