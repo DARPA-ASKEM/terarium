@@ -12,30 +12,43 @@
  * @example
  * <modal @modal-mask-clicked="closeModal"></modal>
  */
+
+defineProps({
+	zIndex: {
+		type: String || Number,
+		default: 'var(--z-index-modal)'
+	}
+});
 </script>
 
 <template>
 	<Transition name="modal">
-		<div>
-			<aside @click.self="$emit('modalMaskClicked')" />
-			<main>
+		<main :style="{ 'z-index': zIndex }">
+			<section>
 				<header>
-					<slot name="header"></slot>
+					<slot name="header" />
 				</header>
-				<slot></slot>
+				<slot />
 				<section><slot name="math-editor"></slot></section>
 				<footer>
-					<slot name="footer"></slot>
+					<slot name="footer" />
 				</footer>
-			</main>
-		</div>
+			</section>
+			<aside @click.self="$emit('modalMaskClicked')" />
+		</main>
 	</Transition>
 </template>
 
 <style scoped>
+main {
+	isolation: isolate;
+}
+
+main > * {
+	position: absolute;
+}
 aside {
-	position: fixed;
-	z-index: 1000;
+	z-index: 1;
 	top: 0;
 	left: 0;
 	width: 100%;
@@ -46,7 +59,7 @@ aside {
 	transition: opacity 0.1s ease;
 }
 
-main {
+main > section {
 	max-height: 95vh;
 	background-color: #fff;
 	border-radius: 0.5rem;
@@ -56,8 +69,7 @@ main {
 	transition: all 0.1s ease;
 	min-width: max-content;
 	width: 80vw;
-	position: absolute;
-	z-index: 1001;
+	z-index: 2;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
@@ -83,8 +95,8 @@ footer {
 	opacity: 0;
 }
 
-.modal-enter-from main,
-.modal-leave-to main {
+.modal-enter-from main > section,
+.modal-leave-to main > section {
 	-webkit-transform: scale(0.9);
 	transform: scale(0.9);
 }
