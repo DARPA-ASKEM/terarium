@@ -204,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep } from 'lodash';
+import { isArray, cloneDeep, isEqual } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
@@ -351,10 +351,12 @@ async function selectModel(node: WorkflowNode, data: { id: string }) {
 	node.state.modelId = data.id;
 
 	// FIXME: Need additional design to work out exactly what to show. June 2023
-	// FIXME: Need to merge with any existing output-port results (e.g. new configs are added)
 	const configurationList = await getModelConfigurations(data.id);
 	node.outputs = [];
 	configurationList.forEach((configuration) => {
+		// Only add new configurations
+		if (node.outputs.find((d) => isEqual(d.value, [configuration.id]))) return;
+
 		node.outputs.push({
 			id: uuidv4(),
 			type: 'modelConfigId',
