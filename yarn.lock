@@ -1813,33 +1813,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/codemirror@npm:3.6.3, @jupyterlab/codemirror@npm:^3.6.3":
-  version: 3.6.3
-  resolution: "@jupyterlab/codemirror@npm:3.6.3"
-  dependencies:
-    "@jupyter/ydoc": ~0.2.3
-    "@jupyterlab/apputils": ^3.6.3
-    "@jupyterlab/codeeditor": ^3.6.3
-    "@jupyterlab/coreutils": ^5.6.3
-    "@jupyterlab/nbformat": ^3.6.3
-    "@jupyterlab/observables": ^4.6.3
-    "@jupyterlab/statusbar": ^3.6.3
-    "@jupyterlab/translation": ^3.6.3
-    "@lumino/algorithm": ^1.9.0
-    "@lumino/commands": ^1.19.0
-    "@lumino/coreutils": ^1.11.0
-    "@lumino/disposable": ^1.10.0
-    "@lumino/polling": ^1.9.0
-    "@lumino/signaling": ^1.10.0
-    "@lumino/widgets": ^1.37.2
-    codemirror: ~5.61.0
-    react: ^17.0.1
-    y-codemirror: ^3.0.1
-  checksum: 3c93aec5aa6b838599e0dc4a00c1f4ace20513b25e2350133a66ac51231155a1bc96c4be80866ec8ffbfa15a6831892ebff1aaa41b6bcbe4cef46b1493eb69db
-  languageName: node
-  linkType: hard
-
-"@jupyterlab/codemirror@npm:^3.6.5":
+"@jupyterlab/codemirror@npm:3.6.5, @jupyterlab/codemirror@npm:^3.6.5":
   version: 3.6.5
   resolution: "@jupyterlab/codemirror@npm:3.6.5"
   dependencies:
@@ -1862,6 +1836,32 @@ __metadata:
     react: ^17.0.1
     y-codemirror: ^3.0.1
   checksum: 9ecd25be9bd1d322cd1d1ce33b05311aac3b0c4d3be8dc779a4c32e52b07f23fd4e8f6f6ef0258b428adb5ad8c2ab78e0ed11d44d78a25ccfe2e65320778b4fc
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/codemirror@npm:^3.6.3":
+  version: 3.6.3
+  resolution: "@jupyterlab/codemirror@npm:3.6.3"
+  dependencies:
+    "@jupyter/ydoc": ~0.2.3
+    "@jupyterlab/apputils": ^3.6.3
+    "@jupyterlab/codeeditor": ^3.6.3
+    "@jupyterlab/coreutils": ^5.6.3
+    "@jupyterlab/nbformat": ^3.6.3
+    "@jupyterlab/observables": ^4.6.3
+    "@jupyterlab/statusbar": ^3.6.3
+    "@jupyterlab/translation": ^3.6.3
+    "@lumino/algorithm": ^1.9.0
+    "@lumino/commands": ^1.19.0
+    "@lumino/coreutils": ^1.11.0
+    "@lumino/disposable": ^1.10.0
+    "@lumino/polling": ^1.9.0
+    "@lumino/signaling": ^1.10.0
+    "@lumino/widgets": ^1.37.2
+    codemirror: ~5.61.0
+    react: ^17.0.1
+    y-codemirror: ^3.0.1
+  checksum: 3c93aec5aa6b838599e0dc4a00c1f4ace20513b25e2350133a66ac51231155a1bc96c4be80866ec8ffbfa15a6831892ebff1aaa41b6bcbe4cef46b1493eb69db
   languageName: node
   linkType: hard
 
@@ -3175,10 +3175,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/eslint-patch@npm:1.3.2":
-  version: 1.3.2
-  resolution: "@rushstack/eslint-patch@npm:1.3.2"
-  checksum: 010c87ef2d901faaaf70ea1bf86fd3e7b74f24e23205f836e9a32790bca2076afe5de58ded03c35cb482f83691c8d22b1a0c34291b075bfe81afd26cfa5d14cc
+"@rushstack/eslint-patch@npm:1.3.3":
+  version: 1.3.3
+  resolution: "@rushstack/eslint-patch@npm:1.3.3"
+  checksum: fd8a19ec5842634da8e4c2c479a4d13ecbefa4f212e42c7f9c39e8706f9eeef7a50db8d6ea939884ac0ff36bb21930c9642068cf68e8309ad491c54f2fc30c01
   languageName: node
   linkType: hard
 
@@ -3643,10 +3643,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.196":
-  version: 4.14.196
-  resolution: "@types/lodash@npm:4.14.196"
-  checksum: 201d17c3e62ae02a93c99ec78e024b2be9bd75564dd8fd8c26f6ac51a985ab280d28ce2688c3bcdfe785b0991cd9814edff19ee000234c7b45d9a697f09feb6a
+"@types/lodash@npm:4.14.197":
+  version: 4.14.197
+  resolution: "@types/lodash@npm:4.14.197"
+  checksum: 53d7567d1704de76cf33266c78062e0fd722d4b846e5b1417d0b6ef0ee41c0d9c451b92bc34f73d5f1fcc45c7d36511e92f6f47a9279b48157ba60a92ddaa078
   languageName: node
   linkType: hard
 
@@ -9049,7 +9049,7 @@ cors@latest:
   dependencies:
     "@types/d3": 7.4.0
     "@types/jest": 29.5.3
-    "@types/lodash": 4.14.196
+    "@types/lodash": 4.14.197
     "@typescript-eslint/eslint-plugin": 5.42.1
     "@typescript-eslint/parser": 5.42.1
     copy: 0.3.2
@@ -9224,7 +9224,7 @@ cors@latest:
     "@jupyterlab/application": 3.6.5
     "@jupyterlab/apputils": 3.6.3
     "@jupyterlab/cells": 3.6.3
-    "@jupyterlab/codemirror": 3.6.3
+    "@jupyterlab/codemirror": 3.6.5
     "@jupyterlab/completer": 3.6.3
     "@jupyterlab/coreutils": 5.6.3
     "@jupyterlab/rendermime": 3.6.3
@@ -9238,9 +9238,9 @@ cors@latest:
     "@pinia/testing": 0.1.3
     "@playwright/experimental-ct-vue": 1.31.2
     "@playwright/test": 1.31.2
-    "@rushstack/eslint-patch": 1.3.2
+    "@rushstack/eslint-patch": 1.3.3
     "@types/d3": 7.4.0
-    "@types/lodash": 4.14.196
+    "@types/lodash": 4.14.197
     "@types/node": 18.11.18
     "@types/p5": 1.6.2
     "@uncharted.software/design-tokens": 1.1.0
