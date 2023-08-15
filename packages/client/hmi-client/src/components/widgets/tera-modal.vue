@@ -29,7 +29,7 @@ defineProps({
 					<slot name="header" />
 				</header>
 				<slot />
-				<section><slot name="math-editor"></slot></section>
+				<section><slot name="math-editor" /></section>
 				<footer>
 					<slot name="footer" />
 				</footer>
