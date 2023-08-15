@@ -1813,33 +1813,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/codemirror@npm:3.6.3, @jupyterlab/codemirror@npm:^3.6.3":
-  version: 3.6.3
-  resolution: "@jupyterlab/codemirror@npm:3.6.3"
-  dependencies:
-    "@jupyter/ydoc": ~0.2.3
-    "@jupyterlab/apputils": ^3.6.3
-    "@jupyterlab/codeeditor": ^3.6.3
-    "@jupyterlab/coreutils": ^5.6.3
-    "@jupyterlab/nbformat": ^3.6.3
-    "@jupyterlab/observables": ^4.6.3
-    "@jupyterlab/statusbar": ^3.6.3
-    "@jupyterlab/translation": ^3.6.3
-    "@lumino/algorithm": ^1.9.0
-    "@lumino/commands": ^1.19.0
-    "@lumino/coreutils": ^1.11.0
-    "@lumino/disposable": ^1.10.0
-    "@lumino/polling": ^1.9.0
-    "@lumino/signaling": ^1.10.0
-    "@lumino/widgets": ^1.37.2
-    codemirror: ~5.61.0
-    react: ^17.0.1
-    y-codemirror: ^3.0.1
-  checksum: 3c93aec5aa6b838599e0dc4a00c1f4ace20513b25e2350133a66ac51231155a1bc96c4be80866ec8ffbfa15a6831892ebff1aaa41b6bcbe4cef46b1493eb69db
-  languageName: node
-  linkType: hard
-
-"@jupyterlab/codemirror@npm:^3.6.5":
+"@jupyterlab/codemirror@npm:3.6.5, @jupyterlab/codemirror@npm:^3.6.5":
   version: 3.6.5
   resolution: "@jupyterlab/codemirror@npm:3.6.5"
   dependencies:
@@ -1862,6 +1836,32 @@ __metadata:
     react: ^17.0.1
     y-codemirror: ^3.0.1
   checksum: 9ecd25be9bd1d322cd1d1ce33b05311aac3b0c4d3be8dc779a4c32e52b07f23fd4e8f6f6ef0258b428adb5ad8c2ab78e0ed11d44d78a25ccfe2e65320778b4fc
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/codemirror@npm:^3.6.3":
+  version: 3.6.3
+  resolution: "@jupyterlab/codemirror@npm:3.6.3"
+  dependencies:
+    "@jupyter/ydoc": ~0.2.3
+    "@jupyterlab/apputils": ^3.6.3
+    "@jupyterlab/codeeditor": ^3.6.3
+    "@jupyterlab/coreutils": ^5.6.3
+    "@jupyterlab/nbformat": ^3.6.3
+    "@jupyterlab/observables": ^4.6.3
+    "@jupyterlab/statusbar": ^3.6.3
+    "@jupyterlab/translation": ^3.6.3
+    "@lumino/algorithm": ^1.9.0
+    "@lumino/commands": ^1.19.0
+    "@lumino/coreutils": ^1.11.0
+    "@lumino/disposable": ^1.10.0
+    "@lumino/polling": ^1.9.0
+    "@lumino/signaling": ^1.10.0
+    "@lumino/widgets": ^1.37.2
+    codemirror: ~5.61.0
+    react: ^17.0.1
+    y-codemirror: ^3.0.1
+  checksum: 3c93aec5aa6b838599e0dc4a00c1f4ace20513b25e2350133a66ac51231155a1bc96c4be80866ec8ffbfa15a6831892ebff1aaa41b6bcbe4cef46b1493eb69db
   languageName: node
   linkType: hard
 
@@ -9224,7 +9224,7 @@ cors@latest:
     "@jupyterlab/application": 3.6.5
     "@jupyterlab/apputils": 3.6.3
     "@jupyterlab/cells": 3.6.3
-    "@jupyterlab/codemirror": 3.6.3
+    "@jupyterlab/codemirror": 3.6.5
     "@jupyterlab/completer": 3.6.3
     "@jupyterlab/coreutils": 5.6.3
     "@jupyterlab/rendermime": 3.6.3
