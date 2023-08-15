@@ -1,8 +1,25 @@
 <template>
-	<main style="margin: 2rem; display: flex; flex-direction: column">
-		<textarea style="width: 80rem; height: 10rem" v-model="exprString"> </textarea>
+	<main v-if="isReady" style="margin: 2rem; display: flex; flex-direction: column">
+		<p>The following variables are preset: x=1, y=2, z=3</p>
+		<textarea style="width: 75rem; height: 10rem" v-model="exprString"> </textarea>
 		<br />
-		{{ mathml }}
+		<div style="display: flex; flex-direction: row">
+			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+				MathML: <br />
+				{{ mathml }}
+			</div>
+			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+				Latex: <br />
+				{{ latex }}
+			</div>
+			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+				Eval: <br />
+				{{ evalResult }}
+			</div>
+		</div>
+	</main>
+	<main v-if="!isReady">
+		<h4>Loading Python and modules ...</h4>
 	</main>
 </template>
 
@@ -12,7 +29,13 @@ import { loadPyodide } from 'pyodide';
 
 let python: any;
 const mathml = ref('');
+const latex = ref('');
+const evalResult = ref<any>('');
+
 const exprString = ref('');
+const isReady = ref(false);
+
+const variableMap: Object = { x: 1, y: 2, z: 3 };
 
 async function main() {
 	console.log('hello python world');
@@ -24,6 +47,7 @@ async function main() {
 	pyodide.runPython(
 		'from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor'
 	);
+	pyodide.runPython('from sympy.printing.latex import latex');
 
 	console.log(pyodide.runPython('1 + 2'));
 	console.log(
@@ -35,18 +59,41 @@ async function main() {
 	);
 
 	// console.log(pyodide.runPython('symify("x + 3")'));
+	isReady.value = true;
 	return pyodide;
 }
 
 const runParser = (expr: string) => {
 	if (!python) return;
-	console.log('in parser');
-	const result = python.runPython(`
+
+	// function to convert expression to mathml
+	let result = python.runPython(`
 		eq = sympy.factor("${expr}")
 		sympy.mathml(eq)
 	`);
-	console.log('!!!!', result);
 	mathml.value = result;
+
+	result = python.runPython(`
+		eq = sympy.factor("${expr}")
+		latex(eq)
+	`);
+	latex.value = result;
+};
+
+const evaluateExpression = (expr: string) => {
+	const subs: any[] = [];
+	if (!python) return;
+
+	Object.keys(variableMap).forEach((key) => {
+		subs.push(`${key}: ${variableMap[key]}`);
+	});
+
+	// function to evaluate
+	const result = python.runPython(`
+		eq = sympy.factor("${expr}")
+		eq.evalf(subs={${subs.join(', ')}})
+	`);
+	evalResult.value = result;
 };
 
 const test = async () => {
@@ -61,6 +108,7 @@ watch(
 	() => exprString.value,
 	() => {
 		runParser(exprString.value);
+		evaluateExpression(exprString.value);
 	}
 );
 </script>
