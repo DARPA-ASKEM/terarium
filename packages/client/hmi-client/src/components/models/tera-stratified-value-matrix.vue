@@ -193,8 +193,7 @@ function configureMatrix() {
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 
-	console.log(props.id, result);
-	console.log('!!!!!', matrix.value);
+	console.log('!!!!!', props.id, result, matrix.value);
 }
 
 onMounted(() => {

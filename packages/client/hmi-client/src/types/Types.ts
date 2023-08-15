@@ -83,7 +83,7 @@ export interface Model {
     schema: string;
     schema_name?: string;
     model: { [index: string]: any };
-    properties?: any;
+    properties?: ModelMetadata;
     semantics?: ModelSemantics;
     metadata?: any;
 }
@@ -193,7 +193,7 @@ export interface TypeSystemExtended {
     schema: string;
     model_version: string;
     model: { [index: string]: any };
-    properties?: any;
+    properties?: ModelMetadata;
     semantics?: ModelSemantics;
     metadata?: any;
 }
@@ -302,6 +302,18 @@ export interface Concept {
     object_id: string;
 }
 
+/**
+ * @deprecated
+ */
+export interface ModelMetadata {
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
+    annotations?: Annotations;
+    attributes?: any[];
+    timeseries?: { [index: string]: any };
+}
+
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
@@ -384,6 +396,28 @@ export interface XDDResponseOK {
     license: string;
 }
 
+export interface VariableStatement {
+    id: string;
+    variable: Variable;
+    value?: StatementValue;
+    metadata?: VariableStatementMetadata[];
+    provenance?: ProvenanceInfo;
+}
+
+export interface Annotations {
+    license?: string;
+    authors?: string[];
+    references?: string[];
+    time_scale?: string;
+    time_start?: string;
+    time_end?: string;
+    locations?: string[];
+    pathogens?: string[];
+    diseases?: string[];
+    hosts?: string[];
+    model_types?: string[];
+}
+
 export interface OdeSemantics {
     rates: Rate[];
     initials?: Initial[];
@@ -431,6 +465,32 @@ export interface PetriNetTransitionProperties {
 export interface XDDFacetBucket {
     key: string;
     docCount: string;
+}
+
+export interface Variable {
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: Equation[];
+    dkg_groundings: DKGConcept[];
+}
+
+export interface StatementValue {
+    value: string;
+    type: string;
+    dkg_grounding?: DKGConcept;
+}
+
+export interface VariableStatementMetadata {
+    type: string;
+    value: string;
+}
+
+export interface ProvenanceInfo {
+    method: string;
+    description: string;
 }
 
 export interface Rate {
@@ -488,9 +548,44 @@ export interface XDDUrlExtraction {
     extractedFrom: string[];
 }
 
+export interface VariableMetadata {
+    type: string;
+    value: string;
+}
+
+export interface DataColumn {
+    id: string;
+    name: string;
+    dataset: MetadataDataset;
+}
+
+export interface Paper {
+    id: string;
+    doi: string;
+    file_directory: string;
+}
+
+export interface Equation {
+    id: string;
+    text: string;
+    image: string;
+}
+
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
+}
+
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
+}
+
+export interface MetadataDataset {
+    id: string;
+    name: string;
+    metadata: string;
 }
 
 export enum EvaluationScenarioStatus {

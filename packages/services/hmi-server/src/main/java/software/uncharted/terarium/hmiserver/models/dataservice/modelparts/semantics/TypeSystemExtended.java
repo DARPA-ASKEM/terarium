@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -27,7 +28,7 @@ public class TypeSystemExtended implements Serializable{
 	private Map<String, Object> model;
 
 	@TSOptional
-	private Object properties;
+	private ModelMetadata properties;
 
 	@TSOptional
 	private ModelSemantics semantics;

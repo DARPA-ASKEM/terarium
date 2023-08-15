@@ -46,9 +46,8 @@ public class MIRAResource {
 	@Path("/reconstruct_ode_semantics")
 	public Object reconstructODESemantics(
 			Object amr
-	) {System.out.println(amr);
+	) {
 		Object result = proxy.reconstructODESemantics(amr);
-		
 		// Model amrReconstructed = proxy.toPetrinet(result);
 
 		return result;
