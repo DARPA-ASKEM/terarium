@@ -243,7 +243,7 @@ const formatDetails = computed(() => {
 	}
 
 	if (props.resourceType === ResourceType.DATASET) {
-		return (props.asset as Dataset).url;
+		return (props.asset as Dataset).datasetUrl;
 	}
 
 	return null;

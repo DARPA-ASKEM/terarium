@@ -280,6 +280,7 @@ import { uploadArtifactToProject } from '@/services/artifact';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/models/extractions';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{
 	project: IProject;
@@ -298,6 +299,8 @@ const selectedResources = ref();
 const openedRow = ref(null);
 
 const tabStore = useTabStore();
+
+const auth = useAuthStore();
 
 const multiSelectButtons = [
 	{
@@ -350,7 +353,7 @@ async function processFiles(files: File[], csvDescription: string) {
 			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
 				progress,
 				file,
-				props.project.username ?? '',
+				auth.name ?? '',
 				props.project.id,
 				csvDescription
 			);
