@@ -10,9 +10,9 @@ import software.uncharted.terarium.hmiserver.resources.documentservice.responses
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -35,7 +35,7 @@ public class DocumentResource {
 	@Path("/documents")
 	@APIResponses({
 		@APIResponse(responseCode = "500", description = "An error occurred retrieving documents"),
-		@APIResponse(responseCode = "204", description = "Request received successfully, but there are documents"),
+		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no documents"),
 		@APIResponse(responseCode = "400", description = "Query must contain one of docid, doi or term") })
 	public Response getDocuments(
 		@QueryParam("docid") String docid,

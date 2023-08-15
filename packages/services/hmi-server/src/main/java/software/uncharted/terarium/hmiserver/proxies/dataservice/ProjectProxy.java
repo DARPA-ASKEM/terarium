@@ -8,9 +8,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.*;
 
 
@@ -23,7 +23,7 @@ public interface ProjectProxy {
 	@GET
 	@LogRestClientTime
 	List<Project> getProjects(
-		@DefaultValue("50") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("250") @QueryParam("page_size") Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 

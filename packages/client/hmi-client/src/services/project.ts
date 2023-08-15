@@ -10,7 +10,7 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
-import { EventType, Project } from '@/types/Types';
+import { DocumentAsset, EventType, Project } from '@/types/Types';
 
 /**
  * Create a project
@@ -77,12 +77,12 @@ async function remove(projectId: IProject['id']): Promise<boolean> {
  * Get all projects
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
-async function getAll(): Promise<IProject[] | null> {
+async function getAll(): Promise<Project[] | null> {
 	try {
 		const response = await API.get('/projects');
 		const { status, data } = response;
 		if (status !== 200 || !data) return null;
-		return data;
+		return (data as Project[]).reverse();
 	} catch (error) {
 		logger.error(error);
 		return null;
@@ -115,6 +115,25 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 		logger.error(error);
 		return null;
 	}
+}
+
+/**
+ * Get projects publication assets for a given project per id
+ * @param projectId projet id to get assets for
+ * @return DocumentAsset[] the documents assets for the project
+ */
+async function getPublicationAssets(projectId: string): Promise<DocumentAsset[]> {
+	try {
+		const url = `/projects/${projectId}/assets?types=${ProjectAssetTypes.DOCUMENTS}`;
+		const response = await API.get(url);
+		const { status, data } = response;
+		if (status === 200) {
+			return data?.[ProjectAssetTypes.DOCUMENTS] ?? ([] as DocumentAsset[]);
+		}
+	} catch (error) {
+		logger.error(error);
+	}
+	return [] as DocumentAsset[];
 }
 
 /**
@@ -239,5 +258,6 @@ export {
 	deleteAsset,
 	getAssets,
 	getAssetIcon,
+	getPublicationAssets,
 	getDocumentAssetXddUri
 };
