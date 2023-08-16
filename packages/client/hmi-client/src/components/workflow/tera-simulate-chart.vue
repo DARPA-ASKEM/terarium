@@ -17,7 +17,7 @@
 				</template>
 			</template>
 		</MultiSelect>
-		<Chart type="line" :data="chartData" :options="CHART_OPTIONS" />
+		<Chart type="scatter" :data="chartData" :options="CHART_OPTIONS" />
 	</div>
 </template>
 
@@ -38,10 +38,9 @@ const props = defineProps<{
 }>();
 
 type DatasetType = {
-	data: number[];
+	data: { x: number; y: number }[];
 	label: string;
 	fill: boolean;
-	tension: number;
 };
 
 const renderedRuns = computed<RunResults>(() => {
@@ -95,6 +94,7 @@ const CHART_OPTIONS = {
 	animation: {
 		duration: 0
 	},
+	showLine: true,
 	plugins: {
 		legend: {
 			display: false
@@ -214,17 +214,23 @@ const renderGraph = () => {
 			.forEach((run, runIdx) => {
 				const dataset = {
 					data: run.map(
-						(datum: { [key: string]: number }) => datum[variable] // - runResults[selectedRun.value][timeIdx][code]
+						// - runResults[selectedRun.value][timeIdx][code]
+						(datum: { [key: string]: number }) =>
+							// return datum[variable];
+							({
+								y: +datum[variable],
+								x: +datum.timestamp
+							})
 					),
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
-					tension: 0.4,
 					borderColor: getLineColor(variable, runIdx),
 					borderWidth: lineWidthArray.value[runIdx]
 				};
 				datasets.push(dataset);
 			})
 	);
+	console.log('datasets', datasets);
 	chartData.value = {
 		labels: renderedRuns.value[Object.keys(renderedRuns.value)[0]].map((datum) =>
 			Number(datum.timestamp)
