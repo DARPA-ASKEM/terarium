@@ -473,16 +473,22 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
+					<div v-if="stratifiedModelType">Stratified configs (WIP)</div>
 					<tera-stratified-model-configuration
-						v-if="model.semantics?.span"
+						ref="stratifiedModelConfigurationRef"
+						v-if="stratifiedModelType"
+						:stratified-model-type="stratifiedModelType"
 						:model="model"
 						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
 						@new-model-configuration="emit('new-model-configuration')"
 					/>
+					<div v-if="stratifiedModelType"><br />All values</div>
 					<tera-model-configuration
-						v-else
+						ref="modelConfigurationRef"
 						:model="model"
 						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
 						@new-model-configuration="emit('new-model-configuration')"
 					/>
 				</AccordionTab>
@@ -574,7 +580,8 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import {
 	convertToAMRModel,
 	updateConfigFields,
-	updateParameterId
+	updateParameterId,
+	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
@@ -660,6 +667,8 @@ const existingModelNames = computed(() => {
 	return modelNames;
 });
 
+const stratifiedModelType = computed(() => model.value && getStratificationType(model.value));
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
@@ -680,6 +689,21 @@ const optionsMenuItems = ref([
 	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
+
+// These reference the different config components (TEMPORARY)
+const stratifiedModelConfigurationRef = ref();
+const modelConfigurationRef = ref();
+
+// Sync different configs as we are TEMPORARILY showing both for stratified models
+function syncConfigs(updateStratified = false) {
+	if (stratifiedModelType.value) {
+		if (updateStratified) {
+			stratifiedModelConfigurationRef.value?.initializeConfigSpace();
+		} else {
+			modelConfigurationRef.value?.initializeConfigSpace();
+		}
+	}
+}
 
 function getJustModelName(modelName: string): string {
 	let potentialNum: string = '';

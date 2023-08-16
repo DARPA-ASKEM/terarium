@@ -79,8 +79,8 @@
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
-							@click="onEnterValueCell('initials', 'expression', i, j)"
 							tabindex="0"
+							@click="onEnterValueCell('initials', 'expression', i, j)"
 							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
 							<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
@@ -106,6 +106,7 @@
 						<td
 							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
 							:key="j"
+							tabindex="0"
 							@click="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
@@ -113,7 +114,6 @@
 									}
 								}
 							"
-							tabindex="0"
 							@keyup.enter="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
@@ -282,7 +282,7 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
-const emit = defineEmits(['new-model-configuration', 'update-model-configuration']);
+const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
 
 const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
@@ -336,6 +336,7 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	setTimeout(() => {
 		emit('new-model-configuration');
 		initializeConfigSpace();
+		emit('sync-configs', true);
 	}, 800);
 }
 
@@ -359,6 +360,7 @@ function onEnterValueCell(
 	);
 	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
 }
+
 function openValueModal(
 	odeType: string,
 	valueName: string,
@@ -487,6 +489,7 @@ function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	openValueConfig.value = false;
 	setTimeout(() => {
 		emit('update-model-configuration');
+		emit('sync-configs', true);
 	}, 800);
 }
 
@@ -539,6 +542,7 @@ async function initializeConfigSpace() {
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 	extractions.value = [{ name: '', value: '' }];
 }
+defineExpose({ initializeConfigSpace });
 
 function resetCellEditing() {
 	const row = { name: false };

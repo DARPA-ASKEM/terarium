@@ -87,7 +87,7 @@
 			<tera-related-publications
 				@extracted-metadata="gotEnrichedData"
 				:dialog-flavour="'dataset'"
-				:publications="props.project?.assets?.publications"
+				:publications="publications"
 				:project="project"
 				:assetId="assetId"
 			/>
@@ -378,6 +378,8 @@ const pd = computed(() =>
 		  )
 		: []
 );
+
+const publications = computed(() => []);
 
 const headers = ref({
 	AUTHOR_NAME: 'Author Name',
