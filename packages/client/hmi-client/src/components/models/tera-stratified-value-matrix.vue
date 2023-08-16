@@ -204,9 +204,7 @@ function configureMatrix() {
 	chosenRow.value = rowDimensions[0];
 
 	// Matrix for editable cell states
-	for (let i = 0; i < matrix.value.length; i++) {
-		editableCellStates.value.push(Array(matrix.value[i].length).fill(false));
-	}
+	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
 }
 
 onMounted(() => {
