@@ -336,7 +336,7 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	setTimeout(() => {
 		emit('new-model-configuration');
 		initializeConfigSpace();
-		emit('sync-configs');
+		emit('sync-configs', true);
 	}, 800);
 }
 
@@ -487,6 +487,7 @@ function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
+	emit('sync-configs', true);
 	setTimeout(() => {
 		emit('update-model-configuration');
 	}, 800);

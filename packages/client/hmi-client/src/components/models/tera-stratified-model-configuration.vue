@@ -84,7 +84,13 @@
 		:model="configItems"
 	/>
 	<Teleport to="body">
-		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+		<tera-modal
+			v-if="openValueConfig"
+			@modal-mask-clicked="
+				openValueConfig = false;
+				emit('sync-configs');
+			"
+		>
 			<template #header>
 				<h4>{{ modalVal.id }}</h4>
 				<span>Configure the matrix values</span>
@@ -112,8 +118,21 @@
 				</TabView>
 			</template>
 			<template #footer>
-				<Button label="OK" @click="openValueConfig = false" />
-				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
+				<Button
+					label="OK"
+					@click="
+						openValueConfig = false;
+						emit('sync-configs');
+					"
+				/>
+				<Button
+					class="p-button-outlined"
+					label="Cancel"
+					@click="
+						openValueConfig = false;
+						emit('sync-configs');
+					"
+				/>
 			</template>
 		</tera-modal>
 	</Teleport>
@@ -194,12 +213,13 @@ const vFocus = {
 	mounted: (el) => el.focus()
 };
 
-function updateModelConfigName(configIndex: number) {
+async function updateModelConfigName(configIndex: number) {
 	cellEditStates.value[configIndex].name = false;
 	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
-	updateModelConfiguration(modelConfigurations.value[configIndex]);
+	await updateModelConfiguration(modelConfigurations.value[configIndex]);
 	setTimeout(() => {
 		emit('update-model-configuration');
+		emit('sync-configs');
 	}, 800);
 }
 

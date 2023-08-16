@@ -190,7 +190,7 @@ function configureMatrix() {
 		delete d.base;
 		return Object.keys(d);
 	})[0];
-	console.log(dimensions, matrixData);
+
 	rowDimensions.push(...dimensions);
 	colDimensions.push(...dimensions);
 

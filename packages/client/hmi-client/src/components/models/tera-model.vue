@@ -473,7 +473,7 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
-					<div v-if="stratifiedModelType">stratified configs (WIP)</div>
+					<div v-if="stratifiedModelType">Stratified configs (WIP)</div>
 					<tera-stratified-model-configuration
 						ref="stratifiedModelConfigurationRef"
 						v-if="stratifiedModelType"
@@ -483,7 +483,7 @@
 						@sync-configs="syncConfigs"
 						@new-model-configuration="emit('new-model-configuration')"
 					/>
-					<div v-if="stratifiedModelType"><br />all values</div>
+					<div v-if="stratifiedModelType"><br />All values</div>
 					<tera-model-configuration
 						ref="modelConfigurationRef"
 						:model="model"
@@ -694,11 +694,14 @@ const optionsMenuItems = ref([
 const stratifiedModelConfigurationRef = ref();
 const modelConfigurationRef = ref();
 
-// Sync different configs as we are temporarily showing both for stratified models
-function syncConfigs() {
+// Sync different configs as we are TEMPORARILY showing both for stratified models
+function syncConfigs(updateStratified = false) {
 	if (stratifiedModelType.value) {
-		stratifiedModelConfigurationRef.value?.initializeConfigSpace();
-		modelConfigurationRef.value?.initializeConfigSpace();
+		if (updateStratified) {
+			stratifiedModelConfigurationRef.value?.initializeConfigSpace();
+		} else {
+			modelConfigurationRef.value?.initializeConfigSpace();
+		}
 	}
 }
 
