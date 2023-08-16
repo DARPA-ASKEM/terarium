@@ -79,8 +79,8 @@
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
-							@click="onEnterValueCell('initials', 'expression', i, j)"
 							tabindex="0"
+							@click="onEnterValueCell('initials', 'expression', i, j)"
 							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
 							<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
@@ -106,6 +106,7 @@
 						<td
 							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
 							:key="j"
+							tabindex="0"
 							@click="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
@@ -113,7 +114,6 @@
 									}
 								}
 							"
-							tabindex="0"
 							@keyup.enter="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
@@ -359,6 +359,7 @@ function onEnterValueCell(
 	);
 	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
 }
+
 function openValueModal(
 	odeType: string,
 	valueName: string,

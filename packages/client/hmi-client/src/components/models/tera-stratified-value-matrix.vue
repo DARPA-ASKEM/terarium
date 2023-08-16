@@ -43,22 +43,18 @@
 							<td
 								v-for="(cell, j) in row"
 								:key="j"
-								@click="
-									valueToEdit = {
-										val: getMatrixValue(cell?.value?.id),
-										rowIdx: i,
-										colIdx: j
-									}
-								"
+								tabindex="0"
+								@keyup.enter="onEnterValueCell(cell?.value?.id, i, j)"
+								@click="onEnterValueCell(cell?.value?.id, i, j)"
 							>
 								<template v-if="cell?.value?.id">
 									<InputText
-										v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
+										v-if="editableCellStates[i][j]"
 										class="cell-input"
-										v-model.lazy="valueToEdit.val"
+										v-model.lazy="valueToEdit"
 										v-focus
-										@focusout="updateModelConfigValue(cell.value.id)"
-										@keyup.stop.enter="updateModelConfigValue(cell.value.id)"
+										@focusout="updateModelConfigValue(cell.value.id, i, j)"
+										@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
 									/>
 									<span v-else class="editable-cell">
 										{{ getMatrixValue(cell?.value?.id) }}
@@ -100,12 +96,18 @@ const rowDimensions: string[] = [];
 const matrix = ref<any>([]);
 const chosenCol = ref('');
 const chosenRow = ref('');
-const valueToEdit = ref({ val: '', rowIdx: -1, colIdx: -1 });
+const valueToEdit = ref('');
+const editableCellStates = ref<boolean[][]>([]);
 
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
+
+function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
+	valueToEdit.value = getMatrixValue(variableName);
+	editableCellStates.value[rowIdx][colIdx] = true;
+}
 
 // Finds where to get the value within the AMR based on the variable name
 function findOdeObjectLocation(variableName: string): {
@@ -142,23 +144,27 @@ function getMatrixValue(variableName: string) {
 	return variableName;
 }
 
-async function updateModelConfigValue(variableName: string) {
-	const newValue = valueToEdit.value.val;
-	// valueToEdit.value = { val: '', rowIdx: -1, colIdx: -1 };
-
+async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
+	editableCellStates.value[rowIdx][colIdx] = false;
+	const newValue = valueToEdit.value;
 	const odeObjectLocation = findOdeObjectLocation(variableName);
 
 	if (odeObjectLocation) {
 		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
 
-		if (odeFieldObject.expression) odeFieldObject.expression = newValue;
-		else if (odeFieldObject.value) odeFieldObject.value = Number(newValue);
+		// Update if the value is different
+		if (odeFieldObject.expression) {
+			if (odeFieldObject.expression === newValue) return;
+			odeFieldObject.expression = newValue;
+		} else if (odeFieldObject.value) {
+			if (odeFieldObject.value === Number(newValue)) return;
+			odeFieldObject.value = Number(newValue);
+		}
 
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
-		await updateModelConfiguration(modelConfigurationClone);
 
-		console.log(0);
+		await updateModelConfiguration(modelConfigurationClone);
 	}
 }
 
@@ -197,7 +203,10 @@ function configureMatrix() {
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 
-	console.log('!!!!!', props.id, result, matrix.value);
+	// Matrix for editable cell states
+	for (let i = 0; i < matrix.value.length; i++) {
+		editableCellStates.value.push(Array(matrix.value[i].length).fill(false));
+	}
 }
 
 onMounted(() => {
