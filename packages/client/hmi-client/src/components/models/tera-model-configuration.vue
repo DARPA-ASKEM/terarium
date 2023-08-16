@@ -282,7 +282,7 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
-const emit = defineEmits(['new-model-configuration', 'update-model-configuration']);
+const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
 
 const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
@@ -336,6 +336,7 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	setTimeout(() => {
 		emit('new-model-configuration');
 		initializeConfigSpace();
+		emit('sync-configs');
 	}, 800);
 }
 
@@ -540,6 +541,7 @@ async function initializeConfigSpace() {
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 	extractions.value = [{ name: '', value: '' }];
 }
+defineExpose({ initializeConfigSpace });
 
 function resetCellEditing() {
 	const row = { name: false };

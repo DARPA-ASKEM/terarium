@@ -150,7 +150,7 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
-const emit = defineEmits(['new-model-configuration', 'update-model-configuration']);
+const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
 
 const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
@@ -213,6 +213,7 @@ async function addModelConfiguration(config: ModelConfiguration) {
 	setTimeout(() => {
 		emit('new-model-configuration');
 		initializeConfigSpace();
+		emit('sync-configs');
 	}, 800);
 }
 
@@ -268,6 +269,7 @@ async function initializeConfigSpace() {
 	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
 	extractions.value = [{ name: 'Default', value: '' }];
 }
+defineExpose({ initializeConfigSpace });
 
 watch(
 	() => props.model.id,

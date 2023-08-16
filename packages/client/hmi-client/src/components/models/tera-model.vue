@@ -473,17 +473,22 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
+					<div v-if="stratifiedModelType">stratified configs (WIP)</div>
 					<tera-stratified-model-configuration
+						ref="stratifiedModelConfigurationRef"
 						v-if="stratifiedModelType"
 						:stratified-model-type="stratifiedModelType"
 						:model="model"
 						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
 						@new-model-configuration="emit('new-model-configuration')"
 					/>
+					<div v-if="stratifiedModelType"><br />all values</div>
 					<tera-model-configuration
-						v-else
+						ref="modelConfigurationRef"
 						:model="model"
 						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
 						@new-model-configuration="emit('new-model-configuration')"
 					/>
 				</AccordionTab>
@@ -684,6 +689,18 @@ const optionsMenuItems = ref([
 	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
+
+// These reference the different config components (TEMPORARY)
+const stratifiedModelConfigurationRef = ref();
+const modelConfigurationRef = ref();
+
+// Sync different configs as we are temporarily showing both for stratified models
+function syncConfigs() {
+	if (stratifiedModelType.value) {
+		stratifiedModelConfigurationRef.value?.initializeConfigSpace();
+		modelConfigurationRef.value?.initializeConfigSpace();
+	}
+}
 
 function getJustModelName(modelName: string): string {
 	let potentialNum: string = '';
