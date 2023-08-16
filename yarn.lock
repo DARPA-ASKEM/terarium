@@ -9279,7 +9279,7 @@ cors@latest:
     primeflex: 3.3.1
     primeicons: 6.0.1
     primevue: 3.25.0
-    pyodide: ^0.23.4
+    pyodide: 0.23.4
     sass: 1.56.1
     typescript: 5.0.4
     uuid: 9.0.0
@@ -12908,7 +12908,7 @@ proxy-middleware@latest:
   languageName: node
   linkType: hard
 
-"pyodide@npm:^0.23.4":
+"pyodide@npm:0.23.4":
   version: 0.23.4
   resolution: "pyodide@npm:0.23.4"
   dependencies:
