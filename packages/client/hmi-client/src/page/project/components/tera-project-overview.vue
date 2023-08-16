@@ -165,84 +165,86 @@
 				</DataTable>
 			</section>
 			<section class="drag-n-drop">
-				<tera-modal
-					v-if="isUploadResourcesModalVisible"
-					class="modal"
-					@modal-mask-clicked="isUploadResourcesModalVisible = false"
-				>
-					<template #header>
-						<h4>Upload resources</h4>
-					</template>
-					<template #default>
-						<p class="subheader">Add resources to your project here</p>
-						<tera-drag-and-drop-importer
-							:show-preview="true"
-							:accept-types="[
-								AcceptedTypes.PDF,
-								AcceptedTypes.CSV,
-								AcceptedTypes.TXT,
-								AcceptedTypes.MD,
-								AcceptedTypes.PY,
-								AcceptedTypes.JS,
-								AcceptedTypes.M,
-								AcceptedTypes.R,
-								AcceptedTypes.JL
-							]"
-							:accept-extensions="[
-								AcceptedExtensions.PDF,
-								AcceptedExtensions.CSV,
-								AcceptedExtensions.TXT,
-								AcceptedExtensions.MD,
-								AcceptedExtensions.PY,
-								AcceptedExtensions.M,
-								AcceptedExtensions.JS,
-								AcceptedExtensions.R,
-								AcceptedExtensions.JL
-							]"
-							:import-action="processFiles"
-							:progress="progress"
-							@import-completed="importCompleted"
-						></tera-drag-and-drop-importer>
+				<Teleport to="body">
+					<tera-modal
+						v-if="isUploadResourcesModalVisible"
+						class="modal"
+						@modal-mask-clicked="isUploadResourcesModalVisible = false"
+					>
+						<template #header>
+							<h4>Upload resources</h4>
+						</template>
+						<template #default>
+							<p class="subheader">Add resources to your project here</p>
+							<tera-drag-and-drop-importer
+								:show-preview="true"
+								:accept-types="[
+									AcceptedTypes.PDF,
+									AcceptedTypes.CSV,
+									AcceptedTypes.TXT,
+									AcceptedTypes.MD,
+									AcceptedTypes.PY,
+									AcceptedTypes.JS,
+									AcceptedTypes.M,
+									AcceptedTypes.R,
+									AcceptedTypes.JL
+								]"
+								:accept-extensions="[
+									AcceptedExtensions.PDF,
+									AcceptedExtensions.CSV,
+									AcceptedExtensions.TXT,
+									AcceptedExtensions.MD,
+									AcceptedExtensions.PY,
+									AcceptedExtensions.M,
+									AcceptedExtensions.JS,
+									AcceptedExtensions.R,
+									AcceptedExtensions.JL
+								]"
+								:import-action="processFiles"
+								:progress="progress"
+								@import-completed="importCompleted"
+							></tera-drag-and-drop-importer>
 
-						<section v-if="isUploadResourcesModalVisible">
-							<Card v-for="(item, i) in results" :key="i" class="card">
-								<template #title>
-									<div class="card-img"></div>
-								</template>
-								<template #content>
-									<div class="card-content">
-										<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
-										<div v-if="item.response" class="file-content">
-											<br />
-											<div>Extracted Text</div>
-											<div>{{ item.response.text }}</div>
-											<br />
-											<div v-if="item.response.images">Images Found</div>
-											<div v-for="image in item.response.images" :key="image">
-												<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+							<section v-if="isUploadResourcesModalVisible">
+								<Card v-for="(item, i) in results" :key="i" class="card">
+									<template #title>
+										<div class="card-img"></div>
+									</template>
+									<template #content>
+										<div class="card-content">
+											<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+											<div v-if="item.response" class="file-content">
+												<br />
+												<div>Extracted Text</div>
+												<div>{{ item.response.text }}</div>
+												<br />
+												<div v-if="item.response.images">Images Found</div>
+												<div v-for="image in item.response.images" :key="image">
+													<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+												</div>
+												<br />
+												<i class="pi pi-plus"></i>
 											</div>
-											<br />
-											<i class="pi pi-plus"></i>
 										</div>
-									</div>
-								</template>
-							</Card>
-						</section>
-					</template>
-					<template #footer>
-						<Button
-							label="Upload"
-							class="p-button-primary"
-							@click="isUploadResourcesModalVisible = false"
-							:disabled="!results"
-						/>
-						<Button
-							label="Cancel"
-							class="p-button-secondary"
-							@click="isUploadResourcesModalVisible = false"
-						/>
-					</template>
-				</tera-modal>
+									</template>
+								</Card>
+							</section>
+						</template>
+						<template #footer>
+							<Button
+								label="Upload"
+								class="p-button-primary"
+								@click="isUploadResourcesModalVisible = false"
+								:disabled="!results"
+							/>
+							<Button
+								label="Cancel"
+								class="p-button-secondary"
+								@click="isUploadResourcesModalVisible = false"
+							/>
+						</template>
+					</tera-modal>
+				</Teleport>
 			</section>
 		</section>
 		<tera-multi-select-modal
@@ -280,6 +282,7 @@ import { uploadArtifactToProject } from '@/services/artifact';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/models/extractions';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{
 	project: IProject;
@@ -298,6 +301,8 @@ const selectedResources = ref();
 const openedRow = ref(null);
 
 const tabStore = useTabStore();
+
+const auth = useAuthStore();
 
 const multiSelectButtons = [
 	{
@@ -350,7 +355,7 @@ async function processFiles(files: File[], csvDescription: string) {
 			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
 				progress,
 				file,
-				props.project.username ?? '',
+				auth.name ?? '',
 				props.project.id,
 				csvDescription
 			);

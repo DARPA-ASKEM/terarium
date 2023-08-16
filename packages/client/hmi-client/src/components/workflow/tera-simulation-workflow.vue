@@ -205,7 +205,6 @@
 
 <script setup lang="ts">
 import { isArray, cloneDeep, isEqual } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
@@ -344,25 +343,31 @@ const testOperation: Operation = {
 const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
-async function selectModel(node: WorkflowNode, data: { id: string }) {
-	droppedAssetId.value = null;
-	node.state.modelId = data.id;
-
+const refreshModelNode = async (node: WorkflowNode) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023
-	const configurationList = await getModelConfigurations(data.id);
-	node.outputs = [];
+	const configurationList = await getModelConfigurations(node.state.modelId);
 	configurationList.forEach((configuration) => {
 		// Only add new configurations
-		if (node.outputs.find((d) => isEqual(d.value, [configuration.id]))) return;
+		const existingConfig = node.outputs.find((port) => isEqual(port.value, [configuration.id]));
+		if (existingConfig) {
+			existingConfig.label = configuration.name;
+			return;
+		}
 
 		node.outputs.push({
-			id: uuidv4(),
+			id: crypto.randomUUID(),
 			type: 'modelConfigId',
 			label: configuration.name,
 			value: [configuration.id],
 			status: WorkflowPortStatus.NOT_CONNECTED
 		});
 	});
+};
+
+async function selectModel(node: WorkflowNode, data: { id: string }) {
+	droppedAssetId.value = null;
+	node.state.modelId = data.id;
+	await refreshModelNode(node);
 }
 
 async function updateWorkflowName() {
@@ -379,7 +384,7 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
-			id: uuidv4(),
+			id: crypto.randomUUID(),
 			type: 'datasetId',
 			label: data.name,
 			value: [data.id],
@@ -390,7 +395,7 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
-		id: uuidv4(),
+		id: crypto.randomUUID(),
 		type: port.type,
 		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
@@ -437,6 +442,22 @@ workflowEventBus.on('node-state-change', (payload: any) => {
 	if (wf.value.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 	workflowDirty = true;
+});
+
+workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
+	if (wf.value.id !== payload.workflowId) return;
+	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
+	if (!node) return;
+
+	if (node.operationType === WorkflowOperationTypes.MODEL) {
+		// This part is a bit hacky and slow. Because we allow multiple instances of the
+		// same model across many nodes in a workflow, they ALL need to be updated. However
+		// this multi-models setup is also somewhat uncommon so I don't want to go out of the way
+		// to communicate "model change" instead of "node change", the former seemingly out of
+		// place when using the WorkflowEventBus mechanism. DC - Aug 2023
+		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
+		nodesToRefresh.forEach(refreshModelNode);
+	}
 });
 
 workflowEventBus.on(

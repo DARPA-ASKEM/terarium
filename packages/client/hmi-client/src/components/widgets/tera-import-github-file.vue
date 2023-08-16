@@ -171,6 +171,7 @@ import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
 import { extractPDF } from '@/services/models/extractions';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{
 	urlString: string;
@@ -187,6 +188,7 @@ const selectedUnknownFiles = ref<GithubFile[]>([]);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref<string>('');
 const displayCode = ref<string>('');
+const auth = useAuthStore();
 
 const modalTitle = computed(
 	() =>
@@ -326,8 +328,9 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
-			props.project?.id ?? ''
+			auth.name ?? '',
+			props.project?.id ?? '',
+			githubFile.htmlUrl
 		);
 	});
 }
