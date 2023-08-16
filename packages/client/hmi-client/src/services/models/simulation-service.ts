@@ -266,6 +266,7 @@ export async function simulationPollAction(
 			error: null
 		};
 	}
+
 	if (
 		response.find(
 			(simulation) =>
@@ -281,11 +282,23 @@ export async function simulationPollAction(
 			status: ProgressState.RUNNING,
 			value: 0
 		};
+		// keep polling
+		return {
+			data: null,
+			progress: null,
+			error: null
+		};
+	}
+
+	// remove all simulations for now if there is an unhandled state
+	const newState = deleteSimulationInProgress(node, simulationIds);
+	if (!isEqual(node.state, newState)) {
+		emitFn('update-state', newState);
 	}
 
 	return {
-		data: null,
+		data: response,
 		progress: null,
-		error: null
+		error: true
 	};
 }

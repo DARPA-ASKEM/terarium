@@ -156,7 +156,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 // EXTRA section
 const numSamples = ref(100);
@@ -237,7 +237,7 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
-	if (response.simulationId) {
+	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
