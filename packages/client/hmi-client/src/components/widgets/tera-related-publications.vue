@@ -119,14 +119,16 @@ const addResources = () => {
 };
 
 const sendForEnrichments = async (/* _selectedResources */) => {
-	// 1. Send dataset profile request
-	const resp = await profileDataset(props.assetId, selectedResources.value.id);
+	if (selectedResources?.value?.id) {
+		// 1. Send dataset profile request
+		const resp = await profileDataset(props.assetId, selectedResources.value.id);
 
-	// 2. Poll
-	const pollResult = await fetchExtraction(resp);
-	console.log('enrichment poll', pollResult);
+		// 2. Poll
+		const pollResult = await fetchExtraction(resp);
+		console.log('enrichment poll', pollResult);
 
-	emit('extracted-metadata', pollResult);
+		emit('extracted-metadata', pollResult);
+	}
 };
 </script>
 
