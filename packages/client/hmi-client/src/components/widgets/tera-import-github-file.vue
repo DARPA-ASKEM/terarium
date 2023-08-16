@@ -127,7 +127,6 @@
 												:options="asDocumentTypes"
 												optionLabel="name"
 												placeholder="Select a document type"
-												style="width: 90%"
 											/>
 										</div>
 									</li>
