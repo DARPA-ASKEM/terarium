@@ -27,8 +27,9 @@
 					:value="allResources"
 					v-model:selection="selectedResources"
 					tableStyle="min-width: 50rem"
+					selection-mode="single"
 				>
-					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
+					<Column selectionMode="single" headerStyle="width: 3rem"></Column>
 					<Column field="name" sortable header="Name"></Column>
 					<Column field="authors" sortable header="Authors"></Column>
 				</DataTable>
@@ -119,8 +120,7 @@ const addResources = () => {
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	// 1. Send dataset profile request
-	/* TODO: send selected resources along with dataset to backend for enrichment */
-	const resp = await profileDataset(props.assetId);
+	const resp = await profileDataset(props.assetId, selectedResources.value.id);
 
 	// 2. Poll
 	const pollResult = await fetchExtraction(resp);
