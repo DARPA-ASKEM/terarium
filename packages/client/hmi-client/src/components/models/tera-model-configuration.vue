@@ -487,9 +487,9 @@ function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
-	emit('sync-configs', true);
 	setTimeout(() => {
 		emit('update-model-configuration');
+		emit('sync-configs', true);
 	}, 800);
 }
 
