@@ -52,7 +52,7 @@ const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
 
