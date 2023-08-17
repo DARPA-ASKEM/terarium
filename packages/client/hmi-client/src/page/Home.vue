@@ -139,7 +139,7 @@
 					<h4>Create project</h4>
 				</template>
 				<template #default>
-					<form>
+					<form id="createProjectForm" @onSubmit.prevent="createNewProject">
 						<label for="new-project-name">Name</label>
 						<InputText
 							id="new-project-name"
@@ -158,7 +158,7 @@
 					</form>
 				</template>
 				<template #footer>
-					<Button @click="createNewProject">Create</Button>
+					<Button type="submit" form="createProjectForm" @click="createNewProject">Create</Button>
 					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
 						>Cancel</Button
 					>

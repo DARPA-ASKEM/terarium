@@ -5,7 +5,7 @@
 				<h4>New model</h4>
 			</template>
 			<template #default>
-				<form>
+				<form id="createModelForm" @onSubmit.prevent="createNewModel()">
 					<label for="new-model">Enter a unique name for your model</label>
 					<InputText
 						v-bind:class="invalidInputStyle"
@@ -17,7 +17,7 @@
 				</form>
 			</template>
 			<template #footer>
-				<Button @click="createNewModel">Create model</Button>
+				<Button type="submit" form="createModelForm" @click="createNewModel">Create model</Button>
 				<Button class="p-button-secondary" @click="emit('close-modal')"> Cancel </Button>
 			</template>
 		</tera-modal>
