@@ -589,8 +589,8 @@ import { createModel, getModel, getModelConfigurations, updateModel } from '@/se
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { ResultType, FeatureConfig } from '@/types/common';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
+import { IProject } from '@/types/Project';
+import { Model, Document, Dataset, ProvenanceType, AssetType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
@@ -764,11 +764,7 @@ async function duplicateModel() {
 		isCopyModelModalVisible.value = false;
 		return;
 	}
-	await ProjectService.addAsset(
-		props.project.id,
-		ProjectAssetTypes.MODELS,
-		duplicateModelResponse.id
-	);
+	await ProjectService.addAsset(props.project.id, AssetType.Models, duplicateModelResponse.id);
 	isCopyModelModalVisible.value = false;
 }
 
@@ -925,7 +921,7 @@ const createNewModel = async () => {
 		if (newModelResp) {
 			const modelId = newModelResp.id.toString();
 			emit('close-current-tab');
-			await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+			await ProjectService.addAsset(props.project.id, AssetType.Models, modelId);
 
 			// Go to the model you just created
 			router.push({
@@ -933,7 +929,7 @@ const createNewModel = async () => {
 				params: {
 					assetName: newModelName.value,
 					assetId: modelId,
-					pageType: ProjectAssetTypes.MODELS
+					pageType: AssetType.Models
 				}
 			});
 		}

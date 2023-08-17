@@ -11,7 +11,6 @@ import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
-import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import {
@@ -20,7 +19,8 @@ import {
 	ProvenanceType,
 	XDDFacetsItemResponse,
 	Extraction,
-	Dataset
+	Dataset,
+	AssetType
 } from '@/types/Types';
 import {
 	XDDDictionary,
@@ -251,18 +251,18 @@ const getAssets = async (params: GetAssetsParams) => {
 
 	// fetch list of model or datasets data from the HMI server
 	let assetList: Model[] | Dataset[] | Document[] = [];
-	let projectAssetType: ProjectAssetTypes;
+	let projectAssetType: AssetType;
 	let xddResults: DocumentsResponseOK | undefined;
 	let hits: number | undefined;
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
 			assetList = (await getAllModelDescriptions()) ?? ([] as Model[]);
-			projectAssetType = ProjectAssetTypes.MODELS;
+			projectAssetType = AssetType.Models;
 			break;
 		case ResourceType.DATASET:
 			assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
-			projectAssetType = ProjectAssetTypes.DATASETS;
+			projectAssetType = AssetType.Datasets;
 			break;
 		case ResourceType.XDD:
 			xddResults = await searchXDDDocuments(term, searchParam);
@@ -270,7 +270,7 @@ const getAssets = async (params: GetAssetsParams) => {
 				assetList = xddResults.data;
 				hits = xddResults.hits;
 			}
-			projectAssetType = ProjectAssetTypes.DOCUMENTS;
+			projectAssetType = AssetType.Publications;
 			break;
 		default:
 			return results; // error or make new resource type compatible
