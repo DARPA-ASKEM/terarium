@@ -16,6 +16,7 @@ public class Observable {
     @TSOptional
     private String name;
 
+    @TSOptional
     private List<String> states;
 
     @TSOptional

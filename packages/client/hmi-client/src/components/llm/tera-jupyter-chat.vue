@@ -28,14 +28,14 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onUnmounted, onMounted } from 'vue';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import {
 	getSessionManager,
 	JupyterMessage,
 	KernelState,
 	createMessageId
 } from '@/services/jupyter';
-import { CsvAsset } from '@/types/Types';
+import { AssetType, CsvAsset } from '@/types/Types';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
@@ -74,7 +74,7 @@ const props = defineProps<{
 	project?: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes;
+	assetType?: AssetType;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
 	showChatThoughts?: boolean;

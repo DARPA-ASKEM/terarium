@@ -297,7 +297,7 @@ export interface Links {
 export interface Concept {
     id: string;
     curie: string;
-    type: Type;
+    type: AssetType;
     status: OntologicalField;
     object_id: string;
 }
@@ -308,12 +308,15 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
+/**
+ * @deprecated
+ */
 export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
-    attributes: any[];
+    attributes?: any[];
     timeseries?: { [index: string]: any };
 }
 
@@ -489,7 +492,7 @@ export interface ModelParameter {
 export interface Observable {
     id: string;
     name?: string;
-    states: string[];
+    states?: string[];
     expression?: string;
     expression_mathml?: string;
 }
@@ -650,14 +653,14 @@ export enum ColumnType {
     Time = "TIME",
 }
 
-export enum Type {
-    Datasets = "DATASETS",
-    Extractions = "EXTRACTIONS",
-    Intermediates = "INTERMEDIATES",
-    Models = "MODELS",
-    Plans = "PLANS",
-    Publications = "PUBLICATIONS",
-    SimulationRuns = "SIMULATION_RUNS",
+export enum AssetType {
+    Datasets = "datasets",
+    ModelConfigurations = "model_configurations",
+    Models = "models",
+    Publications = "publications",
+    Simulations = "simulations",
+    Workflows = "workflows",
+    Artifacts = "artifacts",
 }
 
 export enum OntologicalField {

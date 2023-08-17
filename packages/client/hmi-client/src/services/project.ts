@@ -3,14 +3,14 @@
  */
 
 import API from '@/api/api';
-import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssets } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
-import { DocumentAsset, EventType, Project } from '@/types/Types';
+import { DocumentAsset, EventType, Project, AssetType } from '@/types/Types';
 
 /**
  * Create a project
@@ -104,8 +104,9 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 				url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
 		} else {
-			url +=
-				'?types=datasets&types=model_configurations&types=artifacts&types=models&types=publications&types=simulations&types=workflows';
+			Object.values(AssetType).forEach((type, indx) => {
+				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+			});
 		}
 		const response = await API.get(url);
 		const { status, data } = response;
@@ -124,11 +125,11 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
  */
 async function getPublicationAssets(projectId: string): Promise<DocumentAsset[]> {
 	try {
-		const url = `/projects/${projectId}/assets?types=${ProjectAssetTypes.DOCUMENTS}`;
+		const url = `/projects/${projectId}/assets?types=${AssetType.Publications}`;
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status === 200) {
-			return data?.[ProjectAssetTypes.DOCUMENTS] ?? ([] as DocumentAsset[]);
+			return data?.[AssetType.Publications] ?? ([] as DocumentAsset[]);
 		}
 	} catch (error) {
 		logger.error(error);
@@ -166,13 +167,13 @@ async function addAsset(projectId: string, assetsType: string, assetId: string) 
 /**
  * Delete a project asset
  * @projectId IProject["id"] - represents the project id wherein the asset will be added
- * @assetType ProjectAssetTypes - represents the type of asset to be added, e.g., 'documents'
+ * @assetType AssetType - represents the type of asset to be added, e.g., 'documents'
  * @assetId string | number - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return boolean
  */
 async function deleteAsset(
 	projectId: IProject['id'],
-	assetType: ProjectAssetTypes,
+	assetType: AssetType,
 	assetId: string | number
 ): Promise<boolean> {
 	try {
@@ -220,17 +221,17 @@ async function get(
 /**
  * Get the icon associated with an Asset
  */
-const icons = new Map<string | ProjectAssetTypes, string | Component>([
-	[ProjectAssetTypes.DOCUMENTS, 'file'],
-	[ProjectAssetTypes.MODELS, 'share-2'],
-	[ProjectAssetTypes.DATASETS, DatasetIcon],
-	[ProjectAssetTypes.SIMULATIONS, 'settings'],
-	[ProjectAssetTypes.CODE, 'code'],
-	[ProjectAssetTypes.SIMULATION_WORKFLOW, 'git-merge'],
+const icons = new Map<string | AssetType, string | Component>([
+	[AssetType.Publications, 'file'],
+	[AssetType.Models, 'share-2'],
+	[AssetType.Datasets, DatasetIcon],
+	[AssetType.Simulations, 'settings'],
+	// DVINCE TODO [ProjectAssetTypes.CODE, 'code'],
+	[AssetType.Workflows, 'git-merge'],
 	['overview', 'layout']
 ]);
 
-function getAssetIcon(type: ProjectAssetTypes | string | null): string | Component {
+function getAssetIcon(type: AssetType | string | null): string | Component {
 	if (type && icons.has(type)) {
 		return icons.get(type) ?? 'circle';
 	}
@@ -242,7 +243,7 @@ function getAssetIcon(type: ProjectAssetTypes | string | null): string | Compone
  */
 function getDocumentAssetXddUri(project: IProject, assetId: Tab['assetId']): string | null {
 	return (
-		project.assets?.[ProjectAssetTypes.DOCUMENTS]?.find(
+		project.assets?.[AssetType.Publications]?.find(
 			(document) => document?.id === Number.parseInt(assetId ?? '', 10)
 		)?.xdd_uri ?? null
 	);

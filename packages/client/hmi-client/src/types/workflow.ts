@@ -133,6 +133,7 @@ export interface Size {
 }
 
 export enum ProgressState {
+	RETRIEVING = 'retrieving',
 	QUEUED = 'queued',
 	RUNNING = 'running',
 	COMPLETE = 'complete'
