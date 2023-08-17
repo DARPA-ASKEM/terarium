@@ -1,9 +1,9 @@
-import { XDDFacetsItemResponse, Document, Dataset, Model } from '@/types/Types';
+import { XDDFacetsItemResponse, Document, Dataset, Model, AssetType } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
-import { ProjectAssetTypes, ProjectPages } from './Project';
+import { ProjectPages } from './Project';
 
 export type Annotation = {
 	id: string;
@@ -102,7 +102,7 @@ export type Tab = {
 	icon?: string;
 	assetId?: string;
 	assetName?: string;
-	pageType?: ProjectAssetTypes | ProjectPages;
+	pageType?: AssetType | ProjectPages;
 };
 
 export type CodeRequest = {
