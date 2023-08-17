@@ -1,20 +1,21 @@
 <template>
 	<tera-model
-		v-if="pageType === ProjectAssetTypes.MODELS"
+		v-if="pageType === AssetType.Models"
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@asset-loaded="emit('asset-loaded')"
 	/>
+	<!-- DVINCE TODO
 	<code-editor
-		v-else-if="pageType === ProjectAssetTypes.CODE"
+		v-else-if="pageType === AssetType.CODE"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');
 			openNextCodeFile();
 		"
-	/>
+	/>-->
 	<code-editor
-		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && !assetName?.endsWith('.pdf')"
+		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');
@@ -22,7 +23,7 @@
 		"
 	/>
 	<tera-pdf-embed
-		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && assetName?.endsWith('.pdf')"
+		v-else-if="pageType === AssetType.Artifacts && assetName?.endsWith('.pdf')"
 		:title="assetName"
 		:file-promise="getPDFBytes()"
 	/>
@@ -33,7 +34,7 @@
 		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
 	<tera-simulation-workflow
-		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
+		v-else-if="pageType === AssetType.Workflows"
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
@@ -42,7 +43,7 @@
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && !isEmpty(tabs)">
 		<tera-document
-			v-if="pageType === ProjectAssetTypes.DOCUMENTS"
+			v-if="pageType === AssetType.Publications"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			:project="project"
@@ -50,7 +51,7 @@
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
-			v-else-if="pageType === ProjectAssetTypes.DATASETS"
+			v-else-if="pageType === AssetType.Datasets"
 			:project="project"
 			:asset-id="assetId"
 			@asset-loaded="emit('asset-loaded')"
@@ -65,7 +66,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed } from 'vue';
-import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
+import { ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
@@ -81,11 +82,12 @@ import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import useResourceStore from '@/stores/resources';
+import { AssetType } from '@/types/Types';
 
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
-	pageType?: ProjectAssetTypes | ProjectPages;
+	pageType?: AssetType | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
 }>();
@@ -102,7 +104,7 @@ const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
 
 const assetName = computed<string>(() => {
 	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
+	// dvince TODO if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
 	const assets = resourceStore.activeProjectAssets;
 
 	/**

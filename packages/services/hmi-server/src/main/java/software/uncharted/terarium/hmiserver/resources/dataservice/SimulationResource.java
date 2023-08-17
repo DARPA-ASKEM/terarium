@@ -11,11 +11,10 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import io.smallrye.mutiny.Multi;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.reactivestreams.Publisher;
 import org.jboss.resteasy.annotations.SseElementType;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
@@ -147,7 +146,7 @@ public class SimulationResource implements SnakeCaseResource {
 
 		// Add the dataset to the project as an asset
 		try {
-			return projectProxy.createAsset(projectId, ResourceType.Type.DATASETS.type, dataset.getId());
+			return projectProxy.createAsset(projectId, Assets.AssetType.DATASETS, dataset.getId());
 		} catch (Exception ignored) {
 			log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
 			return Response

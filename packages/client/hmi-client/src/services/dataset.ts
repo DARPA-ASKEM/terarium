@@ -4,9 +4,8 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset } from '@/types/Types';
 import { addAsset } from '@/services/project';
-import { ProjectAssetTypes } from '@/types/Project';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import useResourcesStore from '@/stores/resources';
@@ -134,7 +133,7 @@ async function createNewDatasetFromGithubFile(
 		return null;
 	}
 
-	return addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+	return addAsset(projectId, AssetType.Datasets, newDataSet.id);
 }
 
 /**
@@ -190,7 +189,7 @@ async function createNewDatasetFromCSV(
 		return null;
 	}
 
-	await addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+	await addAsset(projectId, AssetType.Datasets, newDataSet.id);
 
 	// Now verify it all works and obtain a preview for the user.
 	return downloadRawFile(newDataSet.id, file.name);
