@@ -278,7 +278,7 @@ export async function simulationPollAction(
 		.map((simulation) => simulation!.id);
 
 	// all simulations complete
-	if (inProgressSimulationIds.length === 0) {
+	if (inProgressSimulationIds.length === 0 && completedSimulationIds.length > 0) {
 		const newState = cloneDeep(node.state);
 		deleteSimulationInProgress(newState, completedSimulationIds, eventSourceManager);
 		// only update state if it is different from the current one
