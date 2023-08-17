@@ -124,11 +124,12 @@ import {
 	updateAnnotation
 } from '@/services/models/annotations';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
+import { ProjectPages } from '@/types/Project';
+import { AssetType } from '@/types/Types';
 
 const props = defineProps<{
 	assetId?: string;
-	pageType?: ProjectAssetTypes | ProjectPages;
+	pageType?: AssetType | ProjectPages;
 }>();
 
 enum NoteSection {

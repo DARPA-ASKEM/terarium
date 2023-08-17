@@ -1,6 +1,5 @@
-import { Artifact } from '@/types/Types';
+import { Artifact, AssetType } from '@/types/Types';
 import API from '@/api/api';
-import { ProjectAssetTypes } from '@/types/Project';
 import { addAsset } from '@/services/project';
 import { Ref } from 'vue';
 import { logger } from '@/utils/logger';
@@ -46,7 +45,7 @@ async function createNewArtifactFromGithubFile(
 		return null;
 	}
 
-	const resp = addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
+	const resp = addAsset(projectId, AssetType.Artifacts, newArtifact.id);
 
 	if (!resp) return null;
 
@@ -82,7 +81,7 @@ async function uploadArtifactToProject(
 	const successfulUpload = await addFileToArtifact(newArtifact.id, file, progress);
 	if (!successfulUpload) return null;
 
-	const resp = addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
+	const resp = addAsset(projectId, AssetType.Artifacts, newArtifact.id);
 	if (!resp) return null;
 
 	return newArtifact;
