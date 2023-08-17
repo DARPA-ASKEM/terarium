@@ -7,6 +7,14 @@
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"
 	>
+		<template #name-input>
+			<InputText
+				v-if="isRenamingDataset"
+				v-model.lazy="newDatasetName"
+				placeholder="Dataset name"
+				@keyup.enter="updateDatasetName"
+			/>
+		</template>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -327,8 +335,8 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
-import { isString, isEmpty } from 'lodash';
-import { downloadRawFile, getDataset } from '@/services/dataset';
+import { isString, isEmpty, cloneDeep } from 'lodash';
+import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
 import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
@@ -398,7 +406,9 @@ const menu = ref();
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
-const dataset: Ref<Dataset | null> = ref(null);
+const dataset = ref<Dataset | null>(null);
+const newDatasetName = ref('');
+const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 
@@ -443,6 +453,14 @@ const items = ref([
 		]
 	}
 ]);
+
+async function updateDatasetName() {
+	if (dataset.value && newDatasetName.value !== '') {
+		const datasetClone = cloneDeep(dataset.value);
+		datasetClone.name = newDatasetName.value;
+		await updateDataset(datasetClone);
+	}
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -528,6 +546,7 @@ watch(
 watch(
 	() => [props.assetId],
 	async () => {
+		isRenamingDataset.value = false;
 		if (props.assetId !== '') {
 			const datasetTemp: Dataset | null = await getDataset(props.assetId);
 

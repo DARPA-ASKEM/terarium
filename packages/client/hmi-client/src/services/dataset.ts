@@ -34,6 +34,16 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
 	return response?.data ?? null;
 }
 
+/**
+ *
+ * @param datasetIDs
+ * @returns
+ */
+async function updateDataset(dataset: Dataset) {
+	const response = await API.put(`/datasets/${dataset.id}`, dataset);
+	return response?.data ?? null;
+}
+
 //
 // Retrieve multiple datasets by their IDs
 // FIXME: the backend does not support bulk fetch
@@ -228,6 +238,7 @@ export const saveDataset = async (
 export {
 	getAll,
 	getDataset,
+	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
 	createNewDatasetFromCSV,
