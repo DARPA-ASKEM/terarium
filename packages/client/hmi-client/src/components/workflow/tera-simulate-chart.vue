@@ -195,7 +195,7 @@ const watchRunResults = async (runResults) => {
 	if (!stateVariablesList.length) {
 		stateVariablesList = Object.keys(
 			renderedRuns.value[Object.keys(renderedRuns.value)[0]][0]
-		).filter((key) => key !== 'timestep' && key !== 'timestamp' && key !== 'date');
+		).filter((key) => key !== 'timestamp');
 	}
 	renderGraph();
 };
@@ -230,7 +230,6 @@ const renderGraph = () => {
 				datasets.push(dataset);
 			})
 	);
-	console.log('datasets', datasets);
 	chartData.value = {
 		labels: renderedRuns.value[Object.keys(renderedRuns.value)[0]].map((datum) =>
 			Number(datum.timestamp)
