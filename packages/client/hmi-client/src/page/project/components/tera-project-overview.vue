@@ -61,12 +61,12 @@
 						size="large"
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-new-asset', ProjectAssetTypes.MODELS)"
+						@click="emit('open-new-asset', AssetType.Models)"
 					/>
 					<Button
 						size="large"
 						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-new-asset', ProjectAssetTypes.SIMULATION_WORKFLOW)"
+						@click="emit('open-new-asset', AssetType.Workflows)"
 					>
 						<vue-feather
 							class="p-button-icon-left"
@@ -256,7 +256,7 @@
 </template>
 
 <script setup lang="ts">
-import { IProject, isProjectAssetTypes, ProjectAssetTypes } from '@/types/Project';
+import { IProject, isProjectAssetTypes } from '@/types/Project';
 import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import * as ProjectService from '@/services/project';
@@ -274,7 +274,7 @@ import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
-import { Artifact, CsvAsset } from '@/types/Types';
+import { Artifact, AssetType, CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
@@ -319,7 +319,7 @@ const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
 const assets = computed(() => {
-	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
+	const tabs = new Map<AssetType, Set<Tab>>();
 
 	const projectAssets = props.project?.assets;
 	if (!projectAssets) return tabs;
@@ -328,7 +328,7 @@ const assets = computed(() => {
 	// Run through all the assets type within the project
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType: ProjectAssetTypes = type as ProjectAssetTypes;
+			const projectAssetType: AssetType = type as AssetType;
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => {
 					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();

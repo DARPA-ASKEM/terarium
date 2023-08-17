@@ -243,8 +243,8 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Dataset, Model } from '@/types/Types';
+import { IProject } from '@/types/Project';
+import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
@@ -597,7 +597,7 @@ const { getDragData } = useDragEvent();
 function onDrop(event) {
 	const { assetId, assetType } = getDragData('initAssetNode') as {
 		assetId: string;
-		assetType: ProjectAssetTypes;
+		assetType: AssetType;
 	};
 
 	if (assetId && assetType) {
@@ -606,10 +606,10 @@ function onDrop(event) {
 		let operation: Operation;
 
 		switch (assetType) {
-			case ProjectAssetTypes.MODELS:
+			case AssetType.Models:
 				operation = ModelOperation;
 				break;
-			case ProjectAssetTypes.DATASETS:
+			case AssetType.Datasets:
 				operation = DatasetOperation;
 				break;
 			default:

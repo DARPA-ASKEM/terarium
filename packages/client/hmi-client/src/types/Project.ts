@@ -1,16 +1,5 @@
-import { DocumentAsset, Document, Dataset, Model, Artifact } from '@/types/Types';
+import { DocumentAsset, Document, Dataset, Model, Artifact, AssetType } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
-
-// TODO: this should be an enum driven by our back end.
-export enum ProjectAssetTypes {
-	DOCUMENTS = 'publications',
-	MODELS = 'models',
-	SIMULATIONS = 'simulations',
-	SIMULATION_WORKFLOW = 'workflows',
-	DATASETS = 'datasets',
-	CODE = 'code',
-	ARTIFACTS = 'artifacts'
-}
 
 export enum ProjectPages {
 	OVERVIEW = 'overview',
@@ -19,16 +8,16 @@ export enum ProjectPages {
 	EMPTY = ''
 }
 
-export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
-	Object.values(ProjectAssetTypes).includes(type as ProjectAssetTypes);
+export const isProjectAssetTypes = (type: AssetType | string): boolean =>
+	Object.values(AssetType).includes(type as AssetType);
 
 export type ProjectAssets = {
-	[ProjectAssetTypes.DOCUMENTS]: DocumentAsset[];
-	[ProjectAssetTypes.MODELS]: Model[];
-	[ProjectAssetTypes.DATASETS]: Dataset[];
-	[ProjectAssetTypes.CODE]: any[];
-	[ProjectAssetTypes.ARTIFACTS]: Artifact[];
-	[ProjectAssetTypes.SIMULATION_WORKFLOW]: Workflow[];
+	[AssetType.Publications]: DocumentAsset[];
+	[AssetType.Models]: Model[];
+	[AssetType.Datasets]: Dataset[];
+	// DVINCE TODO[ProjectAssetTypes.CODE]: any[];
+	[AssetType.Artifacts]: Artifact[];
+	[AssetType.Workflows]: Workflow[];
 };
 
 export interface IProject {
