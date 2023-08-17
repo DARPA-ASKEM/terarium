@@ -77,7 +77,6 @@ const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as st
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 
-const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 const disableRunButton = computed(
 	() => !ensembleConfigs?.value[0]?.weight || !datasetId.value || !currentDatasetFileName.value
@@ -91,7 +90,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
 const datasetColumnNames = ref<string[]>();
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
 
@@ -124,8 +123,7 @@ const runEnsemble = async () => {
 		}
 	};
 	const response = await makeEnsembleCiemssCalibration(params);
-	startedRunId.value = response.simulationId;
-	if (response.simulationId) {
+	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
