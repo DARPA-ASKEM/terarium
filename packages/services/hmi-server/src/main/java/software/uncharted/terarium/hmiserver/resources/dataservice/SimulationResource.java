@@ -130,8 +130,7 @@ public class SimulationResource implements SnakeCaseResource {
 		if(datasetName != null){
 			try {
 				dataset.setName(datasetName);
-				JsonNode updatedDataset = convertObjectToSnakeCaseJsonNode(dataset);
-				datasetProxy.updateDataset(dataset.getId(), updatedDataset);
+				datasetProxy.updateDataset(dataset.getId(), dataset);
 
 			} catch (Exception e) {
 				log.error("Failed to update dataset {} name", dataset.getId());
