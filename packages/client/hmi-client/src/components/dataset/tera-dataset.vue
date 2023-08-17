@@ -3,6 +3,7 @@
 		v-if="dataset"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
+		:is-naming-asset="isRenamingDataset"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		ref="assetPanel"
@@ -40,6 +41,14 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
+			<template v-if="!featureConfig.isPreview">
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleOptionsMenu"
+				/>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			</template>
 			<span v-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
@@ -343,6 +352,8 @@ import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-p
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
+import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -454,11 +465,32 @@ const items = ref([
 	}
 ]);
 
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingDataset.value = true;
+			newDatasetName.value = dataset.value?.name ?? '';
+		}
+	}
+	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateDatasetDuplication }
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
+]);
+
 async function updateDatasetName() {
 	if (dataset.value && newDatasetName.value !== '') {
 		const datasetClone = cloneDeep(dataset.value);
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
+		dataset.value = await getDataset(props.assetId);
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		isRenamingDataset.value = false;
 	}
 }
 
