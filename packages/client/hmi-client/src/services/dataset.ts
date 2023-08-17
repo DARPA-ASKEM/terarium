@@ -38,7 +38,7 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
  * @return Dataset|null - the dataset, or null if none returned by API
  */
 async function updateDataset(dataset: Dataset) {
-	const response = await API.put(`/datasets/${dataset.id}`, dataset);
+	const response = await API.patch(`/datasets/${dataset.id}`, dataset);
 	return response?.data ?? null;
 }
 
