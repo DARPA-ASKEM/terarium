@@ -105,9 +105,9 @@ import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
-import { ProjectAssetTypes, IProject } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -362,7 +362,7 @@ const onNewDatasetSaved = async (payload) => {
 		return;
 	}
 	const datasetId = payload.dataset_id;
-	await addAsset(props.project.id, ProjectAssetTypes.DATASETS, datasetId);
+	await addAsset(props.project.id, AssetType.Datasets, datasetId);
 	toast.success(
 		'Dataset saved successfully',
 		'Refresh to see the dataset in the resource explorer'

@@ -67,10 +67,10 @@ import Dialog from 'primevue/dialog';
 import { computed, ComputedRef, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
 
-import { Artifact, DocumentAsset } from '@/types/Types';
+import { Artifact, AssetType, DocumentAsset } from '@/types/Types';
 import { profileDataset, fetchExtraction } from '@/services/models/extractions';
 
 const visible = ref(false);
@@ -90,14 +90,14 @@ const allResources: ComputedRef<
 				name: artifact.name,
 				authors: '',
 				id: artifact.id,
-				type: ProjectAssetTypes.ARTIFACTS
+				type: AssetType.Artifacts
 			}));
 
 		const documentResources = props.project?.assets.publications.map((document: DocumentAsset) => ({
 			name: document.title,
 			authors: '',
 			id: document.id,
-			type: ProjectAssetTypes.DOCUMENTS
+			type: AssetType.Publications
 		}));
 
 		return [...documentResources, ...artifactResources];

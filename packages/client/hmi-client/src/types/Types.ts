@@ -297,7 +297,7 @@ export interface Links {
 export interface Concept {
     id: string;
     curie: string;
-    type: Type;
+    type: AssetType;
     status: OntologicalField;
     object_id: string;
 }
@@ -653,14 +653,14 @@ export enum ColumnType {
     Time = "TIME",
 }
 
-export enum Type {
-    Datasets = "DATASETS",
-    Extractions = "EXTRACTIONS",
-    Intermediates = "INTERMEDIATES",
-    Models = "MODELS",
-    Plans = "PLANS",
-    Publications = "PUBLICATIONS",
-    SimulationRuns = "SIMULATION_RUNS",
+export enum AssetType {
+    Datasets = "datasets",
+    ModelConfigurations = "model_configurations",
+    Models = "models",
+    Publications = "publications",
+    Simulations = "simulations",
+    Workflows = "workflows",
+    Artifacts = "artifacts",
 }
 
 export enum OntologicalField {
