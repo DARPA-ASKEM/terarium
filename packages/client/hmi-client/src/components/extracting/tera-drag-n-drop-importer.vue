@@ -85,8 +85,6 @@ const props = defineProps({
 				AcceptedTypes.TXT,
 				AcceptedTypes.MD,
 				AcceptedTypes.PY,
-				AcceptedTypes.M,
-				AcceptedTypes.JS,
 				AcceptedTypes.R,
 				AcceptedTypes.JL
 			].every((v) => value.includes(v))
@@ -101,8 +99,6 @@ const props = defineProps({
 				AcceptedExtensions.TXT,
 				AcceptedExtensions.MD,
 				AcceptedExtensions.PY,
-				AcceptedExtensions.M,
-				AcceptedExtensions.JS,
 				AcceptedExtensions.R,
 				AcceptedExtensions.JL
 			].every((v) => value.includes(v))

@@ -226,15 +226,15 @@ function endDrag() {
 const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
-		/* DVINCE TODO key: ProjectAssetTypes.CODE,
+		key: AssetType.Code,
 		label: 'Code editor',
 		command() {
 			emit('open-asset', {
 				assetName: 'New file',
-				pageType: ProjectAssetTypes.CODE,
+				pageType: AssetType.Code,
 				assetId: undefined
 			});
-		} */
+		}
 	},
 	{
 		key: AssetType.Models,
