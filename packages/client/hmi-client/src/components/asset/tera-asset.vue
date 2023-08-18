@@ -203,7 +203,7 @@ function initiateAssetDuplication() {
 	copiedAssetName.value = getSuggestedAssetName(assetName, 1);
 	isCopyModalVisible.value = true;
 }
-defineExpose({ initiateAssetDuplication, isCopyModalVisible });
+defineExpose({ initiateAssetDuplication, isCopyModalVisible, assetContainer });
 
 async function duplicateAsset() {
 	if (props.namesToNotDuplicate.includes(copiedAssetName.value.trim())) {
