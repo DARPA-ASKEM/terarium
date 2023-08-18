@@ -121,6 +121,7 @@
 				v-if="isRemovalModal"
 				@modal-mask-clicked="isRemovalModal = false"
 				class="remove-modal"
+				@modal-enter-press="removeAsset"
 			>
 				<template #header>
 					<h4>Confirm remove</h4>

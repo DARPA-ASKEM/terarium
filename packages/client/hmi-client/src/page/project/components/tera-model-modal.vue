@@ -1,11 +1,16 @@
 <template>
 	<Teleport to="body">
-		<tera-modal v-if="isVisible" class="modal" @modal-mask-clicked="emit('close-modal')">
+		<tera-modal
+			v-if="isVisible"
+			class="modal"
+			@modal-mask-clicked="emit('close-modal')"
+			@modal-enter-press="createNewModel"
+		>
 			<template #header>
 				<h4>New model</h4>
 			</template>
 			<template #default>
-				<form>
+				<form @submit.prevent>
 					<label for="new-model">Enter a unique name for your model</label>
 					<InputText
 						v-bind:class="invalidInputStyle"

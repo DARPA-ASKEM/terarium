@@ -534,6 +534,7 @@
 				v-if="isCopyModelModalVisible"
 				class="modal"
 				@modal-mask-clicked="isCopyModelModalVisible = false"
+				@modal-enter-press="duplicateModel"
 			>
 				<template #header>
 					<h4>Make a copy</h4>

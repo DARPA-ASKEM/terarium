@@ -90,6 +90,10 @@
 				openValueConfig = false;
 				emit('sync-configs');
 			"
+			@model-submit="
+				openValueConfig = false;
+				emit('sync-configs');
+			"
 		>
 			<template #header>
 				<h4>{{ modalVal.id }}</h4>
