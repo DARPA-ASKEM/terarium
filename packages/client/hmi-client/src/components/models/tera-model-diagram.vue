@@ -94,8 +94,7 @@
 							@equation-updated="setNewEquation"
 							@delete="deleteEquation"
 							ref="equationsRef"
-						>
-						</tera-math-editor>
+						/>
 						<Button
 							v-if="isEditingEQ"
 							class="p-button-sm add-equation-button"
@@ -143,8 +142,7 @@
 							@equation-updated="setNewObservables"
 							@delete="deleteObservable"
 							ref="observablesRefs"
-						>
-						</tera-math-editor>
+						/>
 						<Button
 							v-if="observablesList.length === 0 || isEditingObservables"
 							class="p-button-sm add-equation-button"
