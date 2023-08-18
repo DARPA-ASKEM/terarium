@@ -66,11 +66,12 @@ public class DatasetResource implements SnakeCaseResource {
 	}
 
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create a dataset via TDS proxy")
 	public Response createDataset(
 		final Dataset dataset
 	) {
-		return datasetProxy.createDataset(dataset);
+		return datasetProxy.createDataset(convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
 	@GET

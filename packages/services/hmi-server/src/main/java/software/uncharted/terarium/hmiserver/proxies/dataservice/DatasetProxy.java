@@ -26,7 +26,7 @@ public interface DatasetProxy {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createDataset(
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@GET
