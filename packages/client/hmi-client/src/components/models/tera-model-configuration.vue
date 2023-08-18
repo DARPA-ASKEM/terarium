@@ -529,15 +529,6 @@ async function initializeConfigSpace() {
 
 	modelConfigurations.value = tempConfigurations;
 
-	// Refresh the datastore with whatever we currently have
-	const defaultConfig = modelConfigurations.value.find(
-		(d) => d.name === 'Default config'
-	) as ModelConfiguration;
-	if (defaultConfig) {
-		defaultConfig.configuration = cloneDeep(props.model);
-		updateModelConfiguration(defaultConfig);
-	}
-
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 	extractions.value = [{ name: '', value: '' }];
