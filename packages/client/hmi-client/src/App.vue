@@ -36,6 +36,7 @@
 		v-if="isAboutModalVisible"
 		class="modal"
 		@modal-mask-clicked="isAboutModalVisible = false"
+		@modal-enter-press="isAboutModalVisible = false"
 	>
 		<template #header>
 			<h4>About Terarium</h4>

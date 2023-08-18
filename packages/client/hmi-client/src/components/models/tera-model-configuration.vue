@@ -162,7 +162,11 @@
 		:model="configItems"
 	></SplitButton>
 	<Teleport to="body">
-		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+		<tera-modal
+			v-if="openValueConfig"
+			@modal-mask-clicked="openValueConfig = false"
+			@modal-enter-press="setModelParameters"
+		>
 			<template #header>
 				<h4>
 					{{
