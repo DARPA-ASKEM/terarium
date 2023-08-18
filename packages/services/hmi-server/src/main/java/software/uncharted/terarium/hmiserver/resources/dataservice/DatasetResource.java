@@ -70,8 +70,7 @@ public class DatasetResource implements SnakeCaseResource {
 	public Response createDataset(
 		final Dataset dataset
 	) {
-		JsonNode node = convertObjectToSnakeCaseJsonNode(dataset);
-		return datasetProxy.createDatasets(node);
+		return datasetProxy.createDatasets(dataset);
 	}
 
 	@GET

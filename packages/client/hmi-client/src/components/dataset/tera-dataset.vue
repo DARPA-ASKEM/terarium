@@ -1,12 +1,14 @@
 <template>
 	<tera-asset
+		ref="teraAssetRef"
 		v-if="dataset"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isRenamingDataset"
 		:stretch-content="datasetView === DatasetView.DATA"
+		:names-to-not-duplicate="existingDatasetNames"
 		@close-preview="emit('close-preview')"
-		ref="assetPanel"
+		@duplicate="duplicateDataset"
 	>
 		<template #name-input>
 			<InputText
@@ -345,8 +347,8 @@ import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, isEmpty, cloneDeep } from 'lodash';
-import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
+import { downloadRawFile, getDataset, updateDataset, createNewDataset } from '@/services/dataset';
+import { CsvAsset, Dataset, DatasetColumn, AssetType } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -358,6 +360,7 @@ import TeraRelatedPublications from '@/components/widgets/tera-related-publicati
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { FeatureConfig } from '@/types/common';
+import { logger } from '@/utils/logger';
 
 const enrichedData = ref();
 
@@ -423,7 +426,7 @@ const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 
-const assetPanel = ref({ assetContainer: HTMLElement });
+const teraAssetRef = ref();
 
 const toggleSettingsMenu = (event: Event) => {
 	menu.value.toggle(event);
@@ -465,6 +468,35 @@ const items = ref([
 	}
 ]);
 
+/*
+ * User Menu & Duplication
+ */
+const existingDatasetNames = computed(() => {
+	const datasetNames: string[] = [];
+	props.project.assets?.datasets.forEach((item) => {
+		datasetNames.push(item.name);
+	});
+	return datasetNames;
+});
+
+function initiateDatasetDuplication() {
+	teraAssetRef.value.initiateAssetDuplication();
+}
+
+async function duplicateDataset(copiedDatasetName: string) {
+	const duplicateDatasetResponse = await createNewDataset({
+		...dataset.value,
+		name: copiedDatasetName.trim()
+	});
+	if (!duplicateDatasetResponse?.id) {
+		logger.info('Failed to duplicate dataset.');
+		teraAssetRef.value.isCopyModalVisible = false;
+		return;
+	}
+	await ProjectService.addAsset(props.project.id, AssetType.Datasets, duplicateDatasetResponse.id);
+	teraAssetRef.value.isCopyModalVisible = false;
+}
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
@@ -478,9 +510,9 @@ const optionsMenuItems = ref([
 			isRenamingDataset.value = true;
 			newDatasetName.value = dataset.value?.name ?? '';
 		}
-	}
-	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateDatasetDuplication }
-	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
+	},
+	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateDatasetDuplication }
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
 
 async function updateDatasetName() {

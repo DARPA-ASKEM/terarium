@@ -239,6 +239,7 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
+	createNewDataset,
 	createNewDatasetFromCSV,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult
