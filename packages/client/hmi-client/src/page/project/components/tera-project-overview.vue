@@ -184,8 +184,6 @@
 									AcceptedTypes.TXT,
 									AcceptedTypes.MD,
 									AcceptedTypes.PY,
-									AcceptedTypes.JS,
-									AcceptedTypes.M,
 									AcceptedTypes.R,
 									AcceptedTypes.JL
 								]"
@@ -195,8 +193,6 @@
 									AcceptedExtensions.TXT,
 									AcceptedExtensions.MD,
 									AcceptedExtensions.PY,
-									AcceptedExtensions.M,
-									AcceptedExtensions.JS,
 									AcceptedExtensions.R,
 									AcceptedExtensions.JL
 								]"
@@ -283,6 +279,7 @@ import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.v
 import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/models/extractions';
 import useAuthStore from '@/stores/auth';
+import { uploadCodeToProject } from '@/services/code';
 
 const props = defineProps<{
 	project: IProject;
@@ -351,38 +348,75 @@ const assets = computed(() => {
 
 async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
-		if (file.type === AcceptedTypes.CSV) {
-			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
-				progress,
-				file,
-				auth.name ?? '',
-				props.project.id,
-				csvDescription
-			);
-
-			if (addedCSV !== null) {
-				const text: string = addedCSV?.csv?.join('\r\n') ?? '';
-				const images = [];
-
-				return { file, error: false, response: { text, images } };
-			}
-			return { file, error: true, response: { text: '', images: [] } };
+		switch (file.type) {
+			case AcceptedTypes.CSV:
+				return processDataset(file, csvDescription);
+			case AcceptedTypes.PDF:
+			case AcceptedTypes.TXT:
+			case AcceptedTypes.MD:
+				return processArtifact(file);
+			case AcceptedTypes.PY:
+			case AcceptedTypes.R:
+			case AcceptedTypes.JL:
+				return processCode(file);
+			default:
+				return { file, error: true, response: { text: '', images: [] } };
 		}
-
-		// This is pdf, txt, md files
-		const artifact: Artifact | null = await uploadArtifactToProject(
-			progress,
-			file,
-			props.project.username ?? '',
-			props.project.id,
-			''
-		);
-		if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
-			extractPDF(artifact);
-			return { file, error: false, response: { text: '', images: [] } };
-		}
-		return { file, error: true, response: { text: '', images: [] } };
 	});
+}
+
+/**
+ * Process a python, R or Julia file into a code asset
+ * @param file
+ */
+async function processCode(file: File) {
+	// This is pdf, txt, md files
+	await uploadCodeToProject(props.project.id, file, progress);
+
+	return { file, error: true, response: { text: '', images: [] } };
+}
+
+/**
+ * Process a pdf, txt, md file into an artifact
+ * @param file
+ */
+async function processArtifact(file: File) {
+	// This is pdf, txt, md files
+	const artifact: Artifact | null = await uploadArtifactToProject(
+		progress,
+		file,
+		props.project.username ?? '',
+		props.project.id,
+		''
+	);
+	if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
+		await extractPDF(artifact);
+		return { file, error: false, response: { text: '', images: [] } };
+	}
+	return { file, error: true, response: { text: '', images: [] } };
+}
+
+/**
+ * Process a csv file into a dataset
+ * @param file
+ * @param description
+ */
+async function processDataset(file: File, description: string) {
+	const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
+		progress,
+		file,
+		auth.name ?? '',
+		props.project.id,
+		description
+	);
+
+	if (addedCSV !== null) {
+		const text: string = addedCSV?.csv?.join('\r\n') ?? '';
+		const images = [];
+
+		return { file, error: false, response: { text, images } };
+	}
+	return { file, error: true, response: { text: '', images: [] } };
 }
 
 const onRowSelect = (selectedRows) => {
