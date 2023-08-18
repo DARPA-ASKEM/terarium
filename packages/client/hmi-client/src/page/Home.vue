@@ -134,12 +134,13 @@
 				v-if="isNewProjectModalVisible"
 				class="modal"
 				@modal-mask-clicked="isNewProjectModalVisible = false"
+				@modal-enter-press="createNewProject"
 			>
 				<template #header>
 					<h4>Create project</h4>
 				</template>
 				<template #default>
-					<form id="createProjectForm" @onSubmit.prevent="createNewProject">
+					<form @submit.prevent>
 						<label for="new-project-name">Name</label>
 						<InputText
 							id="new-project-name"
@@ -158,7 +159,7 @@
 					</form>
 				</template>
 				<template #footer>
-					<Button type="submit" form="createProjectForm" @click="createNewProject">Create</Button>
+					<Button @click="createNewProject">Create</Button>
 					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
 						>Cancel</Button
 					>
