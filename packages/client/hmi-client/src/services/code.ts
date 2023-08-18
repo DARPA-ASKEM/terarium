@@ -53,7 +53,6 @@ async function uploadCodeToProject(
 async function uploadCodeToProjectFromGithub(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string,
 	projectId: string,
 	url: string
 ): Promise<Code | null> {
@@ -64,10 +63,10 @@ async function uploadCodeToProjectFromGithub(
 
 	// Create a new code asset with the same name as the file and post the metadata to TDS
 	const codeAsset: Code = {
-		name: file.name,
-		description: file.name,
-		filename: file.name,
-		language: getProgrammingLanguage(file.name),
+		name: fileName,
+		description: path,
+		filename: fileName,
+		language: getProgrammingLanguage(fileName),
 		repoUrl: url
 	};
 
@@ -86,7 +85,7 @@ async function uploadCodeToProjectFromGithub(
 		return null;
 	}
 
-	const resp = addAsset(projectId, AssetType.Code, newCodeAsset.id);
+	const resp = addAsset(projectId, AssetType.Code, newCode.id);
 
 	if (!resp) return null;
 

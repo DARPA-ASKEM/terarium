@@ -367,7 +367,6 @@ async function openCodeFiles(githubFiles: GithubFile[]) {
 		await uploadCodeToProjectFromGithub(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
 			props.project?.id ?? '',
 			githubFile.htmlUrl
 		);
