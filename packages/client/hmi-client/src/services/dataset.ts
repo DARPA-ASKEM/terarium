@@ -89,7 +89,9 @@ async function createDataset(dataset: Dataset): Promise<Dataset | null> {
 async function copyDataset(dataset: Dataset): Promise<Dataset | null> {
 	delete dataset.id;
 	delete dataset.timestamp;
-	delete dataset.columns;
+	// delete dataset.columns;
+
+	console.log(dataset);
 
 	const copiedDataset = await createDataset(dataset); // Lacks columns
 	return copiedDataset ?? null;
