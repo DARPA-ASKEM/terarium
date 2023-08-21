@@ -131,6 +131,17 @@ export interface Simulation {
     projectId?: number;
 }
 
+export interface Code {
+    id?: string;
+    timestamp?: Date;
+    name: string;
+    description: string;
+    filename: string;
+    repoUrl?: string;
+    language: ProgrammingLanguage;
+    metadata?: any;
+}
+
 export interface Dataset {
     id?: string;
     timestamp?: any;
@@ -327,6 +338,7 @@ export interface Assets {
     publications: DocumentAsset[];
     workflows: Workflow[];
     artifacts: Artifact[];
+    code: Code[];
 }
 
 export interface Document {
@@ -638,6 +650,12 @@ export enum ProvenanceType {
     Concept = "Concept",
 }
 
+export enum ProgrammingLanguage {
+    Python = "python",
+    R = "r",
+    Julia = "julia",
+}
+
 export enum ColumnType {
     Unknown = "UNKNOWN",
     Boolean = "BOOLEAN",
@@ -661,6 +679,7 @@ export enum AssetType {
     Simulations = "simulations",
     Workflows = "workflows",
     Artifacts = "artifacts",
+    Code = "code",
 }
 
 export enum OntologicalField {

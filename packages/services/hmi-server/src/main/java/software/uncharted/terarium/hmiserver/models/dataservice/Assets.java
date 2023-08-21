@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 
@@ -20,6 +21,7 @@ public class Assets implements Serializable {
 	List<DocumentAsset> publications;
 	List<Workflow> workflows;
 	List<Artifact> artifacts;
+	List<Code> code;
 
 
 	public enum AssetType {
@@ -29,8 +31,8 @@ public class Assets implements Serializable {
 		PUBLICATIONS("publications"),
 		SIMULATIONS("simulations"),
 		WORKFLOWS("workflows"),
-		ARTIFACTS("artifacts");
-		//CODE("code");
+		ARTIFACTS("artifacts"),
+		CODE("code");
 
 
 

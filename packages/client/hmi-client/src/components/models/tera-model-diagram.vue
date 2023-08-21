@@ -163,6 +163,7 @@
 			class="edit-modal"
 			v-if="openEditNode === true"
 			@modal-mask-clicked="openEditNode = false"
+			@modal-enter-press="addNode"
 		>
 			<template #header>
 				<h4>Add/Edit {{ editNodeObj.nodeType }}</h4>
@@ -621,6 +622,9 @@ const prepareTransitionEdit = () => {
 const addNode = async () => {
 	if (!renderer) return;
 	const node = editNodeObj.value;
+	if (!node?.id) {
+		return;
+	}
 	if (props.model?.model.states.find((s) => s.id === node.id)) {
 		return;
 	}
