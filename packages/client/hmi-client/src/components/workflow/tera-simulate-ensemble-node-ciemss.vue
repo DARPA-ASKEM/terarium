@@ -23,7 +23,7 @@
 				text
 				:outlined="true"
 				@click="addChart"
-				label="Add Chart"
+				label="Add chart"
 				icon="pi pi-plus"
 			/>
 		</section>
@@ -197,7 +197,7 @@ watch(
 	async () => {
 		if (!simulationIds.value) return;
 
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }
