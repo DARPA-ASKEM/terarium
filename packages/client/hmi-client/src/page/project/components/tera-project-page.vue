@@ -5,15 +5,15 @@
 		:project="project"
 		@asset-loaded="emit('asset-loaded')"
 	/>
-	<!-- DVINCE TODO
+
 	<code-editor
-		v-else-if="pageType === AssetType.CODE"
+		v-else-if="pageType === AssetType.Code"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');
-			openNextCodeFile();
+			openCode();
 		"
-	/>-->
+	/>
 	<code-editor
 		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
 		:initial-code="code"
@@ -65,12 +65,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
-import { CodeRequest, Tab } from '@/types/common';
+import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
@@ -83,6 +83,7 @@ import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifa
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
+import { getCodeFileAsText } from '@/services/code';
 
 const props = defineProps<{
 	project: IProject;
@@ -100,11 +101,9 @@ const router = useRouter();
 
 const code = ref<string>();
 
-const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
-
 const assetName = computed<string>(() => {
 	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	// dvince TODO if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
+
 	const assets = resourceStore.activeProjectAssets;
 
 	/**
@@ -115,8 +114,9 @@ const assetName = computed<string>(() => {
 	 */
 	if (assets) {
 		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
-		return asset.name ?? 'n/a';
+		if (asset.name) return asset.name;
 	}
+	if (props.pageType === AssetType.Code) return 'New File';
 	return 'n/a';
 });
 
@@ -130,23 +130,10 @@ const openOverview = () => {
 		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
-async function openCode(codeRequests: CodeRequest[]) {
-	queuedCodeRequests.value = codeRequests;
-	await openNextCodeFile();
-}
-
-async function openNextCodeFile() {
-	if (queuedCodeRequests.value.length > 0) {
-		const currentRequest: CodeRequest | undefined = queuedCodeRequests.value.pop();
-
-		if (!currentRequest) return;
-
-		code.value = currentRequest.code;
-		await router.push({
-			name: RouteName.ProjectRoute,
-			params: currentRequest.asset
-		});
-	}
+async function openCode() {
+	const res: string | null = await getCodeFileAsText(props.assetId!, assetName.value!);
+	if (!res) return;
+	code.value = res;
 }
 
 function getPDFBytes(): Promise<ArrayBuffer | null> {

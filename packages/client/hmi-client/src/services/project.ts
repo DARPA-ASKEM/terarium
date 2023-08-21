@@ -226,7 +226,7 @@ const icons = new Map<string | AssetType, string | Component>([
 	[AssetType.Models, 'share-2'],
 	[AssetType.Datasets, DatasetIcon],
 	[AssetType.Simulations, 'settings'],
-	// DVINCE TODO [ProjectAssetTypes.CODE, 'code'],
+	[AssetType.Code, 'code'],
 	[AssetType.Workflows, 'git-merge'],
 	['overview', 'layout']
 ]);

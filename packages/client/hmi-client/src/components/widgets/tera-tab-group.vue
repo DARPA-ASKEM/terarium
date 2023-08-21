@@ -60,7 +60,6 @@ const loadingTabIndex = ref();
 const getTabName = (tab: Tab) => {
 	if (tab.assetName) return tab.assetName;
 	if (tab.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	// DVINCE TODO if (tab.pageType === AssetType.CODE) return 'New File';
 	const assets = resourceStore.activeProjectAssets;
 
 	if (assets) {
@@ -71,6 +70,9 @@ const getTabName = (tab: Tab) => {
 		// https://github.com/DARPA-ASKEM/data-service/issues/299
 		return (tab.pageType === AssetType.Publications ? asset?.title : asset?.name) ?? 'n/a';
 	}
+
+	if (tab.pageType === AssetType.Code) return 'New File';
+
 	return 'n/a';
 };
 

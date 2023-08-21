@@ -162,7 +162,11 @@
 		:model="configItems"
 	></SplitButton>
 	<Teleport to="body">
-		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+		<tera-modal
+			v-if="openValueConfig"
+			@modal-mask-clicked="openValueConfig = false"
+			@modal-enter-press="setModelParameters"
+		>
 			<template #header>
 				<h4>
 					{{
@@ -528,15 +532,6 @@ async function initializeConfigSpace() {
 	}
 
 	modelConfigurations.value = tempConfigurations;
-
-	// Refresh the datastore with whatever we currently have
-	const defaultConfig = modelConfigurations.value.find(
-		(d) => d.name === 'Default config'
-	) as ModelConfiguration;
-	if (defaultConfig) {
-		defaultConfig.configuration = cloneDeep(props.model);
-		updateModelConfiguration(defaultConfig);
-	}
 
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };

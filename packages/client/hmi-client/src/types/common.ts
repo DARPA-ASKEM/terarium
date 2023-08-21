@@ -117,8 +117,6 @@ export enum AcceptedTypes {
 	TXT = 'text/plain',
 	MD = 'text/markdown',
 	PY = 'text/x-python-script',
-	M = 'text/x-matlab',
-	JS = 'application/javascript',
 	R = 'text/x-r',
 	JL = 'application/julia'
 }
@@ -129,8 +127,6 @@ export enum AcceptedExtensions {
 	TXT = 'txt',
 	MD = 'md',
 	PY = 'py',
-	M = 'm',
-	JS = 'js',
 	R = 'r',
 	JL = 'jl'
 }

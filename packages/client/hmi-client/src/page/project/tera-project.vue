@@ -296,10 +296,11 @@ const overviewResource = {
 	pageType: ProjectPages.OVERVIEW,
 	assetId: ''
 };
-// const codeResource = {
-//	pageType: ProjectAssetTypes.CODE,
-//	assetId: ''
-// };
+
+const codeResource = {
+	pageType: AssetType.Code,
+	assetId: ''
+};
 
 const adjustTabsProjectChange = () => {
 	const pageType = openedAssetRoute.value.pageType;
@@ -344,11 +345,10 @@ const adjustTabs = () => {
 
 	// If new code or overview
 	if (!tabExist && !assetId) {
-		// DVINCE TODO
-		/* if (pageType === ProjectAssetTypes.CODE) {
+		if (pageType === AssetType.Code) {
 			tabStore.addTab(projectId, codeResource);
 			openAsset();
-		} else */ if (pageType === ProjectPages.OVERVIEW) {
+		} else if (pageType === ProjectPages.OVERVIEW) {
 			tabStore.addTab(projectId, overviewResource);
 			openAsset(0);
 		}

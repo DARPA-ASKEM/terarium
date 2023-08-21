@@ -16,6 +16,9 @@
 	"reviewersSampleSize": 1,
 	"semanticCommitType": "build",
 	"automergeStrategy": "squash",
+	"ignoreDeps": [
+		"pyodide"
+	],
 	"packageRules": [
 		{
 			"description": "Trigger breaking release for major updates",

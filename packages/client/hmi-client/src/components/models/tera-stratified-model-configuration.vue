@@ -90,6 +90,10 @@
 				openValueConfig = false;
 				emit('sync-configs');
 			"
+			@model-submit="
+				openValueConfig = false;
+				emit('sync-configs');
+			"
 		>
 			<template #header>
 				<h4>{{ modalVal.id }}</h4>
@@ -273,15 +277,6 @@ async function initializeConfigSpace() {
 	}
 
 	modelConfigurations.value = tempConfigurations;
-
-	// Refresh the datastore with whatever we currently have
-	const defaultConfig = modelConfigurations.value.find(
-		(d) => d.name === 'Default config'
-	) as ModelConfiguration;
-	if (defaultConfig) {
-		defaultConfig.configuration = cloneDeep(props.model);
-		updateModelConfiguration(defaultConfig);
-	}
 
 	resetCellEditing();
 
