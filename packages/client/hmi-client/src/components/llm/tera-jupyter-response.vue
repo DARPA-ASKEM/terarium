@@ -66,12 +66,15 @@
 						"
 					>
 						<AccordionTab header="Preview (click to collapse/expand)">
+							<div>
+								<!-- TODO: Put dataframe selector here? -->
+							</div>
 							<tera-dataset-datatable
 								v-if="m.header.msg_type === 'dataset'"
 								class="tera-dataset-datatable"
 								paginatorPosition="bottom"
 								:rows="10"
-								:raw-content="(m.content as CsvAsset)"
+								:raw-content="(m.content['df'] as CsvAsset)"
 								:preview-mode="true"
 								:showGridlines="true"
 								table-style="width: 100%; font-size: small;"
