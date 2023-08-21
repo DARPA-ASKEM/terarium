@@ -347,7 +347,7 @@ import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, isEmpty, cloneDeep } from 'lodash';
-import { downloadRawFile, getDataset, updateDataset, createNewDataset } from '@/services/dataset';
+import { downloadRawFile, getDataset, updateDataset, copyDataset } from '@/services/dataset';
 import { CsvAsset, Dataset, DatasetColumn, AssetType } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
@@ -484,7 +484,7 @@ function initiateDatasetDuplication() {
 }
 
 async function duplicateDataset(copiedDatasetName: string) {
-	const duplicateDatasetResponse = await createNewDataset({
+	const duplicateDatasetResponse = await copyDataset({
 		...dataset.value,
 		name: copiedDatasetName.trim()
 	});

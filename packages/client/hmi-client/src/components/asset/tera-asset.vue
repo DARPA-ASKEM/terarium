@@ -143,10 +143,10 @@ const scrollPosition = ref(0);
 
 const copiedAssetName = ref<string>('');
 const copyNameInputPrompt = ref('');
-const isValidDuplciateName = ref<boolean>(true);
+const isValidDuplicateName = ref<boolean>(true);
 const isCopyModalVisible = ref(false);
 
-const invalidInputStyle = computed(() => (!isValidDuplciateName.value ? 'p-invalid' : ''));
+const invalidInputStyle = computed(() => (!isValidDuplicateName.value ? 'p-invalid' : ''));
 
 const shrinkHeader = computed(() => {
 	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
@@ -208,12 +208,12 @@ defineExpose({ initiateAssetDuplication, isCopyModalVisible, assetContainer });
 async function duplicateAsset() {
 	if (props.namesToNotDuplicate.includes(copiedAssetName.value.trim())) {
 		copyNameInputPrompt.value = 'Duplicate name - please enter a different name:';
-		isValidDuplciateName.value = false;
+		isValidDuplicateName.value = false;
 		logger.info('Duplicate name - please enter a different name');
 		return;
 	}
 	copyNameInputPrompt.value = 'Creating a copy...';
-	isValidDuplciateName.value = true;
+	isValidDuplicateName.value = true;
 	emit('duplicate', copiedAssetName.value);
 }
 

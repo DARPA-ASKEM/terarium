@@ -77,13 +77,22 @@ async function downloadRawFile(datasetId: string, filename: string): Promise<Csv
  * Creates a new dataset in TDS from the dataset given (required name, url, description).
  * @param dataset the dataset with updated storage ID from tds
  */
-async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
+async function createDataset(dataset: Dataset): Promise<Dataset | null> {
 	const resp = await API.post('/datasets', dataset);
 	if (resp && resp.status < 400 && resp.data) {
 		return resp.data;
 	}
 	console.log(`Error creating new dataset ${resp?.status}`);
 	return null;
+}
+
+async function copyDataset(dataset: Dataset): Promise<Dataset | null> {
+	delete dataset.id;
+	delete dataset.timestamp;
+	delete dataset.columns;
+
+	const copiedDataset = await createDataset(dataset); // Lacks columns
+	return copiedDataset ?? null;
 }
 
 /**
@@ -119,11 +128,11 @@ async function createNewDatasetFromGithubFile(
 		username: userName
 	};
 
-	const newDataSet: Dataset | null = await createNewDataset(dataset);
-	if (!newDataSet || !newDataSet.id) return null;
+	const newDataset: Dataset | null = await createDataset(dataset);
+	if (!newDataset || !newDataset.id) return null;
 
 	const urlResponse = await API.put(
-		`/datasets/${newDataSet.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/datasets/${newDataset.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -133,7 +142,7 @@ async function createNewDatasetFromGithubFile(
 		return null;
 	}
 
-	return addAsset(projectId, AssetType.Datasets, newDataSet.id);
+	return addAsset(projectId, AssetType.Datasets, newDataset.id);
 }
 
 /**
@@ -163,13 +172,13 @@ async function createNewDatasetFromCSV(
 		username: userName
 	};
 
-	const newDataSet: Dataset | null = await createNewDataset(dataset);
-	if (!newDataSet || !newDataSet.id) return null;
+	const newDataset: Dataset | null = await createDataset(dataset);
+	if (!newDataset || !newDataset.id) return null;
 
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const urlResponse = await API.put(`/datasets/${newDataSet.id}/uploadCSV`, formData, {
+	const urlResponse = await API.put(`/datasets/${newDataset.id}/uploadCSV`, formData, {
 		params: {
 			filename: file.name
 		},
@@ -189,10 +198,10 @@ async function createNewDatasetFromCSV(
 		return null;
 	}
 
-	await addAsset(projectId, AssetType.Datasets, newDataSet.id);
+	await addAsset(projectId, AssetType.Datasets, newDataset.id);
 
 	// Now verify it all works and obtain a preview for the user.
-	return downloadRawFile(newDataSet.id, file.name);
+	return downloadRawFile(newDataset.id, file.name);
 }
 
 async function createDatasetFromSimulationResult(
@@ -239,7 +248,7 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
-	createNewDataset,
+	copyDataset,
 	createNewDatasetFromCSV,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult
