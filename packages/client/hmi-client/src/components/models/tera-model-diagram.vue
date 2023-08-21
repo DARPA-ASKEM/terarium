@@ -566,6 +566,8 @@ const onClickUpdateModel = async () => {
 		if (renderer) {
 			emit('update-model-content', renderer.graph);
 		}
+
+		isEditingEQ.value = false;
 	}
 };
 
