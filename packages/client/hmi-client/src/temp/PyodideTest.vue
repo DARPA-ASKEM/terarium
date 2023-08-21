@@ -36,6 +36,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { loadPyodide } from 'pyodide';
+import { PyProxy } from 'pyodide/ffi';
+import { Model } from '@/types/Types';
 
 let python: any;
 const mathml = ref('');
@@ -81,6 +83,17 @@ async function main() {
 						else:
 								expr = new_expr
 				return new_expr, False
+	`);
+
+	// Utility function to return different serialization format
+	pyodide.runPython(`
+		def serialize_expr(expr):
+				eq = sympy.S(expr, locals=_clash)
+				return {
+						"latex": latex(eq),
+						"mathml": sympy.mathml(eq),
+						"str": str(eq)
+				}
 	`);
 
 	// Bootstrap
@@ -140,8 +153,63 @@ const evaluateExpression = (expr: string) => {
 	evalResult.value = result;
 };
 
+// See examples on MMT https://github.com/indralab/mira/blob/modeling_api/mira/modeling/askenet/ops.py
+const serializeExpression = (expressionStr: string) => {
+	const result: PyProxy = python.runPython(`
+		serialize_expr("${expressionStr}")
+	`);
+
+	return {
+		latex: result.get('latex'),
+		mathml: result.get('mathml'),
+		str: result.get('str')
+	};
+};
+
+const substituteExpression = (expressionStr: string, newVar: string, oldVar: string) => {
+	const result: PyProxy = python.runPython(`
+		eq = sympy.S("${expressionStr}", locals=_clash)
+		new_eq = eq.replace(${oldVar}, ${newVar})
+		serialize_expr(new_eq)
+	`);
+	return {
+		latex: result.get('latex'),
+		mathml: result.get('mathml'),
+		str: result.get('str')
+	};
+};
+
+const renameParameterId = (amr: Model, newId: string, oldId: string) => {
+	const ode = amr.semantics?.ode;
+	if (!ode) return;
+
+	ode.parameters?.forEach((param) => {
+		if (param.id === oldId) param.id = newId;
+	});
+
+	if (ode.observables) {
+		ode.observables.forEach((obs) => {
+			const expression = obs.expression as string;
+			const newExpression = substituteExpression(expression, newId, oldId);
+			obs.expression = newExpression.str;
+			obs.expression_mathml = newExpression.mathml;
+		});
+	}
+
+	if (ode.rates) {
+		ode.rates.forEach((rate) => {
+			const expression = rate.expression as string;
+			const newExpression = substituteExpression(expression, newId, oldId);
+			rate.expression = newExpression.str;
+			rate.expression_mathml = newExpression.mathml;
+		});
+	}
+};
+
 const start = async () => {
 	python = await main();
+	const test1 = serializeExpression('x + y + z');
+	console.log(test1);
 };
 
 start();
