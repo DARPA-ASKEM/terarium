@@ -133,9 +133,9 @@ import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
-import { ProjectAssetTypes, IProject } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
-import { DocumentAsset, EventType } from '@/types/Types';
+import { AssetType, DocumentAsset, EventType } from '@/types/Types';
 import { PDFExtractionResponseType } from '@/types/common';
 import { getDocumentDoi } from '@/utils/data-util';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -225,7 +225,7 @@ const isExtractModelLoading = ref(false);
 const resourcesStore = useResourcesStore();
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	const storedPapers: DocumentAsset[] = storedAssets[ProjectAssetTypes.DOCUMENTS];
+	const storedPapers: DocumentAsset[] = storedAssets[AssetType.Publications];
 	if (storedPapers) {
 		const first =
 			'Modelling the COVID-19 epidemic and implementation of population-wide interventions in Italy';
@@ -354,18 +354,14 @@ async function createModelFromCode() {
 		};
 		const model = await createModel(newModel);
 		if (model && props.project && resourcesStore) {
-			await ProjectService.addAsset(
-				props.project.id,
-				ProjectAssetTypes.MODELS,
-				model.id.toString()
-			);
+			await ProjectService.addAsset(props.project.id, AssetType.Models, model.id.toString());
 
 			router.push({
 				name: RouteName.ProjectRoute,
 				params: {
 					assetName: newModelName,
 					assetId: model.id,
-					pageType: ProjectAssetTypes.MODELS
+					pageType: AssetType.Models
 				}
 			});
 		} else {

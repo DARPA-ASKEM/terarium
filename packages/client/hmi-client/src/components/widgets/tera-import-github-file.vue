@@ -171,6 +171,7 @@ import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
 import { extractPDF } from '@/services/models/extractions';
 import useAuthStore from '@/stores/auth';
+import { uploadCodeToProjectFromGithub } from '@/services/code';
 
 const props = defineProps<{
 	urlString: string;
@@ -354,8 +355,14 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
  * @param githubFiles The code files to open
  */
 async function openCodeFiles(githubFiles: GithubFile[]) {
-	// For now just throw to the document path as they're all artifacts
-	await importDocumentFiles(githubFiles);
+	githubFiles.forEach(async (githubFile) => {
+		await uploadCodeToProjectFromGithub(
+			repoOwnerAndName.value,
+			githubFile.path,
+			props.project?.id ?? '',
+			githubFile.htmlUrl
+		);
+	});
 }
 </script>
 

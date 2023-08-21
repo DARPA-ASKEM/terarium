@@ -60,7 +60,7 @@
 		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
-					<template v-if="type === ProjectAssetTypes.DOCUMENTS">Publications & Documents</template>
+					<template v-if="type === AssetType.Publications">Publications & Documents</template>
 					<template v-else>{{ capitalize(type) }}</template>
 					<aside>({{ tabs.size }})</aside>
 				</template>
@@ -81,9 +81,8 @@
 				>
 					<span
 						:draggable="
-							activeTab.pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
-							(tab.pageType === ProjectAssetTypes.MODELS ||
-								tab.pageType === ProjectAssetTypes.DATASETS)
+							activeTab.pageType === AssetType.Workflows &&
+							(tab.pageType === AssetType.Models || tab.pageType === AssetType.Datasets)
 						"
 						@dragstart="startDrag(tab)"
 						@dragend="endDrag"
@@ -122,6 +121,7 @@
 				v-if="isRemovalModal"
 				@modal-mask-clicked="isRemovalModal = false"
 				class="remove-modal"
+				@modal-enter-press="removeAsset"
 			>
 				<template #header>
 					<h4>Confirm remove</h4>
@@ -150,12 +150,13 @@ import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
+import { AssetType } from '@/types/Types';
 
-type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
+type IProjectAssetTabs = Map<AssetType, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
@@ -171,7 +172,7 @@ const assetToDelete = ref<Tab | null>(null);
 const searchAsset = ref<string | null>('');
 
 const assets = computed((): IProjectAssetTabs => {
-	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
+	const tabs = new Map<AssetType, Set<Tab>>();
 
 	const projectAssets = props.project?.assets;
 	if (!projectAssets) return tabs;
@@ -179,7 +180,7 @@ const assets = computed((): IProjectAssetTabs => {
 	// Run through all the assets type within the project
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType = type as ProjectAssetTypes;
+			const projectAssetType = type as AssetType;
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => {
 					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
@@ -226,28 +227,28 @@ function endDrag() {
 const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
-		key: ProjectAssetTypes.CODE,
+		key: AssetType.Code,
 		label: 'Code editor',
 		command() {
 			emit('open-asset', {
 				assetName: 'New file',
-				pageType: ProjectAssetTypes.CODE,
-				assetId: 'New file'
+				pageType: AssetType.Code,
+				assetId: undefined
 			});
 		}
 	},
 	{
-		key: ProjectAssetTypes.MODELS,
+		key: AssetType.Models,
 		label: 'New Model',
 		command() {
-			emit('open-new-asset', ProjectAssetTypes.MODELS);
+			emit('open-new-asset', AssetType.Models);
 		}
 	},
 	{
-		key: ProjectAssetTypes.SIMULATION_WORKFLOW,
+		key: AssetType.Workflows,
 		label: 'New Workflow',
 		command() {
-			emit('open-new-asset', ProjectAssetTypes.SIMULATION_WORKFLOW);
+			emit('open-new-asset', AssetType.Workflows);
 		}
 	}
 ]);

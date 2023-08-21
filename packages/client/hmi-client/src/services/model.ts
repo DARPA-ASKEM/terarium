@@ -1,8 +1,8 @@
 import API from '@/api/api';
-import { EventType, Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, EventType, Model, ModelConfiguration } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 
@@ -87,7 +87,7 @@ export async function addNewModelToProject(
 
 	// 2. Add the model to the project
 	if (modelId) {
-		await ProjectService.addAsset(project.id, ProjectAssetTypes.MODELS, modelId);
+		await ProjectService.addAsset(project.id, AssetType.Models, modelId);
 		return modelId;
 	}
 	return null;

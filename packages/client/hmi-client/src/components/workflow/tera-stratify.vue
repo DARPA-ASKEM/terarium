@@ -176,7 +176,7 @@
 					@click="
 						emit('open-asset', {
 							assetName: `${stratifiedModel?.name}`,
-							pageType: ProjectAssetTypes.MODELS,
+							pageType: AssetType.Models,
 							assetId: stratifiedModel?.id
 						})
 					"
@@ -213,14 +213,13 @@ import {
 	generateAgeStrataModel,
 	generateLocationStrataModel
 } from '@/services/models/stratification-service';
-import { Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import useResourcesStore from '@/stores/resources';
-import { ProjectAssetTypes } from '@/types/Project';
 import { workflowEventBus } from '@/services/workflow';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';

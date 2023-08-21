@@ -20,7 +20,7 @@ defineProps<{
 
 <template>
 	<Transition name="modal">
-		<main :style="{ '--z-index': zIndex }">
+		<main :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
 			<section>
 				<header>
 					<slot name="header" />
