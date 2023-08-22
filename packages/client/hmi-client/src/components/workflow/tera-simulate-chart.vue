@@ -5,7 +5,7 @@
 			v-model="selectedVariable"
 			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
-			placeholder="Select a State Variable"
+			placeholder="Select a state variable"
 			@update:model-value="updateSelectedVariable"
 		>
 			<template v-slot:value>

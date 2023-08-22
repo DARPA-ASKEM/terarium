@@ -38,7 +38,7 @@
 				text
 				:outlined="true"
 				@click="addChart"
-				label="Add Chart"
+				label="Add chart"
 				icon="pi pi-plus"
 			/>
 			<Button
