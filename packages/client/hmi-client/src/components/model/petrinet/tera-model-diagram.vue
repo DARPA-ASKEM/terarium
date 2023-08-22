@@ -93,7 +93,6 @@
 import { watch, ref, onMounted, onUnmounted } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import TeraModelTypeLegend from '@/components/model/tera-model-type-legend.vue';
 import InputText from 'primevue/inputtext';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -108,6 +107,7 @@ import {
 } from '@/model-representation/petrinet/petrinet-renderer';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import { Model } from '@/types/Types';
+import TeraModelTypeLegend from '@/components/model/tera-model-type-legend.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 interface AddStateObj {
