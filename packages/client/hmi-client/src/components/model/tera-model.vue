@@ -97,7 +97,7 @@ const props = defineProps({
 	},
 	assetId: {
 		type: String,
-		default: '4de89d33-71d2-49c2-9583-f0a6a34c49e0' // 'sir-model-id'
+		default: 'sir-model-id'
 	},
 	highlight: {
 		type: String,
@@ -155,7 +155,7 @@ watch(
 </script>
 
 <style scoped>
-/* main is temporary to mimic what model is wrapped in */
+/* main is temporary to mimic what tera-model is wrapped in */
 main {
 	display: grid;
 	grid-template-rows: auto 1fr;
