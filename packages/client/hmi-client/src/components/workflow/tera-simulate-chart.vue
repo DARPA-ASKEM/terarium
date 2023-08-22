@@ -27,6 +27,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { CsvAsset } from '@/types/Types';
 
 const emit = defineEmits(['configuration-change']);
 
@@ -35,8 +36,8 @@ const props = defineProps<{
 	chartConfig: ChartConfig;
 	hasMeanLine?: boolean;
 	colorByRun?: boolean;
-	initialData?: any;
-	mapping?: any;
+	initialData?: CsvAsset;
+	mapping?: { [key: string]: string }[];
 }>();
 
 type DatasetType = {

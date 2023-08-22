@@ -219,7 +219,7 @@ const runCalibrate = async () => {
 
 	let start = state.timeSpan.start;
 	let end = state.timeSpan.end;
-
+	// If we have the min/max timestamp available from the csv asset use it
 	if (csvAsset.value) {
 		const tIndex = csvAsset.value.headers.indexOf('timestamp');
 		if (tIndex !== -1) {
