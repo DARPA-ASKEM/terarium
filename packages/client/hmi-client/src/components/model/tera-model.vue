@@ -165,45 +165,4 @@ main {
 	overflow-y: auto;
 	overflow-x: hidden;
 }
-
-.datatable header,
-.datatable section {
-	align-items: center;
-	border-bottom: 1px solid var(--surface-border-light);
-	display: grid;
-	grid-template-columns: repeat(var(--columns), calc(100% / var(--columns)));
-	grid-auto-flow: row;
-	justify-items: start;
-}
-
-.datatable header > div,
-.datatable section > div {
-	padding: 0.5rem;
-}
-
-.datatable header {
-	color: var(--text-color-light);
-	font-size: var(--font-caption);
-	font-weight: var(--font-weight-semibold);
-	text-transform: uppercase;
-}
-
-.datatable section.active {
-	background-color: var(--surface-secondary);
-}
-
-.datatable input {
-	width: 100%;
-}
-
-.p-datatable:deep(td:hover) {
-	background-color: var(--surface-secondary);
-	cursor: pointer;
-}
-
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-	color: var(--text-color-light);
-	font-size: var(--font-caption);
-	text-transform: uppercase;
-}
 </style>

@@ -21,25 +21,27 @@
 						</span>
 					</template>
 					<template #end>
-						<span v-if="isEditable">
+						<span>
+							<template v-if="isEditable">
+								<Button
+									v-if="isEditing"
+									@click="cancelEdit"
+									label="Cancel"
+									class="p-button-sm p-button-outlined"
+								/>
+								<Button
+									@click="toggleEditMode"
+									:label="isEditing ? 'Save model' : 'Edit model'"
+									:class="isEditing ? 'p-button-sm save-model' : 'p-button-sm p-button-outlined'"
+								/>
+							</template>
 							<Button
-								v-if="isEditing"
-								@click="cancelEdit"
-								label="Cancel"
+								v-if="model && getStratificationType(model) && !isEditing"
+								@click="toggleCollapsedView"
+								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
 								class="p-button-sm p-button-outlined"
 							/>
-							<Button
-								@click="toggleEditMode"
-								:label="isEditing ? 'Save model' : 'Edit model'"
-								:class="isEditing ? 'p-button-sm save-model' : 'p-button-sm p-button-outlined'"
-							/>
 						</span>
-						<Button
-							v-if="model && getStratificationType(model) && !isEditing"
-							@click="toggleCollapsedView"
-							:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
-							class="p-button-sm p-button-outlined"
-						/>
 					</template>
 				</Toolbar>
 				<tera-model-type-legend v-if="model" :model="model" />
