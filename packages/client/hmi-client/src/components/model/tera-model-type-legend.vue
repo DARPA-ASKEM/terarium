@@ -1,5 +1,5 @@
 <template>
-	<section class="legend" v-if="stateTypes || transitionTypes">
+	<section v-if="stateTypes || transitionTypes">
 		<ul>
 			<li v-for="(type, i) in stateTypes" :key="i">
 				<div class="legend-key-circle" :style="getLegendKeyStyle(type)" />
@@ -46,19 +46,6 @@ function getLegendKeyStyle(id: string) {
 </script>
 
 <style scoped>
-.legend {
-	position: absolute;
-	bottom: 0;
-	z-index: 1;
-	margin-bottom: 1rem;
-	margin-left: 1rem;
-	display: flex;
-	gap: 1rem;
-	background-color: var(--surface-section);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-}
-
 .legend-key-circle {
 	height: 24px;
 	width: 24px;

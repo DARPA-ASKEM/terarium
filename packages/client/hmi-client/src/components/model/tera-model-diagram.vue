@@ -44,7 +44,7 @@
 						</span>
 					</template>
 				</Toolbar>
-				<tera-model-type-legend v-if="model" :model="model" />
+				<tera-model-type-legend v-if="model" class="legend-anchor" :model="model" />
 				<div v-if="model" ref="graphElement" class="graph-element" />
 				<ContextMenu ref="menu" :model="contextMenuItems" />
 			</section>
@@ -440,6 +440,19 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.legend-anchor {
+	position: absolute;
+	bottom: 0;
+	z-index: 1;
+	margin-bottom: 1rem;
+	margin-left: 1rem;
+	display: flex;
+	gap: 1rem;
+	background-color: var(--surface-section);
+	border-radius: 0.5rem;
+	padding: 0.5rem;
 }
 
 .edit-modal:deep(main) {

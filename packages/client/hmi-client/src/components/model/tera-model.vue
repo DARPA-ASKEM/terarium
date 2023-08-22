@@ -5,16 +5,12 @@
 			v-if="model"
 			:name="model.name"
 			:feature-config="featureConfig"
-			:is-naming-asset="isNamingModel"
-			:stretch-content="modelView === ModelView.MODEL"
+			:is-naming-asset="isNaming"
+			:stretch-content="view === ModelView.MODEL"
 		>
 			<template #name-input>
 				<!--@keyup.enter="updateModelName" this is being reworked in rename-dataset branch-->
-				<InputText
-					v-if="isNamingModel"
-					v-model.lazy="newModelName"
-					placeholder="Title of new model"
-				/>
+				<InputText v-if="isNaming" v-model.lazy="newName" placeholder="Title of new model" />
 			</template>
 			<template #edit-buttons>
 				<span class="p-buttonset">
@@ -22,22 +18,22 @@
 						class="p-button-secondary p-button-sm"
 						label="Description"
 						icon="pi pi-list"
-						@click="modelView = ModelView.DESCRIPTION"
-						:active="modelView === ModelView.DESCRIPTION"
+						@click="view = ModelView.DESCRIPTION"
+						:active="view === ModelView.DESCRIPTION"
 					/>
 					<Button
 						class="p-button-secondary p-button-sm"
 						label="Model"
 						icon="pi pi-file"
-						@click="modelView = ModelView.MODEL"
-						:active="modelView === ModelView.MODEL"
+						@click="view = ModelView.MODEL"
+						:active="view === ModelView.MODEL"
 					/>
 					<Button
 						class="p-button-secondary p-button-sm"
 						label="Transform"
 						icon="pi pi-sync"
-						@click="modelView = ModelView.NOTEBOOK"
-						:active="modelView === ModelView.NOTEBOOK"
+						@click="view = ModelView.NOTEBOOK"
+						:active="view === ModelView.NOTEBOOK"
 					/>
 				</span>
 				<template v-if="!featureConfig.isPreview">
@@ -51,8 +47,8 @@
 					<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				</template>
 			</template>
-			<tera-model-description v-if="modelView === ModelView.DESCRIPTION" :model="model" />
-			<Accordion v-else-if="modelView === ModelView.MODEL" multiple :active-index="[0, 1, 2, 3]">
+			<tera-model-description v-if="view === ModelView.DESCRIPTION" :model="model" />
+			<Accordion v-else-if="view === ModelView.MODEL" multiple :active-index="[0, 1, 2, 3]">
 				<AccordionTab header="Model diagram">
 					<tera-model-diagram
 						:model="model"
@@ -110,12 +106,12 @@ const props = defineProps({
 });
 
 const model = ref<Model | null>(null);
-const modelView = ref(ModelView.DESCRIPTION);
+const view = ref(ModelView.DESCRIPTION);
 
-const newModelName = ref('New Model');
-const isRenamingModel = ref(false);
+const newName = ref('New Model');
+const isRenaming = ref(false);
 
-const isNamingModel = computed(() => isEmpty(props.assetId) || isRenamingModel.value);
+const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -128,8 +124,8 @@ const optionsMenuItems = ref([
 		icon: 'pi pi-pencil',
 		label: 'Rename',
 		command() {
-			isRenamingModel.value = true;
-			newModelName.value = model.value?.name ?? '';
+			isRenaming.value = true;
+			newName.value = model.value?.name ?? '';
 		}
 	}
 	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
@@ -146,8 +142,8 @@ watch(
 	() => [props.assetId],
 	async () => {
 		// Reset view of model page
-		isRenamingModel.value = false;
-		modelView.value = ModelView.DESCRIPTION;
+		isRenaming.value = false;
+		view.value = ModelView.DESCRIPTION;
 		model.value = !isEmpty(props.assetId) ? await getModel(props.assetId) : null;
 	},
 	{ immediate: true }
