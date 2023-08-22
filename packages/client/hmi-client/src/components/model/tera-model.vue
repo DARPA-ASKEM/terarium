@@ -68,8 +68,8 @@
 import { watch, PropType, ref, computed } from 'vue';
 import { isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraModelDescription from '@/components/model/tera-model-description.vue';
-import TeraModelDiagram from '@/components/model/tera-model-diagram.vue';
+import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';

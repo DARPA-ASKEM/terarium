@@ -107,7 +107,7 @@ import {
 } from '@/model-representation/petrinet/petrinet-renderer';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import { Model } from '@/types/Types';
-import TeraModelTypeLegend from '@/components/model/tera-model-type-legend.vue';
+import TeraModelTypeLegend from '@/components/model/petrinet/tera-model-type-legend.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 interface AddStateObj {
