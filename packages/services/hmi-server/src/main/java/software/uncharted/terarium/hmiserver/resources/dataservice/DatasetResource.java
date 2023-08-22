@@ -141,7 +141,6 @@ public class DatasetResource implements SnakeCaseResource {
 				.build();
 		}
 
-		final int linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
 		List<List<String>> csv = csvToRecords(rawCSV);
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> csvColumnStats = new ArrayList<>();
@@ -150,6 +149,7 @@ public class DatasetResource implements SnakeCaseResource {
 			csvColumnStats.add(getStats(column.subList(1, column.size()))); //remove first as it is header:
 		}
 
+		final int linesToRead = limit != null ? limit == -1 ? csv.size() : limit : DEFAULT_CSV_LIMIT;
 
 		CsvAsset csvAsset = new CsvAsset(csv.subList(0,Math.min(linesToRead, csv.size()-1)), csvColumnStats, headers, csv.size());
 		return Response

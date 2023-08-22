@@ -35,6 +35,8 @@ const props = defineProps<{
 	chartConfig: ChartConfig;
 	hasMeanLine?: boolean;
 	colorByRun?: boolean;
+	initialData?: any;
+	mapping?: any;
 }>();
 
 type DatasetType = {
@@ -208,7 +210,7 @@ const renderGraph = () => {
 	}
 
 	const datasets: DatasetType[] = [];
-	selectedVariable.value.forEach((variable) =>
+	selectedVariable.value.forEach((variable) => {
 		runIdList
 			.map((runId) => renderedRuns.value[runId])
 			.forEach((run, runIdx) => {
@@ -228,8 +230,47 @@ const renderGraph = () => {
 					borderWidth: lineWidthArray.value[runIdx]
 				};
 				datasets.push(dataset);
-			})
-	);
+			});
+
+		if (props.initialData) {
+			let v = variable;
+			// get the dataset variable from the mapping of model variable to dataset variable if there's a mapping
+			if (props.mapping) {
+				if (!(props.mapping.length === 1 && Object.values(props.mapping[0]).some((val) => !val))) {
+					const varMap = props.mapping.find((m) => m.modelVariable === variable);
+					if (varMap) {
+						v = varMap.datasetVariable;
+					}
+				}
+			}
+
+			// get  the index of the timestamp column
+			const tIndex = props.initialData.headers.indexOf('timestamp');
+
+			// get the index of the variable column
+			let colIdx: number;
+			for (let i = 0; i < props.initialData.headers.length; i++) {
+				if (props.initialData.headers[i].trim() === v.trim()) {
+					colIdx = i;
+					break;
+				}
+			}
+
+			const dataset = {
+				// ignore the first row, it's the header
+				data: props.initialData.csv.slice(1).map((datum: string[]) => ({
+					x: +datum[tIndex].trim(),
+					y: +datum[colIdx].trim()
+				})),
+				label: `${variable} - dataset`,
+				fill: false,
+				borderColor: '#000000',
+				borderWidth: 3
+			};
+
+			datasets.push(dataset);
+		}
+	});
 	chartData.value = {
 		labels: renderedRuns.value[Object.keys(renderedRuns.value)[0]].map((datum) =>
 			Number(datum.timestamp)
