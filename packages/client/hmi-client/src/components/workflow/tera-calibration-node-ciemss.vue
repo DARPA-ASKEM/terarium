@@ -43,7 +43,7 @@
 					text
 					:outlined="true"
 					@click="addChart"
-					label="Add Chart"
+					label="Add chart"
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
@@ -335,7 +335,7 @@ watch(
 		// runResults.value[simulationIds.value[0].runId] = csvData as any;
 		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }
