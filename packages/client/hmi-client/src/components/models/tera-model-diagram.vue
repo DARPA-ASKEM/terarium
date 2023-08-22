@@ -732,14 +732,6 @@ section math-editor {
 	justify-content: center;
 }
 
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
-}
-
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;

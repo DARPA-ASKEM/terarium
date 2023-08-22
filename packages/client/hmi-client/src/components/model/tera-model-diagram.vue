@@ -1,0 +1,501 @@
+<template>
+	<main>
+		<TeraResizablePanel v-if="!nodePreview" class="diagram-container">
+			<section class="graph-element">
+				<Toolbar>
+					<template #start>
+						<Button
+							@click="resetZoom"
+							label="Reset zoom"
+							class="p-button-sm p-button-outlined toolbar-button"
+						/>
+					</template>
+					<template #center>
+						<span v-if="isEditing" class="toolbar-subgroup">
+							<Button
+								@click="prepareStateEdit()"
+								label="Add state"
+								class="p-button-sm p-button-outlined toolbar-button"
+							/>
+							<Button
+								@click="prepareTransitionEdit()"
+								label="Add transition"
+								class="p-button-sm p-button-outlined toolbar-button"
+							/>
+						</span>
+					</template>
+					<template #end>
+						<span v-if="isEditable" class="toolbar-subgroup">
+							<Button
+								v-if="isEditing"
+								@click="cancelEdit"
+								label="Cancel"
+								class="p-button-sm p-button-outlined toolbar-button"
+							/>
+							<Button
+								@click="toggleEditMode"
+								:label="isEditing ? 'Save model' : 'Edit model'"
+								:class="
+									isEditing
+										? 'p-button-sm toolbar-button-saveModel'
+										: 'p-button-sm p-button-outlined toolbar-button'
+								"
+							/>
+						</span>
+						<Button
+							v-if="model && getStratificationType(model) && !isEditing"
+							@click="toggleCollapsedView"
+							:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
+							class="p-button-sm p-button-outlined toolbar-button"
+						/>
+					</template>
+				</Toolbar>
+				<tera-model-type-legend v-if="model" :model="model" />
+				<div v-if="model" ref="graphElement" class="graph-element" />
+				<ContextMenu ref="menu" :model="contextMenuItems" />
+			</section>
+		</TeraResizablePanel>
+		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
+		<Teleport to="body">
+			<tera-modal
+				class="edit-modal"
+				v-if="openEditNode === true"
+				@modal-mask-clicked="openEditNode = false"
+				@modal-enter-press="addNode"
+			>
+				<template #header>
+					<h4>Add/Edit {{ editNodeObj.nodeType }}</h4>
+				</template>
+				<div class="modal-input-container">
+					<span class="modal-input-label">ID: </span>
+					<InputText class="modal-input" v-model="editNodeObj.id" placeholder="Id" />
+				</div>
+				<div class="modal-input-container">
+					<span class="modal-input-label">Name: </span>
+					<InputText class="modal-input" v-model="editNodeObj.name" placeholder="Name" />
+				</div>
+				<template #math-editor>
+					<div class="modal-input-container">
+						<span class="modal-input-label">Transition Expression: </span>
+						<tera-math-editor
+							ref="editNodeMathEditor"
+							:keep-open="true"
+							:is-editing-eq="true"
+							:latex-equation="editNodeObj.expression"
+							@equation-updated="updateRateEquation"
+						/>
+					</div>
+				</template>
+				<template #footer>
+					<Button label="Submit" :disabled="editNodeObj.id === ''" @click="addNode" />
+					<Button label="Cancel" class="p-button-secondary" @click="openEditNode = false" />
+				</template>
+			</tera-modal>
+		</Teleport>
+	</main>
+</template>
+
+<script setup lang="ts">
+import { watch, ref, onMounted, onUnmounted } from 'vue';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
+import Toolbar from 'primevue/toolbar';
+import Button from 'primevue/button';
+import ContextMenu from 'primevue/contextmenu';
+// import { petriToLatex } from '@/petrinet/petrinet-service';
+import {
+	// convertAMRToACSet,
+	getStratificationType
+} from '@/model-representation/petrinet/petrinet-service';
+import { IGraph } from '@graph-scaffolder/index';
+import {
+	PetrinetRenderer,
+	NodeData,
+	EdgeData,
+	NodeType
+} from '@/model-representation/petrinet/petrinet-renderer';
+import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import { Model } from '@/types/Types';
+import TeraModelTypeLegend from './tera-model-type-legend.vue';
+import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+
+interface AddStateObj {
+	id: string;
+	name: string;
+	nodeType: string;
+	expression: string;
+	expression_mathml?: string;
+}
+
+const props = defineProps<{
+	model: Model | null;
+	isEditable: boolean;
+	nodePreview?: boolean;
+}>();
+
+const emit = defineEmits(['update-model']);
+
+// Model editor context menu
+const menu = ref();
+const contextMenuItems = ref([
+	{
+		label: 'Add state',
+		icon: 'pi pi-fw pi-circle',
+		command: () => {
+			prepareStateEdit();
+		}
+	},
+	{
+		label: 'Add transition',
+		icon: 'pi pi-fw pi-stop',
+		command: () => {
+			prepareTransitionEdit();
+		}
+	}
+]);
+const isCollapsed = ref(true);
+const isEditing = ref(false);
+const graphElement = ref<HTMLDivElement | null>(null);
+const openEditNode = ref(false);
+const editNodeMathEditor = ref<typeof TeraMathEditor | null>(null);
+const editNodeObj = ref<AddStateObj>({
+	id: '',
+	name: '',
+	nodeType: '',
+	expression: '',
+	expression_mathml: ''
+});
+const splitterContainer = ref<HTMLElement | null>(null);
+const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
+const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
+
+let previousId: any = null;
+let renderer: PetrinetRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
+
+async function toggleCollapsedView() {
+	isCollapsed.value = !isCollapsed.value;
+	if (props.model) {
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
+		// Render graph
+		if (renderer) {
+			renderer.isGraphDirty = true;
+			await renderer.setData(graphData);
+			await renderer.render();
+		}
+	}
+}
+
+const resetZoom = async () => {
+	renderer?.setToDefaultZoom();
+};
+
+// Cancel existing edits, currently this will:
+// - Resets changes to the model structure
+const cancelEdit = async () => {
+	isEditing.value = false;
+	if (!props.model) return;
+
+	// Convert petri net into a graph with raw input data
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
+
+	if (renderer) {
+		renderer.setEditMode(false);
+		await renderer.setData(graphData);
+		renderer.isGraphDirty = true;
+		await renderer.render();
+	}
+};
+
+const toggleEditMode = () => {
+	isEditing.value = !isEditing.value;
+	renderer?.setEditMode(isEditing.value);
+	if (!isEditing.value && props.model && renderer) {
+		emit('update-model', renderer.graph.amr);
+	}
+};
+
+// Updates the transition equations
+const updateRateEquation = (_index: number, latexEquation: string, mathml: string) => {
+	editNodeObj.value.expression = latexEquation;
+	editNodeObj.value.expression_mathml = mathml;
+};
+
+const prepareStateEdit = () => {
+	editNodeObj.value = {
+		id: '',
+		name: '',
+		nodeType: NodeType.State,
+		expression: '',
+		expression_mathml: ''
+	};
+	openEditNode.value = true;
+};
+
+const prepareTransitionEdit = () => {
+	editNodeObj.value = {
+		id: '',
+		name: '',
+		nodeType: NodeType.Transition,
+		expression: '',
+		expression_mathml: ''
+	};
+	openEditNode.value = true;
+};
+
+const addNode = async () => {
+	if (!renderer) return;
+	const node = editNodeObj.value;
+	if (!node?.id) {
+		return;
+	}
+	if (props.model?.model.states.find((s) => s.id === node.id)) {
+		return;
+	}
+	if (props.model?.model.transitions.find((t) => t.id === node.id)) {
+		return;
+	}
+	node.expression_mathml = editNodeMathEditor.value?.mathLiveField.getValue('math-ml');
+
+	if (!previousId) {
+		if (eventX && eventY) {
+			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
+		} else {
+			renderer.addNodeCenter(node.nodeType, node.id, node.name);
+		}
+	} else {
+		renderer.updateNode(previousId, node.id, node.name, node.expression);
+		previousId = null;
+	}
+
+	eventX = -1;
+	eventY = -1;
+	openEditNode.value = false;
+};
+
+// Render graph whenever a new model is fetched or whenever the HTML element
+//	that we render the graph to changes.
+watch(
+	[() => props.model, graphElement],
+	async () => {
+		if (props.model === null || graphElement.value === null) return;
+		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
+
+		// Create renderer
+		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
+
+		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
+			if (isEditing.value === true) {
+				const data = selection.datum();
+				const rate = thisRenderer.graph.amr.semantics?.ode?.rates.find((d) => d.target === data.id);
+				editNodeObj.value = {
+					id: data.id,
+					name: data.label,
+					nodeType: data.data.type,
+					expression: rate?.expression ? rate.expression : ''
+				};
+				previousId = data.id;
+				openEditNode.value = true;
+			}
+		});
+
+		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+			renderer?.addEdge(d.source, d.target);
+		});
+
+		renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+			if (!renderer?.editMode) return;
+			eventX = pos.x;
+			eventY = pos.y;
+			menu.value.show(evt);
+		});
+
+		renderer.on('background-click', () => {
+			if (menu.value) menu.value.hide();
+		});
+
+		// Render graph
+		await renderer?.setData(graphData);
+		await renderer?.render();
+
+		// This may belong in equations
+		// // Update the latex equations
+		// if (latexEquationList.value.length > 0) {
+		// 	/* TODO
+		// 			We need to remedy the fact that the equations are not being updated;
+		// 		A proper merging of the equations is needed with a diff UI for the user.
+		// 		For now, we do nothing.
+		// 	 */
+		// } else {
+		// 	const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
+		// 	if (latexFormula) {
+		// 		updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
+		// 	}
+		// }
+	},
+	{ deep: true }
+);
+
+const editorKeyHandler = (event: KeyboardEvent) => {
+	// Ignore backspace if the current focus is a text/input box
+	if ((event.target as HTMLElement).tagName === 'INPUT') {
+		return;
+	}
+
+	if (event.key === 'Backspace' && renderer) {
+		if (renderer && renderer.nodeSelection) {
+			const nodeData = renderer.nodeSelection.datum();
+			renderer.removeNode(nodeData.id);
+		}
+
+		if (renderer && renderer.edgeSelection) {
+			const edgeData = renderer.edgeSelection.datum();
+			renderer.removeEdge(edgeData.source, edgeData.target);
+		}
+	}
+	if (event.key === 'Enter' && renderer) {
+		if (renderer.nodeSelection) {
+			renderer.deselectNode(renderer.nodeSelection);
+			renderer.nodeSelection
+				.selectAll('.no-drag')
+				.style('opacity', 0)
+				.style('visibility', 'hidden');
+			renderer.nodeSelection = null;
+		}
+		if (renderer.edgeSelection) {
+			renderer.deselectEdge(renderer.edgeSelection);
+			renderer.edgeSelection = null;
+		}
+	}
+};
+
+const updateLayout = () => {
+	if (splitterContainer.value) {
+		layout.value =
+			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
+			window.innerWidth < 800
+				? 'vertical'
+				: 'horizontal';
+	}
+};
+const handleResize = () => updateLayout();
+
+onMounted(() => {
+	document.addEventListener('keyup', editorKeyHandler);
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', editorKeyHandler);
+	window.removeEventListener('resize', handleResize);
+});
+</script>
+
+<style scoped>
+main {
+	overflow: auto;
+}
+
+.p-accordion {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.diagram-container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
+}
+
+.diagram-container-editing {
+	box-shadow: inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073,
+		inset 0 0 0 1px var(--primary-color);
+	border: 2px solid var(--primary-color);
+	border-radius: var(--border-radius);
+}
+
+.preview {
+	min-height: 8rem;
+	background-color: var(--surface-secondary);
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+}
+
+.p-toolbar {
+	position: absolute;
+	width: 100%;
+	z-index: 1;
+	isolation: isolate;
+	background: transparent;
+	padding: 0.5rem;
+}
+
+.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
+	background-color: var(--surface-0);
+	margin: 0.25rem;
+}
+
+.toolbar-button-saveModel {
+	margin: 0.25rem;
+}
+
+.toolbar-subgroup {
+	display: flex;
+}
+
+section math-editor {
+	justify-content: center;
+}
+
+.graph-element {
+	background-color: var(--surface-secondary);
+	height: 100%;
+	max-height: 100%;
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+}
+
+.edit-button {
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+/* Let svg dynamically resize when the sidebar opens/closes or page resizes */
+:deep(.graph-element svg) {
+	width: 100%;
+	height: 100%;
+}
+
+.edit-modal:deep(main) {
+	max-width: 50rem;
+}
+
+.modal-input-container {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.modal-input {
+	height: 25px;
+	padding-left: 5px;
+	margin: 5px;
+	align-items: baseline;
+}
+
+.modal-input-label {
+	margin-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	align-items: baseline;
+}
+</style>

@@ -1,20 +1,86 @@
 <template>
-	<tera-asset
-		name="name"
-		:feature-config="featureConfig"
-		:is-naming-asset="false"
-		:stretch-content="modelView === ModelView.MODEL"
-	>
-	</tera-asset>
+	<!--main is temporary just for css purposes-->
+	<main>
+		<tera-asset
+			v-if="model"
+			:name="model.name"
+			:feature-config="featureConfig"
+			:is-naming-asset="false"
+			:stretch-content="modelView === ModelView.MODEL"
+		>
+			<template #name-input>
+				<InputText
+					v-if="isNamingModel"
+					v-model.lazy="newModelName"
+					placeholder="Title of new model"
+				/>
+				<!--@keyup.enter="updateModelName"-->
+			</template>
+			<template #edit-buttons>
+				<span class="p-buttonset">
+					<Button
+						class="p-button-secondary p-button-sm"
+						label="Description"
+						icon="pi pi-list"
+						@click="modelView = ModelView.DESCRIPTION"
+						:active="modelView === ModelView.DESCRIPTION"
+					/>
+					<Button
+						class="p-button-secondary p-button-sm"
+						label="Model"
+						icon="pi pi-file"
+						@click="modelView = ModelView.MODEL"
+						:active="modelView === ModelView.MODEL"
+					/>
+					<Button
+						class="p-button-secondary p-button-sm"
+						label="Transform"
+						icon="pi pi-sync"
+						@click="modelView = ModelView.NOTEBOOK"
+						:active="modelView === ModelView.NOTEBOOK"
+					/>
+				</span>
+				<template v-if="!featureConfig.isPreview">
+					<Button
+						icon="pi pi-ellipsis-v"
+						class="p-button-icon-only p-button-text p-button-rounded"
+						@click="toggleOptionsMenu"
+					/>
+					<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				</template>
+			</template>
+			<tera-model-description v-if="modelView === ModelView.DESCRIPTION" :model="model" />
+			<Accordion v-else-if="modelView === ModelView.MODEL" multiple :active-index="[0, 1, 2, 3]">
+				<AccordionTab header="Model diagram">
+					<tera-model-diagram
+						:model="model"
+						:is-editable="!featureConfig.isPreview"
+						@update-model="updateModelContent"
+					/>
+				</AccordionTab>
+				<AccordionTab header="Model equations"> </AccordionTab>
+				<AccordionTab header="Model observables"></AccordionTab>
+				<AccordionTab header="Model configurations"></AccordionTab>
+			</Accordion>
+		</tera-asset>
+	</main>
 </template>
 
 <script setup lang="ts">
-import { /* watch, onUpdated, */ PropType, ref, computed } from 'vue';
+import { watch, PropType, ref, computed } from 'vue';
+import { isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-// import * as ProjectService from '@/services/project';
-// import { createModel, getModel, getModelConfigurations, updateModel } from '@/services/model';
-import { /* ResultType, */ FeatureConfig } from '@/types/common';
+import TeraModelDescription from '@/components/model/tera-model-description.vue';
+import TeraModelDiagram from '@/components/model/tera-model-diagram.vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import Menu from 'primevue/menu';
+import { getModel, updateModel } from '@/services/model';
+import { FeatureConfig } from '@/types/common';
 import { IProject } from '@/types/Project';
+import { Model } from '@/types/Types';
 
 enum ModelView {
 	DESCRIPTION,
@@ -41,17 +107,101 @@ const props = defineProps({
 	}
 });
 
+const model = ref<Model | null>(null);
 const modelView = ref(ModelView.DESCRIPTION);
 
-const existingModelNames = computed(() => {
-	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
-	});
-	return modelNames;
-});
+const newModelName = ref('New Model');
+const isRenamingModel = ref(false);
 
-console.log(existingModelNames);
+const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+// User menu
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingModel.value = true;
+			newModelName.value = model.value?.name ?? '';
+		}
+	}
+	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
+]);
+
+// Centralize this eventually
+function updateModelContent(updatedModel: Model) {
+	model.value = updatedModel;
+	updateModel(updatedModel);
+}
+
+watch(
+	() => [props.assetId],
+	async () => {
+		// Reset view of model page
+		isRenamingModel.value = false;
+		modelView.value = ModelView.DESCRIPTION;
+		model.value = !isEmpty(props.assetId) ? await getModel(props.assetId) : null;
+	},
+	{ immediate: true }
+);
 </script>
 
-<style scoped></style>
+<style scoped>
+/* main is temporary to mimic what model is wrapped in */
+main {
+	display: grid;
+	grid-template-rows: auto 1fr;
+	height: 100%;
+	width: 70vw;
+	background-color: var(--surface-section);
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.datatable header,
+.datatable section {
+	align-items: center;
+	border-bottom: 1px solid var(--surface-border-light);
+	display: grid;
+	grid-template-columns: repeat(var(--columns), calc(100% / var(--columns)));
+	grid-auto-flow: row;
+	justify-items: start;
+}
+
+.datatable header > div,
+.datatable section > div {
+	padding: 0.5rem;
+}
+
+.datatable header {
+	color: var(--text-color-light);
+	font-size: var(--font-caption);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+}
+
+.datatable section.active {
+	background-color: var(--surface-secondary);
+}
+
+.datatable input {
+	width: 100%;
+}
+
+.p-datatable:deep(td:hover) {
+	background-color: var(--surface-secondary);
+	cursor: pointer;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+	color: var(--text-color-light);
+	font-size: var(--font-caption);
+	text-transform: uppercase;
+}
+</style>
