@@ -28,7 +28,7 @@
 		"@jupyterlab/rendermime": "3.6.3",
 		"@jupyterlab/services": "6.6.3",
 		"@jupyterlab/theme-light-extension": "3.6.5",
-		"@jupyterlab/translation": "3.6.3",
+		"@jupyterlab/translation": "3.6.5",
 		"@jupyterlab/ui-components": "3.6.3",
 		"@lumino/commands": "2.1.0",
 		"@lumino/coreutils": "2.1.1",

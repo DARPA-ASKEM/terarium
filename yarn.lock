@@ -2330,19 +2330,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/translation@npm:3.6.3, @jupyterlab/translation@npm:^3.6.3":
-  version: 3.6.3
-  resolution: "@jupyterlab/translation@npm:3.6.3"
-  dependencies:
-    "@jupyterlab/coreutils": ^5.6.3
-    "@jupyterlab/services": ^6.6.3
-    "@jupyterlab/statedb": ^3.6.3
-    "@lumino/coreutils": ^1.11.0
-  checksum: 924ea581685790c3fad82e7b5c351749dfa7532404f83805d43cc9154a8dd463531a671f66184a046bf8e81233d049280e23cae6a0760e8bfadd9684e8539708
-  languageName: node
-  linkType: hard
-
-"@jupyterlab/translation@npm:^3.6.5":
+"@jupyterlab/translation@npm:3.6.5, @jupyterlab/translation@npm:^3.6.5":
   version: 3.6.5
   resolution: "@jupyterlab/translation@npm:3.6.5"
   dependencies:
@@ -2351,6 +2339,18 @@ __metadata:
     "@jupyterlab/statedb": ^3.6.5
     "@lumino/coreutils": ^1.11.0
   checksum: f0304c64c5863465f27fae1244264f882320e765e4ff0516c2a54f203784572adea0cc70e845160ddb22285383e1ca33dc15765bc127dbb1880066841ecf7e9b
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/translation@npm:^3.6.3":
+  version: 3.6.3
+  resolution: "@jupyterlab/translation@npm:3.6.3"
+  dependencies:
+    "@jupyterlab/coreutils": ^5.6.3
+    "@jupyterlab/services": ^6.6.3
+    "@jupyterlab/statedb": ^3.6.3
+    "@lumino/coreutils": ^1.11.0
+  checksum: 924ea581685790c3fad82e7b5c351749dfa7532404f83805d43cc9154a8dd463531a671f66184a046bf8e81233d049280e23cae6a0760e8bfadd9684e8539708
   languageName: node
   linkType: hard
 
@@ -9209,7 +9209,7 @@ cors@latest:
     "@jupyterlab/rendermime": 3.6.3
     "@jupyterlab/services": 6.6.3
     "@jupyterlab/theme-light-extension": 3.6.5
-    "@jupyterlab/translation": 3.6.3
+    "@jupyterlab/translation": 3.6.5
     "@jupyterlab/ui-components": 3.6.3
     "@lumino/commands": 2.1.0
     "@lumino/coreutils": 2.1.1
