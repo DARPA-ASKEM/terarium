@@ -4,49 +4,41 @@
 			<section class="graph-element">
 				<Toolbar>
 					<template #start>
-						<Button
-							@click="resetZoom"
-							label="Reset zoom"
-							class="p-button-sm p-button-outlined toolbar-button"
-						/>
+						<Button @click="resetZoom" label="Reset zoom" class="p-button-sm p-button-outlined" />
 					</template>
 					<template #center>
-						<span v-if="isEditing" class="toolbar-subgroup">
+						<span v-if="isEditing">
 							<Button
 								@click="prepareStateEdit()"
 								label="Add state"
-								class="p-button-sm p-button-outlined toolbar-button"
+								class="p-button-sm p-button-outlined"
 							/>
 							<Button
 								@click="prepareTransitionEdit()"
 								label="Add transition"
-								class="p-button-sm p-button-outlined toolbar-button"
+								class="p-button-sm p-button-outlined"
 							/>
 						</span>
 					</template>
 					<template #end>
-						<span v-if="isEditable" class="toolbar-subgroup">
+						<span v-if="isEditable">
 							<Button
 								v-if="isEditing"
 								@click="cancelEdit"
 								label="Cancel"
-								class="p-button-sm p-button-outlined toolbar-button"
+								class="p-button-sm p-button-outlined"
 							/>
 							<Button
 								@click="toggleEditMode"
 								:label="isEditing ? 'Save model' : 'Edit model'"
-								:class="
-									isEditing
-										? 'p-button-sm toolbar-button-saveModel'
-										: 'p-button-sm p-button-outlined toolbar-button'
-								"
+								:class="isEditing ? 'p-button-sm save-model' : 'p-button-sm p-button-outlined'"
 							/>
 						</span>
 						<Button
 							v-if="model && getStratificationType(model) && !isEditing"
 							@click="toggleCollapsedView"
 							:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
-							class="p-button-sm p-button-outlined toolbar-button"
+							class="p-button-sm p-button-outlined"
 						/>
 					</template>
 				</Toolbar>
@@ -99,15 +91,12 @@
 import { watch, ref, onMounted, onUnmounted } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraModelTypeLegend from '@/components/model/tera-model-type-legend.vue';
 import InputText from 'primevue/inputtext';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-// import { petriToLatex } from '@/petrinet/petrinet-service';
-import {
-	// convertAMRToACSet,
-	getStratificationType
-} from '@/model-representation/petrinet/petrinet-service';
+import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import {
 	PetrinetRenderer,
@@ -117,7 +106,6 @@ import {
 } from '@/model-representation/petrinet/petrinet-renderer';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 import { Model } from '@/types/Types';
-import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 interface AddStateObj {
@@ -276,7 +264,7 @@ const addNode = async () => {
 };
 
 // Render graph whenever a new model is fetched or whenever the HTML element
-//	that we render the graph to changes.
+// that we render the graph to changes.
 watch(
 	[() => props.model, graphElement],
 	async () => {
@@ -319,21 +307,6 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-
-		// This may belong in equations
-		// // Update the latex equations
-		// if (latexEquationList.value.length > 0) {
-		// 	/* TODO
-		// 			We need to remedy the fact that the equations are not being updated;
-		// 		A proper merging of the equations is needed with a diff UI for the user.
-		// 		For now, we do nothing.
-		// 	 */
-		// } else {
-		// 	const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
-		// 	if (latexFormula) {
-		// 		updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
-		// 	}
-		// }
 	},
 	{ deep: true }
 );
@@ -437,16 +410,8 @@ main {
 	padding: 0.5rem;
 }
 
-.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
-	background-color: var(--surface-0);
-	margin: 0.25rem;
-}
-
-.toolbar-button-saveModel {
-	margin: 0.25rem;
-}
-
-.toolbar-subgroup {
+.p-toolbar:deep(> div > span) {
+	gap: 0.25rem;
 	display: flex;
 }
 

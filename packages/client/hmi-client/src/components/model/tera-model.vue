@@ -5,16 +5,16 @@
 			v-if="model"
 			:name="model.name"
 			:feature-config="featureConfig"
-			:is-naming-asset="false"
+			:is-naming-asset="isNamingModel"
 			:stretch-content="modelView === ModelView.MODEL"
 		>
 			<template #name-input>
+				<!--@keyup.enter="updateModelName" this is being reworked in rename-dataset branch-->
 				<InputText
 					v-if="isNamingModel"
 					v-model.lazy="newModelName"
 					placeholder="Title of new model"
 				/>
-				<!--@keyup.enter="updateModelName"-->
 			</template>
 			<template #edit-buttons>
 				<span class="p-buttonset">
@@ -41,7 +41,9 @@
 					/>
 				</span>
 				<template v-if="!featureConfig.isPreview">
+					<!--Disable this until rename-dataset is merged-->
 					<Button
+						disabled
 						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
 						@click="toggleOptionsMenu"
@@ -95,7 +97,7 @@ const props = defineProps({
 	},
 	assetId: {
 		type: String,
-		default: 'sir-model-id'
+		default: '4de89d33-71d2-49c2-9583-f0a6a34c49e0' // 'sir-model-id'
 	},
 	highlight: {
 		type: String,
@@ -113,7 +115,7 @@ const modelView = ref(ModelView.DESCRIPTION);
 const newModelName = ref('New Model');
 const isRenamingModel = ref(false);
 
-const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
+const isNamingModel = computed(() => isEmpty(props.assetId) || isRenamingModel.value);
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -158,7 +160,7 @@ main {
 	display: grid;
 	grid-template-rows: auto 1fr;
 	height: 100%;
-	width: 70vw;
+	width: 100%;
 	background-color: var(--surface-section);
 	overflow-y: auto;
 	overflow-x: hidden;

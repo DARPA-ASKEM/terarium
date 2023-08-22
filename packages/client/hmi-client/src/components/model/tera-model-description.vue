@@ -77,7 +77,7 @@ section {
 	margin-left: 1rem;
 }
 
-.p-message:deep(.p-message-info) {
+.p-message.p-message-info {
 	max-width: 70rem;
 }
 
