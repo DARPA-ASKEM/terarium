@@ -125,6 +125,8 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
+import useAuthStore from '@/stores/auth';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -237,20 +239,49 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
+	// Run MQ Test
+	console.log(`Checking MQ for job Id ${response.simulationId}`);
+	const auth = useAuthStore();
+	const MQPoller = new EventSourcePolyfill(
+		`/api/simulations/${response.simulationId}/partial-result`,
+		{
+			headers: {
+				Authorization: `Bearer ${auth.token}`
+			}
+		}
+	);
+	MQPoller.onerror = (e) => {
+		console.log('An error occurred while attempting to connect.');
+		console.log(e);
+		MQPoller.close();
+		console.log('Closing MQPoller');
+	};
+	MQPoller.onmessage = (event) => {
+		console.log(event);
+		const json = event.data;
+		console.log(json);
+		MQPoller.close();
+		console.log('Closing MQPoller');
+	};
 	if (response.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
 
 const getStatus = async (simulationId: string) => {
+	console.log('Getting status');
 	showSpinner.value = true;
-	if (!simulationId) return;
-
+	if (!simulationId) {
+		console.log('No sim id');
+		return;
+	}
+	console.log(`Simulation Id:${simulationId}`);
 	const runIds = [simulationId];
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	console.log('Poller defined');
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
