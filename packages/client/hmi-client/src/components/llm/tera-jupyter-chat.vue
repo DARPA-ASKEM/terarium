@@ -12,7 +12,9 @@
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
 				:auto-expand-preview="autoExpandPreview"
+				:default-preview="defaultPreview"
 				@cell-updated="scrollToLastCell"
+				@preview-selected="previewSelected"
 			/>
 
 			<!-- Chatty Input -->
@@ -67,7 +69,8 @@ const emit = defineEmits([
 	'download-response',
 	'update-kernel-status',
 	'new-dataset-saved',
-	'new-model-saved'
+	'new-model-saved',
+	'update-kernel-state'
 ]);
 
 const props = defineProps<{
@@ -88,6 +91,7 @@ onMounted(() => {
 });
 
 const queryString = ref('');
+const defaultPreview = ref('df');
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
@@ -96,6 +100,10 @@ const iopubMessageHandler = (_session, message) => {
 		return;
 	}
 	newJupyterMessage(message);
+};
+
+const previewSelected = (selection) => {
+	defaultPreview.value = selection;
 };
 
 props.jupyterSession.iopubMessage.connect(iopubMessageHandler);
@@ -180,11 +188,13 @@ const updateNotebookCells = (message) => {
 			(msg) => msg.header.msg_type !== 'dataset'
 		);
 		notebookItem.resultingCsv = message.content;
+		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'model_preview') {
 		// If we get a new model preview, remove any old previews
 		notebookItem.messages = notebookItem.messages.filter(
 			(msg) => msg.header.msg_type !== 'model_preview'
 		);
+		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
 		notebookItem.executions.push(executionParent);
