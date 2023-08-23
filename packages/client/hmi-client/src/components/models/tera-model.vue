@@ -1106,14 +1106,6 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 	margin: 0.25rem;
 }
 
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
-}
-
 .p-datatable:deep(td:hover) {
 	background-color: var(--surface-secondary);
 	cursor: pointer;
