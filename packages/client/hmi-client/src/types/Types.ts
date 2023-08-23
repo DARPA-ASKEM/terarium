@@ -131,6 +131,17 @@ export interface Simulation {
     projectId?: number;
 }
 
+export interface Code {
+    id?: string;
+    timestamp?: Date;
+    name: string;
+    description: string;
+    filename: string;
+    repoUrl?: string;
+    language: ProgrammingLanguage;
+    metadata?: any;
+}
+
 export interface Dataset {
     id?: string;
     timestamp?: any;
@@ -297,7 +308,7 @@ export interface Links {
 export interface Concept {
     id: string;
     curie: string;
-    type: Type;
+    type: AssetType;
     status: OntologicalField;
     object_id: string;
 }
@@ -308,12 +319,15 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
+/**
+ * @deprecated
+ */
 export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
-    attributes: any[];
+    attributes?: any[];
     timeseries?: { [index: string]: any };
 }
 
@@ -324,6 +338,7 @@ export interface Assets {
     publications: DocumentAsset[];
     workflows: Workflow[];
     artifacts: Artifact[];
+    code: Code[];
 }
 
 export interface Document {
@@ -489,7 +504,7 @@ export interface ModelParameter {
 export interface Observable {
     id: string;
     name?: string;
-    states: string[];
+    states?: string[];
     expression?: string;
     expression_mathml?: string;
 }
@@ -635,6 +650,12 @@ export enum ProvenanceType {
     Concept = "Concept",
 }
 
+export enum ProgrammingLanguage {
+    Python = "python",
+    R = "r",
+    Julia = "julia",
+}
+
 export enum ColumnType {
     Unknown = "UNKNOWN",
     Boolean = "BOOLEAN",
@@ -650,14 +671,15 @@ export enum ColumnType {
     Time = "TIME",
 }
 
-export enum Type {
-    Datasets = "DATASETS",
-    Extractions = "EXTRACTIONS",
-    Intermediates = "INTERMEDIATES",
-    Models = "MODELS",
-    Plans = "PLANS",
-    Publications = "PUBLICATIONS",
-    SimulationRuns = "SIMULATION_RUNS",
+export enum AssetType {
+    Datasets = "datasets",
+    ModelConfigurations = "model_configurations",
+    Models = "models",
+    Publications = "publications",
+    Simulations = "simulations",
+    Workflows = "workflows",
+    Artifacts = "artifacts",
+    Code = "code",
 }
 
 export enum OntologicalField {

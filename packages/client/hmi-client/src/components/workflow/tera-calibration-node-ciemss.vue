@@ -43,7 +43,7 @@
 					text
 					:outlined="true"
 					@click="addChart"
-					label="Add Chart"
+					label="Add chart"
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
@@ -158,7 +158,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 // EXTRA section
 const numSamples = ref(100);
@@ -263,7 +263,7 @@ const runCalibrate = async () => {
 		MQPoller.close();
 		console.log('Closing MQPoller');
 	};
-	if (response.simulationId) {
+	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
@@ -366,7 +366,7 @@ watch(
 		// runResults.value[simulationIds.value[0].runId] = csvData as any;
 		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }

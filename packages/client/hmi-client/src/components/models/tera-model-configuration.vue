@@ -79,8 +79,8 @@
 						<td
 							v-for="(initial, j) of configuration?.semantics?.ode.initials"
 							:key="j"
-							@click="onEnterValueCell('initials', 'expression', i, j)"
 							tabindex="0"
+							@click="onEnterValueCell('initials', 'expression', i, j)"
 							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
 						>
 							<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
@@ -106,6 +106,7 @@
 						<td
 							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
 							:key="j"
+							tabindex="0"
 							@click="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
@@ -113,7 +114,6 @@
 									}
 								}
 							"
-							tabindex="0"
 							@keyup.enter="
 								() => {
 									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
@@ -162,7 +162,11 @@
 		:model="configItems"
 	></SplitButton>
 	<Teleport to="body">
-		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+		<tera-modal
+			v-if="openValueConfig"
+			@modal-mask-clicked="openValueConfig = false"
+			@modal-enter-press="setModelParameters"
+		>
 			<template #header>
 				<h4>
 					{{
@@ -282,6 +286,8 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
+
 const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
@@ -332,7 +338,9 @@ async function addModelConfiguration(config: ModelConfiguration) {
 		config.configuration
 	);
 	setTimeout(() => {
+		emit('new-model-configuration');
 		initializeConfigSpace();
+		emit('sync-configs', true);
 	}, 800);
 }
 
@@ -356,6 +364,7 @@ function onEnterValueCell(
 	);
 	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
 }
+
 function openValueModal(
 	odeType: string,
 	valueName: string,
@@ -482,6 +491,10 @@ function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
+	setTimeout(() => {
+		emit('update-model-configuration');
+		emit('sync-configs', true);
+	}, 800);
 }
 
 function getParameterValue(parameter, valueName, timeseries) {
@@ -520,19 +533,11 @@ async function initializeConfigSpace() {
 
 	modelConfigurations.value = tempConfigurations;
 
-	// Refresh the datastore with whatever we currently have
-	const defaultConfig = modelConfigurations.value.find(
-		(d) => d.name === 'Default config'
-	) as ModelConfiguration;
-	if (defaultConfig) {
-		defaultConfig.configuration = cloneDeep(props.model);
-		updateModelConfiguration(defaultConfig);
-	}
-
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 	extractions.value = [{ name: '', value: '' }];
 }
+defineExpose({ initializeConfigSpace });
 
 function resetCellEditing() {
 	const row = { name: false };

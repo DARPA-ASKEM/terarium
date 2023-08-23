@@ -1,4 +1,4 @@
-import _, { cloneDeep } from 'lodash';
+import _, { cloneDeep, isEmpty, some } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import {
@@ -19,6 +19,11 @@ export interface NodeData {
 
 export interface EdgeData {
 	numEdges: number;
+}
+
+export enum StratifiedModelType {
+	Mira = 'mira',
+	Catlab = 'catlab'
 }
 
 // Used to derive equations
@@ -583,15 +588,15 @@ export const stratify = async (baseModel: Model, strataModel: Model) => {
 /// /////////////////////////////////////////////////////////////////////////////
 
 // Check if AMR is a stratified AMR
-export const getStratificationType = (amr: Model): string | null => {
-	// Catlab stratification: this will have "semantics.span" field
-	if (amr.semantics?.span && amr.semantics.span.length > 1) return 'catlab';
+export const getStratificationType = (amr: Model) => {
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModelType.Catlab;
 
-	const hasModifiers = _.some(
+	const hasModifiers = some(
 		(amr.model as PetriNetModel).states,
-		(s) => s.grounding && s.grounding.modifiers && Object.keys(s.grounding.modifiers).length > 0
+		(s) => s.grounding && s.grounding.modifiers && !isEmpty(Object.keys(s.grounding.modifiers))
 	);
-	if (hasModifiers) return 'mira';
+	if (hasModifiers) return StratifiedModelType.Mira;
+
 	return null;
 };
 

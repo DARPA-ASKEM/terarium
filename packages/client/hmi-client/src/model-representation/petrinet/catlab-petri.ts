@@ -116,7 +116,7 @@ export const extractNestedMap = (amr: Model) => {
 /**
  * Given an CAT AMR, extract and compute a presentation-layer data format.
  */
-export const getAMRPresentationData = (amr: Model) => ({
+export const getCatlabAMRPresentationData = (amr: Model) => ({
 	compactModel: getBaseAMR(amr),
 	stateMatrixData: getCatlabStatesMatrixData(amr),
 	transitionMatrixData: getCatlabTransitionsMatrixData(amr)

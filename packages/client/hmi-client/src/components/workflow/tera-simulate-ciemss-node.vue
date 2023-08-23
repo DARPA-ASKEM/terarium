@@ -16,7 +16,7 @@
 				size="small"
 				text
 				@click="addChart"
-				label="Add Chart"
+				label="Add chart"
 				icon="pi pi-plus"
 			></Button>
 			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>
@@ -74,7 +74,7 @@ const ciemssMethodOptions = ref(['dopri5', 'euler']);
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
 

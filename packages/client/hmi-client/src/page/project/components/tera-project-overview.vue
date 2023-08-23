@@ -61,12 +61,12 @@
 						size="large"
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-new-asset', ProjectAssetTypes.MODELS)"
+						@click="emit('open-new-asset', AssetType.Models)"
 					/>
 					<Button
 						size="large"
 						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-new-asset', ProjectAssetTypes.SIMULATION_WORKFLOW)"
+						@click="emit('open-new-asset', AssetType.Workflows)"
 					>
 						<vue-feather
 							class="p-button-icon-left"
@@ -165,84 +165,82 @@
 				</DataTable>
 			</section>
 			<section class="drag-n-drop">
-				<tera-modal
-					v-if="isUploadResourcesModalVisible"
-					class="modal"
-					@modal-mask-clicked="isUploadResourcesModalVisible = false"
-				>
-					<template #header>
-						<h4>Upload resources</h4>
-					</template>
-					<template #default>
-						<p class="subheader">Add resources to your project here</p>
-						<tera-drag-and-drop-importer
-							:show-preview="true"
-							:accept-types="[
-								AcceptedTypes.PDF,
-								AcceptedTypes.CSV,
-								AcceptedTypes.TXT,
-								AcceptedTypes.MD,
-								AcceptedTypes.PY,
-								AcceptedTypes.JS,
-								AcceptedTypes.M,
-								AcceptedTypes.R,
-								AcceptedTypes.JL
-							]"
-							:accept-extensions="[
-								AcceptedExtensions.PDF,
-								AcceptedExtensions.CSV,
-								AcceptedExtensions.TXT,
-								AcceptedExtensions.MD,
-								AcceptedExtensions.PY,
-								AcceptedExtensions.M,
-								AcceptedExtensions.JS,
-								AcceptedExtensions.R,
-								AcceptedExtensions.JL
-							]"
-							:import-action="processFiles"
-							:progress="progress"
-							@import-completed="importCompleted"
-						></tera-drag-and-drop-importer>
+				<Teleport to="body">
+					<tera-modal
+						v-if="isUploadResourcesModalVisible"
+						class="modal"
+						@modal-mask-clicked="isUploadResourcesModalVisible = false"
+					>
+						<template #header>
+							<h4>Upload resources</h4>
+						</template>
+						<template #default>
+							<p class="subheader">Add resources to your project here</p>
+							<tera-drag-and-drop-importer
+								:show-preview="true"
+								:accept-types="[
+									AcceptedTypes.PDF,
+									AcceptedTypes.CSV,
+									AcceptedTypes.TXT,
+									AcceptedTypes.MD,
+									AcceptedTypes.PY,
+									AcceptedTypes.R,
+									AcceptedTypes.JL
+								]"
+								:accept-extensions="[
+									AcceptedExtensions.PDF,
+									AcceptedExtensions.CSV,
+									AcceptedExtensions.TXT,
+									AcceptedExtensions.MD,
+									AcceptedExtensions.PY,
+									AcceptedExtensions.R,
+									AcceptedExtensions.JL
+								]"
+								:import-action="processFiles"
+								:progress="progress"
+								@import-completed="importCompleted"
+							></tera-drag-and-drop-importer>
 
-						<section v-if="isUploadResourcesModalVisible">
-							<Card v-for="(item, i) in results" :key="i" class="card">
-								<template #title>
-									<div class="card-img"></div>
-								</template>
-								<template #content>
-									<div class="card-content">
-										<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
-										<div v-if="item.response" class="file-content">
-											<br />
-											<div>Extracted Text</div>
-											<div>{{ item.response.text }}</div>
-											<br />
-											<div v-if="item.response.images">Images Found</div>
-											<div v-for="image in item.response.images" :key="image">
-												<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+							<section v-if="isUploadResourcesModalVisible">
+								<Card v-for="(item, i) in results" :key="i" class="card">
+									<template #title>
+										<div class="card-img"></div>
+									</template>
+									<template #content>
+										<div class="card-content">
+											<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+											<div v-if="item.response" class="file-content">
+												<br />
+												<div>Extracted Text</div>
+												<div>{{ item.response.text }}</div>
+												<br />
+												<div v-if="item.response.images">Images Found</div>
+												<div v-for="image in item.response.images" :key="image">
+													<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+												</div>
+												<br />
+												<i class="pi pi-plus"></i>
 											</div>
-											<br />
-											<i class="pi pi-plus"></i>
 										</div>
-									</div>
-								</template>
-							</Card>
-						</section>
-					</template>
-					<template #footer>
-						<Button
-							label="Upload"
-							class="p-button-primary"
-							@click="isUploadResourcesModalVisible = false"
-							:disabled="!results"
-						/>
-						<Button
-							label="Cancel"
-							class="p-button-secondary"
-							@click="isUploadResourcesModalVisible = false"
-						/>
-					</template>
-				</tera-modal>
+									</template>
+								</Card>
+							</section>
+						</template>
+						<template #footer>
+							<Button
+								label="Upload"
+								class="p-button-primary"
+								@click="isUploadResourcesModalVisible = false"
+								:disabled="!results"
+							/>
+							<Button
+								label="Cancel"
+								class="p-button-secondary"
+								@click="isUploadResourcesModalVisible = false"
+							/>
+						</template>
+					</tera-modal>
+				</Teleport>
 			</section>
 		</section>
 		<tera-multi-select-modal
@@ -254,7 +252,7 @@
 </template>
 
 <script setup lang="ts">
-import { IProject, isProjectAssetTypes, ProjectAssetTypes } from '@/types/Project';
+import { IProject, isProjectAssetTypes } from '@/types/Project';
 import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import * as ProjectService from '@/services/project';
@@ -272,7 +270,7 @@ import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
-import { Artifact, CsvAsset } from '@/types/Types';
+import { Artifact, AssetType, CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
@@ -281,6 +279,7 @@ import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.v
 import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/models/extractions';
 import useAuthStore from '@/stores/auth';
+import { uploadCodeToProject } from '@/services/code';
 
 const props = defineProps<{
 	project: IProject;
@@ -317,7 +316,7 @@ const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
 const assets = computed(() => {
-	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
+	const tabs = new Map<AssetType, Set<Tab>>();
 
 	const projectAssets = props.project?.assets;
 	if (!projectAssets) return tabs;
@@ -326,7 +325,7 @@ const assets = computed(() => {
 	// Run through all the assets type within the project
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType: ProjectAssetTypes = type as ProjectAssetTypes;
+			const projectAssetType: AssetType = type as AssetType;
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => {
 					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
@@ -349,38 +348,75 @@ const assets = computed(() => {
 
 async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
-		if (file.type === AcceptedTypes.CSV) {
-			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
-				progress,
-				file,
-				auth.name ?? '',
-				props.project.id,
-				csvDescription
-			);
-
-			if (addedCSV !== null) {
-				const text: string = addedCSV?.csv?.join('\r\n') ?? '';
-				const images = [];
-
-				return { file, error: false, response: { text, images } };
-			}
-			return { file, error: true, response: { text: '', images: [] } };
+		switch (file.type) {
+			case AcceptedTypes.CSV:
+				return processDataset(file, csvDescription);
+			case AcceptedTypes.PDF:
+			case AcceptedTypes.TXT:
+			case AcceptedTypes.MD:
+				return processArtifact(file);
+			case AcceptedTypes.PY:
+			case AcceptedTypes.R:
+			case AcceptedTypes.JL:
+				return processCode(file);
+			default:
+				return { file, error: true, response: { text: '', images: [] } };
 		}
-
-		// This is pdf, txt, md files
-		const artifact: Artifact | null = await uploadArtifactToProject(
-			progress,
-			file,
-			props.project.username ?? '',
-			props.project.id,
-			''
-		);
-		if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
-			extractPDF(artifact);
-			return { file, error: false, response: { text: '', images: [] } };
-		}
-		return { file, error: true, response: { text: '', images: [] } };
 	});
+}
+
+/**
+ * Process a python, R or Julia file into a code asset
+ * @param file
+ */
+async function processCode(file: File) {
+	// This is pdf, txt, md files
+	await uploadCodeToProject(props.project.id, file, progress);
+
+	return { file, error: true, response: { text: '', images: [] } };
+}
+
+/**
+ * Process a pdf, txt, md file into an artifact
+ * @param file
+ */
+async function processArtifact(file: File) {
+	// This is pdf, txt, md files
+	const artifact: Artifact | null = await uploadArtifactToProject(
+		progress,
+		file,
+		props.project.username ?? '',
+		props.project.id,
+		''
+	);
+	if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
+		await extractPDF(artifact);
+		return { file, error: false, response: { text: '', images: [] } };
+	}
+	return { file, error: true, response: { text: '', images: [] } };
+}
+
+/**
+ * Process a csv file into a dataset
+ * @param file
+ * @param description
+ */
+async function processDataset(file: File, description: string) {
+	const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
+		progress,
+		file,
+		auth.name ?? '',
+		props.project.id,
+		description
+	);
+
+	if (addedCSV !== null) {
+		const text: string = addedCSV?.csv?.join('\r\n') ?? '';
+		const images = [];
+
+		return { file, error: false, response: { text, images } };
+	}
+	return { file, error: true, response: { text: '', images: [] } };
 }
 
 const onRowSelect = (selectedRows) => {

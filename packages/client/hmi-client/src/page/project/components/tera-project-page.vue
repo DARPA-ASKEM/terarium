@@ -1,20 +1,21 @@
 <template>
 	<tera-model
-		v-if="pageType === ProjectAssetTypes.MODELS"
+		v-if="pageType === AssetType.Models"
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@asset-loaded="emit('asset-loaded')"
 	/>
+
 	<code-editor
-		v-else-if="pageType === ProjectAssetTypes.CODE"
+		v-else-if="pageType === AssetType.Code"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');
-			openNextCodeFile();
+			openCode();
 		"
 	/>
 	<code-editor
-		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && !assetName?.endsWith('.pdf')"
+		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
 		:initial-code="code"
 		@vue:mounted="
 			emit('asset-loaded');
@@ -22,7 +23,7 @@
 		"
 	/>
 	<tera-pdf-embed
-		v-else-if="pageType === ProjectAssetTypes.ARTIFACTS && assetName?.endsWith('.pdf')"
+		v-else-if="pageType === AssetType.Artifacts && assetName?.endsWith('.pdf')"
 		:title="assetName"
 		:file-promise="getPDFBytes()"
 	/>
@@ -33,7 +34,7 @@
 		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
 	<tera-simulation-workflow
-		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
+		v-else-if="pageType === AssetType.Workflows"
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
@@ -42,7 +43,7 @@
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && !isEmpty(tabs)">
 		<tera-document
-			v-if="pageType === ProjectAssetTypes.DOCUMENTS"
+			v-if="pageType === AssetType.Publications"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			:project="project"
@@ -50,7 +51,7 @@
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
-			v-else-if="pageType === ProjectAssetTypes.DATASETS"
+			v-else-if="pageType === AssetType.Datasets"
 			:project="project"
 			:asset-id="assetId"
 			@asset-loaded="emit('asset-loaded')"
@@ -64,12 +65,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed } from 'vue';
-import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
+import { ref, computed } from 'vue';
+import { ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
-import { CodeRequest, Tab } from '@/types/common';
+import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
@@ -81,11 +82,13 @@ import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import useResourceStore from '@/stores/resources';
+import { AssetType } from '@/types/Types';
+import { getCodeFileAsText } from '@/services/code';
 
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
-	pageType?: ProjectAssetTypes | ProjectPages;
+	pageType?: AssetType | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
 }>();
@@ -98,11 +101,9 @@ const router = useRouter();
 
 const code = ref<string>();
 
-const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
-
 const assetName = computed<string>(() => {
 	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	if (props.pageType === ProjectAssetTypes.CODE) return 'New File';
+
 	const assets = resourceStore.activeProjectAssets;
 
 	/**
@@ -113,8 +114,9 @@ const assetName = computed<string>(() => {
 	 */
 	if (assets) {
 		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
-		return asset.name ?? 'n/a';
+		if (asset.name) return asset.name;
 	}
+	if (props.pageType === AssetType.Code) return 'New File';
 	return 'n/a';
 });
 
@@ -128,23 +130,10 @@ const openOverview = () => {
 		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
-async function openCode(codeRequests: CodeRequest[]) {
-	queuedCodeRequests.value = codeRequests;
-	await openNextCodeFile();
-}
-
-async function openNextCodeFile() {
-	if (queuedCodeRequests.value.length > 0) {
-		const currentRequest: CodeRequest | undefined = queuedCodeRequests.value.pop();
-
-		if (!currentRequest) return;
-
-		code.value = currentRequest.code;
-		await router.push({
-			name: RouteName.ProjectRoute,
-			params: currentRequest.asset
-		});
-	}
+async function openCode() {
+	const res: string | null = await getCodeFileAsText(props.assetId!, assetName.value!);
+	if (!res) return;
+	code.value = res;
 }
 
 function getPDFBytes(): Promise<ArrayBuffer | null> {

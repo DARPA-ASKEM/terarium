@@ -1,11 +1,16 @@
 <template>
 	<Teleport to="body">
-		<tera-modal v-if="isVisible" class="modal" @modal-mask-clicked="emit('close-modal')">
+		<tera-modal
+			v-if="isVisible"
+			class="modal"
+			@modal-mask-clicked="emit('close-modal')"
+			@modal-enter-press="createNewModel"
+		>
 			<template #header>
 				<h4>New model</h4>
 			</template>
 			<template #default>
-				<form>
+				<form @submit.prevent>
 					<label for="new-model">Enter a unique name for your model</label>
 					<InputText
 						v-bind:class="invalidInputStyle"
@@ -29,11 +34,12 @@ import { computed, ref } from 'vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { addNewModelToProject } from '@/services/model';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import { AssetType } from '@/types/Types';
 
 const props = defineProps<{
 	project: IProject;
@@ -71,7 +77,7 @@ async function createNewModel() {
 		router.push({
 			name: RouteName.ProjectRoute,
 			params: {
-				pageType: ProjectAssetTypes.MODELS,
+				pageType: AssetType.Models,
 				assetId: modelId
 			}
 		});
