@@ -52,7 +52,7 @@ public class SimulationResource implements SnakeCaseResource {
 	@RestClient
 	DatasetProxy datasetProxy;
 
-	// https://github.com/DARPA-ASKEM/Terarium/issues/1757
+	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@Inject
 	@Channel("simulationStatus") Publisher<byte[]> partialSimulationStream;
 
@@ -169,7 +169,7 @@ public class SimulationResource implements SnakeCaseResource {
 	) {
 		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> {
 			try{ 
-				// https://github.com/DARPA-ASKEM/Terarium/issues/1757
+				//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 				String jsonString = new String(event);
 				jsonString = jsonString.replace(" ","");
 
@@ -188,7 +188,7 @@ public class SimulationResource implements SnakeCaseResource {
 	}
 
 	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
-	// https://github.com/DARPA-ASKEM/Terarium/issues/1757
+	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@PUT
 	@Path("/{jobId}/create-partial-result")
 	@Produces(MediaType.APPLICATION_JSON)
