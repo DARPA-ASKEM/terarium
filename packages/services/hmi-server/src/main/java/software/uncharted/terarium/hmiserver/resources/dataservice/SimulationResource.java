@@ -14,6 +14,7 @@ import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.reactivestreams.Publisher;
 import org.jboss.resteasy.annotations.SseElementType;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -167,13 +168,13 @@ public class SimulationResource implements SnakeCaseResource {
 	public Publisher<byte[]> stream(
 		@PathParam("jobId") final String jobId
 	) {
+		ObjectMapper mapper = new ObjectMapper();
 		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> {
 			try{ 
 				//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 				String jsonString = new String(event);
 				jsonString = jsonString.replace(" ","");
 
-				ObjectMapper mapper = new ObjectMapper();
 				SimulationIntermediateResults interResult = mapper.readValue(jsonString, SimulationIntermediateResults.class);
 
 				return interResult.getJobId().equals(jobId);

@@ -242,7 +242,7 @@ const runCalibrate = async () => {
 	// Run MQ Test
 	console.log(`Checking MQ for job Id ${response.simulationId}`);
 	const auth = useAuthStore();
-	const MQPoller = new EventSourcePolyfill(
+	const eventsource = new EventSourcePolyfill(
 		`/api/simulations/${response.simulationId}/partial-result`,
 		{
 			headers: {
@@ -250,18 +250,18 @@ const runCalibrate = async () => {
 			}
 		}
 	);
-	MQPoller.onerror = (e) => {
+	eventsource.onerror = (e) => {
 		console.log('An error occurred while attempting to connect.');
 		console.log(e);
-		MQPoller.close();
-		console.log('Closing MQPoller');
+		eventsource.close();
+		console.log('Closing eventsource');
 	};
-	MQPoller.onmessage = (event) => {
+	eventsource.onmessage = (event) => {
 		console.log(event);
 		const json = event.data;
 		console.log(json);
-		MQPoller.close();
-		console.log('Closing MQPoller');
+		eventsource.close();
+		console.log('Closing eventsource');
 	};
 	if (response?.simulationId) {
 		getStatus(response.simulationId);
