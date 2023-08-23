@@ -64,6 +64,13 @@ export const convertAMRToACSet = (amr: Model) => {
 		});
 	});
 
+	// post processing to use expressions rather than ids
+	result.T = result.T.map((transition) => {
+		const foundRate = amr.semantics?.ode.rates.find((rate) => rate.target === transition.tname);
+
+		return { tname: `(${foundRate!.expression})` };
+	});
+
 	return result;
 };
 

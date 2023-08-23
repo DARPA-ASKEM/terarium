@@ -229,6 +229,7 @@ export const cleanLatexEquations = (equations: Array<string>): Array<string> =>
 				.replaceAll('\\left', '')
 				.replaceAll('{align}', '')
 				.replaceAll('=&', '=')
+				.replaceAll('*', ' *') // this fixes some parsing issues with variables such as '\beta' and '\gamma' with a '*' right after
 				.trim()
 		);
 
