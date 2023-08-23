@@ -35,11 +35,19 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { loadPyodide } from 'pyodide';
+import { PyodideInterface, loadPyodide } from 'pyodide';
 import { PyProxy } from 'pyodide/ffi';
 import { Model } from '@/types/Types';
 
-let python: any;
+export interface PythonExpr {
+	pyodide: PyodideInterface;
+	substituteExpression: Function;
+	removeExpression: Function;
+	serializeExpression: Function;
+	evaluateExpression: Function;
+}
+
+let pythonExpr: PythonExpr;
 const mathml = ref('');
 const latex = ref('');
 const freeSymbols = ref([]);
@@ -96,6 +104,58 @@ async function main() {
 				}
 	`);
 
+	// See examples on MMT https://github.com/indralab/mira/blob/modeling_api/mira/modeling/askenet/ops.py
+	const serializeExpression = (expressionStr: string) => {
+		const result: PyProxy = pyodide.runPython(`
+			serialize_expr("${expressionStr}")
+		`);
+
+		return {
+			latex: result.get('latex'),
+			mathml: result.get('mathml'),
+			str: result.get('str')
+		};
+	};
+
+	const substituteExpression = (expressionStr: string, newVar: string, oldVar: string) => {
+		const result: PyProxy = pyodide.runPython(`
+			eq = sympy.S("${expressionStr}", locals=_clash)
+			new_eq = eq.replace(${oldVar}, ${newVar})
+			serialize_expr(new_eq)
+		`);
+		return {
+			latex: result.get('latex'),
+			mathml: result.get('mathml'),
+			str: result.get('str')
+		};
+	};
+
+	const removeExpression = (expressionStr: string, v: string) => {
+		const result: PyProxy = pyodide.runPython(`
+			eq = sympy.S("${expressionStr}", locals=_clash)
+			new_eq = sq.subs(${v}, 0)
+			serialize_expr(new_eq)
+		`);
+		return {
+			latex: result.get('latex'),
+			mathml: result.get('mathml'),
+			str: result.get('str')
+		};
+	};
+
+	const evaluateExpression = (expressionStr: string, symbolsTable: Object) => {
+		const subs: any[] = [];
+		Object.keys(symbolsTable).forEach((key) => {
+			subs.push(`${key}: ${symbolsTable[key]}`);
+		});
+
+		const result = pythonExpr.pyodide.runPython(`
+			eq = sympy.S("${expressionStr}", locals=_clash)
+			eq.evalf(subs={${subs.join(', ')}})
+		`);
+		return result;
+	};
+
 	// Bootstrap
 	const keys = Object.keys(variableMap);
 	pyodide.runPython(`
@@ -104,11 +164,18 @@ async function main() {
 
 	endLoad.value = Date.now();
 	isReady.value = true;
-	return pyodide;
+
+	return {
+		pyodide,
+		substituteExpression,
+		removeExpression,
+		serializeExpression,
+		evaluateExpression
+	};
 }
 
 const runParser = (expr: string) => {
-	if (!python) return;
+	if (!pythonExpr) return;
 	console.log(`evalulating .... [${expr}]`);
 	if (!expr || expr.length === 0) {
 		mathml.value = '';
@@ -118,19 +185,19 @@ const runParser = (expr: string) => {
 	}
 
 	// function to convert expression to mathml
-	let result = python.runPython(`
+	let result = pythonExpr.pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
 		sympy.mathml(eq)
 	`);
 	mathml.value = result;
 
-	result = python.runPython(`
+	result = pythonExpr.pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
 		latex(eq)
 	`);
 	latex.value = result;
 
-	result = python.runPython(`
+	result = pythonExpr.pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
 		list(eq.free_symbols)
 	`);
@@ -139,46 +206,21 @@ const runParser = (expr: string) => {
 
 const evaluateExpression = (expr: string) => {
 	const subs: any[] = [];
-	if (!python) return;
+	if (!pythonExpr) return;
 
 	Object.keys(variableMap).forEach((key) => {
 		subs.push(`${key}: ${variableMap[key]}`);
 	});
 
 	// function to evaluate
-	const result = python.runPython(`
+	const result = pythonExpr.pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
 		eq.evalf(subs={${subs.join(', ')}})
 	`);
 	evalResult.value = result;
 };
 
-// See examples on MMT https://github.com/indralab/mira/blob/modeling_api/mira/modeling/askenet/ops.py
-const serializeExpression = (expressionStr: string) => {
-	const result: PyProxy = python.runPython(`
-		serialize_expr("${expressionStr}")
-	`);
-
-	return {
-		latex: result.get('latex'),
-		mathml: result.get('mathml'),
-		str: result.get('str')
-	};
-};
-
-const substituteExpression = (expressionStr: string, newVar: string, oldVar: string) => {
-	const result: PyProxy = python.runPython(`
-		eq = sympy.S("${expressionStr}", locals=_clash)
-		new_eq = eq.replace(${oldVar}, ${newVar})
-		serialize_expr(new_eq)
-	`);
-	return {
-		latex: result.get('latex'),
-		mathml: result.get('mathml'),
-		str: result.get('str')
-	};
-};
-
+/*
 const renameParameterId = (amr: Model, newId: string, oldId: string) => {
 	const ode = amr.semantics?.ode;
 	if (!ode) return;
@@ -190,7 +232,7 @@ const renameParameterId = (amr: Model, newId: string, oldId: string) => {
 	if (ode.observables) {
 		ode.observables.forEach((obs) => {
 			const expression = obs.expression as string;
-			const newExpression = substituteExpression(expression, newId, oldId);
+			const newExpression = pythonExpr.substituteExpression(expression, newId, oldId);
 			obs.expression = newExpression.str;
 			obs.expression_mathml = newExpression.mathml;
 		});
@@ -199,17 +241,18 @@ const renameParameterId = (amr: Model, newId: string, oldId: string) => {
 	if (ode.rates) {
 		ode.rates.forEach((rate) => {
 			const expression = rate.expression as string;
-			const newExpression = substituteExpression(expression, newId, oldId);
+			const newExpression = pythonExpr.substituteExpression(expression, newId, oldId);
 			rate.expression = newExpression.str;
 			rate.expression_mathml = newExpression.mathml;
 		});
 	}
 };
+*/
 
 const start = async () => {
-	python = await main();
-	const test1 = serializeExpression('x + y + z');
-	console.log(test1);
+	pythonExpr = await main();
+	// const test1 = serializeExpression('x + y + z');
+	// console.log(test1);
 };
 
 start();
