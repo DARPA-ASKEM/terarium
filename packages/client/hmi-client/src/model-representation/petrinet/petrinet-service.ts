@@ -68,7 +68,8 @@ export const convertAMRToACSet = (amr: Model) => {
 	result.T = result.T.map((transition) => {
 		const foundRate = amr.semantics?.ode.rates.find((rate) => rate.target === transition.tname);
 
-		return { tname: `(${foundRate!.expression})` };
+		// default to the id if there is a case where there is no expression
+		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
 	});
 
 	return result;
