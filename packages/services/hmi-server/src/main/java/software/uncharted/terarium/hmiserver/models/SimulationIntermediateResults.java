@@ -16,6 +16,5 @@ public class SimulationIntermediateResults implements Serializable {
 	@Override
 	public String toString(){
 		return "{job_id: '" + this.jobId + "', progress: " + Double.toString(this.progress) + "}";
-		// return "{job_id: '" + this.job_id + "', progress: " + this.progress + "}";
 	}
 }
