@@ -260,13 +260,13 @@ const renderGraph = () => {
 			const dataset = {
 				// ignore the first row, it's the header
 				data: props.initialData.csv.slice(1).map((datum: string[]) => ({
-					x: +datum[tIndex].trim(),
-					y: +datum[colIdx].trim()
+					x: +datum[tIndex],
+					y: +datum[colIdx]
 				})),
 				label: `${variable} - dataset`,
 				fill: false,
 				borderColor: '#000000',
-				borderWidth: 3
+				borderDash: [3, 3]
 			};
 
 			datasets.push(dataset);
