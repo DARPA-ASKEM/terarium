@@ -37,7 +37,6 @@
 import { ref, watch } from 'vue';
 import { PyodideInterface, loadPyodide } from 'pyodide';
 import { PyProxy } from 'pyodide/ffi';
-import { Model } from '@/types/Types';
 
 export interface PythonExpr {
 	pyodide: PyodideInterface;
@@ -67,8 +66,7 @@ const variableMap: Object = {
 	N: 'S + I + R'
 };
 
-async function main() {
-	startLoad.value = Date.now();
+const main = async () => {
 	const pyodide = await loadPyodide({
 		indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full'
 	});
@@ -156,15 +154,6 @@ async function main() {
 		return result;
 	};
 
-	// Bootstrap
-	const keys = Object.keys(variableMap);
-	pyodide.runPython(`
-		${keys.join(',')} = sympy.symbols('${keys.join(' ')}')
-	`);
-
-	endLoad.value = Date.now();
-	isReady.value = true;
-
 	return {
 		pyodide,
 		substituteExpression,
@@ -172,7 +161,7 @@ async function main() {
 		serializeExpression,
 		evaluateExpression
 	};
-}
+};
 
 const runParser = (expr: string) => {
 	if (!pythonExpr) return;
@@ -202,22 +191,6 @@ const runParser = (expr: string) => {
 		list(eq.free_symbols)
 	`);
 	freeSymbols.value = result;
-};
-
-const evaluateExpression = (expr: string) => {
-	const subs: any[] = [];
-	if (!pythonExpr) return;
-
-	Object.keys(variableMap).forEach((key) => {
-		subs.push(`${key}: ${variableMap[key]}`);
-	});
-
-	// function to evaluate
-	const result = pythonExpr.pyodide.runPython(`
-		eq = sympy.S("${expr}", locals=_clash)
-		eq.evalf(subs={${subs.join(', ')}})
-	`);
-	evalResult.value = result;
 };
 
 /*
@@ -250,9 +223,16 @@ const renameParameterId = (amr: Model, newId: string, oldId: string) => {
 */
 
 const start = async () => {
+	startLoad.value = Date.now();
 	pythonExpr = await main();
-	// const test1 = serializeExpression('x + y + z');
-	// console.log(test1);
+	endLoad.value = Date.now();
+
+	// Bootstrap
+	const keys = Object.keys(variableMap);
+	pythonExpr.pyodide.runPython(`
+		${keys.join(',')} = sympy.symbols('${keys.join(' ')}')
+	`);
+	isReady.value = true;
 };
 
 start();
@@ -261,7 +241,10 @@ watch(
 	() => exprString.value,
 	() => {
 		runParser(exprString.value);
-		evaluateExpression(exprString.value);
+		if (pythonExpr) {
+			const f = pythonExpr.evaluateExpression(exprString.value, variableMap);
+			evalResult.value = f;
+		}
 	}
 );
 </script>
