@@ -1,23 +1,24 @@
 <template>
 	<main :class="isEditingStyle">
-		<section class="controls" v-if="isEditable">
+		<section v-if="isEditable" class="controls">
 			<Button
 				v-if="isEditing"
+				class="p-button-sm p-button-outlined"
 				@click="emit('cancel-edit')"
 				label="Cancel"
-				class="p-button-sm p-button-outlined edit-button"
 			/>
 			<Button
 				v-if="isEditing"
-				@click="emit('update-model-from-equation')"
-				label="Update model"
 				class="p-button-sm"
+				:disabled="disableSave"
+				@click="emit('update-model-from-equation')"
+				label="Save"
 			/>
 			<Button
 				v-else
+				class="p-button-sm p-button-outlined"
 				@click="emit('start-editing')"
-				label="Edit equation"
-				class="p-button-sm p-button-outlined edit-button"
+				label="Edit"
 			/>
 		</section>
 		<section class="math-editor-container">
@@ -25,8 +26,8 @@
 			<Button
 				v-if="isEditing"
 				class="p-button-sm add-equation-button"
+				:label="`Add ${equationType}`"
 				icon="pi pi-plus"
-				label="Add equation"
 				@click="emit('add-equation')"
 				text
 			/>
@@ -42,6 +43,7 @@ const props = defineProps<{
 	isEditing: boolean;
 	isEditable: boolean;
 	disableSave?: boolean;
+	equationType?: string;
 }>();
 
 const emit = defineEmits([
@@ -51,6 +53,7 @@ const emit = defineEmits([
 	'update-model-from-equation'
 ]);
 
+const equationType = computed(() => props.equationType ?? 'equation');
 const isEditingStyle = computed(() => (props.isEditing ? 'is-editing' : ''));
 </script>
 
@@ -69,11 +72,6 @@ main.is-editing {
 	border-radius: var(--border-radius);
 }
 
-.edit-button {
-	margin-left: 5px;
-	margin-right: 5px;
-}
-
 .add-equation-button {
 	width: 10rem;
 	margin-left: 1rem;
@@ -89,12 +87,10 @@ main.is-editing {
 	margin: 0rem 1rem;
 	justify-content: flex-end;
 	position: relative;
+	gap: 0.5rem;
 	z-index: 20;
 }
 
-section math-editor {
-	justify-content: center;
-}
 .math-editor-container {
 	display: flex;
 	flex-direction: column;

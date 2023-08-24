@@ -2,6 +2,8 @@
 	<tera-equation-container
 		:is-editing="isEditing"
 		:is-editable="isEditable"
+		:disable-save="disableSave"
+		equationType="observable"
 		@cancel-edit="cancelEdit"
 		@add-equation="addObservable"
 		@start-editing="isEditing = true"
@@ -44,16 +46,14 @@ const observablesRefs = ref<any[]>([]);
 const editableObservables = ref<Observable[]>([]);
 const isEditing = ref(false);
 
-// const disableSaveObservable = computed(() => {
-// 	const numEmptyObjservables = editableObservables.value.filter((ob) => ob.id === '').length;
-// 	if (editableObservables.value.length > 0 && numEmptyObjservables === 0) {
-// 		return false;
-// 	}
-// 	if (numEmptyObjservables > 0) {
-// 		return true;
-// 	}
-// 	return false;
-// });
+const disableSave = computed(() => {
+	const emptyObservables = editableObservables.value.filter((ob) => ob.id === '');
+	if (!isEmpty(editableObservables.value) && isEmpty(emptyObservables)) {
+		return false;
+	}
+	if (!isEmpty(emptyObservables)) return true;
+	return false;
+});
 
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 
@@ -119,7 +119,7 @@ const updateObservables = () => {
 };
 
 watch(
-	() => observables.value,
+	() => props.model,
 	() => {
 		if (!isEmpty(observables)) {
 			editableObservables.value = observables.value.filter((ob) => ob.expression);
