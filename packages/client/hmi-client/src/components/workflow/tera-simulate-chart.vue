@@ -28,6 +28,7 @@ import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { CsvAsset } from '@/types/Types';
+import { getGraphDataFromDatasetCSV } from './util';
 
 const emit = defineEmits(['configuration-change']);
 
@@ -234,41 +235,7 @@ const renderGraph = () => {
 			});
 
 		if (props.initialData) {
-			let v = variable;
-			// get the dataset variable from the mapping of model variable to dataset variable if there's a mapping
-			if (props.mapping) {
-				if (!(props.mapping.length === 1 && Object.values(props.mapping[0]).some((val) => !val))) {
-					const varMap = props.mapping.find((m) => m.modelVariable === variable);
-					if (varMap) {
-						v = varMap.datasetVariable;
-					}
-				}
-			}
-
-			// get  the index of the timestamp column
-			const tIndex = props.initialData.headers.indexOf('timestamp');
-
-			// get the index of the variable column
-			let colIdx: number;
-			for (let i = 0; i < props.initialData.headers.length; i++) {
-				if (props.initialData.headers[i].trim() === v.trim()) {
-					colIdx = i;
-					break;
-				}
-			}
-
-			const dataset = {
-				// ignore the first row, it's the header
-				data: props.initialData.csv.slice(1).map((datum: string[]) => ({
-					x: +datum[tIndex],
-					y: +datum[colIdx]
-				})),
-				label: `${variable} - dataset`,
-				fill: false,
-				borderColor: '#000000',
-				borderDash: [3, 3]
-			};
-
+			const dataset = getGraphDataFromDatasetCSV(props.initialData, variable, props.mapping);
 			datasets.push(dataset);
 		}
 	});
