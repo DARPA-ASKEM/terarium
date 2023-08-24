@@ -1,7 +1,3 @@
-export enum Actions {
-	runParser
-}
-
 export default class PyodideController {
 	private _isReady = false;
 
@@ -36,11 +32,23 @@ export default class PyodideController {
 		return this._isBusy;
 	}
 
-	async runParser(expr: any) {
+	async parseExpression(expr: string) {
 		return new Promise((...promise) => {
 			this.taskQueue.push({
-				action: Actions.runParser,
+				action: 'parseExpression',
 				params: [expr],
+				promise
+			});
+			this.queueTask();
+		});
+	}
+
+	async evaluateExpression(expr: string, symbolTable: object) {
+		console.log('symbol table', symbolTable);
+		return new Promise((...promise) => {
+			this.taskQueue.push({
+				action: 'evaluateExpression',
+				params: [expr, symbolTable],
 				promise
 			});
 			this.queueTask();

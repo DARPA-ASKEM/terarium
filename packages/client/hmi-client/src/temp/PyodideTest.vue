@@ -35,9 +35,22 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { PyodideInterface, loadPyodide } from 'pyodide';
-import { PyProxy } from 'pyodide/ffi';
+import PyodideController from '@/python/PyodideController';
 
+const mathml = ref('');
+const latex = ref('');
+const freeSymbols = ref([]);
+const evalResult = ref<any>('');
+
+const exprString = ref('');
+const isReady = ref(false);
+const startLoad = ref(0);
+const endLoad = ref(0);
+
+// import { PyodideInterface, loadPyodide } from 'pyodide';
+// import { PyProxy } from 'pyodide/ffi';
+
+/*
 export interface PythonExpr {
 	pyodide: PyodideInterface;
 	substituteExpression: Function;
@@ -192,6 +205,7 @@ const runParser = (expr: string) => {
 	`);
 	freeSymbols.value = result;
 };
+*/
 
 /*
 const renameParameterId = (amr: Model, newId: string, oldId: string) => {
@@ -222,6 +236,7 @@ const renameParameterId = (amr: Model, newId: string, oldId: string) => {
 };
 */
 
+/*
 const start = async () => {
 	startLoad.value = Date.now();
 	pythonExpr = await main();
@@ -234,17 +249,32 @@ const start = async () => {
 	`);
 	isReady.value = true;
 };
+*/
+
+const start = async () => {
+	const controller = new PyodideController();
+	console.log(controller);
+
+	let result: any;
+	result = await controller.parseExpression('a + b + c + 10');
+	console.log('parse test', result);
+
+	result = await controller.evaluateExpression('a + b', { a: 11, b: 22 });
+	console.log('eval test', result);
+};
 
 start();
 
 watch(
 	() => exprString.value,
 	() => {
+		/*
 		runParser(exprString.value);
 		if (pythonExpr) {
 			const f = pythonExpr.evaluateExpression(exprString.value, variableMap);
 			evalResult.value = f;
 		}
+		*/
 	}
 );
 </script>

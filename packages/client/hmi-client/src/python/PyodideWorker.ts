@@ -1,5 +1,4 @@
 import { loadPyodide } from 'pyodide';
-import { Actions } from './PyodideController';
 
 const variableMap: Object = {
 	S: 1,
@@ -56,7 +55,25 @@ const endLoad = Date.now();
 console.log(endLoad - startLoad);
 postMessage(true);
 
-const runParser = (expr: string) => {
+const evaluateExpression = (expressionStr: string, symbolsTable: Object) => {
+	const subs: any[] = [];
+	Object.keys(symbolsTable).forEach((key) => {
+		subs.push(`${key}: ${symbolsTable[key]}`);
+	});
+
+	const skeys = Object.keys(symbolsTable);
+	pyodide.runPython(`
+		${skeys.join(',')} = sympy.symbols('${skeys.join(' ')}')
+	`);
+
+	const result = pyodide.runPython(`
+		eq = sympy.S("${expressionStr}", locals=_clash)
+		eq.evalf(subs={${subs.join(', ')}})
+	`);
+	return result.toString();
+};
+
+const parseExpression = (expr: string) => {
 	const output = {
 		mathml: '',
 		latex: '',
@@ -95,9 +112,12 @@ onmessage = function (e) {
 	const { action, params } = e.data;
 
 	switch (action) {
-		case Actions.runParser:
+		case 'parseExpression':
 			// eslint-disable-next-line
-			return postMessage(runParser.apply(null, params));
+			return postMessage(parseExpression.apply(null, params));
+		case 'evaluateExpression':
+			// eslint-disable-next-line
+			return postMessage(evaluateExpression.apply(null, params));
 		default:
 			console.error(`${action} INVALID`);
 	}
