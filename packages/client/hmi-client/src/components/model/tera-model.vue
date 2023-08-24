@@ -48,18 +48,12 @@
 				</template>
 			</template>
 			<tera-model-description v-if="view === ModelView.DESCRIPTION" :model="model" />
-			<Accordion v-else-if="view === ModelView.MODEL" multiple :active-index="[0, 1, 2, 3]">
-				<AccordionTab header="Model diagram">
-					<tera-model-diagram
-						:model="model"
-						:is-editable="!featureConfig.isPreview"
-						@update-model="updateModelContent"
-					/>
-				</AccordionTab>
-				<AccordionTab header="Model equations"> </AccordionTab>
-				<AccordionTab header="Model observables"></AccordionTab>
-				<AccordionTab header="Model configurations"></AccordionTab>
-			</Accordion>
+			<tera-model-editor
+				v-else-if="view === ModelView.MODEL"
+				:model="model"
+				:feature-config="featureConfig"
+				@update-model="updateModelContent"
+			/>
 		</tera-asset>
 	</main>
 </template>
@@ -69,9 +63,7 @@ import { watch, PropType, ref, computed } from 'vue';
 import { isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
+import TeraModelEditor from '@/components/model/petrinet/tera-model-editor.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -93,7 +85,7 @@ const props = defineProps({
 	},
 	assetId: {
 		type: String,
-		default: 'sir-model-id'
+		default: '4de89d33-71d2-49c2-9583-f0a6a34c49e0' // 'sir-model-id'
 	},
 	highlight: {
 		type: String,
