@@ -47,12 +47,9 @@ const editableObservables = ref<Observable[]>([]);
 const isEditing = ref(false);
 
 const disableSave = computed(() => {
-	const emptyObservables = editableObservables.value.filter((ob) => ob.id === '');
-	if (!isEmpty(editableObservables.value) && isEmpty(emptyObservables)) {
-		return false;
-	}
-	if (!isEmpty(emptyObservables)) return true;
-	return false;
+	const observablesWithoutId = editableObservables.value.filter((ob) => isEmpty(ob.id));
+	if (isEmpty(observablesWithoutId)) return false;
+	return true;
 });
 
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
