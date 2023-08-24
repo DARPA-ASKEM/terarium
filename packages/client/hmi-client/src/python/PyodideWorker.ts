@@ -1,6 +1,5 @@
 import { loadPyodide } from 'pyodide';
-
-import { Actions } from '@/temp/PyodideController';
+import { Actions } from './PyodideController';
 
 const variableMap: Object = {
 	S: 1,
@@ -26,14 +25,14 @@ pyodide.runPython('from sympy import S');
 
 // Utility function to resolve nested subsitutions - not used
 pyodide.runPython(`
-    def recursive_sub(expr, replace):
-            for _ in range(0, len(replace) + 1):
-                    new_expr = expr.subs(replace)
-                    if new_expr == expr:
-                            return new_expr, True
-                    else:
-                            expr = new_expr
-            return new_expr, False
+def recursive_sub(expr, replace):
+				for _ in range(0, len(replace) + 1):
+								new_expr = expr.subs(replace)
+								if new_expr == expr:
+												return new_expr, True
+								else:
+												expr = new_expr
+				return new_expr, False
 `);
 
 pyodide.runPython(`
@@ -58,12 +57,13 @@ console.log(endLoad - startLoad);
 postMessage(true);
 
 const runParser = (expr: string) => {
-	if (!endLoad) return;
 	const output = {
 		mathml: '',
 		latex: '',
 		freeSymbols: []
 	};
+	if (!endLoad) return output;
+
 	console.log(`evalulating .... [${expr}]`);
 	if (!expr || expr.length === 0) {
 		return output;
@@ -96,8 +96,10 @@ onmessage = function (e) {
 
 	switch (action) {
 		case Actions.runParser:
+			// eslint-disable-next-line
 			return postMessage(runParser.apply(null, params));
 		default:
 			console.error(`${action} INVALID`);
 	}
+	return '';
 };

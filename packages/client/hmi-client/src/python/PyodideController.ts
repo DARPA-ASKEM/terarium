@@ -4,13 +4,16 @@ export enum Actions {
 
 export default class PyodideController {
 	private _isReady = false;
+
 	private _isBusy = false;
+
 	private worker: Promise<Worker>;
+
 	private taskQueue: any[] = [];
 
 	constructor() {
 		this.worker = new Promise((resolve, reject) => {
-			const worker = new Worker(new URL('./Pyodide.worker.ts', import.meta.url), {
+			const worker = new Worker(new URL('./PyodideWorker.ts', import.meta.url), {
 				type: 'module'
 			});
 			worker.onmessage = (e: any) => {
@@ -33,7 +36,7 @@ export default class PyodideController {
 		return this._isBusy;
 	}
 
-	async runParser(expr) {
+	async runParser(expr: any) {
 		return new Promise((...promise) => {
 			this.taskQueue.push({
 				action: Actions.runParser,
