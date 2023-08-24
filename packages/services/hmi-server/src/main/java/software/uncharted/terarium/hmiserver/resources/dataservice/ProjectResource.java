@@ -1,13 +1,21 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.models.Id;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
+import software.uncharted.terarium.hmiserver.utils.rebac.AskemDatumType;
+import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
@@ -16,6 +24,12 @@ import java.util.*;
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Project REST Endpoints")
 public class ProjectResource {
+
+	@Inject
+	ReBACService reBACService;
+
+	@Inject
+	JsonWebToken jwt;
 
 	@Inject
 	@RestClient
@@ -32,6 +46,13 @@ public class ProjectResource {
 		projects = projects
 			.stream()
 			.filter(Project::getActive)
+			.filter(project -> {
+				try {
+					return reBACService.canRead(project.getProjectID(), AskemDatumType.PROJECT, jwt.getSubject());
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			})
 			.toList();
 
 		projects.forEach(project -> {
@@ -57,7 +78,14 @@ public class ProjectResource {
 	public Response getProject(
 		@PathParam("id") final String id
 	) {
-		return proxy.getProject(id);
+		try {
+			if (reBACService.canRead(id, AskemDatumType.PROJECT, jwt.getSubject())) {
+				return proxy.getProject(id);
+			}
+			return Response.status(404).build();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@POST
@@ -65,7 +93,16 @@ public class ProjectResource {
 	public Response createProject(
 		final Project project
 	) {
-		return proxy.createProject(project);
+		Response res = proxy.createProject(project);
+		Id id = res.readEntity(new GenericType<Id>() {});
+		String location = res.getHeaderString("Location");
+		String server = res.getHeaderString("Server");
+		try {
+			reBACService.createRelationship(jwt.getSubject(), Schema.Relationship.OWNER, Integer.toString(id.getId()), AskemDatumType.PROJECT);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		return Response.status(201).header("Location", location).header("Server", server).entity(id).build();
 	}
 
 	@PUT
