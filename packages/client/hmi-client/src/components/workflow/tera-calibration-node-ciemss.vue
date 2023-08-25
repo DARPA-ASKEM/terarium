@@ -219,6 +219,17 @@ const runCalibrate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
+	let start = state.timeSpan.start;
+	let end = state.timeSpan.end;
+	// If we have the min/max timestamp available from the csv asset use it
+	if (csvAsset.value) {
+		const tIndex = csvAsset.value.headers.indexOf('timestamp');
+		if (tIndex !== -1) {
+			start = csvAsset.value.stats?.[tIndex].minValue;
+			end = csvAsset.value.stats?.[tIndex].maxValue;
+		}
+	}
+
 	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
@@ -232,8 +243,8 @@ const runCalibrate = async () => {
 			method: method.value
 		},
 		timespan: {
-			start: state.timeSpan.start,
-			end: state.timeSpan.end
+			start,
+			end
 		},
 		engine: 'ciemss'
 	};
