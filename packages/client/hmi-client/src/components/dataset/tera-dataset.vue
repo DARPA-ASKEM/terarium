@@ -479,9 +479,10 @@ const existingDatasetNames = computed(() => {
 	return datasetNames;
 });
 
-function initiateDatasetDuplication() {
-	teraAssetRef.value.initiateAssetDuplication();
-}
+// TODO: Uncomment this and its button in the options menu once TDS has dataset duplication working
+// function initiateDatasetDuplication() {
+// 	teraAssetRef.value.initiateAssetDuplication();
+// }
 
 async function duplicateDataset(copiedDatasetName: string) {
 	const duplicateDatasetResponse = await copyDataset({
@@ -510,8 +511,8 @@ const optionsMenuItems = ref([
 			isRenamingDataset.value = true;
 			newDatasetName.value = dataset.value?.name ?? '';
 		}
-	},
-	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateDatasetDuplication }
+	}
+	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateDatasetDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
 
