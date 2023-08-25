@@ -49,6 +49,8 @@ dependencies {
 	// Auth dependencies
 	implementation "io.quarkus:quarkus-oidc"
 	implementation "io.quarkus:quarkus-keycloak-authorization"
+	implementation "com.authzed.api:authzed:0.5.0"
+	implementation "io.grpc:grpc-all:1.52.1"
 
 	// Misc
 	implementation "org.apache.commons:commons-text:1.10.0"
