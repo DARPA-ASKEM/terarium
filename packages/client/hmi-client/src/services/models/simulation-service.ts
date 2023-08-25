@@ -257,12 +257,14 @@ export async function simulationPollAction(
 				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
 		)
 		.map((simulation) => simulation!.id);
-	const unhandledStateSimulationIds = response.filter(
-		(simulation) =>
-			simulation?.status !== ProgressState.QUEUED &&
-			simulation?.status !== ProgressState.RUNNING &&
-			simulation?.status !== ProgressState.COMPLETE
-	);
+	const unhandledStateSimulationIds = response
+		.filter(
+			(simulation) =>
+				simulation?.status !== ProgressState.QUEUED &&
+				simulation?.status !== ProgressState.RUNNING &&
+				simulation?.status !== ProgressState.COMPLETE
+		)
+		.map((simulation) => simulation!.id);
 
 	// there are unhandled states - we will return an error
 	if (unhandledStateSimulationIds.length > 0) {
