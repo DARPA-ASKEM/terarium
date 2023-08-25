@@ -118,8 +118,7 @@ import {
 	makeCalibrateJobJulia,
 	getRunResultJulia,
 	simulationPollAction,
-	querySimulationInProgress,
-	EventSourceManager
+	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -169,7 +168,6 @@ const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
-const eventSourceManager = new EventSourceManager();
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
@@ -245,9 +243,7 @@ const getStatus = async (simulationId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () =>
-			simulationPollAction(runIds, props.node, progress, emit, eventSourceManager)
-		);
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {

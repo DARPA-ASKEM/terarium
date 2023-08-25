@@ -16,8 +16,6 @@ import useResourcesStore from '@/stores/resources';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEqual } from 'lodash';
 import { Ref } from 'vue';
-import useAuthStore from '@/stores/auth';
-import { EventSourcePolyfill } from 'event-source-polyfill';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -202,41 +200,24 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 }
 
 // add a simulation in progress if it does not exist
-const addSimulationInProgress = (
-	state: any,
-	runIds: string[],
-	eventSourceManager: EventSourceManager
-) => {
+const addSimulationInProgress = (state: any, runIds: string[]) => {
 	if (!state.simulationsInProgress) {
 		state.simulationsInProgress = [];
 	}
 	runIds.forEach((runId) => {
 		if (!state.simulationsInProgress.includes(runId)) {
 			state.simulationsInProgress.push(runId);
-			if (eventSourceManager) {
-				// eventSourceManager.openConnection(runId);
-				// eventSourceManager.setMessageHandler(runId, (message) => {
-				// 	console.log(message);
-				// });
-			}
 		}
 	});
 };
 
 // delete a simulation in progress if it exists
-const deleteSimulationInProgress = (
-	state: any,
-	runIds: string[],
-	eventSourceManager: EventSourceManager
-) => {
+const deleteSimulationInProgress = (state: any, runIds: string[]) => {
 	if (state.simulationsInProgress) {
 		runIds.forEach((runId) => {
 			const index = state.simulationsInProgress.indexOf(runId);
 			if (index !== -1) {
 				state.simulationsInProgress.splice(index, 1);
-				if (eventSourceManager) {
-					// eventSourceManager.closeConnection(runId);
-				}
 			}
 		});
 	}
@@ -258,10 +239,10 @@ export async function simulationPollAction(
 	simulationIds: string[],
 	node: WorkflowNode,
 	progress: Ref<{ status: ProgressState; value: number }>,
-	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void,
-	eventSourceManager: EventSourceManager
+	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
 ) {
 	const requestList: Promise<Simulation | null>[] = [];
+
 	simulationIds.forEach((id) => {
 		requestList.push(getSimulation(id));
 	});
@@ -276,11 +257,31 @@ export async function simulationPollAction(
 				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
 		)
 		.map((simulation) => simulation!.id);
+	const unhandledStateSimulationIds = response.filter(
+		(simulation) =>
+			simulation?.status !== ProgressState.QUEUED &&
+			simulation?.status !== ProgressState.RUNNING &&
+			simulation?.status !== ProgressState.COMPLETE
+	);
+
+	// there are unhandled states - we will return an error
+	if (unhandledStateSimulationIds.length > 0) {
+		const newState = deleteSimulationInProgress(node, simulationIds);
+		if (!isEqual(node.state, newState)) {
+			emitFn('update-state', newState);
+		}
+
+		return {
+			data: response,
+			progress: null,
+			error: true
+		};
+	}
 
 	// all simulations complete
 	if (inProgressSimulationIds.length === 0 && completedSimulationIds.length > 0) {
 		const newState = cloneDeep(node.state);
-		deleteSimulationInProgress(newState, completedSimulationIds, eventSourceManager);
+		deleteSimulationInProgress(newState, completedSimulationIds);
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
@@ -295,17 +296,14 @@ export async function simulationPollAction(
 	// handle any in progress simulations
 	if (inProgressSimulationIds.length > 0) {
 		const newState = cloneDeep(node.state);
-		addSimulationInProgress(newState, inProgressSimulationIds, eventSourceManager);
-		deleteSimulationInProgress(newState, completedSimulationIds, eventSourceManager);
+		addSimulationInProgress(newState, inProgressSimulationIds);
+		deleteSimulationInProgress(newState, completedSimulationIds);
 
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
 		}
-		progress.value = {
-			status: ProgressState.RUNNING,
-			value: 0
-		};
+		progress.value.status = ProgressState.RUNNING;
 		// keep polling
 		return {
 			data: null,
@@ -325,57 +323,4 @@ export async function simulationPollAction(
 		progress: null,
 		error: true
 	};
-}
-
-type MessageHandler = (message: any) => void;
-
-export class EventSourceManager {
-	private connections: Map<string, EventSourcePolyfill> = new Map();
-
-	public messageHandlers: Map<string, MessageHandler> = new Map();
-
-	public openConnection(id: string) {
-		if (!this.connections.has(id)) {
-			const auth = useAuthStore();
-			const eventSource = new EventSourcePolyfill(`/api/simulations/${id}/partial-result`, {
-				headers: {
-					Authorization: `Bearer ${auth.token}`
-				}
-			});
-
-			eventSource.onopen = () => {
-				console.log(`EventSource opened for ID: ${id}`);
-			};
-
-			eventSource.onmessage = (event) => {
-				const handler = this.messageHandlers.get(id);
-				if (handler) {
-					handler(event.data);
-				}
-			};
-
-			eventSource.onerror = (error) => {
-				console.error(`EventSource error for ID ${id}: ${error}`);
-			};
-
-			this.connections.set(id, eventSource);
-		} else {
-			console.log(`EventSource already open for ID: ${id}`);
-		}
-	}
-
-	public setMessageHandler(id: string, handler: MessageHandler) {
-		this.messageHandlers.set(id, handler);
-	}
-
-	public closeConnection(id: string) {
-		const eventSource = this.connections.get(id);
-
-		if (eventSource) {
-			eventSource.close();
-			console.log(`EventSource closed for ID: ${id}`);
-			this.messageHandlers.delete(id);
-			this.connections.delete(id);
-		}
-	}
 }
