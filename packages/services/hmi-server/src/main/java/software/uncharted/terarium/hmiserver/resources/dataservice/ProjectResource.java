@@ -112,7 +112,14 @@ public class ProjectResource {
 		@PathParam("id") final String id,
 		final Project project
 	) {
-		return proxy.updateProject(id, project);
+		try {
+			if (reBACService.canWrite(id, AskemDatumType.PROJECT, jwt.getSubject())) {
+				return proxy.updateProject(id, project);
+			}
+			return Response.notModified().build();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@DELETE
@@ -121,7 +128,14 @@ public class ProjectResource {
 	public Response deleteProject(
 		@PathParam("id") final String id
 	) {
-		return proxy.deleteProject(id);
+		try {
+			if (reBACService.canAdministrate(id, AskemDatumType.PROJECT, jwt.getSubject())) {
+				return proxy.deleteProject(id);
+			}
+			return Response.notModified().build();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@GET
@@ -130,11 +144,18 @@ public class ProjectResource {
 		@PathParam("project_id") final String projectId,
 		@QueryParam("types") final List<String> types
 	) {
-		return Response
-			.status(Response.Status.OK)
-			.entity(proxy.getAssets(projectId, types))
-			.type(MediaType.APPLICATION_JSON)
-			.build();
+		try {
+			if (reBACService.canRead(projectId, AskemDatumType.PROJECT, jwt.getSubject())) {
+				return Response
+					.status(Response.Status.OK)
+					.entity(proxy.getAssets(projectId, types))
+					.type(MediaType.APPLICATION_JSON)
+					.build();
+			}
+			return Response.status(404).build();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 
 	}
 
@@ -145,7 +166,14 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		return proxy.createAsset(projectId, type, resourceId); // ResourceType.findByType(type).name()
+		try {
+			if (reBACService.canWrite(projectId, AskemDatumType.PROJECT, jwt.getSubject())) {
+				return proxy.createAsset(projectId, type, resourceId); // ResourceType.findByType(type).name()
+			}
+			return Response.notModified().build();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@DELETE
@@ -155,6 +183,13 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		return proxy.deleteAsset(projectId, type, resourceId);
+		try {
+			if (reBACService.canWrite(projectId, AskemDatumType.PROJECT, jwt.getSubject())) {
+				return proxy.deleteAsset(projectId, type, resourceId);
+			}
+			return Response.notModified().build();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
