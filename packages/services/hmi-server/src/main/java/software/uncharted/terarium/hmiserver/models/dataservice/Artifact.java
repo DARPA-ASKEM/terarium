@@ -20,7 +20,7 @@ import java.util.List;
 @TSModel
 public class Artifact {
 
-	/* The name of the artifact. */
+	/* The id of the artifact. */
 	@TSOptional
 	private String id;
 

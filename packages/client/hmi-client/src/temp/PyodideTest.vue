@@ -1,0 +1,120 @@
+<template>
+	<main style="margin: 2rem; display: flex; flex-direction: column">
+		<h4>Python loaded in {{ ((endLoad - startLoad) / 1000).toFixed(2) }} seconds</h4>
+		<section>
+			The following variables are preset:
+			<div v-for="(k) in Object.keys(variableMap) as string[]" :key="k">
+				<div style="margin-left: 2rem">{{ k }} = {{ variableMap[k] }}</div>
+			</div>
+		</section>
+		<textarea style="width: 75rem; height: 10rem" v-model="exprString"> </textarea>
+		<br />
+		<div style="display: flex; flex-direction: row">
+			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+				MathML: <br />
+				{{ mathml }}
+			</div>
+			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+				Latex: <br />
+				{{ latex }}
+			</div>
+			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+				Eval: <br />
+				{{ evalResult }}
+			</div>
+			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+				Symbols: <br />
+				{{ freeSymbols }}
+			</div>
+		</div>
+	</main>
+	<main v-if="!isReady">
+		<h4>Loading Python and modules ...</h4>
+	</main>
+</template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import PyodideController from '@/python/PyodideController';
+
+const mathml = ref('');
+const latex = ref('');
+const freeSymbols = ref([]);
+const evalResult = ref<any>('');
+
+const exprString = ref('');
+const isReady = ref(false);
+const startLoad = ref(0);
+const endLoad = ref(0);
+
+/*
+const renameParameterId = (amr: Model, newId: string, oldId: string) => {
+	const ode = amr.semantics?.ode;
+	if (!ode) return;
+
+	ode.parameters?.forEach((param) => {
+		if (param.id === oldId) param.id = newId;
+	});
+
+	if (ode.observables) {
+		ode.observables.forEach((obs) => {
+			const expression = obs.expression as string;
+			const newExpression = pythonExpr.substituteExpression(expression, newId, oldId);
+			obs.expression = newExpression.str;
+			obs.expression_mathml = newExpression.mathml;
+		});
+	}
+
+	if (ode.rates) {
+		ode.rates.forEach((rate) => {
+			const expression = rate.expression as string;
+			const newExpression = pythonExpr.substituteExpression(expression, newId, oldId);
+			rate.expression = newExpression.str;
+			rate.expression_mathml = newExpression.mathml;
+		});
+	}
+};
+*/
+
+const variableMap: Object = {
+	S: 1,
+	I: 2,
+	R: 'x + y',
+	x: 100,
+	y: 1000,
+	N: 'S + I + R'
+};
+
+const controller = new PyodideController();
+const start = async () => {
+	let result: any;
+	result = await controller.parseExpression('a + b + c + 10');
+	console.log('parse test', result);
+
+	result = await controller.evaluateExpression('a + b', { a: 11, b: 22 });
+	console.log('eval test', result);
+};
+
+start();
+
+watch(
+	() => exprString.value,
+	async () => {
+		const f = await controller.evaluateExpression(exprString.value, variableMap);
+		evalResult.value = f;
+
+		const result = (await controller.parseExpression(exprString.value)) as any;
+		mathml.value = result.mathml;
+		latex.value = result.latex;
+		freeSymbols.value = result.freeSymbols;
+
+		/*
+		runParser(exprString.value);
+		if (pythonExpr) {
+			const f = pythonExpr.evaluateExpression(exprString.value, variableMap);
+			evalResult.value = f;
+		}
+		*/
+	}
+);
+</script>

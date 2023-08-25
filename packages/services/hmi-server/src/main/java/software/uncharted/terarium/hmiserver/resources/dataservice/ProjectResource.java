@@ -54,7 +54,7 @@ public class ProjectResource {
 			.toList();
 
 		projects.forEach(project -> {
-			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList("datasets", "models", "publications"));
+			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList(Assets.AssetType.DATASETS, Assets.AssetType.MODELS, Assets.AssetType.PUBLICATIONS));
 			Map<String, String> metadata = new HashMap<>();
 			metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
 			metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
@@ -140,7 +140,7 @@ public class ProjectResource {
 	@Path("/{project_id}/assets")
 	public Response getAssets(
 		@PathParam("project_id") final String projectId,
-		@QueryParam("types") final List<String> types
+		@QueryParam("types") final List<Assets.AssetType> types
 	) {
 		try {
 			if (reBACService.canRead(projectId, AskemDatumType.PROJECT, jwt.getSubject())) {
@@ -161,12 +161,12 @@ public class ProjectResource {
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
 	public Response createAsset(
 		@PathParam("project_id") final String projectId,
-		@PathParam("resource_type") final String type, // ResourceType
+		@PathParam("resource_type") final Assets.AssetType type,
 		@PathParam("resource_id") final String resourceId
 	) {
 		try {
 			if (reBACService.canWrite(projectId, AskemDatumType.PROJECT, jwt.getSubject())) {
-				return proxy.createAsset(projectId, type, resourceId); // ResourceType.findByType(type).name()
+				return proxy.createAsset(projectId, type, resourceId);
 			}
 			return Response.notModified().build();
 		} catch (Exception e) {
@@ -178,7 +178,7 @@ public class ProjectResource {
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
 	public Response deleteAsset(
 		@PathParam("project_id") final String projectId,
-		@PathParam("resource_type") final String type, // ResourceType
+		@PathParam("resource_type") final Assets.AssetType type,
 		@PathParam("resource_id") final String resourceId
 	) {
 		try {

@@ -12,7 +12,9 @@
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
 				:auto-expand-preview="autoExpandPreview"
+				:default-preview="defaultPreview"
 				@cell-updated="scrollToLastCell"
+				@preview-selected="previewSelected"
 			/>
 
 			<!-- Chatty Input -->
@@ -28,14 +30,14 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onUnmounted, onMounted } from 'vue';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import {
 	getSessionManager,
 	JupyterMessage,
 	KernelState,
 	createMessageId
 } from '@/services/jupyter';
-import { CsvAsset } from '@/types/Types';
+import { AssetType, CsvAsset } from '@/types/Types';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
@@ -67,14 +69,15 @@ const emit = defineEmits([
 	'download-response',
 	'update-kernel-status',
 	'new-dataset-saved',
-	'new-model-saved'
+	'new-model-saved',
+	'update-kernel-state'
 ]);
 
 const props = defineProps<{
 	project?: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes;
+	assetType?: AssetType;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
 	showChatThoughts?: boolean;
@@ -88,6 +91,7 @@ onMounted(() => {
 });
 
 const queryString = ref('');
+const defaultPreview = ref('df');
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
@@ -96,6 +100,10 @@ const iopubMessageHandler = (_session, message) => {
 		return;
 	}
 	newJupyterMessage(message);
+};
+
+const previewSelected = (selection) => {
+	defaultPreview.value = selection;
 };
 
 props.jupyterSession.iopubMessage.connect(iopubMessageHandler);
@@ -180,11 +188,13 @@ const updateNotebookCells = (message) => {
 			(msg) => msg.header.msg_type !== 'dataset'
 		);
 		notebookItem.resultingCsv = message.content;
+		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'model_preview') {
 		// If we get a new model preview, remove any old previews
 		notebookItem.messages = notebookItem.messages.filter(
 			(msg) => msg.header.msg_type !== 'model_preview'
 		);
+		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
 		notebookItem.executions.push(executionParent);

@@ -1,16 +1,5 @@
-import { DocumentAsset, Document, Dataset, Model, Artifact } from '@/types/Types';
+import { DocumentAsset, Document, Dataset, Model, Artifact, AssetType, Code } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
-
-// TODO: this should be an enum driven by our back end.
-export enum ProjectAssetTypes {
-	DOCUMENTS = 'publications',
-	MODELS = 'models',
-	SIMULATIONS = 'simulations',
-	SIMULATION_WORKFLOW = 'workflows',
-	DATASETS = 'datasets',
-	CODE = 'code',
-	ARTIFACTS = 'artifacts'
-}
 
 export enum ProjectPages {
 	OVERVIEW = 'overview',
@@ -19,18 +8,23 @@ export enum ProjectPages {
 	EMPTY = ''
 }
 
-export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
-	Object.values(ProjectAssetTypes).includes(type as ProjectAssetTypes);
+export const isProjectAssetTypes = (type: AssetType | string): boolean =>
+	Object.values(AssetType).includes(type as AssetType);
 
+// TODO this is essentially the same as Assets from Types.tx, however for some reason the
+// Workflows class referenced here is only implemented on the front end and not
+// driven by the TypeScrypt generation on the backend. This should be fixed.
 export type ProjectAssets = {
-	[ProjectAssetTypes.DOCUMENTS]: DocumentAsset[];
-	[ProjectAssetTypes.MODELS]: Model[];
-	[ProjectAssetTypes.DATASETS]: Dataset[];
-	[ProjectAssetTypes.CODE]: any[];
-	[ProjectAssetTypes.ARTIFACTS]: Artifact[];
-	[ProjectAssetTypes.SIMULATION_WORKFLOW]: Workflow[];
+	[AssetType.Publications]: DocumentAsset[];
+	[AssetType.Models]: Model[];
+	[AssetType.Datasets]: Dataset[];
+	[AssetType.Code]: Code[];
+	[AssetType.Artifacts]: Artifact[];
+	[AssetType.Workflows]: Workflow[];
 };
 
+// TODO this is essentially the same as Project from Types.ts, however it references
+// the above ProjectAssets type instead of the Assets type. This should be fixed.
 export interface IProject {
 	id: string;
 	name: string;

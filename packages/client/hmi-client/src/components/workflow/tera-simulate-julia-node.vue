@@ -11,7 +11,7 @@
 				:colorByRun="true"
 			/>
 		</div>
-		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>
+		<Button class="add-chart" text @click="addChart" label="Add chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />
@@ -52,7 +52,7 @@ const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
 

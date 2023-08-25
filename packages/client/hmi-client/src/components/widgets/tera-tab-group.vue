@@ -43,7 +43,8 @@ import Button from 'primevue/button';
 import { getAssetIcon } from '@/services/project';
 import { ref, watch } from 'vue';
 import useResourceStore from '@/stores/resources';
-import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
+import { ProjectPages } from '@/types/Project';
+import { AssetType } from '@/types/Types';
 
 const props = defineProps<{
 	tabs: Tab[];
@@ -59,13 +60,19 @@ const loadingTabIndex = ref();
 const getTabName = (tab: Tab) => {
 	if (tab.assetName) return tab.assetName;
 	if (tab.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	if (tab.pageType === ProjectAssetTypes.CODE) return 'New File';
 	const assets = resourceStore.activeProjectAssets;
 
 	if (assets) {
-		const asset: any = assets[tab.pageType as string].find((d: any) => d.id === tab.assetId);
-		return asset.name ?? 'n/a';
+		const asset: any = assets[tab.pageType as string].find(
+			(assetItem: any) => assetItem.id?.toString() === tab.assetId?.toString()
+		);
+		// FIXME: remove this check for title/name once the following github issue has been addressed
+		// https://github.com/DARPA-ASKEM/data-service/issues/299
+		return (tab.pageType === AssetType.Publications ? asset?.title : asset?.name) ?? 'n/a';
 	}
+
+	if (tab.pageType === AssetType.Code) return 'New File';
+
 	return 'n/a';
 };
 

@@ -11,5 +11,10 @@ import java.io.Serializable;
 public class SimulationIntermediateResults implements Serializable {
 	@JsonAlias("job_id")
 	private String jobId;
-	private float progress;
+	private Double progress;
+
+	@Override
+	public String toString(){
+		return "{job_id: '" + this.jobId + "', progress: " + Double.toString(this.progress) + "}";
+	}
 }

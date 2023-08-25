@@ -473,12 +473,24 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
+					<div v-if="stratifiedModelType">Stratified configs (WIP)</div>
 					<tera-stratified-model-configuration
-						v-if="model.semantics?.span"
+						ref="stratifiedModelConfigurationRef"
+						v-if="stratifiedModelType"
+						:stratified-model-type="stratifiedModelType"
 						:model="model"
 						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
+						@new-model-configuration="emit('new-model-configuration')"
 					/>
-					<tera-model-configuration v-else :model="model" :feature-config="featureConfig" />
+					<div v-if="stratifiedModelType"><br />All values</div>
+					<tera-model-configuration
+						ref="modelConfigurationRef"
+						:model="model"
+						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
+						@new-model-configuration="emit('new-model-configuration')"
+					/>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -522,6 +534,7 @@
 				v-if="isCopyModelModalVisible"
 				class="modal"
 				@modal-mask-clicked="isCopyModelModalVisible = false"
+				@modal-enter-press="duplicateModel"
 			>
 				<template #header>
 					<h4>Make a copy</h4>
@@ -568,7 +581,8 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import {
 	convertToAMRModel,
 	updateConfigFields,
-	updateParameterId
+	updateParameterId,
+	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
@@ -576,8 +590,8 @@ import { createModel, getModel, getModelConfigurations, updateModel } from '@/se
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { ResultType, FeatureConfig } from '@/types/common';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
+import { IProject } from '@/types/Project';
+import { Model, Document, Dataset, ProvenanceType, AssetType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
@@ -596,7 +610,12 @@ enum ModelView {
 }
 
 // TODO - Get rid of these emits
-const emit = defineEmits(['close-preview', 'asset-loaded', 'close-current-tab']);
+const emit = defineEmits([
+	'close-preview',
+	'asset-loaded',
+	'close-current-tab',
+	'new-model-configuration'
+]);
 
 const props = defineProps({
 	project: {
@@ -649,6 +668,8 @@ const existingModelNames = computed(() => {
 	return modelNames;
 });
 
+const stratifiedModelType = computed(() => model.value && getStratificationType(model.value));
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
@@ -669,6 +690,21 @@ const optionsMenuItems = ref([
 	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
+
+// These reference the different config components (TEMPORARY)
+const stratifiedModelConfigurationRef = ref();
+const modelConfigurationRef = ref();
+
+// Sync different configs as we are TEMPORARILY showing both for stratified models
+function syncConfigs(updateStratified = false) {
+	if (stratifiedModelType.value) {
+		if (updateStratified) {
+			stratifiedModelConfigurationRef.value?.initializeConfigSpace();
+		} else {
+			modelConfigurationRef.value?.initializeConfigSpace();
+		}
+	}
+}
 
 function getJustModelName(modelName: string): string {
 	let potentialNum: string = '';
@@ -729,11 +765,7 @@ async function duplicateModel() {
 		isCopyModelModalVisible.value = false;
 		return;
 	}
-	await ProjectService.addAsset(
-		props.project.id,
-		ProjectAssetTypes.MODELS,
-		duplicateModelResponse.id
-	);
+	await ProjectService.addAsset(props.project.id, AssetType.Models, duplicateModelResponse.id);
 	isCopyModelModalVisible.value = false;
 }
 
@@ -890,7 +922,7 @@ const createNewModel = async () => {
 		if (newModelResp) {
 			const modelId = newModelResp.id.toString();
 			emit('close-current-tab');
-			await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+			await ProjectService.addAsset(props.project.id, AssetType.Models, modelId);
 
 			// Go to the model you just created
 			router.push({
@@ -898,7 +930,7 @@ const createNewModel = async () => {
 				params: {
 					assetName: newModelName.value,
 					assetId: modelId,
-					pageType: ProjectAssetTypes.MODELS
+					pageType: AssetType.Models
 				}
 			});
 		}
@@ -1072,14 +1104,6 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
-}
-
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
 }
 
 .p-datatable:deep(td:hover) {

@@ -145,7 +145,7 @@ import { RouteName } from '@/router/routes';
 import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
 import { Tab } from '@/types/common';
-import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -157,6 +157,7 @@ import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
+import { AssetType } from '@/types/Types';
 import TeraModelModal from './components/tera-model-modal.vue';
 
 import TeraProjectPage from './components/tera-project-page.vue';
@@ -165,7 +166,7 @@ import TeraProjectPage from './components/tera-project-page.vue';
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
-	pageType?: ProjectAssetTypes | ProjectPages;
+	pageType?: AssetType | ProjectPages;
 }>();
 
 const tabStore = useTabStore();
@@ -238,7 +239,7 @@ async function removeAsset(asset: Tab) {
 	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
 		const isRemoved = await ProjectService.deleteAsset(
 			props.project.id,
-			pageType as ProjectAssetTypes,
+			pageType as AssetType,
 			assetId
 		);
 
@@ -256,23 +257,19 @@ const openWorkflow = async () => {
 	// Create a new workflow
 	let wfName = 'workflow';
 	if (props.project && props.project.assets) {
-		wfName = `workflow ${props.project.assets[ProjectAssetTypes.SIMULATION_WORKFLOW].length + 1}`;
+		wfName = `workflow ${props.project.assets[AssetType.Workflows].length + 1}`;
 	}
 	const wf = emptyWorkflow(wfName, '');
 
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await ProjectService.addAsset(
-		props.project.id,
-		ProjectAssetTypes.SIMULATION_WORKFLOW,
-		workflowId
-	);
+	await ProjectService.addAsset(props.project.id, AssetType.Workflows, workflowId);
 
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
+			pageType: AssetType.Workflows,
 			assetId: workflowId
 		}
 	});
@@ -280,10 +277,10 @@ const openWorkflow = async () => {
 
 const openNewAsset = (assetType: string) => {
 	switch (assetType) {
-		case ProjectAssetTypes.MODELS:
+		case AssetType.Models:
 			isNewModelModalVisible.value = true;
 			break;
-		case ProjectAssetTypes.SIMULATION_WORKFLOW:
+		case AssetType.Workflows:
 			openWorkflow();
 			break;
 		default:
@@ -299,8 +296,9 @@ const overviewResource = {
 	pageType: ProjectPages.OVERVIEW,
 	assetId: ''
 };
+
 const codeResource = {
-	pageType: ProjectAssetTypes.CODE,
+	pageType: AssetType.Code,
 	assetId: ''
 };
 
@@ -347,7 +345,7 @@ const adjustTabs = () => {
 
 	// If new code or overview
 	if (!tabExist && !assetId) {
-		if (pageType === ProjectAssetTypes.CODE) {
+		if (pageType === AssetType.Code) {
 			tabStore.addTab(projectId, codeResource);
 			openAsset();
 		} else if (pageType === ProjectPages.OVERVIEW) {
