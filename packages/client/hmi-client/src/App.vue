@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, ref, watch } from 'vue';
+import { computed, shallowRef, ref, watch, provide } from 'vue';
 import Toast from 'primevue/toast';
 import Button from 'primevue/button';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
@@ -88,11 +88,12 @@ import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import * as ProjectService from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import { ResourceType } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { addAssetKey, deleteAssetKey } from '@/symbols';
 import { useCurrentRoute } from './router/index';
+import { AssetType } from './types/Types';
 
 const toast = useToastService();
 /**
@@ -119,9 +120,20 @@ const showSuggestions = computed(() => {
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const resourcesStore = useResourcesStore();
 const project = shallowRef<IProject | null>(null);
 const projects = shallowRef<IProject[] | null>(null);
+
+async function addAsset(projectId: string, assetType: string, assetId: string) {
+	const newAssetId = await ProjectService.addAsset(projectId, assetType, assetId);
+	setTimeout(async () => {
+		project.value = await ProjectService.get(projectId as IProject['id'], true);
+	}, 1000);
+	return newAssetId;
+}
+
+async function deleteAsset(projectId: string, assetType: AssetType, assetId: string) {
+	return ProjectService.deleteAsset(projectId, assetType, assetId);
+}
 
 API.interceptors.response.use(
 	(response) => response,
@@ -139,18 +151,13 @@ API.interceptors.response.use(
 	}
 );
 
-async function fetchProject(id: IProject['id']) {
-	resourcesStore.reset();
-	// fetch basic metadata about project assets and save them into a global store/cache
-	resourcesStore.setActiveProject(await ProjectService.get(id, true));
-}
-
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
 		// If the projectId or the Project are null, set the Project to null.
 		if (projectId && !!projectId) {
-			fetchProject(projectId as IProject['id']);
+			// fetchProject(projectId as IProject['id']);
+			project.value = await ProjectService.get(projectId as IProject['id'], true);
 		} else {
 			project.value = null;
 		}
@@ -163,9 +170,9 @@ watch(
 
 // This is crucial - every time the resource store is modified the project prop will be updated to match it
 // Once you update assets within a project (add/remove) the project service sets the resource store to what's in the project in the backend
-resourcesStore.$subscribe((_mutation, state) => {
-	project.value = state.activeProject;
-});
+// resourcesStore.$subscribe((_mutation, state) => {
+// 	project.value = state.activeProject;
+// });
 
 const isAboutModalVisible = ref(false);
 
@@ -177,6 +184,11 @@ const documentation = computed(() => {
 	const url = host.replace(/\bapp\b/g, 'documentation');
 	return `https://${url}`;
 });
+
+provide('activeProject', project);
+provide(addAssetKey, addAsset);
+provide(deleteAssetKey, deleteAsset);
+provide('projectList', projects);
 </script>
 
 <style scoped>

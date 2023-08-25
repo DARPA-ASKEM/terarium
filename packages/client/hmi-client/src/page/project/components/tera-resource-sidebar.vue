@@ -129,7 +129,7 @@
 				<template #default>
 					<p>
 						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ project.name }}.
+						{{ activeProject?.name }}.
 					</p>
 				</template>
 				<template #footer>
@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, inject, Ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -158,7 +158,7 @@ import { AssetType } from '@/types/Types';
 
 type IProjectAssetTabs = Map<AssetType, Set<Tab>>;
 
-const props = defineProps<{
+defineProps<{
 	project: IProject;
 	activeTab: Tab;
 }>();
@@ -170,11 +170,12 @@ const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 const assetToDelete = ref<Tab | null>(null);
 const searchAsset = ref<string | null>('');
+const activeProject = inject<Ref<IProject>>('activeProject');
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<AssetType, Set<Tab>>();
 
-	const projectAssets = props.project?.assets;
+	const projectAssets = activeProject?.value?.assets;
 	if (!projectAssets) return tabs;
 
 	// Run through all the assets type within the project
