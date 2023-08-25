@@ -270,7 +270,7 @@ const getStatus = async (simulationId: string) => {
 		eventSourceManager.openConnection(id);
 		eventSourceManager.setMessageHandler(id, (message) => {
 			const parsedMessage = JSON.parse(message);
-			if (parsedMessage.progres) {
+			if (parsedMessage.progress) {
 				progress.value.value = Math.round(parsedMessage.progress * 100);
 			}
 		});
