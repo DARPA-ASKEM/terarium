@@ -101,6 +101,8 @@
 					:key="index"
 					:run-results="runResults"
 					:chartConfig="cfg"
+					:initial-data="csvAsset"
+					:mapping="mapping"
 					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>

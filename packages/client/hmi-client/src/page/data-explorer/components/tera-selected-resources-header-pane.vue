@@ -68,11 +68,6 @@ const addResourcesToProject = async (projectId: string) => {
 				// then, link and store in the project assets
 				const assetsType = AssetType.Publications;
 				await ProjectService.addAsset(projectId, assetsType, documentId);
-
-				// TODO: Find a way for documents to be added without this
-				// update local copy of project assets
-				// @ts-ignore
-				resources.activeProject?.assets?.[AssetType.Publications].push(documentId, body);
 			}
 		}
 		if (isModel(selectedItem)) {

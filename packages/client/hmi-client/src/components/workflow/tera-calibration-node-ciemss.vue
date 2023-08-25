@@ -125,6 +125,8 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
+import useAuthStore from '@/stores/auth';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -217,6 +219,17 @@ const runCalibrate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
+	let start = state.timeSpan.start;
+	let end = state.timeSpan.end;
+	// If we have the min/max timestamp available from the csv asset use it
+	if (csvAsset.value) {
+		const tIndex = csvAsset.value.headers.indexOf('timestamp');
+		if (tIndex !== -1) {
+			start = csvAsset.value.stats?.[tIndex].minValue;
+			end = csvAsset.value.stats?.[tIndex].maxValue;
+		}
+	}
+
 	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
@@ -230,27 +243,56 @@ const runCalibrate = async () => {
 			method: method.value
 		},
 		timespan: {
-			start: state.timeSpan.start,
-			end: state.timeSpan.end
+			start,
+			end
 		},
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
+	// Run MQ Test
+	console.log(`Checking MQ for job Id ${response.simulationId}`);
+	const auth = useAuthStore();
+	const eventsource = new EventSourcePolyfill(
+		`/api/simulations/${response.simulationId}/partial-result`,
+		{
+			headers: {
+				Authorization: `Bearer ${auth.token}`
+			}
+		}
+	);
+	eventsource.onerror = (e) => {
+		console.log('An error occurred while attempting to connect.');
+		console.log(e);
+		eventsource.close();
+		console.log('Closing eventsource');
+	};
+	eventsource.onmessage = (event) => {
+		console.log(event);
+		const json = event.data;
+		console.log(json);
+		eventsource.close();
+		console.log('Closing eventsource');
+	};
 	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
 
 const getStatus = async (simulationId: string) => {
+	console.log('Getting status');
 	showSpinner.value = true;
-	if (!simulationId) return;
-
+	if (!simulationId) {
+		console.log('No sim id');
+		return;
+	}
+	console.log(`Simulation Id:${simulationId}`);
 	const runIds = [simulationId];
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	console.log('Poller defined');
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {

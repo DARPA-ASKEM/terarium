@@ -35,6 +35,8 @@ services:
       - data-service-port=8000
       - model-service-host=model-service
       - model-service-port=8888
+    volumes:
+      - ./packages/services/hmi-server:/hmi-server/packages/services/hmi-server
   terarium-db:
     image: postgres:15.1
     expose:
@@ -58,7 +60,7 @@ services:
       SQL_PORT: 5432
       SQL_USER: dev
       SQL_PASSWORD: dev
-      NEO4J_ENABLED:
+      NEO4J_ENABLED: true
       NEO4J_driver: neo4j://neo4j:7687
       AWS_ACCESS_KEY_ID: miniouser
       AWS_SECRET_ACCESS_KEY: miniopass
@@ -176,7 +178,7 @@ services:
       - SQL_USER=dev
       - SQL_PASSWORD=dev
       - SQL_DB=askem
-      - NEO4J_ENABLED=
+      - NEO4J_ENABLED=true
       - NEO4J_driver=neo4j://neo4j:7687
       - AWS_ACCESS_KEY_ID=miniouser
       - AWS_SECRET_ACCESS_KEY=miniopass
