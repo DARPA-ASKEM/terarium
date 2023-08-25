@@ -5,9 +5,7 @@
 		:feature-config="featureConfig"
 		:is-naming-asset="isNamingModel"
 		:stretch-content="modelView === ModelView.MODEL"
-		:names-to-not-duplicate="existingModelNames"
 		@close-preview="emit('close-preview')"
-		@duplicate="duplicateModel"
 	>
 		<template #name-input>
 			<InputText
@@ -630,31 +628,6 @@ const stratifiedModelType = computed(() => model.value && getStratificationType(
  * User Menu & Duplication
  */
 const teraAssetRef = ref();
-const existingModelNames = computed(() => {
-	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
-	});
-	return modelNames;
-});
-
-async function duplicateModel(copiedModelName: string) {
-	const duplicateModelResponse = await createModel({
-		...model.value,
-		name: copiedModelName.trim()
-	});
-	if (!duplicateModelResponse) {
-		logger.info('Failed to duplicate model.');
-		teraAssetRef.value.isCopyModalVisible = false;
-		return;
-	}
-	await ProjectService.addAsset(props.project.id, AssetType.Models, duplicateModelResponse.id);
-	teraAssetRef.value.isCopyModalVisible = false;
-}
-
-function initiateModelDuplication() {
-	teraAssetRef.value.initiateAssetDuplication();
-}
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -669,11 +642,6 @@ const optionsMenuItems = ref([
 			isRenamingModel.value = true;
 			newModelName.value = model.value?.name ?? '';
 		}
-	},
-	{
-		icon: 'pi pi-clone',
-		label: 'Make a copy',
-		command: initiateModelDuplication
 	}
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);

@@ -90,17 +90,6 @@ async function createDataset(dataset: Dataset): Promise<Dataset | null> {
 	return null;
 }
 
-async function copyDataset(dataset: Dataset): Promise<Dataset | null> {
-	delete dataset.id;
-	delete dataset.timestamp;
-	// delete dataset.columns;
-
-	console.log(dataset);
-
-	const copiedDataset = await createDataset(dataset); // Lacks columns
-	return copiedDataset ?? null;
-}
-
 /**
  * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
  * share the same name as the file and can optionally have a description
@@ -254,7 +243,6 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
-	copyDataset,
 	createNewDatasetFromCSV,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult

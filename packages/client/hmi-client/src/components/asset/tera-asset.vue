@@ -60,33 +60,6 @@
 		<section :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
-		<Teleport to="body">
-			<tera-modal
-				v-if="isCopyModalVisible"
-				class="modal"
-				@modal-mask-clicked="isCopyModalVisible = false"
-			>
-				<template #header>
-					<h4>Make a copy</h4>
-				</template>
-				<template #default>
-					<form>
-						<label for="copy-asset">{{ copyNameInputPrompt }}</label>
-						<InputText
-							v-bind:class="invalidInputStyle"
-							id="copy-asset"
-							type="text"
-							v-model="copiedAssetName"
-							placeholder="Asset name"
-						/>
-					</form>
-				</template>
-				<template #footer>
-					<Button @click="duplicateAsset">Copy asset</Button>
-					<Button class="p-button-secondary" @click="isCopyModalVisible = false"> Cancel </Button>
-				</template>
-			</tera-modal>
-		</Teleport>
 	</main>
 </template>
 
@@ -94,9 +67,6 @@
 import { ref, computed, watch, PropType } from 'vue';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import InputText from 'primevue/inputtext';
-import { logger } from '@/utils/logger';
 
 const props = defineProps({
 	name: {
@@ -123,11 +93,6 @@ const props = defineProps({
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
 	},
-	// Duplication
-	namesToNotDuplicate: {
-		type: Array as PropType<String[]>,
-		default: () => []
-	},
 	// Booleans default to false if not specified
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
@@ -140,13 +105,6 @@ const emit = defineEmits(['close-preview', 'duplicate']);
 const assetContainer = ref();
 const headerRef = ref();
 const scrollPosition = ref(0);
-
-const copiedAssetName = ref<string>('');
-const copyNameInputPrompt = ref('');
-const isValidDuplicateName = ref<boolean>(true);
-const isCopyModalVisible = ref(false);
-
-const invalidInputStyle = computed(() => (!isValidDuplicateName.value ? 'p-invalid' : ''));
 
 const shrinkHeader = computed(() => {
 	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
@@ -165,56 +123,6 @@ const stretchContentStyle = computed(() =>
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
-}
-
-function getJustAssetName(modelName: string): string {
-	let potentialNum: string = '';
-	let completeParen: boolean = false;
-	let idx = modelName.length;
-	if (modelName.charAt(modelName.length - 1) === ')') {
-		for (let i = modelName.length - 2; i >= 0; i--) {
-			if (modelName.charAt(i) === '(') {
-				completeParen = true;
-				idx = i;
-				break;
-			}
-			potentialNum = modelName.charAt(i) + potentialNum;
-		}
-	}
-
-	if (completeParen && !Number.isNaN(potentialNum as any)) {
-		return modelName.substring(0, idx).trim();
-	}
-	return modelName.trim();
-}
-
-function getSuggestedAssetName(currModelName: string, counter: number): string {
-	const suggestedName = `${currModelName} (${counter})`;
-
-	if (!props.namesToNotDuplicate.includes(suggestedName)) {
-		return suggestedName;
-	}
-	return getSuggestedAssetName(currModelName, counter + 1);
-}
-
-function initiateAssetDuplication() {
-	copyNameInputPrompt.value = 'What do you want to name it?';
-	const assetName = getJustAssetName(props.name.trim());
-	copiedAssetName.value = getSuggestedAssetName(assetName, 1);
-	isCopyModalVisible.value = true;
-}
-defineExpose({ initiateAssetDuplication, isCopyModalVisible, assetContainer });
-
-async function duplicateAsset() {
-	if (props.namesToNotDuplicate.includes(copiedAssetName.value.trim())) {
-		copyNameInputPrompt.value = 'Duplicate name - please enter a different name:';
-		isValidDuplicateName.value = false;
-		logger.info('Duplicate name - please enter a different name');
-		return;
-	}
-	copyNameInputPrompt.value = 'Creating a copy...';
-	isValidDuplicateName.value = true;
-	emit('duplicate', copiedAssetName.value);
 }
 
 // Reset the scroll position to the top on asset change
