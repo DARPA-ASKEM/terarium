@@ -1,4 +1,5 @@
 import { loadPyodide } from 'pyodide';
+import { PyProxy } from 'pyodide/ffi';
 
 const variableMap: Object = {
 	S: 1,
@@ -9,7 +10,6 @@ const variableMap: Object = {
 	N: 'S + I + R'
 };
 
-const startLoad = Date.now();
 const pyodide = await loadPyodide({
 	indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full'
 });
@@ -50,9 +50,6 @@ pyodide.runPython(`
     ${keys.join(',')} = sympy.symbols('${keys.join(' ')}')
 `);
 
-const endLoad = Date.now();
-
-console.log(endLoad - startLoad);
 postMessage(true);
 
 const evaluateExpression = (expressionStr: string, symbolsTable: Object) => {
@@ -79,9 +76,7 @@ const parseExpression = (expr: string) => {
 		latex: '',
 		freeSymbols: []
 	};
-	if (!endLoad) return output;
 
-	console.log(`evalulating .... [${expr}]`);
 	if (!expr || expr.length === 0) {
 		return output;
 	}
@@ -101,25 +96,52 @@ const parseExpression = (expr: string) => {
 
 	result = pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
-		list(eq.free_symbols)
+		list(map(lambda x: x.name, eq.free_symbols))
 	`);
-	output.freeSymbols = result.toString();
+	output.freeSymbols = result.toJs();
 
 	return output;
 };
 
+const substituteExpression = (expressionStr: string, newVar: string, oldVar: string) => {
+	const result: PyProxy = pyodide.runPython(`
+		eq = sympy.S("${expressionStr}", locals=_clash)
+		new_eq = eq.replace(${oldVar}, ${newVar})
+		serialize_expr(new_eq)
+	`);
+	return {
+		latex: result.get('latex'),
+		mathml: result.get('mathml'),
+		str: result.get('str')
+	};
+};
+
+const removeExpression = (expressionStr: string, v: string) => {
+	const result: PyProxy = pyodide.runPython(`
+		eq = sympy.S("${expressionStr}", locals=_clash)
+		new_eq = sq.subs(${v}, 0)
+		serialize_expr(new_eq)
+	`);
+	return {
+		latex: result.get('latex'),
+		mathml: result.get('mathml'),
+		str: result.get('str')
+	};
+};
+
+const map = new Map<string, Function>();
+map.set('parseExpression', parseExpression);
+map.set('substituteExpression', substituteExpression);
+map.set('evaluateExpression', evaluateExpression);
+map.set('removeExpression', removeExpression);
+
 onmessage = function (e) {
 	const { action, params } = e.data;
 
-	switch (action) {
-		case 'parseExpression':
-			// eslint-disable-next-line
-			return postMessage(parseExpression.apply(null, params));
-		case 'evaluateExpression':
-			// eslint-disable-next-line
-			return postMessage(evaluateExpression.apply(null, params));
-		default:
-			console.error(`${action} INVALID`);
+	const func = map.get(action);
+	if (func) {
+		// eslint-disable-next-line
+		return postMessage(func.apply(null, params));
 	}
 	return '';
 };

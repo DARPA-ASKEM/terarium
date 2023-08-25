@@ -44,7 +44,6 @@ export default class PyodideController {
 	}
 
 	async evaluateExpression(expr: string, symbolTable: object) {
-		console.log('symbol table', symbolTable);
 		return new Promise((...promise) => {
 			this.taskQueue.push({
 				action: 'evaluateExpression',
@@ -65,6 +64,11 @@ export default class PyodideController {
 				this._isBusy = false;
 				this.queueTask();
 				promise[0](e.data);
+			};
+			worker.onerror = (e) => {
+				console.error(e);
+				this._isBusy = false;
+				this.queueTask();
 			};
 			worker.postMessage({
 				action,
