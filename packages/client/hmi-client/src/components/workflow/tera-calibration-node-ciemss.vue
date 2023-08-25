@@ -267,7 +267,7 @@ const getStatus = async (simulationId: string) => {
 
 	// open a connection for each run id and handle the messages
 	runIds.forEach((id) => {
-		eventSourceManager.openConnection(id);
+		eventSourceManager.openConnection(id, `/api/simulations/${id}/partial-result`);
 		eventSourceManager.setMessageHandler(id, (message) => {
 			const parsedMessage = JSON.parse(message);
 			if (parsedMessage.progress) {

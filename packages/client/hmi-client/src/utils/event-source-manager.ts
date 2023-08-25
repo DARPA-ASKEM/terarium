@@ -10,10 +10,10 @@ export class EventSourceManager {
 	public messageHandlers: Map<string, MessageHandler> = new Map();
 
 	// open a connection with a unique id, if a connection is already open we will not open it again
-	public openConnection(id: string) {
+	public openConnection(id: string, connectionString: string) {
 		if (!this.connections.has(id)) {
 			const auth = useAuthStore();
-			const eventSource = new EventSourcePolyfill(`/api/simulations/${id}/partial-result`, {
+			const eventSource = new EventSourcePolyfill(connectionString, {
 				headers: {
 					Authorization: `Bearer ${auth.token}`
 				}
