@@ -132,7 +132,11 @@ async function addAsset(projectId: string, assetType: string, assetId: string) {
 }
 
 async function deleteAsset(projectId: string, assetType: AssetType, assetId: string) {
-	return ProjectService.deleteAsset(projectId, assetType, assetId);
+	const deleted = ProjectService.deleteAsset(projectId, assetType, assetId);
+	setTimeout(async () => {
+		project.value = await ProjectService.get(projectId as IProject['id'], true);
+	}, 1000);
+	return deleted;
 }
 
 API.interceptors.response.use(
