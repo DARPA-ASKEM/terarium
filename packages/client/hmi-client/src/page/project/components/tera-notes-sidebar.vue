@@ -92,6 +92,7 @@
 				v-if="isDeleteNoteModal"
 				@modal-mask-clicked="isDeleteNoteModal = false"
 				class="remove-modal"
+				@modal-enter-press="deleteNote"
 			>
 				<template #header>
 					<h4>Delete note</h4>

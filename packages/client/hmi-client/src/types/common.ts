@@ -15,9 +15,9 @@ export type Annotation = {
 	section: string;
 };
 
-export type FeatureConfig = {
+export interface FeatureConfig {
 	isPreview: boolean;
-};
+}
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
 // But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
@@ -117,8 +117,6 @@ export enum AcceptedTypes {
 	TXT = 'text/plain',
 	MD = 'text/markdown',
 	PY = 'text/x-python-script',
-	M = 'text/x-matlab',
-	JS = 'application/javascript',
 	R = 'text/x-r',
 	JL = 'application/julia'
 }
@@ -129,8 +127,6 @@ export enum AcceptedExtensions {
 	TXT = 'txt',
 	MD = 'md',
 	PY = 'py',
-	M = 'm',
-	JS = 'js',
 	R = 'r',
 	JL = 'jl'
 }

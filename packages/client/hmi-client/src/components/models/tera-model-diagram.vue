@@ -94,8 +94,7 @@
 							@equation-updated="setNewEquation"
 							@delete="deleteEquation"
 							ref="equationsRef"
-						>
-						</tera-math-editor>
+						/>
 						<Button
 							v-if="isEditingEQ"
 							class="p-button-sm add-equation-button"
@@ -143,8 +142,7 @@
 							@equation-updated="setNewObservables"
 							@delete="deleteObservable"
 							ref="observablesRefs"
-						>
-						</tera-math-editor>
+						/>
 						<Button
 							v-if="observablesList.length === 0 || isEditingObservables"
 							class="p-button-sm add-equation-button"
@@ -165,6 +163,7 @@
 			class="edit-modal"
 			v-if="openEditNode === true"
 			@modal-mask-clicked="openEditNode = false"
+			@modal-enter-press="addNode"
 		>
 			<template #header>
 				<h4>Add/Edit {{ editNodeObj.nodeType }}</h4>
@@ -623,6 +622,9 @@ const prepareTransitionEdit = () => {
 const addNode = async () => {
 	if (!renderer) return;
 	const node = editNodeObj.value;
+	if (!node?.id) {
+		return;
+	}
 	if (props.model?.model.states.find((s) => s.id === node.id)) {
 		return;
 	}
@@ -728,14 +730,6 @@ main {
 
 section math-editor {
 	justify-content: center;
-}
-
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
 }
 
 .graph-element {

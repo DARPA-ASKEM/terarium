@@ -11,7 +11,7 @@
 				:colorByRun="true"
 			/>
 		</div>
-		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>
+		<Button class="add-chart" text @click="addChart" label="Add chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />

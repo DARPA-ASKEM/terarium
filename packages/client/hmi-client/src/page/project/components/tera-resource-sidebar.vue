@@ -121,6 +121,7 @@
 				v-if="isRemovalModal"
 				@modal-mask-clicked="isRemovalModal = false"
 				class="remove-modal"
+				@modal-enter-press="removeAsset"
 			>
 				<template #header>
 					<h4>Confirm remove</h4>
@@ -226,15 +227,15 @@ function endDrag() {
 const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
-		/* DVINCE TODO key: ProjectAssetTypes.CODE,
+		key: AssetType.Code,
 		label: 'Code editor',
 		command() {
 			emit('open-asset', {
 				assetName: 'New file',
-				pageType: ProjectAssetTypes.CODE,
+				pageType: AssetType.Code,
 				assetId: undefined
 			});
-		} */
+		}
 	},
 	{
 		key: AssetType.Models,

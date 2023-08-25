@@ -16,7 +16,7 @@
 				size="small"
 				text
 				@click="addChart"
-				label="Add Chart"
+				label="Add chart"
 				icon="pi pi-plus"
 			></Button>
 			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>

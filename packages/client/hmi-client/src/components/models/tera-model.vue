@@ -534,6 +534,7 @@
 				v-if="isCopyModelModalVisible"
 				class="modal"
 				@modal-mask-clicked="isCopyModelModalVisible = false"
+				@modal-enter-press="duplicateModel"
 			>
 				<template #header>
 					<h4>Make a copy</h4>
@@ -1103,14 +1104,6 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
-}
-
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
 }
 
 .p-datatable:deep(td:hover) {

@@ -17,8 +17,8 @@ export const RouteMetadata: {
 	[RouteName.ProjectRoute]: { displayName: 'Project summary', icon: IconAccount32 },
 	[RouteName.CodeRoute]: {
 		displayName: 'Code',
-		icon: IconCode32
-		// dvince TODO projectAsset: ProjectAssetTypes.CODE
+		icon: IconCode32,
+		projectAsset: AssetType.Code
 	},
 	[RouteName.ProvenanceRoute]: { displayName: 'Provenance', icon: IconFlow32 },
 	[RouteName.HomeRoute]: { displayName: 'Home', icon: 'pi pi-home' },

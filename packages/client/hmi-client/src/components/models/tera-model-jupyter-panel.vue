@@ -74,6 +74,7 @@
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			:auto-expand-preview="autoExpandPreview"
+			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
 		/>
@@ -155,6 +156,7 @@ const noSelectionDefault = {
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
+const kernelState = ref(null);
 const showKernels = ref(<boolean>false);
 const autoExpandPreview = ref(<boolean>true);
 const modelConfigurations = ref(<
@@ -274,6 +276,10 @@ onMounted(async () => {
 onUnmounted(() => {
 	jupyterSession.shutdown();
 });
+
+const updateKernelState = (newKernelState) => {
+	kernelState.value = newKernelState;
+};
 
 // Save file function
 const saveAsNewModel = async () => {
