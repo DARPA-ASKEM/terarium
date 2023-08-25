@@ -1,11 +1,28 @@
-import { CsvAsset } from '@/types/Types';
+import { CsvAsset, TimeSpan } from '@/types/Types';
+
+export const getTimespan = (inputTimespan: TimeSpan, dataset?: CsvAsset) => {
+	let start = inputTimespan.start;
+	let end = inputTimespan.end;
+	// If we have the min/max timestamp available from the csv asset use it
+	if (dataset) {
+		const tIndex = dataset.headers.indexOf('timestamp');
+		if (tIndex !== -1) {
+			start = dataset.stats?.[tIndex].minValue!;
+			end = dataset.stats?.[tIndex].maxValue!;
+		}
+	}
+	return { start, end };
+};
 
 export const getGraphDataFromDatasetCSV = (
 	dataset: CsvAsset,
 	columnVar: string,
-	mapping?: { [key: string]: string }[]
+	mapping?: { [key: string]: string }[],
+	isJulia?: boolean
 ) => {
-	let v = columnVar;
+	// Julia's output has a (t) at the end of the variable name, so we need to remove it
+	let v = isJulia ? columnVar.slice(0, -3) : columnVar;
+
 	// get the dataset variable from the mapping of model variable to dataset variable if there's a mapping
 	if (mapping) {
 		if (!(mapping.length === 1 && Object.values(mapping[0]).some((val) => !val))) {

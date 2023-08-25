@@ -235,7 +235,14 @@ const renderGraph = () => {
 			});
 
 		if (props.initialData) {
-			const dataset = getGraphDataFromDatasetCSV(props.initialData, variable, props.mapping);
+			// if a simulate/calibrate was run on Julia then the runId will be prefixed with 'sciml'
+			const isJulia = runIdList[0].slice(0, 5) === 'sciml';
+			const dataset = getGraphDataFromDatasetCSV(
+				props.initialData,
+				variable,
+				props.mapping,
+				isJulia
+			);
 			datasets.push(dataset);
 		}
 	});
