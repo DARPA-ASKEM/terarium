@@ -235,7 +235,7 @@ const renderGraph = () => {
 			});
 
 		if (props.initialData) {
-			// if a simulate/calibrate was run on Julia then the runId will be prefixed with 'sciml'
+			// if a calibrate was run on Julia then the runId will be prefixed with 'sciml'
 			const isJulia = runIdList[0].slice(0, 5) === 'sciml';
 			const dataset = getGraphDataFromDatasetCSV(
 				props.initialData,
