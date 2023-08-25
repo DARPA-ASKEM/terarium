@@ -85,7 +85,7 @@ const props = defineProps({
 	},
 	assetId: {
 		type: String,
-		default: 'fa64fb19-7092-4c6e-8b7f-35a21d1d785d' // 'sir-model-id'
+		default: '6ec50c95-9646-41e9-8869-b44a75926711' // 'sir-model-id'
 	},
 	highlight: {
 		type: String,
