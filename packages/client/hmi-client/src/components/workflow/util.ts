@@ -1,5 +1,10 @@
 import { CsvAsset, TimeSpan } from '@/types/Types';
 
+export const enum RunType {
+	Julia = 'julia',
+	Ciemss = 'ciemss'
+}
+
 export const getTimespan = (inputTimespan: TimeSpan, dataset?: CsvAsset) => {
 	let start = inputTimespan.start;
 	let end = inputTimespan.end;
@@ -18,10 +23,10 @@ export const getGraphDataFromDatasetCSV = (
 	dataset: CsvAsset,
 	columnVar: string,
 	mapping?: { [key: string]: string }[],
-	isJulia?: boolean
+	runType?: RunType
 ) => {
 	// Julia's output has a (t) at the end of the variable name, so we need to remove it
-	let v = isJulia ? columnVar.slice(0, -3) : columnVar;
+	let v = runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar;
 
 	// get the dataset variable from the mapping of model variable to dataset variable if there's a mapping
 	if (mapping) {
