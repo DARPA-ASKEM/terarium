@@ -133,6 +133,7 @@ import {
 } from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import TeraProgressBar from './tera-progress-bar.vue';
+import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -219,17 +220,6 @@ const runCalibrate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
-	let start = state.timeSpan.start;
-	let end = state.timeSpan.end;
-	// If we have the min/max timestamp available from the csv asset use it
-	if (csvAsset.value) {
-		const tIndex = csvAsset.value.headers.indexOf('timestamp');
-		if (tIndex !== -1) {
-			start = csvAsset.value.stats?.[tIndex].minValue;
-			end = csvAsset.value.stats?.[tIndex].maxValue;
-		}
-	}
-
 	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
@@ -242,10 +232,7 @@ const runCalibrate = async () => {
 			num_iterations: numIterations.value,
 			method: method.value
 		},
-		timespan: {
-			start,
-			end
-		},
+		timespan: getTimespan(state.timeSpan, csvAsset.value),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
