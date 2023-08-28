@@ -1,6 +1,5 @@
 <template>
 	<tera-asset
-		ref="teraAssetRef"
 		:name="name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNamingModel"
@@ -625,10 +624,8 @@ const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.val
 const stratifiedModelType = computed(() => model.value && getStratificationType(model.value));
 
 /*
- * User Menu & Duplication
+ * User Menu
  */
-const teraAssetRef = ref();
-
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };

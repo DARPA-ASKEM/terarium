@@ -1,6 +1,5 @@
 <template>
 	<tera-asset
-		ref="teraAssetRef"
 		v-if="dataset"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
@@ -423,8 +422,6 @@ const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 
-const teraAssetRef = ref();
-
 const toggleSettingsMenu = (event: Event) => {
 	menu.value.toggle(event);
 };
@@ -482,7 +479,6 @@ const optionsMenuItems = ref([
 			newDatasetName.value = dataset.value?.name ?? '';
 		}
 	}
-	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateDatasetDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
 

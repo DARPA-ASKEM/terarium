@@ -100,7 +100,7 @@ const props = defineProps({
 	stretchContent: Boolean
 });
 
-const emit = defineEmits(['close-preview', 'duplicate']);
+const emit = defineEmits(['close-preview']);
 
 const assetContainer = ref();
 const headerRef = ref();
