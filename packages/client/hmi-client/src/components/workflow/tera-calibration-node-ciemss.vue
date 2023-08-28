@@ -125,8 +125,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
-import useAuthStore from '@/stores/auth';
-import { EventSourcePolyfill } from 'event-source-polyfill';
+import { EventSourceManager } from '@/utils/event-source-manager';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -168,6 +167,7 @@ const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const poller = new Poller();
+const eventSourceManager = new EventSourceManager();
 
 const disableRunButton = computed(
 	() =>
@@ -237,30 +237,6 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
-	// Run MQ Test
-	console.log(`Checking MQ for job Id ${response.simulationId}`);
-	const auth = useAuthStore();
-	const eventsource = new EventSourcePolyfill(
-		`/api/simulations/${response.simulationId}/partial-result`,
-		{
-			headers: {
-				Authorization: `Bearer ${auth.token}`
-			}
-		}
-	);
-	eventsource.onerror = (e) => {
-		console.log('An error occurred while attempting to connect.');
-		console.log(e);
-		eventsource.close();
-		console.log('Closing eventsource');
-	};
-	eventsource.onmessage = (event) => {
-		console.log(event);
-		const json = event.data;
-		console.log(json);
-		eventsource.close();
-		console.log('Closing eventsource');
-	};
 	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
@@ -275,12 +251,29 @@ const getStatus = async (simulationId: string) => {
 	}
 	console.log(`Simulation Id:${simulationId}`);
 	const runIds = [simulationId];
+
+	// open a connection for each run id and handle the messages
+	runIds.forEach((id) => {
+		eventSourceManager.openConnection(id, `/api/simulations/${id}/partial-result`);
+		eventSourceManager.setMessageHandler(id, (message) => {
+			const parsedMessage = JSON.parse(message);
+			if (parsedMessage.progress) {
+				progress.value.value = Math.round(parsedMessage.progress * 100);
+			}
+		});
+	});
+
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
 	console.log('Poller defined');
 	const pollerResults = await poller.start();
+
+	// closing event source connections
+	runIds.forEach((id) => {
+		eventSourceManager.closeConnection(id);
+	});
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
