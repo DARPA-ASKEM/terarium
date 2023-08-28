@@ -150,15 +150,11 @@ function configureMatrix() {
 			? getCatlabAMRPresentationData(amr)
 			: getMiraAMRPresentationData(amr);
 
-	console.log('result', result);
-
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
 			? result.stateMatrixData.filter(({ base }) => base === props.id)
 			: result.transitionMatrixData.filter(({ base }) => base === props.id);
-
-	console.log('matrixData', matrixData);
 
 	if (isEmpty(matrixData)) return;
 
@@ -180,8 +176,6 @@ function configureMatrix() {
 	matrix.value = matrixAttributes.matrix;
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
-
-	console.log('matrixAttributes', matrixAttributes);
 
 	// Matrix for editable cell states
 	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
