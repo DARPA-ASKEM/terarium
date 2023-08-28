@@ -1,6 +1,6 @@
 <template>
 	<main style="margin: 2rem; display: flex; flex-direction: column">
-		<h4>Python paylground</h4>
+		<h4>Python playground</h4>
 		<section>
 			The following variables are preset:
 			<div v-for="(k) in Object.keys(variableMap) as string[]" :key="k">
