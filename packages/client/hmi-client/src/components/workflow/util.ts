@@ -5,12 +5,26 @@ export const enum RunType {
 	Ciemss = 'ciemss'
 }
 
-export const getTimespan = (inputTimespan: TimeSpan, dataset?: CsvAsset) => {
+export type DatasetType = {
+	data: { x: number; y: number }[];
+	label: string;
+	fill: boolean;
+	borderColor?: string;
+	borderWidth?: number;
+	borderDash?: number[];
+};
+
+export const getTimespan = (inputTimespan: TimeSpan, dataset?: CsvAsset): TimeSpan => {
 	let start = inputTimespan.start;
 	let end = inputTimespan.end;
 	// If we have the min/max timestamp available from the csv asset use it
+	// Try to get `timestamp` first, then `t`
+	// TODO: figure out a more robust way to get the timestamp column from the csv asset
 	if (dataset) {
-		const tIndex = dataset.headers.indexOf('timestamp');
+		let tIndex = dataset.headers.indexOf('timestamp');
+		if (tIndex === -1) {
+			tIndex = dataset.headers.indexOf('t');
+		}
 		if (tIndex !== -1) {
 			start = dataset.stats?.[tIndex].minValue!;
 			end = dataset.stats?.[tIndex].maxValue!;
@@ -24,7 +38,7 @@ export const getGraphDataFromDatasetCSV = (
 	columnVar: string,
 	mapping?: { [key: string]: string }[],
 	runType?: RunType
-) => {
+): DatasetType | null => {
 	// Julia's output has a (t) at the end of the variable name, so we need to remove it
 	let v = runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar;
 
@@ -39,15 +53,26 @@ export const getGraphDataFromDatasetCSV = (
 	}
 
 	// get  the index of the timestamp column
-	const tIndex = dataset.headers.indexOf('timestamp');
+	// Try to get `timestamp` first, then `t`
+	// TODO: figure out a more robust way to get the timestamp column from the csv asset
+	let tIndex = dataset.headers.indexOf('timestamp');
+	if (tIndex === -1) {
+		tIndex = dataset.headers.indexOf('t');
+	}
+	if (tIndex === -1) {
+		return null;
+	}
 
 	// get the index of the variable column
-	let colIdx: number;
+	let colIdx: number = -1;
 	for (let i = 0; i < dataset.headers.length; i++) {
 		if (dataset.headers[i].trim() === v.trim()) {
 			colIdx = i;
 			break;
 		}
+	}
+	if (colIdx === -1) {
+		return null;
 	}
 
 	const graphData = {
