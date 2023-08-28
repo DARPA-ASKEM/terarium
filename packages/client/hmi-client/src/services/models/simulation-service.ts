@@ -266,7 +266,7 @@ export async function simulationPollAction(
 		)
 		.map((simulation) => simulation!.id);
 
-	// there are unhandled states - we will return an error
+	// there are unhandled states - we will return an error and remove all simulation Ids
 	if (unhandledStateSimulationIds.length > 0) {
 		const newState = deleteSimulationInProgress(node, simulationIds);
 		if (!isEqual(node.state, newState)) {
