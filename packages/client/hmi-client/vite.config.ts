@@ -47,6 +47,10 @@ export default defineConfig({
 	preview: {
 		port: 8080
 	},
+	// See https://stackoverflow.com/questions/76051452/rollup-vite-build-error-when-including-geotiff-js-and-web-worker-in-build
+	worker: {
+		format: 'es'
+	},
 	build: {
 		target: 'esnext'
 	},
