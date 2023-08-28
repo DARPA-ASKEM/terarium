@@ -32,6 +32,12 @@ export class EventSourceManager {
 			};
 
 			eventSource.onerror = (error) => {
+				if (error?.status === 401) {
+					// reopen the connection when unauthorized
+					this.closeConnection(id);
+					this.openConnection(id, connectionString);
+				}
+
 				console.error(`EventSource error for ID ${id}: ${error}`);
 			};
 
