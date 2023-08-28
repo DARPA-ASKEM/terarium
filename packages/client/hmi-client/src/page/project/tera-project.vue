@@ -142,7 +142,6 @@ import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
 import { RouteName } from '@/router/routes';
-import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
 import { Tab } from '@/types/common';
 import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
@@ -158,8 +157,8 @@ import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ense
 import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 import TeraModelModal from './components/tera-model-modal.vue';
-
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -183,6 +182,9 @@ const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 
 const isNewModelModalVisible = ref(false);
+
+const { addAsset, deleteAsset } = useProjects();
+
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
@@ -203,12 +205,14 @@ function setActiveTab() {
 async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (!(asset && asset.assetId === props.assetId && asset.pageType === props.pageType)) {
-		loadingTabIndex.value = index;
-		router.push({
-			name: RouteName.ProjectRoute,
-			params: { assetId: asset.assetId, pageType: asset.pageType }
-		});
+	if (asset) {
+		if (!(asset.assetId === props.assetId && asset.pageType === props.pageType)) {
+			loadingTabIndex.value = index;
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: { assetId: asset.assetId, pageType: asset.pageType }
+			});
+		}
 	}
 }
 
@@ -237,11 +241,7 @@ async function removeAsset(asset: Tab) {
 
 	// Delete only Asset with an ID and of ProjectAssetType
 	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
-		const isRemoved = await ProjectService.deleteAsset(
-			props.project.id,
-			pageType as AssetType,
-			assetId
-		);
+		const isRemoved = await deleteAsset(props.project.id, pageType as AssetType, assetId);
 
 		if (isRemoved) {
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isSameTab(tab, asset)));
@@ -264,7 +264,7 @@ const openWorkflow = async () => {
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await ProjectService.addAsset(props.project.id, AssetType.Workflows, workflowId);
+	await addAsset(props.project.id, AssetType.Workflows, workflowId);
 
 	router.push({
 		name: RouteName.ProjectRoute,

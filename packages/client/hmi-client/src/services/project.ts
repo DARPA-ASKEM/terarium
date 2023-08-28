@@ -157,10 +157,6 @@ async function addAsset(projectId: string, assetsType: string, assetId: string) 
 			assetId
 		})
 	);
-
-	if (response.data) {
-		useResourcesStore().setActiveProject(await get(projectId, true));
-	}
 	return response?.data ?? null;
 }
 
@@ -179,9 +175,6 @@ async function deleteAsset(
 	try {
 		const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 		const { status } = await API.delete(url);
-		if (status >= 200 && status < 300) {
-			useResourcesStore().setActiveProject(await get(projectId, true));
-		}
 		return status >= 200 && status < 300;
 	} catch (error) {
 		logger.error(error);

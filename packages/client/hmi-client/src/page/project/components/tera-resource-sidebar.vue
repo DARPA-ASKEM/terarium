@@ -129,7 +129,7 @@
 				<template #default>
 					<p>
 						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ project.name }}.
+						{{ activeProject?.name }}.
 					</p>
 				</template>
 				<template #footer>
@@ -155,10 +155,11 @@ import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 
 type IProjectAssetTabs = Map<AssetType, Set<Tab>>;
 
-const props = defineProps<{
+defineProps<{
 	project: IProject;
 	activeTab: Tab;
 }>();
@@ -170,11 +171,12 @@ const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 const assetToDelete = ref<Tab | null>(null);
 const searchAsset = ref<string | null>('');
+const { activeProject } = useProjects();
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<AssetType, Set<Tab>>();
 
-	const projectAssets = props.project?.assets;
+	const projectAssets = activeProject?.value?.assets;
 	if (!projectAssets) return tabs;
 
 	// Run through all the assets type within the project
