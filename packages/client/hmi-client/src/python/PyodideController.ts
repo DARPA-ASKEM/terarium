@@ -54,6 +54,17 @@ export default class PyodideController {
 		});
 	}
 
+	async runPython(code: string) {
+		return new Promise((...promise) => {
+			this.taskQueue.push({
+				action: 'runPython',
+				params: [code],
+				promise
+			});
+			this.queueTask();
+		});
+	}
+
 	private async queueTask() {
 		const worker = await this.worker;
 
@@ -77,3 +88,6 @@ export default class PyodideController {
 		}
 	}
 }
+
+// Single instance for the app
+export const pythonInstance = new PyodideController();
