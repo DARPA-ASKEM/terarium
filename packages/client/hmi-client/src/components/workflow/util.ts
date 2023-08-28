@@ -9,6 +9,9 @@ export type DatasetType = {
 	data: { x: number; y: number }[];
 	label: string;
 	fill: boolean;
+	borderColor?: string;
+	borderWidth?: number;
+	borderDash?: number[];
 };
 
 export const getTimespan = (inputTimespan: TimeSpan, dataset?: CsvAsset): TimeSpan => {
