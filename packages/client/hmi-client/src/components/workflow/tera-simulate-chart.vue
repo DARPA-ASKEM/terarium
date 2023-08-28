@@ -241,7 +241,6 @@ const renderGraph = () => {
 				variable,
 				props.mapping,
 				props.runType
-
 			);
 			datasets.push(dataset);
 		}
