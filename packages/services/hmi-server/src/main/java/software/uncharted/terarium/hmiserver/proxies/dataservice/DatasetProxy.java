@@ -46,7 +46,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateDataset(
 		@PathParam("id") String id,
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@POST
