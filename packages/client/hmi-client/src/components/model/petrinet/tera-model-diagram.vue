@@ -119,7 +119,7 @@ interface AddStateObj {
 }
 
 const props = defineProps<{
-	model: Model | null;
+	model: Model;
 	isEditable: boolean;
 	nodePreview?: boolean;
 }>();
@@ -165,44 +165,45 @@ let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
 
-async function toggleCollapsedView() {
-	isCollapsed.value = !isCollapsed.value;
-	if (props.model) {
-		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
-		// Render graph
-		if (renderer) {
-			renderer.isGraphDirty = true;
-			await renderer.setData(graphData);
-			await renderer.render();
-		}
-	}
-}
-
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
+
+async function renderGraph(updatedModel: Model | null = null) {
+	const modelToRender = updatedModel ?? props.model;
+
+	// Convert petri net into a graph with raw input data
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(modelToRender, isCollapsed.value);
+	// Render graph
+	if (renderer) {
+		renderer.isGraphDirty = true;
+		await renderer.setData(graphData);
+		await renderer.render();
+
+		if (updatedModel) {
+			emit('update-model', renderer.graph.amr);
+		}
+	}
+}
+defineExpose({ renderGraph });
+
+async function toggleCollapsedView() {
+	isCollapsed.value = !isCollapsed.value;
+	renderGraph();
+}
 
 // Cancel existing edits, currently this will:
 // - Resets changes to the model structure
 const cancelEdit = async () => {
 	isEditing.value = false;
-	if (!props.model) return;
-
-	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
-
-	if (renderer) {
-		renderer.setEditMode(false);
-		await renderer.setData(graphData);
-		renderer.isGraphDirty = true;
-		await renderer.render();
-	}
+	renderer?.setEditMode(false);
+	renderGraph();
 };
 
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && props.model && renderer) {
+	if (!isEditing.value && renderer) {
 		emit('update-model', renderer.graph.amr);
 	}
 };
@@ -267,10 +268,11 @@ const addNode = async () => {
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 // that we render the graph to changes.
+// Consider just watching the model
 watch(
 	[() => props.model, graphElement],
 	async () => {
-		if (props.model === null || graphElement.value === null) return;
+		if (graphElement.value === null) return;
 		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 		// Create renderer
@@ -320,12 +322,12 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 	}
 
 	if (event.key === 'Backspace' && renderer) {
-		if (renderer && renderer.nodeSelection) {
+		if (renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
 			renderer.removeNode(nodeData.id);
 		}
 
-		if (renderer && renderer.edgeSelection) {
+		if (renderer.edgeSelection) {
 			const edgeData = renderer.edgeSelection.datum();
 			renderer.removeEdge(edgeData.source, edgeData.target);
 		}
