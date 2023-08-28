@@ -40,9 +40,6 @@ const freeSymbols = ref([]);
 const evalResult = ref<any>('');
 
 const exprString = ref('');
-const isReady = ref(false);
-const startLoad = ref(0);
-const endLoad = ref(0);
 
 /*
 const renameParameterId = (amr: Model, newId: string, oldId: string) => {
