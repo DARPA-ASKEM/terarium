@@ -42,9 +42,9 @@ import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import { getAssetIcon } from '@/services/project';
 import { ref, watch } from 'vue';
-import useResourceStore from '@/stores/resources';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	tabs: Tab[];
@@ -52,7 +52,7 @@ const props = defineProps<{
 	loadingTabIndex: number | null;
 }>();
 
-const resourceStore = useResourceStore();
+const { activeProject } = useProjects();
 
 const emit = defineEmits(['select-tab', 'close-tab']);
 const loadingTabIndex = ref();
@@ -60,7 +60,7 @@ const loadingTabIndex = ref();
 const getTabName = (tab: Tab) => {
 	if (tab.assetName) return tab.assetName;
 	if (tab.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	const assets = resourceStore.activeProjectAssets;
+	const assets = activeProject.value?.assets;
 
 	if (assets) {
 		const asset: any = assets[tab.pageType as string].find(
