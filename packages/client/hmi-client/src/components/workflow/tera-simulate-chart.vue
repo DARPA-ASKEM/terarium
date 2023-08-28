@@ -28,7 +28,7 @@ import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { CsvAsset } from '@/types/Types';
-import { getGraphDataFromDatasetCSV } from './util';
+import { getGraphDataFromDatasetCSV, RunType } from './util';
 
 const emit = defineEmits(['configuration-change']);
 
@@ -39,6 +39,7 @@ const props = defineProps<{
 	colorByRun?: boolean;
 	initialData?: CsvAsset;
 	mapping?: { [key: string]: string }[];
+	runType?: RunType;
 }>();
 
 type DatasetType = {
@@ -235,7 +236,12 @@ const renderGraph = () => {
 			});
 
 		if (props.initialData) {
-			const dataset = getGraphDataFromDatasetCSV(props.initialData, variable, props.mapping);
+			const dataset = getGraphDataFromDatasetCSV(
+				props.initialData,
+				variable,
+				props.mapping,
+				props.runType
+			);
 			datasets.push(dataset);
 		}
 	});
