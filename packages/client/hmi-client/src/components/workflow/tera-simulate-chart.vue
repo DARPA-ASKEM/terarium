@@ -211,7 +211,7 @@ const renderGraph = () => {
 		runIdList
 			.map((runId) => renderedRuns.value[runId])
 			.forEach((run, runIdx) => {
-				const dataset = {
+				const dataset: DatasetType = {
 					data: run.map(
 						// - runResults[selectedRun.value][timeIdx][code]
 						(datum: { [key: string]: number }) =>
@@ -230,7 +230,7 @@ const renderGraph = () => {
 			});
 
 		if (props.initialData) {
-			const dataset = getGraphDataFromDatasetCSV(
+			const dataset: DatasetType | null = getGraphDataFromDatasetCSV(
 				props.initialData,
 				variable,
 				props.mapping,
