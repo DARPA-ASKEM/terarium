@@ -129,11 +129,17 @@ const removeExpression = (expressionStr: string, v: string) => {
 	};
 };
 
+const runPython = (code: string) => {
+	const result: PyProxy = pyodide.runPython(code);
+	return result.toJs();
+};
+
 const map = new Map<string, Function>();
 map.set('parseExpression', parseExpression);
 map.set('substituteExpression', substituteExpression);
 map.set('evaluateExpression', evaluateExpression);
 map.set('removeExpression', removeExpression);
+map.set('runPython', runPython);
 
 onmessage = function (e) {
 	const { action, params } = e.data;
