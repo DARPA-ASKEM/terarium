@@ -99,7 +99,6 @@ public class DatasetResource implements SnakeCaseResource {
 		@PathParam("id") final String id,
 		final Dataset dataset
 	) {
-		System.out.println(convertObjectToSnakeCaseJsonNode(dataset));
 		return datasetProxy.updateDataset(id, convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
@@ -252,7 +251,6 @@ public class DatasetResource implements SnakeCaseResource {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
 				Dataset updatedDataset = new Dataset().setId(datasetId).setColumns(columns);
-				System.out.println(convertObjectToSnakeCaseJsonNode(updatedDataset));
 				Response r = datasetProxy.updateDataset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
 				if(r.getStatus() != Response.Status.OK.getStatusCode()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
