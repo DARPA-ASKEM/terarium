@@ -1,5 +1,5 @@
 <template>
-	<main @scroll="updateScrollPosition" id="tango" ref="assetContainer">
+	<main @scroll="updateScrollPosition" id="tango">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
@@ -102,7 +102,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close-preview']);
 
-const assetContainer = ref();
 const headerRef = ref();
 const scrollPosition = ref(0);
 
