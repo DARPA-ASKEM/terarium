@@ -28,7 +28,7 @@ import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { CsvAsset } from '@/types/Types';
-import { getGraphDataFromDatasetCSV, RunType } from './util';
+import { getGraphDataFromDatasetCSV, RunType, DatasetType } from './util';
 
 const emit = defineEmits(['configuration-change']);
 
@@ -41,12 +41,6 @@ const props = defineProps<{
 	mapping?: { [key: string]: string }[];
 	runType?: RunType;
 }>();
-
-type DatasetType = {
-	data: { x: number; y: number }[];
-	label: string;
-	fill: boolean;
-};
 
 const renderedRuns = computed<RunResults>(() => {
 	if (!props.hasMeanLine) return _.cloneDeep(props.runResults);
@@ -242,15 +236,12 @@ const renderGraph = () => {
 				props.mapping,
 				props.runType
 			);
-			datasets.push(dataset);
+			if (dataset) {
+				datasets.push(dataset);
+			}
 		}
 	});
-	chartData.value = {
-		labels: renderedRuns.value[Object.keys(renderedRuns.value)[0]].map((datum) =>
-			Number(datum.timestamp)
-		),
-		datasets
-	};
+	chartData.value = { datasets };
 };
 
 const updateSelectedVariable = () => {
