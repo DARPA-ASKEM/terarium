@@ -125,7 +125,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
-import { EventSourceManager } from '@/utils/event-source-manager';
+import { EventSourceManager } from '@/api/event-source-manager';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -255,6 +255,13 @@ const runCalibrate = async () => {
 	}
 };
 
+const handlingProgress = (message: string) => {
+	const parsedMessage = JSON.parse(message);
+	if (parsedMessage.progress) {
+		progress.value.value = Math.round(parsedMessage.progress * 100);
+	}
+};
+
 const getStatus = async (simulationId: string) => {
 	console.log('Getting status');
 	showSpinner.value = true;
@@ -267,13 +274,8 @@ const getStatus = async (simulationId: string) => {
 
 	// open a connection for each run id and handle the messages
 	runIds.forEach((id) => {
-		eventSourceManager.openConnection(id, `/api/simulations/${id}/partial-result`);
-		eventSourceManager.setMessageHandler(id, (message) => {
-			const parsedMessage = JSON.parse(message);
-			if (parsedMessage.progress) {
-				progress.value.value = Math.round(parsedMessage.progress * 100);
-			}
-		});
+		eventSourceManager.openConnection(id, `/simulations/${id}/partial-result`);
+		eventSourceManager.setMessageHandler(id, handlingProgress);
 	});
 
 	poller
@@ -284,9 +286,7 @@ const getStatus = async (simulationId: string) => {
 	const pollerResults = await poller.start();
 
 	// closing event source connections
-	runIds.forEach((id) => {
-		eventSourceManager.closeConnection(id);
-	});
+	runIds.forEach((id) => eventSourceManager.closeConnection(id));
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
