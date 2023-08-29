@@ -35,6 +35,7 @@
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
+					<Button label="Extract model"></Button>
 					<Menu
 						ref="addComponentMenu"
 						:model="contextMenuItems"
