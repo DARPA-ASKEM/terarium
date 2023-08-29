@@ -115,13 +115,15 @@ const addResources = () => {
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	// 1. Send asset profile request
-	let resp = '';
+	let resp = null;
 
 	if (props.assetType === ResourceType.MODEL) {
+		console.log(selectedResources.value);
 		resp = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
 	} else if (props.assetType === ResourceType.DATASET) {
 		resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
-	} else return;
+	}
+	if (!resp) return;
 
 	// 2. Poll
 	const pollResult = await fetchExtraction(resp);

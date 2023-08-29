@@ -102,6 +102,7 @@ export const profileModel = async (modelId: string, artifactId: string | null = 
 	} else {
 		response = await API.post(`/extract/profile-model/${modelId}`);
 	}
+	console.log(response);
 	console.log('model profile response', response.data);
 	return response.data.id;
 };
