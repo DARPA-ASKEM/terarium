@@ -396,13 +396,11 @@
 
 <script setup lang="ts">
 import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { getRelatedArtifacts } from '@/services/provenance';
-import { ResultType } from '@/types/common';
-import { Model, ProvenanceType } from '@/types/Types';
+import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
@@ -431,7 +429,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
-const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const isSectionEditable = ref<string | null>();
 const isRowEditable = ref<string | null>();
 const transientTableValue = ref<ModelTableTypes | null>(null);
@@ -573,13 +570,6 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 		}
 	};
 }
-
-onMounted(async () => {
-	relatedTerariumArtifacts.value = await getRelatedArtifacts(
-		props.model.id,
-		ProvenanceType.ModelRevision
-	);
-});
 </script>
 
 <style scoped>
