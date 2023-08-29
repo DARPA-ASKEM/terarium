@@ -105,7 +105,7 @@
 					<template #header>Related publications</template>
 					<tera-related-publications
 						@extracted-metadata="gotEnrichedData"
-						:dialog-flavour="'dataset'"
+						:asset-type="ResourceType.DATASET"
 						:publications="publications"
 						:project="project"
 						:assetId="assetId"
@@ -359,7 +359,7 @@ import * as ProjectService from '@/services/project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { FeatureConfig } from '@/types/common';
+import { FeatureConfig, ResourceType } from '@/types/common';
 
 const enrichedData = ref();
 

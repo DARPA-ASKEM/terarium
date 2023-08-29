@@ -92,6 +92,21 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 };
 
 /**
+ * Given a model, enrich its metadata
+ * Returns a runId used to poll for result
+ */
+export const profileModel = async (modelId: string, artifactId: string | null = null) => {
+	let response: any = null;
+	if (artifactId) {
+		response = await API.post(`/extract/profile-model/${modelId}?artifact_id=${artifactId}`);
+	} else {
+		response = await API.post(`/extract/profile-model/${modelId}`);
+	}
+	console.log('model profile response', response.data);
+	return response.data.id;
+};
+
+/**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */

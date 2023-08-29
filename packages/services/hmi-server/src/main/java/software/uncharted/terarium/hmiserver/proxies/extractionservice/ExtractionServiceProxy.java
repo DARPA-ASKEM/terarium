@@ -109,7 +109,6 @@ public interface ExtractionServiceProxy {
 	 *
 	 * @return the profiled dataset
 	 */
-
 	@POST
 	@Path("/profile_dataset/{dataset_id}")
 	@Consumes(MediaType.APPLICATION_JSON)

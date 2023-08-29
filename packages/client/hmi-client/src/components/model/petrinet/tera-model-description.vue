@@ -28,7 +28,7 @@
 				<tera-related-publications
 					:publications="publications"
 					:project="project"
-					:dialog-flavour="'model'"
+					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 				/>
 			</AccordionTab>
@@ -406,6 +406,7 @@ import {
 	updateConfigFields,
 	updateParameterId
 } from '@/model-representation/petrinet/petrinet-service';
+import { ResourceType } from '@/types/common';
 import { getModelConfigurations } from '@/services/model';
 import Button from 'primevue/button';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';

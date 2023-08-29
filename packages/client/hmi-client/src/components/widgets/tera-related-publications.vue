@@ -13,12 +13,12 @@
 		<Dialog
 			v-model:visible="visible"
 			modal
-			:header="`Describe this ${dialogFlavour}`"
+			:header="`Describe this ${assetType}`"
 			:style="{ width: '50vw' }"
 		>
 			<p class="constrain-width">
 				Terarium can extract information from papers and other artifacts to describe this
-				{{ dialogFlavour }}. Select the resources you would like to use.
+				{{ assetType }}. Select the resources you would like to use.
 			</p>
 			<DataTable
 				v-if="allResources.length > 0"
@@ -63,10 +63,18 @@ import { computed, ComputedRef, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { IProject } from '@/types/Project';
-import { AcceptedExtensions } from '@/types/common';
-
+import { AcceptedExtensions, ResourceType } from '@/types/common';
 import { Artifact, AssetType, DocumentAsset } from '@/types/Types';
-import { profileDataset, fetchExtraction } from '@/services/models/extractions';
+import { profileDataset, profileModel, fetchExtraction } from '@/services/models/extractions';
+
+const props = defineProps<{
+	project?: IProject;
+	publications?: Array<DocumentAsset>;
+	assetType: ResourceType;
+	assetId: string;
+}>();
+
+const emit = defineEmits(['extracted-metadata']);
 
 const visible = ref(false);
 const selectedResources = ref();
@@ -100,22 +108,20 @@ const allResources: ComputedRef<
 	return [];
 });
 
-const props = defineProps<{
-	project?: IProject;
-	publications?: Array<DocumentAsset>;
-	dialogFlavour: string;
-	assetId: string;
-}>();
-const emit = defineEmits(['extracted-metadata']);
-
 const addResources = () => {
 	visible.value = true;
 	// do something
 };
 
 const sendForEnrichments = async (/* _selectedResources */) => {
-	// 1. Send dataset profile request
-	const resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
+	// 1. Send asset profile request
+	let resp = '';
+
+	if (props.assetType === ResourceType.MODEL) {
+		resp = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
+	} else if (props.assetType === ResourceType.DATASET) {
+		resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
+	} else return;
 
 	// 2. Poll
 	const pollResult = await fetchExtraction(resp);
