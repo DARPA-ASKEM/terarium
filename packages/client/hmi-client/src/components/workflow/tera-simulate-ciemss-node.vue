@@ -55,6 +55,7 @@ import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
+import { SimulationRequest } from '@/types/Types';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraProgressBar from './tera-progress-bar.vue';
@@ -85,7 +86,7 @@ const runSimulate = async () => {
 	const state = props.node.state as SimulateCiemssOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
-		const payload = {
+		const payload: SimulationRequest = {
 			modelConfigId: configId,
 			timespan: {
 				start: state.currentTimespan.start,

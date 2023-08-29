@@ -6,12 +6,14 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.utils.Converter;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
+import software.uncharted.terarium.hmiserver.models.simulationservice.Intervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSimulationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleCalibrationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
@@ -20,12 +22,19 @@ import software.uncharted.terarium.hmiserver.proxies.simulationservice.Simulatio
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.*;
+
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurationProxy;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jboss.logging.Logger;
 
 @Path("/api/simulation-request")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation Service REST Endpoint")
 public class SimulationRequestResource {
+	private static final Logger log = Logger.getLogger(SimulationRequestResource.class);
 
 	@RestClient
 	SimulationServiceProxy simulationServiceProxy;
@@ -35,6 +44,9 @@ public class SimulationRequestResource {
 
 	@RestClient
 	SimulationProxy simulationProxy;
+
+	@RestClient
+	ModelConfigurationProxy modelConfigProxy;
 
 	@GET
 	@Path("/{id}")
@@ -81,6 +93,7 @@ public class SimulationRequestResource {
 	public Simulation makeForecastRunCiemss(
 		final SimulationRequest request
 	) {
+		request.setInterventions(getIntervention(request.getModelConfigId()));
 		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
 		Simulation sim = new Simulation();
@@ -177,5 +190,41 @@ public class SimulationRequestResource {
 		return res;
 	}
 
-
+	//Get modelConfigId
+	//Check if it has timeseries in its metadata
+	//If it does for each element convert it to type Intervention and add it to this.interventions
+	public List<Intervention> getIntervention(String modelConfigId){
+		List<Intervention> interventionList = new ArrayList<>();
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			ModelConfiguration modelConfig = modelConfigProxy.getModelConfiguration(modelConfigId);
+			JsonNode configuration =  mapper.convertValue(modelConfig.getConfiguration(), JsonNode.class);
+			if (configuration.findValue("timeseries") != null){
+				JsonNode timeseries = mapper.convertValue(configuration.findValue("timeseries"), JsonNode.class);
+				List<String> fieldNames = new ArrayList<>();
+				timeseries.fieldNames().forEachRemaining(key -> fieldNames.add(key));
+				for (int i = 0; i < fieldNames.size(); i++){
+					// Eg) Beta
+					String interventionName = fieldNames.get(i).replaceAll("\"",",");
+					// Eg) "1:0.14, 10:0.1, 20:0.2, 30:0.3"
+					String tempString = timeseries.findValue(fieldNames.get(i)).toString().replaceAll("\"","").replaceAll(" ","");
+					String[] tempList = tempString.split(",");
+					for (String ele : tempList){
+						Integer timestep = Integer.parseInt(ele.split(":")[0]);
+						Double value = Double.parseDouble(ele.split(":")[1]);
+						Intervention temp = new Intervention();
+						temp.setName(interventionName);
+						temp.setValue(value);
+						temp.setTimestep(timestep);
+						interventionList.add(temp);
+					}
+				}
+			}
+		}
+		catch (RuntimeException e) {
+			log.error("Unable to parse model.configuration.metadata.timeseries for model config id: " + modelConfigId);
+			log.error(e);
+		}
+		return interventionList;
+	}
 }
