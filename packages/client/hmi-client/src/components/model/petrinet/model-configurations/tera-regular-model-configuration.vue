@@ -1,6 +1,5 @@
 <template>
 	<div
-		v-if="isConfigurationVisible"
 		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
 	>
 		<div class="p-datatable-wrapper">
@@ -255,8 +254,8 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed, onMounted } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
+import { ref } from 'vue';
+import { cloneDeep } from 'lodash';
 import Button from 'primevue/button';
 import SplitButton from 'primevue/splitbutton';
 import TabView from 'primevue/tabview';
@@ -265,12 +264,7 @@ import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { ModelConfiguration, Model } from '@/types/Types';
-import {
-	createModelConfiguration,
-	updateModelConfiguration,
-	addDefaultConfiguration
-} from '@/services/model-configurations';
-import { getModelConfigurations } from '@/services/model';
+import { updateModelConfiguration } from '@/services/model-configurations';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import { FeatureConfig } from '@/types/common';
 
@@ -284,6 +278,8 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 	model: Model;
 	calibrationConfig?: boolean;
+	tableHeaders: { name: string; colspan: number }[];
+	configurations: Model[];
 }>();
 
 const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
@@ -299,50 +295,16 @@ const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
 const errorMessage = ref('');
 
-const configurations = computed<Model[]>(
-	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
-);
-
 const typeOptions = ref([
 	{ label: 'A constant', value: ParamType.CONSTANT },
 	{ label: 'A distibution', value: ParamType.DISTRIBUTION },
 	{ label: 'A value that changes over time', value: ParamType.TIME_SERIES }
 ]);
 
-// Decide if we should display the whole configuration table
-const isConfigurationVisible = computed(
-	() => !isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)
-);
-
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
-
-// Determines names of headers and how many columns they'll span eg. initials, parameters, observables
-const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
-	if (configurations.value?.[0]?.semantics) {
-		return ['initials', 'parameters'].map((name) => {
-			const colspan = configurations.value?.[0]?.semantics?.ode?.[name].length ?? 0;
-			return { name, colspan };
-		});
-	}
-	return [];
-});
-
-async function addModelConfiguration(config: ModelConfiguration) {
-	await createModelConfiguration(
-		props.model.id,
-		`Copy of ${config.name}`,
-		config.description as string,
-		config.configuration
-	);
-	setTimeout(() => {
-		emit('new-model-configuration');
-		initializeConfigSpace();
-		emit('sync-configs', true);
-	}, 800);
-}
 
 function getValuePlaceholder(parameterType) {
 	if (parameterType === ParamType.TIME_SERIES) {
@@ -514,60 +476,6 @@ function getParameterType(parameter, timeseries) {
 
 	return ParamType.CONSTANT;
 }
-
-async function initializeConfigSpace() {
-	let tempConfigurations = await getModelConfigurations(props.model.id);
-
-	configItems.value = tempConfigurations.map((config) => ({
-		label: config.name,
-		command: () => {
-			addModelConfiguration(config);
-		}
-	}));
-
-	// Ensure that we always have a "default config" model configuration
-	if (isEmpty(tempConfigurations) || !tempConfigurations.find((d) => d.name === 'Default config')) {
-		await addDefaultConfiguration(props.model);
-		tempConfigurations = await getModelConfigurations(props.model.id);
-	}
-
-	modelConfigurations.value = tempConfigurations;
-
-	openValueConfig.value = false;
-	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
-	extractions.value = [{ name: '', value: '' }];
-}
-defineExpose({ initializeConfigSpace });
-
-function resetCellEditing() {
-	const row = { name: false };
-
-	for (let i = 0; i < tableHeaders.value.length; i++) {
-		const { name, colspan } = tableHeaders.value[i];
-		row[name] = Array(colspan).fill(false);
-	}
-
-	// Can't use fill here because the same row object would be referenced throughout the array
-	const cellEditStatesArr = new Array(modelConfigurations.value.length);
-	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
-	cellEditStates.value = cellEditStatesArr;
-}
-
-watch(
-	() => tableHeaders.value,
-	() => {
-		resetCellEditing();
-	}
-);
-
-watch(
-	() => props.model.id,
-	() => initializeConfigSpace()
-);
-
-onMounted(() => {
-	initializeConfigSpace();
-});
 </script>
 
 <style scoped>

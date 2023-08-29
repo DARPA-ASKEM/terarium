@@ -1,6 +1,5 @@
 <template>
 	<div
-		v-if="isConfigurationVisible"
 		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
 	>
 		<div class="p-datatable-wrapper">
@@ -16,10 +15,10 @@
 					<tr>
 						<th class="p-frozen-column" />
 						<th class="p-frozen-column second-frozen">Select all</th>
-						<th v-for="(id, i) in baseModelStates" :header="id" :key="i">
+						<th v-for="(id, i) in baseStates" :header="id" :key="i">
 							{{ id }}
 						</th>
-						<th v-for="(id, i) in baseModelTransitions" :header="id" :key="i">
+						<th v-for="(id, i) in baseTransitions" :header="id" :key="i">
 							{{ id }}
 						</th>
 						<!--TODO: Insert new th loops for time and observables here-->
@@ -62,7 +61,7 @@
 								{{ name }}
 							</span>
 						</td>
-						<td v-for="(id, j) in [...baseModelStates, ...baseModelTransitions]" :key="j">
+						<td v-for="(id, j) in [...baseStates, ...baseTransitions]" :key="j">
 							<section class="editable-cell" @click="openValueModal(id, i)">
 								<span>{{ id }}<i class="pi pi-table" /></span>
 								<Button
@@ -143,8 +142,8 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed, onMounted } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
+import { ref } from 'vue';
+import { cloneDeep } from 'lodash';
 import Button from 'primevue/button';
 import SplitButton from 'primevue/splitbutton';
 import TabView from 'primevue/tabview';
@@ -153,17 +152,10 @@ import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 // import Checkbox from 'primevue/checkbox';
 import { ModelConfiguration, Model } from '@/types/Types';
-import {
-	createModelConfiguration,
-	updateModelConfiguration,
-	addDefaultConfiguration
-} from '@/services/model-configurations';
-import { getModelConfigurations } from '@/services/model';
+import { updateModelConfiguration } from '@/services/model-configurations';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
-import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
-import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
@@ -171,6 +163,9 @@ const props = defineProps<{
 	model: Model;
 	stratifiedModelType: StratifiedModelType;
 	calibrationConfig?: boolean;
+	tableHeaders: { name: string; colspan: number }[];
+	baseStates: any;
+	baseTransitions: any;
 }>();
 
 const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
@@ -184,33 +179,6 @@ const modalVal = ref({ id: '', configIndex: 0, nodeType: NodeType.State });
 
 const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
-
-const configurations = computed<Model[]>(
-	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
-);
-
-const baseModel = computed<any>(() => {
-	if (props.stratifiedModelType === StratifiedModelType.Catlab) {
-		return getCatlabAMRPresentationData(props.model).compactModel;
-	}
-	if (props.stratifiedModelType === StratifiedModelType.Mira) {
-		return getMiraAMRPresentationData(props.model).compactModel.model;
-	}
-	return props.model.model;
-});
-const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));
-const baseModelTransitions = computed<any>(() => baseModel.value.transitions.map(({ id }) => id));
-
-// Decide if we should display the whole configuration table
-const isConfigurationVisible = computed(
-	() => !isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)
-);
-
-// Determines names of headers and how many columns they'll span eg. initials, parameters, observables
-const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
-	{ name: 'Initials', colspan: baseModelStates.value.length },
-	{ name: 'Parameters', colspan: baseModelTransitions.value.length }
-]);
 
 // Makes cell inputs focus once they appear
 const vFocus = {
@@ -227,73 +195,15 @@ async function updateModelConfigName(configIndex: number) {
 	}, 800);
 }
 
-async function addModelConfiguration(config: ModelConfiguration) {
-	await createModelConfiguration(
-		props.model.id,
-		`Copy of ${config.name}`,
-		config.description as string,
-		config.configuration
-	);
-	setTimeout(() => {
-		emit('new-model-configuration');
-		initializeConfigSpace();
-		emit('sync-configs');
-	}, 800);
-}
-
 function openValueModal(id: string, configIndex: number) {
 	if (!props.featureConfig.isPreview) {
-		const nodeType = baseModelStates.value.includes(id) ? NodeType.State : NodeType.Transition;
+		const nodeType = props.baseStates.includes(id) ? NodeType.State : NodeType.Transition;
 
 		activeIndex.value = 0;
 		openValueConfig.value = true;
 		modalVal.value = { id, configIndex, nodeType };
 	}
 }
-
-function resetCellEditing() {
-	const row = { name: false };
-
-	// Can't use fill here because the same row object would be referenced throughout the array
-	const cellEditStatesArr = new Array(modelConfigurations.value.length);
-	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
-	cellEditStates.value = cellEditStatesArr;
-}
-
-async function initializeConfigSpace() {
-	let tempConfigurations = await getModelConfigurations(props.model.id);
-
-	configItems.value = tempConfigurations.map((config) => ({
-		label: config.name,
-		command: () => {
-			addModelConfiguration(config);
-		}
-	}));
-
-	// Ensure that we always have a "default config" model configuration
-	if (isEmpty(tempConfigurations) || !tempConfigurations.find((d) => d.name === 'Default config')) {
-		await addDefaultConfiguration(props.model);
-		tempConfigurations = await getModelConfigurations(props.model.id);
-	}
-
-	modelConfigurations.value = tempConfigurations;
-
-	resetCellEditing();
-
-	openValueConfig.value = false;
-	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
-	extractions.value = [{ name: 'Default', value: '' }];
-}
-defineExpose({ initializeConfigSpace });
-
-watch(
-	() => props.model.id,
-	() => initializeConfigSpace()
-);
-
-onMounted(() => {
-	initializeConfigSpace();
-});
 </script>
 
 <style scoped>

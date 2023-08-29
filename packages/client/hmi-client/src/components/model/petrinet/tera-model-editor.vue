@@ -22,7 +22,9 @@
 				@update-model="updateModelContent"
 			/>
 		</AccordionTab>
-		<AccordionTab header="Model configurations"></AccordionTab>
+		<AccordionTab header="Model configurations">
+			<tera-model-configuration :model="model" :feature-config="featureConfig" />
+		</AccordionTab>
 	</Accordion>
 </template>
 
@@ -31,6 +33,7 @@ import { ref } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
+import TeraModelConfiguration from '@/components/model/petrinet/tera-model-configuration.vue';
 import { FeatureConfig } from '@/types/common';
 import { Model } from '@/types/Types';
 import Accordion from 'primevue/accordion';
