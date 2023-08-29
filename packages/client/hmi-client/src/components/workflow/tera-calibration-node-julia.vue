@@ -138,6 +138,7 @@ import {
 	CalibrateMethodOptions,
 	CalibrateExtraJulia
 } from './calibrate-operation-julia';
+import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -227,7 +228,7 @@ const runCalibrate = async () => {
 		},
 		extra: extra.value,
 		engine: 'sciml',
-		timespan: timeSpan.value
+		timespan: getTimespan(timeSpan.value, csvAsset.value)
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	if (response?.simulationId) {

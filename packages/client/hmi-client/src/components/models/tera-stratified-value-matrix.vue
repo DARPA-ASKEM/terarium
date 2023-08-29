@@ -1,73 +1,48 @@
 <template>
-	<main>
-		<div
-			v-if="!isEmpty(matrix)"
-			class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
-		>
-			<div class="p-datatable-wrapper">
-				<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-					<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
-						<tr>
-							<th class="choose-criteria"></th>
-							<th class="choose-criteria"></th>
-							<th v-for="i in matrix[0].length + 1" :key="i" class="choose-criteria">
-								<Dropdown
-									v-if="i === 1"
-									class="w-full"
-									placeholder="Select a variable"
-									v-model="chosenCol"
-									:options="colDimensions"
+	<div
+		v-if="!isEmpty(matrix)"
+		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
+	>
+		<div class="p-datatable-wrapper">
+			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
+				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
+					<tr>
+						<th class="choose-criteria"></th>
+						<th v-for="(row, i) in matrix[0]" :key="i">
+							{{ Object.values(row.colCriteria).join(' / ') }}
+						</th>
+					</tr>
+				</thead>
+				<tbody class="p-datatable-tbody">
+					<tr v-for="(row, i) in matrix" :key="i">
+						<td class="p-frozen-column">{{ Object.values(row[0].rowCriteria).join(' / ') }}</td>
+						<td
+							v-for="(cell, j) in row"
+							:key="j"
+							tabindex="0"
+							@keyup.enter="onEnterValueCell(cell?.value?.id, i, j)"
+							@click="onEnterValueCell(cell?.value?.id, i, j)"
+						>
+							<template v-if="cell?.value?.id">
+								<InputText
+									v-if="editableCellStates[i][j]"
+									class="cell-input"
+									v-model.lazy="valueToEdit"
+									v-focus
+									@focusout="updateModelConfigValue(cell.value.id, i, j)"
+									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
 								/>
-							</th>
-						</tr>
-						<tr>
-							<th class="choose-criteria"></th>
-							<th class="choose-criteria"></th>
-							<th v-for="(row, i) in matrix[0]" :key="i">
-								{{ row.colCriteria?.[chosenCol] }}
-							</th>
-						</tr>
-					</thead>
-					<tbody class="p-datatable-tbody">
-						<tr v-for="(row, i) in matrix" :key="i">
-							<td class="p-frozen-column">
-								<Dropdown
-									v-if="i === 0"
-									class="w-full"
-									placeholder="Select a variable"
-									v-model="chosenRow"
-									:options="rowDimensions"
-								/>
-							</td>
-							<td class="p-frozen-column">{{ row[0].rowCriteria?.[chosenRow] }}</td>
-							<td
-								v-for="(cell, j) in row"
-								:key="j"
-								tabindex="0"
-								@keyup.enter="onEnterValueCell(cell?.value?.id, i, j)"
-								@click="onEnterValueCell(cell?.value?.id, i, j)"
-							>
-								<template v-if="cell?.value?.id">
-									<InputText
-										v-if="editableCellStates[i][j]"
-										class="cell-input"
-										v-model.lazy="valueToEdit"
-										v-focus
-										@focusout="updateModelConfigValue(cell.value.id, i, j)"
-										@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
-									/>
-									<span v-else class="editable-cell">
-										{{ getMatrixValue(cell?.value?.id) }}
-									</span>
-								</template>
-								<span v-else class="not-allowed">N/A</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
+								<span v-else class="editable-cell">
+									{{ getMatrixValue(cell?.value?.id) }}
+								</span>
+							</template>
+							<span v-else class="not-allowed">N/A</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
-	</main>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -77,7 +52,6 @@ import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-se
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
-import Dropdown from 'primevue/dropdown';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
@@ -184,7 +158,7 @@ function configureMatrix() {
 
 	if (isEmpty(matrixData)) return;
 
-	// Grab dimension names from the first matrix row
+	// Grab dimension names from the first matrix row (they'll all be the same for the chosen id)
 	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
 		delete d.id;
 		delete d.base;
@@ -214,11 +188,10 @@ onMounted(() => {
 
 <style scoped>
 .p-datatable {
-	height: 10rem;
+	max-width: 80vw;
 }
 
-.p-datatable .p-datatable-thead > tr > th.choose-criteria,
-.p-datatable-scrollable .p-frozen-column:first-child {
+.p-datatable .p-datatable-thead > tr > th.choose-criteria {
 	padding: 0;
 	background: var(--surface-ground);
 	border: none;

@@ -1,5 +1,6 @@
 import useAuthStore from '@/stores/auth';
 import { EventSourcePolyfill } from 'event-source-polyfill';
+import API from './api';
 
 type MessageHandler = (message: any) => void;
 
@@ -13,7 +14,7 @@ export class EventSourceManager {
 	public openConnection(id: string, connectionString: string) {
 		if (!this.connections.has(id)) {
 			const auth = useAuthStore();
-			const eventSource = new EventSourcePolyfill(connectionString, {
+			const eventSource = new EventSourcePolyfill(API.defaults.baseURL + connectionString, {
 				headers: {
 					Authorization: `Bearer ${auth.token}`
 				}
@@ -31,6 +32,12 @@ export class EventSourceManager {
 			};
 
 			eventSource.onerror = (error) => {
+				if (error?.status === 401) {
+					// reopen the connection when unauthorized
+					this.closeConnection(id);
+					this.openConnection(id, connectionString);
+				}
+
 				console.error(`EventSource error for ID ${id}: ${error}`);
 			};
 
