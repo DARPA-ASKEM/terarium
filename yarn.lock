@@ -2354,32 +2354,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/ui-components@npm:3.6.3, @jupyterlab/ui-components@npm:^3.6.3":
-  version: 3.6.3
-  resolution: "@jupyterlab/ui-components@npm:3.6.3"
-  dependencies:
-    "@blueprintjs/core": ^3.36.0
-    "@blueprintjs/select": ^3.15.0
-    "@jupyterlab/coreutils": ^5.6.3
-    "@jupyterlab/translation": ^3.6.3
-    "@lumino/algorithm": ^1.9.0
-    "@lumino/commands": ^1.19.0
-    "@lumino/coreutils": ^1.11.0
-    "@lumino/disposable": ^1.10.0
-    "@lumino/signaling": ^1.10.0
-    "@lumino/virtualdom": ^1.14.0
-    "@lumino/widgets": ^1.37.2
-    "@rjsf/core": ^3.1.0
-    react: ^17.0.1
-    react-dom: ^17.0.1
-    typestyle: ^2.0.4
-  peerDependencies:
-    react: ^17.0.1
-  checksum: 0809b6b83c1fca0f65cde6d395c18682366760c16a7b133d01abe487b665c3f01979ee082a676bc479ecb8c0b112d8032de8f0ad0ad2d6ec82fe114f04534b6b
-  languageName: node
-  linkType: hard
-
-"@jupyterlab/ui-components@npm:^3.6.5":
+"@jupyterlab/ui-components@npm:3.6.5, @jupyterlab/ui-components@npm:^3.6.5":
   version: 3.6.5
   resolution: "@jupyterlab/ui-components@npm:3.6.5"
   dependencies:
@@ -2401,6 +2376,31 @@ __metadata:
   peerDependencies:
     react: ^17.0.1
   checksum: fd87b20dca5f778b19d2a734f6533fa867c6806a10085757c2a42f22311cd8ce24a9ae59efa6f652413ce6802370a84accb518054a683b28554deb20d82cb702
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/ui-components@npm:^3.6.3":
+  version: 3.6.3
+  resolution: "@jupyterlab/ui-components@npm:3.6.3"
+  dependencies:
+    "@blueprintjs/core": ^3.36.0
+    "@blueprintjs/select": ^3.15.0
+    "@jupyterlab/coreutils": ^5.6.3
+    "@jupyterlab/translation": ^3.6.3
+    "@lumino/algorithm": ^1.9.0
+    "@lumino/commands": ^1.19.0
+    "@lumino/coreutils": ^1.11.0
+    "@lumino/disposable": ^1.10.0
+    "@lumino/signaling": ^1.10.0
+    "@lumino/virtualdom": ^1.14.0
+    "@lumino/widgets": ^1.37.2
+    "@rjsf/core": ^3.1.0
+    react: ^17.0.1
+    react-dom: ^17.0.1
+    typestyle: ^2.0.4
+  peerDependencies:
+    react: ^17.0.1
+  checksum: 0809b6b83c1fca0f65cde6d395c18682366760c16a7b133d01abe487b665c3f01979ee082a676bc479ecb8c0b112d8032de8f0ad0ad2d6ec82fe114f04534b6b
   languageName: node
   linkType: hard
 
@@ -9209,7 +9209,7 @@ cors@latest:
     "@jupyterlab/services": 6.6.3
     "@jupyterlab/theme-light-extension": 3.6.5
     "@jupyterlab/translation": 3.6.5
-    "@jupyterlab/ui-components": 3.6.3
+    "@jupyterlab/ui-components": 3.6.5
     "@lumino/commands": 2.1.0
     "@lumino/coreutils": 2.1.1
     "@lumino/widgets": 2.1.0
