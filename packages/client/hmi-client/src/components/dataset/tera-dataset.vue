@@ -84,14 +84,17 @@
 					</section>
 				</section>
 			</section>
-			<tera-related-publications
-				@extracted-metadata="gotEnrichedData"
-				:dialog-flavour="'dataset'"
-				:publications="publications"
-				:project="project"
-				:assetId="assetId"
-			/>
-			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
+			<Accordion :multiple="true" :activeIndex="[0, 1, 2, 3]">
+				<AccordionTab>
+					<template #header>Related publications</template>
+					<tera-related-publications
+						@extracted-metadata="gotEnrichedData"
+						:dialog-flavour="'dataset'"
+						:publications="publications"
+						:project="project"
+						:assetId="assetId"
+					/>
+				</AccordionTab>
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
