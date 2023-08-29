@@ -155,7 +155,6 @@ import { Model, Document, Dataset, ProvenanceType, AssetType } from '@/types/Typ
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
-import { logger } from '@/utils/logger';
 import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
 import useResourcesStore from '@/stores/resources';
 import TeraModelDiagram from './tera-model-diagram.vue';
@@ -266,6 +265,7 @@ function updateModelContent(rendererGraph) {
 	if (model.value) model.value = convertToAMRModel(rendererGraph);
 }
 
+// Just for tera-model-description
 function updateModelContents(updatedModel: Model) {
 	model.value = updatedModel;
 	updateModel(updatedModel);
@@ -306,6 +306,7 @@ watch(
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
+			console.log(model.value);
 		} else {
 			model.value = null;
 		}
