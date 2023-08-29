@@ -30,7 +30,7 @@
 		"@jupyterlab/theme-light-extension": "3.6.5",
 		"@jupyterlab/translation": "3.6.5",
 		"@jupyterlab/ui-components": "3.6.5",
-		"@lumino/commands": "2.1.0",
+		"@lumino/commands": "2.1.3",
 		"@lumino/coreutils": "2.1.1",
 		"@lumino/widgets": "2.1.0",
 		"@uncharted.software/design-tokens": "1.1.0",
