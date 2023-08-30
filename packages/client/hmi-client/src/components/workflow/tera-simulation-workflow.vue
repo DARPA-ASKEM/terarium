@@ -75,6 +75,15 @@
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
+					<tera-dataset-transformer-node
+						v-else-if="
+							node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER && datasets
+						"
+						:datasets="datasets"
+						:dropped-dataset-id="droppedAssetId"
+						:node="node"
+						@select-dataset="(event) => selectDataset(node, event)"
+					/>
 					<tera-simulate-julia-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
@@ -246,10 +255,12 @@ import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
+import TeraDatasetTransformerNode from './tera-dataset-transformer-node.vue';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
 import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
+import { DatasetTransformerOperation } from './dataset-transformer-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -493,6 +504,13 @@ const contextMenuItems = ref([
 		label: 'Dataset',
 		command: () => {
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Dataset Transformer',
+		command: () => {
+			workflowService.addNode(wf.value, DatasetTransformerOperation, newNodePosition);
 			workflowDirty = true;
 		}
 	},

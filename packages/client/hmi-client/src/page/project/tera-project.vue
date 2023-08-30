@@ -109,6 +109,14 @@
 					:project="project"
 					:node="workflowNode"
 				/>
+				<tera-dataset-transformer
+					v-if="
+						workflowNode &&
+						workflowNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER
+					"
+					:project="project"
+					:node="workflowNode"
+				/>
 			</SplitterPanel>
 		</Splitter>
 		<tera-slider-panel
@@ -158,6 +166,7 @@ import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ense
 import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
+import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
 
 import TeraProjectPage from './components/tera-project-page.vue';

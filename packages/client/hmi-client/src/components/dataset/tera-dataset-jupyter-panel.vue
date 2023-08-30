@@ -109,7 +109,7 @@ import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
 import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { AssetType, CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -137,8 +137,8 @@ const confirm = useConfirm();
 
 const props = defineProps<{
 	assetId: string;
+	assetIds: string[];
 	project?: IProject;
-	dataset: Dataset;
 	showKernels: boolean;
 	showChatThoughts: boolean;
 }>();
@@ -190,10 +190,16 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
+
+	const contextInfo = {};
+	props.assetIds.forEach((assetId, i) => {
+		const key = `d${i + 1}`;
+		contextInfo[key] = assetId;
+	});
 	if (kernel?.name === 'llmkernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
-			context_info: { id: props.assetId }
+			context_info: contextInfo
 		});
 	}
 });
