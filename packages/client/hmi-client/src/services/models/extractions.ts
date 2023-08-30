@@ -179,4 +179,23 @@ export const extractPDF = async (artifact: Artifact) => {
 	}
 };
 
+export async function codeToAMR(codeId: string) {
+	const response = await API.post(`/extract/code-to-amr?code_id=${codeId}`);
+	if (response && response?.status === 200) {
+		console.log(response.data);
+		const { id, status } = response.data;
+		if (status === 'queued') {
+			const extraction = await fetchExtraction(id);
+			if (extraction?.state === PollerState.Done) {
+				return extraction.data?.job_result.amr as Model;
+			}
+		}
+		if (status === 'finished') {
+			return response.data.result?.job_result.amr as Model;
+		}
+	}
+	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - ta1-service' });
+	return null;
+}
+
 export { mathmlToAMR, latexToAMR };

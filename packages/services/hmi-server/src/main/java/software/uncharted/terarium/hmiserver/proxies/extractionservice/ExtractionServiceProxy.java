@@ -112,7 +112,7 @@ public interface ExtractionServiceProxy {
 	@Path("/code_to_amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	ExtractionResponse postCodeToAMR(
-		@QueryParam("artifact_id") String artifactId,
+		@QueryParam("code_id") String codeId,
 		@QueryParam("name") String name,
 		@QueryParam("description") String description
 	);
