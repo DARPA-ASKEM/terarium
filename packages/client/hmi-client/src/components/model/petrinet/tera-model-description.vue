@@ -19,6 +19,7 @@
 					<td>{{ model?.metadata?.processed_at }}</td>
 					<td>{{ model?.metadata?.annotations?.authors?.join(', ') }}</td>
 					<td>{{ model?.metadata?.processed_by }}</td>
+					<td>{{ model?.metadata?.license }}</td>
 				</tr>
 			</table>
 		</section>
