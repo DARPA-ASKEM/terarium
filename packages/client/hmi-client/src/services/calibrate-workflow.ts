@@ -19,7 +19,6 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 			});
 		}
 
-		modelColumnNameOptions.push('timestep');
 		modelColumnNameOptions.push('timestamp');
 		return { modelConfiguration, modelColumnNameOptions };
 	}
