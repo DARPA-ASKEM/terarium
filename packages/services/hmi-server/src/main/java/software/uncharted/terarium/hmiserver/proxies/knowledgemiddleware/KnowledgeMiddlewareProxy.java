@@ -1,5 +1,5 @@
 
-package software.uncharted.terarium.hmiserver.proxies.extractionservice;
+package software.uncharted.terarium.hmiserver.proxies.knowledgemiddleware;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
@@ -9,7 +9,6 @@ import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapp
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -18,7 +17,7 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Knowledge Middleware")
 @RegisterProvider(HmiResponseExceptionMapper.class)
-public interface ExtractionServiceProxy {
+public interface KnowledgeMiddlewareProxy {
 
 	/**
 	 * Retrieve the status of an extraction job
