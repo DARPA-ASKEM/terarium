@@ -23,7 +23,7 @@ import java.util.List;
 @Slf4j
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterProvider(HmiResponseExceptionMapper.class)
-public class ExtractionResource {
+public class KnowledgeResource {
 
 	@Inject
 	@RestClient
