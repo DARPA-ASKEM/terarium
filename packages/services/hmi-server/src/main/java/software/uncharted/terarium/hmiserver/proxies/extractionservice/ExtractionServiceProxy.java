@@ -14,9 +14,9 @@ import java.util.Map;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "ta1-service-api")
+@RegisterRestClient(configKey = "knowledge-middleware")
 @Produces(MediaType.APPLICATION_JSON)
-@Tag(name = "Extraction Service")
+@Tag(name = "Knowledge Middleware")
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface ExtractionServiceProxy {
 
