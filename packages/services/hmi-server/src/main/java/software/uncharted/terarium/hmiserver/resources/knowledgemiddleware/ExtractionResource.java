@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources.extractionservice;
+package software.uncharted.terarium.hmiserver.resources.knowledgemiddleware;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
