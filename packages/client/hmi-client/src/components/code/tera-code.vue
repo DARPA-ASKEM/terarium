@@ -1,11 +1,14 @@
 <template>
 	<main>
 		<header>
-			<section>
-				<h4>{{ name }}</h4>
+			<section class="header">
+				<!-- <h4>{{ name }}</h4> -->
+				<section class="name">
+					<InputText v-model="name" class="name-input" />
+				</section>
 				<section class="buttons">
-					<Button label="Save code" @click="saveCode" />
-					<Button label="Extract model" @click="extractModel" :disabled="!codeAsset" />
+					<!-- <Button label="Save code" @click="saveCode" /> -->
+					<Button label="Extract model" @click="extractModel" />
 				</section>
 			</section>
 		</header>
@@ -17,6 +20,25 @@
 			style="height: 100%; width: 100%"
 			class="ace-editor"
 		/>
+		<Teleport to="body">
+			<tera-modal
+				v-if="isModalVisible && model"
+				class="modal"
+				@modal-mask-clicked="isModalVisible = false"
+				@modal-enter-press="isModalVisible = false"
+			>
+				<template #header>
+					<InputText v-model="modelName" class="name-input" />
+				</template>
+				<template #default>
+					<tera-model-diagram :model="model" :is-editable="false" />
+				</template>
+				<template #footer>
+					<Button label="Cancel" class="p-button-secondary" @click="isModalVisible = false" />
+					<Button label="Save model" @click="saveModel" />
+				</template>
+			</tera-modal>
+		</Teleport>
 	</main>
 </template>
 
@@ -28,12 +50,19 @@ import Button from 'primevue/button';
 import { uploadCodeToProject } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/models/extractions';
-import { Code } from '@/types/Types';
+import { AssetType, Code, Model } from '@/types/Types';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
+import { createModel } from '@/services/model';
+import { addAsset } from '@/services/project';
+import TeraModelDiagram from '../model/petrinet/tera-model-diagram.vue';
 
 const props = defineProps<{
 	projectId: string;
 	assetId: string;
 }>();
+
+const emit = defineEmits(['open-new-model']);
 
 const toast = useToastService();
 
@@ -43,6 +72,10 @@ const codeAsset = ref<Code>();
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const progress = ref(0);
+const isModalVisible = ref(false);
+const model = ref<Model>();
+const modelName = ref('');
+
 /**
  * Editor initialization function
  * @param editorInstance	the Ace editor instance
@@ -64,7 +97,7 @@ async function saveCode() {
 	const file = new File([code.value], name.value);
 	const newCodeAsset = await uploadCodeToProject(props.projectId, file, progress);
 	if (!newCodeAsset) {
-		toast.error('', 'Unable to save code');
+		toast.error('', 'Unable to save file');
 	} else {
 		toast.success('', `File saved as ${name.value}`);
 		codeAsset.value = newCodeAsset;
@@ -73,9 +106,30 @@ async function saveCode() {
 }
 
 async function extractModel() {
-	if (codeAsset.value?.id) {
-		const model = await codeToAMR(codeAsset.value.id);
-		console.log(model);
+	if (!codeAsset.value?.id) {
+		const newCodeAsset = await saveCode();
+		if (newCodeAsset && newCodeAsset.id) {
+			const extractedAmr = await codeToAMR(newCodeAsset.id);
+			if (extractedAmr) {
+				model.value = extractedAmr as Model;
+				modelName.value = extractedAmr.header.name;
+				isModalVisible.value = true;
+			}
+		}
+	}
+}
+
+async function saveModel() {
+	const createdModel = await createModel(model.value);
+	if (createdModel) {
+		const asset = (await addAsset(props.projectId, AssetType.Models, createdModel.id)) as Model;
+		if (asset) {
+			emit('open-new-model', asset.id);
+		} else {
+			toast.error('', 'Unable to add model to project');
+		}
+	} else {
+		toast.error('', 'Unable to save model');
 	}
 }
 </script>
@@ -107,5 +161,22 @@ h4 {
 
 .ace-editor {
 	border-top: 1px solid var(--surface-border-light);
+}
+
+.header {
+	display: flex;
+	gap: 1rem;
+}
+
+.name {
+	flex-grow: 2;
+}
+
+.name-input {
+	height: 2.5rem;
+	align-self: center;
+	font-size: 20px;
+	font-weight: var(--font-weight-semibold);
+	width: 100%;
 }
 </style>

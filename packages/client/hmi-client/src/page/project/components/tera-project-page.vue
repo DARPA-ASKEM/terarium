@@ -6,7 +6,7 @@
 		@asset-loaded="emit('asset-loaded')"
 	/>
 	<tera-code
-		:projectId="project.id"
+		:project-id="project.id"
 		:asset-id="assetId ?? ''"
 		v-else-if="pageType === AssetType.Code"
 		@vue:mounted="() => emit('asset-loaded')"
