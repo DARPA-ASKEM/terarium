@@ -76,16 +76,16 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 				return response.data.result as Model;
 			}
 		}
-		logger.error(`MathML to AMR request failed`, { toastTitle: 'Error - ta1-service' });
+		logger.error(`MathML to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
 	} catch (error: unknown) {
 		if ((error as AxiosError).isAxiosError) {
 			const axiosError = error as AxiosError;
-			logger.error('[ta1-service]', axiosError.response?.data || axiosError.message, {
+			logger.error('[knowledge-middleware]', axiosError.response?.data || axiosError.message, {
 				showToast: false,
-				toastTitle: 'Error - ta1-service'
+				toastTitle: 'Error - knowledge-middleware'
 			});
 		} else {
-			logger.error(error, { showToast: false, toastTitle: 'Error - ta1-service' });
+			logger.error(error, { showToast: false, toastTitle: 'Error - knowledge-middleware' });
 		}
 	}
 	return null;
