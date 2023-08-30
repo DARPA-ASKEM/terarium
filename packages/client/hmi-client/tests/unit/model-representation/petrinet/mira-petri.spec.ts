@@ -18,32 +18,4 @@ describe('mira petrinet ', () => {
 		// SEIRD
 		expect(res.compactModel.model.states.length).to.eq(5);
 	});
-	/*
-	it('generating factored table', () => {
-		const result = getMiraAMRPresentationData(amr as unkown as Model);
-
-		function factorsTable(data: any[]) {
-			console.log('!!', data);
-			const table: { [key: string]: string[] } = {};
-			for (let i = 0; i < data.length; i++) {
-				const obj = data[i];
-				const keys = Object.keys(obj).filter(d => d !== 'id' && d !== 'base');
-
-				for (let j = 0; j < keys.length; j++) {
-					const key = keys[i];
-					if (!obj[key]) continue;
-
-					if (!table[key]) table[key] = [];
-					table[key].push(obj[key]);
-				}
-			}
-			console.log(table);
-			return table;
-		}
-
-		factorsTable(result.transitionMatrixData);
-
-		expect(1).to.eq(1);
-	})
-  */
 });
