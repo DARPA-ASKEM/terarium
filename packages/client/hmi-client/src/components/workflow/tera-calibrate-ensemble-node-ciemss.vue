@@ -118,6 +118,8 @@ const runEnsemble = async () => {
 
 	const params: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
+		// TODO: figure out what to use for the timespan
+		// timespan: timeSpan.value,
 		timespan: getTimespan(timeSpan.value, csvAsset.value),
 		dataset: {
 			id: datasetId.value,

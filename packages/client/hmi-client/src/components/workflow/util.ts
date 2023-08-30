@@ -1,30 +1,24 @@
+import { DataseriesConfig, RunType } from '@/types/SimulateConfig';
 import { CsvAsset, TimeSpan } from '@/types/Types';
 
-export const enum RunType {
-	Julia = 'julia',
-	Ciemss = 'ciemss'
-}
-
-export type DatasetType = {
-	data: { x: number; y: number }[];
-	label: string;
-	fill: boolean;
-	borderColor?: string;
-	borderWidth?: number;
-	borderDash?: number[];
-};
-
-export const getTimespan = (inputTimespan: TimeSpan, dataset?: CsvAsset): TimeSpan => {
+export const getTimespan = (
+	inputTimespan: TimeSpan,
+	dataset?: CsvAsset,
+	mapping?: { [key: string]: string }[]
+): TimeSpan => {
 	let start = inputTimespan.start;
 	let end = inputTimespan.end;
 	// If we have the min/max timestamp available from the csv asset use it
-	// Try to get `timestamp` first, then `t`
-	// TODO: figure out a more robust way to get the timestamp column from the csv asset
 	if (dataset) {
-		let tIndex = dataset.headers.indexOf('timestamp');
-		if (tIndex === -1) {
-			tIndex = dataset.headers.indexOf('t');
+		let tVar = 'timestamp';
+		if (mapping) {
+			// if there's a mapping for timestamp, then the model variable is guaranteed to be 'timestamp'
+			const tMap = mapping.find((m) => m.modelVariable === 'timestamp');
+			if (tMap) {
+				tVar = tMap.datasetVariable;
+			}
 		}
+		const tIndex = dataset.headers.indexOf(tVar);
 		if (tIndex !== -1) {
 			start = dataset.stats?.[tIndex].minValue!;
 			end = dataset.stats?.[tIndex].maxValue!;
@@ -38,9 +32,10 @@ export const getGraphDataFromDatasetCSV = (
 	columnVar: string,
 	mapping?: { [key: string]: string }[],
 	runType?: RunType
-): DatasetType | null => {
+): DataseriesConfig | null => {
 	// Julia's output has a (t) at the end of the variable name, so we need to remove it
 	let v = runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar;
+	let tVar = 'timestamp';
 
 	// get the dataset variable from the mapping of model variable to dataset variable if there's a mapping
 	if (mapping) {
@@ -49,16 +44,17 @@ export const getGraphDataFromDatasetCSV = (
 			if (varMap) {
 				v = varMap.datasetVariable;
 			}
+
+			// if there's a mapping for timestamp, then the model variable is guaranteed to be 'timestamp'
+			const tMap = mapping.find((m) => m.modelVariable === 'timestamp');
+			if (tMap) {
+				tVar = tMap.datasetVariable;
+			}
 		}
 	}
 
 	// get  the index of the timestamp column
-	// Try to get `timestamp` first, then `t`
-	// TODO: figure out a more robust way to get the timestamp column from the csv asset
-	let tIndex = dataset.headers.indexOf('timestamp');
-	if (tIndex === -1) {
-		tIndex = dataset.headers.indexOf('t');
-	}
+	const tIndex = dataset.headers.indexOf(tVar);
 	if (tIndex === -1) {
 		return null;
 	}
@@ -75,7 +71,7 @@ export const getGraphDataFromDatasetCSV = (
 		return null;
 	}
 
-	const graphData = {
+	const graphData: DataseriesConfig = {
 		// ignore the first row, it's the header
 		data: dataset.csv.slice(1).map((datum: string[]) => ({
 			x: +datum[tIndex],

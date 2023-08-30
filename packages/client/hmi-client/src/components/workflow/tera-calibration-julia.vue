@@ -142,12 +142,11 @@ import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation-julia';
-import { RunType } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
