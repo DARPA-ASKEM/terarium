@@ -66,12 +66,12 @@ public class DatasetResource implements SnakeCaseResource {
 	}
 
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create a dataset via TDS proxy")
 	public Response createDataset(
 		final Dataset dataset
 	) {
-		JsonNode node = convertObjectToSnakeCaseJsonNode(dataset);
-		return datasetProxy.createDatasets(node);
+		return datasetProxy.createDataset(convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
 	@GET
@@ -251,8 +251,7 @@ public class DatasetResource implements SnakeCaseResource {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
 				Dataset updatedDataset = new Dataset().setId(datasetId).setColumns(columns);
-				JsonNode updatedDatasetJson = convertObjectToSnakeCaseJsonNode(updatedDataset);
-				Response r = datasetProxy.updateDataset(datasetId, updatedDatasetJson);
+				Response r = datasetProxy.updateDataset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
 				if(r.getStatus() != Response.Status.OK.getStatusCode()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
 				}
