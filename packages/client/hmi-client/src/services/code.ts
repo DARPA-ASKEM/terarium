@@ -139,10 +139,4 @@ function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 	}
 }
 
-export {
-	createNewCodeAsset,
-	addFileToCodeAsset,
-	uploadCodeToProject,
-	getCodeFileAsText,
-	uploadCodeToProjectFromGithub
-};
+export { uploadCodeToProject, getCodeFileAsText, uploadCodeToProjectFromGithub };
