@@ -213,7 +213,7 @@ import {
 	convertAMRToACSet,
 	updateExistingModelContent
 } from '@/model-representation/petrinet/petrinet-service';
-import { latexToAMR } from '@/services/extractions';
+import { latexToAMR } from '@/services/knowledge';
 import { updateModel } from '@/services/model';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';

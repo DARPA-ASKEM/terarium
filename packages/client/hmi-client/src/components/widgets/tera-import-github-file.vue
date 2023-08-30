@@ -190,7 +190,7 @@ import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
-import { extractPDF } from '@/services/extractions';
+import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { uploadCodeToProjectFromGithub } from '@/services/code';
 
