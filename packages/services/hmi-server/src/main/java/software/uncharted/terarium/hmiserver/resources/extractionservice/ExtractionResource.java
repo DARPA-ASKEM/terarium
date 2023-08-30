@@ -171,6 +171,8 @@ public class ExtractionResource {
 		@PathParam("model_id") String modelId,
 		@QueryParam("artifact_id") String artifactId
 	) {
+		System.out.println(modelId);
+		System.out.println(artifactId);
 		return extractionProxy.postProfileModel(modelId, artifactId);
 	};
 
