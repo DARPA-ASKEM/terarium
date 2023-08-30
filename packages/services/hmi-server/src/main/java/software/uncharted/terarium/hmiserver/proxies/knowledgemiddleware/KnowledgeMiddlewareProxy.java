@@ -51,7 +51,7 @@ public interface KnowledgeMiddlewareProxy {
 	);
 
 	/**
-	 * Post a PDF to the extraction service
+	 * Post a PDF
 	 *
 	 * @param    annotateSkema (Boolean): Whether to annotate the PDF with Skema
 	 * @param    annotateMIT (Boolean): Whether to annotate the PDF with AMR
@@ -74,7 +74,7 @@ public interface KnowledgeMiddlewareProxy {
 	);
 
 	/**
-	 * Post a PDF to the extraction service to get text
+	 * Post a PDF to get text
 	 * @param artifactId (String): The ID of the artifact to extract text from
 	 * @return
 	 */
