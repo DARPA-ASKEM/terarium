@@ -527,38 +527,6 @@
 				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
 			</tera-modal>
 		</Teleport>
-
-		<!-- Copy model modal -->
-		<Teleport to="body">
-			<tera-modal
-				v-if="isCopyModelModalVisible"
-				class="modal"
-				@modal-mask-clicked="isCopyModelModalVisible = false"
-				@modal-enter-press="duplicateModel"
-			>
-				<template #header>
-					<h4>Make a copy</h4>
-				</template>
-				<template #default>
-					<form>
-						<label for="copy-model">{{ copyModelNameInputPrompt }}</label>
-						<InputText
-							v-bind:class="invalidInputStyle"
-							id="copy-model"
-							type="text"
-							v-model="copyModelName"
-							placeholder="Model name"
-						/>
-					</form>
-				</template>
-				<template #footer>
-					<Button @click="duplicateModel">Copy model</Button>
-					<Button class="p-button-secondary" @click="isCopyModelModalVisible = false">
-						Cancel
-					</Button>
-				</template>
-			</tera-modal>
-		</Teleport>
 	</tera-asset>
 </template>
 
@@ -653,30 +621,15 @@ const newPetri = ref();
 const isRenamingModel = ref(false);
 const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
 
-const isCopyModelModalVisible = ref<boolean>(false);
-const copyModelNameInputPrompt = ref<string>('');
-const copyModelName = ref<string>('');
-
-const isValidName = ref<boolean>(true);
-const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
-
-const existingModelNames = computed(() => {
-	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
-	});
-	return modelNames;
-});
-
 const stratifiedModelType = computed(() => model.value && getStratificationType(model.value));
-
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
 
 /*
  * User Menu
  */
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
 const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
@@ -686,8 +639,7 @@ const optionsMenuItems = ref([
 			isRenamingModel.value = true;
 			newModelName.value = model.value?.name ?? '';
 		}
-	},
-	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
+	}
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
@@ -704,69 +656,6 @@ function syncConfigs(updateStratified = false) {
 			modelConfigurationRef.value?.initializeConfigSpace();
 		}
 	}
-}
-
-function getJustModelName(modelName: string): string {
-	let potentialNum: string = '';
-	let completeParen: boolean = false;
-	let idx = modelName.length;
-	if (modelName.charAt(modelName.length - 1) === ')') {
-		for (let i = modelName.length - 2; i >= 0; i--) {
-			if (modelName.charAt(i) === '(') {
-				completeParen = true;
-				idx = i;
-				break;
-			}
-			potentialNum = modelName.charAt(i) + potentialNum;
-		}
-	}
-
-	if (completeParen && !Number.isNaN(potentialNum as any)) {
-		return modelName.substring(0, idx).trim();
-	}
-	return modelName.trim();
-}
-
-function getSuggestedModelName(currModelName: string, counter: number): string {
-	const suggestedName = `${currModelName} (${counter})`;
-
-	if (!existingModelNames.value.includes(suggestedName)) {
-		return suggestedName;
-	}
-	return getSuggestedModelName(currModelName, counter + 1);
-}
-
-function initiateModelDuplication() {
-	if (!model.value) {
-		logger.info('Failed to duplicate model.');
-		return;
-	}
-	copyModelNameInputPrompt.value = 'What do you want to name it?';
-	const modelName = getJustModelName(model.value.name.trim());
-	copyModelName.value = getSuggestedModelName(modelName, 1);
-	isCopyModelModalVisible.value = true;
-}
-
-async function duplicateModel() {
-	if (existingModelNames.value.includes(copyModelName.value.trim())) {
-		copyModelNameInputPrompt.value = 'Duplicate model name - please enter a different name:';
-		isValidName.value = false;
-		logger.info('Duplicate model name - please enter a different name');
-		return;
-	}
-	copyModelNameInputPrompt.value = 'Creating a copy...';
-	isValidName.value = true;
-	const duplicateModelResponse = await createModel({
-		...model.value,
-		name: copyModelName.value.trim()
-	});
-	if (!duplicateModelResponse) {
-		logger.info('Failed to duplicate model.');
-		isCopyModelModalVisible.value = false;
-		return;
-	}
-	await ProjectService.addAsset(props.project.id, AssetType.Models, duplicateModelResponse.id);
-	isCopyModelModalVisible.value = false;
 }
 
 /* Model */
@@ -1104,14 +993,6 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
-}
-
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
 }
 
 .p-datatable:deep(td:hover) {

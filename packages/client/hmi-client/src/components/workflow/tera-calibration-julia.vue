@@ -87,6 +87,9 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
+					:initial-data="csvAsset"
+					:mapping="mapping"
+					:run-type="RunType.Julia"
 					:chartConfig="cfg"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
@@ -144,6 +147,7 @@ import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation-julia';
+import { RunType } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;

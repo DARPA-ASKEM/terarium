@@ -66,12 +66,12 @@ public class DatasetResource implements SnakeCaseResource {
 	}
 
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create a dataset via TDS proxy")
 	public Response createDataset(
 		final Dataset dataset
 	) {
-		JsonNode node = convertObjectToSnakeCaseJsonNode(dataset);
-		return datasetProxy.createDatasets(node);
+		return datasetProxy.createDataset(convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
 	@GET
@@ -141,7 +141,6 @@ public class DatasetResource implements SnakeCaseResource {
 				.build();
 		}
 
-		final int linesToRead = limit != null ? limit : DEFAULT_CSV_LIMIT;
 		List<List<String>> csv = csvToRecords(rawCSV);
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> csvColumnStats = new ArrayList<>();
@@ -150,6 +149,7 @@ public class DatasetResource implements SnakeCaseResource {
 			csvColumnStats.add(getStats(column.subList(1, column.size()))); //remove first as it is header:
 		}
 
+		final int linesToRead = limit != null ? limit == -1 ? csv.size() : limit : DEFAULT_CSV_LIMIT;
 
 		CsvAsset csvAsset = new CsvAsset(csv.subList(0,Math.min(linesToRead, csv.size()-1)), csvColumnStats, headers, csv.size());
 		return Response
@@ -251,8 +251,7 @@ public class DatasetResource implements SnakeCaseResource {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
 				Dataset updatedDataset = new Dataset().setId(datasetId).setColumns(columns);
-				JsonNode updatedDatasetJson = convertObjectToSnakeCaseJsonNode(updatedDataset);
-				Response r = datasetProxy.updateDataset(datasetId, updatedDatasetJson);
+				Response r = datasetProxy.updateDataset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
 				if(r.getStatus() != Response.Status.OK.getStatusCode()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
 				}

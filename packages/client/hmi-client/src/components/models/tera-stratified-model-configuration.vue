@@ -100,7 +100,8 @@
 				<span>Configure the matrix values</span>
 			</template>
 			<template #default>
-				<TabView v-model:activeIndex="activeIndex">
+				<!-- TODO: Implement value tabs for the modal once we are ready
+					<TabView v-model:activeIndex="activeIndex">
 					<TabPanel v-for="(extraction, i) in extractions" :key="i">
 						<template #header>
 							<span>{{ extraction.name }}</span>
@@ -119,7 +120,13 @@
 							/>
 						</div>
 					</TabPanel>
-				</TabView>
+				</TabView> -->
+				<tera-stratified-value-matrix
+					:model-configuration="modelConfigurations[modalVal.configIndex]"
+					:id="modalVal.id"
+					:stratified-model-type="stratifiedModelType"
+					:node-type="modalVal.nodeType"
+				/>
 			</template>
 			<template #footer>
 				<Button
@@ -147,9 +154,9 @@ import { watch, ref, computed, onMounted } from 'vue';
 import { isEmpty, cloneDeep } from 'lodash';
 import Button from 'primevue/button';
 import SplitButton from 'primevue/splitbutton';
-import TabView from 'primevue/tabview';
+// import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import TabPanel from 'primevue/tabpanel';
+// import TabPanel from 'primevue/tabpanel'; // TODO: Implement value tabs for the modal once we are ready
 import InputText from 'primevue/inputtext';
 // import Checkbox from 'primevue/checkbox';
 import { ModelConfiguration, Model } from '@/types/Types';
@@ -277,15 +284,6 @@ async function initializeConfigSpace() {
 	}
 
 	modelConfigurations.value = tempConfigurations;
-
-	// Refresh the datastore with whatever we currently have
-	const defaultConfig = modelConfigurations.value.find(
-		(d) => d.name === 'Default config'
-	) as ModelConfiguration;
-	if (defaultConfig) {
-		defaultConfig.configuration = cloneDeep(props.model);
-		updateModelConfiguration(defaultConfig);
-	}
 
 	resetCellEditing();
 

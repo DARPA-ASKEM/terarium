@@ -5,7 +5,7 @@
 			v-model="selectedVariable"
 			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
-			placeholder="Select a State Variable"
+			placeholder="Select a state variable"
 			@update:model-value="updateSelectedVariable"
 		>
 			<template v-slot:value>
@@ -27,6 +27,8 @@ import { ref, computed, watch, onMounted } from 'vue';
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { CsvAsset } from '@/types/Types';
+import { getGraphDataFromDatasetCSV, RunType } from './util';
 
 const emit = defineEmits(['configuration-change']);
 
@@ -35,6 +37,9 @@ const props = defineProps<{
 	chartConfig: ChartConfig;
 	hasMeanLine?: boolean;
 	colorByRun?: boolean;
+	initialData?: CsvAsset;
+	mapping?: { [key: string]: string }[];
+	runType?: RunType;
 }>();
 
 type DatasetType = {
@@ -208,7 +213,7 @@ const renderGraph = () => {
 	}
 
 	const datasets: DatasetType[] = [];
-	selectedVariable.value.forEach((variable) =>
+	selectedVariable.value.forEach((variable) => {
 		runIdList
 			.map((runId) => renderedRuns.value[runId])
 			.forEach((run, runIdx) => {
@@ -228,8 +233,18 @@ const renderGraph = () => {
 					borderWidth: lineWidthArray.value[runIdx]
 				};
 				datasets.push(dataset);
-			})
-	);
+			});
+
+		if (props.initialData) {
+			const dataset = getGraphDataFromDatasetCSV(
+				props.initialData,
+				variable,
+				props.mapping,
+				props.runType
+			);
+			datasets.push(dataset);
+		}
+	});
 	chartData.value = {
 		labels: renderedRuns.value[Object.keys(renderedRuns.value)[0]].map((datum) =>
 			Number(datum.timestamp)

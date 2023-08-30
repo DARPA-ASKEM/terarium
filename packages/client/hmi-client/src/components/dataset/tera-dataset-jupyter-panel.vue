@@ -58,11 +58,13 @@
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			:auto-expand-preview="autoExpandPreview"
+			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 		/>
-		<div>
+		<div v-if="kernelState">
+			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
 			<Button
 				class="save-button p-button p-button-secondary p-button-sm"
 				title="Saves the current version of df as a new Terarium asset"
@@ -143,8 +145,10 @@ const props = defineProps<{
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
+const kernelState = ref(null);
 const showKernels = ref(<boolean>false);
 const autoExpandPreview = ref(<boolean>true);
+const actionTarget = ref('df');
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
@@ -231,6 +235,10 @@ onUnmounted(() => {
 	jupyterSession.shutdown();
 });
 
+const updateKernelState = (newKernelState) => {
+	kernelState.value = newKernelState;
+};
+
 // Save file function
 const saveAsNewDataset = async () => {
 	if (!hasValidDatasetName.value || saveAsName.value === null) {
@@ -258,7 +266,8 @@ const saveAsNewDataset = async () => {
 		channel: 'shell',
 		content: {
 			parent_dataset_id: String(props.assetId),
-			name: datasetName
+			name: datasetName,
+			var_name: actionTarget.value
 		},
 		msgType: 'save_dataset_request',
 		msgId: createMessageId('save_dataset_request')
@@ -375,7 +384,9 @@ const downloadDataset = () => {
 	const messageBody = {
 		session: session?.name || '',
 		channel: 'shell',
-		content: {},
+		content: {
+			var_name: actionTarget.value
+		},
 		msgType: 'download_dataset_request',
 		msgId: createMessageId('download_dataset_request')
 	};
