@@ -71,7 +71,7 @@ import { IProject } from '@/types/Project';
 import { AcceptedExtensions } from '@/types/common';
 
 import { Artifact, AssetType, DocumentAsset } from '@/types/Types';
-import { profileDataset, fetchExtraction } from '@/services/models/extractions';
+import { profileDataset, fetchExtraction } from '@/services/knowledge';
 
 const visible = ref(false);
 const selectedResources = ref();

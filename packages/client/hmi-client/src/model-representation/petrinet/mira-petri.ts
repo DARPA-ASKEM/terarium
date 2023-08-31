@@ -78,13 +78,13 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	for (let i = 0; i < model.transitions.length; i++) {
 		const obj: any = {};
 		const transition = model.transitions[i];
-		const input = transition.input.map((d) => lookup.get(d));
-		const output = transition.output.map((d) => lookup.get(d));
+		const input = transition.input.map((d: any) => lookup.get(d));
+		const output = transition.output.map((d: any) => lookup.get(d));
 		const newTransition = { id: '', input, output };
 
 		// Build matrixData array
 		obj.id = transition.id;
-		transition.input.forEach((sid) => {
+		transition.input.forEach((sid: string) => {
 			const modifiers = stateModifierMap.get(sid);
 			if (modifiers) {
 				Object.keys(modifiers).forEach((k) => {
