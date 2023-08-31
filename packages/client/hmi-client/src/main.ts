@@ -13,6 +13,7 @@ import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
+import Keycloak from 'keycloak-js';
 import useAuthStore from './stores/auth';
 import router from './router';
 import '@node_modules/katex/dist/katex.min.css';
@@ -44,8 +45,10 @@ app.component('math-field', MathfieldElement);
 app.component(VueFeather.name, VueFeather);
 app.use(VueKatex);
 
-const auth = useAuthStore();
-await auth.fetchSSO();
+const authStore = useAuthStore();
+const keycloak = new Keycloak('/api/keycloak/config');
+
+authStore.setKeycloak(keycloak);
 
 app.mount('body');
 logger.info('Application Mounted', { showToast: false, silent: true });

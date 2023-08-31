@@ -84,7 +84,7 @@ hibernate {
 generateTypeScript {
     jsonLibrary = 'jackson2'
     classesWithAnnotations = [
-            'software.uncharted.pantera.annotations.TSModel'
+            'software.uncharted.terarium.hmiserver.annotations.TSModel'
     ]
     excludeClasses = [
             'java.io.Serializable'
@@ -95,16 +95,16 @@ generateTypeScript {
             'org.hibernate.**'
     ]
     excludePropertyAnnotations = [
-            'software.uncharted.pantera.annotations.TSIgnore'
+            'software.uncharted.terarium.hmiserver.annotations.TSIgnore'
     ]
     enumMemberCasing = 'PascalCase'
     mapEnum = 'asEnum'
     nonConstEnums = 'true'
     noFileComment = 'true'
-    outputFile = '../client/src/types/Types.ts'
+    outputFile = '../client/hmi-client/src/types/Types.ts'
     outputKind = 'module'
     outputFileType = 'implementationFile'
     optionalAnnotations = [
-            'software.uncharted.pantera.annotations.TSOptional'
+            'software.uncharted.terarium.hmiserver.annotations.TSOptional'
     ]
 }
