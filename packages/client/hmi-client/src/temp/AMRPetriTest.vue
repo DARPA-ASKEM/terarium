@@ -26,7 +26,7 @@ import BasicRenderer from 'graph-scaffolder/src/core/basic-renderer';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import { amr as amrExample } from './sir';
+import * as amrExample from '@/examples/sir.json';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
 
 const graphElement = ref<HTMLDivElement | null>(null);
