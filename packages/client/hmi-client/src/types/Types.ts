@@ -330,6 +330,17 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
+    description?: string;
+    author_inst?: string;
+    author_author?: string;
+    author_email?: string;
+    date?: string;
+    schema?: string;
+    provenance?: string;
+    dataset?: string;
+    complexity?: string;
+    usage?: string;
+    license?: string;
 }
 
 export interface Assets {

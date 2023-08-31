@@ -40,4 +40,48 @@ public class ModelMetadata {
 	@JsonProperty("timeseries")
 	@TSOptional
 	private Map<String, Object> timeseries;
+
+	@JsonProperty("description")
+	@TSOptional
+	private String description;
+
+	@JsonProperty("author_inst")
+	@TSOptional
+	private String authorInst;
+
+	@JsonProperty("author_author")
+	@TSOptional
+	private String authorAuthor;
+
+	@JsonProperty("author_email")
+	@TSOptional
+	private String authorEmail;
+
+	@JsonProperty("date")
+	@TSOptional
+	private String date;
+
+	@JsonProperty("schema")
+	@TSOptional
+	private String schema;
+
+	@JsonProperty("provenance")
+	@TSOptional
+	private String provenance;
+
+	@JsonProperty("dataset")
+	@TSOptional
+	private String dataset;
+
+	@JsonProperty("complexity")
+	@TSOptional
+	private String complexity;
+
+	@JsonProperty("usage")
+	@TSOptional
+	private String usage;
+
+	@JsonProperty("license")
+	@TSOptional
+	private String license;
 }
