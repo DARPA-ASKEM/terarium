@@ -96,12 +96,14 @@ const allResources: ComputedRef<
 				type: AssetType.Artifacts
 			}));
 
-		const documentResources = props.project?.assets.publications.map((document: DocumentAsset) => ({
-			name: document.title,
-			authors: '',
-			id: document.id,
-			type: AssetType.Publications
-		}));
+		// TODO: Add document support for model enrichment once documents are a first class citizen in TDS
+		const documentResources = [];
+		// props.project?.assets.publications.map((document: DocumentAsset) => ({
+		// 	name: document.title,
+		// 	authors: '',
+		// 	id: document.id,
+		// 	type: AssetType.Publications
+		// }));
 
 		console.log(props.project.assets);
 
