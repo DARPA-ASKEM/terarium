@@ -1,5 +1,5 @@
 
-package software.uncharted.terarium.hmiserver.proxies.extractionservice;
+package software.uncharted.terarium.hmiserver.proxies.knowledgemiddleware;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
@@ -9,16 +9,15 @@ import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapp
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "ta1-service-api")
+@RegisterRestClient(configKey = "knowledge-middleware")
 @Produces(MediaType.APPLICATION_JSON)
-@Tag(name = "Extraction Service")
+@Tag(name = "Knowledge Middleware")
 @RegisterProvider(HmiResponseExceptionMapper.class)
-public interface ExtractionServiceProxy {
+public interface KnowledgeMiddlewareProxy {
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -52,7 +51,7 @@ public interface ExtractionServiceProxy {
 	);
 
 	/**
-	 * Post a PDF to the extraction service
+	 * Post a PDF
 	 *
 	 * @param    annotateSkema (Boolean): Whether to annotate the PDF with Skema
 	 * @param    annotateMIT (Boolean): Whether to annotate the PDF with AMR
@@ -75,7 +74,7 @@ public interface ExtractionServiceProxy {
 	);
 
 	/**
-	 * Post a PDF to the extraction service to get text
+	 * Post a PDF to get text
 	 * @param artifactId (String): The ID of the artifact to extract text from
 	 * @return
 	 */
