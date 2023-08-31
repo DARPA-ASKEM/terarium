@@ -455,7 +455,7 @@ const testNode = (node: WorkflowNode) => {
 
 const drilldown = (event: WorkflowNode) => {
 	currentActiveNode.value = event;
-	workflowEventBus.emit('drilldown', { node: event, workflow: wf.value });
+	workflowEventBus.emit('drilldown', event);
 };
 
 workflowEventBus.on('node-state-change', (payload: any) => {

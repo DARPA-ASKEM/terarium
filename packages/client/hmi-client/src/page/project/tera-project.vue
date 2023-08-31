@@ -39,11 +39,7 @@
 					@open-new-asset="openNewAsset"
 				/>
 			</SplitterPanel>
-			<SplitterPanel
-				class="project-page top-z-index"
-				v-if="workflowNode && activeWorkflow"
-				:size="20"
-			>
+			<SplitterPanel class="project-page top-z-index" v-if="workflowNode" :size="20">
 				<tera-tab-group
 					v-if="workflowNode"
 					class="tab-group"
@@ -53,7 +49,6 @@
 					@close-tab="
 						workflowEventBus.emit('clearActiveNode');
 						workflowNode = null;
-						activeWorkflow = null;
 					"
 				/>
 				<tera-calibration-julia
@@ -121,7 +116,6 @@
 					"
 					:project="project"
 					:node="workflowNode"
-					:workflow="activeWorkflow"
 				/>
 			</SplitterPanel>
 		</Splitter>
@@ -171,7 +165,7 @@ import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
-import { AssetType, Workflow } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
 
@@ -189,11 +183,9 @@ const tabStore = useTabStore();
 const router = useRouter();
 
 const workflowNode = ref<WorkflowNode | null>(null);
-const activeWorkflow = ref<Workflow | null>(null);
 
 workflowEventBus.on('drilldown', (payload: any) => {
-	workflowNode.value = payload.node;
-	activeWorkflow.value = payload.workflow;
+	workflowNode.value = payload;
 });
 
 const isResourcesSliderOpen = ref(true);

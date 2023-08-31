@@ -20,13 +20,11 @@ import { IProject } from '@/types/Project';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import { computed, ref } from 'vue';
-import { Workflow } from '@/types/Types';
 import { workflowEventBus } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode;
 	project: IProject;
-	workflow: Workflow;
 }>();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
