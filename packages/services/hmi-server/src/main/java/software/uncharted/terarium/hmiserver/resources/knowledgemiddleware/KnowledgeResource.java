@@ -110,12 +110,7 @@ public class KnowledgeResource {
 		@QueryParam("name") String name,
 		@QueryParam("description") String description
 	) {
-		// Fetch the related artifact to fill potential missing name and description
-		final Artifact artifact = artifactProxy.getArtifact(artifactId);
-		if (name == null) {	name = artifact.getName(); }
-		if (description == null) { description = artifact.getDescription();	}
-
-		return knowledgeMiddlewareProxy.postCodeToAMR(artifactId, name, description);
+		return knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description);
 	}
 
 
