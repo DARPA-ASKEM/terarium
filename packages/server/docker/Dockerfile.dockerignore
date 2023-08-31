@@ -1,8 +1,0 @@
-# Ignore everything except what is needed for building
-*
-
-!modules/server/gradle
-!modules/server/docker
-!modules/server/src
-!modules/server/*gradle*
-
