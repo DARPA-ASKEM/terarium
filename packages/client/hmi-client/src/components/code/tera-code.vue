@@ -54,7 +54,7 @@ import {
 	updateCodeAsset
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
-import { codeToAMR } from '@/services/models/extractions';
+import { codeToAMR } from '@/services/knowledge';
 import { AssetType, Code, Model } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
