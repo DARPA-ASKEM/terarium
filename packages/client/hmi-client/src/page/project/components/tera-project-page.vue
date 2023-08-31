@@ -10,6 +10,7 @@
 		:asset-id="assetId ?? ''"
 		v-else-if="pageType === AssetType.Code"
 		@vue:mounted="() => emit('asset-loaded')"
+		@asset-loaded="emit('asset-loaded')"
 	/>
 	<tera-pdf-embed
 		v-else-if="pageType === AssetType.Artifacts && assetName?.endsWith('.pdf')"

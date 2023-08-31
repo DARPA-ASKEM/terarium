@@ -4,16 +4,16 @@
 			<section class="header">
 				<!-- <h4>{{ name }}</h4> -->
 				<section class="name">
-					<InputText v-model="name" class="name-input" />
+					<InputText v-model="codeName" class="name-input" />
 				</section>
 				<section class="buttons">
-					<!-- <Button label="Save code" @click="saveCode" /> -->
+					<Button label="Save code" @click="saveCode" />
 					<Button label="Extract model" @click="extractModel" />
 				</section>
 			</section>
 		</header>
 		<v-ace-editor
-			v-model:value="code"
+			v-model:value="codeText"
 			@init="initialize"
 			lang="python"
 			theme="chrome"
@@ -43,11 +43,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Button from 'primevue/button';
-import { uploadCodeToProject } from '@/services/code';
+import { uploadCodeToProject, getCodeFileAsText, getCodeAsset } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/models/extractions';
 import { AssetType, Code, Model } from '@/types/Types';
@@ -55,7 +55,6 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import { createModel } from '@/services/model';
 import { addAsset } from '@/services/project';
-import { cloneDeep } from 'lodash';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraModelDiagram from '../model/petrinet/tera-model-diagram.vue';
@@ -65,10 +64,12 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
+const emit = defineEmits(['asset-loaded']);
+
 const toast = useToastService();
 
-const name = ref('newcode.py');
-const code = ref('# Paste some code here');
+const codeName = ref('');
+const codeText = ref('# Paste some code here');
 const codeAsset = ref<Code>();
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
@@ -95,12 +96,12 @@ function onSelectedTextChange() {
 }
 
 async function saveCode() {
-	const file = new File([code.value], name.value);
+	const file = new File([codeText.value], codeName.value);
 	const newCodeAsset = await uploadCodeToProject(props.projectId, file, progress);
 	if (!newCodeAsset) {
 		toast.error('', 'Unable to save file');
 	} else {
-		toast.success('', `File saved as ${name.value}`);
+		toast.success('', `File saved as ${codeName.value}`);
 		codeAsset.value = newCodeAsset;
 	}
 	return newCodeAsset;
@@ -121,26 +122,26 @@ async function extractModel() {
 }
 
 async function saveModel() {
-	const modelToSave = {
-		name: modelName.value,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
-		model: cloneDeep(model.value?.model),
-		semantics: {
-			ode: {
-				rates: [],
-				initials: [],
-				parameters: []
-			}
-		}
-	};
+	// const modelToSave = {
+	// 	name: modelName.value,
+	// 	description: '',
+	// 	schema:
+	// 		'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+	// 	schema_name: 'petrinet',
+	// 	model_version: '0.1',
+	// 	model: cloneDeep(model.value?.model),
+	// 	semantics: {
+	// 		ode: {
+	// 			rates: [],
+	// 			initials: [],
+	// 			parameters: []
+	// 		}
+	// 	}
+	// };
+	const modelToSave = model.value;
 	const createdModel = await createModel(modelToSave);
 	if (createdModel) {
 		const { id } = await addAsset(props.projectId, AssetType.Models, createdModel.id);
-		console.log(id);
 		if (id) {
 			router.push({
 				name: RouteName.ProjectRoute,
@@ -157,6 +158,24 @@ async function saveModel() {
 		toast.error('', 'Unable to save model');
 	}
 }
+
+watch(
+	() => props.assetId,
+	async () => {
+		const code = await getCodeAsset(props.assetId);
+		if (code) {
+			codeName.value = code.name;
+			const text = await getCodeFileAsText(props.assetId, code.name);
+			if (text) {
+				codeText.value = text;
+			}
+		} else {
+			codeName.value = 'newcode.py';
+		}
+		emit('asset-loaded');
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
