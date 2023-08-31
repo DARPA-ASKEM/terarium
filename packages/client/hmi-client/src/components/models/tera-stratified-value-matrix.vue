@@ -32,7 +32,11 @@
 									@focusout="updateModelConfigValue(cell.value.id, i, j)"
 									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
 								/>
-								<div v-else class="mathml-container" v-html="matrixEval[i]?.[j] ?? '...'"></div>
+								<div
+									v-else
+									class="mathml-container"
+									v-html="matrixExpressionsList[i]?.[j] ?? '...'"
+								></div>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
 						</td>
@@ -62,6 +66,7 @@ const props = defineProps<{
 	id: string;
 	stratifiedModelType: StratifiedModelType;
 	nodeType: NodeType;
+	shouldEval: boolean;
 }>();
 
 const colDimensions: string[] = [];
@@ -73,7 +78,7 @@ const chosenRow = ref('');
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
-const matrixEval: any = ref([]);
+const matrixExpressionsList: any = ref([]);
 
 const parametersValueList = computed(() =>
 	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
@@ -82,25 +87,28 @@ const parametersValueList = computed(() =>
 	}, {})
 );
 
-watch(matrix, async () => {
-	const output: any = [];
-	await Promise.all(
-		matrix.value.map(async (row) =>
-			Promise.all(
-				row.map(async (cell) => {
-					if (cell.value?.id) {
-						const matrixVal = await getMatrixValue(cell.value.id);
-						if (!output[cell.row]) {
-							output[cell.row] = [];
+watch(
+	() => [matrix.value, props.shouldEval],
+	async () => {
+		const output: any = [];
+		await Promise.all(
+			matrix.value.map(async (row) =>
+				Promise.all(
+					row.map(async (cell) => {
+						if (cell.value?.id) {
+							const matrixVal = await getMatrixValue(cell.value.id, props.shouldEval);
+							if (!output[cell.row]) {
+								output[cell.row] = [];
+							}
+							output[cell.row][cell.col] = matrixVal;
 						}
-						output[cell.row][cell.col] = matrixVal;
-					}
-				})
+					})
+				)
 			)
-		)
-	);
-	matrixEval.value = output;
-});
+		);
+		matrixExpressionsList.value = output;
+	}
+);
 
 // Makes cell inputs focus once they appear
 const vFocus = {
@@ -147,16 +155,26 @@ function getMatrixExpression(variableName: string) {
 	return variableName;
 }
 
-async function getMatrixValue(variableName: string) {
+async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	const expressionBase = getMatrixExpression(variableName);
-	const expressionEval = (await pythonInstance.evaluateExpression(
-		expressionBase,
-		parametersValueList.value
-	)) as string;
-	const expressionFormatted = (await pythonInstance.parseExpression(expressionEval)) as {
-		mathml: string;
-	};
-	return expressionFormatted.mathml;
+
+	if (shouldEvaluate) {
+		const expressionEval = (await pythonInstance.evaluateExpression(
+			expressionBase,
+			parametersValueList.value
+		)) as string;
+		return (
+			(await pythonInstance.parseExpression(expressionEval)) as {
+				mathml: string;
+			}
+		).mathml;
+	}
+
+	return (
+		(await pythonInstance.parseExpression(expressionBase)) as {
+			mathml: string;
+		}
+	).mathml;
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
