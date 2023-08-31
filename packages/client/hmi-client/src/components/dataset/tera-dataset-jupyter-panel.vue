@@ -62,7 +62,7 @@
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 		/>
-		<div v-if="kernelState">
+		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
 			<Button
 				class="save-button p-button p-button-secondary p-button-sm"
