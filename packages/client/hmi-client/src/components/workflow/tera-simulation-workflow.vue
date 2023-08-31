@@ -492,10 +492,16 @@ workflowEventBus.on(
 
 workflowEventBus.on(
 	'append-output-port',
-	(payload: { node: WorkflowNode; port: { id: string; name: string } }) => {
+	(payload: {
+		node: WorkflowNode;
+		port: { id: string; type: string; label: string; value: string };
+	}) => {
 		const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
 		if (foundNode) {
-			selectDataset(foundNode, payload.port);
+			if (payload.port.type === 'datasetId') {
+				foundNode.state.datasetId = payload.port.value;
+			}
+			appendOutputPort(foundNode, payload.port);
 		}
 	}
 );
