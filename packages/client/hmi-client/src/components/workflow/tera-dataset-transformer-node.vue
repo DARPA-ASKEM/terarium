@@ -28,14 +28,6 @@
 			<span>Showing first 5 rows</span>
 		</section>
 	</template>
-	<Dropdown
-		v-else
-		class="w-full p-button-sm p-button-outlined"
-		:options="datasets"
-		option-label="name"
-		v-model="dataset"
-		placeholder="Select a dataset"
-	/>
 </template>
 
 <script setup lang="ts">
@@ -43,7 +35,6 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Dropdown from 'primevue/dropdown';
 import { getDataset } from '@/services/dataset';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';

@@ -52,7 +52,6 @@
 		<tera-jupyter-chat
 			ref="chat"
 			:project="props.project"
-			:asset-id="props.assetId"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
@@ -136,7 +135,6 @@ const runningSessions = ref<any[]>([]);
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assetId: string;
 	assetIds: string[];
 	project?: IProject;
 	showKernels: boolean;
@@ -272,7 +270,7 @@ const saveAsNewDataset = async () => {
 		session: session?.name || '',
 		channel: 'shell',
 		content: {
-			parent_dataset_id: String(props.assetId),
+			parent_dataset_id: String(props.assetIds[0]),
 			name: datasetName,
 			var_name: actionTarget.value
 		},
