@@ -78,7 +78,7 @@ const chosenRow = ref('');
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
-const matrixExpressionsList: any = ref([]);
+const matrixExpressionsList = ref<string[][]>([]);
 
 const parametersValueList = computed(() =>
 	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
@@ -90,7 +90,7 @@ const parametersValueList = computed(() =>
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
-		const output: any = [];
+		const output: string[][] = [];
 		await Promise.all(
 			matrix.value.map(async (row) =>
 				Promise.all(
@@ -159,22 +159,14 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	const expressionBase = getMatrixExpression(variableName);
 
 	if (shouldEvaluate) {
-		const expressionEval = (await pythonInstance.evaluateExpression(
+		const expressionEval = await pythonInstance.evaluateExpression(
 			expressionBase,
 			parametersValueList.value
-		)) as string;
-		return (
-			(await pythonInstance.parseExpression(expressionEval)) as {
-				mathml: string;
-			}
-		).mathml;
+		);
+		return (await pythonInstance.parseExpression(expressionEval)).mathml;
 	}
 
-	return (
-		(await pythonInstance.parseExpression(expressionBase)) as {
-			mathml: string;
-		}
-	).mathml;
+	return (await pythonInstance.parseExpression(expressionBase)).mathml;
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
