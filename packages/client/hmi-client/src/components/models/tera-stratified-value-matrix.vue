@@ -96,11 +96,10 @@ watch(
 				.map((row) =>
 					row.map(async (cell) => {
 						if (cell.value?.id) {
-							const matrixVal = await getMatrixValue(cell.value.id, props.shouldEval);
 							if (!output[cell.row]) {
 								output[cell.row] = [];
 							}
-							output[cell.row][cell.col] = matrixVal;
+							output[cell.row][cell.col] = await getMatrixValue(cell.value.id, props.shouldEval);
 						}
 					})
 				)
