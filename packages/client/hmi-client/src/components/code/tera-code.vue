@@ -118,7 +118,6 @@ async function saveCode() {
 		}
 		return updatedCode;
 	}
-	console.log('else');
 	const file = new File([codeText.value], codeName.value);
 	const newCodeAsset = await uploadCodeToProject(props.projectId, file, progress);
 	if (!newCodeAsset) {
@@ -185,13 +184,18 @@ async function saveModel() {
 watch(
 	() => props.assetId,
 	async () => {
-		const code = await getCodeAsset(props.assetId);
-		if (code) {
-			codeAsset.value = code;
-			codeName.value = code.name;
-			const text = await getCodeFileAsText(props.assetId, code.name);
-			if (text) {
-				codeText.value = text;
+		if (props.assetId !== 'code') {
+			// FIXME: assetId is 'code' for a newly opened code asset; a hack to get around some weird tab behaviour
+			const code = await getCodeAsset(props.assetId);
+			if (code) {
+				codeAsset.value = code;
+				codeName.value = code.name;
+				const text = await getCodeFileAsText(props.assetId, code.name);
+				if (text) {
+					codeText.value = text;
+				}
+			} else {
+				codeName.value = 'newcode.py';
 			}
 		} else {
 			codeName.value = 'newcode.py';

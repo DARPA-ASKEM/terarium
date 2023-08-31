@@ -310,7 +310,7 @@ const overviewResource = {
 
 const codeResource = {
 	pageType: AssetType.Code,
-	assetId: 'code'
+	assetId: 'code' // FIXME: hack to get around weird tab behaviour
 };
 
 const adjustTabsProjectChange = () => {
