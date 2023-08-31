@@ -39,7 +39,7 @@ const assetIds = computed(() =>
 const addOutputPort = (data) => {
 	workflowEventBus.emit('append-output-port', {
 		node: props.node,
-		port: { id: data.id, name: data.name, type: 'datasetId', value: data.id }
+		port: { id: data.id, label: data.name, type: 'datasetId', value: data.id }
 	});
 };
 </script>
