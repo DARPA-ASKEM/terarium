@@ -84,9 +84,16 @@ const parseExpression = (expr: string) => {
 	// function to convert expression to mathml
 	let result = pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
-		sympy.mathml(eq)
+		sympy.mathml(eq, printer="presentation")
 	`);
-	output.mathml = result;
+
+	// manually replace <mfenced> due to browser deprecation
+	// https://developer.mozilla.org/en-US/docs/Web/MathML/Element/mfenced
+	result = result.replaceAll('<mfenced>', '<mo>(</mo><mrow>');
+	result = result.replaceAll('</mfenced>', '</mrow><mo>)</mo>');
+
+	// add mathml top level element tags
+	output.mathml = `<math xmlns="http://www.w3.org/1998/Math/MathML">${result}</math>`;
 
 	result = pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)

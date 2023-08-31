@@ -32,9 +32,7 @@
 									@focusout="updateModelConfigValue(cell.value.id, i, j)"
 									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
 								/>
-								<span v-else class="editable-cell">
-									{{ getMatrixValue(cell?.value?.id) }}
-								</span>
+								<div v-else class="mathml-container" v-html="matrixEval[i]?.[j] ?? '...'"></div>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
 						</td>
@@ -46,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
@@ -56,6 +54,8 @@ import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/type
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { updateModelConfiguration } from '@/services/model-configurations';
+
+import { pythonInstance } from '@/python/PyodideController';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -73,13 +73,42 @@ const chosenRow = ref('');
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
+const matrixEval: any = ref([]);
+
+const parametersValueList = computed(() =>
+	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
+		acc[val.id] = val.value;
+		return acc;
+	}, {})
+);
+
+watch(matrix, async () => {
+	const output: any = [];
+	await Promise.all(
+		matrix.value.map(async (row) =>
+			Promise.all(
+				row.map(async (cell) => {
+					if (cell.value?.id) {
+						const matrixVal = await getMatrixValue(cell.value.id);
+						if (!output[cell.row]) {
+							output[cell.row] = [];
+						}
+						output[cell.row][cell.col] = matrixVal;
+					}
+				})
+			)
+		)
+	);
+	matrixEval.value = output;
+});
+
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
 
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	valueToEdit.value = getMatrixValue(variableName);
+	valueToEdit.value = getMatrixExpression(variableName);
 	editableCellStates.value[rowIdx][colIdx] = true;
 }
 
@@ -109,13 +138,25 @@ function findOdeObjectLocation(variableName: string): {
 	return null;
 }
 
-function getMatrixValue(variableName: string) {
+function getMatrixExpression(variableName: string) {
 	const odeObjectLocation = findOdeObjectLocation(variableName);
 	if (odeObjectLocation) {
 		const { odeFieldObject } = odeObjectLocation;
 		return odeFieldObject?.expression ?? odeFieldObject?.value;
 	}
 	return variableName;
+}
+
+async function getMatrixValue(variableName: string) {
+	const expressionBase = getMatrixExpression(variableName);
+	const expressionEval = (await pythonInstance.evaluateExpression(
+		expressionBase,
+		parametersValueList.value
+	)) as string;
+	const expressionFormatted = (await pythonInstance.parseExpression(expressionEval)) as {
+		mathml: string;
+	};
+	return expressionFormatted.mathml;
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
