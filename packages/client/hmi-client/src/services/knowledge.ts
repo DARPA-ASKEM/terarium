@@ -12,7 +12,7 @@ export async function fetchExtraction(id: string) {
 	const pollerResult: PollResponse<any> = { data: null, progress: null, error: null };
 	const poller = new Poller<object>()
 		.setPollAction(async () => {
-			const response = await API.get(`/extract/status/${id}`);
+			const response = await API.get(`/knowledge/status/${id}`);
 
 			// Finished
 			if (response?.status === 200 && response?.data?.status === 'finished') {
@@ -42,7 +42,7 @@ export async function fetchExtraction(id: string) {
 const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Model | null> => {
 	try {
 		const response: AxiosResponse<Model> = await API.post(
-			`/extract/latex-to-amr/${framework}`,
+			`/knowledge/latex-to-amr/${framework}`,
 			latex
 		);
 		if (response && response?.status === 200 && response?.data) {
@@ -63,7 +63,7 @@ const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Mode
  */
 const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Model | null> => {
 	try {
-		const response = await API.post(`/extract/mathml-to-amr?framework=${framework}`, mathml);
+		const response = await API.post(`/knowledge/mathml-to-amr?framework=${framework}`, mathml);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
 			if (status === 'queued') {
@@ -98,9 +98,9 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 export const profileDataset = async (datasetId: string, artifactId: string | null = null) => {
 	let response: any = null;
 	if (artifactId) {
-		response = await API.post(`/extract/profile-dataset/${datasetId}?artifact_id=${artifactId}`);
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}?artifact_id=${artifactId}`);
 	} else {
-		response = await API.post(`/extract/profile-dataset/${datasetId}`);
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
 	console.log('data profile response', response.data);
 	return response.data.id;
@@ -108,7 +108,7 @@ export const profileDataset = async (datasetId: string, artifactId: string | nul
 
 const extractTextFromPDFArtifact = async (artifactId: string): Promise<string | null> => {
 	try {
-		const response = await API.post(`/extract/pdf-to-text?artifact_id=${artifactId}`);
+		const response = await API.post(`/knowledge/pdf-to-text?artifact_id=${artifactId}`);
 		if (response?.status === 200 && response?.data?.id) return response.data.id;
 		logger.error('pdf text extraction request failed', {
 			showToast: false,
@@ -137,7 +137,7 @@ const pdfExtractions = async (
 	// I've purposefully excluded the MIT and SKEMA options here, so they're always
 	// defaulted to true.
 
-	let url = `/extract/pdf-extractions?artifact_id=${artifactId}`;
+	let url = `/knowledge/pdf-extractions?artifact_id=${artifactId}`;
 	if (pdfName) {
 		url += `&pdf_name=${pdfName}`;
 	}
