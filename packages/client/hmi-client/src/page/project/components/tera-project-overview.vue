@@ -277,7 +277,7 @@ import { logger } from '@/utils/logger';
 import { uploadArtifactToProject } from '@/services/artifact';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
-import { extractPDF } from '@/services/models/extractions';
+import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { uploadCodeToProject } from '@/services/code';
 
