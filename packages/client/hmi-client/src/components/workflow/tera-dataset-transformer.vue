@@ -7,6 +7,7 @@
 				:project="props.project"
 				:show-kernels="showKernels"
 				:show-chat-thoughts="showChatThoughts"
+				@new-dataset-saved="addOutputPort"
 			/>
 		</Suspense>
 	</div>
@@ -18,11 +19,14 @@
 import { IProject } from '@/types/Project';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
+import { Workflow } from '@/types/Types';
+import { workflowEventBus } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode;
 	project: IProject;
+	workflow: Workflow;
 }>();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
@@ -32,12 +36,12 @@ const assetIds = computed(() =>
 		.map((inputNode) => inputNode.value![0])
 );
 
-onMounted(() => {});
-watch(
-	() => props.node.inputs,
-	async () => console.log('change input'),
-	{ deep: true }
-);
+const addOutputPort = (data) => {
+	workflowEventBus.emit('append-output-port', {
+		node: props.node,
+		port: { id: data.id, name: data.name }
+	});
+};
 </script>
 
 <style>

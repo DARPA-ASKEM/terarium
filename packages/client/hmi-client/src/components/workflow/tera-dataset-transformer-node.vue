@@ -44,47 +44,40 @@ import { CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
-import { downloadRawFile, getDataset } from '@/services/dataset';
-import { WorkflowNode } from '@/types/workflow';
+import { getDataset } from '@/services/dataset';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
 
 const props = defineProps<{
 	node: WorkflowNode;
 	datasets: Dataset[];
-	droppedDatasetId: null | string;
 }>();
-
-const emit = defineEmits(['select-dataset']);
+const emit = defineEmits(['append-input-port']);
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
-let selectedColumns = ref(csvHeaders?.value);
+const selectedColumns = ref(csvHeaders?.value);
 const onToggle = (val) => {
 	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
 };
 
 watch(
-	() => dataset.value,
-	async () => {
-		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
-			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
-			selectedColumns = ref(csvHeaders?.value);
-			emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+	// add another input port when all inputs are connected, we want to add as many datasets as we can
+	() => props.node.inputs,
+	() => {
+		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
+			emit('append-input-port', { type: 'datasetId', label: 'Dataset' });
 		}
-	}
+	},
+	{ deep: true }
 );
 
 onMounted(async () => {
 	if (props.node.state.datasetId) {
 		dataset.value = await getDataset(props.node.state.datasetId);
-	}
-
-	// If dataset is drag and dropped from resource panel
-	else if (props.droppedDatasetId) {
-		dataset.value = props.datasets.find(({ id }) => id === props.droppedDatasetId) ?? null;
 	}
 });
 </script>

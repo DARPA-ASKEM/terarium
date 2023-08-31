@@ -142,6 +142,7 @@ const props = defineProps<{
 	showKernels: boolean;
 	showChatThoughts: boolean;
 }>();
+const emit = defineEmits(['new-dataset-saved']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
@@ -378,6 +379,7 @@ const onNewDatasetSaved = async (payload) => {
 	}
 	const datasetId = payload.dataset_id;
 	await addAsset(props.project.id, AssetType.Datasets, datasetId);
+	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
 	toast.success(
 		'Dataset saved successfully',
 		'Refresh to see the dataset in the resource explorer'

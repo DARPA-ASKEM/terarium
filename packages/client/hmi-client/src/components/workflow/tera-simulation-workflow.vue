@@ -80,9 +80,9 @@
 							node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER && datasets
 						"
 						:datasets="datasets"
-						:dropped-dataset-id="droppedAssetId"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
+						@append-input-port="(event) => appendInputPort(node, event)"
 					/>
 					<tera-simulate-julia-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
@@ -402,6 +402,15 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 			status: WorkflowPortStatus.NOT_CONNECTED
 		}
 	];
+	workflowDirty = true;
+}
+function appendInputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
+	node.inputs.push({
+		id: crypto.randomUUID(),
+		type: port.type,
+		label: port.label,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	});
 }
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
@@ -446,7 +455,7 @@ const testNode = (node: WorkflowNode) => {
 
 const drilldown = (event: WorkflowNode) => {
 	currentActiveNode.value = event;
-	workflowEventBus.emit('drilldown', event);
+	workflowEventBus.emit('drilldown', { node: event, workflow: wf.value });
 };
 
 workflowEventBus.on('node-state-change', (payload: any) => {
@@ -478,6 +487,16 @@ workflowEventBus.on(
 			state: payload.state
 		});
 		workflowDirty = true;
+	}
+);
+
+workflowEventBus.on(
+	'append-output-port',
+	(payload: { node: WorkflowNode; port: { id: string; name: string } }) => {
+		const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
+		if (foundNode) {
+			selectDataset(foundNode, payload.port);
+		}
 	}
 );
 
