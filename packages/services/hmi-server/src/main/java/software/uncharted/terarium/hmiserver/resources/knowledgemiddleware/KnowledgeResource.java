@@ -173,7 +173,7 @@ public class KnowledgeResource {
 	) {
 		System.out.println(modelId);
 		System.out.println(artifactId);
-		return extractionProxy.postProfileModel(modelId, artifactId);
+		return knowledgeMiddlewareProxy.postProfileModel(modelId, artifactId);
 	};
 
 	/**

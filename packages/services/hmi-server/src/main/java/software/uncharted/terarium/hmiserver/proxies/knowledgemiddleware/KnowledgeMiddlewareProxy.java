@@ -97,7 +97,7 @@ public interface KnowledgeMiddlewareProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response postProfileModel(
 		@PathParam("model_id") String modelId,
-		@QueryParam("artifact_id") String artifactId
+		@QueryParam("paper_artifact_id") String artifactId
 	);
 
 	/**

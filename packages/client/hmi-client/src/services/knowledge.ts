@@ -98,11 +98,10 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 export const profileModel = async (modelId: string, artifactId: string | null = null) => {
 	let response: any = null;
 	if (artifactId) {
-		response = await API.post(`/extract/profile-model/${modelId}?artifact_id=${artifactId}`);
+		response = await API.post(`/knowledge/profile-model/${modelId}?artifact_id=${artifactId}`);
 	} else {
-		response = await API.post(`/extract/profile-model/${modelId}`);
+		response = await API.post(`/knowledge/profile-model/${modelId}`);
 	}
-	console.log(response);
 	console.log('model profile response', response.data);
 	return response.data.id;
 };

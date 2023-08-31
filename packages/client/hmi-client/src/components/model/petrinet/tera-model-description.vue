@@ -12,6 +12,10 @@
 					<th>Date created</th>
 					<th>Created by</th>
 					<th>Source</th>
+					<th>Author email</th>
+					<th>License</th>
+					<th>Complexity</th>
+					<th>Usage</th>
 				</tr>
 				<tr>
 					<td class="framework">{{ model?.schema_name }}</td>
@@ -19,7 +23,10 @@
 					<td>{{ model?.metadata?.processed_at }}</td>
 					<td>{{ model?.metadata?.annotations?.authors?.join(', ') }}</td>
 					<td>{{ model?.metadata?.processed_by }}</td>
+					<td>{{ model?.metadata?.author_email }}</td>
 					<td>{{ model?.metadata?.license }}</td>
+					<td>{{ model?.metadata?.complexity }}</td>
+					<td>{{ model?.metadata?.usage }}</td>
 				</tr>
 			</table>
 		</section>

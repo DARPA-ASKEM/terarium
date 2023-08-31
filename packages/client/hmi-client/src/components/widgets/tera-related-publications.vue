@@ -103,7 +103,7 @@ const allResources: ComputedRef<
 			type: AssetType.Publications
 		}));
 
-		console.log(documentResources, props.project.assets.publications);
+		console.log(documentResources, props.project.assets);
 
 		return [...documentResources, ...artifactResources];
 	}
@@ -121,7 +121,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 
 	if (props.assetType === ResourceType.MODEL) {
 		console.log(selectedResources.value);
-		resp = await profileModel(props.assetId, 'fa57a329-d1a0-404e-9643-556e9a60cc5b'); // selectedResources?.value?.id ?? null);
+		resp = await profileModel(props.assetId, selectedResources?.value?.id); // 'fa57a329-d1a0-404e-9643-556e9a60cc5b'); // selectedResources?.value?.id ?? null);
 	} else if (props.assetType === ResourceType.DATASET) {
 		resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
 	}
