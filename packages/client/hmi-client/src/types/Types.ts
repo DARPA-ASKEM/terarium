@@ -97,6 +97,14 @@ export interface ModelConfiguration {
     configuration: any;
 }
 
+export interface NotebookSession {
+    id: string;
+    name: string;
+    description?: string;
+    data: any;
+    timestamp: string;
+}
+
 export interface Project {
     name: string;
     description?: string;
