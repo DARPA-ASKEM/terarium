@@ -92,8 +92,8 @@ watch(
 	async () => {
 		const output: string[][] = [];
 		await Promise.all(
-			matrix.value.map(async (row) =>
-				Promise.all(
+			matrix.value
+				.map((row) =>
 					row.map(async (cell) => {
 						if (cell.value?.id) {
 							const matrixVal = await getMatrixValue(cell.value.id, props.shouldEval);
@@ -104,7 +104,7 @@ watch(
 						}
 					})
 				)
-			)
+				.flat()
 		);
 		matrixExpressionsList.value = output;
 	}
