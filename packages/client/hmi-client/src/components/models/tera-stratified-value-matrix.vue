@@ -190,10 +190,11 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
 		await updateModelConfiguration(modelConfigurationClone);
+		generateMatrix();
 	}
 }
 
-function configureMatrix() {
+function generateMatrix(populateDimensions = false) {
 	const amr: Model = props.modelConfiguration.configuration;
 
 	const result =
@@ -207,17 +208,18 @@ function configureMatrix() {
 			? result.stateMatrixData.filter(({ base }) => base === props.id)
 			: result.transitionMatrixData.filter(({ base }) => base === props.id);
 
-	if (isEmpty(matrixData)) return;
+	if (isEmpty(matrixData)) return matrixData;
 
-	// Grab dimension names from the first matrix row (they'll all be the same for the chosen id)
-	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-		delete d.id;
-		delete d.base;
-		return Object.keys(d);
-	})[0];
+	if (populateDimensions) {
+		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
+			delete d.id;
+			delete d.base;
+			return Object.keys(d);
+		})[0];
 
-	rowDimensions.push(...dimensions);
-	colDimensions.push(...dimensions);
+		rowDimensions.push(...dimensions);
+		colDimensions.push(...dimensions);
+	}
 
 	const matrixAttributes =
 		props.nodeType === NodeType.State
@@ -225,6 +227,14 @@ function configureMatrix() {
 			: createMatrix2D(matrixData, colDimensions, rowDimensions);
 
 	matrix.value = matrixAttributes.matrix;
+
+	return matrixData;
+}
+
+function configureMatrix() {
+	const matrixData = generateMatrix(true);
+	if (isEmpty(matrixData)) return;
+
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 
