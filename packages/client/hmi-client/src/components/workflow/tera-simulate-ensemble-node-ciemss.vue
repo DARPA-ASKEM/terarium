@@ -23,7 +23,7 @@
 				text
 				:outlined="true"
 				@click="addChart"
-				label="Add Chart"
+				label="Add chart"
 				icon="pi pi-plus"
 			/>
 		</section>
@@ -81,7 +81,7 @@ const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
 
@@ -104,7 +104,7 @@ const runEnsemble = async () => {
 		extra: { num_samples: numSamples.value }
 	};
 	const response = await makeEnsembleCiemssSimulation(params);
-	if (response.simulationId) {
+	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
@@ -197,7 +197,7 @@ watch(
 	async () => {
 		if (!simulationIds.value) return;
 
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }

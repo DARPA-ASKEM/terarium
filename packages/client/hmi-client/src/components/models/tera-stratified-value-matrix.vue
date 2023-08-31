@@ -1,6 +1,6 @@
 <template>
 	<div
-		v-if="matrix"
+		v-if="!isEmpty(matrix)"
 		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
 	>
 		<div class="p-datatable-wrapper">
@@ -8,56 +8,29 @@
 				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
-						<th class="choose-criteria"></th>
-						<th v-for="i in matrix[0].length + 1" :key="i" class="choose-criteria">
-							<Dropdown
-								v-if="i === 1"
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="chosenCol"
-								:options="colDimensions"
-							/>
-						</th>
-					</tr>
-					<tr>
-						<th class="choose-criteria"></th>
-						<th class="choose-criteria"></th>
 						<th v-for="(row, i) in matrix[0]" :key="i">
-							{{ row.colCriteria?.[chosenCol] }}
+							{{ Object.values(row.colCriteria).join(' / ') }}
 						</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, i) in matrix" :key="i">
-						<td class="p-frozen-column">
-							<Dropdown
-								v-if="i === 0"
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="chosenRow"
-								:options="rowDimensions"
-							/>
-						</td>
-						<td class="p-frozen-column">{{ row[0].rowCriteria?.[chosenRow] }}</td>
+						<td class="p-frozen-column">{{ Object.values(row[0].rowCriteria).join(' / ') }}</td>
 						<td
 							v-for="(cell, j) in row"
 							:key="j"
-							@click="
-								valueToEdit = {
-									val: getMatrixValue(cell?.value?.id),
-									rowIdx: i,
-									colIdx: j
-								}
-							"
+							tabindex="0"
+							@keyup.enter="onEnterValueCell(cell?.value?.id, i, j)"
+							@click="onEnterValueCell(cell?.value?.id, i, j)"
 						>
 							<template v-if="cell?.value?.id">
 								<InputText
-									v-if="valueToEdit.rowIdx === i && valueToEdit.colIdx === j"
+									v-if="editableCellStates[i][j]"
 									class="cell-input"
-									v-model.lazy="valueToEdit.val"
+									v-model.lazy="valueToEdit"
 									v-focus
-									@focusout="valueToEdit = { val: '', rowIdx: -1, colIdx: -1 }"
-									@keyup.stop.enter="updateModelConfigValue(cell?.value?.id)"
+									@focusout="updateModelConfigValue(cell.value.id, i, j)"
+									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
 								/>
 								<span v-else class="editable-cell">
 									{{ getMatrixValue(cell?.value?.id) }}
@@ -75,10 +48,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import { getAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
+import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
+import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
+import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
-import Dropdown from 'primevue/dropdown';
-import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
+import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { updateModelConfiguration } from '@/services/model-configurations';
@@ -86,21 +60,28 @@ import { updateModelConfiguration } from '@/services/model-configurations';
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
+	stratifiedModelType: StratifiedModelType;
 	nodeType: NodeType;
 }>();
 
 const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
 
-const matrix = ref();
+const matrix = ref<any>([]);
 const chosenCol = ref('');
 const chosenRow = ref('');
-const valueToEdit = ref({ val: '', rowIdx: -1, colIdx: -1 });
+const valueToEdit = ref('');
+const editableCellStates = ref<boolean[][]>([]);
 
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
+
+function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
+	valueToEdit.value = getMatrixValue(variableName);
+	editableCellStates.value[rowIdx][colIdx] = true;
+}
 
 // Finds where to get the value within the AMR based on the variable name
 function findOdeObjectLocation(variableName: string): {
@@ -137,36 +118,47 @@ function getMatrixValue(variableName: string) {
 	return variableName;
 }
 
-function updateModelConfigValue(variableName: string) {
+async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
+	editableCellStates.value[rowIdx][colIdx] = false;
+	const newValue = valueToEdit.value;
 	const odeObjectLocation = findOdeObjectLocation(variableName);
+
 	if (odeObjectLocation) {
 		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
 
-		if (odeFieldObject.expression) odeFieldObject.expression = valueToEdit.value.val;
-		else if (odeFieldObject.value) odeFieldObject.value = Number(valueToEdit.value.val);
+		// Update if the value is different
+		if (odeFieldObject.expression) {
+			if (odeFieldObject.expression === newValue) return;
+			odeFieldObject.expression = newValue;
+		} else if (odeFieldObject.value) {
+			if (odeFieldObject.value === Number(newValue)) return;
+			odeFieldObject.value = Number(newValue);
+		}
 
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
-		updateModelConfiguration(modelConfigurationClone);
 
-		valueToEdit.value = { val: '', rowIdx: -1, colIdx: -1 };
+		await updateModelConfiguration(modelConfigurationClone);
 	}
 }
 
 function configureMatrix() {
-	console.log(props.modelConfiguration.configuration);
+	const amr: Model = props.modelConfiguration.configuration;
 
-	const result = getAMRPresentationData(props.modelConfiguration.configuration);
+	const result =
+		props.stratifiedModelType === StratifiedModelType.Catlab
+			? getCatlabAMRPresentationData(amr)
+			: getMiraAMRPresentationData(amr);
 
 	// Get only the states/transitions that are mapped to the base model
 	const matrixData =
 		props.nodeType === NodeType.State
-			? result.stateMatrixData.filter((d) => d.base === props.id)
-			: result.transitionMatrixData.filter((d) => d.base === props.id);
+			? result.stateMatrixData.filter(({ base }) => base === props.id)
+			: result.transitionMatrixData.filter(({ base }) => base === props.id);
 
 	if (isEmpty(matrixData)) return;
 
-	// Grab dimension names from the first matrix row
+	// Grab dimension names from the first matrix row (they'll all be the same for the chosen id)
 	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
 		delete d.id;
 		delete d.base;
@@ -185,7 +177,8 @@ function configureMatrix() {
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 
-	console.log('!!!!!', matrix.value);
+	// Matrix for editable cell states
+	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
 }
 
 onMounted(() => {
@@ -195,11 +188,10 @@ onMounted(() => {
 
 <style scoped>
 .p-datatable {
-	height: 10rem;
+	max-width: 80vw;
 }
 
-.p-datatable .p-datatable-thead > tr > th.choose-criteria,
-.p-datatable-scrollable .p-frozen-column:first-child {
+.p-datatable .p-datatable-thead > tr > th.choose-criteria {
 	padding: 0;
 	background: var(--surface-ground);
 	border: none;

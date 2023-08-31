@@ -11,7 +11,6 @@ import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
-import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import {
@@ -20,7 +19,8 @@ import {
 	ProvenanceType,
 	XDDFacetsItemResponse,
 	Extraction,
-	Dataset
+	Dataset,
+	AssetType
 } from '@/types/Types';
 import {
 	XDDDictionary,
@@ -29,6 +29,7 @@ import {
 	XDDExtractionType,
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '@/types/XDD';
+import { logger } from '@/utils/logger';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
@@ -250,18 +251,18 @@ const getAssets = async (params: GetAssetsParams) => {
 
 	// fetch list of model or datasets data from the HMI server
 	let assetList: Model[] | Dataset[] | Document[] = [];
-	let projectAssetType: ProjectAssetTypes;
+	let projectAssetType: AssetType;
 	let xddResults: DocumentsResponseOK | undefined;
 	let hits: number | undefined;
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
 			assetList = (await getAllModelDescriptions()) ?? ([] as Model[]);
-			projectAssetType = ProjectAssetTypes.MODELS;
+			projectAssetType = AssetType.Models;
 			break;
 		case ResourceType.DATASET:
 			assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
-			projectAssetType = ProjectAssetTypes.DATASETS;
+			projectAssetType = AssetType.Datasets;
 			break;
 		case ResourceType.XDD:
 			xddResults = await searchXDDDocuments(term, searchParam);
@@ -269,7 +270,7 @@ const getAssets = async (params: GetAssetsParams) => {
 				assetList = xddResults.data;
 				hits = xddResults.hits;
 			}
-			projectAssetType = ProjectAssetTypes.DOCUMENTS;
+			projectAssetType = AssetType.Publications;
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -439,33 +440,20 @@ const getAssets = async (params: GetAssetsParams) => {
 };
 
 /**
- * fetch list of related documented utilizing
- *  semantic similarity (i.e., document embedding) from XDD via the HMI server
- *
- * TODO: this should probably be deprecated at some point now that we're using
- * the "/documents?similar_to=<id>" endpoint as an alternative
+ * fetch list of related documented based on the given document ID
  */
-const getRelatedDocuments = async (docid: string, dataset: string | null) => {
-	if (docid === '') {
-		return [] as Document[];
-	}
-
-	// https://xdd.wisc.edu/sets/xdd-covid-19/doc2vec/api/similar?doi=10.1002/pbc.28600
-	// dataset=xdd-covid-19
-	// doi=10.1002/pbc.28600
-	// docid=5ebd1de8998e17af826e810e
-	const url = `/document/related/document?docid=${docid}&set=${dataset || 'xdd-covid-19'}`;
-
-	const res = await API.get(url);
-	if (res) {
-		const rawdata: XDDResult = res.data;
-
-		if (rawdata && rawdata.data) {
-			const documentsRaw = rawdata.data.map((a) => a.bibjson);
-			return documentsRaw.map((a) => ({
-				...a,
-				abstractText: a.abstractText
-			}));
+const getRelatedDocuments = async (docid: string): Promise<Document[]> => {
+	if (docid !== '') {
+		const { status, data } = await API.get(`/documents?max=8&similar_to=${docid}`);
+		if (status === 200 && data) {
+			return data?.success?.data ?? ([] as Document[]);
+		}
+		if (status === 204) {
+			logger.error('Request received successfully, but there are no documents');
+		} else if (status === 400) {
+			logger.error('Query must contain a docid');
+		} else if (status === 500) {
+			logger.error('An error occurred retrieving documents');
 		}
 	}
 	return [] as Document[];

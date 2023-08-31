@@ -4,9 +4,8 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset } from '@/types/Types';
 import { addAsset } from '@/services/project';
-import { ProjectAssetTypes } from '@/types/Project';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import useResourcesStore from '@/stores/resources';
@@ -34,6 +33,16 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
 	return response?.data ?? null;
 }
 
+/**
+ * Update dataset from the dataservice
+ * @return Dataset|null - the dataset, or null if none returned by API
+ */
+async function updateDataset(dataset: Dataset) {
+	delete dataset.columns;
+	const response = await API.patch(`/datasets/${dataset.id}`, dataset);
+	return response?.data ?? null;
+}
+
 //
 // Retrieve multiple datasets by their IDs
 // FIXME: the backend does not support bulk fetch
@@ -57,8 +66,12 @@ async function getBulkDatasets(datasetIDs: string[]) {
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
-async function downloadRawFile(datasetId: string, filename: string): Promise<CsvAsset | null> {
-	const URL = `/datasets/${datasetId}/downloadCSV?filename=${filename}`;
+async function downloadRawFile(
+	datasetId: string,
+	filename: string,
+	limit: number = 100
+): Promise<CsvAsset | null> {
+	const URL = `/datasets/${datasetId}/downloadCSV?filename=${filename}&limit=${limit}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
@@ -69,7 +82,7 @@ async function downloadRawFile(datasetId: string, filename: string): Promise<Csv
  * Creates a new dataset in TDS from the dataset given (required name, url, description).
  * @param dataset the dataset with updated storage ID from tds
  */
-async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
+async function createDataset(dataset: Dataset): Promise<Dataset | null> {
 	const resp = await API.post('/datasets', dataset);
 	if (resp && resp.status < 400 && resp.data) {
 		return resp.data;
@@ -78,11 +91,21 @@ async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
 	return null;
 }
 
+/**
+ * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
+ * share the same name as the file and can optionally have a description
+ * @param repoOwnerAndName
+ * @param path
+ * @param userName
+ * @param projectId
+ * @param url the source url of the file
+ */
 async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userName: string,
-	projectId: string
+	projectId: string,
+	url: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -95,17 +118,17 @@ async function createNewDatasetFromGithubFile(
 	// Create a new dataset with the same name as the file, and post the metadata to TDS
 	const dataset: Dataset = {
 		name,
-		url: '',
+		datasetUrl: url,
 		description: path,
 		fileNames: [fileName],
 		username: userName
 	};
 
-	const newDataSet: Dataset | null = await createNewDataset(dataset);
-	if (!newDataSet || !newDataSet.id) return null;
+	const newDataset: Dataset | null = await createDataset(dataset);
+	if (!newDataset || !newDataset.id) return null;
 
 	const urlResponse = await API.put(
-		`/datasets/${newDataSet.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/datasets/${newDataset.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -115,7 +138,7 @@ async function createNewDatasetFromGithubFile(
 		return null;
 	}
 
-	return addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+	return addAsset(projectId, AssetType.Datasets, newDataset.id);
 }
 
 /**
@@ -123,9 +146,9 @@ async function createNewDatasetFromGithubFile(
  * share the same name as the file and can optionally have a description
  * @param progress reference to display in ui
  * @param file the CSV file
- * @param userName owner of this project
+ * @param userName uploader of this dataset
  * @param projectId the project ID
- * @param description? description of the file. Optional. If not given description will be just the csv name
+ * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromCSV(
 	progress: Ref<number>,
@@ -140,19 +163,18 @@ async function createNewDatasetFromCSV(
 	// Create a new dataset with the same name as the file, and post the metadata to TDS
 	const dataset: Dataset = {
 		name,
-		url: '',
 		description: description || file.name,
 		fileNames: [file.name],
 		username: userName
 	};
 
-	const newDataSet: Dataset | null = await createNewDataset(dataset);
-	if (!newDataSet || !newDataSet.id) return null;
+	const newDataset: Dataset | null = await createDataset(dataset);
+	if (!newDataset || !newDataset.id) return null;
 
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const urlResponse = await API.put(`/datasets/${newDataSet.id}/uploadCSV`, formData, {
+	const urlResponse = await API.put(`/datasets/${newDataset.id}/uploadCSV`, formData, {
 		params: {
 			filename: file.name
 		},
@@ -172,10 +194,10 @@ async function createNewDatasetFromCSV(
 		return null;
 	}
 
-	await addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+	await addAsset(projectId, AssetType.Datasets, newDataset.id);
 
 	// Now verify it all works and obtain a preview for the user.
-	return downloadRawFile(newDataSet.id, file.name);
+	return downloadRawFile(newDataset.id, file.name);
 }
 
 async function createDatasetFromSimulationResult(
@@ -219,10 +241,10 @@ export const saveDataset = async (
 export {
 	getAll,
 	getDataset,
+	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
 	createNewDatasetFromCSV,
-	createNewDataset,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult
 };

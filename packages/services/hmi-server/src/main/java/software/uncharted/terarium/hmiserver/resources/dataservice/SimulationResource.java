@@ -8,9 +8,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.mutiny.Multi;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.reactivestreams.Publisher;
+import org.jboss.resteasy.annotations.SseElementType;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
@@ -18,6 +23,11 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.utils.Converter;
+import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResults;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.smallrye.reactive.messaging.annotations.Broadcast;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -42,6 +52,14 @@ public class SimulationResource implements SnakeCaseResource {
 	@Inject
 	@RestClient
 	DatasetProxy datasetProxy;
+
+	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
+	@Inject
+	@Channel("simulationStatus") Publisher<byte[]> partialSimulationStream;
+
+	@Broadcast
+	@Channel("simulationStatus")
+	Emitter<SimulationIntermediateResults> partialSimulationEmitter;
 
 	@POST
 	public Simulation createSimulation(final Simulation simulation){
@@ -115,8 +133,7 @@ public class SimulationResource implements SnakeCaseResource {
 		if(datasetName != null){
 			try {
 				dataset.setName(datasetName);
-				JsonNode updatedDataset = convertObjectToSnakeCaseJsonNode(dataset);
-				datasetProxy.updateDataset(dataset.getId(), updatedDataset);
+				datasetProxy.updateDataset(dataset.getId(),  convertObjectToSnakeCaseJsonNode(dataset));
 
 			} catch (Exception e) {
 				log.error("Failed to update dataset {} name", dataset.getId());
@@ -131,7 +148,7 @@ public class SimulationResource implements SnakeCaseResource {
 
 		// Add the dataset to the project as an asset
 		try {
-			return projectProxy.createAsset(projectId, ResourceType.Type.DATASETS.type, dataset.getId());
+			return projectProxy.createAsset(projectId, Assets.AssetType.DATASETS, dataset.getId());
 		} catch (Exception ignored) {
 			log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
 			return Response
@@ -140,5 +157,50 @@ public class SimulationResource implements SnakeCaseResource {
 				.type("text/plain")
 				.build();
 		}
+	}
+
+	@GET
+	@Path("/{jobId}/partial-result")
+	@Produces(MediaType.SERVER_SENT_EVENTS)
+	@SseElementType(MediaType.APPLICATION_JSON)
+	@Tag(name = "Stream partial/intermediate simulation result associated with run ID")
+	public Publisher<byte[]> stream(
+		@PathParam("jobId") final String jobId
+	) {
+		ObjectMapper mapper = new ObjectMapper();
+		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> {
+			try{ 
+				//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
+				String jsonString = new String(event);
+				jsonString = jsonString.replace(" ","");
+
+				SimulationIntermediateResults interResult = mapper.readValue(jsonString, SimulationIntermediateResults.class);
+
+				return interResult.getJobId().equals(jobId);
+			}
+			catch(Exception e){
+				log.error("Error occured while trying to convert simulation-status message to type: SimulationIntermediateResults");
+				log.error(event.toString());
+				log.error(e.toString());
+				return false;
+			}
+		});
+	}
+
+	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
+	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
+	@PUT
+	@Path("/{jobId}/create-partial-result")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Tag(name = "Used to write to the simulation status channel providing a job ID")
+	public Response createPartialResult(
+		@PathParam("jobId") final String jobId
+	) {
+		Double progress = 0.01;
+		SimulationIntermediateResults event = new SimulationIntermediateResults();
+		event.setJobId(jobId);
+		event.setProgress(progress);
+		partialSimulationEmitter.send(event);
+		return Response.ok().build();
 	}
 }

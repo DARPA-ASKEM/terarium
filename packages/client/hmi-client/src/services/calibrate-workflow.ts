@@ -19,7 +19,6 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 			});
 		}
 
-		modelColumnNameOptions.push('timestep');
 		modelColumnNameOptions.push('timestamp');
 		return { modelConfiguration, modelColumnNameOptions };
 	}
@@ -33,8 +32,12 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 		// Get dataset:
 		const dataset: Dataset | null = await getDataset(datasetId);
 		const filename = dataset?.fileNames?.[0] ?? '';
+		// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
+		// This is a temporary fix since the datasets could be very large.
+		const limit = -1;
+
 		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-		const csv = (await downloadRawFile(datasetId, filename)) as CsvAsset;
+		const csv = (await downloadRawFile(datasetId, filename, limit)) as CsvAsset;
 		// datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 		return { filename, csv };
 	}

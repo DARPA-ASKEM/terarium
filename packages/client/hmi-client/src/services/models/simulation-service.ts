@@ -200,9 +200,7 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 }
 
 // add a simulation in progress if it does not exist
-const addSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
-	const state = cloneDeep(node.state);
-
+const addSimulationInProgress = (state: any, runIds: string[]) => {
 	if (!state.simulationsInProgress) {
 		state.simulationsInProgress = [];
 	}
@@ -211,14 +209,10 @@ const addSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
 			state.simulationsInProgress.push(runId);
 		}
 	});
-
-	return state;
 };
 
 // delete a simulation in progress if it exists
-const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
-	const state = cloneDeep(node.state);
-
+const deleteSimulationInProgress = (state: any, runIds: string[]) => {
 	if (state.simulationsInProgress) {
 		runIds.forEach((runId) => {
 			const index = state.simulationsInProgress.indexOf(runId);
@@ -227,8 +221,6 @@ const deleteSimulationInProgress = (node: WorkflowNode, runIds: string[]) => {
 			}
 		});
 	}
-
-	return state;
 };
 
 // This function returns a string array of run ids.
@@ -250,12 +242,48 @@ export async function simulationPollAction(
 	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
 ) {
 	const requestList: Promise<Simulation | null>[] = [];
+
 	simulationIds.forEach((id) => {
 		requestList.push(getSimulation(id));
 	});
 	const response = await Promise.all(requestList);
-	if (response.every((simulation) => simulation!.status === ProgressState.COMPLETE)) {
+
+	const completedSimulationIds = response
+		.filter((simulation) => simulation?.status === ProgressState.COMPLETE)
+		.map((simulation) => simulation!.id);
+	const inProgressSimulationIds = response
+		.filter(
+			(simulation) =>
+				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
+		)
+		.map((simulation) => simulation!.id);
+	const unhandledStateSimulationIds = response
+		.filter(
+			(simulation) =>
+				simulation?.status !== ProgressState.QUEUED &&
+				simulation?.status !== ProgressState.RUNNING &&
+				simulation?.status !== ProgressState.COMPLETE
+		)
+		.map((simulation) => simulation!.id);
+
+	// there are unhandled states - we will return an error and remove all simulation Ids
+	if (unhandledStateSimulationIds.length > 0) {
 		const newState = deleteSimulationInProgress(node, simulationIds);
+		if (!isEqual(node.state, newState)) {
+			emitFn('update-state', newState);
+		}
+
+		return {
+			data: response,
+			progress: null,
+			error: true
+		};
+	}
+
+	// all simulations complete
+	if (inProgressSimulationIds.length === 0 && completedSimulationIds.length > 0) {
+		const newState = cloneDeep(node.state);
+		deleteSimulationInProgress(newState, completedSimulationIds);
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
@@ -266,26 +294,35 @@ export async function simulationPollAction(
 			error: null
 		};
 	}
-	if (
-		response.find(
-			(simulation) =>
-				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
-		)
-	) {
-		const newState = addSimulationInProgress(node, simulationIds);
+
+	// handle any in progress simulations
+	if (inProgressSimulationIds.length > 0) {
+		const newState = cloneDeep(node.state);
+		addSimulationInProgress(newState, inProgressSimulationIds);
+		deleteSimulationInProgress(newState, completedSimulationIds);
+
 		// only update state if it is different from the current one
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
 		}
-		progress.value = {
-			status: ProgressState.RUNNING,
-			value: 0
+		progress.value.status = ProgressState.RUNNING;
+		// keep polling
+		return {
+			data: null,
+			progress: null,
+			error: null
 		};
 	}
 
+	// remove all simulations for now if there is an unhandled state
+	const newState = deleteSimulationInProgress(node, simulationIds);
+	if (!isEqual(node.state, newState)) {
+		emitFn('update-state', newState);
+	}
+
 	return {
-		data: null,
+		data: response,
 		progress: null,
-		error: null
+		error: true
 	};
 }

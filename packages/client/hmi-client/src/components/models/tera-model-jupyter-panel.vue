@@ -74,6 +74,7 @@
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			:auto-expand-preview="autoExpandPreview"
+			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
 		/>
@@ -113,9 +114,9 @@ import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
 import { getModelConfigurations } from '@/services/model';
-import { ProjectAssetTypes, IProject } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { CsvAsset, Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, CsvAsset, Model, ModelConfiguration } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -155,6 +156,7 @@ const noSelectionDefault = {
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
+const kernelState = ref(null);
 const showKernels = ref(<boolean>false);
 const autoExpandPreview = ref(<boolean>true);
 const modelConfigurations = ref(<
@@ -274,6 +276,10 @@ onMounted(async () => {
 onUnmounted(() => {
 	jupyterSession.shutdown();
 });
+
+const updateKernelState = (newKernelState) => {
+	kernelState.value = newKernelState;
+};
 
 // Save file function
 const saveAsNewModel = async () => {
@@ -406,7 +412,7 @@ const onNewModelSaved = async (payload) => {
 		return;
 	}
 	const modelId = payload.model_id;
-	await addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+	await addAsset(props.project.id, AssetType.Models, modelId);
 	toast.success('Model saved successfully', 'Refresh to see the dataset in the resource explorer');
 };
 </script>

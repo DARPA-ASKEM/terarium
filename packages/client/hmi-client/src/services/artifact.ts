@@ -1,6 +1,5 @@
-import { Artifact, PresignedURL } from '@/types/Types';
+import { Artifact, AssetType } from '@/types/Types';
 import API from '@/api/api';
-import { ProjectAssetTypes } from '@/types/Project';
 import { addAsset } from '@/services/project';
 import { Ref } from 'vue';
 import { logger } from '@/utils/logger';
@@ -46,7 +45,7 @@ async function createNewArtifactFromGithubFile(
 		return null;
 	}
 
-	const resp = addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
+	const resp = addAsset(projectId, AssetType.Artifacts, newArtifact.id);
 
 	if (!resp) return null;
 
@@ -82,7 +81,7 @@ async function uploadArtifactToProject(
 	const successfulUpload = await addFileToArtifact(newArtifact.id, file, progress);
 	if (!successfulUpload) return null;
 
-	const resp = addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
+	const resp = addAsset(projectId, AssetType.Artifacts, newArtifact.id);
 	if (!resp) return null;
 
 	return newArtifact;
@@ -144,20 +143,6 @@ async function getArtifactFileAsText(artifactId: string, fileName: string): Prom
 	return response.data;
 }
 
-async function getPresignedDownloadURL(
-	artifactId: string,
-	fileName: string
-): Promise<PresignedURL | null> {
-	const response = await API.get(`/artifacts/${artifactId}/download-url?filename=${fileName}`, {});
-
-	if (!response || response.status >= 400) {
-		logger.error('Error getting presigned download url');
-		return null;
-	}
-
-	return response.data;
-}
-
 async function getArtifactArrayBuffer(
 	artifactId: string,
 	fileName: string
@@ -178,6 +163,5 @@ export {
 	uploadArtifactToProject,
 	createNewArtifactFromGithubFile,
 	getArtifactFileAsText,
-	getPresignedDownloadURL,
 	getArtifactArrayBuffer
 };

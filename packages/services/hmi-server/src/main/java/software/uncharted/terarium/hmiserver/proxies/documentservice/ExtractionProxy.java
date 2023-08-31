@@ -11,7 +11,7 @@ import software.uncharted.terarium.hmiserver.resources.documentservice.responses
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-@RegisterRestClient(configKey = "xdd-document-service")
+@RegisterRestClient(configKey = "xdd-dev-service")
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface ExtractionProxy {

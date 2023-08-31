@@ -190,7 +190,9 @@ import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
-import { extractPDF } from '@/services/models/extractions';
+import { extractPDF } from '@/services/knowledge';
+import useAuthStore from '@/stores/auth';
+import { uploadCodeToProjectFromGithub } from '@/services/code';
 
 const props = defineProps<{
 	urlString: string;
@@ -207,7 +209,7 @@ const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
 const selectedText: Ref<string> = ref('');
 const displayCode: Ref<string> = ref('');
-
+const auth = useAuthStore();
 // Breadcrumb home setup
 const home = ref({
 	icon: 'pi pi-home',
@@ -334,8 +336,9 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
-			props.project?.id ?? ''
+			auth.name ?? '',
+			props.project?.id ?? '',
+			githubFile.htmlUrl
 		);
 	});
 }
@@ -360,8 +363,14 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
  * @param githubFiles The code files to open
  */
 async function openCodeFiles(githubFiles: GithubFile[]) {
-	// For now just throw to the document path as they're all artifacts
-	await importDocumentFiles(githubFiles);
+	githubFiles.forEach(async (githubFile) => {
+		await uploadCodeToProjectFromGithub(
+			repoOwnerAndName.value,
+			githubFile.path,
+			props.project?.id ?? '',
+			githubFile.htmlUrl
+		);
+	});
 }
 </script>
 

@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { Project } from '@/types/Types';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Dialog from 'primevue/dialog';
@@ -73,9 +73,9 @@ import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
-const props = defineProps<{ project?: IProject }>();
+const props = defineProps<{ project?: Project }>();
 const emit = defineEmits<{
-	(e: 'removed', projectId: IProject['id']): void;
+	(e: 'removed', projectId: Project['id']): void;
 }>();
 
 const stats = computed(() =>
@@ -83,9 +83,9 @@ const stats = computed(() =>
 		? null
 		: {
 				contributors: 1,
-				models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
-				datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
-				papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
+				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10),
+				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
+				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10)
 		  }
 );
 
@@ -106,8 +106,8 @@ const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
 const showProjectMenu = (event) => projectMenu.value.toggle(event);
 
 const removeProject = async () => {
-	if (!props.project) return;
-	const isDeleted = await ProjectService.remove(props.project?.id);
+	if (!props.project || !props.project?.id) return;
+	const isDeleted = await ProjectService.remove(props.project.id);
 	closeRemoveDialog();
 	if (isDeleted) {
 		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });

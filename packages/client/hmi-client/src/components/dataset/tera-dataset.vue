@@ -3,10 +3,18 @@
 		v-if="dataset"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
+		:is-naming-asset="isRenamingDataset"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
-		ref="assetPanel"
 	>
+		<template #name-input>
+			<InputText
+				v-if="isRenamingDataset"
+				v-model.lazy="newDatasetName"
+				placeholder="Dataset name"
+				@keyup.enter="updateDatasetName"
+			/>
+		</template>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -32,6 +40,14 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
+			<template v-if="!featureConfig.isPreview">
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleOptionsMenu"
+				/>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			</template>
 			<span v-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
 				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
@@ -47,7 +63,7 @@
 			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
-					<section>{{ csvContent?.length || '-' }}</section>
+					<section>{{ rawContent?.rowCount || '-' }}</section>
 				</section>
 				<section>
 					<header>Columns</header>
@@ -67,7 +83,9 @@
 			<section class="metadata data-row">
 				<section>
 					<header>Source Name</header>
-					<section v-if="dataset.url === 'https://github.com/reichlab/covid19-forecast-hub/'">
+					<section
+						v-if="dataset.datasetUrl === 'https://github.com/reichlab/covid19-forecast-hub/'"
+					>
 						The Reich Lab at UMass-Amherst
 					</section>
 					<section v-else>{{ dataset?.source || '-' }}</section>
@@ -75,7 +93,9 @@
 				<section>
 					<header>Source URL</header>
 					<section>
-						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						<a v-if="dataset?.datasetUrl" :href="dataset?.datasetUrl">{{
+							dataset?.datasetUrl || '-'
+						}}</a>
 						<span v-else>-</span>
 					</section>
 				</section>
@@ -83,7 +103,7 @@
 			<tera-related-publications
 				@extracted-metadata="gotEnrichedData"
 				:dialog-flavour="'dataset'"
-				:publications="props.project?.assets?.publications"
+				:publications="publications"
 				:project="project"
 				:assetId="assetId"
 			/>
@@ -136,8 +156,8 @@
 					</template>
 					This data is sourced from
 					{{ dataset.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
-					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''">{{
-						dataset.metadata?.documents ? dataset.metadata?.documents[0].url : ''
+					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''">{{
+						dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''
 					}}</a>
 				</AccordionTab>
 				<AccordionTab>
@@ -323,14 +343,16 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
-import { isString, isEmpty } from 'lodash';
-import { downloadRawFile, getDataset } from '@/services/dataset';
+import { isString, isEmpty, cloneDeep } from 'lodash';
+import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
 import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
+import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -375,6 +397,8 @@ const pd = computed(() =>
 		: []
 );
 
+const publications = computed(() => []);
+
 const headers = ref({
 	AUTHOR_NAME: 'Author Name',
 	AUTHOR_EMAIL: 'Author Email',
@@ -392,11 +416,11 @@ const menu = ref();
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
-const dataset: Ref<Dataset | null> = ref(null);
+const dataset = ref<Dataset | null>(null);
+const newDatasetName = ref('');
+const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
-
-const assetPanel = ref({ assetContainer: HTMLElement });
 
 const toggleSettingsMenu = (event: Event) => {
 	menu.value.toggle(event);
@@ -437,6 +461,37 @@ const items = ref([
 		]
 	}
 ]);
+
+/*
+ * User Menu
+ */
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingDataset.value = true;
+			newDatasetName.value = dataset.value?.name ?? '';
+		}
+	}
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
+]);
+
+async function updateDatasetName() {
+	if (dataset.value && newDatasetName.value !== '') {
+		const datasetClone = cloneDeep(dataset.value);
+		datasetClone.name = newDatasetName.value;
+		await updateDataset(datasetClone);
+		dataset.value = await getDataset(props.assetId);
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		isRenamingDataset.value = false;
+	}
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -522,6 +577,7 @@ watch(
 watch(
 	() => [props.assetId],
 	async () => {
+		isRenamingDataset.value = false;
 		if (props.assetId !== '') {
 			const datasetTemp: Dataset | null = await getDataset(props.assetId);
 

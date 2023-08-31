@@ -1,9 +1,9 @@
-import { XDDFacetsItemResponse, Document, Dataset, Model } from '@/types/Types';
+import { XDDFacetsItemResponse, Document, Dataset, Model, AssetType } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
-import { ProjectAssetTypes, ProjectPages } from './Project';
+import { ProjectPages } from './Project';
 
 export type Annotation = {
 	id: string;
@@ -15,9 +15,9 @@ export type Annotation = {
 	section: string;
 };
 
-export type FeatureConfig = {
+export interface FeatureConfig {
 	isPreview: boolean;
-};
+}
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
 // But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
@@ -102,7 +102,7 @@ export type Tab = {
 	icon?: string;
 	assetId?: string;
 	assetName?: string;
-	pageType?: ProjectAssetTypes | ProjectPages;
+	pageType?: AssetType | ProjectPages;
 };
 
 export type CodeRequest = {
@@ -117,8 +117,6 @@ export enum AcceptedTypes {
 	TXT = 'text/plain',
 	MD = 'text/markdown',
 	PY = 'text/x-python-script',
-	M = 'text/x-matlab',
-	JS = 'application/javascript',
 	R = 'text/x-r',
 	JL = 'application/julia'
 }
@@ -129,8 +127,6 @@ export enum AcceptedExtensions {
 	TXT = 'txt',
 	MD = 'md',
 	PY = 'py',
-	M = 'm',
-	JS = 'js',
 	R = 'r',
 	JL = 'jl'
 }

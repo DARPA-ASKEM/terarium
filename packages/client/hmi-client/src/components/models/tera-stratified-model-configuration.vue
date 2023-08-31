@@ -54,11 +54,8 @@
 								v-if="cellEditStates[i]?.name"
 								v-model.lazy="modelConfigInputValue"
 								v-focus
-								@focusout="cellEditStates[i].name = false"
-								@keyup.stop.enter="
-									cellEditStates[i].name = false;
-									updateModelConfigName(i);
-								"
+								@focusout="updateModelConfigName(i)"
+								@keyup.stop.enter="updateModelConfigName(i)"
 								class="cell-input"
 							/>
 							<span v-else class="editable-cell">
@@ -87,13 +84,24 @@
 		:model="configItems"
 	/>
 	<Teleport to="body">
-		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+		<tera-modal
+			v-if="openValueConfig"
+			@modal-mask-clicked="
+				openValueConfig = false;
+				emit('sync-configs');
+			"
+			@model-submit="
+				openValueConfig = false;
+				emit('sync-configs');
+			"
+		>
 			<template #header>
 				<h4>{{ modalVal.id }}</h4>
 				<span>Configure the matrix values</span>
 			</template>
 			<template #default>
-				<TabView v-model:activeIndex="activeIndex">
+				<!-- TODO: Implement value tabs for the modal once we are ready
+					<TabView v-model:activeIndex="activeIndex">
 					<TabPanel v-for="(extraction, i) in extractions" :key="i">
 						<template #header>
 							<span>{{ extraction.name }}</span>
@@ -107,15 +115,35 @@
 							<tera-stratified-value-matrix
 								:model-configuration="modelConfigurations[modalVal.configIndex]"
 								:id="modalVal.id"
+								:stratified-model-type="stratifiedModelType"
 								:node-type="modalVal.nodeType"
 							/>
 						</div>
 					</TabPanel>
-				</TabView>
+				</TabView> -->
+				<tera-stratified-value-matrix
+					:model-configuration="modelConfigurations[modalVal.configIndex]"
+					:id="modalVal.id"
+					:stratified-model-type="stratifiedModelType"
+					:node-type="modalVal.nodeType"
+				/>
 			</template>
 			<template #footer>
-				<Button label="OK" @click="openValueConfig = false" />
-				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
+				<Button
+					label="OK"
+					@click="
+						openValueConfig = false;
+						emit('sync-configs');
+					"
+				/>
+				<Button
+					class="p-button-outlined"
+					label="Cancel"
+					@click="
+						openValueConfig = false;
+						emit('sync-configs');
+					"
+				/>
 			</template>
 		</tera-modal>
 	</Teleport>
@@ -126,9 +154,9 @@ import { watch, ref, computed, onMounted } from 'vue';
 import { isEmpty, cloneDeep } from 'lodash';
 import Button from 'primevue/button';
 import SplitButton from 'primevue/splitbutton';
-import TabView from 'primevue/tabview';
+// import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import TabPanel from 'primevue/tabpanel';
+// import TabPanel from 'primevue/tabpanel'; // TODO: Implement value tabs for the modal once we are ready
 import InputText from 'primevue/inputtext';
 // import Checkbox from 'primevue/checkbox';
 import { ModelConfiguration, Model } from '@/types/Types';
@@ -140,14 +168,19 @@ import {
 import { getModelConfigurations } from '@/services/model';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
-import { getBaseAMR } from '@/model-representation/petrinet/catlab-petri';
+import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
+import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
+import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	featureConfig: FeatureConfig;
 	model: Model;
+	stratifiedModelType: StratifiedModelType;
 	calibrationConfig?: boolean;
 }>();
+
+const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
 
 const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
@@ -163,7 +196,15 @@ const configurations = computed<Model[]>(
 	() => modelConfigurations.value?.map((m) => m.configuration) ?? []
 );
 
-const baseModel = computed<any>(() => getBaseAMR(props.model));
+const baseModel = computed<any>(() => {
+	if (props.stratifiedModelType === StratifiedModelType.Catlab) {
+		return getCatlabAMRPresentationData(props.model).compactModel;
+	}
+	if (props.stratifiedModelType === StratifiedModelType.Mira) {
+		return getMiraAMRPresentationData(props.model).compactModel.model;
+	}
+	return props.model.model;
+});
 const baseModelStates = computed<any>(() => baseModel.value.states.map(({ id }) => id));
 const baseModelTransitions = computed<any>(() => baseModel.value.transitions.map(({ id }) => id));
 
@@ -183,9 +224,14 @@ const vFocus = {
 	mounted: (el) => el.focus()
 };
 
-function updateModelConfigName(configIndex: number) {
+async function updateModelConfigName(configIndex: number) {
+	cellEditStates.value[configIndex].name = false;
 	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
-	updateModelConfiguration(modelConfigurations.value[configIndex]);
+	await updateModelConfiguration(modelConfigurations.value[configIndex]);
+	setTimeout(() => {
+		emit('update-model-configuration');
+		emit('sync-configs');
+	}, 800);
 }
 
 async function addModelConfiguration(config: ModelConfiguration) {
@@ -196,7 +242,9 @@ async function addModelConfiguration(config: ModelConfiguration) {
 		config.configuration
 	);
 	setTimeout(() => {
+		emit('new-model-configuration');
 		initializeConfigSpace();
+		emit('sync-configs');
 	}, 800);
 }
 
@@ -237,21 +285,13 @@ async function initializeConfigSpace() {
 
 	modelConfigurations.value = tempConfigurations;
 
-	// Refresh the datastore with whatever we currently have
-	const defaultConfig = modelConfigurations.value.find(
-		(d) => d.name === 'Default config'
-	) as ModelConfiguration;
-	if (defaultConfig) {
-		defaultConfig.configuration = cloneDeep(props.model);
-		updateModelConfiguration(defaultConfig);
-	}
-
 	resetCellEditing();
 
 	openValueConfig.value = false;
 	modalVal.value = { id: '', configIndex: 0, nodeType: NodeType.State };
 	extractions.value = [{ name: 'Default', value: '' }];
 }
+defineExpose({ initializeConfigSpace });
 
 watch(
 	() => props.model.id,

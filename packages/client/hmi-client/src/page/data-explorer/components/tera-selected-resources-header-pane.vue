@@ -25,9 +25,9 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { Document, DocumentAsset } from '@/types/Types';
+import { AssetType, Document, DocumentAsset } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import * as ProjectService from '@/services/project';
@@ -66,27 +66,22 @@ const addResourcesToProject = async (projectId: string) => {
 				const documentId = res.id;
 
 				// then, link and store in the project assets
-				const assetsType = ProjectAssetTypes.DOCUMENTS;
+				const assetsType = AssetType.Publications;
 				await ProjectService.addAsset(projectId, assetsType, documentId);
-
-				// TODO: Find a way for documents to be added without this
-				// update local copy of project assets
-				// @ts-ignore
-				resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId, body);
 			}
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.MODELS;
+			const assetsType = AssetType.Models;
 			await ProjectService.addAsset(projectId, assetsType, modelId);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.DATASETS;
+			const assetsType = AssetType.Datasets;
 			if (datasetId) {
 				await ProjectService.addAsset(projectId, assetsType, datasetId);
 			}
@@ -113,7 +108,7 @@ const addAssetsToProject = async (projectName) => {
 };
 
 onMounted(async () => {
-	const projects = await ProjectService.getAll();
+	const projects = (await ProjectService.getAll()) as unknown as IProject[];
 	if (projects !== null) {
 		projectsList.value = projects;
 	}

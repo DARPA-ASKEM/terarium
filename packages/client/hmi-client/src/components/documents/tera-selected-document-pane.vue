@@ -23,9 +23,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import { Document, DocumentAsset } from '@/types/Types';
+import { AssetType, Document, DocumentAsset } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
 import dropdown from 'primevue/dropdown';
@@ -58,12 +58,12 @@ const addResourcesToProject = async (projectId: string) => {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
-		const assetsType = ProjectAssetTypes.DOCUMENTS;
+		const assetsType = AssetType.Publications;
 		await ProjectService.addAsset(projectId, assetsType, documentId);
 
 		// update local copy of project assets
 		// @ts-ignore
-		resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId, body);
+		resources.activeProject?.assets?.[AssetType.Publications].push(documentId, body);
 	}
 };
 
@@ -86,7 +86,7 @@ const addAssetsToProject = async (projectName) => {
 };
 
 onMounted(async () => {
-	const all = await ProjectService.getAll();
+	const all = (await ProjectService.getAll()) as unknown as IProject[];
 	if (all !== null) {
 		projectsList.value = all;
 	}

@@ -473,12 +473,24 @@
 			/>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab v-if="model" header="Model configurations">
+					<div v-if="stratifiedModelType">Stratified configs (WIP)</div>
 					<tera-stratified-model-configuration
-						v-if="model.semantics?.span"
+						ref="stratifiedModelConfigurationRef"
+						v-if="stratifiedModelType"
+						:stratified-model-type="stratifiedModelType"
 						:model="model"
 						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
+						@new-model-configuration="emit('new-model-configuration')"
 					/>
-					<tera-model-configuration v-else :model="model" :feature-config="featureConfig" />
+					<div v-if="stratifiedModelType"><br />All values</div>
+					<tera-model-configuration
+						ref="modelConfigurationRef"
+						:model="model"
+						:feature-config="featureConfig"
+						@sync-configs="syncConfigs"
+						@new-model-configuration="emit('new-model-configuration')"
+					/>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -515,37 +527,6 @@
 				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
 			</tera-modal>
 		</Teleport>
-
-		<!-- Copy model modal -->
-		<Teleport to="body">
-			<tera-modal
-				v-if="isCopyModelModalVisible"
-				class="modal"
-				@modal-mask-clicked="isCopyModelModalVisible = false"
-			>
-				<template #header>
-					<h4>Make a copy</h4>
-				</template>
-				<template #default>
-					<form>
-						<label for="copy-model">{{ copyModelNameInputPrompt }}</label>
-						<InputText
-							v-bind:class="invalidInputStyle"
-							id="copy-model"
-							type="text"
-							v-model="copyModelName"
-							placeholder="Model name"
-						/>
-					</form>
-				</template>
-				<template #footer>
-					<Button @click="duplicateModel">Copy model</Button>
-					<Button class="p-button-secondary" @click="isCopyModelModalVisible = false">
-						Cancel
-					</Button>
-				</template>
-			</tera-modal>
-		</Teleport>
 	</tera-asset>
 </template>
 
@@ -568,7 +549,8 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import {
 	convertToAMRModel,
 	updateConfigFields,
-	updateParameterId
+	updateParameterId,
+	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
@@ -576,14 +558,15 @@ import { createModel, getModel, getModelConfigurations, updateModel } from '@/se
 import * as ProjectService from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { ResultType, FeatureConfig } from '@/types/common';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
+import { IProject } from '@/types/Project';
+import { Model, Document, Dataset, ProvenanceType, AssetType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import Menu from 'primevue/menu';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
 import { logger } from '@/utils/logger';
 import TeraStratifiedModelConfiguration from '@/components/models/tera-stratified-model-configuration.vue';
+import useResourcesStore from '@/stores/resources';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 import TeraModelJupyterPanel from './tera-model-jupyter-panel.vue';
@@ -595,7 +578,12 @@ enum ModelView {
 }
 
 // TODO - Get rid of these emits
-const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
+const emit = defineEmits([
+	'close-preview',
+	'asset-loaded',
+	'close-current-tab',
+	'new-model-configuration'
+]);
 
 const props = defineProps({
 	project: {
@@ -633,28 +621,15 @@ const newPetri = ref();
 const isRenamingModel = ref(false);
 const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.value);
 
-const isCopyModelModalVisible = ref<boolean>(false);
-const copyModelNameInputPrompt = ref<string>('');
-const copyModelName = ref<string>('');
-
-const isValidName = ref<boolean>(true);
-const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));
-
-const existingModelNames = computed(() => {
-	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
-	});
-	return modelNames;
-});
-
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
+const stratifiedModelType = computed(() => model.value && getStratificationType(model.value));
 
 /*
  * User Menu
  */
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
 const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
@@ -664,76 +639,23 @@ const optionsMenuItems = ref([
 			isRenamingModel.value = true;
 			newModelName.value = model.value?.name ?? '';
 		}
-	},
-	{ icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
+	}
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
-function getJustModelName(modelName: string): string {
-	let potentialNum: string = '';
-	let completeParen: boolean = false;
-	let idx = modelName.length;
-	if (modelName.charAt(modelName.length - 1) === ')') {
-		for (let i = modelName.length - 2; i >= 0; i--) {
-			if (modelName.charAt(i) === '(') {
-				completeParen = true;
-				idx = i;
-				break;
-			}
-			potentialNum = modelName.charAt(i) + potentialNum;
+// These reference the different config components (TEMPORARY)
+const stratifiedModelConfigurationRef = ref();
+const modelConfigurationRef = ref();
+
+// Sync different configs as we are TEMPORARILY showing both for stratified models
+function syncConfigs(updateStratified = false) {
+	if (stratifiedModelType.value) {
+		if (updateStratified) {
+			stratifiedModelConfigurationRef.value?.initializeConfigSpace();
+		} else {
+			modelConfigurationRef.value?.initializeConfigSpace();
 		}
 	}
-
-	if (completeParen && !Number.isNaN(potentialNum as any)) {
-		return modelName.substring(0, idx).trim();
-	}
-	return modelName.trim();
-}
-
-function getSuggestedModelName(currModelName: string, counter: number): string {
-	const suggestedName = `${currModelName} (${counter})`;
-
-	if (!existingModelNames.value.includes(suggestedName)) {
-		return suggestedName;
-	}
-	return getSuggestedModelName(currModelName, counter + 1);
-}
-
-function initiateModelDuplication() {
-	if (!model.value) {
-		logger.info('Failed to duplicate model.');
-		return;
-	}
-	copyModelNameInputPrompt.value = 'What do you want to name it?';
-	const modelName = getJustModelName(model.value.name.trim());
-	copyModelName.value = getSuggestedModelName(modelName, 1);
-	isCopyModelModalVisible.value = true;
-}
-
-async function duplicateModel() {
-	if (existingModelNames.value.includes(copyModelName.value.trim())) {
-		copyModelNameInputPrompt.value = 'Duplicate model name - please enter a different name:';
-		isValidName.value = false;
-		logger.info('Duplicate model name - please enter a different name');
-		return;
-	}
-	copyModelNameInputPrompt.value = 'Creating a copy...';
-	isValidName.value = true;
-	const duplicateModelResponse = await createModel({
-		...model.value,
-		name: copyModelName.value.trim()
-	});
-	if (!duplicateModelResponse) {
-		logger.info('Failed to duplicate model.');
-		isCopyModelModalVisible.value = false;
-		return;
-	}
-	await ProjectService.addAsset(
-		props.project.id,
-		ProjectAssetTypes.MODELS,
-		duplicateModelResponse.id
-	);
-	isCopyModelModalVisible.value = false;
 }
 
 /* Model */
@@ -872,15 +794,6 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	() => newModelName.value,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			emit('update-tab-name', newValue);
-		}
-	}
-);
-
 onUpdated(() => {
 	if (model.value) {
 		emit('asset-loaded');
@@ -898,7 +811,7 @@ const createNewModel = async () => {
 		if (newModelResp) {
 			const modelId = newModelResp.id.toString();
 			emit('close-current-tab');
-			await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+			await ProjectService.addAsset(props.project.id, AssetType.Models, modelId);
 
 			// Go to the model you just created
 			router.push({
@@ -906,7 +819,7 @@ const createNewModel = async () => {
 				params: {
 					assetName: newModelName.value,
 					assetId: modelId,
-					pageType: ProjectAssetTypes.MODELS
+					pageType: AssetType.Models
 				}
 			});
 		}
@@ -914,14 +827,16 @@ const createNewModel = async () => {
 };
 
 async function updateModelName() {
-	if (model.value) {
+	if (model.value && newModelName.value !== '') {
 		const modelClone = cloneDeep(model.value);
 		modelClone.name = newModelName.value;
 		await updateModel(modelClone);
 		model.value = await getModel(props.assetId);
-		// FIXME: Names aren't updated in sidebar
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		isRenamingModel.value = false;
+	} else if (newModelName.value !== '') {
+		isRenamingModel.value = false;
 	}
-	isRenamingModel.value = false;
 }
 
 // Toggle rows to become editable
@@ -1078,14 +993,6 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 .p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
 	background-color: var(--surface-0);
 	margin: 0.25rem;
-}
-
-.floating-edit-button {
-	background-color: var(--surface-0);
-	margin-top: 10px;
-	position: absolute;
-	right: 10px;
-	z-index: 10;
 }
 
 .p-datatable:deep(td:hover) {

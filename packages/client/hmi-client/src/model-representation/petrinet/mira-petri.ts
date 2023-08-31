@@ -78,13 +78,13 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	for (let i = 0; i < model.transitions.length; i++) {
 		const obj: any = {};
 		const transition = model.transitions[i];
-		const input = transition.input.map((d) => lookup.get(d));
-		const output = transition.output.map((d) => lookup.get(d));
+		const input = transition.input.map((d: any) => lookup.get(d));
+		const output = transition.output.map((d: any) => lookup.get(d));
 		const newTransition = { id: '', input, output };
 
 		// Build matrixData array
 		obj.id = transition.id;
-		transition.input.forEach((sid) => {
+		transition.input.forEach((sid: string) => {
 			const modifiers = stateModifierMap.get(sid);
 			if (modifiers) {
 				Object.keys(modifiers).forEach((k) => {
@@ -131,7 +131,7 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 /**
  * Given an MIRA AMR, extract and compute a presentation-layer data format
  */
-export const getAMRPresentationData = (amr: Model) => {
+export const getMiraAMRPresentationData = (amr: Model) => {
 	const statesData = getStates(amr);
 	const transitionsData = getTransitions(amr, statesData.lookup);
 

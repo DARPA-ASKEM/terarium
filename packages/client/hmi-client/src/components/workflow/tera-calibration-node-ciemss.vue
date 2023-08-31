@@ -43,7 +43,7 @@
 					text
 					:outlined="true"
 					@click="addChart"
-					label="Add Chart"
+					label="Add chart"
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
@@ -125,6 +125,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
+import { EventSourceManager } from '@/api/event-source-manager';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -132,6 +133,7 @@ import {
 } from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import TeraProgressBar from './tera-progress-bar.vue';
+import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -156,7 +158,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 // EXTRA section
 const numSamples = ref(100);
@@ -165,6 +167,7 @@ const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const poller = new Poller();
+const eventSourceManager = new EventSourceManager();
 
 const disableRunButton = computed(
 	() =>
@@ -229,29 +232,48 @@ const runCalibrate = async () => {
 			num_iterations: numIterations.value,
 			method: method.value
 		},
-		timespan: {
-			start: state.timeSpan.start,
-			end: state.timeSpan.end
-		},
+		timespan: getTimespan(state.timeSpan, csvAsset.value),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
-	if (response.simulationId) {
+	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
 
-const getStatus = async (simulationId: string) => {
-	showSpinner.value = true;
-	if (!simulationId) return;
+const handlingProgress = (message: string) => {
+	const parsedMessage = JSON.parse(message);
+	if (parsedMessage.progress) {
+		progress.value.value = Math.round(parsedMessage.progress * 100);
+	}
+};
 
+const getStatus = async (simulationId: string) => {
+	console.log('Getting status');
+	showSpinner.value = true;
+	if (!simulationId) {
+		console.log('No sim id');
+		return;
+	}
+	console.log(`Simulation Id:${simulationId}`);
 	const runIds = [simulationId];
+
+	// open a connection for each run id and handle the messages
+	runIds.forEach((id) => {
+		eventSourceManager.openConnection(id, `/simulations/${id}/partial-result`);
+		eventSourceManager.setMessageHandler(id, handlingProgress);
+	});
+
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	console.log('Poller defined');
 	const pollerResults = await poller.start();
+
+	// closing event source connections
+	runIds.forEach((id) => eventSourceManager.closeConnection(id));
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
@@ -335,7 +357,7 @@ watch(
 		// runResults.value[simulationIds.value[0].runId] = csvData as any;
 		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'simulation.csv');
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }

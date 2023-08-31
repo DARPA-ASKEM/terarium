@@ -5,7 +5,7 @@
 			v-model="selectedVariable"
 			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
-			placeholder="Select a State Variable"
+			placeholder="Select a state variable"
 			@update:model-value="updateSelectedVariable"
 		>
 			<template v-slot:value>
@@ -17,7 +17,7 @@
 				</template>
 			</template>
 		</MultiSelect>
-		<Chart type="line" :data="chartData" :options="CHART_OPTIONS" />
+		<Chart type="scatter" :data="chartData" :options="CHART_OPTIONS" />
 	</div>
 </template>
 
@@ -27,6 +27,8 @@ import { ref, computed, watch, onMounted } from 'vue';
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { CsvAsset } from '@/types/Types';
+import { getGraphDataFromDatasetCSV, RunType } from './util';
 
 const emit = defineEmits(['configuration-change']);
 
@@ -35,13 +37,15 @@ const props = defineProps<{
 	chartConfig: ChartConfig;
 	hasMeanLine?: boolean;
 	colorByRun?: boolean;
+	initialData?: CsvAsset;
+	mapping?: { [key: string]: string }[];
+	runType?: RunType;
 }>();
 
 type DatasetType = {
-	data: number[];
+	data: { x: number; y: number }[];
 	label: string;
 	fill: boolean;
-	tension: number;
 };
 
 const renderedRuns = computed<RunResults>(() => {
@@ -95,6 +99,7 @@ const CHART_OPTIONS = {
 	animation: {
 		duration: 0
 	},
+	showLine: true,
 	plugins: {
 		legend: {
 			display: false
@@ -195,7 +200,7 @@ const watchRunResults = async (runResults) => {
 	if (!stateVariablesList.length) {
 		stateVariablesList = Object.keys(
 			renderedRuns.value[Object.keys(renderedRuns.value)[0]][0]
-		).filter((key) => key !== 'timestep' && key !== 'timestamp' && key !== 'date');
+		).filter((key) => key !== 'timestamp');
 	}
 	renderGraph();
 };
@@ -208,23 +213,38 @@ const renderGraph = () => {
 	}
 
 	const datasets: DatasetType[] = [];
-	selectedVariable.value.forEach((variable) =>
+	selectedVariable.value.forEach((variable) => {
 		runIdList
 			.map((runId) => renderedRuns.value[runId])
 			.forEach((run, runIdx) => {
 				const dataset = {
 					data: run.map(
-						(datum: { [key: string]: number }) => datum[variable] // - runResults[selectedRun.value][timeIdx][code]
+						// - runResults[selectedRun.value][timeIdx][code]
+						(datum: { [key: string]: number }) =>
+							// return datum[variable];
+							({
+								y: +datum[variable],
+								x: +datum.timestamp
+							})
 					),
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
-					tension: 0.4,
 					borderColor: getLineColor(variable, runIdx),
 					borderWidth: lineWidthArray.value[runIdx]
 				};
 				datasets.push(dataset);
-			})
-	);
+			});
+
+		if (props.initialData) {
+			const dataset = getGraphDataFromDatasetCSV(
+				props.initialData,
+				variable,
+				props.mapping,
+				props.runType
+			);
+			datasets.push(dataset);
+		}
+	});
 	chartData.value = {
 		labels: renderedRuns.value[Object.keys(renderedRuns.value)[0]].map((datum) =>
 			Number(datum.timestamp)

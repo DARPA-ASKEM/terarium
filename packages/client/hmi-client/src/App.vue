@@ -36,6 +36,7 @@
 		v-if="isAboutModalVisible"
 		class="modal"
 		@modal-mask-clicked="isAboutModalVisible = false"
+		@modal-enter-press="isAboutModalVisible = false"
 	>
 		<template #header>
 			<h4>About Terarium</h4>
@@ -155,7 +156,7 @@ watch(
 		}
 
 		// Refetch the list of all projects
-		projects.value = await ProjectService.getAll();
+		projects.value = (await ProjectService.getAll()) as unknown as IProject[];
 	},
 	{ immediate: true }
 );

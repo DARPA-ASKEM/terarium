@@ -40,7 +40,7 @@
 					text
 					:outlined="true"
 					@click="addChart"
-					label="Add Chart"
+					label="Add chart"
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
@@ -138,6 +138,7 @@ import {
 	CalibrateMethodOptions,
 	CalibrateExtraJulia
 } from './calibrate-operation-julia';
+import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -149,7 +150,6 @@ const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string |
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const modelConfig = ref<ModelConfiguration>();
-const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 const parameterResult = ref<{ [index: string]: any }>();
 
@@ -166,7 +166,7 @@ const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
-const progress = ref({ status: ProgressState.QUEUED, value: 0 });
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
 
@@ -228,11 +228,10 @@ const runCalibrate = async () => {
 		},
 		extra: extra.value,
 		engine: 'sciml',
-		timespan: timeSpan.value
+		timespan: getTimespan(timeSpan.value, csvAsset.value)
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
-	startedRunId.value = response.simulationId;
-	if (response.simulationId) {
+	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
@@ -250,11 +249,11 @@ const getStatus = async (simulationId: string) => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', startedRunId.value);
+		console.error('Failed', simulationId);
 		showSpinner.value = false;
 		throw Error('Failed Runs');
 	}
-	completedRunId.value = startedRunId.value;
+	completedRunId.value = simulationId;
 	updateOutputPorts(completedRunId);
 	showSpinner.value = false;
 };

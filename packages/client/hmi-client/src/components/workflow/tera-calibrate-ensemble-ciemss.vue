@@ -33,7 +33,7 @@
 				text
 				:outlined="true"
 				@click="addChart"
-				label="Add Chart"
+				label="Add chart"
 				icon="pi pi-plus"
 			/>
 			<Button
@@ -408,7 +408,7 @@ const addChart = () => {
 const watchCompletedRunList = async () => {
 	if (!completedRunId.value) return;
 
-	const output = await getRunResultCiemss(completedRunId.value, 'simulation.csv');
+	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
 	runResults.value = output.runResults;
 };
 
