@@ -55,14 +55,15 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import { createModel } from '@/services/model';
 import { addAsset } from '@/services/project';
+import { cloneDeep } from 'lodash';
+import router from '@/router';
+import { RouteName } from '@/router/routes';
 import TeraModelDiagram from '../model/petrinet/tera-model-diagram.vue';
 
 const props = defineProps<{
 	projectId: string;
 	assetId: string;
 }>();
-
-const emit = defineEmits(['open-new-model']);
 
 const toast = useToastService();
 
@@ -120,11 +121,35 @@ async function extractModel() {
 }
 
 async function saveModel() {
-	const createdModel = await createModel(model.value);
+	const modelToSave = {
+		name: modelName.value,
+		description: '',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
+		model_version: '0.1',
+		model: cloneDeep(model.value?.model),
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	const createdModel = await createModel(modelToSave);
 	if (createdModel) {
-		const asset = (await addAsset(props.projectId, AssetType.Models, createdModel.id)) as Model;
-		if (asset) {
-			emit('open-new-model', asset.id);
+		const { id } = await addAsset(props.projectId, AssetType.Models, createdModel.id);
+		console.log(id);
+		if (id) {
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: {
+					pageType: AssetType.Models,
+					projectId: props.projectId,
+					assetId: createdModel.id
+				}
+			});
 		} else {
 			toast.error('', 'Unable to add model to project');
 		}
