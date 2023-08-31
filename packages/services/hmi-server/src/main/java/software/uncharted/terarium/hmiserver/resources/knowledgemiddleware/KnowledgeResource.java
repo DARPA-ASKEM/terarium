@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources.extractionservice;
+package software.uncharted.terarium.hmiserver.resources.knowledgemiddleware;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,7 +9,7 @@ import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapp
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
-import software.uncharted.terarium.hmiserver.proxies.extractionservice.ExtractionServiceProxy;
+import software.uncharted.terarium.hmiserver.proxies.knowledgemiddleware.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 
@@ -19,15 +19,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Path("/api/extract")
+@Path("/api/knowledge")
 @Slf4j
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterProvider(HmiResponseExceptionMapper.class)
-public class ExtractionResource {
+public class KnowledgeResource {
 
 	@Inject
 	@RestClient
-	ExtractionServiceProxy extractionProxy;
+	KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
 	@Inject
 	@RestClient
@@ -46,7 +46,7 @@ public class ExtractionResource {
 	@Path("/status/{id}")
 	public Response getTaskStatus(
 		@PathParam("id") final String id) {
-		return extractionProxy.getTaskStatus(id);
+		return knowledgeMiddlewareProxy.getTaskStatus(id);
 	}
 
 	/**
@@ -68,7 +68,7 @@ public class ExtractionResource {
 		@DefaultValue("petrinet") @QueryParam("framework") String framework,
 		List<String> mathMLPayload
 	) {
-		return extractionProxy.postMathMLToAMR(framework, mathMLPayload);
+		return knowledgeMiddlewareProxy.postMathMLToAMR(framework, mathMLPayload);
 	};
 
 	/**
@@ -115,7 +115,7 @@ public class ExtractionResource {
 		if (name == null) {	name = artifact.getName(); }
 		if (description == null) { description = artifact.getDescription();	}
 
-		return extractionProxy.postCodeToAMR(artifactId, name, description);
+		return knowledgeMiddlewareProxy.postCodeToAMR(artifactId, name, description);
 	}
 
 
@@ -142,7 +142,7 @@ public class ExtractionResource {
 		@QueryParam("name") String name,
 		@QueryParam("description") String description
 	) {
-		return extractionProxy.postPDFExtractions(artifactId, annotateSkema, annotateMIT, name, description);
+		return knowledgeMiddlewareProxy.postPDFExtractions(artifactId, annotateSkema, annotateMIT, name, description);
 	};
 
 	/**
@@ -153,7 +153,7 @@ public class ExtractionResource {
 	@POST
 	@Path("/pdf-to-text")
 	public Response postPDFToText(@QueryParam("artifact_id") String artifactId){
-		return extractionProxy.postPDFToText(artifactId);
+		return knowledgeMiddlewareProxy.postPDFToText(artifactId);
 	}
 
 	/**
@@ -191,6 +191,6 @@ public class ExtractionResource {
 		@PathParam("dataset_id") String datasetId,
 		@QueryParam("artifact_id") String artifactId
 	) {
-		return extractionProxy.postProfileDataset(datasetId, artifactId);
+		return knowledgeMiddlewareProxy.postProfileDataset(datasetId, artifactId);
 	};
 }

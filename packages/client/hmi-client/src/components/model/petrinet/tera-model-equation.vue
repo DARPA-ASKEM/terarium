@@ -31,7 +31,7 @@ import {
 	convertAMRToACSet,
 	updateExistingModelContent
 } from '@/model-representation/petrinet/petrinet-service';
-import { latexToAMR } from '@/services/models/extractions';
+import { latexToAMR } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import { isEmpty } from 'lodash';

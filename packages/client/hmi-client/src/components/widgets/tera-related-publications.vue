@@ -65,7 +65,7 @@ import Column from 'primevue/column';
 import { IProject } from '@/types/Project';
 import { AcceptedExtensions, ResourceType } from '@/types/common';
 import { Artifact, AssetType, DocumentAsset } from '@/types/Types';
-import { profileDataset, profileModel, fetchExtraction } from '@/services/models/extractions';
+import { profileDataset, profileModel, fetchExtraction } from '@/services/knowledge';
 
 const props = defineProps<{
 	project?: IProject;
