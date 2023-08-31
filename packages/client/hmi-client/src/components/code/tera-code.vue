@@ -47,7 +47,12 @@ import { ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Button from 'primevue/button';
-import { uploadCodeToProject, getCodeFileAsText, getCodeAsset } from '@/services/code';
+import {
+	uploadCodeToProject,
+	getCodeFileAsText,
+	getCodeAsset,
+	updateCodeAsset
+} from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/models/extractions';
 import { AssetType, Code, Model } from '@/types/Types';
@@ -57,6 +62,7 @@ import { createModel } from '@/services/model';
 import { addAsset } from '@/services/project';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import useResourceStore from '@/stores/resources';
 import TeraModelDiagram from '../model/petrinet/tera-model-diagram.vue';
 
 const props = defineProps<{
@@ -66,6 +72,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['asset-loaded']);
 
+const resourceStore = useResourceStore();
 const toast = useToastService();
 
 const codeName = ref('');
@@ -77,7 +84,6 @@ const progress = ref(0);
 const isModalVisible = ref(false);
 const model = ref<Model>();
 const modelName = ref('');
-
 /**
  * Editor initialization function
  * @param editorInstance	the Ace editor instance
@@ -96,6 +102,23 @@ function onSelectedTextChange() {
 }
 
 async function saveCode() {
+	const existingCode = resourceStore.activeProjectAssets?.code.find(
+		(c) => c.name === codeName.value
+	);
+	if (existingCode?.id) {
+		console.log(existingCode);
+		console.log(codeText.value);
+		const file = new File([codeText.value], codeName.value);
+		const updatedCode = await updateCodeAsset(existingCode, file, progress);
+		if (!updatedCode) {
+			toast.error('', 'Unable to save file');
+		} else {
+			toast.success('', `File saved as ${codeName.value}`);
+			codeAsset.value = updatedCode;
+		}
+		return updatedCode;
+	}
+	console.log('else');
 	const file = new File([codeText.value], codeName.value);
 	const newCodeAsset = await uploadCodeToProject(props.projectId, file, progress);
 	if (!newCodeAsset) {
@@ -164,6 +187,7 @@ watch(
 	async () => {
 		const code = await getCodeAsset(props.assetId);
 		if (code) {
+			codeAsset.value = code;
 			codeName.value = code.name;
 			const text = await getCodeFileAsText(props.assetId, code.name);
 			if (text) {

@@ -15,6 +15,28 @@ async function getCodeAsset(codeAssetId: string): Promise<Code | null> {
 	return response.data as Code;
 }
 
+async function updateCodeAsset(
+	code: Code,
+	file: File,
+	progress: Ref<number>
+): Promise<Code | null> {
+	if (!code.id) {
+		return null;
+	}
+	const successfulUpload = await addFileToCodeAsset(code.id, file, progress);
+	if (!successfulUpload) {
+		return null;
+	}
+	const response = await API.put(`/code-asset/${code.id}`, code);
+
+	if (!response || response.status >= 400) {
+		logger.error('Error updating code asset');
+		return null;
+	}
+
+	return response.data as Code;
+}
+
 async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise<string | null> {
 	const response = await API.get(
 		`/code-asset/${codeAssetId}/download-code-as-text?filename=${fileName}`,
@@ -150,4 +172,11 @@ function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 	}
 }
 
-export { uploadCodeToProject, getCodeFileAsText, uploadCodeToProjectFromGithub, getCodeAsset };
+export {
+	uploadCodeToProject,
+	getCodeFileAsText,
+	uploadCodeToProjectFromGithub,
+	getCodeAsset,
+	updateCodeAsset,
+	addFileToCodeAsset
+};
