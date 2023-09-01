@@ -60,6 +60,7 @@
 				:highlight="highlight"
 				:project="project"
 				@update-model="updateModelContents"
+				@fetch-model="fetchModel"
 			/>
 		</template>
 		<template v-if="modelView === ModelView.MODEL">
@@ -291,7 +292,7 @@ watch(
 		isRenamingModel.value = false;
 		modelView.value = ModelView.DESCRIPTION;
 		if (props.assetId !== '') {
-			model.value = await getModel(props.assetId);
+			await fetchModel();
 			fetchRelatedTerariumArtifacts();
 			console.log(model.value);
 		} else {
@@ -300,6 +301,10 @@ watch(
 	},
 	{ immediate: true }
 );
+
+async function fetchModel() {
+	model.value = await getModel(props.assetId);
+}
 
 onUpdated(() => {
 	if (model.value) {

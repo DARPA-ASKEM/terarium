@@ -70,6 +70,7 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
+const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
 
@@ -87,6 +88,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	// 2. Poll
 	const pollResult = await fetchExtraction(resp);
 	console.log('enrichment poll', pollResult);
+	emit('enriched');
 };
 </script>
 

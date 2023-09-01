@@ -43,6 +43,7 @@
 					:related-publications="relatedPublications"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
+					@enriched="fetchAsset"
 				/>
 			</AccordionTab>
 			<AccordionTab>
@@ -446,22 +447,41 @@ const props = defineProps<{
 	project: IProject;
 }>();
 
-const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-model', 'fetch-model']);
+
+function fetchAsset() {
+	emit('fetch-model');
+}
 
 const isSectionEditable = ref<string | null>();
 const isRowEditable = ref<string | null>();
 const transientTableValue = ref<ModelTableTypes | null>(null);
 const nameOfCurieCache = ref(new Map<string, string>());
 
+const card = computed(() => {
+	if (props.model.metadata?.card) {
+		const cardWithUnknowns = props.model.metadata?.card;
+		const cardWithUnknownsArr = Object.entries(cardWithUnknowns);
+
+		for (let i = 0; i < cardWithUnknownsArr.length; i++) {
+			const key = cardWithUnknownsArr[i][0];
+			if (cardWithUnknowns[key] === 'UNKNOWN') {
+				cardWithUnknowns[key] = null;
+			}
+		}
+		return cardWithUnknowns;
+	}
+	return null;
+});
 const description = computed(() =>
 	highlightSearchTerms(
 		props.model?.header?.description?.concat(' ', props.model.metadata?.card?.DESCRIPTION ?? '')
 	)
 );
-const usage = computed(() => props.model.metadata?.card?.USAGE ?? '');
-const sourceDataset = computed(() => props.model.metadata?.card?.DATASET ?? '');
-const provenance = computed(() => props.model.metadata?.card?.PROVENANCE ?? '');
-const schema = computed(() => props.model.metadata?.card?.SCHEMA ?? '');
+const usage = computed(() => card.value?.USAGE ?? '');
+const sourceDataset = computed(() => card.value?.DATASET ?? '');
+const provenance = computed(() => card.value?.PROVENANCE ?? '');
+const schema = computed(() => card.value?.SCHEMA ?? '');
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const publications = computed(
