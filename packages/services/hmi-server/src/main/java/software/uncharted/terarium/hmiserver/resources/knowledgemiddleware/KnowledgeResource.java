@@ -170,9 +170,7 @@ public class KnowledgeResource {
 	public Response postProfileModel(
 		@PathParam("model_id") String modelId,
 		@QueryParam("artifact_id") String artifactId
-	) {
-		System.out.println(modelId);
-		System.out.println(artifactId);
+	) { 
 		return knowledgeMiddlewareProxy.postProfileModel(modelId, artifactId);
 	};
 
