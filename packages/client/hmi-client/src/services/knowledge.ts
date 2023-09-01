@@ -61,7 +61,7 @@ const latexToAMR = async (
 					return result.data.job_result.amr as Model;
 				}
 			}
-			if (status === 'finished' && response.data.result.job_result.status_code === 200) {
+			if (status === 'finished' && response.data.result.job_result?.status_code === 200) {
 				return response.data.result.job_result.amr as Model;
 			}
 		}
