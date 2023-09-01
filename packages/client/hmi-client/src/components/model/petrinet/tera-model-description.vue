@@ -43,7 +43,7 @@
 					:project="project"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
-					@fetch-asset="fetchAsset"
+					@enriched="fetchAsset"
 				/>
 			</AccordionTab>
 			<AccordionTab>

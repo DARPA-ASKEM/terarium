@@ -60,7 +60,7 @@
 				:highlight="highlight"
 				:project="project"
 				@update-model="updateModelContents"
-				@fetch-asset="fetchModel"
+				@fetch-model="fetchModel"
 			/>
 		</template>
 		<template v-if="modelView === ModelView.MODEL">
@@ -317,7 +317,6 @@ watch(
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
-	console.log(0);
 }
 
 onUpdated(() => {

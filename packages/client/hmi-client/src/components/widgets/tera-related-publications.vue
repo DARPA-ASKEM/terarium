@@ -74,7 +74,7 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const emit = defineEmits(['extracted-metadata', 'fetch-asset']);
+const emit = defineEmits(['extracted-metadata', 'enriched']);
 
 const visible = ref(false);
 const selectedResources = ref();
@@ -134,7 +134,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	console.log('enrichment poll', pollResult);
 
 	emit('extracted-metadata', pollResult);
-	emit('fetch-asset');
+	emit('enriched');
 };
 </script>
 
