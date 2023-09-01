@@ -39,10 +39,14 @@ export async function fetchExtraction(id: string) {
  * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
  * @return {Promise<Model | null>}
  */
-const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Model | null> => {
+const latexToAMR = async (
+	latex: string[],
+	modelId: string,
+	framework = 'petrinet'
+): Promise<Model | null> => {
 	try {
 		const response: AxiosResponse<Model> = await API.post(
-			`/knowledge/latex-to-amr/${framework}`,
+			`/knowledge/latex-to-amr/${framework}?modelId=${modelId}`,
 			latex
 		);
 		if (response && response?.status === 200 && response?.data) {

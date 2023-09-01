@@ -115,4 +115,22 @@ public interface KnowledgeMiddlewareProxy {
 		@QueryParam("name") String name,
 		@QueryParam("description") String description
 	);
+
+	/**
+	 * Transform LaTeX equations to AMR
+	 * @param 	equationType (String): the type of equation to transform
+	 * @param 	model (String): the model to transform to
+	 * @param 	modelId (String): the id of the model to transform to
+	 * @param 	payload (List<String>): the list of equations to transform
+	 * @return  (ExtractionResponse)
+	 */
+	@POST
+	@Path("/equations_to_amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response postLaTeXToAMR(
+		@QueryParam("equation_type") String equationType,
+		@QueryParam("model") String framework,
+		@QueryParam("model_id") String modelId,
+		List<String> equations
+	);
 }

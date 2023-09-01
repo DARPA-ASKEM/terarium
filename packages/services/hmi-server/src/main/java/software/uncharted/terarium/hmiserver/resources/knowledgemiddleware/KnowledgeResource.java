@@ -80,19 +80,28 @@ public class KnowledgeResource {
 	@POST
 	@Path("/latex-to-amr/{framework}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Model postLaTeXToAMR(
+	public Response postLaTeXToAMR(
 		@DefaultValue("petrinet") @PathParam("framework") String framework,
+		@QueryParam("modelId") String modelId,
 		List<String> equations
 	) {
 		/* Create the JSON request containing the LaTeX equations and model framework:
 		 * https://skema-unified.staging.terarium.ai/docs#/workflows/equations_to_amr_workflows_latex_equations_to_amr_post
 		 * ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
 		 */
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode request = mapper.createObjectNode();
-		request.put("model", framework);
-		request.set("equations", mapper.valueToTree(equations));
-		return skemaUnifiedProxy.postLaTeXToAMR(request);
+		// ObjectMapper mapper = new ObjectMapper();
+		// ObjectNode request = mapper.createObjectNode();
+		// request.put("model", framework);
+		// request.set("equations", mapper.valueToTree(equations));
+		// System.out.println(request.toString());
+		// return skemaUnifiedProxy.postLaTeXToAMR(request);
+		// return knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations);
+
+		// take the response id from knowledgeMiddlewareProxy.postLaTeXToAMR and and fetch
+		// the model using the response id
+		Response res = knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations);
+		System.out.println(res);
+		return res;
 	};
 
 	/**
