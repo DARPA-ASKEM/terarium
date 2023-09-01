@@ -20,7 +20,8 @@ import {
 	XDDFacetsItemResponse,
 	Extraction,
 	Dataset,
-	AssetType
+	AssetType,
+	Model
 } from '@/types/Types';
 import {
 	XDDDictionary,
@@ -30,7 +31,7 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '@/types/XDD';
 import { logger } from '@/utils/logger';
-import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
+import { ID, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
 import { getAllModelDescriptions } from './model';
