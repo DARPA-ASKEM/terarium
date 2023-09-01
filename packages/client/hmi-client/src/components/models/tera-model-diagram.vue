@@ -498,9 +498,9 @@ watch(
 
 		// Create renderer
 		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
-		if (renderer.constructor === NestedPetrinetRenderer) {
+		if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 			graphLegendLabels.value = renderer.dims;
-			graphLegendColors.value = renderer.depthColorMap;
+			graphLegendColors.value = renderer.depthColorList;
 		}
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {

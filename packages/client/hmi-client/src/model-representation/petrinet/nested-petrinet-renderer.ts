@@ -12,7 +12,7 @@ import CIRCLE_PACKING_CHILD_NORMALIZED_RADII from '@/model-representation/petrin
 export interface NestedPetrinetOptions extends Options {
 	nestedMap?: { [baseNodeId: string]: any };
 	transitionMatrices?: { [baseTransitionId: string]: any[] };
-	dims: string[];
+	dims?: string[];
 }
 
 const CIRCLE_MARGIN_CONST = 1;
@@ -33,18 +33,18 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 	transitionMatrices?: { [baseTransitionId: string]: any[] };
 
-	dims: string[];
+	dims?: string[];
 
 	// override type of constructor argument
 	constructor(options: NestedPetrinetOptions) {
 		super(options as Options);
 		this.nestedMap = options.nestedMap;
 		this.transitionMatrices = options.transitionMatrices;
-		this.dims = options.dims;
+		this.dims = options.dims ?? [];
 	}
 
-	get depthColorMap() {
-		return this.dims.map((_, i) => getNestedTypeColor(i));
+	get depthColorList() {
+		return this.dims?.map((_, i) => getNestedTypeColor(i)) ?? [];
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
