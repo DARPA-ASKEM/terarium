@@ -3,7 +3,7 @@
 	<main>
 		<tera-asset
 			v-if="model"
-			:name="model.name"
+			:name="model.header.name"
 			:feature-config="featureConfig"
 			:is-naming-asset="isNaming"
 			:stretch-content="view === ModelView.MODEL"

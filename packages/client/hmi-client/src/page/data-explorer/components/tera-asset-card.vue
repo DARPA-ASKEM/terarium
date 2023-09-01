@@ -29,7 +29,7 @@
 					</template>
 				</div>
 				<div v-else-if="resourceType === ResourceType.MODEL">
-					{{ (asset as Model).schema_name }}
+					{{ (asset as Model).header.schema_name }}
 				</div>
 			</div>
 			<header class="title" v-html="title" />
