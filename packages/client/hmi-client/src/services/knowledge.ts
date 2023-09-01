@@ -117,7 +117,7 @@ export const profileDataset = async (datasetId: string, artifactId: string | nul
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
-	console.log('data profile response', response);
+	console.log('data profile response', response.data);
 	return response.data.id;
 };
 
