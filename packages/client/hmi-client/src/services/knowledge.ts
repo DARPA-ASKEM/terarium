@@ -186,7 +186,7 @@ export async function codeToAMR(codeId: string) {
 		if (status === 'queued') {
 			const extraction = await fetchExtraction(id);
 			if (extraction?.state === PollerState.Done) {
-				const data = extraction.data as any;
+				const data = extraction.data as any; // fix linting
 				return data?.job_result.amr;
 			}
 		}
