@@ -117,7 +117,7 @@ const optionsMenuItems = ref([
 		label: 'Rename',
 		command() {
 			isRenaming.value = true;
-			newName.value = model.value?.name ?? '';
+			newName.value = model.value?.header.name ?? '';
 		}
 	}
 	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
