@@ -54,10 +54,8 @@ const latexToAMR = async (
 			const { id, status } = response.data;
 			if (status === 'queued') {
 				const result = await fetchExtraction(id);
-				if (result?.state === PollerState.Done) {
-					if (result?.data?.job_result?.status_code === 200) {
-						return result.data.job_result.amr as Model;
-					}
+				if (result?.state === PollerState.Done && result?.data?.job_result?.status_code === 200) {
+					return result.data.job_result.amr as Model;
 				}
 			}
 			if (status === 'finished' && response.data.result.job_result.status_code === 200) {
