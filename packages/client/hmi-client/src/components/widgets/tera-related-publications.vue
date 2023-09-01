@@ -74,8 +74,6 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const emit = defineEmits(['extracted-metadata']);
-
 const visible = ref(false);
 const selectedResources = ref();
 
@@ -96,18 +94,22 @@ const allResources: ComputedRef<
 				type: AssetType.Artifacts
 			}));
 
-		// TODO: Add document support for model enrichment once documents are a first class citizen in TDS
-		const documentResources = [];
-		// props.project?.assets.publications.map((document: DocumentAsset) => ({
-		// 	name: document.title,
-		// 	authors: '',
-		// 	id: document.id,
-		// 	type: AssetType.Publications
-		// }));
+		return artifactResources;
 
-		console.log(props.project.assets);
+		/**
+		 * For now we can only handle Artifact for extractions
+		 * TODO: Add document support for model enrichment once documents are a first class citizen in TDS
+		 */
+		/*
+		const documentResources = props.project?.assets.publications.map((document: DocumentAsset) => ({
+			name: document.title,
+			authors: '',
+			id: document.id,
+			type: AssetType.Publications
+		}));
 
 		return [...documentResources, ...artifactResources];
+		 */
 	}
 	return [];
 });
@@ -132,8 +134,6 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	// 2. Poll
 	const pollResult = await fetchExtraction(resp);
 	console.log('enrichment poll', pollResult);
-
-	emit('extracted-metadata', pollResult);
 };
 </script>
 

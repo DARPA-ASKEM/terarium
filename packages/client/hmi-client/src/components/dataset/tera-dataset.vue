@@ -104,7 +104,6 @@
 				<AccordionTab>
 					<template #header>Related publications</template>
 					<tera-related-publications
-						@extracted-metadata="gotEnrichedData"
 						:asset-type="ResourceType.DATASET"
 						:publications="publications"
 						:project="project"
@@ -113,7 +112,7 @@
 				</AccordionTab>
 				<AccordionTab>
 					<template #header>
-						<header id="Description">Description</header>
+						<header>Description</header>
 					</template>
 					<section v-if="enriched">
 						<div class="dataset-detail">
@@ -364,10 +363,11 @@ import { FeatureConfig, ResourceType } from '@/types/common';
 const enrichedData = ref();
 
 enum DatasetView {
-	DESCRIPTION = 'description',
-	DATA = 'data',
-	LLM = 'llm'
+	DESCRIPTION,
+	DATA,
+	LLM
 }
+
 const props = defineProps({
 	assetId: {
 		type: String,
@@ -386,11 +386,6 @@ const props = defineProps({
 		default: null
 	}
 });
-
-const gotEnrichedData = (payload) => {
-	enrichedData.value = payload;
-	enriched.value = true;
-};
 
 const pd = computed(() =>
 	enrichedData.value
