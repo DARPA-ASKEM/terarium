@@ -7,8 +7,17 @@
 					<InputText v-model="codeName" class="name-input" />
 				</section>
 				<section class="buttons">
+					<FileUpload
+						name="demo[]"
+						:customUpload="true"
+						@uploader="onFileOpen"
+						mode="basic"
+						auto
+						chooseLabel="Load file"
+						class="p-button-secondary"
+					/>
 					<Button label="Save code" @click="saveCode" />
-					<Button label="Extract model" @click="extractModel" />
+					<Button label="Convert code to model" @click="extractModel" />
 				</section>
 			</section>
 		</header>
@@ -63,6 +72,7 @@ import { addAsset } from '@/services/project';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import useResourceStore from '@/stores/resources';
+import FileUpload from 'primevue/fileupload';
 import TeraModelDiagram from '../model/petrinet/tera-model-diagram.vue';
 
 const props = defineProps<{
@@ -152,22 +162,6 @@ async function extractModel() {
 }
 
 async function saveModel() {
-	// const modelToSave = {
-	// 	name: modelName.value,
-	// 	description: '',
-	// 	schema:
-	// 		'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-	// 	schema_name: 'petrinet',
-	// 	model_version: '0.1',
-	// 	model: cloneDeep(model.value?.model),
-	// 	semantics: {
-	// 		ode: {
-	// 			rates: [],
-	// 			initials: [],
-	// 			parameters: []
-	// 		}
-	// 	}
-	// };
 	const modelToSave = model.value;
 	const createdModel = await createModel(modelToSave);
 	if (createdModel) {
@@ -187,6 +181,14 @@ async function saveModel() {
 	} else {
 		toast.error('', 'Unable to save model');
 	}
+}
+
+async function onFileOpen(event) {
+	const reader = new FileReader();
+	reader.readAsText(event.files[0], 'UTF-8');
+	reader.onload = (evt) => {
+		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
+	};
 }
 
 watch(
