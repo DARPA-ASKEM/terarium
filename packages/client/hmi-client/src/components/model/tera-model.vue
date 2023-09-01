@@ -143,6 +143,7 @@ watch(
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
 		model.value = !isEmpty(props.assetId) ? await getModel(props.assetId) : null;
+		console.log(model.value);
 	},
 	{ immediate: true }
 );

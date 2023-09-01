@@ -13,9 +13,9 @@
 					<th>Created by</th>
 					<th>Source</th>
 					<th>Author email</th>
+					<th>Institution</th>
 					<th>License</th>
 					<th>Complexity</th>
-					<th>Usage</th>
 				</tr>
 				<tr>
 					<td class="framework">{{ model?.schema_name }}</td>
@@ -27,7 +27,6 @@
 					<td>{{ model?.metadata?.card?.AUTHOR_INST }}</td>
 					<td>{{ model?.metadata?.card?.LICENSE }}</td>
 					<td>{{ model?.metadata?.card?.COMPLEXITY }}</td>
-					<td>{{ model?.metadata?.card?.USAGE }}</td>
 				</tr>
 			</table>
 		</section>
@@ -434,7 +433,12 @@ const transientTableValue = ref<ModelTableTypes | null>(null);
 const nameOfCurieCache = ref(new Map<string, string>());
 
 const description = computed(() =>
-	highlightSearchTerms(props.model?.description ?? props.model.metadata?.card?.DESCRIPTION)
+	highlightSearchTerms(
+		props.model?.description
+			.concat(' ', props.model.metadata?.card?.USAGE ?? '')
+			.concat(' ', props.model.metadata?.card?.DATASET ?? '')
+			.concat(' ', props.model.metadata?.card?.DESCRIPTION ?? '')
+	)
 );
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
@@ -505,7 +509,7 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 // Toggle rows to become editable
 function editRow(event: Event) {
 	if (!event?.target) return;
-	const row = (event.target as HTMLElement).closest('.datatable tr');
+	const row = (event.target as HTMLElement).closest('table.datatable tr');
 	if (!row) return;
 	isRowEditable.value = isRowEditable.value === row.className ? null : row.className;
 }
@@ -592,6 +596,18 @@ section {
 	color: var(--text-color-primary);
 }
 
+table th {
+	text-align: left;
+}
+
+table tr > td:empty:before {
+	content: '--';
+}
+
+td.framework {
+	text-transform: capitalize;
+}
+
 table.bibliography th,
 table.bibliography td {
 	font-family: var(--font-family);
@@ -609,24 +625,12 @@ table.bibliography td {
 	font-size: var(--font-body-small);
 }
 
-table th {
-	text-align: left;
-}
-
-table tr > td:empty:before {
-	content: '--';
-}
-
-td.framework {
-	text-transform: capitalize;
-}
-
-.datatable {
+table.datatable {
 	display: flex;
 	flex-direction: column;
 }
 
-.datatable tr {
+table.datatable tr {
 	align-items: center;
 	border-bottom: 1px solid var(--surface-border-light);
 	display: grid;
@@ -635,23 +639,23 @@ td.framework {
 	justify-items: start;
 }
 
-.datatable tr > td,
-.datatable tr > td {
+table.datatable tr > td,
+table.datatable tr > td {
 	padding: 0.5rem;
 }
 
-.datatable th {
+table.datatable th {
 	color: var(--text-color-light);
 	font-size: var(--font-caption);
 	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 }
 
-.datatable tr.active {
+table.datatable tr.active {
 	background-color: var(--surface-secondary);
 }
 
-.datatable input {
+table.datatable input {
 	width: 100%;
 }
 </style>
