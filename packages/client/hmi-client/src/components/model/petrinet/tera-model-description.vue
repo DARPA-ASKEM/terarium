@@ -20,8 +20,13 @@
 				<tr>
 					<td class="framework">{{ model?.schema_name }}</td>
 					<td>{{ model?.model_version }}</td>
-					<td>{{ model?.metadata?.processed_at }}</td>
-					<td>{{ model?.metadata?.annotations?.authors?.join(', ') }}</td>
+					<td>{{ model?.metadata?.processed_at ?? model?.metadata?.card?.DATE }}</td>
+					<td>
+						{{ model?.metadata?.card?.AUTHOR_AUTHOR }}
+						<template v-if="model?.metadata?.annotations?.authors">
+							, {{ model.metadata.annotations.authors.join(', ') }}
+						</template>
+					</td>
 					<td>{{ model?.metadata?.card?.AUTHOR_EMAIL }}</td>
 					<td>{{ model?.metadata?.processed_by }}</td>
 					<td>{{ model?.metadata?.card?.AUTHOR_INST }}</td>
@@ -30,7 +35,7 @@
 				</tr>
 			</table>
 		</section>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
+		<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]">
 			<AccordionTab>
 				<template #header>Related publications</template>
 				<tera-related-publications
@@ -49,6 +54,22 @@
 						<label for="placeholder" />
 						<Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
 					</template> -->
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(usage)">
+				<template #header>Usage</template>
+				<p v-html="usage" />
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(sourceDataset)">
+				<template #header>Source dataset</template>
+				<p v-html="sourceDataset" />
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(provenance)">
+				<template #header>Provenance</template>
+				<p v-html="provenance" />
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(schema)">
+				<template #header>Schema</template>
+				<p v-html="schema" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
@@ -434,12 +455,13 @@ const nameOfCurieCache = ref(new Map<string, string>());
 
 const description = computed(() =>
 	highlightSearchTerms(
-		props.model?.description
-			.concat(' ', props.model.metadata?.card?.USAGE ?? '')
-			.concat(' ', props.model.metadata?.card?.DATASET ?? '')
-			.concat(' ', props.model.metadata?.card?.DESCRIPTION ?? '')
+		props.model?.description.concat(' ', props.model.metadata?.card?.DESCRIPTION ?? '')
 	)
 );
+const usage = computed(() => props.model.metadata?.card?.USAGE ?? '');
+const sourceDataset = computed(() => props.model.metadata?.card?.DATASET ?? '');
+const provenance = computed(() => props.model.metadata?.card?.PROVENANCE ?? '');
+const schema = computed(() => props.model.metadata?.card?.SCHEMA ?? '');
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const publications = computed(() => []);
@@ -611,6 +633,7 @@ td.framework {
 table.bibliography th,
 table.bibliography td {
 	font-family: var(--font-family);
+	max-width: 15rem;
 	padding-right: 1rem;
 }
 
