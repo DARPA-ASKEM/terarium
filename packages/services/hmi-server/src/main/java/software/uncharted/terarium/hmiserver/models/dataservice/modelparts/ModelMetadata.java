@@ -12,6 +12,7 @@ import java.util.Map;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 
 @Data
 @Accessors(chain = true)
@@ -40,4 +41,8 @@ public class ModelMetadata {
 	@JsonProperty("timeseries")
 	@TSOptional
 	private Map<String, Object> timeseries;
+
+	@JsonProperty("card")
+	@TSOptional
+	private Card card;
 }
