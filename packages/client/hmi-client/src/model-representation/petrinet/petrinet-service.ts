@@ -601,14 +601,18 @@ export const getStratificationType = (amr: Model) => {
 };
 
 export function newAMR(modelName: string) {
+	// @ts-ignore
+	// eslint-disable-next-line
 	const amr: Model = {
+		header: {
+			name: modelName,
+			description: '',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1'
+		},
 		id: '',
-		name: modelName,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
 		model: {
 			states: [],
 			transitions: []
