@@ -47,7 +47,13 @@
 					<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				</template>
 			</template>
-			<tera-model-description v-if="view === ModelView.DESCRIPTION" :model="model" />
+			<tera-model-description
+				v-if="view === ModelView.DESCRIPTION"
+				:model="model"
+				:highlight="highlight"
+				:project="project"
+				@update-model="updateModelContent"
+			/>
 			<tera-model-editor
 				v-else-if="view === ModelView.MODEL"
 				:model="model"
@@ -137,6 +143,7 @@ watch(
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
 		model.value = !isEmpty(props.assetId) ? await getModel(props.assetId) : null;
+		console.log(model.value);
 	},
 	{ immediate: true }
 );

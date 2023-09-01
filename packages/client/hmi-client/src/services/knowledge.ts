@@ -90,19 +90,34 @@ const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Mo
 				return response.data.result as Model;
 			}
 		}
-		logger.error(`MathML to AMR request failed`, { toastTitle: 'Error - ta1-service' });
+		logger.error(`MathML to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
 	} catch (error: unknown) {
 		if ((error as AxiosError).isAxiosError) {
 			const axiosError = error as AxiosError;
-			logger.error('[ta1-service]', axiosError.response?.data || axiosError.message, {
+			logger.error('[knowledge-middleware]', axiosError.response?.data || axiosError.message, {
 				showToast: false,
-				toastTitle: 'Error - ta1-service'
+				toastTitle: 'Error - knowledge-middleware'
 			});
 		} else {
-			logger.error(error, { showToast: false, toastTitle: 'Error - ta1-service' });
+			logger.error(error, { showToast: false, toastTitle: 'Error - knowledge-middleware' });
 		}
 	}
 	return null;
+};
+
+/**
+ * Given a model, enrich its metadata
+ * Returns a runId used to poll for result
+ */
+export const profileModel = async (modelId: string, artifactId: string | null = null) => {
+	let response: any = null;
+	if (artifactId) {
+		response = await API.post(`/knowledge/profile-model/${modelId}?artifact_id=${artifactId}`);
+	} else {
+		response = await API.post(`/knowledge/profile-model/${modelId}`);
+	}
+	console.log('model profile response', response.data);
+	return response.data.id;
 };
 
 /**

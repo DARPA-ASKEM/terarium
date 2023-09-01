@@ -1,77 +1,80 @@
 <template>
-	<Accordion :activeIndex="0">
-		<AccordionTab>
-			<template #header> Related publications </template>
-			<p>
-				Terarium can extract information from papers and other artifacts to add relevant information
-				to this resource.
+	<main>
+		<p>
+			Terarium can extract information from papers and other artifacts to add relevant information
+			to this resource.
+		</p>
+		<ul>
+			<li v-for="(publication, index) in publications" :key="index">
+				<a :href="publication.xdd_uri">{{ publication.title }}</a>
+			</li>
+		</ul>
+		<Button icon="pi pi-plus" label="Add resources" text @click="addResources" />
+		<Dialog
+			v-model:visible="visible"
+			modal
+			:header="`Describe this ${assetType}`"
+			:style="{ width: '50vw' }"
+		>
+			<p class="constrain-width">
+				Terarium can extract information from papers and other artifacts to describe this
+				{{ assetType }}. Select the resources you would like to use.
 			</p>
-			<ul>
-				<li v-for="(publication, index) in publications" :key="index">
-					<a :href="publication.xdd_uri">{{ publication.title }}</a>
-				</li>
-			</ul>
-			<Button icon="pi pi-plus" label="Add resources" text @click="addResources" />
-			<Dialog
-				v-model:visible="visible"
-				modal
-				:header="`Describe this ${dialogFlavour}`"
-				:style="{ width: '50vw' }"
+			<DataTable
+				v-if="allResources.length > 0"
+				:value="allResources"
+				v-model:selection="selectedResources"
+				tableStyle="min-width: 50rem"
+				selection-mode="single"
 			>
-				<p class="constrain-width">
-					Terarium can extract information from papers and other artifacts to describe this
-					{{ dialogFlavour }}. Select the resources you would like to use.
-				</p>
-				<DataTable
-					v-if="allResources.length > 0"
-					:value="allResources"
-					v-model:selection="selectedResources"
-					tableStyle="min-width: 50rem"
-					selection-mode="single"
-				>
-					<Column selectionMode="single" headerStyle="width: 3rem"></Column>
-					<Column field="name" sortable header="Name"></Column>
-					<Column field="authors" sortable header="Authors"></Column>
-				</DataTable>
-				<div v-else>
-					<div class="no-artifacts">
-						<img class="no-artifacts-img" src="@assets/svg/plants.svg" alt="" />
-						<div class="no-artifacts-text">
-							You don't have any resources that can be used. Try adding some artifacts.
-						</div>
-						<div class="no-artifacts-text">
-							Would you like to generate descriptions without attaching additional context?
-						</div>
+				<Column selectionMode="single" headerStyle="width: 3rem"></Column>
+				<Column field="name" sortable header="Name"></Column>
+				<Column field="authors" sortable header="Authors"></Column>
+			</DataTable>
+			<div v-else>
+				<div class="no-artifacts">
+					<img class="no-artifacts-img" src="@assets/svg/plants.svg" alt="" />
+					<div class="no-artifacts-text">
+						You don't have any resources that can be used. Try adding some artifacts.
+					</div>
+					<div class="no-artifacts-text">
+						Would you like to generate descriptions without attaching additional context?
 					</div>
 				</div>
-				<template #footer>
-					<Button class="secondary-button" label="Cancel" @click="visible = false" />
-					<Button
-						label="Use these resources to enrich descriptions"
-						@click="
-							sendForEnrichments();
-							visible = false;
-						"
-					/>
-				</template>
-			</Dialog>
-		</AccordionTab>
-	</Accordion>
+			</div>
+			<template #footer>
+				<Button class="secondary-button" label="Cancel" @click="visible = false" />
+				<Button
+					label="Use these resources to enrich descriptions"
+					@click="
+						sendForEnrichments();
+						visible = false;
+					"
+				/>
+			</template>
+		</Dialog>
+	</main>
 </template>
 
 <script setup lang="ts">
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { computed, ComputedRef, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { IProject } from '@/types/Project';
-import { AcceptedExtensions } from '@/types/common';
-
+import { AcceptedExtensions, ResourceType } from '@/types/common';
 import { Artifact, AssetType, DocumentAsset } from '@/types/Types';
-import { profileDataset, fetchExtraction } from '@/services/knowledge';
+import { profileDataset, profileModel, fetchExtraction } from '@/services/knowledge';
+
+const props = defineProps<{
+	project?: IProject;
+	publications?: Array<DocumentAsset>;
+	assetType: ResourceType;
+	assetId: string;
+}>();
+
+const emit = defineEmits(['extracted-metadata', 'enriched']);
 
 const visible = ref(false);
 const selectedResources = ref();
@@ -83,7 +86,7 @@ const allResources: ComputedRef<
 		const artifactResources = props.project?.assets.artifacts
 			.filter((artifact: Artifact) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
-					artifact.name.endsWith(extension)
+					artifact.fileNames[0].endsWith(extension)
 				)
 			)
 			.map((artifact: Artifact) => ({
@@ -93,25 +96,21 @@ const allResources: ComputedRef<
 				type: AssetType.Artifacts
 			}));
 
-		const documentResources = props.project?.assets.publications.map((document: DocumentAsset) => ({
-			name: document.title,
-			authors: '',
-			id: document.id,
-			type: AssetType.Publications
-		}));
+		// TODO: Add document support for model enrichment once documents are a first class citizen in TDS
+		const documentResources = [];
+		// props.project?.assets.publications.map((document: DocumentAsset) => ({
+		// 	name: document.title,
+		// 	authors: '',
+		// 	id: document.id,
+		// 	type: AssetType.Publications
+		// }));
+
+		console.log(props.project.assets);
 
 		return [...documentResources, ...artifactResources];
 	}
 	return [];
 });
-
-const props = defineProps<{
-	project?: IProject;
-	publications?: Array<DocumentAsset>;
-	dialogFlavour: string;
-	assetId: string;
-}>();
-const emit = defineEmits(['extracted-metadata']);
 
 const addResources = () => {
 	visible.value = true;
@@ -119,14 +118,23 @@ const addResources = () => {
 };
 
 const sendForEnrichments = async (/* _selectedResources */) => {
-	// 1. Send dataset profile request
-	const resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
+	// 1. Send asset profile request
+	let resp = null;
+
+	if (props.assetType === ResourceType.MODEL) {
+		console.log(selectedResources.value);
+		resp = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
+	} else if (props.assetType === ResourceType.DATASET) {
+		resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
+	}
+	if (!resp) return;
 
 	// 2. Poll
 	const pollResult = await fetchExtraction(resp);
 	console.log('enrichment poll', pollResult);
 
 	emit('extracted-metadata', pollResult);
+	emit('enriched');
 };
 </script>
 
