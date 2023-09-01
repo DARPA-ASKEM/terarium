@@ -1,9 +1,11 @@
 {
-  "name": "SIR model",
-  "schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json",
-  "schema_name": "petrinet",
-  "description": "SIR model",
-  "model_version": "0.1",
+	"header": {
+		"name": "SIR model",
+		"schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json",
+		"schema_name": "petrinet",
+		"description": "SIR model",
+		"model_version": "0.1"
+	},
   "properties": {},
   "model": {
     "states": [
