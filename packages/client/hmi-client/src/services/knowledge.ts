@@ -23,6 +23,9 @@ export async function fetchExtraction(id: string) {
 			// Failed
 			if (response?.status === 200 && response?.data?.status === 'failed') {
 				pollerResult.error = true;
+				logger.error(`Extraction failed, Service not responding`, {
+					toastTitle: 'Error - knowledge-middleware'
+				});
 				return pollerResult;
 			}
 
@@ -117,7 +120,7 @@ export const profileDataset = async (datasetId: string, artifactId: string | nul
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
-	console.log('data profile response', response);
+	console.log('data profile response', response.data);
 	return response.data.id;
 };
 
