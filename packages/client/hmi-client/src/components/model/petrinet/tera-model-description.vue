@@ -20,18 +20,18 @@
 				<tr>
 					<td class="framework">{{ model?.header.schema_name }}</td>
 					<td>{{ model?.header.model_version }}</td>
-					<td>{{ model?.metadata?.processed_at ?? model?.metadata?.card?.DATE }}</td>
+					<td>{{ model?.metadata?.processed_at ?? card?.DATE }}</td>
 					<td>
-						{{ model?.metadata?.card?.AUTHOR_AUTHOR }}
+						{{ card?.AUTHOR_AUTHOR }}
 						<template v-if="model?.metadata?.annotations?.authors">
 							, {{ model.metadata.annotations.authors.join(', ') }}
 						</template>
 					</td>
-					<td>{{ model?.metadata?.card?.AUTHOR_EMAIL }}</td>
+					<td>{{ card?.AUTHOR_EMAIL }}</td>
 					<td>{{ model?.metadata?.processed_by }}</td>
-					<td>{{ model?.metadata?.card?.AUTHOR_INST }}</td>
-					<td>{{ model?.metadata?.card?.LICENSE }}</td>
-					<td>{{ model?.metadata?.card?.COMPLEXITY }}</td>
+					<td>{{ card?.AUTHOR_INST }}</td>
+					<td>{{ card?.LICENSE }}</td>
+					<td>{{ card?.COMPLEXITY }}</td>
 				</tr>
 			</table>
 		</section>
