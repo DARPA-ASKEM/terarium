@@ -115,40 +115,7 @@
 					<template #header>
 						<header>Description</header>
 					</template>
-					<section v-if="enriched">
-						<div class="dataset-detail">
-							<div class="column">
-								<p class="content">{{ enrichedData.DESCRIPTION }}</p>
-
-								<h3 class="subtitle">{{ headers.AUTHOR_NAME }}</h3>
-								<p class="content">{{ enrichedData.AUTHOR_NAME }}</p>
-
-								<h3 class="subtitle">{{ headers.AUTHOR_EMAIL }}</h3>
-								<p class="content">{{ enrichedData.AUTHOR_EMAIL }}</p>
-							</div>
-
-							<div class="column">
-								<h3 class="subtitle">{{ headers.DATE }}</h3>
-								<p class="content">{{ enrichedData.DATE }}</p>
-
-								<h3 class="subtitle">{{ headers.SCHEMA }}</h3>
-								<p class="content">{{ enrichedData.SCHEMA }}</p>
-
-								<h3 class="subtitle">{{ headers.PROVENANCE }}</h3>
-								<p class="content">{{ enrichedData.PROVENANCE }}</p>
-							</div>
-
-							<div class="column">
-								<h3 class="subtitle">{{ headers.SENSITIVITY }}</h3>
-								<p class="content">{{ enrichedData.SENSITIVITY }}</p>
-							</div>
-							<div class="column">
-								<h3 class="subtitle">{{ headers.LICENSE }}</h3>
-								<p class="content">{{ enrichedData.LICENSE }}</p>
-							</div>
-						</div>
-					</section>
-					<p v-else>
+					<p>
 						No information available. Add resources to generate a description. Or click edit icon to
 						edit this field directly.
 					</p>
@@ -302,17 +269,6 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(pd)">
-					<template #header>
-						<header id="ExtractionTable">Extraction Table</header>
-					</template>
-					<DataTable :value="pd">
-						<Column field="col_name" header="Column Name"></Column>
-						<Column field="concept" header="Concept"></Column>
-						<Column field="unit" header="Unit"></Column>
-						<Column field="description" header="Description"></Column>
-					</DataTable>
-				</AccordionTab>
 			</Accordion>
 		</template>
 		<template v-else-if="datasetView === DatasetView.DATA">
@@ -346,22 +302,17 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
-import { isString, isEmpty, cloneDeep } from 'lodash';
+import { isString, cloneDeep } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
 import { Artifact, CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject } from '@/types/Project';
-import Menu from 'primevue/menu';
 import useResourcesStore from '@/stores/resources';
 import * as ProjectService from '@/services/project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
-
-const enrichedData = ref();
 
 enum DatasetView {
 	DESCRIPTION,
@@ -388,14 +339,6 @@ const props = defineProps({
 	}
 });
 
-const pd = computed(() =>
-	enrichedData.value
-		? Object.values(
-				enrichedData.value.DATA_PROFILING_RESULT ? enrichedData.value.DATA_PROFILING_RESULT : {}
-		  )
-		: []
-);
-
 const publications = computed(
 	() =>
 		props.project?.assets?.artifacts
@@ -411,6 +354,7 @@ const publications = computed(
 );
 const relatedPublications = computed(() => []);
 
+/*
 const headers = ref({
 	AUTHOR_NAME: 'Author Name',
 	AUTHOR_EMAIL: 'Author Email',
@@ -420,6 +364,7 @@ const headers = ref({
 	SENSITIVITY: 'Data Sensitivity',
 	LICENSE: 'License Information'
 });
+*/
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const showKernels = ref(<boolean>false);
