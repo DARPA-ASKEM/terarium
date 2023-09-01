@@ -154,6 +154,7 @@ function getMatrixExpression(variableName: string) {
 	return variableName;
 }
 
+// Returns the presentation mathml
 async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	const expressionBase = getMatrixExpression(variableName);
 
@@ -162,10 +163,10 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 			expressionBase,
 			parametersValueList.value
 		);
-		return (await pythonInstance.parseExpression(expressionEval)).mathml;
+		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
 
-	return (await pythonInstance.parseExpression(expressionBase)).mathml;
+	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
@@ -179,7 +180,13 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		// Update if the value is different
 		if (odeFieldObject.expression) {
 			if (odeFieldObject.expression === newValue) return;
+
+			// If expression changed, we want to update the the twin fields
+			// - expression
+			// - expression_mathml
 			odeFieldObject.expression = newValue;
+			const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
+			odeFieldObject.expression_mathml = mathml;
 		} else if (odeFieldObject.value) {
 			if (odeFieldObject.value === Number(newValue)) return;
 			odeFieldObject.value = Number(newValue);

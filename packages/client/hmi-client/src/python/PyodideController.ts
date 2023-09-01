@@ -34,6 +34,7 @@ export default class PyodideController {
 
 	async parseExpression(expr: string): Promise<{
 		mathml: string;
+		pmathml: string;
 		latex: string;
 		freeSymbols: string[];
 	}> {
