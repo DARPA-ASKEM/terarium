@@ -127,7 +127,7 @@ public interface KnowledgeMiddlewareProxy {
 	@POST
 	@Path("/equations_to_amr")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response postLaTeXToAMR(
+	ExtractionResponse postLaTeXToAMR(
 		@QueryParam("equation_type") String equationType,
 		@QueryParam("model") String framework,
 		@QueryParam("model_id") String modelId,

@@ -74,7 +74,8 @@ const updateLatexFormula = (equationsList: string[]) => {
 };
 
 const updateModelFromEquations = async () => {
-	const updatedModel = await latexToAMR(equations.value);
+	console.log(props.model.id);
+	const updatedModel = await latexToAMR(equations.value, props.model.id);
 	if (updatedModel) {
 		emit('update-diagram', updateExistingModelContent(updatedModel, props.model));
 	}

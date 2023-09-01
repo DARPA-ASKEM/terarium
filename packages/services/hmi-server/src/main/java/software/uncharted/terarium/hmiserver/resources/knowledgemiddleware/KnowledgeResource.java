@@ -80,7 +80,7 @@ public class KnowledgeResource {
 	@POST
 	@Path("/latex-to-amr/{framework}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response postLaTeXToAMR(
+	public ExtractionResponse postLaTeXToAMR(
 		@DefaultValue("petrinet") @PathParam("framework") String framework,
 		@QueryParam("modelId") String modelId,
 		List<String> equations
@@ -99,7 +99,7 @@ public class KnowledgeResource {
 
 		// take the response id from knowledgeMiddlewareProxy.postLaTeXToAMR and and fetch
 		// the model using the response id
-		Response res = knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations);
+		ExtractionResponse res = knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations);
 		System.out.println(res);
 		return res;
 	};

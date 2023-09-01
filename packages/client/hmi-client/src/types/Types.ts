@@ -238,12 +238,16 @@ export interface PetriNetModel {
 
 export interface ExtractionResponse {
     id: string;
+    status: string;
+    result: ExtractionResponseResult;
+}
+
+export interface ExtractionResponseResult {
     created_at: Date;
     enqueued_at: Date;
     started_at: Date;
-    status: string;
-    extraction_error: string;
-    result: any;
+    job_error: string;
+    job_result: any;
 }
 
 export interface DKG {

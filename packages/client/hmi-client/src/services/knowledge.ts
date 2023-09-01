@@ -1,6 +1,6 @@
-import API, { Poller, PollerState, PollResponse } from '@/api/api';
+import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Artifact, Model } from '@/types/Types';
+import { Artifact, ExtractionResponse, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
  * @param id
  * @return {Promise<PollerResult>}
  */
-export async function fetchExtraction(id: string) {
+export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
 	const pollerResult: PollResponse<any> = { data: null, progress: null, error: null };
 	const poller = new Poller<object>()
 		.setPollAction(async () => {
@@ -41,20 +41,31 @@ export async function fetchExtraction(id: string) {
  */
 const latexToAMR = async (
 	latex: string[],
-	modelId: string,
+	modelId?: string,
 	framework = 'petrinet'
 ): Promise<Model | null> => {
 	try {
-		const response: AxiosResponse<Model> = await API.post(
+		const response: AxiosResponse<ExtractionResponse> = await API.post(
 			`/knowledge/latex-to-amr/${framework}?modelId=${modelId}`,
 			latex
 		);
-		if (response && response?.status === 200 && response?.data) {
-			return response.data;
+		if (response && response?.status === 200) {
+			const { id, status } = response.data;
+			if (status === 'queued') {
+				const result = await fetchExtraction(id);
+				if (result?.state === PollerState.Done) {
+					if (result?.data?.job_result?.status_code === 200) {
+						return result.data.job_result.amr as Model;
+					}
+				}
+			}
+			if (status === 'finished' && response.data.result.job_result.status_code === 200) {
+				return response.data.result.job_result.amr as Model;
+			}
 		}
-		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - SKEMA Unified' });
+		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
 	} catch (error: unknown) {
-		logger.error(error, { showToast: false, toastTitle: 'Error - SKEMA Unified' });
+		logger.error(error, { showToast: false, toastTitle: 'Error - Knowledge Middleware' });
 	}
 	return null;
 };
