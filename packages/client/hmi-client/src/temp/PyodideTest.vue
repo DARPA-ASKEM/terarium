@@ -10,9 +10,11 @@
 		<textarea style="width: 75rem; height: 10rem" v-model="exprString"> </textarea>
 		<br />
 		<div style="display: flex; flex-direction: row">
-			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+			<div style="padding: 1rem; font-size: 100%; width: 25rem; border: 1px solid #888">
 				MathML: <br />
 				{{ mathml }}
+				<hr />
+				{{ pmathml }}
 			</div>
 			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
 				Latex: <br />
@@ -35,6 +37,7 @@ import { ref, watch } from 'vue';
 import { pythonInstance } from '@/python/PyodideController';
 
 const mathml = ref('');
+const pmathml = ref('');
 const latex = ref('');
 const freeSymbols = ref([]);
 const evalResult = ref<any>('');
@@ -105,6 +108,7 @@ watch(
 
 		const result = (await pythonInstance.parseExpression(exprString.value)) as any;
 		mathml.value = result.mathml;
+		pmathml.value = result.pmathml;
 		latex.value = result.latex;
 		freeSymbols.value = result.freeSymbols;
 	}

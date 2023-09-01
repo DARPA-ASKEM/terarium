@@ -76,18 +76,17 @@ const selectedResources = ref();
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	// 1. Send asset profile request
-	let resp = null;
+	let jobId = null;
 
 	if (props.assetType === ResourceType.MODEL) {
-		resp = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
+		jobId = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
 	} else if (props.assetType === ResourceType.DATASET) {
-		resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
+		jobId = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
 	}
-	if (!resp) return;
+	if (!jobId) return;
 
 	// 2. Poll
-	const pollResult = await fetchExtraction(resp);
-	console.log('enrichment poll', pollResult);
+	await fetchExtraction(jobId);
 	emit('enriched');
 };
 </script>

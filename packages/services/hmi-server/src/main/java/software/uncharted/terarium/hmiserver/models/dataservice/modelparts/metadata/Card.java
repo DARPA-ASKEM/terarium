@@ -3,52 +3,52 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 @Data
 @Accessors(chain = true)
 public class Card {
-    @JsonProperty("DESCRIPTION")
+    @JsonAlias("DESCRIPTION")
 	@TSOptional
 	private String description;
 
-	@JsonProperty("AUTHOR_INST")
+	@JsonAlias("AUTHOR_INST")
 	@TSOptional
 	private String authorInst;
 
-	@JsonProperty("AUTHOR_AUTHOR")
+	@JsonAlias("AUTHOR_AUTHOR")
 	@TSOptional
 	private String authorAuthor;
 
-	@JsonProperty("AUTHOR_EMAIL")
+	@JsonAlias("AUTHOR_EMAIL")
 	@TSOptional
 	private String authorEmail;
 
-	@JsonProperty("DATE")
+	@JsonAlias("DATE")
     @TSOptional
 	private String date;
 
-	@JsonProperty("SCHEMA")
+	@JsonAlias("SCHEMA")
 	@TSOptional
 	private String schema;
 
-	@JsonProperty("PROVENANCE")
+	@JsonAlias("PROVENANCE")
 	@TSOptional
 	private String provenance;
 
-	@JsonProperty("DATASET")
+	@JsonAlias("DATASET")
 	@TSOptional
 	private String dataset;
 
-	@JsonProperty("COMPLEXITY")
+	@JsonAlias("COMPLEXITY")
 	@TSOptional
 	private String complexity;
 
-	@JsonProperty("USAGE")
+	@JsonAlias("USAGE")
 	@TSOptional
 	private String usage;
 
-	@JsonProperty("LICENSE")
+	@JsonAlias("LICENSE")
 	@TSOptional
 	private String license;
 }
