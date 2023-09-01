@@ -131,4 +131,22 @@ public interface KnowledgeMiddlewareProxy {
 		@QueryParam("name") String name,
 		@QueryParam("description") String description
 	);
+
+	/**
+	 * Transform LaTeX equations to AMR
+	 * @param 	equationType (String): [latex, mathml]
+	 * @param 	model (String): AMR model return type. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param 	modelId (String): the id of the model (to update) based on the set of equations
+	 * @param 	payload (List<String>): the list of LaTeX strings representing the functions that are used to convert to AMR
+	 * @return  (ExtractionResponse)
+	 */
+	@POST
+	@Path("/equations_to_amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	ExtractionResponse postLaTeXToAMR(
+		@QueryParam("equation_type") String equationType,
+		@QueryParam("model") String framework,
+		@QueryParam("model_id") String modelId,
+		List<String> equations
+	);
 }

@@ -73,26 +73,21 @@ public class KnowledgeResource {
 
 	/**
 	 * Post LaTeX to SKEMA Unified service to get an AMR
-	 * @param	framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
-	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR mode.
-	 * @return (Model): The AMR model
+	 * @param   framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param   modelId (String): the id of the model (to update) based on the set of equations
+	 * @param   equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @return  (ExtractionResponse): The response from the extraction service
 	 */
 	@POST
 	@Path("/latex-to-amr/{framework}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Model postLaTeXToAMR(
+	public ExtractionResponse postLaTeXToAMR(
 		@DefaultValue("petrinet") @PathParam("framework") String framework,
+		@QueryParam("modelId") String modelId,
 		List<String> equations
 	) {
-		/* Create the JSON request containing the LaTeX equations and model framework:
-		 * https://skema-unified.staging.terarium.ai/docs#/workflows/equations_to_amr_workflows_latex_equations_to_amr_post
-		 * ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
-		 */
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode request = mapper.createObjectNode();
-		request.put("model", framework);
-		request.set("equations", mapper.valueToTree(equations));
-		return skemaUnifiedProxy.postLaTeXToAMR(request);
+		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
+		return knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations);
 	};
 
 	/**
