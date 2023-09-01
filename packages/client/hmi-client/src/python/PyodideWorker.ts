@@ -73,6 +73,7 @@ const evaluateExpression = (expressionStr: string, symbolsTable: Object) => {
 const parseExpression = (expr: string) => {
 	const output = {
 		mathml: '',
+		pmathml: '',
 		latex: '',
 		freeSymbols: []
 	};
@@ -81,7 +82,7 @@ const parseExpression = (expr: string) => {
 		return output;
 	}
 
-	// function to convert expression to mathml
+	// function to convert expression to presentation mathml
 	let result = pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
 		sympy.mathml(eq, printer="presentation")
@@ -93,7 +94,14 @@ const parseExpression = (expr: string) => {
 	result = result.replaceAll('</mfenced>', '</mrow><mo>)</mo>');
 
 	// add mathml top level element tags
-	output.mathml = `<math xmlns="http://www.w3.org/1998/Math/MathML">${result}</math>`;
+	output.pmathml = `<math xmlns="http://www.w3.org/1998/Math/MathML">${result}</math>`;
+
+	// function to convert expression to barebone mathml
+	result = pyodide.runPython(`
+		eq = sympy.S("${expr}", locals=_clash)
+		sympy.mathml(eq)
+	`);
+	output.mathml = result;
 
 	result = pyodide.runPython(`
 		eq = sympy.S("${expr}", locals=_clash)
