@@ -1,9 +1,11 @@
 {
- "name": "Scenario 1 age/diagnosis stratified",
- "schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json",
- "schema_name": "petrinet",
- "description": "Scenario 1 age/diagnosis stratified",
- "model_version": "0.1",
+	"header": {
+		"name": "Scenario 1 age/diagnosis stratified",
+		"schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json",
+		"schema_name": "petrinet",
+		"description": "Scenario 1 age/diagnosis stratified",
+		"model_version": "0.1"
+	},
  "properties": {},
  "model": {
   "states": [

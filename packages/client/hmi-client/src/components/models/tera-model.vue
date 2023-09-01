@@ -69,8 +69,8 @@
 					<th>Source</th>
 				</tr>
 				<tr>
-					<td>{{ capitalize(model?.schema_name ?? '--') }}</td>
-					<td>{{ model?.model_version ?? '--' }}</td>
+					<td>{{ capitalize(model?.header.schema_name ?? '--') }}</td>
+					<td>{{ model?.header.model_version ?? '--' }}</td>
 					<td>{{ model?.metadata?.processed_at ?? '--' }}</td>
 					<td>
 						{{
