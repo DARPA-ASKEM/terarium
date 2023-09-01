@@ -601,8 +601,6 @@ export const getStratificationType = (amr: Model) => {
 };
 
 export function newAMR(modelName: string) {
-	// @ts-ignore
-	// eslint-disable-next-line
 	const amr: Model = {
 		header: {
 			name: modelName,
