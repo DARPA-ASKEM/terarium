@@ -185,21 +185,23 @@ export const extractPDF = async (artifact: Artifact) => {
 	}
 };
 
-export async function codeToAMR(codeId: string) {
-	const response = await API.post(`/knowledge/code-to-amr?code_id=${codeId}`);
+export async function codeToAMR(codeId: string, name: string = '', description: string = '') {
+	const response = await API.post(
+		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}`
+	);
 	if (response && response?.status === 200) {
 		const { id, status } = response.data;
 		if (status === 'queued') {
 			const extraction = await fetchExtraction(id);
 			if (extraction?.state === PollerState.Done) {
 				const data = extraction.data as any; // fix linting
-				return data?.job_result.amr;
+				return data?.job_result.tds_model_id;
 			}
 		}
 		if (status === 'finished') {
-			return response.data.result?.job_result.amr;
+			return response.data.result?.job_result.tds_model.id;
 		}
 	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middlewareõ' });
+	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
 	return null;
 }

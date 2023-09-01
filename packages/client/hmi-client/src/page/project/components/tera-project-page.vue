@@ -6,7 +6,7 @@
 		@asset-loaded="emit('asset-loaded')"
 	/>
 	<tera-code
-		:project-id="project.id"
+		:project="project"
 		:asset-id="assetId ?? ''"
 		v-else-if="pageType === AssetType.Code"
 		@asset-loaded="emit('asset-loaded')"

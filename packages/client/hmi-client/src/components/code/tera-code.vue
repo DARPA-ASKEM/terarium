@@ -16,7 +16,7 @@
 						class="p-button-secondary"
 					/>
 					<Button label="Save code" @click="saveCode" />
-					<Button label="Convert code to model" @click="extractModel" />
+					<Button label="Create model from code" @click="isModelNamingModalVisible = true" />
 				</section>
 			</section>
 		</header>
@@ -30,20 +30,37 @@
 		/>
 		<Teleport to="body">
 			<tera-modal
-				v-if="isModalVisible && model"
+				v-if="isModelNamingModalVisible"
 				class="modal"
-				@modal-mask-clicked="isModalVisible = false"
-				@modal-enter-press="isModalVisible = false"
+				@modal-mask-clicked="isModelDiagramModalVisible = false"
+				@modal-enter-press="isModelDiagramModalVisible = false"
 			>
 				<template #header>
-					<InputText v-model="modelName" class="name-input" />
+					<h4>New model</h4>
 				</template>
 				<template #default>
-					<tera-model-diagram :model="model" :is-editable="false" />
+					<form @submit.prevent>
+						<label for="model-name">Enter a unique name for your model</label>
+						<InputText id="model-name" type="text" v-model="newModelName" />
+						<label for="model-description">Enter a description (optional)</label>
+						<Textarea v-model="newModelDescription" />
+					</form>
 				</template>
 				<template #footer>
-					<Button label="Cancel" class="p-button-secondary" @click="isModalVisible = false" />
-					<Button label="Save model" @click="saveModel" />
+					<Button
+						label="Cancel"
+						class="p-button-secondary"
+						@click="isModelNamingModalVisible = false"
+					/>
+					<Button
+						label="Create model"
+						@click="
+							() => {
+								isModelNamingModalVisible = false;
+								extractModel();
+							}
+						"
+					/>
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -63,21 +80,20 @@ import {
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/knowledge';
-import { AssetType, Code, Model } from '@/types/Types';
+import { AssetType, Code } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
-import { createModel } from '@/services/model';
-import { addAsset } from '@/services/project';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import useResourceStore from '@/stores/resources';
 import FileUpload from 'primevue/fileupload';
-import TeraModelDiagram from '../model/petrinet/tera-model-diagram.vue';
+import { IProject } from '@/types/Project';
+import Textarea from 'primevue/textarea';
 
 const INITIAL_TEXT = '# Paste some code here';
 
 const props = defineProps<{
-	projectId: string;
+	project: IProject;
 	assetId: string;
 }>();
 
@@ -92,9 +108,10 @@ const codeAsset = ref<Code | null>(null);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const progress = ref(0);
-const isModalVisible = ref(false);
-const model = ref<Model>();
-const modelName = ref('');
+const isModelDiagramModalVisible = ref(false);
+const isModelNamingModalVisible = ref(false);
+const newModelName = ref('');
+const newModelDescription = ref('');
 /**
  * Editor initialization function
  * @param editorInstance	the Ace editor instance
@@ -117,8 +134,6 @@ async function saveCode() {
 		(c) => c.name === codeName.value
 	);
 	if (existingCode?.id) {
-		console.log(existingCode);
-		console.log(codeText.value);
 		const file = new File([codeText.value], codeName.value);
 		const updatedCode = await updateCodeAsset(existingCode, file, progress);
 		if (!updatedCode) {
@@ -130,7 +145,7 @@ async function saveCode() {
 		return updatedCode;
 	}
 	const file = new File([codeText.value], codeName.value);
-	const newCodeAsset = await uploadCodeToProject(props.projectId, file, progress);
+	const newCodeAsset = await uploadCodeToProject(props.project.id, file, progress);
 	if (!newCodeAsset) {
 		toast.error('', 'Unable to save file');
 	} else {
@@ -140,7 +155,7 @@ async function saveCode() {
 			name: RouteName.ProjectRoute,
 			params: {
 				pageType: AssetType.Code,
-				projectId: props.projectId,
+				projectId: props.project.id,
 				assetId: codeAsset.value.id
 			}
 		});
@@ -151,33 +166,17 @@ async function saveCode() {
 async function extractModel() {
 	const newCodeAsset = await saveCode();
 	if (newCodeAsset && newCodeAsset.id) {
-		const extractedAmr = await codeToAMR(newCodeAsset.id);
-		if (extractedAmr) {
-			model.value = extractedAmr as Model;
-			modelName.value = extractedAmr.header.name;
-			isModalVisible.value = true;
-		}
-	}
-}
-
-async function saveModel() {
-	const createdModel = await createModel(model.value);
-	if (createdModel) {
-		const { id } = await addAsset(props.projectId, AssetType.Models, createdModel.id);
-		if (id) {
+		const extractedModelId = await codeToAMR(newCodeAsset.id);
+		if (extractedModelId) {
 			router.push({
 				name: RouteName.ProjectRoute,
 				params: {
 					pageType: AssetType.Models,
-					projectId: props.projectId,
-					assetId: createdModel.id
+					projectId: props.project.id,
+					assetId: extractedModelId
 				}
 			});
-		} else {
-			toast.error('', 'Unable to add model to project');
 		}
-	} else {
-		toast.error('', 'Unable to save model');
 	}
 }
 
