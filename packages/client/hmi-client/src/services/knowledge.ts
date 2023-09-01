@@ -36,14 +36,14 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
 /**
  * Transform a list of LaTeX strings to an AMR
  * @param latex string[] - list of LaTeX strings representing a model
- * @param modelId string - the model id to use for the extraction
  * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
+ * @param modelId string - the model id to use for the extraction
  * @return {Promise<Model | null>}
  */
 const latexToAMR = async (
 	latex: string[],
-	modelId?: string,
-	framework = 'petrinet'
+	framework = 'petrinet',
+	modelId?: string
 ): Promise<Model | null> => {
 	try {
 		const response: AxiosResponse<ExtractionResponse> = await API.post(

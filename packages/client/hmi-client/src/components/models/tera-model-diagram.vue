@@ -549,7 +549,7 @@ const updatePetriNet = async (model: Model) => {
 
 // Update the model from the new mathml equations
 const onClickUpdateModel = async () => {
-	const model = await latexToAMR(latexEquationList.value, props.model?.id);
+	const model = await latexToAMR(latexEquationList.value, 'petrinet', props.model?.id);
 	if (model) {
 		if (props.model) {
 			const newModel = updateExistingModelContent(model, props.model);
