@@ -11,8 +11,8 @@ import java.util.Date;
 @TSModel
 public class ExtractionResponseResult {
     private Date created_at;
-	private Date enqueued_at;
-	private Date started_at;
+    private Date enqueued_at;
+    private Date started_at;
     private String job_error;
     private Object job_result;
 }

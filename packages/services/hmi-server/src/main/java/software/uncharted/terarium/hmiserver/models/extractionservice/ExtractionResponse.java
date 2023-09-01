@@ -10,7 +10,7 @@ import java.util.Date;
 @Accessors(chain = true)
 @TSModel
 public class ExtractionResponse {
-		private String id;
-		private String status;
-		private ExtractionResponseResult result;
+	private String id;
+	private String status;
+	private ExtractionResponseResult result;
 }
