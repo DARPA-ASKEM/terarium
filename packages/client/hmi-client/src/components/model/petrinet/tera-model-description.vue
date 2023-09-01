@@ -5,7 +5,7 @@
 				This page describes the model. Use the content switcher above to see the diagram and manage
 				configurations.
 			</Message>
-			<table>
+			<table class="bibliography">
 				<tr>
 					<th>Framework</th>
 					<th>Model version</th>
@@ -23,10 +23,10 @@
 					<td>{{ model?.metadata?.processed_at }}</td>
 					<td>{{ model?.metadata?.annotations?.authors?.join(', ') }}</td>
 					<td>{{ model?.metadata?.processed_by }}</td>
-					<td>{{ model?.metadata?.author_email }}</td>
-					<td>{{ model?.metadata?.license }}</td>
-					<td>{{ model?.metadata?.complexity }}</td>
-					<td>{{ model?.metadata?.usage }}</td>
+					<td>{{ model?.metadata?.card?.AUTHOR_EMAIL }}</td>
+					<td>{{ model?.metadata?.card?.LICENSE }}</td>
+					<td>{{ model?.metadata?.card?.COMPLEXITY }}</td>
+					<td>{{ model?.metadata?.card?.USAGE }}</td>
 				</tr>
 			</table>
 		</section>
@@ -54,14 +54,14 @@
 				<template #header>
 					Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 				</template>
-				<main v-if="parameters.length > 0" class="datatable" style="--columns: 5">
-					<header>
-						<div>ID</div>
-						<div>Value</div>
-						<div>Distribution</div>
-						<div>Extractions</div>
-					</header>
-					<section
+				<table v-if="parameters.length > 0" class="datatable" style="--columns: 5">
+					<tr>
+						<th>ID</th>
+						<th>Value</th>
+						<th>Distribution</th>
+						<th>Extractions</th>
+					</tr>
+					<tr
 						v-for="(parameter, i) in parameters"
 						:key="parameter.id"
 						:class="[
@@ -70,58 +70,58 @@
 						]"
 					>
 						<template v-if="isRowEditable === `parameter-${parameter.id}`">
-							<div>
+							<td>
 								<input
 									type="text"
 									:value="parameter?.id ?? '--'"
 									@input="updateTable('parameters', i, 'id', $event.target?.['value'])"
 								/>
-							</div>
-							<div>
+							</td>
+							<td>
 								<input
 									type="text"
 									:value="parameter?.value ?? '--'"
 									@input="updateTable('parameters', i, 'value', $event.target?.['value'])"
 								/>
-							</div>
-							<div>--</div>
-							<div>
+							</td>
+							<td>--</td>
+							<td>
 								<template v-if="parameter?.distribution?.parameters">
 									[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
 									{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
 								</template>
 								<template v-else>--</template>
-							</div>
-							<div v-if="extractions?.[parameter?.id]" style="grid-column: 1 / span 4">
+							</td>
+							<td v-if="extractions?.[parameter?.id]" style="grid-column: 1 / span 4">
 								<tera-model-extraction :extractions="extractions[parameter.id]" />
-							</div>
+							</td>
 						</template>
 						<template v-else>
-							<div>{{ parameter?.id ?? '--' }}</div>
-							<div>{{ parameter?.value ?? '--' }}</div>
-							<div>
+							<td>{{ parameter?.id ?? '--' }}</td>
+							<td>{{ parameter?.value ?? '--' }}</td>
+							<td>
 								<template v-if="parameter?.distribution?.parameters">
 									[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
 									{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
 								</template>
 								<template v-else>--</template>
-							</div>
-							<div>
+							</td>
+							<td>
 								<template v-if="extractions?.[parameter.id]">
 									<Tag :value="extractions?.[parameter.id].length" />
 								</template>
 								<template v-else>--</template>
-							</div>
+							</td>
 						</template>
-						<div v-if="!isRowEditable">
+						<td v-if="!isRowEditable">
 							<Button icon="pi pi-file-edit" text @click="editRow" />
-						</div>
-						<div v-else-if="isRowEditable === `parameter-${parameter.id}`">
+						</td>
+						<td v-else-if="isRowEditable === `parameter-${parameter.id}`">
 							<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
 							<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
-						</div>
-					</section>
-				</main>
+						</td>
+					</tr>
+				</table>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
@@ -414,6 +414,7 @@ import {
 	updateConfigFields,
 	updateParameterId
 } from '@/model-representation/petrinet/petrinet-service';
+import Tag from 'primevue/tag';
 import { ResourceType } from '@/types/common';
 import { getModelConfigurations } from '@/services/model';
 import Button from 'primevue/button';
@@ -513,7 +514,7 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 // Toggle rows to become editable
 function editRow(event: Event) {
 	if (!event?.target) return;
-	const row = (event.target as HTMLElement).closest('.datatable section');
+	const row = (event.target as HTMLElement).closest('.datatable tr');
 	if (!row) return;
 	isRowEditable.value = isRowEditable.value === row.className ? null : row.className;
 }
@@ -600,20 +601,25 @@ section {
 	color: var(--text-color-primary);
 }
 
-table th {
-	padding-right: 2rem;
+table.bibliography th,
+table.bibliography td {
 	font-family: var(--font-family);
+	padding-right: 1rem;
+}
+
+table.bibliography th {
 	font-weight: 500;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
-	text-align: left;
 }
 
-table td {
-	padding-right: 50px;
-	font-family: var(--font-family);
+table.bibliography td {
 	font-weight: 400;
 	font-size: var(--font-body-small);
+}
+
+table th {
+	text-align: left;
 }
 
 table tr > td:empty:before {
@@ -624,8 +630,12 @@ table .framework {
 	text-transform: capitalize;
 }
 
-.datatable header,
-.datatable section {
+.datatable {
+	display: flex;
+	flex-direction: column;
+}
+
+.datatable tr {
 	align-items: center;
 	border-bottom: 1px solid var(--surface-border-light);
 	display: grid;
@@ -634,19 +644,19 @@ table .framework {
 	justify-items: start;
 }
 
-.datatable header > div,
-.datatable section > div {
+.datatable tr > td,
+.datatable tr > td {
 	padding: 0.5rem;
 }
 
-.datatable header {
+.datatable th {
 	color: var(--text-color-light);
 	font-size: var(--font-caption);
 	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 }
 
-.datatable section.active {
+.datatable tr.active {
 	background-color: var(--surface-secondary);
 }
 
