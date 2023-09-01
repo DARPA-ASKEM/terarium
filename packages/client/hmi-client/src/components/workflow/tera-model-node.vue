@@ -1,6 +1,6 @@
 <template>
 	<template v-if="model">
-		<h5>{{ model.name }}</h5>
+		<h5>{{ model.header.name }}</h5>
 		<div class="container">
 			<tera-model-diagram :model="model" :is-editable="false" nodePreview />
 		</div>

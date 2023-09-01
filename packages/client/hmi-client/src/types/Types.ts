@@ -78,11 +78,27 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    name: string;
-    description: string;
+    /**
+     * @deprecated
+     */
+    name?: string;
+    /**
+     * @deprecated
+     */
+    description?: string;
+    /**
+     * @deprecated
+     */
     model_version?: string;
-    schema: string;
+    /**
+     * @deprecated
+     */
+    schema?: string;
+    /**
+     * @deprecated
+     */
     schema_name?: string;
+    header: ModelHeader;
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
@@ -312,6 +328,14 @@ export interface Concept {
     type: AssetType;
     status: OntologicalField;
     object_id: string;
+}
+
+export interface ModelHeader {
+    name: string;
+    schema: string;
+    schema_name?: string;
+    description: string;
+    model_version?: string;
 }
 
 export interface ModelSemantics {

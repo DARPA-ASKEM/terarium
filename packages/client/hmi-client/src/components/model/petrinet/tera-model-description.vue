@@ -14,8 +14,8 @@
 					<th>Source</th>
 				</tr>
 				<tr>
-					<td class="framework">{{ model?.schema_name }}</td>
-					<td>{{ model?.model_version }}</td>
+					<td class="framework">{{ model?.header.schema_name }}</td>
+					<td>{{ model?.header.model_version }}</td>
 					<td>{{ model?.metadata?.processed_at }}</td>
 					<td>{{ model?.metadata?.annotations?.authors?.join(', ') }}</td>
 					<td>{{ model?.metadata?.processed_by }}</td>
