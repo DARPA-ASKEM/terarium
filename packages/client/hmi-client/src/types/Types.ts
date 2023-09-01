@@ -465,17 +465,17 @@ export interface Annotations {
 }
 
 export interface Card {
-    DESCRIPTION?: string;
-    AUTHOR_INST?: string;
-    AUTHOR_AUTHOR?: string;
-    AUTHOR_EMAIL?: string;
-    DATE?: string;
-    SCHEMA?: string;
-    PROVENANCE?: string;
-    DATASET?: string;
-    COMPLEXITY?: string;
-    USAGE?: string;
-    LICENSE?: string;
+    description?: string;
+    authorInst?: string;
+    authorAuthor?: string;
+    authorEmail?: string;
+    date?: string;
+    schema?: string;
+    provenance?: string;
+    dataset?: string;
+    complexity?: string;
+    usage?: string;
+    license?: string;
 }
 
 export interface Extraction {

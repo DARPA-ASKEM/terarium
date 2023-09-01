@@ -102,7 +102,7 @@ export const profileModel = async (modelId: string, artifactId: string | null = 
 	} else {
 		response = await API.post(`/knowledge/profile-model/${modelId}`);
 	}
-	logger.debug('model profile response', response.data);
+	console.log('model profile response', response.data);
 	return response.data.id;
 };
 
@@ -117,7 +117,7 @@ export const profileDataset = async (datasetId: string, artifactId: string | nul
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
-	logger.debug('data profile response', response.data);
+	console.log('data profile response', response.data);
 	return response.data.id;
 };
 

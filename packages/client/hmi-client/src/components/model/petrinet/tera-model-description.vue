@@ -20,18 +20,18 @@
 				<tr>
 					<td class="framework">{{ model?.header?.schema_name }}</td>
 					<td>{{ model?.header?.model_version }}</td>
-					<td>{{ model?.metadata?.processed_at ?? card?.DATE }}</td>
+					<td>{{ model?.metadata?.processed_at ?? card?.date }}</td>
 					<td>
-						{{ card?.AUTHOR_AUTHOR }}
+						{{ card?.authorAuthor }}
 						<template v-if="model?.metadata?.annotations?.authors">
 							, {{ model.metadata.annotations.authors.join(', ') }}
 						</template>
 					</td>
-					<td>{{ card?.AUTHOR_EMAIL }}</td>
+					<td>{{ card?.authorEmail }}</td>
 					<td>{{ model?.metadata?.processed_by }}</td>
-					<td>{{ card?.AUTHOR_INST }}</td>
-					<td>{{ card?.LICENSE }}</td>
-					<td>{{ card?.COMPLEXITY }}</td>
+					<td>{{ card?.authorInst }}</td>
+					<td>{{ card?.license }}</td>
+					<td>{{ card?.complexity }}</td>
 				</tr>
 			</table>
 		</section>
@@ -474,12 +474,12 @@ const card = computed(() => {
 	return null;
 });
 const description = computed(() =>
-	highlightSearchTerms(props.model?.header?.description.concat(' ', card.value?.DESCRIPTION ?? ''))
+	highlightSearchTerms(props.model?.header?.description.concat(' ', card.value?.description ?? ''))
 );
-const usage = computed(() => card.value?.USAGE ?? '');
-const sourceDataset = computed(() => card.value?.DATASET ?? '');
-const provenance = computed(() => card.value?.PROVENANCE ?? '');
-const schema = computed(() => card.value?.SCHEMA ?? '');
+const usage = computed(() => card.value?.usage ?? '');
+const sourceDataset = computed(() => card.value?.dataset ?? '');
+const provenance = computed(() => card.value?.provenance ?? '');
+const schema = computed(() => card.value?.schema ?? '');
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const publications = computed(() => []);
