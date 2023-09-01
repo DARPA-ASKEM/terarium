@@ -70,7 +70,7 @@
 				</tr>
 				<tr>
 					<td>{{ capitalize(model?.header.schema_name ?? '--') }}</td>
-					<td>{{ model?.model_version ?? '--' }}</td>
+					<td>{{ model?.header.model_version ?? '--' }}</td>
 					<td>{{ model?.metadata?.processed_at ?? '--' }}</td>
 					<td>
 						{{

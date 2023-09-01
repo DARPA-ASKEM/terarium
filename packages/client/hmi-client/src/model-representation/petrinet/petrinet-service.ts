@@ -551,13 +551,13 @@ export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => 
 export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
-		const { name, description, schema, semantics } = amrCopy;
+		const { name, description, schema } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
 			schema,
-			model_version: amrCopy.model_version,
-			model: semantics?.typing?.system
+			model_version: amrCopy.header.model_version,
+			model: amrCopy.semantics?.typing?.system
 		};
 		amrCopy.semantics.typing.system = typeSystem;
 	}
