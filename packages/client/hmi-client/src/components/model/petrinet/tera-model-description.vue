@@ -476,10 +476,10 @@ const card = computed(() => {
 const description = computed(() =>
 	highlightSearchTerms(props.model?.header?.description.concat(' ', card.value?.description ?? ''))
 );
-const usage = computed(() => card.value?.USAGE ?? '');
-const sourceDataset = computed(() => card.value?.DATASET ?? '');
-const provenance = computed(() => card.value?.PROVENANCE ?? '');
-const schema = computed(() => card.value?.SCHEMA ?? '');
+const usage = computed(() => card.value?.usage ?? '');
+const sourceDataset = computed(() => card.value?.dataset ?? '');
+const provenance = computed(() => card.value?.provenance ?? '');
+const schema = computed(() => card.value?.schema ?? '');
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const publications = computed(
