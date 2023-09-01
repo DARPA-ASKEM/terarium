@@ -226,6 +226,7 @@ const filterAssets = <T extends Model | Dataset>(
 				const assetIDs = matchingResult?.map((mr) => mr.id);
 
 				assetIDs?.forEach((assetId) => {
+					// @ts-ignore
 					const asset = allAssets.find((m) => m.id === assetId);
 					if (asset) finalAssets.push(asset);
 				});
