@@ -12,6 +12,14 @@
 		@vue:mounted="() => emit('asset-loaded')"
 		@asset-loaded="emit('asset-loaded')"
 	/>
+	<code-editor
+		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
+		:initial-code="code"
+		@vue:mounted="
+			emit('asset-loaded');
+			openTextArtifact();
+		"
+	/>
 	<tera-pdf-embed
 		v-else-if="pageType === AssetType.Artifacts && assetName?.endsWith('.pdf')"
 		:title="assetName"
@@ -65,10 +73,11 @@ import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/models/tera-model.vue';
+import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import * as ProjectService from '@/services/project';
-import { getArtifactArrayBuffer } from '@/services/artifact';
+import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
@@ -128,6 +137,12 @@ async function openCode() {
 
 function getPDFBytes(): Promise<ArrayBuffer | null> {
 	return getArtifactArrayBuffer(props.assetId!, assetName.value!);
+}
+
+async function openTextArtifact() {
+	const res: string | null = await getArtifactFileAsText(props.assetId!, assetName.value!);
+	if (!res) return;
+	code.value = res;
 }
 </script>
 
