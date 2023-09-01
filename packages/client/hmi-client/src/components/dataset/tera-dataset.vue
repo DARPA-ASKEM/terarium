@@ -55,10 +55,10 @@
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
 			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page describes the dataset. Use the content switcher above to see the data table and
-					transformation tools.</Message
-				>
+				<Message class="inline-message" icon="none">
+					This page describes the dataset. Use the content switcher above to see the data table and
+					transformation tools.
+				</Message>
 			</div>
 			<section class="metadata data-row">
 				<section>
@@ -347,7 +347,7 @@ import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, isEmpty, cloneDeep } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
+import { Artifact, CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -358,7 +358,7 @@ import * as ProjectService from '@/services/project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { FeatureConfig, ResourceType } from '@/types/common';
+import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
 
 const enrichedData = ref();
 
@@ -395,7 +395,19 @@ const pd = computed(() =>
 		: []
 );
 
-const publications = computed(() => []);
+const publications = computed(
+	() =>
+		props.project?.assets?.artifacts
+			.filter((artifact: Artifact) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
+					artifact.fileNames[0].endsWith(extension)
+				)
+			)
+			.map((artifact: Artifact) => ({
+				name: artifact.name,
+				id: artifact.id
+			})) ?? []
+);
 
 const headers = ref({
 	AUTHOR_NAME: 'Author Name',
