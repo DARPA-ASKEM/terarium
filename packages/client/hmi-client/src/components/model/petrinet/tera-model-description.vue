@@ -18,8 +18,8 @@
 					<th>Complexity</th>
 				</tr>
 				<tr>
-					<td class="framework">{{ model?.schema_name }}</td>
-					<td>{{ model?.model_version }}</td>
+					<td class="framework">{{ model?.header.schema_name }}</td>
+					<td>{{ model?.header.model_version }}</td>
 					<td>{{ model?.metadata?.processed_at ?? model?.metadata?.card?.DATE }}</td>
 					<td>
 						{{ model?.metadata?.card?.AUTHOR_AUTHOR }}
