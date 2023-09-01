@@ -36,6 +36,7 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
 /**
  * Transform a list of LaTeX strings to an AMR
  * @param latex string[] - list of LaTeX strings representing a model
+ * @param modelId string - the model id to use for the extraction
  * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
  * @return {Promise<Model | null>}
  */
