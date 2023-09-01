@@ -85,6 +85,22 @@ public interface KnowledgeMiddlewareProxy {
 	);
 
 	/**
+	 * Profile a model
+	 *
+	 * @param		modelId (String): The ID of the model to profile
+	 * @param		documentText (String): The text of the document to profile
+	 *
+	 * @return the profiled model
+	 */
+	@POST
+	@Path("/profile_model/{model_id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response postProfileModel(
+		@PathParam("model_id") String modelId,
+		@QueryParam("paper_artifact_id") String artifactId
+	);
+
+	/**
 	 * Profile a dataset
 	 *
 	 * @param		datasetId (String): The ID of the dataset to profile

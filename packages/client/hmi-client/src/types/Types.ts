@@ -354,6 +354,7 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
+    card?: Card;
 }
 
 export interface Assets {
@@ -461,6 +462,20 @@ export interface Annotations {
     diseases?: string[];
     hosts?: string[];
     model_types?: string[];
+}
+
+export interface Card {
+    description?: string;
+    authorInst?: string;
+    authorAuthor?: string;
+    authorEmail?: string;
+    date?: string;
+    schema?: string;
+    provenance?: string;
+    dataset?: string;
+    complexity?: string;
+    usage?: string;
+    license?: string;
 }
 
 export interface Extraction {
