@@ -32,9 +32,11 @@
 									@focusout="updateModelConfigValue(cell.value.id, i, j)"
 									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
 								/>
-								<span v-else class="editable-cell">
-									{{ getMatrixValue(cell?.value?.id) }}
-								</span>
+								<div
+									v-else
+									class="mathml-container"
+									v-html="matrixExpressionsList[i]?.[j] ?? '...'"
+								></div>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
 						</td>
@@ -46,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
@@ -57,11 +59,14 @@ import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { updateModelConfiguration } from '@/services/model-configurations';
 
+import { pythonInstance } from '@/python/PyodideController';
+
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
 	stratifiedModelType: StratifiedModelType;
 	nodeType: NodeType;
+	shouldEval: boolean;
 }>();
 
 const colDimensions: string[] = [];
@@ -73,13 +78,44 @@ const chosenRow = ref('');
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
+const matrixExpressionsList = ref<string[][]>([]);
+
+const parametersValueList = computed(() =>
+	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
+		acc[val.id] = val.value;
+		return acc;
+	}, {})
+);
+
+watch(
+	() => [matrix.value, props.shouldEval],
+	async () => {
+		const output: string[][] = [];
+		await Promise.all(
+			matrix.value
+				.map((row) =>
+					row.map(async (cell) => {
+						if (cell.value?.id) {
+							if (!output[cell.row]) {
+								output[cell.row] = [];
+							}
+							output[cell.row][cell.col] = await getMatrixValue(cell.value.id, props.shouldEval);
+						}
+					})
+				)
+				.flat()
+		);
+		matrixExpressionsList.value = output;
+	}
+);
+
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
 
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	valueToEdit.value = getMatrixValue(variableName);
+	valueToEdit.value = getMatrixExpression(variableName);
 	editableCellStates.value[rowIdx][colIdx] = true;
 }
 
@@ -109,13 +145,28 @@ function findOdeObjectLocation(variableName: string): {
 	return null;
 }
 
-function getMatrixValue(variableName: string) {
+function getMatrixExpression(variableName: string) {
 	const odeObjectLocation = findOdeObjectLocation(variableName);
 	if (odeObjectLocation) {
 		const { odeFieldObject } = odeObjectLocation;
 		return odeFieldObject?.expression ?? odeFieldObject?.value;
 	}
 	return variableName;
+}
+
+// Returns the presentation mathml
+async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
+	const expressionBase = getMatrixExpression(variableName);
+
+	if (shouldEvaluate) {
+		const expressionEval = await pythonInstance.evaluateExpression(
+			expressionBase,
+			parametersValueList.value
+		);
+		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
+	}
+
+	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
@@ -129,7 +180,13 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		// Update if the value is different
 		if (odeFieldObject.expression) {
 			if (odeFieldObject.expression === newValue) return;
+
+			// If expression changed, we want to update the the twin fields
+			// - expression
+			// - expression_mathml
 			odeFieldObject.expression = newValue;
+			const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
+			odeFieldObject.expression_mathml = mathml;
 		} else if (odeFieldObject.value) {
 			if (odeFieldObject.value === Number(newValue)) return;
 			odeFieldObject.value = Number(newValue);
@@ -139,10 +196,11 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
 		await updateModelConfiguration(modelConfigurationClone);
+		generateMatrix();
 	}
 }
 
-function configureMatrix() {
+function generateMatrix(populateDimensions = false) {
 	const amr: Model = props.modelConfiguration.configuration;
 
 	const result =
@@ -156,17 +214,18 @@ function configureMatrix() {
 			? result.stateMatrixData.filter(({ base }) => base === props.id)
 			: result.transitionMatrixData.filter(({ base }) => base === props.id);
 
-	if (isEmpty(matrixData)) return;
+	if (isEmpty(matrixData)) return matrixData;
 
-	// Grab dimension names from the first matrix row (they'll all be the same for the chosen id)
-	const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-		delete d.id;
-		delete d.base;
-		return Object.keys(d);
-	})[0];
+	if (populateDimensions) {
+		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
+			delete d.id;
+			delete d.base;
+			return Object.keys(d);
+		})[0];
 
-	rowDimensions.push(...dimensions);
-	colDimensions.push(...dimensions);
+		rowDimensions.push(...dimensions);
+		colDimensions.push(...dimensions);
+	}
 
 	const matrixAttributes =
 		props.nodeType === NodeType.State
@@ -174,6 +233,14 @@ function configureMatrix() {
 			: createMatrix2D(matrixData, colDimensions, rowDimensions);
 
 	matrix.value = matrixAttributes.matrix;
+
+	return matrixData;
+}
+
+function configureMatrix() {
+	const matrixData = generateMatrix(true);
+	if (isEmpty(matrixData)) return;
+
 	chosenCol.value = colDimensions[0];
 	chosenRow.value = rowDimensions[0];
 

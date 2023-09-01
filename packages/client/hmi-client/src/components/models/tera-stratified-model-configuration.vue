@@ -98,6 +98,15 @@
 			<template #header>
 				<h4>{{ modalVal.id }}</h4>
 				<span>Configure the matrix values</span>
+				<div class="flex align-items-center">
+					<Checkbox
+						inputId="matrixShouldEval"
+						v-model="matrixShouldEval"
+						:binary="true"
+						label="Evaluate expressions?"
+					/>
+					<label for="matrixShouldEval" class="ml-2"> Evaluate Expressions? </label>
+				</div>
 			</template>
 			<template #default>
 				<!-- TODO: Implement value tabs for the modal once we are ready
@@ -126,6 +135,7 @@
 					:id="modalVal.id"
 					:stratified-model-type="stratifiedModelType"
 					:node-type="modalVal.nodeType"
+					:should-eval="matrixShouldEval"
 				/>
 			</template>
 			<template #footer>
@@ -158,7 +168,7 @@ import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 // import TabPanel from 'primevue/tabpanel'; // TODO: Implement value tabs for the modal once we are ready
 import InputText from 'primevue/inputtext';
-// import Checkbox from 'primevue/checkbox';
+import Checkbox from 'primevue/checkbox';
 import { ModelConfiguration, Model } from '@/types/Types';
 import {
 	createModelConfiguration,
@@ -188,6 +198,7 @@ const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const modalVal = ref({ id: '', configIndex: 0, nodeType: NodeType.State });
+const matrixShouldEval = ref(true);
 
 const activeIndex = ref(0);
 const configItems = ref<any[]>([]);
