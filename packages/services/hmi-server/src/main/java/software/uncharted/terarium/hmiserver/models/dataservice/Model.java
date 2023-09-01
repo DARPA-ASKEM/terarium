@@ -24,10 +24,12 @@ public class Model implements Serializable {
 	// To be removed
 	// See: https://github.com/DARPA-ASKEM/Model-Representations/commit/f2c90f16c6c3865f71d1e727e15bc2f0b1f5ec58
 	@Deprecated
+	@TSOptional
 	private String name;
 
 	@Deprecated
 	@JsonSetter(nulls = Nulls.SKIP)
+	@TSOptional
 	private String description = "";
 
 	@Deprecated
@@ -35,6 +37,7 @@ public class Model implements Serializable {
 	private String model_version;
 
 	@Deprecated
+	@TSOptional
 	private String schema;
 
 	@Deprecated

@@ -81,11 +81,11 @@ export interface Model {
     /**
      * @deprecated
      */
-    name: string;
+    name?: string;
     /**
      * @deprecated
      */
-    description: string;
+    description?: string;
     /**
      * @deprecated
      */
@@ -93,7 +93,7 @@ export interface Model {
     /**
      * @deprecated
      */
-    schema: string;
+    schema?: string;
     /**
      * @deprecated
      */
