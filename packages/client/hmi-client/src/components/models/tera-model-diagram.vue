@@ -54,7 +54,18 @@
 							</template>
 						</Toolbar>
 						<tera-model-type-legend v-if="model" :model="model" />
-						<div v-if="model" ref="graphElement" class="graph-element" />
+						<div v-if="model" class="graph-container">
+							<div ref="graphElement" class="graph-element" />
+							<div class="legend">
+								<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
+									<div
+										class="legend-circle"
+										:style="`background: ${graphLegendColors[index]}`"
+									></div>
+									{{ label }}
+								</div>
+							</div>
+						</div>
 						<ContextMenu ref="menu" :model="contextMenuItems" />
 					</section>
 				</TeraResizablePanel>
@@ -206,6 +217,7 @@ import {
 	EdgeData,
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import {
@@ -296,9 +308,12 @@ const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
 const graphElement = ref<HTMLDivElement | null>(null);
-let renderer: PetrinetRenderer | null = null;
+let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
+
+const graphLegendLabels = ref<string[]>([]);
+const graphLegendColors = ref<string[]>([]);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -483,6 +498,10 @@ watch(
 
 		// Create renderer
 		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
+		if (renderer.constructor === NestedPetrinetRenderer) {
+			graphLegendLabels.value = renderer.dims;
+			graphLegendColors.value = renderer.depthColorMap;
+		}
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
 			if (isEditing.value === true) {
@@ -732,7 +751,7 @@ section math-editor {
 	justify-content: center;
 }
 
-.graph-element {
+.graph-container {
 	background-color: var(--surface-secondary);
 	height: 100%;
 	max-height: 100%;
@@ -740,6 +759,29 @@ section math-editor {
 	overflow: hidden;
 	border: none;
 	position: relative;
+}
+.graph-element {
+	background-color: var(--surface-secondary);
+	height: 100%;
+}
+.legend {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	margin: 1rem;
+}
+.legend-item {
+	display: flex;
+	align-items: center;
+	margin: 0 1rem;
+}
+.legend-circle {
+	display: inline-block;
+	height: 1rem;
+	width: 1rem;
+	border-radius: 50%;
+	margin-right: 0.5rem;
 }
 
 .math-editor-container {
