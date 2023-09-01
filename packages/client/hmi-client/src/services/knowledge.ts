@@ -180,7 +180,7 @@ export const extractPDF = async (artifact: Artifact) => {
 };
 
 export async function codeToAMR(codeId: string) {
-	const response = await API.post(`/extract/code-to-amr?code_id=${codeId}`);
+	const response = await API.post(`/knowledge/code-to-amr?code_id=${codeId}`);
 	if (response && response?.status === 200) {
 		const { id, status } = response.data;
 		if (status === 'queued') {

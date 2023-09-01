@@ -2,7 +2,6 @@
 	<main>
 		<header>
 			<section class="header">
-				<!-- <h4>{{ name }}</h4> -->
 				<section class="name">
 					<InputText v-model="codeName" class="name-input" />
 				</section>
@@ -75,6 +74,8 @@ import useResourceStore from '@/stores/resources';
 import FileUpload from 'primevue/fileupload';
 import TeraModelDiagram from '../model/petrinet/tera-model-diagram.vue';
 
+const INITIAL_TEXT = '# Paste some code here';
+
 const props = defineProps<{
 	projectId: string;
 	assetId: string;
@@ -86,8 +87,8 @@ const resourceStore = useResourceStore();
 const toast = useToastService();
 
 const codeName = ref('');
-const codeText = ref('# Paste some code here');
-const codeAsset = ref<Code>();
+const codeText = ref(INITIAL_TEXT);
+const codeAsset = ref<Code | null>(null);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const progress = ref(0);
@@ -184,10 +185,12 @@ async function saveModel() {
 }
 
 async function onFileOpen(event) {
+	const file = event.files[0];
 	const reader = new FileReader();
-	reader.readAsText(event.files[0], 'UTF-8');
+	reader.readAsText(file, 'UTF-8');
 	reader.onload = (evt) => {
 		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
+		codeName.value = file.name;
 	};
 }
 
@@ -205,10 +208,14 @@ watch(
 					codeText.value = text;
 				}
 			} else {
+				codeAsset.value = null;
 				codeName.value = 'newcode.py';
+				codeText.value = INITIAL_TEXT;
 			}
 		} else {
+			codeAsset.value = null;
 			codeName.value = 'newcode.py';
+			codeText.value = INITIAL_TEXT;
 		}
 		emit('asset-loaded');
 	},
