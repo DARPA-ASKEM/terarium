@@ -106,7 +106,7 @@
 					<tera-related-publications
 						:asset-type="ResourceType.DATASET"
 						:publications="publications"
-						:project="project"
+						:related-publications="relatedPublications"
 						:assetId="assetId"
 					/>
 				</AccordionTab>
@@ -408,6 +408,7 @@ const publications = computed(
 				id: artifact.id
 			})) ?? []
 );
+const relatedPublications = computed(() => []);
 
 const headers = ref({
 	AUTHOR_NAME: 'Author Name',

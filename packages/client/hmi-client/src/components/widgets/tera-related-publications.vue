@@ -4,7 +4,7 @@
 			Terarium can extract information from artifacts to add relevant information to this resource.
 		</p>
 		<ul>
-			<li v-for="publication in publications" :key="publication.id">
+			<li v-for="publication in relatedPublications" :key="publication.id">
 				{{ publication.name }}
 			</li>
 		</ul>
@@ -55,9 +55,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { ResourceType } from '@/types/common';
@@ -65,6 +65,7 @@ import { profileDataset, profileModel, fetchExtraction } from '@/services/knowle
 
 const props = defineProps<{
 	publications?: Array<{ name: string; id: string | undefined }>;
+	relatedPublications?: Array<{ name: string; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
 }>();
@@ -77,7 +78,6 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	let resp = null;
 
 	if (props.assetType === ResourceType.MODEL) {
-		console.log(selectedResources.value);
 		resp = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
 	} else if (props.assetType === ResourceType.DATASET) {
 		resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);

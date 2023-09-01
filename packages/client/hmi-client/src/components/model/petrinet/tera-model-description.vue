@@ -40,6 +40,7 @@
 				<template #header>Related publications</template>
 				<tera-related-publications
 					:publications="publications"
+					:related-publications="relatedPublications"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 				/>
@@ -454,7 +455,7 @@ const nameOfCurieCache = ref(new Map<string, string>());
 
 const description = computed(() =>
 	highlightSearchTerms(
-		props.model?.description.concat(' ', props.model.metadata?.card?.DESCRIPTION ?? '')
+		props.model?.header?.description?.concat(' ', props.model.metadata?.card?.DESCRIPTION ?? '')
 	)
 );
 const usage = computed(() => props.model.metadata?.card?.USAGE ?? '');
@@ -476,6 +477,7 @@ const publications = computed(
 				id: artifact.id
 			})) ?? []
 );
+const relatedPublications = computed(() => []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
