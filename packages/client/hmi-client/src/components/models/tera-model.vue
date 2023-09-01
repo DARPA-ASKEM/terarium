@@ -215,7 +215,7 @@ const optionsMenuItems = ref([
 		label: 'Rename',
 		command() {
 			isRenamingModel.value = true;
-			newModelName.value = model.value?.name ?? '';
+			newModelName.value = model.value?.header?.name ?? '';
 		}
 	}
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
@@ -237,7 +237,7 @@ function syncConfigs(updateStratified = false) {
 }
 
 /* Model */
-const name = computed(() => highlightSearchTerms(model.value?.name));
+const name = computed(() => highlightSearchTerms(model.value?.header?.name));
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
