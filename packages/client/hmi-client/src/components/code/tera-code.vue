@@ -161,8 +161,7 @@ async function extractModel() {
 }
 
 async function saveModel() {
-	const modelToSave = model.value;
-	const createdModel = await createModel(modelToSave);
+	const createdModel = await createModel(model.value);
 	if (createdModel) {
 		const { id } = await addAsset(props.projectId, AssetType.Models, createdModel.id);
 		if (id) {

@@ -39,7 +39,10 @@ export async function fetchExtraction(id: string) {
  * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
  * @return {Promise<Model | null>}
  */
-const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Model | null> => {
+export const latexToAMR = async (
+	latex: string[],
+	framework = 'petrinet'
+): Promise<Model | null> => {
 	try {
 		const response: AxiosResponse<Model> = await API.post(
 			`/knowledge/latex-to-amr/${framework}`,
@@ -61,7 +64,10 @@ const latexToAMR = async (latex: string[], framework = 'petrinet'): Promise<Mode
  * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
  * @return {Promise<Model | null>}
  */
-const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Model | null> => {
+export const mathmlToAMR = async (
+	mathml: string[],
+	framework = 'petrinet'
+): Promise<Model | null> => {
 	try {
 		const response = await API.post(`/knowledge/mathml-to-amr?framework=${framework}`, mathml);
 		if (response && response?.status === 200) {
@@ -194,8 +200,6 @@ export async function codeToAMR(codeId: string) {
 			return response.data.result?.job_result.amr;
 		}
 	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - ta1-service' });
+	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middlewareõ' });
 	return null;
 }
-
-export { mathmlToAMR, latexToAMR };
