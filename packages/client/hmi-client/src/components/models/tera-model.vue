@@ -294,7 +294,6 @@ watch(
 		if (props.assetId !== '') {
 			await fetchModel();
 			fetchRelatedTerariumArtifacts();
-			console.log(model.value);
 		} else {
 			model.value = null;
 		}
