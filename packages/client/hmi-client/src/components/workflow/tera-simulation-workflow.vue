@@ -79,9 +79,7 @@
 						v-else-if="
 							node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER && datasets
 						"
-						:datasets="datasets"
 						:node="node"
-						@select-dataset="(event) => selectDataset(node, event)"
 						@append-input-port="(event) => appendInputPort(node, event)"
 					/>
 					<tera-simulate-julia-node

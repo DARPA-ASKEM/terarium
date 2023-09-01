@@ -203,6 +203,11 @@ const updateNotebookCells = (message) => {
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
 		notebookItem.executions.push(executionParent);
+		// add the latest message execution to the code cell, we need this in order to persist the latest code execution
+		const codeCell = notebookItem.messages.find((m) => m.header.msg_type === 'code_cell');
+		if (codeCell) {
+			codeCell.content.code = message.content.code;
+		}
 		return;
 	}
 
