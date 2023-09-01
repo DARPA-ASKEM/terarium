@@ -66,9 +66,18 @@ const getTabName = (tab: Tab) => {
 		const asset: any = assets[tab.pageType as string].find(
 			(assetItem: any) => assetItem.id?.toString() === tab.assetId?.toString()
 		);
+
+		// FIXME should unify upstream via a summary endpoint
+		let assetName = null;
+		if (asset?.header && asset?.header?.name) {
+			assetName = asset.header.name;
+		} else {
+			assetName = asset.name;
+		}
+
 		// FIXME: remove this check for title/name once the following github issue has been addressed
 		// https://github.com/DARPA-ASKEM/data-service/issues/299
-		return (tab.pageType === AssetType.Publications ? asset?.title : asset?.name) ?? 'n/a';
+		return (tab.pageType === AssetType.Publications ? asset?.title : assetName) ?? 'n/a';
 	}
 
 	if (tab.pageType === AssetType.Code) return 'New File';

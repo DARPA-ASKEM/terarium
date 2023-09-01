@@ -114,6 +114,10 @@ const assetName = computed<string>(() => {
 	 */
 	if (assets) {
 		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
+
+		// FIXME should unify upstream via a summary endpoint
+		if (asset.header && asset.header.name) return asset.header.name;
+
 		if (asset.name) return asset.name;
 	}
 	if (props.pageType === AssetType.Code) return 'New File';
