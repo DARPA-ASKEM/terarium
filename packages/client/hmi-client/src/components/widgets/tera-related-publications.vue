@@ -1,15 +1,14 @@
 <template>
 	<main>
 		<p>
-			Terarium can extract information from papers and other artifacts to add relevant information
-			to this resource.
+			Terarium can extract information from artifacts to add relevant information to this resource.
 		</p>
 		<ul>
-			<li v-for="(publication, index) in publications" :key="index">
-				<a :href="publication.xdd_uri">{{ publication.title }}</a>
+			<li v-for="publication in relatedPublications" :key="publication.id">
+				{{ publication.name }}
 			</li>
 		</ul>
-		<Button icon="pi pi-plus" label="Add resources" text @click="addResources" />
+		<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -17,19 +16,18 @@
 			:style="{ width: '50vw' }"
 		>
 			<p class="constrain-width">
-				Terarium can extract information from papers and other artifacts to describe this
-				{{ assetType }}. Select the resources you would like to use.
+				Terarium can extract information from artifacts to describe this
+				{{ assetType }}. Select the artifacts you would like to use.
 			</p>
 			<DataTable
-				v-if="allResources.length > 0"
-				:value="allResources"
+				v-if="publications && publications.length > 0"
+				:value="publications"
 				v-model:selection="selectedResources"
 				tableStyle="min-width: 50rem"
 				selection-mode="single"
 			>
-				<Column selectionMode="single" headerStyle="width: 3rem"></Column>
-				<Column field="name" sortable header="Name"></Column>
-				<Column field="authors" sortable header="Authors"></Column>
+				<Column selectionMode="single" headerStyle="width: 3rem" />
+				<Column field="name" sortable header="Name" />
 			</DataTable>
 			<div v-else>
 				<div class="no-artifacts">
@@ -57,83 +55,38 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { computed, ComputedRef, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { IProject } from '@/types/Project';
-import { AcceptedExtensions, ResourceType } from '@/types/common';
-import { Artifact, AssetType, DocumentAsset } from '@/types/Types';
+import { ResourceType } from '@/types/common';
 import { profileDataset, profileModel, fetchExtraction } from '@/services/knowledge';
 
 const props = defineProps<{
-	project?: IProject;
-	publications?: Array<DocumentAsset>;
+	publications?: Array<{ name: string; id: string | undefined }>;
+	relatedPublications?: Array<{ name: string; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
 }>();
 
-const emit = defineEmits(['extracted-metadata', 'enriched']);
-
+const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
 
-const allResources: ComputedRef<
-	{ name: string; id: string | undefined; authors: string }[] | any[]
-> = computed(() => {
-	if (props.project?.assets) {
-		const artifactResources = props.project?.assets.artifacts
-			.filter((artifact: Artifact) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
-					artifact.fileNames[0].endsWith(extension)
-				)
-			)
-			.map((artifact: Artifact) => ({
-				name: artifact.name,
-				authors: '',
-				id: artifact.id,
-				type: AssetType.Artifacts
-			}));
-
-		// TODO: Add document support for model enrichment once documents are a first class citizen in TDS
-		const documentResources = [];
-		// props.project?.assets.publications.map((document: DocumentAsset) => ({
-		// 	name: document.title,
-		// 	authors: '',
-		// 	id: document.id,
-		// 	type: AssetType.Publications
-		// }));
-
-		console.log(props.project.assets);
-
-		return [...documentResources, ...artifactResources];
-	}
-	return [];
-});
-
-const addResources = () => {
-	visible.value = true;
-	// do something
-};
-
 const sendForEnrichments = async (/* _selectedResources */) => {
 	// 1. Send asset profile request
-	let resp = null;
+	let jobId = null;
 
 	if (props.assetType === ResourceType.MODEL) {
-		console.log(selectedResources.value);
-		resp = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
+		jobId = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
 	} else if (props.assetType === ResourceType.DATASET) {
-		resp = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
+		jobId = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
 	}
-	if (!resp) return;
+	if (!jobId) return;
 
 	// 2. Poll
-	const pollResult = await fetchExtraction(resp);
-	console.log('enrichment poll', pollResult);
-
-	emit('extracted-metadata', pollResult);
+	await fetchExtraction(jobId);
 	emit('enriched');
 };
 </script>

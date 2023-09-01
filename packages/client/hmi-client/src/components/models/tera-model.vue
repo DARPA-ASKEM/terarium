@@ -115,17 +115,6 @@
 				/>
 			</Suspense>
 		</template>
-		<Teleport to="body">
-			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
-				<template #header>
-					<header>Related publications</header>
-				</template>
-				<p>
-					Terarium can extract information from papers and other artifacts to describe this model.
-				</p>
-				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
-			</tera-modal>
-		</Teleport>
 	</tera-asset>
 </template>
 
@@ -141,7 +130,6 @@ import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
 import {
 	convertToAMRModel,
 	getStratificationType
@@ -197,7 +185,6 @@ const props = defineProps({
 	}
 });
 
-const openValueConfig = ref(false);
 const modelView = ref(ModelView.DESCRIPTION);
 const router = useRouter();
 

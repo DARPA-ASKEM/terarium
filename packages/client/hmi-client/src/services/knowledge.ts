@@ -23,6 +23,9 @@ export async function fetchExtraction(id: string) {
 			// Failed
 			if (response?.status === 200 && response?.data?.status === 'failed') {
 				pollerResult.error = true;
+				logger.error(`Extraction failed, Service not responding`, {
+					toastTitle: 'Error - knowledge-middleware'
+				});
 				return pollerResult;
 			}
 

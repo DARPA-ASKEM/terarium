@@ -40,7 +40,7 @@
 				<template #header>Related publications</template>
 				<tera-related-publications
 					:publications="publications"
-					:project="project"
+					:related-publications="relatedPublications"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 					@enriched="fetchAsset"
@@ -49,7 +49,7 @@
 			<AccordionTab>
 				<template #header>Description</template>
 				<p v-html="description" />
-				<!-- 
+				<!--
 					For model creation
 					<template v-else>
 						<label for="placeholder" />
@@ -418,14 +418,14 @@ import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { Model } from '@/types/Types';
+import { Artifact, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
 	updateParameterId
 } from '@/model-representation/petrinet/petrinet-service';
 import Tag from 'primevue/tag';
-import { ResourceType } from '@/types/common';
+import { AcceptedExtensions, ResourceType } from '@/types/common';
 import { getModelConfigurations } from '@/services/model';
 import Button from 'primevue/button';
 import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
@@ -482,7 +482,20 @@ const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
-const publications = computed(() => []);
+const publications = computed(
+	() =>
+		props.project?.assets?.artifacts
+			.filter((artifact: Artifact) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
+					artifact.fileNames[0].endsWith(extension)
+				)
+			)
+			.map((artifact: Artifact) => ({
+				name: artifact.name,
+				id: artifact.id
+			})) ?? []
+);
+const relatedPublications = computed(() => []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
