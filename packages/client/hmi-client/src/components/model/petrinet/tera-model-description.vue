@@ -18,8 +18,8 @@
 					<th>Complexity</th>
 				</tr>
 				<tr>
-					<td class="framework">{{ model?.schema_name }}</td>
-					<td>{{ model?.model_version }}</td>
+					<td class="framework">{{ model?.header?.schema_name }}</td>
+					<td>{{ model?.header?.model_version }}</td>
 					<td>{{ model?.metadata?.processed_at ?? card?.DATE }}</td>
 					<td>
 						{{ card?.AUTHOR_AUTHOR }}
@@ -474,7 +474,7 @@ const card = computed(() => {
 	return null;
 });
 const description = computed(() =>
-	highlightSearchTerms(props.model?.description.concat(' ', card.value?.DESCRIPTION ?? ''))
+	highlightSearchTerms(props.model?.header?.description.concat(' ', card.value?.DESCRIPTION ?? ''))
 );
 const usage = computed(() => card.value?.USAGE ?? '');
 const sourceDataset = computed(() => card.value?.DATASET ?? '');

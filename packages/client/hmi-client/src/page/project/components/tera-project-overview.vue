@@ -328,7 +328,13 @@ const assets = computed(() => {
 			const projectAssetType: AssetType = type as AssetType;
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => {
-					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+					let assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+
+					// FIXME should unify upstream via a summary endpoint
+					if (asset.header && asset.header.name) {
+						assetName = asset.header.name;
+					}
+
 					const pageType = asset?.type ?? projectAssetType;
 					const assetId = asset?.id ?? '';
 					return { assetName, pageType, assetId };
