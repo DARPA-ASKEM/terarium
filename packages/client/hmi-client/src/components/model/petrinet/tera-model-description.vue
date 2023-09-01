@@ -22,8 +22,9 @@
 					<td>{{ model?.model_version }}</td>
 					<td>{{ model?.metadata?.processed_at }}</td>
 					<td>{{ model?.metadata?.annotations?.authors?.join(', ') }}</td>
-					<td>{{ model?.metadata?.processed_by }}</td>
 					<td>{{ model?.metadata?.card?.AUTHOR_EMAIL }}</td>
+					<td>{{ model?.metadata?.processed_by }}</td>
+					<td>{{ model?.metadata?.card?.AUTHOR_INST }}</td>
 					<td>{{ model?.metadata?.card?.LICENSE }}</td>
 					<td>{{ model?.metadata?.card?.COMPLEXITY }}</td>
 					<td>{{ model?.metadata?.card?.USAGE }}</td>
@@ -97,8 +98,8 @@
 							</td>
 						</template>
 						<template v-else>
-							<td>{{ parameter?.id ?? '--' }}</td>
-							<td>{{ parameter?.value ?? '--' }}</td>
+							<td>{{ parameter?.id }}</td>
+							<td>{{ parameter?.value }}</td>
 							<td>
 								<template v-if="parameter?.distribution?.parameters">
 									[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
@@ -127,51 +128,51 @@
 				<template #header>
 					State variables<span class="artifact-amount">({{ states.length }})</span>
 				</template>
-				<main v-if="states.length > 0" class="datatable" style="--columns: 5">
-					<header>
-						<div>Id</div>
-						<div>Name</div>
-						<div>Unit</div>
-						<div>Concept</div>
-						<div>Extractions</div>
-					</header>
-					<section
+				<table v-if="states.length > 0" class="datatable" style="--columns: 5">
+					<tr>
+						<th>Id</th>
+						<th>Name</th>
+						<th>Unit</th>
+						<th>Concept</th>
+						<th>Extractions</th>
+					</tr>
+					<tr
 						v-for="(state, i) in states"
 						:key="state.id"
 						:class="[{ active: isRowEditable === `state-${state.id}` }, `state-${state.id}`]"
 					>
 						<template v-if="isRowEditable === `state-${state.id}`">
-							<div>
+							<td>
 								<input
 									type="text"
 									:value="state?.id ?? '--'"
 									@input="updateTable('states', i, 'id', $event.target?.['value'])"
 								/>
-							</div>
-							<div>
+							</td>
+							<td>
 								<input
 									type="text"
 									:value="state?.name ?? '--'"
 									@input="updateTable('states', i, 'name', $event.target?.['value'])"
 								/>
-							</div>
-							<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
-							<div>Identifiers</div>
-							<div>
+							</td>
+							<td><input type="text" :value="state?.units?.expression ?? '--'" /></td>
+							<td>Identifiers</td>
+							<td>
 								<template v-if="extractions?.[state?.id]">
 									<Tag :value="extractions?.[state?.id].length" />
 								</template>
 								<template v-else>--</template>
-							</div>
-							<div v-if="extractions?.[state?.id]" style="grid-column: 1 / span 4">
+							</td>
+							<td v-if="extractions?.[state?.id]" style="grid-column: 1 / span 4">
 								<tera-model-extraction :extractions="extractions[state.id]" />
-							</div>
+							</td>
 						</template>
 						<template v-else>
-							<div>{{ state.id ?? '--' }}</div>
-							<div>{{ state?.name ?? '--' }}</div>
-							<div>{{ state?.units?.expression ?? '--' }}</div>
-							<div>
+							<td>{{ state.id }}</td>
+							<td>{{ state?.name }}</td>
+							<td>{{ state?.units?.expression }}</td>
+							<td>
 								<template
 									v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
 								>
@@ -190,13 +191,13 @@
 									</a>
 								</template>
 								<template v-else>--</template>
-							</div>
-							<div>
+							</td>
+							<td>
 								<template v-if="extractions?.[state?.id]">
 									<Tag :value="extractions?.[state?.id].length" />
 								</template>
 								<template v-else>--</template>
-							</div>
+							</td>
 						</template>
 						<!-- <div v-if="!isRowEditable">
 								<Button icon="pi pi-file-edit" text @click="editRow" />
@@ -205,21 +206,21 @@
 								<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
 								<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
 							</div> -->
-					</section>
-				</main>
+					</tr>
+				</table>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
 					Observables <span class="artifact-amount">({{ observables.length }})</span>
 				</template>
-				<main v-if="observables.length > 0" class="datatable" style="--columns: 4">
-					<header>
-						<div>ID</div>
-						<div>Name</div>
-						<div>Expression</div>
-						<div>Extractions</div>
-					</header>
-					<section
+				<table v-if="!isEmpty(observables)" class="datatable" style="--columns: 4">
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+						<th>Expression</th>
+						<th>Extractions</th>
+					</tr>
+					<tr
 						v-for="observable in observables"
 						:key="observable.id"
 						:class="[
@@ -228,60 +229,60 @@
 						]"
 					>
 						<template v-if="isSectionEditable === `observable-${observable.id}`">
-							<div>{{ observable.id ?? '--' }}</div>
-							<div>{{ observable.name ?? '--' }}</div>
-							<div>
+							<td>{{ observable.id }}</td>
+							<td>{{ observable.name }}</td>
+							<td>
 								<katex-element
 									v-if="observable.expression"
 									:expression="observable.expression"
 									:throw-on-error="false"
 								/>
 								<template v-else>--</template>
-							</div>
-							<div>
+							</td>
+							<td>
 								<!-- TODO: needs to make those button active -->
 								<Button icon="pi pi-check" text rounded aria-label="Save" />
 								<Button icon="pi pi-times" text rounded aria-label="Discard" />
-							</div>
-							<div v-if="extractions?.[observable?.id]" style="grid-column: 1 / span 4">
+							</td>
+							<td v-if="extractions?.[observable?.id]" style="grid-column: 1 / span 4">
 								<tera-model-extraction :extractions="extractions[observable.id]" />
-							</div>
+							</td>
 						</template>
 						<template v-else>
-							<div>{{ observable.id ?? '--' }}</div>
-							<div>{{ observable.name ?? '--' }}</div>
-							<div>
+							<td>{{ observable.id }}</td>
+							<td>{{ observable.name }}</td>
+							<td>
 								<katex-element
 									v-if="observable.expression"
 									:expression="observable.expression"
 									:throw-on-error="false"
 								/>
 								<template v-else>--</template>
-							</div>
-							<div>
+							</td>
+							<td>
 								<template v-if="extractions?.[observable.id]">
 									<Tag :value="extractions?.[observable.id].length" />
 								</template>
 								<template v-else>--</template>
-							</div>
+							</td>
 						</template>
-					</section>
-				</main>
+					</tr>
+				</table>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
 					Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 				</template>
-				<main v-if="transitions.length > 0" class="datatable" style="--columns: 6">
-					<header>
-						<div>Id</div>
-						<div>Name</div>
-						<div>Input</div>
-						<div>Output</div>
-						<div>Expression</div>
-						<div>Extractions</div>
-					</header>
-					<section
+				<table v-if="transitions.length > 0" class="datatable" style="--columns: 6">
+					<tr>
+						<th>Id</th>
+						<th>Name</th>
+						<th>Input</th>
+						<th>Output</th>
+						<th>Expression</th>
+						<th>Extractions</th>
+					</tr>
+					<tr
 						v-for="(transition, index) in transitions"
 						:key="index"
 						:class="[
@@ -290,77 +291,65 @@
 						]"
 					>
 						<template v-if="isSectionEditable === `transition-${index}`">
-							<div>{{ transition.id }}</div>
-							<div>{{ transition.name }}</div>
-							<div>{{ transition.input }}</div>
-							<div>{{ transition.output }}</div>
-							<div>
+							<td>{{ transition.id }}</td>
+							<td>{{ transition.name }}</td>
+							<td>{{ transition.input }}</td>
+							<td>{{ transition.output }}</td>
+							<td>
 								<katex-element
 									v-if="transition.expression"
 									:expression="transition.expression"
 									:throw-on-error="false"
 								/>
 								<template v-else>--</template>
-							</div>
-							<div>
+							</td>
+							<td>
 								<!-- TODO: needs to make those button active -->
 								<Button icon="pi pi-check" text rounded aria-label="Save" />
 								<Button icon="pi pi-times" text rounded aria-label="Discard" />
-							</div>
-							<div v-if="transition?.extractions" style="grid-column: 1 / span 5">
+							</td>
+							<td v-if="transition?.extractions" style="grid-column: 1 / span 5">
 								<tera-model-extraction :extractions="transition?.extractions" />
-							</div>
+							</td>
 						</template>
 						<template v-else>
-							<div>{{ transition.id }}</div>
-							<div>{{ transition.name }}</div>
-							<div>{{ transition.input }}</div>
-							<div>{{ transition.output }}</div>
-							<div>
+							<td>{{ transition.id }}</td>
+							<td>{{ transition.name }}</td>
+							<td>{{ transition.input }}</td>
+							<td>{{ transition.output }}</td>
+							<td>
 								<katex-element
 									v-if="transition.expression"
 									:expression="transition.expression"
 									:throw-on-error="false"
 								/>
 								<template v-else>--</template>
-							</div>
-							<div>
+							</td>
+							<td>
 								<Tag v-if="transition?.extractions" :value="extractions?.[transition.id].length" />
 								<template v-else>--</template>
-							</div>
+							</td>
 						</template>
-					</section>
-				</main>
+					</tr>
+				</table>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
 					Other concepts
 					<span class="artifact-amount">({{ otherConcepts.length }})</span>
 				</template>
-				<main v-if="otherConcepts.length > 0" class="datatable" style="--columns: 4">
-					<header>
-						<div>Payload id</div>
-						<div>Names</div>
-						<div>Descriptions</div>
-						<div>Concept</div>
-					</header>
-					<section v-for="item in otherConcepts" :key="item.payload?.id?.id">
-						<div>{{ item.payload?.id?.id ?? '--' }}</div>
-						<div>
-							{{
-								item.payload?.names?.length > 0
-									? item.payload?.names?.map((n) => n?.name).join(', ')
-									: '--'
-							}}
-						</div>
-						<div>
-							{{
-								item.payload?.descriptions?.length > 0
-									? item.payload?.descriptions?.map((d) => d?.source).join(', ')
-									: '--'
-							}}
-						</div>
-						<div>
+				<table v-if="otherConcepts.length > 0" class="datatable" style="--columns: 4">
+					<tr>
+						<th>Payload id</th>
+						<th>Names</th>
+						<th>Descriptions</th>
+						<th>Concept</th>
+					</tr>
+					<tr v-for="item in otherConcepts" :key="item.payload?.id?.id">
+						<td>{{ item.payload?.id?.id }}</td>
+						<td>{{ item.payload?.names?.map((n) => n?.name).join(', ') }}</td>
+						<td>{{ item.payload?.descriptions?.map((d) => d?.source).join(', ') }}</td>
+						<td>
 							<template v-if="!item.payload.groundings || item.payload.groundings.length < 1"
 								>--</template
 							>
@@ -377,26 +366,26 @@
 									{{ grounding.grounding_text }}
 								</a>
 							</template>
-						</div>
-					</section>
-				</main>
+						</td>
+					</tr>
+				</table>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
 					Time
 					<span class="artifact-amount">({{ time.length }})</span>
 				</template>
-				<main v-if="time.length > 0" class="datatable" style="--columns: 3">
-					<header>
-						<div>ID</div>
-						<div>Units</div>
-						<div>Extractions</div>
-					</header>
-					<section v-for="(item, index) in time" :key="index">
-						<div>{{ item?.id ?? '--' }}</div>
-						<div>{{ item?.units?.expression ?? '--' }}</div>
-					</section>
-				</main>
+				<table v-if="!isEmpty(time)" class="datatable" style="--columns: 3">
+					<tr>
+						<th>ID</th>
+						<th>Units</th>
+						<th>Extractions</th>
+					</tr>
+					<tr v-for="(item, index) in time" :key="index">
+						<td>{{ item?.id }}</td>
+						<td>{{ item?.units?.expression }}</td>
+					</tr>
+				</table>
 			</AccordionTab>
 		</Accordion>
 	</main>
@@ -444,7 +433,9 @@ const isRowEditable = ref<string | null>();
 const transientTableValue = ref<ModelTableTypes | null>(null);
 const nameOfCurieCache = ref(new Map<string, string>());
 
-const description = computed(() => highlightSearchTerms(props.model?.description));
+const description = computed(() =>
+	highlightSearchTerms(props.model?.description ?? props.model.metadata?.card?.DESCRIPTION)
+);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const publications = computed(() => []);
@@ -626,7 +617,7 @@ table tr > td:empty:before {
 	content: '--';
 }
 
-table .framework {
+td.framework {
 	text-transform: capitalize;
 }
 
