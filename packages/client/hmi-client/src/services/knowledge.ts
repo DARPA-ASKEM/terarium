@@ -42,7 +42,7 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  */
 const latexToAMR = async (
 	latex: string[],
-	framework = 'petrinet',
+	framework: string = 'petrinet',
 	modelId?: string
 ): Promise<Model | null> => {
 	try {
