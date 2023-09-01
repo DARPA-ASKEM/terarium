@@ -2,7 +2,7 @@ package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.NotebookSession;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.NotebookSessionProxy;
 
 import software.uncharted.terarium.hmiserver.utils.Converter;
@@ -47,7 +47,7 @@ public class NotebookSessionResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateNotebookSession(
 		@PathParam("id") String id,
-		ModelConfiguration config
+		NotebookSession config
 	) {
 		return proxy.updateNotebookSession(id, Converter.convertObjectToSnakeCaseJsonNode(config));
 	}

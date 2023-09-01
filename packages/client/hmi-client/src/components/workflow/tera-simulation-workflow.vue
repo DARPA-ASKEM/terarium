@@ -506,6 +506,13 @@ workflowEventBus.on(
 	}
 );
 
+workflowEventBus.on('update-state', (payload: { node: WorkflowNode; state }) => {
+	const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
+	if (foundNode) {
+		updateWorkflowNodeState(foundNode, payload.state);
+	}
+});
+
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };

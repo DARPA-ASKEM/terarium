@@ -5,7 +5,7 @@ import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.NotebookSession;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -30,7 +30,7 @@ public interface NotebookSessionProxy {
 	@GET
 	@Path("/{id}")
 	@LogRestClientTime
-	ModelConfiguration getNotebookSession(
+	NotebookSession getNotebookSession(
 		@PathParam("id") String id
 	);
 

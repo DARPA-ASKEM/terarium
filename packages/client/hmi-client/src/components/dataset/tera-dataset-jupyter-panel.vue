@@ -61,6 +61,7 @@
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
+			:notebook-session="props.notebookSession"
 		/>
 		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
@@ -108,7 +109,7 @@ import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
 import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { AssetType, CsvAsset } from '@/types/Types';
+import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -139,6 +140,7 @@ const props = defineProps<{
 	project?: IProject;
 	showKernels: boolean;
 	showChatThoughts: boolean;
+	notebookSession?: NotebookSession;
 }>();
 const emit = defineEmits(['new-dataset-saved']);
 
