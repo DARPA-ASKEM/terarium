@@ -149,15 +149,13 @@ async function saveCode() {
 }
 
 async function extractModel() {
-	if (!codeAsset.value?.id) {
-		const newCodeAsset = await saveCode();
-		if (newCodeAsset && newCodeAsset.id) {
-			const extractedAmr = await codeToAMR(newCodeAsset.id);
-			if (extractedAmr) {
-				model.value = extractedAmr as Model;
-				modelName.value = extractedAmr.header.name;
-				isModalVisible.value = true;
-			}
+	const newCodeAsset = await saveCode();
+	if (newCodeAsset && newCodeAsset.id) {
+		const extractedAmr = await codeToAMR(newCodeAsset.id);
+		if (extractedAmr) {
+			model.value = extractedAmr as Model;
+			modelName.value = extractedAmr.header.name;
+			isModalVisible.value = true;
 		}
 	}
 }
