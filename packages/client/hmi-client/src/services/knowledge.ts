@@ -43,7 +43,7 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @param modelId string - the model id to use for the extraction
  * @return {Promise<Model | null>}
  */
-const latexToAMR = async (
+export const latexToAMR = async (
 	latex: string[],
 	framework: string = 'petrinet',
 	modelId?: string
@@ -78,7 +78,10 @@ const latexToAMR = async (
  * @param framework [string] - the framework to use for the extraction, default to 'petrinet'
  * @return {Promise<Model | null>}
  */
-const mathmlToAMR = async (mathml: string[], framework = 'petrinet'): Promise<Model | null> => {
+export const mathmlToAMR = async (
+	mathml: string[],
+	framework = 'petrinet'
+): Promise<Model | null> => {
 	try {
 		const response = await API.post(`/knowledge/mathml-to-amr?framework=${framework}`, mathml);
 		if (response && response?.status === 200) {
@@ -211,4 +214,23 @@ export const extractPDF = async (artifact: Artifact) => {
 	}
 };
 
-export { mathmlToAMR, latexToAMR };
+export async function codeToAMR(codeId: string, name: string = '', description: string = '') {
+	const response = await API.post(
+		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}`
+	);
+	if (response && response?.status === 200) {
+		const { id, status } = response.data;
+		if (status === 'queued') {
+			const extraction = await fetchExtraction(id);
+			if (extraction?.state === PollerState.Done) {
+				const data = extraction.data as any; // fix linting
+				return data?.job_result.tds_model_id;
+			}
+		}
+		if (status === 'finished') {
+			return response.data.result?.job_result.tds_model.id;
+		}
+	}
+	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
+	return null;
+}

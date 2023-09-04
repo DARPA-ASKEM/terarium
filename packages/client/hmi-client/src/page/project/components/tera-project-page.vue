@@ -5,14 +5,11 @@
 		:project="project"
 		@asset-loaded="emit('asset-loaded')"
 	/>
-
-	<code-editor
+	<tera-code
+		:project="project"
+		:asset-id="assetId ?? ''"
 		v-else-if="pageType === AssetType.Code"
-		:initial-code="code"
-		@vue:mounted="
-			emit('asset-loaded');
-			openCode();
-		"
+		@asset-loaded="emit('asset-loaded')"
 	/>
 	<code-editor
 		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
@@ -84,6 +81,7 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
+import TeraCode from '@/components/code/tera-code.vue';
 
 const props = defineProps<{
 	project: IProject;
