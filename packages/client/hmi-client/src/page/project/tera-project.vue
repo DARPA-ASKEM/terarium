@@ -168,7 +168,6 @@ import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/work
 import { AssetType } from '@/types/Types';
 import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
-
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -212,12 +211,14 @@ function setActiveTab() {
 async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (!(asset && asset.assetId === props.assetId && asset.pageType === props.pageType)) {
-		loadingTabIndex.value = index;
-		router.push({
-			name: RouteName.ProjectRoute,
-			params: { assetId: asset.assetId, pageType: asset.pageType }
-		});
+	if (asset) {
+		if (!(asset.assetId === props.assetId && asset.pageType === props.pageType)) {
+			loadingTabIndex.value = index;
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: { assetId: asset.assetId, pageType: asset.pageType }
+			});
+		}
 	}
 }
 
@@ -284,6 +285,13 @@ const openWorkflow = async () => {
 	});
 };
 
+const openCode = () => {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: codeResource
+	});
+};
+
 const openNewAsset = (assetType: string) => {
 	switch (assetType) {
 		case AssetType.Models:
@@ -291,6 +299,9 @@ const openNewAsset = (assetType: string) => {
 			break;
 		case AssetType.Workflows:
 			openWorkflow();
+			break;
+		case AssetType.Code:
+			openCode();
 			break;
 		default:
 			break;
@@ -308,7 +319,7 @@ const overviewResource = {
 
 const codeResource = {
 	pageType: AssetType.Code,
-	assetId: ''
+	assetId: 'code' // FIXME: hack to get around weird tab behaviour
 };
 
 const adjustTabsProjectChange = () => {
@@ -378,7 +389,7 @@ onMounted(() => {
 	setTimeout(() => {
 		adjustTabsProjectChange();
 		adjustTabs();
-	}, 400);
+	}, 1000);
 });
 </script>
 

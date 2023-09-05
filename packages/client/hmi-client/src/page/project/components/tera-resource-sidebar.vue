@@ -234,13 +234,9 @@ const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
 		key: AssetType.Code,
-		label: 'Code editor',
+		label: 'New code',
 		command() {
-			emit('open-asset', {
-				assetName: 'New file',
-				pageType: AssetType.Code,
-				assetId: undefined
-			});
+			emit('open-new-asset', AssetType.Code);
 		}
 	},
 	{

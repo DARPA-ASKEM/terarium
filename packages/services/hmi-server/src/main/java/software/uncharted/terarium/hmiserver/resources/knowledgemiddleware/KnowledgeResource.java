@@ -101,16 +101,11 @@ public class KnowledgeResource {
 	@Path("/code-to-amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public ExtractionResponse postCodeToAMR(
-		String artifactId,
-		String name,
-		String description
+		@QueryParam("code_id") String codeId,
+		@QueryParam("name") String name,
+		@QueryParam("description") String description
 	) {
-		// Fetch the related artifact to fill potential missing name and description
-		final Artifact artifact = artifactProxy.getArtifact(artifactId);
-		if (name == null) {	name = artifact.getName(); }
-		if (description == null) { description = artifact.getDescription();	}
-
-		return knowledgeMiddlewareProxy.postCodeToAMR(artifactId, name, description);
+		return knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description);
 	}
 
 
@@ -186,4 +181,6 @@ public class KnowledgeResource {
 	) {
 		return knowledgeMiddlewareProxy.postProfileDataset(datasetId, artifactId);
 	};
+
+
 }
