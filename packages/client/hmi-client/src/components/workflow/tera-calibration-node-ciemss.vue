@@ -34,6 +34,8 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
+					:initial-data="csvAsset"
+					:mapping="mapping"
 					:chartConfig="cfg"
 					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
