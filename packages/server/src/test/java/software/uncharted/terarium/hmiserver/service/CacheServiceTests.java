@@ -10,7 +10,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.cache.CacheManager;
 import software.uncharted.terarium.hmiserver.PanteraApplicationTests;
 import software.uncharted.terarium.hmiserver.util.MatchUtil;
-import software.uncharted.terarium.hmiserver.model.CacheName;
+import software.uncharted.terarium.hmiserver.models.CacheName;
 
 import java.util.Objects;
 

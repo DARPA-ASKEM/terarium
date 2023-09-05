@@ -12,7 +12,7 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.PanteraApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.model.CacheName;
+import software.uncharted.terarium.hmiserver.models.CacheName;
 import software.uncharted.terarium.hmiserver.service.CacheableTestService;
 import software.uncharted.terarium.hmiserver.util.MatchUtil;
 

@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import software.uncharted.terarium.hmiserver.model.ClientLog;
-import software.uncharted.terarium.hmiserver.model.User;
+import software.uncharted.terarium.hmiserver.models.ClientLog;
+import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
 import java.util.ArrayList;

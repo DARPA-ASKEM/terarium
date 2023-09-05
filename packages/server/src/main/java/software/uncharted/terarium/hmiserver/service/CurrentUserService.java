@@ -7,7 +7,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.model.User;
+import software.uncharted.terarium.hmiserver.models.User;
 
 import java.util.stream.Collectors;
 

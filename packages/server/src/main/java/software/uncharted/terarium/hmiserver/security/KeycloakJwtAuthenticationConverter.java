@@ -11,10 +11,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.service.DataInitializationService;
-import software.uncharted.terarium.hmiserver.model.User;
-import software.uncharted.terarium.hmiserver.model.authority.KeycloakRole;
-import software.uncharted.terarium.hmiserver.model.authority.Role;
-import software.uncharted.terarium.hmiserver.model.authority.RoleType;
+import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.authority.KeycloakRole;
+import software.uncharted.terarium.hmiserver.models.authority.Role;
+import software.uncharted.terarium.hmiserver.models.authority.RoleType;
 import software.uncharted.terarium.hmiserver.service.AdminClientService;
 import software.uncharted.terarium.hmiserver.service.RoleService;
 import software.uncharted.terarium.hmiserver.service.UserService;

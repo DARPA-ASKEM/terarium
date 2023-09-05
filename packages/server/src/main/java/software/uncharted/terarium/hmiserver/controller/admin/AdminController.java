@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.repository.RoleRepository;
-import software.uncharted.terarium.hmiserver.model.User;
-import software.uncharted.terarium.hmiserver.model.authority.Role;
+import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.authority.Role;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.service.AdminClientService;
 

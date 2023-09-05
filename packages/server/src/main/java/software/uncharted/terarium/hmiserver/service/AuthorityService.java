@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.repository.AuthorityRepository;
-import software.uncharted.terarium.hmiserver.model.authority.Authority;
-import software.uncharted.terarium.hmiserver.model.authority.AuthorityType;
+import software.uncharted.terarium.hmiserver.models.authority.Authority;
+import software.uncharted.terarium.hmiserver.models.authority.AuthorityType;
 
 @Service
 @Slf4j

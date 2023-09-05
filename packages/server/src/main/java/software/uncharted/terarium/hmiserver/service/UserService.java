@@ -3,7 +3,7 @@ package software.uncharted.terarium.hmiserver.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
-import software.uncharted.terarium.hmiserver.model.User;
+import software.uncharted.terarium.hmiserver.models.User;
 
 import java.time.Instant;
 

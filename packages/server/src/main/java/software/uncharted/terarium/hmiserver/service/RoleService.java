@@ -2,7 +2,7 @@ package software.uncharted.terarium.hmiserver.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.model.authority.*;
+import software.uncharted.terarium.hmiserver.models.authority.*;
 import software.uncharted.terarium.hmiserver.repository.AuthorityRepository;
 import software.uncharted.terarium.hmiserver.repository.RoleRepository;
 

@@ -4,10 +4,10 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.model.authority.AuthorityLevel;
-import software.uncharted.terarium.hmiserver.model.authority.AuthorityType;
-import software.uncharted.terarium.hmiserver.model.authority.KeycloakRole;
-import software.uncharted.terarium.hmiserver.model.authority.RoleType;
+import software.uncharted.terarium.hmiserver.models.authority.AuthorityLevel;
+import software.uncharted.terarium.hmiserver.models.authority.AuthorityType;
+import software.uncharted.terarium.hmiserver.models.authority.KeycloakRole;
+import software.uncharted.terarium.hmiserver.models.authority.RoleType;
 
 import java.util.Arrays;
 import java.util.List;

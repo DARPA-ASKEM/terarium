@@ -9,7 +9,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.model.User;
+import software.uncharted.terarium.hmiserver.models.User;
 
 import javax.annotation.PostConstruct;
 
