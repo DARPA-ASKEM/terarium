@@ -32,6 +32,8 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
+					:initial-data="csvAsset"
+					:mapping="mapping"
 					:chartConfig="cfg"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
@@ -228,7 +230,7 @@ const runCalibrate = async () => {
 		},
 		extra: extra.value,
 		engine: 'sciml',
-		timespan: getTimespan(timeSpan.value, csvAsset.value)
+		timespan: getTimespan(timeSpan.value, csvAsset.value, mapping.value)
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	if (response?.simulationId) {

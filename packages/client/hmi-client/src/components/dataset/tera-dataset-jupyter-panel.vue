@@ -52,7 +52,6 @@
 		<tera-jupyter-chat
 			ref="chat"
 			:project="props.project"
-			:asset-id="props.assetId"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
@@ -62,8 +61,9 @@
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
+			:notebook-session="props.notebookSession"
 		/>
-		<div v-if="kernelState">
+		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
 			<Button
 				class="save-button p-button p-button-secondary p-button-sm"
@@ -109,7 +109,7 @@ import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
 import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { AssetType, CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -136,12 +136,13 @@ const runningSessions = ref<any[]>([]);
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assetId: string;
+	assetIds: string[];
 	project?: IProject;
-	dataset: Dataset;
 	showKernels: boolean;
 	showChatThoughts: boolean;
+	notebookSession?: NotebookSession;
 }>();
+const emit = defineEmits(['new-dataset-saved']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
@@ -190,10 +191,16 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
+
+	const contextInfo = {};
+	props.assetIds.forEach((assetId, i) => {
+		const key = `d${i + 1}`;
+		contextInfo[key] = assetId;
+	});
 	if (kernel?.name === 'llmkernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
-			context_info: { id: props.assetId }
+			context_info: contextInfo
 		});
 	}
 });
@@ -265,7 +272,7 @@ const saveAsNewDataset = async () => {
 		session: session?.name || '',
 		channel: 'shell',
 		content: {
-			parent_dataset_id: String(props.assetId),
+			parent_dataset_id: String(props.assetIds[0]),
 			name: datasetName,
 			var_name: actionTarget.value
 		},
@@ -372,6 +379,7 @@ const onNewDatasetSaved = async (payload) => {
 	}
 	const datasetId = payload.dataset_id;
 	await addAsset(props.project.id, AssetType.Datasets, datasetId);
+	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
 	toast.success(
 		'Dataset saved successfully',
 		'Refresh to see the dataset in the resource explorer'

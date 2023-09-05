@@ -259,7 +259,7 @@ async function createModelFromCode() {
 }
 
 async function getPDFContents(url: string): Promise<PDFExtractionResponseType> {
-	const result = await API.get(`/extract/convertpdfurl/`, {
+	const result = await API.get(`/knowledge/convertpdfurl/`, {
 		params: {
 			url,
 			extraction_method: 'pymupdf',
@@ -274,7 +274,7 @@ async function getPDFContents(url: string): Promise<PDFExtractionResponseType> {
 			.setInterval(2000)
 			.setThreshold(90)
 			.setPollAction(async () => {
-				const response = await API.get(`/extract/task-result/${taskID}`);
+				const response = await API.get(`/knowledge/task-result/${taskID}`);
 
 				if (response.data.status === 'SUCCESS' && response.data.result) {
 					return {

@@ -169,13 +169,13 @@
 				Saved as:
 				<Button
 					class=".p-button-link"
-					:label="stratifiedModel?.name"
+					:label="stratifiedModel?.header.name"
 					icon="pi pi-pencil"
 					iconPos="right"
 					text
 					@click="
 						emit('open-asset', {
-							assetName: `${stratifiedModel?.name}`,
+							assetName: `${stratifiedModel?.header.name}`,
 							pageType: AssetType.Models,
 							assetId: stratifiedModel?.id
 						})
