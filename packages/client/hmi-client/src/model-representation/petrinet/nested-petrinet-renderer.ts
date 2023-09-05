@@ -20,7 +20,7 @@ const { getNodeTypeColor } = useNodeTypeColorPalette();
 const { getNestedTypeColor, setNestedTypeColor } = useNestedTypeColorPalette();
 
 const getMaxDepth = (node, depth = 0) => {
-	const keys = Object.keys(node);
+	const keys = Object.keys(node).filter((d) => d !== '_key');
 	if (keys.length === 0) {
 		return depth - 1;
 	}
@@ -102,9 +102,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				return;
 			}
 
-			const nestedNodesLen = Object.keys(node).length;
+			const nestedNodesLen = Object.keys(node).filter((d) => d !== '_key').length;
 
 			Object.entries(node).forEach((kvPair, i) => {
+				if (kvPair[0] === '_key') return;
 				const value = kvPair[1];
 				const childRadius =
 					CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] *
