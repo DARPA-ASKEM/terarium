@@ -31,14 +31,6 @@
 					@click="datasetView = DatasetView.DATA"
 					:active="datasetView === DatasetView.DATA"
 				/>
-				<Button
-					v-if="!featureConfig.isPreview"
-					class="p-button-secondary p-button-sm"
-					label="Transform"
-					icon="pi pi-sync"
-					@click="openDatesetChatTab"
-					:active="datasetView === DatasetView.LLM"
-				/>
 			</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
@@ -48,10 +40,6 @@
 				/>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
-			<span v-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
-				<i class="pi pi-cog" @click="toggleSettingsMenu" />
-				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
-			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
 			<div class="container">
@@ -281,17 +269,6 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
-			<Suspense>
-				<tera-dataset-jupyter-panel
-					:asset-id="props.assetId"
-					:project="props.project"
-					:dataset="dataset"
-					:show-kernels="showKernels"
-					:show-chat-thoughts="showChatThoughts"
-				/>
-			</Suspense>
-		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
@@ -306,7 +283,6 @@ import { isString, cloneDeep } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
 import { Artifact, CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
@@ -367,9 +343,6 @@ const headers = ref({
 */
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
-const showKernels = ref(<boolean>false);
-const showChatThoughts = ref(<boolean>false);
-const menu = ref();
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
@@ -379,45 +352,13 @@ const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 
-const toggleSettingsMenu = (event: Event) => {
-	menu.value.toggle(event);
-};
-
 function formatName(name: string) {
 	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
 }
 
 const datasetView = ref(DatasetView.DESCRIPTION);
 
-const chatThoughtLabel = computed(() =>
-	showChatThoughts.value ? 'Auto hide chat thoughts' : 'Do not auto hide chat thoughts'
-);
-
-const kernelSettingsLabel = computed(() =>
-	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
-);
-
 const csvContent = computed(() => rawContent.value?.csv);
-
-const items = ref([
-	{
-		label: 'Chat Options',
-		items: [
-			{
-				label: kernelSettingsLabel,
-				command: () => {
-					showKernels.value = !showKernels.value;
-				}
-			},
-			{
-				label: chatThoughtLabel,
-				command: () => {
-					showChatThoughts.value = !showChatThoughts.value;
-				}
-			}
-		]
-	}
-]);
 
 /*
  * User Menu
@@ -492,10 +433,6 @@ function cancelRowEdits(index: number) {
 		groundingValues.value[index] = [...groundingValuesUnsaved.value[index]];
 	}
 }
-const openDatesetChatTab = () => {
-	datasetView.value = DatasetView.LLM;
-	jupyterCsv.value = null;
-};
 
 const fetchDataset = async () => {
 	const datasetTemp: Dataset | null = await getDataset(props.assetId);
