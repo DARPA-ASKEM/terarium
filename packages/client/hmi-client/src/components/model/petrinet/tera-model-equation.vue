@@ -74,7 +74,7 @@ const updateLatexFormula = (equationsList: string[]) => {
 };
 
 const updateModelFromEquations = async () => {
-	const updatedModel = await latexToAMR(equations.value);
+	const updatedModel = await latexToAMR(equations.value, 'petrinet', props.model.id);
 	if (updatedModel) {
 		emit('update-diagram', updateExistingModelContent(updatedModel, props.model));
 	}
