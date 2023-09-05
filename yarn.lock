@@ -8443,13 +8443,13 @@ cors@latest:
   languageName: node
   linkType: hard
 
-"feather-icons@npm:4.29.0":
-  version: 4.29.0
-  resolution: "feather-icons@npm:4.29.0"
+"feather-icons@npm:4.29.1":
+  version: 4.29.1
+  resolution: "feather-icons@npm:4.29.1"
   dependencies:
     classnames: ^2.2.5
     core-js: ^3.1.3
-  checksum: 13f344736de25e7235fe9ab67c00c88e30396c0ff416614cbfeedf0159cac64890b04d2c704b005f2b1fab8ba79a8fd22e96ed2b30fbb3f9a41de0f491da8993
+  checksum: 87c7d1b2a5049e0be1dbae27bd5d287c5abd9f4d6bc81783fa8559b2946fbd1e885f658584d0cff1879cb7bdedafaeb68e7548e2d5fcde40b9fcc74368259b92
   languageName: node
   linkType: hard
 
@@ -9307,7 +9307,7 @@ cors@latest:
     dagre: 0.8.5
     eslint-import-resolver-typescript: 3.5.5
     event-source-polyfill: 1.0.31
-    feather-icons: 4.29.0
+    feather-icons: 4.29.1
     graph-scaffolder: "*"
     katex: 0.16.8
     lodash: 4.17.21
