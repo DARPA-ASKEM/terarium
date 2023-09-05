@@ -113,6 +113,7 @@ const isModelDiagramModalVisible = ref(false);
 const isModelNamingModalVisible = ref(false);
 const newModelName = ref('');
 const newModelDescription = ref('');
+
 /**
  * Editor initialization function
  * @param editorInstance	the Ace editor instance
@@ -268,6 +269,15 @@ h4 {
 	font-size: 20px;
 	font-weight: var(--font-weight-semibold);
 	width: 100%;
+	border: 0;
+}
+
+:deep(.p-inputtext:enabled:hover) {
+	background-color: var(--surface-hover);
+}
+
+:deep(.p-inputtext:enabled:hover:focus) {
+	background-color: transparent;
 }
 
 :deep(header section) {
