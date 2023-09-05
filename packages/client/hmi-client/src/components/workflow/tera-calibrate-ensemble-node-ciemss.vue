@@ -41,19 +41,14 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, shallowRef, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
 import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
-import {
-	CsvAsset,
-	EnsembleCalibrationCiemssRequest,
-	TimeSpan,
-	EnsembleModelConfigs
-} from '@/types/Types';
+import { EnsembleCalibrationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
 	makeEnsembleCiemssCalibration,
 	getRunResultCiemss,
@@ -71,7 +66,6 @@ import {
 } from './calibrate-ensemble-ciemss-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import TeraProgressBar from './tera-progress-bar.vue';
-import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -98,8 +92,6 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 const datasetColumnNames = ref<string[]>();
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-
 const poller = new Poller();
 
 onMounted(() => {
@@ -118,9 +110,7 @@ const runEnsemble = async () => {
 
 	const params: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
-		// TODO: figure out what to use for the timespan
-		// timespan: timeSpan.value,
-		timespan: getTimespan(timeSpan.value, csvAsset.value),
+		timespan: timeSpan.value,
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value
@@ -201,7 +191,6 @@ watch(
 	async () => {
 		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
 	},
 	{ immediate: true }

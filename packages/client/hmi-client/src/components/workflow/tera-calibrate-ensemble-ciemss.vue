@@ -24,7 +24,6 @@
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
-				:initial-data="csvAsset"
 				:chartConfig="cfg"
 				has-mean-line
 				@configuration-change="chartConfigurationChange(index, $event)"
@@ -217,7 +216,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, shallowRef, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { saveDataset } from '@/services/dataset';
@@ -227,7 +226,7 @@ import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
-import { CsvAsset, ModelConfiguration, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
+import { ModelConfiguration, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -291,8 +290,6 @@ const customWeights = ref<boolean>(false);
 const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
-
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
@@ -420,7 +417,6 @@ watch(
 	async () => {
 		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
 		datasetColumnNames.value = csv?.headers;
 	},
 	{ immediate: true }
