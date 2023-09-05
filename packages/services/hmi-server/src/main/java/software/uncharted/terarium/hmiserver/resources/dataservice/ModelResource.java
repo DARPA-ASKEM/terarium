@@ -61,7 +61,7 @@ public class ModelResource {
 	@GET
 	@Path("/descriptions")
 	public Response getDescriptions(
-		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("1000") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return proxy.getDescriptions(pageSize, page);
