@@ -211,6 +211,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary)')
 			.style('pointer-events', 'none')
+			.style('text-shadow', '1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff, 0 1px 0 #fff')
 			.text((d) => d.id);
 	}
 }
