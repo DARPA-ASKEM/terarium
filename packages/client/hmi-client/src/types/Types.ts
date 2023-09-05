@@ -78,11 +78,27 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    name: string;
-    description: string;
+    /**
+     * @deprecated
+     */
+    name?: string;
+    /**
+     * @deprecated
+     */
+    description?: string;
+    /**
+     * @deprecated
+     */
     model_version?: string;
-    schema: string;
+    /**
+     * @deprecated
+     */
+    schema?: string;
+    /**
+     * @deprecated
+     */
     schema_name?: string;
+    header: ModelHeader;
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
@@ -95,6 +111,14 @@ export interface ModelConfiguration {
     description?: string;
     modelId: string;
     configuration: any;
+}
+
+export interface NotebookSession {
+    id: string;
+    name: string;
+    description?: string;
+    data: any;
+    timestamp: string;
 }
 
 export interface Project {
@@ -222,12 +246,16 @@ export interface PetriNetModel {
 
 export interface ExtractionResponse {
     id: string;
+    status: string;
+    result: ExtractionResponseResult;
+}
+
+export interface ExtractionResponseResult {
     created_at: Date;
     enqueued_at: Date;
     started_at: Date;
-    status: string;
-    extraction_error: string;
-    result: any;
+    job_error: string;
+    job_result: any;
 }
 
 export interface DKG {
@@ -314,6 +342,14 @@ export interface Concept {
     object_id: string;
 }
 
+export interface ModelHeader {
+    name: string;
+    schema: string;
+    schema_name?: string;
+    description: string;
+    model_version?: string;
+}
+
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
@@ -330,6 +366,7 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
+    card?: Card;
 }
 
 export interface Assets {
@@ -437,6 +474,20 @@ export interface Annotations {
     diseases?: string[];
     hosts?: string[];
     model_types?: string[];
+}
+
+export interface Card {
+    description?: string;
+    authorInst?: string;
+    authorAuthor?: string;
+    authorEmail?: string;
+    date?: string;
+    schema?: string;
+    provenance?: string;
+    dataset?: string;
+    complexity?: string;
+    usage?: string;
+    license?: string;
 }
 
 export interface Extraction {

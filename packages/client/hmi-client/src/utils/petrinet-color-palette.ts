@@ -15,11 +15,26 @@ export const nodeTypeColors = [
 	'#b15928'
 ];
 
-let scale: d3.ScaleOrdinal<string, string, never> = d3.scaleOrdinal(nodeTypeColors).domain([]);
+export const nestedTypeColors = [
+	'#c9e9a9',
+	'#aedc30',
+	'#53d25e',
+	'#03c386',
+	'#01a9a1',
+	'#0098b3',
+	'#007eb3',
+	'#00659f',
+	'#3e4d83'
+];
+
 const domain: string[] = [];
 
+let scaleNodeType: d3.ScaleOrdinal<string, string, never> = d3
+	.scaleOrdinal(nodeTypeColors)
+	.domain([]);
+
 function getNodeTypeColor(id: string): string {
-	return scale(id);
+	return scaleNodeType(id);
 }
 
 function setNodeTypeColor(ids: string[]): void {
@@ -28,9 +43,23 @@ function setNodeTypeColor(ids: string[]): void {
 			domain.push(id);
 		}
 	});
-	scale = d3.scaleOrdinal(nodeTypeColors).domain(domain);
+	scaleNodeType = d3.scaleOrdinal(nodeTypeColors).domain(domain);
 }
 
 export function useNodeTypeColorPalette() {
 	return { getNodeTypeColor, setNodeTypeColor };
+}
+
+let scaleNestedType = d3.scaleLinear().domain([0, 2]);
+
+function getNestedTypeColor(id: number): string {
+	return d3.piecewise(d3.interpolateRgb.gamma(2.2), nestedTypeColors)(scaleNestedType(id));
+}
+
+function setNestedTypeColor(setDomain: [number, number]): void {
+	scaleNestedType = d3.scaleLinear().domain(setDomain);
+}
+
+export function useNestedTypeColorPalette() {
+	return { getNestedTypeColor, setNestedTypeColor };
 }

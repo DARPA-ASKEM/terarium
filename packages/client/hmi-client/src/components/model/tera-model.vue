@@ -3,7 +3,7 @@
 	<main>
 		<tera-asset
 			v-if="model"
-			:name="model.name"
+			:name="model.header.name"
 			:feature-config="featureConfig"
 			:is-naming-asset="isNaming"
 			:stretch-content="view === ModelView.MODEL"
@@ -47,7 +47,13 @@
 					<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				</template>
 			</template>
-			<tera-model-description v-if="view === ModelView.DESCRIPTION" :model="model" />
+			<tera-model-description
+				v-if="view === ModelView.DESCRIPTION"
+				:model="model"
+				:highlight="highlight"
+				:project="project"
+				@update-model="updateModelContent"
+			/>
 			<tera-model-editor
 				v-else-if="view === ModelView.MODEL"
 				:model="model"
@@ -117,7 +123,7 @@ const optionsMenuItems = ref([
 		label: 'Rename',
 		command() {
 			isRenaming.value = true;
-			newName.value = model.value?.name ?? '';
+			newName.value = model.value?.header.name ?? '';
 		}
 	}
 	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
@@ -137,6 +143,7 @@ watch(
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
 		model.value = !isEmpty(props.assetId) ? await getModel(props.assetId) : null;
+		console.log(model.value);
 	},
 	{ immediate: true }
 );

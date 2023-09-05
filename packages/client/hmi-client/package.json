@@ -46,7 +46,7 @@
 		"dagre": "0.8.5",
 		"eslint-import-resolver-typescript": "3.5.5",
 		"event-source-polyfill": "1.0.31",
-		"feather-icons": "4.29.0",
+		"feather-icons": "4.29.1",
 		"graph-scaffolder": "*",
 		"katex": "0.16.8",
 		"lodash": "4.17.21",
@@ -67,7 +67,7 @@
 		"vue-feather": "2.0.0",
 		"vue-gtag": "2.0.1",
 		"vue-router": "4.1.6",
-		"vue3-ace-editor": "2.2.2",
+		"vue3-ace-editor": "2.2.3",
 		"vue3-draggable-resizable": "1.6.5"
 	},
 	"devDependencies": {

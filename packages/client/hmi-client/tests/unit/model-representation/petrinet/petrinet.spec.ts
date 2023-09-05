@@ -35,7 +35,7 @@ describe('petrinet general utilities test', () => {
 
 	it('new empty amr', () => {
 		const res = newAMR('test123');
-		expect(res.name).to.eq('test123');
+		expect(res.header.name).to.eq('test123');
 		expect(res).toHaveProperty('model');
 	});
 });
