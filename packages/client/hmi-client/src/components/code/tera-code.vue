@@ -3,10 +3,23 @@
 		<template #name-input>
 			<section class="header">
 				<section class="name">
-					<InputText v-model="codeName" class="name-input" @change="saveCode" />
+					<InputText
+						v-model="codeName"
+						class="name-input"
+						@change="
+							() => {
+								programmingLanguage = getProgrammingLanguage(codeName);
+								saveCode();
+							}
+						"
+					/>
 				</section>
 				<section class="buttons">
-					<Dropdown v-model="programmingLanguage" :options="programmingLanguages" />
+					<Dropdown
+						v-model="programmingLanguage"
+						:options="programmingLanguages"
+						@change="codeName = setFileExtension(codeName)"
+					/>
 					<FileUpload
 						name="demo[]"
 						:customUpload="true"
@@ -25,7 +38,7 @@
 		<v-ace-editor
 			v-model:value="codeText"
 			@init="initialize"
-			lang="python"
+			:lang="programmingLanguage"
 			theme="chrome"
 			style="height: 100%; width: 100%"
 			class="ace-editor"
@@ -105,6 +118,9 @@
 import { ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import 'ace-builds/src-noconflict/mode-python';
+import 'ace-builds/src-noconflict/mode-julia';
+import 'ace-builds/src-noconflict/mode-r';
 import Button from 'primevue/button';
 import {
 	uploadCodeToProject,
@@ -187,6 +203,7 @@ function setFileExtension(fileName: string) {
 }
 
 async function saveCode() {
+	// programmingLanguage.value = getProgrammingLanguage(codeName.value);
 	const existingCode = resourceStore.activeProjectAssets?.code.find((c) => c.id === props.assetId);
 	if (existingCode?.id) {
 		codeName.value = setFileExtension(codeName.value);
@@ -204,7 +221,8 @@ async function saveCode() {
 		}
 		return updatedCode;
 	}
-	return null;
+	newCodeName.value = codeName.value;
+	return saveNewCode();
 }
 
 async function saveNewCode() {
@@ -289,13 +307,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-watch(
-	() => programmingLanguage.value,
-	() => {
-		saveCode();
-	}
-);
 </script>
 
 <style scoped>
@@ -361,11 +372,5 @@ h4 {
 :deep(header section) {
 	gap: 0;
 	max-width: 100%;
-}
-
-.input-buttons {
-	display: flex;
-	/* position: relative;
-	right: 2rem; */
 }
 </style>
