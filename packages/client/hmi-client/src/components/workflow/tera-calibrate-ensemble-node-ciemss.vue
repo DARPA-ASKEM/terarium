@@ -48,12 +48,7 @@ import { ref, shallowRef, watch, computed, ComputedRef, onMounted, onUnmounted }
 import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
-import {
-	CsvAsset,
-	EnsembleCalibrationCiemssRequest,
-	TimeSpan,
-	EnsembleModelConfigs
-} from '@/types/Types';
+import { CsvAsset, EnsembleCalibrationCiemssRequest, EnsembleModelConfigs } from '@/types/Types';
 import {
 	makeEnsembleCiemssCalibration,
 	getRunResultCiemss,
@@ -88,7 +83,6 @@ const disableRunButton = computed(
 	() => !ensembleConfigs?.value[0]?.weight || !datasetId.value || !currentDatasetFileName.value
 );
 const ensembleConfigs = computed<EnsembleModelConfigs[]>(() => props.node.state.mapping);
-const timeSpan = computed<TimeSpan>(() => props.node.state.timeSpan);
 const extra = ref<EnsembleCalibrateExtraCiemss>(props.node.state.extra);
 
 const runResults = ref<RunResults>({});
@@ -118,9 +112,7 @@ const runEnsemble = async () => {
 
 	const params: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: ensembleConfigs.value,
-		// TODO: figure out what to use for the timespan
-		// timespan: timeSpan.value,
-		timespan: getTimespan(timeSpan.value, csvAsset.value),
+		timespan: getTimespan(csvAsset.value),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value

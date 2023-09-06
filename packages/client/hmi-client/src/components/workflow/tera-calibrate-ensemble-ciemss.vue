@@ -184,20 +184,12 @@
 					<table>
 						<thead class="p-datatable-thead">
 							<th>Units</th>
-							<th>Start Step</th>
-							<th>End Step</th>
 							<th>Number of Samples</th>
 							<th>Number of iterations</th>
 							<th>Total Population</th>
 						</thead>
 						<tbody class="p-datatable-tbody">
 							<td>Steps</td>
-							<td>
-								<InputNumber v-model="timeSpan.start" />
-							</td>
-							<td>
-								<InputNumber v-model="timeSpan.end" />
-							</td>
 							<td>
 								<InputNumber v-model="extra.numSamples" />
 							</td>
@@ -227,7 +219,7 @@ import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
-import { CsvAsset, ModelConfiguration, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
+import { CsvAsset, ModelConfiguration, EnsembleModelConfigs } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -278,7 +270,6 @@ const allModelConfigurations = ref<ModelConfiguration[]>([]);
 const allModelOptions = ref<string[][]>([]);
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
-const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const extra = ref<EnsembleCalibrateExtraCiemss>(props.node.state.extra);
 
 const completedRunId = computed<string>(
@@ -463,21 +454,6 @@ watch(
 
 		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
-
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => timeSpan.value,
-	async () => {
-		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
-		state.timeSpan = timeSpan.value;
 
 		workflowEventBus.emitNodeStateChange({
 			workflowId: props.node.workflowId,

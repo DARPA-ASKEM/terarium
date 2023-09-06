@@ -213,8 +213,6 @@ const runCalibrate = async () => {
 	const initialsObj = {};
 	const paramsObj = {};
 
-	const state = props.node.state;
-
 	initials.forEach((d) => {
 		initialsObj[d] = Math.random() * 100;
 	});
@@ -234,7 +232,7 @@ const runCalibrate = async () => {
 			num_iterations: numIterations.value,
 			method: method.value
 		},
-		timespan: getTimespan(state.timeSpan, csvAsset.value, mapping.value),
+		timespan: getTimespan(csvAsset.value, mapping.value),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
