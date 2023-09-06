@@ -31,7 +31,6 @@ import {
 } from '@jupyterlab/completer';
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 // import InputText from 'primevue/inputtext';
 
 const props = defineProps({
@@ -85,7 +84,7 @@ const codeCell = ref<HTMLElement | null>(null);
 
 // Initialize cellWidget
 const cellWidget = new CodeCell({
-	rendermime: renderMime as IRenderMimeRegistry,
+	rendermime: renderMime,
 	editorConfig: {
 		lineNumbers: true
 	},
