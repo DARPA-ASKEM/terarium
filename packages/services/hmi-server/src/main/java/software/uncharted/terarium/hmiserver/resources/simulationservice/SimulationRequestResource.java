@@ -93,7 +93,9 @@ public class SimulationRequestResource {
 	public Simulation makeForecastRunCiemss(
 		final SimulationRequest request
 	) {
-		request.setInterventions(getIntervention(request.getModelConfigId()));
+		if (request.getInterventions() == null){
+			request.setInterventions(getInterventionFromId(request.getModelConfigId()));
+		}
 		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
 		Simulation sim = new Simulation();
@@ -193,7 +195,8 @@ public class SimulationRequestResource {
 	//Get modelConfigId
 	//Check if it has timeseries in its metadata
 	//If it does for each element convert it to type Intervention and add it to this.interventions
-	public List<Intervention> getIntervention(String modelConfigId){
+	//Schema: http://json-schema.org/draft-07/schema#
+	public List<Intervention> getInterventionFromId(String modelConfigId){
 		List<Intervention> interventionList = new ArrayList<>();
 		try {
 			ObjectMapper mapper = new ObjectMapper();
