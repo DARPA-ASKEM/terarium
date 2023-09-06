@@ -3,9 +3,10 @@
 		<template #name-input>
 			<section class="header">
 				<section class="name">
-					<InputText v-model="codeName" class="name-input" />
+					<InputText v-model="codeName" class="name-input" @change="saveCode" />
 				</section>
 				<section class="buttons">
+					<Dropdown v-model="programmingLanguage" :options="programmingLanguages" />
 					<FileUpload
 						name="demo[]"
 						:customUpload="true"
@@ -15,7 +16,8 @@
 						chooseLabel="Load file"
 						class="p-button-secondary"
 					/>
-					<Button label="Save code" @click="saveCode" />
+					<Button label="Save" @click="saveCode" />
+					<Button label="Save as new" @click="isCodeNamingModalVisible = true" />
 					<Button label="Create model from code" @click="isModelNamingModalVisible = true" />
 				</section>
 			</section>
@@ -63,6 +65,38 @@
 					/>
 				</template>
 			</tera-modal>
+			<tera-modal
+				v-if="isCodeNamingModalVisible"
+				class="modal"
+				@modal-mask-clicked="isCodeNamingModalVisible = false"
+				@modal-enter-press="isCodeNamingModalVisible = false"
+			>
+				<template #header>
+					<h4>Save new code</h4>
+				</template>
+				<template #default>
+					<form @submit.prevent>
+						<label for="model-name">Name</label>
+						<InputText id="model-name" type="text" v-model="newCodeName" />
+					</form>
+				</template>
+				<template #footer>
+					<Button
+						label="Cancel"
+						class="p-button-secondary"
+						@click="isCodeNamingModalVisible = false"
+					/>
+					<Button
+						label="Save code"
+						@click="
+							() => {
+								isCodeNamingModalVisible = false;
+								saveNewCode();
+							}
+						"
+					/>
+				</template>
+			</tera-modal>
 		</Teleport>
 	</tera-asset>
 </template>
@@ -76,11 +110,13 @@ import {
 	uploadCodeToProject,
 	getCodeFileAsText,
 	getCodeAsset,
-	updateCodeAsset
+	updateCodeAsset,
+	getFileExtension,
+	getProgrammingLanguage
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/knowledge';
-import { AssetType, Code } from '@/types/Types';
+import { AssetType, Code, ProgrammingLanguage } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import router from '@/router';
@@ -90,6 +126,7 @@ import FileUpload from 'primevue/fileupload';
 import { IProject } from '@/types/Project';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import Dropdown from 'primevue/dropdown';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -111,8 +148,16 @@ const selectedText = ref('');
 const progress = ref(0);
 const isModelDiagramModalVisible = ref(false);
 const isModelNamingModalVisible = ref(false);
+const isCodeNamingModalVisible = ref(false);
+const newCodeName = ref('');
 const newModelName = ref('');
 const newModelDescription = ref('');
+const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
+const programmingLanguages = [
+	ProgrammingLanguage.Julia,
+	ProgrammingLanguage.Python,
+	ProgrammingLanguage.R
+];
 
 /**
  * Editor initialization function
@@ -131,13 +176,26 @@ function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
 }
 
+function setFileExtension(fileName: string) {
+	// check name for file extension
+	// if there is no extension, add the appropriate one based on the selected language
+	const name = fileName.split('.');
+	if (name.length > 0) {
+		return name[0].concat('.').concat(getFileExtension(programmingLanguage.value));
+	}
+	return fileName;
+}
+
 async function saveCode() {
-	const existingCode = resourceStore.activeProjectAssets?.code.find(
-		(c) => c.name === codeName.value
-	);
+	const existingCode = resourceStore.activeProjectAssets?.code.find((c) => c.id === props.assetId);
 	if (existingCode?.id) {
+		codeName.value = setFileExtension(codeName.value);
 		const file = new File([codeText.value], codeName.value);
-		const updatedCode = await updateCodeAsset(existingCode, file, progress);
+		const updatedCode = await updateCodeAsset(
+			{ ...existingCode, name: codeName.value },
+			file,
+			progress
+		);
 		if (!updatedCode) {
 			toast.error('', 'Unable to save file');
 		} else {
@@ -146,12 +204,17 @@ async function saveCode() {
 		}
 		return updatedCode;
 	}
-	const file = new File([codeText.value], codeName.value);
+	return null;
+}
+
+async function saveNewCode() {
+	newCodeName.value = setFileExtension(newCodeName.value);
+	const file = new File([codeText.value], newCodeName.value);
 	const newCodeAsset = await uploadCodeToProject(props.project.id, file, progress);
 	if (!newCodeAsset) {
 		toast.error('', 'Unable to save file');
 	} else {
-		toast.success('', `File saved as ${codeName.value}`);
+		toast.success('', `File saved as ${newCodeName.value}`);
 		codeAsset.value = newCodeAsset;
 		router.push({
 			name: RouteName.ProjectRoute,
@@ -209,19 +272,29 @@ watch(
 				if (text) {
 					codeText.value = text;
 				}
+				programmingLanguage.value = getProgrammingLanguage(codeName.value);
 			} else {
 				codeAsset.value = null;
 				codeName.value = 'newcode.py';
 				codeText.value = INITIAL_TEXT;
+				programmingLanguage.value = ProgrammingLanguage.Python;
 			}
 		} else {
 			codeAsset.value = null;
 			codeName.value = 'newcode.py';
 			codeText.value = INITIAL_TEXT;
+			programmingLanguage.value = ProgrammingLanguage.Python;
 		}
 		emit('asset-loaded');
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => programmingLanguage.value,
+	() => {
+		saveCode();
+	}
 );
 </script>
 
@@ -250,6 +323,10 @@ h4 {
 	gap: 0.5rem;
 }
 
+.buttons > * {
+	height: 2.5rem;
+}
+
 .ace-editor {
 	border-top: 1px solid var(--surface-border-light);
 }
@@ -261,6 +338,7 @@ h4 {
 
 .name {
 	flex-grow: 2;
+	display: flex;
 }
 
 .name-input {
@@ -282,5 +360,12 @@ h4 {
 
 :deep(header section) {
 	gap: 0;
+	max-width: 100%;
+}
+
+.input-buttons {
+	display: flex;
+	/* position: relative;
+	right: 2rem; */
 }
 </style>

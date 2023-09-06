@@ -172,11 +172,26 @@ function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 	}
 }
 
+function getFileExtension(language: ProgrammingLanguage): string {
+	switch (language) {
+		case ProgrammingLanguage.Python:
+			return 'py';
+		case ProgrammingLanguage.Julia:
+			return 'jl';
+		case ProgrammingLanguage.R:
+			return 'r';
+		default:
+			return '';
+	}
+}
+
 export {
 	uploadCodeToProject,
 	getCodeFileAsText,
 	uploadCodeToProjectFromGithub,
 	getCodeAsset,
 	updateCodeAsset,
-	addFileToCodeAsset
+	addFileToCodeAsset,
+	getFileExtension,
+	getProgrammingLanguage
 };
