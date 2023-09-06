@@ -24,7 +24,7 @@ export const getStates = (amr: Model) => {
 			let str = state.id;
 			modifierKeys.forEach((key) => {
 				str = str.replace(`_${grounding.modifiers[key]}`, '');
-				obj[key] = grounding.modifiers[key];
+				obj[key] = [grounding.modifiers[key]];
 			});
 			obj.base = str;
 

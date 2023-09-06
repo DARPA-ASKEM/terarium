@@ -25,6 +25,8 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 		const keys = Object.keys(data[i]);
 
 		keys.forEach((key) => {
+			if (!_.isArray(data[i][key])) return;
+
 			let terms: any[] = [];
 			if (cardinality.has(key)) {
 				terms = cardinality.get(key);
