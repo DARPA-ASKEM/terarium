@@ -37,13 +37,14 @@ import {
 	KernelState,
 	createMessageId
 } from '@/services/jupyter';
-import { AssetType, CsvAsset } from '@/types/Types';
+import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { updateNotebookSession } from '@/services/notebook-session';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -84,9 +85,13 @@ const props = defineProps<{
 	jupyterSession: SessionContext;
 	kernelStatus: String;
 	autoExpandPreview?: boolean;
+	notebookSession?: NotebookSession;
 }>();
 
-onMounted(() => {
+onMounted(async () => {
+	if (props.notebookSession) {
+		notebookItems.value = props.notebookSession.data?.history;
+	}
 	activeSessions.value = getSessionManager().running();
 });
 
@@ -198,6 +203,11 @@ const updateNotebookCells = (message) => {
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
 		notebookItem.executions.push(executionParent);
+		// add the latest message execution to the code cell, we need this in order to persist the latest code execution
+		const codeCell = notebookItem.messages.find((m) => m.header.msg_type === 'code_cell');
+		if (codeCell) {
+			codeCell.content.code = message.content.code;
+		}
 		return;
 	}
 
@@ -316,6 +326,32 @@ watch(
 	() => {
 		console.log(props.project, props.assetId);
 	}
+);
+
+// update the notebook history when we get the notebookSession
+watch(
+	() => props.notebookSession,
+	() => {
+		if (props.notebookSession) {
+			notebookItems.value = props.notebookSession.data.history;
+		}
+	}
+);
+
+watch(
+	() => notebookItems.value,
+	async () => {
+		if (props.notebookSession) {
+			await updateNotebookSession({
+				id: props.notebookSession.id,
+				name: props.notebookSession.name,
+				description: props.notebookSession.description,
+				data: { history: notebookItems.value },
+				timestamp: new Date().toISOString()
+			});
+		}
+	},
+	{ deep: true }
 );
 
 defineExpose({

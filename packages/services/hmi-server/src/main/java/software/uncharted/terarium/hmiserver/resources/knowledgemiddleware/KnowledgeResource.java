@@ -73,26 +73,21 @@ public class KnowledgeResource {
 
 	/**
 	 * Post LaTeX to SKEMA Unified service to get an AMR
-	 * @param	framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
-	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR mode.
-	 * @return (Model): The AMR model
+	 * @param   framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param   modelId (String): the id of the model (to update) based on the set of equations
+	 * @param   equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @return  (ExtractionResponse): The response from the extraction service
 	 */
 	@POST
 	@Path("/latex-to-amr/{framework}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Model postLaTeXToAMR(
+	public ExtractionResponse postLaTeXToAMR(
 		@DefaultValue("petrinet") @PathParam("framework") String framework,
+		@QueryParam("modelId") String modelId,
 		List<String> equations
 	) {
-		/* Create the JSON request containing the LaTeX equations and model framework:
-		 * https://skema-unified.staging.terarium.ai/docs#/workflows/equations_to_amr_workflows_latex_equations_to_amr_post
-		 * ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
-		 */
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode request = mapper.createObjectNode();
-		request.put("model", framework);
-		request.set("equations", mapper.valueToTree(equations));
-		return skemaUnifiedProxy.postLaTeXToAMR(request);
+		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
+		return knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations);
 	};
 
 	/**
@@ -106,16 +101,11 @@ public class KnowledgeResource {
 	@Path("/code-to-amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public ExtractionResponse postCodeToAMR(
-		String artifactId,
-		String name,
-		String description
+		@QueryParam("code_id") String codeId,
+		@QueryParam("name") String name,
+		@QueryParam("description") String description
 	) {
-		// Fetch the related artifact to fill potential missing name and description
-		final Artifact artifact = artifactProxy.getArtifact(artifactId);
-		if (name == null) {	name = artifact.getName(); }
-		if (description == null) { description = artifact.getDescription();	}
-
-		return knowledgeMiddlewareProxy.postCodeToAMR(artifactId, name, description);
+		return knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description);
 	}
 
 
@@ -157,6 +147,24 @@ public class KnowledgeResource {
 	}
 
 	/**
+	 * Profile a model
+	 *
+	 * @param		modelId (String): The ID of the model to profile
+	 * @param		documentText (String): The text of the document to profile
+	 *
+	 * @return the profiled model
+	 */
+	@POST
+	@Path("/profile-model/{model_id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postProfileModel(
+		@PathParam("model_id") String modelId,
+		@QueryParam("artifact_id") String artifactId
+	) { 
+		return knowledgeMiddlewareProxy.postProfileModel(modelId, artifactId);
+	};
+
+	/**
 	 * Profile a dataset
 	 *
 	 * @param		datasetId (String): The ID of the dataset to profile
@@ -173,4 +181,6 @@ public class KnowledgeResource {
 	) {
 		return knowledgeMiddlewareProxy.postProfileDataset(datasetId, artifactId);
 	};
+
+
 }
