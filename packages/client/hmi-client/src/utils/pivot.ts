@@ -40,9 +40,6 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 				}
 			});
 
-			// if (!terms.includes(data[i][key])) {
-			// 	terms.push(data[i][key]);
-			// }
 			cardinality.set(key, terms);
 		});
 	}
