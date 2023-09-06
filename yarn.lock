@@ -2123,30 +2123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/rendermime@npm:3.6.3, @jupyterlab/rendermime@npm:^3.6.3":
-  version: 3.6.3
-  resolution: "@jupyterlab/rendermime@npm:3.6.3"
-  dependencies:
-    "@jupyterlab/apputils": ^3.6.3
-    "@jupyterlab/codemirror": ^3.6.3
-    "@jupyterlab/coreutils": ^5.6.3
-    "@jupyterlab/nbformat": ^3.6.3
-    "@jupyterlab/observables": ^4.6.3
-    "@jupyterlab/rendermime-interfaces": ^3.6.3
-    "@jupyterlab/services": ^6.6.3
-    "@jupyterlab/translation": ^3.6.3
-    "@lumino/algorithm": ^1.9.0
-    "@lumino/coreutils": ^1.11.0
-    "@lumino/messaging": ^1.10.0
-    "@lumino/signaling": ^1.10.0
-    "@lumino/widgets": ^1.37.2
-    lodash.escape: ^4.0.1
-    marked: ^4.0.17
-  checksum: cae953db43d3370b3fb96c5469747120a0f88fc8d7c0e03fe73b10492c16e5e4b0787b83d9a6b3183ccf45c8b892b1d30651150157a976d5f043996614dd9230
-  languageName: node
-  linkType: hard
-
-"@jupyterlab/rendermime@npm:^3.6.5":
+"@jupyterlab/rendermime@npm:3.6.5, @jupyterlab/rendermime@npm:^3.6.5":
   version: 3.6.5
   resolution: "@jupyterlab/rendermime@npm:3.6.5"
   dependencies:
@@ -2166,6 +2143,29 @@ __metadata:
     lodash.escape: ^4.0.1
     marked: ^4.0.17
   checksum: 3372ebad3df65121d86fc4775686ab5a1ef9eaae27b484de4f97e5c208b3f2228b4b9918fa2ae4e8819bb22b638c4325937321bcb50f8a5dbfea5b1effd725f6
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/rendermime@npm:^3.6.3":
+  version: 3.6.3
+  resolution: "@jupyterlab/rendermime@npm:3.6.3"
+  dependencies:
+    "@jupyterlab/apputils": ^3.6.3
+    "@jupyterlab/codemirror": ^3.6.3
+    "@jupyterlab/coreutils": ^5.6.3
+    "@jupyterlab/nbformat": ^3.6.3
+    "@jupyterlab/observables": ^4.6.3
+    "@jupyterlab/rendermime-interfaces": ^3.6.3
+    "@jupyterlab/services": ^6.6.3
+    "@jupyterlab/translation": ^3.6.3
+    "@lumino/algorithm": ^1.9.0
+    "@lumino/coreutils": ^1.11.0
+    "@lumino/messaging": ^1.10.0
+    "@lumino/signaling": ^1.10.0
+    "@lumino/widgets": ^1.37.2
+    lodash.escape: ^4.0.1
+    marked: ^4.0.17
+  checksum: cae953db43d3370b3fb96c5469747120a0f88fc8d7c0e03fe73b10492c16e5e4b0787b83d9a6b3183ccf45c8b892b1d30651150157a976d5f043996614dd9230
   languageName: node
   linkType: hard
 
@@ -9157,7 +9157,7 @@ cors@latest:
     "@jupyterlab/codemirror": 3.6.5
     "@jupyterlab/completer": 3.6.5
     "@jupyterlab/coreutils": 5.6.5
-    "@jupyterlab/rendermime": 3.6.3
+    "@jupyterlab/rendermime": 3.6.5
     "@jupyterlab/services": 6.6.5
     "@jupyterlab/theme-light-extension": 3.6.5
     "@jupyterlab/translation": 3.6.5
