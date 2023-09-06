@@ -2,7 +2,7 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 // import { EnsembleRequest } from '@/types/Types';
 // import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';
-import { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
+import { EnsembleModelConfigs } from '@/types/Types';
 
 export interface EnsembleCalibrateExtraCiemss {
 	numSamples: number;
@@ -14,7 +14,6 @@ export interface CalibrateEnsembleCiemssOperationState {
 	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
 	mapping: EnsembleModelConfigs[];
-	timeSpan: TimeSpan;
 	extra: EnsembleCalibrateExtraCiemss;
 	simulationsInProgress: string[];
 }
@@ -41,7 +40,6 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: [],
-			timeSpan: { start: 0, end: 40 },
 			extra: {
 				numSamples: 50,
 				totalPopulation: 1000,

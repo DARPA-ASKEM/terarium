@@ -3,7 +3,6 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { ChartConfig } from '@/types/SimulateConfig';
-import { TimeSpan } from '@/types/Types';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -27,7 +26,6 @@ export interface CalibrationOperationStateJulia {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
 	extra: CalibrateExtraJulia;
-	timeSpan: TimeSpan;
 	simulationsInProgress: string[];
 }
 
@@ -76,7 +74,6 @@ export const CalibrationOperationJulia: Operation = {
 				odeMethod: 'default',
 				calibrateMethod: CalibrateMethodOptions.GLOBAL
 			},
-			timeSpan: { start: 0, end: 90 },
 			simulationsInProgress: []
 		};
 		return init;

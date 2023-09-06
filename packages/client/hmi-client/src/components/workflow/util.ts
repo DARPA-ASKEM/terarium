@@ -2,12 +2,11 @@ import { DataseriesConfig, RunType } from '@/types/SimulateConfig';
 import { CsvAsset, TimeSpan } from '@/types/Types';
 
 export const getTimespan = (
-	inputTimespan: TimeSpan,
 	dataset?: CsvAsset,
 	mapping?: { [key: string]: string }[]
 ): TimeSpan => {
-	let start = inputTimespan.start;
-	let end = inputTimespan.end;
+	let start = 0;
+	let end = 90;
 	// If we have the min/max timestamp available from the csv asset use it
 	if (dataset) {
 		let tVar = 'timestamp';
@@ -18,11 +17,13 @@ export const getTimespan = (
 				tVar = tMap.datasetVariable;
 			}
 		}
-		const tIndex = dataset.headers.indexOf(tVar);
-		if (tIndex !== -1) {
-			start = dataset.stats?.[tIndex].minValue!;
-			end = dataset.stats?.[tIndex].maxValue!;
-		}
+		let tIndex = dataset.headers.indexOf(tVar);
+		// if the timestamp column is not found, default to 0 as this is what is assumed to be the default
+		// timestamp column in the pyciemss backend
+		tIndex = tIndex === -1 ? 0 : tIndex;
+
+		start = dataset.stats?.[tIndex].minValue!;
+		end = dataset.stats?.[tIndex].maxValue!;
 	}
 	return { start, end };
 };
@@ -54,10 +55,10 @@ export const getGraphDataFromDatasetCSV = (
 	}
 
 	// get  the index of the timestamp column
-	const tIndex = dataset.headers.indexOf(tVar);
-	if (tIndex === -1) {
-		return null;
-	}
+	let tIndex = dataset.headers.indexOf(tVar);
+	// if the timestamp column is not found, default to 0 as this is what is assumed to be the default
+	// timestamp column in the pyciemss backend
+	tIndex = tIndex === -1 ? 0 : tIndex;
 
 	// get the index of the variable column
 	let colIdx: number = -1;
