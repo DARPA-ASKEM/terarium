@@ -1,6 +1,6 @@
 <template>
-	<main>
-		<header>
+	<tera-asset>
+		<template #name-input>
 			<section class="header">
 				<section class="name">
 					<InputText v-model="codeName" class="name-input" />
@@ -19,7 +19,7 @@
 					<Button label="Create model from code" @click="isModelNamingModalVisible = true" />
 				</section>
 			</section>
-		</header>
+		</template>
 		<v-ace-editor
 			v-model:value="codeText"
 			@init="initialize"
@@ -64,7 +64,7 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-	</main>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -89,6 +89,7 @@ import useResourceStore from '@/stores/resources';
 import FileUpload from 'primevue/fileupload';
 import { IProject } from '@/types/Project';
 import Textarea from 'primevue/textarea';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -112,6 +113,7 @@ const isModelDiagramModalVisible = ref(false);
 const isModelNamingModalVisible = ref(false);
 const newModelName = ref('');
 const newModelDescription = ref('');
+
 /**
  * Editor initialization function
  * @param editorInstance	the Ace editor instance
@@ -166,7 +168,11 @@ async function saveCode() {
 async function extractModel() {
 	const newCodeAsset = await saveCode();
 	if (newCodeAsset && newCodeAsset.id) {
-		const extractedModelId = await codeToAMR(newCodeAsset.id);
+		const extractedModelId = await codeToAMR(
+			newCodeAsset.id,
+			newModelName.value,
+			newModelDescription.value
+		);
 		if (extractedModelId) {
 			router.push({
 				name: RouteName.ProjectRoute,
@@ -263,5 +269,18 @@ h4 {
 	font-size: 20px;
 	font-weight: var(--font-weight-semibold);
 	width: 100%;
+	border: 0;
+}
+
+:deep(.p-inputtext:enabled:hover) {
+	background-color: var(--surface-hover);
+}
+
+:deep(.p-inputtext:enabled:hover:focus) {
+	background-color: transparent;
+}
+
+:deep(header section) {
+	gap: 0;
 }
 </style>
