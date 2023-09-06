@@ -342,7 +342,7 @@ watch(
 		});
 
 		// eslint-disable-next-line @typescript-eslint/naming-convention
-		const { name, description, schema, model_version } = typedModel.value;
+		const { name, description, schema, model_version } = typedModel.value.header;
 		typingSemantics = {
 			map: stateTypedMap,
 			system: {
