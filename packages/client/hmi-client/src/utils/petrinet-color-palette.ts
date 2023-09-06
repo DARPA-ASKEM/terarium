@@ -27,7 +27,7 @@ export const nestedTypeColors = [
 	'#3e4d83'
 ];
 
-const domain: string[] = [];
+let domain: string[] = [];
 
 let scaleNodeType: d3.ScaleOrdinal<string, string, never> = d3
 	.scaleOrdinal(nodeTypeColors)
@@ -52,12 +52,17 @@ export function useNodeTypeColorPalette() {
 
 let scaleNestedType = d3.scaleLinear().domain([0, 2]);
 
-function getNestedTypeColor(id: number): string {
-	return d3.piecewise(d3.interpolateRgb.gamma(2.2), nestedTypeColors)(scaleNestedType(id));
+function getNestedTypeColor(id: string): string {
+	const index = domain.indexOf(id);
+	return d3.piecewise(
+		d3.interpolateRgb.gamma(2.2),
+		nestedTypeColors
+	)(scaleNestedType(index === -1 ? 0 : index));
 }
 
-function setNestedTypeColor(setDomain: [number, number]): void {
-	scaleNestedType = d3.scaleLinear().domain(setDomain);
+function setNestedTypeColor(ids: string[]): void {
+	domain = ids;
+	scaleNestedType = d3.scaleLinear().domain([0, ids.length]);
 }
 
 export function useNestedTypeColorPalette() {
