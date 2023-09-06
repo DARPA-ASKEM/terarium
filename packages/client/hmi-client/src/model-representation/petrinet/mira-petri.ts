@@ -88,7 +88,23 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 			const modifiers = stateModifierMap.get(sid);
 			if (modifiers) {
 				Object.keys(modifiers).forEach((k) => {
-					obj[k] = modifiers[k];
+					if (obj[k] && !obj[k].includes(modifiers[k])) {
+						obj[k].push(modifiers[k]);
+					} else {
+						obj[k] = [modifiers[k]];
+					}
+				});
+			}
+		});
+		transition.output.forEach((sid: string) => {
+			const modifiers = stateModifierMap.get(sid);
+			if (modifiers) {
+				Object.keys(modifiers).forEach((k) => {
+					if (obj[k] && !obj[k].includes(modifiers[k])) {
+						obj[k].push(modifiers[k]);
+					} else {
+						obj[k] = [modifiers[k]];
+					}
 				});
 			}
 		});

@@ -12,7 +12,7 @@ export interface PivotMatrixCell {
 // Helper function to expand the row and column terms into "lookup" axes
 //
 // For example: given a data array:
-//   [ { a:1, b: 1}, { a: 2, b: 2 } ]
+//   [ { a:[1], b: [1]}, { a: [2], b: [2] } ]
 //
 // If both row = [a, b] and col = [a]
 //
@@ -32,14 +32,20 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 				terms = [];
 			}
 
-			if (!terms.includes(data[i][key])) {
-				terms.push(data[i][key]);
-			}
+			data[i][key].forEach((term: any) => {
+				if (!terms.includes(term)) {
+					terms.push(term);
+				}
+			});
+
+			// if (!terms.includes(data[i][key])) {
+			// 	terms.push(data[i][key]);
+			// }
 			cardinality.set(key, terms);
 		});
 	}
 
-	// Expansion, basica this is a certesian product across the terms of the specified dimensions
+	// Expansion, basically this is a certesian product across the terms of the specified dimensions
 	let rowAxis: any[] = [];
 	rowDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
@@ -58,7 +64,7 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 		}
 	});
 
-	// Expansion, basica this is a certesian product across the terms of the specified dimensions
+	// Expansion, basically this is a certesian product across the terms of the specified dimensions
 	let colAxis: any[] = [];
 	colDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
@@ -137,7 +143,7 @@ export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensio
 				const colKeys = Object.keys(colCriteria);
 
 				for (let i = 0; i < rowKeys.length; i++) {
-					if (d[rowKeys[i]] !== rowCriteria[rowKeys[i]]) {
+					if (_.first(d[rowKeys[i]]) !== rowCriteria[rowKeys[i]]) {
 						found = false;
 						break;
 					}
@@ -145,7 +151,7 @@ export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensio
 				if (found === false) return found;
 
 				for (let i = 0; i < colKeys.length; i++) {
-					if (d[colKeys[i]] !== colCriteria[colKeys[i]]) {
+					if (_.last(d[colKeys[i]]) !== colCriteria[colKeys[i]]) {
 						found = false;
 						break;
 					}
