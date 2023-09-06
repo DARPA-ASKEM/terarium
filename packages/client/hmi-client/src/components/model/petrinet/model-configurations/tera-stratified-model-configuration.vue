@@ -1,105 +1,74 @@
 <template>
-	<div
-		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
-	>
-		<div class="p-datatable-wrapper">
-			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead class="p-datatable-thead">
-					<tr v-if="!featureConfig.isPreview">
-						<th class="p-frozen-column"></th>
-						<th class="p-frozen-column second-frozen"></th>
-						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
-							{{ name }}
-						</th>
-					</tr>
-					<tr>
-						<th class="p-frozen-column" />
-						<th class="p-frozen-column second-frozen">Select all</th>
-						<th v-for="(id, i) in baseStates" :header="id" :key="i">
-							{{ id }}
-						</th>
-						<th v-for="(id, i) in baseTransitions" :header="id" :key="i">
-							{{ id }}
-						</th>
-						<!--TODO: Insert new th loops for time and observables here-->
-					</tr>
-				</thead>
-				<tbody class="p-datatable-tbody">
-					<tr v-for="({ name }, i) in modelConfigurations" :key="i">
-						<!--TODO: This td is a placeholder, row selection doesn't work-->
-						<td class="p-selection-column p-frozen-column">
-							<div class="p-checkbox p-component">
-								<div class="p-hidden-accessible">
-									<input type="checkbox" tabindex="0" aria-label="Row Unselected" />
-								</div>
-								<div class="p-checkbox-box p-component">
-									<span class="p-checkbox-icon"></span>
-								</div>
-							</div>
-						</td>
-						<td
-							class="p-frozen-column second-frozen"
-							tabindex="0"
-							@keyup.enter="
-								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
-								cellEditStates[i].name = true;
-							"
-							@click="
-								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
-								cellEditStates[i].name = true;
-							"
-						>
-							<InputText
-								v-if="cellEditStates[i]?.name"
-								v-model.lazy="modelConfigInputValue"
-								v-focus
-								@focusout="updateModelConfigName(i)"
-								@keyup.stop.enter="updateModelConfigName(i)"
-								class="cell-input"
-							/>
-							<span v-else class="editable-cell">
-								{{ name }}
-							</span>
-						</td>
-						<td v-for="(id, j) in [...baseStates, ...baseTransitions]" :key="j">
-							<section class="editable-cell" @click="openValueModal(id, i)">
-								<span>{{ id }}<i class="pi pi-table" /></span>
-								<Button
-									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-									icon="pi pi-ellipsis-v"
-								/>
-							</section>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</div>
-	<SplitButton
-		outlined
-		label="Add configuration"
-		size="small"
-		icon="pi pi-plus"
-		:model="configItems"
-	/>
+	<tbody class="p-datatable-tbody">
+		<tr v-for="({ name }, i) in modelConfigurations" :key="i">
+			<!--TODO: This td is a placeholder, row selection doesn't work-->
+			<td class="p-selection-column p-frozen-column">
+				<div class="p-checkbox p-component">
+					<div class="p-hidden-accessible">
+						<input type="checkbox" tabindex="0" aria-label="Row Unselected" />
+					</div>
+					<div class="p-checkbox-box p-component">
+						<span class="p-checkbox-icon"></span>
+					</div>
+				</div>
+			</td>
+			<td
+				class="p-frozen-column second-frozen"
+				tabindex="0"
+				@keyup.enter="
+					modelConfigInputValue = cloneDeep(modelConfigurations[i].name)
+					// cellEditStates[i].name = true;
+				"
+				@click="
+					modelConfigInputValue = cloneDeep(modelConfigurations[i].name)
+					// cellEditStates[i].name = true;
+				"
+			>
+				<InputText
+					v-if="cellEditStates[i]?.name"
+					v-model.lazy="modelConfigInputValue"
+					v-focus
+					@focusout="emit('update-name', i)"
+					@keyup.stop.enter="emit('update-name', i)"
+					class="cell-input"
+				/>
+				<span v-else class="editable-cell">
+					{{ name }}
+				</span>
+			</td>
+			<td v-for="(id, j) in [...baseStates, ...baseTransitions]" :key="j">
+				<section class="editable-cell" @click="openValueModal(id, i)">
+					<span>{{ id }}<i class="pi pi-table" /></span>
+					<Button
+						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v"
+					/>
+				</section>
+			</td>
+		</tr>
+	</tbody>
 	<Teleport to="body">
 		<tera-modal
 			v-if="openValueConfig"
-			@modal-mask-clicked="
-				openValueConfig = false;
-				emit('sync-configs');
-			"
-			@model-submit="
-				openValueConfig = false;
-				emit('sync-configs');
-			"
+			@modal-mask-clicked="openValueConfig = false"
+			@model-submit="openValueConfig = false"
 		>
 			<template #header>
 				<h4>{{ modalVal.id }}</h4>
 				<span>Configure the matrix values</span>
+				<div class="flex align-items-center">
+					<Checkbox
+						inputId="matrixShouldEval"
+						v-model="matrixShouldEval"
+						:binary="true"
+						label="Evaluate expressions?"
+					/>
+					<label for="matrixShouldEval" class="ml-2"> Evaluate Expressions? </label>
+				</div>
 			</template>
 			<template #default>
-				<TabView v-model:activeIndex="activeIndex">
+				<!-- TODO: Implement value tabs for the modal once we are ready
+					<TabView v-model:activeIndex="activeIndex">
 					<TabPanel v-for="(extraction, i) in extractions" :key="i">
 						<template #header>
 							<span>{{ extraction.name }}</span>
@@ -118,24 +87,18 @@
 							/>
 						</div>
 					</TabPanel>
-				</TabView>
+				</TabView> -->
+				<tera-stratified-value-matrix
+					:model-configuration="modelConfigurations[modalVal.configIndex]"
+					:id="modalVal.id"
+					:stratified-model-type="stratifiedModelType"
+					:node-type="modalVal.nodeType"
+					:should-eval="matrixShouldEval"
+				/>
 			</template>
 			<template #footer>
-				<Button
-					label="OK"
-					@click="
-						openValueConfig = false;
-						emit('sync-configs');
-					"
-				/>
-				<Button
-					class="p-button-outlined"
-					label="Cancel"
-					@click="
-						openValueConfig = false;
-						emit('sync-configs');
-					"
-				/>
+				<Button label="OK" @click="openValueConfig = false" />
+				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
 			</template>
 		</tera-modal>
 	</Teleport>
@@ -145,14 +108,12 @@
 import { ref } from 'vue';
 import { cloneDeep } from 'lodash';
 import Button from 'primevue/button';
-import SplitButton from 'primevue/splitbutton';
-import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import TabPanel from 'primevue/tabpanel';
+// import TabPanel from 'primevue/tabpanel';
+// import TabView from 'primevue/tabview';
 import InputText from 'primevue/inputtext';
-// import Checkbox from 'primevue/checkbox';
-import { ModelConfiguration, Model } from '@/types/Types';
-import { updateModelConfiguration } from '@/services/model-configurations';
+import Checkbox from 'primevue/checkbox';
+import { ModelConfiguration } from '@/types/Types';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
@@ -160,40 +121,34 @@ import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	featureConfig: FeatureConfig;
-	model: Model;
+	modelConfigurations: ModelConfiguration[];
 	stratifiedModelType: StratifiedModelType;
 	calibrationConfig?: boolean;
 	tableHeaders: { name: string; colspan: number }[];
+	cellEditStates: any[];
 	baseStates: any;
 	baseTransitions: any;
 }>();
 
-const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
+const emit = defineEmits([
+	'new-model-configuration',
+	'update-name',
+	'update-value',
+	'enter-value-cell'
+]);
 
 const modelConfigInputValue = ref<string>('');
-const modelConfigurations = ref<ModelConfiguration[]>([]);
-const cellEditStates = ref<any[]>([]);
-const extractions = ref<any[]>([]);
+// const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const modalVal = ref({ id: '', configIndex: 0, nodeType: NodeType.State });
+const matrixShouldEval = ref(true);
 
 const activeIndex = ref(0);
-const configItems = ref<any[]>([]);
 
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
-
-async function updateModelConfigName(configIndex: number) {
-	cellEditStates.value[configIndex].name = false;
-	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
-	await updateModelConfiguration(modelConfigurations.value[configIndex]);
-	setTimeout(() => {
-		emit('update-model-configuration');
-		emit('sync-configs');
-	}, 800);
-}
 
 function openValueModal(id: string, configIndex: number) {
 	if (!props.featureConfig.isPreview) {
@@ -209,10 +164,6 @@ function openValueModal(id: string, configIndex: number) {
 <style scoped>
 .model-configuration:deep(.p-column-header-content) {
 	color: var(--text-color-subdued);
-}
-
-.model-configuration {
-	margin-bottom: 1rem;
 }
 
 /** TODO: Apply to all tables in theme or create second table rules?  */

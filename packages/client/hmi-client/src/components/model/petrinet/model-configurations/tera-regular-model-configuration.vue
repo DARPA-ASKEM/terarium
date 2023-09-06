@@ -1,165 +1,115 @@
 <template>
-	<div
-		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
-	>
-		<div class="p-datatable-wrapper">
-			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead class="p-datatable-thead">
-					<!-- Table header 1st row: Column groups such asInitials, Parameters, Observables, etc. -->
-					<tr v-if="!featureConfig.isPreview">
-						<th class="p-frozen-column"></th>
-						<th class="p-frozen-column second-frozen"></th>
-						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
-							<span class="capitalize">{{ name }}</span>
-						</th>
-					</tr>
-					<!-- Table header 2nd row: Actual column headers -->
-					<tr>
-						<th class="p-frozen-column" />
-						<th class="p-frozen-column second-frozen">Select all</th>
-						<th
-							v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
-							:header="target"
-							:key="i"
+	<tbody class="p-datatable-tbody">
+		<tr v-for="({ configuration, name }, i) in modelConfigurations" :key="i">
+			<!--TODO: This td is a placeholder, row selection doesn't work-->
+			<td class="p-selection-column p-frozen-column">
+				<div class="p-checkbox p-component">
+					<div class="p-hidden-accessible">
+						<input type="checkbox" tabindex="0" aria-label="Row Unselected" />
+					</div>
+					<div class="p-checkbox-box p-component">
+						<span class="p-checkbox-icon"></span>
+					</div>
+				</div>
+			</td>
+			<td
+				class="p-frozen-column second-frozen"
+				tabindex="0"
+				@keyup.enter="
+					modelConfigInputValue = cloneDeep(modelConfigurations[i].name)
+					// cellEditStates[i].name = true;
+				"
+				@click="
+					modelConfigInputValue = cloneDeep(modelConfigurations[i].name)
+					// cellEditStates[i].name = true;
+				"
+			>
+				<span :class="!cellEditStates[i].name ? 'editable-cell' : 'editable-cell-hidden'">
+					{{ name }}
+				</span>
+				<InputText
+					v-if="cellEditStates[i].name"
+					v-model.lazy="modelConfigInputValue"
+					v-focus
+					@focusout="emit('update-name', i)"
+					@keyup.stop.enter="emit('update-name', i)"
+					class="cell-input"
+				/>
+			</td>
+			<!-- Additional columns -->
+			<td
+				v-for="(initial, j) of configuration?.semantics?.ode.initials"
+				:key="j"
+				tabindex="0"
+				@click="emit('enter-value-cell', 'initials', 'expression', i, j)"
+				@keyup.enter="emit('enter-value-cell', 'initials', 'expression', i, j)"
+			>
+				<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
+				<section :class="!cellEditStates[i].initials[j] ? 'editable-cell' : 'editable-cell-hidden'">
+					<span>{{ initial.expression }}</span>
+					<Button
+						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v"
+						@click.stop="openValueModal('initials', 'expression', i, j)"
+					/>
+				</section>
+				<InputText
+					v-if="cellEditStates[i].initials[j]"
+					v-model.lazy="modelConfigInputValue"
+					v-focus
+					@focusout="emit('update-value', 'initials', 'expression', i, j)"
+					@keyup.stop.enter="emit('update-value', 'initials', 'expression', i, j)"
+					class="cell-input"
+				/>
+			</td>
+			<td
+				v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
+				:key="j"
+				tabindex="0"
+				@click="
+					() => {
+						if (!configuration?.metadata?.timeseries?.[parameter.id]) {
+							emit('enter-value-cell', 'parameters', 'value', i, j);
+						}
+					}
+				"
+				@keyup.enter="
+					() => {
+						if (!configuration?.metadata?.timeseries?.[parameter.id]) {
+							emit('enter-value-cell', 'parameters', 'value', i, j);
+						}
+					}
+				"
+			>
+				<section
+					:class="!cellEditStates[i].parameters[j] ? 'editable-cell' : 'editable-cell-hidden'"
+				>
+					<div class="distribution-cell">
+						<!-- To represent a time series variable -->
+						<span v-if="configuration?.metadata?.timeseries?.[parameter.id]">TS</span>
+						<span v-else>{{ parameter.value }}</span>
+						<span class="distribution-range" v-if="parameter.distribution"
+							>Min: {{ parameter.distribution.parameters.minimum }} Max:
+							{{ parameter.distribution.parameters.maximum }}</span
 						>
-							{{ target }}
-						</th>
-						<th
-							v-for="({ id }, i) in configurations[0]?.semantics?.ode.parameters"
-							:header="id"
-							:key="i"
-						>
-							{{ id }}
-						</th>
-						<!--TODO: Insert new th loops for time and observables here-->
-					</tr>
-				</thead>
-				<!-- Table body -->
-				<tbody class="p-datatable-tbody">
-					<tr v-for="({ configuration, name }, i) in modelConfigurations" :key="i">
-						<!--TODO: This td is a placeholder, row selection doesn't work-->
-						<!-- Checkbox -->
-						<td class="p-selection-column p-frozen-column">
-							<div class="p-checkbox p-component">
-								<div class="p-hidden-accessible">
-									<input type="checkbox" tabindex="0" aria-label="Row Unselected" />
-								</div>
-								<div class="p-checkbox-box p-component">
-									<span class="p-checkbox-icon"></span>
-								</div>
-							</div>
-						</td>
-						<!-- 1st column: Configuration name -->
-						<td
-							class="p-frozen-column second-frozen"
-							tabindex="0"
-							@keyup.enter="
-								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
-								cellEditStates[i].name = true;
-							"
-							@click="
-								modelConfigInputValue = cloneDeep(modelConfigurations[i].name);
-								cellEditStates[i].name = true;
-							"
-						>
-							<span :class="!cellEditStates[i].name ? 'editable-cell' : 'editable-cell-hidden'">
-								{{ name }}
-							</span>
-							<InputText
-								v-if="cellEditStates[i].name"
-								v-model.lazy="modelConfigInputValue"
-								v-focus
-								@focusout="updateModelConfigName(i)"
-								@keyup.stop.enter="updateModelConfigName(i)"
-								class="cell-input"
-							/>
-						</td>
-						<!-- Additional columns -->
-						<td
-							v-for="(initial, j) of configuration?.semantics?.ode.initials"
-							:key="j"
-							tabindex="0"
-							@click="onEnterValueCell('initials', 'expression', i, j)"
-							@keyup.enter="onEnterValueCell('initials', 'expression', i, j)"
-						>
-							<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
-							<section
-								:class="!cellEditStates[i].initials[j] ? 'editable-cell' : 'editable-cell-hidden'"
-							>
-								<span>{{ initial.expression }}</span>
-								<Button
-									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-									icon="pi pi-ellipsis-v"
-									@click.stop="openValueModal('initials', 'expression', i, j)"
-								/>
-							</section>
-							<InputText
-								v-if="cellEditStates[i].initials[j]"
-								v-model.lazy="modelConfigInputValue"
-								v-focus
-								@focusout="updateModelConfigValue('initials', 'expression', i, j)"
-								@keyup.stop.enter="updateModelConfigValue('initials', 'expression', i, j)"
-								class="cell-input"
-							/>
-						</td>
-						<td
-							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
-							:key="j"
-							tabindex="0"
-							@click="
-								() => {
-									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										onEnterValueCell('parameters', 'value', i, j);
-									}
-								}
-							"
-							@keyup.enter="
-								() => {
-									if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-										onEnterValueCell('parameters', 'value', i, j);
-									}
-								}
-							"
-						>
-							<section
-								:class="!cellEditStates[i].parameters[j] ? 'editable-cell' : 'editable-cell-hidden'"
-							>
-								<div class="distribution-cell">
-									<!-- To represent a time series variable -->
-									<span v-if="configuration?.metadata?.timeseries?.[parameter.id]">TS</span>
-									<span v-else>{{ parameter.value }}</span>
-									<span class="distribution-range" v-if="parameter.distribution"
-										>Min: {{ parameter.distribution.parameters.minimum }} Max:
-										{{ parameter.distribution.parameters.maximum }}</span
-									>
-								</div>
-								<Button
-									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-									icon="pi pi-ellipsis-v"
-									@click.stop="openValueModal('parameters', 'value', i, j)"
-								/>
-							</section>
-							<InputText
-								v-if="cellEditStates[i].parameters[j]"
-								v-model.lazy="modelConfigInputValue"
-								v-focus
-								@focusout="updateModelConfigValue('parameters', 'value', i, j)"
-								@keyup.stop.enter="updateModelConfigValue('parameters', 'value', i, j)"
-								class="cell-input"
-							/>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</div>
-	<SplitButton
-		outlined
-		label="Add configuration"
-		size="small"
-		icon="pi pi-plus"
-		:model="configItems"
-	></SplitButton>
+					</div>
+					<Button
+						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v"
+						@click.stop="openValueModal('parameters', 'value', i, j)"
+					/>
+				</section>
+				<InputText
+					v-if="cellEditStates[i].parameters[j]"
+					v-model.lazy="modelConfigInputValue"
+					v-focus
+					@focusout="emit('update-value', 'parameters', 'value', i, j)"
+					@keyup.stop.enter="emit('update-value', 'parameters', 'value', i, j)"
+					class="cell-input"
+				/>
+			</td>
+		</tr>
+	</tbody>
 	<Teleport to="body">
 		<tera-modal
 			v-if="openValueConfig"
@@ -257,14 +207,13 @@
 import { ref } from 'vue';
 import { cloneDeep } from 'lodash';
 import Button from 'primevue/button';
-import SplitButton from 'primevue/splitbutton';
+
 import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
-import { ModelConfiguration, Model } from '@/types/Types';
-import { updateModelConfiguration } from '@/services/model-configurations';
+import { ModelConfiguration } from '@/types/Types';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import { FeatureConfig } from '@/types/common';
 
@@ -276,23 +225,25 @@ enum ParamType {
 
 const props = defineProps<{
 	featureConfig: FeatureConfig;
-	model: Model;
+	modelConfigurations: ModelConfiguration[];
 	calibrationConfig?: boolean;
 	tableHeaders: { name: string; colspan: number }[];
-	configurations: Model[];
+	cellEditStates: any[];
 }>();
 
-const emit = defineEmits(['new-model-configuration', 'update-model-configuration', 'sync-configs']);
+const emit = defineEmits([
+	'new-model-configuration',
+	'update-name',
+	'update-value',
+	'enter-value-cell'
+]);
 
 const modelConfigInputValue = ref<string>('');
-const modelConfigurations = ref<ModelConfiguration[]>([]);
-const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
 
 const activeIndex = ref(0);
-const configItems = ref<any[]>([]);
 const errorMessage = ref('');
 
 const typeOptions = ref([
@@ -313,20 +264,6 @@ function getValuePlaceholder(parameterType) {
 	return '';
 }
 
-function onEnterValueCell(
-	odeType: string,
-	valueName: string,
-	configIndex: number,
-	odeObjIndex: number
-) {
-	modelConfigInputValue.value = cloneDeep(
-		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
-			valueName
-		]
-	);
-	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
-}
-
 function openValueModal(
 	odeType: string,
 	valueName: string,
@@ -339,12 +276,12 @@ function openValueModal(
 		openValueConfig.value = true;
 		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
 		const modelParameter = cloneDeep(
-			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
+			props.modelConfigurations[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
 		);
 
 		// sticking the timeseries values on the metadata, temporary solution for now
 		const modelTimeSeries =
-			cloneDeep(modelConfigurations.value[configIndex].configuration?.metadata?.timeseries) ?? {};
+			cloneDeep(props.modelConfigurations[configIndex].configuration?.metadata?.timeseries) ?? {};
 
 		extractions.value[0].value = getParameterValue(modelParameter, valueName, modelTimeSeries);
 		extractions.value[0].name = modelParameter.name ?? 'Default';
@@ -399,64 +336,31 @@ function checkModelParameters() {
 // function to set the provided values from the modal
 function setModelParameters() {
 	if (checkModelParameters()) {
-		const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
-		const modelParameter =
-			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
-		modelParameter[valueName] = extractions.value[activeIndex.value].value;
-
-		if (!modelConfigurations.value[configIndex].configuration.metadata) {
-			modelConfigurations.value[configIndex].configuration.metadata = {};
-		}
-		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
-
-		modelParameter.name = extractions.value[activeIndex.value].name;
-
-		if (extractions.value[activeIndex.value].type === ParamType.TIME_SERIES) {
-			if (!modelMetadata.timeseries) modelMetadata.timeseries = {};
-			if (!modelMetadata.timeseries[modelParameter.id])
-				modelMetadata.timeseries[modelParameter.id] = {};
-			modelMetadata.timeseries[modelParameter.id] = extractions.value[activeIndex.value].value;
-			delete modelParameter.distribution;
-		} else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
-			modelParameter.distribution = extractions.value[activeIndex.value].distribution;
-			delete modelMetadata.timeseries?.[modelParameter.id];
-		} else {
-			// A constant
-			delete modelParameter.distribution;
-			delete modelMetadata.timeseries?.[modelParameter.id];
-		}
-
-		updateModelConfig();
+		// const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
+		// const modelParameter =
+		// 	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
+		// modelParameter[valueName] = extractions.value[activeIndex.value].value;
+		// if (!modelConfigurations.value[configIndex].configuration.metadata) {
+		// 	modelConfigurations.value[configIndex].configuration.metadata = {};
+		// }
+		// const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
+		// modelParameter.name = extractions.value[activeIndex.value].name;
+		// if (extractions.value[activeIndex.value].type === ParamType.TIME_SERIES) {
+		// 	if (!modelMetadata.timeseries) modelMetadata.timeseries = {};
+		// 	if (!modelMetadata.timeseries[modelParameter.id])
+		// 		modelMetadata.timeseries[modelParameter.id] = {};
+		// 	modelMetadata.timeseries[modelParameter.id] = extractions.value[activeIndex.value].value;
+		// 	delete modelParameter.distribution;
+		// } else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
+		// 	modelParameter.distribution = extractions.value[activeIndex.value].distribution;
+		// 	delete modelMetadata.timeseries?.[modelParameter.id];
+		// } else {
+		// 	// A constant
+		// 	delete modelParameter.distribution;
+		// 	delete modelMetadata.timeseries?.[modelParameter.id];
+		// }
+		// updateModelConfig();
 	}
-}
-
-function updateModelConfigName(configIndex: number) {
-	cellEditStates.value[configIndex].name = false;
-	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
-	updateModelConfig(configIndex);
-}
-
-function updateModelConfigValue(
-	odeType: string,
-	valueName: string,
-	configIndex: number,
-	odeObjIndex: number
-) {
-	cellEditStates.value[configIndex][odeType][odeObjIndex] = false;
-	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
-		valueName
-	] = modelConfigInputValue.value;
-	updateModelConfig(configIndex);
-}
-
-function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
-	const configToUpdate = modelConfigurations.value[configIndex];
-	updateModelConfiguration(configToUpdate);
-	openValueConfig.value = false;
-	setTimeout(() => {
-		emit('update-model-configuration');
-		emit('sync-configs', true);
-	}, 800);
 }
 
 function getParameterValue(parameter, valueName, timeseries) {
@@ -481,10 +385,6 @@ function getParameterType(parameter, timeseries) {
 <style scoped>
 .model-configuration:deep(.p-column-header-content) {
 	color: var(--text-color-subdued);
-}
-
-.model-configuration {
-	margin-bottom: 1rem;
 }
 
 /** TODO: Apply to all tables in theme or create second table rules?  */
