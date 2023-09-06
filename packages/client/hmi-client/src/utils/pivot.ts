@@ -14,7 +14,7 @@ export interface PivotMatrixCell {
 // For example: given a data array:
 //   [ { a:[1], b: [1]}, { a: [2], b: [2] } ]
 //
-// If both row = [a, b] and col = [a]
+// If rowDimension = [a, b] and colDimension = [a]
 //
 //   rowAxis = [ { a: 1, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 1 }, { a: 2, b: 2} ]
 //   colAxis = [ { a: 1 }, { a: 2 } ]
@@ -44,7 +44,7 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 		});
 	}
 
-	// Expansion, basically this is a certesian product across the terms of the specified dimensions
+	// Expansion, basically this is a cartesian product across the terms of the specified dimensions
 	let rowAxis: any[] = [];
 	rowDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
@@ -63,7 +63,7 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 		}
 	});
 
-	// Expansion, basically this is a certesian product across the terms of the specified dimensions
+	// Expansion, basically this is a cartesian product across the terms of the specified dimensions
 	let colAxis: any[] = [];
 	colDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
