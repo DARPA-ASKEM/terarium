@@ -109,6 +109,14 @@
 					:project="project"
 					:node="workflowNode"
 				/>
+				<tera-dataset-transformer
+					v-if="
+						workflowNode &&
+						workflowNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER
+					"
+					:project="project"
+					:node="workflowNode"
+				/>
 			</SplitterPanel>
 		</Splitter>
 		<tera-slider-panel
@@ -158,6 +166,7 @@ import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-en
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 
@@ -275,6 +284,13 @@ const openWorkflow = async () => {
 	});
 };
 
+const openCode = () => {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: codeResource
+	});
+};
+
 const openNewAsset = (assetType: string) => {
 	switch (assetType) {
 		case AssetType.Models:
@@ -282,6 +298,9 @@ const openNewAsset = (assetType: string) => {
 			break;
 		case AssetType.Workflows:
 			openWorkflow();
+			break;
+		case AssetType.Code:
+			openCode();
 			break;
 		default:
 			break;
@@ -299,7 +318,7 @@ const overviewResource = {
 
 const codeResource = {
 	pageType: AssetType.Code,
-	assetId: ''
+	assetId: 'code' // FIXME: hack to get around weird tab behaviour
 };
 
 const adjustTabsProjectChange = () => {
@@ -369,7 +388,7 @@ onMounted(() => {
 	setTimeout(() => {
 		adjustTabsProjectChange();
 		adjustTabs();
-	}, 400);
+	}, 1000);
 });
 </script>
 

@@ -55,7 +55,7 @@ const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : '')
 const existingModelNames = computed(() => {
 	const modelNames: string[] = [];
 	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
+		modelNames.push(item.header.name);
 	});
 	return modelNames;
 });

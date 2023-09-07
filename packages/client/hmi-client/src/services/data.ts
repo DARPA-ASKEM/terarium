@@ -20,7 +20,8 @@ import {
 	XDDFacetsItemResponse,
 	Extraction,
 	Dataset,
-	AssetType
+	AssetType,
+	Model
 } from '@/types/Types';
 import {
 	XDDDictionary,
@@ -30,7 +31,7 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '@/types/XDD';
 import { logger } from '@/utils/logger';
-import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
+import { ID, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
 import { getAllModelDescriptions } from './model';
@@ -204,8 +205,10 @@ const filterAssets = <T extends Model | Dataset>(
 
 		AssetFilterAttributes.forEach((attribute) => {
 			finalAssets = allAssets.filter((d) => {
-				if (d[attribute as keyof T])
-					return (d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase());
+				const searchTarget = resourceType === ResourceType.MODEL ? (d as Model).header : d;
+
+				if (searchTarget[attribute])
+					return (searchTarget[attribute] as string).toLowerCase().includes(term.toLowerCase());
 				return '';
 			});
 		});
@@ -225,6 +228,7 @@ const filterAssets = <T extends Model | Dataset>(
 				const assetIDs = matchingResult?.map((mr) => mr.id);
 
 				assetIDs?.forEach((assetId) => {
+					// @ts-ignore
 					const asset = allAssets.find((m) => m.id === assetId);
 					if (asset) finalAssets.push(asset);
 				});

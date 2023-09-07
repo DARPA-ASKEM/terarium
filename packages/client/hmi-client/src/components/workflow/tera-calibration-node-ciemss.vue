@@ -34,6 +34,8 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
+					:initial-data="csvAsset"
+					:mapping="mapping"
 					:chartConfig="cfg"
 					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
@@ -125,7 +127,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
-import { EventSourceManager } from '@/utils/event-source-manager';
+import { EventSourceManager } from '@/api/event-source-manager';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -133,6 +135,7 @@ import {
 } from './calibrate-operation-ciemss';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 import TeraProgressBar from './tera-progress-bar.vue';
+import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -210,25 +213,12 @@ const runCalibrate = async () => {
 	const initialsObj = {};
 	const paramsObj = {};
 
-	const state = props.node.state;
-
 	initials.forEach((d) => {
 		initialsObj[d] = Math.random() * 100;
 	});
 	rates.forEach((d) => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
-
-	let start = state.timeSpan.start;
-	let end = state.timeSpan.end;
-	// If we have the min/max timestamp available from the csv asset use it
-	if (csvAsset.value) {
-		const tIndex = csvAsset.value.headers.indexOf('timestamp');
-		if (tIndex !== -1) {
-			start = csvAsset.value.stats?.[tIndex].minValue;
-			end = csvAsset.value.stats?.[tIndex].maxValue;
-		}
-	}
 
 	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
@@ -242,16 +232,20 @@ const runCalibrate = async () => {
 			num_iterations: numIterations.value,
 			method: method.value
 		},
-		timespan: {
-			start,
-			end
-		},
+		timespan: getTimespan(csvAsset.value, mapping.value),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	if (response?.simulationId) {
 		getStatus(response.simulationId);
+	}
+};
+
+const handlingProgress = (message: string) => {
+	const parsedMessage = JSON.parse(message);
+	if (parsedMessage.progress) {
+		progress.value.value = Math.round(parsedMessage.progress * 100);
 	}
 };
 
@@ -267,13 +261,8 @@ const getStatus = async (simulationId: string) => {
 
 	// open a connection for each run id and handle the messages
 	runIds.forEach((id) => {
-		eventSourceManager.openConnection(id, `/api/simulations/${id}/partial-result`);
-		eventSourceManager.setMessageHandler(id, (message) => {
-			const parsedMessage = JSON.parse(message);
-			if (parsedMessage.progress) {
-				progress.value.value = Math.round(parsedMessage.progress * 100);
-			}
-		});
+		eventSourceManager.openConnection(id, `/simulations/${id}/partial-result`);
+		eventSourceManager.setMessageHandler(id, handlingProgress);
 	});
 
 	poller
@@ -284,9 +273,7 @@ const getStatus = async (simulationId: string) => {
 	const pollerResults = await poller.start();
 
 	// closing event source connections
-	runIds.forEach((id) => {
-		eventSourceManager.closeConnection(id);
-	});
+	runIds.forEach((id) => eventSourceManager.closeConnection(id));
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now

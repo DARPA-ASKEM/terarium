@@ -3,10 +3,18 @@
 		v-if="dataset"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
+		:is-naming-asset="isRenamingDataset"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
-		ref="assetPanel"
 	>
+		<template #name-input>
+			<InputText
+				v-if="isRenamingDataset"
+				v-model.lazy="newDatasetName"
+				placeholder="Dataset name"
+				@keyup.enter="updateDatasetName"
+			/>
+		</template>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -23,26 +31,22 @@
 					@click="datasetView = DatasetView.DATA"
 					:active="datasetView === DatasetView.DATA"
 				/>
+			</span>
+			<template v-if="!featureConfig.isPreview">
 				<Button
-					v-if="!featureConfig.isPreview"
-					class="p-button-secondary p-button-sm"
-					label="Transform"
-					icon="pi pi-sync"
-					@click="openDatesetChatTab"
-					:active="datasetView === DatasetView.LLM"
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleOptionsMenu"
 				/>
-			</span>
-			<span v-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
-				<i class="pi pi-cog" @click="toggleSettingsMenu" />
-				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
-			</span>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			</template>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
 			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page describes the dataset. Use the content switcher above to see the data table and
-					transformation tools.</Message
-				>
+				<Message class="inline-message" icon="none">
+					This page describes the dataset. Use the content switcher above to see the data table and
+					transformation tools.
+				</Message>
 			</div>
 			<section class="metadata data-row">
 				<section>
@@ -84,52 +88,22 @@
 					</section>
 				</section>
 			</section>
-			<tera-related-publications
-				@extracted-metadata="gotEnrichedData"
-				:dialog-flavour="'dataset'"
-				:publications="publications"
-				:project="project"
-				:assetId="assetId"
-			/>
-			<Accordion :multiple="true" :activeIndex="[0, 1, 2]">
+			<Accordion :multiple="true" :activeIndex="[0, 1, 2, 3]">
+				<AccordionTab>
+					<template #header>Related publications</template>
+					<tera-related-publications
+						:asset-type="ResourceType.DATASET"
+						:publications="publications"
+						:related-publications="relatedPublications"
+						:assetId="assetId"
+						@enriched="fetchDataset"
+					/>
+				</AccordionTab>
 				<AccordionTab>
 					<template #header>
-						<header id="Description">Description</header>
+						<header>Description</header>
 					</template>
-					<section v-if="enriched">
-						<div class="dataset-detail">
-							<div class="column">
-								<p class="content">{{ enrichedData.DESCRIPTION }}</p>
-
-								<h3 class="subtitle">{{ headers.AUTHOR_NAME }}</h3>
-								<p class="content">{{ enrichedData.AUTHOR_NAME }}</p>
-
-								<h3 class="subtitle">{{ headers.AUTHOR_EMAIL }}</h3>
-								<p class="content">{{ enrichedData.AUTHOR_EMAIL }}</p>
-							</div>
-
-							<div class="column">
-								<h3 class="subtitle">{{ headers.DATE }}</h3>
-								<p class="content">{{ enrichedData.DATE }}</p>
-
-								<h3 class="subtitle">{{ headers.SCHEMA }}</h3>
-								<p class="content">{{ enrichedData.SCHEMA }}</p>
-
-								<h3 class="subtitle">{{ headers.PROVENANCE }}</h3>
-								<p class="content">{{ enrichedData.PROVENANCE }}</p>
-							</div>
-
-							<div class="column">
-								<h3 class="subtitle">{{ headers.SENSITIVITY }}</h3>
-								<p class="content">{{ enrichedData.SENSITIVITY }}</p>
-							</div>
-							<div class="column">
-								<h3 class="subtitle">{{ headers.LICENSE }}</h3>
-								<p class="content">{{ enrichedData.LICENSE }}</p>
-							</div>
-						</div>
-					</section>
-					<p v-else>
+					<p>
 						No information available. Add resources to generate a description. Or click edit icon to
 						edit this field directly.
 					</p>
@@ -283,17 +257,6 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(pd)">
-					<template #header>
-						<header id="ExtractionTable">Extraction Table</header>
-					</template>
-					<DataTable :value="pd">
-						<Column field="col_name" header="Column Name"></Column>
-						<Column field="concept" header="Concept"></Column>
-						<Column field="unit" header="Unit"></Column>
-						<Column field="description" header="Description"></Column>
-					</DataTable>
-				</AccordionTab>
 			</Accordion>
 		</template>
 		<template v-else-if="datasetView === DatasetView.DATA">
@@ -306,17 +269,6 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.LLM && !featureConfig.isPreview">
-			<Suspense>
-				<tera-dataset-jupyter-panel
-					:asset-id="props.assetId"
-					:project="props.project"
-					:dataset="dataset"
-					:show-kernels="showKernels"
-					:show-chat-thoughts="showChatThoughts"
-				/>
-			</Suspense>
-		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
@@ -327,26 +279,23 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
-import { isString, isEmpty } from 'lodash';
-import { downloadRawFile, getDataset } from '@/services/dataset';
-import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
+import { isString, cloneDeep } from 'lodash';
+import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
+import { Artifact, CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject } from '@/types/Project';
-import Menu from 'primevue/menu';
+import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import { FeatureConfig } from '@/types/common';
-
-const enrichedData = ref();
+import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
 
 enum DatasetView {
-	DESCRIPTION = 'description',
-	DATA = 'data',
-	LLM = 'llm'
+	DESCRIPTION,
+	DATA,
+	LLM
 }
+
 const props = defineProps({
 	assetId: {
 		type: String,
@@ -366,21 +315,22 @@ const props = defineProps({
 	}
 });
 
-const gotEnrichedData = (payload) => {
-	enrichedData.value = payload;
-	enriched.value = true;
-};
-
-const pd = computed(() =>
-	enrichedData.value
-		? Object.values(
-				enrichedData.value.DATA_PROFILING_RESULT ? enrichedData.value.DATA_PROFILING_RESULT : {}
-		  )
-		: []
+const publications = computed(
+	() =>
+		props.project?.assets?.artifacts
+			.filter((artifact: Artifact) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
+					artifact.fileNames[0].endsWith(extension)
+				)
+			)
+			.map((artifact: Artifact) => ({
+				name: artifact.name,
+				id: artifact.id
+			})) ?? []
 );
+const relatedPublications = computed(() => []);
 
-const publications = computed(() => []);
-
+/*
 const headers = ref({
 	AUTHOR_NAME: 'Author Name',
 	AUTHOR_EMAIL: 'Author Email',
@@ -390,23 +340,17 @@ const headers = ref({
 	SENSITIVITY: 'Data Sensitivity',
 	LICENSE: 'License Information'
 });
+*/
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
-const showKernels = ref(<boolean>false);
-const showChatThoughts = ref(<boolean>false);
-const menu = ref();
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
-const dataset: Ref<Dataset | null> = ref(null);
+const dataset = ref<Dataset | null>(null);
+const newDatasetName = ref('');
+const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
-
-const assetPanel = ref({ assetContainer: HTMLElement });
-
-const toggleSettingsMenu = (event: Event) => {
-	menu.value.toggle(event);
-};
 
 function formatName(name: string) {
 	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
@@ -414,35 +358,38 @@ function formatName(name: string) {
 
 const datasetView = ref(DatasetView.DESCRIPTION);
 
-const chatThoughtLabel = computed(() =>
-	showChatThoughts.value ? 'Auto hide chat thoughts' : 'Do not auto hide chat thoughts'
-);
-
-const kernelSettingsLabel = computed(() =>
-	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
-);
-
 const csvContent = computed(() => rawContent.value?.csv);
 
-const items = ref([
+/*
+ * User Menu
+ */
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
 	{
-		label: 'Chat Options',
-		items: [
-			{
-				label: kernelSettingsLabel,
-				command: () => {
-					showKernels.value = !showKernels.value;
-				}
-			},
-			{
-				label: chatThoughtLabel,
-				command: () => {
-					showChatThoughts.value = !showChatThoughts.value;
-				}
-			}
-		]
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingDataset.value = true;
+			newDatasetName.value = dataset.value?.name ?? '';
+		}
 	}
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
+
+async function updateDatasetName() {
+	if (dataset.value && newDatasetName.value !== '') {
+		const datasetClone = cloneDeep(dataset.value);
+		datasetClone.name = newDatasetName.value;
+		await updateDataset(datasetClone);
+		dataset.value = await getDataset(props.assetId);
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		isRenamingDataset.value = false;
+	}
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -486,9 +433,20 @@ function cancelRowEdits(index: number) {
 		groundingValues.value[index] = [...groundingValuesUnsaved.value[index]];
 	}
 }
-const openDatesetChatTab = () => {
-	datasetView.value = DatasetView.LLM;
-	jupyterCsv.value = null;
+
+const fetchDataset = async () => {
+	const datasetTemp: Dataset | null = await getDataset(props.assetId);
+
+	// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+	rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
+	if (datasetTemp) {
+		Object.entries(datasetTemp).forEach(([key, value]) => {
+			if (isString(value)) {
+				datasetTemp[key] = highlightSearchTerms(value);
+			}
+		});
+		dataset.value = datasetTemp;
+	}
 };
 
 onUpdated(() => {
@@ -528,19 +486,9 @@ watch(
 watch(
 	() => [props.assetId],
 	async () => {
+		isRenamingDataset.value = false;
 		if (props.assetId !== '') {
-			const datasetTemp: Dataset | null = await getDataset(props.assetId);
-
-			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-			rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
-			if (datasetTemp) {
-				Object.entries(datasetTemp).forEach(([key, value]) => {
-					if (isString(value)) {
-						datasetTemp[key] = highlightSearchTerms(value);
-					}
-				});
-				dataset.value = datasetTemp;
-			}
+			fetchDataset();
 		} else {
 			dataset.value = null;
 			rawContent.value = null;

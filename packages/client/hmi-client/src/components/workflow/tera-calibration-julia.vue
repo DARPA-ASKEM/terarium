@@ -87,6 +87,9 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
+					:initial-data="csvAsset"
+					:mapping="mapping"
+					:run-type="RunType.Julia"
 					:chartConfig="cfg"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
@@ -139,7 +142,7 @@ import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
