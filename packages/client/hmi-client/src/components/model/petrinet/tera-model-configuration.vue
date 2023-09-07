@@ -18,36 +18,36 @@
 						<tr>
 							<th class="p-frozen-column" />
 							<th class="p-frozen-column second-frozen">Select all</th>
-							<th v-for="(variableName, i) in [...headerStates, ...headerTransitions]" :key="i">
+							<th v-for="(variableName, i) in headerStatesAndTransitions" :key="i">
 								{{ variableName }}
 							</th>
 						</tr>
 					</thead>
-					<!-- <div v-if="stratifiedModelType">Stratified configs (WIP)</div> -->
+					<!--Different tbody depending on model component tag??-->
 					<tera-stratified-model-configuration
 						v-if="stratifiedModelType"
-						:stratified-model-type="stratifiedModelType"
+						v-model:editValue="editValue"
 						:model-configurations="modelConfigurations"
 						:cell-edit-states="cellEditStates"
-						:feature-config="featureConfig"
-						:table-headers="tableHeaders"
-						:base-states="headerStates"
-						:base-transitions="headerTransitions"
+						:base-states-and-transitions="headerStatesAndTransitions"
 						@new-model-configuration="emit('new-model-configuration')"
 						@update-value="updateValue"
 						@update-name="updateName"
+						@enter-name-cell="onEnterNameCell"
 						@enter-value-cell="onEnterValueCell"
+						@open-matrix-modal="openMatrixModal"
 					/>
-					<!-- <div v-if="stratifiedModelType"><br />All values</div> -->
 					<tera-regular-model-configuration
+						v-else
+						v-model:editValue="editValue"
 						:model-configurations="modelConfigurations"
-						:feature-config="featureConfig"
 						:cell-edit-states="cellEditStates"
-						:table-headers="tableHeaders"
 						@new-model-configuration="emit('new-model-configuration')"
 						@update-value="updateValue"
 						@update-name="updateName"
+						@enter-name-cell="onEnterNameCell"
 						@enter-value-cell="onEnterValueCell"
+						@open-value-modal="openValueModal"
 					/>
 				</table>
 			</div>
@@ -59,6 +59,143 @@
 			icon="pi pi-plus"
 			:model="configItems"
 		/>
+		<Teleport to="body">
+			<tera-modal
+				v-if="openValueConfig && stratifiedModelType && modalAttributes.id"
+				@modal-mask-clicked="openValueConfig = false"
+				@model-submit="openValueConfig = false"
+			>
+				<template #header>
+					<h4>{{ modalAttributes.id }}</h4>
+					<span>Configure the matrix values</span>
+					<div class="flex align-items-center">
+						<Checkbox
+							inputId="matrixShouldEval"
+							v-model="matrixShouldEval"
+							:binary="true"
+							label="Evaluate expressions?"
+						/>
+						<label for="matrixShouldEval" class="ml-2"> Evaluate Expressions? </label>
+					</div>
+				</template>
+				<template #default>
+					<!-- TODO: Implement value tabs for the modal once we are ready
+					<TabView v-model:activeIndex="activeIndex">
+					<TabPanel v-for="(extraction, i) in extractions" :key="i">
+						<template #header>
+							<span>{{ extraction.name }}</span>
+						</template>
+						<div>
+							<label for="name">Name</label>
+							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
+						</div>
+						<div>
+							<label for="name">Matrix</label>
+							<tera-stratified-value-matrix
+								:model-configuration="modelConfigurations[modalAttributes.configIndex]"
+								:id="modalAttributes.id"
+								:stratified-model-type="stratifiedModelType"
+								:node-type="modalAttributes.nodeType"
+							/>
+						</div>
+					</TabPanel>
+				</TabView> -->
+					<tera-stratified-value-matrix
+						:model-configuration="modelConfigurations[modalAttributes.configIndex]"
+						:id="modalAttributes.id"
+						:stratified-model-type="stratifiedModelType"
+						:node-type="modalAttributes.nodeType"
+						:should-eval="matrixShouldEval"
+					/>
+				</template>
+				<template #footer>
+					<Button label="OK" @click="openValueConfig = false" />
+					<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
+				</template>
+			</tera-modal>
+			<tera-modal
+				v-else-if="openValueConfig && modalAttributes.odeType"
+				@modal-mask-clicked="openValueConfig = false"
+				@modal-enter-press="setModelParameters"
+			>
+				<template #header>
+					<h4>
+						{{
+							modelConfigurations[modalAttributes.configIndex].configuration.semantics.ode[
+								modalAttributes.odeType
+							][modalAttributes.odeObjIndex]['id'] ??
+							modelConfigurations[modalAttributes.configIndex].configuration.semantics.ode[
+								modalAttributes.odeType
+							][modalAttributes.odeObjIndex]['target']
+						}}
+					</h4>
+					<span>Select a value for this configuration</span>
+				</template>
+				<template #default>
+					<TabView v-model:activeIndex="activeIndex">
+						<TabPanel v-for="(extraction, i) in extractions" :key="i">
+							<template #header>
+								<span>{{ extraction.name }}</span>
+							</template>
+							<div>
+								<label for="name">Name</label>
+								<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
+							</div>
+							<div v-if="modalAttributes.odeType === 'parameters'">
+								<label for="type">Type</label>
+								<Dropdown
+									v-model="extraction.type"
+									:options="typeOptions"
+									optionLabel="label"
+									optionValue="value"
+									placeholder="Select a parameter type"
+								></Dropdown>
+							</div>
+							<div>
+								<label for="name">Value</label>
+								<InputText
+									class="p-inputtext-sm"
+									:class="{ 'p-invalid': errorMessage }"
+									:key="'value' + i"
+									v-model="extraction.value"
+									:placeholder="getValuePlaceholder(extraction.type)"
+									@keydown="clearError()"
+								/>
+								<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
+							</div>
+							<div v-if="modalAttributes.odeType === 'parameters'">
+								<div v-if="extraction.type === ParamType.DISTRIBUTION">
+									<label for="name">Min</label>
+									<InputText
+										class="p-inputtext-sm"
+										:key="'min' + i"
+										v-model="extraction.distribution.parameters.minimum"
+									/>
+									<label for="name">Max</label>
+									<InputText
+										class="p-inputtext-sm"
+										:key="'max' + i"
+										v-model="extraction.distribution.parameters.maximum"
+									/>
+								</div>
+							</div>
+							<label for="equation">Equation</label>
+							<tera-math-editor
+								:is-editing-eq="true"
+								:latex-equation="''"
+								:keep-open="true"
+								@equation-updated="console.log('equation udpated from configuration')"
+							>
+							</tera-math-editor>
+						</TabPanel>
+					</TabView>
+				</template>
+				<template #footer>
+					<Button label="OK" @click="setModelParameters" />
+					<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
+				</template>
+			</tera-modal>
+		</Teleport>
 	</main>
 </template>
 
@@ -80,9 +217,21 @@ import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 import { getModelConfigurations } from '@/services/model';
-import { FeatureConfig } from '@/types/common';
-import TeraStratifiedModelConfiguration from './model-configurations/tera-stratified-model-configuration.vue';
+import { FeatureConfig, ParamType } from '@/types/common';
+
+import TabView from 'primevue/tabview';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import TabPanel from 'primevue/tabpanel';
+import Dropdown from 'primevue/dropdown';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import Button from 'primevue/button';
+// st
+import Checkbox from 'primevue/checkbox';
+import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import TeraRegularModelConfiguration from './model-configurations/tera-regular-model-configuration.vue';
+import TeraStratifiedModelConfiguration from './model-configurations/tera-stratified-model-configuration.vue';
+// import TabPanel from 'primevue/tabpanel';
+// import TabView from 'primevue/tabview';
 
 const props = defineProps<{
 	featureConfig: FeatureConfig;
@@ -92,15 +241,16 @@ const props = defineProps<{
 
 const emit = defineEmits(['new-model-configuration', 'update-model-configuration']);
 
-// const modelConfigInputValue = ref<string>('');
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
-const modelConfigInputValue = ref<string>('');
-
-// const activeIndex = ref(0);
+const editValue = ref<string>('');
+const activeIndex = ref(0);
+const errorMessage = ref('');
 const configItems = ref<any[]>([]);
+
+const matrixShouldEval = ref(true);
 
 const configurations = computed<Model[]>(
 	() => modelConfigurations.value.map((m) => m.configuration) ?? []
@@ -108,7 +258,7 @@ const configurations = computed<Model[]>(
 
 const stratifiedModelType = computed(() => props.model && getStratificationType(props.model));
 // Dependent on stratifiedModelType which is computed
-const modalVal = ref(
+const modalAttributes = ref(
 	stratifiedModelType.value
 		? { id: '', configIndex: 0, nodeType: NodeType.State }
 		: { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 }
@@ -133,6 +283,10 @@ const headerTransitions = computed<any[]>(() =>
 		? baseModel.value.transitions.map(({ id }) => id)
 		: configurations.value[0]?.semantics?.ode.parameters?.map(({ id }) => id) ?? []
 );
+const headerStatesAndTransitions = computed(() => [
+	...headerStates.value,
+	...headerTransitions.value
+]);
 
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
@@ -147,13 +301,18 @@ const isConfigurationVisible = computed(
 		!isEmpty(cellEditStates.value)
 );
 
+function onEnterNameCell(configIndex: number) {
+	editValue.value = cloneDeep(modelConfigurations.value[configIndex].name);
+	cellEditStates.value[configIndex].name = true;
+}
+
 function onEnterValueCell(
 	odeType: string,
 	valueName: string,
 	configIndex: number,
 	odeObjIndex: number
 ) {
-	modelConfigInputValue.value = cloneDeep(
+	editValue.value = cloneDeep(
 		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
 			valueName
 		]
@@ -161,7 +320,7 @@ function onEnterValueCell(
 	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
 }
 
-function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
+function updateModelConfig(configIndex: number = modalAttributes.value.configIndex) {
 	const configToUpdate = modelConfigurations.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
@@ -170,18 +329,155 @@ function updateModelConfig(configIndex: number = modalVal.value.configIndex) {
 	}, 800);
 }
 
+function updateName(configIndex: number) {
+	cellEditStates.value[configIndex].name = false;
+	modelConfigurations.value[configIndex].name = editValue.value;
+	updateModelConfig(configIndex);
+}
+
 function updateValue(odeType: string, valueName: string, configIndex: number, odeObjIndex: number) {
 	cellEditStates.value[configIndex][odeType][odeObjIndex] = false;
 	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
 		valueName
-	] = modelConfigInputValue.value;
+	] = editValue.value;
 	updateModelConfig(configIndex);
 }
 
-function updateName(configIndex: number) {
-	cellEditStates.value[configIndex].name = false;
-	modelConfigurations.value[configIndex].name = modelConfigInputValue.value;
-	updateModelConfig(configIndex);
+// Modal
+function getValuePlaceholder(parameterType) {
+	if (parameterType === ParamType.TIME_SERIES) {
+		return 'Enter values here as a list of time:value pairs (e.g., 0:500, 10:550, 25:700 etc)';
+	}
+	return '';
+}
+
+const typeOptions = ref([
+	{ label: 'A constant', value: ParamType.CONSTANT },
+	{ label: 'A distibution', value: ParamType.DISTRIBUTION },
+	{ label: 'A value that changes over time', value: ParamType.TIME_SERIES }
+]);
+
+function clearError() {
+	errorMessage.value = '';
+}
+
+function getParameterValue(parameter, valueName, timeseries) {
+	if (parameter.id in timeseries) {
+		return timeseries[parameter.id];
+	}
+	return parameter[valueName];
+}
+function getParameterType(parameter, timeseries) {
+	if (parameter.id in timeseries) {
+		return ParamType.TIME_SERIES;
+	}
+	if (parameter.distribution) {
+		return ParamType.DISTRIBUTION;
+	}
+	return ParamType.CONSTANT;
+}
+
+function openMatrixModal(configIndex: number, id: string) {
+	if (!props.featureConfig.isPreview) {
+		activeIndex.value = 0;
+		openValueConfig.value = true;
+		const nodeType = headerStates.value.includes(id) ? NodeType.State : NodeType.Transition;
+		modalAttributes.value = { id, configIndex, nodeType };
+	}
+}
+
+function openValueModal(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	if (!props.featureConfig.isPreview) {
+		activeIndex.value = 0;
+		openValueConfig.value = true;
+		clearError();
+		modalAttributes.value = { odeType, valueName, configIndex, odeObjIndex };
+		const modelParameter = cloneDeep(
+			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
+		);
+
+		// sticking the timeseries values on the metadata, temporary solution for now
+		const modelTimeSeries =
+			cloneDeep(modelConfigurations.value[configIndex].configuration?.metadata?.timeseries) ?? {};
+
+		extractions.value[0].value = getParameterValue(modelParameter, valueName, modelTimeSeries);
+		extractions.value[0].name = modelParameter.name ?? 'Default';
+		extractions.value[0].type = getParameterType(modelParameter, modelTimeSeries);
+		// we are only adding the ability to add one type of distribution for now...
+		extractions.value[0].distribution = modelParameter.distribution ?? {
+			type: 'Uniform1',
+			parameters: { minimum: null, maximum: null }
+		};
+	}
+}
+
+function validateTimeSeries(values) {
+	let isValid = true;
+	if (typeof values !== 'string') {
+		isValid = false;
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+		return isValid;
+	}
+	const timeValuePairs = values.split(',');
+
+	timeValuePairs.forEach((pair) => {
+		const [time, value] = pair.trim().split(/\s*:\s*/);
+		if (!time || !value) {
+			isValid = false;
+		}
+	});
+
+	clearError();
+	if (!isValid) {
+		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+	}
+	return isValid;
+}
+
+// to validate input
+function checkModelParameters() {
+	const { type, value } = extractions.value[activeIndex.value];
+
+	if (type === ParamType.TIME_SERIES) {
+		return validateTimeSeries(value);
+	}
+	clearError();
+	return true;
+}
+
+// function to set the provided values from the modal
+function setModelParameters() {
+	if (checkModelParameters()) {
+		const { odeType, valueName, configIndex, odeObjIndex } = modalAttributes.value;
+		const modelParameter =
+			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
+		modelParameter[valueName] = extractions.value[activeIndex.value].value;
+		if (!modelConfigurations.value[configIndex].configuration.metadata) {
+			modelConfigurations.value[configIndex].configuration.metadata = {};
+		}
+		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
+		modelParameter.name = extractions.value[activeIndex.value].name;
+		if (extractions.value[activeIndex.value].type === ParamType.TIME_SERIES) {
+			if (!modelMetadata.timeseries) modelMetadata.timeseries = {};
+			if (!modelMetadata.timeseries[modelParameter.id])
+				modelMetadata.timeseries[modelParameter.id] = {};
+			modelMetadata.timeseries[modelParameter.id] = extractions.value[activeIndex.value].value;
+			delete modelParameter.distribution;
+		} else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
+			modelParameter.distribution = extractions.value[activeIndex.value].distribution;
+			delete modelMetadata.timeseries?.[modelParameter.id];
+		} else {
+			// A constant
+			delete modelParameter.distribution;
+			delete modelMetadata.timeseries?.[modelParameter.id];
+		}
+		updateModelConfig();
+	}
 }
 
 async function addModelConfiguration(config: ModelConfiguration) {
@@ -228,11 +524,10 @@ async function setupConfigurations() {
 	}
 
 	modelConfigurations.value = tempConfigurations;
-	console.log(modelConfigurations.value);
 	resetCellEditing();
 
 	openValueConfig.value = false;
-	modalVal.value = stratifiedModelType.value
+	modalAttributes.value = stratifiedModelType.value
 		? { id: '', configIndex: 0, nodeType: NodeType.State }
 		: { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 	extractions.value = [{ name: '', value: '' }];
@@ -258,5 +553,21 @@ onMounted(() => {
 <style scoped>
 .model-configuration {
 	margin-bottom: 1rem;
+}
+
+.model-configuration:deep(.p-column-header-content) {
+	color: var(--text-color-subdued);
+}
+
+/** TODO: Apply to all tables in theme or create second table rules?  */
+.p-datatable-thead th {
+	text-transform: none !important;
+	color: var(--text-color-primary) !important;
+	font-size: var(--font-size-small) !important;
+	padding-left: 1rem !important;
+}
+
+.model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
+	content: '--';
 }
 </style>

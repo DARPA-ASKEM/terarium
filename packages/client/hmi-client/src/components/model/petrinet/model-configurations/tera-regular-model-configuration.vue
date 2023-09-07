@@ -15,28 +15,22 @@
 			<td
 				class="p-frozen-column second-frozen"
 				tabindex="0"
-				@keyup.enter="
-					modelConfigInputValue = cloneDeep(modelConfigurations[i].name)
-					// cellEditStates[i].name = true;
-				"
-				@click="
-					modelConfigInputValue = cloneDeep(modelConfigurations[i].name)
-					// cellEditStates[i].name = true;
-				"
+				@keyup.enter="emit('enter-name-cell', i)"
+				@click="emit('enter-name-cell', i)"
 			>
-				<span :class="!cellEditStates[i].name ? 'editable-cell' : 'editable-cell-hidden'">
-					{{ name }}
-				</span>
 				<InputText
 					v-if="cellEditStates[i].name"
-					v-model.lazy="modelConfigInputValue"
+					:value="editValue"
+					@input="emit('update:editValue', ($event.target as HTMLInputElement).value)"
 					v-focus
 					@focusout="emit('update-name', i)"
 					@keyup.stop.enter="emit('update-name', i)"
 					class="cell-input"
 				/>
+				<span v-else class="editable-cell">
+					{{ name }}
+				</span>
 			</td>
-			<!-- Additional columns -->
 			<td
 				v-for="(initial, j) of configuration?.semantics?.ode.initials"
 				:key="j"
@@ -50,12 +44,13 @@
 					<Button
 						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 						icon="pi pi-ellipsis-v"
-						@click.stop="openValueModal('initials', 'expression', i, j)"
+						@click.stop="emit('open-value-modal', 'initials', 'expression', i, j)"
 					/>
 				</section>
 				<InputText
 					v-if="cellEditStates[i].initials[j]"
-					v-model.lazy="modelConfigInputValue"
+					:value="editValue"
+					@input="emit('update:editValue', ($event.target as HTMLInputElement).value)"
 					v-focus
 					@focusout="emit('update-value', 'initials', 'expression', i, j)"
 					@keyup.stop.enter="emit('update-value', 'initials', 'expression', i, j)"
@@ -96,12 +91,13 @@
 					<Button
 						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 						icon="pi pi-ellipsis-v"
-						@click.stop="openValueModal('parameters', 'value', i, j)"
+						@click.stop="emit('open-value-modal', 'parameters', 'value', i, j)"
 					/>
 				</section>
 				<InputText
 					v-if="cellEditStates[i].parameters[j]"
-					v-model.lazy="modelConfigInputValue"
+					:value="editValue"
+					@input="emit('update:editValue', ($event.target as HTMLInputElement).value)"
 					v-focus
 					@focusout="emit('update-value', 'parameters', 'value', i, j)"
 					@keyup.stop.enter="emit('update-value', 'parameters', 'value', i, j)"
@@ -110,124 +106,17 @@
 			</td>
 		</tr>
 	</tbody>
-	<Teleport to="body">
-		<tera-modal
-			v-if="openValueConfig"
-			@modal-mask-clicked="openValueConfig = false"
-			@modal-enter-press="setModelParameters"
-		>
-			<template #header>
-				<h4>
-					{{
-						modelConfigurations[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-							modalVal.odeObjIndex
-						]['id'] ??
-						modelConfigurations[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
-							modalVal.odeObjIndex
-						]['target']
-					}}
-				</h4>
-				<span>Select a value for this configuration</span>
-			</template>
-			<template #default>
-				<TabView v-model:activeIndex="activeIndex">
-					<TabPanel v-for="(extraction, i) in extractions" :key="i">
-						<template #header>
-							<span>{{ extraction.name }}</span>
-						</template>
-						<div>
-							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
-						</div>
-						<div v-if="modalVal.odeType === 'parameters'">
-							<label for="type">Type</label>
-							<Dropdown
-								v-model="extraction.type"
-								:options="typeOptions"
-								optionLabel="label"
-								optionValue="value"
-								placeholder="Select a parameter type"
-							></Dropdown>
-						</div>
-						<div>
-							<label for="name">Value</label>
-							<InputText
-								class="p-inputtext-sm"
-								:class="{ 'p-invalid': errorMessage }"
-								:key="'value' + i"
-								v-model="extraction.value"
-								:placeholder="getValuePlaceholder(extraction.type)"
-								@keydown="clearError()"
-							/>
-							<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
-						</div>
-						<div v-if="modalVal.odeType === 'parameters'">
-							<div v-if="extraction.type === ParamType.DISTRIBUTION">
-								<label for="name">Min</label>
-								<InputText
-									class="p-inputtext-sm"
-									:key="'min' + i"
-									v-model="extraction.distribution.parameters.minimum"
-								/>
-								<label for="name">Max</label>
-								<InputText
-									class="p-inputtext-sm"
-									:key="'max' + i"
-									v-model="extraction.distribution.parameters.maximum"
-								/>
-							</div>
-						</div>
-						<label for="equation">Equation</label>
-						<tera-math-editor
-							:is-editing-eq="true"
-							:latex-equation="''"
-							:keep-open="true"
-							@equation-updated="console.log('equation udpated from configuration')"
-						>
-						</tera-math-editor>
-					</TabPanel>
-				</TabView>
-			</template>
-			<template #footer>
-				<Button
-					label="OK"
-					@click="
-						() => {
-							setModelParameters();
-						}
-					"
-				/>
-				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
-			</template>
-		</tera-modal>
-	</Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { cloneDeep } from 'lodash';
 import Button from 'primevue/button';
-
-import TabView from 'primevue/tabview';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import Dropdown from 'primevue/dropdown';
 import { ModelConfiguration } from '@/types/Types';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import { FeatureConfig } from '@/types/common';
 
-enum ParamType {
-	CONSTANT = 'constant',
-	DISTRIBUTION = 'distribution',
-	TIME_SERIES = 'time_series'
-}
-
-const props = defineProps<{
-	featureConfig: FeatureConfig;
+defineProps<{
+	editValue: string;
 	modelConfigurations: ModelConfiguration[];
 	calibrationConfig?: boolean;
-	tableHeaders: { name: string; colspan: number }[];
 	cellEditStates: any[];
 }>();
 
@@ -235,170 +124,19 @@ const emit = defineEmits([
 	'new-model-configuration',
 	'update-name',
 	'update-value',
-	'enter-value-cell'
-]);
-
-const modelConfigInputValue = ref<string>('');
-const extractions = ref<any[]>([]);
-const openValueConfig = ref(false);
-const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
-
-const activeIndex = ref(0);
-const errorMessage = ref('');
-
-const typeOptions = ref([
-	{ label: 'A constant', value: ParamType.CONSTANT },
-	{ label: 'A distibution', value: ParamType.DISTRIBUTION },
-	{ label: 'A value that changes over time', value: ParamType.TIME_SERIES }
+	'enter-name-cell',
+	'enter-value-cell',
+	'open-value-modal',
+	'update:editValue'
 ]);
 
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
-
-function getValuePlaceholder(parameterType) {
-	if (parameterType === ParamType.TIME_SERIES) {
-		return 'Enter values here as a list of time:value pairs (e.g., 0:500, 10:550, 25:700 etc)';
-	}
-	return '';
-}
-
-function openValueModal(
-	odeType: string,
-	valueName: string,
-	configIndex: number,
-	odeObjIndex: number
-) {
-	if (!props.featureConfig.isPreview) {
-		clearError();
-		activeIndex.value = 0;
-		openValueConfig.value = true;
-		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
-		const modelParameter = cloneDeep(
-			props.modelConfigurations[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
-		);
-
-		// sticking the timeseries values on the metadata, temporary solution for now
-		const modelTimeSeries =
-			cloneDeep(props.modelConfigurations[configIndex].configuration?.metadata?.timeseries) ?? {};
-
-		extractions.value[0].value = getParameterValue(modelParameter, valueName, modelTimeSeries);
-		extractions.value[0].name = modelParameter.name ?? 'Default';
-		extractions.value[0].type = getParameterType(modelParameter, modelTimeSeries);
-		// we are only adding the ability to add one type of distribution for now...
-		extractions.value[0].distribution = modelParameter.distribution ?? {
-			type: 'Uniform1',
-			parameters: { minimum: null, maximum: null }
-		};
-	}
-}
-
-function clearError() {
-	errorMessage.value = '';
-}
-
-function validateTimeSeries(values) {
-	let isValid = true;
-	if (typeof values !== 'string') {
-		isValid = false;
-		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
-		return isValid;
-	}
-	const timeValuePairs = values.split(',');
-
-	timeValuePairs.forEach((pair) => {
-		const [time, value] = pair.trim().split(/\s*:\s*/);
-		if (!time || !value) {
-			isValid = false;
-		}
-	});
-
-	clearError();
-	if (!isValid) {
-		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
-	}
-	return isValid;
-}
-
-// to validate input
-function checkModelParameters() {
-	const { type, value } = extractions.value[activeIndex.value];
-
-	if (type === ParamType.TIME_SERIES) {
-		return validateTimeSeries(value);
-	}
-
-	clearError();
-	return true;
-}
-
-// function to set the provided values from the modal
-function setModelParameters() {
-	if (checkModelParameters()) {
-		// const { odeType, valueName, configIndex, odeObjIndex } = modalVal.value;
-		// const modelParameter =
-		// 	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
-		// modelParameter[valueName] = extractions.value[activeIndex.value].value;
-		// if (!modelConfigurations.value[configIndex].configuration.metadata) {
-		// 	modelConfigurations.value[configIndex].configuration.metadata = {};
-		// }
-		// const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
-		// modelParameter.name = extractions.value[activeIndex.value].name;
-		// if (extractions.value[activeIndex.value].type === ParamType.TIME_SERIES) {
-		// 	if (!modelMetadata.timeseries) modelMetadata.timeseries = {};
-		// 	if (!modelMetadata.timeseries[modelParameter.id])
-		// 		modelMetadata.timeseries[modelParameter.id] = {};
-		// 	modelMetadata.timeseries[modelParameter.id] = extractions.value[activeIndex.value].value;
-		// 	delete modelParameter.distribution;
-		// } else if (extractions.value[activeIndex.value].type === ParamType.DISTRIBUTION) {
-		// 	modelParameter.distribution = extractions.value[activeIndex.value].distribution;
-		// 	delete modelMetadata.timeseries?.[modelParameter.id];
-		// } else {
-		// 	// A constant
-		// 	delete modelParameter.distribution;
-		// 	delete modelMetadata.timeseries?.[modelParameter.id];
-		// }
-		// updateModelConfig();
-	}
-}
-
-function getParameterValue(parameter, valueName, timeseries) {
-	if (parameter.id in timeseries) {
-		return timeseries[parameter.id];
-	}
-	return parameter[valueName];
-}
-function getParameterType(parameter, timeseries) {
-	if (parameter.id in timeseries) {
-		return ParamType.TIME_SERIES;
-	}
-
-	if (parameter.distribution) {
-		return ParamType.DISTRIBUTION;
-	}
-
-	return ParamType.CONSTANT;
-}
 </script>
 
 <style scoped>
-.model-configuration:deep(.p-column-header-content) {
-	color: var(--text-color-subdued);
-}
-
-/** TODO: Apply to all tables in theme or create second table rules?  */
-.p-datatable-thead th {
-	text-transform: none !important;
-	color: var(--text-color-primary) !important;
-	font-size: var(--font-size-small) !important;
-	padding-left: 1rem !important;
-}
-
-.model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
-	content: '--';
-}
-
 .editable-cell {
 	display: flex;
 	justify-content: space-between;
