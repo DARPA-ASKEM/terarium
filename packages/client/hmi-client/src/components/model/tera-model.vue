@@ -28,7 +28,7 @@
 					<Button
 						class="p-button-secondary p-button-sm"
 						label="Model"
-						icon="pi pi-file"
+						icon="pi pi-share-alt"
 						@click="view = ModelView.MODEL"
 						:active="view === ModelView.MODEL"
 					/>
@@ -53,6 +53,7 @@
 			<tera-model-description
 				v-if="view === ModelView.DESCRIPTION"
 				:model="model"
+				:model-configurations="modelConfigurations"
 				:highlight="highlight"
 				:project="project"
 				@update-model="updateModelContent"
@@ -61,8 +62,11 @@
 			<tera-model-editor
 				v-else-if="view === ModelView.MODEL"
 				:model="model"
+				:model-configurations="modelConfigurations"
 				:feature-config="featureConfig"
 				@update-model="updateModelContent"
+				@update-configuration="updateConfiguration"
+				@add-configuration="addConfiguration"
 			/>
 		</tera-asset>
 	</main>
@@ -78,10 +82,15 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import useResourcesStore from '@/stores/resources';
-import { getModel, updateModel } from '@/services/model';
+import {
+	createModelConfiguration,
+	updateModelConfiguration,
+	addDefaultConfiguration
+} from '@/services/model-configurations';
+import { getModel, updateModel, getModelConfigurations } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { IProject } from '@/types/Project';
-import { Model } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import * as ProjectService from '@/services/project';
 
 enum ModelView {
@@ -109,9 +118,11 @@ const props = defineProps({
 	}
 });
 
-const model = ref<Model | null>(null);
-const view = ref(ModelView.DESCRIPTION);
+const emit = defineEmits(['update-model-configuration', 'new-model-configuration']);
 
+const model = ref<Model | null>(null);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+const view = ref(ModelView.DESCRIPTION);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 
@@ -136,10 +147,9 @@ const optionsMenuItems = ref([
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
-// Centralize this eventually
 async function updateModelContent(updatedModel: Model) {
-	model.value = updatedModel;
 	await updateModel(updatedModel);
+	model.value = updatedModel; // await fetchModel(); Better to fetch instead but elastic search might not update in time
 	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id ?? '102', true));
 }
 
@@ -152,8 +162,48 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
+async function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
+	await updateModelConfiguration(updatedConfiguration);
+	modelConfigurations.value[index] = updatedConfiguration; // Better to fetch instead but elastic search might not update in time
+	setTimeout(() => {
+		emit('update-model-configuration');
+	}, 800);
+}
+
+async function addConfiguration(configuration: ModelConfiguration) {
+	if (model.value) {
+		await createModelConfiguration(
+			model.value.id,
+			`Copy of ${configuration.name}`,
+			configuration.description as string,
+			configuration.configuration
+		);
+		setTimeout(() => {
+			emit('new-model-configuration');
+			fetchConfigurations();
+		}, 800);
+	}
+}
+
+async function fetchConfigurations() {
+	if (model.value) {
+		let tempConfigurations = await getModelConfigurations(model.value.id);
+
+		// Ensure that we always have a "default config" model configuration
+		if (
+			isEmpty(tempConfigurations) ||
+			!tempConfigurations.find((d) => d.name === 'Default config')
+		) {
+			await addDefaultConfiguration(model.value);
+			tempConfigurations = await getModelConfigurations(model.value.id);
+		}
+		modelConfigurations.value = tempConfigurations;
+	}
+}
+
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
+	fetchConfigurations();
 }
 
 watch(

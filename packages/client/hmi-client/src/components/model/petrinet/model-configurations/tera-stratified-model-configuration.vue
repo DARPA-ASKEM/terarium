@@ -58,7 +58,6 @@ defineProps<{
 }>();
 
 const emit = defineEmits([
-	'new-model-configuration',
 	'update-name',
 	'update-value',
 	'enter-name-cell',

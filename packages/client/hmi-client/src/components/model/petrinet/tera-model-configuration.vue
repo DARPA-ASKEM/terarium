@@ -32,7 +32,6 @@
 						:model-configurations="modelConfigurations"
 						:cell-edit-states="cellEditStates"
 						:base-states-and-transitions="headerStatesAndTransitions"
-						@new-model-configuration="emit('new-model-configuration')"
 						@update-value="updateValue"
 						@update-name="updateName"
 						@enter-name-cell="onEnterNameCell"
@@ -48,7 +47,7 @@
 			label="Add configuration"
 			size="small"
 			icon="pi pi-plus"
-			:model="configItems"
+			:model="addConfigurationItems"
 		/>
 		<Teleport to="body">
 			<tera-modal
@@ -190,23 +189,17 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, onMounted, computed } from 'vue';
+import { watch, ref, computed } from 'vue';
 import { isEmpty, cloneDeep } from 'lodash';
 import {
 	StratifiedModelType,
 	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
 import { ModelConfiguration, Model } from '@/types/Types';
-import {
-	createModelConfiguration,
-	updateModelConfiguration,
-	addDefaultConfiguration
-} from '@/services/model-configurations';
 import SplitButton from 'primevue/splitbutton';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
-import { getModelConfigurations } from '@/services/model';
 import { FeatureConfig, ParamType } from '@/types/common';
 
 import TabView from 'primevue/tabview';
@@ -225,26 +218,33 @@ import TeraStratifiedModelConfiguration from './model-configurations/tera-strati
 // import TabView from 'primevue/tabview';
 
 const props = defineProps<{
-	featureConfig: FeatureConfig;
 	model: Model;
+	modelConfigurations: ModelConfiguration[];
+	featureConfig: FeatureConfig;
 	calibrationConfig?: boolean;
 }>();
 
-const emit = defineEmits(['new-model-configuration', 'update-model-configuration']);
+const emit = defineEmits(['update-model', 'update-configuration', 'add-configuration']);
 
-const modelConfigurations = ref<ModelConfiguration[]>([]);
 const cellEditStates = ref<any[]>([]);
 const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const editValue = ref<string>('');
 const activeIndex = ref(0);
 const errorMessage = ref('');
-const configItems = ref<any[]>([]);
-
 const matrixShouldEval = ref(true);
 
+const addConfigurationItems = computed(() =>
+	props.modelConfigurations.map((config) => ({
+		label: config.name,
+		command: () => {
+			emit('add-configuration', config);
+		}
+	}))
+);
+
 const configurations = computed<Model[]>(
-	() => modelConfigurations.value.map((m) => m.configuration) ?? []
+	() => props.modelConfigurations.map((m) => m.configuration) ?? []
 );
 
 const stratifiedModelType = computed(() => props.model && getStratificationType(props.model));
@@ -287,13 +287,13 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => [
 // Decide if we should display the whole configuration table
 const isConfigurationVisible = computed(
 	() =>
-		!isEmpty(modelConfigurations.value) &&
+		!isEmpty(props.modelConfigurations) &&
 		!isEmpty(tableHeaders.value) &&
 		!isEmpty(cellEditStates.value)
 );
 
 function onEnterNameCell(configIndex: number) {
-	editValue.value = cloneDeep(modelConfigurations.value[configIndex].name);
+	editValue.value = cloneDeep(props.modelConfigurations[configIndex].name);
 	cellEditStates.value[configIndex].name = true;
 }
 
@@ -304,34 +304,11 @@ function onEnterValueCell(
 	odeObjIndex: number
 ) {
 	editValue.value = cloneDeep(
-		modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
+		props.modelConfigurations[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
 			valueName
 		]
 	);
 	cellEditStates.value[configIndex][odeType][odeObjIndex] = true;
-}
-
-function updateModelConfig(configIndex: number = modalAttributes.value.configIndex) {
-	const configToUpdate = modelConfigurations.value[configIndex];
-	updateModelConfiguration(configToUpdate);
-	openValueConfig.value = false;
-	setTimeout(() => {
-		emit('update-model-configuration');
-	}, 800);
-}
-
-function updateName(configIndex: number) {
-	cellEditStates.value[configIndex].name = false;
-	modelConfigurations.value[configIndex].name = editValue.value;
-	updateModelConfig(configIndex);
-}
-
-function updateValue(odeType: string, valueName: string, configIndex: number, odeObjIndex: number) {
-	cellEditStates.value[configIndex][odeType][odeObjIndex] = false;
-	modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex][
-		valueName
-	] = editValue.value;
-	updateModelConfig(configIndex);
 }
 
 // Modal
@@ -389,12 +366,12 @@ function openValueModal(
 		clearError();
 		modalAttributes.value = { odeType, valueName, configIndex, odeObjIndex };
 		const modelParameter = cloneDeep(
-			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
+			props.modelConfigurations[configIndex].configuration.semantics.ode[odeType][odeObjIndex]
 		);
 
 		// sticking the timeseries values on the metadata, temporary solution for now
 		const modelTimeSeries =
-			cloneDeep(modelConfigurations.value[configIndex].configuration?.metadata?.timeseries) ?? {};
+			cloneDeep(props.modelConfigurations[configIndex].configuration?.metadata?.timeseries) ?? {};
 
 		extractions.value[0].value = getParameterValue(modelParameter, valueName, modelTimeSeries);
 		extractions.value[0].name = modelParameter.name ?? 'Default';
@@ -441,18 +418,36 @@ function checkModelParameters() {
 	return true;
 }
 
+function updateName(index: number) {
+	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
+	cellEditStates.value[index].name = false;
+	configToUpdate.name = editValue.value;
+	emit('update-configuration', configToUpdate, index);
+}
+
+function updateValue(odeType: string, valueName: string, index: number, odeObjIndex: number) {
+	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
+	cellEditStates.value[index][odeType][odeObjIndex] = false;
+	configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
+	emit('update-configuration', configToUpdate, index);
+}
+
 // function to set the provided values from the modal
 function setModelParameters() {
 	if (checkModelParameters() && modalAttributes.value.odeType) {
 		const { odeType, valueName, configIndex, odeObjIndex } = modalAttributes.value;
-		const modelParameter =
-			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
+		const configToUpdate = cloneDeep(props.modelConfigurations[configIndex]);
+
+		const modelParameter = configToUpdate.configuration.semantics.ode[odeType][odeObjIndex];
 		modelParameter[valueName] = extractions.value[activeIndex.value].value;
-		if (!modelConfigurations.value[configIndex].configuration.metadata) {
-			modelConfigurations.value[configIndex].configuration.metadata = {};
+
+		if (!configToUpdate.configuration.metadata) {
+			configToUpdate.configuration.metadata = {};
 		}
-		const modelMetadata = modelConfigurations.value[configIndex].configuration.metadata;
+		const modelMetadata = configToUpdate.configuration.metadata;
+
 		modelParameter.name = extractions.value[activeIndex.value].name;
+
 		if (extractions.value[activeIndex.value].type === ParamType.TIME_SERIES) {
 			if (!modelMetadata.timeseries) modelMetadata.timeseries = {};
 			if (!modelMetadata.timeseries[modelParameter.id])
@@ -467,21 +462,8 @@ function setModelParameters() {
 			delete modelParameter.distribution;
 			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
-		updateModelConfig();
+		emit('update-configuration', configToUpdate, configIndex);
 	}
-}
-
-async function addModelConfiguration(config: ModelConfiguration) {
-	await createModelConfiguration(
-		props.model.id,
-		`Copy of ${config.name}`,
-		config.description as string,
-		config.configuration
-	);
-	setTimeout(() => {
-		emit('new-model-configuration');
-		setupConfigurations();
-	}, 800);
 }
 
 function resetCellEditing() {
@@ -493,28 +475,12 @@ function resetCellEditing() {
 	}
 
 	// Can't use fill here because the same row object would be referenced throughout the array
-	const cellEditStatesArr = new Array(modelConfigurations.value.length);
-	for (let i = 0; i < modelConfigurations.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
+	const cellEditStatesArr = new Array(props.modelConfigurations.length);
+	for (let i = 0; i < props.modelConfigurations.length; i++) cellEditStatesArr[i] = cloneDeep(row);
 	cellEditStates.value = cellEditStatesArr;
 }
 
 async function setupConfigurations() {
-	let tempConfigurations = await getModelConfigurations(props.model.id);
-
-	configItems.value = tempConfigurations.map((config) => ({
-		label: config.name,
-		command: () => {
-			addModelConfiguration(config);
-		}
-	}));
-
-	// Ensure that we always have a "default config" model configuration
-	if (isEmpty(tempConfigurations) || !tempConfigurations.find((d) => d.name === 'Default config')) {
-		await addDefaultConfiguration(props.model);
-		tempConfigurations = await getModelConfigurations(props.model.id);
-	}
-
-	modelConfigurations.value = tempConfigurations;
 	resetCellEditing();
 
 	openValueConfig.value = false;
@@ -532,13 +498,12 @@ watch(
 );
 
 watch(
-	() => props.model.id,
-	() => setupConfigurations()
+	() => [props.model.id, props.modelConfigurations],
+	() => {
+		setupConfigurations();
+	},
+	{ immediate: true, deep: true }
 );
-
-onMounted(() => {
-	setupConfigurations();
-});
 </script>
 
 <style scoped>
