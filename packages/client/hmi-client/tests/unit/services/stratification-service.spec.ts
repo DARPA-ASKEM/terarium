@@ -12,12 +12,14 @@ describe('test generate age strata model', () => {
 		const model = generateAgeStrataModel(stateNames);
 		expect(model).toEqual({
 			id: 'age-contact',
-			name: 'Age-contact strata model',
-			description: 'Age-contact strata model',
-			schema:
-				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
-			schema_name: 'petrinet',
-			model_version: '0.1',
+			header: {
+				name: 'Age-contact strata model',
+				description: 'Age-contact strata model',
+				schema:
+					'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+				schema_name: 'petrinet',
+				model_version: '0.1'
+			},
 			model: {
 				states: [
 					{
@@ -206,12 +208,14 @@ describe('test generate location strata model', () => {
 		const model = generateLocationStrataModel(stateNames);
 		expect(model).toEqual({
 			id: 'location-travel',
-			name: 'Location-travel strata model',
-			description: 'Location-travel strata model',
-			schema:
-				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
-			schema_name: 'petrinet',
-			model_version: '0.1',
+			header: {
+				name: 'Location-travel strata model',
+				description: 'Location-travel strata model',
+				schema:
+					'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+				schema_name: 'petrinet',
+				model_version: '0.1'
+			},
 			model: {
 				states: [
 					{

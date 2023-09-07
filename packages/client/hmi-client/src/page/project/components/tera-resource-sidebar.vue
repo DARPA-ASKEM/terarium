@@ -183,7 +183,13 @@ const assets = computed((): IProjectAssetTabs => {
 			const projectAssetType = type as AssetType;
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => {
-					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+					let assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+
+					// FIXME should unify upstream via a summary endpoint
+					if (asset.header && asset.header.name) {
+						assetName = asset.header.name;
+					}
+
 					const pageType = asset?.type ?? projectAssetType;
 					const assetId = asset?.id?.toString();
 					return { assetName, pageType, assetId };
@@ -228,13 +234,9 @@ const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
 		key: AssetType.Code,
-		label: 'Code editor',
+		label: 'New code',
 		command() {
-			emit('open-asset', {
-				assetName: 'New file',
-				pageType: AssetType.Code,
-				assetId: undefined
-			});
+			emit('open-new-asset', AssetType.Code);
 		}
 	},
 	{

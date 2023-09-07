@@ -23,25 +23,53 @@
 			/>
 		</AccordionTab>
 		<AccordionTab header="Model configurations"></AccordionTab>
+		<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+			<DataTable :value="relatedTerariumModels">
+				<Column field="name" header="Models" />
+			</DataTable>
+			<DataTable :value="relatedTerariumDatasets">
+				<Column field="name" header="Datasets" />
+			</DataTable>
+			<DataTable :value="relatedTerariumDocuments">
+				<Column field="name" header="Documents" />
+			</DataTable>
+		</AccordionTab>
 	</Accordion>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, onMounted, computed } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
-import { FeatureConfig } from '@/types/common';
-import { Model } from '@/types/Types';
+import { FeatureConfig, ResultType } from '@/types/common';
+import { Document, Dataset, Model, ProvenanceType } from '@/types/Types';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import { getRelatedArtifacts } from '@/services/provenance';
+import { isModel, isDataset, isDocument } from '@/utils/data-util';
 
-defineProps<{
+const props = defineProps<{
 	model: Model;
 	featureConfig: FeatureConfig;
 }>();
 
+const relatedTerariumArtifacts = ref<ResultType[]>([]);
+
 const emit = defineEmits(['update-model']);
+
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
+);
 
 const teraModelDiagramRef = ref();
 function updateDiagramFromEquation(updatedModel: Model) {
@@ -51,4 +79,11 @@ function updateDiagramFromEquation(updatedModel: Model) {
 function updateModelContent(updatedModel: Model) {
 	emit('update-model', updatedModel);
 }
+
+onMounted(async () => {
+	relatedTerariumArtifacts.value = await getRelatedArtifacts(
+		props.model.id,
+		ProvenanceType.ModelRevision
+	);
+});
 </script>

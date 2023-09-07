@@ -34,6 +34,8 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
+					:initial-data="csvAsset"
+					:mapping="mapping"
 					:chartConfig="cfg"
 					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
@@ -211,8 +213,6 @@ const runCalibrate = async () => {
 	const initialsObj = {};
 	const paramsObj = {};
 
-	const state = props.node.state;
-
 	initials.forEach((d) => {
 		initialsObj[d] = Math.random() * 100;
 	});
@@ -232,7 +232,7 @@ const runCalibrate = async () => {
 			num_iterations: numIterations.value,
 			method: method.value
 		},
-		timespan: getTimespan(state.timeSpan, csvAsset.value),
+		timespan: getTimespan(csvAsset.value, mapping.value),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
