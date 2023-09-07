@@ -304,9 +304,9 @@ watch(
 	{ immediate: true }
 );
 
-function modelIsEmpty(model2: Model): boolean {
+function modelIsEmpty(targetModel: Model): boolean {
 	// model does not have any states or transitions
-	if (model2.model?.states?.length === 0 && model2.model?.transitions?.length === 0) {
+	if (targetModel.model?.states?.length === 0 && targetModel.model?.transitions?.length === 0) {
 		return true;
 	}
 
