@@ -20,8 +20,9 @@ input these equations, ensuring that they cover a wide spectrum of complexity an
 is evaluated on its ability to accurately parse, interpret, and generate meaningful outputs from these equations. 
 Testers should also validate against real-world scenarios and edge cases.
 
-## [setup]Setup
-1. Login into Terarium and create a new project
+## [setup]
+
+* Login into Terarium and create a new project
 
 | Scenario | Paper | Equations | Data |
 |----------|-------|-----------|------|
@@ -29,7 +30,7 @@ Testers should also validate against real-world scenarios and edge cases.
 | {{ state.name }} | {{ state.paper}} | {{state.equations }} | {{state.data }} |
 {%- endfor %}
 
-## [test manual equations]Test
+## [test manual equations]
 1. Create a new blank model from Overview page
 2. Enter equations (copy and paste laTeX)
 
@@ -37,9 +38,9 @@ Testers should also validate against real-world scenarios and edge cases.
    * {{ state.name }}: {{state.equations }}
 {%- endfor %}
 
-4. See new model diagram (should be a valid AMR)
+3. See new model diagram (should be a valid AMR)
 
-## [test extracted equations]Test
+## [test extracted equations]
 1. Select image(s) of equations extracted from a paper
 
 {%- for state in spec.scenarios %}
@@ -53,7 +54,8 @@ Testers should also validate against real-world scenarios and edge cases.
 5. See new model diagram (should be a valid AMR)
 6. compare model diagrams with manually added equations and ensure they are the same
 
-## [teardown]Teardown
-1. Log any bugs or issues in [Github](https://github.com/DARPA-ASKEM/Terarium/issues)
-2. Remove any projects and resources created during the test
-3. Update test to reflect any new intended behaviour 
+## [teardown]
+
+* Log any bugs or issues in [Github](https://github.com/DARPA-ASKEM/Terarium/issues)
+* Remove any projects and resources created during the test 
+* Update test to reflect any new intended behaviour 
