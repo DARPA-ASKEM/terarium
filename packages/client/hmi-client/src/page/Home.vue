@@ -13,7 +13,7 @@
 				</header>
 				<TabView>
 					<TabPanel header="My projects">
-						<section v-if="projects && isEmpty(projects)" class="no-projects">
+						<section v-if="allProjects && isEmpty(allProjects)" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
 							<h3>Welcome to Terarium</h3>
 							<div>
@@ -38,12 +38,11 @@
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="project in projects" :key="project.id">
+								<li v-for="project in allProjects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
-										:project="project"
+										:project="(project as IProject)"
 										@click="openProject(project.id)"
-										@removed="removeProject"
 									/>
 								</li>
 								<li>
@@ -66,7 +65,7 @@
 					</TabPanel>
 				</TabView>
 			</section>
-			<section class="papers" v-if="!(projects && isEmpty(projects))">
+			<section class="papers" v-if="!(allProjects && isEmpty(allProjects))">
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
@@ -174,7 +173,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
-import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';
@@ -184,23 +182,23 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
-import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import { useProjects } from '@/composables/project';
+import { IProject } from '@/types/Project';
 
-const projects = ref<Project[]>();
-
+const { allProjects, getAllProjects, getPublicationAssets, create } = useProjects();
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
  */
 type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Document[] };
 const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
-async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
+async function updateProjectsWithRelatedDocuments() {
 	projectsWithRelatedDocuments.value = await Promise.all(
-		newProjects
+		allProjects.value
 			// filter out the ones with no publications
 			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
 			// get the first three project with a publication
@@ -210,7 +208,7 @@ async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 				let relatedDocuments = [] as Document[];
 				if (project.id) {
 					// Fetch the publications for the project
-					const publications = await ProjectService.getPublicationAssets(project.id);
+					const publications = await getPublicationAssets(project.id);
 					if (!isEmpty(publications)) {
 						// Fetch the related documents for the first publication
 						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
@@ -220,10 +218,8 @@ async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 			}) ?? ([] as RelatedDocumentFromProject[])
 	);
 }
-watch(projects, (newProjects) => newProjects && updateProjectsWithRelatedDocuments(newProjects));
 
 const selectedDocument = ref<Document>();
-const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
 const router = useRouter();
 const auth = useAuthStore();
@@ -231,14 +227,17 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjects = computed(() => !projects.value);
+const isLoadingProjects = computed(() => !allProjects.value);
+
+watch(
+	() => allProjects.value,
+	() => updateProjectsWithRelatedDocuments()
+);
 
 onMounted(async () => {
 	// Clear all...
-	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
-
-	projects.value = (await ProjectService.getAll()) ?? [];
+	await getAllProjects();
 });
 
 const selectDocument = (item: Document) => {
@@ -285,11 +284,7 @@ function openProject(projectId: string) {
 
 async function createNewProject() {
 	const author = auth.name ?? '';
-	const project = await ProjectService.create(
-		newProjectName.value,
-		newProjectDescription.value,
-		author
-	);
+	const project = await create(newProjectName.value, newProjectDescription.value, author);
 	if (project?.id) {
 		isNewProjectModalVisible.value = false;
 		openProject(project.id);
@@ -299,10 +294,6 @@ async function createNewProject() {
 function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
-
-const removeProject = (projectId: Project['id']) => {
-	projects.value = projects.value?.filter((project) => project.id !== projectId);
-};
 </script>
 
 <style scoped>

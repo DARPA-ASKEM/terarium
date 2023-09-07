@@ -6,7 +6,7 @@ import { AssetType } from '@/types/Types';
 const TIMEOUT_MS = 1000;
 
 const activeProject = shallowRef<IProject | null>(null);
-const allProjects = shallowRef<IProject[]>([]);
+const allProjects = shallowRef<IProject[] | null>(null);
 
 export function useProjects() {
 	async function getActiveProject(projectId: IProject['id']): Promise<IProject | null> {
@@ -39,8 +39,16 @@ export function useProjects() {
 		return deleted;
 	}
 
+	async function create(name: string, description: string, username: string) {
+		return ProjectService.create(name, description, username);
+	}
+
 	async function remove(projectId: IProject['id']) {
 		return ProjectService.remove(projectId);
+	}
+
+	async function getPublicationAssets(projectId: IProject['id']) {
+		return ProjectService.getPublicationAssets(projectId);
 	}
 
 	return {
@@ -50,6 +58,8 @@ export function useProjects() {
 		getAllProjects,
 		addAsset,
 		deleteAsset,
-		remove
+		create,
+		remove,
+		getPublicationAssets
 	};
 }

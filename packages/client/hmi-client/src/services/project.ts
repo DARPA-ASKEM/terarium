@@ -8,7 +8,6 @@ import { logger } from '@/utils/logger';
 import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
-import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
 import { DocumentAsset, EventType, Project, AssetType } from '@/types/Types';
 
@@ -50,7 +49,6 @@ async function update(project: IProject): Promise<IProject | null> {
 		if (status !== 200) {
 			return null;
 		}
-		useResourcesStore().setActiveProject(await get(project.id, true));
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);
