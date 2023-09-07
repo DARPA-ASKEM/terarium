@@ -11,7 +11,7 @@
 							<th class="p-frozen-column"></th>
 							<th class="p-frozen-column second-frozen"></th>
 							<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
-								<span class="capitalize">{{ name }}</span>
+								{{ name }}
 							</th>
 						</tr>
 						<!-- Table header 2nd row: Actual column headers -->
@@ -140,7 +140,7 @@
 									optionLabel="label"
 									optionValue="value"
 									placeholder="Select a parameter type"
-								></Dropdown>
+								/>
 							</div>
 							<div>
 								<label for="name">Value</label>
@@ -176,8 +176,7 @@
 								:latex-equation="''"
 								:keep-open="true"
 								@equation-updated="console.log('equation udpated from configuration')"
-							>
-							</tera-math-editor>
+							/>
 						</TabPanel>
 					</TabView>
 				</template>
@@ -543,11 +542,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.model-configuration {
-	margin-bottom: 1rem;
+.p-splitbutton {
+	margin-top: 1rem;
 }
 
-.capitalize {
+thead > tr:first-child {
+	text-transform: capitalize;
 	font-size: var(--font-body-medium);
 }
 
@@ -557,8 +557,6 @@ onMounted(() => {
 
 /** TODO: Apply to all tables in theme or create second table rules?  */
 .p-datatable-thead th {
-	text-transform: none !important;
-	color: var(--text-color-primary) !important;
 	font-size: var(--font-size-small) !important;
 	padding-left: 1rem !important;
 }
