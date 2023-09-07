@@ -1,6 +1,6 @@
 <template>
 	<template v-if="model">
-		<h5>{{ model.name }}</h5>
+		<h5>{{ model.header.name }}</h5>
 		<div class="container">
 			<tera-model-diagram :model="model" :is-editable="false" nodePreview />
 		</div>
@@ -10,7 +10,7 @@
 		class="w-full p-button-sm p-button-outlined"
 		v-model="selectedModel"
 		:options="models"
-		option-label="name"
+		option-label="header.name"
 		placeholder="Select a model"
 	/>
 </template>

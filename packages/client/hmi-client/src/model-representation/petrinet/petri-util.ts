@@ -22,7 +22,7 @@ import { Model } from '@/types/Types';
 export const getPetrinetRenderer = (
 	model: Model,
 	graphElement: HTMLDivElement
-): PetrinetRenderer => {
+): PetrinetRenderer | NestedPetrinetRenderer => {
 	const strataType = getStratificationType(model);
 	if (strataType === 'catlab') {
 		return new NestedPetrinetRenderer({
@@ -62,7 +62,8 @@ export const getPetrinetRenderer = (
 			runLayout: runDagreLayout,
 			dragSelector: 'no-drag',
 			nestedMap,
-			transitionMatrices: transitionMatrixMap
+			transitionMatrices: transitionMatrixMap,
+			dims
 		});
 	}
 	return new PetrinetRenderer({

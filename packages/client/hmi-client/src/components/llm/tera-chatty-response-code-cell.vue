@@ -2,18 +2,20 @@
 	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
 		<template ref="codeCell" />
 		<div class="controls">
-			<i class="pi pi-play play" v-tooltip="`Run again`" @click="run"></i>
+			<i class="pi pi-play play" v-tooltip="`Run again`" @click="run" />
 			<div class="run">Run again</div>
-			<i class="pi pi-check-circle check"></i>
+			<i class="pi pi-check-circle check" />
 			<div class="run">Success</div>
 		</div>
-		<!-- <div class="save-file-container">
+		<!--
+		<div class="save-file-container">
 			<div class="save-as">Save As:</div>
 			<div class="saved-name">{{ props.savedName }}</div>
 			<InputText v-model="savedFileName" class="post-fix" :style="`padding:3px;`" />
-			<i class="pi pi-times i" :class="{ clear: hasValidFileName }" @click="savedFileName = ''"></i>
-			<i class="pi pi-check i" :class="{ save: hasValidFileName }" @click="saveAsNewDataset()"></i>
-		</div> -->
+			<i class="pi pi-times i" :class="{ clear: hasValidFileName }" @click="savedFileName = ''" />
+			<i class="pi pi-check i" :class="{ save: hasValidFileName }" @click="saveAsNewDataset()" />
+		</div>
+		 -->
 	</div>
 </template>
 

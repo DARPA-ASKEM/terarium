@@ -75,6 +75,13 @@
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
+					<tera-dataset-transformer-node
+						v-else-if="
+							node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER && datasets
+						"
+						:node="node"
+						@append-input-port="(event) => appendInputPort(node, event)"
+					/>
 					<tera-simulate-julia-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
@@ -246,10 +253,12 @@ import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
+import TeraDatasetTransformerNode from './tera-dataset-transformer-node.vue';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
 import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
+import { DatasetTransformerOperation } from './dataset-transformer-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -391,6 +400,15 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 			status: WorkflowPortStatus.NOT_CONNECTED
 		}
 	];
+	workflowDirty = true;
+}
+function appendInputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
+	node.inputs.push({
+		id: crypto.randomUUID(),
+		type: port.type,
+		label: port.label,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	});
 }
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
@@ -470,6 +488,29 @@ workflowEventBus.on(
 	}
 );
 
+workflowEventBus.on(
+	'append-output-port',
+	(payload: {
+		node: WorkflowNode;
+		port: { id: string; type: string; label: string; value: string };
+	}) => {
+		const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
+		if (foundNode) {
+			if (payload.port.type === 'datasetId') {
+				foundNode.state.datasetId = payload.port.value;
+			}
+			appendOutputPort(foundNode, payload.port);
+		}
+	}
+);
+
+workflowEventBus.on('update-state', (payload: { node: WorkflowNode; state }) => {
+	const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
+	if (foundNode) {
+		updateWorkflowNodeState(foundNode, payload.state);
+	}
+});
+
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
@@ -493,6 +534,13 @@ const contextMenuItems = ref([
 		label: 'Dataset',
 		command: () => {
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Dataset Transformer',
+		command: () => {
+			workflowService.addNode(wf.value, DatasetTransformerOperation, newNodePosition);
 			workflowDirty = true;
 		}
 	},

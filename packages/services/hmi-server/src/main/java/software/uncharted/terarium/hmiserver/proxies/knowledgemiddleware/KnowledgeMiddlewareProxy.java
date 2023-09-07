@@ -1,5 +1,5 @@
 
-package software.uncharted.terarium.hmiserver.proxies.extractionservice;
+package software.uncharted.terarium.hmiserver.proxies.knowledgemiddleware;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
@@ -9,16 +9,15 @@ import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapp
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "ta1-service-api")
+@RegisterRestClient(configKey = "knowledge-middleware")
 @Produces(MediaType.APPLICATION_JSON)
-@Tag(name = "Extraction Service")
+@Tag(name = "Knowledge Middleware")
 @RegisterProvider(HmiResponseExceptionMapper.class)
-public interface ExtractionServiceProxy {
+public interface KnowledgeMiddlewareProxy {
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -52,7 +51,7 @@ public interface ExtractionServiceProxy {
 	);
 
 	/**
-	 * Post a PDF to the extraction service
+	 * Post a PDF
 	 *
 	 * @param    annotateSkema (Boolean): Whether to annotate the PDF with Skema
 	 * @param    annotateMIT (Boolean): Whether to annotate the PDF with AMR
@@ -75,7 +74,7 @@ public interface ExtractionServiceProxy {
 	);
 
 	/**
-	 * Post a PDF to the extraction service to get text
+	 * Post a PDF to get text
 	 * @param artifactId (String): The ID of the artifact to extract text from
 	 * @return
 	 */
@@ -83,6 +82,22 @@ public interface ExtractionServiceProxy {
 	@Path("/pdf_to_text")
 	Response postPDFToText(
 		@QueryParam("artifact_id") String artifactId
+	);
+
+	/**
+	 * Profile a model
+	 *
+	 * @param		modelId (String): The ID of the model to profile
+	 * @param		documentText (String): The text of the document to profile
+	 *
+	 * @return the profiled model
+	 */
+	@POST
+	@Path("/profile_model/{model_id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response postProfileModel(
+		@PathParam("model_id") String modelId,
+		@QueryParam("paper_artifact_id") String artifactId
 	);
 
 	/**
@@ -112,8 +127,26 @@ public interface ExtractionServiceProxy {
 	@Path("/code_to_amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	ExtractionResponse postCodeToAMR(
-		@QueryParam("artifact_id") String artifactId,
+		@QueryParam("code_id") String codeId,
 		@QueryParam("name") String name,
 		@QueryParam("description") String description
+	);
+
+	/**
+	 * Transform LaTeX equations to AMR
+	 * @param 	equationType (String): [latex, mathml]
+	 * @param 	framework (String): AMR model return type. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param 	modelId (String): the id of the model (to update) based on the set of equations
+	 * @param 	equations (List<String>): the list of LaTeX strings representing the functions that are used to convert to AMR
+	 * @return  (ExtractionResponse)
+	 */
+	@POST
+	@Path("/equations_to_amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	ExtractionResponse postLaTeXToAMR(
+		@QueryParam("equation_type") String equationType,
+		@QueryParam("model") String framework,
+		@QueryParam("model_id") String modelId,
+		List<String> equations
 	);
 }
