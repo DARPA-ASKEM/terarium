@@ -4,13 +4,7 @@
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<tera-navbar
-		class="header"
-		:active="!isErrorState"
-		:current-project-id="activeProject?.id ?? null"
-		:projects="allProjects"
-		:show-suggestions="showSuggestions"
-	/>
+	<tera-navbar class="header" :active="!isErrorState" :show-suggestions="showSuggestions" />
 	<main>
 		<router-view v-slot="{ Component }">
 			<component class="page" ref="pageRef" :is="Component" :project="activeProject" />
@@ -118,7 +112,7 @@ const showSuggestions = computed(() => {
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const { activeProject, allProjects, getActiveProject, getAllProjects } = useProjects();
+const { activeProject, getActiveProject, getAllProjects } = useProjects();
 
 API.interceptors.response.use(
 	(response) => response,

@@ -5,8 +5,8 @@
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
 			</router-link>
 			<div class="navigation-dropdown" @click="showNavigationMenu">
-				<h1 v-if="currentProjectId || isDataExplorer">
-					{{ currentProjectName ?? 'Explorer' }}
+				<h1 v-if="activeProject?.id || isDataExplorer">
+					{{ activeProject?.name ?? 'Explorer' }}
 				</h1>
 				<img
 					v-else
@@ -137,7 +137,6 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
-import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
@@ -145,11 +144,10 @@ import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
+import { useProjects } from '@/composables/project';
 
-const props = defineProps<{
+defineProps<{
 	active: boolean;
-	currentProjectId: IProject['id'] | null;
-	projects: IProject[] | null;
 	showSuggestions: boolean;
 }>();
 
@@ -159,6 +157,7 @@ const props = defineProps<{
 const router = useRouter();
 const navigationMenu = ref();
 const resources = useResourcesStore();
+const { activeProject, allProjects } = useProjects();
 
 /**
  * Evaluation scenario code
@@ -395,19 +394,12 @@ function searchByExampleModalToggled() {
 	*/
 }
 
-/*
- * Reactive
- */
-const currentProjectName = computed(
-	() => props.projects?.find((project) => project.id === props.currentProjectId?.toString())?.name
-);
-
 watch(
-	() => props.projects,
+	() => allProjects.value,
 	() => {
-		if (props.projects) {
+		if (allProjects.value) {
 			const items: MenuItem[] = [];
-			props.projects?.forEach((project) => {
+			allProjects.value.forEach((project) => {
 				items.push({
 					label: project.name,
 					icon: 'pi pi-folder',

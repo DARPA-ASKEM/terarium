@@ -39,12 +39,17 @@ export function useProjects() {
 		return deleted;
 	}
 
+	async function remove(projectId: IProject['id']) {
+		return ProjectService.remove(projectId);
+	}
+
 	return {
 		activeProject: readonly(activeProject),
-		allProjects,
+		allProjects: readonly(allProjects),
 		getActiveProject,
 		getAllProjects,
 		addAsset,
-		deleteAsset
+		deleteAsset,
+		remove
 	};
 }

@@ -70,13 +70,15 @@ import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
 import { logger } from '@/utils/logger';
-import * as ProjectService from '@/services/project';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{ project?: Project }>();
 const emit = defineEmits<{
 	(e: 'removed', projectId: Project['id']): void;
 }>();
+
+const { remove } = useProjects();
 
 const stats = computed(() =>
 	!props.project
@@ -107,7 +109,7 @@ const showProjectMenu = (event) => projectMenu.value.toggle(event);
 
 const removeProject = async () => {
 	if (!props.project || !props.project?.id) return;
-	const isDeleted = await ProjectService.remove(props.project.id);
+	const isDeleted = await remove(props.project.id);
 	closeRemoveDialog();
 	if (isDeleted) {
 		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
