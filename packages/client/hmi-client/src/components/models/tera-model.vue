@@ -358,7 +358,7 @@ const createNewModel = async () => {
 async function updateModelName() {
 	if (model.value && newModelName.value !== '') {
 		const modelClone = cloneDeep(model.value);
-		modelClone.name = newModelName.value;
+		modelClone.header.name = newModelName.value;
 		await updateModel(modelClone);
 		model.value = await getModel(props.assetId);
 		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
