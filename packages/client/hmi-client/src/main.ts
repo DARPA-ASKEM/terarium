@@ -13,7 +13,7 @@ import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import Keycloak from 'keycloak-js';
+import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import useAuthStore from './stores/auth';
 import router from './router';
 import '@node_modules/katex/dist/katex.min.css';
@@ -30,7 +30,7 @@ app.use(PrimeVue, { ripple: true });
 app.directive('tooltip', Tooltip);
 
 // Configure Google Analytics
-const GTAG = await axios.get('/configuration/ga');
+const GTAG = await axios.get('/api/configuration/ga');
 app.use(
 	VueGtag,
 	{
@@ -48,10 +48,35 @@ app.use(VueKatex);
 const authStore = useAuthStore();
 const keycloak = new Keycloak('/api/keycloak/config');
 
-authStore.setKeycloak(keycloak);
+await keycloak
+	.init({
+		onLoad: 'login-required' as KeycloakOnLoad
+	})
+	.then(async (auth) => {
+		if (!auth) {
+			window.location.reload();
+		} else {
+			if (keycloak?.token) {
+				authStore.setKeycloak(keycloak);
+			}
+			await authStore.init();
+			app.use(router);
+			app.mount('#app');
+			//	Logger.info('Authenticated');
 
-app.mount('body');
-logger.info('Application Mounted', { showToast: false, silent: true });
+			// Token Refresh
+			setInterval(async () => {
+				await keycloak.updateToken(70);
+			}, 6000);
+		}
+	})
+	.then(() => {
+		app.mount('body');
+		logger.info('Application Mounted', { showToast: false, silent: true });
+	})
+	.catch((e) => {
+		console.error('Authentication Failed', e);
+	});
 
 let previousRoute;
 let routeStartedMillis = Date.now();

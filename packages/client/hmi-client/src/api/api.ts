@@ -15,9 +15,9 @@ API.interceptors.request.use(
 		const auth = useAuthStore();
 
 		if (config.headers) {
-			config.headers.Authorization = `Bearer ${auth.token}`;
+			config.headers.Authorization = `Bearer ${auth.keycloak.token}`;
 		} else {
-			config.headers = { Authorization: `Bearer ${auth.token}` };
+			config.headers = { Authorization: `Bearer ${auth.keycloak.token}` };
 		}
 		return config;
 	},

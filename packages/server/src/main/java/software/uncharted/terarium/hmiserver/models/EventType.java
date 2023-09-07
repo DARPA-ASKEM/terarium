@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import lombok.Getter;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
+@TSModel
 public enum EventType {
 	SEARCH(true),
 	EVALUATION_SCENARIO(true),

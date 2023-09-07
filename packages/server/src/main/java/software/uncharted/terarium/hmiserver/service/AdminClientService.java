@@ -43,7 +43,7 @@ public class AdminClientService {
 
 
   private UserResource getUserResource(String id) {
-    return keycloak.realm("Uncharted").users().get(id);
+    return keycloak.realm("Terarium").users().get(id);
   }
 
   private UserRepresentation getUserRepresentationById(String id) {

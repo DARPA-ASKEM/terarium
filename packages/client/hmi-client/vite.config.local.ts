@@ -44,7 +44,7 @@ config.server.proxy = {
 };
 // Fix HMR port to match port set in docker compose. https://vitejs.dev/config/server-options.html#server-hmr
 config.server.hmr = {
-	clientPort: 8078
+	clientPort: 8080
 };
 
 export default config;

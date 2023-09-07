@@ -630,6 +630,21 @@ export enum EvaluationScenarioStatus {
     Stopped = "STOPPED",
 }
 
+export enum EventType {
+    Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
+    ProxyTiming = "PROXY_TIMING",
+    AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
+    ExtractModel = "EXTRACT_MODEL",
+    PersistModel = "PERSIST_MODEL",
+    TransformPrompt = "TRANSFORM_PROMPT",
+    AddCodeCell = "ADD_CODE_CELL",
+    RunSimulation = "RUN_SIMULATION",
+    RunCalibrate = "RUN_CALIBRATE",
+    GithubImport = "GITHUB_IMPORT",
+}
+
 export enum AuthorityLevel {
     Read = "READ",
     Create = "CREATE",
@@ -695,21 +710,6 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
-}
-
-export enum EventType {
-    Search = "SEARCH",
-    EvaluationScenario = "EVALUATION_SCENARIO",
-    RouteTiming = "ROUTE_TIMING",
-    ProxyTiming = "PROXY_TIMING",
-    AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
-    ExtractModel = "EXTRACT_MODEL",
-    PersistModel = "PERSIST_MODEL",
-    TransformPrompt = "TRANSFORM_PROMPT",
-    AddCodeCell = "ADD_CODE_CELL",
-    RunSimulation = "RUN_SIMULATION",
-    RunCalibrate = "RUN_CALIBRATE",
-    GithubImport = "GITHUB_IMPORT",
 }
 
 export enum AssetType {

@@ -8,10 +8,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 public class TerariumApplication {
     public static void main(String[] args) {
-			System.out.println("Hello World!");
         SpringApplication.run(TerariumApplication.class, args);
-
-				System.out.println("Hello World!");
     }
 
 }

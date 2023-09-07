@@ -16,10 +16,11 @@ public class KeycloakController {
 
   @GetMapping("/config")
   ResponseEntity<KeycloakJsConfiguration> keycloak() {
-    return ResponseEntity.ok(new KeycloakJsConfiguration()
-      .setUrl(config.getKeycloak().getUrl())
-      .setRealm(config.getKeycloak().getRealm())
-      .setClientId(config.getKeycloak().getClientId())
-    );
+
+    KeycloakJsConfiguration keycloakJsConfiguration = new KeycloakJsConfiguration().setUrl(config.getKeycloak().getUrl())
+            .setRealm(config.getKeycloak().getRealm())
+            .setClientId(config.getKeycloak().getClientId());
+
+    return ResponseEntity.ok(keycloakJsConfiguration);
   }
 }

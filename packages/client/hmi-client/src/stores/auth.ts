@@ -23,7 +23,7 @@ const useAuthStore = defineStore('auth', {
 	actions: {
 		async init() {
 			const response = await axios.get('/api/user/me', {
-				headers: new AxiosHeaders().setAuthorization(`Bearer ${this.token}`)
+				headers: new AxiosHeaders().setAuthorization(`Bearer ${this.keycloak?.token}`)
 			});
 			this.user = response.data;
 		},
