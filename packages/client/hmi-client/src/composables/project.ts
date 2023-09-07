@@ -6,7 +6,7 @@ import { AssetType } from '@/types/Types';
 const TIMEOUT_MS = 1000;
 
 const activeProject = shallowRef<IProject | null>(null);
-const allProjects = shallowRef<IProject[] | null>(null);
+const allProjects = shallowRef<IProject[]>([]);
 
 export function useProjects() {
 	async function getActiveProject(projectId: IProject['id']): Promise<IProject | null> {

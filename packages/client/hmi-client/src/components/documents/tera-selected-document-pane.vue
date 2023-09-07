@@ -22,13 +22,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, PropType, ref } from 'vue';
+import { computed, PropType } from 'vue';
 import { AssetType, Document, DocumentAsset } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
-import { IProject } from '@/types/Project';
-import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
 import dropdown from 'primevue/dropdown';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps({
 	selectedDocument: {
@@ -38,10 +36,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
-const resources = useResourcesStore();
 
-const projectsList = ref<IProject[]>([]);
-const projectsNames = computed(() => projectsList.value.map((p) => p.name));
+const projectsNames = computed(() => allProjects?.value?.map((p) => p.name));
+
+const { addAsset, activeProject, allProjects } = useProjects();
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
@@ -54,16 +52,12 @@ const addResourcesToProject = async (projectId: string) => {
 
 	// first, insert into the proper table/collection
 	const res = await addDocuments(body);
-	if (res && resources.activeProject) {
+	if (res && activeProject.value) {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
 		const assetsType = AssetType.Publications;
-		await ProjectService.addAsset(projectId, assetsType, documentId);
-
-		// update local copy of project assets
-		// @ts-ignore
-		resources.activeProject?.assets?.[AssetType.Publications].push(documentId, body);
+		await addAsset(projectId, assetsType, documentId);
 	}
 };
 
@@ -73,24 +67,17 @@ const formatAbstract = (item: Document) =>
 const addAssetsToProject = async (projectName) => {
 	let projectId = '';
 	if (projectName !== undefined && typeof projectName.value === 'string') {
-		const project = projectsList.value.find((p) => p.name === projectName.value);
+		const project = allProjects?.value?.find((p) => p.name === projectName.value);
 		projectId = project?.id as string;
 	} else {
-		if (!resources.activeProject) return;
-		projectId = resources.activeProject.id;
+		if (!activeProject.value) return;
+		projectId = activeProject.value.id;
 	}
 
 	addResourcesToProject(projectId);
 
 	emit('close');
 };
-
-onMounted(async () => {
-	const all = (await ProjectService.getAll()) as unknown as IProject[];
-	if (all !== null) {
-		projectsList.value = all;
-	}
-});
 </script>
 
 <style scoped>
