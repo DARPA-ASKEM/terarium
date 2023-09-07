@@ -23,9 +23,11 @@
 							</th>
 						</tr>
 					</thead>
-					<!--Different tbody depending on model component tag??-->
-					<tera-stratified-model-configuration
-						v-if="stratifiedModelType"
+					<!--Different tbody depending on model-->
+					<component
+						:is="
+							stratifiedModelType ? TeraStratifiedModelConfiguration : TeraRegularModelConfiguration
+						"
 						v-model:editValue="editValue"
 						:model-configurations="modelConfigurations"
 						:cell-edit-states="cellEditStates"
@@ -36,17 +38,6 @@
 						@enter-name-cell="onEnterNameCell"
 						@enter-value-cell="onEnterValueCell"
 						@open-matrix-modal="openMatrixModal"
-					/>
-					<tera-regular-model-configuration
-						v-else
-						v-model:editValue="editValue"
-						:model-configurations="modelConfigurations"
-						:cell-edit-states="cellEditStates"
-						@new-model-configuration="emit('new-model-configuration')"
-						@update-value="updateValue"
-						@update-name="updateName"
-						@enter-name-cell="onEnterNameCell"
-						@enter-value-cell="onEnterValueCell"
 						@open-value-modal="openValueModal"
 					/>
 				</table>
@@ -228,6 +219,7 @@ import Button from 'primevue/button';
 // st
 import Checkbox from 'primevue/checkbox';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
+import InputText from 'primevue/inputtext';
 import TeraRegularModelConfiguration from './model-configurations/tera-regular-model-configuration.vue';
 import TeraStratifiedModelConfiguration from './model-configurations/tera-stratified-model-configuration.vue';
 // import TabPanel from 'primevue/tabpanel';
@@ -555,6 +547,10 @@ onMounted(() => {
 	margin-bottom: 1rem;
 }
 
+.capitalize {
+	font-size: var(--font-body-medium);
+}
+
 .model-configuration:deep(.p-column-header-content) {
 	color: var(--text-color-subdued);
 }
@@ -569,5 +565,94 @@ onMounted(() => {
 
 .model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
 	content: '--';
+}
+
+/**Modal */
+
+.p-tabview {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	justify-content: space-between;
+}
+
+.p-tabview:deep(> *) {
+	width: 50vw;
+	height: 65vh;
+	overflow: auto;
+}
+
+.p-tabview:deep(.p-tabview-nav) {
+	flex-direction: column;
+}
+
+.p-tabview:deep(label) {
+	display: block;
+	font-size: var(--font-caption);
+	margin-bottom: 0.25rem;
+	width: 20%;
+}
+
+.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
+	width: 20%;
+}
+
+.p-tabview:deep(.p-tabview-panels) {
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	background-color: var(--surface-ground);
+	width: 100%;
+	height: 100%;
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.p-tabview:deep(.p-tabview-nav li) {
+	border-left: 3px solid transparent;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
+	border-bottom: 1px solid var(--surface-border-light);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight) {
+	border-left: 3px solid var(--primary-color);
+	background: var(--surface-highlight);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+	background: none;
+}
+
+.p-tabview:deep(.p-inputtext) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
+	display: none;
+}
+
+.modal-input-container {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.modal-input {
+	height: 25px;
+	padding-left: 5px;
+	margin: 5px;
+	align-items: baseline;
+}
+
+.modal-input-label {
+	margin-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	align-items: baseline;
 }
 </style>

@@ -42,7 +42,6 @@
 			</td>
 		</tr>
 	</tbody>
-	<Teleport to="body"> </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -123,70 +122,6 @@ td:hover .cell-menu {
 	visibility: visible;
 }
 
-.p-tabview {
-	display: flex;
-	gap: 1rem;
-	margin-bottom: 1rem;
-	justify-content: space-between;
-}
-
-.p-tabview:deep(> *) {
-	width: 50vw;
-	height: 65vh;
-	overflow: auto;
-}
-
-.p-tabview:deep(.p-tabview-nav) {
-	flex-direction: column;
-}
-
-.p-tabview:deep(label) {
-	display: block;
-	font-size: var(--font-caption);
-	margin-bottom: 0.25rem;
-}
-
-.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
-	width: 30%;
-}
-
-.p-tabview:deep(.p-tabview-panels) {
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border-light);
-	background-color: var(--surface-ground);
-}
-
-.p-tabview:deep(.p-tabview-panel) {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.p-tabview:deep(.p-tabview-nav li) {
-	border-left: 3px solid transparent;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
-	border-bottom: 1px solid var(--surface-border-light);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight) {
-	border-left: 3px solid var(--primary-color);
-	background: var(--surface-highlight);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-	background: none;
-}
-
-.p-tabview:deep(.p-inputtext) {
-	width: 100%;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
-	display: none;
-}
-
 .distribution-cell {
 	display: flex;
 	flex-direction: column;
@@ -199,10 +134,5 @@ td:hover .cell-menu {
 .invalid-message {
 	color: var(--text-color-danger);
 	font-size: var(--font-caption);
-}
-
-.capitalize {
-	text-transform: capitalize !important;
-	font-size: var(--font-body-medium) !important;
 }
 </style>
