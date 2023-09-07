@@ -14,7 +14,6 @@ describe('mira petrinet ', () => {
 
 	it('compact graph', () => {
 		const res = getMiraAMRPresentationData(amr as any);
-
 		// SEIRD
 		expect(res.compactModel.model.states.length).to.eq(5);
 	});

@@ -59,7 +59,7 @@ public class DatasetResource implements SnakeCaseResource {
 	@GET
 	@Tag(name = "Get all datasets via TDS proxy")
 	public List<Dataset> getDatasets(
-		@DefaultValue("500") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("1000") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return datasetProxy.getDatasets(pageSize, page);

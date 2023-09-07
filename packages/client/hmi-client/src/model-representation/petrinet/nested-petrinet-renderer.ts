@@ -15,7 +15,7 @@ export interface NestedPetrinetOptions extends Options {
 	dims?: string[];
 }
 
-const CIRCLE_MARGIN_CONST = 1;
+const CIRCLE_MARGIN = 2;
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 const { getNestedTypeColor, setNestedTypeColor } = useNestedTypeColorPalette();
 
@@ -99,9 +99,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				if (kvPair[0] === '_key') return;
 				const value = kvPair[1];
 				const childRadius =
-					CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] *
-					CIRCLE_MARGIN_CONST *
-					parentRadius;
+					CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] * parentRadius - CIRCLE_MARGIN;
 
 				const xPos =
 					parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0] + parentX;
@@ -160,8 +158,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 							.append('rect')
 							.attr('width', d.width / transitionMatrixLen)
 							.attr('height', d.width / transitionMatrixLen)
-							.attr('x', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.row)
-							.attr('y', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.col)
+							.attr('x', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.col)
+							.attr('y', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.row)
 							.attr('rx', 2)
 							.attr('ry', 2)
 							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#8692a4')
