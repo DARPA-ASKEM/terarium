@@ -252,7 +252,7 @@ const emit = defineEmits([
 const props = defineProps<{
 	model: Model | null;
 	isEditable: boolean;
-	isEquationsEditable: boolean;
+	isEquationsEditable?: boolean;
 	nodePreview?: boolean;
 }>();
 
