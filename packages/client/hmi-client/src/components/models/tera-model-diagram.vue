@@ -73,7 +73,7 @@
 			<!-- Model equations -->
 			<AccordionTab header="Model equations">
 				<section :class="isEditingEQ ? `diagram-container-editing` : `diagram-container`">
-					<section v-if="props.isEditable" class="controls">
+					<section v-if="props.isEditable && props.isEquationsEditable" class="controls">
 						<Button
 							v-if="isEditingEQ"
 							@click="cancelEditEquations"
@@ -252,6 +252,7 @@ const emit = defineEmits([
 const props = defineProps<{
 	model: Model | null;
 	isEditable: boolean;
+	isEquationsEditable: boolean;
 	nodePreview?: boolean;
 }>();
 
@@ -269,6 +270,8 @@ const latexEquationsOriginalList = ref<string[]>([]);
 // Observable Equations
 const observablesRefs = ref<any[]>([]);
 const observervablesList = ref<Observable[]>([]);
+
+const mathContainerStyle = computed(() => (props.isEquationsEditable ? '-1rem' : '0rem'));
 
 // For model editing
 interface AddStateObj {
@@ -790,7 +793,7 @@ section math-editor {
 	border: 4px solid transparent;
 	border-radius: var(--border-radius);
 	position: relative;
-	top: -1rem;
+	top: v-bind('mathContainerStyle');
 }
 
 .observable-editor-container {
