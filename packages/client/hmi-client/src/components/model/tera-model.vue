@@ -9,8 +9,12 @@
 			:stretch-content="view === ModelView.MODEL"
 		>
 			<template #name-input>
-				<!--@keyup.enter="updateModelName" this is being reworked in rename-dataset branch-->
-				<InputText v-if="isNaming" v-model.lazy="newName" placeholder="Title of new model" />
+				<InputText
+					v-if="isNaming"
+					v-model.lazy="newName"
+					placeholder="Title of new model"
+					@keyup.enter="updateModelName"
+				/>
 			</template>
 			<template #edit-buttons>
 				<span class="p-buttonset">
@@ -39,7 +43,6 @@
 				<template v-if="!featureConfig.isPreview">
 					<!--Disable this until rename-dataset is merged-->
 					<Button
-						disabled
 						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
 						@click="toggleOptionsMenu"
@@ -53,6 +56,7 @@
 				:highlight="highlight"
 				:project="project"
 				@update-model="updateModelContent"
+				@fetch-model="fetchModel"
 			/>
 			<tera-model-editor
 				v-else-if="view === ModelView.MODEL"
@@ -66,17 +70,19 @@
 
 <script setup lang="ts">
 import { watch, PropType, ref, computed } from 'vue';
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraModelEditor from '@/components/model/petrinet/tera-model-editor.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
+import useResourcesStore from '@/stores/resources';
 import { getModel, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { IProject } from '@/types/Project';
 import { Model } from '@/types/Types';
+import * as ProjectService from '@/services/project';
 
 enum ModelView {
 	DESCRIPTION,
@@ -131,9 +137,23 @@ const optionsMenuItems = ref([
 ]);
 
 // Centralize this eventually
-function updateModelContent(updatedModel: Model) {
+async function updateModelContent(updatedModel: Model) {
 	model.value = updatedModel;
-	updateModel(updatedModel);
+	await updateModel(updatedModel);
+	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id ?? '102', true));
+}
+
+async function updateModelName() {
+	if (model.value && !isEmpty(newName.value)) {
+		const modelClone = cloneDeep(model.value);
+		modelClone.header.name = newName.value;
+		await updateModelContent(modelClone);
+	}
+	isRenaming.value = false;
+}
+
+async function fetchModel() {
+	model.value = await getModel(props.assetId);
 }
 
 watch(
@@ -142,7 +162,7 @@ watch(
 		// Reset view of model page
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
-		model.value = !isEmpty(props.assetId) ? await getModel(props.assetId) : null;
+		if (!isEmpty(props.assetId)) await fetchModel();
 		console.log(model.value);
 	},
 	{ immediate: true }
