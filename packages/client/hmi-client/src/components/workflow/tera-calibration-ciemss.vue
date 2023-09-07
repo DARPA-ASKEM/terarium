@@ -76,19 +76,6 @@
 					<Slider v-model="trainTestValue" />
 				</section>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header> Simulation time range </template>
-				<div class="sim-tspan-container">
-					<div class="sim-tspan-group">
-						<label for="2">Start date</label>
-						<InputNumber id="2" class="p-inputtext-sm" v-model="timespan.start" />
-					</div>
-					<div class="sim-tspan-group">
-						<label for="3">End date</label>
-						<InputNumber id="3" class="p-inputtext-sm" v-model="timespan.end" />
-					</div>
-				</div>
-			</AccordionTab>
 		</Accordion>
 		<Accordion
 			v-if="calibrationView === CalibrationView.OUTPUT && modelConfig"
@@ -101,6 +88,8 @@
 					:key="index"
 					:run-results="runResults"
 					:chartConfig="cfg"
+					:initial-data="csvAsset"
+					:mapping="mapping"
 					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
@@ -150,7 +139,7 @@ import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import { CsvAsset, ModelConfiguration, TimeSpan } from '@/types/Types';
+import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
@@ -173,7 +162,6 @@ enum CalibrationView {
 const modelColumnNames = ref<string[] | undefined>();
 
 const calibrationView = ref(CalibrationView.INPUT);
-const timespan = ref<TimeSpan>(props.node.state.timeSpan);
 
 const trainTestValue = ref(80);
 

@@ -29,7 +29,7 @@
 					</template>
 				</div>
 				<div v-else-if="resourceType === ResourceType.MODEL">
-					{{ (asset as Model).schema_name }}
+					{{ (asset as Model).header.schema_name }}
 				</div>
 			</div>
 			<header class="title" v-html="title" />
@@ -39,7 +39,13 @@
 			</ul>
 			<div
 				class="description"
-				v-html="highlightSearchTerms((asset as Model | Dataset).description)"
+				v-if="resourceType === ResourceType.MODEL"
+				v-html="highlightSearchTerms((asset as Model).header.description)"
+			/>
+			<div
+				class="description"
+				v-else-if="resourceType === ResourceType.DATASET"
+				v-html="highlightSearchTerms((asset as Dataset).description)"
 			/>
 			<div
 				class="parameters"
@@ -189,10 +195,14 @@ const snippets = computed(() =>
 		: null
 );
 const title = computed(() => {
-	const value =
-		props.resourceType === ResourceType.XDD
-			? (props.asset as Document).title
-			: (props.asset as Model | Dataset).name;
+	let value = '';
+	if (props.resourceType === ResourceType.XDD) {
+		value = (props.asset as Document).title;
+	} else if (props.resourceType === ResourceType.MODEL) {
+		value = (props.asset as Model).header.name;
+	} else if (props.resourceType === ResourceType.DATASET) {
+		value = (props.asset as Dataset).name;
+	}
 	return highlightSearchTerms(value);
 });
 

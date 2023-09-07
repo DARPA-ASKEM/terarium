@@ -559,13 +559,13 @@ export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => 
 export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
-		const { name, description, schema, semantics } = amrCopy;
+		const { name, description, schema } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
 			schema,
-			model_version: amrCopy.model_version,
-			model: semantics?.typing?.system
+			model_version: amrCopy.header.model_version,
+			model: amrCopy.semantics?.typing?.system
 		};
 		amrCopy.semantics.typing.system = typeSystem;
 	}
@@ -610,13 +610,15 @@ export const getStratificationType = (amr: Model) => {
 
 export function newAMR(modelName: string) {
 	const amr: Model = {
+		header: {
+			name: modelName,
+			description: '',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1'
+		},
 		id: '',
-		name: modelName,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
 		model: {
 			states: [],
 			transitions: []
