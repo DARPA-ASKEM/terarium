@@ -452,7 +452,7 @@ function checkModelParameters() {
 
 // function to set the provided values from the modal
 function setModelParameters() {
-	if (checkModelParameters()) {
+	if (checkModelParameters() && modalAttributes.value.odeType) {
 		const { odeType, valueName, configIndex, odeObjIndex } = modalAttributes.value;
 		const modelParameter =
 			modelConfigurations.value[configIndex].configuration.semantics.ode[odeType][odeObjIndex];
