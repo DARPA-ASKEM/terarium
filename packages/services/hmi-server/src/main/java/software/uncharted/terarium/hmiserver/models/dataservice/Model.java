@@ -21,30 +21,6 @@ import java.util.Map;
 public class Model implements Serializable {
 	private String id;
 
-	// To be removed
-	// See: https://github.com/DARPA-ASKEM/Model-Representations/commit/f2c90f16c6c3865f71d1e727e15bc2f0b1f5ec58
-	@Deprecated
-	@TSOptional
-	private String name;
-
-	@Deprecated
-	@JsonSetter(nulls = Nulls.SKIP)
-	@TSOptional
-	private String description = "";
-
-	@Deprecated
-	@TSOptional
-	private String model_version;
-
-	@Deprecated
-	@TSOptional
-	private String schema;
-
-	@Deprecated
-	@TSOptional
-	private String schema_name;
-	// End
-
 	private ModelHeader header;
 
 	private Map<String, Object> model;
@@ -57,5 +33,4 @@ public class Model implements Serializable {
 
 	@TSOptional
 	private ModelMetadata metadata;
-
 }
