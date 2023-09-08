@@ -94,6 +94,7 @@ import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	node: WorkflowNode;
+	workflowId: string;
 	canDrag: boolean;
 	isActive: boolean;
 }>();
@@ -187,7 +188,7 @@ function showNodeDrilldown() {
 function openDrilldown() {
 	const url = router.resolve({
 		name: RouteName.WorkflowNode,
-		params: { nodeId: node.id }
+		params: { nodeId: props.node.id, workflowId: props.workflowId }
 	}).href;
 	floatingWindow.open(url);
 }

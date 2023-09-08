@@ -17,11 +17,12 @@ import TeraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ense
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import * as workflowService from '@/services/workflow';
 
-const props = defineProps<{ nodeId: string }>();
+const props = defineProps<{ nodeId: string; workflowId: string }>();
 
 const node: WorkflowNode = ref<WorkflowNode>(null);
 const updateNode = async () => {
-	node.value = await workflowService.getWorkflow().getNodeById(props.nodeId);
+	const workflow = await workflowService.getWorkflow(props.workflowId);
+	node.value = workflow.nodes.find((n) => n.id === props.nodeId);
 };
 
 watch(
