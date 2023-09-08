@@ -12,7 +12,7 @@
 
 import { IProject } from '@/types/Project';
 import { WorkflowNode } from '@/types/workflow';
-import TeraModel from '@/components/models/tera-model.vue';
+import TeraModel from '@/components/model/tera-model.vue';
 import { workflowEventBus } from '@/services/workflow';
 
 const props = defineProps<{

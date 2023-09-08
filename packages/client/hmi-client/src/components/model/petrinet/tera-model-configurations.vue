@@ -26,7 +26,9 @@
 					<!--Different tbody depending on model-->
 					<component
 						:is="
-							stratifiedModelType ? TeraStratifiedModelConfiguration : TeraRegularModelConfiguration
+							stratifiedModelType
+								? TeraStratifiedModelConfigurations
+								: TeraRegularModelConfigurations
 						"
 						v-model:editValue="editValue"
 						:model-configurations="modelConfigurations"
@@ -215,8 +217,8 @@ import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import InputText from 'primevue/inputtext';
-import TeraRegularModelConfiguration from './model-configurations/tera-regular-model-configuration.vue';
-import TeraStratifiedModelConfiguration from './model-configurations/tera-stratified-model-configuration.vue';
+import TeraRegularModelConfigurations from './model-configurations/tera-regular-model-configurations.vue';
+import TeraStratifiedModelConfigurations from './model-configurations/tera-stratified-model-configurations.vue';
 // import TabPanel from 'primevue/tabpanel';
 // import TabView from 'primevue/tabview';
 
