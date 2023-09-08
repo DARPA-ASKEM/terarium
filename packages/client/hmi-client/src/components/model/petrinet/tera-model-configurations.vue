@@ -426,15 +426,23 @@ function checkModelParameters() {
 function updateName(index: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index].name = false;
-	configToUpdate.name = editValue.value;
-	emit('update-configuration', configToUpdate, index);
+	if (configToUpdate.name !== editValue.value && !isEmpty(editValue.value)) {
+		configToUpdate.name = editValue.value;
+		emit('update-configuration', configToUpdate, index);
+	}
 }
 
 function updateValue(odeType: string, valueName: string, index: number, odeObjIndex: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index][odeType][odeObjIndex] = false;
-	configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
-	emit('update-configuration', configToUpdate, index);
+	if (
+		configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName].toString() !==
+			editValue.value &&
+		!isEmpty(editValue.value)
+	) {
+		configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
+		emit('update-configuration', configToUpdate, index);
+	}
 }
 
 // function to set the provided values from the modal

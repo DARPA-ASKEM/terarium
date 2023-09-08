@@ -232,7 +232,6 @@ watch(
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
 		if (!isEmpty(props.assetId)) await getModelWithConfigurations();
-		console.log(model.value);
 	},
 	{ immediate: true }
 );
