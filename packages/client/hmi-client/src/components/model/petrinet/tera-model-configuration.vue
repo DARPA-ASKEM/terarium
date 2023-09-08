@@ -99,7 +99,6 @@
 						:stratified-model-type="stratifiedModelType"
 						:node-type="modalAttributes.nodeType"
 						:should-eval="matrixShouldEval"
-						@update-configuration="updateConfiguration"
 					/>
 				</template>
 				<template #footer>
@@ -296,10 +295,6 @@ const isConfigurationVisible = computed(
 		!isEmpty(cellEditStates.value)
 );
 
-function updateConfiguration(updatedConfiguration: ModelConfiguration) {
-	emit('update-configuration', updatedConfiguration);
-}
-
 function onEnterNameCell(configIndex: number) {
 	editValue.value = cloneDeep(props.modelConfigurations[configIndex].name);
 	cellEditStates.value[configIndex].name = true;
@@ -430,14 +425,14 @@ function updateName(index: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index].name = false;
 	configToUpdate.name = editValue.value;
-	emit('update-configuration', configToUpdate);
+	emit('update-configuration', configToUpdate, index);
 }
 
 function updateValue(odeType: string, valueName: string, index: number, odeObjIndex: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index][odeType][odeObjIndex] = false;
 	configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
-	emit('update-configuration', configToUpdate);
+	emit('update-configuration', configToUpdate, index);
 }
 
 // function to set the provided values from the modal
@@ -470,7 +465,7 @@ function setModelParameters() {
 			delete modelParameter.distribution;
 			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
-		emit('update-configuration', configToUpdate);
+		emit('update-configuration', configToUpdate, configIndex);
 	}
 }
 
@@ -555,8 +550,8 @@ thead > tr:first-child {
 .model-configuration:deep(.cell-modal-button) {
 	visibility: hidden;
 }
-.model-configuration:deep(th:hover .cell-modal-button),
-.model-configuration:deep(td:hover .cell-modal-button) {
+.model-configuration:deep(th:hover > .editable-cell > .cell-modal-button),
+.model-configuration:deep(td:hover > .editable-cell > .cell-modal-button) {
 	visibility: visible;
 }
 

@@ -106,7 +106,7 @@ const props = defineProps({
 	},
 	assetId: {
 		type: String,
-		default: '5f61e93e-c03e-43c3-a29a-258ab983fe8a' // '6ec50c95-9646-41e9-8869-b44a75926711' //   // 'sir-model-id'
+		default: '6ec50c95-9646-41e9-8869-b44a75926711' // '5f61e93e-c03e-43c3-a29a-258ab983fe8a'  //   // 'sir-model-id'
 	},
 	highlight: {
 		type: String,
@@ -164,11 +164,12 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+async function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
 	await updateModelConfiguration(updatedConfiguration);
 	setTimeout(async () => {
 		emit('update-model-configuration');
-		await fetchConfigurations(); // elastic search might still not update in time
+		modelConfigurations.value[index] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
+		// await fetchConfigurations(); // elastic search might still not update in time
 	}, 800);
 }
 
