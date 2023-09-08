@@ -67,7 +67,6 @@
 			<tera-model-diagram
 				:model="model"
 				:isEditable="!featureConfig.isPreview"
-				:isEquationsEditable="canEditEquations"
 				@update-model-content="updateModelContent"
 				@update-model-observables="updateModelObservables"
 			/>
@@ -202,8 +201,6 @@ const isNamingModel = computed(() => props.assetId === '' || isRenamingModel.val
 
 const stratifiedModelType = computed(() => model.value && getStratificationType(model.value));
 
-const canEditEquations = ref(true);
-
 /*
  * User Menu
  */
@@ -304,19 +301,8 @@ watch(
 	{ immediate: true }
 );
 
-function modelIsEmpty(targetModel: Model): boolean {
-	// model does not have any states or transitions
-	if (targetModel.model?.states?.length === 0 && targetModel.model?.transitions?.length === 0) {
-		return true;
-	}
-
-	return false;
-}
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
-
-	// we can only edit equations when the AMR is empty
-	canEditEquations.value = (model.value && modelIsEmpty(model.value)) as boolean;
 }
 
 onUpdated(() => {
