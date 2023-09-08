@@ -36,8 +36,7 @@
 						@update-name="updateName"
 						@enter-name-cell="onEnterNameCell"
 						@enter-value-cell="onEnterValueCell"
-						@open-matrix-modal="openMatrixModal"
-						@open-value-modal="openValueModal"
+						v-on="{ 'open-modal': stratifiedModelType ? openMatrixModal : openValueModal }"
 					/>
 				</table>
 			</div>
@@ -53,7 +52,6 @@
 			<tera-modal
 				v-if="openValueConfig && stratifiedModelType && modalAttributes.id"
 				@modal-mask-clicked="openValueConfig = false"
-				@model-submit="openValueConfig = false"
 			>
 				<template #header>
 					<h4>{{ modalAttributes.id }}</h4>
@@ -96,6 +94,7 @@
 						:stratified-model-type="stratifiedModelType"
 						:node-type="modalAttributes.nodeType"
 						:should-eval="matrixShouldEval"
+						@update-configuration="updateConfiguration"
 					/>
 				</template>
 				<template #footer>
@@ -292,6 +291,10 @@ const isConfigurationVisible = computed(
 		!isEmpty(cellEditStates.value)
 );
 
+function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+	emit('update-configuration', updatedConfiguration);
+}
+
 function onEnterNameCell(configIndex: number) {
 	editValue.value = cloneDeep(props.modelConfigurations[configIndex].name);
 	cellEditStates.value[configIndex].name = true;
@@ -422,14 +425,14 @@ function updateName(index: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index].name = false;
 	configToUpdate.name = editValue.value;
-	emit('update-configuration', configToUpdate, index);
+	emit('update-configuration', configToUpdate);
 }
 
 function updateValue(odeType: string, valueName: string, index: number, odeObjIndex: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index][odeType][odeObjIndex] = false;
 	configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
-	emit('update-configuration', configToUpdate, index);
+	emit('update-configuration', configToUpdate);
 }
 
 // function to set the provided values from the modal
@@ -462,7 +465,7 @@ function setModelParameters() {
 			delete modelParameter.distribution;
 			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
-		emit('update-configuration', configToUpdate, configIndex);
+		emit('update-configuration', configToUpdate);
 	}
 }
 
@@ -511,6 +514,11 @@ watch(
 	margin-top: 1rem;
 }
 
+.invalid-message {
+	color: var(--text-color-danger);
+	font-size: var(--font-caption);
+}
+
 thead > tr:first-child {
 	text-transform: capitalize;
 	font-size: var(--font-body-medium);
@@ -520,14 +528,50 @@ thead > tr:first-child {
 	color: var(--text-color-subdued);
 }
 
-/** TODO: Apply to all tables in theme or create second table rules?  */
 .p-datatable-thead th {
+	/** TODO: Apply to all tables in theme or create second table rules?  */
 	font-size: var(--font-size-small) !important;
 	padding-left: 1rem !important;
 }
 
 .model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
 	content: '--';
+}
+
+.p-datatable:deep(td) {
+	cursor: pointer;
+}
+
+.p-datatable:deep(td:focus) {
+	background-color: var(--primary-color-lighter);
+}
+
+/**Applies tbodys */
+.model-configuration:deep(.cell-modal-button) {
+	visibility: hidden;
+}
+.model-configuration:deep(th:hover .cell-modal-button),
+.model-configuration:deep(td:hover .cell-modal-button) {
+	visibility: visible;
+}
+
+.model-configuration:deep(.p-frozen-column) {
+	left: 0px;
+	white-space: nowrap;
+}
+
+.model-configuration:deep(.second-frozen) {
+	left: 48px;
+}
+
+.model-configuration:deep(.cell-input) {
+	height: 4rem;
+	width: 100%;
+}
+
+.model-configuration:deep(td:has(.cell-input)) {
+	padding: 2px !important;
+	max-width: 4rem;
 }
 
 /**Modal */

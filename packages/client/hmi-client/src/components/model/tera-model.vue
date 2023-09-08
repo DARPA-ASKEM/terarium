@@ -106,7 +106,7 @@ const props = defineProps({
 	},
 	assetId: {
 		type: String,
-		default: '6ec50c95-9646-41e9-8869-b44a75926711' // '5f61e93e-c03e-43c3-a29a-258ab983fe8a'  // 'sir-model-id'
+		default: '5f61e93e-c03e-43c3-a29a-258ab983fe8a' // '6ec50c95-9646-41e9-8869-b44a75926711' //   // 'sir-model-id'
 	},
 	highlight: {
 		type: String,
@@ -149,8 +149,10 @@ const optionsMenuItems = ref([
 
 async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
-	model.value = updatedModel; // await fetchModel(); Better to fetch instead but elastic search might not update in time
-	useResourcesStore().setActiveProject(await ProjectService.get(props.project.id ?? '102', true));
+	setTimeout(async () => {
+		await fetchModel(); // elastic search might still not update in time
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id ?? '102', true));
+	}, 800);
 }
 
 async function updateModelName() {
@@ -162,11 +164,11 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
+async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	await updateModelConfiguration(updatedConfiguration);
-	modelConfigurations.value[index] = updatedConfiguration; // Better to fetch instead but elastic search might not update in time
-	setTimeout(() => {
+	setTimeout(async () => {
 		emit('update-model-configuration');
+		await fetchConfigurations(); // elastic search might still not update in time
 	}, 800);
 }
 
@@ -180,7 +182,7 @@ async function addConfiguration(configuration: ModelConfiguration) {
 		);
 		setTimeout(() => {
 			emit('new-model-configuration');
-			fetchConfigurations();
+			fetchConfigurations(); // elastic search might still not update in time
 		}, 800);
 	}
 }

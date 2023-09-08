@@ -38,13 +38,12 @@
 				@click="emit('enter-value-cell', 'initials', 'expression', i, j)"
 				@keyup.enter="emit('enter-value-cell', 'initials', 'expression', i, j)"
 			>
-				<!-- <section v-if="!cellEditStates[i].initials[j]" class="editable-cell"> -->
 				<section :class="!cellEditStates[i].initials[j] ? 'editable-cell' : 'editable-cell-hidden'">
 					<span>{{ initial.expression }}</span>
 					<Button
-						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						class="cell-modal-button p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						icon="pi pi-ellipsis-v"
-						@click.stop="emit('open-value-modal', 'initials', 'expression', i, j)"
+						@click.stop="emit('open-modal', 'initials', 'expression', i, j)"
 					/>
 				</section>
 				<InputText
@@ -89,9 +88,9 @@
 						>
 					</div>
 					<Button
-						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						class="cell-modal-button p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						icon="pi pi-ellipsis-v"
-						@click.stop="emit('open-value-modal', 'parameters', 'value', i, j)"
+						@click.stop="emit('open-modal', 'parameters', 'value', i, j)"
 					/>
 				</section>
 				<InputText
@@ -126,7 +125,7 @@ const emit = defineEmits([
 	'update-value',
 	'enter-name-cell',
 	'enter-value-cell',
-	'open-value-modal',
+	'open-modal',
 	'update:editValue'
 ]);
 
@@ -156,47 +155,12 @@ const vFocus = {
 	border-right: 11px solid transparent;
 }
 
-.cell-menu {
-	visibility: hidden;
-}
-
-.cell-input {
-	height: 4rem;
-	width: 100%;
-	padding-left: 12px;
-}
-
-td:has(.cell-input) {
-	padding: 0px !important;
-}
-
-.p-datatable:deep(td) {
-	cursor: pointer;
-}
-
-.p-datatable:deep(td:focus) {
-	background-color: var(--primary-color-lighter);
-}
-
-.p-frozen-column {
-	left: 0px;
-}
-
-.second-frozen {
-	left: 48px;
-}
-
 .p-datatable .p-datatable-tbody > tr > td {
 	padding-right: 0.5rem;
 	white-space: nowrap;
 }
 
-th:hover .cell-menu,
-td:hover .cell-menu {
-	visibility: visible;
-}
-
-.editable-cell-hidden .cell-menu {
+.editable-cell-hidden {
 	visibility: hidden !important;
 }
 
@@ -208,10 +172,5 @@ td:hover .cell-menu {
 .distribution-range {
 	white-space: nowrap;
 	color: var(--text-color-subdued);
-}
-
-.invalid-message {
-	color: var(--text-color-danger);
-	font-size: var(--font-caption);
 }
 </style>

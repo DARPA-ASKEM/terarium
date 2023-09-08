@@ -32,10 +32,10 @@
 				</span>
 			</td>
 			<td v-for="(id, j) in baseStatesAndTransitions" :key="j">
-				<section class="editable-cell" @click="emit('open-matrix-modal', i, id)">
+				<section class="editable-cell" @click="emit('open-modal', i, id)">
 					<span>{{ id }}<i class="pi pi-table" /></span>
 					<Button
-						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						class="cell-modal-button p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						icon="pi pi-ellipsis-v"
 					/>
 				</section>
@@ -62,7 +62,7 @@ const emit = defineEmits([
 	'update-value',
 	'enter-name-cell',
 	'enter-value-cell',
-	'open-matrix-modal',
+	'open-modal',
 	'update:editValue'
 ]);
 
@@ -73,61 +73,11 @@ const vFocus = {
 </script>
 
 <style scoped>
-.cell-menu {
-	visibility: hidden;
-}
-
-.cell-input {
-	width: calc(100%);
-	height: 4rem;
-}
-
 .editable-cell {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	min-width: 3rem;
-}
-
-td:has(.cell-input) {
-	padding: 2px !important;
-	max-width: 4rem;
-}
-
-.p-datatable:deep(td) {
-	cursor: pointer;
-}
-
-.p-datatable:deep(td:focus) {
-	background-color: var(--primary-color-lighter);
-}
-
-.p-frozen-column {
-	left: 0px;
-	white-space: nowrap;
-}
-
-.p-frozen-column,
-th {
-	background: transparent;
-}
-
-.second-frozen {
-	left: 48px;
-}
-
-th:hover .cell-menu,
-td:hover .cell-menu {
-	visibility: visible;
-}
-
-.distribution-cell {
-	display: flex;
-	flex-direction: column;
-}
-
-.distribution-range {
-	white-space: nowrap;
 }
 
 .invalid-message {

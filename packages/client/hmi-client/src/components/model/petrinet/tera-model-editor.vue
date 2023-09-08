@@ -90,8 +90,8 @@ function updateModelContent(updatedModel: Model) {
 	emit('update-model', updatedModel);
 }
 
-function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
-	emit('update-configuration', updatedConfiguration, index);
+function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+	emit('update-configuration', updatedConfiguration);
 }
 
 function addConfiguration(configuration: ModelConfiguration) {
