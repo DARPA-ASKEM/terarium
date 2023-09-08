@@ -4,6 +4,7 @@ import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/project/tera-project.vue';
+import WorkflowNodeView from '@/page/WorkflowNode.vue';
 
 // These are test/experiment pages
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
@@ -17,7 +18,8 @@ import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Project = '/projects/:projectId/:pageType?/:assetId?',
+	Project = `/projects/:projectId/:pageType?/:assetId?`,
+	WorkflowNode = `/${RouteName.WorkflowNode}/:nodeType/:nodeId`,
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 
@@ -40,7 +42,13 @@ const routes = [
 		props: true
 	},
 	{
-		name: RouteName.DataExplorerRoute,
+		name: RouteName.WorkflowNode,
+		path: RoutePath.WorkflowNode,
+		component: WorkflowNodeView,
+		props: true
+	},
+	{
+		name: RouteName.DataExplorer,
 		path: RoutePath.DataExplorer,
 		component: DataExplorerView
 	},

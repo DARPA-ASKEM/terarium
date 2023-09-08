@@ -9,7 +9,7 @@
 					@click="showNodeDrilldown"
 				/>
 				<Button
-					icon="pi pi-paperclip"
+					icon="pi pi-bolt"
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="openDrilldown"
 				/>
