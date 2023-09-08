@@ -115,11 +115,11 @@
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configuration </template>
-						<tera-model-configuration
+						<!-- <tera-model-configurations
 							v-if="model"
 							:model="model"
 							:feature-config="{ isPreview: true }"
-						/>
+						/> -->
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation time range </template>
@@ -179,8 +179,8 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
-import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
-import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
+// import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 import { WorkflowNode } from '@/types/workflow';

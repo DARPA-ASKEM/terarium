@@ -110,7 +110,7 @@ import {
 } from '@/services/models/stratification-service';
 import Toolbar from 'primevue/toolbar';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
-import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 

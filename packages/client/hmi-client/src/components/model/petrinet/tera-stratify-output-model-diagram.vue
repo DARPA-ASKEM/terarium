@@ -47,7 +47,7 @@ import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
-import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 
 const props = defineProps<{
 	model: Model;

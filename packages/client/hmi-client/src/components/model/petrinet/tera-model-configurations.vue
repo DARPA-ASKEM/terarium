@@ -215,8 +215,8 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
 // st
 import Checkbox from 'primevue/checkbox';
-import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import InputText from 'primevue/inputtext';
+import TeraStratifiedValueMatrix from './model-configurations/tera-stratified-value-matrix.vue';
 import TeraRegularModelConfigurations from './model-configurations/tera-regular-model-configurations.vue';
 import TeraStratifiedModelConfigurations from './model-configurations/tera-stratified-model-configurations.vue';
 // import TabPanel from 'primevue/tabpanel';

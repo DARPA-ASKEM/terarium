@@ -137,7 +137,7 @@ import { getRunResult, getRunResultCiemss } from '@/services/models/simulation-s
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
