@@ -95,26 +95,6 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    /**
-     * @deprecated
-     */
-    name?: string;
-    /**
-     * @deprecated
-     */
-    description?: string;
-    /**
-     * @deprecated
-     */
-    model_version?: string;
-    /**
-     * @deprecated
-     */
-    schema?: string;
-    /**
-     * @deprecated
-     */
-    schema_name?: string;
     header: ModelHeader;
     model: { [index: string]: any };
     properties?: any;
