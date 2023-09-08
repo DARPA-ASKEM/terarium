@@ -1,52 +1,45 @@
 <template>
 	<tera-model-workflow-wrapper
-		v-if="workflowNode.operationType === WorkflowOperationTypes.MODEL"
-		:project="project"
-		:node="workflowNode"
+		v-if="node.operationType === WorkflowOperationTypes.MODEL"
+		:node="node"
 	/>
 	<tera-stratify
-		v-if="workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
-		:node="workflowNode"
-		:key="workflowNode.id"
+		v-if="node.operationType === WorkflowOperationTypes.STRATIFY"
+		:node="node"
+		:key="node.id"
 		@open-asset="(asset) => openAssetFromSidebar(asset)"
 	/>
 	<tera-dataset-transformer
-		v-if="workflowNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
-		:project="project"
-		:node="workflowNode"
+		v-if="node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
+		:node="node"
 	/>
 	<tera-dataset-workflow-wrapper
-		v-if="workflowNode.operationType === WorkflowOperationTypes.DATASET"
-		:project="project"
-		:node="workflowNode"
+		v-if="node.operationType === WorkflowOperationTypes.DATASET"
+		:node="node"
 	/>
 	<tera-calibration-julia
-		v-if="workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
-		:node="workflowNode"
+		v-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
+		:node="node"
 	/>
 	<tera-simulate-julia
-		v-if="workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
-		:node="workflowNode"
-		:project="project"
+		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
+		:node="node"
 	/>
 	<tera-calibration-ciemss
-		v-if="workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
-		:node="workflowNode"
+		v-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
+		:node="node"
 	/>
 	<tera-calibrate-ensemble-ciemss
-		v-if="workflowNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
-		:node="workflowNode"
-		:project="project"
+		v-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
+		:node="node"
 	/>
 	<tera-simulate-ciemss
-		v-if="workflowNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
-		:node="workflowNode"
-		:project="project"
+		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
+		:node="node"
 	/>
 	<tera-simulate-ensemble-ciemss
-		v-if="workflowNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
-		:node="workflowNode"
-		:project="project"
+		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
+		:node="node"
 	/>
 </template>
 
@@ -61,4 +54,7 @@ import TeraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-en
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
+import { WorkflowNode } from '@/types/workflow';
+
+const node: WorkflowNode = null;
 </script>
