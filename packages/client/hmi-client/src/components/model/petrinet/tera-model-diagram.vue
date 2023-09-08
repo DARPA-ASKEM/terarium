@@ -45,7 +45,15 @@
 					</template>
 				</Toolbar>
 				<tera-model-type-legend v-if="model" class="legend-anchor" :model="model" />
-				<div v-if="model" ref="graphElement" class="graph-element" />
+				<div v-if="model" class="graph-container">
+					<div ref="graphElement" class="graph-element" />
+					<div class="legend">
+						<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
+							<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
+							{{ label }}
+						</div>
+					</div>
+				</div>
 				<ContextMenu ref="menu" :model="contextMenuItems" />
 			</section>
 		</TeraResizablePanel>
@@ -109,6 +117,7 @@ import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrin
 import { Model } from '@/types/Types';
 import TeraModelTypeLegend from '@/components/model/petrinet/tera-model-type-legend.vue';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 
 interface AddStateObj {
 	id: string;
@@ -159,9 +168,11 @@ const editNodeObj = ref<AddStateObj>({
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
+const graphLegendLabels = ref<string[]>([]);
+const graphLegendColors = ref<string[]>([]);
 
 let previousId: any = null;
-let renderer: PetrinetRenderer | null = null;
+let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
 
@@ -277,6 +288,10 @@ watch(
 
 		// Create renderer
 		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
+		if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
+			graphLegendLabels.value = renderer.dims;
+			graphLegendColors.value = renderer.depthColorList;
+		}
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
 			if (isEditing.value === true) {
@@ -423,16 +438,6 @@ section math-editor {
 	justify-content: center;
 }
 
-.graph-element {
-	background-color: var(--surface-secondary);
-	height: 100%;
-	max-height: 100%;
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
-}
-
 .edit-button {
 	margin-left: 5px;
 	margin-right: 5px;
@@ -442,6 +447,38 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+.graph-container {
+	background-color: var(--surface-secondary);
+	height: 100%;
+	max-height: 100%;
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+}
+.graph-element {
+	background-color: var(--surface-secondary);
+	height: 100%;
+}
+.legend {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	margin: 1rem;
+}
+.legend-item {
+	display: flex;
+	align-items: center;
+	margin: 0 1rem;
+}
+.legend-circle {
+	display: inline-block;
+	height: 1rem;
+	width: 1rem;
+	border-radius: 50%;
+	margin-right: 0.5rem;
 }
 
 .legend-anchor {
