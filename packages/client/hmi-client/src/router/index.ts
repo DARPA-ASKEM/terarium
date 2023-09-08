@@ -19,7 +19,7 @@ import { RouteName } from './routes';
 export enum RoutePath {
 	Home = '/',
 	Project = `/projects/:projectId/:pageType?/:assetId?`,
-	WorkflowNode = `/${RouteName.WorkflowNode}/:nodeType/:nodeId`,
+	WorkflowNode = `/${RouteName.WorkflowNode}/:nodeId`,
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 
