@@ -49,6 +49,11 @@
 			:model="addConfigurationItems"
 		/>
 		<Teleport to="body">
+			<!--
+			TODO: Not sure if these modals should be in the child config components or if they should 
+			be in their own since they are dealing with a different set of variables. Will deal with
+			this in another PR.
+			-->
 			<tera-modal
 				v-if="openValueConfig && stratifiedModelType && modalAttributes.id"
 				@modal-mask-clicked="openValueConfig = false"
