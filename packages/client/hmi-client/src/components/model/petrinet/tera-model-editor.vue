@@ -22,7 +22,15 @@
 				@update-model="updateModelContent"
 			/>
 		</AccordionTab>
-		<AccordionTab header="Model configurations"></AccordionTab>
+		<AccordionTab header="Model configurations">
+			<tera-model-configuration
+				:model="model"
+				:model-configurations="modelConfigurations"
+				:feature-config="featureConfig"
+				@update-model="updateModelContent"
+				@update-configuration="updateConfiguration"
+				@add-configuration="addConfiguration"
+		/></AccordionTab>
 		<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 			<DataTable :value="relatedTerariumModels">
 				<Column field="name" header="Models" />
@@ -43,8 +51,9 @@ import { ref, onMounted, computed } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
+import TeraModelConfiguration from '@/components/model/petrinet/tera-model-configuration.vue';
 import { FeatureConfig, ResultType } from '@/types/common';
-import { Document, Dataset, Model, ProvenanceType } from '@/types/Types';
+import { Document, Dataset, Model, ProvenanceType, ModelConfiguration } from '@/types/Types';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
@@ -54,12 +63,13 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 
 const props = defineProps<{
 	model: Model;
+	modelConfigurations: ModelConfiguration[];
 	featureConfig: FeatureConfig;
 }>();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
-const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-model', 'update-configuration', 'add-configuration']);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -78,6 +88,14 @@ function updateDiagramFromEquation(updatedModel: Model) {
 
 function updateModelContent(updatedModel: Model) {
 	emit('update-model', updatedModel);
+}
+
+function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
+	emit('update-configuration', updatedConfiguration, index);
+}
+
+function addConfiguration(configuration: ModelConfiguration) {
+	emit('add-configuration', configuration);
 }
 
 onMounted(async () => {
