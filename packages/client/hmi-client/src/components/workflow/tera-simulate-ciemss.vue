@@ -115,11 +115,12 @@
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configuration </template>
-						<!-- <tera-model-configurations
+						<tera-model-configurations
 							v-if="model"
 							:model="model"
+							:model-configurations="modelConfigurations"
 							:feature-config="{ isPreview: true }"
-						/> -->
+						/>
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation time range </template>
@@ -174,13 +175,13 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Paginator from 'primevue/paginator';
-import { Model, TimeSpan } from '@/types/Types';
+import { Model, TimeSpan, ModelConfiguration } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { getModel } from '@/services/model';
+import { getModel, getModelConfigurations } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-// import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
+import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';
 import { WorkflowNode } from '@/types/workflow';
@@ -207,6 +208,7 @@ enum SimulateTabs {
 const activeTab = ref(SimulateTabs.input);
 
 const model = ref<Model | null>(null);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
 const parsedRawData = ref<any>();
 const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
@@ -256,6 +258,7 @@ onMounted(async () => {
 	const modelConfiguration = await getModelConfigurationById(modelConfigId);
 	if (modelConfiguration) {
 		model.value = await getModel(modelConfiguration.modelId);
+		if (model.value) modelConfigurations.value = await getModelConfigurations(model.value.id);
 	}
 
 	const output = await getRunResultCiemss(simulationId);
