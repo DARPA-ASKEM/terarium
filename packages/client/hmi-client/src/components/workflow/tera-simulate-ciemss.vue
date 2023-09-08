@@ -179,7 +179,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
-import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 // import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { SimulateCiemssOperationState } from '@/components/workflow/simulate-ciemss-operation';

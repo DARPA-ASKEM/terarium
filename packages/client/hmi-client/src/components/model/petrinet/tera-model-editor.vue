@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, onMounted, computed } from 'vue';
-import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
