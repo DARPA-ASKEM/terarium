@@ -316,11 +316,7 @@ async function fetchModel() {
 	model.value = await getModel(props.assetId);
 
 	// we can only edit equations when the AMR is empty
-	if (model.value && !modelIsEmpty(model.value)) {
-		canEditEquations.value = false;
-	} else {
-		canEditEquations.value = true;
-	}
+	canEditEquations.value = model.value && modelIsEmpty(model.value);
 }
 
 onUpdated(() => {
