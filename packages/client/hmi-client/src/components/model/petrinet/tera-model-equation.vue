@@ -1,7 +1,7 @@
 <template>
 	<tera-equation-container
 		:is-editing="isEditing"
-		:is-editable="isEditable"
+		:is-editable="isEditable && canEditEquations"
 		@cancel-edit="cancelEdit"
 		@add-equation="addEquation"
 		@start-editing="isEditing = true"
