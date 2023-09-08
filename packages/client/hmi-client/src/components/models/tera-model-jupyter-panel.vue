@@ -151,7 +151,7 @@ const props = defineProps<{
 
 const noSelectionDefault = {
 	id: props.model?.id,
-	name: `Model "${props.model?.name}" (${props.model?.id}) -- (No configuration)`
+	name: `Model "${props.model?.header.name}" (${props.model?.id}) -- (No configuration)`
 };
 
 const chat = ref();
