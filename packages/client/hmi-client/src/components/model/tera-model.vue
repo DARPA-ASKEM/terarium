@@ -9,8 +9,12 @@
 			:stretch-content="view === ModelView.MODEL"
 		>
 			<template #name-input>
-				<!--@keyup.enter="updateModelName" this is being reworked in rename-dataset branch-->
-				<InputText v-if="isNaming" v-model.lazy="newName" placeholder="Title of new model" />
+				<InputText
+					v-if="isNaming"
+					v-model.lazy="newName"
+					placeholder="Title of new model"
+					@keyup.enter="updateModelName"
+				/>
 			</template>
 			<template #edit-buttons>
 				<span class="p-buttonset">
@@ -24,7 +28,7 @@
 					<Button
 						class="p-button-secondary p-button-sm"
 						label="Model"
-						icon="pi pi-file"
+						icon="pi pi-share-alt"
 						@click="view = ModelView.MODEL"
 						:active="view === ModelView.MODEL"
 					/>
@@ -39,7 +43,6 @@
 				<template v-if="!featureConfig.isPreview">
 					<!--Disable this until rename-dataset is merged-->
 					<Button
-						disabled
 						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
 						@click="toggleOptionsMenu"
@@ -50,15 +53,20 @@
 			<tera-model-description
 				v-if="view === ModelView.DESCRIPTION"
 				:model="model"
+				:model-configurations="modelConfigurations"
 				:highlight="highlight"
 				:project="project"
 				@update-model="updateModelContent"
+				@fetch-model="fetchModel"
 			/>
 			<tera-model-editor
 				v-else-if="view === ModelView.MODEL"
 				:model="model"
+				:model-configurations="modelConfigurations"
 				:feature-config="featureConfig"
 				@update-model="updateModelContent"
+				@update-configuration="updateConfiguration"
+				@add-configuration="addConfiguration"
 			/>
 		</tera-asset>
 	</main>
@@ -66,17 +74,24 @@
 
 <script setup lang="ts">
 import { watch, PropType, ref, computed } from 'vue';
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraModelEditor from '@/components/model/petrinet/tera-model-editor.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
-import { getModel, updateModel } from '@/services/model';
+import useResourcesStore from '@/stores/resources';
+import {
+	createModelConfiguration,
+	updateModelConfiguration,
+	addDefaultConfiguration
+} from '@/services/model-configurations';
+import { getModel, updateModel, getModelConfigurations } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { IProject } from '@/types/Project';
-import { Model } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
+import * as ProjectService from '@/services/project';
 
 enum ModelView {
 	DESCRIPTION,
@@ -91,7 +106,7 @@ const props = defineProps({
 	},
 	assetId: {
 		type: String,
-		default: '6ec50c95-9646-41e9-8869-b44a75926711' // 'sir-model-id'
+		default: '6ec50c95-9646-41e9-8869-b44a75926711' // '5f61e93e-c03e-43c3-a29a-258ab983fe8a'  //   // 'sir-model-id'
 	},
 	highlight: {
 		type: String,
@@ -103,9 +118,11 @@ const props = defineProps({
 	}
 });
 
-const model = ref<Model | null>(null);
-const view = ref(ModelView.DESCRIPTION);
+const emit = defineEmits(['update-model-configuration', 'new-model-configuration']);
 
+const model = ref<Model | null>(null);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+const view = ref(ModelView.DESCRIPTION);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 
@@ -130,10 +147,70 @@ const optionsMenuItems = ref([
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
-// Centralize this eventually
-function updateModelContent(updatedModel: Model) {
-	model.value = updatedModel;
-	updateModel(updatedModel);
+async function updateModelContent(updatedModel: Model) {
+	await updateModel(updatedModel);
+	setTimeout(async () => {
+		await fetchModel(); // elastic search might still not update in time
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+	}, 800);
+}
+
+async function updateModelName() {
+	if (model.value && !isEmpty(newName.value)) {
+		const modelClone = cloneDeep(model.value);
+		modelClone.header.name = newName.value;
+		await updateModelContent(modelClone);
+	}
+	isRenaming.value = false;
+}
+
+async function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
+	await updateModelConfiguration(updatedConfiguration);
+	setTimeout(async () => {
+		emit('update-model-configuration');
+		modelConfigurations.value[index] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
+		// await fetchConfigurations(); // elastic search might still not update in time
+	}, 800);
+}
+
+async function addConfiguration(configuration: ModelConfiguration) {
+	if (model.value) {
+		await createModelConfiguration(
+			model.value.id,
+			`Copy of ${configuration.name}`,
+			configuration.description as string,
+			configuration.configuration
+		);
+		setTimeout(() => {
+			emit('new-model-configuration');
+			fetchConfigurations(); // elastic search might still not update in time
+		}, 800);
+	}
+}
+
+async function fetchConfigurations() {
+	if (model.value) {
+		let tempConfigurations = await getModelConfigurations(model.value.id);
+
+		// Ensure that we always have a "default config" model configuration
+		if (
+			isEmpty(tempConfigurations) ||
+			!tempConfigurations.find((d) => d.name === 'Default config')
+		) {
+			await addDefaultConfiguration(model.value);
+			tempConfigurations = await getModelConfigurations(model.value.id);
+		}
+		modelConfigurations.value = tempConfigurations;
+	}
+}
+
+async function fetchModel() {
+	model.value = await getModel(props.assetId);
+}
+
+async function getModelWithConfigurations() {
+	await fetchModel();
+	await fetchConfigurations();
 }
 
 watch(
@@ -142,7 +219,7 @@ watch(
 		// Reset view of model page
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
-		model.value = !isEmpty(props.assetId) ? await getModel(props.assetId) : null;
+		if (!isEmpty(props.assetId)) await getModelWithConfigurations();
 		console.log(model.value);
 	},
 	{ immediate: true }
