@@ -151,7 +151,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await fetchModel(); // elastic search might still not update in time
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id ?? '102', true));
+		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	}, 800);
 }
 
@@ -206,7 +206,11 @@ async function fetchConfigurations() {
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
-	fetchConfigurations();
+}
+
+async function getModelWithConfigurations() {
+	await fetchModel();
+	await fetchConfigurations();
 }
 
 watch(
@@ -215,7 +219,7 @@ watch(
 		// Reset view of model page
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
-		if (!isEmpty(props.assetId)) await fetchModel();
+		if (!isEmpty(props.assetId)) await getModelWithConfigurations();
 		console.log(model.value);
 	},
 	{ immediate: true }

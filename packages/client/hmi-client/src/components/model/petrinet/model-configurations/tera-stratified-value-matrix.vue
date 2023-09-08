@@ -295,20 +295,6 @@ onMounted(() => {
 	padding-left: 12px;
 }
 
-/* .p-frozen-column {
-	left: 0px;
-	white-space: nowrap;
-}
-
-.second-frozen {
-	left: 12rem;
-}
-
-.p-frozen-column,
-th {
-	background: transparent;
-} */
-
 .p-datatable-scrollable .p-frozen-column {
 	padding-right: 1rem;
 }

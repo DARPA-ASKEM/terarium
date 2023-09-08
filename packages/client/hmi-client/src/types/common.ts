@@ -20,9 +20,9 @@ export interface FeatureConfig {
 }
 
 export enum ParamType {
-	CONSTANT = 'constant',
-	DISTRIBUTION = 'distribution',
-	TIME_SERIES = 'time_series'
+	CONSTANT,
+	DISTRIBUTION,
+	TIME_SERIES
 }
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
