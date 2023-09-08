@@ -89,7 +89,8 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import floatingWindow from '@/utils/floating-window';
-import { getNodeURL } from './util';
+import router from '@/router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -184,7 +185,10 @@ function showNodeDrilldown() {
 }
 
 function openDrilldown() {
-	const url = getNodeURL(props.node);
+	const url = router.resolve({
+		name: RouteName.WorkflowNode,
+		params: { nodeId: node.id }
+	}).href;
 	floatingWindow.open(url);
 }
 

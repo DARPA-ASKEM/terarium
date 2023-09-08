@@ -1,49 +1,10 @@
 <template>
-	<tera-model-workflow-wrapper
-		v-if="node.operationType === WorkflowOperationTypes.MODEL"
-		:node="node"
-	/>
-	<tera-stratify
-		v-if="node.operationType === WorkflowOperationTypes.STRATIFY"
-		:node="node"
-		:key="node.id"
-		@open-asset="(asset) => openAssetFromSidebar(asset)"
-	/>
-	<tera-dataset-transformer
-		v-if="node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
-		:node="node"
-	/>
-	<tera-dataset-workflow-wrapper
-		v-if="node.operationType === WorkflowOperationTypes.DATASET"
-		:node="node"
-	/>
-	<tera-calibration-julia
-		v-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
-		:node="node"
-	/>
-	<tera-simulate-julia
-		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
-		:node="node"
-	/>
-	<tera-calibration-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
-		:node="node"
-	/>
-	<tera-calibrate-ensemble-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
-		:node="node"
-	/>
-	<tera-simulate-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
-		:node="node"
-	/>
-	<tera-simulate-ensemble-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
-		:node="node"
-	/>
+	<component :is="component" :node="node" />
 </template>
 
 <script setup lang="ts">
+import { Component, computed, watch, ref } from 'vue';
+import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
 import TeraDatasetWorkflowWrapper from '@/components/workflow/tera-dataset-workflow-wrapper.vue';
 import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
@@ -54,7 +15,44 @@ import TeraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-en
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
-import { WorkflowNode } from '@/types/workflow';
+import * as workflowService from '@/services/workflow';
 
-const node: WorkflowNode = null;
+const props = defineProps<{ nodeId: string }>();
+
+const node: WorkflowNode = ref<WorkflowNode>(null);
+const updateNode = async () => {
+	node.value = await workflowService.getWorkflow().getNodeById(props.nodeId);
+};
+
+watch(
+	() => props.nodeId,
+	() => updateNode
+);
+
+const component: Component = computed<Component>(() => {
+	switch (node.value.operationType) {
+		case WorkflowOperationTypes.MODEL:
+			return TeraModelWorkflowWrapper;
+		case WorkflowOperationTypes.DATASET:
+			return TeraDatasetWorkflowWrapper;
+		case WorkflowOperationTypes.DATASET_TRANSFORMER:
+			return TeraDatasetTransformer;
+		case WorkflowOperationTypes.CALIBRATION_JULIA:
+			return TeraCalibrationJulia;
+		case WorkflowOperationTypes.SIMULATE_JULIA:
+			return TeraSimulateJulia;
+		case WorkflowOperationTypes.CALIBRATION_CIEMSS:
+			return TeraCalibrationCiemss;
+		case WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS:
+			return TeraCalibrateEnsembleCiemss;
+		case WorkflowOperationTypes.SIMULATE_CIEMSS:
+			return TeraSimulateCiemss;
+		case WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS:
+			return TeraSimulateEnsembleCiemss;
+		case WorkflowOperationTypes.STRATIFY:
+			return TeraStratify;
+		default:
+			return null;
+	}
+});
 </script>

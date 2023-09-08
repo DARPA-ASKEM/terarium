@@ -1,8 +1,5 @@
 import { DataseriesConfig, RunType } from '@/types/SimulateConfig';
 import { CsvAsset, TimeSpan } from '@/types/Types';
-import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
-import router from '@/router';
-import { RouteName } from '@/router/routes';
 
 export const getTimespan = (
 	dataset?: CsvAsset,
@@ -88,16 +85,4 @@ export const getGraphDataFromDatasetCSV = (
 	};
 
 	return graphData;
-};
-
-export const getNodeURL = (node: WorkflowNode): string => {
-	if (node.operationType === WorkflowOperationTypes.MODEL) {
-		return router.resolve({
-			name: RouteName.WorkflowNode,
-			params: { nodeId: node.id }
-		}).href;
-	}
-
-	console.log(node.state);
-	return `overview`;
 };
