@@ -128,7 +128,7 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 
 const openOverview = () => {
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };

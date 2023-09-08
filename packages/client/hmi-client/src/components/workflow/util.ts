@@ -93,7 +93,7 @@ export const getGraphDataFromDatasetCSV = (
 export const getNodeURL = (node: WorkflowNode): string => {
 	if (node.operationType === WorkflowOperationTypes.MODEL) {
 		return router.resolve({
-			name: RouteName.ProjectRoute,
+			name: RouteName.Project,
 			params: {
 				projectId: node.state.projectId || 107,
 				assetId: node.state.modelId,

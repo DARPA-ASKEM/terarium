@@ -326,7 +326,7 @@ const createNewModel = async () => {
 
 			// Go to the model you just created
 			router.push({
-				name: RouteName.ProjectRoute,
+				name: RouteName.Project,
 				params: {
 					assetName: newModelName.value,
 					assetId: modelId,

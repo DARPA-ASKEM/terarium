@@ -32,9 +32,9 @@ export enum RoutePath {
 
 const routes = [
 	{ name: 'unauthorized', path: RoutePath.Unauthorized, component: UnauthorizedView },
-	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
+	{ name: RouteName.Home, path: RoutePath.Home, component: HomeView },
 	{
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		path: RoutePath.Project,
 		component: ProjectView,
 		props: true
@@ -44,6 +44,7 @@ const routes = [
 		path: RoutePath.DataExplorer,
 		component: DataExplorerView
 	},
+
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
