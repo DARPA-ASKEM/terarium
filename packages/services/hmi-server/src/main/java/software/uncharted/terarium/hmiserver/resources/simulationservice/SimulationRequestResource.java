@@ -27,14 +27,14 @@ import java.util.*;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurationProxy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jboss.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 @Path("/api/simulation-request")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation Service REST Endpoint")
+@Slf4j
 public class SimulationRequestResource {
-	private static final Logger log = Logger.getLogger(SimulationRequestResource.class);
 
 	@RestClient
 	SimulationServiceProxy simulationServiceProxy;
@@ -226,7 +226,7 @@ public class SimulationRequestResource {
 		}
 		catch (RuntimeException e) {
 			log.error("Unable to parse model.configuration.metadata.timeseries for model config id: " + modelConfigId);
-			log.error(e);
+			log.error(e.toString());
 		}
 		return interventionList;
 	}
