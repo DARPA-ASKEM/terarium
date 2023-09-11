@@ -31,14 +31,16 @@ Testers should also validate against real-world scenarios and edge cases.
 {%- endfor %}
 
 ## [test manual equations]
-1. Create a new blank model from Overview page
-2. Enter equations (copy and paste laTeX)
+1. Pick a scenario from the table above
+2. Create a new blank model from Overview page and name it after the scenario
+3. switch to the model editor tab and begin entering equations from the scenario (copy and paste laTeX)
 
 {%- for state in spec.scenarios %}
    * {{ state.name }}: {{state.equations }}
 {%- endfor %}
 
-3. See new model diagram (should be a valid AMR)
+4. See new model diagram (should be a valid AMR)
+
 
 ## [test extracted equations]
 1. Select image(s) of equations extracted from a paper
