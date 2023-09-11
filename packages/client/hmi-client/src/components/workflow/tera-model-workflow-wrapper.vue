@@ -17,7 +17,7 @@ import { workflowEventBus } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
+	project?: IProject;
 }>();
 
 // Send refresh event onto the eventBus
