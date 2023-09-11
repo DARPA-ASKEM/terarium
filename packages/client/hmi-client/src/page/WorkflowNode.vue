@@ -1,41 +1,42 @@
 <template>
 	<tera-model-workflow-wrapper
-		v-if="node.operationType === WorkflowOperationTypes.MODEL"
+		v-if="node?.operationType === WorkflowOperationTypes.MODEL"
 		:node="node"
 	/>
-	<tera-stratify v-if="node.operationType === WorkflowOperationTypes.STRATIFY" :node="node" />
+	<tera-stratify v-else-if="node?.operationType === WorkflowOperationTypes.STRATIFY" :node="node" />
 	<tera-dataset-transformer
-		v-if="node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
+		v-else-if="node?.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
 		:node="node"
 	/>
 	<tera-dataset-workflow-wrapper
-		v-if="node.operationType === WorkflowOperationTypes.DATASET"
+		v-else-if="node?.operationType === WorkflowOperationTypes.DATASET"
 		:node="node"
 	/>
 	<tera-calibration-julia
-		v-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
+		v-else-if="node?.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
 		:node="node"
 	/>
 	<tera-simulate-julia
-		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
+		v-else-if="node?.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 		:node="node"
 	/>
 	<tera-calibration-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
+		v-else-if="node?.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 		:node="node"
 	/>
 	<tera-calibrate-ensemble-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
+		v-else-if="node?.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
 		:node="node"
 	/>
 	<tera-simulate-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
+		v-else-if="node?.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 		:node="node"
 	/>
 	<tera-simulate-ensemble-ciemss
-		v-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
+		v-else-if="node?.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
 		:node="node"
 	/>
+	<template v-else>{{ node }}</template>
 </template>
 
 <script setup lang="ts">
@@ -60,10 +61,12 @@ const node: WorkflowNode = ref<WorkflowNode>(null);
 async function updateNode() {
 	const workflow = await workflowService.getWorkflow(props.workflowId);
 	node.value = workflow.nodes.find((n) => n.id === props.nodeId);
+	console.log(node.value);
 }
 
 watch(
 	() => props.nodeId,
-	() => updateNode
+	() => updateNode(),
+	{ immediate: true }
 );
 </script>
