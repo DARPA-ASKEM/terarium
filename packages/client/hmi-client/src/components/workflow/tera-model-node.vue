@@ -20,7 +20,7 @@ import { ref, watch, onMounted } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
-import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { WorkflowNode } from '@/types/workflow';
 
 const props = defineProps<{

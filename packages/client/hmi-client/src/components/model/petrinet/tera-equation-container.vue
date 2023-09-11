@@ -55,6 +55,7 @@ const emit = defineEmits([
 
 const equationType = computed(() => props.equationType ?? 'equation');
 const isEditingStyle = computed(() => (props.isEditing ? 'is-editing' : ''));
+const mathContainerStyle = computed(() => (props.isEditable ? '-1rem' : '0rem'));
 </script>
 
 <style scoped>
@@ -97,6 +98,6 @@ main.is-editing {
 	border: 4px solid transparent;
 	border-radius: var(--border-radius);
 	position: relative;
-	top: -1rem;
+	top: v-bind('mathContainerStyle');
 }
 </style>

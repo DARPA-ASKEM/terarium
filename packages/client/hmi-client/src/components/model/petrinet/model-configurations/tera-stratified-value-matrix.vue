@@ -57,8 +57,6 @@ import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
-import { updateModelConfiguration } from '@/services/model-configurations';
-
 import { pythonInstance } from '@/python/PyodideController';
 
 const props = defineProps<{
@@ -68,6 +66,8 @@ const props = defineProps<{
 	nodeType: NodeType;
 	shouldEval: boolean;
 }>();
+
+const emit = defineEmits(['update-configuration']);
 
 const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
@@ -195,7 +195,7 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
-		await updateModelConfiguration(modelConfigurationClone);
+		emit('update-configuration', modelConfigurationClone);
 		generateMatrix();
 	}
 }
@@ -294,20 +294,6 @@ onMounted(() => {
 	width: 100%;
 	padding-left: 12px;
 }
-
-/* .p-frozen-column {
-	left: 0px;
-	white-space: nowrap;
-}
-
-.second-frozen {
-	left: 12rem;
-}
-
-.p-frozen-column,
-th {
-	background: transparent;
-} */
 
 .p-datatable-scrollable .p-frozen-column {
 	padding-right: 1rem;
