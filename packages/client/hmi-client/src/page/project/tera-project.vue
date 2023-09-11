@@ -51,13 +51,13 @@
 						workflowNode = null;
 					"
 				/>
-				<tera-calibration-julia
+				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
 					"
 					:node="workflowNode"
 				/>
-				<tera-calibration-ciemss
+				<tera-calibrate-ciemss
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 					"
@@ -144,8 +144,8 @@ import { useRouter } from 'vue-router';
 import { isEmpty } from 'lodash';
 import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
 import TeraDatasetWorkflowWrapper from '@//workflow/ops/dataset/tera-dataset-workflow-wrapper.vue';
-import TeraCalibrationJulia from '@/workflow/ops/calibrate-julia/tera-calibration-julia.vue';
-import TeraCalibrationCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibration-ciemss.vue';
+import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
+import TeraCalibrateCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
 import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';
 import TeraStratify from '@/workflow/ops/stratify-julia/tera-stratify.vue';
 import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
