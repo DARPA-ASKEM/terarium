@@ -53,7 +53,7 @@ import { PropType, computed, ref, watch } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
-import TeraModel from '@/components/models/tera-model.vue';
+import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocument from '@/components/documents/tera-document.vue';

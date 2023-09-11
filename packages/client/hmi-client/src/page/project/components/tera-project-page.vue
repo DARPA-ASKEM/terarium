@@ -71,7 +71,7 @@ import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
-import TeraModel from '@/components/models/tera-model.vue';
+import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';

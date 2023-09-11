@@ -427,7 +427,7 @@ import {
 import Tag from 'primevue/tag';
 import { AcceptedExtensions, ResourceType } from '@/types/common';
 import Button from 'primevue/button';
-import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
+import TeraModelExtraction from '@/components/model/petrinet/tera-model-extraction.vue';
 import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
