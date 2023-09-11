@@ -64,6 +64,14 @@ export const convertAMRToACSet = (amr: Model) => {
 		});
 	});
 
+	// post processing to use expressions rather than ids
+	result.T = result.T.map((transition) => {
+		const foundRate = amr.semantics?.ode.rates.find((rate) => rate.target === transition.tname);
+
+		// default to the id if there is a case where there is no expression
+		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
+	});
+
 	return result;
 };
 
@@ -541,12 +549,12 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 };
 
 // FIXME - We need a proper way to update the model
-export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => ({
-	...amrOld,
-	...amr,
-	name: amrOld.name,
-	metadata: amrOld.metadata
-});
+export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => {
+	const m: Model = { ...amrOld, ...amr };
+	m.metadata = amrOld.metadata;
+	m.header.name = amrOld.header.name;
+	return m;
+};
 
 export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);

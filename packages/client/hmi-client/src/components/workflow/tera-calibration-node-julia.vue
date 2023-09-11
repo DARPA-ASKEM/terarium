@@ -75,12 +75,6 @@
 						:options="Object.values(CalibrateMethodOptions)"
 						v-model="extra.calibrateMethod"
 					/>
-					<div class="smaller-buttons">
-						<label>Start</label>
-						<InputNumber v-model="timeSpan.start" />
-						<label>End</label>
-						<InputNumber v-model="timeSpan.end" />
-					</div>
 				</span>
 			</AccordionTab>
 			<!-- <AccordionTab header="Loss"></AccordionTab>
@@ -115,7 +109,7 @@ import Button from 'primevue/button';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { CalibrationRequestJulia, CsvAsset, ModelConfiguration, TimeSpan } from '@/types/Types';
+import { CalibrationRequestJulia, CsvAsset, ModelConfiguration } from '@/types/Types';
 import {
 	makeCalibrateJobJulia,
 	getRunResultJulia,
@@ -164,7 +158,6 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
-const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
@@ -230,7 +223,7 @@ const runCalibrate = async () => {
 		},
 		extra: extra.value,
 		engine: 'sciml',
-		timespan: getTimespan(timeSpan.value, csvAsset.value, mapping.value)
+		timespan: getTimespan(csvAsset.value, mapping.value)
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	if (response?.simulationId) {
