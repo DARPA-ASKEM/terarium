@@ -202,8 +202,8 @@ public class SimulationRequestResource {
 			ObjectMapper mapper = new ObjectMapper();
 			ModelConfiguration modelConfig = modelConfigProxy.getModelConfiguration(modelConfigId);
 			JsonNode configuration =  mapper.convertValue(modelConfig.getConfiguration(), JsonNode.class);
-			if (configuration.findValue("timeseries") != null){
-				JsonNode timeseries = mapper.convertValue(configuration.findValue("timeseries"), JsonNode.class);
+			if (configuration.get("metadata").get("timeseries") != null){
+				JsonNode timeseries = mapper.convertValue(configuration.get("metadata").get("timeseries"), JsonNode.class);
 				List<String> fieldNames = new ArrayList<>();
 				timeseries.fieldNames().forEachRemaining(key -> fieldNames.add(key));
 				for (int i = 0; i < fieldNames.size(); i++){
