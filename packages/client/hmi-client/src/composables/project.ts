@@ -4,6 +4,7 @@ import * as ProjectService from '@/services/project';
 import * as CodeService from '@/services/code';
 import * as ArtifactService from '@/services/artifact';
 import * as DatasetService from '@/services/dataset';
+import * as ModelService from '@/services/model';
 import { AssetType } from '@/types/Types';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
@@ -174,6 +175,14 @@ export function useProjects() {
 		return dataset;
 	}
 
+	async function addNewModelToProject(modelName: string, projectId: IProject['id']) {
+		const modelId = await ModelService.addNewModelToProject(modelName);
+		if (modelId) {
+			await addAsset(projectId, AssetType.Models, modelId);
+		}
+		return modelId;
+	}
+
 	return {
 		activeProject: readonly(activeProject),
 		allProjects: readonly(allProjects),
@@ -191,6 +200,7 @@ export function useProjects() {
 		uploadArtifactToProject,
 		createNewArtifactFromGithubFile,
 		createNewDatasetFromCSV,
-		createNewDatasetFromGithubFile
+		createNewDatasetFromGithubFile,
+		addNewModelToProject
 	};
 }

@@ -7,8 +7,6 @@ import { logger } from '@/utils/logger';
 import { CsvAsset, Dataset } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
-import useResourcesStore from '@/stores/resources';
-import * as ProjectService from '@/services/project';
 
 /**
  * Get all datasets
@@ -227,9 +225,7 @@ export const saveDataset = async (
 	datasetName: string | null
 ) => {
 	if (!simulationId) return;
-	if (await createDatasetFromSimulationResult(projectId, simulationId, datasetName)) {
-		useResourcesStore().setActiveProject(await ProjectService.get(projectId, true));
-	}
+	await createDatasetFromSimulationResult(projectId, simulationId, datasetName);
 };
 
 export {

@@ -36,16 +36,17 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { IProject } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { addNewModelToProject } from '@/services/model';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import { AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	project: IProject;
 	isVisible: boolean;
 }>();
 const emit = defineEmits(['close-modal']);
+const { addNewModelToProject } = useProjects();
 
 // New Model Modal
 const newModelName = ref<string>('');
@@ -72,7 +73,7 @@ async function createNewModel() {
 		return;
 	}
 	isValidName.value = true;
-	const modelId = await addNewModelToProject(newModelName.value.trim(), props.project);
+	const modelId = await addNewModelToProject(newModelName.value.trim(), props.project.id);
 	if (modelId) {
 		router.push({
 			name: RouteName.ProjectRoute,
