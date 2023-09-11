@@ -188,7 +188,6 @@ import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
 import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
-import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
@@ -199,7 +198,11 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const { uploadCodeToProjectFromGithub, createNewArtifactFromGithubFile } = useProjects();
+const {
+	uploadCodeToProjectFromGithub,
+	createNewArtifactFromGithubFile,
+	createNewDatasetFromGithubFile
+} = useProjects();
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');

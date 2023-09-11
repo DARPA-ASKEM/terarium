@@ -264,9 +264,8 @@ import { AcceptedExtensions, AcceptedTypes, Tab } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
-import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
-import { Artifact, AssetType, CsvAsset } from '@/types/Types';
+import { Artifact, AssetType, CsvAsset, Dataset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
@@ -275,6 +274,7 @@ import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
+import { downloadRawFile } from '@/services/dataset';
 
 const props = defineProps<{
 	project: IProject;
@@ -310,7 +310,13 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const { update, getAssetIcon, uploadCodeToProject, uploadArtifactToProject } = useProjects();
+const {
+	update,
+	getAssetIcon,
+	uploadCodeToProject,
+	uploadArtifactToProject,
+	createNewDatasetFromCSV
+} = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
@@ -405,13 +411,18 @@ async function processArtifact(file: File) {
  * @param description
  */
 async function processDataset(file: File, description: string) {
-	const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
+	let addedCSV: CsvAsset | null = null;
+	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
 		progress,
 		file,
 		auth.name ?? '',
 		props.project.id,
 		description
 	);
+
+	if (addedDataset && addedDataset.id) {
+		addedCSV = await downloadRawFile(addedDataset.id, file.name);
+	}
 
 	if (addedCSV !== null) {
 		const text: string = addedCSV?.csv?.join('\r\n') ?? '';

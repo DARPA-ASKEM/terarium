@@ -4,8 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { AssetType, CsvAsset, Dataset } from '@/types/Types';
-import { addAsset } from '@/services/project';
+import { CsvAsset, Dataset } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import useResourcesStore from '@/stores/resources';
@@ -104,7 +103,6 @@ async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userName: string,
-	projectId: string,
 	url: string
 ) {
 	// Find the file name by removing the path portion
@@ -138,7 +136,7 @@ async function createNewDatasetFromGithubFile(
 		return null;
 	}
 
-	return addAsset(projectId, AssetType.Datasets, newDataset.id);
+	return newDataset;
 }
 
 /**
@@ -154,9 +152,8 @@ async function createNewDatasetFromCSV(
 	progress: Ref<number>,
 	file: File,
 	userName: string,
-	projectId: string,
 	description?: string
-): Promise<CsvAsset | null> {
+): Promise<Dataset | null> {
 	// Remove the file extension from the name, if any
 	const name = file.name.replace(/\.[^/.]+$/, '');
 
@@ -194,10 +191,7 @@ async function createNewDatasetFromCSV(
 		return null;
 	}
 
-	await addAsset(projectId, AssetType.Datasets, newDataset.id);
-
-	// Now verify it all works and obtain a preview for the user.
-	return downloadRawFile(newDataset.id, file.name);
+	return newDataset;
 }
 
 async function createDatasetFromSimulationResult(

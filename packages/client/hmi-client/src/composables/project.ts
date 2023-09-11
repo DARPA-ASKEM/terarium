@@ -3,6 +3,7 @@ import { Component, Ref, readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import * as CodeService from '@/services/code';
 import * as ArtifactService from '@/services/artifact';
+import * as DatasetService from '@/services/dataset';
 import { AssetType } from '@/types/Types';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
@@ -122,7 +123,7 @@ export function useProjects() {
 		repoOwnerAndName: string,
 		path: string,
 		userName: string,
-		projectId: string
+		projectId: IProject['id']
 	) {
 		const artifact = await ArtifactService.createNewArtifactFromGithubFile(
 			repoOwnerAndName,
@@ -133,6 +134,44 @@ export function useProjects() {
 			await addAsset(projectId, AssetType.Artifacts, artifact.id);
 		}
 		return artifact;
+	}
+
+	async function createNewDatasetFromCSV(
+		progress: Ref<number>,
+		file: File,
+		userName: string,
+		projectId: IProject['id'],
+		description?: string
+	) {
+		const dataset = await DatasetService.createNewDatasetFromCSV(
+			progress,
+			file,
+			userName,
+			description
+		);
+		if (dataset && dataset.id) {
+			await addAsset(projectId, AssetType.Datasets, dataset.id);
+		}
+		return dataset;
+	}
+
+	async function createNewDatasetFromGithubFile(
+		repoOwnerAndName: string,
+		path: string,
+		userName: string,
+		projectId: IProject['id'],
+		url: string
+	) {
+		const dataset = await DatasetService.createNewDatasetFromGithubFile(
+			repoOwnerAndName,
+			path,
+			userName,
+			url
+		);
+		if (dataset && dataset.id) {
+			await addAsset(projectId, AssetType.Datasets, dataset.id);
+		}
+		return dataset;
 	}
 
 	return {
@@ -150,6 +189,8 @@ export function useProjects() {
 		uploadCodeToProject,
 		uploadCodeToProjectFromGithub,
 		uploadArtifactToProject,
-		createNewArtifactFromGithubFile
+		createNewArtifactFromGithubFile,
+		createNewDatasetFromCSV,
+		createNewDatasetFromGithubFile
 	};
 }
