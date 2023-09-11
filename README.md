@@ -127,6 +127,10 @@ You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSH
 * HMI Server - 3000
 * Model Service - 3010
 * Data Service - 3020
+* RabbitMQ - 5672
+
+## Using Rabbit MQ:
+When sending and recieving messages we should use utf-8 format rather than byte[] for Quarkus deserialization.
 
 ## Packaging and running the client
 

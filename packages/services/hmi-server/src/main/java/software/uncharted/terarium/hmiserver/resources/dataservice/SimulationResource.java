@@ -53,9 +53,8 @@ public class SimulationResource implements SnakeCaseResource {
 	@RestClient
 	DatasetProxy datasetProxy;
 
-	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@Inject
-	@Channel("simulationStatus") Publisher<byte[]> partialSimulationStream;
+	@Channel("simulationStatus") Publisher<SimulationIntermediateResults> partialSimulationStream;
 
 	@Broadcast
 	@Channel("simulationStatus")
@@ -164,27 +163,11 @@ public class SimulationResource implements SnakeCaseResource {
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	@Tag(name = "Stream partial/intermediate simulation result associated with run ID")
-	public Publisher<byte[]> stream(
+	public Publisher<SimulationIntermediateResults> stream(
 		@PathParam("jobId") final String jobId
 	) {
 		ObjectMapper mapper = new ObjectMapper();
-		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> {
-			try{ 
-				//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
-				String jsonString = new String(event);
-				jsonString = jsonString.replace(" ","");
-
-				SimulationIntermediateResults interResult = mapper.readValue(jsonString, SimulationIntermediateResults.class);
-
-				return interResult.getJobId().equals(jobId);
-			}
-			catch(Exception e){
-				log.error("Error occured while trying to convert simulation-status message to type: SimulationIntermediateResults");
-				log.error(event.toString());
-				log.error(e.toString());
-				return false;
-			}
-		});
+		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> event.getJobId().equals(jobId));
 	}
 
 	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
