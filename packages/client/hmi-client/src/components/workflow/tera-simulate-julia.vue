@@ -57,6 +57,7 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
+					v-if="projectId"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
@@ -128,7 +129,7 @@ import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
+	project?: IProject;
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
@@ -143,7 +144,7 @@ const activeTab = ref(SimulateTabs.input);
 const model = ref<Model | null>(null);
 const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
-const projectId = ref<string>(props.project.id);
+const projectId = ref(props?.project?.id);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);
