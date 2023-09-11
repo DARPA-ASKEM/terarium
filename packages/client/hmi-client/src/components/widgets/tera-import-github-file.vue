@@ -189,7 +189,6 @@ import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
-import { createNewArtifactFromGithubFile } from '@/services/artifact';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
@@ -200,7 +199,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const { uploadCodeToProjectFromGithub } = useProjects();
+const { uploadCodeToProjectFromGithub, createNewArtifactFromGithubFile } = useProjects();
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');

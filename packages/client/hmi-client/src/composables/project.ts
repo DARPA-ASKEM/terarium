@@ -2,6 +2,7 @@ import { IProject } from '@/types/Project';
 import { Component, Ref, readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import * as CodeService from '@/services/code';
+import * as ArtifactService from '@/services/artifact';
 import { AssetType } from '@/types/Types';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
@@ -98,6 +99,42 @@ export function useProjects() {
 		return code;
 	}
 
+	async function uploadArtifactToProject(
+		progress: Ref<number>,
+		file: File,
+		userName: string,
+		projectId: IProject['id'],
+		description?: string
+	) {
+		const artifact = await ArtifactService.uploadArtifactToProject(
+			progress,
+			file,
+			userName,
+			description
+		);
+		if (artifact && artifact.id) {
+			await addAsset(projectId, AssetType.Artifacts, artifact.id);
+		}
+		return artifact;
+	}
+
+	async function createNewArtifactFromGithubFile(
+		repoOwnerAndName: string,
+		path: string,
+		userName: string,
+		projectId: string
+	) {
+		const artifact = await ArtifactService.createNewArtifactFromGithubFile(
+			repoOwnerAndName,
+			path,
+			userName
+		);
+		if (artifact && artifact.id) {
+			await addAsset(projectId, AssetType.Artifacts, artifact.id);
+		}
+		return artifact;
+	}
+
 	return {
 		activeProject: readonly(activeProject),
 		allProjects: readonly(allProjects),
@@ -111,6 +148,8 @@ export function useProjects() {
 		getPublicationAssets,
 		getAssetIcon,
 		uploadCodeToProject,
-		uploadCodeToProjectFromGithub
+		uploadCodeToProjectFromGithub,
+		uploadArtifactToProject,
+		createNewArtifactFromGithubFile
 	};
 }

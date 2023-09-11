@@ -270,7 +270,6 @@ import { Artifact, AssetType, CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
-import { uploadArtifactToProject } from '@/services/artifact';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/knowledge';
@@ -311,7 +310,7 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const { update, getAssetIcon, uploadCodeToProject } = useProjects();
+const { update, getAssetIcon, uploadCodeToProject, uploadArtifactToProject } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
