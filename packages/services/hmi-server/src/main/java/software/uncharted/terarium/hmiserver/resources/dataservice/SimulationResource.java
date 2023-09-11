@@ -179,7 +179,7 @@ public class SimulationResource implements SnakeCaseResource {
 				return interResult.getJobId().equals(jobId);
 			}
 			catch(Exception e){
-				log.error("Error occured while trying to convert simulation-status message to type: SimulationIntermediateResults");
+				log.error("Error occured while trying to convert simulation-status message to type: SimulationIntermediateResultsCiemss");
 				log.error(event.toString());
 				log.error(e.toString());
 				return false;
