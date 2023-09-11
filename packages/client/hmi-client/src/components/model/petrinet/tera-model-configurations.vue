@@ -589,7 +589,6 @@ thead > tr:first-child {
 .p-tabview {
 	display: flex;
 	gap: 1rem;
-	margin-bottom: 1rem;
 	justify-content: space-between;
 }
 
