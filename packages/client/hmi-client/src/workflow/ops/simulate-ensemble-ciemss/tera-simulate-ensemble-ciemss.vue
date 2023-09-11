@@ -220,7 +220,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { IProject } from '@/types/Project';
-import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const dataLabelPlugin = [ChartDataLabels];

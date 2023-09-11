@@ -128,14 +128,14 @@ import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
 import { EventSourceManager } from '@/api/event-source-manager';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { getTimespan } from '@/workflow/util';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
 	CalibrateMap
 } from './calibrate-operation-ciemss';
-import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from './tera-progress-bar.vue';
-import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;

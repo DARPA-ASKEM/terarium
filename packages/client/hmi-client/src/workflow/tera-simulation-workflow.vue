@@ -226,24 +226,9 @@ import {
 	WorkflowDirection,
 	WorkflowOperationTypes
 } from '@/types/workflow';
-import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
-import TeraModelNode from '@/components/workflow/tera-model-node.vue';
-import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
-import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
-import TeraSimulateEnsembleCiemssNode from '@/components/workflow/tera-simulate-ensemble-node-ciemss.vue';
-import TeraCalibrateEnsembleCiemssNode from '@/components/workflow/tera-calibrate-ensemble-node-ciemss.vue';
-import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
-import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
-import { ModelOperation } from '@/components/workflow/model-operation';
-import { CalibrationOperationJulia } from '@/components/workflow/calibrate-operation-julia';
-import { CalibrationOperationCiemss } from '@/components/workflow/calibrate-operation-ciemss';
-import {
-	SimulateJuliaOperation,
-	SimulateJuliaOperationState
-} from '@/components/workflow/simulate-julia-operation';
-import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
-import { StratifyOperation } from '@/components/workflow/stratify-operation';
-import { CalibrateEnsembleCiemssOperation } from '@/components/workflow/calibrate-ensemble-ciemss-operation';
+
+// Operation imports
+import TeraWorkflowNode from '@/workflow/tera-workflow-node.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -253,12 +238,38 @@ import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
-import TeraDatasetTransformerNode from './tera-dataset-transformer-node.vue';
-import { DatasetOperation } from './dataset-operation';
-import TeraDatasetNode from './tera-dataset-node.vue';
-import TeraStratifyNode from './tera-stratify-node.vue';
-import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
-import { DatasetTransformerOperation } from './dataset-transformer-operation';
+import { ModelOperation } from './ops/model/model-operation';
+import TeraModelNode from './ops/model/tera-model-node.vue';
+
+import { SimulateCiemssOperation } from './ops/simulate-ciemss/simulate-ciemss-operation';
+import TeraSimulateCiemssNode from './ops/simulate-ciemss/tera-simulate-ciemss-node.vue';
+
+import { StratifyOperation } from './ops/stratify-julia/stratify-operation';
+import TeraStratifyNode from './ops/stratify-julia/tera-stratify-node.vue';
+
+import { DatasetOperation } from './ops/dataset/dataset-operation';
+import TeraDatasetNode from './ops/dataset/tera-dataset-node.vue';
+
+import { CalibrateEnsembleCiemssOperation } from './ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
+import TeraCalibrateEnsembleCiemssNode from './ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-node.ciemss.vue';
+
+import { DatasetTransformerOperation } from './ops/dataset-transformer/dataset-transformer-operation';
+import TeraDatasetTransformerNode from './ops/dataset-transformer/tera-dataset-transformer-node.vue';
+
+import { CalibrationOperationJulia } from './ops/calibrate-julia/calibrate-operation-julia';
+import TeraCalibrationJuliaNode from './ops/calibrate-julia/tera-calibration-node-julia.vue';
+
+import { CalibrationOperationCiemss } from './ops/calibrate-ciemss/calibrate-operation-ciemss';
+import TeraCalibrationCiemssNode from './ops/calibrate-ciemss/tera-calibration-node-ciemss.vue';
+
+import { SimulateEnsembleCiemssOperation } from './ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+import TeraSimulateEnsembleCiemssNode from './ops/simulate-ensemble-ciemss/tera-simulate-ensemble-node-ciemss.vue';
+
+import {
+	SimulateJuliaOperation,
+	SimulateJuliaOperationState
+} from './ops/simulate-julia/simulate-julia-operation';
+import TeraSimulateJuliaNode from './ops/simulate-julia/tera-simulate-julia-node.vue';
 
 const workflowEventBus = workflowService.workflowEventBus;
 

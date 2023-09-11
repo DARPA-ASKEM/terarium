@@ -74,7 +74,7 @@ import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
+import TeraSimulationWorkflow from '@/workflow/tera-simulation-workflow.vue';
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';

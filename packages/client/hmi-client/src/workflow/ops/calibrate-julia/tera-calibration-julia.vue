@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" stretch-content>
+	<tera-asset :name="'Calibrate (deterministic)'" stretch-content>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button
@@ -87,22 +87,20 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
-					:chartConfig="cfg"
 					:initial-data="csvAsset"
 					:mapping="mapping"
-					has-mean-line
+					:run-type="RunType.Julia"
+					:chartConfig="cfg"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
-					class="add-chart"
-					text
-					:outlined="true"
+					class="p-button-sm p-button-text"
 					@click="addChart"
 					label="Add chart"
 					icon="pi pi-plus"
 				></Button>
 			</AccordionTab>
-			<!-- <AccordionTab header="Calibrated parameter values">
+			<AccordionTab header="Calibrated parameter values">
 				<table class="p-datatable-table">
 					<thead class="p-datatable-thead">
 						<th>Parameter</th>
@@ -117,7 +115,7 @@
 						</td>
 					</tr>
 				</table>
-			</AccordionTab> -->
+			</AccordionTab>
 		</Accordion>
 		<section v-else-if="!modelConfig" class="emptyState">
 			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -129,11 +127,12 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ref, shallowRef, watch } from 'vue';
+import { csvParse } from 'd3';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-import { getRunResult, getRunResultCiemss } from '@/services/models/simulation-service';
+import { getRunResultJulia } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -143,11 +142,11 @@ import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import TeraSimulateChart from './tera-simulate-chart.vue';
-import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation-ciemss';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation-julia';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -180,7 +179,7 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -191,7 +190,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -209,7 +208,7 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -250,14 +249,13 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		// const csvData = csvParse(resultCsv);
-		// console.log(csvData);
-		// runResults.value[simulationIds.value[0].runId] = csvData as any;
-
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
-		runResults.value = output.runResults;
-		parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'visualization.json');
+		const resultCsv = (await getRunResultJulia(
+			simulationIds.value[0].runId,
+			'result.json'
+		)) as string;
+		const csvData = csvParse(resultCsv);
+		runResults.value[simulationIds.value[0].runId] = csvData as any;
+		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 	},
 	{ immediate: true }
 );
@@ -321,18 +319,6 @@ th {
 	font-size: var(--font-body-small);
 	width: 90%;
 	margin-top: 1rem;
-}
-
-.sim-tspan-container {
-	display: flex;
-	gap: 1em;
-}
-
-.sim-tspan-group {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	flex-basis: 0;
 }
 
 img {

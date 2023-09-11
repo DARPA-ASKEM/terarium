@@ -125,8 +125,9 @@ import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { Poller, PollerState } from '@/api/api';
-import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from './tera-progress-bar.vue';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { getTimespan } from '@/workflow/util';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -134,7 +135,6 @@ import {
 	CalibrateMethodOptions,
 	CalibrateExtraJulia
 } from './calibrate-operation-julia';
-import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;
