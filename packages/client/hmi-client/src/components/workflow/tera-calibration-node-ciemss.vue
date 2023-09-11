@@ -261,7 +261,7 @@ const getStatus = async (simulationId: string) => {
 
 	// open a connection for each run id and handle the messages
 	runIds.forEach((id) => {
-		eventSourceManager.openConnection(id, `/simulations/${id}/partial-result`);
+		eventSourceManager.openConnection(id, `/simulations/${id}/ciemss/partial-result`);
 		eventSourceManager.setMessageHandler(id, handlingProgress);
 	});
 
