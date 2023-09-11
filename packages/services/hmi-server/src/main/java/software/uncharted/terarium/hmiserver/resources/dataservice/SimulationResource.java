@@ -171,7 +171,6 @@ public class SimulationResource implements SnakeCaseResource {
 	}
 
 	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
-	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@PUT
 	@Path("/{jobId}/create-partial-result")
 	@Produces(MediaType.APPLICATION_JSON)
