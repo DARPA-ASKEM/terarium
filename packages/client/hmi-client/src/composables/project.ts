@@ -1,12 +1,27 @@
 import { IProject } from '@/types/Project';
-import { readonly, shallowRef } from 'vue';
+import { Component, Ref, readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
+import * as CodeService from '@/services/code';
 import { AssetType } from '@/types/Types';
+import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
 const TIMEOUT_MS = 1000;
 
 const activeProject = shallowRef<IProject | null>(null);
 const allProjects = shallowRef<IProject[] | null>(null);
+
+/**
+ * Get the icon associated with an Asset
+ */
+const icons = new Map<string | AssetType, string | Component>([
+	[AssetType.Publications, 'file'],
+	[AssetType.Models, 'share-2'],
+	[AssetType.Datasets, DatasetIcon],
+	[AssetType.Simulations, 'settings'],
+	[AssetType.Code, 'code'],
+	[AssetType.Workflows, 'git-merge'],
+	['overview', 'layout']
+]);
 
 export function useProjects() {
 	async function getActiveProject(projectId: IProject['id']): Promise<IProject | null> {
@@ -43,12 +58,44 @@ export function useProjects() {
 		return ProjectService.create(name, description, username);
 	}
 
+	async function update(project: IProject) {
+		return ProjectService.update(project);
+	}
+
 	async function remove(projectId: IProject['id']) {
 		return ProjectService.remove(projectId);
 	}
 
 	async function getPublicationAssets(projectId: IProject['id']) {
 		return ProjectService.getPublicationAssets(projectId);
+	}
+
+	function getAssetIcon(type: AssetType | string | null): string | Component {
+		if (type && icons.has(type)) {
+			return icons.get(type) ?? 'circle';
+		}
+		return 'circle';
+	}
+
+	async function uploadCodeToProject(projectId: IProject['id'], file: File, progress: Ref<number>) {
+		const code = await CodeService.uploadCodeToProject(file, progress);
+		if (code && code.id) {
+			await addAsset(projectId, AssetType.Code, code.id);
+		}
+		return code;
+	}
+
+	async function uploadCodeToProjectFromGithub(
+		projectId: IProject['id'],
+		repoOwnerAndName: string,
+		path: string,
+		url: string
+	) {
+		const code = await CodeService.uploadCodeToProjectFromGithub(repoOwnerAndName, path, url);
+		if (code && code.id) {
+			await addAsset(projectId, AssetType.Code, code.id);
+		}
+		return code;
 	}
 
 	return {
@@ -59,7 +106,11 @@ export function useProjects() {
 		addAsset,
 		deleteAsset,
 		create,
+		update,
 		remove,
-		getPublicationAssets
+		getPublicationAssets,
+		getAssetIcon,
+		uploadCodeToProject,
+		uploadCodeToProjectFromGithub
 	};
 }

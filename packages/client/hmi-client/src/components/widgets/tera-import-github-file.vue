@@ -192,13 +192,15 @@ import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
-import { uploadCodeToProjectFromGithub } from '@/services/code';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	urlString: string;
 	showImportButton: boolean;
 	project?: IProject;
 }>();
+
+const { uploadCodeToProjectFromGithub } = useProjects();
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');

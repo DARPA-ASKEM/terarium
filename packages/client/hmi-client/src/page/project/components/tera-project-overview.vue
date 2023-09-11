@@ -112,17 +112,15 @@
 						<template #body="slotProps">
 							<div class="asset-button" @click="openResource(slotProps.data)">
 								<vue-feather
-									v-if="
-										typeof ProjectService.getAssetIcon(slotProps.data.pageType ?? null) === 'string'
-									"
-									:type="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
+									:type="getAssetIcon(slotProps.data.pageType ?? null)"
 									size="1rem"
 									stroke="rgb(16, 24, 40)"
 									class="p-button-icon-left icon"
 								/>
 								<component
 									v-else
-									:is="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									:is="getAssetIcon(slotProps.data.pageType ?? null)"
 									class="p-button-icon-left icon"
 								/>
 								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
@@ -255,8 +253,6 @@
 import { IProject, isProjectAssetTypes } from '@/types/Project';
 import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
-import * as ProjectService from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import DataTable from 'primevue/datatable';
@@ -279,7 +275,7 @@ import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.v
 import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
-import { uploadCodeToProject } from '@/services/code';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	project: IProject;
@@ -314,6 +310,8 @@ const multiSelectButtons = [
 
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
+
+const { update, getAssetIcon, uploadCodeToProject } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
@@ -450,9 +448,6 @@ async function importCompleted(
 		}
 		results.value = null;
 		isUploadResourcesModalVisible.value = false;
-
-		// TODO: See about getting rid of this - this refresh should preferably be within a service
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
 	}
@@ -474,7 +469,7 @@ async function updateProjectName() {
 	isRenamingProject.value = false;
 	const updatedProject = props.project;
 	updatedProject.name = newProjectName.value;
-	await ProjectService.update(updatedProject);
+	await update(updatedProject);
 }
 
 const projectMenu = ref();
