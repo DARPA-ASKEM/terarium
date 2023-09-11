@@ -113,7 +113,7 @@ import { ModelConfiguration, Model, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
-import ModelDiagram from '@/components/models/tera-model-diagram.vue';
+import ModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';

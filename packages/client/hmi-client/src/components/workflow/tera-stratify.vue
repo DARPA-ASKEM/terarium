@@ -222,9 +222,9 @@ import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import useResourcesStore from '@/stores/resources';
 import { workflowEventBus } from '@/services/workflow';
 import { ModelOperation } from '@/components/workflow/model-operation';
-import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
-import TeraTypedModelDiagram from '../models/tera-typed-model-diagram.vue';
-import TeraStratifyOutputModelDiagram from '../models/tera-stratify-output-model-diagram.vue';
+import TeraStrataModelDiagram from '@/components/model/petrinet/model-diagrams/tera-strata-model-diagram.vue';
+import TeraTypedModelDiagram from '@/components/model/petrinet/model-diagrams/tera-typed-model-diagram.vue';
+import TeraStratifyOutputModelDiagram from '@/components/model/petrinet/model-diagrams/tera-stratify-output-model-diagram.vue';
 
 const resourceStore = useResourcesStore();
 

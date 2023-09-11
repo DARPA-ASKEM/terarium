@@ -48,7 +48,7 @@
 					empty-selection-message="Hello"
 					optionLabel="name"
 					optionsValue="id"
-					:disabled="modelConfigurations.length === 0"
+					:disabled="isEmpty(modelConfigurations)"
 					style="min-width: 100%; height: 30px; margin-bottom: 10px"
 				/>
 			</div>
@@ -108,12 +108,12 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted, Ref } from 'vue';
+import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
-import { getModelConfigurations } from '@/services/model';
 import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { AssetType, CsvAsset, Model, ModelConfiguration } from '@/types/Types';
@@ -145,6 +145,7 @@ const props = defineProps<{
 	assetId: string;
 	project?: IProject;
 	model: Model | null;
+	modelConfigurations: ModelConfiguration[];
 	showKernels: boolean;
 	showChatThoughts: boolean;
 }>();
@@ -159,9 +160,6 @@ const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
 const showKernels = ref(<boolean>false);
 const autoExpandPreview = ref(<boolean>true);
-const modelConfigurations = ref(<
-	(ModelConfiguration | { id: string; name: string; type: string })[]
->[noSelectionDefault]);
 const selectedConfiguration = ref(
 	<ModelConfiguration | { id: string; name: string }>noSelectionDefault
 );
@@ -247,11 +245,6 @@ watch(
 );
 
 onMounted(async () => {
-	if (props.model) {
-		const tempConfigurations = await getModelConfigurations(props.model.id);
-		modelConfigurations.value = modelConfigurations.value.concat(tempConfigurations);
-	}
-
 	// for admin panel
 	jupyterSession.ready.then(() => {
 		if (jupyterSession.session) {

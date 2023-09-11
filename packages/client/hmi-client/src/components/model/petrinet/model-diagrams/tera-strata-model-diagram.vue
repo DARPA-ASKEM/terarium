@@ -35,7 +35,7 @@ import {
 import { convertToIGraph } from '@/model-representation/petrinet/petrinet-service';
 import { Model, TypeSystem } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
-import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraReflexivesToolbar from './tera-reflexives-toolbar.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 

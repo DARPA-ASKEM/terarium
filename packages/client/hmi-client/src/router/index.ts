@@ -12,7 +12,6 @@ import SSE from '@/temp/sse.vue';
 import EvaluationScenarios from '@/temp/EvaluationScenarios.vue';
 import AMRPetriTest from '@/temp/AMRPetriTest.vue';
 import PyodideTest from '@/temp/PyodideTest.vue';
-import NewTeraModel from '@/components/model/tera-model.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -50,8 +49,7 @@ const routes = [
 	{ path: RoutePath.EvaluationScenariosPath, component: EvaluationScenarios },
 	{ path: '/sse', component: SSE },
 	{ path: '/amr-petri-test', component: AMRPetriTest },
-	{ path: '/pyodide-test', component: PyodideTest },
-	{ path: '/new-tera-model', component: NewTeraModel }
+	{ path: '/pyodide-test', component: PyodideTest }
 ];
 
 const router = createRouter({

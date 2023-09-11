@@ -26,7 +26,9 @@
 					<!--Different tbody depending on model-->
 					<component
 						:is="
-							stratifiedModelType ? TeraStratifiedModelConfiguration : TeraRegularModelConfiguration
+							stratifiedModelType
+								? TeraStratifiedModelConfigurations
+								: TeraRegularModelConfigurations
 						"
 						v-model:editValue="editValue"
 						:model-configurations="modelConfigurations"
@@ -213,10 +215,10 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
 // st
 import Checkbox from 'primevue/checkbox';
-import TeraStratifiedValueMatrix from '@/components/models/tera-stratified-value-matrix.vue';
 import InputText from 'primevue/inputtext';
-import TeraRegularModelConfiguration from './model-configurations/tera-regular-model-configuration.vue';
-import TeraStratifiedModelConfiguration from './model-configurations/tera-stratified-model-configuration.vue';
+import TeraStratifiedValueMatrix from './model-configurations/tera-stratified-value-matrix.vue';
+import TeraRegularModelConfigurations from './model-configurations/tera-regular-model-configurations.vue';
+import TeraStratifiedModelConfigurations from './model-configurations/tera-stratified-model-configurations.vue';
 // import TabPanel from 'primevue/tabpanel';
 // import TabView from 'primevue/tabview';
 
@@ -424,15 +426,23 @@ function checkModelParameters() {
 function updateName(index: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index].name = false;
-	configToUpdate.name = editValue.value;
-	emit('update-configuration', configToUpdate, index);
+	if (configToUpdate.name !== editValue.value && !isEmpty(editValue.value)) {
+		configToUpdate.name = editValue.value;
+		emit('update-configuration', configToUpdate, index);
+	}
 }
 
 function updateValue(odeType: string, valueName: string, index: number, odeObjIndex: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index][odeType][odeObjIndex] = false;
-	configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
-	emit('update-configuration', configToUpdate, index);
+	if (
+		configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName].toString() !==
+			editValue.value &&
+		!isEmpty(editValue.value)
+	) {
+		configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
+		emit('update-configuration', configToUpdate, index);
+	}
 }
 
 // function to set the provided values from the modal
