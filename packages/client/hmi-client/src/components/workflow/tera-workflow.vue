@@ -83,6 +83,11 @@
 						:node="node"
 						@append-input-port="(event) => appendInputPort(node, event)"
 					/>
+					<tera-model-transformer-node
+						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER && models"
+						:node="node"
+						@append-input-port="(event) => appendInputPort(node, event)"
+					/>
 					<tera-simulate-julia-node
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
@@ -255,11 +260,13 @@ import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import TeraDatasetTransformerNode from './tera-dataset-transformer-node.vue';
+import TeraModelTransformerNode from './tera-model-transformer-node.vue';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
 import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
 import { DatasetTransformerOperation } from './dataset-transformer-operation';
+import { ModelTransformerOperation } from './model-transformer-operation';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -542,6 +549,13 @@ const contextMenuItems = ref([
 		label: 'Dataset Transformer',
 		command: () => {
 			workflowService.addNode(wf.value, DatasetTransformerOperation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Model Transformer',
+		command: () => {
+			workflowService.addNode(wf.value, ModelTransformerOperation, newNodePosition);
 			workflowDirty = true;
 		}
 	},

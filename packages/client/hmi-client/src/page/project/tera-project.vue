@@ -117,6 +117,13 @@
 					:project="project"
 					:node="workflowNode"
 				/>
+				<tera-model-transformer
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER
+					"
+					:project="project"
+					:node="workflowNode"
+				/>
 			</SplitterPanel>
 		</Splitter>
 		<tera-slider-panel
@@ -167,6 +174,7 @@ import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-en
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
 import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
+import TeraModelTransformer from '@/components/workflow/tera-model-transformer.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 

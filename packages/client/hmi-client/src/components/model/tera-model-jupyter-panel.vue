@@ -40,18 +40,6 @@
 		<div>
 			<h4>Select a model configuration:</h4>
 			<h5 style="color: darkred">Changing this will clear and restart your session.</h5>
-			<div class="kernel-dropdown">
-				<Dropdown
-					v-model="selectedConfiguration"
-					:options="modelConfigurations"
-					empty-message="Select a configuration or leave blank to work directly on the model"
-					empty-selection-message="Hello"
-					optionLabel="name"
-					optionsValue="id"
-					:disabled="isEmpty(modelConfigurations)"
-					style="min-width: 100%; height: 30px; margin-bottom: 10px"
-				/>
-			</div>
 		</div>
 		<div class="gpt-header flex">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
@@ -68,7 +56,6 @@
 		<tera-jupyter-chat
 			ref="chat"
 			:project="props.project"
-			:asset-id="props.assetId"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
@@ -77,6 +64,7 @@
 			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
+			:notebook-session="props.notebookSession"
 		/>
 		<div>
 			<Button
@@ -108,7 +96,6 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted, Ref } from 'vue';
-import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
@@ -116,7 +103,7 @@ import { useToastService } from '@/services/toast';
 import { addAsset } from '@/services/project';
 import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { AssetType, CsvAsset, Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, CsvAsset, Model, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -135,6 +122,8 @@ import { useConfirm } from 'primevue/useconfirm';
 
 // import { createNewDataset } from '@/services/dataset';
 
+const emit = defineEmits(['new-model-saved']);
+
 const jupyterSession: SessionContext = await newSession('llmkernel', 'ChattyNode');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
@@ -145,25 +134,17 @@ const props = defineProps<{
 	assetId: string;
 	project?: IProject;
 	model: Model | null;
-	modelConfigurations: ModelConfiguration[];
+	modelConfigurationId: string;
 	showKernels: boolean;
 	showChatThoughts: boolean;
+	notebookSession?: NotebookSession;
 }>();
-
-const noSelectionDefault = {
-	id: props.model?.id,
-	name: `Model "${props.model?.header.name}" (${props.model?.id}) -- (No configuration)`
-};
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
 const showKernels = ref(<boolean>false);
 const autoExpandPreview = ref(<boolean>true);
-const selectedConfiguration = ref(
-	<ModelConfiguration | { id: string; name: string }>noSelectionDefault
-);
-
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
@@ -207,7 +188,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	if (kernel?.name === 'llmkernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'mira_model',
-			context_info: { id: props.assetId }
+			context_info: { id: props.modelConfigurationId, type: 'model_config' }
 		});
 	}
 });
@@ -220,27 +201,6 @@ watch(
 			newCsvContent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
 			newCsvHeader.value = jupyterCsv.value.headers;
 		}
-	}
-);
-
-watch(
-	() => [selectedConfiguration.value],
-	() => {
-		const kernel = jupyterSession.session?.kernel;
-		let contextInfo;
-		if (
-			selectedConfiguration.value.id === noSelectionDefault.id &&
-			selectedConfiguration.value.name === noSelectionDefault.name
-		) {
-			contextInfo = { id: props.assetId, type: 'model' };
-		} else {
-			contextInfo = { id: selectedConfiguration.value.id, type: 'model_config' };
-		}
-		chat.value.clearHistory();
-		setKernelContext(kernel as IKernelConnection, {
-			context: 'mira_model',
-			context_info: contextInfo
-		});
 	}
 );
 
@@ -401,11 +361,12 @@ const updateKernelList = () => {
 
 const onNewModelSaved = async (payload) => {
 	if (!props.project) {
-		toast.error('Unable to save dataset', "Can't find active an project");
+		toast.error('Unable to save model', "Can't find active an project");
 		return;
 	}
 	const modelId = payload.model_id;
 	await addAsset(props.project.id, AssetType.Models, modelId);
+	emit('new-model-saved', { id: modelId, name: saveAsName.value });
 	toast.success('Model saved successfully', 'Refresh to see the dataset in the resource explorer');
 };
 </script>

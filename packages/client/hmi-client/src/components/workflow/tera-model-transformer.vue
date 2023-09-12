@@ -1,12 +1,14 @@
 <template>
 	<div class="background">
 		<Suspense>
-			<tera-dataset-jupyter-panel
-				:asset-ids="assetIds"
+			<tera-model-jupyter-panel
+				asset-id="bcd32c48-1daa-4a52-8ed7-147c1dc4b0b0"
+				:model-configuration-id="modelConfigurationId"
 				:project="props.project"
-				:show-kernels="showKernels"
-				:show-chat-thoughts="showChatThoughts"
-				@new-dataset-saved="addOutputPort"
+				:model="null"
+				:show-kernels="false"
+				:show-chat-thoughts="false"
+				@new-model-saved="addOutputPort"
 				:notebook-session="notebookSession"
 			/>
 		</Suspense>
@@ -18,7 +20,7 @@
 
 import { IProject } from '@/types/Project';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
-import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
+import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
 import { workflowEventBus } from '@/services/workflow';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
@@ -28,15 +30,16 @@ import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
+	project: IProject;
 }>();
-const showKernels = ref(<boolean>false);
-const showChatThoughts = ref(<boolean>false);
-const assetIds = computed(() =>
-	props.node?.inputs
+const modelConfigurationId = computed(() => {
+	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
+	const modelConfirgurationList = props.node?.inputs
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
-		.map((inputNode) => inputNode.value![0])
-);
+		.map((inputNode) => inputNode.value![0]);
+
+	return modelConfirgurationList[0];
+});
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
@@ -70,7 +73,7 @@ onMounted(async () => {
 const addOutputPort = (data) => {
 	workflowEventBus.emit('append-output-port', {
 		node: props.node,
-		port: { id: data.id, label: data.name, type: 'datasetId', value: data.id }
+		port: { id: data.id, label: data.name, type: 'modelConfigId', value: data.id }
 	});
 };
 </script>
