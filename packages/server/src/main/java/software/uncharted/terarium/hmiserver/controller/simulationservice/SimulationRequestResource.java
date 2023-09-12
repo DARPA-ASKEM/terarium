@@ -1,11 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import software.uncharted.terarium.hmiserver.utils.Converter;
+
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
@@ -17,23 +18,21 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
+import software.uncharted.terarium.hmiserver.utils.Converter;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @RequestMapping("/simulation-request")
 @RestController
 @Slf4j
 public class SimulationRequestResource {
 
-	@Autowired 
+	@Autowired
 	private SimulationServiceProxy simulationServiceProxy;
 
-	@Autowired 
+	@Autowired
 	private SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
-	@Autowired 
+	@Autowired
 	private SimulationProxy simulationProxy;
 
 	@GetMapping("/{id}")
@@ -47,7 +46,7 @@ public class SimulationRequestResource {
 	public ResponseEntity<Simulation> makeForecastRun(
 		@RequestBody final SimulationRequest request
 	) {
-		final JobResponse res = simulationServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
+		final JobResponse res = simulationServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request)).getBody();
 
 		Simulation sim = new Simulation();
 		sim.setId(res.getSimulationId());
@@ -74,7 +73,7 @@ public class SimulationRequestResource {
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
 		@RequestBody final SimulationRequest request
 	) {
-		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
+		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request)).getBody();
 
 		Simulation sim = new Simulation();
 		sim.setId(res.getSimulationId());

@@ -34,7 +34,7 @@ public interface ProjectProxy {
 	@PutMapping("/{id}")
 	ResponseEntity<JsonNode> updateProject(
 		@PathVariable("id") String id,
-		Project project
+		@RequestBody Project project
 	);
 
 	@DeleteMapping("/{id}")

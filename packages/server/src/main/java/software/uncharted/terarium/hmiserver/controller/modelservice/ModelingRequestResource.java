@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.modelservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import software.uncharted.terarium.hmiserver.models.modelservice.StratifyRequest;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 
@@ -17,11 +15,11 @@ import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServicePr
 @Slf4j
 public class ModelingRequestResource {
 
-	@Autowired 
+	@Autowired
 	private ModelServiceProxy modelServiceProxy;
 
 	@PostMapping("/stratify")
-	public ResponseEntity<Object> stratify(
+	public ResponseEntity<JsonNode> stratify(
 		@RequestBody final StratifyRequest req
 	) {
 		return modelServiceProxy.stratify(req);

@@ -15,22 +15,22 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 @FeignClient(name = "simulation-service", url = "${terarium.dataservice.url}", path = "/simulation-service")
 public interface SimulationServiceProxy {
 	@PostMapping("/simulate")
-	JobResponse makeForecastRun(
+	ResponseEntity<JobResponse> makeForecastRun(
 		@RequestBody JsonNode request
 	);
 
 	@PostMapping("/calibrate")
-	JobResponse makeCalibrateJob(
+	ResponseEntity<JobResponse> makeCalibrateJob(
 		@RequestBody JsonNode request
 	);
 
 	@GetMapping("/runs/{runId}/status")
-	Response getRunStatus(
+	ResponseEntity<JsonNode> getRunStatus(
 		@PathVariable("runId") String runId
 	);
 
 	@GetMapping("/runs/{runId}/result")
-	Response getRunResult(
+	ResponseEntity<JsonNode> getRunResult(
 		@PathVariable("runId") String runId
 	);
 }
