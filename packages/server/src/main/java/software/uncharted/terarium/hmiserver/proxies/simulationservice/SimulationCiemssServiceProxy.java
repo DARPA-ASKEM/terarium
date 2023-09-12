@@ -1,50 +1,41 @@
 package software.uncharted.terarium.hmiserver.proxies.simulationservice;
 
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 
-@RegisterRestClient(configKey = "ciemss-service")
-@Produces(MediaType.APPLICATION_JSON)
+@FeignClient(name = "ciemss-service", url = "${terarium.dataservice.url}", path = "/ciemss-service")
 public interface SimulationCiemssServiceProxy {
-	@POST
-	@Path("/simulate")
-	@Consumes(MediaType.APPLICATION_JSON)
-	JobResponse makeForecastRun(
+	@PostMapping("/simulate")
+	ResponseEntity<JobResponse> makeForecastRun(
 		JsonNode request
 	);
 
-	@POST
-	@Path("/calibrate")
-	@Consumes(MediaType.APPLICATION_JSON)
-	JobResponse makeCalibrateJob(
+	@PostMapping("/calibrate")
+	ResponseEntity<JobResponse> makeCalibrateJob(
 		JsonNode request
 	);
 
-	@POST
-	@Path("/ensemble-simulate")
-	@Consumes(MediaType.APPLICATION_JSON)
-	JobResponse makeEnsembleSimulateCiemssJob(
+	@PostMapping("/ensemble-simulate")
+	ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 		JsonNode request
 	);
 
-	@POST
-	@Path("/ensemble-calibrate")
-	@Consumes(MediaType.APPLICATION_JSON)
-	JobResponse makeEnsembleCalibrateCiemssJob(
+	@PostMapping("/ensemble-calibrate")
+	ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 		JsonNode request
 	);
 
-	@GET
-	@Path("/status/{runId}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	Response getRunStatus(
-		@PathParam("runId") String runId
+	@GetMapping("/status/{runId}")
+	ResponseEntity<JobResponse> getRunStatus(
+		@PathVariable("runId") String runId
 	);
 }
