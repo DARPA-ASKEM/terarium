@@ -16,7 +16,7 @@ public interface ProjectProxy {
 
 	@GetMapping
 	ResponseEntity<List<Project>> getProjects(
-			@RequestParam(name = "include_inactive", defaultValue="false") final Boolean includeInactive
+		@RequestParam(name = "include_inactive", defaultValue="false") final Boolean includeInactive
 	);
 
 
