@@ -57,11 +57,11 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="projectId"
+					v-if="project?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDataset(projectId, completedRunId, saveAsName);
+						saveDataset(project.id, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -144,7 +144,6 @@ const activeTab = ref(SimulateTabs.input);
 const model = ref<Model | null>(null);
 const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
-const projectId = ref(props?.project?.id);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);
