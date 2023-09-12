@@ -60,7 +60,7 @@
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDataset(projectId, completedRunId, saveAsName);
+						saveDatasetFromSimulationResultToProject(projectId, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -117,14 +117,16 @@ import ModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-
 
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
+import { useProjects } from '@/composables/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+
+const { saveDatasetFromSimulationResultToProject } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;

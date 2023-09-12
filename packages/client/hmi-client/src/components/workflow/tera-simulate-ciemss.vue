@@ -100,7 +100,7 @@
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDataset(projectId, completedRunId, saveAsName);
+						saveDatasetFromSimulationResultToProject(projectId, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -187,8 +187,10 @@ import { SimulateCiemssOperationState } from '@/components/workflow/simulate-cie
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
-import { saveDataset } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
+import { useProjects } from '@/composables/project';
+
+const { saveDatasetFromSimulationResultToProject } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;

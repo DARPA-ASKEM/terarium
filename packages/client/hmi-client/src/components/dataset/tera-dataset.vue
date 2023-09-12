@@ -285,10 +285,10 @@ import { Artifact, CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
-import * as ProjectService from '@/services/project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
+import Menu from 'primevue/menu';
+import { useProjects } from '@/composables/project';
 
 enum DatasetView {
 	DESCRIPTION,
@@ -314,6 +314,8 @@ const props = defineProps({
 		default: null
 	}
 });
+
+const { getActiveProject } = useProjects();
 
 const publications = computed(
 	() =>
@@ -386,7 +388,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		getActiveProject(props.project.id);
 		isRenamingDataset.value = false;
 	}
 }

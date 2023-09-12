@@ -183,6 +183,23 @@ export function useProjects() {
 		return modelId;
 	}
 
+	async function saveDatasetFromSimulationResultToProject(
+		projectId: IProject['id'],
+		simulationId: string | undefined,
+		datasetName: string | null
+	) {
+		if (!simulationId) return null;
+		const dataset = await DatasetService.createDatasetFromSimulationResult(
+			projectId,
+			simulationId,
+			datasetName
+		);
+		if (dataset) {
+			await getActiveProject(projectId);
+		}
+		return dataset;
+	}
+
 	return {
 		activeProject: readonly(activeProject),
 		allProjects: readonly(allProjects),
@@ -201,6 +218,7 @@ export function useProjects() {
 		createNewArtifactFromGithubFile,
 		createNewDatasetFromCSV,
 		createNewDatasetFromGithubFile,
-		addNewModelToProject
+		addNewModelToProject,
+		saveDatasetFromSimulationResultToProject
 	};
 }
