@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class SimulationIntermediateResults implements Serializable {
+public class SimulationIntermediateResultsCiemss implements Serializable {
 	@JsonAlias("job_id")
 	private String jobId;
 	private Double progress;

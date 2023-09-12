@@ -29,7 +29,7 @@ import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
+	project?: IProject;
 }>();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);

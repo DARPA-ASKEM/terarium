@@ -11,6 +11,6 @@ import TeraDataset from '@/components/dataset/tera-dataset.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
+	project?: IProject;
 }>();
 </script>
