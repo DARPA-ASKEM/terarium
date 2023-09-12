@@ -4,31 +4,25 @@ import software.uncharted.terarium.hmiserver.models.modelservice.StratifyRequest
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "model-service")
-@Produces(MediaType.APPLICATION_JSON)
+@FeignClient(name = "model-service", url = "${terarium.dataservice.url}", path = "/model-service")
 public interface ModelServiceProxy {
-	@POST
-	@Path("/api/petri-to-latex")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.TEXT_PLAIN)
-	@LogRestClientTime
-	Response petrinetToLatex(
-			PetriNet content
+	@PostMapping("/petri-to-latex")
+	ResponseEntity<Response> petrinetToLatex(
+		@RequestBody PetriNet content
 	);
 
-	@POST
-	@Path("/api/stratify")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@LogRestClientTime
-	Response stratify(
-			StratifyRequest req
+	@PostMapping("/stratify")
+	ResponseEntity<Response> stratify(
+		@RequestBody StratifyRequest req
 	);
 
 }

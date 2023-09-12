@@ -1,7 +1,9 @@
-package software.uncharted.terarium.hmiserver.resources.modelservice;
+package software.uncharted.terarium.hmiserver.controller.modelservice;
 
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import software.uncharted.terarium.hmiserver.models.modelservice.StratifyRequest;
 
 import javax.ws.rs.*;
@@ -10,22 +12,17 @@ import javax.ws.rs.core.Response;
 
 import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 
-@Path("/api/modeling-request")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
-@Tag(name = "Modeling Service REST Endpoint")
+@RequestMapping("/modeling-request")
+@RestController
+@Slf4j
 public class ModelingRequestResource {
 
-	@RestClient
-	ModelServiceProxy modelServiceProxy;
+	@Autowired 
+	private ModelServiceProxy modelServiceProxy;
 
-	@POST
-	@Path("/stratify")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Stratify two AMR models together")
-	public Object stratify(
-			final StratifyRequest req
+	@PostMapping("/stratify")
+	public ResponseEntity<Object> stratify(
+		@RequestBody final StratifyRequest req
 	) {
 		return modelServiceProxy.stratify(req);
 	}
