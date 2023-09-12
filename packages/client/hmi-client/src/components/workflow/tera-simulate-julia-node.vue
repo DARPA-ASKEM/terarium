@@ -37,9 +37,9 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
-import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
+import TeraProgressBar from './tera-progress-bar.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
