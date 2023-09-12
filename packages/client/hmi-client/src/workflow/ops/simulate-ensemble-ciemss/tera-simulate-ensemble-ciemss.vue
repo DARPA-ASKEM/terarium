@@ -221,7 +221,7 @@ import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { IProject } from '@/types/Project';
 import { useProjects } from '@/composables/project';
-import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const { saveDatasetFromSimulationResultToProject } = useProjects();

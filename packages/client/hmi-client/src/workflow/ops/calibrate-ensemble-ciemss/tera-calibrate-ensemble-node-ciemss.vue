@@ -60,14 +60,14 @@ import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { Poller, PollerState } from '@/api/api';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { getTimespan } from '@/workflow/util';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleCiemssOperation,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
-import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from './tera-progress-bar.vue';
-import { getTimespan } from './util';
 
 const props = defineProps<{
 	node: WorkflowNode;

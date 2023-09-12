@@ -227,7 +227,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { IProject } from '@/types/Project';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
-import TeraSimulateChart from './tera-simulate-chart.vue';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
