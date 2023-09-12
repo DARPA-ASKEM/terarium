@@ -16,12 +16,12 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 public interface SimulationServiceProxy {
 	@PostMapping("/simulate")
 	JobResponse makeForecastRun(
-		JsonNode request
+		@RequestBody JsonNode request
 	);
 
 	@PostMapping("/calibrate")
 	JobResponse makeCalibrateJob(
-		JsonNode request
+		@RequestBody JsonNode request
 	);
 
 	@GetMapping("/runs/{runId}/status")

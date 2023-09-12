@@ -45,7 +45,7 @@ public class SimulationRequestResource {
 
 	@PostMapping("/forecast")
 	public ResponseEntity<Simulation> makeForecastRun(
-		@RequestParam(name = "request") final SimulationRequest request
+		@RequestBody final SimulationRequest request
 	) {
 		final JobResponse res = simulationServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
@@ -72,7 +72,7 @@ public class SimulationRequestResource {
 
 	@PostMapping("ciemss/forecast")
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
-		@RequestParam(name = "request") final SimulationRequest request
+		@RequestBody final SimulationRequest request
 	) {
 		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
@@ -98,28 +98,28 @@ public class SimulationRequestResource {
 
 	@PostMapping("/calibrate")
 	public ResponseEntity<JobResponse> makeCalibrateJob(
-		@RequestParam(name = "request") final CalibrationRequestJulia request
+		@RequestBody final CalibrationRequestJulia request
 	) {
 		return simulationServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}
 
 	@PostMapping("ciemss/calibrate")
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
-		@RequestParam(name = "request") final CalibrationRequestCiemss request
+		@RequestBody final CalibrationRequestCiemss request
 	) {
 		return simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
-		@RequestParam(name = "request") final EnsembleSimulationCiemssRequest request
+		@RequestBody final EnsembleSimulationCiemssRequest request
 	) {
 		return simulationCiemssServiceProxy.makeEnsembleSimulateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
-		@RequestParam(name = "request") final EnsembleCalibrationCiemssRequest request
+		@RequestBody final EnsembleCalibrationCiemssRequest request
 	) {
 		return simulationCiemssServiceProxy.makeEnsembleCalibrateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}

@@ -16,17 +16,17 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 public interface SimulationCiemssServiceProxy {
 	@PostMapping("/simulate")
 	ResponseEntity<JobResponse> makeForecastRun(
-		JsonNode request
+		@RequestBody JsonNode request
 	);
 
 	@PostMapping("/calibrate")
 	ResponseEntity<JobResponse> makeCalibrateJob(
-		JsonNode request
+		@RequestBody JsonNode request
 	);
 
 	@PostMapping("/ensemble-simulate")
 	ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
-		JsonNode request
+		@RequestBody JsonNode request
 	);
 
 	@PostMapping("/ensemble-calibrate")
