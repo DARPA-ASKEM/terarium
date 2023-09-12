@@ -54,7 +54,7 @@ public class SimulationResource implements SnakeCaseResource {
 	DatasetProxy datasetProxy;
 
 	@Inject
-	@Channel("simulationStatus") Publisher<SimulationIntermediateResults> partialSimulationStream;
+	@Channel("simulationStatus") Publisher<SimulationIntermediateResultsCiemss> partialSimulationStream;
 
 	@Broadcast
 	@Channel("simulationStatus")
@@ -163,14 +163,14 @@ public class SimulationResource implements SnakeCaseResource {
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	@Tag(name = "Stream partial/intermediate simulation result associated with run ID")
-	public Publisher<SimulationIntermediateResults> stream(
+	public Publisher<SimulationIntermediateResultsCiemss> stream(
 		@PathParam("jobId") final String jobId
 	) {
 		ObjectMapper mapper = new ObjectMapper();
 		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> event.getJobId().equals(jobId));
 	}
 
-	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
+	// When we finalize the SimulationIntermediateResultsCiemss object this end point will need to be passed more parameters
 	@PUT
 	@Path("/{jobId}/ciemss/create-partial-result")
 	@Produces(MediaType.APPLICATION_JSON)
