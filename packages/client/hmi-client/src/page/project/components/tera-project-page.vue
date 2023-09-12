@@ -75,13 +75,15 @@ import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
-import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
+import { useProjects } from '@/composables/project';
+
+const { activeProject } = useProjects();
 
 const props = defineProps<{
 	project: IProject;
@@ -124,7 +126,9 @@ const assetName = computed<string>(() => {
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
-	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
+	activeProject.value?.assets?.[AssetType.Publications]?.find(
+		(document) => document?.id === Number.parseInt(assetId ?? '', 10)
+	)?.xdd_uri ?? '';
 
 const openOverview = () => {
 	router.push({

@@ -89,7 +89,6 @@ import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.v
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
-import useResourcesStore from '@/stores/resources';
 import {
 	createModelConfiguration,
 	updateModelConfiguration,
@@ -99,7 +98,9 @@ import { getModel, updateModel, getModelConfigurations } from '@/services/model'
 import { FeatureConfig } from '@/types/common';
 import { IProject } from '@/types/Project';
 import { Model, ModelConfiguration } from '@/types/Types';
-import * as ProjectService from '@/services/project';
+import { useProjects } from '@/composables/project';
+
+const { getActiveProject } = useProjects();
 
 enum ModelView {
 	DESCRIPTION,
@@ -163,7 +164,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await fetchModel(); // elastic search might still not update in time
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		getActiveProject(props.project.id);
 	}, 800);
 }
 
