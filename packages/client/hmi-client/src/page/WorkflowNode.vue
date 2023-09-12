@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { watch, ref } from 'vue';
 import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
+import * as workflowService from '@/services/workflow';
 import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
 import TeraDatasetWorkflowWrapper from '@/components/workflow/tera-dataset-workflow-wrapper.vue';
 import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
@@ -39,7 +40,6 @@ import TeraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-en
 import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
 import TeraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
-import * as workflowService from '@/services/workflow';
 
 const props = defineProps<{ nodeId: string; workflowId: string }>();
 

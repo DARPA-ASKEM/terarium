@@ -6,13 +6,15 @@
 			:active-index="[0, 3]"
 		>
 			<AccordionTab header="Mapping">
-				<DataTable class="mappingTable" :value="mapping">
+				<DataTable class="p-datatable-xsm" :value="mapping">
 					<Column field="modelVariable">
 						<template #header>
 							<span class="column-header">Model variable</span>
 						</template>
 						<template #body="{ data, field }">
-							<div class="mappingVariable">{{ data[field] }}</div>
+							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
+								{{ data[field] ? data[field] : '-' }}
+							</div>
 						</template>
 					</Column>
 					<Column field="datasetVariable">
@@ -35,6 +37,7 @@
 					:initial-data="csvAsset"
 					:mapping="mapping"
 					:chartConfig="cfg"
+					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
@@ -63,19 +66,20 @@
 				</table>
 			</AccordionTab>
 			<AccordionTab header="Extras">
-				<span class="extras">
-					<label>Num Chains</label>
-					<InputNumber v-model="extra.numChains" />
-					<label>num_iterations</label>
-					<InputNumber v-model="extra.numIterations" />
-					<label>odeMethod</label>
-					<InputText v-model="extra.odeMethod" />
-					<label>calibrate_method</label>
-					<Dropdown
-						:options="Object.values(CalibrateMethodOptions)"
-						v-model="extra.calibrateMethod"
-					/>
-				</span>
+				<div class="extras w-full">
+					<div class="flex flex-column gap-2 w-full">
+						<label class="extras-label" for="numSamples">Number of samples</label>
+						<InputNumber id="numSamples" v-model="numSamples"></InputNumber>
+					</div>
+					<div class="flex flex-column gap-2 w-full">
+						<label class="extras-label" for="numIterations">Number of solver iterations</label>
+						<InputNumber id="numIterations" v-model="numIterations"></InputNumber>
+					</div>
+				</div>
+				<div class="flex flex-column gap-2 w-full">
+					<label class="extras-label" for="method">Solver method</label>
+					<Dropdown id="method" :options="ciemssMethodOptions" v-model="method" />
+				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Loss"></AccordionTab>
 			<AccordionTab header="Parameters"></AccordionTab>
@@ -106,35 +110,32 @@ import { computed, shallowRef, watch, ref, ComputedRef, onMounted, onUnmounted }
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { CalibrationRequestJulia, CsvAsset, ModelConfiguration } from '@/types/Types';
+import InputNumber from 'primevue/inputnumber';
+import { CalibrationRequestCiemss, CsvAsset, ModelConfiguration } from '@/types/Types';
 import {
-	makeCalibrateJobJulia,
-	getRunResultJulia,
+	makeCalibrateJobCiemss,
+	getRunResultCiemss,
 	simulationPollAction,
 	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
-import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
-import Dropdown from 'primevue/dropdown';
 import { Poller, PollerState } from '@/api/api';
-import TeraSimulateChart from './tera-simulate-chart.vue';
-import TeraProgressBar from './tera-progress-bar.vue';
+import { EventSourceManager } from '@/api/event-source-manager';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { getTimespan } from '@/workflow/util';
 import {
-	CalibrationOperationJulia,
-	CalibrationOperationStateJulia,
-	CalibrateMap,
-	CalibrateMethodOptions,
-	CalibrateExtraJulia
-} from './calibrate-operation-julia';
-import { getTimespan } from './util';
+	CalibrationOperationCiemss,
+	CalibrationOperationStateCiemss,
+	CalibrateMap
+} from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -157,13 +158,27 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 );
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
-const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
-
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
+// EXTRA section
+const numSamples = ref(100);
+const numIterations = ref(100);
+const method = ref('dopri5');
+const ciemssMethodOptions = ref(['dopri5', 'euler']);
+
 const poller = new Poller();
+const eventSourceManager = new EventSourceManager();
+
+const disableRunButton = computed(
+	() =>
+		!currentDatasetFileName.value ||
+		!modelConfig.value ||
+		!csvAsset.value ||
+		!modelConfigId.value ||
+		!datasetId.value
+);
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
@@ -175,15 +190,6 @@ onMounted(() => {
 onUnmounted(() => {
 	poller.stop();
 });
-
-const disableRunButton = computed(
-	() =>
-		!currentDatasetFileName.value ||
-		!modelConfig.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value
-);
 
 const runCalibrate = async () => {
 	if (
@@ -214,33 +220,60 @@ const runCalibrate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
-	const calibrationRequest: CalibrationRequestJulia = {
+	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
 			mappings: formattedMap
 		},
-		extra: extra.value,
-		engine: 'sciml',
-		timespan: getTimespan(csvAsset.value, mapping.value)
+		extra: {
+			num_samples: numSamples.value,
+			num_iterations: numIterations.value,
+			method: method.value
+		},
+		timespan: getTimespan(csvAsset.value, mapping.value),
+		engine: 'ciemss'
 	};
-	const response = await makeCalibrateJobJulia(calibrationRequest);
+	const response = await makeCalibrateJobCiemss(calibrationRequest);
+
 	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
 };
 
-const getStatus = async (simulationId: string) => {
-	showSpinner.value = true;
-	if (!simulationId) return;
+const handlingProgress = (message: string) => {
+	const parsedMessage = JSON.parse(message);
+	if (parsedMessage.progress) {
+		progress.value.value = Math.round(parsedMessage.progress * 100);
+	}
+};
 
+const getStatus = async (simulationId: string) => {
+	console.log('Getting status');
+	showSpinner.value = true;
+	if (!simulationId) {
+		console.log('No sim id');
+		return;
+	}
+	console.log(`Simulation Id:${simulationId}`);
 	const runIds = [simulationId];
+
+	// open a connection for each run id and handle the messages
+	runIds.forEach((id) => {
+		eventSourceManager.openConnection(id, `/simulations/${id}/ciemss/partial-result`);
+		eventSourceManager.setMessageHandler(id, handlingProgress);
+	});
+
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	console.log('Poller defined');
 	const pollerResults = await poller.start();
+
+	// closing event source connections
+	runIds.forEach((id) => eventSourceManager.closeConnection(id));
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
@@ -256,7 +289,7 @@ const getStatus = async (simulationId: string) => {
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
-		type: CalibrationOperationJulia.outputs[0].type,
+		type: CalibrationOperationCiemss.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: {
 			runId
@@ -266,7 +299,7 @@ const updateOutputPorts = async (runId) => {
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -277,7 +310,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -319,13 +352,13 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		const resultCsv = (await getRunResultJulia(
-			simulationIds.value[0].runId,
-			'result.json'
-		)) as string;
-		const csvData = csvParse(resultCsv);
-		runResults.value[simulationIds.value[0].runId] = csvData as any;
+		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		// const csvData = csvParse(resultCsv);
+		// runResults.value[simulationIds.value[0].runId] = csvData as any;
 		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
+
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
+		runResults.value = output.runResults;
 	},
 	{ immediate: true }
 );
@@ -341,7 +374,6 @@ watch(
 	margin-bottom: 1rem;
 	gap: 0.5rem;
 }
-
 .helpMessage {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
@@ -354,38 +386,38 @@ img {
 th {
 	text-align: left;
 }
-
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-caption);
 	font-weight: var(--font-semibold);
 }
-
 .mappingVariable {
 	font-size: var(--font-caption);
 }
-
 .unmappedVariable {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 }
-.p-datatable:deep(td) {
-	padding: 0.25rem 0rem !important;
-}
-.p-datatable:deep(th) {
-	padding: 0.25rem 0rem !important;
+.extras {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+	margin-bottom: 1rem;
 }
 
+.extras-label {
+	font-size: var(--font-caption);
+}
+#numSamples:deep(.p-inputnumber-input),
+#numIterations:deep(.p-inputnumber-input),
+#method:deep(.p-dropdown-label) {
+	width: 100%;
+	padding: 0.75rem;
+}
 .run-button {
 	margin-top: 1rem;
 	margin-bottom: 0.5rem;
 	width: 5rem;
 	float: right;
-}
-.extras {
-	display: grid;
-}
-.smaller-buttons {
-	max-width: 30%;
 }
 </style>
