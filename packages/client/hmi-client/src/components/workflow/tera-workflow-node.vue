@@ -8,6 +8,11 @@
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="showNodeDrilldown"
 				/>
+				<Button
+					icon="pi pi-bolt"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="openDrilldown"
+				/>
 				<!-- 3-dot options menu -->
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -83,9 +88,13 @@ import {
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
+import floatingWindow from '@/utils/floating-window';
+import router from '@/router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	node: WorkflowNode;
+	workflowId: string;
 	canDrag: boolean;
 	isActive: boolean;
 }>();
@@ -174,6 +183,14 @@ const getInputLabelColor = (edgeIdx: number) => {
 
 function showNodeDrilldown() {
 	emit('drilldown', props.node);
+}
+
+function openDrilldown() {
+	const url = router.resolve({
+		name: RouteName.WorkflowNode,
+		params: { nodeId: props.node.id, workflowId: props.workflowId }
+	}).href;
+	floatingWindow.open(url);
 }
 
 function mouseoverPort(event) {

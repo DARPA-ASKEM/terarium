@@ -472,7 +472,7 @@ async function editProject() {
 }
 
 async function openResource(data) {
-	router.push({ name: RouteName.ProjectRoute, params: data });
+	router.push({ name: RouteName.Project, params: data });
 }
 
 async function updateProjectName() {

@@ -279,7 +279,7 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 };
 
 function openProject(projectId: string) {
-	router.push({ name: RouteName.ProjectRoute, params: { projectId } });
+	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
 async function createNewProject() {

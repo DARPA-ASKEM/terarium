@@ -147,7 +147,7 @@ async function saveCode() {
 		toast.success('', `File saved as ${codeName.value}`);
 		codeAsset.value = newCodeAsset;
 		router.push({
-			name: RouteName.ProjectRoute,
+			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Code,
 				projectId: props.project.id,
@@ -168,7 +168,7 @@ async function extractModel() {
 		);
 		if (extractedModelId) {
 			router.push({
-				name: RouteName.ProjectRoute,
+				name: RouteName.Project,
 				params: {
 					pageType: AssetType.Models,
 					projectId: props.project.id,

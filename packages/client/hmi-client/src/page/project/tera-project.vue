@@ -218,7 +218,7 @@ async function openAsset(index: number = tabStore.getActiveTabIndex(projectConte
 		if (!(asset.assetId === props.assetId && asset.pageType === props.pageType)) {
 			loadingTabIndex.value = index;
 			router.push({
-				name: RouteName.ProjectRoute,
+				name: RouteName.Project,
 				params: { assetId: asset.assetId, pageType: asset.pageType }
 			});
 		}
@@ -227,7 +227,7 @@ async function openAsset(index: number = tabStore.getActiveTabIndex(projectConte
 
 function openAssetFromSidebar(asset: Tab) {
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: { assetId: asset.assetId, pageType: asset.pageType }
 	});
 	loadingTabIndex.value = tabs.value.length;
@@ -276,7 +276,7 @@ const openWorkflow = async () => {
 	await addAsset(props.project.id, AssetType.Workflows, workflowId);
 
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: {
 			pageType: AssetType.Workflows,
 			assetId: workflowId
@@ -286,7 +286,7 @@ const openWorkflow = async () => {
 
 const openCode = () => {
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: codeResource
 	});
 };

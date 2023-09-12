@@ -53,10 +53,11 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
+					v-if="project?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDatasetFromSimulationResultToProject(projectId, completedRunId, saveAsName);
+						saveDatasetFromSimulationResultToProject(project.id, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -238,7 +239,7 @@ const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
+	project?: IProject;
 }>();
 
 enum EnsembleTabs {
@@ -277,7 +278,6 @@ const extra = ref<EnsembleCalibrateExtraCiemss>(props.node.state.extra);
 const completedRunId = computed<string>(
 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 );
-const projectId = ref<string>(props.project.id);
 
 const customWeights = ref<boolean>(false);
 // TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
