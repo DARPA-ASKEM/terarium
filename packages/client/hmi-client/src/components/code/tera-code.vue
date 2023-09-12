@@ -72,12 +72,7 @@ import { ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Button from 'primevue/button';
-import {
-	uploadCodeToProject,
-	getCodeFileAsText,
-	getCodeAsset,
-	updateCodeAsset
-} from '@/services/code';
+import { getCodeFileAsText, getCodeAsset, updateCodeAsset } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/knowledge';
 import { AssetType, Code } from '@/types/Types';
@@ -85,11 +80,11 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import useResourceStore from '@/stores/resources';
 import FileUpload from 'primevue/fileupload';
 import { IProject } from '@/types/Project';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import { useProjects } from '@/composables/project';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -100,7 +95,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['asset-loaded']);
 
-const resourceStore = useResourceStore();
+const { activeProject, uploadCodeToProject } = useProjects();
 const toast = useToastService();
 
 const codeName = ref('');
@@ -132,9 +127,7 @@ function onSelectedTextChange() {
 }
 
 async function saveCode() {
-	const existingCode = resourceStore.activeProjectAssets?.code.find(
-		(c) => c.name === codeName.value
-	);
+	const existingCode = activeProject.value?.assets?.code.find((c) => c.name === codeName.value);
 	if (existingCode?.id) {
 		const file = new File([codeText.value], codeName.value);
 		const updatedCode = await updateCodeAsset(existingCode, file, progress);
