@@ -51,7 +51,6 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				:workflowId="assetId"
 				@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
