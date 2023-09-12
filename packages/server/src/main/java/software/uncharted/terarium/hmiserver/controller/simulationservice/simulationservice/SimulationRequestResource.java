@@ -1,7 +1,8 @@
 package software.uncharted.terarium.hmiserver.resources.simulationservice;
 
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.utils.Converter;
@@ -21,34 +22,30 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/api/simulation-request")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
-@Tag(name = "Simulation Service REST Endpoint")
+@RequestMapping("/api/simulation-request")
+@RestController
+@Slf4j
 public class SimulationRequestResource {
 
-	@RestClient
-	SimulationServiceProxy simulationServiceProxy;
+	@Autowired 
+	private SimulationServiceProxy simulationServiceProxy;
 
-	@RestClient
-	SimulationCiemssServiceProxy simulationCiemssServiceProxy;
+	@Autowired 
+	private SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
-	@RestClient
-	SimulationProxy simulationProxy;
+	@Autowired 
+	private SimulationProxy simulationProxy;
 
-	@GET
-	@Path("/{id}")
-	public Simulation getSimulation(@PathParam("id") final String id){
+	@GetMapping("/{id}")
+	public Simulation getSimulation(
+		@PathVariable("id") final String id
+	){
 		return simulationProxy.getSimulation(id);
 	}
 
-	@POST
-	@Path("/forecast")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Make new forecast simulation")
+	@PostMapping("/forecast")
 	public Simulation makeForecastRun(
-		final SimulationRequest request
+		@RequestParam(name = "request") final SimulationRequest request
 	) {
 		final JobResponse res = simulationServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
@@ -73,13 +70,9 @@ public class SimulationRequestResource {
 	}
 
 
-	@POST
-	@Path("ciemss/forecast")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Make new forecast simulation in CIEMSS")
+	@PostMapping("ciemss/forecast")
 	public Simulation makeForecastRunCiemss(
-		final SimulationRequest request
+		@RequestParam(name = "request") final SimulationRequest request
 	) {
 		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
@@ -103,78 +96,32 @@ public class SimulationRequestResource {
 		return simulationProxy.createSimulation(jn);
 	}
 
-	@POST
-	@Path("/calibrate")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Create calibrate job")
+	@PostMapping("/calibrate")
 	public JobResponse makeCalibrateJob(
-		final CalibrationRequestJulia request
+		@RequestParam(name = "request") final CalibrationRequestJulia request
 	) {
-		final JobResponse res = simulationServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
-
-		// Simulation sim = new Simulation();
-		// sim.setId(res.getSimulationId());
-		// sim.setType("simulation");
-
-		// sim.setExecutionPayload(request);
-
-		// // FIXME: These fiels are arguable unnecessary
-		// sim.setStatus("queued");
-		// sim.setWorkflowId("dummy");
-		// sim.setUserId(0);
-		// sim.setProjectId(0);
-		// sim.setEngine("sciml");
-
-		// JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
-		// return simulationProxy.createSimulation(jn);
-		return res;
+		return simulationServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}
 
-	@POST
-	@Path("ciemss/calibrate")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Create calibrate job")
+	@PostMapping("ciemss/calibrate")
 	public JobResponse makeCalibrateJobCiemss(
-		final CalibrationRequestCiemss request
+		@RequestParam(name = "request") final CalibrationRequestCiemss request
 	) {
-		final JobResponse res = simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
-
-		// Simulation sim = new Simulation();
-		// sim.setId(res.getSimulationId());
-		// sim.setType("simulation");
-
-		// sim.setExecutionPayload(request);
-
-		// JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
-		// return simulationProxy.createSimulation(jn);
-
-		return res;
+		return simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}
 
-	@POST
-	@Path("ciemss/ensemble-simulate")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Create calibrate job")
+	@PostMapping("ciemss/ensemble-simulate")
 	public JobResponse makeEnsembleSimulateCiemssJob(
-		final EnsembleSimulationCiemssRequest request
+		@RequestParam(name = "request") final EnsembleSimulationCiemssRequest request
 	) {
-		final JobResponse res = simulationCiemssServiceProxy.makeEnsembleSimulateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
-		return res;
+		return simulationCiemssServiceProxy.makeEnsembleSimulateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}
 
-	@POST
-	@Path("ciemss/ensemble-calibrate")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Create calibrate job")
+	@PostMapping("ciemss/ensemble-calibrate")
 	public JobResponse makeEnsembleCalibrateCiemssJob(
-		final EnsembleCalibrationCiemssRequest request
+		@RequestParam(name = "request") final EnsembleCalibrationCiemssRequest request
 	) {
-		final JobResponse res = simulationCiemssServiceProxy.makeEnsembleCalibrateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
-		return res;
+		return simulationCiemssServiceProxy.makeEnsembleCalibrateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
 	}
 
 
