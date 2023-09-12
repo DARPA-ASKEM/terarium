@@ -83,38 +83,40 @@
 						:node="node"
 						@append-input-port="(event) => appendInputPort(node, event)"
 					/>
-					<tera-simulate-julia-node
+					<tera-simulate-node-julia
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<tera-simulate-ciemss-node
+					<tera-simulate-node-ciemss
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<tera-calibration-julia-node
+					<tera-calibrate-node-julia
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<tera-calibration-ciemss-node
+					<tera-calibrate-node-ciemss
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
-					<tera-simulate-ensemble-ciemss-node
+					<tera-stratify-node-julia
+						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY"
+					/>
+					<tera-simulate-ensemble-node-ciemss
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<tera-calibrate-ensemble-ciemss-node
+					<tera-calibrate-ensemble-node-ciemss
 						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
@@ -227,24 +229,9 @@ import {
 	WorkflowDirection,
 	WorkflowOperationTypes
 } from '@/types/workflow';
-import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
-import TeraModelNode from '@/components/workflow/tera-model-node.vue';
-import TeraCalibrationJuliaNode from '@/components/workflow/tera-calibration-node-julia.vue';
-import TeraCalibrationCiemssNode from '@/components/workflow/tera-calibration-node-ciemss.vue';
-import TeraSimulateEnsembleCiemssNode from '@/components/workflow/tera-simulate-ensemble-node-ciemss.vue';
-import TeraCalibrateEnsembleCiemssNode from '@/components/workflow/tera-calibrate-ensemble-node-ciemss.vue';
-import TeraSimulateJuliaNode from '@/components/workflow/tera-simulate-julia-node.vue';
-import TeraSimulateCiemssNode from '@/components/workflow/tera-simulate-ciemss-node.vue';
-import { ModelOperation } from '@/components/workflow/model-operation';
-import { CalibrationOperationJulia } from '@/components/workflow/calibrate-operation-julia';
-import { CalibrationOperationCiemss } from '@/components/workflow/calibrate-operation-ciemss';
-import {
-	SimulateJuliaOperation,
-	SimulateJuliaOperationState
-} from '@/components/workflow/simulate-julia-operation';
-import { SimulateCiemssOperation } from '@/components/workflow/simulate-ciemss-operation';
-import { StratifyOperation } from '@/components/workflow/stratify-operation';
-import { CalibrateEnsembleCiemssOperation } from '@/components/workflow/calibrate-ensemble-ciemss-operation';
+
+// Operation imports
+import TeraWorkflowNode from '@/workflow/tera-workflow-node.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -254,12 +241,31 @@ import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
-import TeraDatasetTransformerNode from './tera-dataset-transformer-node.vue';
-import { DatasetOperation } from './dataset-operation';
-import TeraDatasetNode from './tera-dataset-node.vue';
-import TeraStratifyNode from './tera-stratify-node.vue';
-import { SimulateEnsembleCiemssOperation } from './simulate-ensemble-ciemss-operation';
-import { DatasetTransformerOperation } from './dataset-transformer-operation';
+
+import { ModelOperation, TeraModelNode } from './ops/model/mod';
+import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
+import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
+import { DatasetOperation, TeraDatasetNode } from './ops/dataset/mod';
+import {
+	CalibrateEnsembleCiemssOperation,
+	TeraCalibrateEnsembleNodeCiemss
+} from './ops/calibrate-ensemble-ciemss/mod';
+import {
+	DatasetTransformerOperation,
+	TeraDatasetTransformerNode
+} from './ops/dataset-transformer/mod';
+import { CalibrationOperationJulia, TeraCalibrateNodeJulia } from './ops/calibrate-julia/mod';
+import { CalibrationOperationCiemss, TeraCalibrateNodeCiemss } from './ops/calibrate-ciemss/mod';
+import {
+	SimulateEnsembleCiemssOperation,
+	TeraSimulateEnsembleNodeCiemss
+} from './ops/simulate-ensemble-ciemss/mod';
+
+import {
+	SimulateJuliaOperation,
+	SimulateJuliaOperationState,
+	TeraSimulateNodeJulia
+} from './ops/simulate-julia/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
