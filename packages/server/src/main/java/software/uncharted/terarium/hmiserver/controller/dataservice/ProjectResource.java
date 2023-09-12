@@ -10,8 +10,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.*;
 
 @RequestMapping("/projects")
@@ -49,7 +47,6 @@ public class ProjectResource {
 				log.info("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}", project.getProjectID());
 			}
 		});
-
 
 
 

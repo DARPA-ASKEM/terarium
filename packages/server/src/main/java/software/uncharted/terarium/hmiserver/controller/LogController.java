@@ -2,10 +2,9 @@ package software.uncharted.terarium.hmiserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.ClientLog;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -25,8 +24,8 @@ public class LogController {
    * Log a list of messages from the client
    * @param logList the list of messages to log
    */
-  @PutMapping
-  public void log(@RequestBody List<ClientLog> logList) {
+  @PostMapping
+  public ResponseEntity<HttpStatus> log(@RequestBody List<ClientLog> logList) {
     logList.forEach(clientLog -> {
       List<String> parts = new ArrayList<>(List.of(clientLog.getTimestampMillis() + "", getCurrentUsername(), clientLog.getMessage()));
       if (clientLog.getArgs() != null && clientLog.getArgs().length > 0) {
@@ -39,7 +38,10 @@ public class LogController {
         case "debug" -> log.debug(message);
         default -> log.info(message);
       }
+
+
     });
+		return ResponseEntity.ok(HttpStatus.OK);
   }
 
   /**

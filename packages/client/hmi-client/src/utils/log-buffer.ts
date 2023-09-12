@@ -65,9 +65,7 @@ export class LogBuffer {
 	sendLogsToServer = async () => {
 		if (!this.isEmpty()) {
 			try {
-				const resp = await LOGS.post(`/logs/`, {
-					logs: this.getLogBuffer()
-				});
+				const resp = await LOGS.post(`/logs`, this.getLogBuffer());
 				const { status } = resp;
 				if (status === 200) {
 					this.clearLogs();

@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources.documentservice.responses;
+package software.uncharted.terarium.hmiserver.models.documentservice.responses;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

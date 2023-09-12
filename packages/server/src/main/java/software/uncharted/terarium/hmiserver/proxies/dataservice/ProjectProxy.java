@@ -27,7 +27,7 @@ public interface ProjectProxy {
 
 	@PostMapping
 	ResponseEntity<JsonNode> createProject(
-		Project project
+		@RequestBody Project project
 	);
 
 

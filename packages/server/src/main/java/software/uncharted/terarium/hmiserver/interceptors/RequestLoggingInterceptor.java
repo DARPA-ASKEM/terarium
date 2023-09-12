@@ -9,6 +9,7 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 
 @Slf4j
@@ -23,26 +24,33 @@ public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-    if (handler instanceof HandlerMethod) {
-      if (skipLogging((HandlerMethod) handler)) {
-        return true;
-      }
-    }
+		if (handler instanceof HandlerMethod) {
+			if (skipLogging((HandlerMethod) handler)) {
+				return true;
+			}
 
-    long startTime = System.nanoTime();
-    request.setAttribute("startTime", startTime);
 
-    String methodName = getMethodName((HandlerMethod) handler).toString();
-    String requestMsg = PRE_REQUEST_PREFIX +
-      PROPERTY_SEPARATOR +
-      methodName +
-      PROPERTY_SEPARATOR +
-      getRequestInfo(request);
+			long startTime = System.nanoTime();
+			request.setAttribute("startTime", startTime);
 
-    MDC.put("method", methodName);
-    logger.info(requestMsg);
+			String methodName = getMethodName((HandlerMethod) handler).toString();
+			String requestMsg = PRE_REQUEST_PREFIX +
+				PROPERTY_SEPARATOR +
+				methodName +
+				PROPERTY_SEPARATOR +
+				getRequestInfo(request);
 
-    return true;
+			MDC.put("method", methodName);
+			logger.info(requestMsg);
+
+			return true;
+		} else if(handler instanceof ResourceHttpRequestHandler resourceHandler) {
+			// Find the resource path of this handler and print it to the log
+			//logger.info(resourceHandler.toString());
+			return true;
+		}
+
+		return false;
   }
 
   @Override
