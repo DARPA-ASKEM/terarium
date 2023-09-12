@@ -121,7 +121,7 @@ brew install ansible
 ```
 
 * There is an ansible encrypted vault located
-  in `packages/services/hmi-server/src/main/resources/application-secrets.properties.encrypted`
+  in `packages/server/src/main/resources/application-secrets.properties.encrypted`
 * These instructions assume you have the vault password in your home directory in a file named `askem-vault-id.txt`
 * You can find this file in the **ASKEM TERArium (Shared External)** drive on Google Drive
 * There is a [husky script](.husky/secretsVerification.sh) which ensures that the secrets file is not committed
@@ -135,7 +135,7 @@ brew install ansible
 ```
 
 2. Notice that in the resources directory there is now a `application-secrets.properties` file. Add the secrets that you
-   want to this file, making sure to add the %dev prefix to everything as you do.
+   want to this file.
 3. Re-encrypt the file to commit via the command
 
 ```shell
