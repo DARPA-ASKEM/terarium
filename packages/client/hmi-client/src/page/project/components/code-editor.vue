@@ -85,7 +85,9 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { createModel } from '@/services/model';
 import * as EventService from '@/services/event';
-import * as ProjectService from '@/services/project';
+import { useProjects } from '@/composables/project';
+
+const { addAsset } = useProjects();
 
 const props = defineProps({
 	project: {
@@ -241,7 +243,7 @@ async function createModelFromCode() {
 		};
 		const model = await createModel(newModel);
 		if (model && props.project && resourcesStore) {
-			await ProjectService.addAsset(props.project.id, AssetType.Models, model.id.toString());
+			await addAsset(props.project.id, AssetType.Models, model.id.toString());
 
 			router.push({
 				name: RouteName.ProjectRoute,
