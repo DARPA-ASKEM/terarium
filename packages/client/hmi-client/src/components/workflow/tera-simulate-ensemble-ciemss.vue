@@ -52,10 +52,11 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
+					v-if="project?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDataset(projectId, completedRunId, saveAsName);
+						saveDataset(project.id, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -227,7 +228,7 @@ const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
+	project?: IProject;
 }>();
 
 enum EnsembleTabs {
@@ -258,7 +259,6 @@ const numSamples = ref<number>(props.node.state.numSamples);
 const completedRunId = computed<string>(
 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 );
-const projectId = ref<string>(props.project.id);
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);

@@ -97,10 +97,11 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
+					v-if="project?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDataset(projectId, completedRunId, saveAsName);
+						saveDataset(project.id, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -192,7 +193,7 @@ import InputText from 'primevue/inputtext';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
+	project?: IProject;
 }>();
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
@@ -218,7 +219,6 @@ const selectedCols = ref<string[]>([]);
 const paginatorRows = ref(10);
 const paginatorFirst = ref(0);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
-const projectId = ref<string>(props.project.id);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);

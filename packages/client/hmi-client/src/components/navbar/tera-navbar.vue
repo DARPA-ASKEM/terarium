@@ -315,13 +315,13 @@ const clearEvaluationScenario = () => {
 };
 
 const homeItem: MenuItem = {
-	label: RouteMetadata[RouteName.HomeRoute].displayName,
-	icon: RouteMetadata[RouteName.HomeRoute].icon,
+	label: RouteMetadata[RouteName.Home].displayName,
+	icon: RouteMetadata[RouteName.Home].icon,
 	command: () => router.push(RoutePath.Home)
 };
 const explorerItem: MenuItem = {
-	label: RouteMetadata[RouteName.DataExplorerRoute].displayName,
-	icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
+	label: RouteMetadata[RouteName.DataExplorer].displayName,
+	icon: RouteMetadata[RouteName.DataExplorer].icon,
 	command: () => router.push(RoutePath.DataExplorer)
 };
 const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
@@ -329,7 +329,7 @@ const showNavigationMenu = (event) => {
 	navigationMenu.value.toggle(event);
 };
 const currentRoute = useCurrentRoute();
-const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorerRoute);
+const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
 
 /*
  * User Menu
@@ -411,8 +411,7 @@ watch(
 				items.push({
 					label: project.name,
 					icon: 'pi pi-folder',
-					command: () =>
-						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
+					command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
 				});
 			});
 			navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
