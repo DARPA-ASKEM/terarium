@@ -12,11 +12,11 @@ import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
 import useAuthStore from './stores/auth';
 import router from './router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from './App.vue';
+import { useProjects } from './composables/project';
 
 import './assets/css/style.scss';
 
@@ -52,14 +52,14 @@ logger.info('Application Mounted', { showToast: false, silent: true });
 
 let previousRoute;
 let routeStartedMillis = Date.now();
-const resources = useResourcesStore();
+const { activeProject } = useProjects();
 router.beforeEach((to, _from, next) => {
 	if (previousRoute) {
 		const nowMillis = Date.now();
 		const timeSpent = nowMillis - routeStartedMillis;
 		EventService.create(
 			EventType.RouteTiming,
-			resources.activeProject?.id,
+			activeProject.value?.id,
 			JSON.stringify({
 				name: previousRoute.name,
 				path: previousRoute.path,

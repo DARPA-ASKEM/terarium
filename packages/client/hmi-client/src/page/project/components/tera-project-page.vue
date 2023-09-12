@@ -77,7 +77,6 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
@@ -95,8 +94,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['asset-loaded', 'open-new-asset']);
 
-const resourceStore = useResourceStore();
-
 const router = useRouter();
 
 const code = ref<string>();
@@ -104,7 +101,7 @@ const code = ref<string>();
 const assetName = computed<string>(() => {
 	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
 
-	const assets = resourceStore.activeProjectAssets;
+	const assets = activeProject.value?.assets;
 
 	/**
 	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc

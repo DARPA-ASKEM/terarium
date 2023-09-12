@@ -142,7 +142,6 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 
@@ -156,7 +155,6 @@ defineProps<{
  */
 const router = useRouter();
 const navigationMenu = ref();
-const resources = useResourcesStore();
 const { activeProject, allProjects } = useProjects();
 
 /**
@@ -196,7 +194,7 @@ const isEvaluationScenarioValid = computed(
 const beginEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Started))
 	);
 	persistEvaluationScenario();
@@ -211,7 +209,7 @@ const beginEvaluationScenario = async () => {
 const stopEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Stopped))
 	);
 	clearEvaluationScenario();
@@ -225,7 +223,7 @@ const stopEvaluationScenario = async () => {
 const pauseEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
 	);
 	await refreshEvaluationScenario();
@@ -236,7 +234,7 @@ const pauseEvaluationScenario = async () => {
 const resumeEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
 	);
 	await refreshEvaluationScenario();

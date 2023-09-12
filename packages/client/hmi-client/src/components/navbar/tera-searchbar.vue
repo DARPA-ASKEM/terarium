@@ -133,6 +133,9 @@ import {
 	extractResourceName
 } from '@/page/data-explorer/search-by-example';
 import { getResourceID } from '@/utils/data-util';
+import { useProjects } from '@/composables/project';
+
+const { activeProject } = useProjects();
 
 const props = defineProps<{
 	showSuggestions: boolean;
@@ -168,7 +171,7 @@ function clearQuery() {
 const initiateSearch = () => {
 	emit('query-changed', query.value);
 	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
-	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
+	EventService.create(EventType.Search, activeProject.value?.id, query.value);
 };
 
 function initiateSearchByExample() {

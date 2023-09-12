@@ -1,8 +1,8 @@
 import API from '@/api/api';
 import { EventType, Model, ModelConfiguration } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import { IProject } from '@/types/Project';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -46,11 +46,11 @@ export async function getAllModelDescriptions(): Promise<Model[] | null> {
 	return response?.data ?? null;
 }
 
-export async function updateModel(model: Model) {
+export async function updateModel(model: Model, projectId?: IProject['id']) {
 	const response = await API.put(`/models/${model.id}`, model);
 	EventService.create(
 		EventType.PersistModel,
-		useResourcesStore().activeProject?.id,
+		projectId,
 		JSON.stringify({
 			id: model.id
 		})

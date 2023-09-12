@@ -100,7 +100,7 @@ import { IProject } from '@/types/Project';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 
-const { getActiveProject } = useProjects();
+const { activeProject, getActiveProject } = useProjects();
 
 enum ModelView {
 	DESCRIPTION,
@@ -161,7 +161,7 @@ const optionsMenuItems = ref([
 ]);
 
 async function updateModelContent(updatedModel: Model) {
-	await updateModel(updatedModel);
+	await updateModel(updatedModel, activeProject.value?.id);
 	setTimeout(async () => {
 		await fetchModel(); // elastic search might still not update in time
 		getActiveProject(props.project.id);

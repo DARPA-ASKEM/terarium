@@ -219,14 +219,14 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
-import useResourcesStore from '@/stores/resources';
 import { workflowEventBus } from '@/services/workflow';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import TeraStrataModelDiagram from '@/components/model/petrinet/model-diagrams/tera-strata-model-diagram.vue';
 import TeraTypedModelDiagram from '@/components/model/petrinet/model-diagrams/tera-typed-model-diagram.vue';
 import TeraStratifyOutputModelDiagram from '@/components/model/petrinet/model-diagrams/tera-stratify-output-model-diagram.vue';
+import { useProjects } from '@/composables/project';
 
-const resourceStore = useResourcesStore();
+const { activeProject } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -314,7 +314,7 @@ async function doStratify() {
 			stratifiedModel.value.id = response.id;
 		}
 		const newModelId = response?.id;
-		const projectId = resourceStore.activeProject?.id as string;
+		const projectId = activeProject.value?.id as string;
 		if (newModelId) {
 			await addAsset(projectId, 'models', newModelId);
 			stratifyView.value = StratifyView.Output;
