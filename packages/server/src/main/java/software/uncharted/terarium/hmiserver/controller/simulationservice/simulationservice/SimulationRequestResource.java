@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources.simulationservice;
+package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
