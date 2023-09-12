@@ -5,32 +5,24 @@ public class Schema {
             definition user {}
 
             definition group {
-                relation owner: user | group
+                relation creqtor: user
                 relation admin: user
-                relation writer: user
-                relation reader: user
-                relation invited: user
+                relation member: user
 
-                permission administrate = admin + owner + owner->administrate
-                permission read = reader + writer + admin + owner + owner->read
-                permission write = writer + admin + owner + owner->write
-                permission invite = reader + writer + admin + owner + owner->invite
-                permission accept_invite = admin + owner + owner->accept_invite
-                permission remove_member = admin + owner + owner->remove_member
-                permission promote = admin + owner + owner->promote
+                permission administrate = admin + creator
+                permission membership = member + admin + creator
             }
-                            
+
             definition datum {
-                relation owner: user | group
-                relation admin: user
-                relation reader: user
-                relation writer: user
-                            
-                permission read = reader + writer + admin + owner + owner->read
-                permission write = writer + admin + owner + owner->write
-                permission administrate = admin + owner + owner->administrate
-                permission change_ownership = owner + owner->owner
-            }
+                relation creator: user
+                relation admin: user | group
+                relation reader: user | group
+                relation writer: user | group
+
+                permission read = reader + reader->membership + writer + writer->membership + admin + admin->membership + owner
+                permission write = writer + writer->membership + admin + admin->membership + owner
+                permission administrate = admin + admin->membership + owner
+						}
             """;
 
     public enum Type {
@@ -50,7 +42,7 @@ public class Schema {
         ADMIN("admin"),
         WRITER("writer"),
         READER("reader"),
-        INVITED("invited");
+        INVITED("member");
 
         private final String text;
         Relationship(String text) { this.text = text; }
@@ -74,5 +66,5 @@ public class Schema {
 
         @Override
         public String toString() { return text; }
-    }    
+    }
 }

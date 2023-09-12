@@ -15,10 +15,12 @@ public class ReBACService {
 		private boolean schemaExists = false;
 
 		private void createSchemaIfNotExists() throws Exception {
+			/*
 				if( !schemaManager.doesSchemaExist(channel, bearerToken) ) {
 						schemaManager.createSchema(channel, bearerToken, Schema.schema);
 				}
-				schemaExists = true;
+			 */
+			schemaExists = true;
 		}
 
     private ManagedChannel channel = ManagedChannelBuilder
@@ -27,46 +29,40 @@ public class ReBACService {
         .usePlaintext()
         .build();
 
-		public boolean canRead(String datumId, AskemDatumType datumType, String userId) throws Exception {
+		public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
 			if (!schemaExists) { createSchemaIfNotExists(); }
 
-			SchemaObject user = new SchemaObject(Schema.Type.USER, userId);
-			SchemaObject datum = new SchemaObject(Schema.Type.DATUM, datumType + datumId);
 			Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-
 			ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
-			return rebac.checkPermission(user, Schema.Permission.READ, datum, full);
+			return rebac.checkPermission(who, Schema.Permission.READ, what, full);
 		}
 
-		public boolean canWrite(String datumId, AskemDatumType datumType, String userId) throws Exception {
+		public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
 				if (!schemaExists) { createSchemaIfNotExists(); }
 
-        SchemaObject user = new SchemaObject(Schema.Type.USER, userId);
-        SchemaObject datum = new SchemaObject(Schema.Type.DATUM, datumType + datumId);
         Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-
         ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
-        return rebac.checkPermission(user, Schema.Permission.WRITE, datum, full);
+        return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
     }
 
-		public boolean canAdministrate(String datumId, AskemDatumType datumType, String userId) throws Exception {
+		public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
 			if (!schemaExists) { createSchemaIfNotExists(); }
 
-			SchemaObject user = new SchemaObject(Schema.Type.USER, userId);
-			SchemaObject datum = new SchemaObject(Schema.Type.DATUM, datumType + datumId);
 			Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-
 			ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
-			return rebac.checkPermission(user, Schema.Permission.ADMINISTRATE, datum, full);
+			return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
 		}
 
-		public void createRelationship(String userId, Schema.Relationship relationship, String datumId, AskemDatumType datumType) throws Exception {
+		public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception {
 			if (!schemaExists) { createSchemaIfNotExists(); }
 
-			SchemaObject user = new SchemaObject(Schema.Type.USER, userId);
-			SchemaObject datum = new SchemaObject(Schema.Type.DATUM, datumType + datumId);
-
 			ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
-			rebac.createRelationship(user, relationship, datum);
+			rebac.createRelationship(who, relationship, what);
+		}
+
+		public void getDatumDetails(String datumId, AskemDatumType datumType) throws Exception {
+			if (!schemaExists) { createSchemaIfNotExists(); }
+
+			SchemaObject datum = new SchemaObject(Schema.Type.DATUM, datumType + datumId);
 		}
 }
