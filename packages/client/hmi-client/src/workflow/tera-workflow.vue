@@ -83,6 +83,11 @@
 						:node="node"
 						@append-input-port="(event) => appendInputPort(node, event)"
 					/>
+					<tera-model-transformer-node
+						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER && models"
+						:node="node"
+						@append-input-port="(event) => appendInputPort(node, event)"
+					/>
 					<tera-simulate-node-julia
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 						:node="node"
@@ -266,6 +271,8 @@ import {
 	SimulateJuliaOperationState,
 	TeraSimulateNodeJulia
 } from './ops/simulate-julia/mod';
+
+import { ModelTransformerOperation, TeraModelTransformerNode } from './ops/model-transformer/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 
@@ -548,6 +555,13 @@ const contextMenuItems = ref([
 		label: 'Dataset Transformer',
 		command: () => {
 			workflowService.addNode(wf.value, DatasetTransformerOperation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Model Transformer',
+		command: () => {
+			workflowService.addNode(wf.value, ModelTransformerOperation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
