@@ -51,13 +51,13 @@
 						workflowNode = null;
 					"
 				/>
-				<tera-calibration-julia
+				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
 					"
 					:node="workflowNode"
 				/>
-				<tera-calibration-ciemss
+				<tera-calibrate-ciemss
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 					"
@@ -149,8 +149,17 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty } from 'lodash';
-import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
-import TeraDatasetWorkflowWrapper from '@/components/workflow/tera-dataset-workflow-wrapper.vue';
+import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
+import TeraDatasetWorkflowWrapper from '@//workflow/ops/dataset/tera-dataset-workflow-wrapper.vue';
+import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
+import TeraCalibrateCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
+import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';
+import TeraStratify from '@/workflow/ops/stratify-julia/tera-stratify.vue';
+import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
+import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
+import teraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
+import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
+
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
@@ -164,17 +173,9 @@ import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import TeraCalibrationJulia from '@/components/workflow/tera-calibration-julia.vue';
-import TeraCalibrationCiemss from '@/components/workflow/tera-calibration-ciemss.vue';
-import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
-import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
-import TeraStratify from '@/components/workflow/tera-stratify.vue';
-import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
-import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
-import TeraDatasetTransformer from '@/components/workflow/tera-dataset-transformer.vue';
-import TeraModelTransformer from '@/components/workflow/tera-model-transformer.vue';
+import TeraModelTransformer from '@/workflow/ops/model-transformer/tera-model-transformer.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 

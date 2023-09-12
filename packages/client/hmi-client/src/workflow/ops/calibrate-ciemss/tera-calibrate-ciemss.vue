@@ -146,8 +146,8 @@ import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflo
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import TeraSimulateChart from './tera-simulate-chart.vue';
-import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation-ciemss';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;

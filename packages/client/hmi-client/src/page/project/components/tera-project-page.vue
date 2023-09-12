@@ -74,7 +74,6 @@ import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
@@ -82,6 +81,7 @@ import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
+import TeraWorkflow from '@/workflow/tera-workflow.vue';
 
 const props = defineProps<{
 	project: IProject;
