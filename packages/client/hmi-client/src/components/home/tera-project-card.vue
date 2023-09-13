@@ -12,7 +12,11 @@
 				<img :src="image" alt="Artistic representation of the Project statistics" />
 			</div>
 			<section>
-				<div class="title">{{ project.name }}</div>
+				<div class="title" ref="titleRef">
+					{{ project.name }}
+					{{ descriptionLines }} {{ titleRef?.clientHeight }}long title long title long title long
+					title long title long title long title long title long title
+				</div>
 				<section class="details">
 					<div>
 						<div class="author">{{ project.username }}</div>
@@ -85,6 +89,17 @@ const props = defineProps<{ project?: Project }>();
 const emit = defineEmits<{
 	(e: 'removed', projectId: Project['id']): void;
 }>();
+
+const titleRef = ref();
+const descriptionLines = computed(() => {
+	const titleHeight = titleRef.value?.clientHeight;
+	for (let i = 1; i < 3; i++) {
+		if (titleHeight <= 17 * i) {
+			return 6 + i;
+		}
+	}
+	return 6;
+});
 
 const stats = computed(() =>
 	!props.project
@@ -193,13 +208,21 @@ section {
 	height: 0;
 }
 
-.title {
+.title,
+.description {
 	display: -webkit-box;
-	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+
+.title {
 	font-weight: var(--font-weight-semibold);
+	-webkit-line-clamp: 3;
+}
+
+.description {
+	-webkit-line-clamp: v-bind('descriptionLines');
 }
 
 .p-card-footer.skeleton,
@@ -237,9 +260,9 @@ section {
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
-	margin-top: auto;
 	padding-top: 0.5rem;
 	font-size: var(--font-caption);
+	position: relative;
 }
 .p-card .p-card-footer .p-button-icon-only {
 	visibility: hidden;
