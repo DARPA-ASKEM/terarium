@@ -14,8 +14,6 @@
 			<section>
 				<div class="title" ref="titleRef">
 					{{ project.name }}
-					{{ descriptionLines }} {{ titleRef?.clientHeight }}long title long title long title long
-					title long title long title long title long title long title
 				</div>
 				<section class="details">
 					<div>
