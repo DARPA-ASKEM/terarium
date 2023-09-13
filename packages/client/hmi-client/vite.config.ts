@@ -53,14 +53,7 @@ export default defineConfig({
 		format: 'es'
 	},
 	build: {
-		target: 'esnext',
-		rollupOptions: {
-			output: {
-				globals: { crypto: 'crypto' }
-			},
-			external: ['crypto'],
-			plugins: [nodeResolve({ preferBuiltins: true })]
-		}
+		target: 'esnext'
 	},
 	plugins: [
 		vue({
