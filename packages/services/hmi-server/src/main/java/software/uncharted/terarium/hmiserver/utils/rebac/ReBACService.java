@@ -31,9 +31,10 @@ public class ReBACService {
 	private SchemaManager schemaManager = new SchemaManager();
 
 	public static final String PUBLIC_GROUP_NAME = "Public";
-	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
+	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM_Admins";
 
 	void startup(@Observes StartupEvent event) throws Exception {
+		System.out.println("Init ReBAC");
 		if( !schemaManager.doesSchemaExist(channel, bearerToken) ) {
 			schemaManager.createSchema(channel, bearerToken, Schema.schema);
 

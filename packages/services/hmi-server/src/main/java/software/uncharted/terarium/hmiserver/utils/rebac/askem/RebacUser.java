@@ -7,13 +7,12 @@ import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 import javax.inject.Inject;
 
 public class RebacUser {
-	@Inject
-	ReBACService reBACService;
-
+	private ReBACService reBACService;
 	private String id;
 
-	public RebacUser(String id) {
+	public RebacUser(String id, ReBACService reBACService) {
 		this.id = id;
+		this.reBACService = reBACService;
 	}
 
 	public SchemaObject getSchemaObject() {
