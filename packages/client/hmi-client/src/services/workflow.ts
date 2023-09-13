@@ -41,7 +41,7 @@ export const addNode = (
 	options: { size?: Size; state?: any } = { size: defaultNodeSize, state: {} }
 ) => {
 	const node: WorkflowNode = {
-		id: crypto.randomUUID(),
+		id: window.crypto.randomUUID(),
 		workflowId: wf.id,
 		operationType: op.name,
 		displayName: op.displayName,
@@ -50,7 +50,7 @@ export const addNode = (
 		state: options.state,
 
 		inputs: op.inputs.map((port) => ({
-			id: crypto.randomUUID(),
+			id: window.crypto.randomUUID(),
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
@@ -60,7 +60,7 @@ export const addNode = (
 		outputs: [],
 		/*
 		outputs: op.outputs.map((port) => ({
-			id: crypto.randomUUID(),
+			id: window.crypto.randomUUID(),
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
@@ -126,7 +126,7 @@ export const addEdge = (
 	}
 
 	const edge: WorkflowEdge = {
-		id: crypto.randomUUID(),
+		id: window.crypto.randomUUID(),
 		workflowId: wf.id,
 		source: sourceId,
 		sourcePortId,
