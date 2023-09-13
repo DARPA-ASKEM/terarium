@@ -15,6 +15,7 @@ import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
 import API from '@/api/api';
+import crypto from 'crypto';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;

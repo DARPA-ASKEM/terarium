@@ -25,6 +25,7 @@ import { workflowEventBus } from '@/services/workflow';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
+import crypto from 'crypto';
 
 const props = defineProps<{
 	node: WorkflowNode;

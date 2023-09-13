@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import svgLoader from 'vite-svg-loader';
 import * as path from 'path';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 // const node_modules_dir = path.resolve(__dirname, '../../../node_modules/');
 const node_modules_dir = path.resolve(
@@ -52,7 +53,14 @@ export default defineConfig({
 		format: 'es'
 	},
 	build: {
-		target: 'esnext'
+		target: 'esnext',
+		rollupOptions: {
+			output: {
+				globals: { crypto: 'crypto' }
+			},
+			external: ['crypto'],
+			plugins: [nodeResolve({ preferBuiltins: true })]
+		}
 	},
 	plugins: [
 		vue({

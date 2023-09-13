@@ -241,6 +241,7 @@ import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 
+import crypto from 'crypto';
 import { ModelOperation, TeraModelNode } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';

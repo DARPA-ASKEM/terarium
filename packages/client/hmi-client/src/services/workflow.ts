@@ -10,6 +10,7 @@ import {
 	WorkflowPortStatus,
 	WorkflowStatus
 } from '@/types/workflow';
+import crypto from 'crypto';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
