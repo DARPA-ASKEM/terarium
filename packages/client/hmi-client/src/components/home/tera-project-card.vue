@@ -20,7 +20,9 @@
 						<div class="author">{{ project.username }}</div>
 						<div class="creation-date">{{ formatDdMmmYyyy(project.timestamp) }}</div>
 					</div>
-					<div class="description">{{ project.description }}</div>
+					<div class="description">
+						{{ project.description }}
+					</div>
 				</section>
 			</section>
 		</template>
@@ -256,6 +258,7 @@ section {
 .p-card:deep(.p-card-footer) {
 	align-items: center;
 	padding: 0;
+	margin: 0;
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
@@ -263,11 +266,11 @@ section {
 	height: 2rem;
 }
 .p-card .p-card-footer .p-button-icon-only {
-	display: none;
+	visibility: hidden;
 }
 
 .p-card:hover .p-card-footer .p-button-icon-only {
-	display: inline;
+	visibility: visible;
 }
 
 .p-card-footer.skeleton {
