@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources;
+package software.uncharted.terarium.hmiserver.controller;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
