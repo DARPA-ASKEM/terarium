@@ -9,7 +9,8 @@ export enum WorkflowOperationTypes {
 	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
 	STRATIFY = 'Stratify',
 	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
-	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms'
+	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms',
+	DATASET_TRANSFORMER = 'DatasetTransformer'
 }
 
 export enum WorkflowStatus {
@@ -67,7 +68,7 @@ export interface WorkflowNode {
 	id: string;
 	displayName: string;
 	workflowId: string;
-	operationType: string;
+	operationType: WorkflowOperationTypes;
 
 	// Position on canvas
 	x: number;

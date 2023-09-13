@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -20,18 +21,7 @@ import java.util.Map;
 public class Model implements Serializable {
 	private String id;
 
-	private String name;
-
-	@JsonSetter(nulls = Nulls.SKIP)
-	private String description = "";
-
-	@TSOptional
-	private String model_version;
-
-	private String schema;
-
-	@TSOptional
-	private String schema_name;
+	private ModelHeader header;
 
 	private Map<String, Object> model;
 
@@ -43,5 +33,4 @@ public class Model implements Serializable {
 
 	@TSOptional
 	private ModelMetadata metadata;
-
 }

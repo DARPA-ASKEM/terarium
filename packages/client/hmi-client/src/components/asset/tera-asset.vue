@@ -1,5 +1,5 @@
 <template>
-	<main @scroll="updateScrollPosition" id="tango" ref="assetContainer">
+	<main @scroll="updateScrollPosition">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
@@ -67,12 +67,6 @@
 import { ref, computed, watch, PropType } from 'vue';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
-
-const assetContainer = ref();
-
-defineExpose({
-	assetContainer
-});
 
 const props = defineProps({
 	name: {

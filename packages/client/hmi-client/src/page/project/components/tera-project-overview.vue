@@ -277,7 +277,7 @@ import { logger } from '@/utils/logger';
 import { uploadArtifactToProject } from '@/services/artifact';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
-import { extractPDF } from '@/services/models/extractions';
+import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { uploadCodeToProject } from '@/services/code';
 
@@ -328,7 +328,13 @@ const assets = computed(() => {
 			const projectAssetType: AssetType = type as AssetType;
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => {
-					const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+					let assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+
+					// FIXME should unify upstream via a summary endpoint
+					if (asset.header && asset.header.name) {
+						assetName = asset.header.name;
+					}
+
 					const pageType = asset?.type ?? projectAssetType;
 					const assetId = asset?.id ?? '';
 					return { assetName, pageType, assetId };
@@ -461,7 +467,7 @@ async function editProject() {
 }
 
 async function openResource(data) {
-	router.push({ name: RouteName.ProjectRoute, params: data });
+	router.push({ name: RouteName.Project, params: data });
 }
 
 async function updateProjectName() {

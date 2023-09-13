@@ -23,7 +23,7 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.resources.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.utils.Converter;
-import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResults;
+import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResultsCiemss;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.smallrye.reactive.messaging.annotations.Broadcast;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
@@ -55,11 +55,11 @@ public class SimulationResource implements SnakeCaseResource {
 
 	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@Inject
-	@Channel("simulationStatus") Publisher<byte[]> partialSimulationStream;
+	@Channel("simulationStatus") Publisher<byte[]> simulationStatusStream;
 
 	@Broadcast
 	@Channel("simulationStatus")
-	Emitter<SimulationIntermediateResults> partialSimulationEmitter;
+	Emitter<SimulationIntermediateResultsCiemss> simulationStatusEmitter;
 
 	@POST
 	public Simulation createSimulation(final Simulation simulation){
@@ -133,8 +133,7 @@ public class SimulationResource implements SnakeCaseResource {
 		if(datasetName != null){
 			try {
 				dataset.setName(datasetName);
-				JsonNode updatedDataset = convertObjectToSnakeCaseJsonNode(dataset);
-				datasetProxy.updateDataset(dataset.getId(), updatedDataset);
+				datasetProxy.updateDataset(dataset.getId(),  convertObjectToSnakeCaseJsonNode(dataset));
 
 			} catch (Exception e) {
 				log.error("Failed to update dataset {} name", dataset.getId());
@@ -161,7 +160,7 @@ public class SimulationResource implements SnakeCaseResource {
 	}
 
 	@GET
-	@Path("/{jobId}/partial-result")
+	@Path("/{jobId}/ciemss/partial-result")
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	@Tag(name = "Stream partial/intermediate simulation result associated with run ID")
@@ -169,18 +168,18 @@ public class SimulationResource implements SnakeCaseResource {
 		@PathParam("jobId") final String jobId
 	) {
 		ObjectMapper mapper = new ObjectMapper();
-		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> {
+		return Multi.createFrom().publisher(simulationStatusStream).filter(event -> {
 			try{ 
 				//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 				String jsonString = new String(event);
 				jsonString = jsonString.replace(" ","");
 
-				SimulationIntermediateResults interResult = mapper.readValue(jsonString, SimulationIntermediateResults.class);
+				SimulationIntermediateResultsCiemss interResult = mapper.readValue(jsonString, SimulationIntermediateResultsCiemss.class);
 
 				return interResult.getJobId().equals(jobId);
 			}
 			catch(Exception e){
-				log.error("Error occured while trying to convert simulation-status message to type: SimulationIntermediateResults");
+				log.error("Error occured while trying to convert simulation-status message to type: SimulationIntermediateResultsCiemss");
 				log.error(event.toString());
 				log.error(e.toString());
 				return false;
@@ -191,17 +190,17 @@ public class SimulationResource implements SnakeCaseResource {
 	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
 	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@PUT
-	@Path("/{jobId}/create-partial-result")
+	@Path("/{jobId}/ciemss/create-partial-result")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Used to write to the simulation status channel providing a job ID")
 	public Response createPartialResult(
 		@PathParam("jobId") final String jobId
 	) {
 		Double progress = 0.01;
-		SimulationIntermediateResults event = new SimulationIntermediateResults();
+		SimulationIntermediateResultsCiemss event = new SimulationIntermediateResultsCiemss();
 		event.setJobId(jobId);
 		event.setProgress(progress);
-		partialSimulationEmitter.send(event);
+		simulationStatusEmitter.send(event);
 		return Response.ok().build();
 	}
 }

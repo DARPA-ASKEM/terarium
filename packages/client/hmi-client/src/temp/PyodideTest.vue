@@ -1,6 +1,6 @@
 <template>
 	<main style="margin: 2rem; display: flex; flex-direction: column">
-		<h4>Python loaded in {{ ((endLoad - startLoad) / 1000).toFixed(2) }} seconds</h4>
+		<h4>Python playground</h4>
 		<section>
 			The following variables are preset:
 			<div v-for="(k) in Object.keys(variableMap) as string[]" :key="k">
@@ -10,9 +10,11 @@
 		<textarea style="width: 75rem; height: 10rem" v-model="exprString"> </textarea>
 		<br />
 		<div style="display: flex; flex-direction: row">
-			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
+			<div style="padding: 1rem; font-size: 100%; width: 25rem; border: 1px solid #888">
 				MathML: <br />
 				{{ mathml }}
+				<hr />
+				{{ pmathml }}
 			</div>
 			<div style="padding: 1rem; font-size: 120%; width: 25rem; border: 1px solid #888">
 				Latex: <br />
@@ -28,24 +30,19 @@
 			</div>
 		</div>
 	</main>
-	<main v-if="!isReady">
-		<h4>Loading Python and modules ...</h4>
-	</main>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import PyodideController from '@/python/PyodideController';
+import { pythonInstance } from '@/python/PyodideController';
 
 const mathml = ref('');
+const pmathml = ref('');
 const latex = ref('');
 const freeSymbols = ref([]);
 const evalResult = ref<any>('');
 
 const exprString = ref('');
-const isReady = ref(false);
-const startLoad = ref(0);
-const endLoad = ref(0);
 
 /*
 const renameParameterId = (amr: Model, newId: string, oldId: string) => {
@@ -85,14 +82,20 @@ const variableMap: Object = {
 	N: 'S + I + R'
 };
 
-const controller = new PyodideController();
 const start = async () => {
 	let result: any;
-	result = await controller.parseExpression('a + b + c + 10');
+
+	// Expression parsing example
+	result = await pythonInstance.parseExpression('a + b + c + 10');
 	console.log('parse test', result);
 
-	result = await controller.evaluateExpression('a + b', { a: 11, b: 22 });
+	// Expression evaluation example
+	result = await pythonInstance.evaluateExpression('a + b', { a: 11, b: 22 });
 	console.log('eval test', result);
+
+	// Python example
+	result = await pythonInstance.runPython('list(map(lambda x: x ** 2, [1, 2, 3, 4, 5]))');
+	console.log('code test', result);
 };
 
 start();
@@ -100,21 +103,14 @@ start();
 watch(
 	() => exprString.value,
 	async () => {
-		const f = await controller.evaluateExpression(exprString.value, variableMap);
+		const f = await pythonInstance.evaluateExpression(exprString.value, variableMap);
 		evalResult.value = f;
 
-		const result = (await controller.parseExpression(exprString.value)) as any;
+		const result = (await pythonInstance.parseExpression(exprString.value)) as any;
 		mathml.value = result.mathml;
+		pmathml.value = result.pmathml;
 		latex.value = result.latex;
 		freeSymbols.value = result.freeSymbols;
-
-		/*
-		runParser(exprString.value);
-		if (pythonExpr) {
-			const f = pythonExpr.evaluateExpression(exprString.value, variableMap);
-			evalResult.value = f;
-		}
-		*/
 	}
 );
 </script>

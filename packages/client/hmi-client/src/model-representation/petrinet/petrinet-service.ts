@@ -64,6 +64,14 @@ export const convertAMRToACSet = (amr: Model) => {
 		});
 	});
 
+	// post processing to use expressions rather than ids
+	result.T = result.T.map((transition) => {
+		const foundRate = amr.semantics?.ode.rates.find((rate) => rate.target === transition.tname);
+
+		// default to the id if there is a case where there is no expression
+		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
+	});
+
 	return result;
 };
 
@@ -541,23 +549,23 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 };
 
 // FIXME - We need a proper way to update the model
-export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => ({
-	...amrOld,
-	...amr,
-	name: amrOld.name,
-	metadata: amrOld.metadata
-});
+export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => {
+	const m: Model = { ...amrOld, ...amr };
+	m.metadata = amrOld.metadata;
+	m.header.name = amrOld.header.name;
+	return m;
+};
 
 export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
-		const { name, description, schema, semantics } = amrCopy;
+		const { name, description, schema } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
 			schema,
-			model_version: amrCopy.model_version,
-			model: semantics?.typing?.system
+			model_version: amrCopy.header.model_version,
+			model: amrCopy.semantics?.typing?.system
 		};
 		amrCopy.semantics.typing.system = typeSystem;
 	}
@@ -602,13 +610,15 @@ export const getStratificationType = (amr: Model) => {
 
 export function newAMR(modelName: string) {
 	const amr: Model = {
+		header: {
+			name: modelName,
+			description: '',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1'
+		},
 		id: '',
-		name: modelName,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
 		model: {
 			states: [],
 			transitions: []

@@ -32,7 +32,12 @@ export default class PyodideController {
 		return this._isBusy;
 	}
 
-	async parseExpression(expr: string) {
+	async parseExpression(expr: string): Promise<{
+		mathml: string;
+		pmathml: string;
+		latex: string;
+		freeSymbols: string[];
+	}> {
 		return new Promise((...promise) => {
 			this.taskQueue.push({
 				action: 'parseExpression',
@@ -43,11 +48,22 @@ export default class PyodideController {
 		});
 	}
 
-	async evaluateExpression(expr: string, symbolTable: object) {
+	async evaluateExpression(expr: string, symbolTable: object): Promise<string> {
 		return new Promise((...promise) => {
 			this.taskQueue.push({
 				action: 'evaluateExpression',
 				params: [expr, symbolTable],
+				promise
+			});
+			this.queueTask();
+		});
+	}
+
+	async runPython(code: string) {
+		return new Promise((...promise) => {
+			this.taskQueue.push({
+				action: 'runPython',
+				params: [code],
 				promise
 			});
 			this.queueTask();
@@ -77,3 +93,6 @@ export default class PyodideController {
 		}
 	}
 }
+
+// Single instance for the app
+export const pythonInstance = new PyodideController();

@@ -1,15 +1,13 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.Id;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
-import software.uncharted.terarium.hmiserver.utils.rebac.AskemDatumType;
-import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
@@ -23,6 +21,7 @@ import java.util.*;
 @Path("/api/projects")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Project REST Endpoints")
+@Slf4j
 public class ProjectResource {
 
 	@Inject
@@ -53,15 +52,19 @@ public class ProjectResource {
 			.toList();
 
 		projects.forEach(project -> {
-			Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList(Assets.AssetType.DATASETS, Assets.AssetType.MODELS, Assets.AssetType.PUBLICATIONS));
-			Map<String, String> metadata = new HashMap<>();
-			metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
-			metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
-			metadata.put("models-count", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
-			metadata.put("publications-count", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
-			metadata.put("workflows-count", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
-			metadata.put("artifacts-count", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
-			project.setMetadata(metadata);
+			try {
+				Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList(Assets.AssetType.DATASETS, Assets.AssetType.MODELS, Assets.AssetType.PUBLICATIONS));
+				Map<String, String> metadata = new HashMap<>();
+				metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
+				metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
+				metadata.put("models-count", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
+				metadata.put("publications-count", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
+				metadata.put("workflows-count", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
+				metadata.put("artifacts-count", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
+				project.setMetadata(metadata);
+			} catch (Exception e) {
+				log.info("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}", project.getProjectID());
+			}
 		});
 
 		return Response

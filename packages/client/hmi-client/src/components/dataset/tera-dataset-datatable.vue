@@ -20,7 +20,7 @@
 	<!-- Datable -->
 	<DataTable
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-		:value="csvContent?.slice(1, csvContent.length)"
+		:value="props.rawContent?.data ? csvContent : csvContent?.slice(1, csvContent.length)"
 		:rows="props.rows"
 		paginator
 		:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"
@@ -34,7 +34,7 @@
 		<Column
 			v-for="(colName, index) of selectedColumns"
 			:key="index"
-			:field="index.toString()"
+			:field="props.rawContent?.data ? colName : index.toString()"
 			:header="colName"
 			:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 			sortable
@@ -100,7 +100,7 @@ const MINBARLENGTH = 1;
 
 const showSummaries = ref(true);
 
-const csvContent = computed(() => props.rawContent?.csv);
+const csvContent = computed(() => props.rawContent?.data || props.rawContent?.csv);
 const csvHeaders = computed(() => props.rawContent?.headers);
 const chartData = computed(() =>
 	props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))

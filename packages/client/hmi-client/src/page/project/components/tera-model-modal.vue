@@ -55,7 +55,7 @@ const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : '')
 const existingModelNames = computed(() => {
 	const modelNames: string[] = [];
 	props.project.assets?.models.forEach((item) => {
-		modelNames.push(item.name);
+		modelNames.push(item.header.name);
 	});
 	return modelNames;
 });
@@ -75,7 +75,7 @@ async function createNewModel() {
 	const modelId = await addNewModelToProject(newModelName.value.trim(), props.project);
 	if (modelId) {
 		router.push({
-			name: RouteName.ProjectRoute,
+			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Models,
 				assetId: modelId

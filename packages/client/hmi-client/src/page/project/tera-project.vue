@@ -51,13 +51,13 @@
 						workflowNode = null;
 					"
 				/>
-				<tera-calibration-julia
+				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
 					"
 					:node="workflowNode"
 				/>
-				<tera-calibration-ciemss
+				<tera-calibrate-ciemss
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 					"
@@ -109,6 +109,14 @@
 					:project="project"
 					:node="workflowNode"
 				/>
+				<tera-dataset-transformer
+					v-if="
+						workflowNode &&
+						workflowNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER
+					"
+					:project="project"
+					:node="workflowNode"
+				/>
 			</SplitterPanel>
 		</Splitter>
 		<tera-slider-panel
@@ -134,8 +142,17 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty } from 'lodash';
-import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
-import TeraDatasetWorkflowWrapper from '@/components/workflow/tera-dataset-workflow-wrapper.vue';
+import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
+import TeraDatasetWorkflowWrapper from '@//workflow/ops/dataset/tera-dataset-workflow-wrapper.vue';
+import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
+import TeraCalibrateCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
+import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';
+import TeraStratify from '@/workflow/ops/stratify-julia/tera-stratify.vue';
+import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
+import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
+import teraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
+import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
+
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
@@ -149,17 +166,9 @@ import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import TeraCalibrationJulia from '@/components/workflow/tera-calibration-julia.vue';
-import TeraCalibrationCiemss from '@/components/workflow/tera-calibration-ciemss.vue';
-import TeraSimulateJulia from '@/components/workflow/tera-simulate-julia.vue';
-import TeraSimulateCiemss from '@/components/workflow/tera-simulate-ciemss.vue';
-import TeraStratify from '@/components/workflow/tera-stratify.vue';
-import teraSimulateEnsembleCiemss from '@/components/workflow/tera-simulate-ensemble-ciemss.vue';
-import teraCalibrateEnsembleCiemss from '@/components/workflow/tera-calibrate-ensemble-ciemss.vue';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
 import TeraModelModal from './components/tera-model-modal.vue';
-
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -203,18 +212,20 @@ function setActiveTab() {
 async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
-	if (!(asset && asset.assetId === props.assetId && asset.pageType === props.pageType)) {
-		loadingTabIndex.value = index;
-		router.push({
-			name: RouteName.ProjectRoute,
-			params: { assetId: asset.assetId, pageType: asset.pageType }
-		});
+	if (asset) {
+		if (!(asset.assetId === props.assetId && asset.pageType === props.pageType)) {
+			loadingTabIndex.value = index;
+			router.push({
+				name: RouteName.Project,
+				params: { assetId: asset.assetId, pageType: asset.pageType }
+			});
+		}
 	}
 }
 
 function openAssetFromSidebar(asset: Tab) {
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: { assetId: asset.assetId, pageType: asset.pageType }
 	});
 	loadingTabIndex.value = tabs.value.length;
@@ -267,11 +278,18 @@ const openWorkflow = async () => {
 	await ProjectService.addAsset(props.project.id, AssetType.Workflows, workflowId);
 
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: {
 			pageType: AssetType.Workflows,
 			assetId: workflowId
 		}
+	});
+};
+
+const openCode = () => {
+	router.push({
+		name: RouteName.Project,
+		params: codeResource
 	});
 };
 
@@ -282,6 +300,9 @@ const openNewAsset = (assetType: string) => {
 			break;
 		case AssetType.Workflows:
 			openWorkflow();
+			break;
+		case AssetType.Code:
+			openCode();
 			break;
 		default:
 			break;
@@ -299,7 +320,7 @@ const overviewResource = {
 
 const codeResource = {
 	pageType: AssetType.Code,
-	assetId: ''
+	assetId: 'code' // FIXME: hack to get around weird tab behaviour
 };
 
 const adjustTabsProjectChange = () => {
@@ -369,7 +390,7 @@ onMounted(() => {
 	setTimeout(() => {
 		adjustTabsProjectChange();
 		adjustTabs();
-	}, 400);
+	}, 1000);
 });
 </script>
 

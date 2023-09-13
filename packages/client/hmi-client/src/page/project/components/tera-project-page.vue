@@ -5,14 +5,11 @@
 		:project="project"
 		@asset-loaded="emit('asset-loaded')"
 	/>
-
-	<code-editor
+	<tera-code
+		:project="project"
+		:asset-id="assetId ?? ''"
 		v-else-if="pageType === AssetType.Code"
-		:initial-code="code"
-		@vue:mounted="
-			emit('asset-loaded');
-			openCode();
-		"
+		@asset-loaded="emit('asset-loaded')"
 	/>
 	<code-editor
 		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
@@ -33,7 +30,7 @@
 		@vue:mounted="emit('asset-loaded')"
 		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
-	<tera-simulation-workflow
+	<tera-workflow
 		v-else-if="pageType === AssetType.Workflows"
 		:asset-id="assetId ?? ''"
 		:project="project"
@@ -74,16 +71,17 @@ import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
-import TeraModel from '@/components/models/tera-model.vue';
+import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
+import TeraWorkflow from '@/workflow/tera-workflow.vue';
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
+import TeraCode from '@/components/code/tera-code.vue';
 
 const props = defineProps<{
 	project: IProject;
@@ -114,6 +112,10 @@ const assetName = computed<string>(() => {
 	 */
 	if (assets) {
 		const asset: any = assets[props.pageType as string].find((d: any) => d.id === props.assetId);
+
+		// FIXME should unify upstream via a summary endpoint
+		if (asset.header && asset.header.name) return asset.header.name;
+
 		if (asset.name) return asset.name;
 	}
 	if (props.pageType === AssetType.Code) return 'New File';
@@ -126,7 +128,7 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 
 const openOverview = () => {
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
