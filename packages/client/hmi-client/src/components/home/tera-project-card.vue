@@ -14,6 +14,8 @@
 			<section>
 				<div class="title" ref="titleRef">
 					{{ project.name }}
+					{{ descriptionLines }} {{ titleRef?.clientHeight }} sdsd sdssdsds sdsd sdssdsds sdsd
+					sdssdsds sdsd
 				</div>
 				<section class="details">
 					<div>
@@ -92,8 +94,8 @@ const titleRef = ref();
 const descriptionLines = computed(() => {
 	const titleHeight = titleRef.value?.clientHeight;
 	for (let i = 1; i < 3; i++) {
-		if (titleHeight <= 17 * i) {
-			return 6 + i;
+		if (titleHeight === 17 * i) {
+			return 10 - i;
 		}
 	}
 	return 6;
@@ -255,10 +257,10 @@ section {
 
 .p-card:deep(.p-card-footer) {
 	align-items: center;
+	padding: 0;
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
-	padding-top: 0.5rem;
 	font-size: var(--font-caption);
 	position: relative;
 }
