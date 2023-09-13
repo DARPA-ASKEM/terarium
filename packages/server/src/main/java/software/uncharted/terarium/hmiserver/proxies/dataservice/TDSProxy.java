@@ -33,16 +33,16 @@ public interface TDSProxy<T> {
 	);
 
 	@PatchMapping("/{id}")
-	ResponseEntity<JsonNode> updateAsset(
+	ResponseEntity<JsonNode> patchUpdateAsset(
 		@PathVariable("id") String id,
 		@RequestBody JsonNode asset
 	);
 
-	@PostMapping("/deprecate/{id}")
-	ResponseEntity<JsonNode>  deprecateAsset(
-		@PathVariable("id") String id
+	@PutMapping ("/{id}")
+	ResponseEntity<JsonNode> updateAsset(
+		@PathVariable("id") String id,
+		@RequestBody JsonNode asset
 	);
-
 
 	@GetMapping("/{id}/upload-url")
 	ResponseEntity<PresignedURL>  getUploadUrl(

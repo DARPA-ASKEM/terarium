@@ -84,15 +84,9 @@ public class DatasetResource implements SnakeCaseResource {
 		@PathVariable("id") final String id,
 		@RequestBody final Dataset dataset
 	) {
-		return datasetProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(dataset));
+		return datasetProxy.patchUpdateAsset(id, convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
-	@PostMapping("/deprecate/{id}")
-	public ResponseEntity<JsonNode> deprecateDataset(
-		@PathVariable("id") final String id
-	) {
-		return datasetProxy.deprecateAsset(id);
-	}
 
 	@GetMapping("/{datasetId}/downloadCSV")
 	public ResponseEntity<CsvAsset> getCsv(
@@ -220,7 +214,7 @@ public class DatasetResource implements SnakeCaseResource {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
 				Dataset updatedDataset = new Dataset().setId(datasetId).setColumns(columns);
-				ResponseEntity<JsonNode> r = datasetProxy.updateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
+				ResponseEntity<JsonNode> r = datasetProxy.patchUpdateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
 				if(r.getStatusCode().value() != HttpStatus.OK.value()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
 				}

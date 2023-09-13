@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
@@ -18,13 +19,12 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
-import software.uncharted.terarium.hmiserver.utils.Converter;
 
 
 @RequestMapping("/simulation-request")
 @RestController
 @Slf4j
-public class SimulationRequestResource {
+public class SimulationRequestResource implements SnakeCaseResource {
 
 	@Autowired
 	private SimulationServiceProxy simulationServiceProxy;
@@ -39,14 +39,14 @@ public class SimulationRequestResource {
 	public ResponseEntity<Simulation> getSimulation(
 		@PathVariable("id") final String id
 	){
-		return simulationProxy.getSimulation(id);
+		return simulationProxy.getAsset(id);
 	}
 
 	@PostMapping("/forecast")
-	public ResponseEntity<Simulation> makeForecastRun(
+	public ResponseEntity<JsonNode> makeForecastRun(
 		@RequestBody final SimulationRequest request
 	) {
-		final JobResponse res = simulationServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request)).getBody();
+		final JobResponse res = simulationServiceProxy.makeForecastRun(convertObjectToSnakeCaseJsonNode(request)).getBody();
 
 		Simulation sim = new Simulation();
 		sim.setId(res.getSimulationId());
@@ -64,16 +64,16 @@ public class SimulationRequestResource {
 		sim.setProjectId(0);
 		sim.setEngine("sciml");
 
-		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
-		return simulationProxy.createSimulation(jn);
+;
+		return simulationProxy.createAsset(convertObjectToSnakeCaseJsonNode(sim));
 	}
 
 
 	@PostMapping("ciemss/forecast")
-	public ResponseEntity<Simulation> makeForecastRunCiemss(
+	public ResponseEntity<JsonNode> makeForecastRunCiemss(
 		@RequestBody final SimulationRequest request
 	) {
-		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request)).getBody();
+		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(convertObjectToSnakeCaseJsonNode(request)).getBody();
 
 		Simulation sim = new Simulation();
 		sim.setId(res.getSimulationId());
@@ -91,36 +91,35 @@ public class SimulationRequestResource {
 		sim.setProjectId(0);
 		sim.setEngine("ciemss");
 
-		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
-		return simulationProxy.createSimulation(jn);
+		return simulationProxy.createAsset(convertObjectToSnakeCaseJsonNode(sim));
 	}
 
 	@PostMapping("/calibrate")
 	public ResponseEntity<JobResponse> makeCalibrateJob(
 		@RequestBody final CalibrationRequestJulia request
 	) {
-		return simulationServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+		return simulationServiceProxy.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request));
 	}
 
 	@PostMapping("ciemss/calibrate")
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
 		@RequestBody final CalibrationRequestCiemss request
 	) {
-		return simulationCiemssServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+		return simulationCiemssServiceProxy.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request));
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 		@RequestBody final EnsembleSimulationCiemssRequest request
 	) {
-		return simulationCiemssServiceProxy.makeEnsembleSimulateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+		return simulationCiemssServiceProxy.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request));
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 		@RequestBody final EnsembleCalibrationCiemssRequest request
 	) {
-		return simulationCiemssServiceProxy.makeEnsembleCalibrateCiemssJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+		return simulationCiemssServiceProxy.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request));
 	}
 
 

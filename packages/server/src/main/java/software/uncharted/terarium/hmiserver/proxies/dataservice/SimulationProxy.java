@@ -10,40 +10,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 
 
 @FeignClient(name = "simulationService", url = "${terarium.dataservice.url}", path = "/simulations")
-public interface SimulationProxy {
-
-	@GetMapping("/{id}")
-	ResponseEntity<Simulation> getSimulation(
-		@PathVariable("id") String id
-	);
-
-	@PostMapping
-	ResponseEntity<Simulation> createSimulation(
-		@RequestBody JsonNode simulation
-	);
-
-	@PatchMapping("/{id}")
-	ResponseEntity<Simulation> updateSimulation(
-		@PathVariable("id") String id,
-		@RequestBody Simulation simulation
-	);
-
-	@DeleteMapping("/{id}")
-	ResponseEntity<String> deleteSimulation(
-		@PathVariable("id") String id
-	);
-
-	@GetMapping("/{id}/upload-url")
-	ResponseEntity<PresignedURL> getUploadURL(
-		@PathVariable("id") String id,
-		@RequestParam("filename") String filename
-	);
-
-	@GetMapping("/{id}/download-url")
-	ResponseEntity<PresignedURL> getDownloadURL(
-		@PathVariable("id") String id,
-		@RequestParam("filename") String filename
-	);
+public interface SimulationProxy extends TDSProxy<Simulation>{
 
 	@GetMapping("/{id}/copy_results")
 	ResponseEntity<Dataset> copyResultsToDataset(
