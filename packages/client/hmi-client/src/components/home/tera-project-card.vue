@@ -260,14 +260,14 @@ section {
 	justify-content: space-between;
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
-	position: relative;
+	height: 2rem;
 }
 .p-card .p-card-footer .p-button-icon-only {
-	visibility: hidden;
+	display: none;
 }
 
 .p-card:hover .p-card-footer .p-button-icon-only {
-	visibility: visible;
+	display: inline;
 }
 
 .p-card-footer.skeleton {
