@@ -23,6 +23,10 @@
 									placeholder="Filter by keyword"
 								/>
 							</span>
+							<span
+								><label>Sort by:</label>
+								<Dropdown v-model="selectedSort" :options="sortOptions" class="p-inputtext-sm" />
+							</span>
 						</section>
 						<section v-if="projects && isEmpty(projects)" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
@@ -49,7 +53,7 @@
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="project in filteredProjects" :key="project.id">
+								<li v-for="project in filteredSortedProjects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -201,15 +205,43 @@ import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import Dropdown from 'primevue/dropdown';
+
+const selectedSort = ref('Last updated (descending)');
+const sortOptions = ref([
+	'Last updated (descending)',
+	'Last updated (ascending)',
+	'Creation date (descending)',
+	'Creation date (ascending)',
+	'Alphabetic'
+]);
 
 const projects = ref<Project[]>();
-const filteredProjects = computed(() =>
-	projects.value?.filter((project) => {
+const filteredSortedProjects = computed(() => {
+	const filtered = projects.value?.filter((project) => {
 		const projectSearchLower = projectSearch.value.trim().toLowerCase();
 		if (!projectSearchLower) return true;
 		return project.name.toLowerCase().includes(projectSearchLower);
-	})
-);
+	});
+	if (!filtered) return [];
+
+	if (selectedSort.value === 'Alphabetic') {
+		filtered.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+	}
+	// FIXME: Last updated and creation date are the same at the moment
+	else if (
+		selectedSort.value === 'Last updated (descending)' ||
+		selectedSort.value === 'Creation date (descending)'
+	) {
+		filtered.sort((a, b) => new Date(b?.timestamp) - new Date(a?.timestamp));
+	} else if (
+		selectedSort.value === 'Last updated (ascending)' ||
+		selectedSort.value === 'Creation date (ascending)'
+	) {
+		filtered.sort((a, b) => new Date(a?.timestamp) - new Date(b?.timestamp));
+	}
+	return filtered;
+});
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
@@ -340,11 +372,23 @@ section {
 	padding: 1rem;
 }
 
+.p-dropdown {
+	min-width: 15rem;
+}
+
 .filter-and-sort {
 	background-color: var(--surface-ground);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
-	padding: 0.5rem;
+	padding: 0.75rem;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.filter-and-sort label {
+	padding-right: 0.25rem;
+	font-size: var(--font-caption);
 }
 
 .papers {
@@ -405,27 +449,16 @@ header svg {
 	height: 100%;
 	display: flex;
 	align-items: center;
-	height: 443px;
 }
 
 .chevron-left {
 	left: -1rem;
-	top: 0.5rem;
-	height: 22rem;
 	border-radius: 0rem 10rem 10rem 0rem;
 }
 
 .chevron-right {
 	right: -1rem;
-	top: 0.5em;
-	height: 22em;
 	border-radius: 10rem 0rem 0rem 10rem;
-}
-
-.papers .chevron-left,
-.papers .chevron-right {
-	height: 22rem;
-	top: 0.4rem;
 }
 
 .chevron-left:hover,
