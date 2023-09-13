@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
 	ServerConnection,
@@ -145,7 +144,7 @@ let initialized = false;
 
 export const createMessageId = (msgType) => {
 	// const timestamp = Date
-	const uuid = uuidv4().replaceAll('-', '').slice(0, 16);
+	const uuid = crypto.randomUUID().replaceAll('-', '').slice(0, 16);
 	return `tgpt-${uuid}-${msgType}`;
 };
 
