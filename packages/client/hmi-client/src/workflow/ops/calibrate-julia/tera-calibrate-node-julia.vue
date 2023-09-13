@@ -246,7 +246,7 @@ const getStatus = async (simulationId: string) => {
 
 	// open a connection for each run id and handle the messages
 	runIds.forEach((id) => {
-		eventSourceManager.openConnection(id, `/simulations/${id}/sciml-intermediate-results`);
+		eventSourceManager.openConnection(id, `/simulations/${id}/sciml/partial-result`);
 		eventSourceManager.setMessageHandler(id, handlingProgress);
 	});
 

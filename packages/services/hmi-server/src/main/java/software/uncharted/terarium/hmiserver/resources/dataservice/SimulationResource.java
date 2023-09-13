@@ -189,7 +189,7 @@ public class SimulationResource implements SnakeCaseResource {
 	}
 
 	@GET
-	@Path("/{jobId}/sciml-intermediate-results")
+	@Path("/{jobId}/sciml/partial-result")
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	@Tag(name = "sciml simulation intermediate results associated with run ID")
@@ -197,7 +197,15 @@ public class SimulationResource implements SnakeCaseResource {
 		@PathParam("jobId") final String jobId
 	) {
 		return Multi.createFrom().publisher(scimlQueueStream).filter(event -> {
-			return event.getValue("id").equals(jobId);
+			try {
+				return event.getValue("id").equals(jobId);
+			}
+			catch(Exception e) {
+				log.error("Error occured while trying to consume sciml-queue message");
+				log.error(event.toString());
+				log.error(e.toString());
+				return false;
+			}
 		});
 	}
 
