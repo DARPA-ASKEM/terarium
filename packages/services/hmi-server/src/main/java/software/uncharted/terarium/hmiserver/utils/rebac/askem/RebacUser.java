@@ -32,7 +32,7 @@ public class RebacUser {
 		return reBACService.canAdministrate(getSchemaObject(), rebacProject.getSchemaObject());
 	}
 
-	public void createOwnerRelationship(RebacProject rebacProject) throws Exception {
-		reBACService.createRelationship(getSchemaObject(), rebacProject.getSchemaObject(), Schema.Relationship.OWNER);
+	public void createCreatorRelationship(RebacProject rebacProject) throws Exception {
+		reBACService.createRelationship(getSchemaObject(), rebacProject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 }

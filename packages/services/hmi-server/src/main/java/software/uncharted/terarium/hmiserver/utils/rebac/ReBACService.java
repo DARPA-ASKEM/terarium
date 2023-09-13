@@ -1,12 +1,14 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.quarkus.runtime.StartupEvent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
@@ -31,9 +33,7 @@ public class ReBACService {
 	public static final String PUBLIC_GROUP_NAME = "Public";
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
 
-	private boolean schemaExists = false;
-
-	private void createSchemaIfNotExists() throws Exception {
+	void startup(@Observes StartupEvent event) throws Exception {
 		if( !schemaManager.doesSchemaExist(channel, bearerToken) ) {
 			schemaManager.createSchema(channel, bearerToken, Schema.schema);
 
@@ -62,7 +62,6 @@ public class ReBACService {
 				}
 			}
 		}
-		schemaExists = true;
 	}
 
 	private ManagedChannel channel = ManagedChannelBuilder
@@ -72,39 +71,29 @@ public class ReBACService {
 		.build();
 
 	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
-		if (!schemaExists) { createSchemaIfNotExists(); }
-
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
 		return rebac.checkPermission(who, Schema.Permission.READ, what, full);
 	}
 
 	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		if (!schemaExists) { createSchemaIfNotExists(); }
-
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
 		return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
 	}
 
 	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		if (!schemaExists) { createSchemaIfNotExists(); }
-
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
 		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
 	}
 
 	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception {
-		if (!schemaExists) { createSchemaIfNotExists(); }
-
 		ReBACFunctions rebac = new ReBACFunctions(channel, bearerToken);
 		rebac.createRelationship(who, relationship, what);
 	}
 
 	public void getDatumDetails(String datumId, AskemDatumType datumType) throws Exception {
-		if (!schemaExists) { createSchemaIfNotExists(); }
-
 		SchemaObject datum = new SchemaObject(Schema.Type.DATUM, datumType + datumId);
 	}
 }

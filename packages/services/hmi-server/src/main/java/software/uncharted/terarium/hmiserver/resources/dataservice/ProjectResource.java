@@ -95,7 +95,7 @@ public class ProjectResource {
 		String location = res.getHeaderString("Location");
 		String server = res.getHeaderString("Server");
 		try {
-			new RebacUser(jwt.getSubject()).createOwnerRelationship(new RebacProject(Integer.toString(id.getId())));
+			new RebacUser(jwt.getSubject()).createCreatorRelationship(new RebacProject(Integer.toString(id.getId())));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
