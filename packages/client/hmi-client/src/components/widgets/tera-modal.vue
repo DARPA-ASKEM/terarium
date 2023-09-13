@@ -25,7 +25,7 @@ defineProps<{
 				<header>
 					<slot name="header" />
 				</header>
-				<slot />
+				<section class="content"><slot /></section>
 				<section><slot name="math-editor" /></section>
 				<footer>
 					<slot name="footer" />
@@ -63,7 +63,7 @@ main > section {
 	border-radius: 0.5rem;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	margin: 0px auto;
-	padding: 2rem;
+	padding: 2rem 0;
 	transition: all 0.1s ease;
 	min-width: max-content;
 	width: 80vw;
@@ -71,6 +71,12 @@ main > section {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+}
+
+.content {
+	max-height: 65vh;
+	padding: 0 2rem;
+	overflow-y: auto;
 }
 
 header {
@@ -86,6 +92,11 @@ footer {
 	gap: 1rem;
 	justify-content: end;
 	margin-top: 2rem;
+}
+
+header,
+footer {
+	padding: 0 2rem;
 }
 
 .modal-enter-from,
