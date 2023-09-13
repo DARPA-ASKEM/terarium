@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -11,7 +10,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import io.smallrye.mutiny.Multi;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.reactivestreams.Publisher;
 import org.jboss.resteasy.annotations.SseElementType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
@@ -27,7 +25,7 @@ import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResult
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.smallrye.reactive.messaging.annotations.Broadcast;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
-import java.util.Map;
+import io.vertx.core.json.JsonObject;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -56,6 +54,9 @@ public class SimulationResource implements SnakeCaseResource {
 	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@Inject
 	@Channel("simulationStatus") Publisher<byte[]> partialSimulationStream;
+
+	@Inject
+	@Channel("simulationStatusJulia") Publisher<JsonObject> juliaSimulationStream;
 
 	@Broadcast
 	@Channel("simulationStatus")
@@ -184,6 +185,19 @@ public class SimulationResource implements SnakeCaseResource {
 				log.error(e.toString());
 				return false;
 			}
+		});
+	}
+
+	@GET
+	@Path("/{jobId}/sciml-result")
+	@Produces(MediaType.SERVER_SENT_EVENTS)
+	@SseElementType(MediaType.APPLICATION_JSON)
+	@Tag(name = "sciml simulation result associated with run ID")
+	public Publisher<JsonObject> scimlResult(
+		@PathParam("jobId") final String jobId
+	) {
+		return Multi.createFrom().publisher(juliaSimulationStream).filter(event -> {
+			return event.getValue("id").equals(jobId);
 		});
 	}
 
