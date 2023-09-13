@@ -10,7 +10,6 @@ import {
 	WorkflowPortStatus,
 	WorkflowStatus
 } from '@/types/workflow';
-import crypto from 'crypto';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -23,7 +22,7 @@ import crypto from 'crypto';
 
 export const emptyWorkflow = (name: string = 'test', description: string = '') => {
 	const workflow: Workflow = {
-		id: crypto.randomUUID(),
+		id: window.crypto.randomUUID(),
 		name,
 		description,
 
