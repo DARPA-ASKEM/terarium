@@ -153,6 +153,7 @@ const removeProject = async () => {
 	justify-content: space-between;
 	display: flex;
 	flex-direction: column;
+	position: relative;
 }
 
 header {
@@ -234,7 +235,7 @@ section {
 	overflow: hidden;
 	opacity: 0;
 	height: 0;
-	transition: opacity 0.3s ease, height 0.3s ease;
+	transition: opacity 0.5s ease, height 0.3s ease;
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
 }
@@ -257,13 +258,16 @@ section {
 
 .p-card:deep(.p-card-footer) {
 	align-items: center;
-	padding: 0;
-	margin: 0;
+	padding: 0 0 0.5rem 0;
+	height: 3rem;
+	background-color: rgba(255, 255, 255, 0.85);
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
-	height: 2rem;
+	position: absolute;
+	bottom: 0;
+	width: calc(100% - 2rem);
 }
 .p-card .p-card-footer .p-button-icon-only {
 	visibility: hidden;
