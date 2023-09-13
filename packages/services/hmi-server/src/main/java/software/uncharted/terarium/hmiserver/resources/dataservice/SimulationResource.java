@@ -55,12 +55,12 @@ public class SimulationResource implements SnakeCaseResource {
 	@Inject
 	@Channel("simulationStatus") Publisher<byte[]> simulationStatusStream;
 
-	@Inject
-	@Channel("simulationStatusJulia") Publisher<JsonObject> juliaSimulationStream;
-
 	@Broadcast
 	@Channel("simulationStatus")
 	Emitter<SimulationIntermediateResultsCiemss> simulationStatusEmitter;
+
+	@Inject
+	@Channel("scimlQueue") Publisher<JsonObject> scimlQueueStream;
 
 	@POST
 	public Simulation createSimulation(final Simulation simulation){
@@ -170,7 +170,7 @@ public class SimulationResource implements SnakeCaseResource {
 	) {
 		ObjectMapper mapper = new ObjectMapper();
 		return Multi.createFrom().publisher(simulationStatusStream).filter(event -> {
-			try{ 
+			try{
 				//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 				String jsonString = new String(event);
 				jsonString = jsonString.replace(" ","");
@@ -189,14 +189,14 @@ public class SimulationResource implements SnakeCaseResource {
 	}
 
 	@GET
-	@Path("/{jobId}/sciml-result")
+	@Path("/{jobId}/sciml-intermediate-results")
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
-	@Tag(name = "sciml simulation result associated with run ID")
+	@Tag(name = "sciml simulation intermediate results associated with run ID")
 	public Publisher<JsonObject> scimlResult(
 		@PathParam("jobId") final String jobId
 	) {
-		return Multi.createFrom().publisher(juliaSimulationStream).filter(event -> {
+		return Multi.createFrom().publisher(scimlQueueStream).filter(event -> {
 			return event.getValue("id").equals(jobId);
 		});
 	}
