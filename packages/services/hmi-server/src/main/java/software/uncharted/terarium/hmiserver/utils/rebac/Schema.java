@@ -5,7 +5,7 @@ public class Schema {
 		definition user {}
 
 		definition group {
-			relation creqtor: user
+			relation creator: user
 			relation admin: user
 			relation member: user
 
@@ -19,9 +19,9 @@ public class Schema {
 			relation reader: user | group
 			relation writer: user | group
 
-			permission read = reader + reader->membership + writer + writer->membership + admin + admin->membership + owner
-			permission write = writer + writer->membership + admin + admin->membership + owner
-			permission administrate = admin + admin->membership + owner
+			permission read = reader + reader->membership + writer + writer->membership + admin + admin->membership + creator
+			permission write = writer + writer->membership + admin + admin->membership + creator
+			permission administrate = admin + admin->membership + creator
 		}
 	""";
 
