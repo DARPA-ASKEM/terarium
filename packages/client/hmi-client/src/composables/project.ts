@@ -62,7 +62,11 @@ export function useProjects() {
 	}
 
 	async function update(project: IProject) {
-		return ProjectService.update(project);
+		const updated = ProjectService.update(project);
+		setTimeout(async () => {
+			activeProject.value = await ProjectService.get(project.id, true);
+		}, 1000);
+		return updated;
 	}
 
 	async function remove(projectId: IProject['id']) {
