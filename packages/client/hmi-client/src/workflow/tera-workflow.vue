@@ -267,6 +267,7 @@ import {
 } from './ops/simulate-julia/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
+const WORKFLOW_SAVE_INTERVAL = 8000;
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -822,7 +823,7 @@ onMounted(() => {
 			workflowService.updateWorkflow(wf.value);
 			workflowDirty = false;
 		}
-	}, 8000);
+	}, WORKFLOW_SAVE_INTERVAL);
 });
 onUnmounted(() => {
 	if (workflowDirty) {
