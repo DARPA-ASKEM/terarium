@@ -14,8 +14,6 @@
 			<section>
 				<div class="title" ref="titleRef">
 					{{ project.name }}
-					{{ descriptionLines }} {{ titleRef?.clientHeight }} sdsd sdssdsds sdsd sdssdsds sdsd
-					sdssdsds sdsd
 				</div>
 				<section class="details">
 					<div>
@@ -98,7 +96,7 @@ const descriptionLines = computed(() => {
 			return 10 - i;
 		}
 	}
-	return 6;
+	return 7;
 });
 
 const stats = computed(() =>
