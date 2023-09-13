@@ -13,6 +13,17 @@
 				</header>
 				<TabView>
 					<TabPanel header="My projects">
+						<section class="filter-and-sort">
+							<span class="p-input-icon-left">
+								<i class="pi pi-filter" />
+								<InputText
+									v-model="projectSearch"
+									size="small"
+									class="p-inputtext-sm"
+									placeholder="Filter by keyword"
+								/>
+							</span>
+						</section>
 						<section v-if="projects && isEmpty(projects)" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
 							<h3>Welcome to Terarium</h3>
@@ -38,7 +49,7 @@
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="project in projects" :key="project.id">
+								<li v-for="project in filteredProjects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -192,6 +203,13 @@ import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 
 const projects = ref<Project[]>();
+const filteredProjects = computed(() =>
+	projects.value?.filter((project) => {
+		const projectSearchLower = projectSearch.value.trim().toLowerCase();
+		if (!projectSearchLower) return true;
+		return project.name.toLowerCase().includes(projectSearchLower);
+	})
+);
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
@@ -232,6 +250,7 @@ const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
 const isLoadingProjects = computed(() => !projects.value);
+const projectSearch = ref('');
 
 onMounted(async () => {
 	// Clear all...
@@ -270,13 +289,13 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	}
 
 	const marginLeftString =
-		cardListElement.style.marginLeft === '' ? '0.5' : cardListElement.style.marginLeft;
+		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseFloat(marginLeftString);
 	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
+	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
 };
 
 function openProject(projectId: string) {
@@ -321,6 +340,13 @@ section {
 	padding: 1rem;
 }
 
+.filter-and-sort {
+	background-color: var(--surface-ground);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	padding: 0.5rem;
+}
+
 .papers {
 	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
 	padding: 1rem;
@@ -345,7 +371,14 @@ h3 {
 }
 
 .p-tabview:deep(.p-tabview-panels) {
-	padding: 0 0 0 0;
+	padding: 0;
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin: 1rem 0;
 }
 
 header svg {
@@ -356,14 +389,11 @@ header svg {
 .carousel {
 	position: relative;
 	display: flex;
-	height: 319px;
 }
 
 .carousel ul {
 	align-items: center;
 	display: flex;
-	margin: 0.5rem 0.5rem 0 0.5rem;
-	padding-bottom: 0.5rem;
 }
 
 .chevron-left,
@@ -423,8 +453,6 @@ header svg {
 }
 
 ul {
-	align-items: center;
-	display: inline-flex;
 	gap: 1.5rem;
 	transition: margin-left 0.8s;
 }
