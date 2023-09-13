@@ -233,12 +233,20 @@ const filteredSortedProjects = computed(() => {
 		selectedSort.value === 'Last updated (descending)' ||
 		selectedSort.value === 'Creation date (descending)'
 	) {
-		filtered.sort((a, b) => new Date(b?.timestamp) - new Date(a?.timestamp));
+		filtered.sort((a, b) =>
+			a.timestamp && b.timestamp
+				? new Date(b.timestamp).valueOf() - new Date(a.timestamp).valueOf()
+				: -1
+		);
 	} else if (
 		selectedSort.value === 'Last updated (ascending)' ||
 		selectedSort.value === 'Creation date (ascending)'
 	) {
-		filtered.sort((a, b) => new Date(a?.timestamp) - new Date(b?.timestamp));
+		filtered.sort((a, b) =>
+			a.timestamp && b.timestamp
+				? new Date(a.timestamp).valueOf() - new Date(b.timestamp).valueOf()
+				: -1
+		);
 	}
 	return filtered;
 });
