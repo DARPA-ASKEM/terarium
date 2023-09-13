@@ -80,7 +80,7 @@ import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
 import { useProjects } from '@/composables/project';
-import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
+import TeraWorkflow from '@/workflow/tera-workflow.vue';
 
 const { activeProject } = useProjects();
 
