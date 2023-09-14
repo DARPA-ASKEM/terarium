@@ -14,6 +14,14 @@ const pyodide = await loadPyodide({
 	indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full'
 });
 await pyodide.loadPackage('sympy');
+
+// Downloading an archive
+await pyodide.runPythonAsync(`
+    from pyodide.http import pyfetch
+    response = await pyfetch("http://10.65.18.101:8080/mira-0.1.0-py3-none-any.whl")
+    await response.unpack_archive()
+`);
+
 pyodide.runPython('import sympy');
 pyodide.runPython(
 	'from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor'
@@ -21,6 +29,32 @@ pyodide.runPython(
 pyodide.runPython('from sympy.printing.latex import latex');
 pyodide.runPython('from sympy.abc import _clash1, _clash2, _clash');
 pyodide.runPython('from sympy import S');
+
+// start
+const pkg = pyodide.pyimport('mira');
+console.log(pkg);
+await pyodide.loadPackage('networkx');
+await pyodide.loadPackage('pydantic');
+await pyodide.loadPackage('tqdm');
+
+pyodide.runPython('import mira');
+const test1 = pyodide.runPython(`
+from mira.metamodel import ControlledConversion, NaturalConversion, Concept, Template
+
+infected = Concept(name='infected population', identifiers={'ido': '0000511'})
+susceptible = Concept(name='susceptible population', identifiers={'ido': '0000514'})
+immune = Concept(name='immune population', identifiers={'ido': '0000592'})
+
+t1 = ControlledConversion(
+    controller=infected,
+    subject=susceptible,
+    outcome=infected,
+)
+t2 = NaturalConversion(subject=infected, outcome=immune)
+t2.__dict__
+`);
+console.log('mira', test1.toJs());
+// end
 
 // Utility function to resolve nested subsitutions - not used
 pyodide.runPython(`
