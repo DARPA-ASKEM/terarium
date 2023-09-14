@@ -166,7 +166,6 @@ public class SimulationResource implements SnakeCaseResource {
 	public Publisher<SimulationIntermediateResultsCiemss> stream(
 		@PathParam("jobId") final String jobId
 	) {
-		ObjectMapper mapper = new ObjectMapper();
 		return Multi.createFrom().publisher(partialSimulationStream).filter(event -> event.getJobId().equals(jobId));
 	}
 
