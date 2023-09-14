@@ -500,7 +500,7 @@ const updateAssetType = async (newResourceType: ResourceType) => {
 		/** clear filters if they exist, we when to set the old resource type to
 		 * have dirty results since now they will need to be refetched when the facets filters are cleared
 		 * */
-		if (clientFilters.value.clauses.length > 0) {
+		if (!isEmpty(clientFilters.value.clauses)) {
 			queryStore.reset();
 			dirtyResults.value[oldResourceType] = true;
 		}
