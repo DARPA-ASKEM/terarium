@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources;
+package software.uncharted.terarium.hmiserver.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -6,24 +6,31 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
-@Path("/api/download")
-@Tag(name = "PDF Download REST Endpoints")
+@RequestMapping("/download")
+@RestController
 @Slf4j
 public class DownloadResource {
 
@@ -148,28 +155,28 @@ public class DownloadResource {
 		return url;
 	}
 
-	@GET
-	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response get(@QueryParam("doi") final String doi) throws IOException, URISyntaxException {
+	@GetMapping
+	public ResponseEntity<Resource> get(@RequestParam("doi") final String doi) throws IOException, URISyntaxException {
 		final byte[] pdfBytes = getPDF("https://unpaywall.org/" + doi);
 		if (pdfBytes != null) {
-			return Response.ok(pdfBytes)
-					.header("Content-Length", pdfBytes.length)
-					.build();
+
+			return ResponseEntity.ok()
+				.headers(new HttpHeaders())
+				.contentLength(pdfBytes.length)
+				.contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.body(new ByteArrayResource(pdfBytes));
 		} else {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+			return ResponseEntity.internalServerError().build();
 		}
 	}
 
-	@GET
-	@Path("/url")
-	@Produces(MediaType.TEXT_PLAIN)
-	public String getURL(@QueryParam("url") final String url) throws IOException, URISyntaxException {
+	@GetMapping("/url")
+	public ResponseEntity<String> getURL(@QueryParam("url") final String url) throws IOException, URISyntaxException {
 		final String pdfLink = getPDFURL("https://unpaywall.org/" + url);
 		if (pdfLink != null) {
-			return pdfLink;
+			return ResponseEntity.ok(pdfLink);
 		}
-		return "";
+		return ResponseEntity.noContent().build();
 	}
 
 }
