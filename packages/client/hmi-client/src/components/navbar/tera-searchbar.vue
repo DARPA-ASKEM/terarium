@@ -167,7 +167,7 @@ function clearQuery() {
 
 const initiateSearch = () => {
 	emit('query-changed', query.value);
-	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
+	router.push({ name: RouteName.DataExplorer, query: { q: query.value } });
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
@@ -179,7 +179,7 @@ function initiateSearchByExample() {
 	// used to update the search bar text with the name of the search by example asset
 	query.value = extractResourceName(searchByExampleItem.value);
 	router.push({
-		name: RouteName.DataExplorerRoute,
+		name: RouteName.DataExplorer,
 		query: { resourceId: getResourceID(searchByExampleItem.value!) }
 	});
 }
@@ -253,7 +253,7 @@ watch(
 // Clear the query if not on the data explorer view
 watch(
 	() => route.name,
-	(name) => name !== RouteName.DataExplorerRoute && clearQuery()
+	(name) => name !== RouteName.DataExplorer && clearQuery()
 );
 </script>
 

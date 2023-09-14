@@ -30,7 +30,7 @@
 		@vue:mounted="emit('asset-loaded')"
 		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
-	<tera-simulation-workflow
+	<tera-workflow
 		v-else-if="pageType === AssetType.Workflows"
 		:asset-id="assetId ?? ''"
 		:project="project"
@@ -71,10 +71,10 @@ import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
-import TeraModel from '@/components/models/tera-model.vue';
+import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
+import TeraWorkflow from '@/workflow/tera-workflow.vue';
 import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
@@ -128,7 +128,7 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 
 const openOverview = () => {
 	router.push({
-		name: RouteName.ProjectRoute,
+		name: RouteName.Project,
 		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };

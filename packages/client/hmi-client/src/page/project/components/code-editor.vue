@@ -244,7 +244,7 @@ async function createModelFromCode() {
 			await ProjectService.addAsset(props.project.id, AssetType.Models, model.id.toString());
 
 			router.push({
-				name: RouteName.ProjectRoute,
+				name: RouteName.Project,
 				params: {
 					assetName: newModelName,
 					assetId: model.id,
