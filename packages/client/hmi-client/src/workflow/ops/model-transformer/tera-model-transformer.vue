@@ -76,10 +76,15 @@ const addOutputPort = async (data) => {
 	if (!data.id) return;
 	// get model
 	const model = await getModel(data.id);
+
 	if (!model) return;
 
-	// get default configuration
+	const state = cloneDeep(props.node.state);
+	state.modelId = model?.id;
+	// update node state with the model id
+	workflowEventBus.emit('update-state', { node: props.node, state });
 
+	// set default configuration
 	await addDefaultConfiguration(model);
 
 	// setting timeout...elastic search might not update default config in time
@@ -97,11 +102,6 @@ const addOutputPort = async (data) => {
 			});
 		});
 	}, 800);
-
-	// workflowEventBus.emit('append-output-port', {
-	// 	node: props.node,
-	// 	port: { id: data.id, label: data.name, type: 'modelConfigId', value: data.id }
-	// });
 };
 </script>
 
