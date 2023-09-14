@@ -60,7 +60,7 @@ public class DatasetResource implements SnakeCaseResource {
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createDataset(
-		final Dataset dataset
+		@RequestBody final Dataset dataset
 	) {
 		return datasetProxy.createAsset(convertObjectToSnakeCaseJsonNode(dataset));
 	}
@@ -80,11 +80,19 @@ public class DatasetResource implements SnakeCaseResource {
 	}
 
 	@PatchMapping("/{id}")
-	public ResponseEntity<JsonNode> updateDataset(
+	public ResponseEntity<JsonNode> patchUpdateDataset(
 		@PathVariable("id") final String id,
 		@RequestBody final Dataset dataset
 	) {
 		return datasetProxy.patchUpdateAsset(id, convertObjectToSnakeCaseJsonNode(dataset));
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<JsonNode> updateDataset(
+			@PathVariable("id") final String id,
+			@RequestBody final Dataset dataset
+	) {
+		return datasetProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
 
