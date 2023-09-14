@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.io.Serializable;
 import java.util.List;
@@ -22,4 +23,7 @@ public class SimulationRequest implements Serializable {
 	private Object extra;
 
 	private String engine;
+
+	@TSOptional
+	private List<Intervention> interventions;
 }
