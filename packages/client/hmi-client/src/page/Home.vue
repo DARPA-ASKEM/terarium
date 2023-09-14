@@ -216,7 +216,7 @@ const sortOptions = [
 	'Last updated (ascending)',
 	'Creation date (descending)',
 	'Creation date (ascending)',
-	'Alphabetic'
+	'Alphabetical'
 ];
 
 const projects = ref<Project[]>([]);
