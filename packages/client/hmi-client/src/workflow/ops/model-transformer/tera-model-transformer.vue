@@ -27,6 +27,8 @@ import { createNotebookSession, getNotebookSessionById } from '@/services/notebo
 import { v4 as uuidv4 } from 'uuid';
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
+import { getModel, getModelConfigurations } from '@/services/model';
+import { addDefaultConfiguration } from '@/services/model-configurations';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -70,11 +72,36 @@ onMounted(async () => {
 	notebookSession.value = await getNotebookSessionById(notebookSessionId);
 });
 
-const addOutputPort = (data) => {
-	workflowEventBus.emit('append-output-port', {
-		node: props.node,
-		port: { id: data.id, label: data.name, type: 'modelConfigId', value: data.id }
-	});
+const addOutputPort = async (data) => {
+	if (!data.id) return;
+	// get model
+	const model = await getModel(data.id);
+	if (!model) return;
+
+	// get default configuration
+
+	await addDefaultConfiguration(model);
+
+	// setting timeout...elastic search might not update default config in time
+	await setTimeout(async () => {
+		const configurationList = await getModelConfigurations(model.id);
+		configurationList.forEach((configuration) => {
+			workflowEventBus.emit('append-output-port', {
+				node: props.node,
+				port: {
+					id: crypto.randomUUID(),
+					label: configuration.name,
+					type: 'modelConfigId',
+					value: [configuration.id]
+				}
+			});
+		});
+	}, 800);
+
+	// workflowEventBus.emit('append-output-port', {
+	// 	node: props.node,
+	// 	port: { id: data.id, label: data.name, type: 'modelConfigId', value: data.id }
+	// });
 };
 </script>
 

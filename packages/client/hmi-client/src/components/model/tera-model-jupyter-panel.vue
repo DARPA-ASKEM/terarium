@@ -66,7 +66,7 @@
 			@new-model-saved="onNewModelSaved"
 			:notebook-session="props.notebookSession"
 		/>
-		<div>
+		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Button
 				class="save-button p-button p-button-secondary p-button-sm"
 				title="Saves the current version of the model as a new Terarium asset"
