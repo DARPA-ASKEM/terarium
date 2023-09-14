@@ -62,7 +62,7 @@ public class ProjectResource {
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createProject(
-		final Project project
+		@RequestBody final Project project
 	) {
 		return proxy.createProject(project);
 	}
