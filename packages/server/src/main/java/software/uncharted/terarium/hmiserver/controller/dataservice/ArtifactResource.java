@@ -21,9 +21,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
