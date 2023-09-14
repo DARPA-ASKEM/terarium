@@ -196,12 +196,19 @@ public class SimulationRequestResource {
 	//Check if it has timeseries in its metadata
 	//If it does for each element convert it to type Intervention and add it to this.interventions
 	//Schema: http://json-schema.org/draft-07/schema#
-	public List<Intervention> getInterventionFromId(String modelConfigId){
+	private List<Intervention> getInterventionFromId(String modelConfigId){
 		List<Intervention> interventionList = new ArrayList<>();
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			ModelConfiguration modelConfig = modelConfigProxy.getModelConfiguration(modelConfigId);
 			JsonNode configuration =  mapper.convertValue(modelConfig.getConfiguration(), JsonNode.class);
+			// Parse the values found under the following path: 
+			// 		AMR -> configuration -> metadata -> timeseries -> parameter name -> value
+			// 		EG) "timeseries": {
+			//   			"beta": "1:0.05,2:0.04,3:0.01"
+			// 			}
+			// Into the following format: "interventions": [{"timestep":1,"name":"beta","value":0.05}, {"timestep":2,"name":"beta","value":0.04}, ...]
+			//This will later be scrapped after a redesign where our AMR -> configuration -> metadata -> timeseries -> parameter name -> value should be more typed. 
 			if (configuration.get("metadata").get("timeseries") != null){
 				JsonNode timeseries = mapper.convertValue(configuration.get("metadata").get("timeseries"), JsonNode.class);
 				List<String> fieldNames = new ArrayList<>();
