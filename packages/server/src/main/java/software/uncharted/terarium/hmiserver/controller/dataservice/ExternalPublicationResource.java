@@ -1,0 +1,77 @@
+package software.uncharted.terarium.hmiserver.controller.dataservice;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
+import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ExternalPublicationProxy;
+
+import java.util.List;
+
+
+@RequestMapping("/external/publications")
+@RestController
+@Slf4j
+public class ExternalPublicationResource implements SnakeCaseResource {
+
+	@Autowired
+	ExternalPublicationProxy proxy;
+
+
+
+	@GetMapping
+	public ResponseEntity<List<DocumentAsset>> getPublications() {
+		try {
+			return proxy.getAssets(100,0);
+		} catch (Exception e) {
+			log.error("Unable to get publications", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	@PostMapping()
+	public ResponseEntity<JsonNode> createPublication(
+		@RequestBody final DocumentAsset publication
+	) {
+		return proxy.createAsset(convertObjectToSnakeCaseJsonNode(publication));
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<DocumentAsset> getPublication(
+		@PathVariable("id") final String id
+	) {
+		try {
+			return proxy.getAsset(id);
+		} catch (Exception e) {
+			log.error("Unable to get publication", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<JsonNode> putPublication(
+		@PathVariable("id") final String id,
+		@RequestBody final DocumentAsset publication
+	) {
+		try {
+			return proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(publication));
+		} catch (Exception e) {
+			log.error("Unable to put publication", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<JsonNode> deletePublication(
+		@PathVariable("id") final String id
+	) {
+		return proxy.deleteAsset(id);
+	}
+
+
+
+
+}
