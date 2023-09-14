@@ -75,7 +75,7 @@ async function createNewModel() {
 	const modelId = await addNewModelToProject(newModelName.value.trim(), props.project);
 	if (modelId) {
 		router.push({
-			name: RouteName.ProjectRoute,
+			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Models,
 				assetId: modelId

@@ -486,6 +486,7 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 
 const updateAssetType = async (newResourceType: ResourceType) => {
 	if (resourceType.value !== newResourceType) {
+		const oldResourceType = resourceType.value;
 		resourceType.value = newResourceType;
 
 		if (executeSearchByExample.value) return;
@@ -495,6 +496,15 @@ const updateAssetType = async (newResourceType: ResourceType) => {
 		const resList = dataItemsUnfiltered.value.find(
 			(res) => res.searchSubsystem === resourceType.value
 		);
+
+		/** clear filters if they exist, we when to set the old resource type to
+		 * have dirty results since now they will need to be refetched when the facets filters are cleared
+		 * */
+		if (!isEmpty(clientFilters.value.clauses)) {
+			queryStore.reset();
+			dirtyResults.value[oldResourceType] = true;
+		}
+
 		if (!resList || dirtyResults.value[resourceType.value]) {
 			disableSearchByExample();
 			await executeSearch();

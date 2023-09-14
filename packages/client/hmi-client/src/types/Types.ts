@@ -78,26 +78,6 @@ export interface DocumentAsset {
 
 export interface Model {
     id: string;
-    /**
-     * @deprecated
-     */
-    name?: string;
-    /**
-     * @deprecated
-     */
-    description?: string;
-    /**
-     * @deprecated
-     */
-    model_version?: string;
-    /**
-     * @deprecated
-     */
-    schema?: string;
-    /**
-     * @deprecated
-     */
-    schema_name?: string;
     header: ModelHeader;
     model: { [index: string]: any };
     properties?: any;
@@ -308,11 +288,18 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface Intervention {
+    name: string;
+    timestep: number;
+    value: number;
+}
+
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
     extra: any;
     engine: string;
+    interventions?: Intervention[];
 }
 
 export interface TimeSpan {
