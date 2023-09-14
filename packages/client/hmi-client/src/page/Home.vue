@@ -12,7 +12,7 @@
 					/>
 				</header>
 				<TabView>
-					<TabPanel header="My projects">
+					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
 							<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
@@ -25,21 +25,32 @@
 							</span>
 							<span
 								><label>Sort by:</label>
-								<Dropdown v-model="selectedSort" :options="sortOptions" class="p-inputtext-sm" />
+								<Dropdown
+									v-model="selectedSort"
+									:options="sortOptions"
+									@update:model-value="tab.projects = myFilteredSortedProjects"
+									class="p-inputtext-sm"
+								/>
 							</span>
 						</section>
-						<section v-if="projects && isEmpty(projects)" class="no-projects">
+						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
-							<h3>Welcome to Terarium</h3>
-							<div>
-								Get started by creating a
-								<Button
-									label="new project"
-									class="p-button-text new-project-button"
-									@click="isNewProjectModalVisible = true"
-								/>. Your projects will be displayed on this page.
-							</div>
-						</section>
+							<template v-if="tab.title === 'My projects'">
+								<h3>Welcome to Terarium</h3>
+								<div>
+									Get started by creating a
+									<Button
+										label="new project"
+										class="p-button-text new-project-button"
+										@click="isNewProjectModalVisible = true"
+									/>. Your projects will be displayed on this page.
+								</div>
+							</template>
+							<template v-else-if="tab.title === 'Shared projects'">
+								<h3>You don't have any shared projects</h3>
+								<p>Shared projects will be displayed on this page</p>
+							</template>
+						</div>
 						<div v-else class="carousel">
 							<div class="chevron-left" @click="scroll('left', $event)">
 								<i class="pi pi-chevron-left" />
@@ -53,7 +64,7 @@
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="project in filteredSortedProjects" :key="project.id">
+								<li v-for="project in tab.projects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -72,16 +83,9 @@
 							</ul>
 						</div>
 					</TabPanel>
-					<TabPanel header="Shared projects">
-						<section class="no-projects">
-							<img src="@assets/svg/plants.svg" alt="" />
-							<h3>You don't have any shared projects</h3>
-							<p>Shared projects will be displayed on this page</p>
-						</section>
-					</TabPanel>
 				</TabView>
 			</section>
-			<section class="papers" v-if="!(projects && isEmpty(projects))">
+			<section class="papers">
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
@@ -163,7 +167,6 @@
 							v-model="newProjectName"
 							placeholder="What do you want to call your project?"
 						/>
-
 						<label for="new-project-description">Description</label>
 						<Textarea
 							id="new-project-description"
@@ -208,16 +211,17 @@ import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import Dropdown from 'primevue/dropdown';
 
 const selectedSort = ref('Last updated (descending)');
-const sortOptions = ref([
+const sortOptions = [
 	'Last updated (descending)',
 	'Last updated (ascending)',
 	'Creation date (descending)',
 	'Creation date (ascending)',
 	'Alphabetic'
-]);
+];
 
-const projects = ref<Project[]>();
-const filteredSortedProjects = computed(() => {
+const projects = ref<Project[]>([]);
+
+const myFilteredSortedProjects = computed(() => {
 	const filtered = projects.value?.filter((project) => {
 		const projectSearchLower = projectSearch.value.trim().toLowerCase();
 		if (!projectSearchLower) return true;
@@ -250,6 +254,11 @@ const filteredSortedProjects = computed(() => {
 	}
 	return filtered;
 });
+
+const projectsTabs = ref<{ title: string; projects: Project[] }[]>([
+	{ title: 'My projects', projects: [] },
+	{ title: 'Shared projects', projects: [] } // Keep shared projects empty for now
+]);
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
@@ -289,7 +298,7 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjects = computed(() => !projects.value);
+const isLoadingProjects = ref(true);
 const projectSearch = ref('');
 
 onMounted(async () => {
@@ -298,6 +307,8 @@ onMounted(async () => {
 	queryStore.reset(); // Facets queries.
 
 	projects.value = (await ProjectService.getAll()) ?? [];
+	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
+	isLoadingProjects.value = false;
 });
 
 const selectDocument = (item: Document) => {
