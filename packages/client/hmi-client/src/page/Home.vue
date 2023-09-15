@@ -14,7 +14,8 @@
 				<TabView>
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<span class="p-input-icon-left">
+							<!-- TODO: Add project search back in once we are ready
+								<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
 								<InputText
 									v-model="searchQuery"
@@ -22,7 +23,7 @@
 									class="p-inputtext-sm"
 									placeholder="Filter by keyword"
 								/>
-							</span>
+							</span> -->
 							<span
 								><label>Sort by:</label>
 								<Dropdown
@@ -188,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
@@ -295,21 +296,17 @@ const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
 const isLoadingProjects = ref(true);
-const searchQuery = ref('');
+// const searchQuery = ref('');
 
-watch(
-	() => searchQuery.value,
-	async () => {
-		// Clear all...
-		resourcesStore.reset(); // Project related resources saved.
-		queryStore.reset(); // Facets queries.
+onMounted(async () => {
+	// Clear all...
+	resourcesStore.reset(); // Project related resources saved.
+	queryStore.reset(); // Facets queries.
 
-		projects.value = (await ProjectService.getAll(searchQuery.value)) ?? [];
-		projectsTabs.value[0].projects = myFilteredSortedProjects.value;
-		isLoadingProjects.value = false;
-	},
-	{ immediate: true }
-);
+	projects.value = (await ProjectService.getAll()) ?? [];
+	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
+	isLoadingProjects.value = false;
+});
 
 const selectDocument = (item: Document) => {
 	const itemID = item as Document;
