@@ -24,7 +24,7 @@ public class ProjectResource {
 	ProjectProxy proxy;
 
 	@GET
-	public Response getProjects( 
+	public Response getProjects(
 		@DefaultValue("250") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
