@@ -43,6 +43,12 @@
 										v-if="project.id"
 										:project="(project as IProject)"
 										@click="openProject(project.id)"
+										@show-share-dialog="
+											(project) => {
+												isShareProjectVisible = true;
+												projectToShare = project;
+											}
+										"
 									/>
 								</li>
 								<li>
@@ -165,6 +171,11 @@
 				</template>
 			</tera-modal>
 		</Teleport>
+		<TeraShareProject
+			v-if="projectToShare"
+			v-model="isShareProjectVisible"
+			:project="projectToShare"
+		/>
 	</main>
 </template>
 
@@ -189,6 +200,7 @@ import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import { useProjects } from '@/composables/project';
 import { IProject } from '@/types/Project';
+import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
 
 const { allProjects, getAllProjects, getPublicationAssets, create } = useProjects();
 /**
@@ -228,6 +240,9 @@ const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
 const isLoadingProjects = computed(() => !allProjects.value);
+
+const isShareProjectVisible = ref(false);
+const projectToShare = ref<IProject>();
 
 watch(
 	() => allProjects.value,

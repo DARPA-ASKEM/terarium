@@ -22,7 +22,14 @@
 					@click.stop="showProjectMenu"
 				/>
 			</div>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true">
+				<template #item="{ item }">
+					<div class="project-menu-item">
+						<i :class="item.icon" />
+						<span>{{ item.label }}</span>
+					</div>
+				</template>
+			</Menu>
 			<Dialog :header="`Remove ${project.name}`" v-model:visible="isRemoveDialog">
 				<p>
 					You are about to remove project <em>{{ project.name }}</em
@@ -77,6 +84,7 @@ import { IProject } from '@/types/Project';
 const props = defineProps<{ project?: IProject }>();
 const emit = defineEmits<{
 	(e: 'removed', projectId: Project['id']): void;
+	(e: 'show-share-dialog', project: IProject): void;
 }>();
 
 const { remove } = useProjects();
@@ -105,7 +113,18 @@ const closeRemoveDialog = () => {
 	isRemoveDialog.value = false;
 };
 const projectMenu = ref();
-const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
+const projectMenuItems = ref([
+	{ label: 'Rename', icon: 'pi pi-pencil', command: () => {} },
+	{
+		label: 'Share',
+		icon: 'pi pi-user-plus',
+		command: () => {
+			if (props.project) emit('show-share-dialog', props.project);
+		}
+	},
+	{ separator: true },
+	{ label: 'Remove', icon: 'pi pi-trash', command: openRemoveDialog }
+]);
 const showProjectMenu = (event) => projectMenu.value.toggle(event);
 
 const removeProject = async () => {
@@ -220,5 +239,16 @@ const removeProject = async () => {
 
 .p-dialog em {
 	font-weight: var(--font-weight-semibold);
+}
+
+.project-menu-item {
+	display: flex;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem 0.5rem 1rem;
+	color: var(--text-color-secondary);
+}
+
+.project-menu-item:hover {
+	background-color: var(--surface-highlight);
 }
 </style>
