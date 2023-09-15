@@ -105,7 +105,7 @@ public class ReBACService {
 		return null;
 	}
 
-	private Response addGroup(String parentId, GroupRepresentation group) {
+	private Response createGroupMaybeParent(String parentId, GroupRepresentation group) {
 		if (parentId == null) {
 			return keycloak.realm(REALM_NAME).groups().add(group);
 		} else {
@@ -118,7 +118,7 @@ public class ReBACService {
 		GroupRepresentation groupRepresentation = new GroupRepresentation();
 		groupRepresentation.setName(name);
 
-		Response response = addGroup(parentId, groupRepresentation);
+		Response response = createGroupMaybeParent(parentId, groupRepresentation);
 		switch (response.getStatus()) {
 			case 201:
 				return CreatedResponseUtil.getCreatedId(response);
@@ -133,6 +133,12 @@ public class ReBACService {
 
 	private String createGroup(String name) {
 		return this.createGroup(null, name);
+	}
+
+	public PermissionGroup addGroup(String name) {
+		return new PermissionGroup(
+			createGroup(name),
+			name);
 	}
 
 	public List<PermissionUser> getUsers() {

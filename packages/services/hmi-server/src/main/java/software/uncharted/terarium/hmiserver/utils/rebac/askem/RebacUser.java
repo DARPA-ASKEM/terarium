@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.utils.rebac.askem;
 
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
@@ -33,5 +34,11 @@ public class RebacUser {
 
 	public void createCreatorRelationship(RebacProject rebacProject) throws Exception {
 		reBACService.createRelationship(getSchemaObject(), rebacProject.getSchemaObject(), Schema.Relationship.CREATOR);
+	}
+
+	public PermissionGroup addGroup(String name) throws Exception {
+		PermissionGroup group = reBACService.addGroup(name);
+		reBACService.createRelationship(getSchemaObject(), new SchemaObject(Schema.Type.GROUP, group.getId()), Schema.Relationship.CREATOR);
+		return group;
 	}
 }
