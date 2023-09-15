@@ -106,9 +106,9 @@ const stats = computed(() =>
 		? null
 		: {
 				contributors: 1,
-				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10),
+				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10),
 				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
-				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10)
+				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10)
 		  }
 );
 

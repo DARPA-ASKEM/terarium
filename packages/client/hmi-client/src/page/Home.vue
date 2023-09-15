@@ -123,10 +123,33 @@
 								sortable
 								:key="index"
 							>
+								<template v-if="col.field === 'name'" #body="{ data }">
+									<a @click.stop="openProject(data.id)">{{ data.name }}</a>
+								</template>
+								<template v-else-if="col.field === 'stats'" #body="{ data }">
+									<div class="stats">
+										<span><i class="pi pi-user" />1</span>
+										<span
+											><i class="pi pi-file" /> {{ data.metadata?.['publications-count'] }}</span
+										>
+										<span>
+											<dataset-icon fill="var(--text-color-secondary)" />
+											{{ data.metadata?.['datasets-count'] }}
+										</span>
+										<span><i class="pi pi-share-alt" /> {{ data.metadata?.['models-count'] }}</span>
+									</div>
+								</template>
 								<!--FIXME: There is no 'last updated' property in project yet-->
-								<template v-if="col.field === 'timestamp'" #body="{ data }">
+								<template v-else-if="col.field === 'timestamp'" #body="{ data }">
 									{{ formatDdMmmYyyy(data.timestamp) }}
 								</template>
+							</Column>
+							<Column style="width: 0">
+								<template #body>
+									<Button
+										icon="pi pi-ellipsis-v"
+										class="project-options p-button-icon-only p-button-text p-button-rounded"
+								/></template>
 							</Column>
 						</DataTable>
 					</TabPanel>
@@ -236,7 +259,6 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
-import { formatDdMmmYyyy } from '@/utils/date';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
@@ -260,6 +282,8 @@ import Dropdown from 'primevue/dropdown';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import MultiSelect from 'primevue/multiselect';
+import { formatDdMmmYyyy } from '@/utils/date';
+import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
 enum ProjectsView {
 	Cards,
@@ -318,6 +342,7 @@ const columns = ref([
 	{ field: 'name', header: 'Project title' },
 	{ field: 'description', header: 'Description' },
 	{ field: 'username', header: 'Author' },
+	{ field: 'stats', header: 'Stats' },
 	{ field: 'timestamp', header: 'Created' },
 	{ field: 'timestamp', header: 'Last updated' }
 ]);
@@ -457,12 +482,47 @@ section {
 	padding: 1rem;
 }
 
+.stats {
+	color: var(--text-color-secondary);
+	display: flex;
+	gap: 0.5rem;
+	font-size: var(--font-caption);
+	vertical-align: bottom;
+}
+
+.stats span {
+	display: flex;
+	gap: 0.1rem;
+	align-items: center;
+}
 .p-dropdown {
 	min-width: 15rem;
 }
 
+.p-datatable {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
+.p-datatable:deep(.p-datatable-thead > tr > th) {
+	padding: 1rem 0.5rem;
+	background-color: var(--surface-ground);
+}
+
 .p-datatable:deep(.p-datatable-tbody > tr > td) {
 	padding: 0.5rem;
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr .project-options) {
+	visibility: hidden;
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr:hover .project-options) {
+	visibility: visible;
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr > td > a) {
+	font-weight: var(--font-weight-semibold);
 }
 
 .p-multiselect:deep(.p-multiselect-label) {
