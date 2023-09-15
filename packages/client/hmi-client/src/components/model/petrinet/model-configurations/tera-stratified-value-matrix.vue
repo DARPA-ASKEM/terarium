@@ -87,6 +87,12 @@ const parametersValueMap = computed(() =>
 	}, {})
 );
 
+const initialsList = computed(() => {
+	const model = props.modelConfiguration.configuration as Model;
+	const initials = model.semantics?.ode.initials;
+	return initials?.map((initial) => initial.target);
+});
+
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
@@ -154,9 +160,28 @@ function getMatrixExpression(variableName: string) {
 	return variableName;
 }
 
+// See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	const expressionBase = getMatrixExpression(variableName);
+	const expressionEvalTest = await pythonInstance.parseExpression(expressionBase);
+	console.log('evaluted', expressionBase, expressionEvalTest.freeSymbols);
+
+	// Strip out initials the free symbols
+	const freeParamSymbols = expressionEvalTest.freeSymbols.filter(
+		(s) => initialsList.value?.includes(s) === false
+	);
+	console.log('\tfree params', freeParamSymbols);
+
+	if (freeParamSymbols.length === 1) {
+		return freeParamSymbols[0];
+	}
+
+	/*
+	console.log('debug', initialsList.value);
+	let simplifiedStr = await pythonInstance.removeExpressions(expressionBase, initialsList.value as string[]);
+	console.log('\tSimplified expr', expressionBase, simplifiedStr);
+	*/
 
 	if (shouldEvaluate) {
 		const expressionEval = await pythonInstance.evaluateExpression(

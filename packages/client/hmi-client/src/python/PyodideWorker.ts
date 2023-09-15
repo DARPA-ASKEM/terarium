@@ -132,13 +132,18 @@ const substituteExpression = (expressionStr: string, newVar: string, oldVar: str
 };
 
 const removeExpressions = (expressionStr: string, v: string[]) => {
+	// Register
+	pyodide.runPython(`
+		${v.join(',')} = sympy.symbols('${v.join(' ')}')
+	`);
+
 	// convert to python tuples
 	const tuples = v.map((d) => `(${d}, 0)`);
 	const p = `[${tuples.join(',')}]`;
 
 	const result: PyProxy = pyodide.runPython(`
 		eq = sympy.S("${expressionStr}", locals=_clash)
-		new_eq = sq.subs(${p})
+		new_eq = eq.subs(${p})
 		serialize_expr(new_eq)
 	`);
 

@@ -62,7 +62,7 @@ export default class PyodideController {
 	async removeExpressions(expr: string, removeList: string[]): Promise<string> {
 		return new Promise((...promise) => {
 			this.taskQueue.push({
-				action: 'evaluateExpressions',
+				action: 'removeExpressions',
 				params: [expr, removeList],
 				promise
 			});
