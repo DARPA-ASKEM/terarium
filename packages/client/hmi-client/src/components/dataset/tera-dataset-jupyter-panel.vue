@@ -128,8 +128,8 @@ import { useConfirm } from 'primevue/useconfirm';
 
 // import { createNewDataset } from '@/services/dataset';
 
-// const jupyterSession = ref(<SessionContext>newSession('llmkernel', 'ChattyNode'));
-const jupyterSession: SessionContext = await newSession('llmkernel', 'ChattyNode');
+// const jupyterSession = ref(<SessionContext>newSession('beaker', 'Beaker'));
+const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -197,7 +197,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 		const key = `d${i + 1}`;
 		contextInfo[key] = assetId;
 	});
-	if (kernel?.name === 'llmkernel') {
+	if (kernel?.name === 'beaker') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
 			context_info: contextInfo
