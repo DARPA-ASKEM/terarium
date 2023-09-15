@@ -130,7 +130,6 @@ const runningSessions = ref<any[]>([]);
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assetId: string;
 	project?: IProject;
 	model: Model | null;
 	modelConfigurationId: string;
@@ -259,7 +258,7 @@ const saveAsNewModel = async () => {
 		session: session?.name || '',
 		channel: 'shell',
 		content: {
-			parent_dataset_id: String(props.assetId),
+			parent_dataset_id: String(props.modelConfigurationId),
 			name: modelName
 		},
 		msgType: 'save_amr_request',

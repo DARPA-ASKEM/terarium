@@ -28,7 +28,7 @@ onMounted(async () => {
 	await fetchModel();
 });
 watch(
-	() => props.node.state,
+	() => props.node?.state?.modelId,
 	async () => {
 		await fetchModel();
 	}

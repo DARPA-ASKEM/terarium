@@ -1,8 +1,9 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
-interface ModelOperationState {
+export interface ModelTransformerState {
 	modelId: string | null;
-	modelConfigurationIds: any[];
+	modelConfigurationIds: string[];
+	notebookSessionId?: string;
 }
 
 export const ModelTransformerOperation: Operation = {
@@ -15,7 +16,7 @@ export const ModelTransformerOperation: Operation = {
 	action: () => {},
 
 	initState: () => {
-		const init: ModelOperationState = {
+		const init: ModelTransformerState = {
 			modelId: null,
 			modelConfigurationIds: []
 		};

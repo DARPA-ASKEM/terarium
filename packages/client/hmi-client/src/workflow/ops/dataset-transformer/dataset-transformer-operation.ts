@@ -1,7 +1,8 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
-export interface DatasetOperationState {
+export interface DatasetTransformerState {
 	datasetId: string | null;
+	notebookSessionId?: string;
 }
 
 export const DatasetTransformerOperation: Operation = {
@@ -14,7 +15,7 @@ export const DatasetTransformerOperation: Operation = {
 	action: () => {},
 
 	initState: () => {
-		const init: DatasetOperationState = {
+		const init: DatasetTransformerState = {
 			datasetId: null
 		};
 		return init;

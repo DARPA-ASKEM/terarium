@@ -2,7 +2,6 @@
 	<div class="background">
 		<Suspense>
 			<tera-model-jupyter-panel
-				asset-id="bcd32c48-1daa-4a52-8ed7-147c1dc4b0b0"
 				:model-configuration-id="modelConfigurationId"
 				:project="props.project"
 				:model="null"
@@ -29,6 +28,7 @@ import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { getModel, getModelConfigurations } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
+import { ModelTransformerState } from './mod';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -46,7 +46,8 @@ const modelConfigurationId = computed(() => {
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
 onMounted(async () => {
-	let notebookSessionId = props.node.state?.notebookSessionId;
+	const state = cloneDeep(props.node.state) as ModelTransformerState;
+	let notebookSessionId = state.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
 		const response = await createNotebookSession({
@@ -60,7 +61,6 @@ onMounted(async () => {
 
 		if (notebookSessionId) {
 			// update the node state with the notebook session id
-			const state = cloneDeep(props.node.state);
 			state.notebookSessionId = notebookSessionId;
 			workflowEventBus.emit('update-state', {
 				node: props.node,
@@ -68,8 +68,7 @@ onMounted(async () => {
 			});
 		}
 	}
-
-	notebookSession.value = await getNotebookSessionById(notebookSessionId);
+	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
 });
 
 const addOutputPort = async (data) => {
@@ -79,7 +78,7 @@ const addOutputPort = async (data) => {
 
 	if (!model) return;
 
-	const state = cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state) as ModelTransformerState;
 	state.modelId = model?.id;
 	// update node state with the model id
 	workflowEventBus.emit('update-state', { node: props.node, state });
@@ -88,7 +87,7 @@ const addOutputPort = async (data) => {
 	await addDefaultConfiguration(model);
 
 	// setting timeout...elastic search might not update default config in time
-	await setTimeout(async () => {
+	setTimeout(async () => {
 		const configurationList = await getModelConfigurations(model.id);
 		configurationList.forEach((configuration) => {
 			workflowEventBus.emit('append-output-port', {
