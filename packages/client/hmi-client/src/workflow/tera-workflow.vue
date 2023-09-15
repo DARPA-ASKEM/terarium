@@ -51,7 +51,6 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				:workflowId="assetId"
 				@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
@@ -242,6 +241,7 @@ import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 
+import crypto from 'crypto';
 import { ModelOperation, TeraModelNode } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
@@ -268,6 +268,7 @@ import {
 } from './ops/simulate-julia/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
+const WORKFLOW_SAVE_INTERVAL = 8000;
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -823,7 +824,7 @@ onMounted(() => {
 			workflowService.updateWorkflow(wf.value);
 			workflowDirty = false;
 		}
-	}, 8000);
+	}, WORKFLOW_SAVE_INTERVAL);
 });
 onUnmounted(() => {
 	if (workflowDirty) {
