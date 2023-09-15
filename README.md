@@ -130,7 +130,10 @@ You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSH
 * RabbitMQ - 5672
 
 ## Using Rabbit MQ:
-When sending and recieving messages we should use utf-8 format rather than byte[] for Quarkus deserialization.
+When sending and recieving messages we should use utf-8 format for deserialization.
+current queues include: 
+simulation-status -> messages from pyciemss-service including calibration intermediate results
+user-event -> Messages mostly used as a proof of concept at the moment
 
 ## Packaging and running the client
 
