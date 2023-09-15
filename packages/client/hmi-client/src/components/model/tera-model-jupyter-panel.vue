@@ -135,7 +135,7 @@ import { useConfirm } from 'primevue/useconfirm';
 
 // import { createNewDataset } from '@/services/dataset';
 
-const jupyterSession: SessionContext = await newSession('llmkernel', 'ChattyNode');
+const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -204,7 +204,7 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
-	if (kernel?.name === 'llmkernel') {
+	if (kernel?.name === 'beaker') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'mira_model',
 			context_info: { id: props.assetId }

@@ -17,9 +17,9 @@
 				@preview-selected="previewSelected"
 			/>
 
-			<!-- Chatty Input -->
-			<tera-chatty-input
-				class="tera-chatty-input"
+			<!-- Beaker Input -->
+			<tera-beaker-input
+				class="tera-beaker-input"
 				:kernel-is-busy="props.kernelStatus !== KernelState.idle"
 				context="dataset"
 				@submitQuery="submitQuery"
@@ -38,7 +38,7 @@ import {
 	createMessageId
 } from '@/services/jupyter';
 import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
-import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
+import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
@@ -221,7 +221,7 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'llm_response', 'chatty_response', 'dataset'].indexOf(
+		['stream', 'code_cell', 'llm_request', 'llm_response', 'beaker_response', 'dataset'].indexOf(
 			msgType
 		) > -1
 	) {
