@@ -33,6 +33,31 @@
 									class="p-inputtext-sm"
 								/>
 							</span>
+							<MultiSelect
+								v-if="view === ProjectsView.Table"
+								:modelValue="selectedColumns"
+								:options="columns"
+								optionLabel="header"
+								@update:modelValue="onToggle"
+								placeholder="Add or remove columns"
+								class="p-inputtext-sm"
+							/>
+							<span class="p-buttonset">
+								<Button
+									class="p-button-secondary p-button-sm"
+									label="Cards"
+									icon="pi pi-image"
+									@click="view = ProjectsView.Cards"
+									:active="view === ProjectsView.Cards"
+								/>
+								<Button
+									class="p-button-secondary p-button-sm"
+									label="Table"
+									icon="pi pi-list"
+									@click="view = ProjectsView.Table"
+									:active="view === ProjectsView.Table"
+								/>
+							</span>
 						</section>
 						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
@@ -52,7 +77,7 @@
 								<p>Shared projects will be displayed on this page</p>
 							</template>
 						</div>
-						<div v-else class="carousel">
+						<div v-else-if="view === ProjectsView.Cards" class="carousel">
 							<div class="chevron-left" @click="scroll('left', $event)">
 								<i class="pi pi-chevron-left" />
 							</div>
@@ -83,6 +108,27 @@
 								</li>
 							</ul>
 						</div>
+						<DataTable
+							v-else-if="view === ProjectsView.Table"
+							:value="tab.projects"
+							paginator
+							:rows="10"
+							:rowsPerPageOptions="[10, 20, 50]"
+						>
+							<Column expander style="width: 5rem" />
+							<Column
+								v-for="(col, index) of selectedColumns"
+								:field="col.field"
+								:header="col.header"
+								sortable
+								:key="index"
+							>
+								<!--FIXME: There is no 'last updated' property in project yet-->
+								<template v-if="col.field === 'timestamp'" #body="{ data }">
+									{{ formatDdMmmYyyy(data.timestamp) }}
+								</template>
+							</Column>
+						</DataTable>
 					</TabPanel>
 				</TabView>
 			</section>
@@ -190,6 +236,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
+import { formatDdMmmYyyy } from '@/utils/date';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
@@ -210,6 +257,14 @@ import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import Dropdown from 'primevue/dropdown';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import MultiSelect from 'primevue/multiselect';
+
+enum ProjectsView {
+	Cards,
+	Table
+}
 
 const selectedSort = ref('Last updated (descending)');
 const sortOptions = [
@@ -221,6 +276,7 @@ const sortOptions = [
 ];
 
 const projects = ref<Project[]>([]);
+const view = ref(ProjectsView.Cards);
 
 const myFilteredSortedProjects = computed(() => {
 	const filtered = projects.value;
@@ -256,6 +312,19 @@ const projectsTabs = ref<{ title: string; projects: Project[] }[]>([
 	{ title: 'My projects', projects: [] },
 	{ title: 'Shared projects', projects: [] } // Keep shared projects empty for now
 ]);
+
+// Table view
+const columns = ref([
+	{ field: 'name', header: 'Project title' },
+	{ field: 'description', header: 'Description' },
+	{ field: 'username', header: 'Author' },
+	{ field: 'timestamp', header: 'Created' },
+	{ field: 'timestamp', header: 'Last updated' }
+]);
+const selectedColumns = ref(columns.value);
+const onToggle = (val) => {
+	selectedColumns.value = columns.value.filter((col) => val.includes(col));
+};
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
@@ -392,6 +461,16 @@ section {
 	min-width: 15rem;
 }
 
+.p-datatable:deep(.p-datatable-tbody > tr > td) {
+	padding: 0.5rem;
+}
+
+.p-multiselect:deep(.p-multiselect-label) {
+	/* Matches exact size of smalldropdown */
+	font-size: 12.25px;
+	padding: 0.875rem;
+}
+
 .filter-and-sort {
 	background-color: var(--surface-ground);
 	border-radius: var(--border-radius);
@@ -405,6 +484,10 @@ section {
 .filter-and-sort label {
 	padding-right: 0.25rem;
 	font-size: var(--font-caption);
+}
+
+.p-buttonset {
+	margin-left: auto;
 }
 
 .papers {
@@ -444,6 +527,27 @@ h3 {
 header svg {
 	color: var(--primary-color);
 	margin-right: 0.5rem;
+}
+.no-projects {
+	background-color: var(--gray-0);
+	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
+	background-size: 12px 12px;
+	background-position: 0 0;
+	background-repeat: repeat;
+}
+
+.no-projects > * {
+	margin: auto;
+	margin-top: 1rem;
+	text-align: center;
+}
+
+.no-projects > img {
+	height: 203px;
+}
+
+a {
+	color: var(--primary-color);
 }
 
 .carousel {
@@ -500,7 +604,40 @@ header svg {
 .pi-chevron-right:hover {
 	color: var(--primary-color);
 }
+.new-project-card {
+	width: 17rem;
+	height: 20rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1rem;
+	border-radius: var(--border-radius-big);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+	cursor: pointer;
+}
 
+.new-project-card > p {
+	text-align: center;
+	color: var(--text-color-primary);
+}
+
+.new-project-card img {
+	margin: auto;
+}
+
+.new-project-card:hover {
+	background-color: var(--surface);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.new-project-button {
+	padding: 0;
+}
+
+#new-project-name,
+#new-project-description {
+	border-color: var(--surface-border);
+}
 ul {
 	gap: 1.5rem;
 	transition: margin-left 0.8s;
@@ -572,62 +709,5 @@ li {
 
 .selected-document-pane {
 	margin: 2rem 0;
-}
-
-.no-projects {
-	background-color: var(--gray-0);
-	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
-	background-size: 12px 12px;
-	background-position: 0 0;
-	background-repeat: repeat;
-}
-
-.no-projects > * {
-	margin: auto;
-	margin-top: 1rem;
-	text-align: center;
-}
-
-.no-projects > img {
-	height: 203px;
-}
-
-a {
-	color: var(--primary-color);
-}
-
-.new-project-card {
-	width: 17rem;
-	height: 20rem;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	border-radius: var(--border-radius-big);
-	transition: background-color 0.2s ease, box-shadow 0.2s ease;
-	cursor: pointer;
-}
-
-.new-project-card > p {
-	text-align: center;
-	color: var(--text-color-primary);
-}
-
-.new-project-card img {
-	margin: auto;
-}
-
-.new-project-card:hover {
-	background-color: var(--surface);
-	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-}
-
-.new-project-button {
-	padding: 0;
-}
-
-#new-project-name,
-#new-project-description {
-	border-color: var(--surface-border);
 }
 </style>
