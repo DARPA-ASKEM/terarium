@@ -76,7 +76,7 @@ async function remove(projectId: IProject['id']): Promise<boolean> {
  */
 async function getAll(): Promise<Project[] | null> {
 	try {
-		const response = await API.get('/projects');
+		const response = await API.get(`/projects`);
 		const { status, data } = response;
 		if (status !== 200 || !data) return null;
 		return (data as Project[]).reverse();
