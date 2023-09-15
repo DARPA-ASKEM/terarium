@@ -59,99 +59,103 @@
 								/>
 							</span>
 						</section>
-						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
-							<img src="@assets/svg/seed.svg" alt="" />
-							<template v-if="tab.title === 'My projects'">
-								<h3>Welcome to Terarium</h3>
-								<div>
-									Get started by creating a
-									<Button
-										label="new project"
-										class="p-button-text new-project-button"
-										@click="isNewProjectModalVisible = true"
-									/>. Your projects will be displayed on this page.
-								</div>
-							</template>
-							<template v-else-if="tab.title === 'Shared projects'">
-								<h3>You don't have any shared projects</h3>
-								<p>Shared projects will be displayed on this page</p>
-							</template>
-						</div>
-						<div v-else-if="view === ProjectsView.Cards" class="carousel">
-							<div class="chevron-left" @click="scroll('left', $event)">
-								<i class="pi pi-chevron-left" />
-							</div>
-							<div class="chevron-right" @click="scroll('right', $event)">
-								<i class="pi pi-chevron-right" />
-							</div>
-							<ul v-if="isLoadingProjects">
-								<li v-for="i in [0, 1, 2]" :key="i">
-									<tera-project-card />
-								</li>
-							</ul>
-							<ul v-else>
-								<li v-for="project in tab.projects" :key="project.id">
-									<tera-project-card
-										v-if="project.id"
-										:project="project"
-										@click="openProject(project.id)"
-										@removed="removeProject"
-									/>
-								</li>
-								<li>
-									<section class="new-project-card" @click="isNewProjectModalVisible = true">
-										<div>
-											<img src="@assets/svg/plus.svg" alt="" />
-										</div>
-										<p>New project</p>
-									</section>
-								</li>
-							</ul>
-						</div>
-						<DataTable
-							v-else-if="view === ProjectsView.Table"
-							:value="tab.projects"
-							paginator
-							:rows="10"
-							:rowsPerPageOptions="[10, 20, 50]"
-						>
-							<Column expander style="width: 5rem" />
-							<Column
-								v-for="(col, index) of selectedColumns"
-								:field="col.field"
-								:header="col.header"
-								sortable
-								:key="index"
-							>
-								<template v-if="col.field === 'name'" #body="{ data }">
-									<a @click.stop="openProject(data.id)">{{ data.name }}</a>
-								</template>
-								<template v-else-if="col.field === 'stats'" #body="{ data }">
-									<div class="stats">
-										<span><i class="pi pi-user" />1</span>
-										<span
-											><i class="pi pi-file" /> {{ data.metadata?.['publications-count'] }}</span
-										>
-										<span>
-											<dataset-icon fill="var(--text-color-secondary)" />
-											{{ data.metadata?.['datasets-count'] }}
-										</span>
-										<span><i class="pi pi-share-alt" /> {{ data.metadata?.['models-count'] }}</span>
+						<section class="list-of-projects">
+							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+								<img src="@assets/svg/seed.svg" alt="" />
+								<template v-if="tab.title === 'My projects'">
+									<h3>Welcome to Terarium</h3>
+									<div>
+										Get started by creating a
+										<Button
+											label="new project"
+											class="p-button-text new-project-button"
+											@click="isNewProjectModalVisible = true"
+										/>. Your projects will be displayed on this page.
 									</div>
 								</template>
-								<!--FIXME: There is no 'last updated' property in project yet-->
-								<template v-else-if="col.field === 'timestamp'" #body="{ data }">
-									{{ formatDdMmmYyyy(data.timestamp) }}
+								<template v-else-if="tab.title === 'Shared projects'">
+									<h3>You don't have any shared projects</h3>
+									<p>Shared projects will be displayed on this page</p>
 								</template>
-							</Column>
-							<Column style="width: 0">
-								<template #body>
-									<Button
-										icon="pi pi-ellipsis-v"
-										class="project-options p-button-icon-only p-button-text p-button-rounded"
-								/></template>
-							</Column>
-						</DataTable>
+							</div>
+							<div v-else-if="view === ProjectsView.Cards" class="carousel">
+								<div class="chevron-left" @click="scroll('left', $event)">
+									<i class="pi pi-chevron-left" />
+								</div>
+								<div class="chevron-right" @click="scroll('right', $event)">
+									<i class="pi pi-chevron-right" />
+								</div>
+								<ul v-if="isLoadingProjects">
+									<li v-for="i in [0, 1, 2]" :key="i">
+										<tera-project-card />
+									</li>
+								</ul>
+								<ul v-else>
+									<li v-for="project in tab.projects" :key="project.id">
+										<tera-project-card
+											v-if="project.id"
+											:project="project"
+											@click="openProject(project.id)"
+											@removed="removeProject"
+										/>
+									</li>
+									<li>
+										<section class="new-project-card" @click="isNewProjectModalVisible = true">
+											<div>
+												<img src="@assets/svg/plus.svg" alt="" />
+											</div>
+											<p>New project</p>
+										</section>
+									</li>
+								</ul>
+							</div>
+							<DataTable
+								v-else-if="view === ProjectsView.Table"
+								:value="tab.projects"
+								paginator
+								:rows="10"
+								:rowsPerPageOptions="[10, 20, 50]"
+							>
+								<Column expander style="width: 5rem" />
+								<Column
+									v-for="(col, index) of selectedColumns"
+									:field="col.field"
+									:header="col.header"
+									:sortable="col.field !== 'stats'"
+									:key="index"
+								>
+									<template v-if="col.field === 'name'" #body="{ data }">
+										<a @click.stop="openProject(data.id)">{{ data.name }}</a>
+									</template>
+									<template v-else-if="col.field === 'stats'" #body="{ data }">
+										<div class="stats">
+											<span><i class="pi pi-user" />1</span>
+											<span
+												><i class="pi pi-file" /> {{ data.metadata?.['publications-count'] }}</span
+											>
+											<span>
+												<dataset-icon fill="var(--text-color-secondary)" />
+												{{ data.metadata?.['datasets-count'] }}
+											</span>
+											<span
+												><i class="pi pi-share-alt" /> {{ data.metadata?.['models-count'] }}</span
+											>
+										</div>
+									</template>
+									<!--FIXME: There is no 'last updated' property in project yet-->
+									<template v-else-if="col.field === 'timestamp'" #body="{ data }">
+										{{ formatDdMmmYyyy(data.timestamp) }}
+									</template>
+								</Column>
+								<Column style="width: 0">
+									<template #body>
+										<Button
+											icon="pi pi-ellipsis-v"
+											class="project-options p-button-icon-only p-button-text p-button-rounded"
+									/></template>
+								</Column>
+							</DataTable>
+						</section>
 					</TabPanel>
 				</TabView>
 			</section>
@@ -476,16 +480,20 @@ const removeProject = (projectId: Project['id']) => {
 	flex-direction: column;
 }
 
-section {
+.projects {
 	background-color: var(--surface-section);
 	color: var(--text-color-secondary);
 	padding: 1rem;
 }
 
+.list-of-projects {
+	min-height: 21rem;
+}
+
 .stats {
 	color: var(--text-color-secondary);
 	display: flex;
-	gap: 0.5rem;
+	gap: 0.75rem;
 	font-size: var(--font-caption);
 	vertical-align: bottom;
 }
@@ -504,6 +512,13 @@ section {
 	border-radius: var(--border-radius);
 }
 
+.p-datatable:deep(.p-datatable-tbody > tr > td),
+.p-datatable:deep(.p-datatable-thead > tr > th) {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	padding: 1rem 0.5rem;
 	background-color: var(--surface-ground);
@@ -511,6 +526,7 @@ section {
 
 .p-datatable:deep(.p-datatable-tbody > tr > td) {
 	padding: 0.5rem;
+	max-width: 20rem;
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr .project-options) {
@@ -526,7 +542,7 @@ section {
 }
 
 .p-multiselect:deep(.p-multiselect-label) {
-	/* Matches exact size of smalldropdown */
+	/* Matches exact size of small dropdown */
 	font-size: 12.25px;
 	padding: 0.875rem;
 }
