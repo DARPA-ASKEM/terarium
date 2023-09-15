@@ -80,7 +80,7 @@ const editableCellStates = ref<boolean[][]>([]);
 
 const matrixExpressionsList = ref<string[][]>([]);
 
-const parametersValueList = computed(() =>
+const parametersValueMap = computed(() =>
 	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
 		acc[val.id] = val.value;
 		return acc;
@@ -161,7 +161,7 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	if (shouldEvaluate) {
 		const expressionEval = await pythonInstance.evaluateExpression(
 			expressionBase,
-			parametersValueList.value
+			parametersValueMap.value
 		);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}

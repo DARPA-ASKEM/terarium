@@ -131,12 +131,23 @@ const substituteExpression = (expressionStr: string, newVar: string, oldVar: str
 	};
 };
 
-const removeExpression = (expressionStr: string, v: string) => {
+const removeExpressions = (expressionStr: string, v: string[]) => {
+	// convert to python tuples
+	const tuples = v.map((d) => `(${d}, 0)`);
+	const p = `[${tuples.join(',')}]`;
+
 	const result: PyProxy = pyodide.runPython(`
 		eq = sympy.S("${expressionStr}", locals=_clash)
-		new_eq = sq.subs(${v}, 0)
+		new_eq = sq.subs(${p})
 		serialize_expr(new_eq)
 	`);
+
+	// const result: PyProxy = pyodide.runPython(`
+	// 	eq = sympy.S("${expressionStr}", locals=_clash)
+	// 	new_eq = sq.subs(${v}, 0)
+	// 	serialize_expr(new_eq)
+	// `);
+	//
 	return {
 		latex: result.get('latex'),
 		mathml: result.get('mathml'),
@@ -153,7 +164,7 @@ const map = new Map<string, Function>();
 map.set('parseExpression', parseExpression);
 map.set('substituteExpression', substituteExpression);
 map.set('evaluateExpression', evaluateExpression);
-map.set('removeExpression', removeExpression);
+map.set('removeExpressions', removeExpressions);
 map.set('runPython', runPython);
 
 onmessage = function (e) {

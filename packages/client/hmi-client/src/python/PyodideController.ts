@@ -59,6 +59,17 @@ export default class PyodideController {
 		});
 	}
 
+	async removeExpressions(expr: string, removeList: string[]): Promise<string> {
+		return new Promise((...promise) => {
+			this.taskQueue.push({
+				action: 'evaluateExpressions',
+				params: [expr, removeList],
+				promise
+			});
+			this.queueTask();
+		});
+	}
+
 	async runPython(code: string) {
 		return new Promise((...promise) => {
 			this.taskQueue.push({
