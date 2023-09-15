@@ -25,10 +25,11 @@ public class ProjectResource {
 
 	@GET
 	public Response getProjects(
+		@QueryParam("search_query") final String searchQuery,
 		@DefaultValue("250") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
-		List<Project> projects = proxy.getProjects(pageSize, page);
+		List<Project> projects = proxy.getProjects(searchQuery, pageSize, page);
 
 		// Remove non-active (soft-deleted) projects
 		projects = projects

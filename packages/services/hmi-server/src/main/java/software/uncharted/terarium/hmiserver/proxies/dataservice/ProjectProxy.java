@@ -22,6 +22,7 @@ public interface ProjectProxy {
 	@GET
 	@LogRestClientTime
 	List<Project> getProjects(
+		@QueryParam("search_query") String searchQuery,
 		@DefaultValue("250") @QueryParam("page_size") Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") Integer page
 	);

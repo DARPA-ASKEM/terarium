@@ -17,7 +17,7 @@
 							<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
 								<InputText
-									v-model="projectSearch"
+									v-model="searchQuery"
 									size="small"
 									class="p-inputtext-sm"
 									placeholder="Filter by keyword"
@@ -188,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
@@ -222,11 +222,7 @@ const sortOptions = [
 const projects = ref<Project[]>([]);
 
 const myFilteredSortedProjects = computed(() => {
-	const filtered = projects.value?.filter((project) => {
-		const projectSearchLower = projectSearch.value.trim().toLowerCase();
-		if (!projectSearchLower) return true;
-		return project.name.toLowerCase().includes(projectSearchLower);
-	});
+	const filtered = projects.value;
 	if (!filtered) return [];
 
 	if (selectedSort.value === 'Alphabetic') {
@@ -299,17 +295,21 @@ const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
 const isLoadingProjects = ref(true);
-const projectSearch = ref('');
+const searchQuery = ref('');
 
-onMounted(async () => {
-	// Clear all...
-	resourcesStore.reset(); // Project related resources saved.
-	queryStore.reset(); // Facets queries.
+watch(
+	() => searchQuery.value,
+	async () => {
+		// Clear all...
+		resourcesStore.reset(); // Project related resources saved.
+		queryStore.reset(); // Facets queries.
 
-	projects.value = (await ProjectService.getAll()) ?? [];
-	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
-	isLoadingProjects.value = false;
-});
+		projects.value = (await ProjectService.getAll(searchQuery.value)) ?? [];
+		projectsTabs.value[0].projects = myFilteredSortedProjects.value;
+		isLoadingProjects.value = false;
+	},
+	{ immediate: true }
+);
 
 const selectDocument = (item: Document) => {
 	const itemID = item as Document;
@@ -480,13 +480,13 @@ header svg {
 	border-radius: 10rem 0rem 0rem 10rem;
 }
 
-.chevron-left:hover,
-.chevron-right:hover {
+.carousel:hover .chevron-left,
+.carousel:hover .chevron-right {
 	background-color: var(--chevron-hover);
 }
 
-.chevron-left:hover > .pi-chevron-left,
-.chevron-right:hover > .pi-chevron-right {
+.carousel:hover .chevron-left > .pi-chevron-left,
+.carousel:hover .chevron-right > .pi-chevron-right {
 	color: var(--primary-color);
 	opacity: 100;
 }
