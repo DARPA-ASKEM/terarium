@@ -226,7 +226,7 @@ const myFilteredSortedProjects = computed(() => {
 	const filtered = projects.value;
 	if (!filtered) return [];
 
-	if (selectedSort.value === 'Alphabetic') {
+	if (selectedSort.value === 'Alphabetical') {
 		filtered.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 	}
 	// FIXME: Last updated and creation date are the same at the moment
