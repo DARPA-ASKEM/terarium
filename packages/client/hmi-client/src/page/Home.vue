@@ -44,6 +44,12 @@
 										:project="project"
 										@click="openProject(project.id)"
 										@removed="removeProject"
+										@show-share-dialog="
+											(project) => {
+												isShareProjectVisible = true;
+												projectToShare = project;
+											}
+										"
 									/>
 								</li>
 								<li>
@@ -166,6 +172,11 @@
 				</template>
 			</tera-modal>
 		</Teleport>
+		<TeraShareProject
+			v-if="projectToShare"
+			v-model="isShareProjectVisible"
+			:project="projectToShare"
+		/>
 	</main>
 </template>
 
@@ -190,6 +201,8 @@ import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import { IProject } from '@/types/Project';
+import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
 
 const projects = ref<Project[]>();
 
@@ -232,6 +245,9 @@ const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
 const isLoadingProjects = computed(() => !projects.value);
+
+const isShareProjectVisible = ref(false);
+const projectToShare = ref<IProject>();
 
 onMounted(async () => {
 	// Clear all...

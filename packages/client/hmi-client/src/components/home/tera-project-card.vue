@@ -84,10 +84,12 @@ import { placeholder } from '@/utils/project-card';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { IProject } from '@/types/Project';
 
 const props = defineProps<{ project?: Project }>();
 const emit = defineEmits<{
 	(e: 'removed', projectId: Project['id']): void;
+	(e: 'show-share-dialog', project: IProject): void;
 }>();
 
 const titleRef = ref();
@@ -125,7 +127,18 @@ const closeRemoveDialog = () => {
 	isRemoveDialog.value = false;
 };
 const projectMenu = ref();
-const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
+const projectMenuItems = ref([
+	{ label: 'Rename', icon: 'pi pi-pencil', command: () => {} },
+	{
+		label: 'Share',
+		icon: 'pi pi-user-plus',
+		command: () => {
+			if (props.project) emit('show-share-dialog', props.project);
+		}
+	},
+	{ separator: true },
+	{ label: 'Remove', icon: 'pi pi-trash', command: openRemoveDialog }
+]);
 const showProjectMenu = (event) => projectMenu.value.toggle(event);
 
 const removeProject = async () => {
@@ -283,5 +296,16 @@ section {
 
 .p-dialog em {
 	font-weight: var(--font-weight-semibold);
+}
+
+.project-menu-item {
+	display: flex;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem 0.5rem 1rem;
+	color: var(--text-color-secondary);
+}
+
+.project-menu-item:hover {
+	background-color: var(--surface-highlight);
 }
 </style>
