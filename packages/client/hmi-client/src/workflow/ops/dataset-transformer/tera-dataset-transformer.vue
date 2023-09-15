@@ -25,7 +25,7 @@ import { workflowEventBus } from '@/services/workflow';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
-import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -46,7 +46,7 @@ onMounted(async () => {
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
 		const response = await createNotebookSession({
-			id: crypto.randomUUID(),
+			id: uuidv4(),
 			name: props.node.id,
 			description: '',
 			data: { history: [] },
