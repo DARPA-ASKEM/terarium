@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
 	ServerConnection,
@@ -16,6 +15,7 @@ import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
 import API from '@/api/api';
+import crypto from 'crypto';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;
@@ -145,7 +145,7 @@ let initialized = false;
 
 export const createMessageId = (msgType) => {
 	// const timestamp = Date
-	const uuid = uuidv4().replaceAll('-', '').slice(0, 16);
+	const uuid = crypto.randomUUID().replaceAll('-', '').slice(0, 16);
 	return `tgpt-${uuid}-${msgType}`;
 };
 
