@@ -22,9 +22,9 @@ import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-p
 import { computed, onMounted, ref } from 'vue';
 import { workflowEventBus } from '@/services/workflow';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
-import { v4 as uuidv4 } from 'uuid';
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
 const props = defineProps<{
 	node: WorkflowNode;

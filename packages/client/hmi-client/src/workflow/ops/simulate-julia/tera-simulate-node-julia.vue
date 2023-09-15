@@ -23,7 +23,7 @@ import _ from 'lodash';
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, SimulationRequest } from '@/types/Types';
 
 import {
 	makeForecastJob,
@@ -74,7 +74,7 @@ const runSimulate = async () => {
 	const state = props.node.state as SimulateJuliaOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
-		const payload = {
+		const payload: SimulationRequest = {
 			modelConfigId: configId,
 			timespan: {
 				start: state.currentTimespan.start,
