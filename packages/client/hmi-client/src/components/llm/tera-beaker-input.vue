@@ -1,5 +1,5 @@
 <template>
-	<div class="tera-chatty-container" ref="containerElement">
+	<div class="tera-beaker-container" ref="containerElement">
 		<div class="chat-input-container">
 			<span class="p-input-icon-right">
 				<div>
@@ -109,7 +109,7 @@ onMounted(() => {
 ::placeholder {
 	color: var(--gray-700);
 }
-.tera-chatty-container {
+.tera-beaker-container {
 	display: relative;
 	padding-top: 5px;
 	padding-bottom: 35px;
