@@ -172,11 +172,37 @@ function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 	}
 }
 
+function getFileExtension(language: ProgrammingLanguage): string {
+	switch (language) {
+		case ProgrammingLanguage.Python:
+			return 'py';
+		case ProgrammingLanguage.Julia:
+			return 'jl';
+		case ProgrammingLanguage.R:
+			return 'r';
+		default:
+			return '';
+	}
+}
+
+function setFileExtension(fileName: string, language: ProgrammingLanguage) {
+	// check name for file extension
+	// if there is no extension, add the appropriate one based on the selected language
+	const name = fileName.split('.');
+	if (name.length > 0) {
+		return name[0].concat('.').concat(getFileExtension(language));
+	}
+	return fileName;
+}
+
 export {
 	uploadCodeToProject,
 	getCodeFileAsText,
 	uploadCodeToProjectFromGithub,
 	getCodeAsset,
 	updateCodeAsset,
-	addFileToCodeAsset
+	addFileToCodeAsset,
+	getFileExtension,
+	getProgrammingLanguage,
+	setFileExtension
 };
