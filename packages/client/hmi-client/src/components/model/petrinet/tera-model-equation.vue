@@ -1,7 +1,7 @@
 <template>
 	<tera-equation-container
 		:is-editing="isEditing"
-		:is-editable="isEditable && canEditEquations"
+		:is-editable="isEditable"
 		@cancel-edit="cancelEdit"
 		@add-equation="addEquation"
 		@start-editing="isEditing = true"
@@ -45,7 +45,6 @@ const equationsRef = ref<any[]>([]);
 const equations = ref<string[]>([]);
 const originalEquations = ref<string[]>([]);
 const isEditing = ref(false);
-const canEditEquations = ref(true);
 
 const setNewEquation = (index: number, latexEq: string) => {
 	equations.value[index] = latexEq;
@@ -77,15 +76,6 @@ const updateModelFromEquations = async () => {
 	if (updated) emit('model-updated');
 };
 
-function modelIsEmpty(targetModel: Model): boolean {
-	// model does not have any states or transitions
-	if (targetModel.model?.states?.length === 0 && targetModel.model?.transitions?.length === 0) {
-		return true;
-	}
-
-	return false;
-}
-
 watch(
 	() => props.model,
 	async () => {
@@ -93,8 +83,6 @@ watch(
 		if (latexFormula) {
 			updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
 		}
-
-		canEditEquations.value = (props.model && modelIsEmpty(props.model)) as boolean;
 	},
 	{ deep: true, immediate: true }
 );
