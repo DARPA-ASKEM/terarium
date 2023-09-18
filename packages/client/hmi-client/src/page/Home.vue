@@ -24,7 +24,7 @@
 									placeholder="Filter by keyword"
 								/>
 							</span> -->
-							<span
+							<span v-if="view === ProjectsView.Cards"
 								><label>Sort by:</label>
 								<Dropdown
 									v-model="selectedSort"
@@ -37,6 +37,7 @@
 								v-if="view === ProjectsView.Table"
 								:modelValue="selectedColumns"
 								:options="columns"
+								:maxSelectedLabels="1"
 								optionLabel="header"
 								@update:modelValue="onToggle"
 								placeholder="Add or remove columns"
@@ -116,7 +117,7 @@
 								:rows="10"
 								:rowsPerPageOptions="[10, 20, 50]"
 							>
-								<Column expander style="width: 5rem" />
+								<Column expander style="width: 0" />
 								<Column
 									v-for="(col, index) of selectedColumns"
 									:field="col.field"
@@ -125,7 +126,9 @@
 									:key="index"
 								>
 									<template v-if="col.field === 'name'" #body="{ data }">
-										<a @click.stop="openProject(data.id)">{{ data.name }}</a>
+										<div class="project-title-link" @click.stop="openProject(data.id)">
+											<a>{{ data.name }}</a>
+										</div>
 									</template>
 									<template v-else-if="col.field === 'stats'" #body="{ data }">
 										<div class="stats">
@@ -492,6 +495,7 @@ const removeProject = (projectId: Project['id']) => {
 
 .stats {
 	display: flex;
+	width: fit-content;
 	gap: 0.75rem;
 	font-size: var(--font-caption);
 	vertical-align: bottom;
@@ -501,8 +505,11 @@ const removeProject = (projectId: Project['id']) => {
 	display: flex;
 	gap: 0.1rem;
 	align-items: center;
+	width: 2rem;
 }
-.p-dropdown {
+
+.p-dropdown,
+.p-multiselect {
 	min-width: 15rem;
 }
 
@@ -526,7 +533,7 @@ const removeProject = (projectId: Project['id']) => {
 .p-datatable:deep(.p-datatable-tbody > tr > td) {
 	color: var(--text-color-secondary);
 	padding: 0.5rem;
-	max-width: 20rem;
+	max-width: 32rem;
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr .project-options) {
@@ -538,7 +545,22 @@ const removeProject = (projectId: Project['id']) => {
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td > a) {
+	color: var(--text-color-primary);
 	font-weight: var(--font-weight-semibold);
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr > td > .project-title-link) {
+	cursor: pointer;
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr > td > .project-title-link > a) {
+	color: var(--text-color-primary);
+	font-weight: var(--font-weight-semibold);
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr > td > .project-title-link:hover > a) {
+	color: var(--primary-color);
+	text-decoration: underline;
 }
 
 .p-multiselect:deep(.p-multiselect-label) {
