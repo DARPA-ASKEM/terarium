@@ -31,13 +31,6 @@
 					@click="view = ModelView.MODEL"
 					:active="view === ModelView.MODEL"
 				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Transform"
-					icon="pi pi-sync"
-					@click="view = ModelView.NOTEBOOK"
-					:active="view === ModelView.NOTEBOOK"
-				/>
 			</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
@@ -66,16 +59,6 @@
 			@update-configuration="updateConfiguration"
 			@add-configuration="addConfiguration"
 		/>
-		<Suspense v-else-if="view === ModelView.NOTEBOOK">
-			<tera-model-jupyter-panel
-				:asset-id="model.id"
-				:model-configurations="modelConfigurations"
-				:project="props.project"
-				:model="model"
-				:show-kernels="false"
-				:show-chat-thoughts="false"
-			/>
-		</Suspense>
 	</tera-asset>
 </template>
 
@@ -85,7 +68,6 @@ import { isEmpty, cloneDeep } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraModelEditor from '@/components/model/petrinet/tera-model-editor.vue';
-import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -104,8 +86,7 @@ const { activeProject, getActiveProject } = useProjects();
 
 enum ModelView {
 	DESCRIPTION,
-	MODEL,
-	NOTEBOOK
+	MODEL
 }
 
 const props = defineProps({
