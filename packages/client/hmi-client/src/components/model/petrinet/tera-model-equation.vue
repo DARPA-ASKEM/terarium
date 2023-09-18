@@ -72,7 +72,7 @@ const cancelEdit = () => {
 
 const updateLatexFormula = (equationsList: string[]) => {
 	equations.value = equationsList;
-	if (isEmpty(originalEquations.value)) originalEquations.value = equationsList.map((eq) => eq);
+	if (isEmpty(originalEquations.value)) originalEquations.value = Array.from(equationsList);
 };
 
 const updateModelFromEquations = async () => {
