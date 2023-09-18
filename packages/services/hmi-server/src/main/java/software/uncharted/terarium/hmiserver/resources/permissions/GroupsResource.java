@@ -6,11 +6,14 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/api/groups")
@@ -36,11 +39,18 @@ public class GroupsResource {
 
 	@POST
 	@Tag(name = "Post group")
-	public PermissionGroup addGroup(
+	public Response addGroup(
 		@QueryParam("name") final String name
 	) {
 		try {
-			return new RebacUser(jwt.getSubject(), reBACService).addGroup(name);
+			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID))) {
+				PermissionGroup permissionGroup = new RebacUser(jwt.getSubject(), reBACService).addGroup(name);
+				return Response
+					.status(Response.Status.OK)
+					.entity(permissionGroup)
+					.build();
+			}
+			return Response.status(404).build();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

@@ -6,7 +6,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
 import javax.inject.Inject;
 
-public class RebacGroup {
+public class RebacGroup extends RebacObject {
 	@Inject
 	ReBACService reBACService;
 
@@ -18,21 +18,5 @@ public class RebacGroup {
 
 	public SchemaObject getSchemaObject() {
 		return new SchemaObject(Schema.Type.USER, id);
-	}
-
-	public boolean canRead(SchemaObject schemaObject) throws Exception {
-		return reBACService.canRead(getSchemaObject(), schemaObject);
-	}
-
-	public boolean canWrite(SchemaObject schemaObject) throws Exception {
-		return reBACService.canWrite(getSchemaObject(), schemaObject);
-	}
-
-	public boolean canAdministrate(SchemaObject schemaObject) throws Exception {
-		return reBACService.canAdministrate(getSchemaObject(), schemaObject);
-	}
-
-	public void createCreatorRelationship(SchemaObject schemaObject) throws Exception {
-		reBACService.createRelationship(getSchemaObject(), schemaObject, Schema.Relationship.CREATOR);
 	}
 }
