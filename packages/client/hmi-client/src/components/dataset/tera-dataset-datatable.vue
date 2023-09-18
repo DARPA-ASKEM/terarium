@@ -130,6 +130,7 @@ const chartOptions = computed(() => setChartOptions());
 
 // Given the bins for a column set up the object needed for the chart.
 const setBarChartData = (bins: any[]) => {
+	console.log(props.rawContent);
 	const documentStyle = getComputedStyle(document.documentElement);
 	const dummyLabels: string[] = [];
 	// reverse the bins so that the chart is displayed in the correct order

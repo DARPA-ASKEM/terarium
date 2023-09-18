@@ -33,6 +33,7 @@
 				@configuration-change="configurationChange(index, $event)"
 				color-by-run
 			/>
+			<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
 			<Button
 				class="add-chart"
 				text
@@ -110,7 +111,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { ModelConfiguration, Model, TimeSpan } from '@/types/Types';
+import { ModelConfiguration, Model, TimeSpan, CsvAsset } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -118,13 +119,14 @@ import ModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-
 
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { saveDataset } from '@/services/dataset';
+import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -148,6 +150,7 @@ const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
+const rawContent = ref<CsvAsset | null>(null);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
@@ -195,6 +198,8 @@ onMounted(async () => {
 	const modelId = modelConfigurationObj.modelId;
 	model.value = await getModel(modelId);
 
+	console.log(nodeObj.outputs);
+
 	// Fetch run results
 	await Promise.all(
 		port.value.map(async (runId) => {
@@ -209,6 +214,8 @@ onMounted(async () => {
 				);
 			}
 			runResults.value[runId] = csvData as any;
+			rawContent.value = createCsvAssetFromRunResults(runResults.value);
+			console.log(rawContent.value);
 		})
 	);
 });

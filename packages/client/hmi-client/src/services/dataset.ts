@@ -10,6 +10,8 @@ import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import useResourcesStore from '@/stores/resources';
 import * as ProjectService from '@/services/project';
+import { RunResults } from '@/types/SimulateConfig';
+import _ from 'lodash';
 
 /**
  * Get all datasets
@@ -227,7 +229,7 @@ async function createDatasetFromSimulationResult(
 	}
 }
 
-export const saveDataset = async (
+const saveDataset = async (
 	projectId: string,
 	simulationId: string | undefined,
 	datasetName: string | null
@@ -238,6 +240,35 @@ export const saveDataset = async (
 	}
 };
 
+const createCsvAssetFromRunResults = (runResults: RunResults): CsvAsset | null => {
+	const runResult: RunResults = _.cloneDeep(runResults);
+	console.log('runResult', runResult);
+	const runIdList = Object.keys(runResult);
+	if (runIdList.length === 0) return null;
+
+	const headers = ['run_id', ...Object.keys(runResult[runIdList[0]][0])];
+	let csvData: CsvAsset = {
+		headers,
+		data: [],
+		csv: [headers],
+		rowCount: 0
+	};
+
+	runIdList.forEach((id) => {
+		csvData = {
+			...csvData,
+			data: [...csvData.data, ...runResult[id].map((row) => ({ run_id: id, ...row }))],
+			rowCount: csvData.rowCount + runResult[id].length
+		};
+		runResult[id].forEach((row) => {
+			const rowValues = Object.values(row);
+			csvData.csv.push([id, ...(rowValues as any)]);
+		});
+	});
+
+	return csvData;
+};
+
 export {
 	getAll,
 	getDataset,
@@ -246,5 +277,7 @@ export {
 	downloadRawFile,
 	createNewDatasetFromCSV,
 	createNewDatasetFromGithubFile,
-	createDatasetFromSimulationResult
+	createDatasetFromSimulationResult,
+	saveDataset,
+	createCsvAssetFromRunResults
 };
