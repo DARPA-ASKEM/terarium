@@ -240,8 +240,8 @@ import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
+import { v4 as uuidv4 } from 'uuid';
 
-import crypto from 'crypto';
 import { ModelOperation, TeraModelNode } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
@@ -372,7 +372,7 @@ const refreshModelNode = async (node: WorkflowNode) => {
 		}
 
 		node.outputs.push({
-			id: crypto.randomUUID(),
+			id: uuidv4(),
 			type: 'modelConfigId',
 			label: configuration.name,
 			value: [configuration.id],
@@ -401,7 +401,7 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
-			id: crypto.randomUUID(),
+			id: uuidv4(),
 			type: 'datasetId',
 			label: data.name,
 			value: [data.id],
@@ -412,7 +412,7 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 }
 function appendInputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
-		id: crypto.randomUUID(),
+		id: uuidv4(),
 		type: port.type,
 		label: port.label,
 		status: WorkflowPortStatus.NOT_CONNECTED
@@ -421,7 +421,7 @@ function appendInputPort(node: WorkflowNode, port: { type: string; label?: strin
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
-		id: crypto.randomUUID(),
+		id: uuidv4(),
 		type: port.type,
 		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
