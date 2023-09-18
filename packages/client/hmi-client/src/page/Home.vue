@@ -491,7 +491,6 @@ const removeProject = (projectId: Project['id']) => {
 }
 
 .stats {
-	color: var(--text-color-secondary);
 	display: flex;
 	gap: 0.75rem;
 	font-size: var(--font-caption);
@@ -525,6 +524,7 @@ const removeProject = (projectId: Project['id']) => {
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td) {
+	color: var(--text-color-secondary);
 	padding: 0.5rem;
 	max-width: 20rem;
 }
