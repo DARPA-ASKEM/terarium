@@ -28,10 +28,7 @@ import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
 import { Model } from '@/types/Types';
-import {
-	convertAMRToACSet,
-	updateExistingModelContent
-} from '@/model-representation/petrinet/petrinet-service';
+import { convertAMRToACSet } from '@/model-representation/petrinet/petrinet-service';
 import { latexToAMR } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { petriToLatex } from '@/petrinet/petrinet-service';
@@ -42,7 +39,7 @@ const props = defineProps<{
 	isEditable: boolean;
 }>();
 
-const emit = defineEmits(['update-diagram']);
+const emit = defineEmits(['model-updated']);
 
 const equationsRef = ref<any[]>([]);
 const equations = ref<string[]>([]);
@@ -76,10 +73,8 @@ const updateLatexFormula = (equationsList: string[]) => {
 };
 
 const updateModelFromEquations = async () => {
-	const updatedModel = await latexToAMR(equations.value, 'petrinet', props.model.id);
-	if (updatedModel) {
-		emit('update-diagram', updateExistingModelContent(updatedModel, props.model));
-	}
+	const updated = await latexToAMR(equations.value, 'petrinet', props.model.id);
+	if (updated) emit('model-updated');
 };
 
 function modelIsEmpty(targetModel: Model): boolean {

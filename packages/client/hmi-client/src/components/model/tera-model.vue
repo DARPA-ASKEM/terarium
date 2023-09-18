@@ -55,6 +55,7 @@
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:feature-config="featureConfig"
+			@model-updated="fetchModel"
 			@update-model="updateModelContent"
 			@update-configuration="updateConfiguration"
 			@add-configuration="addConfiguration"

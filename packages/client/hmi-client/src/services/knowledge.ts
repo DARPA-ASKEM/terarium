@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Artifact, ExtractionResponse, Model } from '@/types/Types';
+import { Artifact, ExtractionResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -41,13 +41,13 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @param latex string[] - list of LaTeX strings representing a model
  * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
- * @return {Promise<Model | null>}
+ * @return {Promise<Boolean>}
  */
 export const latexToAMR = async (
 	latex: string[],
 	framework: string = 'petrinet',
 	modelId?: string
-): Promise<Model | null> => {
+): Promise<Boolean> => {
 	try {
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
 			`/knowledge/latex-to-amr/?framework=${framework}&modelId=${modelId}`,
@@ -58,18 +58,18 @@ export const latexToAMR = async (
 			if (status === 'queued') {
 				const result = await fetchExtraction(id);
 				if (result?.state === PollerState.Done && result?.data?.job_result?.status_code === 200) {
-					return result.data.job_result.amr as Model;
+					return true;
 				}
 			}
 			if (status === 'finished' && response.data.result.job_result?.status_code === 200) {
-				return response.data.result.job_result.amr as Model;
+				return true;
 			}
 		}
 		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
 	}
-	return null;
+	return false;
 };
 
 /**
