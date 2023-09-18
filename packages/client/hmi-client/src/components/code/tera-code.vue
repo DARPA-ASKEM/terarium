@@ -225,13 +225,13 @@ async function saveNewCode() {
 	}
 	if (newAsset) {
 		toast.success('', `File saved as ${codeName.value}`);
-		codeAsset.value = newAsset;
+		codeAsset.value = newCode;
 		router.push({
 			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Code,
 				projectId: props.project.id,
-				assetId: newAsset.id
+				assetId: codeAsset?.value?.id
 			}
 		});
 		return newCode;
