@@ -276,6 +276,7 @@ import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
 import { downloadRawFile } from '@/services/dataset';
 import { uploadCodeToProject } from '@/services/code';
+import { uploadArtifactToProject } from '@/services/artifact';
 
 const props = defineProps<{
 	project: IProject;
@@ -311,8 +312,7 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const { update, getAssetIcon, uploadArtifactToProject, createNewDatasetFromCSV, addAsset } =
-	useProjects();
+const { update, getAssetIcon, createNewDatasetFromCSV, addAsset } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
@@ -397,10 +397,13 @@ async function processArtifact(file: File) {
 		progress,
 		file,
 		props.project.username ?? '',
-		props.project.id,
 		''
 	);
-	if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
+	let newAsset;
+	if (artifact && artifact.id) {
+		newAsset = await addAsset(props.project.id, AssetType.Artifacts, artifact.id);
+	}
+	if (artifact && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
 		await extractPDF(artifact);
 		return { file, error: false, response: { text: '', images: [] } };
 	}

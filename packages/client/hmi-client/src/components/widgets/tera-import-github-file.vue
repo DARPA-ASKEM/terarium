@@ -192,6 +192,7 @@ import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
 import { uploadCodeToProjectFromGithub } from '@/services/code';
+import { createNewArtifactFromGithubFile } from '@/services/artifact';
 
 const props = defineProps<{
 	urlString: string;
@@ -199,7 +200,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const { createNewArtifactFromGithubFile, createNewDatasetFromGithubFile, addAsset } = useProjects();
+const { createNewDatasetFromGithubFile, addAsset } = useProjects();
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -349,11 +350,13 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
 		const artifact: Artifact | null = await createNewArtifactFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
-			props.project?.id ?? ''
+			props.project?.username ?? ''
 		);
-
-		if (artifact && githubFile.name?.toLowerCase().endsWith('.pdf')) {
+		let newAsset;
+		if (artifact && artifact.id && props.project?.id) {
+			newAsset = await addAsset(props.project.id, AssetType.Artifacts, artifact.id);
+		}
+		if (artifact && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
 			extractPDF(artifact);
 		}
 	});

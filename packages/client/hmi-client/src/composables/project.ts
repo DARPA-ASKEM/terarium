@@ -9,7 +9,6 @@
 import { IProject } from '@/types/Project';
 import { Component, Ref, readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import * as ArtifactService from '@/services/artifact';
 import * as DatasetService from '@/services/dataset';
 import * as ModelService from '@/services/model';
 import { AssetType } from '@/types/Types';
@@ -91,42 +90,6 @@ export function useProjects() {
 		return 'circle';
 	}
 
-	async function uploadArtifactToProject(
-		progress: Ref<number>,
-		file: File,
-		userName: string,
-		projectId: IProject['id'],
-		description?: string
-	) {
-		const artifact = await ArtifactService.uploadArtifactToProject(
-			progress,
-			file,
-			userName,
-			description
-		);
-		if (artifact && artifact.id) {
-			await addAsset(projectId, AssetType.Artifacts, artifact.id);
-		}
-		return artifact;
-	}
-
-	async function createNewArtifactFromGithubFile(
-		repoOwnerAndName: string,
-		path: string,
-		userName: string,
-		projectId: IProject['id']
-	) {
-		const artifact = await ArtifactService.createNewArtifactFromGithubFile(
-			repoOwnerAndName,
-			path,
-			userName
-		);
-		if (artifact && artifact.id) {
-			await addAsset(projectId, AssetType.Artifacts, artifact.id);
-		}
-		return artifact;
-	}
-
 	async function createNewDatasetFromCSV(
 		progress: Ref<number>,
 		file: File,
@@ -202,8 +165,6 @@ export function useProjects() {
 		remove,
 		getPublicationAssets,
 		getAssetIcon,
-		uploadArtifactToProject,
-		createNewArtifactFromGithubFile,
 		createNewDatasetFromCSV,
 		createNewDatasetFromGithubFile,
 		addNewModelToProject,
