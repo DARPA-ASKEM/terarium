@@ -152,7 +152,7 @@ watch(
 		if (projectId && !!projectId) {
 			fetchProject(projectId as IProject['id']);
 		} else {
-			project.value = null;
+			resourcesStore.setActiveProject(null);
 		}
 
 		// Refetch the list of all projects
