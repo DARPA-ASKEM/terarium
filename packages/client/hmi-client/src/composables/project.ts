@@ -9,7 +9,6 @@
 import { IProject } from '@/types/Project';
 import { Component, Ref, readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import * as CodeService from '@/services/code';
 import * as ArtifactService from '@/services/artifact';
 import * as DatasetService from '@/services/dataset';
 import * as ModelService from '@/services/model';
@@ -90,19 +89,6 @@ export function useProjects() {
 			return icons.get(type) ?? 'circle';
 		}
 		return 'circle';
-	}
-
-	async function uploadCodeToProjectFromGithub(
-		projectId: IProject['id'],
-		repoOwnerAndName: string,
-		path: string,
-		url: string
-	) {
-		const code = await CodeService.uploadCodeToProjectFromGithub(repoOwnerAndName, path, url);
-		if (code && code.id) {
-			await addAsset(projectId, AssetType.Code, code.id);
-		}
-		return code;
 	}
 
 	async function uploadArtifactToProject(
@@ -216,7 +202,6 @@ export function useProjects() {
 		remove,
 		getPublicationAssets,
 		getAssetIcon,
-		uploadCodeToProjectFromGithub,
 		uploadArtifactToProject,
 		createNewArtifactFromGithubFile,
 		createNewDatasetFromCSV,

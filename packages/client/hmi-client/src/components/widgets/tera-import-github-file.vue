@@ -181,7 +181,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { IProject } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { Artifact, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import { Artifact, AssetType, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
@@ -191,6 +191,7 @@ import Breadcrumb from 'primevue/breadcrumb';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
+import { uploadCodeToProjectFromGithub } from '@/services/code';
 
 const props = defineProps<{
 	urlString: string;
@@ -198,11 +199,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const {
-	uploadCodeToProjectFromGithub,
-	createNewArtifactFromGithubFile,
-	createNewDatasetFromGithubFile
-} = useProjects();
+const { createNewArtifactFromGithubFile, createNewDatasetFromGithubFile, addAsset } = useProjects();
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -368,12 +365,14 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
  */
 async function openCodeFiles(githubFiles: GithubFile[]) {
 	githubFiles.forEach(async (githubFile) => {
-		await uploadCodeToProjectFromGithub(
+		const newCode = await uploadCodeToProjectFromGithub(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.id ?? '',
 			githubFile.htmlUrl
 		);
+		if (newCode && newCode.id && props.project?.id) {
+			await addAsset(props.project.id, AssetType.Code, newCode.id);
+		}
 	});
 }
 </script>
