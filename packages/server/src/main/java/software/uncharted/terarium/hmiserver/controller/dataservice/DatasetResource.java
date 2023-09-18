@@ -52,31 +52,32 @@ public class DatasetResource implements SnakeCaseResource {
 
 	@GetMapping
 	public ResponseEntity<List<Dataset>> getDatasets(
-		@RequestParam(name = "page_size", defaultValue = "1000", required = false) final Integer pageSize,
+		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
-		return datasetProxy.getAssets(pageSize, page);
+
+		return ResponseEntity.ok(datasetProxy.getAssets(pageSize, page).getBody());
 	}
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createDataset(
 		@RequestBody final Dataset dataset
 	) {
-		return datasetProxy.createAsset(convertObjectToSnakeCaseJsonNode(dataset));
+		return ResponseEntity.ok(datasetProxy.createAsset(convertObjectToSnakeCaseJsonNode(dataset))).getBody();
 	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<Dataset> getDataset(
 		@PathVariable("id") final String id
 	) {
-		return datasetProxy.getAsset(id);
+		return ResponseEntity.ok(datasetProxy.getAsset(id).getBody());
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<JsonNode> deleteDataset(
 		@PathVariable("id") final String id
 	) {
-		return datasetProxy.deleteAsset(id);
+		return ResponseEntity.ok(datasetProxy.deleteAsset(id).getBody());
 	}
 
 	@PatchMapping("/{id}")
@@ -84,7 +85,7 @@ public class DatasetResource implements SnakeCaseResource {
 		@PathVariable("id") final String id,
 		@RequestBody final Dataset dataset
 	) {
-		return datasetProxy.patchUpdateAsset(id, convertObjectToSnakeCaseJsonNode(dataset));
+		return ResponseEntity.ok(datasetProxy.patchUpdateAsset(id, convertObjectToSnakeCaseJsonNode(dataset)).getBody());
 	}
 
 	@PutMapping("/{id}")
@@ -92,7 +93,7 @@ public class DatasetResource implements SnakeCaseResource {
 			@PathVariable("id") final String id,
 			@RequestBody final Dataset dataset
 	) {
-		return datasetProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(dataset));
+		return ResponseEntity.ok(datasetProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(dataset)).getBody());
 	}
 
 

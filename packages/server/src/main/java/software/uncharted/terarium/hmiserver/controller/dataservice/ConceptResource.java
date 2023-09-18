@@ -24,7 +24,7 @@ public class ConceptResource {
 		@RequestParam("curie") final String curie
 	) {
 		try {
-			return proxy.searchConcept(curie);
+			return ResponseEntity.ok(proxy.searchConcept(curie).getBody());
 		} catch (RuntimeException e) {
 			log.error("Unable to get search concept", e);
 			return ResponseEntity.internalServerError().build();
@@ -36,7 +36,7 @@ public class ConceptResource {
 		@RequestBody final Concept concept
 	) {
 		try {
-			return proxy.createConcept(concept);
+			return ResponseEntity.ok(proxy.createConcept(concept).getBody());
 		} catch (RuntimeException e) {
 			log.error("Unable to create a concept", e);
 			return ResponseEntity.internalServerError().build();
@@ -50,7 +50,7 @@ public class ConceptResource {
 		@RequestParam(name = "offset", defaultValue = "100") Integer offset
 	) {
 		try {
-			return proxy.searchConceptDefinitions(term, limit, offset);
+			return ResponseEntity.ok(proxy.searchConceptDefinitions(term, limit, offset).getBody());
 		} catch (RuntimeException e) {
 			log.error("An error searching concept definitions", e);
 			return ResponseEntity.internalServerError().build();
@@ -62,7 +62,7 @@ public class ConceptResource {
 		@PathVariable("curie") final String curie
 	) {
 		try {
-			return proxy.getConceptDefinitions(curie);
+			return ResponseEntity.ok(proxy.getConceptDefinitions(curie).getBody());
 		} catch (RuntimeException e) {
 			log.error("An error getting concept definitions", e);
 			return ResponseEntity.internalServerError().build();
@@ -73,7 +73,7 @@ public class ConceptResource {
 	public ResponseEntity<JsonNode> getConcept(
 		@PathVariable("id") final String id
 	) {
-		return proxy.getConcept(id);
+		return ResponseEntity.ok(proxy.getConcept(id).getBody());
 	}
 
 	@DeleteMapping("/{id}")
@@ -81,7 +81,7 @@ public class ConceptResource {
 		@PathVariable("id") final String id
 	) {
 		try {
-			return proxy.deleteConcept(id);
+			return ResponseEntity.ok(proxy.deleteConcept(id).getBody());
 		} catch (RuntimeException e) {
 			log.error("Unable to delete concept", e);
 			return ResponseEntity.internalServerError().build();
@@ -94,7 +94,7 @@ public class ConceptResource {
 		@RequestBody final Concept concept
 	) {
 		try {
-			return proxy.updateConcept(id, concept);
+			return ResponseEntity.ok(proxy.updateConcept(id, concept).getBody());
 		} catch (RuntimeException e) {
 			log.error("Unable to update concept", e);
 			return ResponseEntity.internalServerError().build();
@@ -107,7 +107,7 @@ public class ConceptResource {
 		@RequestParam(value = "curies", required = false) final List<String> curies
 	) {
 		try {
-			return proxy.searchConceptsUsingFacets(types, curies);
+			return ResponseEntity.ok(proxy.searchConceptsUsingFacets(types, curies).getBody());
 		} catch (RuntimeException e) {
 			log.error("Unable to search concept using facets", e);
 			return ResponseEntity.internalServerError().build();

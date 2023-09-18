@@ -1,7 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
+import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -25,37 +30,4 @@ public class Assets implements Serializable {
 	List<Code> code;
 
 
-	public enum AssetType {
-		DATASETS("datasets"),
-		MODEL_CONFIGURATIONS("model_configurations"),
-		MODELS("models"),
-		PUBLICATIONS("publications"),
-		SIMULATIONS("simulations"),
-		WORKFLOWS("workflows"),
-		ARTIFACTS("artifacts"),
-		CODE("code");
-
-
-
-
-		public final String type;
-
-
-		AssetType(final String type) {
-			this.type = type;
-		}
-
-		@Override
-		@JsonValue
-		public String toString() {
-			return type;
-		}
-
-		public static AssetType fromString(final String type) {
-			return Arrays.stream(AssetType.values())
-					.filter(t -> t.type.equals(type))
-					.findFirst()
-					.orElseThrow(() -> new IllegalArgumentException("Unknown resource type: " + type));
-		}
-	}
 }

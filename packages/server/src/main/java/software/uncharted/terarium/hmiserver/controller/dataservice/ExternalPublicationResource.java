@@ -25,7 +25,7 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 	@GetMapping
 	public ResponseEntity<List<DocumentAsset>> getPublications() {
 		try {
-			return proxy.getAssets(100,0);
+			return ResponseEntity.ok(proxy.getAssets(100,0).getBody());
 		} catch (Exception e) {
 			log.error("Unable to get publications", e);
 			return ResponseEntity.internalServerError().build();
@@ -36,7 +36,7 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 	public ResponseEntity<JsonNode> createPublication(
 		@RequestBody final DocumentAsset publication
 	) {
-		return proxy.createAsset(convertObjectToSnakeCaseJsonNode(publication));
+		return ResponseEntity.ok(proxy.createAsset(convertObjectToSnakeCaseJsonNode(publication)).getBody());
 	}
 
 	@GetMapping("/{id}")
@@ -44,7 +44,7 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 		@PathVariable("id") final String id
 	) {
 		try {
-			return proxy.getAsset(id);
+			return ResponseEntity.ok(proxy.getAsset(id).getBody());
 		} catch (Exception e) {
 			log.error("Unable to get publication", e);
 			return ResponseEntity.internalServerError().build();
@@ -57,7 +57,7 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 		@RequestBody final DocumentAsset publication
 	) {
 		try {
-			return proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(publication));
+			return ResponseEntity.ok(proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(publication)).getBody());
 		} catch (Exception e) {
 			log.error("Unable to put publication", e);
 			return ResponseEntity.internalServerError().build();
@@ -68,7 +68,7 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 	public ResponseEntity<JsonNode> deletePublication(
 		@PathVariable("id") final String id
 	) {
-		return proxy.deleteAsset(id);
+		return ResponseEntity.ok(proxy.deleteAsset(id).getBody());
 	}
 
 

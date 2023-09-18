@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 
-import javax.ws.rs.*;
 import java.util.*;
 
 
@@ -45,20 +45,20 @@ public interface ProjectProxy {
 	@GetMapping("/{project_id}/assets")
 	ResponseEntity<Assets> getAssets(
 		@PathVariable("project_id") String projectId,
-		@RequestParam("types") final List<Assets.AssetType> types
+		@RequestParam("types") final List<AssetType> types
 	);
 
 	@PostMapping("/{id}/assets/{resource_type}/{resource_id}")
 	ResponseEntity<JsonNode> createAsset(
 		@PathVariable("id") String id,
-		@PathVariable("resource_type") Assets.AssetType type,
+		@PathVariable("resource_type") AssetType type,
 		@PathVariable("resource_id") String resourceId
 	);
 
 	@DeleteMapping("/{project_id}/assets/{resource_type}/{resource_id}")
 	ResponseEntity<JsonNode> deleteAsset(
 		@PathVariable("project_id") String projectId,
-		@PathVariable("resource_type") Assets.AssetType type,
+		@PathVariable("resource_type") AssetType type,
 		@PathVariable("resource_id") String resourceId
 	);
 }
