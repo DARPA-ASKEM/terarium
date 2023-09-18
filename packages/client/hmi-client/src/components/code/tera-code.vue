@@ -18,7 +18,7 @@
 					<Dropdown
 						v-model="programmingLanguage"
 						:options="programmingLanguages"
-						@change="codeName = setFileExtension(codeName)"
+						@change="codeName = setFileExtension(codeName, programmingLanguage)"
 					/>
 					<FileUpload
 						name="demo[]"
@@ -127,7 +127,7 @@ import {
 	getCodeFileAsText,
 	getCodeAsset,
 	updateCodeAsset,
-	getFileExtension,
+	setFileExtension,
 	getProgrammingLanguage
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
@@ -192,21 +192,11 @@ function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
 }
 
-function setFileExtension(fileName: string) {
-	// check name for file extension
-	// if there is no extension, add the appropriate one based on the selected language
-	const name = fileName.split('.');
-	if (name.length > 0) {
-		return name[0].concat('.').concat(getFileExtension(programmingLanguage.value));
-	}
-	return fileName;
-}
-
 async function saveCode() {
 	// programmingLanguage.value = getProgrammingLanguage(codeName.value);
 	const existingCode = resourceStore.activeProjectAssets?.code.find((c) => c.id === props.assetId);
 	if (existingCode?.id) {
-		codeName.value = setFileExtension(codeName.value);
+		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
 		const file = new File([codeText.value], codeName.value);
 		const updatedCode = await updateCodeAsset(
 			{ ...existingCode, name: codeName.value },
@@ -226,7 +216,7 @@ async function saveCode() {
 }
 
 async function saveNewCode() {
-	newCodeName.value = setFileExtension(newCodeName.value);
+	newCodeName.value = setFileExtension(newCodeName.value, programmingLanguage.value);
 	const file = new File([codeText.value], newCodeName.value);
 	const newCodeAsset = await uploadCodeToProject(props.project.id, file, progress);
 	if (!newCodeAsset) {
