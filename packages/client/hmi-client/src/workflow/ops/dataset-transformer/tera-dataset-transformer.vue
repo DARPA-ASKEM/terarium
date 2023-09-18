@@ -2,7 +2,6 @@
 	<div class="background">
 		<Suspense>
 			<tera-dataset-jupyter-panel
-				asset-id="e3aa40fd-9eb5-4d11-8932-65d478b2bd1f"
 				:asset-ids="assetIds"
 				:project="props.project"
 				:show-kernels="showKernels"
@@ -26,6 +25,7 @@ import { createNotebookSession, getNotebookSessionById } from '@/services/notebo
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import { DatasetTransformerState } from './mod';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -42,6 +42,7 @@ const assetIds = computed(() =>
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
 onMounted(async () => {
+	const state = cloneDeep(props.node.state) as DatasetTransformerState;
 	let notebookSessionId = props.node.state?.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
@@ -56,7 +57,6 @@ onMounted(async () => {
 
 		if (notebookSessionId) {
 			// update the node state with the notebook session id
-			const state = cloneDeep(props.node.state);
 			state.notebookSessionId = notebookSessionId;
 			workflowEventBus.emit('update-state', {
 				node: props.node,
@@ -65,7 +65,7 @@ onMounted(async () => {
 		}
 	}
 
-	notebookSession.value = await getNotebookSessionById(notebookSessionId);
+	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
 });
 
 const addOutputPort = (data) => {

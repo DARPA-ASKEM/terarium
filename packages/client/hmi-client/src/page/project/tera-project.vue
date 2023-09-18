@@ -117,6 +117,13 @@
 					:project="project"
 					:node="workflowNode"
 				/>
+				<tera-model-transformer
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER
+					"
+					:project="project"
+					:node="workflowNode"
+				/>
 			</SplitterPanel>
 		</Splitter>
 		<tera-slider-panel
@@ -152,6 +159,7 @@ import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-cie
 import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
 import teraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
 import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
+import TeraModelTransformer from '@/workflow/ops/model-transformer/tera-model-transformer.vue';
 
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -320,7 +328,8 @@ const overviewResource = {
 
 const codeResource = {
 	pageType: AssetType.Code,
-	assetId: 'code' // FIXME: hack to get around weird tab behaviour
+	assetId: 'code', // FIXME: hack to get around weird tab behaviour,
+	assetName: 'New file'
 };
 
 const adjustTabsProjectChange = () => {
