@@ -84,12 +84,11 @@ import { placeholder } from '@/utils/project-card';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import { IProject } from '@/types/Project';
 
 const props = defineProps<{ project?: Project }>();
 const emit = defineEmits<{
 	(e: 'removed', projectId: Project['id']): void;
-	(e: 'show-share-dialog', project: IProject): void;
+	(e: 'show-share-dialog', project: Project): void;
 }>();
 
 const titleRef = ref();

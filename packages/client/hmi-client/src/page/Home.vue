@@ -201,7 +201,6 @@ import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
-import { IProject } from '@/types/Project';
 import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
 
 const projects = ref<Project[]>();
@@ -247,7 +246,7 @@ const newProjectDescription = ref('');
 const isLoadingProjects = computed(() => !projects.value);
 
 const isShareProjectVisible = ref(false);
-const projectToShare = ref<IProject>();
+const projectToShare = ref<Project>();
 
 onMounted(async () => {
 	// Clear all...
