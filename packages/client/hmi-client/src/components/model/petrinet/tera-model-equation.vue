@@ -18,7 +18,8 @@
 				@equation-updated="setNewEquation"
 				@delete="deleteEquation"
 				ref="equationsRef"
-		/></template>
+			/>
+		</template>
 	</tera-equation-container>
 </template>
 
@@ -45,7 +46,7 @@ const emit = defineEmits(['update-diagram']);
 
 const equationsRef = ref<any[]>([]);
 const equations = ref<string[]>([]);
-const orginalEquations = ref<string[]>([]);
+const originalEquations = ref<string[]>([]);
 const isEditing = ref(false);
 const canEditEquations = ref(true);
 
@@ -63,7 +64,7 @@ const addEquation = () => {
 
 const cancelEdit = () => {
 	isEditing.value = false;
-	equations.value = orginalEquations.value.map((eq) => eq);
+	equations.value = originalEquations.value.map((eq) => eq);
 	equationsRef.value.forEach((eq) => {
 		eq.isEditingEquation = false;
 	});
@@ -71,7 +72,7 @@ const cancelEdit = () => {
 
 const updateLatexFormula = (equationsList: string[]) => {
 	equations.value = equationsList;
-	if (isEmpty(orginalEquations.value)) orginalEquations.value = equationsList.map((eq) => eq);
+	if (isEmpty(originalEquations.value)) originalEquations.value = equationsList.map((eq) => eq);
 };
 
 const updateModelFromEquations = async () => {
