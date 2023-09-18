@@ -72,7 +72,12 @@ import { ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Button from 'primevue/button';
-import { getCodeFileAsText, getCodeAsset, updateCodeAsset } from '@/services/code';
+import {
+	getCodeFileAsText,
+	getCodeAsset,
+	updateCodeAsset,
+	uploadCodeToProject
+} from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/knowledge';
 import { AssetType, Code } from '@/types/Types';
@@ -95,7 +100,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['asset-loaded']);
 
-const { activeProject, uploadCodeToProject } = useProjects();
+const { activeProject, addAsset } = useProjects();
 const toast = useToastService();
 
 const codeName = ref('');
@@ -140,22 +145,26 @@ async function saveCode() {
 		return updatedCode;
 	}
 	const file = new File([codeText.value], codeName.value);
-	const newCodeAsset = await uploadCodeToProject(props.project.id, file, progress);
-	if (!newCodeAsset) {
-		toast.error('', 'Unable to save file');
-	} else {
+	const newCode = await uploadCodeToProject(file, progress);
+	let newAsset;
+	if (newCode && newCode.id) {
+		newAsset = await addAsset(props.project.id, AssetType.Code, newCode.id);
+	}
+	if (newAsset) {
 		toast.success('', `File saved as ${codeName.value}`);
-		codeAsset.value = newCodeAsset;
+		codeAsset.value = newAsset;
 		router.push({
 			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Code,
 				projectId: props.project.id,
-				assetId: codeAsset.value.id
+				assetId: newAsset.id
 			}
 		});
+		return newCode;
 	}
-	return newCodeAsset;
+	toast.error('', 'Unable to save file');
+	return newCode;
 }
 
 async function extractModel() {

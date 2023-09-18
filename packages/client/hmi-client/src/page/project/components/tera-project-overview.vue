@@ -275,6 +275,7 @@ import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
 import { downloadRawFile } from '@/services/dataset';
+import { uploadCodeToProject } from '@/services/code';
 
 const props = defineProps<{
 	project: IProject;
@@ -310,13 +311,8 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const {
-	update,
-	getAssetIcon,
-	uploadCodeToProject,
-	uploadArtifactToProject,
-	createNewDatasetFromCSV
-} = useProjects();
+const { update, getAssetIcon, uploadArtifactToProject, createNewDatasetFromCSV, addAsset } =
+	useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
@@ -380,8 +376,14 @@ async function processFiles(files: File[], csvDescription: string) {
  */
 async function processCode(file: File) {
 	// This is pdf, txt, md files
-	await uploadCodeToProject(props.project.id, file, progress);
-
+	const newCode = await uploadCodeToProject(file, progress);
+	let newAsset;
+	if (newCode && newCode.id) {
+		newAsset = await addAsset(props.project.id, AssetType.Code, newCode.id);
+	}
+	if (newAsset) {
+		return { file, error: false, response: { text: '', images: [] } };
+	}
 	return { file, error: true, response: { text: '', images: [] } };
 }
 

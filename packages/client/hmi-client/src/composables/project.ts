@@ -92,14 +92,6 @@ export function useProjects() {
 		return 'circle';
 	}
 
-	async function uploadCodeToProject(projectId: IProject['id'], file: File, progress: Ref<number>) {
-		const code = await CodeService.uploadCodeToProject(file, progress);
-		if (code && code.id) {
-			await addAsset(projectId, AssetType.Code, code.id);
-		}
-		return code;
-	}
-
 	async function uploadCodeToProjectFromGithub(
 		projectId: IProject['id'],
 		repoOwnerAndName: string,
@@ -224,7 +216,6 @@ export function useProjects() {
 		remove,
 		getPublicationAssets,
 		getAssetIcon,
-		uploadCodeToProject,
 		uploadCodeToProjectFromGithub,
 		uploadArtifactToProject,
 		createNewArtifactFromGithubFile,
