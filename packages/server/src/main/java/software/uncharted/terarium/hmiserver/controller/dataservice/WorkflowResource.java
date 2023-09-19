@@ -38,14 +38,14 @@ public class WorkflowResource implements SnakeCaseResource {
 	}
 
 	@PostMapping
-	public ResponseEntity<JsonNode> createWorkflow(Workflow item) {
+	public ResponseEntity<JsonNode> createWorkflow(@RequestBody Workflow item) {
 		return ResponseEntity.ok(workflowProxy.createAsset(convertObjectToSnakeCaseJsonNode(item)).getBody());
 	}
 
 	@PutMapping("/{id}")
 	public ResponseEntity<JsonNode> updateWorkflow(
 		@PathVariable("id") String id,
-		Workflow workflow
+		@RequestBody Workflow workflow
 	) {
 		return ResponseEntity.ok(workflowProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(workflow)).getBody());
 	}
