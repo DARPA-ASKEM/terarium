@@ -20,7 +20,7 @@ import java.util.Map;
 
 @RequestMapping("/code")
 @RestController
-public class CodeResource {
+public class CodeController {
 	@Autowired
 	GithubProxy githubProxy;
 
