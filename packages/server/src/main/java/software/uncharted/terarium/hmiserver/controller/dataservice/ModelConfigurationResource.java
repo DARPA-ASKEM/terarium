@@ -25,20 +25,20 @@ public class ModelConfigurationResource implements SnakeCaseResource {
 		@RequestParam(name = "page_size", defaultValue="500") final Integer pageSize,
 		@RequestParam(name = "page", defaultValue="0") final Integer page
 	) {
-		return proxy.getAssets(pageSize, page);
+		return ResponseEntity.ok(proxy.getAssets(pageSize, page).getBody());
 	}
 
 	//TODO why isnt the param here a ModelConfiguration?
 	@PostMapping
 	public ResponseEntity<JsonNode> createModelConfiguration(Object config) {
-		return proxy.createAsset(convertObjectToSnakeCaseJsonNode(config));
+		return ResponseEntity.ok(proxy.createAsset(convertObjectToSnakeCaseJsonNode(config)).getBody());
 	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
 			@PathVariable("id") String id
 	) {
-		return proxy.getAsset(id);
+		return ResponseEntity.ok(proxy.getAsset(id).getBody());
 	}
 
 	@PutMapping("/{id}")
@@ -46,13 +46,13 @@ public class ModelConfigurationResource implements SnakeCaseResource {
 		@PathVariable("id") String id,
 		@RequestBody ModelConfiguration config
 	) {
-		return proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(config));
+		return ResponseEntity.ok(proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(config)).getBody());
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<JsonNode> deleteModelConfiguration(
 		@PathVariable("id") String id
 	) {
-		return proxy.deleteAsset(id);
+		return ResponseEntity.ok(proxy.deleteAsset(id).getBody());
 	}
 }

@@ -45,26 +45,26 @@ public class ArtifactResource implements SnakeCaseResource {
 			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
-		return artifactProxy.getAssets(pageSize, page);
+		return ResponseEntity.ok(artifactProxy.getAssets(pageSize, page).getBody());
 	}
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createArtifact(@RequestBody  Artifact artifact) {
-		return artifactProxy.createAsset(convertObjectToSnakeCaseJsonNode(artifact));
+		return ResponseEntity.ok(artifactProxy.createAsset(convertObjectToSnakeCaseJsonNode(artifact)).getBody());
 	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") String artifactId) {
-		return artifactProxy.getAsset(artifactId);
+		return ResponseEntity.ok(artifactProxy.getAsset(artifactId).getBody());
 	}
 
 	@PutMapping("/{id}")
 	public ResponseEntity<JsonNode> updateArtifact(@PathVariable("id") String artifactId, @RequestBody Artifact artifact) {
-		return artifactProxy.updateAsset(artifactId, convertObjectToSnakeCaseJsonNode(artifact));
+		return ResponseEntity.ok(artifactProxy.updateAsset(artifactId, convertObjectToSnakeCaseJsonNode(artifact)).getBody());
 	}
 	@DeleteMapping("/{id}")
 	public ResponseEntity<JsonNode> deleteArtifact(@PathVariable("id") String artifactId) {
-		return artifactProxy.deleteAsset(artifactId);
+		return ResponseEntity.ok(artifactProxy.deleteAsset(artifactId).getBody());
 	}
 
 	@GetMapping("/{id}/download-file-as-text")

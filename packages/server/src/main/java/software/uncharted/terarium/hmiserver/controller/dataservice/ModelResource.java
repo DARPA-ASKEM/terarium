@@ -28,21 +28,21 @@ public class ModelResource {
 	ResponseEntity<JsonNode> createFramework(
 		@RequestBody final ModelFramework framework
 	) {
-		return proxy.createFramework(framework);
+		return ResponseEntity.ok(proxy.createFramework(framework).getBody());
 	}
 
 	@GetMapping("/frameworks/{name}")
 	ResponseEntity<JsonNode> getFramework(
 		@PathVariable("name") String name
 	) {
-		return proxy.getFramework(name);
+		return ResponseEntity.ok(proxy.getFramework(name).getBody());
 	}
 
 	@DeleteMapping("/frameworks/{name}")
 	ResponseEntity<JsonNode> deleteFramework(
 		@PathVariable("name") String name
 	) {
-		return proxy.deleteFramework(name);
+		return ResponseEntity.ok(proxy.deleteFramework(name).getBody());
 	}
 
 	@GetMapping("/descriptions")
@@ -50,14 +50,14 @@ public class ModelResource {
 		@RequestParam(name = "page_size", defaultValue = "100") Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
-		return proxy.getDescriptions(pageSize, page);
+		return ResponseEntity.ok(proxy.getDescriptions(pageSize, page).getBody());
 	}
 
 	@GetMapping("/{id}/descriptions")
 	ResponseEntity<JsonNode> getDescription(
 		@PathVariable("id") String id
 	) {
-		return proxy.getDescription(id);
+		return ResponseEntity.ok(proxy.getDescription(id).getBody());
 	}
 
 	/**
@@ -91,14 +91,14 @@ public class ModelResource {
 		@PathVariable("id") String id,
 		@RequestBody Model model
 	) {
-		return proxy.updateModel(id, model);
+		return ResponseEntity.ok(proxy.updateModel(id, model).getBody());
 	}
 
 	@PostMapping
 	ResponseEntity<JsonNode> createModel(
 		@RequestBody Model model
 	) {
-		return proxy.createModel(model);
+		return ResponseEntity.ok(proxy.createModel(model).getBody());
 	}
 
 
@@ -107,6 +107,6 @@ public class ModelResource {
 		@PathVariable("id") String id,
 		@RequestParam("page_size") int pageSize
 	) {
-		return proxy.getModelConfigurations(id, 100);
+		return ResponseEntity.ok(proxy.getModelConfigurations(id, 100).getBody());
 	}
 }

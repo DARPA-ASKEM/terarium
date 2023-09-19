@@ -194,11 +194,6 @@ export interface Grounding {
     context?: { [index: string]: any };
 }
 
-export interface PresignedURL {
-    url: string;
-    method: string;
-}
-
 export interface State {
     id: string;
     name?: string;
@@ -239,6 +234,14 @@ export interface TypingSemantics {
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
+}
+
+export interface DocumentsResponseOK extends XDDResponseOK {
+    data: Document[];
+    nextPage: string;
+    scrollId: string;
+    hits: number;
+    facets: { [index: string]: XDDFacetsItemResponse };
 }
 
 export interface ExtractionResponse {
@@ -437,6 +440,17 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
+export interface XDDFacetsItemResponse {
+    buckets: XDDFacetBucket[];
+    doc_count_error_upper_bound: number;
+    sum_other_doc_count: number;
+}
+
+export interface XDDResponseOK {
+    v: number;
+    license: string;
+}
+
 export interface UserOld {
     username: string;
     roles: string[];
@@ -526,6 +540,11 @@ export interface PetriNetTransitionProperties {
     name: string;
     description: string;
     grounding?: ModelGrounding;
+}
+
+export interface XDDFacetBucket {
+    key: string;
+    docCount: string;
 }
 
 export interface Authority {

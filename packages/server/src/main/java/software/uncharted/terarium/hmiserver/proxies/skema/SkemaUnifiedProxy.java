@@ -1,17 +1,16 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-@RegisterRestClient(configKey = "skema-unified")
-@Produces(MediaType.APPLICATION_JSON)
-@Tag(name = "SKEMA Unified Service")
+@FeignClient(name = "skema-unified", url = "${skema.unified.url}")
 public interface SkemaUnifiedProxy {
 
 	/**
@@ -21,9 +20,6 @@ public interface SkemaUnifiedProxy {
 	 *                ie: { "equations": [ "equation1", "equation2", ... ], "model": "petrinet" }
 	 * @return AMR Model
 	 */
-	@POST
-	@Path("/workflows/latex/equations-to-amr")
-	@LogRestClientTime
-	@Consumes(MediaType.APPLICATION_JSON)
-	Model postLaTeXToAMR(JsonNode request);
+	@PostMapping("/workflows/latex/equations-to-amr")
+	ResponseEntity<Model> postLaTeXToAMR(@RequestBody JsonNode request);
 }

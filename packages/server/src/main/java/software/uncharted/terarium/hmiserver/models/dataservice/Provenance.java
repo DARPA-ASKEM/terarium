@@ -22,12 +22,12 @@ public class Provenance implements Serializable {
 	private String left;
 
 	@JsonProperty("left_type")
-	private Assets.AssetType leftType;
+	private AssetType leftType;
 
 	private String right;
 
 	@JsonProperty("right_type")
-	private Assets.AssetType rightType;
+	private AssetType rightType;
 
 	@JsonProperty("user_id")
 	private String userId;

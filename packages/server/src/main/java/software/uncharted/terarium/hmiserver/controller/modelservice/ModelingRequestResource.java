@@ -22,7 +22,7 @@ public class ModelingRequestResource {
 	public ResponseEntity<JsonNode> stratify(
 		@RequestBody final StratifyRequest req
 	) {
-		return modelServiceProxy.stratify(req);
+		return ResponseEntity.ok(modelServiceProxy.stratify(req).getBody());
 	}
 }
 

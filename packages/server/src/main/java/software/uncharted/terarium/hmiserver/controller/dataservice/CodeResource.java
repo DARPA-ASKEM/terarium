@@ -51,28 +51,29 @@ public class CodeResource implements SnakeCaseResource {
 			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
-		return codeProxy.getAssets(pageSize, page);
+		return ResponseEntity.ok(codeProxy.getAssets(pageSize, page).getBody());
 	}
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createCode(@RequestBody Code code) {
 
-		return codeProxy.createAsset(convertObjectToSnakeCaseJsonNode(code));
+		return ResponseEntity.ok(codeProxy.createAsset(convertObjectToSnakeCaseJsonNode(code)).getBody());
 	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<Code> getCode(@PathVariable("id") String codeId) {
-		return codeProxy.getAsset(codeId);
+
+		return ResponseEntity.ok(codeProxy.getAsset(codeId).getBody());
 	}
 
 	@PutMapping("/{id}")
 	public ResponseEntity<JsonNode> updateCode(@PathVariable("id") String codeId, @RequestBody Code code) {
-		return codeProxy.updateAsset(codeId, convertObjectToSnakeCaseJsonNode(code));
+		return ResponseEntity.ok(codeProxy.updateAsset(codeId, convertObjectToSnakeCaseJsonNode(code)).getBody());
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<JsonNode> deleteCode(@PathVariable("id") String codeId) {
-		return codeProxy.deleteAsset(codeId);
+		return ResponseEntity.ok(codeProxy.deleteAsset(codeId).getBody());
 	}
 
 	@GetMapping("/{id}/download-code-as-text")

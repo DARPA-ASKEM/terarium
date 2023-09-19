@@ -20,7 +20,7 @@ public class Association implements Serializable {
 	private String resourceId;
 
 	@JsonProperty("resource_type")
-	private Assets.AssetType resourceType;
+	private AssetType resourceType;
 
 	private Role role;
 }

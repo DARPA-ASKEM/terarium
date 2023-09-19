@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
@@ -25,8 +26,12 @@ public class ProjectResource {
 		@RequestParam(name = "include_inactive", defaultValue="false") final Boolean includeInactive
 	) {
 		List<Project> projects = proxy.getProjects(includeInactive).getBody();
+		if(projects == null) {
+			return ResponseEntity.noContent().build();
+		}
 
 		// Remove non-active (soft-deleted) projects
+
 		projects = projects
 			.stream()
 			.filter(Project::getActive)
@@ -34,7 +39,9 @@ public class ProjectResource {
 
 		projects.forEach(project -> {
 			try {
-				Assets assets = proxy.getAssets(project.getProjectID(), Arrays.asList(Assets.AssetType.DATASETS, Assets.AssetType.MODELS, Assets.AssetType.PUBLICATIONS)).getBody();
+				List<AssetType> assetTypes= Arrays.asList(AssetType.datasets, AssetType.models, AssetType.publications);
+
+				Assets assets = proxy.getAssets(project.getProjectID(), assetTypes).getBody();
 				Map<String, String> metadata = new HashMap<>();
 				metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
 				metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
@@ -44,7 +51,7 @@ public class ProjectResource {
 				metadata.put("artifacts-count", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
 				project.setMetadata(metadata);
 			} catch (Exception e) {
-				log.info("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}", project.getProjectID());
+				log.error("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}", project.getProjectID(), e);
 			}
 		});
 
@@ -57,14 +64,14 @@ public class ProjectResource {
 	public ResponseEntity<Project> getProject(
 		@PathVariable("id") final String id
 	) {
-		return proxy.getProject(id);
+		return ResponseEntity.ok(proxy.getProject(id).getBody());
 	}
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createProject(
 		@RequestBody final Project project
 	) {
-		return proxy.createProject(project);
+		return ResponseEntity.ok(proxy.createProject(project).getBody());
 	}
 
 	@PutMapping("/{id}")
@@ -72,40 +79,40 @@ public class ProjectResource {
 		@PathVariable("id") final String id,
 		final Project project
 	) {
-		return proxy.updateProject(id, project);
+		return ResponseEntity.ok(proxy.updateProject(id, project).getBody());
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<JsonNode> deleteProject(
 		@PathVariable("id") final String id
 	) {
-		return proxy.deleteProject(id);
+		return ResponseEntity.ok(proxy.deleteProject(id).getBody());
 	}
 
 	@GetMapping("/{project_id}/assets")
 	public ResponseEntity<Assets> getAssets(
 		@PathVariable("project_id") final String projectId,
-		@RequestParam("types") final List<Assets.AssetType> types
+		@RequestParam("types") final List<AssetType> types
 	) {
-		return proxy.getAssets(projectId, types);
+		return ResponseEntity.ok(proxy.getAssets(projectId, types).getBody());
 
 	}
 
 	@PostMapping("/{project_id}/assets/{resource_type}/{resource_id}")
 	public ResponseEntity<JsonNode> createAsset(
 		@PathVariable("project_id") final String projectId,
-		@PathVariable("resource_type") final Assets.AssetType type,
+		@PathVariable("resource_type") final AssetType type,
 		@PathVariable("resource_id") final String resourceId
 	) {
-		return proxy.createAsset(projectId, type, resourceId);
+		return ResponseEntity.ok(proxy.createAsset(projectId, type, resourceId).getBody());
 	}
 
 	@DeleteMapping("/{project_id}/assets/{resource_type}/{resource_id}")
 	public ResponseEntity<JsonNode> deleteAsset(
 		@PathVariable("project_id") final String projectId,
-		@PathVariable("resource_type") final Assets.AssetType type,
+		@PathVariable("resource_type") final AssetType type,
 		@PathVariable("resource_id") final String resourceId
 	) {
-		return proxy.deleteAsset(projectId, type, resourceId);
+		return ResponseEntity.ok(proxy.deleteAsset(projectId, type, resourceId).getBody());
 	}
 }
