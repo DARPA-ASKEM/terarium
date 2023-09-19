@@ -96,8 +96,9 @@
 										<tera-project-card
 											v-if="project.id"
 											:project="project"
+											:project-menu-items="projectMenuItems"
 											@click="openProject(project.id)"
-											@removed="removeProject"
+											@update-chosen-project-menu="chosenProjectMenu = project"
 										/>
 									</li>
 									<li>
@@ -117,17 +118,23 @@
 								:rows="10"
 								:rowsPerPageOptions="[10, 20, 50]"
 							>
-								<Column expander style="width: 0" />
+								<Column expander style="width: 0" @click="expandOrCloseRow" />
 								<Column
-									v-for="(col, index) of selectedColumns"
+									v-for="(col, index) in selectedColumns"
 									:field="col.field"
 									:header="col.header"
 									:sortable="col.field !== 'stats'"
 									:key="index"
+									:style="`width: ${getColumnWidth(col.field)}%`"
 								>
 									<template v-if="col.field === 'name'" #body="{ data }">
 										<div class="project-title-link" @click.stop="openProject(data.id)">
 											<a>{{ data.name }}</a>
+										</div>
+									</template>
+									<template v-else-if="col.field === 'description'" #body="{ data }">
+										<div :class="descriptionStyle" @click="expandOrCloseRow">
+											{{ data.description }}
 										</div>
 									</template>
 									<template v-else-if="col.field === 'stats'" #body="{ data }">
@@ -151,13 +158,30 @@
 									</template>
 								</Column>
 								<Column style="width: 0">
-									<template #body>
+									<template #body="{ data, index }">
 										<Button
 											icon="pi pi-ellipsis-v"
 											class="project-options p-button-icon-only p-button-text p-button-rounded"
-									/></template>
+											@click.stop="(event) => toggleProjectMenu(event, index, data)"
+										/>
+										<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+									</template>
 								</Column>
 							</DataTable>
+							<Dialog
+								:header="`Remove ${chosenProjectMenu?.name}`"
+								v-model:visible="isRemoveDialog"
+							>
+								<p>
+									You are about to remove project <em>{{ chosenProjectMenu?.name }}</em
+									>.
+								</p>
+								<p>Are you sure?</p>
+								<template #footer>
+									<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
+									<Button label="Remove project" @click="removeProject" />
+								</template>
+							</Dialog>
 						</section>
 					</TabPanel>
 				</TabView>
@@ -291,6 +315,9 @@ import Column from 'primevue/column';
 import MultiSelect from 'primevue/multiselect';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { logger } from '@/utils/logger';
+import Dialog from 'primevue/dialog';
+import Menu from 'primevue/menu';
 
 enum ProjectsView {
 	Cards,
@@ -351,12 +378,65 @@ const columns = ref([
 	{ field: 'username', header: 'Author' },
 	{ field: 'stats', header: 'Stats' },
 	{ field: 'timestamp', header: 'Created' },
-	{ field: 'timestamp', header: 'Last updated' }
+	{ field: 'lastUpdated', header: 'Last updated' } // Last update property doesn't exist yet
 ]);
 const selectedColumns = ref(columns.value);
 const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
+
+/*
+ * User Menu
+ */
+const chosenProjectMenu = ref<Project | null>(null);
+
+const isRemoveDialog = ref(false);
+const openRemoveDialog = () => {
+	isRemoveDialog.value = true;
+};
+const closeRemoveDialog = () => {
+	isRemoveDialog.value = false;
+};
+const projectMenu = ref();
+const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
+const toggleProjectMenu = (event, index: number, project: Project) => {
+	projectMenu.value[index].toggle(event);
+	chosenProjectMenu.value = project;
+};
+
+const removeProject = async () => {
+	if (!chosenProjectMenu.value?.id) return;
+	const { name, id } = chosenProjectMenu.value;
+
+	const isDeleted = await ProjectService.remove(id);
+	closeRemoveDialog();
+	if (isDeleted) {
+		// Should refetch instead - will finalize once project composable is merged
+		projects.value = projects.value?.filter((project) => project.id !== id);
+		logger.info(`The project ${name} was removed`, { showToast: true });
+	} else {
+		logger.error(`Unable to delete the project ${name}`, { showToast: true });
+	}
+};
+
+function getColumnWidth(columnField: string) {
+	switch (columnField) {
+		case 'description':
+			return 55;
+		case 'name':
+			return 25;
+		default:
+			return 5;
+	}
+}
+
+const descriptionStyle = ref('project-description');
+function expandOrCloseRow() {
+	descriptionStyle.value =
+		descriptionStyle.value === 'project-description'
+			? 'project-description-expanded'
+			: 'project-description';
+}
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
@@ -467,10 +547,6 @@ async function createNewProject() {
 function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
-
-const removeProject = (projectId: Project['id']) => {
-	projects.value = projects.value?.filter((project) => project.id !== projectId);
-};
 </script>
 
 <style scoped>
@@ -519,15 +595,25 @@ const removeProject = (projectId: Project['id']) => {
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td),
+.p-datatable:deep(.p-datatable-tbody > tr .project-description),
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	vertical-align: top;
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr .project-description-expanded) {
+	white-space: wrap;
 }
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	padding: 1rem 0.5rem;
 	background-color: var(--surface-ground);
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr:not(.p-highlight):focus) {
+	background-color: transparent;
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td) {
