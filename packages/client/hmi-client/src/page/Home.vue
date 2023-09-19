@@ -101,6 +101,33 @@
 											@update-chosen-project-menu="selectedProjectMenu = project"
 										/>
 									</li>
+									<li v-for="project in tab.projects" :key="project.id">
+										<tera-project-card
+											v-if="project.id"
+											:project="project"
+											:project-menu-items="projectMenuItems"
+											@click="openProject(project.id)"
+											@update-chosen-project-menu="selectedProjectMenu = project"
+										/>
+									</li>
+									<li v-for="project in tab.projects" :key="project.id">
+										<tera-project-card
+											v-if="project.id"
+											:project="project"
+											:project-menu-items="projectMenuItems"
+											@click="openProject(project.id)"
+											@update-chosen-project-menu="selectedProjectMenu = project"
+										/>
+									</li>
+									<li v-for="project in tab.projects" :key="project.id">
+										<tera-project-card
+											v-if="project.id"
+											:project="project"
+											:project-menu-items="projectMenuItems"
+											@click="openProject(project.id)"
+											@update-chosen-project-menu="selectedProjectMenu = project"
+										/>
+									</li>
 									<li>
 										<section class="new-project-card" @click="isNewProjectModalVisible = true">
 											<div>
@@ -516,7 +543,7 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 18.5 * 6; // (card width + margin) * number of cards to display at once
+const SCROLL_INCREMENT_IN_REM = 17 * 6; // card width * number of cards to display at once
 const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
