@@ -1,23 +1,22 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import com.authzed.api.v1.Core.ObjectReference;
 import com.authzed.api.v1.Core.Relationship;
 import com.authzed.api.v1.Core.RelationshipUpdate;
 import com.authzed.api.v1.Core.SubjectReference;
-import com.authzed.api.v1.Core.ZedToken;
 import com.authzed.api.v1.PermissionService;
 import com.authzed.api.v1.PermissionService.Consistency;
-import com.authzed.api.v1.PermissionService.LookupPermissionship;
-import com.authzed.api.v1.PermissionService.LookupResourcesResponse;
-import com.authzed.api.v1.PermissionService.LookupSubjectsResponse;
 import com.authzed.api.v1.PermissionService.ReadRelationshipsResponse;
 import com.authzed.api.v1.PermissionService.RelationshipFilter;
 import com.authzed.api.v1.PermissionsServiceGrpc;
 import com.authzed.grpcutil.BearerToken;
 
 import io.grpc.ManagedChannel;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
 public class ReBACFunctions {
     final PermissionsServiceGrpc.PermissionsServiceBlockingStub permissionsService;
@@ -27,7 +26,7 @@ public class ReBACFunctions {
         .newBlockingStub(channel)
         .withCallCredentials(bearerToken);
     }
-    
+
     private ObjectReference createObject(String type, String id) {
         return ObjectReference.newBuilder()
         .setObjectType(type)
@@ -80,4 +79,30 @@ public class ReBACFunctions {
         PermissionService.WriteRelationshipsResponse response = permissionsService.writeRelationships(request);
         return response.getWrittenAt().getToken();
     }
+
+	public List<RebacPermissionRelationship> getRelationship(SchemaObject resource, Consistency consistency) throws Exception {
+		return getRelationship(resource.type.toString(), resource.id, consistency);
+	}
+	public List<RebacPermissionRelationship> getRelationship(String resourceType, String resourceId, Consistency consistency) throws Exception {
+		List<RebacPermissionRelationship> relationships = new ArrayList<>();
+		PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
+			.setConsistency(consistency)
+			.setRelationshipFilter(
+				RelationshipFilter.newBuilder()
+					.setResourceType(resourceType)
+					.setOptionalResourceId(resourceId))
+			.build();
+
+		Iterator<ReadRelationshipsResponse> iter = permissionsService.readRelationships(request);
+
+		System.out.println("Relationships:");
+		while (iter.hasNext()) {
+			PermissionService.ReadRelationshipsResponse response = iter.next();
+			ObjectReference subject = response.getRelationship().getSubject().getObject();
+			ObjectReference resource = response.getRelationship().getResource();
+			RebacPermissionRelationship rebacRelationship = new RebacPermissionRelationship(subject, response.getRelationship().getRelation(), resource);
+			relationships.add(rebacRelationship);
+		}
+		return relationships;
+	}
 }

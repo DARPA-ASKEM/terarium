@@ -21,6 +21,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -196,6 +197,12 @@ public class ReBACService {
 		return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
 	}
 
+	public boolean hasMembership(SchemaObject who, SchemaObject what) throws Exception {
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, full);
+	}
+
 	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
@@ -207,7 +214,9 @@ public class ReBACService {
 		rebac.createRelationship(who, relationship, what);
 	}
 
-	public void getDatumDetails(String datumId, AskemDatumType datumType) throws Exception {
-		SchemaObject datum = new SchemaObject(Schema.Type.DATUM, datumType + datumId);
+	public List<RebacPermissionRelationship> getPermissions(SchemaObject what) throws Exception {
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.getRelationship(what, full);
 	}
 }

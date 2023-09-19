@@ -43,8 +43,9 @@ public class GroupsResource {
 		@QueryParam("name") final String name
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID))) {
-				PermissionGroup permissionGroup = new RebacUser(jwt.getSubject(), reBACService).addGroup(name);
+			RebacUser rebacUser = new RebacUser(jwt.getSubject(), reBACService);
+			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID))) {
+				PermissionGroup permissionGroup = rebacUser.addGroup(name);
 				return Response
 					.status(Response.Status.OK)
 					.entity(permissionGroup)

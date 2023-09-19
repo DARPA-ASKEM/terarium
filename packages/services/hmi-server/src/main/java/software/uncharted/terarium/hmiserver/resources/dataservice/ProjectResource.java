@@ -6,10 +6,14 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.Id;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
+import software.uncharted.terarium.hmiserver.models.dataservice.ProjectPermissions;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 import javax.inject.Inject;
@@ -26,7 +30,6 @@ import java.util.*;
 public class ProjectResource {
 	@Inject
 	ReBACService reBACService;
-
 	@Inject
 	JsonWebToken jwt;
 
@@ -47,7 +50,7 @@ public class ProjectResource {
 			.filter(Project::getActive)
 			.filter(project -> {
 				try {
-					return new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(project.getProjectID()));
+					return new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(project.getProjectID(), reBACService));
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
@@ -82,8 +85,37 @@ public class ProjectResource {
 		@PathParam("id") final String id
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(id))) {
+			RebacProject rebacProject = new RebacProject(id, reBACService);
+			if (new RebacUser(jwt.getSubject(), reBACService).canRead(rebacProject)) {
 				return proxy.getProject(id);
+			}
+			return Response.status(404).build();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GET
+	@Path("/{id}/permissions")
+	public Response getProjectPermissions(
+		@PathParam("id") final String id
+	) {
+		try {
+			RebacProject rebacProject = new RebacProject(id, reBACService);
+			if (new RebacUser(jwt.getSubject(), reBACService).canRead(rebacProject)) {
+				ProjectPermissions permissions = new ProjectPermissions();
+				for (RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
+					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+						permissions.addGroup(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+					}
+				}
+
+				return Response
+					.status(Response.Status.OK)
+					.entity(permissions)
+					.build();
 			}
 			return Response.status(404).build();
 		} catch (Exception e) {
@@ -101,7 +133,7 @@ public class ProjectResource {
 		String location = res.getHeaderString("Location");
 		String server = res.getHeaderString("Server");
 		try {
-			new RebacUser(jwt.getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId())));
+			new RebacUser(jwt.getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId()), reBACService));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -116,7 +148,7 @@ public class ProjectResource {
 		final Project project
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(id))) {
+			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
 				return proxy.updateProject(id, project);
 			}
 			return Response.notModified().build();
@@ -132,7 +164,7 @@ public class ProjectResource {
 		@PathParam("id") final String id
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(new RebacProject(id))) {
+			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(new RebacProject(id, reBACService))) {
 				return proxy.deleteProject(id);
 			}
 			return Response.notModified().build();
@@ -148,7 +180,7 @@ public class ProjectResource {
 		@QueryParam("types") final List<Assets.AssetType> types
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(projectId))) {
+			if (new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
 				return Response
 					.status(Response.Status.OK)
 					.entity(proxy.getAssets(projectId, types))
@@ -170,7 +202,7 @@ public class ProjectResource {
 		@PathParam("resource_id") final String resourceId
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(projectId))) {
+			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				return proxy.createAsset(projectId, type, resourceId);
 			}
 			return Response.notModified().build();
@@ -187,7 +219,7 @@ public class ProjectResource {
 		@PathParam("resource_id") final String resourceId
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(projectId))) {
+			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				return proxy.deleteAsset(projectId, type, resourceId);
 			}
 			return Response.notModified().build();

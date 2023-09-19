@@ -54,6 +54,7 @@ public class Schema {
 	public enum Permission {
 		READ("read"),
 		WRITE("write"),
+		MEMBERSHIP("membership"),
 		ADMINISTRATE("administrate");
 
 		private final String text;
