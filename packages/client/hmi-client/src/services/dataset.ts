@@ -4,7 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { AssetType, CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
 import { addAsset } from '@/services/project';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
@@ -246,13 +246,25 @@ const createCsvAssetFromRunResults = (runResults: RunResults): CsvAsset | null =
 	const runIdList = Object.keys(runResult);
 	if (runIdList.length === 0) return null;
 
-	const headers = ['run_id', ...Object.keys(runResult[runIdList[0]][0])];
+	const csvColHeaders = Object.keys(runResult[runIdList[0]][0]);
 	let csvData: CsvAsset = {
-		headers,
+		headers: ['run_id', ...csvColHeaders],
 		data: [],
-		csv: [headers],
-		rowCount: 0
+		csv: [['run_id', ...csvColHeaders]],
+		rowCount: 0,
+		stats: [
+			{
+				bins: Array(10).fill(0),
+				minValue: 0,
+				maxValue: 0,
+				mean: 0,
+				median: 0,
+				sd: 0
+			}
+		]
 	};
+
+	const csvColumns: { [key: string]: number[] } = {};
 
 	runIdList.forEach((id) => {
 		csvData = {
@@ -263,10 +275,52 @@ const createCsvAssetFromRunResults = (runResults: RunResults): CsvAsset | null =
 		runResult[id].forEach((row) => {
 			const rowValues = Object.values(row);
 			csvData.csv.push([id, ...(rowValues as any)]);
+
+			csvColHeaders.forEach((header, index) => {
+				if (!csvColumns[header]) {
+					csvColumns[header] = [];
+				}
+				csvColumns[header].push(+rowValues[index]);
+			});
 		});
 	});
 
+	csvColHeaders.forEach((header) => {
+		csvData.stats!.push(getCsvColumnStats(csvColumns[header]));
+	});
+
 	return csvData;
+};
+
+const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
+	const sortedCol = [...csvColumn].sort((a, b) => a - b);
+
+	const minValue = sortedCol[0];
+	const maxValue = sortedCol[sortedCol.length - 1];
+	const mean = sortedCol.reduce((a, b) => a + b, 0) / sortedCol.length;
+	const median = sortedCol[Math.floor(sortedCol.length / 2)];
+
+	// Calculate standard deviation
+	const squaredDifferences = sortedCol.map((value) => (value - mean) ** 2);
+	const variance = squaredDifferences.reduce((a, b) => a + b, 0) / squaredDifferences.length;
+	const sd = Math.sqrt(variance);
+
+	// Set up bins
+	const binCount = 10;
+	const bins = Array(binCount).fill(0);
+	const stepSize = (maxValue - minValue) / (binCount - 1);
+
+	// Fill bins
+	sortedCol.forEach((value) => {
+		if (stepSize !== 0) {
+			const binIndex = Math.abs(Math.floor((value - minValue) / stepSize));
+			bins[binIndex]++;
+		} else {
+			// TODO: how do we handle when stepSize is 0 (i.e. all values are the same)?
+		}
+	});
+
+	return { bins, minValue, maxValue, mean, median, sd };
 };
 
 export {

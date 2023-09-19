@@ -33,7 +33,6 @@
 				@configuration-change="configurationChange(index, $event)"
 				color-by-run
 			/>
-			<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
 			<Button
 				class="add-chart"
 				text
@@ -67,6 +66,7 @@
 					"
 				></i>
 			</span>
+			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">

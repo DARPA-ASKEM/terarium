@@ -25,7 +25,7 @@
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
 			class="simulate-container"
 		>
-			<div class="datatable-header">
+			<!-- <div class="datatable-header">
 				<div class="datatable-header-title">
 					{{ `${rawDataKeys.length} columns | ${parsedRawData.length} rows` }}
 				</div>
@@ -64,7 +64,7 @@
 				v-model:rows="paginatorRows"
 				:totalRecords="parsedRawData.length"
 				:rowsPerPageOptions="[5, 10, 20, 50]"
-			/>
+			/> -->
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -106,6 +106,7 @@
 					"
 				></i>
 			</span>
+			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -172,11 +173,11 @@ import _ from 'lodash';
 import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import MultiSelect from 'primevue/multiselect';
+// import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import Paginator from 'primevue/paginator';
-import { Model, TimeSpan, ModelConfiguration } from '@/types/Types';
+// import Paginator from 'primevue/paginator';
+import { CsvAsset, Model, TimeSpan, ModelConfiguration } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel, getModelConfigurations } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -187,8 +188,9 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
-import { saveDataset } from '@/services/dataset';
+import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -215,10 +217,11 @@ const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
-const selectedCols = ref<string[]>([]);
-const paginatorRows = ref(10);
-const paginatorFirst = ref(0);
+// const selectedCols = ref<string[]>([]);
+// const paginatorRows = ref(10);
+// const paginatorFirst = ref(0);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
+const rawContent = ref<CsvAsset | null>(null);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
@@ -265,6 +268,11 @@ onMounted(async () => {
 	parsedRawData.value = output.parsedRawData;
 	runResults.value = output.runResults;
 	runConfigs.value = output.runConfigs;
+
+	rawContent.value = createCsvAssetFromRunResults(runResults.value);
+	console.log(rawContent.value);
+	// console.log(parsedRawData.value);
+	// console.log(rawDataKeys.value);
 });
 
 watch(
@@ -280,11 +288,11 @@ watch(
 	}
 );
 
-const rawDataKeys = computed(() => Object.keys(parsedRawData.value[0]));
+// const rawDataKeys = computed(() => Object.keys(parsedRawData.value[0]));
 
-const rawDataRenderedRows = computed(() =>
-	parsedRawData.value.slice(paginatorFirst.value, paginatorFirst.value + paginatorRows.value)
-);
+// const rawDataRenderedRows = computed(() =>
+// 	parsedRawData.value.slice(paginatorFirst.value, paginatorFirst.value + paginatorRows.value)
+// );
 </script>
 
 <style scoped>
