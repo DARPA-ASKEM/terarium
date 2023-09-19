@@ -102,6 +102,7 @@
 					:class="{ save: hasValidDatasetName }"
 					@click="
 						saveDataset(project.id, completedRunId, saveAsName);
+						getActiveProject(project.id);
 						showSaveInput = false;
 					"
 				></i>
@@ -189,7 +190,10 @@ import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import { saveDataset } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
+
+const { getActiveProject } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;

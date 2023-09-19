@@ -58,6 +58,7 @@
 					:class="{ save: hasValidDatasetName }"
 					@click="
 						saveDataset(project.id, completedRunId, saveAsName);
+						getActiveProject(project.id);
 						showSaveInput = false;
 					"
 				></i>
@@ -228,10 +229,13 @@ import { IProject } from '@/types/Project';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
+
+const { getActiveProject } = useProjects();
 
 const dataLabelPlugin = [ChartDataLabels];
 

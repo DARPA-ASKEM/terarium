@@ -62,6 +62,7 @@
 					:class="{ save: hasValidDatasetName }"
 					@click="
 						saveDataset(project.id, completedRunId, saveAsName);
+						getActiveProject(project.id);
 						showSaveInput = false;
 					"
 				></i>
@@ -125,7 +126,10 @@ import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
+
+const { getActiveProject } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;
