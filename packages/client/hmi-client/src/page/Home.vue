@@ -346,7 +346,7 @@ enum ProjectsView {
 
 enum TabTitles {
 	MyProjects = 'My projects',
-	SharedProjects = 'Shared Projects'
+	SharedProjects = 'Shared projects'
 }
 
 const selectedSort = ref('Last updated (descending)');
