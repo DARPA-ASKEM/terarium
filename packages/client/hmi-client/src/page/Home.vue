@@ -63,7 +63,7 @@
 						<section class="list-of-projects">
 							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
 								<img src="@assets/svg/seed.svg" alt="" />
-								<template v-if="tab.title === 'My projects'">
+								<template v-if="tab.title === TabTitles.MyProjects">
 									<h3>Welcome to Terarium</h3>
 									<div>
 										Get started by creating a
@@ -74,7 +74,7 @@
 										/>. Your projects will be displayed on this page.
 									</div>
 								</template>
-								<template v-else-if="tab.title === 'Shared projects'">
+								<template v-else-if="tab.title === TabTitles.SharedProjects">
 									<h3>You don't have any shared projects</h3>
 									<p>Shared projects will be displayed on this page</p>
 								</template>
@@ -191,20 +191,6 @@
 									</template>
 								</Column>
 							</DataTable>
-							<Dialog
-								:header="`Remove ${selectedProjectMenu?.name}`"
-								v-model:visible="isRemoveDialog"
-							>
-								<p>
-									You are about to remove project <em>{{ selectedProjectMenu?.name }}</em
-									>.
-								</p>
-								<p>Are you sure?</p>
-								<template #footer>
-									<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
-									<Button label="Remove project" @click="removeProject" />
-								</template>
-							</Dialog>
 						</section>
 					</TabPanel>
 				</TabView>
@@ -308,6 +294,17 @@
 				</template>
 			</tera-modal>
 		</Teleport>
+		<Dialog :header="`Remove ${selectedProjectMenu?.name}`" v-model:visible="isRemoveDialog">
+			<p>
+				You are about to remove project <em>{{ selectedProjectMenu?.name }}</em
+				>.
+			</p>
+			<p>Are you sure?</p>
+			<template #footer>
+				<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
+				<Button label="Remove project" @click="removeProject" />
+			</template>
+		</Dialog>
 	</main>
 </template>
 
@@ -345,6 +342,11 @@ import Menu from 'primevue/menu';
 enum ProjectsView {
 	Cards,
 	Table
+}
+
+enum TabTitles {
+	MyProjects = 'My projects',
+	SharedProjects = 'Shared Projects'
 }
 
 const selectedSort = ref('Last updated (descending)');
@@ -390,8 +392,8 @@ const myFilteredSortedProjects = computed(() => {
 });
 
 const projectsTabs = ref<{ title: string; projects: Project[] }[]>([
-	{ title: 'My projects', projects: [] },
-	{ title: 'Shared projects', projects: [] } // Keep shared projects empty for now
+	{ title: TabTitles.MyProjects, projects: [] },
+	{ title: TabTitles.SharedProjects, projects: [] } // Keep shared projects empty for now
 ]);
 
 // Table view
