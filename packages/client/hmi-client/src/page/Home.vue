@@ -644,6 +644,7 @@ function listAuthorNames(authors) {
 
 .p-datatable:deep(.p-datatable-tbody > tr .project-options) {
 	visibility: hidden;
+	float: right;
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr:hover .project-options) {
