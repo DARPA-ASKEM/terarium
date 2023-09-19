@@ -90,7 +90,7 @@ const addResourcesToProject = async (projectId: string) => {
 const addAssetsToProject = async (projectOption) => {
 	if (props.selectedSearchItems.length === 0) return;
 
-	const projectId = projectOption.id ?? activeProject.value?.id;
+	const projectId = projectOption.value.id ?? activeProject.value?.id;
 	addResourcesToProject(projectId);
 
 	emit('close');
