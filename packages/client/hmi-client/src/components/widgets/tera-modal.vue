@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import Button from 'primevue/button';
+
 /**
  * A modal with content slots for a header, body, and footer. Use v-if to control visiblity.
  * @example
@@ -13,17 +16,30 @@
  * <modal @modal-mask-clicked="closeModal"></modal>
  */
 
-defineProps<{
+const props = defineProps<{
 	zIndex?: number;
+	fullscreen?: boolean;
 }>();
+
+const emit = defineEmits(['modal-enter-press', 'modal-mask-clicked', 'on-close-clicked']);
+
+const fullscreenClass = computed(() => (props.fullscreen ? 'fullscreen' : ''));
 </script>
 
 <template>
 	<Transition name="modal">
-		<main :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
-			<section>
+		<main :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
+			<section :class="fullscreenClass">
 				<header>
 					<slot name="header" />
+					<Button
+						v-if="fullscreen"
+						icon="pi pi-times"
+						text
+						rounded
+						aria-label="Close"
+						@click="emit('on-close-clicked')"
+					/>
 				</header>
 				<section class="content"><slot /></section>
 				<section><slot name="math-editor" /></section>
@@ -31,7 +47,7 @@ defineProps<{
 					<slot name="footer" />
 				</footer>
 			</section>
-			<aside @click.self="$emit('modalMaskClicked')" />
+			<aside @click.self="emit('modal-mask-clicked')" />
 		</main>
 	</Transition>
 </template>
@@ -71,6 +87,11 @@ main > section {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+}
+
+main > section.fullscreen {
+	height: 95%;
+	width: 95%;
 }
 
 .content {
