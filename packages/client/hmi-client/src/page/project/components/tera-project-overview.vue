@@ -277,6 +277,7 @@ import { useProjects } from '@/composables/project';
 import { downloadRawFile, createNewDatasetFromCSV } from '@/services/dataset';
 import { uploadCodeToProject } from '@/services/code';
 import { uploadArtifactToProject } from '@/services/artifact';
+import { getAssetIcon } from '@/services/project';
 
 const props = defineProps<{
 	project: IProject;
@@ -312,7 +313,7 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const { update, getAssetIcon, addAsset } = useProjects();
+const { update, addAsset } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
@@ -425,7 +426,7 @@ async function processDataset(file: File, description: string) {
 	);
 
 	let newAsset;
-	if (addedDataset && addedDataset.id) {
+	if (addedDataset?.id) {
 		newAsset = await addAsset(props.project.id, AssetType.Datasets, addedDataset.id);
 		addedCSV = await downloadRawFile(addedDataset.id, file.name);
 	}

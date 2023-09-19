@@ -7,28 +7,14 @@
 */
 
 import { IProject } from '@/types/Project';
-import { Component, readonly, shallowRef } from 'vue';
+import { readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import { AssetType } from '@/types/Types';
-import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
 const TIMEOUT_MS = 1000;
 
 const activeProject = shallowRef<IProject | null>(null);
 const allProjects = shallowRef<IProject[] | null>(null);
-
-/**
- * Get the icon associated with an Asset
- */
-const icons = new Map<string | AssetType, string | Component>([
-	[AssetType.Publications, 'file'],
-	[AssetType.Models, 'share-2'],
-	[AssetType.Datasets, DatasetIcon],
-	[AssetType.Simulations, 'settings'],
-	[AssetType.Code, 'code'],
-	[AssetType.Workflows, 'git-merge'],
-	['overview', 'layout']
-]);
 
 export function useProjects() {
 	async function getActiveProject(projectId: IProject['id']): Promise<IProject | null> {
@@ -81,13 +67,6 @@ export function useProjects() {
 		return ProjectService.getPublicationAssets(projectId);
 	}
 
-	function getAssetIcon(type: AssetType | string | null): string | Component {
-		if (type && icons.has(type)) {
-			return icons.get(type) ?? 'circle';
-		}
-		return 'circle';
-	}
-
 	return {
 		activeProject: readonly(activeProject),
 		allProjects: readonly(allProjects),
@@ -98,7 +77,6 @@ export function useProjects() {
 		create,
 		update,
 		remove,
-		getPublicationAssets,
-		getAssetIcon
+		getPublicationAssets
 	};
 }
