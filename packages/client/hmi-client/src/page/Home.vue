@@ -649,12 +649,6 @@ function listAuthorNames(authors) {
 .p-datatable:deep(.p-datatable-tbody > tr:hover .project-options) {
 	visibility: visible;
 }
-
-.p-datatable:deep(.p-datatable-tbody > tr > td > a) {
-	color: var(--text-color-primary);
-	font-weight: var(--font-weight-semibold);
-}
-
 .p-datatable:deep(.p-datatable-tbody > tr > td > a) {
 	color: var(--text-color-primary);
 	font-weight: var(--font-weight-semibold);
