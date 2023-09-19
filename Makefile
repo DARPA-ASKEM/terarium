@@ -22,19 +22,11 @@ TARGETS :=
 
 TARGETS += hmi-server
 clean-hmi-server: clean-hmi-server-base
-	rm -rf $(PROJECT_DIR)/packages/services/hmi-server/docker/jvm/build
+	rm -rf $(PROJECT_DIR)/packages/server/docker/build
 
 image-hmi-server: clean-hmi-server
-	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=jar
-	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/jvm/build
-
-TARGETS += hmi-server-native
-clean-hmi-server-native: clean-hmi-server-base
-	rm -rf $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
-
-image-hmi-server-native: clean-hmi-server-native
-	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=native
-	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
+	./gradlew :packages:server:build
+	mv $(PROJECT_DIR)/packages/server/build $(PROJECT_DIR)/packages/server/docker/build
 
 TARGETS += hmi-client
 clean-hmi-client:
@@ -57,7 +49,7 @@ clean: $(TARGETS:%=clean-%)
 
 .PHONY: clean-hmi-server-base
 clean-hmi-server-base:
-	./gradlew :packages:services:hmi-server:clean
+	./gradlew :packages:server:clean
 
 
 ## Images

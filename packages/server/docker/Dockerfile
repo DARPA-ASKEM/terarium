@@ -1,6 +1,8 @@
 FROM eclipse-temurin:17-jdk-focal AS builder
+
 WORKDIR /app
-COPY /modules/server .
+COPY /packages/server .
+
 RUN --mount=type=cache,target=/root/.gradle ./gradlew clean bootJar
 
 # Extract JAR into layers for more optimal builds
@@ -9,9 +11,9 @@ RUN cp ./build/libs/*-SNAPSHOT.jar ./layers
 RUN (cd layers; java -Djarmode=layertools -jar *-SNAPSHOT.jar extract)
 
 FROM eclipse-temurin:17-jre-focal
-RUN groupadd -r pantera && useradd --no-log-init -r -g pantera pantera
+RUN groupadd -r terarium && useradd --no-log-init -r -g terarium terarium
 VOLUME /tmp
-USER pantera
+USER terarium
 
 # copy over the layers
 ARG LAYERS=/app/layers
