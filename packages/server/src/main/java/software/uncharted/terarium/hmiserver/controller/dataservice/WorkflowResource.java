@@ -31,7 +31,7 @@ public class WorkflowResource implements SnakeCaseResource {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Workflow> getWorkflows(
+	public ResponseEntity<Workflow> getWorkflow(
 		@PathVariable("id") String id
 	) {
 		return ResponseEntity.ok(workflowProxy.getAsset(id).getBody());
