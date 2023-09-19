@@ -1174,7 +1174,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/core@npm:^29.6.4, @jest/core@npm:^29.7.0":
+"@jest/core@npm:^29.7.0":
   version: 29.7.0
   resolution: "@jest/core@npm:29.7.0"
   dependencies:
@@ -3124,13 +3124,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:29.5.4":
-  version: 29.5.4
-  resolution: "@types/jest@npm:29.5.4"
+"@types/jest@npm:29.5.5":
+  version: 29.5.5
+  resolution: "@types/jest@npm:29.5.5"
   dependencies:
     expect: ^29.0.0
     pretty-format: ^29.0.0
-  checksum: 38ed5942f44336452efd0f071eab60aaa57cd8d46530348d0a3aa5a691dcbf1366c4ca8f6ee8364efb45b4413bfefae443e5d4f469246a472a03b21ac11cd4ed
+  checksum: 56e55cde9949bcc0ee2fa34ce5b7c32c2bfb20e53424aa4ff3a210859eeaaa3fdf6f42f81a3f655238039cdaaaf108b054b7a8602f394e6c52b903659338d8c6
   languageName: node
   linkType: hard
 
@@ -4708,9 +4708,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001517":
-  version: 1.0.30001535
-  resolution: "caniuse-lite@npm:1.0.30001535"
-  checksum: d66f71a3b97bc24108a54fe7ecaf9133c8a9466f91199185bdf43cff94dc89905860ea15ac18e57a109dd5dc85465d8df7dffa50e19324d03682f37a203468c1
+  version: 1.0.30001538
+  resolution: "caniuse-lite@npm:1.0.30001538"
+  checksum: 94c5d55757a339c7cc175f08a024671e2b4e7c04f130b1015793303d637061347efb6ad84447c3b8137333e742d150b8ad9672716bbf2482646c2e63a56f6c55
   languageName: node
   linkType: hard
 
@@ -8263,7 +8263,7 @@ __metadata:
   resolution: "graph-scaffolder@workspace:packages/client/graph-scaffolder"
   dependencies:
     "@types/d3": 7.4.0
-    "@types/jest": 29.5.4
+    "@types/jest": 29.5.5
     "@types/lodash": 4.14.198
     "@typescript-eslint/eslint-plugin": 5.42.1
     "@typescript-eslint/parser": 5.42.1
@@ -8276,7 +8276,7 @@ __metadata:
     eslint-config-esnext: 4.1.0
     eslint-plugin-import: 2.26.0
     globby: 13.1.4
-    jest: 29.6.4
+    jest: 29.7.0
     live-server: 1.2.2
     lodash: 4.17.21
     npm-run-all: 4.1.5
@@ -8497,7 +8497,7 @@ __metadata:
     pyodide: 0.23.4
     sass: 1.56.1
     typescript: 5.0.4
-    uuid: ^9.0.1
+    uuid: 9.0.1
     vite: 4.3.9
     vite-svg-loader: 4.0.0
     vitest: 0.24.5
@@ -9551,7 +9551,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-cli@npm:^29.6.4":
+"jest-cli@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest-cli@npm:29.7.0"
   dependencies:
@@ -9999,14 +9999,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest@npm:29.6.4":
-  version: 29.6.4
-  resolution: "jest@npm:29.6.4"
+"jest@npm:29.7.0":
+  version: 29.7.0
+  resolution: "jest@npm:29.7.0"
   dependencies:
-    "@jest/core": ^29.6.4
+    "@jest/core": ^29.7.0
     "@jest/types": ^29.6.3
     import-local: ^3.0.2
-    jest-cli: ^29.6.4
+    jest-cli: ^29.7.0
   peerDependencies:
     node-notifier: ^8.0.1 || ^9.0.0 || ^10.0.0
   peerDependenciesMeta:
@@ -10014,7 +10014,7 @@ __metadata:
       optional: true
   bin:
     jest: bin/jest.js
-  checksum: ba28ca7a86d029bcd742bb254c0c8d0119c1e002ddae128ff6409ebabc0b29c36f69dbf3fdd326aff16e7b2500c9a918bbc6a9a5db4d966e035127242239439f
+  checksum: 17ca8d67504a7dbb1998cf3c3077ec9031ba3eb512da8d71cb91bcabb2b8995c4e4b292b740cb9bf1cbff5ce3e110b3f7c777b0cefb6f41ab05445f248d0ee0b
   languageName: node
   linkType: hard
 
@@ -14062,21 +14062,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"uuid@npm:9.0.1":
+  version: 9.0.1
+  resolution: "uuid@npm:9.0.1"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 39931f6da74e307f51c0fb463dc2462807531dc80760a9bff1e35af4316131b4fc3203d16da60ae33f07fdca5b56f3f1dd662da0c99fea9aaeab2004780cc5f4
+  languageName: node
+  linkType: hard
+
 "uuid@npm:^3.0.0":
   version: 3.4.0
   resolution: "uuid@npm:3.4.0"
   bin:
     uuid: ./bin/uuid
   checksum: 58de2feed61c59060b40f8203c0e4ed7fd6f99d42534a499f1741218a1dd0c129f4aa1de797bcf822c8ea5da7e4137aa3673431a96dae729047f7aca7b27866f
-  languageName: node
-  linkType: hard
-
-"uuid@npm:^9.0.1":
-  version: 9.0.1
-  resolution: "uuid@npm:9.0.1"
-  bin:
-    uuid: dist/bin/uuid
-  checksum: 39931f6da74e307f51c0fb463dc2462807531dc80760a9bff1e35af4316131b4fc3203d16da60ae33f07fdca5b56f3f1dd662da0c99fea9aaeab2004780cc5f4
   languageName: node
   linkType: hard
 
@@ -14694,8 +14694,8 @@ __metadata:
   linkType: hard
 
 "ws@npm:^8.5.0":
-  version: 8.14.1
-  resolution: "ws@npm:8.14.1"
+  version: 8.14.2
+  resolution: "ws@npm:8.14.2"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ">=5.0.2"
@@ -14704,7 +14704,7 @@ __metadata:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: 9e310be2b0ff69e1f87d8c6d093ecd17a1ed4c37f281d17c35e8c30e2bd116401775b3d503249651374e6e0e1e9905db62fff096b694371c77561aee06bc3466
+  checksum: 3ca0dad26e8cc6515ff392b622a1467430814c463b3368b0258e33696b1d4bed7510bc7030f7b72838b9fdeb8dbd8839cbf808367d6aae2e1d668ce741d4308b
   languageName: node
   linkType: hard
 
