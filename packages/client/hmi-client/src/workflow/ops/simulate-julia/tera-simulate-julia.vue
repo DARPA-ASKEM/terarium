@@ -61,7 +61,7 @@
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDatasetFromSimulationResultToProject(project.id, completedRunId, saveAsName);
+						saveDataset(project.id, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -123,11 +123,9 @@ import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
-import { useProjects } from '@/composables/project';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import { saveDataset } from '@/services/dataset';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
-
-const { saveDatasetFromSimulationResultToProject } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;

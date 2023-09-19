@@ -56,7 +56,7 @@
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDatasetFromSimulationResultToProject(project.id, completedRunId, saveAsName);
+						saveDataset(project.id, completedRunId, saveAsName);
 						showSaveInput = false;
 					"
 				></i>
@@ -220,11 +220,9 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { IProject } from '@/types/Project';
-import { useProjects } from '@/composables/project';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import { saveDataset } from '@/services/dataset';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
-
-const { saveDatasetFromSimulationResultToProject } = useProjects();
 
 const dataLabelPlugin = [ChartDataLabels];
 

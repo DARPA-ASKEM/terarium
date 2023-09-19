@@ -193,6 +193,7 @@ import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
 import { uploadCodeToProjectFromGithub } from '@/services/code';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
+import { createNewDatasetFromGithubFile } from '@/services/dataset';
 
 const props = defineProps<{
 	urlString: string;
@@ -200,7 +201,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const { createNewDatasetFromGithubFile, addAsset } = useProjects();
+const { addAsset } = useProjects();
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -335,13 +336,15 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 	// iterate through our files and fetch their contents
 	githubFiles.forEach(async (githubFile) => {
 		// Create a new dataset from this GitHub file
-		await createNewDatasetFromGithubFile(
+		const newDataset = await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
 			auth.name ?? '',
-			props.project?.id ?? '',
 			githubFile.htmlUrl
 		);
+		if (newDataset && newDataset.id && props.project?.id) {
+			await addAsset(props.project.id, AssetType.Datasets, newDataset.id);
+		}
 	});
 }
 

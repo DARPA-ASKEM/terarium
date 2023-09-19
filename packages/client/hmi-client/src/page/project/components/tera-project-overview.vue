@@ -274,7 +274,7 @@ import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
-import { downloadRawFile } from '@/services/dataset';
+import { downloadRawFile, createNewDatasetFromCSV } from '@/services/dataset';
 import { uploadCodeToProject } from '@/services/code';
 import { uploadArtifactToProject } from '@/services/artifact';
 
@@ -312,7 +312,7 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const { update, getAssetIcon, createNewDatasetFromCSV, addAsset } = useProjects();
+const { update, getAssetIcon, addAsset } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
@@ -421,15 +421,16 @@ async function processDataset(file: File, description: string) {
 		progress,
 		file,
 		auth.name ?? '',
-		props.project.id,
 		description
 	);
 
+	let newAsset;
 	if (addedDataset && addedDataset.id) {
+		newAsset = await addAsset(props.project.id, AssetType.Datasets, addedDataset.id);
 		addedCSV = await downloadRawFile(addedDataset.id, file.name);
 	}
 
-	if (addedCSV !== null) {
+	if (addedCSV !== null && newAsset) {
 		const text: string = addedCSV?.csv?.join('\r\n') ?? '';
 		const images = [];
 

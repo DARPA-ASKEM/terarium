@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { CsvAsset, Dataset } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
+import { useProjects } from '@/composables/project';
 
 /**
  * Get all datasets
@@ -218,6 +219,17 @@ async function createDatasetFromSimulationResult(
 		return null;
 	}
 }
+
+export const saveDataset = async (
+	projectId: string,
+	simulationId: string | undefined,
+	datasetName: string | null
+) => {
+	if (!simulationId) return;
+	if (await createDatasetFromSimulationResult(projectId, simulationId, datasetName)) {
+		useProjects().getActiveProject(projectId);
+	}
+};
 
 export {
 	getAll,

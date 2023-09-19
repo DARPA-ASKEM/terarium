@@ -7,9 +7,8 @@
 */
 
 import { IProject } from '@/types/Project';
-import { Component, Ref, readonly, shallowRef } from 'vue';
+import { Component, readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import * as DatasetService from '@/services/dataset';
 import * as ModelService from '@/services/model';
 import { AssetType } from '@/types/Types';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
@@ -90,67 +89,12 @@ export function useProjects() {
 		return 'circle';
 	}
 
-	async function createNewDatasetFromCSV(
-		progress: Ref<number>,
-		file: File,
-		userName: string,
-		projectId: IProject['id'],
-		description?: string
-	) {
-		const dataset = await DatasetService.createNewDatasetFromCSV(
-			progress,
-			file,
-			userName,
-			description
-		);
-		if (dataset && dataset.id) {
-			await addAsset(projectId, AssetType.Datasets, dataset.id);
-		}
-		return dataset;
-	}
-
-	async function createNewDatasetFromGithubFile(
-		repoOwnerAndName: string,
-		path: string,
-		userName: string,
-		projectId: IProject['id'],
-		url: string
-	) {
-		const dataset = await DatasetService.createNewDatasetFromGithubFile(
-			repoOwnerAndName,
-			path,
-			userName,
-			url
-		);
-		if (dataset && dataset.id) {
-			await addAsset(projectId, AssetType.Datasets, dataset.id);
-		}
-		return dataset;
-	}
-
 	async function addNewModelToProject(modelName: string, projectId: IProject['id']) {
 		const modelId = await ModelService.addNewModelToProject(modelName);
 		if (modelId) {
 			await addAsset(projectId, AssetType.Models, modelId);
 		}
 		return modelId;
-	}
-
-	async function saveDatasetFromSimulationResultToProject(
-		projectId: IProject['id'],
-		simulationId: string | undefined,
-		datasetName: string | null
-	) {
-		if (!simulationId) return null;
-		const dataset = await DatasetService.createDatasetFromSimulationResult(
-			projectId,
-			simulationId,
-			datasetName
-		);
-		if (dataset) {
-			await getActiveProject(projectId);
-		}
-		return dataset;
 	}
 
 	return {
@@ -165,9 +109,6 @@ export function useProjects() {
 		remove,
 		getPublicationAssets,
 		getAssetIcon,
-		createNewDatasetFromCSV,
-		createNewDatasetFromGithubFile,
-		addNewModelToProject,
-		saveDatasetFromSimulationResultToProject
+		addNewModelToProject
 	};
 }
