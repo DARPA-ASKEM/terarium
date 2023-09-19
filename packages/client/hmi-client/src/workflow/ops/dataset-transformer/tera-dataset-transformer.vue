@@ -25,7 +25,7 @@ import { createNotebookSession, getNotebookSessionById } from '@/services/notebo
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { DatasetTransformerState } from './mod';
+import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
