@@ -1,49 +1,53 @@
-package software.uncharted.terarium.hmiserver.resources.dataservice;
+package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.WorkflowProxy;
+import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
 
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import org.springframework.http.ResponseEntity;
 import java.util.Map;
+import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
-@Path("/api/workflows")
-@Produces(MediaType.APPLICATION_JSON)
-@Tag(name = "Workflow REST Endpoints")
-public class WorkflowResource {
-	@Inject
-	@RestClient
-	WorkflowProxy proxy;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-	@GET
-	public Response getWorkflows() {
-		return proxy.getWorkflows();
+@RequestMapping("/workflows")
+@RestController
+@Slf4j
+public class WorkflowResource implements SnakeCaseResource {
+
+	@Autowired
+	WorkflowProxy workflowProxy; 
+
+	@GetMapping
+	public ResponseEntity<List<Workflow>> getWorkflows(
+		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
+	) {
+		return ResponseEntity.ok(workflowProxy.getAssets(pageSize, page).getBody());
 	}
 
-	@POST
-	public Response createWorkflow(Workflow item) {
-		return proxy.createWorkflow(item);
+	@GetMapping("/{id}")
+	public ResponseEntity<Workflow> getWorkflows(
+		@PathVariable("id") String id
+	) {
+		return ResponseEntity.ok(workflowProxy.getAsset(id).getBody());
 	}
 
-	@PUT
-	@Path("/{id}")
-	public Response updateWorkflow(
-		@PathParam("id") String id,
+	@PostMapping
+	public ResponseEntity<JsonNode> createWorkflow(Workflow item) {
+		return ResponseEntity.ok(workflowProxy.createAsset(convertObjectToSnakeCaseJsonNode(item)).getBody());
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<JsonNode> updateWorkflow(
+		@PathVariable("id") String id,
 		Workflow workflow
 	) {
-		return proxy.updateWorkflow(id, workflow);
-	}
-
-	@GET
-	@Path("/{id}")
-	public Response getWorkflows(
-		@PathParam("id") String id
-	) {
-		return proxy.getWorkflowById(id);
+		return ResponseEntity.ok(workflowProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(workflow)).getBody());
 	}
 }
 
