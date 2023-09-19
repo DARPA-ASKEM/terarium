@@ -9,7 +9,6 @@
 import { IProject } from '@/types/Project';
 import { Component, readonly, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import * as ModelService from '@/services/model';
 import { AssetType } from '@/types/Types';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
@@ -89,14 +88,6 @@ export function useProjects() {
 		return 'circle';
 	}
 
-	async function addNewModelToProject(modelName: string, projectId: IProject['id']) {
-		const modelId = await ModelService.addNewModelToProject(modelName);
-		if (modelId) {
-			await addAsset(projectId, AssetType.Models, modelId);
-		}
-		return modelId;
-	}
-
 	return {
 		activeProject: readonly(activeProject),
 		allProjects: readonly(allProjects),
@@ -108,7 +99,6 @@ export function useProjects() {
 		update,
 		remove,
 		getPublicationAssets,
-		getAssetIcon,
-		addNewModelToProject
+		getAssetIcon
 	};
 }

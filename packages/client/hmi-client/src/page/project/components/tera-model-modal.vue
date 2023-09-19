@@ -39,14 +39,16 @@ import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import { AssetType } from '@/types/Types';
+import { addNewModelToProject } from '@/services/model';
 import { useProjects } from '@/composables/project';
+
+const { addAsset } = useProjects();
 
 const props = defineProps<{
 	project: IProject;
 	isVisible: boolean;
 }>();
 const emit = defineEmits(['close-modal']);
-const { addNewModelToProject } = useProjects();
 
 // New Model Modal
 const newModelName = ref<string>('');
@@ -73,8 +75,12 @@ async function createNewModel() {
 		return;
 	}
 	isValidName.value = true;
-	const modelId = await addNewModelToProject(newModelName.value.trim(), props.project.id);
+	const modelId = await addNewModelToProject(newModelName.value.trim());
+	let newAsset;
 	if (modelId) {
+		newAsset = await addAsset(props.project.id, AssetType.Models, modelId);
+	}
+	if (newAsset) {
 		router.push({
 			name: RouteName.Project,
 			params: {
