@@ -328,7 +328,8 @@ const overviewResource = {
 
 const codeResource = {
 	pageType: AssetType.Code,
-	assetId: 'code' // FIXME: hack to get around weird tab behaviour
+	assetId: 'code', // FIXME: hack to get around weird tab behaviour,
+	assetName: 'New file'
 };
 
 const adjustTabsProjectChange = () => {
