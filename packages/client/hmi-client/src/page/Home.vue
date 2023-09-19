@@ -98,7 +98,7 @@
 											:project="project"
 											:project-menu-items="projectMenuItems"
 											@click="openProject(project.id)"
-											@update-chosen-project-menu="chosenProjectMenu = project"
+											@update-chosen-project-menu="selectedProjectMenu = project"
 										/>
 									</li>
 									<li>
@@ -113,12 +113,29 @@
 							</div>
 							<DataTable
 								v-else-if="view === ProjectsView.Table"
+								v-model:selection="selectedProject"
 								:value="tab.projects"
 								paginator
 								:rows="10"
+								selectionMode="single"
+								dataKey="id"
 								:rowsPerPageOptions="[10, 20, 50]"
 							>
-								<Column expander style="width: 0" @click="expandOrCloseRow" />
+								<Column style="width: 0">
+									<template #body="{ data }">
+										<Button
+											:icon="
+												selectedProject === data ? 'pi pi-chevron-down' : 'pi pi-chevron-right'
+											"
+											class="p-button-icon-only p-button-text p-button-rounded"
+											@click.stop="
+												selectedProject === data
+													? (selectedProject = null)
+													: (selectedProject = data)
+											"
+										/>
+									</template>
+								</Column>
 								<Column
 									v-for="(col, index) in selectedColumns"
 									:field="col.field"
@@ -128,12 +145,18 @@
 									:style="`width: ${getColumnWidth(col.field)}%`"
 								>
 									<template v-if="col.field === 'name'" #body="{ data }">
-										<div class="project-title-link" @click.stop="openProject(data.id)">
-											<a>{{ data.name }}</a>
-										</div>
+										<a class="project-title-link" @click.stop="openProject(data.id)">{{
+											data.name
+										}}</a>
 									</template>
 									<template v-else-if="col.field === 'description'" #body="{ data }">
-										<div :class="descriptionStyle" @click="expandOrCloseRow">
+										<div
+											:class="
+												selectedProject === data
+													? 'project-description-expanded'
+													: 'project-description'
+											"
+										>
 											{{ data.description }}
 										</div>
 									</template>
@@ -169,11 +192,11 @@
 								</Column>
 							</DataTable>
 							<Dialog
-								:header="`Remove ${chosenProjectMenu?.name}`"
+								:header="`Remove ${selectedProjectMenu?.name}`"
 								v-model:visible="isRemoveDialog"
 							>
 								<p>
-									You are about to remove project <em>{{ chosenProjectMenu?.name }}</em
+									You are about to remove project <em>{{ selectedProjectMenu?.name }}</em
 									>.
 								</p>
 								<p>Are you sure?</p>
@@ -388,7 +411,8 @@ const onToggle = (val) => {
 /*
  * User Menu
  */
-const chosenProjectMenu = ref<Project | null>(null);
+const selectedProject = ref<Project | null>(null);
+const selectedProjectMenu = ref<Project | null>(null);
 
 const isRemoveDialog = ref(false);
 const openRemoveDialog = () => {
@@ -401,12 +425,12 @@ const projectMenu = ref();
 const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
 const toggleProjectMenu = (event, index: number, project: Project) => {
 	projectMenu.value[index].toggle(event);
-	chosenProjectMenu.value = project;
+	selectedProjectMenu.value = project;
 };
 
 const removeProject = async () => {
-	if (!chosenProjectMenu.value?.id) return;
-	const { name, id } = chosenProjectMenu.value;
+	if (!selectedProjectMenu.value?.id) return;
+	const { name, id } = selectedProjectMenu.value;
 
 	const isDeleted = await ProjectService.remove(id);
 	closeRemoveDialog();
@@ -428,14 +452,6 @@ function getColumnWidth(columnField: string) {
 		default:
 			return 5;
 	}
-}
-
-const descriptionStyle = ref('project-description');
-function expandOrCloseRow() {
-	descriptionStyle.value =
-		descriptionStyle.value === 'project-description'
-			? 'project-description-expanded'
-			: 'project-description';
 }
 
 /**
@@ -622,6 +638,10 @@ function listAuthorNames(authors) {
 	max-width: 32rem;
 }
 
+.p-datatable:deep(.p-datatable-tbody > tr > td:not(:first-child, :last-child)) {
+	padding-top: 1rem;
+}
+
 .p-datatable:deep(.p-datatable-tbody > tr .project-options) {
 	visibility: hidden;
 }
@@ -635,16 +655,13 @@ function listAuthorNames(authors) {
 	font-weight: var(--font-weight-semibold);
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td > .project-title-link) {
+.p-datatable:deep(.p-datatable-tbody > tr > td > a) {
+	color: var(--text-color-primary);
+	font-weight: var(--font-weight-semibold);
 	cursor: pointer;
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td > .project-title-link > a) {
-	color: var(--text-color-primary);
-	font-weight: var(--font-weight-semibold);
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr > td > .project-title-link:hover > a) {
+.p-datatable:deep(.p-datatable-tbody > tr > td > a:hover) {
 	color: var(--primary-color);
 	text-decoration: underline;
 }
