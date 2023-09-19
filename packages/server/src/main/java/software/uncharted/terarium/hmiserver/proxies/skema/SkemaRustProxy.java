@@ -17,7 +17,7 @@ public interface SkemaRustProxy {
 	 * @return	the model id of the stored model
 	 */
 	@PostMapping("/models")
-	ResponseEntity<JsonNode> addModel(String functionNetwork);
+	ResponseEntity<String> addModel(String functionNetwork);
 
 	/**
 	 * Gets a list of inputs from a stored model id
@@ -25,7 +25,7 @@ public interface SkemaRustProxy {
 	 * @return				the list of inputs
 	 */
 	@GetMapping("/models/{modelId}/named_opis")
-	ResponseEntity<JsonNode> getModelNamedOpis(@PathVariable("modelId") String modelId);
+	ResponseEntity<String> getModelNamedOpis(@PathVariable("modelId") String modelId);
 
 	/**
 	 * Gets a list of outputs from a stored model id
@@ -33,7 +33,7 @@ public interface SkemaRustProxy {
 	 * @return				the list of outputs
 	 */
 	@GetMapping("/models/{modelId}/named_opos")
-	ResponseEntity<JsonNode> getModelNamedOpos(@PathVariable("modelId") String modelId);
+	ResponseEntity<String> getModelNamedOpos(@PathVariable("modelId") String modelId);
 
 
 	@PutMapping("/mathml/acset")

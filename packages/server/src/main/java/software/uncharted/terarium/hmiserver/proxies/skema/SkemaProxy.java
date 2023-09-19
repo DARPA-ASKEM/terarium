@@ -16,5 +16,5 @@ public interface SkemaProxy {
 	 * @return	an escaped JSON string of the function network
 	 */
 	@PostMapping("/fn-given-filepaths")
-	ResponseEntity<JsonNode> getFunctionNetwork(@RequestBody CodeRequest request);
+	ResponseEntity<String> getFunctionNetwork(@RequestBody CodeRequest request);
 }
