@@ -18,7 +18,6 @@ import { onMounted, onUpdated, ref, nextTick } from 'vue';
 defineProps<{
 	text: string;
 	lines?: number;
-	parentExpandButton?: boolean;
 }>();
 
 const expanded = ref(false);
@@ -35,7 +34,6 @@ function determineShowMore() {
 function collapseOrExpand() {
 	expanded.value = !expanded.value;
 }
-defineExpose({ collapseOrExpand, triggerShowMore, expanded });
 
 onMounted(async () => {
 	await nextTick();

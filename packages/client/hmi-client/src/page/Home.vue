@@ -134,13 +134,7 @@
 										}}</a>
 									</template>
 									<template v-else-if="col.field === 'description'" #body="{ data }">
-										<div :class="teraShowMoreTextRef?.[index]?.expanded && 'expanded-description'">
-											<tera-show-more-text
-												:text="data.description"
-												:lines="1"
-												parent-expand-button
-											/>
-										</div>
+										<tera-show-more-text :text="data.description" :lines="1" />
 									</template>
 									<template v-else-if="col.field === 'stats'" #body="{ data }">
 										<div class="stats">
@@ -601,10 +595,6 @@ function listAuthorNames(authors) {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	vertical-align: top;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr > td > .expanded-description) {
-	padding-bottom: 0.5rem;
 }
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
