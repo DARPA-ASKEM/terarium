@@ -30,7 +30,6 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onUnmounted, onMounted } from 'vue';
-import { IProject } from '@/types/Project';
 import {
 	getSessionManager,
 	JupyterMessage,
@@ -45,6 +44,9 @@ import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
+import { useProjects } from '@/composables/project';
+
+const { activeProject } = useProjects();
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -75,7 +77,6 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-	project?: IProject;
 	assetName?: string;
 	assetId?: string;
 	assetType?: AssetType;
@@ -321,10 +322,10 @@ watch(
 watch(
 	() => [
 		props.assetId, // Once the route name changes, add/switch to another tab
-		props.project
+		activeProject.value
 	],
 	() => {
-		console.log(props.project, props.assetId);
+		console.log(activeProject.value, props.assetId);
 	}
 );
 

@@ -55,7 +55,6 @@
 		</div>
 		<tera-jupyter-chat
 			ref="chat"
-			:project="props.project"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
@@ -100,8 +99,6 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
-import { addAsset } from '@/services/project';
-import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { AssetType, CsvAsset, Model, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
@@ -119,6 +116,9 @@ import Dropdown from 'primevue/dropdown';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
+import { useProjects } from '@/composables/project';
+
+const { activeProject, addAsset } = useProjects();
 
 // import { createNewDataset } from '@/services/dataset';
 
@@ -130,7 +130,6 @@ const runningSessions = ref<any[]>([]);
 const confirm = useConfirm();
 
 const props = defineProps<{
-	project?: IProject;
 	model: Model | null;
 	modelConfigurationId: string;
 	showKernels: boolean;
@@ -358,12 +357,12 @@ const updateKernelList = () => {
 };
 
 const onNewModelSaved = async (payload) => {
-	if (!props.project) {
+	if (!activeProject.value) {
 		toast.error('Unable to save model', "Can't find active an project");
 		return;
 	}
 	const modelId = payload.model_id;
-	await addAsset(props.project.id, AssetType.Models, modelId);
+	await addAsset(AssetType.Models, modelId);
 	emit('new-model-saved', { id: modelId, name: saveAsName.value });
 	toast.success('Model saved successfully', 'Refresh to see the dataset in the resource explorer');
 };

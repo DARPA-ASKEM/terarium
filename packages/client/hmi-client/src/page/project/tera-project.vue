@@ -65,14 +65,12 @@
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-simulate-ciemss
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-stratify
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
@@ -86,7 +84,6 @@
 						workflowNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-calibrate-ensemble-ciemss
 					v-if="
@@ -94,16 +91,13 @@
 						workflowNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-model-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
-					:project="project"
 					:node="workflowNode"
 				/>
 				<tera-dataset-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.DATASET"
-					:project="project"
 					:node="workflowNode"
 				/>
 				<tera-dataset-transformer
@@ -111,14 +105,12 @@
 						workflowNode &&
 						workflowNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER
 					"
-					:project="project"
 					:node="workflowNode"
 				/>
 				<tera-model-transformer
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER
 					"
-					:project="project"
 					:node="workflowNode"
 				/>
 			</SplitterPanel>
@@ -134,11 +126,7 @@
 			</template>
 		</tera-slider-panel>
 		<!-- New model modal -->
-		<tera-model-modal
-			:project="project"
-			:is-visible="isNewModelModalVisible"
-			@close-modal="onCloseModelModal"
-		/>
+		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
 	</main>
 </template>
 
@@ -196,10 +184,10 @@ const isNotesSliderOpen = ref(false);
 
 const isNewModelModalVisible = ref(false);
 
-const { addAsset, deleteAsset } = useProjects();
+const { addAsset, deleteAsset, activeProject } = useProjects();
 
 // Associated with tab storage
-const projectContext = computed(() => props.project?.id.toString());
+const projectContext = computed(() => activeProject.value?.id.toString() ?? '');
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
@@ -253,8 +241,14 @@ async function removeAsset(asset: Tab) {
 	const { assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
-		const isRemoved = await deleteAsset(props.project.id, pageType as AssetType, assetId);
+	if (
+		assetId &&
+		pageType &&
+		isProjectAssetTypes(pageType) &&
+		pageType !== ProjectPages.OVERVIEW &&
+		activeProject.value?.id
+	) {
+		const isRemoved = await deleteAsset(activeProject.value?.id, pageType as AssetType, assetId);
 
 		if (isRemoved) {
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isSameTab(tab, asset)));
@@ -269,15 +263,15 @@ async function removeAsset(asset: Tab) {
 const openWorkflow = async () => {
 	// Create a new workflow
 	let wfName = 'workflow';
-	if (props.project && props.project.assets) {
-		wfName = `workflow ${props.project.assets[AssetType.Workflows].length + 1}`;
+	if (activeProject.value && activeProject.value?.assets) {
+		wfName = `workflow ${activeProject.value.assets[AssetType.Workflows].length + 1}`;
 	}
 	const wf = emptyWorkflow(wfName, '');
 
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await addAsset(props.project.id, AssetType.Workflows, workflowId);
+	await addAsset(AssetType.Workflows, workflowId);
 
 	router.push({
 		name: RouteName.Project,

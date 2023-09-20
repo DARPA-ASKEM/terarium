@@ -217,7 +217,6 @@ import { AssetType, Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
-import { addAsset } from '@/services/project';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';
 import { workflowEventBus } from '@/services/workflow';
 import { ModelOperation } from '@/workflow/ops/model/model-operation';
@@ -226,7 +225,7 @@ import TeraTypedModelDiagram from '@/components/model/petrinet/model-diagrams/te
 import TeraStratifyOutputModelDiagram from '@/components/model/petrinet/model-diagrams/tera-stratify-output-model-diagram.vue';
 import { useProjects } from '@/composables/project';
 
-const { activeProject } = useProjects();
+const { addAsset } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -314,9 +313,8 @@ async function doStratify() {
 			stratifiedModel.value.id = response.id;
 		}
 		const newModelId = response?.id;
-		const projectId = activeProject.value?.id as string;
 		if (newModelId) {
-			await addAsset(projectId, 'models', newModelId);
+			await addAsset('models', newModelId);
 			stratifyView.value = StratifyView.Output;
 
 			workflowEventBus.emitNodeStateChange({

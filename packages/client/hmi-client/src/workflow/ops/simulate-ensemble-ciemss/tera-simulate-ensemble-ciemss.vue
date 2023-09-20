@@ -52,12 +52,12 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="activeProject?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						getActiveProject(project.id);
+						saveDataset(activeProject.id, completedRunId, saveAsName);
+						getProject();
 						showSaveInput = false;
 					"
 				></i>
@@ -220,19 +220,17 @@ import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { IProject } from '@/types/Project';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
-const { getActiveProject } = useProjects();
+const { getProject, activeProject } = useProjects();
 
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 enum EnsembleTabs {

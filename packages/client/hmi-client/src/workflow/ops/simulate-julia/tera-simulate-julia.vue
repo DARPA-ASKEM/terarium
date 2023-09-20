@@ -57,12 +57,12 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="activeProject?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						getActiveProject(project.id);
+						saveDataset(activeProject.id, completedRunId, saveAsName);
+						getProject();
 						showSaveInput = false;
 					"
 				></i>
@@ -122,18 +122,16 @@ import { getModel } from '@/services/model';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
-const { getActiveProject } = useProjects();
+const { getProject, activeProject } = useProjects();
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
