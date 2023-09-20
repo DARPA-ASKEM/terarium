@@ -15,7 +15,7 @@ const TIMEOUT_MS = 100;
 
 const activeProject = shallowRef<IProject | null>(null);
 const allProjects = shallowRef<IProject[] | null>(null);
-const activeProjectId = computed(() => activeProject.value?.id ?? '');
+const activeProjectId = computed<string>(() => activeProject.value?.id ?? '');
 
 export function useProjects() {
 	// refresh the current activeProject if `projectId` is not defined
@@ -49,7 +49,7 @@ export function useProjects() {
 	}
 
 	async function deleteAsset(assetType: AssetType, assetId: string, projectId?: string) {
-		const deleted = ProjectService.deleteAsset(
+		const deleted = await ProjectService.deleteAsset(
 			projectId ?? activeProjectId.value,
 			assetType,
 			assetId
@@ -57,17 +57,21 @@ export function useProjects() {
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
 				activeProject.value = await ProjectService.get(activeProjectId.value, true);
-			}, 1000);
+			}, TIMEOUT_MS);
 		}
 		return deleted;
 	}
 
 	async function create(name: string, description: string, username: string) {
-		return ProjectService.create(name, description, username);
+		const created = await ProjectService.create(name, description, username);
+		setTimeout(async () => {
+			getAll();
+		}, TIMEOUT_MS);
+		return created;
 	}
 
 	async function update(project: IProject) {
-		const updated = ProjectService.update(project);
+		const updated = await ProjectService.update(project);
 		setTimeout(async () => {
 			activeProject.value = await ProjectService.get(project.id, true);
 		}, 1000);
@@ -75,7 +79,16 @@ export function useProjects() {
 	}
 
 	async function remove(projectId: IProject['id']) {
-		return ProjectService.remove(projectId);
+		const removed = await ProjectService.remove(projectId);
+		setTimeout(async () => {
+			getAll();
+		}, TIMEOUT_MS);
+		// `toString()` shouldn't be necessary but for some reason `activeProjectId.value` evaluates to a number
+		if (removed && projectId === activeProjectId.value.toString()) {
+			// removed project was the active project; set active project to null
+			activeProject.value = null;
+		}
+		return removed;
 	}
 
 	async function getPublicationAssets(projectId: IProject['id']) {
