@@ -34,7 +34,7 @@
 								/>
 							</span>
 						</section>
-						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+						<div v-if="!isLoadingProjects && tab.projects.length < 1" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
 							<template v-if="tab.title === 'My projects'">
 								<h3>Welcome to Terarium</h3>
@@ -68,7 +68,7 @@
 								<li v-for="project in tab.projects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
-										:project="(project as IProject)"
+										:project="project"
 										@click="openProject(project.id)"
 									/>
 								</li>
@@ -249,8 +249,8 @@ const myFilteredSortedProjects = computed(() => {
 	return filtered;
 });
 
-const projectsTabs = ref<{ title: string; projects: IProject[] }[]>([
-	{ title: 'My projects', projects: [] },
+const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
+	{ title: 'My projects', projects: myFilteredSortedProjects.value },
 	{ title: 'Shared projects', projects: [] } // Keep shared projects empty for now
 ]);
 
@@ -262,7 +262,7 @@ const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
 async function updateProjectsWithRelatedDocuments() {
 	projectsWithRelatedDocuments.value = await Promise.all(
 		useProjects()
-			.allProjects.value// filter out the ones with no publications
+			.allProjects.value // filter out the ones with no publications
 			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
 			// get the first three project with a publication
 			.slice(0, 3)
@@ -301,7 +301,7 @@ onMounted(async () => {
 	// Clear all...
 	queryStore.reset(); // Facets queries.
 	await useProjects().getAll();
-	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
+	// projectsTabs.value[0].projects = myFilteredSortedProjects.value;
 });
 
 const selectDocument = (item: Document) => {
