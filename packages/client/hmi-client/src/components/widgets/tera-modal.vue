@@ -30,20 +30,23 @@ const fullscreenClass = computed(() => (props.fullscreen ? 'fullscreen' : ''));
 	<Transition name="modal">
 		<main :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
 			<section :class="fullscreenClass">
-				<header>
-					<slot name="header" />
+				<header ref="header">
+					<div>
+						<slot name="header" />
+					</div>
 					<Button
 						v-if="fullscreen"
 						icon="pi pi-times"
 						text
 						rounded
 						aria-label="Close"
+						size="large"
 						@click="emit('on-close-clicked')"
 					/>
 				</header>
 				<section class="content"><slot /></section>
-				<section><slot name="math-editor" /></section>
-				<footer>
+				<section ref="math-editor"><slot name="math-editor" /></section>
+				<footer ref="footer">
 					<slot name="footer" />
 				</footer>
 			</section>
@@ -79,7 +82,6 @@ main > section {
 	border-radius: 0.5rem;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	margin: 0px auto;
-	padding: 2rem 0;
 	transition: all 0.1s ease;
 	min-width: max-content;
 	width: 80vw;
@@ -87,15 +89,19 @@ main > section {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 main > section.fullscreen {
-	height: 95%;
-	width: 95%;
+	height: 98%;
+	margin-top: 1%;
+	width: 98%;
+	max-height: 100%;
 }
 
 .content {
-	max-height: 65vh;
 	padding: 0 2rem;
 	overflow-y: auto;
 }
@@ -103,8 +109,11 @@ main > section.fullscreen {
 header {
 	margin-bottom: 1rem;
 	display: flex;
-	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
 	gap: 0.5rem;
+	background-color: var(--surface-highlight);
+	padding: 1.5rem 2rem;
 }
 
 footer {
@@ -113,11 +122,7 @@ footer {
 	gap: 1rem;
 	justify-content: end;
 	margin-top: 2rem;
-}
-
-header,
-footer {
-	padding: 0 2rem;
+	padding: 1.5rem 2rem;
 }
 
 .modal-enter-from,

@@ -65,6 +65,9 @@
 				fullscreen
 				@on-close-clicked="dialogIsOpened = false"
 			>
+				<template #header
+					><h4>{{ workflowNode?.displayName }}</h4></template
+				>
 				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA

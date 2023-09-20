@@ -1,7 +1,6 @@
 <template>
 	<main>
 		<header>
-			<h4>Stratify</h4>
 			<span class="p-buttonset">
 				<Button
 					class="p-button-secondary p-button-sm"
