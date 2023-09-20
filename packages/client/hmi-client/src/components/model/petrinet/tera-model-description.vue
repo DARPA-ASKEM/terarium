@@ -418,7 +418,7 @@ import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { Artifact, Model } from '@/types/Types';
+import { Artifact, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
@@ -426,9 +426,8 @@ import {
 } from '@/model-representation/petrinet/petrinet-service';
 import Tag from 'primevue/tag';
 import { AcceptedExtensions, ResourceType } from '@/types/common';
-import { getModelConfigurations } from '@/services/model';
 import Button from 'primevue/button';
-import TeraModelExtraction from '@/components/models/tera-model-extraction.vue';
+import TeraModelExtraction from '@/components/model/petrinet/tera-model-extraction.vue';
 import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
@@ -443,6 +442,7 @@ interface ModelTableTypes {
 
 const props = defineProps<{
 	model: Model;
+	modelConfigurations: ModelConfiguration[];
 	highlight: string;
 	project: IProject;
 }>();
@@ -571,7 +571,6 @@ async function confirmEdit() {
 	if (props.model && transientTableValue.value) {
 		const { tableType, idx, updateProperty } = transientTableValue.value;
 		const modelClone = cloneDeep(props.model);
-		const modelConfigs = await getModelConfigurations(props.model.id);
 
 		switch (tableType) {
 			case 'parameters':
@@ -586,8 +585,12 @@ async function confirmEdit() {
 
 							// note that this is making a call to an async function to update the different model configs
 							// but we don't need to wait for it to finish because we don't need immediate access to the model configs
-							if (modelConfigs) {
-								updateConfigFields(modelConfigs, ode.parameters![idx][key], value as string);
+							if (!isEmpty(props.modelConfigurations)) {
+								updateConfigFields(
+									props.modelConfigurations,
+									ode.parameters![idx][key],
+									value as string
+								);
 							}
 						}
 					});

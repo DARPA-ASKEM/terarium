@@ -12,19 +12,46 @@
 					/>
 				</header>
 				<TabView>
-					<TabPanel header="My projects">
-						<section v-if="projects && isEmpty(projects)" class="no-projects">
-							<img src="@assets/svg/seed.svg" alt="" />
-							<h3>Welcome to Terarium</h3>
-							<div>
-								Get started by creating a
-								<Button
-									label="new project"
-									class="p-button-text new-project-button"
-									@click="isNewProjectModalVisible = true"
-								/>. Your projects will be displayed on this page.
-							</div>
+					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
+						<section class="filter-and-sort">
+							<!-- TODO: Add project search back in once we are ready
+								<span class="p-input-icon-left">
+								<i class="pi pi-filter" />
+								<InputText
+									v-model="searchQuery"
+									size="small"
+									class="p-inputtext-sm"
+									placeholder="Filter by keyword"
+								/>
+							</span> -->
+							<span
+								><label>Sort by:</label>
+								<Dropdown
+									v-model="selectedSort"
+									:options="sortOptions"
+									@update:model-value="tab.projects = myFilteredSortedProjects"
+									class="p-inputtext-sm"
+								/>
+							</span>
 						</section>
+						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+							<img src="@assets/svg/seed.svg" alt="" />
+							<template v-if="tab.title === 'My projects'">
+								<h3>Welcome to Terarium</h3>
+								<div>
+									Get started by creating a
+									<Button
+										label="new project"
+										class="p-button-text new-project-button"
+										@click="isNewProjectModalVisible = true"
+									/>. Your projects will be displayed on this page.
+								</div>
+							</template>
+							<template v-else-if="tab.title === 'Shared projects'">
+								<h3>You don't have any shared projects</h3>
+								<p>Shared projects will be displayed on this page</p>
+							</template>
+						</div>
 						<div v-else class="carousel">
 							<div class="chevron-left" @click="scroll('left', $event)">
 								<i class="pi pi-chevron-left" />
@@ -38,7 +65,7 @@
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="project in projects" :key="project.id">
+								<li v-for="project in tab.projects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -57,16 +84,9 @@
 							</ul>
 						</div>
 					</TabPanel>
-					<TabPanel header="Shared projects">
-						<section class="no-projects">
-							<img src="@assets/svg/plants.svg" alt="" />
-							<h3>You don't have any shared projects</h3>
-							<p>Shared projects will be displayed on this page</p>
-						</section>
-					</TabPanel>
 				</TabView>
 			</section>
-			<section class="papers" v-if="!(projects && isEmpty(projects))">
+			<section class="papers">
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
@@ -148,7 +168,6 @@
 							v-model="newProjectName"
 							placeholder="What do you want to call your project?"
 						/>
-
 						<label for="new-project-description">Description</label>
 						<Textarea
 							id="new-project-description"
@@ -170,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
@@ -190,8 +209,53 @@ import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import Dropdown from 'primevue/dropdown';
 
-const projects = ref<Project[]>();
+const selectedSort = ref('Last updated (descending)');
+const sortOptions = [
+	'Last updated (descending)',
+	'Last updated (ascending)',
+	'Creation date (descending)',
+	'Creation date (ascending)',
+	'Alphabetical'
+];
+
+const projects = ref<Project[]>([]);
+
+const myFilteredSortedProjects = computed(() => {
+	const filtered = projects.value;
+	if (!filtered) return [];
+
+	if (selectedSort.value === 'Alphabetical') {
+		filtered.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+	}
+	// FIXME: Last updated and creation date are the same at the moment
+	else if (
+		selectedSort.value === 'Last updated (descending)' ||
+		selectedSort.value === 'Creation date (descending)'
+	) {
+		filtered.sort((a, b) =>
+			a.timestamp && b.timestamp
+				? new Date(b.timestamp).valueOf() - new Date(a.timestamp).valueOf()
+				: -1
+		);
+	} else if (
+		selectedSort.value === 'Last updated (ascending)' ||
+		selectedSort.value === 'Creation date (ascending)'
+	) {
+		filtered.sort((a, b) =>
+			a.timestamp && b.timestamp
+				? new Date(a.timestamp).valueOf() - new Date(b.timestamp).valueOf()
+				: -1
+		);
+	}
+	return filtered;
+});
+
+const projectsTabs = ref<{ title: string; projects: Project[] }[]>([
+	{ title: 'My projects', projects: [] },
+	{ title: 'Shared projects', projects: [] } // Keep shared projects empty for now
+]);
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
@@ -231,7 +295,8 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjects = computed(() => !projects.value);
+const isLoadingProjects = ref(true);
+// const searchQuery = ref('');
 
 onMounted(async () => {
 	// Clear all...
@@ -239,6 +304,8 @@ onMounted(async () => {
 	queryStore.reset(); // Facets queries.
 
 	projects.value = (await ProjectService.getAll()) ?? [];
+	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
+	isLoadingProjects.value = false;
 });
 
 const selectDocument = (item: Document) => {
@@ -270,17 +337,17 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	}
 
 	const marginLeftString =
-		cardListElement.style.marginLeft === '' ? '0.5' : cardListElement.style.marginLeft;
+		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseFloat(marginLeftString);
 	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
+	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
 };
 
 function openProject(projectId: string) {
-	router.push({ name: RouteName.ProjectRoute, params: { projectId } });
+	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
 async function createNewProject() {
@@ -321,6 +388,25 @@ section {
 	padding: 1rem;
 }
 
+.p-dropdown {
+	min-width: 15rem;
+}
+
+.filter-and-sort {
+	background-color: var(--surface-ground);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	padding: 0.75rem;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.filter-and-sort label {
+	padding-right: 0.25rem;
+	font-size: var(--font-caption);
+}
+
 .papers {
 	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
 	padding: 1rem;
@@ -345,7 +431,14 @@ h3 {
 }
 
 .p-tabview:deep(.p-tabview-panels) {
-	padding: 0 0 0 0;
+	padding: 0;
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin: 1rem 0;
 }
 
 header svg {
@@ -356,14 +449,11 @@ header svg {
 .carousel {
 	position: relative;
 	display: flex;
-	height: 319px;
 }
 
 .carousel ul {
 	align-items: center;
 	display: flex;
-	margin: 0.5rem 0.5rem 0 0.5rem;
-	padding-bottom: 0.5rem;
 }
 
 .chevron-left,
@@ -375,36 +465,25 @@ header svg {
 	height: 100%;
 	display: flex;
 	align-items: center;
-	height: 443px;
 }
 
 .chevron-left {
 	left: -1rem;
-	top: 0.5rem;
-	height: 22rem;
 	border-radius: 0rem 10rem 10rem 0rem;
 }
 
 .chevron-right {
 	right: -1rem;
-	top: 0.5em;
-	height: 22em;
 	border-radius: 10rem 0rem 0rem 10rem;
 }
 
-.papers .chevron-left,
-.papers .chevron-right {
-	height: 22rem;
-	top: 0.4rem;
-}
-
-.chevron-left:hover,
-.chevron-right:hover {
+.carousel:hover .chevron-left,
+.carousel:hover .chevron-right {
 	background-color: var(--chevron-hover);
 }
 
-.chevron-left:hover > .pi-chevron-left,
-.chevron-right:hover > .pi-chevron-right {
+.carousel:hover .chevron-left > .pi-chevron-left,
+.carousel:hover .chevron-right > .pi-chevron-right {
 	color: var(--primary-color);
 	opacity: 100;
 }
@@ -423,8 +502,6 @@ header svg {
 }
 
 ul {
-	align-items: center;
-	display: inline-flex;
 	gap: 1.5rem;
 	transition: margin-left 0.8s;
 }

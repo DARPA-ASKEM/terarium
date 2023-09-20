@@ -296,11 +296,18 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface Intervention {
+    name: string;
+    timestep: number;
+    value: number;
+}
+
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
     extra: any;
     engine: string;
+    interventions?: Intervention[];
 }
 
 export interface DatasetLocation {
