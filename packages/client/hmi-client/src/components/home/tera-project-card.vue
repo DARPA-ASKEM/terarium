@@ -84,8 +84,9 @@ import { placeholder } from '@/utils/project-card';
 import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { useProjects } from '@/composables/project';
+import { IProject } from '@/types/Project';
 
-const props = defineProps<{ project?: Project }>();
+const props = defineProps<{ project?: IProject }>();
 const emit = defineEmits<{
 	(e: 'removed', projectId: Project['id']): void;
 }>();
