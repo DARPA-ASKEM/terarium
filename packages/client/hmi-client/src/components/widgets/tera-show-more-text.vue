@@ -6,7 +6,7 @@
 	>
 		<div v-html="text"></div>
 	</div>
-	<span v-if="!parentExpandButton" @click="collapseOrExpand">
+	<span @click="collapseOrExpand">
 		<template v-if="triggerShowMore">Show more</template>
 		<template v-if="expanded">Show less</template>
 	</span>

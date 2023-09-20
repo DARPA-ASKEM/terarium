@@ -120,9 +120,18 @@
 								selectionMode="multiple"
 								dataKey="id"
 								:rowsPerPageOptions="[10, 20, 50]"
+								@page="
+									(e) => {
+										prevPageRows = e.page * e.rows;
+										teraShowMoreTextRef = [];
+										console.log(teraShowMoreTextRef);
+									}
+								"
 							>
 								<Column style="width: 0">
 									<template #body="{ index }">
+										{{ prevPageRows + index }}
+										{{ teraShowMoreTextRef?.[index]?.triggerShowMore }}
 										<Button
 											v-if="
 												teraShowMoreTextRef?.[index]?.triggerShowMore ||
@@ -136,7 +145,6 @@
 											class="p-button-icon-only p-button-text p-button-rounded"
 											@click.stop="teraShowMoreTextRef?.[index]?.collapseOrExpand()"
 										/>
-										{{ index }}
 									</template>
 								</Column>
 								<Column
@@ -409,6 +417,8 @@ const columns = ref([
 	{ field: 'timestamp', header: 'Created' },
 	{ field: 'lastUpdated', header: 'Last updated' } // Last update property doesn't exist yet
 ]);
+const prevPageRows = ref(0);
+// const indexMult = computed(prevPageRows.value *)
 const selectedColumns = ref(columns.value);
 const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
