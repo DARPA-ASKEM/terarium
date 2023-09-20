@@ -11,7 +11,7 @@ import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import { AssetType } from '@/types/Types';
 
-const TIMEOUT_MS = 1000;
+const TIMEOUT_MS = 100;
 
 const activeProject = shallowRef<IProject | null>(null);
 const allProjects = shallowRef<IProject[] | null>(null);
@@ -40,7 +40,7 @@ export function useProjects() {
 			assetType,
 			assetId
 		);
-		if (projectId === activeProjectId.value) {
+		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
 				activeProject.value = await ProjectService.get(activeProjectId.value, true);
 			}, TIMEOUT_MS);
@@ -54,9 +54,9 @@ export function useProjects() {
 			assetType,
 			assetId
 		);
-		if (projectId === activeProjectId.value) {
+		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
-				activeProject.value = await ProjectService.get(projectId, true);
+				activeProject.value = await ProjectService.get(activeProjectId.value, true);
 			}, 1000);
 		}
 		return deleted;
