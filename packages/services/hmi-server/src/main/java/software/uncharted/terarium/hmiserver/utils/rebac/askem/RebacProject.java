@@ -24,6 +24,16 @@ public class RebacProject extends RebacObject {
 	}
 
 	public List<RebacPermissionRelationship> getPermissionRelationships() throws Exception {
-		return reBACService.getPermissions(getSchemaObject());
+		return reBACService.getRelationships(getSchemaObject());
+	}
+
+	public void setPermissionRelationships(RebacObject who, String relationship) throws Exception {
+		Schema.Relationship relationshipEnum = Schema.Relationship.valueOf(relationship.toUpperCase());
+		reBACService.createRelationship(who.getSchemaObject(), getSchemaObject(), relationshipEnum);
+	}
+
+	public void removePermissionRelationships(RebacObject who, String relationship) throws Exception {
+		Schema.Relationship relationshipEnum = Schema.Relationship.valueOf(relationship.toUpperCase());
+		reBACService.removeRelationship(who.getSchemaObject(), getSchemaObject(), relationshipEnum);
 	}
 }

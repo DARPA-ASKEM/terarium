@@ -44,7 +44,7 @@ public class GroupsResource {
 	) {
 		try {
 			RebacUser rebacUser = new RebacUser(jwt.getSubject(), reBACService);
-			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID))) {
+			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID, reBACService))) {
 				PermissionGroup permissionGroup = rebacUser.addGroup(name);
 				return Response
 					.status(Response.Status.OK)

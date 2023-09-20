@@ -58,26 +58,48 @@ public class ReBACFunctions {
         return response.getPermissionship().name().equalsIgnoreCase(HAS_PERMISSION);
     }
 
-    public String createRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception {
-        return createRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
+	public String createRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception {
+		return createRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
+	}
+
+	public String createRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception {
+		PermissionService.WriteRelationshipsRequest request = PermissionService.WriteRelationshipsRequest.newBuilder()
+			.addUpdates(
+				RelationshipUpdate.newBuilder()
+					.setOperation(RelationshipUpdate.Operation.OPERATION_CREATE)
+					.setRelationship(
+						Relationship.newBuilder()
+							.setResource(createObject(targetType, targetId))
+							.setRelation(relationship)
+							.setSubject(createSubject(subjectType, subjectId))
+							.build())
+					.build())
+			.build();
+
+		PermissionService.WriteRelationshipsResponse response = permissionsService.writeRelationships(request);
+		return response.getWrittenAt().getToken();
+	}
+
+    public String removeRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception {
+        return removeRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
     }
 
-    public String createRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception {
-        PermissionService.WriteRelationshipsRequest request = PermissionService.WriteRelationshipsRequest.newBuilder()
-        .addUpdates(
-            RelationshipUpdate.newBuilder()
-            .setOperation(RelationshipUpdate.Operation.OPERATION_CREATE)
-            .setRelationship(
-                Relationship.newBuilder()
-                .setResource(createObject(targetType, targetId))
-                .setRelation(relationship)
-                .setSubject(createSubject(subjectType, subjectId))
-                .build())
-            .build())
-        .build();
+    public String removeRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception {
+			PermissionService.DeleteRelationshipsRequest request = PermissionService.DeleteRelationshipsRequest.newBuilder()
+				.setRelationshipFilter(RelationshipFilter.newBuilder()
+					.setResourceType(targetType)
+					.setOptionalResourceId(targetId)
+					.setOptionalRelation(relationship)
+					.setOptionalSubjectFilter(PermissionService.SubjectFilter
+						.newBuilder()
+						.setSubjectType(subjectType)
+						.setOptionalSubjectId(subjectId)
+						.build()
+					).build()
+				).build();
 
-        PermissionService.WriteRelationshipsResponse response = permissionsService.writeRelationships(request);
-        return response.getWrittenAt().getToken();
+			PermissionService.DeleteRelationshipsResponse response = permissionsService.deleteRelationships(request);
+			return response.getDeletedAt().getToken();
     }
 
 	public List<RebacPermissionRelationship> getRelationship(SchemaObject resource, Consistency consistency) throws Exception {
@@ -95,7 +117,6 @@ public class ReBACFunctions {
 
 		Iterator<ReadRelationshipsResponse> iter = permissionsService.readRelationships(request);
 
-		System.out.println("Relationships:");
 		while (iter.hasNext()) {
 			PermissionService.ReadRelationshipsResponse response = iter.next();
 			ObjectReference subject = response.getRelationship().getSubject().getObject();

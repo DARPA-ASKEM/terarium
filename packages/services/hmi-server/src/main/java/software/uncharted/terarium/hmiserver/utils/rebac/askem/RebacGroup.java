@@ -7,11 +7,11 @@ import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 import javax.inject.Inject;
 
 public class RebacGroup extends RebacObject {
-	@Inject
-	ReBACService reBACService;
+	private ReBACService reBACService;
 
-	public RebacGroup(String id) {
+	public RebacGroup(String id, ReBACService reBACService) {
 		super(id);
+		this.reBACService = reBACService;
 	}
 
 	public SchemaObject getSchemaObject() {

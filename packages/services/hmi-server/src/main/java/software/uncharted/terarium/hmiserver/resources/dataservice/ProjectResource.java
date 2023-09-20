@@ -11,10 +11,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -121,6 +118,86 @@ public class ProjectResource {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@POST
+	@Path("/{projectId}/permissions/group/{groupId}/{relationship}")
+	public Response setProjectGroupPermissions(
+		@PathParam("projectId") final String projectId,
+		@PathParam("groupId") final String groupId,
+		@PathParam("relationship") final String relationship
+	) {
+		try {
+			RebacProject what = new RebacProject(projectId, reBACService);
+			RebacGroup who = new RebacGroup(groupId, reBACService);
+			return setProjectPermissions(what, who, relationship);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@DELETE
+	@Path("/{projectId}/permissions/group/{groupId}/{relationship}")
+	public Response removeProjectGroupPermissions(
+		@PathParam("projectId") final String projectId,
+		@PathParam("groupId") final String groupId,
+		@PathParam("relationship") final String relationship
+	) {
+		try {
+			RebacProject what = new RebacProject(projectId, reBACService);
+			RebacGroup who = new RebacGroup(groupId, reBACService);
+			return removeProjectPermissions(what, who, relationship);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@POST
+	@Path("/{projectId}/permissions/user/{userId}/{relationship}")
+	public Response setProjectUserPermissions(
+		@PathParam("projectId") final String projectId,
+		@PathParam("userId") final String userId,
+		@PathParam("relationship") final String relationship
+	) {
+		try {
+			RebacProject what = new RebacProject(projectId, reBACService);
+			RebacUser who = new RebacUser(userId, reBACService);
+			return setProjectPermissions(what, who, relationship);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@DELETE
+	@Path("/{projectId}/permissions/user/{userId}/{relationship}")
+	public Response removeProjectUserPermissions(
+		@PathParam("projectId") final String projectId,
+		@PathParam("userId") final String userId,
+		@PathParam("relationship") final String relationship
+	) {
+		try {
+			RebacProject what = new RebacProject(projectId, reBACService);
+			RebacUser who = new RebacUser(userId, reBACService);
+			return removeProjectPermissions(what, who, relationship);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private Response setProjectPermissions(RebacProject what, RebacObject who, String relationship) throws Exception {
+		if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
+			what.setPermissionRelationships(who, relationship);
+			return Response.ok().build();
+		}
+		return Response.status(404).build();
+	}
+
+	private Response removeProjectPermissions(RebacProject what, RebacObject who, String relationship) throws Exception {
+		if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
+			what.removePermissionRelationships(who, relationship);
+			return Response.ok().build();
+		}
+		return Response.status(404).build();
 	}
 
 	@POST

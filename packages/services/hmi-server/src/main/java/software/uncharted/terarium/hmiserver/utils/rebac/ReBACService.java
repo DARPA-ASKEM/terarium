@@ -214,7 +214,12 @@ public class ReBACService {
 		rebac.createRelationship(who, relationship, what);
 	}
 
-	public List<RebacPermissionRelationship> getPermissions(SchemaObject what) throws Exception {
+	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception {
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		rebac.removeRelationship(who, relationship, what);
+	}
+
+	public List<RebacPermissionRelationship> getRelationships(SchemaObject what) throws Exception {
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.getRelationship(what, full);
