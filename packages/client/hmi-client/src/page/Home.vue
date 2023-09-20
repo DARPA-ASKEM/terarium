@@ -38,6 +38,7 @@
 								:modelValue="selectedColumns"
 								:options="columns"
 								:maxSelectedLabels="1"
+								:selected-items-label="`{0} columns displayed`"
 								optionLabel="header"
 								@update:modelValue="onToggle"
 								placeholder="Add or remove columns"
@@ -113,27 +114,29 @@
 							</div>
 							<DataTable
 								v-else-if="view === ProjectsView.Table"
-								v-model:selection="selectedProject"
 								:value="tab.projects"
 								paginator
 								:rows="10"
-								selectionMode="single"
+								selectionMode="multiple"
 								dataKey="id"
 								:rowsPerPageOptions="[10, 20, 50]"
 							>
 								<Column style="width: 0">
-									<template #body="{ data }">
+									<template #body="{ index }">
 										<Button
+											v-if="
+												teraShowMoreTextRef?.[index]?.triggerShowMore ||
+												teraShowMoreTextRef?.[index]?.expanded
+											"
 											:icon="
-												selectedProject === data ? 'pi pi-chevron-down' : 'pi pi-chevron-right'
+												teraShowMoreTextRef?.[index]?.expanded
+													? 'pi pi-chevron-down'
+													: 'pi pi-chevron-right'
 											"
 											class="p-button-icon-only p-button-text p-button-rounded"
-											@click.stop="
-												selectedProject === data
-													? (selectedProject = null)
-													: (selectedProject = data)
-											"
+											@click.stop="teraShowMoreTextRef?.[index]?.collapseOrExpand()"
 										/>
+										{{ index }}
 									</template>
 								</Column>
 								<Column
@@ -150,14 +153,13 @@
 										}}</a>
 									</template>
 									<template v-else-if="col.field === 'description'" #body="{ data }">
-										<div
-											:class="
-												selectedProject === data
-													? 'project-description-expanded'
-													: 'project-description'
-											"
-										>
-											{{ data.description }}
+										<div :class="teraShowMoreTextRef?.[index]?.expanded && 'expanded-description'">
+											<tera-show-more-text
+												ref="teraShowMoreTextRef"
+												:text="data.description"
+												:lines="1"
+												parent-expand-button
+											/>
 										</div>
 									</template>
 									<template v-else-if="col.field === 'stats'" #body="{ data }">
@@ -333,6 +335,7 @@ import Dropdown from 'primevue/dropdown';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import MultiSelect from 'primevue/multiselect';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { logger } from '@/utils/logger';
@@ -360,6 +363,7 @@ const sortOptions = [
 
 const projects = ref<Project[]>([]);
 const view = ref(ProjectsView.Cards);
+const teraShowMoreTextRef = ref();
 
 const myFilteredSortedProjects = computed(() => {
 	const filtered = projects.value;
@@ -413,7 +417,6 @@ const onToggle = (val) => {
 /*
  * User Menu
  */
-const selectedProject = ref<Project | null>(null);
 const selectedProjectMenu = ref<Project | null>(null);
 
 const isRemoveDialog = ref(false);
@@ -613,7 +616,6 @@ function listAuthorNames(authors) {
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td),
-.p-datatable:deep(.p-datatable-tbody > tr .project-description),
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	white-space: nowrap;
 	overflow: hidden;
@@ -621,8 +623,8 @@ function listAuthorNames(authors) {
 	vertical-align: top;
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr .project-description-expanded) {
-	white-space: wrap;
+.p-datatable:deep(.p-datatable-tbody > tr > td > .expanded-description) {
+	padding-bottom: 0.5rem;
 }
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {

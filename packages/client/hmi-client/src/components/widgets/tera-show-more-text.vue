@@ -6,7 +6,7 @@
 	>
 		<div v-html="text"></div>
 	</div>
-	<span @click="collapseOrExpand">
+	<span v-if="!parentExpandButton" @click="collapseOrExpand">
 		<template v-if="triggerShowMore">Show more</template>
 		<template v-if="expanded">Show less</template>
 	</span>
@@ -16,8 +16,9 @@
 import { onMounted, onUpdated, ref, nextTick } from 'vue';
 
 defineProps<{
-	lines?: number;
 	text: string;
+	lines?: number;
+	parentExpandButton?: boolean;
 }>();
 
 const expanded = ref(false);
@@ -34,6 +35,8 @@ function determineShowMore() {
 function collapseOrExpand() {
 	expanded.value = !expanded.value;
 }
+defineExpose({ collapseOrExpand, triggerShowMore, expanded });
+
 onMounted(async () => {
 	await nextTick();
 	determineShowMore();
