@@ -1,5 +1,5 @@
 <template>
-	<Card v-if="activeProject">
+	<Card v-if="project">
 		<template #content>
 			<header>
 				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span
@@ -13,31 +13,31 @@
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
-					{{ activeProject.name }}
+					{{ project.name }}
 				</div>
 				<section class="details">
 					<div>
-						<div class="author">{{ activeProject.username }}</div>
-						<div class="creation-date">{{ formatDdMmmYyyy(activeProject.timestamp) }}</div>
+						<div class="author">{{ project.username }}</div>
+						<div class="creation-date">{{ formatDdMmmYyyy(project.timestamp) }}</div>
 					</div>
 					<div class="description">
-						{{ activeProject.description }}
+						{{ project.description }}
 					</div>
 				</section>
 			</section>
 		</template>
 		<template #footer>
 			<!--FIXME: There is no 'last updated' property in project yet-->
-			<span>Last updated {{ formatDdMmmYyyy(activeProject.timestamp) }}</span>
+			<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
 			<Button
 				icon="pi pi-ellipsis-v"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click.stop="showProjectMenu"
 			/>
 			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-			<Dialog :header="`Remove ${activeProject.name}`" v-model:visible="isRemoveDialog">
+			<Dialog :header="`Remove ${project.name}`" v-model:visible="isRemoveDialog">
 				<p>
-					You are about to remove project <em>{{ activeProject.name }}</em
+					You are about to remove project <em>{{ project.name }}</em
 					>.
 				</p>
 				<p>Are you sure?</p>
@@ -85,11 +85,10 @@ import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { useProjects } from '@/composables/project';
 
+const props = defineProps<{ project?: Project }>();
 const emit = defineEmits<{
 	(e: 'removed', projectId: Project['id']): void;
 }>();
-
-const { remove, activeProject } = useProjects();
 const titleRef = ref();
 const descriptionLines = computed(() => {
 	const titleHeight = titleRef.value?.clientHeight;
@@ -102,13 +101,13 @@ const descriptionLines = computed(() => {
 });
 
 const stats = computed(() =>
-	!activeProject.value
+	!props.project
 		? null
 		: {
 				contributors: 1,
-				models: parseInt(activeProject.value?.metadata?.['models-count'] ?? '0', 10),
-				datasets: parseInt(activeProject.value?.metadata?.['datasets-count'] ?? '0', 10),
-				papers: parseInt(activeProject.value?.metadata?.['publications-count'] ?? '0', 10)
+				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10),
+				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
+				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10)
 		  }
 );
 
@@ -129,14 +128,14 @@ const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
 const showProjectMenu = (event) => projectMenu.value.toggle(event);
 
 const removeProject = async () => {
-	if (!activeProject.value || !activeProject.value?.id) return;
-	const isDeleted = await remove(activeProject.value.id);
+	if (!props.project || !props.project?.id) return;
+	const isDeleted = await useProjects().remove(props.project.id);
 	closeRemoveDialog();
 	if (isDeleted) {
-		logger.info(`The project ${activeProject.value?.name} was removed`, { showToast: true });
-		emit('removed', activeProject.value.id);
+		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
+		emit('removed', props.project.id);
 	} else {
-		logger.error(`Unable to delete the project ${activeProject.value?.name}`, { showToast: true });
+		logger.error(`Unable to delete the project ${props.project?.name}`, { showToast: true });
 	}
 };
 </script>
