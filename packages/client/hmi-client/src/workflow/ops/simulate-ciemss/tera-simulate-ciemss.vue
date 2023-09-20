@@ -97,7 +97,7 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="activeProject?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="saveDatasetToProject"
@@ -188,8 +188,6 @@ import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
-const { getProject, activeProject } = useProjects();
-
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
@@ -241,9 +239,10 @@ const addChart = () => {
 };
 
 function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
 	if (activeProject.value?.id) {
 		saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value);
-		getProject();
+		get();
 		showSaveInput.value = false;
 	}
 }

@@ -184,10 +184,8 @@ const isNotesSliderOpen = ref(false);
 
 const isNewModelModalVisible = ref(false);
 
-const { addAsset, deleteAsset, activeProject } = useProjects();
-
 // Associated with tab storage
-const projectContext = computed(() => activeProject.value?.id ?? '');
+const projectContext = computed(() => useProjects().activeProject.value?.id ?? '');
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
@@ -241,14 +239,8 @@ async function removeAsset(asset: Tab) {
 	const { assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (
-		assetId &&
-		pageType &&
-		isProjectAssetTypes(pageType) &&
-		pageType !== ProjectPages.OVERVIEW &&
-		activeProject.value?.id
-	) {
-		const isRemoved = await deleteAsset(pageType as AssetType, assetId);
+	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
+		const isRemoved = await useProjects().deleteAsset(pageType as AssetType, assetId);
 
 		if (isRemoved) {
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isSameTab(tab, asset)));
@@ -263,6 +255,7 @@ async function removeAsset(asset: Tab) {
 const openWorkflow = async () => {
 	// Create a new workflow
 	let wfName = 'workflow';
+	const { activeProject } = useProjects();
 	if (activeProject.value && activeProject.value?.assets) {
 		wfName = `workflow ${activeProject.value.assets[AssetType.Workflows].length + 1}`;
 	}
@@ -271,7 +264,7 @@ const openWorkflow = async () => {
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await addAsset(AssetType.Workflows, workflowId);
+	await useProjects().addAsset(AssetType.Workflows, workflowId);
 
 	router.push({
 		name: RouteName.Project,

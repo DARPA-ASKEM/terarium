@@ -53,7 +53,7 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="activeProject?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
 					@click="saveDatasetToProject"
@@ -230,8 +230,6 @@ import {
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 
-const { getProject, activeProject } = useProjects();
-
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
@@ -405,9 +403,10 @@ const watchCompletedRunList = async () => {
 };
 
 function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
 	if (activeProject.value?.id) {
 		saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value);
-		getProject();
+		get();
 		showSaveInput.value = false;
 	}
 }

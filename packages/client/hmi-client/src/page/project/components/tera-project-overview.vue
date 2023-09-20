@@ -1,10 +1,12 @@
 <template>
 	<main>
 		<tera-asset
-			:name="activeProject?.name"
-			:authors="activeProject?.username"
+			:name="useProjects().activeProject.value?.name"
+			:authors="useProjects().activeProject.value?.username"
 			:is-naming-asset="isRenamingProject"
-			:publisher="`Last updated ${DateUtils.formatLong(activeProject?.timestamp)}`"
+			:publisher="`Last updated ${DateUtils.formatLong(
+				useProjects().activeProject.value?.timestamp
+			)}`"
 			class="overview-banner"
 		>
 			<template #name-input>
@@ -30,14 +32,18 @@
 						<!-- Description & Contributors -->
 						<section class="description">
 							<p>
-								{{ activeProject?.description }}
+								{{ useProjects().activeProject.value?.description }}
 							</p>
 						</section>
 					</div>
 				</section>
 				<!-- Project summary KPIs -->
 				<section class="summary-KPI-bar">
-					<div class="summary-KPI" v-for="(assets, type) of activeProject?.assets" :key="type">
+					<div
+						class="summary-KPI"
+						v-for="(assets, type) of useProjects().activeProject.value?.assets"
+						:key="type"
+					>
 						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
 						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 					</div>
@@ -301,6 +307,7 @@ const multiSelectButtons = [
 		label: 'Open',
 		callback: () => {
 			selectedResources.value.forEach((resource) => {
+				const { activeProject } = useProjects();
 				if (activeProject.value?.id) {
 					tabStore.addTab(activeProject.value.id, toRaw(resource), false);
 				}
@@ -311,8 +318,6 @@ const multiSelectButtons = [
 
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
-
-const { activeProject } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
@@ -482,6 +487,7 @@ async function openResource(data) {
 }
 
 async function updateProjectName() {
+	const { activeProject } = useProjects();
 	if (activeProject.value) {
 		isRenamingProject.value = false;
 		const updatedProject = activeProject.value;
