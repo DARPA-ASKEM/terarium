@@ -60,11 +60,7 @@
 					v-if="activeProject?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(activeProject.id, completedRunId, saveAsName);
-						getProject();
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -172,6 +168,14 @@ const addChart = () => {
 		state
 	});
 };
+
+function saveDatasetToProject() {
+	if (activeProject.value?.id) {
+		saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value);
+		getProject();
+		showSaveInput.value = false;
+	}
+}
 
 onMounted(async () => {
 	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now

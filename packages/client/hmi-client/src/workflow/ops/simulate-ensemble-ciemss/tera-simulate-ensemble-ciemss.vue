@@ -55,11 +55,7 @@
 					v-if="activeProject?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(activeProject.id, completedRunId, saveAsName);
-						getProject();
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -384,6 +380,14 @@ const addChart = () => {
 		state
 	});
 };
+
+function saveDatasetToProject() {
+	if (activeProject.value?.id) {
+		saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value);
+		getProject();
+		showSaveInput.value = false;
+	}
+}
 
 // assume only one run for now
 const watchCompletedRunList = async () => {

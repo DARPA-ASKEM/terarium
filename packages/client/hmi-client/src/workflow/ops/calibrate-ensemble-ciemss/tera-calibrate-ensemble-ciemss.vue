@@ -53,14 +53,10 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="activeProject?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						getProject(project.id);
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -225,7 +221,6 @@ import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { IProject } from '@/types/Project';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
@@ -235,13 +230,12 @@ import {
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 
-const { getProject } = useProjects();
+const { getProject, activeProject } = useProjects();
 
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 enum EnsembleTabs {
@@ -409,6 +403,14 @@ const watchCompletedRunList = async () => {
 	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
 	runResults.value = output.runResults;
 };
+
+function saveDatasetToProject() {
+	if (activeProject.value?.id) {
+		saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value);
+		getProject();
+		showSaveInput.value = false;
+	}
+}
 
 watch(
 	() => datasetId.value,
