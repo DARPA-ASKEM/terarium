@@ -59,12 +59,7 @@
 
 		<!--Full screen modal-->
 		<Teleport to="body">
-			<tera-modal
-				v-if="dialogIsOpened"
-				@modal-mask-clicked="dialogIsOpened = false"
-				fullscreen
-				@on-close-clicked="dialogIsOpened = false"
-			>
+			<tera-modal v-if="dialogIsOpened" fullscreen @on-close-clicked="dialogIsOpened = false">
 				<template #header
 					><h4>{{ workflowNode?.displayName }}</h4></template
 				>
