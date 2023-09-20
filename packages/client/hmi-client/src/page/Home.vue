@@ -210,8 +210,6 @@ import { useProjects } from '@/composables/project';
 import { IProject } from '@/types/Project';
 import Dropdown from 'primevue/dropdown';
 
-const { allProjects, getAllProjects, getPublicationAssets, create } = useProjects();
-
 const selectedSort = ref('Last updated (descending)');
 const sortOptions = [
 	'Last updated (descending)',
@@ -222,7 +220,7 @@ const sortOptions = [
 ];
 
 const myFilteredSortedProjects = computed(() => {
-	const filtered = allProjects.value;
+	const filtered = useProjects().allProjects.value;
 	if (!filtered) return [];
 
 	if (selectedSort.value === 'Alphabetical') {
@@ -263,8 +261,8 @@ type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Doc
 const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
 async function updateProjectsWithRelatedDocuments() {
 	projectsWithRelatedDocuments.value = await Promise.all(
-		allProjects.value
-			// filter out the ones with no publications
+		useProjects()
+			.allProjects.value// filter out the ones with no publications
 			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
 			// get the first three project with a publication
 			.slice(0, 3)
@@ -273,7 +271,7 @@ async function updateProjectsWithRelatedDocuments() {
 				let relatedDocuments = [] as Document[];
 				if (project.id) {
 					// Fetch the publications for the project
-					const publications = await getPublicationAssets(project.id);
+					const publications = await useProjects().getPublicationAssets(project.id);
 					if (!isEmpty(publications)) {
 						// Fetch the related documents for the first publication
 						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
@@ -292,17 +290,17 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjects = computed(() => !allProjects.value);
+const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
 watch(
-	() => allProjects.value,
+	() => useProjects().allProjects.value,
 	() => updateProjectsWithRelatedDocuments()
 );
 
 onMounted(async () => {
 	// Clear all...
 	queryStore.reset(); // Facets queries.
-	await getAllProjects();
+	await useProjects().getAll();
 	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
 });
 
@@ -350,7 +348,11 @@ function openProject(projectId: string) {
 
 async function createNewProject() {
 	const author = auth.name ?? '';
-	const project = await create(newProjectName.value, newProjectDescription.value, author);
+	const project = await useProjects().create(
+		newProjectName.value,
+		newProjectDescription.value,
+		author
+	);
 	if (project?.id) {
 		isNewProjectModalVisible.value = false;
 		openProject(project.id);

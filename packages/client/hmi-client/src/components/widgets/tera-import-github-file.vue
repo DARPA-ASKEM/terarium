@@ -199,8 +199,6 @@ const props = defineProps<{
 	showImportButton: boolean;
 }>();
 
-const { addAsset, activeProject } = useProjects();
-
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
 const directoryContent: Ref<GithubRepo | null> = ref(null);
@@ -341,7 +339,7 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 			githubFile.htmlUrl
 		);
 		if (newDataset && newDataset.id) {
-			await addAsset(AssetType.Datasets, newDataset.id);
+			await useProjects().addAsset(AssetType.Datasets, newDataset.id);
 		}
 	});
 }
@@ -351,11 +349,11 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
 		const artifact: Artifact | null = await createNewArtifactFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			activeProject.value?.username ?? ''
+			useProjects().activeProject.value?.username ?? ''
 		);
 		let newAsset;
 		if (artifact && artifact.id) {
-			newAsset = await addAsset(AssetType.Artifacts, artifact.id);
+			newAsset = await useProjects().addAsset(AssetType.Artifacts, artifact.id);
 		}
 		if (artifact && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
 			extractPDF(artifact);
@@ -375,7 +373,7 @@ async function openCodeFiles(githubFiles: GithubFile[]) {
 			githubFile.htmlUrl
 		);
 		if (newCode && newCode.id) {
-			await addAsset(AssetType.Code, newCode.id);
+			await useProjects().addAsset(AssetType.Code, newCode.id);
 		}
 	});
 }

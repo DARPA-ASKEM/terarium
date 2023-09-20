@@ -76,8 +76,6 @@ import TeraCode from '@/components/code/tera-code.vue';
 import { useProjects } from '@/composables/project';
 import TeraWorkflow from '@/workflow/tera-workflow.vue';
 
-const { activeProject } = useProjects();
-
 const props = defineProps<{
 	assetId?: string;
 	pageType?: AssetType | ProjectPages;
@@ -94,7 +92,7 @@ const code = ref<string>();
 const assetName = computed<string>(() => {
 	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
 
-	const assets = activeProject.value?.assets;
+	const assets = useProjects().activeProject.value?.assets;
 
 	/**
 	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
@@ -116,7 +114,7 @@ const assetName = computed<string>(() => {
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
-	activeProject.value?.assets?.[AssetType.Publications]?.find(
+	useProjects().activeProject.value?.assets?.[AssetType.Publications]?.find(
 		(document) => document?.id === Number.parseInt(assetId ?? '', 10)
 	)?.xdd_uri ?? '';
 

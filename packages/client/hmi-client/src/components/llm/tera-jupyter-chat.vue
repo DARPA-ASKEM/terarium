@@ -46,8 +46,6 @@ import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
 import { useProjects } from '@/composables/project';
 
-const { activeProject } = useProjects();
-
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
 const messageContainer = ref(<HTMLElement | null>null);
@@ -322,10 +320,10 @@ watch(
 watch(
 	() => [
 		props.assetId, // Once the route name changes, add/switch to another tab
-		activeProject.value
+		useProjects().activeProject.value
 	],
 	() => {
-		console.log(activeProject.value, props.assetId);
+		console.log(useProjects().activeProject.value, props.assetId);
 	}
 );
 

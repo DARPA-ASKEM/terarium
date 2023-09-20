@@ -85,8 +85,6 @@ import { createModel } from '@/services/model';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 
-const { addAsset, activeProject } = useProjects();
-
 const props = defineProps({
 	initialCode: {
 		type: String,
@@ -125,7 +123,7 @@ const selectedPapers = ref<DocumentAsset[]>();
 const createModelLoading = ref(false);
 const extractPetrinetLoading = ref(false);
 const resources = computed(() => {
-	const storedAssets = activeProject.value?.assets ?? [];
+	const storedAssets = useProjects().activeProject.value?.assets ?? [];
 	const storedPapers: DocumentAsset[] = storedAssets[AssetType.Publications];
 	if (storedPapers) {
 		const first =
@@ -160,7 +158,7 @@ async function onExtractModel() {
 	extractPetrinetLoading.value = true;
 	const response = await codeToAcset(selectedText.value);
 
-	EventService.create(EventType.ExtractModel, activeProject.value?.id);
+	EventService.create(EventType.ExtractModel, useProjects().activeProject.value?.id);
 
 	extractPetrinetLoading.value = false;
 	acset.value = response;
@@ -235,7 +233,7 @@ async function createModelFromCode() {
 		};
 		const model = await createModel(newModel);
 		if (model) {
-			await addAsset(AssetType.Models, model.id.toString());
+			await useProjects().addAsset(AssetType.Models, model.id.toString());
 
 			router.push({
 				name: RouteName.Project,

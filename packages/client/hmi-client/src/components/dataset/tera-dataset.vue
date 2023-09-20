@@ -310,12 +310,10 @@ const props = defineProps({
 	}
 });
 
-const { activeProject, getProject } = useProjects();
-
 const publications = computed(
 	() =>
-		activeProject.value?.assets?.artifacts
-			.filter((artifact: Artifact) =>
+		useProjects()
+			.activeProject.value?.assets?.artifacts.filter((artifact: Artifact) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
 					artifact.fileNames[0].endsWith(extension)
 				)
@@ -383,7 +381,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		getProject();
+		useProjects().get();
 		isRenamingDataset.value = false;
 	}
 }

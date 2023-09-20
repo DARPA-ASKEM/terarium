@@ -20,7 +20,7 @@ const activeProjectId = computed(() => activeProject.value?.id ?? '');
 export function useProjects() {
 	// refresh the current activeProject if `projectId` is not defined
 	// otherwise get and set the current project to the one specified by `projectId`
-	async function getProject(projectId?: IProject['id']): Promise<IProject | null> {
+	async function get(projectId?: IProject['id']): Promise<IProject | null> {
 		if (projectId) {
 			activeProject.value = await ProjectService.get(projectId, true);
 		} else {
@@ -29,7 +29,7 @@ export function useProjects() {
 		return activeProject.value;
 	}
 
-	async function getAllProjects(): Promise<IProject[]> {
+	async function getAll(): Promise<IProject[]> {
 		allProjects.value = (await ProjectService.getAll()) as unknown as IProject[];
 		return allProjects.value;
 	}
@@ -77,8 +77,8 @@ export function useProjects() {
 	return {
 		activeProject,
 		allProjects,
-		getProject,
-		getAllProjects,
+		get,
+		getAll,
 		addAsset,
 		deleteAsset,
 		create,

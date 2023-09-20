@@ -129,7 +129,7 @@
 				<template #default>
 					<p>
 						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ activeProject?.name }}.
+						{{ useProjects().activeProject.value?.name }}.
 					</p>
 				</template>
 				<template #footer>
@@ -170,12 +170,11 @@ const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 const assetToDelete = ref<Tab | null>(null);
 const searchAsset = ref<string | null>('');
-const { activeProject } = useProjects();
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<AssetType, Set<Tab>>();
 
-	const projectAssets = activeProject?.value?.assets;
+	const projectAssets = useProjects().activeProject?.value?.assets;
 	if (!projectAssets) return tabs;
 
 	// Run through all the assets type within the project

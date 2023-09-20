@@ -41,8 +41,6 @@ import { AssetType } from '@/types/Types';
 import { addNewModelToProject } from '@/services/model';
 import { useProjects } from '@/composables/project';
 
-const { addAsset, activeProject } = useProjects();
-
 defineProps<{
 	isVisible: boolean;
 }>();
@@ -55,7 +53,7 @@ const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : '')
 
 const existingModelNames = computed(() => {
 	const modelNames: string[] = [];
-	activeProject.value?.assets?.models.forEach((item) => {
+	useProjects().activeProject.value?.assets?.models.forEach((item) => {
 		modelNames.push(item.header.name);
 	});
 	return modelNames;
@@ -76,7 +74,7 @@ async function createNewModel() {
 	const modelId = await addNewModelToProject(newModelName.value.trim());
 	let newAsset;
 	if (modelId) {
-		newAsset = await addAsset(AssetType.Models, modelId);
+		newAsset = await useProjects().addAsset(AssetType.Models, modelId);
 	}
 	if (newAsset) {
 		router.push({

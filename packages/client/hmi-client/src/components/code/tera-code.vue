@@ -151,7 +151,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['asset-loaded']);
 
-const { activeProject, addAsset } = useProjects();
 const toast = useToastService();
 
 const codeName = ref('');
@@ -192,7 +191,9 @@ function onSelectedTextChange() {
 
 async function saveCode() {
 	// programmingLanguage.value = getProgrammingLanguage(codeName.value);
-	const existingCode = activeProject.value?.assets?.code.find((c) => c.id === props.assetId);
+	const existingCode = useProjects().activeProject.value?.assets?.code.find(
+		(c) => c.id === props.assetId
+	);
 	if (existingCode?.id) {
 		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
 		const file = new File([codeText.value], codeName.value);
@@ -219,7 +220,7 @@ async function saveNewCode() {
 	const newCode = await uploadCodeToProject(file, progress);
 	let newAsset;
 	if (newCode && newCode.id) {
-		newAsset = await addAsset(AssetType.Code, newCode.id);
+		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
 	}
 	if (newAsset) {
 		toast.success('', `File saved as ${codeName.value}`);
@@ -228,7 +229,7 @@ async function saveNewCode() {
 			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Code,
-				projectId: activeProject.value?.id,
+				projectId: useProjects().activeProject.value?.id,
 				assetId: codeAsset?.value?.id
 			}
 		});
@@ -251,7 +252,7 @@ async function extractModel() {
 				name: RouteName.Project,
 				params: {
 					pageType: AssetType.Models,
-					projectId: activeProject.value?.id,
+					projectId: useProjects().activeProject.value?.id,
 					assetId: extractedModelId
 				}
 			});

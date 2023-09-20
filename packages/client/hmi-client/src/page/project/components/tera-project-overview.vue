@@ -312,12 +312,12 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const { update, addAsset, activeProject } = useProjects();
+const { activeProject } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
 
-	const projectAssets = activeProject.value?.assets;
+	const projectAssets = useProjects().activeProject.value?.assets;
 	if (!projectAssets) return tabs;
 
 	const result = <any>[];
@@ -379,7 +379,7 @@ async function processCode(file: File) {
 	const newCode = await uploadCodeToProject(file, progress);
 	let newAsset;
 	if (newCode && newCode.id) {
-		newAsset = await addAsset(AssetType.Code, newCode.id);
+		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
 	}
 	if (newAsset) {
 		return { file, error: false, response: { text: '', images: [] } };
@@ -396,12 +396,12 @@ async function processArtifact(file: File) {
 	const artifact: Artifact | null = await uploadArtifactToProject(
 		progress,
 		file,
-		activeProject.value?.username ?? '',
+		useProjects().activeProject.value?.username ?? '',
 		''
 	);
 	let newAsset;
 	if (artifact && artifact.id) {
-		newAsset = await addAsset(AssetType.Artifacts, artifact.id);
+		newAsset = await useProjects().addAsset(AssetType.Artifacts, artifact.id);
 	}
 	if (artifact && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
 		await extractPDF(artifact);
@@ -426,7 +426,7 @@ async function processDataset(file: File, description: string) {
 
 	let newAsset;
 	if (addedDataset?.id) {
-		newAsset = await addAsset(AssetType.Datasets, addedDataset.id);
+		newAsset = await useProjects().addAsset(AssetType.Datasets, addedDataset.id);
 		addedCSV = await downloadRawFile(addedDataset.id, file.name);
 	}
 
@@ -470,7 +470,7 @@ async function importCompleted(
 }
 
 async function editProject() {
-	newProjectName.value = activeProject.value?.name ?? '';
+	newProjectName.value = useProjects().activeProject.value?.name ?? '';
 	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
@@ -486,7 +486,7 @@ async function updateProjectName() {
 		isRenamingProject.value = false;
 		const updatedProject = activeProject.value;
 		updatedProject.name = newProjectName.value;
-		await update(updatedProject);
+		await useProjects().update(updatedProject);
 	}
 }
 

@@ -24,7 +24,6 @@
 			<tera-model
 				v-else-if="previewItemResourceType === ResourceType.MODEL"
 				:asset-id="previewItemId"
-				:project="(activeProject as IProject)"
 				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
@@ -56,10 +55,6 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocument from '@/components/documents/tera-document.vue';
-import { IProject } from '@/types/Project';
-import { useProjects } from '@/composables/project';
-
-const { activeProject } = useProjects();
 
 const props = defineProps({
 	// slider props

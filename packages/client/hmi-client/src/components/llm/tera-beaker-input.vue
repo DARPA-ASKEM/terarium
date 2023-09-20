@@ -41,8 +41,6 @@ import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 
-const { activeProject } = useProjects();
-
 const emit = defineEmits(['submit-query', 'add-code-cell']);
 
 const props = defineProps({
@@ -74,14 +72,18 @@ const addCodeCellButton = ref<HTMLElement | null>(null);
 const fixedDivWidth = ref(0);
 
 const submitQuery = () => {
-	EventService.create(EventType.TransformPrompt, activeProject.value?.id, queryString.value);
+	EventService.create(
+		EventType.TransformPrompt,
+		useProjects().activeProject.value?.id,
+		queryString.value
+	);
 	emit('submit-query', queryString.value);
 	queryString.value = '';
 };
 
 const addCodeCell = () => {
 	emit('add-code-cell');
-	EventService.create(EventType.AddCodeCell, activeProject.value?.id);
+	EventService.create(EventType.AddCodeCell, useProjects().activeProject.value?.id);
 };
 
 onMounted(() => {

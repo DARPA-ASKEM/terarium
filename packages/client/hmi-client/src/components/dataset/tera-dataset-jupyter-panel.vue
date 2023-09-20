@@ -124,8 +124,6 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 
-const { activeProject, addAsset } = useProjects();
-
 // import { createNewDataset } from '@/services/dataset';
 
 // const jupyterSession = ref(<SessionContext>newSession('beaker', 'Beaker'));
@@ -372,12 +370,12 @@ const updateKernelList = () => {
 };
 
 const onNewDatasetSaved = async (payload) => {
-	if (!activeProject.value) {
+	if (!useProjects().activeProject.value) {
 		toast.error('Unable to save dataset', "Can't find active an project");
 		return;
 	}
 	const datasetId = payload.dataset_id;
-	await addAsset(AssetType.Datasets, datasetId);
+	await useProjects().addAsset(AssetType.Datasets, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
 	toast.success(
 		'Dataset saved successfully',

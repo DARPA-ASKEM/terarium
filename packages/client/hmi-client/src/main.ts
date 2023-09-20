@@ -52,14 +52,13 @@ logger.info('Application Mounted', { showToast: false, silent: true });
 
 let previousRoute;
 let routeStartedMillis = Date.now();
-const { activeProject } = useProjects();
 router.beforeEach((to, _from, next) => {
 	if (previousRoute) {
 		const nowMillis = Date.now();
 		const timeSpent = nowMillis - routeStartedMillis;
 		EventService.create(
 			EventType.RouteTiming,
-			activeProject.value?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				name: previousRoute.name,
 				path: previousRoute.path,

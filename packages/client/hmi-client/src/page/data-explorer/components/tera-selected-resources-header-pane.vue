@@ -34,7 +34,6 @@ import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
 
 const router = useRouter();
-const { addAsset, activeProject, allProjects } = useProjects();
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -45,7 +44,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'clear-selected']);
 
-const projectOptions = computed(() => allProjects.value?.map((p) => ({ name: p.name, id: p.id })));
+const projectOptions = computed(() =>
+	useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
+);
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
@@ -65,7 +66,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 				// then, link and store in the project assets
 				const assetsType = AssetType.Publications;
-				await addAsset(projectId, assetsType, documentId);
+				await useProjects().addAsset(projectId, assetsType, documentId);
 			}
 		}
 		if (isModel(selectedItem)) {
@@ -73,7 +74,7 @@ const addResourcesToProject = async (projectId: string) => {
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
 			const assetsType = AssetType.Models;
-			await addAsset(projectId, assetsType, modelId);
+			await useProjects().addAsset(projectId, assetsType, modelId);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
@@ -81,7 +82,7 @@ const addResourcesToProject = async (projectId: string) => {
 			// then, link and store in the project assets
 			const assetsType = AssetType.Datasets;
 			if (datasetId) {
-				await addAsset(projectId, assetsType, datasetId);
+				await useProjects().addAsset(projectId, assetsType, datasetId);
 			}
 		}
 	});
@@ -90,7 +91,7 @@ const addResourcesToProject = async (projectId: string) => {
 const addAssetsToProject = async (projectOption) => {
 	if (props.selectedSearchItems.length === 0) return;
 
-	const projectId = projectOption.value.id ?? activeProject.value?.id;
+	const projectId = projectOption.value.id ?? useProjects().activeProject.value?.id;
 	addResourcesToProject(projectId);
 
 	emit('close');

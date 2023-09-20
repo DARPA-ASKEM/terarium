@@ -52,15 +52,13 @@ const props = defineProps<{
 	loadingTabIndex: number | null;
 }>();
 
-const { activeProject } = useProjects();
-
 const emit = defineEmits(['select-tab', 'close-tab']);
 const loadingTabIndex = ref();
 
 const getTabName = (tab: Tab) => {
 	if (tab.assetName) return tab.assetName;
 	if (tab.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	const assets = activeProject.value?.assets;
+	const assets = useProjects().activeProject.value?.assets;
 
 	if (assets) {
 		const asset: any = assets[tab.pageType as string].find(

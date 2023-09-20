@@ -118,8 +118,6 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 
-const { activeProject, addAsset } = useProjects();
-
 // import { createNewDataset } from '@/services/dataset';
 
 const emit = defineEmits(['new-model-saved']);
@@ -357,12 +355,12 @@ const updateKernelList = () => {
 };
 
 const onNewModelSaved = async (payload) => {
-	if (!activeProject.value) {
+	if (!useProjects().activeProject.value) {
 		toast.error('Unable to save model', "Can't find active an project");
 		return;
 	}
 	const modelId = payload.model_id;
-	await addAsset(AssetType.Models, modelId);
+	await useProjects().addAsset(AssetType.Models, modelId);
 	emit('new-model-saved', { id: modelId, name: saveAsName.value });
 	toast.success('Model saved successfully', 'Refresh to see the dataset in the resource explorer');
 };

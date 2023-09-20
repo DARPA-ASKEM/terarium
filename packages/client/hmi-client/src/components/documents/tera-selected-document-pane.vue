@@ -37,9 +37,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const projectsNames = computed(() => allProjects?.value?.map((p) => p.name));
-
-const { addAsset, activeProject, allProjects } = useProjects();
+const projectsNames = computed(() => useProjects().allProjects?.value?.map((p) => p.name));
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
@@ -52,12 +50,12 @@ const addResourcesToProject = async (projectId: string) => {
 
 	// first, insert into the proper table/collection
 	const res = await addDocuments(body);
-	if (res && activeProject.value) {
+	if (res && useProjects().activeProject.value) {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
 		const assetsType = AssetType.Publications;
-		await addAsset(projectId, assetsType, documentId);
+		await useProjects().addAsset(projectId, assetsType, documentId);
 	}
 };
 
@@ -67,11 +65,11 @@ const formatAbstract = (item: Document) =>
 const addAssetsToProject = async (projectName) => {
 	let projectId = '';
 	if (projectName !== undefined && typeof projectName.value === 'string') {
-		const project = allProjects?.value?.find((p) => p.name === projectName.value);
+		const project = useProjects().allProjects?.value?.find((p) => p.name === projectName.value);
 		projectId = project?.id as string;
 	} else {
-		if (!activeProject.value) return;
-		projectId = activeProject.value.id;
+		if (useProjects().activeProject.value) return;
+		projectId = useProjects().activeProject.value!.id;
 	}
 
 	addResourcesToProject(projectId);
