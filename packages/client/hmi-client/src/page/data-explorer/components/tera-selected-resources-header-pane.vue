@@ -66,7 +66,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 				// then, link and store in the project assets
 				const assetsType = AssetType.Publications;
-				await useProjects().addAsset(projectId, assetsType, documentId);
+				await useProjects().addAsset(assetsType, documentId, projectId);
 			}
 		}
 		if (isModel(selectedItem)) {
@@ -74,7 +74,7 @@ const addResourcesToProject = async (projectId: string) => {
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
 			const assetsType = AssetType.Models;
-			await useProjects().addAsset(projectId, assetsType, modelId);
+			await useProjects().addAsset(assetsType, modelId, projectId);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
@@ -82,7 +82,7 @@ const addResourcesToProject = async (projectId: string) => {
 			// then, link and store in the project assets
 			const assetsType = AssetType.Datasets;
 			if (datasetId) {
-				await useProjects().addAsset(projectId, assetsType, datasetId);
+				await useProjects().addAsset(assetsType, datasetId, projectId);
 			}
 		}
 	});

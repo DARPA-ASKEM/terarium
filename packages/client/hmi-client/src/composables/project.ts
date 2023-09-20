@@ -40,9 +40,11 @@ export function useProjects() {
 			assetType,
 			assetId
 		);
-		setTimeout(async () => {
-			activeProject.value = await ProjectService.get(projectId ?? activeProjectId.value, true);
-		}, TIMEOUT_MS);
+		if (projectId === activeProjectId.value) {
+			setTimeout(async () => {
+				activeProject.value = await ProjectService.get(activeProjectId.value, true);
+			}, TIMEOUT_MS);
+		}
 		return newAssetId;
 	}
 
