@@ -28,7 +28,7 @@ import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { getModel, getModelConfigurations } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
-import { ModelTransformerState } from './mod';
+import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
