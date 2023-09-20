@@ -115,38 +115,11 @@
 							<DataTable
 								v-else-if="view === ProjectsView.Table"
 								:value="tab.projects"
-								paginator
-								:rows="10"
-								selectionMode="multiple"
 								dataKey="id"
 								:rowsPerPageOptions="[10, 20, 50]"
-								@page="
-									(e) => {
-										prevPageRows = e.page * e.rows;
-										teraShowMoreTextRef = [];
-										console.log(teraShowMoreTextRef);
-									}
-								"
+								scrollable
+								scrollHeight="45rem"
 							>
-								<Column style="width: 0">
-									<template #body="{ index }">
-										{{ prevPageRows + index }}
-										{{ teraShowMoreTextRef?.[index]?.triggerShowMore }}
-										<Button
-											v-if="
-												teraShowMoreTextRef?.[index]?.triggerShowMore ||
-												teraShowMoreTextRef?.[index]?.expanded
-											"
-											:icon="
-												teraShowMoreTextRef?.[index]?.expanded
-													? 'pi pi-chevron-down'
-													: 'pi pi-chevron-right'
-											"
-											class="p-button-icon-only p-button-text p-button-rounded"
-											@click.stop="teraShowMoreTextRef?.[index]?.collapseOrExpand()"
-										/>
-									</template>
-								</Column>
 								<Column
 									v-for="(col, index) in selectedColumns"
 									:field="col.field"
@@ -163,7 +136,6 @@
 									<template v-else-if="col.field === 'description'" #body="{ data }">
 										<div :class="teraShowMoreTextRef?.[index]?.expanded && 'expanded-description'">
 											<tera-show-more-text
-												ref="teraShowMoreTextRef"
 												:text="data.description"
 												:lines="1"
 												parent-expand-button
@@ -371,7 +343,6 @@ const sortOptions = [
 
 const projects = ref<Project[]>([]);
 const view = ref(ProjectsView.Cards);
-const teraShowMoreTextRef = ref();
 
 const myFilteredSortedProjects = computed(() => {
 	const filtered = projects.value;
@@ -417,8 +388,7 @@ const columns = ref([
 	{ field: 'timestamp', header: 'Created' },
 	{ field: 'lastUpdated', header: 'Last updated' } // Last update property doesn't exist yet
 ]);
-const prevPageRows = ref(0);
-// const indexMult = computed(prevPageRows.value *)
+
 const selectedColumns = ref(columns.value);
 const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
@@ -461,9 +431,9 @@ const removeProject = async () => {
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
 		case 'description':
-			return 55;
+			return 60;
 		case 'name':
-			return 25;
+			return 20;
 		default:
 			return 5;
 	}
@@ -652,7 +622,7 @@ function listAuthorNames(authors) {
 	max-width: 32rem;
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td:not(:first-child, :last-child)) {
+.p-datatable:deep(.p-datatable-tbody > tr > td:not(:last-child)) {
 	padding-top: 1rem;
 }
 
