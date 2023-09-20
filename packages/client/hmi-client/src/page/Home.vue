@@ -38,6 +38,7 @@
 								:modelValue="selectedColumns"
 								:options="columns"
 								:maxSelectedLabels="1"
+								:selected-items-label="`{0} columns displayed`"
 								optionLabel="header"
 								@update:modelValue="onToggle"
 								placeholder="Add or remove columns"
@@ -113,29 +114,12 @@
 							</div>
 							<DataTable
 								v-else-if="view === ProjectsView.Table"
-								v-model:selection="selectedProject"
 								:value="tab.projects"
-								paginator
-								:rows="10"
-								selectionMode="single"
 								dataKey="id"
 								:rowsPerPageOptions="[10, 20, 50]"
+								scrollable
+								scrollHeight="45rem"
 							>
-								<Column style="width: 0">
-									<template #body="{ data }">
-										<Button
-											:icon="
-												selectedProject === data ? 'pi pi-chevron-down' : 'pi pi-chevron-right'
-											"
-											class="p-button-icon-only p-button-text p-button-rounded"
-											@click.stop="
-												selectedProject === data
-													? (selectedProject = null)
-													: (selectedProject = data)
-											"
-										/>
-									</template>
-								</Column>
 								<Column
 									v-for="(col, index) in selectedColumns"
 									:field="col.field"
@@ -150,15 +134,7 @@
 										}}</a>
 									</template>
 									<template v-else-if="col.field === 'description'" #body="{ data }">
-										<div
-											:class="
-												selectedProject === data
-													? 'project-description-expanded'
-													: 'project-description'
-											"
-										>
-											{{ data.description }}
-										</div>
+										<tera-show-more-text :text="data.description" :lines="1" />
 									</template>
 									<template v-else-if="col.field === 'stats'" #body="{ data }">
 										<div class="stats">
@@ -333,6 +309,7 @@ import Dropdown from 'primevue/dropdown';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import MultiSelect from 'primevue/multiselect';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { logger } from '@/utils/logger';
@@ -405,6 +382,7 @@ const columns = ref([
 	{ field: 'timestamp', header: 'Created' },
 	{ field: 'lastUpdated', header: 'Last updated' } // Last update property doesn't exist yet
 ]);
+
 const selectedColumns = ref(columns.value);
 const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
@@ -413,7 +391,6 @@ const onToggle = (val) => {
 /*
  * User Menu
  */
-const selectedProject = ref<Project | null>(null);
 const selectedProjectMenu = ref<Project | null>(null);
 
 const isRemoveDialog = ref(false);
@@ -448,9 +425,9 @@ const removeProject = async () => {
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
 		case 'description':
-			return 55;
+			return 60;
 		case 'name':
-			return 25;
+			return 20;
 		default:
 			return 5;
 	}
@@ -614,16 +591,11 @@ function listAuthorNames(authors) {
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td),
-.p-datatable:deep(.p-datatable-tbody > tr .project-description),
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	vertical-align: top;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr .project-description-expanded) {
-	white-space: wrap;
 }
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
@@ -641,7 +613,7 @@ function listAuthorNames(authors) {
 	max-width: 32rem;
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td:not(:first-child, :last-child)) {
+.p-datatable:deep(.p-datatable-tbody > tr > td:not(:last-child)) {
 	padding-top: 1rem;
 }
 
