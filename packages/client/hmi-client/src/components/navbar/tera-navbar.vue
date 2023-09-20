@@ -5,8 +5,8 @@
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
 			</router-link>
 			<div class="navigation-dropdown" @click="showNavigationMenu">
-				<h1 v-if="activeProject?.id || isDataExplorer">
-					{{ activeProject?.name ?? 'Explorer' }}
+				<h1 v-if="useProjects().activeProject.value?.id || isDataExplorer">
+					{{ useProjects().activeProject.value?.name ?? 'Explorer' }}
 				</h1>
 				<img
 					v-else
@@ -155,7 +155,6 @@ defineProps<{
  */
 const router = useRouter();
 const navigationMenu = ref();
-const { activeProject, allProjects } = useProjects();
 
 /**
  * Evaluation scenario code
@@ -194,7 +193,7 @@ const isEvaluationScenarioValid = computed(
 const beginEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		activeProject.value?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Started))
 	);
 	persistEvaluationScenario();
@@ -209,7 +208,7 @@ const beginEvaluationScenario = async () => {
 const stopEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		activeProject.value?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Stopped))
 	);
 	clearEvaluationScenario();
@@ -223,7 +222,7 @@ const stopEvaluationScenario = async () => {
 const pauseEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		activeProject.value?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
 	);
 	await refreshEvaluationScenario();
@@ -234,7 +233,7 @@ const pauseEvaluationScenario = async () => {
 const resumeEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		activeProject.value?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
 	);
 	await refreshEvaluationScenario();
@@ -393,19 +392,17 @@ function searchByExampleModalToggled() {
 }
 
 watch(
-	() => allProjects.value,
+	() => useProjects().allProjects.value,
 	() => {
-		if (allProjects.value) {
-			const items: MenuItem[] = [];
-			allProjects.value.forEach((project) => {
-				items.push({
-					label: project.name,
-					icon: 'pi pi-folder',
-					command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
-				});
+		const items: MenuItem[] = [];
+		useProjects().allProjects.value?.forEach((project) => {
+			items.push({
+				label: project.name,
+				icon: 'pi pi-folder',
+				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
 			});
-			navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
-		}
+		});
+		navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
 	},
 	{ immediate: true }
 );
