@@ -242,11 +242,11 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { IProject } from '@/types/Project';
 import { AssetType, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
+import { useProjects } from '@/composables/project';
 import { ModelOperation, TeraModelNode } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
@@ -277,9 +277,10 @@ import { ModelTransformerOperation, TeraModelTransformerNode } from './ops/model
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
+const { activeProject } = useProjects();
+
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
-	project: IProject;
 	assetId: string;
 }>();
 
@@ -364,8 +365,8 @@ const testOperation: Operation = {
 	isRunnable: true
 };
 
-const models = computed<Model[]>(() => props.project.assets?.models ?? []);
-const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
+const models = computed<Model[]>(() => activeProject.value?.assets?.models ?? []);
+const datasets = computed<Dataset[]>(() => activeProject.value?.assets?.datasets ?? []);
 
 const refreshModelNode = async (node: WorkflowNode) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023

@@ -178,7 +178,6 @@
 import { computed, ComputedRef, ref, Ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { IProject } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
 import { Artifact, AssetType, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
@@ -198,10 +197,9 @@ import { createNewDatasetFromGithubFile } from '@/services/dataset';
 const props = defineProps<{
 	urlString: string;
 	showImportButton: boolean;
-	project?: IProject;
 }>();
 
-const { addAsset } = useProjects();
+const { addAsset, activeProject } = useProjects();
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -342,8 +340,8 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 			auth.name ?? '',
 			githubFile.htmlUrl
 		);
-		if (newDataset && newDataset.id && props.project?.id) {
-			await addAsset(props.project.id, AssetType.Datasets, newDataset.id);
+		if (newDataset && newDataset.id) {
+			await addAsset(AssetType.Datasets, newDataset.id);
 		}
 	});
 }
@@ -353,11 +351,11 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
 		const artifact: Artifact | null = await createNewArtifactFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? ''
+			activeProject.value?.username ?? ''
 		);
 		let newAsset;
-		if (artifact && artifact.id && props.project?.id) {
-			newAsset = await addAsset(props.project.id, AssetType.Artifacts, artifact.id);
+		if (artifact && artifact.id) {
+			newAsset = await addAsset(AssetType.Artifacts, artifact.id);
 		}
 		if (artifact && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
 			extractPDF(artifact);
@@ -376,8 +374,8 @@ async function openCodeFiles(githubFiles: GithubFile[]) {
 			githubFile.path,
 			githubFile.htmlUrl
 		);
-		if (newCode && newCode.id && props.project?.id) {
-			await addAsset(props.project.id, AssetType.Code, newCode.id);
+		if (newCode && newCode.id) {
+			await addAsset(AssetType.Code, newCode.id);
 		}
 	});
 }

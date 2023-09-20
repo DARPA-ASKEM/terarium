@@ -112,7 +112,7 @@ const showSuggestions = computed(() => {
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const { activeProject, getActiveProject, getAllProjects } = useProjects();
+const { activeProject, getProject, getAllProjects } = useProjects();
 
 API.interceptors.response.use(
 	(response) => response,
@@ -133,7 +133,7 @@ API.interceptors.response.use(
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
-		getActiveProject(projectId as IProject['id']);
+		getProject(projectId as IProject['id']);
 		// Refetch the list of all projects
 		getAllProjects();
 	},

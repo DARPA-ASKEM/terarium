@@ -284,7 +284,6 @@ import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
 import { Artifact, CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { IProject } from '@/types/Project';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
 import Menu from 'primevue/menu';
@@ -308,18 +307,14 @@ const props = defineProps({
 	highlight: {
 		type: String,
 		default: null
-	},
-	project: {
-		type: Object as PropType<IProject> | null,
-		default: null
 	}
 });
 
-const { getActiveProject } = useProjects();
+const { activeProject, getProject } = useProjects();
 
 const publications = computed(
 	() =>
-		props.project?.assets?.artifacts
+		activeProject.value?.assets?.artifacts
 			.filter((artifact: Artifact) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
 					artifact.fileNames[0].endsWith(extension)
@@ -388,7 +383,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		getActiveProject(props.project.id);
+		getProject();
 		isRenamingDataset.value = false;
 	}
 }

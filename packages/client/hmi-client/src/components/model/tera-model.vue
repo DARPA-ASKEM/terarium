@@ -42,11 +42,11 @@
 			</template>
 		</template>
 		<tera-model-description
-			v-if="view === ModelView.DESCRIPTION"
+			v-if="view === ModelView.DESCRIPTION && activeProject"
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:highlight="highlight"
-			:project="project"
+			:project="activeProject"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
 		/>
@@ -78,11 +78,10 @@ import {
 } from '@/services/model-configurations';
 import { getModel, updateModel, getModelConfigurations } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { IProject } from '@/types/Project';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 
-const { activeProject, getActiveProject } = useProjects();
+const { activeProject, getProject } = useProjects();
 
 enum ModelView {
 	DESCRIPTION,
@@ -90,10 +89,6 @@ enum ModelView {
 }
 
 const props = defineProps({
-	project: {
-		type: Object as PropType<IProject> | null,
-		default: null
-	},
 	assetId: {
 		type: String,
 		default: ''
@@ -145,7 +140,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel, activeProject.value?.id);
 	setTimeout(async () => {
 		await fetchModel(); // elastic search might still not update in time
-		getActiveProject(props.project.id);
+		getProject();
 	}, 800);
 }
 

@@ -9,7 +9,6 @@
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
-					:project="project"
 					:active-tab="openedAssetRoute"
 					@open-asset="(asset) => openAssetFromSidebar(asset)"
 					@remove-asset="removeAsset"
@@ -29,8 +28,6 @@
 					@select-tab="openAsset"
 				/>
 				<tera-project-page
-					v-if="project"
-					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
 					v-model:tabs="tabs"
@@ -168,7 +165,7 @@ import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
 import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { Tab } from '@/types/common';
-import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -180,7 +177,6 @@ import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
-	project: IProject;
 	assetId?: string;
 	pageType?: AssetType | ProjectPages;
 }>();

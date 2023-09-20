@@ -1,13 +1,13 @@
 /* 
 	Use `activeProject` to get the active project in your component. It is read only and should not be directly modified. 
-	`activeProject` can be refreshed by calling `getActiveProject`
+	`activeProject` can be refreshed by calling `getProject`
 	Use the functions in this composable to make modifications to the project and to add/remove assets from it.
 	Using these functions guarantees that such changes propogate to all components using `activeProject`.
 	Using the resource store for project data is no longer needed.
 */
 
 import { IProject } from '@/types/Project';
-import { readonly, shallowRef } from 'vue';
+import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import { AssetType } from '@/types/Types';
 
@@ -15,13 +15,16 @@ const TIMEOUT_MS = 1000;
 
 const activeProject = shallowRef<IProject | null>(null);
 const allProjects = shallowRef<IProject[] | null>(null);
+const activeProjectId = computed(() => activeProject.value?.id ?? '');
 
 export function useProjects() {
-	async function getActiveProject(projectId: IProject['id']): Promise<IProject | null> {
-		if (projectId && !!projectId) {
+	// refresh the current activeProject if `projectId` is not defined
+	// otherwise get and set the current project to the one specified by `projectId`
+	async function getProject(projectId?: IProject['id']): Promise<IProject | null> {
+		if (projectId) {
 			activeProject.value = await ProjectService.get(projectId, true);
 		} else {
-			activeProject.value = null;
+			activeProject.value = await ProjectService.get(activeProjectId.value, true);
 		}
 		return activeProject.value;
 	}
@@ -31,10 +34,14 @@ export function useProjects() {
 		return allProjects.value;
 	}
 
-	async function addAsset(projectId: string, assetType: string, assetId: string) {
-		const newAssetId = await ProjectService.addAsset(projectId, assetType, assetId);
+	async function addAsset(assetType: string, assetId: string, projectId?: string) {
+		const newAssetId = await ProjectService.addAsset(
+			projectId ?? activeProjectId.value,
+			assetType,
+			assetId
+		);
 		setTimeout(async () => {
-			activeProject.value = await ProjectService.get(projectId as IProject['id'], true);
+			activeProject.value = await ProjectService.get(projectId ?? activeProjectId.value, true);
 		}, TIMEOUT_MS);
 		return newAssetId;
 	}
@@ -68,9 +75,9 @@ export function useProjects() {
 	}
 
 	return {
-		activeProject: readonly(activeProject),
-		allProjects: readonly(allProjects),
-		getActiveProject,
+		activeProject,
+		allProjects,
+		getProject,
 		getAllProjects,
 		addAsset,
 		deleteAsset,

@@ -1,10 +1,10 @@
 <template>
 	<main>
 		<tera-asset
-			:name="project?.name"
-			:authors="project?.username"
+			:name="activeProject?.name"
+			:authors="activeProject?.username"
 			:is-naming-asset="isRenamingProject"
-			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
+			:publisher="`Last updated ${DateUtils.formatLong(activeProject?.timestamp)}`"
 			class="overview-banner"
 		>
 			<template #name-input>
@@ -30,14 +30,14 @@
 						<!-- Description & Contributors -->
 						<section class="description">
 							<p>
-								{{ project?.description }}
+								{{ activeProject?.description }}
 							</p>
 						</section>
 					</div>
 				</section>
 				<!-- Project summary KPIs -->
 				<section class="summary-KPI-bar">
-					<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
+					<div class="summary-KPI" v-for="(assets, type) of activeProject?.assets" :key="type">
 						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
 						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 					</div>
@@ -250,7 +250,7 @@
 </template>
 
 <script setup lang="ts">
-import { IProject, isProjectAssetTypes } from '@/types/Project';
+import { isProjectAssetTypes } from '@/types/Project';
 import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -279,9 +279,6 @@ import { uploadCodeToProject } from '@/services/code';
 import { uploadArtifactToProject } from '@/services/artifact';
 import { getAssetIcon } from '@/services/project';
 
-const props = defineProps<{
-	project: IProject;
-}>();
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
 const isRenamingProject = ref(false);
@@ -304,7 +301,9 @@ const multiSelectButtons = [
 		label: 'Open',
 		callback: () => {
 			selectedResources.value.forEach((resource) => {
-				tabStore.addTab(props.project.id.toString(), toRaw(resource), false);
+				if (activeProject.value?.id) {
+					tabStore.addTab(activeProject.value.id, toRaw(resource), false);
+				}
 			});
 		}
 	}
@@ -313,12 +312,12 @@ const multiSelectButtons = [
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const { update, addAsset } = useProjects();
+const { update, addAsset, activeProject } = useProjects();
 
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
 
-	const projectAssets = props.project?.assets;
+	const projectAssets = activeProject.value?.assets;
 	if (!projectAssets) return tabs;
 
 	const result = <any>[];
@@ -380,7 +379,7 @@ async function processCode(file: File) {
 	const newCode = await uploadCodeToProject(file, progress);
 	let newAsset;
 	if (newCode && newCode.id) {
-		newAsset = await addAsset(props.project.id, AssetType.Code, newCode.id);
+		newAsset = await addAsset(AssetType.Code, newCode.id);
 	}
 	if (newAsset) {
 		return { file, error: false, response: { text: '', images: [] } };
@@ -397,12 +396,12 @@ async function processArtifact(file: File) {
 	const artifact: Artifact | null = await uploadArtifactToProject(
 		progress,
 		file,
-		props.project.username ?? '',
+		activeProject.value?.username ?? '',
 		''
 	);
 	let newAsset;
 	if (artifact && artifact.id) {
-		newAsset = await addAsset(props.project.id, AssetType.Artifacts, artifact.id);
+		newAsset = await addAsset(AssetType.Artifacts, artifact.id);
 	}
 	if (artifact && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
 		await extractPDF(artifact);
@@ -427,7 +426,7 @@ async function processDataset(file: File, description: string) {
 
 	let newAsset;
 	if (addedDataset?.id) {
-		newAsset = await addAsset(props.project.id, AssetType.Datasets, addedDataset.id);
+		newAsset = await addAsset(AssetType.Datasets, addedDataset.id);
 		addedCSV = await downloadRawFile(addedDataset.id, file.name);
 	}
 
@@ -471,7 +470,7 @@ async function importCompleted(
 }
 
 async function editProject() {
-	newProjectName.value = props.project.name;
+	newProjectName.value = activeProject.value?.name ?? '';
 	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
@@ -483,10 +482,12 @@ async function openResource(data) {
 }
 
 async function updateProjectName() {
-	isRenamingProject.value = false;
-	const updatedProject = props.project;
-	updatedProject.name = newProjectName.value;
-	await update(updatedProject);
+	if (activeProject.value) {
+		isRenamingProject.value = false;
+		const updatedProject = activeProject.value;
+		updatedProject.name = newProjectName.value;
+		await update(updatedProject);
+	}
 }
 
 const projectMenu = ref();

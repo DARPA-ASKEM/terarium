@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, PropType } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
@@ -62,12 +62,10 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import useResourcesStore from '@/stores/resources';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
-import { IProject } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
 import { AssetType, DocumentAsset, EventType } from '@/types/Types';
 import { PDFExtractionResponseType } from '@/types/common';
@@ -87,14 +85,9 @@ import { createModel } from '@/services/model';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 
-const { addAsset } = useProjects();
+const { addAsset, activeProject } = useProjects();
 
 const props = defineProps({
-	project: {
-		type: Object as PropType<IProject> | null,
-		default: null,
-		required: false
-	},
 	initialCode: {
 		type: String,
 		default: '# Paste some python code here or import from the controls above'
@@ -131,9 +124,8 @@ watch([graphElement], async () => {
 const selectedPapers = ref<DocumentAsset[]>();
 const createModelLoading = ref(false);
 const extractPetrinetLoading = ref(false);
-const resourcesStore = useResourcesStore();
 const resources = computed(() => {
-	const storedAssets = resourcesStore.activeProjectAssets ?? [];
+	const storedAssets = activeProject.value?.assets ?? [];
 	const storedPapers: DocumentAsset[] = storedAssets[AssetType.Publications];
 	if (storedPapers) {
 		const first =
@@ -168,7 +160,7 @@ async function onExtractModel() {
 	extractPetrinetLoading.value = true;
 	const response = await codeToAcset(selectedText.value);
 
-	EventService.create(EventType.ExtractModel, useResourcesStore().activeProject?.id);
+	EventService.create(EventType.ExtractModel, activeProject.value?.id);
 
 	extractPetrinetLoading.value = false;
 	acset.value = response;
@@ -242,8 +234,8 @@ async function createModelFromCode() {
 			content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
 		};
 		const model = await createModel(newModel);
-		if (model && props.project && resourcesStore) {
-			await addAsset(props.project.id, AssetType.Models, model.id.toString());
+		if (model) {
+			await addAsset(AssetType.Models, model.id.toString());
 
 			router.push({
 				name: RouteName.Project,

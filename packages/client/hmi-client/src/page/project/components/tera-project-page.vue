@@ -2,11 +2,9 @@
 	<tera-model
 		v-if="pageType === AssetType.Models"
 		:asset-id="assetId ?? ''"
-		:project="project"
 		@asset-loaded="emit('asset-loaded')"
 	/>
 	<tera-code
-		:project="project"
 		:asset-id="assetId ?? ''"
 		v-else-if="pageType === AssetType.Code"
 		@asset-loaded="emit('asset-loaded')"
@@ -26,14 +24,12 @@
 	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
-		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
 	<tera-workflow
 		v-else-if="pageType === AssetType.Workflows"
 		:asset-id="assetId ?? ''"
-		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 		@page-loaded="emit('asset-loaded')"
 	/>
@@ -43,13 +39,11 @@
 			v-if="pageType === AssetType.Publications"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
-			:project="project"
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
 			v-else-if="pageType === AssetType.Datasets"
-			:project="project"
 			:asset-id="assetId"
 			@asset-loaded="emit('asset-loaded')"
 		/>
@@ -63,7 +57,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ProjectPages, IProject } from '@/types/Project';
+import { ProjectPages } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
@@ -85,7 +79,6 @@ import TeraWorkflow from '@/workflow/tera-workflow.vue';
 const { activeProject } = useProjects();
 
 const props = defineProps<{
-	project: IProject;
 	assetId?: string;
 	pageType?: AssetType | ProjectPages;
 	tabs?: Tab[];

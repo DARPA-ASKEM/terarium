@@ -150,7 +150,7 @@ import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -160,7 +160,6 @@ import { useProjects } from '@/composables/project';
 type IProjectAssetTabs = Map<AssetType, Set<Tab>>;
 
 defineProps<{
-	project: IProject;
 	activeTab: Tab;
 }>();
 

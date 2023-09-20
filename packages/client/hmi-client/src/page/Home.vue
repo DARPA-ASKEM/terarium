@@ -222,7 +222,7 @@ const sortOptions = [
 ];
 
 const myFilteredSortedProjects = computed(() => {
-	const filtered = allProjects.value?.map((p) => p as IProject);
+	const filtered = allProjects.value;
 	if (!filtered) return [];
 
 	if (selectedSort.value === 'Alphabetical') {

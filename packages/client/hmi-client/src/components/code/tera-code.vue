@@ -138,7 +138,6 @@ import InputText from 'primevue/inputtext';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import FileUpload from 'primevue/fileupload';
-import { IProject } from '@/types/Project';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
@@ -147,7 +146,6 @@ import Dropdown from 'primevue/dropdown';
 const INITIAL_TEXT = '# Paste some code here';
 
 const props = defineProps<{
-	project: IProject;
 	assetId: string;
 }>();
 
@@ -221,7 +219,7 @@ async function saveNewCode() {
 	const newCode = await uploadCodeToProject(file, progress);
 	let newAsset;
 	if (newCode && newCode.id) {
-		newAsset = await addAsset(props.project.id, AssetType.Code, newCode.id);
+		newAsset = await addAsset(AssetType.Code, newCode.id);
 	}
 	if (newAsset) {
 		toast.success('', `File saved as ${codeName.value}`);
@@ -230,7 +228,7 @@ async function saveNewCode() {
 			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Code,
-				projectId: props.project.id,
+				projectId: activeProject.value?.id,
 				assetId: codeAsset?.value?.id
 			}
 		});
@@ -253,7 +251,7 @@ async function extractModel() {
 				name: RouteName.Project,
 				params: {
 					pageType: AssetType.Models,
-					projectId: props.project.id,
+					projectId: activeProject.value?.id,
 					assetId: extractedModelId
 				}
 			});
