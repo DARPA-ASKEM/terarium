@@ -187,7 +187,7 @@ const isNewModelModalVisible = ref(false);
 const { addAsset, deleteAsset, activeProject } = useProjects();
 
 // Associated with tab storage
-const projectContext = computed(() => activeProject.value?.id.toString() ?? '');
+const projectContext = computed(() => activeProject.value?.id ?? '');
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
