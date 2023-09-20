@@ -58,7 +58,7 @@
 					:class="{ save: hasValidDatasetName }"
 					@click="
 						saveDataset(project.id, completedRunId, saveAsName);
-						getActiveProject(project.id);
+						getProject(project.id);
 						showSaveInput = false;
 					"
 				></i>
@@ -235,7 +235,7 @@ import {
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 
-const { getActiveProject } = useProjects();
+const { getProject } = useProjects();
 
 const dataLabelPlugin = [ChartDataLabels];
 
