@@ -248,7 +248,7 @@ async function removeAsset(asset: Tab) {
 		pageType !== ProjectPages.OVERVIEW &&
 		activeProject.value?.id
 	) {
-		const isRemoved = await deleteAsset(activeProject.value?.id, pageType as AssetType, assetId);
+		const isRemoved = await deleteAsset(pageType as AssetType, assetId);
 
 		if (isRemoved) {
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isSameTab(tab, asset)));

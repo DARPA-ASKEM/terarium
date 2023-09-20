@@ -48,11 +48,17 @@ export function useProjects() {
 		return newAssetId;
 	}
 
-	async function deleteAsset(projectId: string, assetType: AssetType, assetId: string) {
-		const deleted = ProjectService.deleteAsset(projectId, assetType, assetId);
-		setTimeout(async () => {
-			activeProject.value = await ProjectService.get(projectId as IProject['id'], true);
-		}, 1000);
+	async function deleteAsset(assetType: AssetType, assetId: string, projectId?: string) {
+		const deleted = ProjectService.deleteAsset(
+			projectId ?? activeProjectId.value,
+			assetType,
+			assetId
+		);
+		if (projectId === activeProjectId.value) {
+			setTimeout(async () => {
+				activeProject.value = await ProjectService.get(projectId, true);
+			}, 1000);
+		}
 		return deleted;
 	}
 
