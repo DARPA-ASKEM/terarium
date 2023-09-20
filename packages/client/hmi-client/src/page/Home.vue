@@ -502,11 +502,20 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 
 	if (cardListElement === null || cardListElement === undefined) return;
 
-	const SCROLL_INCREMENT_IN_REM = 294 * 1; // (card width + gap on the right) * number of cards to display at once
+	const cardWidth = 238; // 17rem
+	const rightGapWidth = 21; // 1.5rem
+
+	const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
+	const amountOfCardsToMove = parentBounds?.width
+		? Math.floor(parentBounds.width / (cardWidth + rightGapWidth))
+		: 3;
+
+	console.log(amountOfCardsToMove);
+
+	const scrollIncriment = (cardWidth + rightGapWidth) * amountOfCardsToMove;
 
 	// Don't scroll if last element is already within viewport
 	if (direction === 'right' && cardListElement.lastElementChild) {
-		const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
 		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
 		if (bounds && parentBounds && bounds.x + bounds.width < parentBounds.x + parentBounds.width) {
 			return;
@@ -516,8 +525,8 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseFloat(marginLeftString);
-	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
-	const newMarginLeft = currentMarginLeft + changeInRem;
+	const change = direction === 'right' ? -scrollIncriment : scrollIncriment;
+	const newMarginLeft = currentMarginLeft + change;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
