@@ -7,7 +7,7 @@
 	<tera-navbar class="header" :active="!isErrorState" :show-suggestions="showSuggestions" />
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" :project="activeProject" />
+			<component class="page" ref="pageRef" :is="Component" />
 		</router-view>
 	</main>
 	<footer class="footer">
@@ -112,7 +112,7 @@ const showSuggestions = computed(() => {
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const { activeProject, getProject, getAllProjects } = useProjects();
+const { getProject, getAllProjects } = useProjects();
 
 API.interceptors.response.use(
 	(response) => response,
