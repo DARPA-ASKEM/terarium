@@ -101,33 +101,6 @@
 											@update-chosen-project-menu="selectedProjectMenu = project"
 										/>
 									</li>
-									<li v-for="project in tab.projects" :key="project.id">
-										<tera-project-card
-											v-if="project.id"
-											:project="project"
-											:project-menu-items="projectMenuItems"
-											@click="openProject(project.id)"
-											@update-chosen-project-menu="selectedProjectMenu = project"
-										/>
-									</li>
-									<li v-for="project in tab.projects" :key="project.id">
-										<tera-project-card
-											v-if="project.id"
-											:project="project"
-											:project-menu-items="projectMenuItems"
-											@click="openProject(project.id)"
-											@update-chosen-project-menu="selectedProjectMenu = project"
-										/>
-									</li>
-									<li v-for="project in tab.projects" :key="project.id">
-										<tera-project-card
-											v-if="project.id"
-											:project="project"
-											:project-menu-items="projectMenuItems"
-											@click="openProject(project.id)"
-											@update-chosen-project-menu="selectedProjectMenu = project"
-										/>
-									</li>
 									<li>
 										<section class="new-project-card" @click="isNewProjectModalVisible = true">
 											<div>
@@ -543,7 +516,6 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 17 * 6; // card width * number of cards to display at once
 const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
@@ -552,6 +524,8 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 			: chevronElement.parentElement?.parentElement?.querySelector('ul');
 
 	if (cardListElement === null || cardListElement === undefined) return;
+
+	const SCROLL_INCREMENT_IN_REM = 294 * 1; // (card width + gap on the right) * number of cards to display at once
 
 	// Don't scroll if last element is already within viewport
 	if (direction === 'right' && cardListElement.lastElementChild) {
@@ -569,7 +543,7 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const newMarginLeft = currentMarginLeft + changeInRem;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
+	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
 };
 
 function openProject(projectId: string) {
