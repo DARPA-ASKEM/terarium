@@ -137,7 +137,7 @@ const optionsMenuItems = ref([
 ]);
 
 async function updateModelContent(updatedModel: Model) {
-	await updateModel(updatedModel, activeProject.value?.id);
+	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await fetchModel(); // elastic search might still not update in time
 		getProject();
