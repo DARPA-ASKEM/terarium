@@ -3,12 +3,12 @@ package software.uncharted.terarium.hmiserver.controller;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import software.uncharted.terarium.hmiserver.PanteraApplicationTests;
+import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class AuthoritiesTests extends PanteraApplicationTests {
+public class AuthoritiesTests extends TerariumApplicationTests {
 
   @Test
   @WithUserDetails(MockUser.ADAM)

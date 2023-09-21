@@ -8,14 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.cache.CacheManager;
-import software.uncharted.terarium.hmiserver.PanteraApplicationTests;
+import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.util.MatchUtil;
 import software.uncharted.terarium.hmiserver.models.CacheName;
 
 import java.util.Objects;
 
 @ExtendWith(OutputCaptureExtension.class)
-public class CacheServiceTests extends PanteraApplicationTests {
+public class CacheServiceTests extends TerariumApplicationTests {
   @Autowired
   CacheService cacheService;
 

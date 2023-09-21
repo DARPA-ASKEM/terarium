@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.util.List;
 
 @Configuration
-@ConfigurationProperties(prefix = "pantera")
+@ConfigurationProperties(prefix = "terarium")
 @Data
 @Accessors(chain = true)
 @NoArgsConstructor

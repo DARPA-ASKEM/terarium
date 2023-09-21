@@ -47,6 +47,7 @@ app.use(VueKatex);
 
 const authStore = useAuthStore();
 const keycloak = new Keycloak('/api/keycloak/config');
+authStore.setKeycloak(keycloak);
 
 await keycloak
 	.init({
@@ -56,13 +57,9 @@ await keycloak
 		if (!auth) {
 			window.location.reload();
 		} else {
-			if (keycloak?.token) {
-				authStore.setKeycloak(keycloak);
-			}
 			await authStore.init();
 			app.use(router);
 			app.mount('#app');
-			//	Logger.info('Authenticated');
 
 			// Token Refresh
 			setInterval(async () => {

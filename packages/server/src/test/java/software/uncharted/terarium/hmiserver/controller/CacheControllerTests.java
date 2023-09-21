@@ -10,7 +10,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.cache.CacheManager;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import software.uncharted.terarium.hmiserver.PanteraApplicationTests;
+import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.CacheName;
 import software.uncharted.terarium.hmiserver.service.CacheableTestService;
@@ -22,7 +22,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(OutputCaptureExtension.class)
-public class CacheControllerTests extends PanteraApplicationTests {
+public class CacheControllerTests extends TerariumApplicationTests {
   @Autowired
   private CacheableTestService testService;
 

@@ -351,7 +351,7 @@ function openProject(projectId: string) {
 }
 
 async function createNewProject() {
-	const author = auth.name ?? '';
+	const author = auth.user?.name ?? '';
 	const project = await ProjectService.create(
 		newProjectName.value,
 		newProjectDescription.value,

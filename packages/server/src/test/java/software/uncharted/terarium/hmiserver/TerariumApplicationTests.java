@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 
 @AutoConfigureMockMvc
 @SpringBootTest
-public class PanteraApplicationTests {
+public class TerariumApplicationTests {
   @Autowired
   private WebApplicationContext context;
 

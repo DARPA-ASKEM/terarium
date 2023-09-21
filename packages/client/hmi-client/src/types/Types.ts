@@ -23,6 +23,15 @@ export interface EvaluationScenarioSummary {
     timestampMillis: number;
 }
 
+export interface Event {
+    id?: string;
+    timestampMillis?: number;
+    projectId?: number;
+    username?: string;
+    type: EventType;
+    value?: string;
+}
+
 export interface User {
     id: string;
     createdAtMs: number;

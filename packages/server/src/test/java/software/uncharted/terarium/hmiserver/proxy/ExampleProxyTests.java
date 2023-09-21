@@ -6,10 +6,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
-import software.uncharted.terarium.hmiserver.PanteraApplicationTests;
+import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 
 @ExtendWith(OutputCaptureExtension.class)
-public class ExampleProxyTests extends PanteraApplicationTests {
+public class ExampleProxyTests extends TerariumApplicationTests {
   @Autowired
   private ExampleProxy proxy;
 

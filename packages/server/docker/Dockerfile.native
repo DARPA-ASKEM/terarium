@@ -13,10 +13,10 @@ RUN --mount=type=cache,target=/root/.gradle ./gradlew clean nativeCompile
 FROM quay.io/quarkus/quarkus-micro-image:2.0
 
 # Add Spring Boot Native app spring-boot-graal to Container
-COPY --from=builder "builder/build/native/nativeCompile/pantera" pantera
+COPY --from=builder "builder/build/native/nativeCompile/terarium" terarium
 
 # Fire up our Spring Boot Native app by default
-CMD [ "./pantera" ]
+CMD [ "./terarium" ]
 
 # ---- Alternative WIP
 # # Simple Dockerfile adding Maven and GraalVM Native Image compiler to the standard
@@ -30,7 +30,7 @@ CMD [ "./pantera" ]
 # # RUN gu install native-image;
 
 # # RUN --mount=type=cache,target=/root/.gradle ./gradlew clean nativeCompile
-# RUN native-image --static --initialize-at-build-time=PanteraApplication
+# RUN native-image --static --initialize-at-build-time=TerariumApplication
 
 # # We use a Docker multi-stage build here in order that we only take the compiled native Spring Boot App from the first build container
 # FROM alpine:3.17.3
@@ -44,7 +44,7 @@ CMD [ "./pantera" ]
 # # RUN apk add --upgrade libstdc++
 
 # # Add Spring Boot Native app spring-boot-graal to Container
-# COPY --from=builder "builder/build/native/nativeCompile/pantera" pantera
+# COPY --from=builder "builder/build/native/nativeCompile/terarium" terarium
 
 # # Fire up our Spring Boot Native app by default
-# CMD [ "./pantera" ]
+# CMD [ "./terarium" ]

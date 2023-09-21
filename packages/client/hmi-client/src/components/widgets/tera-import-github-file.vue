@@ -336,7 +336,7 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			auth.name ?? '',
+			auth.user?.name ?? '',
 			props.project?.id ?? '',
 			githubFile.htmlUrl
 		);
