@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import Button from 'primevue/button';
-
 /**
  * A modal with content slots for a header, body, and footer. Use v-if to control visiblity.
  * @example
@@ -16,41 +13,25 @@ import Button from 'primevue/button';
  * <modal @modal-mask-clicked="closeModal"></modal>
  */
 
-const props = defineProps<{
+defineProps<{
 	zIndex?: number;
-	fullscreen?: boolean;
 }>();
-
-const emit = defineEmits(['modal-enter-press', 'modal-mask-clicked', 'on-close-clicked']);
-
-const fullscreenClass = computed(() => (props.fullscreen ? 'fullscreen' : ''));
 </script>
 
 <template>
 	<Transition name="modal">
-		<main :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
-			<section :class="fullscreenClass">
-				<header ref="header">
-					<div>
-						<slot name="header" />
-					</div>
-					<Button
-						v-if="fullscreen"
-						icon="pi pi-times"
-						text
-						rounded
-						aria-label="Close"
-						size="large"
-						@click="emit('on-close-clicked')"
-					/>
+		<main :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
+			<section>
+				<header>
+					<slot name="header" />
 				</header>
 				<section class="content"><slot /></section>
-				<section ref="math-editor"><slot name="math-editor" /></section>
-				<footer ref="footer">
+				<section><slot name="math-editor" /></section>
+				<footer>
 					<slot name="footer" />
 				</footer>
 			</section>
-			<aside @click.self="emit('modal-mask-clicked')" />
+			<aside @click.self="$emit('modalMaskClicked')" />
 		</main>
 	</Transition>
 </template>
@@ -82,6 +63,7 @@ main > section {
 	border-radius: 0.5rem;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	margin: 0px auto;
+	padding: 2rem 0;
 	transition: all 0.1s ease;
 	min-width: max-content;
 	width: 80vw;
@@ -89,34 +71,19 @@ main > section {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-}
-
-main > section.fullscreen {
-	height: 98%;
-	margin-top: 1%;
-	width: 98%;
-	max-height: 98vw;
-	max-width: 98vw;
-	border-radius: 0.5rem 0.5rem 0 0;
 }
 
 .content {
+	max-height: 65vh;
 	padding: 0 2rem;
 	overflow-y: auto;
-	max-width: inherit;
 }
 
 header {
 	margin-bottom: 1rem;
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	flex-direction: column;
 	gap: 0.5rem;
-	background-color: var(--surface-highlight);
-	padding: 1.5rem 2rem;
 }
 
 footer {
@@ -125,7 +92,11 @@ footer {
 	gap: 1rem;
 	justify-content: end;
 	margin-top: 2rem;
-	padding: 1.5rem 2rem;
+}
+
+header,
+footer {
+	padding: 0 2rem;
 }
 
 .modal-enter-from,
