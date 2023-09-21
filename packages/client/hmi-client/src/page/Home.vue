@@ -99,7 +99,7 @@
 											:project="project"
 											:project-menu-items="projectMenuItems"
 											@click="openProject(project.id)"
-											@update-chosen-project-menu="selectedProjectMenu = project"
+											@update-chosen-project-menu="updateChosenProjectMenu(project)"
 										/>
 									</li>
 									<li>
@@ -112,64 +112,14 @@
 									</li>
 								</ul>
 							</div>
-							<DataTable
+							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								:value="tab.projects"
-								dataKey="id"
-								:rowsPerPageOptions="[10, 20, 50]"
-								scrollable
-								scrollHeight="45rem"
-							>
-								<Column
-									v-for="(col, index) in selectedColumns"
-									:field="col.field"
-									:header="col.header"
-									:sortable="col.field !== 'stats'"
-									:key="index"
-									:style="`width: ${getColumnWidth(col.field)}%`"
-								>
-									<template v-if="col.field !== 'username'" #body="{ data }">
-										<a
-											v-if="col.field === 'name'"
-											class="project-title-link"
-											@click.stop="openProject(data.id)"
-											>{{ data.name }}
-										</a>
-										<tera-show-more-text
-											v-else-if="col.field === 'description'"
-											:text="data.description"
-											:lines="1"
-										/>
-										<div v-else-if="col.field === 'stats'" class="stats">
-											<span><i class="pi pi-user" />1</span>
-											<span
-												><i class="pi pi-file" /> {{ data.metadata?.['publications-count'] }}</span
-											>
-											<span>
-												<dataset-icon fill="var(--text-color-secondary)" />
-												{{ data.metadata?.['datasets-count'] }}
-											</span>
-											<span
-												><i class="pi pi-share-alt" /> {{ data.metadata?.['models-count'] }}</span
-											>
-										</div>
-										<!--FIXME: There is no 'last updated' property in project yet-->
-										<template v-else-if="col.field === 'timestamp'">
-											{{ formatDdMmmYyyy(data.timestamp) }}
-										</template>
-									</template>
-								</Column>
-								<Column style="width: 0">
-									<template #body="{ data, index }">
-										<Button
-											icon="pi pi-ellipsis-v"
-											class="project-options p-button-icon-only p-button-text p-button-rounded"
-											@click.stop="(event) => toggleProjectMenu(event, index, data)"
-										/>
-										<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-									</template>
-								</Column>
-							</DataTable>
+								:projects="tab.projects"
+								:project-menu-items="projectMenuItems"
+								:selected-columns="selectedColumns"
+								@open-project="openProject"
+								@update-chosen-project-menu="updateChosenProjectMenu"
+							/>
 						</section>
 					</TabPanel>
 				</TabView>
@@ -309,15 +259,10 @@ import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import Dropdown from 'primevue/dropdown';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import MultiSelect from 'primevue/multiselect';
-import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import { formatDdMmmYyyy } from '@/utils/date';
-import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
-import Menu from 'primevue/menu';
+import TeraProjectTable from '@/components/home/tera-project-table.vue';
 
 enum ProjectsView {
 	Cards,
@@ -387,6 +332,7 @@ const columns = ref([
 ]);
 
 const selectedColumns = ref(columns.value);
+
 const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
@@ -397,18 +343,23 @@ const onToggle = (val) => {
 const selectedProjectMenu = ref<Project | null>(null);
 
 const isRemoveDialog = ref(false);
-const openRemoveDialog = () => {
-	isRemoveDialog.value = true;
-};
 const closeRemoveDialog = () => {
 	isRemoveDialog.value = false;
 };
-const projectMenu = ref();
-const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
-const toggleProjectMenu = (event, index: number, project: Project) => {
-	projectMenu.value[index].toggle(event);
-	selectedProjectMenu.value = project;
+const openRemoveDialog = () => {
+	isRemoveDialog.value = true;
 };
+
+const projectMenuItems = ref([
+	{
+		label: 'Remove',
+		command: openRemoveDialog
+	}
+]);
+
+function updateChosenProjectMenu(project: Project) {
+	selectedProjectMenu.value = project;
+}
 
 const removeProject = async () => {
 	if (!selectedProjectMenu.value?.id) return;
@@ -424,17 +375,6 @@ const removeProject = async () => {
 		logger.error(`Unable to delete the project ${name}`, { showToast: true });
 	}
 };
-
-function getColumnWidth(columnField: string) {
-	switch (columnField) {
-		case 'description':
-			return 60;
-		case 'name':
-			return 20;
-		default:
-			return 5;
-	}
-}
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
@@ -567,75 +507,9 @@ function listAuthorNames(authors) {
 	min-height: 21rem;
 }
 
-.stats {
-	display: flex;
-	width: fit-content;
-	gap: 0.75rem;
-	font-size: var(--font-caption);
-	vertical-align: bottom;
-}
-
-.stats span {
-	display: flex;
-	gap: 0.1rem;
-	align-items: center;
-	width: 2rem;
-}
-
 .p-dropdown,
 .p-multiselect {
 	min-width: 15rem;
-}
-
-.p-datatable {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr > td),
-.p-datatable:deep(.p-datatable-thead > tr > th) {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	vertical-align: top;
-}
-
-.p-datatable:deep(.p-datatable-thead > tr > th) {
-	padding: 1rem 0.5rem;
-	background-color: var(--surface-ground);
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr:not(.p-highlight):focus) {
-	background-color: transparent;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr > td) {
-	color: var(--text-color-secondary);
-	padding: 0.5rem;
-	max-width: 32rem;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr > td:not(:last-child)) {
-	padding-top: 1rem;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr .project-options) {
-	visibility: hidden;
-	float: right;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr:hover .project-options) {
-	visibility: visible;
-}
-.p-datatable:deep(.p-datatable-tbody > tr > td > a) {
-	color: var(--text-color-primary);
-	font-weight: var(--font-weight-semibold);
-	cursor: pointer;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr > td > a:hover) {
-	color: var(--primary-color);
-	text-decoration: underline;
 }
 
 .p-multiselect:deep(.p-multiselect-label) {
