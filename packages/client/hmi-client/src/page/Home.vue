@@ -88,7 +88,7 @@
 								<template #skeleton-card>
 									<tera-project-card />
 								</template>
-								<template #list-of-cards>
+								<template #card-list-items>
 									<li v-for="project in tab.projects" :key="project.id">
 										<tera-project-card
 											v-if="project.id"
@@ -133,7 +133,7 @@
 						<template #skeleton-card>
 							<tera-document-card />
 						</template>
-						<template #list-of-cards>
+						<template #card-list-items>
 							<li v-for="document in project.relatedDocuments" :key="document.gddId">
 								<tera-document-card :document="document" @click="selectDocument(document)" />
 							</li>

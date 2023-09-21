@@ -17,7 +17,7 @@
 				</li>
 			</ul>
 			<ul v-else ref="cardListRef">
-				<slot name="list-of-cards" />
+				<slot name="card-list-items" />
 			</ul>
 		</section>
 		<section v-if="amountOfCardPages" class="page-indicators">
