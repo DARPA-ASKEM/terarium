@@ -128,16 +128,19 @@
 									:key="index"
 									:style="`width: ${getColumnWidth(col.field)}%`"
 								>
-									<template v-if="col.field === 'name'" #body="{ data }">
-										<a class="project-title-link" @click.stop="openProject(data.id)">{{
-											data.name
-										}}</a>
-									</template>
-									<template v-else-if="col.field === 'description'" #body="{ data }">
-										<tera-show-more-text :text="data.description" :lines="1" />
-									</template>
-									<template v-else-if="col.field === 'stats'" #body="{ data }">
-										<div class="stats">
+									<template v-if="col.field !== 'username'" #body="{ data }">
+										<a
+											v-if="col.field === 'name'"
+											class="project-title-link"
+											@click.stop="openProject(data.id)"
+											>{{ data.name }}
+										</a>
+										<tera-show-more-text
+											v-else-if="col.field === 'description'"
+											:text="data.description"
+											:lines="1"
+										/>
+										<div v-else-if="col.field === 'stats'" class="stats">
 											<span><i class="pi pi-user" />1</span>
 											<span
 												><i class="pi pi-file" /> {{ data.metadata?.['publications-count'] }}</span
@@ -150,10 +153,10 @@
 												><i class="pi pi-share-alt" /> {{ data.metadata?.['models-count'] }}</span
 											>
 										</div>
-									</template>
-									<!--FIXME: There is no 'last updated' property in project yet-->
-									<template v-else-if="col.field === 'timestamp'" #body="{ data }">
-										{{ formatDdMmmYyyy(data.timestamp) }}
+										<!--FIXME: There is no 'last updated' property in project yet-->
+										<template v-else-if="col.field === 'timestamp'">
+											{{ formatDdMmmYyyy(data.timestamp) }}
+										</template>
 									</template>
 								</Column>
 								<Column style="width: 0">
