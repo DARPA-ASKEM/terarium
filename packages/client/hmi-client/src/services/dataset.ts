@@ -196,18 +196,18 @@ async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
 	datasetName: string | null
-) {
+): Promise<boolean> {
 	try {
 		const response: AxiosResponse<Response> = await API.get(
 			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?datasetName=${datasetName}`
 		);
 		if (response && response.status === 201) {
-			return response.data;
+			return true;
 		}
 		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
 			toastTitle: 'TDS - Simulation'
 		});
-		return null;
+		return false;
 	} catch (error) {
 		logger.error(
 			`/simulations/{id}/add-result-as-dataset-to-project/{projectId} not responding:  ${error}`,
@@ -215,7 +215,7 @@ async function createDatasetFromSimulationResult(
 				toastTitle: 'TDS - Simulation'
 			}
 		);
-		return null;
+		return false;
 	}
 }
 
@@ -224,8 +224,8 @@ export const saveDataset = async (
 	simulationId: string | undefined,
 	datasetName: string | null
 ) => {
-	if (!simulationId) return;
-	await createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+	if (!simulationId) return false;
+	return createDatasetFromSimulationResult(projectId, simulationId, datasetName);
 };
 
 export {

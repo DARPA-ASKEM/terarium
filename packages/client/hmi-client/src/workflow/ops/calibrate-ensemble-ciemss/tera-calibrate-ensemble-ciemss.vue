@@ -402,11 +402,12 @@ const watchCompletedRunList = async () => {
 	runResults.value = output.runResults;
 };
 
-function saveDatasetToProject() {
+async function saveDatasetToProject() {
 	const { activeProject, get } = useProjects();
 	if (activeProject.value?.id) {
-		saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value);
-		get();
+		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+			get();
+		}
 		showSaveInput.value = false;
 	}
 }
