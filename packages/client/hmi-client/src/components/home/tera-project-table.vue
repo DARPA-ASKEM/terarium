@@ -43,11 +43,11 @@
 			</template>
 		</Column>
 		<Column style="width: 0">
-			<template #body="{ data, index }">
+			<template #body="{ data }">
 				<Button
 					icon="pi pi-ellipsis-v"
 					class="project-options p-button-icon-only p-button-text p-button-rounded"
-					@click.stop="(event) => showProjectMenu(event, index, data)"
+					@click.stop="(event) => showProjectMenu(event, data)"
 				/>
 				<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
 			</template>
@@ -76,9 +76,8 @@ const emit = defineEmits(['open-project', 'update-chosen-project-menu']);
 
 const projectMenu = ref();
 
-const showProjectMenu = (event, index: number, project: Project) => {
-	console.log(index, projectMenu.value);
-	projectMenu.value[index]?.toggle(event);
+const showProjectMenu = (event, project: Project) => {
+	projectMenu.value.toggle(event);
 	emit('update-chosen-project-menu', project);
 };
 
