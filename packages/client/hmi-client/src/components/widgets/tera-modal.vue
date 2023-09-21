@@ -98,12 +98,15 @@ main > section.fullscreen {
 	height: 98%;
 	margin-top: 1%;
 	width: 98%;
-	max-height: 100%;
+	max-height: 98vw;
+	max-width: 98vw;
+	border-radius: 0.5rem 0.5rem 0 0;
 }
 
 .content {
 	padding: 0 2rem;
 	overflow-y: auto;
+	max-width: inherit;
 }
 
 header {
