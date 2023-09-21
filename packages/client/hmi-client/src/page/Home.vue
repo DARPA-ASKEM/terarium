@@ -81,11 +81,19 @@
 								</template>
 							</div>
 							<template v-else-if="view === ProjectsView.Cards">
-								<div class="carousel" ref="carouselRef">
-									<div class="chevron-left" @click="scroll('left', $event)">
+								<section class="carousel" ref="carouselRef">
+									<div
+										v-if="activeCarouselPage > 1"
+										class="chevron-left"
+										@click="scroll($event, 'left')"
+									>
 										<i class="pi pi-chevron-left" />
 									</div>
-									<div class="chevron-right" @click="scroll('right', $event)">
+									<div
+										v-if="activeCarouselPage !== amountOfCardPages"
+										class="chevron-right"
+										@click="scroll($event, 'right')"
+									>
 										<i class="pi pi-chevron-right" />
 									</div>
 									<ul v-if="isLoadingProjects">
@@ -94,6 +102,24 @@
 										</li>
 									</ul>
 									<ul v-else ref="cardListRef">
+										<li v-for="project in tab.projects" :key="project.id">
+											<tera-project-card
+												v-if="project.id"
+												:project="project"
+												:project-menu-items="projectMenuItems"
+												@click="openProject(project.id)"
+												@update-chosen-project-menu="updateChosenProjectMenu(project)"
+											/>
+										</li>
+										<li v-for="project in tab.projects" :key="project.id">
+											<tera-project-card
+												v-if="project.id"
+												:project="project"
+												:project-menu-items="projectMenuItems"
+												@click="openProject(project.id)"
+												@update-chosen-project-menu="updateChosenProjectMenu(project)"
+											/>
+										</li>
 										<li v-for="project in tab.projects" :key="project.id">
 											<tera-project-card
 												v-if="project.id"
@@ -112,15 +138,16 @@
 											</section>
 										</li>
 									</ul>
-								</div>
+								</section>
 								<section v-if="amountOfCardPages" class="page-indicators">
+									<!--page starts counting at 1 because we are looping through a number-->
 									<Button
 										v-for="page in amountOfCardPages"
 										:key="page"
 										icon="pi pi-circle-fill"
 										:active="activeCarouselPage === page"
 										class="page-indicator p-button-icon-only p-button-text p-button-rounded"
-										@click="activeCarouselPage = page"
+										@click="onCarouselPaginate(page)"
 									/>
 								</section>
 							</template>
@@ -143,10 +170,10 @@
 				<div v-for="project in projectsWithRelatedDocuments" :key="project.name">
 					<p>{{ project.name }}</p>
 					<div class="carousel">
-						<div class="chevron-left" @click="scroll('left', $event)">
+						<div class="chevron-left" @click="scroll($event, 'left')">
 							<i class="pi pi-chevron-left" />
 						</div>
-						<div class="chevron-right" @click="scroll('right', $event)">
+						<div class="chevron-right" @click="scroll($event, 'right')">
 							<i class="pi pi-chevron-right" />
 						</div>
 						<ul>
@@ -269,12 +296,12 @@ import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
+import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
-import TeraProjectTable from '@/components/home/tera-project-table.vue';
 
 enum ProjectsView {
 	Cards,
@@ -441,17 +468,18 @@ const rightGapWidth = 21; // 1.5rem
 const carouselRef = ref();
 const cardListRef = ref();
 const carouselWidth = ref(0);
-const activeCarouselPage = ref(0);
-
-const amountOfCardPages = computed(() => {
-	const allCardsWidth = cardListRef?.value?.[0]?.clientWidth;
-	console.log(allCardsWidth, carouselWidth.value);
-	return Math.floor(allCardsWidth / carouselWidth.value);
-});
+const activeCarouselPage = ref(1);
 
 const amountOfCardsToMove = computed(() =>
 	carouselWidth.value ? Math.floor(carouselWidth.value / (cardWidth + rightGapWidth)) : 3
 );
+
+const scrollIncriment = computed(() => (cardWidth + rightGapWidth) * amountOfCardsToMove.value);
+
+const amountOfCardPages = computed(() => {
+	const allCardsWidth = cardListRef?.value?.[0]?.clientWidth;
+	return Math.ceil(allCardsWidth / scrollIncriment.value);
+});
 
 function handleResize() {
 	if (carouselRef?.value?.[0]?.clientWidth) {
@@ -459,7 +487,7 @@ function handleResize() {
 	}
 }
 
-const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
+const scroll = (event: MouseEvent, direction: 'right' | 'left', pagesToMove: number = 1) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
 		chevronElement.nodeName === 'svg'
@@ -468,30 +496,39 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 
 	if (cardListElement === null || cardListElement === undefined) return;
 
-	const scrollIncriment = (cardWidth + rightGapWidth) * amountOfCardsToMove.value;
-
+	let pixelsToTranslate = 0;
 	// Don't scroll if last element is already within viewport
-	if (direction === 'right' && cardListElement.lastElementChild) {
-		const carouselBounds = carouselRef?.value?.[0]?.getBoundingClientRect();
-		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
-		if (
-			bounds &&
-			carouselBounds &&
-			bounds.x + bounds.width < carouselBounds.x + carouselWidth.value
-		) {
-			return;
+	if (direction === 'right') {
+		if (cardListElement.lastElementChild) {
+			const carouselBounds = carouselRef?.value?.[0]?.getBoundingClientRect();
+			const bounds = cardListElement.lastElementChild.getBoundingClientRect();
+			if (
+				bounds &&
+				carouselBounds &&
+				bounds.x + bounds.width < carouselBounds.x + carouselWidth.value
+			) {
+				return;
+			}
 		}
+		activeCarouselPage.value += pagesToMove;
+		pixelsToTranslate = -scrollIncriment.value * pagesToMove;
+	} else if (direction === 'left') {
+		activeCarouselPage.value -= pagesToMove;
+		pixelsToTranslate = scrollIncriment.value * pagesToMove;
 	}
 
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseFloat(marginLeftString);
-	const change = direction === 'right' ? -scrollIncriment : scrollIncriment;
-	const newMarginLeft = currentMarginLeft + change;
+	const newMarginLeft = currentMarginLeft + pixelsToTranslate;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
 };
+
+function onCarouselPaginate(page: number) {
+	activeCarouselPage.value = page;
+}
 
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
