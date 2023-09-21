@@ -262,6 +262,7 @@ import MultiSelect from 'primevue/multiselect';
 import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
+import { IProject } from '@/types/Project';
 
 enum ProjectsView {
 	Cards,
@@ -282,7 +283,6 @@ const sortOptions = [
 	'Alphabetical'
 ];
 
-const projects = ref<Project[]>([]);
 const view = ref(ProjectsView.Cards);
 
 const myFilteredSortedProjects = computed(() => {
@@ -315,8 +315,8 @@ const myFilteredSortedProjects = computed(() => {
 	return filtered;
 });
 
-const projectsTabs = ref<{ title: string; projects: Project[] }[]>([
-	{ title: TabTitles.MyProjects, projects: [] },
+const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
+	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
 	{ title: TabTitles.SharedProjects, projects: [] } // Keep shared projects empty for now
 ]);
 
@@ -339,7 +339,7 @@ const onToggle = (val) => {
 /*
  * User Menu
  */
-const selectedProjectMenu = ref<Project | null>(null);
+const selectedProjectMenu = ref<IProject | null>(null);
 
 const isRemoveDialog = ref(false);
 const closeRemoveDialog = () => {
@@ -356,7 +356,7 @@ const projectMenuItems = ref([
 	}
 ]);
 
-function updateChosenProjectMenu(project: Project) {
+function updateChosenProjectMenu(project: IProject) {
 	selectedProjectMenu.value = project;
 }
 
@@ -364,11 +364,10 @@ const removeProject = async () => {
 	if (!selectedProjectMenu.value?.id) return;
 	const { name, id } = selectedProjectMenu.value;
 
-	const isDeleted = await ProjectService.remove(id);
+	const isDeleted = await useProjects().remove(id);
 	closeRemoveDialog();
 	if (isDeleted) {
-		// Should refetch instead - will finalize once project composable is merged
-		projects.value = projects.value?.filter((project) => project.id !== id);
+		useProjects().getAll();
 		logger.info(`The project ${name} was removed`, { showToast: true });
 	} else {
 		logger.error(`Unable to delete the project ${name}`, { showToast: true });

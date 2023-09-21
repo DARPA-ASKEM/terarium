@@ -62,7 +62,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Project } from '@/types/Types';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Menu from 'primevue/menu';
@@ -70,9 +69,10 @@ import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { IProject } from '@/types/Project';
 
 const props = defineProps<{
-	project?: Project;
+	project?: IProject;
 	projectMenuItems?: any[];
 }>();
 
