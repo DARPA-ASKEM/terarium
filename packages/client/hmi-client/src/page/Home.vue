@@ -80,38 +80,50 @@
 									<p>Shared projects will be displayed on this page</p>
 								</template>
 							</div>
-							<div v-else-if="view === ProjectsView.Cards" class="carousel">
-								<div class="chevron-left" @click="scroll('left', $event)">
-									<i class="pi pi-chevron-left" />
+							<template v-else-if="view === ProjectsView.Cards">
+								<div ref="carouselRef" class="carousel">
+									<div class="chevron-left" @click="scroll('left', $event)">
+										<i class="pi pi-chevron-left" />
+									</div>
+									<div class="chevron-right" @click="scroll('right', $event)">
+										<i class="pi pi-chevron-right" />
+									</div>
+									<ul v-if="isLoadingProjects">
+										<li v-for="i in [0, 1, 2]" :key="i">
+											<tera-project-card />
+										</li>
+									</ul>
+									<ul v-else ref="cardListRef">
+										<li v-for="project in tab.projects" :key="project.id">
+											<tera-project-card
+												v-if="project.id"
+												:project="project"
+												:project-menu-items="projectMenuItems"
+												@click="openProject(project.id)"
+												@update-chosen-project-menu="selectedProjectMenu = project"
+											/>
+										</li>
+										<li>
+											<section class="new-project-card" @click="isNewProjectModalVisible = true">
+												<div>
+													<img src="@assets/svg/plus.svg" alt="" />
+												</div>
+												<p>New project</p>
+											</section>
+										</li>
+									</ul>
 								</div>
-								<div class="chevron-right" @click="scroll('right', $event)">
-									<i class="pi pi-chevron-right" />
-								</div>
-								<ul v-if="isLoadingProjects">
-									<li v-for="i in [0, 1, 2]" :key="i">
-										<tera-project-card />
-									</li>
-								</ul>
-								<ul v-else>
-									<li v-for="project in tab.projects" :key="project.id">
-										<tera-project-card
-											v-if="project.id"
-											:project="project"
-											:project-menu-items="projectMenuItems"
-											@click="openProject(project.id)"
-											@update-chosen-project-menu="selectedProjectMenu = project"
-										/>
-									</li>
-									<li>
-										<section class="new-project-card" @click="isNewProjectModalVisible = true">
-											<div>
-												<img src="@assets/svg/plus.svg" alt="" />
-											</div>
-											<p>New project</p>
-										</section>
-									</li>
-								</ul>
-							</div>
+								<section v-if="amountOfCardPages" class="page-indicators">
+									<Button
+										v-for="page in amountOfCardPages"
+										:key="page"
+										icon="pi pi-circle-fill"
+										:active="activeCarouselPage === page"
+										class="page-indicator p-button-icon-only p-button-text p-button-rounded"
+										@click="activeCarouselPage = page"
+									/>
+								</section>
+							</template>
 							<DataTable
 								v-else-if="view === ProjectsView.Table"
 								:value="tab.projects"
@@ -285,7 +297,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
@@ -308,13 +320,13 @@ import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import Dropdown from 'primevue/dropdown';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import MultiSelect from 'primevue/multiselect';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
+import MultiSelect from 'primevue/multiselect';
 
 enum ProjectsView {
 	Cards,
@@ -460,7 +472,6 @@ async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 			}) ?? ([] as RelatedDocumentFromProject[])
 	);
 }
-watch(projects, (newProjects) => newProjects && updateProjectsWithRelatedDocuments(newProjects));
 
 const selectedDocument = ref<Document>();
 const resourcesStore = useResourcesStore();
@@ -472,17 +483,6 @@ const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
 const isLoadingProjects = ref(true);
-// const searchQuery = ref('');
-
-onMounted(async () => {
-	// Clear all...
-	resourcesStore.reset(); // Project related resources saved.
-	queryStore.reset(); // Facets queries.
-
-	projects.value = (await ProjectService.getAll()) ?? [];
-	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
-	isLoadingProjects.value = false;
-});
 
 const selectDocument = (item: Document) => {
 	const itemID = item as Document;
@@ -493,6 +493,30 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
+const cardWidth = 238; // 17rem
+const rightGapWidth = 21; // 1.5rem
+
+const carouselRef = ref();
+const cardListRef = ref();
+const carouselWidth = ref(0);
+const activeCarouselPage = ref(0);
+
+const amountOfCardPages = computed(() => {
+	const allCardsWidth = cardListRef?.value?.[0]?.clientWidth;
+	console.log(allCardsWidth, carouselWidth.value);
+	return Math.floor(allCardsWidth / carouselWidth.value);
+});
+
+const amountOfCardsToMove = computed(() =>
+	carouselWidth.value ? Math.floor(carouselWidth.value / (cardWidth + rightGapWidth)) : 3
+);
+
+function handleResize() {
+	if (carouselRef?.value?.[0]?.clientWidth) {
+		carouselWidth.value = carouselRef?.value?.[0]?.clientWidth;
+	}
+}
+
 const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
@@ -502,22 +526,17 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 
 	if (cardListElement === null || cardListElement === undefined) return;
 
-	const cardWidth = 238; // 17rem
-	const rightGapWidth = 21; // 1.5rem
-
-	const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
-	const amountOfCardsToMove = parentBounds?.width
-		? Math.floor(parentBounds.width / (cardWidth + rightGapWidth))
-		: 3;
-
-	console.log(amountOfCardsToMove);
-
-	const scrollIncriment = (cardWidth + rightGapWidth) * amountOfCardsToMove;
+	const scrollIncriment = (cardWidth + rightGapWidth) * amountOfCardsToMove.value;
 
 	// Don't scroll if last element is already within viewport
 	if (direction === 'right' && cardListElement.lastElementChild) {
+		const carouselBounds = carouselRef?.value?.[0]?.getBoundingClientRect();
 		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
-		if (bounds && parentBounds && bounds.x + bounds.width < parentBounds.x + parentBounds.width) {
+		if (
+			bounds &&
+			carouselBounds &&
+			bounds.x + bounds.width < carouselBounds.x + carouselWidth.value
+		) {
 			return;
 		}
 	}
@@ -552,6 +571,24 @@ async function createNewProject() {
 function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
+
+watch(projects, (newProjects) => {
+	if (newProjects) updateProjectsWithRelatedDocuments(newProjects);
+	carouselWidth.value = carouselRef?.value?.[0]?.clientWidth;
+});
+
+onMounted(async () => {
+	// Clear all...
+	resourcesStore.reset(); // Project related resources saved.
+	queryStore.reset(); // Facets queries.
+
+	projects.value = (await ProjectService.getAll()) ?? [];
+	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
+	isLoadingProjects.value = false;
+	window.addEventListener('resize', handleResize);
+});
+
+onBeforeUnmount(() => window.removeEventListener('resize', handleResize));
 </script>
 
 <style scoped>
@@ -592,6 +629,21 @@ function listAuthorNames(authors) {
 .p-dropdown,
 .p-multiselect {
 	min-width: 15rem;
+}
+
+.page-indicators {
+	margin-top: 1.5rem;
+	justify-content: center;
+	gap: 0.5rem;
+	display: flex;
+}
+
+.page-indicator.p-button.p-button-icon-only {
+	color: var(--petri-nodeFill);
+}
+
+.page-indicator.p-button.p-button-icon-only[active='true'] {
+	color: var(--primary-color);
 }
 
 .p-datatable {
