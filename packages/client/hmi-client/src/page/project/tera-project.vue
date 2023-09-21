@@ -59,7 +59,11 @@
 
 		<!--Full screen modal-->
 		<Teleport to="body">
-			<tera-modal v-if="dialogIsOpened" fullscreen @on-close-clicked="dialogIsOpened = false">
+			<tera-fullscreen-modal
+				v-if="dialogIsOpened"
+				fullscreen
+				@on-close-clicked="dialogIsOpened = false"
+			>
 				<template #header
 					><h4>{{ workflowNode?.displayName }}</h4></template
 				>
@@ -136,7 +140,7 @@
 					:project="project"
 					:node="workflowNode"
 				/>
-			</tera-modal>
+			</tera-fullscreen-modal>
 		</Teleport>
 	</main>
 </template>
@@ -172,7 +176,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
-import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 
