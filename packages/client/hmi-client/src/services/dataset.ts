@@ -282,6 +282,7 @@ const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): C
 
 /**
  * This is a client side implementation of the getStats function from DatasetResource.java
+ * NOTE: if performance ever becomes an issue, we can write a new endpoint to call getStats from the backend
  * @param csvColumn
  * @returns CsvColumnStats object
  */
@@ -300,18 +301,20 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 
 	// Set up bins
 	const binCount = 10;
-	const bins = Array(binCount).fill(0);
 	const stepSize = (maxValue - minValue) / (binCount - 1);
+	let bins: number[];
 
-	// Fill bins
-	sortedCol.forEach((value) => {
-		if (stepSize !== 0) {
+	if (stepSize === 0) {
+		// Every value is the same, so just return a single bin
+		bins = [sortedCol.length];
+	} else {
+		bins = Array(binCount).fill(0);
+		// Fill bins
+		sortedCol.forEach((value) => {
 			const binIndex = Math.abs(Math.floor((value - minValue) / stepSize));
 			bins[binIndex]++;
-		} else {
-			// TODO: how do we handle when stepSize is 0 (i.e. all values are the same)?
-		}
-	});
+		});
+	}
 
 	return { bins, minValue, maxValue, mean, median, sd };
 };
