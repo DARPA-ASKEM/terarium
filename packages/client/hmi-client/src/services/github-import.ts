@@ -2,7 +2,7 @@ import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventType, GithubRepo } from '@/types/Types';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
+import { useProjects } from '@/composables/project';
 
 export async function getGithubRepositoryContent(
 	repoOwnerAndName: string,
@@ -11,7 +11,7 @@ export async function getGithubRepositoryContent(
 	try {
 		EventService.create(
 			EventType.GithubImport,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({ repoOwnerAndName, path })
 		);
 

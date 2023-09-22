@@ -1,6 +1,5 @@
-import { Artifact, AssetType } from '@/types/Types';
+import { Artifact } from '@/types/Types';
 import API from '@/api/api';
-import { addAsset } from '@/services/project';
 import { Ref } from 'vue';
 import { logger } from '@/utils/logger';
 
@@ -14,8 +13,7 @@ import { logger } from '@/utils/logger';
 async function createNewArtifactFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string,
-	projectId: string
+	userName: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -45,10 +43,6 @@ async function createNewArtifactFromGithubFile(
 		return null;
 	}
 
-	const resp = addAsset(projectId, AssetType.Artifacts, newArtifact.id);
-
-	if (!resp) return null;
-
 	return newArtifact;
 }
 
@@ -64,7 +58,6 @@ async function uploadArtifactToProject(
 	progress: Ref<number>,
 	file: File,
 	userName: string,
-	projectId: string,
 	description?: string
 ): Promise<Artifact | null> {
 	// Create a new artifact with the same name as the file, and post the metadata to TDS
@@ -80,9 +73,6 @@ async function uploadArtifactToProject(
 
 	const successfulUpload = await addFileToArtifact(newArtifact.id, file, progress);
 	if (!successfulUpload) return null;
-
-	const resp = addAsset(projectId, AssetType.Artifacts, newArtifact.id);
-	if (!resp) return null;
 
 	return newArtifact;
 }

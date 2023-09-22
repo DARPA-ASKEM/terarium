@@ -53,13 +53,10 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -213,7 +210,6 @@ import _ from 'lodash';
 import { ref, shallowRef, computed, watch } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { saveDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import Button from 'primevue/button';
@@ -225,9 +221,10 @@ import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { IProject } from '@/types/Project';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import { saveDataset } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -237,7 +234,6 @@ const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 enum EnsembleTabs {
@@ -405,6 +401,16 @@ const watchCompletedRunList = async () => {
 	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
 	runResults.value = output.runResults;
 };
+
+async function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+			get();
+		}
+		showSaveInput.value = false;
+	}
+}
 
 watch(
 	() => datasetId.value,

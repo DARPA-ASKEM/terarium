@@ -46,7 +46,6 @@
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:highlight="highlight"
-			:project="project"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
 		/>
@@ -72,7 +71,6 @@ import TeraModelEditor from '@/components/model/petrinet/tera-model-editor.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
-import useResourcesStore from '@/stores/resources';
 import {
 	createModelConfiguration,
 	updateModelConfiguration,
@@ -80,9 +78,8 @@ import {
 } from '@/services/model-configurations';
 import { getModel, updateModel, getModelConfigurations } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { IProject } from '@/types/Project';
 import { Model, ModelConfiguration } from '@/types/Types';
-import * as ProjectService from '@/services/project';
+import { useProjects } from '@/composables/project';
 
 enum ModelView {
 	DESCRIPTION,
@@ -90,10 +87,6 @@ enum ModelView {
 }
 
 const props = defineProps({
-	project: {
-		type: Object as PropType<IProject> | null,
-		default: null
-	},
 	assetId: {
 		type: String,
 		default: ''
@@ -145,7 +138,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await fetchModel(); // elastic search might still not update in time
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		useProjects().get();
 	}, 800);
 }
 
