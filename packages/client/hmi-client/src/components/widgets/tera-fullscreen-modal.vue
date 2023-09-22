@@ -1,51 +1,52 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 
-/**
- * A modal with content slots for a header, body, and footer. Use v-if to control visiblity.
- * @example
- * <modal v-if="isModalVisible">
- * 		<template #header>Header content</template>
- * 		<template #default>Body content</template>
- * 		<template #footer>Footer content</template>
- * </modal>
- *
- * Clicking outside the modal will emit the event modalMaskClicked.
- * @example
- * <modal @modal-mask-clicked="closeModal"></modal>
- */
-
 const emit = defineEmits(['modal-enter-press', 'modal-mask-clicked', 'on-close-clicked']);
 </script>
 
 <template>
-	<Transition name="modal">
-		<main @keyup.enter="emit('modal-enter-press')">
-			<section class="fullscreen">
+	<div class="overlay-container" @keyup.enter="emit('modal-enter-press')">
+		<section>
+			<header ref="header">
 				<div>
-					<header ref="header">
-						<div>
-							<slot name="header" />
-						</div>
-						<Button
-							icon="pi pi-times"
-							text
-							rounded
-							aria-label="Close"
-							size="large"
-							@click="emit('on-close-clicked')"
-						/>
-					</header>
-					<section class="content"><slot /></section>
+					<slot name="header" />
 				</div>
-			</section>
-			<aside @click.self="emit('modal-mask-clicked')" />
-		</main>
-	</Transition>
+				<Button
+					icon="pi pi-times"
+					text
+					rounded
+					aria-label="Close"
+					size="large"
+					@click="emit('on-close-clicked')"
+				/>
+			</header>
+			<section class="content"><slot /></section>
+		</section>
+	</div>
 </template>
 
 <style scoped>
-main {
+.overlay-container {
+	isolation: isolate;
+	overflow-y: auto;
+	z-index: var(--z-index, var(--z-index-modal));
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.32);
+}
+
+.overlay-container > section {
+	height: fit-content;
+	min-height: 98%;
+	width: 98vw;
+	margin-top: 1%;
+	margin-bottom: 1%;
+	margin-left: 1%;
+	background: #fff;
+	border-radius: 0.5rem;
+}
+/* main {
 	isolation: isolate;
 	z-index: var(--z-index, var(--z-index-modal));
 }
@@ -88,7 +89,7 @@ main > section > div {
 	background-color: #fff;
 	margin: 1%;
 	border-radius: 0.5rem;
-}
+} */
 
 .content {
 	padding: 0 2rem;
@@ -105,16 +106,7 @@ header {
 	padding: 1.5rem 2rem;
 }
 
-footer {
-	display: flex;
-	flex-direction: row-reverse;
-	gap: 1rem;
-	justify-content: end;
-	margin-top: 2rem;
-	padding: 1.5rem 2rem;
-}
-
-.modal-enter-from,
+/* .modal-enter-from,
 .modal-leave-to {
 	opacity: 0;
 }
@@ -123,5 +115,5 @@ footer {
 .modal-leave-to main > section {
 	-webkit-transform: scale(0.9);
 	transform: scale(0.9);
-}
+} */
 </style>
