@@ -1,7 +1,6 @@
 <template>
 	<section class="tera-ensemble">
 		<div class="ensemble-header p-buttonset">
-			<span class="ensemble-header-label">Ensemble</span>
 			<Button
 				label="Input"
 				severity="secondary"
