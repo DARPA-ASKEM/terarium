@@ -1,10 +1,12 @@
 <template>
 	<main>
 		<tera-asset
-			:name="project?.name"
-			:authors="project?.username"
+			:name="useProjects().activeProject.value?.name"
+			:authors="useProjects().activeProject.value?.username"
 			:is-naming-asset="isRenamingProject"
-			:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
+			:publisher="`Last updated ${DateUtils.formatLong(
+				useProjects().activeProject.value?.timestamp
+			)}`"
 			class="overview-banner"
 		>
 			<template #name-input>
@@ -30,14 +32,18 @@
 						<!-- Description & Contributors -->
 						<section class="description">
 							<p>
-								{{ project?.description }}
+								{{ useProjects().activeProject.value?.description }}
 							</p>
 						</section>
 					</div>
 				</section>
 				<!-- Project summary KPIs -->
 				<section class="summary-KPI-bar">
-					<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
+					<div
+						class="summary-KPI"
+						v-for="(assets, type) of useProjects().activeProject.value?.assets"
+						:key="type"
+					>
 						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
 						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 					</div>
@@ -112,17 +118,15 @@
 						<template #body="slotProps">
 							<div class="asset-button" @click="openResource(slotProps.data)">
 								<vue-feather
-									v-if="
-										typeof ProjectService.getAssetIcon(slotProps.data.pageType ?? null) === 'string'
-									"
-									:type="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
+									:type="getAssetIcon(slotProps.data.pageType ?? null)"
 									size="1rem"
 									stroke="rgb(16, 24, 40)"
 									class="p-button-icon-left icon"
 								/>
 								<component
 									v-else
-									:is="ProjectService.getAssetIcon(slotProps.data.pageType ?? null)"
+									:is="getAssetIcon(slotProps.data.pageType ?? null)"
 									class="p-button-icon-left icon"
 								/>
 								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
@@ -252,11 +256,9 @@
 </template>
 
 <script setup lang="ts">
-import { IProject, isProjectAssetTypes } from '@/types/Project';
+import { isProjectAssetTypes } from '@/types/Project';
 import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
-import * as ProjectService from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import DataTable from 'primevue/datatable';
@@ -268,22 +270,21 @@ import { AcceptedExtensions, AcceptedTypes, Tab } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
-import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
-import { Artifact, AssetType, CsvAsset } from '@/types/Types';
+import { Artifact, AssetType, CsvAsset, Dataset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
-import { uploadArtifactToProject } from '@/services/artifact';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
+import { useProjects } from '@/composables/project';
+import { downloadRawFile, createNewDatasetFromCSV } from '@/services/dataset';
 import { uploadCodeToProject } from '@/services/code';
+import { uploadArtifactToProject } from '@/services/artifact';
+import { getAssetIcon } from '@/services/project';
 
-const props = defineProps<{
-	project: IProject;
-}>();
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
 const isRenamingProject = ref(false);
@@ -306,7 +307,10 @@ const multiSelectButtons = [
 		label: 'Open',
 		callback: () => {
 			selectedResources.value.forEach((resource) => {
-				tabStore.addTab(props.project.id.toString(), toRaw(resource), false);
+				const { activeProject } = useProjects();
+				if (activeProject.value?.id) {
+					tabStore.addTab(activeProject.value.id, toRaw(resource), false);
+				}
 			});
 		}
 	}
@@ -318,7 +322,7 @@ const showMultiSelect = ref<boolean>(false);
 const assets = computed(() => {
 	const tabs = new Map<AssetType, Set<Tab>>();
 
-	const projectAssets = props.project?.assets;
+	const projectAssets = useProjects().activeProject.value?.assets;
 	if (!projectAssets) return tabs;
 
 	const result = <any>[];
@@ -377,8 +381,14 @@ async function processFiles(files: File[], csvDescription: string) {
  */
 async function processCode(file: File) {
 	// This is pdf, txt, md files
-	await uploadCodeToProject(props.project.id, file, progress);
-
+	const newCode = await uploadCodeToProject(file, progress);
+	let newAsset;
+	if (newCode && newCode.id) {
+		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
+	}
+	if (newAsset) {
+		return { file, error: false, response: { text: '', images: [] } };
+	}
 	return { file, error: true, response: { text: '', images: [] } };
 }
 
@@ -391,11 +401,14 @@ async function processArtifact(file: File) {
 	const artifact: Artifact | null = await uploadArtifactToProject(
 		progress,
 		file,
-		props.project.username ?? '',
-		props.project.id,
+		useProjects().activeProject.value?.username ?? '',
 		''
 	);
-	if (artifact && file.name.toLowerCase().endsWith('.pdf')) {
+	let newAsset;
+	if (artifact && artifact.id) {
+		newAsset = await useProjects().addAsset(AssetType.Artifacts, artifact.id);
+	}
+	if (artifact && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
 		await extractPDF(artifact);
 		return { file, error: false, response: { text: '', images: [] } };
 	}
@@ -408,15 +421,21 @@ async function processArtifact(file: File) {
  * @param description
  */
 async function processDataset(file: File, description: string) {
-	const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
+	let addedCSV: CsvAsset | null = null;
+	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
 		progress,
 		file,
 		auth.name ?? '',
-		props.project.id,
 		description
 	);
 
-	if (addedCSV !== null) {
+	let newAsset;
+	if (addedDataset?.id) {
+		newAsset = await useProjects().addAsset(AssetType.Datasets, addedDataset.id);
+		addedCSV = await downloadRawFile(addedDataset.id, file.name);
+	}
+
+	if (addedCSV !== null && newAsset) {
 		const text: string = addedCSV?.csv?.join('\r\n') ?? '';
 		const images = [];
 
@@ -450,16 +469,13 @@ async function importCompleted(
 		}
 		results.value = null;
 		isUploadResourcesModalVisible.value = false;
-
-		// TODO: See about getting rid of this - this refresh should preferably be within a service
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
 	} else {
 		results.value = newResults;
 	}
 }
 
 async function editProject() {
-	newProjectName.value = props.project.name;
+	newProjectName.value = useProjects().activeProject.value?.name ?? '';
 	isRenamingProject.value = true;
 	await nextTick();
 	// @ts-ignore
@@ -471,10 +487,13 @@ async function openResource(data) {
 }
 
 async function updateProjectName() {
-	isRenamingProject.value = false;
-	const updatedProject = props.project;
-	updatedProject.name = newProjectName.value;
-	await ProjectService.update(updatedProject);
+	const { activeProject } = useProjects();
+	if (activeProject.value) {
+		isRenamingProject.value = false;
+		const updatedProject = activeProject.value;
+		updatedProject.name = newProjectName.value;
+		await useProjects().update(updatedProject);
+	}
 }
 
 const projectMenu = ref();

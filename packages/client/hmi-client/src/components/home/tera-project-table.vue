@@ -63,11 +63,11 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import Menu from 'primevue/menu';
-import { Project } from '@/types/Types';
 import Button from 'primevue/button';
+import { IProject } from '@/types/Project';
 
 defineProps<{
-	projects: Project[];
+	projects: IProject[];
 	projectMenuItems?: any[];
 	selectedColumns: { field: string; header: string }[];
 }>();
@@ -76,7 +76,7 @@ const emit = defineEmits(['open-project', 'update-chosen-project-menu']);
 
 const projectMenu = ref();
 
-const showProjectMenu = (event, project: Project) => {
+const showProjectMenu = (event, project: IProject) => {
 	projectMenu.value.toggle(event);
 	emit('update-chosen-project-menu', project);
 };

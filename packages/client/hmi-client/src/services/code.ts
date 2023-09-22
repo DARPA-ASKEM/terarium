@@ -1,7 +1,6 @@
 import API from '@/api/api';
-import { AssetType, Code, ProgrammingLanguage } from '@/types/Types';
+import { Code, ProgrammingLanguage } from '@/types/Types';
 import { Ref } from 'vue';
-import { addAsset } from '@/services/project';
 import { logger } from '@/utils/logger';
 
 async function getCodeAsset(codeAssetId: string): Promise<Code | null> {
@@ -51,11 +50,7 @@ async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise
 	return response.data;
 }
 
-async function uploadCodeToProject(
-	projectId: string,
-	file: File,
-	progress: Ref<number>
-): Promise<Code | null> {
+async function uploadCodeToProject(file: File, progress: Ref<number>): Promise<Code | null> {
 	// Create a new code asset with the same name as the file and post the metadata to TDS
 	const codeAsset: Code = {
 		name: file.name,
@@ -70,9 +65,6 @@ async function uploadCodeToProject(
 	const successfulUpload = await addFileToCodeAsset(newCodeAsset.id, file, progress);
 	if (!successfulUpload) return null;
 
-	const resp = addAsset(projectId, AssetType.Code, newCodeAsset.id);
-	if (!resp) return null;
-
 	return newCodeAsset;
 }
 
@@ -86,7 +78,6 @@ async function uploadCodeToProject(
 async function uploadCodeToProjectFromGithub(
 	repoOwnerAndName: string,
 	path: string,
-	projectId: string,
 	url: string
 ): Promise<Code | null> {
 	// Find the file name by removing the path portion
@@ -117,10 +108,6 @@ async function uploadCodeToProjectFromGithub(
 		logger.error(`Failed to upload code from github: ${urlResponse}`);
 		return null;
 	}
-
-	const resp = addAsset(projectId, AssetType.Code, newCode.id);
-
-	if (!resp) return null;
 
 	return newCode;
 }
