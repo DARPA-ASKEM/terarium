@@ -52,7 +52,10 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
-import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
+import {
+	getMiraAMRPresentationData,
+	getUnstratifiedParameters
+} from '@/model-representation/petrinet/mira-petri';
 import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
@@ -87,11 +90,11 @@ const parametersValueMap = computed(() =>
 	}, {})
 );
 
-const initialsList = computed(() => {
-	const model = props.modelConfiguration.configuration as Model;
-	const initials = model.semantics?.ode.initials;
-	return initials?.map((initial) => initial.target);
-});
+// const initialsList = computed(() => {
+// 	const model = props.modelConfiguration.configuration as Model;
+// 	const initials = model.semantics?.ode.initials;
+// 	return initials?.map((initial) => initial.target);
+// });
 
 watch(
 	() => [matrix.value, props.shouldEval],
@@ -164,18 +167,16 @@ function getMatrixExpression(variableName: string) {
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	const expressionBase = getMatrixExpression(variableName);
-	const expressionEvalTest = await pythonInstance.parseExpression(expressionBase);
-	console.log('evaluted', expressionBase, expressionEvalTest.freeSymbols);
+	// const expressionEvalTest = await pythonInstance.parseExpression(expressionBase);
+	// console.log('evaluted', expressionBase, expressionEvalTest.freeSymbols);
 
 	// Strip out initials the free symbols
-	const freeParamSymbols = expressionEvalTest.freeSymbols.filter(
-		(s) => initialsList.value?.includes(s) === false
-	);
-	console.log('\tfree params', freeParamSymbols);
-
-	if (freeParamSymbols.length === 1) {
-		return freeParamSymbols[0];
-	}
+	// const freeParamSymbols = expressionEvalTest.freeSymbols.filter(
+	// 	(s) => initialsList.value?.includes(s) === false
+	// );
+	// if (freeParamSymbols.length === 1) {
+	// 	return freeParamSymbols[0];
+	// }
 
 	/*
 	console.log('debug', initialsList.value);
@@ -234,10 +235,29 @@ function generateMatrix(populateDimensions = false) {
 			: getMiraAMRPresentationData(amr);
 
 	// Get only the states/transitions that are mapped to the base model
-	const matrixData =
-		props.nodeType === NodeType.State
-			? result.stateMatrixData.filter(({ base }) => base === props.id)
-			: result.transitionMatrixData.filter(({ base }) => base === props.id);
+	let matrixData: any[] = [];
+	if (props.nodeType === NodeType.State) {
+		matrixData = result.stateMatrixData.filter(({ base }) => base === props.id);
+	} else {
+		const paramsMap = getUnstratifiedParameters(props.modelConfiguration.configuration);
+		if (!paramsMap.has(props.id)) return [];
+
+		const childIds = paramsMap.get(props.id) as string[];
+		matrixData = result.transitionMatrixData.filter((d) => {
+			// Check if the transition's expression include the usage
+			const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
+			if (!rate) return false;
+
+			// FIXME: should check through sympy to be more accurate
+			if (rate.expression.includes(props.id)) return true;
+			for (let i = 0; i < childIds.length; i++) {
+				if (rate.expression.includes(childIds[i])) return true;
+			}
+			return false;
+		});
+
+		console.log('matrix data', matrixData);
+	}
 
 	if (isEmpty(matrixData)) return matrixData;
 
