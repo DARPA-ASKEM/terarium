@@ -7,7 +7,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectPermissions {
+public class PermissionRelationships {
 	private List<Group> groups = new ArrayList<>();
 	private List<User> users = new ArrayList<>();
 
