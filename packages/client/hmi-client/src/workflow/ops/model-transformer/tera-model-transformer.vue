@@ -3,7 +3,6 @@
 		<Suspense>
 			<tera-model-jupyter-panel
 				:model-configuration-id="modelConfigurationId"
-				:project="props.project"
 				:model="null"
 				:show-kernels="false"
 				:show-chat-thoughts="false"
@@ -17,7 +16,6 @@
 <script setup lang="ts">
 // Proxy to use tera-dataset via a workflow context
 
-import { IProject } from '@/types/Project';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
@@ -32,7 +30,6 @@ import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project: IProject;
 }>();
 const modelConfigurationId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
