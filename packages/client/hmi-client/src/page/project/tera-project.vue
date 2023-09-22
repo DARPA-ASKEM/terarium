@@ -36,18 +36,25 @@
 					@open-new-asset="openNewAsset"
 				/>
 			</SplitterPanel>
-			<SplitterPanel class="project-page top-z-index" v-if="workflowNode" :size="20">
-				<tera-tab-group
-					v-if="workflowNode"
-					class="tab-group"
-					:tabs="[{ assetName: workflowNode.displayName }]"
-					:active-tab-index="0"
-					:loading-tab-index="null"
-					@close-tab="
-						workflowEventBus.emit('clearActiveNode');
-						workflowNode = null;
-					"
-				/>
+		</Splitter>
+		<tera-slider-panel
+			v-model:is-open="isNotesSliderOpen"
+			content-width="240px"
+			direction="right"
+			header="Notes"
+		>
+			<template v-slot:content>
+				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
+			</template>
+		</tera-slider-panel>
+		<!-- New model modal -->
+		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
+		<!--Full screen modal-->
+		<Teleport to="body">
+			<tera-fullscreen-modal v-if="dialogIsOpened" @on-close-clicked="dialogIsOpened = false">
+				<template #header
+					><h2>{{ workflowNode?.displayName }}</h2></template
+				>
 				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
@@ -113,20 +120,8 @@
 					"
 					:node="workflowNode"
 				/>
-			</SplitterPanel>
-		</Splitter>
-		<tera-slider-panel
-			v-model:is-open="isNotesSliderOpen"
-			content-width="240px"
-			direction="right"
-			header="Notes"
-		>
-			<template v-slot:content>
-				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
-			</template>
-		</tera-slider-panel>
-		<!-- New model modal -->
-		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
+			</tera-fullscreen-modal>
+		</Teleport>
 	</main>
 </template>
 
@@ -159,6 +154,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
+import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
 import { useProjects } from '@/composables/project';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
@@ -173,10 +169,13 @@ const tabStore = useTabStore();
 
 const router = useRouter();
 
+const dialogIsOpened = ref(false);
+
 const workflowNode = ref<WorkflowNode | null>(null);
 
 workflowEventBus.on('drilldown', (payload: any) => {
 	workflowNode.value = payload;
+	dialogIsOpened.value = true;
 });
 
 const isResourcesSliderOpen = ref(true);
