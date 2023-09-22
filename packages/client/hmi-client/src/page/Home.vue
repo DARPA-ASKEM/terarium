@@ -242,7 +242,6 @@ import { computed, ref, onMounted, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
-import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';
@@ -252,17 +251,18 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
-import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
+import { IProject } from '@/types/Project';
 
 enum ProjectsView {
 	Cards,
@@ -283,11 +283,10 @@ const sortOptions = [
 	'Alphabetical'
 ];
 
-const projects = ref<Project[]>([]);
 const view = ref(ProjectsView.Cards);
 
 const myFilteredSortedProjects = computed(() => {
-	const filtered = projects.value;
+	const filtered = useProjects().allProjects.value;
 	if (!filtered) return [];
 
 	if (selectedSort.value === 'Alphabetical') {
@@ -316,8 +315,8 @@ const myFilteredSortedProjects = computed(() => {
 	return filtered;
 });
 
-const projectsTabs = ref<{ title: string; projects: Project[] }[]>([
-	{ title: TabTitles.MyProjects, projects: [] },
+const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
+	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
 	{ title: TabTitles.SharedProjects, projects: [] } // Keep shared projects empty for now
 ]);
 
@@ -340,7 +339,7 @@ const onToggle = (val) => {
 /*
  * User Menu
  */
-const selectedProjectMenu = ref<Project | null>(null);
+const selectedProjectMenu = ref<IProject | null>(null);
 
 const isRemoveDialog = ref(false);
 const closeRemoveDialog = () => {
@@ -357,7 +356,7 @@ const projectMenuItems = ref([
 	}
 ]);
 
-function updateChosenProjectMenu(project: Project) {
+function updateChosenProjectMenu(project: IProject) {
 	selectedProjectMenu.value = project;
 }
 
@@ -365,11 +364,10 @@ const removeProject = async () => {
 	if (!selectedProjectMenu.value?.id) return;
 	const { name, id } = selectedProjectMenu.value;
 
-	const isDeleted = await ProjectService.remove(id);
+	const isDeleted = await useProjects().remove(id);
 	closeRemoveDialog();
 	if (isDeleted) {
-		// Should refetch instead - will finalize once project composable is merged
-		projects.value = projects.value?.filter((project) => project.id !== id);
+		useProjects().getAll();
 		logger.info(`The project ${name} was removed`, { showToast: true });
 	} else {
 		logger.error(`Unable to delete the project ${name}`, { showToast: true });
@@ -381,10 +379,10 @@ const removeProject = async () => {
  */
 type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Document[] };
 const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
-async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
+async function updateProjectsWithRelatedDocuments() {
 	projectsWithRelatedDocuments.value = await Promise.all(
-		newProjects
-			// filter out the ones with no publications
+		useProjects()
+			.allProjects.value // filter out the ones with no publications
 			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
 			// get the first three project with a publication
 			.slice(0, 3)
@@ -393,7 +391,7 @@ async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 				let relatedDocuments = [] as Document[];
 				if (project.id) {
 					// Fetch the publications for the project
-					const publications = await ProjectService.getPublicationAssets(project.id);
+					const publications = await useProjects().getPublicationAssets(project.id);
 					if (!isEmpty(publications)) {
 						// Fetch the related documents for the first publication
 						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
@@ -403,10 +401,8 @@ async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 			}) ?? ([] as RelatedDocumentFromProject[])
 	);
 }
-watch(projects, (newProjects) => newProjects && updateProjectsWithRelatedDocuments(newProjects));
 
 const selectedDocument = ref<Document>();
-const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
 const router = useRouter();
 const auth = useAuthStore();
@@ -414,17 +410,18 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjects = ref(true);
-// const searchQuery = ref('');
+const isLoadingProjects = computed(() => !useProjects().allProjects.value);
+
+watch(
+	() => useProjects().allProjects.value,
+	() => updateProjectsWithRelatedDocuments()
+);
 
 onMounted(async () => {
 	// Clear all...
-	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
-
-	projects.value = (await ProjectService.getAll()) ?? [];
-	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
-	isLoadingProjects.value = false;
+	await useProjects().getAll();
+	// projectsTabs.value[0].projects = myFilteredSortedProjects.value;
 });
 
 const selectDocument = (item: Document) => {
@@ -471,7 +468,7 @@ function openProject(projectId: string) {
 
 async function createNewProject() {
 	const author = auth.name ?? '';
-	const project = await ProjectService.create(
+	const project = await useProjects().create(
 		newProjectName.value,
 		newProjectDescription.value,
 		author

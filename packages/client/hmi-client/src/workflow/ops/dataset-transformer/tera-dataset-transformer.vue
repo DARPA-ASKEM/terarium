@@ -3,7 +3,6 @@
 		<Suspense>
 			<tera-dataset-jupyter-panel
 				:asset-ids="assetIds"
-				:project="props.project"
 				:show-kernels="showKernels"
 				:show-chat-thoughts="showChatThoughts"
 				@new-dataset-saved="addOutputPort"
@@ -16,7 +15,6 @@
 <script setup lang="ts">
 // Proxy to use tera-dataset via a workflow context
 
-import { IProject } from '@/types/Project';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
@@ -29,7 +27,6 @@ import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);

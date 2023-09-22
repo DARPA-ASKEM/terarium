@@ -2,11 +2,9 @@
 	<tera-model
 		v-if="pageType === AssetType.Models"
 		:asset-id="assetId ?? ''"
-		:project="project"
 		@asset-loaded="emit('asset-loaded')"
 	/>
 	<tera-code
-		:project="project"
 		:asset-id="assetId ?? ''"
 		v-else-if="pageType === AssetType.Code"
 		@asset-loaded="emit('asset-loaded')"
@@ -26,14 +24,12 @@
 	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
-		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
 	/>
 	<tera-workflow
 		v-else-if="pageType === AssetType.Workflows"
 		:asset-id="assetId ?? ''"
-		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 		@page-loaded="emit('asset-loaded')"
 	/>
@@ -43,13 +39,11 @@
 			v-if="pageType === AssetType.Publications"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
-			:project="project"
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
 			v-else-if="pageType === AssetType.Datasets"
-			:project="project"
 			:asset-id="assetId"
 			@asset-loaded="emit('asset-loaded')"
 		/>
@@ -63,7 +57,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ProjectPages, IProject } from '@/types/Project';
+import { ProjectPages } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
@@ -74,17 +68,15 @@ import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import TeraWorkflow from '@/workflow/tera-workflow.vue';
-import * as ProjectService from '@/services/project';
 import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import useResourceStore from '@/stores/resources';
 import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
+import { useProjects } from '@/composables/project';
+import TeraWorkflow from '@/workflow/tera-workflow.vue';
 
 const props = defineProps<{
-	project: IProject;
 	assetId?: string;
 	pageType?: AssetType | ProjectPages;
 	tabs?: Tab[];
@@ -93,8 +85,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['asset-loaded', 'open-new-asset']);
 
-const resourceStore = useResourceStore();
-
 const router = useRouter();
 
 const code = ref<string>();
@@ -102,7 +92,7 @@ const code = ref<string>();
 const assetName = computed<string>(() => {
 	if (props.pageType === ProjectPages.OVERVIEW) return 'Overview';
 
-	const assets = resourceStore.activeProjectAssets;
+	const assets = useProjects().activeProject.value?.assets;
 
 	/**
 	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
@@ -124,7 +114,9 @@ const assetName = computed<string>(() => {
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
-	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
+	useProjects().activeProject.value?.assets?.[AssetType.Publications]?.find(
+		(document) => document?.id === Number.parseInt(assetId ?? '', 10)
+	)?.xdd_uri ?? '';
 
 const openOverview = () => {
 	router.push({
