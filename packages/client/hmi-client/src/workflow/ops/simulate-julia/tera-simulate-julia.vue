@@ -1,7 +1,6 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<span class="simulate-header-label">Simulate (deterministic)</span>
 			<div class="simulate-header p-buttonset">
 				<Button
 					label="Input"
