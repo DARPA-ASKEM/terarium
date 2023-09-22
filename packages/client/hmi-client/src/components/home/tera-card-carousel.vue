@@ -1,13 +1,13 @@
 <template>
 	<main>
 		<section class="carousel" ref="carouselRef">
-			<div v-if="activeCarouselPage > 1" class="chevron-left" @click="scroll($event, 'left')">
+			<div v-if="activeCarouselPage > 1" class="chevron-left" @click="scroll('left')">
 				<i class="pi pi-chevron-left" />
 			</div>
 			<div
 				v-if="activeCarouselPage !== amountOfCardPages"
 				class="chevron-right"
-				@click="scroll($event, 'right')"
+				@click="scroll('right')"
 			>
 				<i class="pi pi-chevron-right" />
 			</div>
@@ -20,7 +20,7 @@
 				<slot name="card-list-items" />
 			</ul>
 		</section>
-		<section v-if="amountOfCardPages" class="page-indicators">
+		<section v-if="amountOfCardPages > 1" class="page-indicators">
 			<!--page starts counting at 1 because we are looping through a number-->
 			<Button
 				v-for="page in amountOfCardPages"
@@ -53,6 +53,7 @@ const props = defineProps({
 	}
 });
 
+// If cards end up varying in width cardWidth could be a prop
 const cardWidth = 238; // 17rem
 const rightGapWidth = 21; // 1.5rem
 
@@ -73,26 +74,20 @@ const amountOfCardPages = computed(() => {
 });
 
 function handleResize() {
-	if (carouselRef?.value.clientWidth) {
-		carouselWidth.value = carouselRef?.value.clientWidth;
+	if (carouselRef.value?.clientWidth) {
+		carouselWidth.value = carouselRef.value.clientWidth;
 	}
 }
 
-const scroll = (event: MouseEvent, direction: 'right' | 'left', pagesToMove: number = 1) => {
-	const chevronElement = event.target as HTMLElement;
-	const cardListElement =
-		chevronElement.nodeName === 'svg'
-			? chevronElement.parentElement?.querySelector('ul')
-			: chevronElement.parentElement?.parentElement?.querySelector('ul');
-
-	if (cardListElement === null || cardListElement === undefined) return;
+function scroll(direction: 'right' | 'left', pagesToMove: number = 1) {
+	if (!cardListRef.value) return;
 
 	let pixelsToTranslate = 0;
 	// Don't scroll if last element is already within viewport
 	if (direction === 'right') {
-		if (cardListElement.lastElementChild) {
+		if (cardListRef.value.lastElementChild) {
 			const carouselBounds = carouselRef?.value.getBoundingClientRect();
-			const bounds = cardListElement.lastElementChild.getBoundingClientRect();
+			const bounds = cardListRef.value.lastElementChild.getBoundingClientRect();
 			if (
 				bounds &&
 				carouselBounds &&
@@ -109,23 +104,23 @@ const scroll = (event: MouseEvent, direction: 'right' | 'left', pagesToMove: num
 	}
 
 	const marginLeftString =
-		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
+		cardListRef.value.style.marginLeft === '' ? '0' : cardListRef.value.style.marginLeft;
 	const currentMarginLeft = parseFloat(marginLeftString);
 	const newMarginLeft = currentMarginLeft + pixelsToTranslate;
-	// Don't let the list scroll far enough left that we see space before the
-	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
-};
+	// Don't let the list scroll far enough left that we see space before the first card.
+	cardListRef.value.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
+}
 
 function onCarouselPaginate(page: number) {
+	if (page === activeCarouselPage.value) return;
+	const pagesToMove = Math.abs(activeCarouselPage.value - page);
+	scroll(page > activeCarouselPage.value ? 'right' : 'left', pagesToMove);
 	activeCarouselPage.value = page;
 }
 
 watch(
 	() => props.amountOfCards,
-	() => {
-		carouselWidth.value = carouselRef?.value.clientWidth;
-	}
+	() => handleResize()
 );
 
 onMounted(() => window.addEventListener('resize', handleResize));
@@ -178,21 +173,16 @@ onBeforeUnmount(() => window.removeEventListener('resize', handleResize));
 
 .carousel:hover .chevron-left > .pi-chevron-left,
 .carousel:hover .chevron-right > .pi-chevron-right {
-	color: var(--primary-color);
+	color: var(--gray-0);
 	opacity: 100;
 }
 
 .pi-chevron-left,
 .pi-chevron-right {
 	margin: 0 1rem;
-	font-size: 2rem;
+	font-size: 2.5rem;
 	opacity: 0;
 	transition: opacity 0.2s ease;
-}
-
-.pi-chevron-left:hover,
-.pi-chevron-right:hover {
-	color: var(--primary-color);
 }
 
 .page-indicators {

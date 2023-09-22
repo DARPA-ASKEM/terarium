@@ -124,7 +124,7 @@
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
-				<div v-for="project in projectsWithRelatedDocuments" :key="project.name">
+				<section v-for="(project, i) in projectsWithRelatedDocuments" :key="i">
 					<p>{{ project.name }}</p>
 					<tera-card-carousel
 						:is-loading="isLoadingProjectsWithRelatedDocs"
@@ -139,7 +139,14 @@
 							</li>
 						</template>
 					</tera-card-carousel>
-				</div>
+				</section>
+				<template v-if="isLoadingProjectsWithRelatedDocs">
+					<p><Skeleton width="6rem" /></p>
+					<tera-card-carousel :is-loading="isLoadingProjectsWithRelatedDocs">
+						<template #skeleton-card>
+							<tera-document-card />
+						</template> </tera-card-carousel
+				></template>
 			</section>
 		</section>
 		<!-- modal window for showing selected document -->
@@ -247,6 +254,7 @@ import MultiSelect from 'primevue/multiselect';
 import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
+import Skeleton from 'primevue/skeleton';
 
 enum ProjectsView {
 	Cards,
@@ -394,7 +402,6 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-// const isLoadingProjects = ref(true);
 const isLoadingProjectsWithRelatedDocs = ref(true);
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
@@ -437,8 +444,6 @@ onMounted(async () => {
 	// Clear all...
 	queryStore.reset(); // Facets queries.
 	await useProjects().getAll();
-	// projectsTabs.value[0].projects = myFilteredSortedProjects.value;
-	// isLoadingProjects.value = false;
 });
 </script>
 
