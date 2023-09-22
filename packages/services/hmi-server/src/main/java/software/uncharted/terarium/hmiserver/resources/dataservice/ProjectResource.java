@@ -6,10 +6,11 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.Id;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-import software.uncharted.terarium.hmiserver.models.dataservice.ProjectPermissions;
+import software.uncharted.terarium.hmiserver.models.dataservice.permission.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
@@ -49,7 +50,7 @@ public class ProjectResource {
 				try {
 					return new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(project.getProjectID(), reBACService));
 				} catch (Exception e) {
-					throw new RuntimeException(e);
+					log.error("Error getting user's permissions for project", e);
 				}
 			})
 			.toList();
@@ -86,9 +87,10 @@ public class ProjectResource {
 			if (new RebacUser(jwt.getSubject(), reBACService).canRead(rebacProject)) {
 				return proxy.getProject(id);
 			}
-			return Response.status(404).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error getting project", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -100,7 +102,7 @@ public class ProjectResource {
 		try {
 			RebacProject rebacProject = new RebacProject(id, reBACService);
 			if (new RebacUser(jwt.getSubject(), reBACService).canRead(rebacProject)) {
-				ProjectPermissions permissions = new ProjectPermissions();
+				PermissionRelationships permissions = new PermissionRelationships();
 				for (RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
 						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
@@ -114,9 +116,10 @@ public class ProjectResource {
 					.entity(permissions)
 					.build();
 			}
-			return Response.status(404).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error getting project permission relationships", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -132,7 +135,8 @@ public class ProjectResource {
 			RebacGroup who = new RebacGroup(groupId, reBACService);
 			return setProjectPermissions(what, who, relationship);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error setting project group permission relationships", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -143,12 +147,16 @@ public class ProjectResource {
 		@PathParam("groupId") final String groupId,
 		@PathParam("relationship") final String relationship
 	) {
+		if (relationship.equals(Schema.Relationship.CREATOR)) {
+			return Response.notModified().build();
+		}
 		try {
 			RebacProject what = new RebacProject(projectId, reBACService);
 			RebacGroup who = new RebacGroup(groupId, reBACService);
 			return removeProjectPermissions(what, who, relationship);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error deleting project group permission relationships", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -164,7 +172,8 @@ public class ProjectResource {
 			RebacUser who = new RebacUser(userId, reBACService);
 			return setProjectPermissions(what, who, relationship);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error setting project user permission relationships", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -180,7 +189,8 @@ public class ProjectResource {
 			RebacUser who = new RebacUser(userId, reBACService);
 			return removeProjectPermissions(what, who, relationship);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error deleting project user permission relationships", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -189,15 +199,19 @@ public class ProjectResource {
 			what.setPermissionRelationships(who, relationship);
 			return Response.ok().build();
 		}
-		return Response.status(404).build();
+		return Response.status(Response.Status.NOT_FOUND).build();
 	}
 
 	private Response removeProjectPermissions(RebacProject what, RebacObject who, String relationship) throws Exception {
 		if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
-			what.removePermissionRelationships(who, relationship);
-			return Response.ok().build();
+			try {
+				what.removePermissionRelationships(who, relationship);
+				return Response.ok().build();
+			} catch (RelationshipAlreadyExistsException e) {
+				return Response.notModified().build();
+			}
 		}
-		return Response.status(404).build();
+		return Response.status(Response.Status.NOT_FOUND).build();
 	}
 
 	@POST
@@ -212,7 +226,8 @@ public class ProjectResource {
 		try {
 			new RebacUser(jwt.getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId()), reBACService));
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error getting user's permissions for project", e);
+			// TODO: Rollback potential?
 		}
 		return Response.status(201).header("Location", location).header("Server", server).entity(id).build();
 	}
@@ -230,7 +245,8 @@ public class ProjectResource {
 			}
 			return Response.notModified().build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error updating project", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -246,7 +262,8 @@ public class ProjectResource {
 			}
 			return Response.notModified().build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error deleting project", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -264,11 +281,11 @@ public class ProjectResource {
 					.type(MediaType.APPLICATION_JSON)
 					.build();
 			}
-			return Response.status(404).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error getting project assets", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
-
 	}
 
 	@POST
@@ -284,7 +301,8 @@ public class ProjectResource {
 			}
 			return Response.notModified().build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error creating project assets", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -301,7 +319,8 @@ public class ProjectResource {
 			}
 			return Response.notModified().build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error deleting project assets", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 }
