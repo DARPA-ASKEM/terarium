@@ -8,7 +8,7 @@ import { CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
-import _ from 'lodash';
+import { cloneDeep } from 'lodash';
 
 /**
  * Get all datasets
@@ -233,13 +233,13 @@ const saveDataset = async (
 /**
  * This is a client side function to create a CsvAsset similar to the getCsv function from DatasetResource.java
  * The reason we reimplement this client side is because runResults already has all of the data we need, except
- * it's not in the correct format necessary to be consumed by the TeraDatasetDatatable component.
+ * it's not in the correct format necessary to be used by the TeraDatasetDatatable component.
  * @param runResults
  * @param runId
  * @returns CsvAsset object with the data from the runResults
  */
 const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): CsvAsset | null => {
-	const runResult: RunResults = _.cloneDeep(runResults);
+	const runResult: RunResults = cloneDeep(runResults);
 	const runIdList = runId ? [runId] : Object.keys(runResult);
 	if (runIdList.length === 0) return null;
 
