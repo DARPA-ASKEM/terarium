@@ -1,14 +1,10 @@
 <template>
 	<main>
 		<section class="carousel" ref="carouselRef">
-			<div v-if="activeCarouselPage > 1" class="chevron-left" @click="scroll('left')">
+			<div v-if="activeCarouselPage > 1" class="chevron-left" @click="scroll(-1)">
 				<i class="pi pi-chevron-left" />
 			</div>
-			<div
-				v-if="activeCarouselPage !== amountOfCardPages"
-				class="chevron-right"
-				@click="scroll('right')"
-			>
+			<div v-if="activeCarouselPage !== amountOfCardPages" class="chevron-right" @click="scroll(1)">
 				<i class="pi pi-chevron-right" />
 			</div>
 			<ul v-if="isLoading">
@@ -63,14 +59,14 @@ const carouselWidth = ref(0);
 const activeCarouselPage = ref(1);
 
 const amountOfCardsToMove = computed(() =>
-	carouselWidth.value ? Math.floor(carouselWidth.value / (cardWidth + rightGapWidth)) : 3
+	Math.floor(carouselWidth.value / (cardWidth + rightGapWidth))
 );
 
-const scrollIncriment = computed(() => (cardWidth + rightGapWidth) * amountOfCardsToMove.value);
+const scrollIncrement = computed(() => (cardWidth + rightGapWidth) * amountOfCardsToMove.value);
 
 const amountOfCardPages = computed(() => {
 	const allCardsWidth = cardListRef?.value?.clientWidth;
-	return Math.ceil(allCardsWidth / scrollIncriment.value);
+	return Math.ceil(allCardsWidth / scrollIncrement.value);
 });
 
 function handleResize() {
@@ -79,42 +75,33 @@ function handleResize() {
 	}
 }
 
-function scroll(direction: 'right' | 'left', pagesToMove: number = 1) {
+function scroll(pagesToMove: number) {
 	if (!cardListRef.value) return;
 
-	let pixelsToTranslate = 0;
 	// Don't scroll if last element is already within viewport
-	if (direction === 'right') {
-		if (cardListRef.value.lastElementChild) {
-			const carouselBounds = carouselRef?.value.getBoundingClientRect();
-			const bounds = cardListRef.value.lastElementChild.getBoundingClientRect();
-			if (
-				bounds &&
-				carouselBounds &&
-				bounds.x + bounds.width < carouselBounds.x + carouselWidth.value
-			) {
-				return;
-			}
+	if (pagesToMove > 0 && cardListRef.value.lastElementChild) {
+		const carouselBounds = carouselRef?.value.getBoundingClientRect();
+		const bounds = cardListRef.value.lastElementChild.getBoundingClientRect();
+		if (
+			bounds &&
+			carouselBounds &&
+			bounds.x + bounds.width < carouselBounds.x + carouselWidth.value
+		) {
+			return;
 		}
-		activeCarouselPage.value += pagesToMove;
-		pixelsToTranslate = -scrollIncriment.value * pagesToMove;
-	} else if (direction === 'left') {
-		activeCarouselPage.value -= pagesToMove;
-		pixelsToTranslate = scrollIncriment.value * pagesToMove;
 	}
-
+	activeCarouselPage.value += pagesToMove;
+	const pixelsToTranslate = -scrollIncrement.value * pagesToMove;
 	const marginLeftString =
 		cardListRef.value.style.marginLeft === '' ? '0' : cardListRef.value.style.marginLeft;
-	const currentMarginLeft = parseFloat(marginLeftString);
-	const newMarginLeft = currentMarginLeft + pixelsToTranslate;
+	const newMarginLeft = parseFloat(marginLeftString) + pixelsToTranslate;
 	// Don't let the list scroll far enough left that we see space before the first card.
 	cardListRef.value.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
 }
 
 function onCarouselPaginate(page: number) {
 	if (page === activeCarouselPage.value) return;
-	const pagesToMove = Math.abs(activeCarouselPage.value - page);
-	scroll(page > activeCarouselPage.value ? 'right' : 'left', pagesToMove);
+	scroll(page - activeCarouselPage.value);
 	activeCarouselPage.value = page;
 }
 
