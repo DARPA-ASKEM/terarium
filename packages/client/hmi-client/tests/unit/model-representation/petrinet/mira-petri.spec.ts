@@ -1,9 +1,6 @@
 import * as amr from '@/examples/mira-petri.json';
 import { describe, expect, it } from 'vitest';
-import {
-	getMiraAMRPresentationData,
-	getUnstratifiedParameters
-} from '@/model-representation/petrinet/mira-petri';
+import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 
 describe('mira petrinet ', () => {
 	it('parse mira amr', () => {
@@ -19,13 +16,5 @@ describe('mira petrinet ', () => {
 		const res = getMiraAMRPresentationData(amr as any);
 		// SEIRD
 		expect(res.compactModel.model.states.length).to.eq(5);
-	});
-
-	it('getting root parameters of parameters', () => {
-		const res = getUnstratifiedParameters(amr as any);
-		const originalSize = amr.semantics.ode.parameters.length;
-
-		expect(res.size).to.lessThan(originalSize);
-		expect(res.size).to.eq(11);
 	});
 });
