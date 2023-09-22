@@ -12,7 +12,7 @@
 					@click="activeTab = SimulateTabs.input"
 				/>
 				<Button
-					label="Ouput"
+					label="Output"
 					severity="secondary"
 					icon="pi pi-sign-out"
 					size="small"
