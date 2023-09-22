@@ -123,10 +123,10 @@ import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import Button from 'primevue/button';
 import {
-	uploadCodeToProject,
 	getCodeFileAsText,
 	getCodeAsset,
 	updateCodeAsset,
+	uploadCodeToProject,
 	setFileExtension,
 	getProgrammingLanguage
 } from '@/services/code';
@@ -137,23 +137,20 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import useResourceStore from '@/stores/resources';
 import FileUpload from 'primevue/fileupload';
-import { IProject } from '@/types/Project';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 
 const INITIAL_TEXT = '# Paste some code here';
 
 const props = defineProps<{
-	project: IProject;
 	assetId: string;
 }>();
 
 const emit = defineEmits(['asset-loaded']);
 
-const resourceStore = useResourceStore();
 const toast = useToastService();
 
 const codeName = ref('');
@@ -194,7 +191,9 @@ function onSelectedTextChange() {
 
 async function saveCode() {
 	// programmingLanguage.value = getProgrammingLanguage(codeName.value);
-	const existingCode = resourceStore.activeProjectAssets?.code.find((c) => c.id === props.assetId);
+	const existingCode = useProjects().activeProject.value?.assets?.code.find(
+		(c) => c.id === props.assetId
+	);
 	if (existingCode?.id) {
 		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
 		const file = new File([codeText.value], codeName.value);
@@ -218,22 +217,26 @@ async function saveCode() {
 async function saveNewCode() {
 	newCodeName.value = setFileExtension(newCodeName.value, programmingLanguage.value);
 	const file = new File([codeText.value], newCodeName.value);
-	const newCodeAsset = await uploadCodeToProject(props.project.id, file, progress);
-	if (!newCodeAsset) {
-		toast.error('', 'Unable to save file');
-	} else {
-		toast.success('', `File saved as ${newCodeName.value}`);
-		codeAsset.value = newCodeAsset;
+	const newCode = await uploadCodeToProject(file, progress);
+	let newAsset;
+	if (newCode && newCode.id) {
+		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
+	}
+	if (newAsset) {
+		toast.success('', `File saved as ${codeName.value}`);
+		codeAsset.value = newCode;
 		router.push({
 			name: RouteName.Project,
 			params: {
 				pageType: AssetType.Code,
-				projectId: props.project.id,
-				assetId: codeAsset.value.id
+				projectId: useProjects().activeProject.value?.id,
+				assetId: codeAsset?.value?.id
 			}
 		});
+		return newCode;
 	}
-	return newCodeAsset;
+	toast.error('', 'Unable to save file');
+	return newCode;
 }
 
 async function extractModel() {
@@ -249,7 +252,7 @@ async function extractModel() {
 				name: RouteName.Project,
 				params: {
 					pageType: AssetType.Models,
-					projectId: props.project.id,
+					projectId: useProjects().activeProject.value?.id,
 					assetId: extractedModelId
 				}
 			});
