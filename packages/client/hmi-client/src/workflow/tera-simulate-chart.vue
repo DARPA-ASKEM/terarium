@@ -46,8 +46,6 @@ const renderedRuns = computed<RunResults>(() => {
 	if (!props.hasMeanLine) return _.cloneDeep(props.runResults);
 
 	const runResult: RunResults = _.cloneDeep(props.runResults);
-	console.log('RUN RESULT', runResult);
-	console.log(props.initialData);
 	const parsedSimProbData = Object.values(runResult);
 
 	const numRuns = parsedSimProbData.length;
