@@ -21,6 +21,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
 import java.io.UnsupportedEncodingException;
@@ -185,6 +186,16 @@ public class ReBACService {
 		return response;
 	}
 
+	public PermissionGroup getGroup(String id) {
+		GroupResource groupResource = keycloak.realm(REALM_NAME).groups().group(id);
+		GroupRepresentation groupRepresentation = groupResource.toRepresentation();
+		PermissionGroup permissionGroup= new PermissionGroup(
+			groupRepresentation.getId(),
+			groupRepresentation.getName());
+
+		return permissionGroup;
+	}
+
 	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
@@ -214,7 +225,7 @@ public class ReBACService {
 		rebac.createRelationship(who, relationship, what);
 	}
 
-	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception {
+	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		rebac.removeRelationship(who, relationship, what);
 	}

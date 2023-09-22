@@ -16,6 +16,7 @@ import com.authzed.api.v1.PermissionsServiceGrpc;
 import com.authzed.grpcutil.BearerToken;
 
 import io.grpc.ManagedChannel;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
 public class ReBACFunctions {
@@ -80,11 +81,12 @@ public class ReBACFunctions {
 		return response.getWrittenAt().getToken();
 	}
 
-    public String removeRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception {
+    public String removeRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception, RelationshipAlreadyExistsException {
         return removeRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
     }
 
-    public String removeRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception {
+		private static final String ALREADY_EXISTS_CREATE_RELATIONSHIP = "ALREADY_EXISTS: could not CREATE relationship";
+    public String removeRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception, RelationshipAlreadyExistsException {
 			PermissionService.DeleteRelationshipsRequest request = PermissionService.DeleteRelationshipsRequest.newBuilder()
 				.setRelationshipFilter(RelationshipFilter.newBuilder()
 					.setResourceType(targetType)
@@ -98,8 +100,15 @@ public class ReBACFunctions {
 					).build()
 				).build();
 
-			PermissionService.DeleteRelationshipsResponse response = permissionsService.deleteRelationships(request);
-			return response.getDeletedAt().getToken();
+			try {
+				PermissionService.DeleteRelationshipsResponse response = permissionsService.deleteRelationships(request);
+				return response.getDeletedAt().getToken();
+			} catch (Exception e) {
+				if (e.getMessage().startsWith(ALREADY_EXISTS_CREATE_RELATIONSHIP)) {
+					throw new RelationshipAlreadyExistsException(e);
+				}
+				throw e;
+			}
     }
 
 	public List<RebacPermissionRelationship> getRelationship(SchemaObject resource, Consistency consistency) throws Exception {

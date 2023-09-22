@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.dataservice.permission;
 
 import software.uncharted.terarium.hmiserver.models.dataservice.permission.Group;
 import software.uncharted.terarium.hmiserver.models.dataservice.permission.User;
