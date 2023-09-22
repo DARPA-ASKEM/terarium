@@ -4,16 +4,10 @@
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<tera-navbar
-		class="header"
-		:active="!isErrorState"
-		:current-project-id="project?.id ?? null"
-		:projects="projects"
-		:show-suggestions="showSuggestions"
-	/>
+	<tera-navbar class="header" :active="!isErrorState" :show-suggestions="showSuggestions" />
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" :project="project" />
+			<component class="page" ref="pageRef" :is="Component" />
 		</router-view>
 	</main>
 	<footer class="footer">
@@ -80,18 +74,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Toast from 'primevue/toast';
 import Button from 'primevue/button';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
-import * as ProjectService from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import { ResourceType } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useProjects } from '@/composables/project';
 import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
@@ -115,13 +108,7 @@ const showSuggestions = computed(() => {
 
 /**
  * Project
- *
- * As we use only one Project per application instance.
- * It is loaded at the root and passed to all views as prop.
  */
-const resourcesStore = useResourcesStore();
-const project = shallowRef<IProject | null>(null);
-const projects = shallowRef<IProject[] | null>(null);
 
 API.interceptors.response.use(
 	(response) => response,
@@ -139,33 +126,15 @@ API.interceptors.response.use(
 	}
 );
 
-async function fetchProject(id: IProject['id']) {
-	resourcesStore.reset();
-	// fetch basic metadata about project assets and save them into a global store/cache
-	resourcesStore.setActiveProject(await ProjectService.get(id, true));
-}
-
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
-		// If the projectId or the Project are null, set the Project to null.
-		if (projectId && !!projectId) {
-			fetchProject(projectId as IProject['id']);
-		} else {
-			project.value = null;
-		}
-
+		useProjects().get(projectId as IProject['id']);
 		// Refetch the list of all projects
-		projects.value = (await ProjectService.getAll()) as unknown as IProject[];
+		useProjects().getAll();
 	},
 	{ immediate: true }
 );
-
-// This is crucial - every time the resource store is modified the project prop will be updated to match it
-// Once you update assets within a project (add/remove) the project service sets the resource store to what's in the project in the backend
-resourcesStore.$subscribe((_mutation, state) => {
-	project.value = state.activeProject;
-});
 
 const isAboutModalVisible = ref(false);
 

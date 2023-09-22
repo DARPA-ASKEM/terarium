@@ -35,17 +35,6 @@
 				@click.stop="showProjectMenu"
 			/>
 			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-			<Dialog :header="`Remove ${project.name}`" v-model:visible="isRemoveDialog">
-				<p>
-					You are about to remove project <em>{{ project.name }}</em
-					>.
-				</p>
-				<p>Are you sure?</p>
-				<template #footer>
-					<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
-					<Button label="Remove project" @click="removeProject" />
-				</template>
-			</Dialog>
 		</template>
 	</Card>
 	<Card v-else>
@@ -73,23 +62,27 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Project } from '@/types/Types';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
-import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
-import { logger } from '@/utils/logger';
-import * as ProjectService from '@/services/project';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { IProject } from '@/types/Project';
 
-const props = defineProps<{ project?: Project }>();
-const emit = defineEmits<{
-	(e: 'removed', projectId: Project['id']): void;
-	(e: 'show-share-dialog', project: Project): void;
+const props = defineProps<{
+	project?: IProject;
+	projectMenuItems?: any[];
 }>();
+
+const emit = defineEmits(['update-chosen-project-menu']);
+
+const projectMenu = ref();
+const showProjectMenu = (event) => {
+	projectMenu.value.toggle(event);
+	emit('update-chosen-project-menu');
+};
 
 const titleRef = ref();
 const descriptionLines = computed(() => {
@@ -107,50 +100,13 @@ const stats = computed(() =>
 		? null
 		: {
 				contributors: 1,
-				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10),
+				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10),
 				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
-				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10)
+				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10)
 		  }
 );
 
 const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
-
-/*
- * User Menu
- */
-const isRemoveDialog = ref(false);
-const openRemoveDialog = () => {
-	isRemoveDialog.value = true;
-};
-const closeRemoveDialog = () => {
-	isRemoveDialog.value = false;
-};
-const projectMenu = ref();
-const projectMenuItems = ref([
-	{ label: 'Rename', icon: 'pi pi-pencil', command: () => {} },
-	{
-		label: 'Share',
-		icon: 'pi pi-user-plus',
-		command: () => {
-			if (props.project) emit('show-share-dialog', props.project);
-		}
-	},
-	{ separator: true },
-	{ label: 'Remove', icon: 'pi pi-trash', command: openRemoveDialog }
-]);
-const showProjectMenu = (event) => projectMenu.value.toggle(event);
-
-const removeProject = async () => {
-	if (!props.project || !props.project?.id) return;
-	const isDeleted = await ProjectService.remove(props.project.id);
-	closeRemoveDialog();
-	if (isDeleted) {
-		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
-		emit('removed', props.project.id);
-	} else {
-		logger.error(`Unable to delete the project ${props.project?.name}`, { showToast: true });
-	}
-};
 </script>
 
 <style scoped>
