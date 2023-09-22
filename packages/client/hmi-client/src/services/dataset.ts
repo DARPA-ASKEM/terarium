@@ -240,28 +240,26 @@ const saveDataset = async (
 	}
 };
 
-const createCsvAssetFromRunResults = (runResults: RunResults): CsvAsset | null => {
+/**
+ * This is a client side function to create a CsvAsset similar to the getCsv function from DatasetResource.java
+ * The reason we reimplement this client side is because runResults already has all of the data we need, except
+ * it's not in the correct format necessary to be consumed by the TeraDatasetDatatable component.
+ * @param runResults
+ * @param runId
+ * @returns CsvAsset object with the data from the runResults
+ */
+const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): CsvAsset | null => {
 	const runResult: RunResults = _.cloneDeep(runResults);
-	console.log('runResult', runResult);
-	const runIdList = Object.keys(runResult);
+	const runIdList = runId ? [runId] : Object.keys(runResult);
 	if (runIdList.length === 0) return null;
 
 	const csvColHeaders = Object.keys(runResult[runIdList[0]][0]);
 	let csvData: CsvAsset = {
-		headers: ['run_id', ...csvColHeaders],
+		headers: csvColHeaders,
 		data: [],
-		csv: [['run_id', ...csvColHeaders]],
+		csv: [csvColHeaders],
 		rowCount: 0,
-		stats: [
-			{
-				bins: Array(10).fill(0),
-				minValue: 0,
-				maxValue: 0,
-				mean: 0,
-				median: 0,
-				sd: 0
-			}
-		]
+		stats: []
 	};
 
 	const csvColumns: { [key: string]: number[] } = {};
@@ -269,12 +267,12 @@ const createCsvAssetFromRunResults = (runResults: RunResults): CsvAsset | null =
 	runIdList.forEach((id) => {
 		csvData = {
 			...csvData,
-			data: [...csvData.data, ...runResult[id].map((row) => ({ run_id: id, ...row }))],
+			data: [...csvData.data, ...(runResult[id] as any)],
 			rowCount: csvData.rowCount + runResult[id].length
 		};
 		runResult[id].forEach((row) => {
 			const rowValues = Object.values(row);
-			csvData.csv.push([id, ...(rowValues as any)]);
+			csvData.csv.push(rowValues as any);
 
 			csvColHeaders.forEach((header, index) => {
 				if (!csvColumns[header]) {
@@ -292,6 +290,11 @@ const createCsvAssetFromRunResults = (runResults: RunResults): CsvAsset | null =
 	return csvData;
 };
 
+/**
+ * This is a client side implementation of the getStats function from DatasetResource.java
+ * @param csvColumn
+ * @returns CsvColumnStats object
+ */
 const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 	const sortedCol = [...csvColumn].sort((a, b) => a - b);
 

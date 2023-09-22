@@ -41,6 +41,7 @@
 				label="Add chart"
 				icon="pi pi-plus"
 			/>
+			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 			<Button
 				class="add-chart"
 				title="Saves the current version of the model as a new Terarium asset"
@@ -66,7 +67,6 @@
 					"
 				></i>
 			</span>
-			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -198,8 +198,6 @@ onMounted(async () => {
 	const modelId = modelConfigurationObj.modelId;
 	model.value = await getModel(modelId);
 
-	console.log(nodeObj.outputs);
-
 	// Fetch run results
 	await Promise.all(
 		port.value.map(async (runId) => {
@@ -214,10 +212,11 @@ onMounted(async () => {
 				);
 			}
 			runResults.value[runId] = csvData as any;
-			rawContent.value = createCsvAssetFromRunResults(runResults.value);
-			console.log(rawContent.value);
 		})
 	);
+
+	// For now just get the CSV asset for a single run
+	rawContent.value = createCsvAssetFromRunResults(runResults.value, simulationId);
 });
 </script>
 

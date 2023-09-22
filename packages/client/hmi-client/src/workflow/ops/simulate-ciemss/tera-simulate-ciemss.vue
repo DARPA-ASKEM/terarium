@@ -25,46 +25,6 @@
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
 			class="simulate-container"
 		>
-			<!-- <div class="datatable-header">
-				<div class="datatable-header-title">
-					{{ `${rawDataKeys.length} columns | ${parsedRawData.length} rows` }}
-				</div>
-				<div class="datatable-header-select-container">
-					<MultiSelect v-model="selectedCols" :options="rawDataKeys" placeholder="Select columns" />
-				</div>
-			</div>
-			<div
-				class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header"
-			>
-				<div class="p-datatable-wrapper">
-					<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-						<thead class="p-datatable-thead">
-							<tr>
-								<th
-									v-for="(header, i) of selectedCols.length ? selectedCols : rawDataKeys"
-									:key="i"
-									class="p-frozen-column"
-								>
-									{{ header }}
-								</th>
-							</tr>
-						</thead>
-						<tbody class="p-datatable-tbody">
-							<tr v-for="(data, i) of rawDataRenderedRows" :key="i">
-								<td v-for="(key, j) of selectedCols.length ? selectedCols : rawDataKeys" :key="j">
-									{{ data[key] }}
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<Paginator
-				v-model:first="paginatorFirst"
-				v-model:rows="paginatorRows"
-				:totalRecords="parsedRawData.length"
-				:rowsPerPageOptions="[5, 10, 20, 50]"
-			/> -->
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -81,6 +41,7 @@
 				label="Add chart"
 				icon="pi pi-plus"
 			/>
+			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 			<Button
 				class="add-chart"
 				title="Saves the current version of the model as a new Terarium asset"
@@ -106,7 +67,6 @@
 					"
 				></i>
 			</span>
-			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -173,10 +133,8 @@ import _ from 'lodash';
 import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-// import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-// import Paginator from 'primevue/paginator';
 import { CsvAsset, Model, TimeSpan, ModelConfiguration } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel, getModelConfigurations } from '@/services/model';
@@ -217,9 +175,6 @@ const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
-// const selectedCols = ref<string[]>([]);
-// const paginatorRows = ref(10);
-// const paginatorFirst = ref(0);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
 const rawContent = ref<CsvAsset | null>(null);
 
@@ -270,9 +225,6 @@ onMounted(async () => {
 	runConfigs.value = output.runConfigs;
 
 	rawContent.value = createCsvAssetFromRunResults(runResults.value);
-	console.log(rawContent.value);
-	// console.log(parsedRawData.value);
-	// console.log(rawDataKeys.value);
 });
 
 watch(
@@ -287,12 +239,6 @@ watch(
 		});
 	}
 );
-
-// const rawDataKeys = computed(() => Object.keys(parsedRawData.value[0]));
-
-// const rawDataRenderedRows = computed(() =>
-// 	parsedRawData.value.slice(paginatorFirst.value, paginatorFirst.value + paginatorRows.value)
-// );
 </script>
 
 <style scoped>
