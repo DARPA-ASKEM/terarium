@@ -1,7 +1,6 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<span class="simulate-header-label">Simulate (probabilistic)</span>
 			<div class="simulate-header p-buttonset">
 				<Button
 					label="Input"
@@ -97,13 +96,10 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -186,14 +182,13 @@ import TeraModelConfigurations from '@/components/model/petrinet/tera-model-conf
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { IProject } from '@/types/Project';
-import { saveDataset } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
+import { saveDataset } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
@@ -241,6 +236,16 @@ const addChart = () => {
 		state
 	});
 };
+
+async function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+			get();
+		}
+		showSaveInput.value = false;
+	}
+}
 
 onMounted(async () => {
 	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now

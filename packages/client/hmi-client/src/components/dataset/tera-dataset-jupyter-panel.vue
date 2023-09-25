@@ -51,7 +51,6 @@
 		</div>
 		<tera-jupyter-chat
 			ref="chat"
-			:project="props.project"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
@@ -106,8 +105,6 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
-import { addAsset } from '@/services/project';
-import { IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
@@ -125,11 +122,12 @@ import Dropdown from 'primevue/dropdown';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
+import { useProjects } from '@/composables/project';
 
 // import { createNewDataset } from '@/services/dataset';
 
-// const jupyterSession = ref(<SessionContext>newSession('llmkernel', 'ChattyNode'));
-const jupyterSession: SessionContext = await newSession('llmkernel', 'ChattyNode');
+// const jupyterSession = ref(<SessionContext>newSession('beaker', 'Beaker'));
+const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -137,7 +135,6 @@ const confirm = useConfirm();
 
 const props = defineProps<{
 	assetIds: string[];
-	project?: IProject;
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
@@ -197,7 +194,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 		const key = `d${i + 1}`;
 		contextInfo[key] = assetId;
 	});
-	if (kernel?.name === 'llmkernel') {
+	if (kernel?.name === 'beaker') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
 			context_info: contextInfo
@@ -373,12 +370,12 @@ const updateKernelList = () => {
 };
 
 const onNewDatasetSaved = async (payload) => {
-	if (!props.project) {
+	if (!useProjects().activeProject.value) {
 		toast.error('Unable to save dataset', "Can't find active an project");
 		return;
 	}
 	const datasetId = payload.dataset_id;
-	await addAsset(props.project.id, AssetType.Datasets, datasetId);
+	await useProjects().addAsset(AssetType.Datasets, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
 	toast.success(
 		'Dataset saved successfully',

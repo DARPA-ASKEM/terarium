@@ -1,7 +1,6 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<span class="simulate-header-label">Simulate (deterministic)</span>
 			<div class="simulate-header p-buttonset">
 				<Button
 					label="Input"
@@ -57,13 +56,10 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -118,18 +114,17 @@ import ModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-
 
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import { saveDataset } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
@@ -170,6 +165,16 @@ const addChart = () => {
 		state
 	});
 };
+
+async function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+			get();
+		}
+		showSaveInput.value = false;
+	}
+}
 
 onMounted(async () => {
 	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now

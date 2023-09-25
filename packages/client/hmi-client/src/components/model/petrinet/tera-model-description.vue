@@ -431,7 +431,7 @@ import TeraModelExtraction from '@/components/model/petrinet/tera-model-extracti
 import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
-import { IProject } from '@/types/Project';
+import { useProjects } from '@/composables/project';
 
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
@@ -444,7 +444,6 @@ const props = defineProps<{
 	model: Model;
 	modelConfigurations: ModelConfiguration[];
 	highlight: string;
-	project: IProject;
 }>();
 
 const emit = defineEmits(['update-model', 'fetch-model']);
@@ -484,8 +483,8 @@ const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const publications = computed(
 	() =>
-		props.project?.assets?.artifacts
-			.filter((artifact: Artifact) =>
+		useProjects()
+			.activeProject.value?.assets?.artifacts.filter((artifact: Artifact) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
 					artifact.fileNames[0].endsWith(extension)
 				)

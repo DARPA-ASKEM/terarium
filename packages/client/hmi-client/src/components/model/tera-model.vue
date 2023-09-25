@@ -31,13 +31,6 @@
 					@click="view = ModelView.MODEL"
 					:active="view === ModelView.MODEL"
 				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Transform"
-					icon="pi pi-sync"
-					@click="view = ModelView.NOTEBOOK"
-					:active="view === ModelView.NOTEBOOK"
-				/>
 			</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
@@ -53,7 +46,6 @@
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:highlight="highlight"
-			:project="project"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
 		/>
@@ -66,16 +58,6 @@
 			@update-configuration="updateConfiguration"
 			@add-configuration="addConfiguration"
 		/>
-		<Suspense v-else-if="view === ModelView.NOTEBOOK">
-			<tera-model-jupyter-panel
-				:asset-id="model.id"
-				:model-configurations="modelConfigurations"
-				:project="props.project"
-				:model="model"
-				:show-kernels="false"
-				:show-chat-thoughts="false"
-			/>
-		</Suspense>
 	</tera-asset>
 </template>
 
@@ -85,11 +67,9 @@ import { isEmpty, cloneDeep } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraModelEditor from '@/components/model/petrinet/tera-model-editor.vue';
-import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
-import useResourcesStore from '@/stores/resources';
 import {
 	createModelConfiguration,
 	updateModelConfiguration,
@@ -97,21 +77,15 @@ import {
 } from '@/services/model-configurations';
 import { getModel, updateModel, getModelConfigurations } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { IProject } from '@/types/Project';
 import { Model, ModelConfiguration } from '@/types/Types';
-import * as ProjectService from '@/services/project';
+import { useProjects } from '@/composables/project';
 
 enum ModelView {
 	DESCRIPTION,
-	MODEL,
-	NOTEBOOK
+	MODEL
 }
 
 const props = defineProps({
-	project: {
-		type: Object as PropType<IProject> | null,
-		default: null
-	},
 	assetId: {
 		type: String,
 		default: ''
@@ -163,7 +137,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await fetchModel(); // elastic search might still not update in time
-		useResourcesStore().setActiveProject(await ProjectService.get(props.project.id, true));
+		useProjects().get();
 	}, 800);
 }
 

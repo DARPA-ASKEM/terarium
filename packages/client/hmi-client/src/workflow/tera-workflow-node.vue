@@ -4,7 +4,7 @@
 			<h5 class="truncate">{{ node.displayName }}</h5>
 			<span>
 				<Button
-					icon="pi pi-sign-in"
+					icon="pi pi-search-plus"
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="showNodeDrilldown"
 				/>
@@ -94,7 +94,6 @@ import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	workflowId: string;
 	canDrag: boolean;
 	isActive: boolean;
 }>();
@@ -188,7 +187,7 @@ function showNodeDrilldown() {
 function openDrilldown() {
 	const url = router.resolve({
 		name: RouteName.WorkflowNode,
-		params: { nodeId: props.node.id, workflowId: props.workflowId }
+		params: { nodeId: props.node.id, workflowId: props.node.workflowId }
 	}).href;
 	floatingWindow.open(url);
 }
