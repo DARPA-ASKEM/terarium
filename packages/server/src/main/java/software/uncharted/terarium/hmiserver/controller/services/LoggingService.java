@@ -1,12 +1,10 @@
-package software.uncharted.terarium.hmiserver.services;
+package software.uncharted.terarium.hmiserver.controller.services;
 
 import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
-@ApplicationScoped
 @Slf4j
 @Data
 @Accessors(chain = true)

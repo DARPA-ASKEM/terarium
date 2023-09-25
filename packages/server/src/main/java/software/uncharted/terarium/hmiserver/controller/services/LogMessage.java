@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.services;
+package software.uncharted.terarium.hmiserver.controller.services;
 
 import lombok.Data;
 

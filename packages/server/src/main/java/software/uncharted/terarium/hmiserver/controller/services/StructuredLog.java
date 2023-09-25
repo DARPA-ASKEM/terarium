@@ -1,18 +1,16 @@
-package software.uncharted.terarium.hmiserver.services;
+package software.uncharted.terarium.hmiserver.controller.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.springframework.beans.factory.annotation.Value;
 
-import javax.enterprise.context.ApplicationScoped;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@ApplicationScoped
 @Slf4j
 public class StructuredLog {
 	public enum Type {
@@ -22,7 +20,9 @@ public class StructuredLog {
 		PROXY_REQUEST
 	}
 
-	@ConfigProperty(name = "quarkus.log.console.json", defaultValue = "false")
+
+	//TODO SHOULD THIS COME FROM SPRING?
+	@Value("${terarium.log.console.json:false}")
 	Boolean JSON_LOGGING_ENABLED;
 
 	private final ObjectMapper mapper = new ObjectMapper();
