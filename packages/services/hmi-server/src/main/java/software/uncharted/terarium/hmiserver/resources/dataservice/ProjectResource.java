@@ -51,6 +51,7 @@ public class ProjectResource {
 					return new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(project.getProjectID(), reBACService));
 				} catch (Exception e) {
 					log.error("Error getting user's permissions for project", e);
+					return false;
 				}
 			})
 			.toList();
