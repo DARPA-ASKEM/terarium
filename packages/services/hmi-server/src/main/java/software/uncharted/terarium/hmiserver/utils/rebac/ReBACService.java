@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-@UnlessBuildProfile("test")
+//@UnlessBuildProfile("test")
 public class ReBACService {
 	@Inject
 	Keycloak keycloak;
