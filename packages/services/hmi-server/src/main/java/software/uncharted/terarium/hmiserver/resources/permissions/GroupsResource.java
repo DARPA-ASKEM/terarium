@@ -65,9 +65,10 @@ public class GroupsResource {
 					.entity(permissionGroup)
 					.build();
 			}
-			return Response.status(404).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error getting group", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -85,9 +86,10 @@ public class GroupsResource {
 					.entity(permissionGroup)
 					.build();
 			}
-			return Response.status(404).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error adding group", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -106,9 +108,10 @@ public class GroupsResource {
 				what.setPermissionRelationships(who, relationship);
 				return Response.ok().build();
 			}
-			return Response.status(404).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error adding group user permission relationships", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -130,10 +133,10 @@ public class GroupsResource {
 					return Response.notModified().build();
 				}
 			}
-			return Response.status(404).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("Error removing group user permission relationships", e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
-
 }
