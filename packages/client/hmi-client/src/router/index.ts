@@ -10,7 +10,6 @@ import WorkflowNodeView from '@/page/WorkflowNode.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import SSE from '@/temp/sse.vue';
-import EvaluationScenarios from '@/temp/EvaluationScenarios.vue';
 import AMRPetriTest from '@/temp/AMRPetriTest.vue';
 import PyodideTest from '@/temp/PyodideTest.vue';
 import { RouteName } from './routes';
@@ -26,7 +25,6 @@ export enum RoutePath {
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	EvaluationScenariosPath = '/evaluation-scenarios',
 	ModelEditor = '/model-editor',
 	ModelRunner = '/model-runner'
 }
@@ -55,7 +53,6 @@ const routes = [
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.EvaluationScenariosPath, component: EvaluationScenarios },
 	{ path: '/sse', component: SSE },
 	{ path: '/amr-petri-test', component: AMRPetriTest },
 	{ path: '/pyodide-test', component: PyodideTest }
