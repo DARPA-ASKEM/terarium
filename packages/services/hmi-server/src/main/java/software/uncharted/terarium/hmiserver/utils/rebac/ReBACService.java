@@ -9,6 +9,7 @@ import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.quarkus.arc.profile.UnlessBuildProfile;
 import io.quarkus.runtime.StartupEvent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.CreatedResponseUtil;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
+@UnlessBuildProfile("test")
 public class ReBACService {
 	@Inject
 	Keycloak keycloak;
@@ -53,6 +55,8 @@ public class ReBACService {
 	}
 
 	void startup(@Observes StartupEvent event) throws Exception {
+		//if (ProfileManager.getActiveProfile().equalsIgnoreCase("test")) { return; }
+
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
 		channel = ManagedChannelBuilder
 			.forTarget(SPICEDB_TARGET)
