@@ -24,7 +24,7 @@
 				icon="pi pi-circle-fill"
 				:active="activeCarouselPage === page"
 				class="page-indicator p-button-icon-only p-button-text p-button-rounded"
-				@click="onCarouselPaginate(page)"
+				@click="page !== activeCarouselPage && scroll(page - activeCarouselPage)"
 			/>
 		</section>
 	</main>
@@ -66,13 +66,13 @@ const scrollIncrement = computed(() => (cardWidth + rightGapWidth) * amountOfCar
 
 const amountOfCardPages = computed(() => {
 	const allCardsWidth = cardListRef?.value?.clientWidth;
-	return Math.ceil(allCardsWidth / scrollIncrement.value);
+	const pages = Math.ceil(allCardsWidth / scrollIncrement.value);
+	if (Number.isNaN(pages) || pages === Infinity) return 1;
+	return pages;
 });
 
 function handleResize() {
-	if (carouselRef.value?.clientWidth) {
-		carouselWidth.value = carouselRef.value.clientWidth;
-	}
+	carouselWidth.value = carouselRef.value.clientWidth ?? 0;
 }
 
 function scroll(pagesToMove: number) {
@@ -81,11 +81,11 @@ function scroll(pagesToMove: number) {
 	// Don't scroll if last element is already within viewport
 	if (pagesToMove > 0 && cardListRef.value.lastElementChild) {
 		const carouselBounds = carouselRef?.value.getBoundingClientRect();
-		const bounds = cardListRef.value.lastElementChild.getBoundingClientRect();
+		const cardListBounds = cardListRef.value.lastElementChild.getBoundingClientRect();
 		if (
-			bounds &&
+			cardListBounds &&
 			carouselBounds &&
-			bounds.x + bounds.width < carouselBounds.x + carouselWidth.value
+			cardListBounds.x + cardListBounds.width < carouselBounds.x + carouselWidth.value
 		) {
 			return;
 		}
@@ -97,12 +97,6 @@ function scroll(pagesToMove: number) {
 	const newMarginLeft = parseFloat(marginLeftString) + pixelsToTranslate;
 	// Don't let the list scroll far enough left that we see space before the first card.
 	cardListRef.value.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
-}
-
-function onCarouselPaginate(page: number) {
-	if (page === activeCarouselPage.value) return;
-	scroll(page - activeCarouselPage.value);
-	activeCarouselPage.value = page;
 }
 
 watch(

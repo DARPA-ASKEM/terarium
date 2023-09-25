@@ -83,7 +83,7 @@
 							<tera-card-carousel
 								v-else-if="view === ProjectsView.Cards"
 								:is-loading="isLoadingProjects"
-								:amount-of-cards="tab.projects.length * 3"
+								:amount-of-cards="tab.projects.length"
 							>
 								<template #skeleton-card>
 									<tera-project-card />
