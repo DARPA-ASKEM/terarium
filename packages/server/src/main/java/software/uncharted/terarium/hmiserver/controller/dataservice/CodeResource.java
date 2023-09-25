@@ -14,6 +14,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,7 +28,6 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,7 +101,7 @@ public class CodeResource implements SnakeCaseResource {
 
 	}
 
-	@PutMapping("/{codeId}/uploadFile")
+	@PutMapping(value = "/{codeId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Integer> uploadFile(
 		@PathVariable("codeId") final String codeId,
 		@RequestParam("filename") final String filename,

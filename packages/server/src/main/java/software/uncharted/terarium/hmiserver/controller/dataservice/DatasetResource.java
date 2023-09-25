@@ -170,7 +170,7 @@ public class DatasetResource implements SnakeCaseResource {
 	 * @param filename  CSV file to upload
 	 * @return Response
 	 */
-	@PutMapping(value = "/{datasetId}/uploadCSV", consumes = "*/*")
+	@PutMapping(value = "/{datasetId}/uploadCSV", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<JsonNode> uploadCsv(
 		@PathVariable("datasetId") final String datasetId,
 		@RequestParam("filename") final String filename,
