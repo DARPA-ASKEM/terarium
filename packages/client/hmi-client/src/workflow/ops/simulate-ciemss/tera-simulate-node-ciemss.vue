@@ -127,7 +127,6 @@ const getStatus = async (runIds: string[]) => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', runIds);
 		showSpinner.value = false;
 		logger.error(`Simulation: ${runIds} has failed`, {
 			toastTitle: 'Error - Pyciemss'
