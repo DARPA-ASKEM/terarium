@@ -6,6 +6,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public enum EventType {
 	SEARCH(true),
+	EVALUATION_SCENARIO(true),
 	ROUTE_TIMING(true),
 	PROXY_TIMING(true),
 	ADD_RESOURCES_TO_PROJECT(true),

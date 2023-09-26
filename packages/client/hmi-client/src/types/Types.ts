@@ -14,6 +14,15 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface EvaluationScenarioSummary {
+    name: string;
+    username: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
+}
+
 export interface Event {
     id?: string;
     timestampMillis?: number;
@@ -296,6 +305,12 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface Intervention {
+    name: string;
+    timestep: number;
+    value: number;
+}
+
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
@@ -314,12 +329,6 @@ export interface EnsembleModelConfigs {
     id: string;
     solutionMappings: { [index: string]: string };
     weight: number;
-}
-
-export interface Intervention {
-    name: string;
-    timestep: number;
-    value: number;
 }
 
 export interface TimeSpan {
@@ -680,8 +689,16 @@ export interface MetadataDataset {
     metadata: string;
 }
 
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
+}
+
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
     RouteTiming = "ROUTE_TIMING",
     ProxyTiming = "PROXY_TIMING",
     AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
