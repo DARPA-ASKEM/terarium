@@ -9,7 +9,9 @@ import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.inprocess.InProcessChannelBuilder;
 import io.quarkus.arc.profile.UnlessBuildProfile;
+import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.StartupEvent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.CreatedResponseUtil;
@@ -30,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-//@UnlessBuildProfile("test")
 public class ReBACService {
 	@Inject
 	Keycloak keycloak;
@@ -54,15 +55,21 @@ public class ReBACService {
 	public ReBACService() throws UnsupportedEncodingException {
 	}
 
-	void startup(@Observes StartupEvent event) throws Exception {
-		//if (ProfileManager.getActiveProfile().equalsIgnoreCase("test")) { return; }
-
+	void startup(@Observes StartupEvent event, LaunchMode mode) throws Exception {
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
-		channel = ManagedChannelBuilder
-			.forTarget(SPICEDB_TARGET)
-			//.useTransportSecurity() // for TLS communication
-			.usePlaintext()
-			.build();
+		if (mode != LaunchMode.TEST) {
+			channel = ManagedChannelBuilder
+				.forTarget(SPICEDB_TARGET)
+				//.useTransportSecurity() // for TLS communication
+				.usePlaintext()
+				.build();
+		} else {
+			channel = InProcessChannelBuilder
+				.forName("FakeSpiceDB")
+				.build();
+
+			return;
+		}
 
 		System.out.printf("Init ReBAC");
 		if( !schemaManager.doesSchemaExist(channel, spiceDbBearerToken) ) {
