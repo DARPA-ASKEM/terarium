@@ -8,14 +8,20 @@
 				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
-						<th v-for="(row, i) in matrix[0]" :key="i">
-							{{ Object.values(row.colCriteria).join(' / ') }}
-						</th>
+						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, i) in matrix" :key="i">
-						<td class="p-frozen-column">{{ Object.values(row[0].rowCriteria).join(' / ') }}</td>
+						<td class="p-frozen-column">
+							<template v-if="nodeType === NodeType.State">
+								{{ Object.values(row[0].rowCriteria).join(' / ') }}
+							</template>
+							<template v-else>
+								{{ row[0].rowCriteria }}
+							</template>
+						</td>
+
 						<td
 							v-for="(cell, j) in row"
 							:key="j"
@@ -23,7 +29,7 @@
 							@keyup.enter="onEnterValueCell(cell?.value?.id, i, j)"
 							@click="onEnterValueCell(cell?.value?.id, i, j)"
 						>
-							<template v-if="cell?.value?.id">
+							<template v-if="cell?.value">
 								<InputText
 									v-if="editableCellStates[i][j]"
 									class="cell-input"
@@ -33,9 +39,8 @@
 									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
 								/>
 								<div
-									v-else
 									class="mathml-container"
-									v-html="matrixExpressionsList[i]?.[j] ?? '...'"
+									v-html="matrixExpressionsList[i]?.[j] ?? cell.value ?? '...'"
 								></div>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
@@ -76,8 +81,6 @@ const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
 
 const matrix = ref<any>([]);
-const chosenCol = ref('');
-const chosenRow = ref('');
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
@@ -229,34 +232,98 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 function generateMatrix(populateDimensions = false) {
 	const amr: Model = props.modelConfiguration.configuration;
 
-	const result =
+	const { stateMatrixData, transitionMatrixData } =
 		props.stratifiedModelType === StratifiedModelType.Catlab
 			? getCatlabAMRPresentationData(amr)
 			: getMiraAMRPresentationData(amr);
 
 	// Get only the states/transitions that are mapped to the base model
 	let matrixData: any[] = [];
+	let inputs: string[] = [];
+	let outputs: string[] = [];
 	if (props.nodeType === NodeType.State) {
-		matrixData = result.stateMatrixData.filter(({ base }) => base === props.id);
+		matrixData = stateMatrixData.filter(({ base }) => base === props.id);
 	} else {
-		const paramsMap = getUnstratifiedParameters(props.modelConfiguration.configuration);
+		const paramsMap = getUnstratifiedParameters(amr);
 		if (!paramsMap.has(props.id)) return [];
 
-		const childIds = paramsMap.get(props.id) as string[];
-		matrixData = result.transitionMatrixData.filter((d) => {
+		// IDs to find within the rates
+		const childParmaterIds = paramsMap.get(props.id) as string[];
+
+		// ;
+
+		// Holds all points that have the parameter
+		matrixData = transitionMatrixData.filter((d) => {
 			// Check if the transition's expression include the usage
 			const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
 			if (!rate) return false;
 
 			// FIXME: should check through sympy to be more accurate
 			if (rate.expression.includes(props.id)) return true;
-			for (let i = 0; i < childIds.length; i++) {
-				if (rate.expression.includes(childIds[i])) return true;
+			for (let i = 0; i < childParmaterIds.length; i++) {
+				if (rate.expression.includes(childParmaterIds[i])) return true;
 			}
 			return false;
 		});
-
+		console.log(childParmaterIds);
 		console.log('matrix data', matrixData);
+
+		// Get inputs and outputs
+		for (let i = 0; i < matrixData.length; i++) {
+			const id = matrixData[i].id;
+			const { input, output } = amr.model.transitions.find((t) => t.id === id);
+			inputs.push(...input);
+			outputs.push(...output);
+		}
+
+		// Get unique inputs and outputs and sort names alphabetically
+		inputs = [...new Set(inputs)].sort();
+		outputs = [...new Set(outputs)].sort();
+
+		const rows: any[] = [];
+		for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
+			const row: any[] = [];
+			for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
+				// If there is an input output pair that matches then a parameter belongs in this cell
+				let value: any = null;
+
+				// Get inputs and outputs
+				for (let i = 0; i < matrixData.length; i++) {
+					const id = matrixData[i].id;
+					const { input, output } = amr.model.transitions.find((t) => t.id === id);
+
+					if (input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
+						const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+						if (!rate) {
+							value = id;
+							break;
+						}
+						for (let j = 0; j < childParmaterIds.length; j++) {
+							if (rate.expression.includes(childParmaterIds[j])) {
+								value =
+									amr.semantics?.ode.parameters?.find((p) => p.id === childParmaterIds[j])?.value ??
+									null;
+								break;
+							}
+						}
+					}
+				}
+
+				row.push({
+					row: rowIdx,
+					col: colIdx,
+					rowCriteria: inputs[rowIdx],
+					colCriteria: outputs[colIdx],
+					value
+				});
+			}
+			rows.push(row);
+		}
+
+		console.log(inputs, outputs, rows);
+
+		matrix.value = rows;
+		return matrixData;
 	}
 
 	if (isEmpty(matrixData)) return matrixData;
@@ -268,6 +335,8 @@ function generateMatrix(populateDimensions = false) {
 			return Object.keys(d);
 		})[0];
 
+		console.log(dimensions);
+
 		rowDimensions.push(...dimensions);
 		colDimensions.push(...dimensions);
 	}
@@ -278,6 +347,7 @@ function generateMatrix(populateDimensions = false) {
 			: createMatrix2D(matrixData, colDimensions, rowDimensions);
 
 	matrix.value = matrixAttributes.matrix;
+	console.log(matrix.value);
 
 	return matrixData;
 }
@@ -285,9 +355,6 @@ function generateMatrix(populateDimensions = false) {
 function configureMatrix() {
 	const matrixData = generateMatrix(true);
 	if (isEmpty(matrixData)) return;
-
-	chosenCol.value = colDimensions[0];
-	chosenRow.value = rowDimensions[0];
 
 	// Matrix for editable cell states
 	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
