@@ -129,7 +129,7 @@ import { EventSourceManager } from '@/api/event-source-manager';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
-import { useToastService } from '@/services/toast';
+import { logger } from '@/utils/logger';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -144,7 +144,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['append-output-port', 'update-state']);
 
-const toast = useToastService();
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
@@ -265,7 +264,9 @@ const getStatus = async (simulationId: string) => {
 		// throw if there are any failed runs for now
 		console.error('Failed', simulationId);
 		showSpinner.value = false;
-		toast.error('', `Calibration: ${simulationId} has failed`);
+		logger.error(`Calibrate: ${simulationId} has failed`, {
+			toastTitle: 'Error - Julia'
+		});
 		throw Error('Failed Runs');
 	}
 	completedRunId.value = simulationId;

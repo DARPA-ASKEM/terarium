@@ -58,7 +58,7 @@ import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { SimulationRequest } from '@/types/Types';
-import { useToastService } from '@/services/toast';
+import { logger } from '@/utils/logger';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -66,7 +66,6 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output-port', 'update-state']);
 
-const toast = useToastService();
 const showSpinner = ref(false);
 // EXTRA section
 const numSamples = ref(props.node.state.numSamples);
@@ -130,7 +129,9 @@ const getStatus = async (runIds: string[]) => {
 		// throw if there are any failed runs for now
 		console.error('Failed', runIds);
 		showSpinner.value = false;
-		toast.error('', `Simulation: ${runIds} has failed`);
+		logger.error(`Simulation: ${runIds} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
 		throw Error('Failed Runs');
 	}
 	completedRunIdList.value = runIds;
