@@ -8,6 +8,13 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 
 import java.util.List;
 
+/**
+ * Generic Proxy for the Terarium Data Service
+ *
+ * NOTE!!!! Patch is not supported by Feign, so we HAVE to use PUT for instead.
+ *
+ * @param <T> some TDS asset type
+ */
 @FeignClient(name = "tds", url = "${terarium.dataservice.url}")
 public interface TDSProxy<T> {
 
@@ -30,12 +37,6 @@ public interface TDSProxy<T> {
 	@DeleteMapping("/{id}")
 	ResponseEntity<JsonNode> deleteAsset(
 		@PathVariable("id") String id
-	);
-
-	@PatchMapping("/{id}")
-	ResponseEntity<JsonNode> patchUpdateAsset(
-		@PathVariable("id") String id,
-		@RequestBody JsonNode asset
 	);
 
 	@PutMapping ("/{id}")

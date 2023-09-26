@@ -82,14 +82,6 @@ public class DatasetResource implements SnakeCaseResource {
 		return ResponseEntity.ok(datasetProxy.deleteAsset(id).getBody());
 	}
 
-	@PatchMapping("/{id}")
-	public ResponseEntity<JsonNode> patchUpdateDataset(
-		@PathVariable("id") final String id,
-		@RequestBody final Dataset dataset
-	) {
-		return ResponseEntity.ok(datasetProxy.patchUpdateAsset(id, convertObjectToSnakeCaseJsonNode(dataset)).getBody());
-	}
-
 	@PutMapping("/{id}")
 	public ResponseEntity<JsonNode> updateDataset(
 			@PathVariable("id") final String id,
@@ -224,8 +216,13 @@ public class DatasetResource implements SnakeCaseResource {
 				for(String header : headers) {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
-				Dataset updatedDataset = new Dataset().setId(datasetId).setColumns(columns);
-				ResponseEntity<JsonNode> r = datasetProxy.patchUpdateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
+				Dataset updatedDataset = datasetProxy.getAsset(datasetId).getBody();
+				if(updatedDataset == null) {
+					log.error("Failed to get dataset {} after upload", datasetId);
+					return ResponseEntity.internalServerError().build();
+				}
+				updatedDataset.setColumns(columns);
+				ResponseEntity<JsonNode> r = datasetProxy.updateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
 				if(r.getStatusCode().value() != HttpStatus.OK.value()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
 				}
