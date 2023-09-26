@@ -330,7 +330,7 @@ function getValuePlaceholder(parameterType) {
 
 const typeOptions = ref([
 	{ label: 'A constant', value: ParamType.CONSTANT },
-	{ label: 'A distibution', value: ParamType.DISTRIBUTION },
+	{ label: 'A distribution', value: ParamType.DISTRIBUTION },
 	{ label: 'A value that changes over time', value: ParamType.TIME_SERIES }
 ]);
 
