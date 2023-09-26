@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/documents")
 @RestController
 @Slf4j
-public class DocumentResource {
+public class XDDDocumentResource {
 
 	@Autowired
 	DocumentProxy proxy;

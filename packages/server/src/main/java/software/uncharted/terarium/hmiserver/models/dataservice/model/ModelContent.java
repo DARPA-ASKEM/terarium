@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonSetter;

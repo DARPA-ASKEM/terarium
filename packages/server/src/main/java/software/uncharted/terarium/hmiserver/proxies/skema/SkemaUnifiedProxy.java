@@ -5,10 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 @FeignClient(name = "skema-unified", url = "${skema.unified.url}")
 public interface SkemaUnifiedProxy {

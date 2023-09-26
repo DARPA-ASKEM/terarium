@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;

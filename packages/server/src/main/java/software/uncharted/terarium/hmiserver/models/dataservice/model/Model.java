@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;

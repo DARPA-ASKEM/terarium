@@ -1,24 +1,24 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
-import java.io.Serializable;
+import java.util.Map;
 
+/**
+ * Represents a grounding document from TDS
+ */
 @Data
 @Accessors(chain = true)
 @TSModel
-public class DocumentAsset implements Serializable {
+public class Grounding {
 
+	/** Ontological identifier per DKG **/
+	private Map<String, String> identifiers;
+
+	/** (Optional) Additional context that informs the grounding **/
 	@TSOptional
-	private Long id;
-
-	@JsonProperty("xdd_uri")
-	private String xddUri;
-
-	private String title;
-
+	private Map<String, Object> context;
 }

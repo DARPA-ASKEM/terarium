@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.logging;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,10 +14,10 @@ import software.uncharted.terarium.hmiserver.controller.services.LoggingService;
 import javax.ws.rs.core.Response;
 
 
-@RequestMapping("/logs")
+@RequestMapping("/logsOld")
 @RestController
 @Slf4j
-public class LoggingController {
+public class LogsController {
 
 	@Autowired
 	private IAuthenticationFacade authenticationFacade;

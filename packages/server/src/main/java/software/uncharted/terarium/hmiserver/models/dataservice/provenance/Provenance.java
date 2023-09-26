@@ -1,8 +1,9 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 
 import java.io.Serializable;
 import java.time.Instant;

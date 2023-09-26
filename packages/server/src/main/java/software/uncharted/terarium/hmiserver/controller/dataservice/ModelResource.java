@@ -3,14 +3,12 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 
 import java.util.List;

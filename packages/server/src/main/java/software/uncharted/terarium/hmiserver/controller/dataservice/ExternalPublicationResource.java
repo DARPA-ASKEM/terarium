@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
-import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ExternalPublicationProxy;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 
 
 	@GetMapping
-	public ResponseEntity<List<DocumentAsset>> getPublications() {
+	public ResponseEntity<List<ExternalPublication>> getPublications() {
 		try {
 			return ResponseEntity.ok(proxy.getAssets(100,0).getBody());
 		} catch (Exception e) {
@@ -34,13 +34,13 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 
 	@PostMapping()
 	public ResponseEntity<JsonNode> createPublication(
-		@RequestBody final DocumentAsset publication
+		@RequestBody final ExternalPublication publication
 	) {
 		return ResponseEntity.ok(proxy.createAsset(convertObjectToSnakeCaseJsonNode(publication)).getBody());
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<DocumentAsset> getPublication(
+	public ResponseEntity<ExternalPublication> getPublication(
 		@PathVariable("id") final String id
 	) {
 		try {
@@ -54,7 +54,7 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 	@PutMapping("/{id}")
 	public ResponseEntity<JsonNode> putPublication(
 		@PathVariable("id") final String id,
-		@RequestBody final DocumentAsset publication
+		@RequestBody final ExternalPublication publication
 	) {
 		try {
 			return ResponseEntity.ok(proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(publication)).getBody());

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.uncharted.terarium.hmiserver.models.dataservice.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.ProvenanceQueryParam;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
 
 

@@ -10,7 +10,7 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
-import { DocumentAsset, EventType, Project, AssetType } from '@/types/Types';
+import { ExternalPublication, EventType, Project, AssetType } from '@/types/Types';
 
 /**
  * Create a project
@@ -121,20 +121,20 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 /**
  * Get projects publication assets for a given project per id
  * @param projectId projet id to get assets for
- * @return DocumentAsset[] the documents assets for the project
+ * @return ExternalPublication[] the documents assets for the project
  */
-async function getPublicationAssets(projectId: string): Promise<DocumentAsset[]> {
+async function getPublicationAssets(projectId: string): Promise<ExternalPublication[]> {
 	try {
 		const url = `/projects/${projectId}/assets?types=${AssetType.Publications}`;
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status === 200) {
-			return data?.[AssetType.Publications] ?? ([] as DocumentAsset[]);
+			return data?.[AssetType.Publications] ?? ([] as ExternalPublication[]);
 		}
 	} catch (error) {
 		logger.error(error);
 	}
-	return [] as DocumentAsset[];
+	return [] as ExternalPublication[];
 }
 
 /**

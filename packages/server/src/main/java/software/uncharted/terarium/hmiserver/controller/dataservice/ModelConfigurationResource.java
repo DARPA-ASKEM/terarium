@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurationProxy;
 
 import java.util.List;
