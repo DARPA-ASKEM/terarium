@@ -119,6 +119,9 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 		} else {
 			obj.base = existingTransition.id;
 		}
+		obj.input = transition.input;
+		obj.output = transition.output;
+
 		matrixData.push(obj);
 	}
 	return { uniqueTransitions, matrixData };

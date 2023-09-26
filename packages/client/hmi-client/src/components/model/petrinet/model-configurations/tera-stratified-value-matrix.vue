@@ -21,27 +21,30 @@
 								{{ row[0].rowCriteria }}
 							</template>
 						</td>
-
 						<td
 							v-for="(cell, j) in row"
 							:key="j"
 							tabindex="0"
-							@keyup.enter="onEnterValueCell(cell?.value?.id, i, j)"
-							@click="onEnterValueCell(cell?.value?.id, i, j)"
+							@keyup.enter="onEnterValueCell(cell?.content?.id, i, j)"
+							@click="onEnterValueCell(cell?.content?.id, i, j)"
 						>
-							<template v-if="cell?.value">
+							<template v-if="cell.content.id">
 								<InputText
 									v-if="editableCellStates[i][j]"
 									class="cell-input"
 									v-model.lazy="valueToEdit"
 									v-focus
-									@focusout="updateModelConfigValue(cell.value.id, i, j)"
-									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
+									@focusout="updateModelConfigValue(cell.content.id, i, j)"
+									@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, j)"
 								/>
 								<div
+									v-else-if="nodeType === NodeType.State"
 									class="mathml-container"
-									v-html="matrixExpressionsList[i]?.[j] ?? cell.value ?? '...'"
-								></div>
+									v-html="matrixExpressionsList?.[i]?.[j] ?? '...'"
+								/>
+								<div v-else>
+									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+								</div>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
 						</td>
@@ -61,7 +64,7 @@ import {
 	getMiraAMRPresentationData,
 	getUnstratifiedParameters
 } from '@/model-representation/petrinet/mira-petri';
-import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
+import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
@@ -107,11 +110,11 @@ watch(
 			matrix.value
 				.map((row) =>
 					row.map(async (cell) => {
-						if (cell.value?.id) {
+						if (cell.content?.id) {
 							if (!output[cell.row]) {
 								output[cell.row] = [];
 							}
-							output[cell.row][cell.col] = await getMatrixValue(cell.value.id, props.shouldEval);
+							output[cell.row][cell.col] = await getMatrixValue(cell.content.id, props.shouldEval);
 						}
 					})
 				)
@@ -239,8 +242,8 @@ function generateMatrix(populateDimensions = false) {
 
 	// Get only the states/transitions that are mapped to the base model
 	let matrixData: any[] = [];
-	let inputs: string[] = [];
-	let outputs: string[] = [];
+	let childParameterIds: string[] = [];
+
 	if (props.nodeType === NodeType.State) {
 		matrixData = stateMatrixData.filter(({ base }) => base === props.id);
 	} else {
@@ -248,9 +251,7 @@ function generateMatrix(populateDimensions = false) {
 		if (!paramsMap.has(props.id)) return [];
 
 		// IDs to find within the rates
-		const childParmaterIds = paramsMap.get(props.id) as string[];
-
-		// ;
+		childParameterIds = paramsMap.get(props.id) as string[];
 
 		// Holds all points that have the parameter
 		matrixData = transitionMatrixData.filter((d) => {
@@ -260,70 +261,11 @@ function generateMatrix(populateDimensions = false) {
 
 			// FIXME: should check through sympy to be more accurate
 			if (rate.expression.includes(props.id)) return true;
-			for (let i = 0; i < childParmaterIds.length; i++) {
-				if (rate.expression.includes(childParmaterIds[i])) return true;
+			for (let i = 0; i < childParameterIds.length; i++) {
+				if (rate.expression.includes(childParameterIds[i])) return true;
 			}
 			return false;
 		});
-		console.log(childParmaterIds);
-		console.log('matrix data', matrixData);
-
-		// Get inputs and outputs
-		for (let i = 0; i < matrixData.length; i++) {
-			const id = matrixData[i].id;
-			const { input, output } = amr.model.transitions.find((t) => t.id === id);
-			inputs.push(...input);
-			outputs.push(...output);
-		}
-
-		// Get unique inputs and outputs and sort names alphabetically
-		inputs = [...new Set(inputs)].sort();
-		outputs = [...new Set(outputs)].sort();
-
-		const rows: any[] = [];
-		for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
-			const row: any[] = [];
-			for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
-				// If there is an input output pair that matches then a parameter belongs in this cell
-				let value: any = null;
-
-				// Get inputs and outputs
-				for (let i = 0; i < matrixData.length; i++) {
-					const id = matrixData[i].id;
-					const { input, output } = amr.model.transitions.find((t) => t.id === id);
-
-					if (input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
-						const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
-						if (!rate) {
-							value = id;
-							break;
-						}
-						for (let j = 0; j < childParmaterIds.length; j++) {
-							if (rate.expression.includes(childParmaterIds[j])) {
-								value =
-									amr.semantics?.ode.parameters?.find((p) => p.id === childParmaterIds[j])?.value ??
-									null;
-								break;
-							}
-						}
-					}
-				}
-
-				row.push({
-					row: rowIdx,
-					col: colIdx,
-					rowCriteria: inputs[rowIdx],
-					colCriteria: outputs[colIdx],
-					value
-				});
-			}
-			rows.push(row);
-		}
-
-		console.log(inputs, outputs, rows);
-
-		matrix.value = rows;
-		return matrixData;
 	}
 
 	if (isEmpty(matrixData)) return matrixData;
@@ -344,10 +286,9 @@ function generateMatrix(populateDimensions = false) {
 	const matrixAttributes =
 		props.nodeType === NodeType.State
 			? createMatrix1D(matrixData)
-			: createMatrix2D(matrixData, colDimensions, rowDimensions);
+			: createParameterMatrix(matrixData, amr, childParameterIds);
 
 	matrix.value = matrixAttributes.matrix;
-	console.log(matrix.value);
 
 	return matrixData;
 }

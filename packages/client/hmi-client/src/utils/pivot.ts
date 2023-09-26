@@ -1,12 +1,13 @@
 // Create pivot table
 import _ from 'lodash';
+import { Model } from '@/types/Types';
 
 export interface PivotMatrixCell {
 	row: number;
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
-	value: any;
+	content: any;
 }
 
 // Helper function to expand the row and column terms into "lookup" axes
@@ -97,11 +98,75 @@ export const createMatrix1D = (data: any[]) => {
 			col: 0,
 			rowCriteria: data[rowIdx],
 			colCriteria: null,
-			value: data[rowIdx]
+			content: data[rowIdx]
 		});
 		rows.push(row);
 	}
 
+	return { matrix: rows };
+};
+
+export const createParameterMatrix = (
+	transitionMatrixData: any[],
+	amr: Model,
+	childParameterIds: string[]
+) => {
+	const rows: any[] = [];
+	let inputs: string[] = [];
+	let outputs: string[] = [];
+
+	// Get unique inputs and outputs and sort names alphabetically
+	for (let i = 0; i < transitionMatrixData.length; i++) {
+		inputs.push(...transitionMatrixData[i].input);
+		outputs.push(...transitionMatrixData[i].output);
+	}
+	inputs = [...new Set(inputs)].sort();
+	outputs = [...new Set(outputs)].sort();
+
+	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
+		const row: PivotMatrixCell[] = [];
+		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
+			// If there is an input output pair that matches then a parameter belongs in this cell
+			const content: { value: any; id: string; hasController: boolean } = {
+				value: null,
+				id: '',
+				hasController: false
+			};
+
+			// Get inputs and outputs
+			for (let i = 0; i < transitionMatrixData.length; i++) {
+				const { input, output, id } = transitionMatrixData[i];
+				const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+
+				if (rate && input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
+					for (let j = 0; j < childParameterIds.length; j++) {
+						if (rate.expression.includes(childParameterIds[j])) {
+							const parameter = amr.semantics?.ode.parameters?.find(
+								(p) => p.id === childParameterIds[j]
+							);
+							if (parameter) {
+								content.id = parameter.id;
+								content.value = parameter.value;
+								content.hasController = inputs[rowIdx] === outputs[colIdx];
+							}
+							break;
+						}
+					}
+				}
+			}
+			row.push({
+				row: rowIdx,
+				col: colIdx,
+				rowCriteria: inputs[rowIdx],
+				colCriteria: outputs[colIdx],
+				content
+			});
+		}
+		rows.push(row);
+	}
+	console.log(childParameterIds);
+	console.log('matrix data', transitionMatrixData);
+	console.log(inputs, outputs, rows);
 	return { matrix: rows };
 };
 
@@ -121,14 +186,14 @@ export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensio
 				col: colIdx,
 				rowCriteria: axes.rowAxis[rowIdx],
 				colCriteria: axes.colAxis[colIdx],
-				value: null
+				content: null
 			});
 		}
 		rows.push(row);
 	}
 
 	// Populate matrix
-	// A cell has a non-null value if the row and col criteria matches
+	// A cell has a non-null content if the row and col criteria matches
 	// with an element in the data array
 	for (let rowIdx = 0; rowIdx < axes.rowAxis.length; rowIdx++) {
 		for (let colIdx = 0; colIdx < axes.colAxis.length; colIdx++) {
@@ -157,7 +222,7 @@ export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensio
 				}
 				return found;
 			});
-			rows[rowIdx][colIdx].value = dataObj;
+			rows[rowIdx][colIdx].content = dataObj;
 		}
 	}
 
