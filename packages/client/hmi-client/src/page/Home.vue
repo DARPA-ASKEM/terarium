@@ -227,9 +227,9 @@
 			</template>
 		</Dialog>
 		<tera-share-project
-			v-if="projectToShare"
-			v-model="isShareProjectVisible"
-			:project="projectToShare"
+			v-if="selectedMenuProject"
+			v-model="isShareDialogVisible"
+			:project="selectedMenuProject"
 		/>
 	</main>
 </template>
@@ -262,6 +262,9 @@ import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
 import Skeleton from 'primevue/skeleton';
+import { useProjectMenu } from '@/composables/project-menu';
+
+const { isShareDialogVisible, selectedMenuProject } = useProjectMenu();
 
 enum ProjectsView {
 	Cards,
@@ -347,11 +350,6 @@ const openRemoveDialog = () => {
 	isRemoveDialog.value = true;
 };
 
-function openShareDialog() {
-	isShareProjectVisible.value = true;
-	projectToShare.value = selectedProjectMenu.value;
-}
-
 function updateChosenProjectMenu(project: IProject) {
 	selectedProjectMenu.value = project;
 }
@@ -409,9 +407,6 @@ const newProjectName = ref('');
 const newProjectDescription = ref('');
 const isLoadingProjectsWithRelatedDocs = ref(true);
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
-
-const isShareProjectVisible = ref(false);
-const projectToShare = ref<IProject | null>();
 
 const selectDocument = (item: Document) => {
 	const itemID = item as Document;
