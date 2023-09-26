@@ -14,15 +14,6 @@ export interface ClientLog {
     args?: string[];
 }
 
-export interface EvaluationScenarioSummary {
-    name: string;
-    username: string;
-    task: string;
-    description: string;
-    notes: string;
-    timestampMillis: number;
-}
-
 export interface Event {
     id?: string;
     timestampMillis?: number;
@@ -180,6 +171,21 @@ export interface DatasetColumn {
     description?: string;
 }
 
+export interface DocumentAsset {
+    id?: string;
+    name?: string;
+    description?: string;
+    timestamp?: Date;
+    username?: string;
+    fileNames?: string[];
+    documentUrl?: string[];
+    metadata?: any;
+    source?: string;
+    text?: string;
+    grounding?: Grounding;
+    concepts?: Concept[];
+}
+
 export interface Model {
     id: string;
     header: ModelHeader;
@@ -253,6 +259,15 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     facets: { [index: string]: XDDFacetsItemResponse };
 }
 
+export interface EvaluationScenarioSummary {
+    name: string;
+    username: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
+}
+
 export interface ExtractionResponse {
     id: string;
     status: string;
@@ -305,12 +320,6 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
-export interface Intervention {
-    name: string;
-    timestep: number;
-    value: number;
-}
-
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
@@ -329,6 +338,12 @@ export interface EnsembleModelConfigs {
     id: string;
     solutionMappings: { [index: string]: string };
     weight: number;
+}
+
+export interface Intervention {
+    name: string;
+    timestep: number;
+    value: number;
 }
 
 export interface TimeSpan {
@@ -689,13 +704,6 @@ export interface MetadataDataset {
     metadata: string;
 }
 
-export enum EvaluationScenarioStatus {
-    Started = "STARTED",
-    Paused = "PAUSED",
-    Resumed = "RESUMED",
-    Stopped = "STOPPED",
-}
-
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
@@ -727,6 +735,13 @@ export enum RoleType {
     Admin = "ADMIN",
     User = "USER",
     Special = "SPECIAL",
+}
+
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
 }
 
 export enum FileType {

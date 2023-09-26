@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models;
+package software.uncharted.terarium.hmiserver.models.evaluation;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

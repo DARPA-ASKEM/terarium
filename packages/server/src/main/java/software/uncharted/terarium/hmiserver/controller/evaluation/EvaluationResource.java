@@ -1,55 +1,56 @@
-package software.uncharted.terarium.hmiserver.resources.evaluation;
+package software.uncharted.terarium.hmiserver.controller.evaluation;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import io.quarkus.panache.common.Sort;
-import io.quarkus.security.identity.SecurityIdentity;
-import lombok.AllArgsConstructor;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import software.uncharted.terarium.hmiserver.entities.Event;
-import software.uncharted.terarium.hmiserver.models.EvaluationScenarioStatus;
-import software.uncharted.terarium.hmiserver.models.EvaluationScenarioSummary;
-import software.uncharted.terarium.hmiserver.models.EventType;
 
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import software.uncharted.terarium.hmiserver.controller.services.AuthenticationFacade;
+
+import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioSummary;
+
+
 import javax.ws.rs.QueryParam;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
-@Tag(name = "Evaluation Scenarios REST Endpoint")
-@Path("/api/evaluation")
+
+@RequestMapping("/evaluation")
+@RestController
 @Slf4j
 public class EvaluationResource {
-	@Inject
-	SecurityIdentity securityIdentity;
+	@Autowired
+	AuthenticationFacade authenticationFacade;
 
-	@Inject
+	@Autowired
 	ObjectMapper mapper;
 
 	/**
 	 * Get a list of all evaluation scenarios
 	 * @return	A list of all evaluation scenarios
 	 */
-	@GET
-	@Path("/scenarios")
-	public List<EvaluationScenarioSummary> getScenarios() {
-		Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
+	@GetMapping("/scenarios")
+	public ResponseEntity<List<EvaluationScenarioSummary>> getScenarios() {
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+		/*Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
 
 		// Find the first event for each summary
 		final List<Event> events = Event.find("type = ?1", Sort.descending("timestampmillis"), EventType.EVALUATION_SCENARIO).list();
@@ -83,7 +84,7 @@ public class EvaluationResource {
 		usernameToScenarioNameToSummary.forEach((username, scenarioNameToSummary) -> {
 			scenarioSummaries.addAll(scenarioNameToSummary.values());
 		});
-		return scenarioSummaries;
+		return ResponseEntity.ok(scenarioSummaries);*/
 	}
 
 	/**
@@ -91,10 +92,10 @@ public class EvaluationResource {
 	 * @param name
 	 * @return
 	 */
-	@GET
-	@Path("/status")
-	public String getStatus(@QueryParam("name") String name) {
-		final String username = securityIdentity.getPrincipal().getName();
+	@GetMapping("/status")
+	public ResponseEntity<String> getStatus(@RequestParam("name") String name) {
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+	/*	final String username = authenticationFacade.getAuthentication().getName();
 		final List<Event> events = Event.find("type = ?1 and username = ?2", Sort.descending("timestampmillis"), EventType.EVALUATION_SCENARIO, username).list();
 		final Event latestEvent = events
 			.stream()
@@ -112,18 +113,18 @@ public class EvaluationResource {
 		if (latestEvent != null) {
 			try {
 				final JsonNode value = mapper.readValue(latestEvent.getValue(), JsonNode.class);
-				return value.at("/action").asText();
+				return ResponseEntity.ok(value.at("/action").asText());
 			} catch (JsonProcessingException e) {
 				log.error("Error parsing event value", e);
 			}
 		}
-		return null;
+		return ResponseEntity.noContent().build();*/
 	}
 
-	@GET
-	@Path("/runtime")
-	public Long getRuntime(@QueryParam("name") String name) {
-		final String username = securityIdentity.getPrincipal().getName();
+	@GetMapping("/runtime")
+	public ResponseEntity<Long> getRuntime(@RequestParam("name") String name) {
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+		/*final String username = authenticationFacade.getAuthentication().getName();
 		final List<Event> events = Event.find("type = ?1 and username = ?2", Sort.ascending("timestampmillis"), EventType.EVALUATION_SCENARIO, username).list();
 		final List<Event> scenarioEvents = events
 			.stream()
@@ -139,7 +140,7 @@ public class EvaluationResource {
 			.toList();
 
 		if (scenarioEvents.size() == 1) {
-			return Instant.now().toEpochMilli() - scenarioEvents.get(0).getTimestampMillis();
+			return ResponseEntity.ok(Instant.now().toEpochMilli() - scenarioEvents.get(0).getTimestampMillis());
 		}
 
 		long runtime = 0L;
@@ -156,15 +157,15 @@ public class EvaluationResource {
 				log.error("Error parsing event value", e);
 			}
 		}
-		return runtime;
+		return ResponseEntity.ok(runtime);*/
 	}
 
-	@GET
-	@Path("/download")
-	public String getCSV(@QueryParam("username") final String username,
-											 @QueryParam("name") final String name) throws IOException {
+	@GetMapping("/download")
+	public ResponseEntity<String> getCSV(@RequestParam("username") final String username,
+											 @RequestParam("name") final String name) throws IOException {
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 
-		final List<Event> events = Event.findAllByUsername(username);
+		/*final List<Event> events = Event.findAllByUsername(username);
 
 		// Find the list of timeranges for the scenario
 		final List<Event> scenarioEvents = events.stream()
@@ -248,7 +249,7 @@ public class EvaluationResource {
 				}
 			});
 		}
-		return sw.toString();
+		return ResponseEntity.ok(sw.toString());*/
 	}
 
 	@Accessors(chain = true)
@@ -269,7 +270,7 @@ public class EvaluationResource {
 	 * @param scenarioEvents	All events for the scenario of type EVALUATION_SCENARIO
 	 * @return								A list of ranges for which the scenario was not paused
 	 */
-	private List<Range> getRangesForScenario(final List<Event> scenarioEvents) {
+	/*private List<Range> getRangesForScenario(final List<Event> scenarioEvents) {
 		final List<Range> ranges = new ArrayList<>();
 		for (int i = 0; i < scenarioEvents.size() - 1; i++) {
 			final Event currentEvent = scenarioEvents.get(i);
@@ -285,5 +286,5 @@ public class EvaluationResource {
 			}
 		}
 		return ranges;
-	}
+	}*/
 }

@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models;
+package software.uncharted.terarium.hmiserver.models.evaluation;
 
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
