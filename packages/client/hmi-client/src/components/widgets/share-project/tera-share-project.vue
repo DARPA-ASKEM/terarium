@@ -61,6 +61,7 @@ import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import { watch, ref, computed } from 'vue';
 import Button from 'primevue/button';
+import { IProject } from '@/types/Project';
 import TeraUserCard from './tera-user-card.vue';
 
 export interface User {

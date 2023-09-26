@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Menu from 'primevue/menu';
@@ -70,13 +70,19 @@ import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { IProject } from '@/types/Project';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{
 	project?: IProject;
-	projectMenuItems?: any[];
 }>();
 
-const emit = defineEmits(['update-chosen-project-menu']);
+const emit = defineEmits(['update-chosen-project-menu', 'open-share-dialog', 'open-remove-dialog']);
+
+const projectMenuItems = ref([
+	{ label: 'Rename', icon: 'pi pi-pencil', command: () => {} },
+	{ separator: true },
+	{ label: 'Remove', icon: 'pi pi-trash', command: () => emit('open-remove-dialog') }
+]);
 
 const projectMenu = ref();
 const showProjectMenu = (event) => {
@@ -107,6 +113,16 @@ const stats = computed(() =>
 );
 
 const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
+
+onMounted(() => {
+	if (useAuthStore().name === props.project?.username) {
+		projectMenuItems.value = projectMenuItems.value.toSpliced(1, 0, {
+			label: 'Share',
+			icon: 'pi pi-user-plus',
+			command: () => emit('open-share-dialog')
+		});
+	}
+});
 </script>
 
 <style scoped>

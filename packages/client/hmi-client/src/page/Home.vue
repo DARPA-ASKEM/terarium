@@ -97,9 +97,10 @@
 										<tera-project-card
 											v-if="project.id"
 											:project="project"
-											:project-menu-items="projectMenuItems"
 											@click="openProject(project.id)"
 											@update-chosen-project-menu="updateChosenProjectMenu(project)"
+											@open-remove-dialog="openRemoveDialog"
+											@open-share-dialog="openShareDialog"
 										/>
 									</li>
 									<li>
@@ -355,21 +356,10 @@ const openRemoveDialog = () => {
 	isRemoveDialog.value = true;
 };
 
-function showShareDialog() {
+function openShareDialog() {
 	isShareProjectVisible.value = true;
 	projectToShare.value = selectedProjectMenu.value;
 }
-
-const projectMenuItems = ref([
-	{ label: 'Rename', icon: 'pi pi-pencil', command: () => {} },
-	{
-		label: 'Share',
-		icon: 'pi pi-user-plus',
-		command: showShareDialog
-	},
-	{ separator: true },
-	{ label: 'Remove', icon: 'pi pi-trash', command: openRemoveDialog }
-]);
 
 function updateChosenProjectMenu(project: IProject) {
 	selectedProjectMenu.value = project;
