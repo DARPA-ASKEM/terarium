@@ -33,13 +33,13 @@ describe('pivot table tests', () => {
 		let undefinedCells = 0;
 		r.matrix.forEach((row) => {
 			row.forEach((d: any) => {
-				if (!d.value) undefinedCells++;
+				if (!d.content) undefinedCells++;
 			});
 		});
 
-		expect(r.matrix[0][0].value).to.not.eq(undefined);
-		expect(r.matrix[1][1].value).to.not.eq(undefined);
-		expect(r.matrix[2][2].value).to.not.eq(undefined);
+		expect(r.matrix[0][0].content).to.not.eq(undefined);
+		expect(r.matrix[1][1].content).to.not.eq(undefined);
+		expect(r.matrix[2][2].content).to.not.eq(undefined);
 		expect(undefinedCells).to.eq(6);
 	});
 
@@ -50,7 +50,7 @@ describe('pivot table tests', () => {
 		let undefinedCells = 0;
 		r.matrix.forEach((row) => {
 			row.forEach((d: any) => {
-				if (!d.value) undefinedCells++;
+				if (!d.content) undefinedCells++;
 			});
 		});
 		expect(undefinedCells).to.eq(7);
@@ -59,7 +59,7 @@ describe('pivot table tests', () => {
 	it('2D pivot short form', () => {
 		const r = createMatrix2D(data4, ['fruit'], ['fruit']);
 		expect(r.matrix.length).to.eq(2);
-		expect(r.matrix[0][0].value).to.not.eq(undefined);
-		expect(r.matrix[1][1].value).to.not.eq(undefined);
+		expect(r.matrix[0][0].content).to.not.eq(undefined);
+		expect(r.matrix[1][1].content).to.not.eq(undefined);
 	});
 });

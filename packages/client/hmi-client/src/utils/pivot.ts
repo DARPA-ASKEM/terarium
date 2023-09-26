@@ -115,7 +115,7 @@ export const createParameterMatrix = (
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
-	// Get unique inputs and outputs and sort names alphabetically
+	// Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
 	for (let i = 0; i < transitionMatrixData.length; i++) {
 		inputs.push(...transitionMatrixData[i].input);
 		outputs.push(...transitionMatrixData[i].output);
@@ -123,23 +123,26 @@ export const createParameterMatrix = (
 	inputs = [...new Set(inputs)].sort();
 	outputs = [...new Set(outputs)].sort();
 
+	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
 		const row: PivotMatrixCell[] = [];
 		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
-			// If there is an input output pair that matches then a parameter belongs in this cell
 			const content: { value: any; id: string; hasController: boolean } = {
 				value: null,
 				id: '',
 				hasController: false
 			};
 
-			// Get inputs and outputs
+			// Go through transition data to see what inputs/outputs belong to certain transitions
 			for (let i = 0; i < transitionMatrixData.length; i++) {
 				const { input, output, id } = transitionMatrixData[i];
 				const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
 
+				// If the current input/output combo matches a combo in the transition data then a parameter belongs in this cell
 				if (rate && input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
+					// Find the parameter that's in the rate expression
 					for (let j = 0; j < childParameterIds.length; j++) {
+						// Fill cell content with parameter content
 						if (rate.expression.includes(childParameterIds[j])) {
 							const parameter = amr.semantics?.ode.parameters?.find(
 								(p) => p.id === childParameterIds[j]
