@@ -94,9 +94,6 @@
 											v-if="project.id"
 											:project="project"
 											@click="openProject(project.id)"
-											@update-chosen-project-menu="updateChosenProjectMenu(project)"
-											@open-remove-dialog="openRemoveDialog"
-											@open-share-dialog="openShareDialog"
 										/>
 									</li>
 									<li>
@@ -112,10 +109,8 @@
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
 								:projects="tab.projects"
-								:project-menu-items="projectMenuItems"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
-								@update-chosen-project-menu="updateChosenProjectMenu"
 							/>
 						</section>
 					</TabPanel>
@@ -215,14 +210,14 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-		<Dialog :header="`Remove ${selectedProjectMenu?.name}`" v-model:visible="isRemoveDialog">
+		<Dialog :header="`Remove ${selectedMenuProject?.name}`" v-model:visible="isRemoveDialogVisible">
 			<p>
-				You are about to remove project <em>{{ selectedProjectMenu?.name }}</em
+				You are about to remove project <em>{{ selectedMenuProject?.name }}</em
 				>.
 			</p>
 			<p>Are you sure?</p>
 			<template #footer>
-				<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
+				<Button label="Cancel" class="p-button-secondary" @click="isRemoveDialogVisible = false" />
 				<Button label="Remove project" @click="removeProject" />
 			</template>
 		</Dialog>
@@ -264,7 +259,7 @@ import { IProject } from '@/types/Project';
 import Skeleton from 'primevue/skeleton';
 import { useProjectMenu } from '@/composables/project-menu';
 
-const { isShareDialogVisible, selectedMenuProject } = useProjectMenu();
+const { isShareDialogVisible, isRemoveDialogVisible, selectedMenuProject } = useProjectMenu();
 
 enum ProjectsView {
 	Cards,
@@ -337,29 +332,11 @@ const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
 
-/*
- * User Menu
- */
-const selectedProjectMenu = ref<IProject | null>(null);
-
-const isRemoveDialog = ref(false);
-const closeRemoveDialog = () => {
-	isRemoveDialog.value = false;
-};
-const openRemoveDialog = () => {
-	isRemoveDialog.value = true;
-};
-
-function updateChosenProjectMenu(project: IProject) {
-	selectedProjectMenu.value = project;
-}
-
 const removeProject = async () => {
-	if (!selectedProjectMenu.value?.id) return;
-	const { name, id } = selectedProjectMenu.value;
-
+	if (!selectedMenuProject.value) return;
+	const { name, id } = selectedMenuProject.value;
 	const isDeleted = await useProjects().remove(id);
-	closeRemoveDialog();
+	isRemoveDialogVisible.value = false;
 	if (isDeleted) {
 		useProjects().getAll();
 		logger.info(`The project ${name} was removed`, { showToast: true });
