@@ -1,80 +1,114 @@
-[![Build and Publish](https://github.com/DARPA-ASKEM/Terarium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
 
 # Terarium
 
 Terarium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish
 machine extracted models.
 
-## Install and dependencies
+[app.terarium.ai](https://app.terarium.ai/)
 
-The Terarium client is built with Typescript and Vue3. The Terarium server is built with Java and Quarkus. To run and
+## Table of Contents
+
+1. [Project Status](#project-status)
+1. [Getting Started](#getting-started)
+  1. [Dependencies](#dependencies)
+  1. [Running and Debugging](#Running and Debugging)
+     1. [Running the Client](#running-the-client)
+  1. [Running Tests](#running-tests)
+     1. [Other Tests](#other-tests)
+  1. [Installation](#installation)
+  1. [Usage](#usage)
+1. [Release Process](#release-process)
+  1. [Versioning](#versioning)
+  1. [Payload](#payload)
+1. [How to Get Help](#how-to-get-help)
+1. [Contributing](#contributing)
+1. [Further Reading](#further-reading)
+1. [License](#license)
+1. [Authors](#authors)
+1. [Acknowledgments](#acknowledgements)
+
+
+## Project Status
+[![Build and Publish](https://github.com/DARPA-ASKEM/Terarium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
+
+
+[![Client E2E Tests](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client-e2e.yaml/badge.svg)](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client-e2e.yaml)
+[![Client Tests](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client.yaml/badge.svg)](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client.yaml)
+[![Server Tests](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-server.yaml/badge.svg)](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-server.yaml)
+
+## Getting Started
+
+### Dependencies
+
+The Terarium client is built with Typescript and Vue3. The Terarium server is built with Java and Spring Boot. To run and
 develop Terarium, you will need these as a prerequisite:
 
 - [Yarn 2](https://yarnpkg.com/getting-started/install)
 - [NodeJS 18](https://nodejs.org/en/download/current/)
-- [JDK 17](https://openjdk.org/projects/jdk/17/)
-- [Quarkus CLI](https://quarkus.io/guides/cli-tooling)
+- [JDK 17](https://adoptium.net/temurin)
+- [Gradle 7](https://gradle.org/install/)
 
-> NOTE: You **must** enable Kubernetes support in Docker. Go to your Docker dashboard -> Settings (Gear icon) ->
-> Kubernetes -> Enable Kubernetes
-> NOTE: The latest jdk version (i.e., 19) is not supportted and hence the reference to the usage of an earlier version (
-> e.g., openjdk17)
-
-### macOS
-
-Installing/Using [Homebrew](https://brew.sh/) to install the following:
-
-* [Temurin](https://adoptium.net/temurin) OR OpenJDK
-* [Gradle](https://gradle.org)
-* [Quarkus](https://quarkus.io/guides/cli-tooling).
+There are many ways/package managers to install these dependencies. We recommend using [Homebrew](https://brew.sh/) on MacOS. 
 
 ```bash
 brew tap homebrew/cask-versions
 brew install --cask temurin17 # OR brew install openjdk@17 
 brew install gradle
-brew install quarkusio/tap/quarkus
+brew install yarn
 ```
 
-## Running the server in dev mode
+In addition, you will need to have the ansible askem vault id file in your home directory. This is used to decrypt the local secrets file. This file is not included in the repository for security reasons. Please contact the team for access to this file.
 
-First, launch the authentication service before running the server (see
-documentation [here](https://github.com/DARPA-ASKEM/orchestration)).
+### Running and Debugging
+There is a companion project to Terarium which handles spinning up the required services. Depending on what you're doing this can be configured to run all or some of the related services. You'll need to start the orchestration project up before beginning (see documentation [here](https://github.com/DARPA-ASKEM/orchestration)).
 
-Then, before your first launch of the server you will need to decrypt the local secrets file. This command is assuming
-you have the password located in your home directory in a file named `askem-vault-id.txt`.
-This command should be run from inside of the `resources` directory of the hmi-server
 
-```shell
-ansible-vault decrypt --vault-password-file ~/askem-vault-id.txt --output application-secrets.properties application-secrets.properties.encrypted   
-```
-
-Then, you can run your application in dev mode that enables live coding using:
-
-```
-./gradlew quarkusDev
-```
-
-or, if you have the Quarkus CLI
-
-```
-quarkus dev
-```
-
-When running in dev mode, you will need to run both the HMI server _and_ the Document service explicitly
-> NOTE: Quarkus has a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
-
-## Running the client in dev mode
-
+#### Running the Client and Server
 To install package dependencies, run the command in the root directory
 
-```
+```shell
 yarn install
 ```
 
-## Dev UI
+If you don't intend to work with the back end at all, you can simply kick off the back end process via the server dev script located in the root of this directory. It will handle decrypting secrets, starting the server, and reencrypting secrets once you shut the server down. *If you do intend to work with the back end, skip this step and see the below debug instructions*
 
-Once your application is running locally, you can hit the dev UI at localhost:3000/q/dev. From here you can access lots
-of different tools and views, including our Swagger UI located http://localhost:3000/q/swagger-ui/
+```shell
+./hmiServerDev.sh start
+```
+
+Finally, to start the client, run the command in the root directory
+
+```shell
+yarn dev
+```
+
+<details>
+<summary><b>Debugging the Client in IntelliJ</b></summary>
+
+Create a new IntelliJ run configuration with the following settings:
+* Type: JavaScript Debug
+* Name: `Terarium Client` (or whatever you want)
+* URL: `http://localhost:8080`
+* Browser: `Chrome` (or whatever you want)
+* Check "Ensure breakpoints are detected when loading scripts"
+
+Save your configuration, and choose Debug from the Run menu. You will now hit breakpoints set in your front end code. Note that prior to running this config you'll need to have run `yarn dev` separately
+
+  ![debug Front End](docs/debugFrontEnd.png)
+
+</details>
+<details>
+<summary><b>Debugging the Server in IntelliJ</b></summary>
+The easiest way to debug the back end is to use the auto-created debug profile in IntelliJ. However first you'll have to
+create a new run config to decrypt the application secrets and then modify the default run profile to include it.
+
+1) Create a new run profile named "Decrypt" which runs the `hmiServerDev decrypt` command:
+   ![Decrypt run config](docs/decrypt.png)
+2) Navigate now to the default created Spring Boot run profile. If you don't have one, create one and set the properties to what you see below.
+   * Add a "Before Launch" option of "Run Another Configuration" and select the "Decrypt" run config you just created. Slot it first.
+![springboot-config.png](docs%2Fspringboot-config.png)
+</details>
+
 
 ## Testing
 

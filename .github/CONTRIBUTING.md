@@ -93,27 +93,8 @@ tag.
 
 ### Back End
 
-The easiest way to debug the back end is to use the auto-created debug profile in IntelliJ. However first you'll have to
-create a new run config to decrypt the application secrets and then modify the default run profile to include it.
 
-1) Create a new run profile named "Decrypt" which runs the `hmiServerDev decrypt` command:
-   ![Decrypt run config](decrypt.png)
-2) In your default run profile for the hmi-server, add a "Before Launch" step to run your previously created config.
-   Note that you may need to manually run the Decrypt run profile once for IntelliJ to pick it up:
-   ![before Launch](beforeLaunch.png)
-3) Now when you run your run/debug profile, the secrets will be decrypted correctly.
 
-### Front End
-
-You can also use IntelliJ to debug the front end, setting and hitting breakpoints in your IDE instead of the browser.
-
-1) Run the `yarn dev` command from the root directory to start the front end in a terminal window.
-2) In IntelliJ, create a new run config of type "HMI Client" and set the URL to `http://localhost:8080/`. Set your browser of choice and click "OK".
-   ![debug Front End](debugFrontEnd.png)
-3) Now when you run your run/debug profile, the front end will be served from your IDE and you can set breakpoints in your IDE.
-
-As previously mentioned you are able to start up the hmi-server by running the `hmiServerDev` script located in the main
-directory. Once launched you should be able to attach your favourite debugger to the process
 
 ## Application Secrets
 
