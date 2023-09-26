@@ -63,6 +63,7 @@ import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
+import { useToastService } from '@/services/toast';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleCiemssOperation,
@@ -74,6 +75,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output-port', 'update-state']);
 
+const toast = useToastService();
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -146,6 +148,7 @@ const getStatus = async (simulationId: string) => {
 		// throw if there are any failed runs for now
 		console.error('Failed', simulationId);
 		showSpinner.value = false;
+		toast.error('', `Calibration: ${simulationId} has failed`);
 		throw Error('Failed Runs');
 	}
 	completedRunId.value = simulationId;

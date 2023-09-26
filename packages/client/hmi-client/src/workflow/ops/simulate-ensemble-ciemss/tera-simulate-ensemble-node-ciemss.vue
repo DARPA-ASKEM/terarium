@@ -60,6 +60,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { useToastService } from '@/services/toast';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleCiemssOperation
@@ -70,6 +71,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output-port', 'update-state']);
 
+const toast = useToastService();
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
 const completedRunId = ref<string>();
@@ -148,6 +150,7 @@ const getStatus = async (simulationId: string) => {
 		// throw if there are any failed runs for now
 		console.error('Failed', simulationId);
 		showSpinner.value = false;
+		toast.error('', `Simulation: ${simulationId} has failed`);
 		throw Error('Failed Runs');
 	}
 	completedRunId.value = simulationId;
