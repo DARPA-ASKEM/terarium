@@ -61,7 +61,6 @@ import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import { watch, ref, computed } from 'vue';
 import Button from 'primevue/button';
-import { Project } from '@/types/Types';
 import TeraUserCard from './tera-user-card.vue';
 
 export interface User {
@@ -69,7 +68,7 @@ export interface User {
 	email: string;
 }
 
-const props = defineProps<{ modelValue: boolean; project: Project }>();
+const props = defineProps<{ modelValue: boolean; project: IProject }>();
 
 const visible = ref(props.modelValue);
 const users = ref<User[]>([

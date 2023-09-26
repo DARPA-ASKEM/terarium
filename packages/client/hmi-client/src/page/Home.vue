@@ -234,6 +234,11 @@
 				<Button label="Remove project" @click="removeProject" />
 			</template>
 		</Dialog>
+		<tera-share-project
+			v-if="projectToShare"
+			v-model="isShareProjectVisible"
+			:project="projectToShare"
+		/>
 	</main>
 </template>
 
@@ -350,11 +355,20 @@ const openRemoveDialog = () => {
 	isRemoveDialog.value = true;
 };
 
+function showShareDialog() {
+	isShareProjectVisible.value = true;
+	projectToShare.value = selectedProjectMenu.value;
+}
+
 const projectMenuItems = ref([
+	{ label: 'Rename', icon: 'pi pi-pencil', command: () => {} },
 	{
-		label: 'Remove',
-		command: openRemoveDialog
-	}
+		label: 'Share',
+		icon: 'pi pi-user-plus',
+		command: showShareDialog
+	},
+	{ separator: true },
+	{ label: 'Remove', icon: 'pi pi-trash', command: openRemoveDialog }
 ]);
 
 function updateChosenProjectMenu(project: IProject) {
@@ -419,7 +433,7 @@ watch(
 );
 
 const isShareProjectVisible = ref(false);
-const projectToShare = ref<Project>();
+const projectToShare = ref<IProject | null>();
 
 onMounted(async () => {
 	// Clear all...
