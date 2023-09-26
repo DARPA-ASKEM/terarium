@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import { AssetType, Document, DocumentAsset } from '@/types/Types';
+import { AssetType, Document, ExternalPublication } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
@@ -45,7 +45,7 @@ const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
-	const body: DocumentAsset = {
+	const body: ExternalPublication = {
 		xdd_uri: props.selectedDocument.gddId,
 		title: props.selectedDocument.title
 	};

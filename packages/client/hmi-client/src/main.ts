@@ -15,7 +15,7 @@ import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
 import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import useAuthStore from './stores/auth';
-import router from './router';
+import router, { RoutePath } from './router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from './App.vue';
 
@@ -70,6 +70,7 @@ await keycloak
 	.then(() => {
 		app.mount('body');
 		logger.info('Application Mounted', { showToast: false, silent: true });
+		router.push(RoutePath.Home);
 	})
 	.catch((e) => {
 		console.error('Authentication Failed', e);

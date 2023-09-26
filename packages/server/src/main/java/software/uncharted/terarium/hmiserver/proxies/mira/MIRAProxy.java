@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
-import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 import java.util.List;
 

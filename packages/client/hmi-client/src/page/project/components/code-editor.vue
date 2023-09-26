@@ -69,7 +69,7 @@ import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/p
 import { IGraph } from '@graph-scaffolder/index';
 import { IProject } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
-import { AssetType, DocumentAsset, EventType } from '@/types/Types';
+import { AssetType, ExternalPublication, EventType } from '@/types/Types';
 import { PDFExtractionResponseType } from '@/types/common';
 import { getDocumentDoi } from '@/utils/data-util';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -126,13 +126,13 @@ watch([graphElement], async () => {
 	await renderer?.render();
 });
 
-const selectedPapers = ref<DocumentAsset[]>();
+const selectedPapers = ref<ExternalPublication[]>();
 const createModelLoading = ref(false);
 const extractPetrinetLoading = ref(false);
 const resourcesStore = useResourcesStore();
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	const storedPapers: DocumentAsset[] = storedAssets[AssetType.Publications];
+	const storedPapers: ExternalPublication[] = storedAssets[AssetType.Publications];
 	if (storedPapers) {
 		const first =
 			'Modelling the COVID-19 epidemic and implementation of population-wide interventions in Italy';

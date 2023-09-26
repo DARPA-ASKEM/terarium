@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 
 
 import java.util.List;

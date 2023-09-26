@@ -18,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
@@ -78,14 +80,6 @@ public class DatasetResource implements SnakeCaseResource {
 		@PathVariable("id") final String id
 	) {
 		return ResponseEntity.ok(datasetProxy.deleteAsset(id).getBody());
-	}
-
-	@PatchMapping("/{id}")
-	public ResponseEntity<JsonNode> patchUpdateDataset(
-		@PathVariable("id") final String id,
-		@RequestBody final Dataset dataset
-	) {
-		return ResponseEntity.ok(datasetProxy.patchUpdateAsset(id, convertObjectToSnakeCaseJsonNode(dataset)).getBody());
 	}
 
 	@PutMapping("/{id}")
@@ -164,20 +158,20 @@ public class DatasetResource implements SnakeCaseResource {
 	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS then push
 	 * the file to S3.
 	 *
-	 * @param datasetId ID of the dataset to upload to
+	 * @param datasetId ID of the dataset to upload t
 	 * @param filename  CSV file to upload
 	 * @return Response
 	 */
-	@PutMapping("/{datasetId}/uploadCSV")
+	@PutMapping(value = "/{datasetId}/uploadCSV", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<JsonNode> uploadCsv(
 		@PathVariable("datasetId") final String datasetId,
 		@RequestParam("filename") final String filename,
-		@RequestBody Map<String, InputStream> input
+		@RequestPart("file") MultipartFile input
 	) throws IOException {
 
 		log.debug("Uploading CSV file to dataset {}", datasetId);
 		int status;
-		byte[] csvBytes = input.get("file").readAllBytes();
+		byte[] csvBytes = input.getBytes();
 
 
 		HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
@@ -222,8 +216,13 @@ public class DatasetResource implements SnakeCaseResource {
 				for(String header : headers) {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
-				Dataset updatedDataset = new Dataset().setId(datasetId).setColumns(columns);
-				ResponseEntity<JsonNode> r = datasetProxy.patchUpdateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
+				Dataset updatedDataset = datasetProxy.getAsset(datasetId).getBody();
+				if(updatedDataset == null) {
+					log.error("Failed to get dataset {} after upload", datasetId);
+					return ResponseEntity.internalServerError().build();
+				}
+				updatedDataset.setColumns(columns);
+				ResponseEntity<JsonNode> r = datasetProxy.updateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
 				if(r.getStatusCode().value() != HttpStatus.OK.value()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
 				}

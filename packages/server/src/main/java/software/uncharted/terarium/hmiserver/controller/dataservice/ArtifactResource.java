@@ -13,8 +13,10 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -114,16 +116,16 @@ public class ArtifactResource implements SnakeCaseResource {
 
 	}
 
-	@PutMapping("/{artifactId}/uploadFile")
+	@PutMapping(value = "/{artifactId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Integer> uploadFile(
 		@PathVariable("artifactId") final String artifactId,
 		@RequestParam("filename") final String filename,
-		@RequestBody Map<String, InputStream> input
+		@RequestPart("file") MultipartFile input
 	) throws IOException {
 
 		log.debug("Uploading artifact {} to project", artifactId);
 
-		byte[] fileAsBytes = input.get("file").readAllBytes();
+		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadArtifactHelper(artifactId, filename, fileEntity);
 

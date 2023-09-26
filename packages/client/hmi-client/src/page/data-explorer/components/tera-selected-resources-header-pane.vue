@@ -25,7 +25,7 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { AssetType, Document, DocumentAsset } from '@/types/Types';
+import { AssetType, Document, ExternalPublication } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
@@ -53,7 +53,7 @@ const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isDocument(selectedItem)) {
-			const body: DocumentAsset = {
+			const body: ExternalPublication = {
 				xdd_uri: (selectedItem as Document).gddId,
 				title: (selectedItem as Document).title
 			};
