@@ -27,6 +27,10 @@ jobs:
   test-client:
     uses: ./.github/workflows/test-client.yaml
 
+  # Run Server Tests
+  test-server:
+    uses: ./.github/workflows/test-server.yaml
+
   # Generate a matrix based on all the targets defined in the
   # bake file.
   targets:
