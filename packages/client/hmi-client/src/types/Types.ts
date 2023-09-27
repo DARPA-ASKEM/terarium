@@ -171,6 +171,21 @@ export interface DatasetColumn {
     description?: string;
 }
 
+export interface DocumentAsset {
+    id?: string;
+    name?: string;
+    description?: string;
+    timestamp?: Date;
+    username?: string;
+    fileNames?: string[];
+    documentUrl?: string[];
+    metadata?: any;
+    source?: string;
+    text?: string;
+    grounding?: Grounding;
+    concepts?: Concept[];
+}
+
 export interface Model {
     id: string;
     header: ModelHeader;
@@ -242,6 +257,15 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     scrollId: string;
     hits: number;
     facets: { [index: string]: XDDFacetsItemResponse };
+}
+
+export interface EvaluationScenarioSummary {
+    name: string;
+    username: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
 }
 
 export interface ExtractionResponse {
@@ -682,6 +706,7 @@ export interface MetadataDataset {
 
 export enum EventType {
     Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
     RouteTiming = "ROUTE_TIMING",
     ProxyTiming = "PROXY_TIMING",
     AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
@@ -710,6 +735,13 @@ export enum RoleType {
     Admin = "ADMIN",
     User = "USER",
     Special = "SPECIAL",
+}
+
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
 }
 
 export enum FileType {
