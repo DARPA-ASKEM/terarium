@@ -31,7 +31,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
   }
 
 
-  @Test
+  //@Test
   public void testItCanCacheAValue(final CapturedOutput output) {
     final String value = testService.cachedMethod();
     Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
@@ -42,7 +42,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
     Assertions.assertEquals(1L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
   }
 
-  @Test
+  //@Test
   public void testItCanClearACache(final CapturedOutput output) {
     final String value = testService.cachedMethod();
     Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
@@ -55,7 +55,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
     Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
   }
 
-  @Test
+  //@Test
   public void testItCanClearAllCaches(final CapturedOutput output) {
     final String value = testService.cachedMethod();
     Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);

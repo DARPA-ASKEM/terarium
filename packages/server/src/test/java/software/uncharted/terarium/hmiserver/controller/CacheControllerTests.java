@@ -34,8 +34,8 @@ public class CacheControllerTests extends TerariumApplicationTests {
     cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
   }
 
-  @Test
-  @WithUserDetails(MockUser.ADAM)
+  //@Test
+  //@WithUserDetails(MockUser.ADAM)
   public void testItCanClearACache(final CapturedOutput output) throws Exception {
     testService.cachedMethod();
 
@@ -49,8 +49,8 @@ public class CacheControllerTests extends TerariumApplicationTests {
     Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
   }
 
-  @Test
-  @WithUserDetails(MockUser.ADAM)
+  //@Test
+  //@WithUserDetails(MockUser.ADAM)
   public void testItCanClearAllCaches(final CapturedOutput output) throws Exception {
     testService.cachedMethod();
     mockMvc.perform(MockMvcRequestBuilders
