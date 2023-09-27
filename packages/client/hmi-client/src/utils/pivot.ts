@@ -7,6 +7,7 @@ export interface PivotMatrixCell {
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
+	controllers?: string[];
 	content: any;
 }
 
@@ -123,6 +124,12 @@ export const createParameterOrTransitionMatrix = (
 	inputs = [...new Set(inputs)].sort();
 	outputs = [...new Set(outputs)].sort();
 
+	console.log(inputs, outputs);
+
+	// Extract controllers out of inputs array
+	const controllers = inputs.filter((i) => outputs.includes(i));
+	inputs = inputs.filter((i) => !outputs.includes(i));
+
 	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
 		const row: PivotMatrixCell[] = [];
@@ -179,9 +186,13 @@ export const createParameterOrTransitionMatrix = (
 		rows.push(row);
 	}
 	// console.log(childParameterIds);
-	console.log('matrix data', transitionMatrixData, amr);
-	// console.log(inputs, outputs, rows);
-	return { matrix: rows };
+	// console.log('matrix data', transitionMatrixData);
+	console.log(rows);
+	console.log(inputs, outputs, controllers);
+	return {
+		matrix: rows,
+		controllers: !_.isEmpty(controllers) ? controllers : ['']
+	};
 };
 
 // Creates a M x N matrix where
