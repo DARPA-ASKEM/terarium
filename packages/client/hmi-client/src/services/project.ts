@@ -5,10 +5,8 @@
 import API from '@/api/api';
 import { IProject, ProjectAssets } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
-import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
 import { ExternalPublication, EventType, Project, AssetType } from '@/types/Types';
 
@@ -50,7 +48,6 @@ async function update(project: IProject): Promise<IProject | null> {
 		if (status !== 200) {
 			return null;
 		}
-		useResourcesStore().setActiveProject(await get(project.id, true));
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);
@@ -157,10 +154,6 @@ async function addAsset(projectId: string, assetsType: string, assetId: string) 
 			assetId
 		})
 	);
-
-	if (response.data) {
-		useResourcesStore().setActiveProject(await get(projectId, true));
-	}
 	return response?.data ?? null;
 }
 
@@ -179,9 +172,6 @@ async function deleteAsset(
 	try {
 		const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 		const { status } = await API.delete(url);
-		if (status >= 200 && status < 300) {
-			useResourcesStore().setActiveProject(await get(projectId, true));
-		}
 		return status >= 200 && status < 300;
 	} catch (error) {
 		logger.error(error);
@@ -238,17 +228,6 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 	return 'circle';
 }
 
-/**
- * Get the xdd_uri of a Project Document
- */
-function getDocumentAssetXddUri(project: IProject, assetId: Tab['assetId']): string | null {
-	return (
-		project.assets?.[AssetType.Publications]?.find(
-			(document) => document?.id === Number.parseInt(assetId ?? '', 10)
-		)?.xdd_uri ?? null
-	);
-}
-
 export {
 	create,
 	update,
@@ -259,6 +238,5 @@ export {
 	deleteAsset,
 	getAssets,
 	getAssetIcon,
-	getPublicationAssets,
-	getDocumentAssetXddUri
+	getPublicationAssets
 };

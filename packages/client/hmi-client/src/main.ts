@@ -12,12 +12,12 @@ import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
 import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import useAuthStore from './stores/auth';
 import router, { RoutePath } from './router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from './App.vue';
+import { useProjects } from './composables/project';
 
 import './assets/css/style.scss';
 
@@ -78,14 +78,13 @@ await keycloak
 
 let previousRoute;
 let routeStartedMillis = Date.now();
-const resources = useResourcesStore();
 router.beforeEach((to, _from, next) => {
 	if (previousRoute) {
 		const nowMillis = Date.now();
 		const timeSpent = nowMillis - routeStartedMillis;
 		EventService.create(
 			EventType.RouteTiming,
-			resources.activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				name: previousRoute.name,
 				path: previousRoute.path,

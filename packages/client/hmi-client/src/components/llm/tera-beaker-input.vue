@@ -39,7 +39,7 @@ import ProgressBar from 'primevue/progressbar';
 import InputText from 'primevue/inputtext';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
+import { useProjects } from '@/composables/project';
 
 const emit = defineEmits(['submit-query', 'add-code-cell']);
 
@@ -74,7 +74,7 @@ const fixedDivWidth = ref(0);
 const submitQuery = () => {
 	EventService.create(
 		EventType.TransformPrompt,
-		useResourcesStore().activeProject?.id,
+		useProjects().activeProject.value?.id,
 		queryString.value
 	);
 	emit('submit-query', queryString.value);
@@ -83,7 +83,7 @@ const submitQuery = () => {
 
 const addCodeCell = () => {
 	emit('add-code-cell');
-	EventService.create(EventType.AddCodeCell, useResourcesStore().activeProject?.id);
+	EventService.create(EventType.AddCodeCell, useProjects().activeProject.value?.id);
 };
 
 onMounted(() => {

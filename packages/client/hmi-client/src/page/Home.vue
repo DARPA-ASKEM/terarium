@@ -24,7 +24,7 @@
 									placeholder="Filter by keyword"
 								/>
 							</span> -->
-							<span
+							<span v-if="view === ProjectsView.Cards"
 								><label>Sort by:</label>
 								<Dropdown
 									v-model="selectedSort"
@@ -33,56 +33,90 @@
 									class="p-inputtext-sm"
 								/>
 							</span>
+							<MultiSelect
+								v-if="view === ProjectsView.Table"
+								:modelValue="selectedColumns"
+								:options="columns"
+								:maxSelectedLabels="1"
+								:selected-items-label="`{0} columns displayed`"
+								optionLabel="header"
+								@update:modelValue="onToggle"
+								placeholder="Add or remove columns"
+								class="p-inputtext-sm"
+							/>
+							<span class="p-buttonset">
+								<Button
+									class="p-button-secondary p-button-sm"
+									label="Cards"
+									icon="pi pi-image"
+									@click="view = ProjectsView.Cards"
+									:active="view === ProjectsView.Cards"
+								/>
+								<Button
+									class="p-button-secondary p-button-sm"
+									label="Table"
+									icon="pi pi-list"
+									@click="view = ProjectsView.Table"
+									:active="view === ProjectsView.Table"
+								/>
+							</span>
 						</section>
-						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
-							<img src="@assets/svg/seed.svg" alt="" />
-							<template v-if="tab.title === 'My projects'">
-								<h3>Welcome to Terarium</h3>
-								<div>
-									Get started by creating a
-									<Button
-										label="new project"
-										class="p-button-text new-project-button"
-										@click="isNewProjectModalVisible = true"
-									/>. Your projects will be displayed on this page.
-								</div>
-							</template>
-							<template v-else-if="tab.title === 'Shared projects'">
-								<h3>You don't have any shared projects</h3>
-								<p>Shared projects will be displayed on this page</p>
-							</template>
-						</div>
-						<div v-else class="carousel">
-							<div class="chevron-left" @click="scroll('left', $event)">
-								<i class="pi pi-chevron-left" />
+						<section class="list-of-projects">
+							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+								<img src="@assets/svg/seed.svg" alt="" />
+								<template v-if="tab.title === TabTitles.MyProjects">
+									<h3>Welcome to Terarium</h3>
+									<div>
+										Get started by creating a
+										<Button
+											label="new project"
+											class="p-button-text new-project-button"
+											@click="isNewProjectModalVisible = true"
+										/>. Your projects will be displayed on this page.
+									</div>
+								</template>
+								<template v-else-if="tab.title === TabTitles.SharedProjects">
+									<h3>You don't have any shared projects</h3>
+									<p>Shared projects will be displayed on this page</p>
+								</template>
 							</div>
-							<div class="chevron-right" @click="scroll('right', $event)">
-								<i class="pi pi-chevron-right" />
-							</div>
-							<ul v-if="isLoadingProjects">
-								<li v-for="i in [0, 1, 2]" :key="i">
+							<tera-card-carousel
+								v-else-if="view === ProjectsView.Cards"
+								:is-loading="isLoadingProjects"
+								:amount-of-cards="tab.projects.length"
+							>
+								<template #skeleton-card>
 									<tera-project-card />
-								</li>
-							</ul>
-							<ul v-else>
-								<li v-for="project in tab.projects" :key="project.id">
-									<tera-project-card
-										v-if="project.id"
-										:project="project"
-										@click="openProject(project.id)"
-										@removed="removeProject"
-									/>
-								</li>
-								<li>
-									<section class="new-project-card" @click="isNewProjectModalVisible = true">
-										<div>
-											<img src="@assets/svg/plus.svg" alt="" />
-										</div>
-										<p>New project</p>
-									</section>
-								</li>
-							</ul>
-						</div>
+								</template>
+								<template #card-list-items>
+									<li v-for="project in tab.projects" :key="project.id">
+										<tera-project-card
+											v-if="project.id"
+											:project="project"
+											:project-menu-items="projectMenuItems"
+											@click="openProject(project.id)"
+											@update-chosen-project-menu="updateChosenProjectMenu(project)"
+										/>
+									</li>
+									<li>
+										<section class="new-project-card" @click="isNewProjectModalVisible = true">
+											<div>
+												<img src="@assets/svg/plus.svg" alt="" />
+											</div>
+											<p>New project</p>
+										</section>
+									</li>
+								</template>
+							</tera-card-carousel>
+							<tera-project-table
+								v-else-if="view === ProjectsView.Table"
+								:projects="tab.projects"
+								:project-menu-items="projectMenuItems"
+								:selected-columns="selectedColumns"
+								@open-project="openProject"
+								@update-chosen-project-menu="updateChosenProjectMenu"
+							/>
+						</section>
 					</TabPanel>
 				</TabView>
 			</section>
@@ -90,34 +124,29 @@
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
-				<div v-for="project in projectsWithRelatedDocuments" :key="project.name">
+				<section v-for="(project, i) in projectsWithRelatedDocuments" :key="i">
 					<p>{{ project.name }}</p>
-					<div class="carousel">
-						<div class="chevron-left" @click="scroll('left', $event)">
-							<i class="pi pi-chevron-left" />
-						</div>
-						<div class="chevron-right" @click="scroll('right', $event)">
-							<i class="pi pi-chevron-right" />
-						</div>
-						<ul>
+					<tera-card-carousel
+						:is-loading="isLoadingProjectsWithRelatedDocs"
+						:amount-of-cards="project.relatedDocuments.length"
+					>
+						<template #skeleton-card>
+							<tera-document-card />
+						</template>
+						<template #card-list-items>
 							<li v-for="document in project.relatedDocuments" :key="document.gddId">
 								<tera-document-card :document="document" @click="selectDocument(document)" />
 							</li>
-						</ul>
-					</div>
-				</div>
-				<div v-if="isLoadingProjects">
-					<p>
-						<Skeleton width="6rem" />
-					</p>
-					<div class="carousel">
-						<ul>
-							<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
-								<tera-document-card />
-							</li>
-						</ul>
-					</div>
-				</div>
+						</template>
+					</tera-card-carousel>
+				</section>
+				<template v-if="isLoadingProjectsWithRelatedDocs">
+					<p><Skeleton width="6rem" /></p>
+					<tera-card-carousel :is-loading="isLoadingProjectsWithRelatedDocs">
+						<template #skeleton-card>
+							<tera-document-card />
+						</template> </tera-card-carousel
+				></template>
 			</section>
 		</section>
 		<!-- modal window for showing selected document -->
@@ -185,6 +214,17 @@
 				</template>
 			</tera-modal>
 		</Teleport>
+		<Dialog :header="`Remove ${selectedProjectMenu?.name}`" v-model:visible="isRemoveDialog">
+			<p>
+				You are about to remove project <em>{{ selectedProjectMenu?.name }}</em
+				>.
+			</p>
+			<p>Are you sure?</p>
+			<template #footer>
+				<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
+				<Button label="Remove project" @click="removeProject" />
+			</template>
+		</Dialog>
 	</main>
 </template>
 
@@ -193,7 +233,6 @@ import { computed, ref, onMounted, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
-import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';
@@ -203,13 +242,29 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
-import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
-import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
+import TeraProjectTable from '@/components/home/tera-project-table.vue';
+import TeraCardCarousel from '@/components/home/tera-card-carousel.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
+import { logger } from '@/utils/logger';
+import Dialog from 'primevue/dialog';
+import { IProject } from '@/types/Project';
+import Skeleton from 'primevue/skeleton';
+
+enum ProjectsView {
+	Cards,
+	Table
+}
+
+enum TabTitles {
+	MyProjects = 'My projects',
+	SharedProjects = 'Shared projects'
+}
 
 const selectedSort = ref('Last updated (descending)');
 const sortOptions = [
@@ -220,10 +275,10 @@ const sortOptions = [
 	'Alphabetical'
 ];
 
-const projects = ref<Project[]>([]);
+const view = ref(ProjectsView.Cards);
 
 const myFilteredSortedProjects = computed(() => {
-	const filtered = projects.value;
+	const filtered = useProjects().allProjects.value;
 	if (!filtered) return [];
 
 	if (selectedSort.value === 'Alphabetical') {
@@ -252,20 +307,73 @@ const myFilteredSortedProjects = computed(() => {
 	return filtered;
 });
 
-const projectsTabs = ref<{ title: string; projects: Project[] }[]>([
-	{ title: 'My projects', projects: [] },
-	{ title: 'Shared projects', projects: [] } // Keep shared projects empty for now
+const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
+	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
+	{ title: TabTitles.SharedProjects, projects: [] } // Keep shared projects empty for now
 ]);
+
+// Table view
+const columns = ref([
+	{ field: 'name', header: 'Project title' },
+	{ field: 'description', header: 'Description' },
+	{ field: 'username', header: 'Author' },
+	{ field: 'stats', header: 'Stats' },
+	{ field: 'timestamp', header: 'Created' },
+	{ field: 'lastUpdated', header: 'Last updated' } // Last update property doesn't exist yet
+]);
+
+const selectedColumns = ref(columns.value);
+const onToggle = (val) => {
+	selectedColumns.value = columns.value.filter((col) => val.includes(col));
+};
+
+/*
+ * User Menu
+ */
+const selectedProjectMenu = ref<IProject | null>(null);
+
+const isRemoveDialog = ref(false);
+const closeRemoveDialog = () => {
+	isRemoveDialog.value = false;
+};
+const openRemoveDialog = () => {
+	isRemoveDialog.value = true;
+};
+
+const projectMenuItems = ref([
+	{
+		label: 'Remove',
+		command: openRemoveDialog
+	}
+]);
+
+function updateChosenProjectMenu(project: IProject) {
+	selectedProjectMenu.value = project;
+}
+
+const removeProject = async () => {
+	if (!selectedProjectMenu.value?.id) return;
+	const { name, id } = selectedProjectMenu.value;
+
+	const isDeleted = await useProjects().remove(id);
+	closeRemoveDialog();
+	if (isDeleted) {
+		useProjects().getAll();
+		logger.info(`The project ${name} was removed`, { showToast: true });
+	} else {
+		logger.error(`Unable to delete the project ${name}`, { showToast: true });
+	}
+};
 
 /**
  * Display Related Documents for the latest 3 project with at least one publication.
  */
 type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Document[] };
 const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
-async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
+async function updateProjectsWithRelatedDocuments() {
 	projectsWithRelatedDocuments.value = await Promise.all(
-		newProjects
-			// filter out the ones with no publications
+		useProjects()
+			.allProjects.value // filter out the ones with no publications
 			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
 			// get the first three project with a publication
 			.slice(0, 3)
@@ -274,7 +382,7 @@ async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 				let relatedDocuments = [] as Document[];
 				if (project.id) {
 					// Fetch the publications for the project
-					const publications = await ProjectService.getPublicationAssets(project.id);
+					const publications = await useProjects().getPublicationAssets(project.id);
 					if (!isEmpty(publications)) {
 						// Fetch the related documents for the first publication
 						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
@@ -283,11 +391,10 @@ async function updateProjectsWithRelatedDocuments(newProjects: Project[]) {
 				return { name: project.name, relatedDocuments } as RelatedDocumentFromProject;
 			}) ?? ([] as RelatedDocumentFromProject[])
 	);
+	isLoadingProjectsWithRelatedDocs.value = false;
 }
-watch(projects, (newProjects) => newProjects && updateProjectsWithRelatedDocuments(newProjects));
 
 const selectedDocument = ref<Document>();
-const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
 const router = useRouter();
 const auth = useAuthStore();
@@ -295,18 +402,8 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjects = ref(true);
-// const searchQuery = ref('');
-
-onMounted(async () => {
-	// Clear all...
-	resourcesStore.reset(); // Project related resources saved.
-	queryStore.reset(); // Facets queries.
-
-	projects.value = (await ProjectService.getAll()) ?? [];
-	projectsTabs.value[0].projects = myFilteredSortedProjects.value;
-	isLoadingProjects.value = false;
-});
+const isLoadingProjectsWithRelatedDocs = ref(true);
+const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
 const selectDocument = (item: Document) => {
 	const itemID = item as Document;
@@ -317,42 +414,13 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 18.5 * 6; // (card width + margin) * number of cards to display at once
-const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
-	const chevronElement = event.target as HTMLElement;
-	const cardListElement =
-		chevronElement.nodeName === 'svg'
-			? chevronElement.parentElement?.querySelector('ul')
-			: chevronElement.parentElement?.parentElement?.querySelector('ul');
-
-	if (cardListElement === null || cardListElement === undefined) return;
-
-	// Don't scroll if last element is already within viewport
-	if (direction === 'right' && cardListElement.lastElementChild) {
-		const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
-		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
-		if (bounds && parentBounds && bounds.x + bounds.width < parentBounds.x + parentBounds.width) {
-			return;
-		}
-	}
-
-	const marginLeftString =
-		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
-	const currentMarginLeft = parseFloat(marginLeftString);
-	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
-	const newMarginLeft = currentMarginLeft + changeInRem;
-	// Don't let the list scroll far enough left that we see space before the
-	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
-};
-
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
 async function createNewProject() {
 	const author = auth.user?.name ?? '';
-	const project = await ProjectService.create(
+	const project = await useProjects().create(
 		newProjectName.value,
 		newProjectDescription.value,
 		author
@@ -367,9 +435,16 @@ function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
 
-const removeProject = (projectId: Project['id']) => {
-	projects.value = projects.value?.filter((project) => project.id !== projectId);
-};
+watch(
+	() => useProjects().allProjects.value,
+	() => updateProjectsWithRelatedDocuments()
+);
+
+onMounted(async () => {
+	// Clear all...
+	queryStore.reset(); // Facets queries.
+	await useProjects().getAll();
+});
 </script>
 
 <style scoped>
@@ -382,14 +457,25 @@ const removeProject = (projectId: Project['id']) => {
 	flex-direction: column;
 }
 
-section {
+.projects {
 	background-color: var(--surface-section);
 	color: var(--text-color-secondary);
 	padding: 1rem;
 }
 
-.p-dropdown {
+.list-of-projects {
+	min-height: 25rem;
+}
+
+.p-dropdown,
+.p-multiselect {
 	min-width: 15rem;
+}
+
+.p-multiselect:deep(.p-multiselect-label) {
+	/* Matches exact size of small dropdown */
+	font-size: 12.25px;
+	padding: 0.875rem;
 }
 
 .filter-and-sort {
@@ -405,6 +491,10 @@ section {
 .filter-and-sort label {
 	padding-right: 0.25rem;
 	font-size: var(--font-caption);
+}
+
+.p-buttonset {
+	margin-left: auto;
 }
 
 .papers {
@@ -445,69 +535,61 @@ header svg {
 	color: var(--primary-color);
 	margin-right: 0.5rem;
 }
-
-.carousel {
-	position: relative;
-	display: flex;
+.no-projects {
+	background-color: var(--gray-0);
+	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
+	background-size: 12px 12px;
+	background-position: 0 0;
+	background-repeat: repeat;
 }
 
-.carousel ul {
-	align-items: center;
-	display: flex;
+.no-projects > * {
+	margin: auto;
+	margin-top: 1rem;
+	text-align: center;
 }
 
-.chevron-left,
-.chevron-right {
-	width: 4rem;
-	position: absolute;
-	z-index: 2;
+.no-projects > img {
+	height: 203px;
+}
+
+a {
+	color: var(--primary-color);
+}
+
+.new-project-card {
+	width: 17rem;
+	height: 20rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1rem;
+	border-radius: var(--border-radius-big);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease;
 	cursor: pointer;
-	height: 100%;
-	display: flex;
-	align-items: center;
 }
 
-.chevron-left {
-	left: -1rem;
-	border-radius: 0rem 10rem 10rem 0rem;
+.new-project-card > p {
+	text-align: center;
+	color: var(--text-color-primary);
 }
 
-.chevron-right {
-	right: -1rem;
-	border-radius: 10rem 0rem 0rem 10rem;
+.new-project-card img {
+	margin: auto;
 }
 
-.carousel:hover .chevron-left,
-.carousel:hover .chevron-right {
-	background-color: var(--chevron-hover);
+.new-project-card:hover {
+	background-color: var(--surface);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
-.carousel:hover .chevron-left > .pi-chevron-left,
-.carousel:hover .chevron-right > .pi-chevron-right {
-	color: var(--primary-color);
-	opacity: 100;
+.new-project-button {
+	padding: 0;
 }
 
-.pi-chevron-left,
-.pi-chevron-right {
-	margin: 0 1rem;
-	font-size: 2rem;
-	opacity: 0;
-	transition: opacity 0.2s ease;
-}
-
-.pi-chevron-left:hover,
-.pi-chevron-right:hover {
-	color: var(--primary-color);
-}
-
-ul {
-	gap: 1.5rem;
-	transition: margin-left 0.8s;
-}
-
-li {
-	list-style: none;
+#new-project-name,
+#new-project-description {
+	border-color: var(--surface-border);
 }
 
 .selected-document-modal-mask {
@@ -572,62 +654,5 @@ li {
 
 .selected-document-pane {
 	margin: 2rem 0;
-}
-
-.no-projects {
-	background-color: var(--gray-0);
-	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
-	background-size: 12px 12px;
-	background-position: 0 0;
-	background-repeat: repeat;
-}
-
-.no-projects > * {
-	margin: auto;
-	margin-top: 1rem;
-	text-align: center;
-}
-
-.no-projects > img {
-	height: 203px;
-}
-
-a {
-	color: var(--primary-color);
-}
-
-.new-project-card {
-	width: 17rem;
-	height: 20rem;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	border-radius: var(--border-radius-big);
-	transition: background-color 0.2s ease, box-shadow 0.2s ease;
-	cursor: pointer;
-}
-
-.new-project-card > p {
-	text-align: center;
-	color: var(--text-color-primary);
-}
-
-.new-project-card img {
-	margin: auto;
-}
-
-.new-project-card:hover {
-	background-color: var(--surface);
-	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-}
-
-.new-project-button {
-	padding: 0;
-}
-
-#new-project-name,
-#new-project-description {
-	border-color: var(--surface-border);
 }
 </style>

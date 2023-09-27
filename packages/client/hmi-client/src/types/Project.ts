@@ -43,4 +43,5 @@ export interface IProject {
 	assets: ProjectAssets | null;
 	relatedDocuments: Document[];
 	username: string;
+	metadata?: { [index: string]: string };
 }

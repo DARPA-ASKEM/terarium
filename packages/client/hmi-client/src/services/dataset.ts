@@ -4,12 +4,11 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { AssetType, CsvAsset, Dataset } from '@/types/Types';
-import { addAsset } from '@/services/project';
+import { CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
-import useResourcesStore from '@/stores/resources';
-import * as ProjectService from '@/services/project';
+import { RunResults } from '@/types/SimulateConfig';
+import { cloneDeep } from 'lodash';
 
 /**
  * Get all datasets
@@ -104,7 +103,6 @@ async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userName: string,
-	projectId: string,
 	url: string
 ) {
 	// Find the file name by removing the path portion
@@ -138,7 +136,7 @@ async function createNewDatasetFromGithubFile(
 		return null;
 	}
 
-	return addAsset(projectId, AssetType.Datasets, newDataset.id);
+	return newDataset;
 }
 
 /**
@@ -154,9 +152,8 @@ async function createNewDatasetFromCSV(
 	progress: Ref<number>,
 	file: File,
 	userName: string,
-	projectId: string,
 	description?: string
-): Promise<CsvAsset | null> {
+): Promise<Dataset | null> {
 	// Remove the file extension from the name, if any
 	const name = file.name.replace(/\.[^/.]+$/, '');
 
@@ -194,10 +191,7 @@ async function createNewDatasetFromCSV(
 		return null;
 	}
 
-	await addAsset(projectId, AssetType.Datasets, newDataset.id);
-
-	// Now verify it all works and obtain a preview for the user.
-	return downloadRawFile(newDataset.id, file.name);
+	return newDataset;
 }
 
 async function createDatasetFromSimulationResult(
@@ -227,15 +221,102 @@ async function createDatasetFromSimulationResult(
 	}
 }
 
-export const saveDataset = async (
+const saveDataset = async (
 	projectId: string,
 	simulationId: string | undefined,
 	datasetName: string | null
 ) => {
-	if (!simulationId) return;
-	if (await createDatasetFromSimulationResult(projectId, simulationId, datasetName)) {
-		useResourcesStore().setActiveProject(await ProjectService.get(projectId, true));
+	if (!simulationId) return false;
+	return createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+};
+
+/**
+ * This is a client side function to create a CsvAsset similar to the getCsv function from DatasetResource.java
+ * The reason we reimplement this client side is because runResults already has all of the data we need, except
+ * it's not in the correct format necessary to be used by the TeraDatasetDatatable component.
+ * @param runResults
+ * @param runId
+ * @returns CsvAsset object with the data from the runResults
+ */
+const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): CsvAsset | null => {
+	const runResult: RunResults = cloneDeep(runResults);
+	const runIdList = runId ? [runId] : Object.keys(runResult);
+	if (runIdList.length === 0) return null;
+
+	const csvColHeaders = Object.keys(runResult[runIdList[0]][0]);
+	let csvData: CsvAsset = {
+		headers: csvColHeaders,
+		data: [],
+		csv: [csvColHeaders],
+		rowCount: 0,
+		stats: []
+	};
+
+	const csvColumns: { [key: string]: number[] } = {};
+
+	runIdList.forEach((id) => {
+		csvData = {
+			...csvData,
+			data: [...csvData.data, ...(runResult[id] as any)],
+			rowCount: csvData.rowCount + runResult[id].length
+		};
+		runResult[id].forEach((row) => {
+			const rowValues = Object.values(row);
+			csvData.csv.push(rowValues as any);
+
+			csvColHeaders.forEach((header, index) => {
+				if (!csvColumns[header]) {
+					csvColumns[header] = [];
+				}
+				csvColumns[header].push(+rowValues[index]);
+			});
+		});
+	});
+
+	csvColHeaders.forEach((header) => {
+		csvData.stats!.push(getCsvColumnStats(csvColumns[header]));
+	});
+
+	return csvData;
+};
+
+/**
+ * This is a client side implementation of the getStats function from DatasetResource.java
+ * NOTE: if performance ever becomes an issue, we can write a new endpoint to call getStats from the backend
+ * @param csvColumn
+ * @returns CsvColumnStats object
+ */
+const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
+	const sortedCol = [...csvColumn].sort((a, b) => a - b);
+
+	const minValue = sortedCol[0];
+	const maxValue = sortedCol[sortedCol.length - 1];
+	const mean = sortedCol.reduce((a, b) => a + b, 0) / sortedCol.length;
+	const median = sortedCol[Math.floor(sortedCol.length / 2)];
+
+	// Calculate standard deviation
+	const squaredDifferences = sortedCol.map((value) => (value - mean) ** 2);
+	const variance = squaredDifferences.reduce((a, b) => a + b, 0) / squaredDifferences.length;
+	const sd = Math.sqrt(variance);
+
+	// Set up bins
+	const binCount = 10;
+	const stepSize = (maxValue - minValue) / (binCount - 1);
+	let bins: number[];
+
+	if (stepSize === 0) {
+		// Every value is the same, so just return a single bin
+		bins = [sortedCol.length];
+	} else {
+		bins = Array(binCount).fill(0);
+		// Fill bins
+		sortedCol.forEach((value) => {
+			const binIndex = Math.abs(Math.floor((value - minValue) / stepSize));
+			bins[binIndex]++;
+		});
 	}
+
+	return { bins, minValue, maxValue, mean, median, sd };
 };
 
 export {
@@ -246,5 +327,7 @@ export {
 	downloadRawFile,
 	createNewDatasetFromCSV,
 	createNewDatasetFromGithubFile,
-	createDatasetFromSimulationResult
+	createDatasetFromSimulationResult,
+	saveDataset,
+	createCsvAssetFromRunResults
 };

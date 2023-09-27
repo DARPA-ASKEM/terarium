@@ -129,6 +129,7 @@ import { EventSourceManager } from '@/api/event-source-manager';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
+import { logger } from '@/utils/logger';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -261,8 +262,10 @@ const getStatus = async (simulationId: string) => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', simulationId);
 		showSpinner.value = false;
+		logger.error(`Calibrate: ${simulationId} has failed`, {
+			toastTitle: 'Error - Julia'
+		});
 		throw Error('Failed Runs');
 	}
 	completedRunId.value = simulationId;

@@ -14,7 +14,8 @@
 				placeholder="Add to project"
 				class="p-button dropdown-button"
 				:is-dropdown-left-aligned="false"
-				:options="projectsNames"
+				:options="projectOptions"
+				option-label="name"
 				v-on:change="addAssetsToProject"
 			/>
 		</div>
@@ -22,17 +23,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, PropType, ref } from 'vue';
+import { computed, PropType } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import { AssetType, Document, ExternalPublication } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
-import { IProject } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
 import { useRouter } from 'vue-router';
+import { useProjects } from '@/composables/project';
 
 const router = useRouter();
 
@@ -44,10 +43,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'clear-selected']);
-const resources = useResourcesStore();
 
-const projectsList = ref<IProject[]>([]);
-const projectsNames = computed(() => projectsList.value.map((p) => p.name));
+const projectOptions = computed(() =>
+	useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
+);
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
@@ -62,12 +61,12 @@ const addResourcesToProject = async (projectId: string) => {
 
 			// first, insert into the proper table/collection
 			const res = await addDocuments(body);
-			if (res && resources) {
+			if (res) {
 				const documentId = res.id;
 
 				// then, link and store in the project assets
 				const assetsType = AssetType.Publications;
-				await ProjectService.addAsset(projectId, assetsType, documentId);
+				await useProjects().addAsset(assetsType, documentId, projectId);
 			}
 		}
 		if (isModel(selectedItem)) {
@@ -75,7 +74,7 @@ const addResourcesToProject = async (projectId: string) => {
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
 			const assetsType = AssetType.Models;
-			await ProjectService.addAsset(projectId, assetsType, modelId);
+			await useProjects().addAsset(assetsType, modelId, projectId);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
@@ -83,36 +82,21 @@ const addResourcesToProject = async (projectId: string) => {
 			// then, link and store in the project assets
 			const assetsType = AssetType.Datasets;
 			if (datasetId) {
-				await ProjectService.addAsset(projectId, assetsType, datasetId);
+				await useProjects().addAsset(assetsType, datasetId, projectId);
 			}
 		}
 	});
 };
 
-const addAssetsToProject = async (projectName) => {
+const addAssetsToProject = async (projectOption) => {
 	if (props.selectedSearchItems.length === 0) return;
 
-	let projectId = '';
-	if (projectName !== undefined && typeof projectName.value === 'string') {
-		const project = projectsList.value.find((p) => p.name === projectName.value);
-		projectId = project?.id as string;
-	} else {
-		if (!resources.activeProject) return;
-		projectId = resources.activeProject.id;
-	}
-
+	const projectId = projectOption.value.id ?? useProjects().activeProject.value?.id;
 	addResourcesToProject(projectId);
 
 	emit('close');
 	router.push(`/projects/${projectId}`);
 };
-
-onMounted(async () => {
-	const projects = (await ProjectService.getAll()) as unknown as IProject[];
-	if (projects !== null) {
-		projectsList.value = projects;
-	}
-});
 </script>
 
 <style scoped>

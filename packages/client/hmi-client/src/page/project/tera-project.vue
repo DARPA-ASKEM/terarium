@@ -9,7 +9,6 @@
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
-					:project="project"
 					:active-tab="openedAssetRoute"
 					@open-asset="(asset) => openAssetFromSidebar(asset)"
 					@remove-asset="removeAsset"
@@ -29,8 +28,6 @@
 					@select-tab="openAsset"
 				/>
 				<tera-project-page
-					v-if="project"
-					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
 					v-model:tabs="tabs"
@@ -39,18 +36,25 @@
 					@open-new-asset="openNewAsset"
 				/>
 			</SplitterPanel>
-			<SplitterPanel class="project-page top-z-index" v-if="workflowNode" :size="20">
-				<tera-tab-group
-					v-if="workflowNode"
-					class="tab-group"
-					:tabs="[{ assetName: workflowNode.displayName }]"
-					:active-tab-index="0"
-					:loading-tab-index="null"
-					@close-tab="
-						workflowEventBus.emit('clearActiveNode');
-						workflowNode = null;
-					"
-				/>
+		</Splitter>
+		<tera-slider-panel
+			v-model:is-open="isNotesSliderOpen"
+			content-width="240px"
+			direction="right"
+			header="Notes"
+		>
+			<template v-slot:content>
+				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
+			</template>
+		</tera-slider-panel>
+		<!-- New model modal -->
+		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
+		<!--Full screen modal-->
+		<Teleport to="body">
+			<tera-fullscreen-modal v-if="dialogIsOpened" @on-close-clicked="dialogIsOpened = false">
+				<template #header
+					><h2>{{ workflowNode?.displayName }}</h2></template
+				>
 				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
@@ -68,14 +72,12 @@
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-simulate-ciemss
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-stratify
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
@@ -89,7 +91,6 @@
 						workflowNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-calibrate-ensemble-ciemss
 					v-if="
@@ -97,16 +98,13 @@
 						workflowNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS
 					"
 					:node="workflowNode"
-					:project="project"
 				/>
 				<tera-model-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
-					:project="project"
 					:node="workflowNode"
 				/>
 				<tera-dataset-workflow-wrapper
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.DATASET"
-					:project="project"
 					:node="workflowNode"
 				/>
 				<tera-dataset-transformer
@@ -114,34 +112,16 @@
 						workflowNode &&
 						workflowNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER
 					"
-					:project="project"
 					:node="workflowNode"
 				/>
 				<tera-model-transformer
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER
 					"
-					:project="project"
 					:node="workflowNode"
 				/>
-			</SplitterPanel>
-		</Splitter>
-		<tera-slider-panel
-			v-model:is-open="isNotesSliderOpen"
-			content-width="240px"
-			direction="right"
-			header="Notes"
-		>
-			<template v-slot:content>
-				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
-			</template>
-		</tera-slider-panel>
-		<!-- New model modal -->
-		<tera-model-modal
-			:project="project"
-			:is-visible="isNewModelModalVisible"
-			@close-modal="onCloseModelModal"
-		/>
+			</tera-fullscreen-modal>
+		</Teleport>
 	</main>
 </template>
 
@@ -160,28 +140,27 @@ import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/
 import teraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
 import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
 import TeraModelTransformer from '@/workflow/ops/model-transformer/tera-model-transformer.vue';
-
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
 import { RouteName } from '@/router/routes';
-import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
 import { Tab } from '@/types/common';
-import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
+import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
+import { useProjects } from '@/composables/project';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
-	project: IProject;
 	assetId?: string;
 	pageType?: AssetType | ProjectPages;
 }>();
@@ -190,18 +169,22 @@ const tabStore = useTabStore();
 
 const router = useRouter();
 
+const dialogIsOpened = ref(false);
+
 const workflowNode = ref<WorkflowNode | null>(null);
 
 workflowEventBus.on('drilldown', (payload: any) => {
 	workflowNode.value = payload;
+	dialogIsOpened.value = true;
 });
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 
 const isNewModelModalVisible = ref(false);
+
 // Associated with tab storage
-const projectContext = computed(() => props.project?.id.toString());
+const projectContext = computed(() => useProjects().activeProject.value?.id ?? '');
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
@@ -256,11 +239,7 @@ async function removeAsset(asset: Tab) {
 
 	// Delete only Asset with an ID and of ProjectAssetType
 	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
-		const isRemoved = await ProjectService.deleteAsset(
-			props.project.id,
-			pageType as AssetType,
-			assetId
-		);
+		const isRemoved = await useProjects().deleteAsset(pageType as AssetType, assetId);
 
 		if (isRemoved) {
 			removeClosedTab(tabs.value.findIndex((tab: Tab) => isSameTab(tab, asset)));
@@ -275,15 +254,16 @@ async function removeAsset(asset: Tab) {
 const openWorkflow = async () => {
 	// Create a new workflow
 	let wfName = 'workflow';
-	if (props.project && props.project.assets) {
-		wfName = `workflow ${props.project.assets[AssetType.Workflows].length + 1}`;
+	const { activeProject } = useProjects();
+	if (activeProject.value && activeProject.value?.assets) {
+		wfName = `workflow ${activeProject.value.assets[AssetType.Workflows].length + 1}`;
 	}
 	const wf = emptyWorkflow(wfName, '');
 
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await ProjectService.addAsset(props.project.id, AssetType.Workflows, workflowId);
+	await useProjects().addAsset(AssetType.Workflows, workflowId);
 
 	router.push({
 		name: RouteName.Project,
