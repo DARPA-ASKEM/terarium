@@ -336,7 +336,6 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 			repoOwnerAndName.value,
 			githubFile.path,
 			auth.user?.name ?? '',
-			props.project?.id ?? '',
 			githubFile.htmlUrl
 		);
 		if (newDataset && newDataset.id) {
