@@ -8,7 +8,6 @@ import org.springframework.context.annotation.PropertySource;
 @SpringBootApplication
 @EnableFeignClients
 @PropertySource("classpath:application.properties")
-@PropertySource(value = "classpath:application-secrets.properties", ignoreResourceNotFound = true)
 public class TerariumApplication {
     public static void main(String[] args) {
         SpringApplication.run(TerariumApplication.class, args);
