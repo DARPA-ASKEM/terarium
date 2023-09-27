@@ -11,7 +11,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 @FeignClient(name = "documentService", url = "${xdd-dev-service}")
-@Produces(MediaType.APPLICATION_JSON)
 public interface DocumentProxy {
 	@GetMapping("/api/v2/articles")
 	XDDResponse<DocumentsResponseOK> getDocuments(

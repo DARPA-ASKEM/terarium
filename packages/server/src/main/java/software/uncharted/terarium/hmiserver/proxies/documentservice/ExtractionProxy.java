@@ -14,7 +14,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 @FeignClient(name = "extractionService", url = "${xdd-dev-service}")
-@Produces(MediaType.APPLICATION_JSON)
 public interface ExtractionProxy {
 	@GetMapping("/askem/object")
 	XDDResponse<XDDExtractionsResponseOK> getExtractions(
