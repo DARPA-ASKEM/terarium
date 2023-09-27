@@ -5,7 +5,7 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="odeType === OdeSemantic.Parameters" class="p-datatable-thead">
+				<thead v-if="odeType !== OdeSemantic.Initials" class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
 						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
@@ -38,7 +38,7 @@
 									@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, j)"
 								/>
 								<div
-									v-else-if="odeType === OdeSemantic.Initials"
+									v-else-if="odeType !== OdeSemantic.Parameters"
 									class="mathml-container"
 									v-html="matrixExpressionsList?.[i]?.[j] ?? '...'"
 								/>
@@ -64,7 +64,7 @@ import {
 	getMiraAMRPresentationData,
 	getUnstratifiedParameters
 } from '@/model-representation/petrinet/mira-petri';
-import { createMatrix1D, createParameterMatrix, createTransitionMatrix } from '@/utils/pivot';
+import { createMatrix1D, createParameterOrTransitionMatrix } from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
@@ -292,9 +292,9 @@ function generateMatrix(populateDimensions = false) {
 	if (props.odeType === OdeSemantic.Initials) {
 		matrixAttributes = createMatrix1D(matrixData);
 	} else if (props.odeType === OdeSemantic.Parameters) {
-		matrixAttributes = createParameterMatrix(matrixData, amr, childParameterIds);
+		matrixAttributes = createParameterOrTransitionMatrix(matrixData, amr, childParameterIds);
 	} else if (props.odeType === OdeSemantic.Rates) {
-		matrixAttributes = createTransitionMatrix();
+		matrixAttributes = createParameterOrTransitionMatrix(matrixData, amr);
 	}
 
 	matrix.value = matrixAttributes.matrix;

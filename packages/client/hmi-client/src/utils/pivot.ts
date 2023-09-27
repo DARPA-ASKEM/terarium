@@ -106,36 +106,22 @@ export const createMatrix1D = (data: any[]) => {
 	return { matrix: rows };
 };
 
-function extractInputsAndOutputs(transitionMatrixData: any[]) {
-	const inputs: string[] = [];
-	const outputs: string[] = [];
+export const createParameterOrTransitionMatrix = (
+	transitionMatrixData: any[],
+	amr: Model,
+	childParameterIds?: string[] // Required to build parameter matrix
+) => {
+	const rows: any[] = [];
+	let inputs: string[] = [];
+	let outputs: string[] = [];
 
 	// Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
 	for (let i = 0; i < transitionMatrixData.length; i++) {
 		inputs.push(...transitionMatrixData[i].input);
 		outputs.push(...transitionMatrixData[i].output);
 	}
-	return {
-		inputs: [...new Set(inputs)].sort(),
-		outputs: [...new Set(outputs)].sort()
-	};
-}
-
-export const createTransitionMatrix = (transitionMatrixData: any[]) => {
-	const rows: any[] = [];
-	// const { inputs, outputs } = extractInputsAndOutputs(transitionMatrixData);
-	console.log(transitionMatrixData);
-
-	return { matrix: rows };
-};
-
-export const createParameterMatrix = (
-	transitionMatrixData: any[],
-	amr: Model,
-	childParameterIds: string[]
-) => {
-	const rows: any[] = [];
-	const { inputs, outputs } = extractInputsAndOutputs(transitionMatrixData);
+	inputs = [...new Set(inputs)].sort();
+	outputs = [...new Set(outputs)].sort();
 
 	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
@@ -154,20 +140,31 @@ export const createParameterMatrix = (
 
 				// If the current input/output combo matches a combo in the transition data then a parameter belongs in this cell
 				if (rate && input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
-					// Find the parameter that's in the rate expression
-					for (let j = 0; j < childParameterIds.length; j++) {
-						// Fill cell content with parameter content
-						if (rate.expression.includes(childParameterIds[j])) {
-							const parameter = amr.semantics?.ode.parameters?.find(
-								(p) => p.id === childParameterIds[j]
-							);
-							if (parameter) {
-								content.id = parameter.id;
-								content.value = parameter.value;
-								content.hasController = inputs[rowIdx] === outputs[colIdx];
+					// If we are building a parameter matrix we will have childParameterIds
+					if (childParameterIds) {
+						// Find the parameter that's in the rate expression
+						for (let j = 0; j < childParameterIds.length; j++) {
+							// Fill cell content with parameter content
+							if (rate.expression.includes(childParameterIds[j])) {
+								const parameter = amr.semantics?.ode.parameters?.find(
+									(p) => p.id === childParameterIds[j]
+								);
+								if (parameter) {
+									content.id = parameter.id;
+									content.value = parameter.value;
+									content.hasController = inputs[rowIdx] === outputs[colIdx];
+								}
+								break;
 							}
-							break;
 						}
+					}
+					// Building a transition matrix
+					else {
+						// Fill cell content with rate
+						content.id = rate.target;
+						content.value = rate.expression;
+						content.hasController = inputs[rowIdx] === outputs[colIdx];
+						break;
 					}
 				}
 			}
@@ -181,9 +178,9 @@ export const createParameterMatrix = (
 		}
 		rows.push(row);
 	}
-	console.log(childParameterIds);
-	console.log('matrix data', transitionMatrixData);
-	console.log(inputs, outputs, rows);
+	// console.log(childParameterIds);
+	console.log('matrix data', transitionMatrixData, amr);
+	// console.log(inputs, outputs, rows);
 	return { matrix: rows };
 };
 
