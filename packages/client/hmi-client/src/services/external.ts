@@ -3,14 +3,14 @@
  */
 
 import API from '@/api/api';
-import { DocumentAsset } from '@/types/Types';
+import { ExternalPublication } from '@/types/Types';
 
 /**
  * Get external document asset linked by a given project asset/doc id
  * @docId string - represents a specific project asset/doc id
  * @return DocumentAsset|null - the specific document info including its xdd url, or null if none returned by API
  */
-async function getDocument(docId: string): Promise<DocumentAsset | null> {
+async function getDocument(docId: string): Promise<ExternalPublication | null> {
 	const response = await API.get(`/external/publications/${docId}`);
 	return response?.data ?? null;
 }
@@ -21,8 +21,8 @@ async function getDocument(docId: string): Promise<DocumentAsset | null> {
  * @return DocumentAsset[]|null - the specific document info including its xdd url, or null if none returned by API
  */
 async function getBulkDocumentAssets(docIDs: string[]) {
-	const result: DocumentAsset[] = [];
-	const promiseList = [] as Promise<DocumentAsset | null>[];
+	const result: ExternalPublication[] = [];
+	const promiseList = [] as Promise<ExternalPublication | null>[];
 	docIDs.forEach((docId) => {
 		promiseList.push(getDocument(docId));
 	});
@@ -40,7 +40,7 @@ async function getBulkDocumentAssets(docIDs: string[]) {
  * @body DocumentAsset - represents the metadata (xdd) url of the asset to be added
  * @return {id: string}|null - the id of the inserted asset, or null if none returned by API
  */
-async function addDocuments(body: DocumentAsset): Promise<{ id: string } | null> {
+async function addDocuments(body: ExternalPublication): Promise<{ id: string } | null> {
 	// FIXME: handle cases where assets is already added to the project
 	const response = await API.post('/external/publications', body);
 	return response?.data ?? null;

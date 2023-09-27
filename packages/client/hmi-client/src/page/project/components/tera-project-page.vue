@@ -35,9 +35,16 @@
 	/>
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && !isEmpty(tabs)">
-		<tera-document
+		<tera-external-publication
 			v-if="pageType === AssetType.Publications"
 			:xdd-uri="getXDDuri(assetId)"
+			:previewLineLimit="10"
+			@open-code="openCode"
+			@asset-loaded="emit('asset-loaded')"
+		/>
+		<tera-document-asset
+			v-if="pageType === AssetType.Documents"
+			:assetId="'586e8b37-b79b-4ef3-ac3d-f240c0b8c8de' ?? ''"
 			:previewLineLimit="10"
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
@@ -63,7 +70,8 @@ import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
 import { Tab } from '@/types/common';
 import Button from 'primevue/button';
-import TeraDocument from '@/components/documents/tera-document.vue';
+import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
+import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';

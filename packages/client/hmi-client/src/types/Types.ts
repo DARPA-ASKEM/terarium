@@ -71,6 +71,21 @@ export interface CsvColumnStats {
 }
 
 export interface DocumentAsset {
+    id: string;
+    name: string;
+    username: string;
+    description?: string;
+    timestamp: string;
+    file_names: string[];
+    metadata: any;
+    document_url: string;
+    source: string;
+    text: string;
+    grounding: any;
+    assets: any[];
+}
+
+export interface ExternalPublication {
     id?: number;
     title: string;
     xdd_uri: string;
@@ -360,7 +375,7 @@ export interface Assets {
     datasets: Dataset[];
     extractions: Extraction[];
     models: Model[];
-    publications: DocumentAsset[];
+    publications: ExternalPublication[];
     workflows: Workflow[];
     artifacts: Artifact[];
     code: Code[];
@@ -719,6 +734,7 @@ export enum AssetType {
     Workflows = "workflows",
     Artifacts = "artifacts",
     Code = "code",
+    Documents = "documents"
 }
 
 export enum OntologicalField {
