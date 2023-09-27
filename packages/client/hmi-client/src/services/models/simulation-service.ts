@@ -268,7 +268,8 @@ export async function simulationPollAction(
 
 	// there are unhandled states - we will return an error and remove all simulation Ids
 	if (unhandledStateSimulationIds.length > 0) {
-		const newState = deleteSimulationInProgress(node, simulationIds);
+		const newState = cloneDeep(node.state);
+		deleteSimulationInProgress(newState, simulationIds);
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
 		}
