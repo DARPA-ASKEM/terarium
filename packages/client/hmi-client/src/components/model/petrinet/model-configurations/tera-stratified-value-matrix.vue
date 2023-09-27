@@ -12,43 +12,46 @@
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr v-for="(row, i) in matrix" :key="i">
-						<td class="p-frozen-column">
-							<template v-if="nodeType === NodeType.State">
-								{{ Object.values(row[0].rowCriteria).join(' / ') }}
-							</template>
-							<template v-else>
-								{{ row[0].rowCriteria }}
-							</template>
-						</td>
-						<td
-							v-for="(cell, j) in row"
-							:key="j"
-							tabindex="0"
-							@keyup.enter="onEnterValueCell(cell?.content?.id, i, j)"
-							@click="onEnterValueCell(cell?.content?.id, i, j)"
-						>
-							<template v-if="cell.content.id">
-								<InputText
-									v-if="editableCellStates[i][j]"
-									class="cell-input"
-									v-model.lazy="valueToEdit"
-									v-focus
-									@focusout="updateModelConfigValue(cell.content.id, i, j)"
-									@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, j)"
-								/>
-								<div
-									v-else-if="nodeType === NodeType.State"
-									class="mathml-container"
-									v-html="matrixExpressionsList?.[i]?.[j] ?? '...'"
-								/>
-								<div v-else>
-									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
-								</div>
-							</template>
-							<span v-else class="not-allowed">N/A</span>
-						</td>
-					</tr>
+					<template v-for="(row, i) in matrix" :key="i">
+						<tr v-for="(controller, j) in controllers" :key="j">
+							<td class="p-frozen-column">
+								<template v-if="nodeType === NodeType.State">
+									{{ Object.values(row[0].rowCriteria).join(' / ') }}
+								</template>
+								<template v-else>
+									{{ row[0].rowCriteria
+									}}<template v-if="controller !== ''">, {{ controller }} </template>
+								</template>
+							</td>
+							<td
+								v-for="(cell, k) in row"
+								:key="k"
+								tabindex="0"
+								@keyup.enter="onEnterValueCell(cell?.content?.id, i, k)"
+								@click="onEnterValueCell(cell?.content?.id, i, k)"
+							>
+								<template v-if="cell.content.id">
+									<InputText
+										v-if="editableCellStates[i][k]"
+										class="cell-input"
+										v-model.lazy="valueToEdit"
+										v-focus
+										@focusout="updateModelConfigValue(cell.content.id, i, k)"
+										@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, k)"
+									/>
+									<div
+										v-else-if="nodeType === NodeType.State"
+										class="mathml-container"
+										v-html="matrixExpressionsList?.[i]?.[k] ?? '...'"
+									/>
+									<div v-else>
+										{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+									</div>
+								</template>
+								<span v-else class="not-allowed">N/A</span>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -84,6 +87,7 @@ const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
 
 const matrix = ref<any>([]);
+const controllers = ref<string[]>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
@@ -283,12 +287,13 @@ function generateMatrix(populateDimensions = false) {
 		colDimensions.push(...dimensions);
 	}
 
-	const matrixAttributes =
+	const matrixAttributes: any =
 		props.nodeType === NodeType.State
 			? createMatrix1D(matrixData)
 			: createParameterMatrix(matrixData, amr, childParameterIds);
 
 	matrix.value = matrixAttributes.matrix;
+	if (matrixAttributes.controllers) controllers.value = matrixAttributes.controllers;
 
 	return matrixData;
 }
