@@ -106,22 +106,36 @@ export const createMatrix1D = (data: any[]) => {
 	return { matrix: rows };
 };
 
-export const createParameterMatrix = (
-	transitionMatrixData: any[],
-	amr: Model,
-	childParameterIds: string[]
-) => {
-	const rows: any[] = [];
-	let inputs: string[] = [];
-	let outputs: string[] = [];
+function extractInputsAndOutputs(transitionMatrixData: any[]) {
+	const inputs: string[] = [];
+	const outputs: string[] = [];
 
 	// Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
 	for (let i = 0; i < transitionMatrixData.length; i++) {
 		inputs.push(...transitionMatrixData[i].input);
 		outputs.push(...transitionMatrixData[i].output);
 	}
-	inputs = [...new Set(inputs)].sort();
-	outputs = [...new Set(outputs)].sort();
+	return {
+		inputs: [...new Set(inputs)].sort(),
+		outputs: [...new Set(outputs)].sort()
+	};
+}
+
+export const createTransitionMatrix = (transitionMatrixData: any[]) => {
+	const rows: any[] = [];
+	// const { inputs, outputs } = extractInputsAndOutputs(transitionMatrixData);
+	console.log(transitionMatrixData);
+
+	return { matrix: rows };
+};
+
+export const createParameterMatrix = (
+	transitionMatrixData: any[],
+	amr: Model,
+	childParameterIds: string[]
+) => {
+	const rows: any[] = [];
+	const { inputs, outputs } = extractInputsAndOutputs(transitionMatrixData);
 
 	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {

@@ -5,7 +5,7 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
+				<thead v-if="odeType === OdeSemantic.Parameters" class="p-datatable-thead">
 					<tr>
 						<th class="choose-criteria"></th>
 						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
@@ -14,7 +14,7 @@
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, i) in matrix" :key="i">
 						<td class="p-frozen-column">
-							<template v-if="nodeType === NodeType.State">
+							<template v-if="odeType === OdeSemantic.Initials">
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
 							<template v-else>
@@ -38,7 +38,7 @@
 									@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, j)"
 								/>
 								<div
-									v-else-if="nodeType === NodeType.State"
+									v-else-if="odeType === OdeSemantic.Initials"
 									class="mathml-container"
 									v-html="matrixExpressionsList?.[i]?.[j] ?? '...'"
 								/>
@@ -64,17 +64,17 @@ import {
 	getMiraAMRPresentationData,
 	getUnstratifiedParameters
 } from '@/model-representation/petrinet/mira-petri';
-import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
+import { createMatrix1D, createParameterMatrix, createTransitionMatrix } from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
-import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
+import { OdeSemantic } from '@/types/common';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
 	stratifiedModelType: StratifiedModelType;
-	nodeType: NodeType;
+	odeType: OdeSemantic;
 	shouldEval: boolean;
 }>();
 
@@ -143,7 +143,7 @@ function findOdeObjectLocation(variableName: string): {
 	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 	if (!ode) return null;
 
-	const fieldNames = ['rates', 'initials', 'parameters'];
+	const fieldNames = [OdeSemantic.Rates, OdeSemantic.Initials, OdeSemantic.Parameters];
 
 	for (let i = 0; i < fieldNames.length; i++) {
 		const fieldIndex = ode[fieldNames[i]].findIndex(
@@ -240,13 +240,15 @@ function generateMatrix(populateDimensions = false) {
 			? getCatlabAMRPresentationData(amr)
 			: getMiraAMRPresentationData(amr);
 
+	console.log(props.odeType);
+
 	// Get only the states/transitions that are mapped to the base model
 	let matrixData: any[] = [];
 	let childParameterIds: string[] = [];
 
-	if (props.nodeType === NodeType.State) {
+	if (props.odeType === OdeSemantic.Initials) {
 		matrixData = stateMatrixData.filter(({ base }) => base === props.id);
-	} else {
+	} else if (props.odeType === OdeSemantic.Parameters) {
 		const paramsMap = getUnstratifiedParameters(amr);
 		if (!paramsMap.has(props.id)) return [];
 
@@ -266,6 +268,8 @@ function generateMatrix(populateDimensions = false) {
 			}
 			return false;
 		});
+	} else if (props.odeType === OdeSemantic.Rates) {
+		matrixData = transitionMatrixData.filter(({ base }) => base === props.id);
 	}
 
 	if (isEmpty(matrixData)) return matrixData;
@@ -283,10 +287,15 @@ function generateMatrix(populateDimensions = false) {
 		colDimensions.push(...dimensions);
 	}
 
-	const matrixAttributes =
-		props.nodeType === NodeType.State
-			? createMatrix1D(matrixData)
-			: createParameterMatrix(matrixData, amr, childParameterIds);
+	let matrixAttributes: any;
+
+	if (props.odeType === OdeSemantic.Initials) {
+		matrixAttributes = createMatrix1D(matrixData);
+	} else if (props.odeType === OdeSemantic.Parameters) {
+		matrixAttributes = createParameterMatrix(matrixData, amr, childParameterIds);
+	} else if (props.odeType === OdeSemantic.Rates) {
+		matrixAttributes = createTransitionMatrix();
+	}
 
 	matrix.value = matrixAttributes.matrix;
 
