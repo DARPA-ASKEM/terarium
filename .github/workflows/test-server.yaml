@@ -79,7 +79,7 @@ jobs:
         uses: gradle/gradle-build-action@cfc50b189af149aeb55f94103f47753382d88d33
         with:
           gradle-version: wrapper
-          build-root-directory: modules/server
+          build-root-directory: packages/server
           arguments: |
             test
             --info
