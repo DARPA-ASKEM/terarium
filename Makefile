@@ -25,7 +25,7 @@ clean-hmi-server: clean-hmi-server-base
 	rm -rf $(PROJECT_DIR)/packages/server/docker/build
 
 image-hmi-server: clean-hmi-server
-	./gradlew :packages:server:build
+	./gradlew :packages:server:build -x test
 	mv $(PROJECT_DIR)/packages/server/build $(PROJECT_DIR)/packages/server/docker/build
 
 TARGETS += hmi-client
