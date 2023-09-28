@@ -51,7 +51,7 @@ export const mathmlToPetri = async (mathml: string[]) => {
 	return null;
 };
 
-// Transfrom a petrinet into latex
+// Transform a petrinet into latex
 export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 	try {
 		const payloadPetri = {
@@ -67,7 +67,10 @@ export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 			return resp.data;
 		}
 
-		logger.error('petriToLatex: Server did not provide a correct response', { showToast: false });
+		logger.error('[Model Service] petriToLatex: Server did not provide a correct response', {
+			showToast: false,
+			toastTitle: 'Model Service'
+		});
 	} catch (error: unknown) {
 		if ((error as AxiosError).isAxiosError) {
 			const axiosError = error as AxiosError;
