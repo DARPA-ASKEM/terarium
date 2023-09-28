@@ -4,7 +4,7 @@ import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.annotations.LogRestClientTime;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
-import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
 import software.uncharted.terarium.hmiserver.models.dataservice.Software;
 
 import javax.ws.rs.*;
@@ -58,6 +58,6 @@ public interface ExternalProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@LogRestClientTime
 	Response createPublication(
-		DocumentAsset publication
+		ExternalPublication publication
 	);
 }

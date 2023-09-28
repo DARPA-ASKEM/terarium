@@ -5,7 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
-import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
 import software.uncharted.terarium.hmiserver.models.dataservice.Software;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ExternalProxy;
 
@@ -82,7 +82,7 @@ public class ExternalResource {
 	@Path("/publications")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createPublication(
-		final DocumentAsset publication
+		final ExternalPublication publication
 	) {
 		return proxy.createPublication(publication);
 	}

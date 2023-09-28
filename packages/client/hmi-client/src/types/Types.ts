@@ -379,6 +379,7 @@ export interface Assets {
     workflows: Workflow[];
     artifacts: Artifact[];
     code: Code[];
+    documents: DocumentAsset[];
 }
 
 export interface Document {
@@ -734,7 +735,7 @@ export enum AssetType {
     Workflows = "workflows",
     Artifacts = "artifacts",
     Code = "code",
-    Documents = "documents"
+    Documents = "documents",
 }
 
 export enum OntologicalField {
