@@ -6,7 +6,7 @@
 			:model-configuration="modelConfiguration"
 			:stratified-model-type="StratifiedModelType.Mira"
 			:ode-type="OdeSemantic.Rates"
-			:should-eval="true"
+			:should-eval="false"
 		/>
 	</div>
 </template>
