@@ -126,12 +126,13 @@ export const createParameterMatrix = (
 		inputs.push(...input.filter((ip: string) => !output.includes(ip)));
 		outputs.push(...output);
 	}
-	controllers = [...new Set(controllers)].sort();
-	inputs = [...new Set(inputs)].sort();
-	outputs = [...new Set(outputs)].sort();
+	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
+	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
+	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
 
 	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
+		// inputs.length
 		const row: PivotMatrixCell[] = [];
 		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
 			const content: { value: any; id: string; hasController: boolean } = {
@@ -157,7 +158,6 @@ export const createParameterMatrix = (
 							if (parameter) {
 								content.id = parameter.id;
 								content.value = parameter.value;
-								content.hasController = inputs[rowIdx] === outputs[colIdx];
 							}
 							break;
 						}
@@ -179,7 +179,7 @@ export const createParameterMatrix = (
 	// console.log(rows, inputs, outputs, controllers);
 	return {
 		matrix: rows,
-		controllers: !_.isEmpty(controllers) ? controllers : ['']
+		controllers
 	};
 };
 

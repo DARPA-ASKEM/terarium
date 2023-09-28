@@ -5,16 +5,16 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
+				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
-						<th class="choose-criteria"></th>
+						<th v-if="matrix.length > 1" class="choose-criteria"></th>
 						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<template v-for="(row, i) in matrix" :key="i">
 						<tr v-for="(controller, j) in controllers" :key="j">
-							<td class="p-frozen-column">
+							<td v-if="matrix.length > 1" class="p-frozen-column">
 								<template v-if="nodeType === NodeType.State">
 									{{ Object.values(row[0].rowCriteria).join(' / ') }}
 								</template>
@@ -294,6 +294,8 @@ function generateMatrix(populateDimensions = false) {
 
 	matrix.value = matrixAttributes.matrix;
 	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];
+
+	console.log(matrix.value);
 
 	return matrixData;
 }
