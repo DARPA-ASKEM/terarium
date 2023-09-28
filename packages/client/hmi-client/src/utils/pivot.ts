@@ -119,8 +119,7 @@ export const createParameterMatrix = (
 
 	// Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
 	for (let i = 0; i < transitionMatrixData.length; i++) {
-		const output = transitionMatrixData[i].output;
-		const input = transitionMatrixData[i].input;
+		const { input, output } = transitionMatrixData[i];
 
 		// Extract and remove controllers out of inputs array
 		controllers.push(...input.filter((ip: string) => output.includes(ip)));
