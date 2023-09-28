@@ -93,6 +93,7 @@ async function getAll(): Promise<Project[] | null> {
  * @return ProjectAssets|null - the appropriate project, or null if none returned by API
  */
 async function getAssets(projectId: string, types?: string[]): Promise<ProjectAssets | null> {
+	if (projectId === '') return null;
 	try {
 		let url = `/projects/${projectId}/assets`;
 		if (types) {

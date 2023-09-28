@@ -113,22 +113,23 @@ export const createParameterMatrix = (
 	childParameterIds: string[]
 ) => {
 	const rows: any[] = [];
+	let controllers: string[] = [];
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
 	// Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
 	for (let i = 0; i < transitionMatrixData.length; i++) {
-		inputs.push(...transitionMatrixData[i].input);
-		outputs.push(...transitionMatrixData[i].output);
+		const output = transitionMatrixData[i].output;
+		const input = transitionMatrixData[i].input;
+
+		// Extract and remove controllers out of inputs array
+		controllers.push(...input.filter((ip: string) => output.includes(ip)));
+		inputs.push(...input.filter((ip: string) => !output.includes(ip)));
+		outputs.push(...output);
 	}
+	controllers = [...new Set(controllers)].sort();
 	inputs = [...new Set(inputs)].sort();
 	outputs = [...new Set(outputs)].sort();
-
-	console.log(inputs, outputs);
-
-	// Extract controllers out of inputs array
-	const controllers = inputs.filter((i) => outputs.includes(i));
-	inputs = inputs.filter((i) => !outputs.includes(i));
 
 	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
@@ -176,8 +177,7 @@ export const createParameterMatrix = (
 	}
 	// console.log(childParameterIds);
 	// console.log('matrix data', transitionMatrixData);
-	console.log(rows);
-	console.log(inputs, outputs, controllers);
+	// console.log(rows, inputs, outputs, controllers);
 	return {
 		matrix: rows,
 		controllers: !_.isEmpty(controllers) ? controllers : ['']
