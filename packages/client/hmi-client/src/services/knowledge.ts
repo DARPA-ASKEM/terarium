@@ -87,6 +87,12 @@ export const profileModel = async (modelId: string, artifactId: string | null = 
 	return response.data.id;
 };
 
+export const alignModel = async (modelId: string, documentId: string) => {
+	const response = await API.post(
+		`/knowledge/link-amr?document_id=${documentId}&model_id=${modelId}`
+	);
+	return response?.data?.id ?? null;
+};
 /**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result

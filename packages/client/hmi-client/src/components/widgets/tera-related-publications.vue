@@ -61,7 +61,7 @@ import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { ResourceType } from '@/types/common';
-import { profileDataset, profileModel, fetchExtraction } from '@/services/knowledge';
+import { profileDataset, profileModel, fetchExtraction, alignModel } from '@/services/knowledge';
 
 const props = defineProps<{
 	publications?: Array<{ name: string; id: string | undefined }>;
@@ -70,7 +70,7 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const emit = defineEmits(['enriched']);
+const emit = defineEmits(['enriched', 'aligned']);
 const visible = ref(false);
 const selectedResources = ref();
 
@@ -88,6 +88,21 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	// 2. Poll
 	await fetchExtraction(jobId);
 	emit('enriched');
+
+	// 3. Align models after fetching enrichments
+	await sendToAlignModel(props.assetId, selectedResources?.value?.id);
+};
+
+const sendToAlignModel = async (modelId: string, documentId: string) => {
+	if (modelId !== ResourceType.MODEL || !documentId) {
+		return;
+	}
+
+	const jobId = await alignModel(modelId, documentId);
+	if (!jobId) return;
+
+	await fetchExtraction(jobId);
+	emit('aligned');
 };
 </script>
 
