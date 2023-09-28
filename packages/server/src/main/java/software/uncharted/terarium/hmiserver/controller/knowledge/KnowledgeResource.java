@@ -39,40 +39,38 @@ public class KnowledgeResource {
 	}
 
 	/**
-	 * Post MathML to skema service to get AMR return
+	 * Post LaTeX to SKEMA Unified service to get an AMR
 	 *
-	 * @return AMR model
-	 * @param    framework (String) the id of the model
-	 * <p>
-	 * Args:
-	 * mathMLPayload (List<String>): A list of MathML strings representing the functions that are
-	 * used to convert to AMR model (str, optional): AMR model return type.
-	 * Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param framework (String) the type of AMR to return. Options: "regnet", "petrinet".
+	 * @param modelId   (String): the id of the model (to update) based on the set of equations
+	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @return (ExtractionResponse): The response from the extraction service
 	 */
 	@PostMapping("/mathml-to-amr")
-	public ResponseEntity<JsonNode> postMathMLToAMR(
-		@RequestParam(name = "framework", defaultValue = "petrinet") String framework,
-		@RequestBody List<String> mathMLPayload
+	public ResponseEntity<ExtractionResponse> postMathMLToAMR(
+		@RequestParam("framework") String framework,
+		@RequestParam("modelId") String modelId,
+		@RequestBody List<String> equations
 	) {
-		return knowledgeMiddlewareProxy.postMathMLToAMR(framework, mathMLPayload);
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR("mathml", framework, modelId, equations).getBody());
 	};
 
 	/**
 	 * Post LaTeX to SKEMA Unified service to get an AMR
 	 *
-	 * @param framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param framework (String) the type of AMR to return. Options: "regnet", "petrinet".
 	 * @param modelId   (String): the id of the model (to update) based on the set of equations
 	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
 	 * @return (ExtractionResponse): The response from the extraction service
 	 */
-	@PostMapping("/latex-to-amr/{framework}")
+	@PostMapping("/latex-to-amr")
 	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(
-		@PathVariable(name = "framework") String framework,
+		@RequestParam("framework") String framework,
 		@RequestParam ("modelId") String modelId,
 		@RequestBody List<String> equations
 	) {
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR("latex", framework, modelId, equations).getBody());
 	};
 
 	/**

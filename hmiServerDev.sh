@@ -28,7 +28,7 @@ case ${COMMAND} in
 		cd ${SERVER_DIR} || exit
 		echo "Decrypting local secrets vault"
 		ansible-vault decrypt --vault-password-file ${VAULT_PASSWORD} --output ${DECRYPTED_FILE} ${ENCRYPTED_FILE}
-    gradle bootRun
+    gradle bootRun --args='--spring.profiles.active=default,secrets'
     echo "Deleting local secrets fault"
     rm ${DECRYPTED_FILE}
     ;;
