@@ -302,7 +302,7 @@ function generateMatrix(populateDimensions = false) {
 	}
 
 	matrix.value = matrixAttributes.matrix;
-	if (matrixAttributes.controllers) controllers.value = matrixAttributes.controllers;
+	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];
 
 	return matrixData;
 }
