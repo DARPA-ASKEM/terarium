@@ -24,10 +24,10 @@ public class ExtractionResource {
 	private static final Pattern DOI_VALIDATION_PATTERN = Pattern.compile("^10.\\d{4,9}\\/[-._;()\\/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
 
-	@Value("${xdd.api_key}")
+	@Value("${xdd.api-key}")
 	String key;
 
-	@Value("${xdd.api_es_key}")
+	@Value("${xdd.api-es-key}")
 	String ESkey;
 
 	@Autowired

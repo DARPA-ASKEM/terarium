@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
-@FeignClient(name = "skema-unified", url = "${skema.unified.url}")
+@FeignClient(name = "skema-unified", url = "${skema-unified.url}")
 public interface SkemaUnifiedProxy {
 
 	/**

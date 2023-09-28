@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
-@FeignClient(name = "mit", url = "${mit.url}")
+@FeignClient(name = "mit", url = "${mit-proxy.url}")
 public interface MitProxy {
 
 	//TODO I question if these are all actually String?

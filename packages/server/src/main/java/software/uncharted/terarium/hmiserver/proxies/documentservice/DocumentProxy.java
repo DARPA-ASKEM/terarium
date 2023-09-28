@@ -10,7 +10,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.responses.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-@FeignClient(name = "documentService", url = "${xdd-dev-service}")
+@FeignClient(name = "documentService", url = "${xdd-dev-service.url}")
 public interface DocumentProxy {
 	@GetMapping("/api/v2/articles")
 	XDDResponse<DocumentsResponseOK> getDocuments(

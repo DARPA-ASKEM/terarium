@@ -13,7 +13,7 @@ import java.util.List;
 
 
 
-@FeignClient(name = "knowledge-middleware", url = "${knowledge-middleware}")
+@FeignClient(name = "knowledge-middleware", url = "${knowledge-middleware.url}")
 public interface KnowledgeMiddlewareProxy {
 
 	/**
