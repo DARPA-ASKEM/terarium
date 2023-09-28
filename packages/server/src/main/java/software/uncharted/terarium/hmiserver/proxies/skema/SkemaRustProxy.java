@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 
-@FeignClient(name = "skema-rust", url = "${skema.rust.url}")
+@FeignClient(name = "skema-rust", url = "${skema-rs.url}")
 public interface SkemaRustProxy {
 	/**
 	 * Store the model

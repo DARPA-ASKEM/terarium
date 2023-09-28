@@ -13,7 +13,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.responses.XD
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-@FeignClient(name = "extractionService", url = "${xdd-dev-service}")
+@FeignClient(name = "extractionService", url = "${xdd-dev-service.url}")
 public interface ExtractionProxy {
 	@GetMapping("/askem/object")
 	XDDResponse<XDDExtractionsResponseOK> getExtractions(

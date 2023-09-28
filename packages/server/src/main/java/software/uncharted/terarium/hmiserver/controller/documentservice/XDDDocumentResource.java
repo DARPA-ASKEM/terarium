@@ -22,7 +22,7 @@ public class XDDDocumentResource {
 	DocumentProxy proxy;
 
 
-	@Value("${xdd.api_es_key}")
+	@Value("${xdd.api-es-key}")
 	String api_es_key;
 
 	// NOTE: the query parameters match the proxy version and the type XDDSearchPayload

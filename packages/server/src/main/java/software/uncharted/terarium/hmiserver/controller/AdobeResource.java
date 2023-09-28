@@ -15,7 +15,7 @@ import java.util.Optional;
 @Slf4j
 public class AdobeResource {
 
-	@Value("${adobe_key}")
+	@Value("${adobe.api-key}")
 	String key;
 
 	@GetMapping

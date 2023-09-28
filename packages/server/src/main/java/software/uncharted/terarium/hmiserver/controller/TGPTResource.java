@@ -19,13 +19,13 @@ public class TGPTResource {
 	@Autowired
 	ObjectMapper mapper;
 
-	@Value("${tgpt.baseUrl}")
+	@Value("${tgpt.base.url}")
 	String baseUrl;
 
-	@Value("${tgpt.appUrl}")
+	@Value("${tgpt.app.url}")
 	String appUrl;
 
-	@Value("${tgpt.wsUrl}")
+	@Value("${tgpt.ws.url}")
 	String wsUrl;
 
 	@Value("${tgpt.token}")

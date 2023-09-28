@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 
-@FeignClient(name = "skema-py", url = "${skema.py.url}")
+@FeignClient(name = "skema-py", url = "${skema-py.url}")
 public interface SkemaProxy {
 	/**
 	 * Converts a {@link CodeRequest} to a function network via TA1 Skema
