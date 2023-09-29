@@ -55,27 +55,15 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      spicedb:
-        # Docker Hub image
-        image: authzed/spicedb:v1.24.0
-        command: [ "serve" ]
-        env:
-          SPICEDB_GRPC_PRESHARED_KEY: "test"
-        ports:
-          - 50051:50051
-        # Set health checks to wait until spicedb has started
-        options: >-
-          --health-cmd "grpc_health_probe -addr=:50051"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-
     permissions:
       contents: read
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - uses: authzed/action-spicedb@v1
+        with:
+          version: v1.24.0
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
