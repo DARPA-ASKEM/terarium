@@ -1,10 +1,14 @@
 package software.uncharted.terarium.hmiserver.controller.permissions;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.jwt.JsonWebToken;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.permission.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
@@ -14,34 +18,30 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@RequestMapping("/groups")
 @RestController
-@Slf4j
+@RequestMapping("/groups")
 @RequiredArgsConstructor
+@Slf4j
 public class GroupsResource {
-	@Inject
+	@Autowired
 	ReBACService reBACService;
 
 	JsonWebToken jwt;
 
-	@GET
-	public List<PermissionGroup> getGroups(
-		@DefaultValue("1000") @QueryParam("page_size") final Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") final Integer page
+	@GetMapping
+	public ResponseEntity<List<PermissionGroup>> getGroups(
+		@RequestParam(name = "page_size", defaultValue = "1000") Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
-		return reBACService.getGroups();
+		return ResponseEntity.ok(reBACService.getGroups());
 	}
 
-	@GET
-	@Path("/{groupId}")
-	public Response getGroup(
-		@PathParam("groupId") final String groupId
+	@GetMapping("/{groupId}")
+	public ResponseEntity<PermissionGroup> getGroup(
+		@PathVariable("groupId") final String groupId
 	) {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
@@ -58,65 +58,57 @@ public class GroupsResource {
 					}
 				}
 
-				return Response
-					.status(Response.Status.OK)
-					.entity(permissionGroup)
-					.build();
+				return ResponseEntity.ok(permissionGroup);
 			}
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			log.error("Error getting group", e);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+			return ResponseEntity.internalServerError().build();
 		}
 	}
 
-	@POST
-	public Response addGroup(
-		@QueryParam("name") final String name
+	@PostMapping
+	public ResponseEntity<PermissionGroup> addGroup(
+		@RequestParam(name = "name") final String name
 	) {
 		try {
 			RebacUser rebacUser = new RebacUser(jwt.getSubject(), reBACService);
 			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID, reBACService))) {
 				PermissionGroup permissionGroup = rebacUser.addGroup(name);
-				return Response
-					.status(Response.Status.OK)
-					.entity(permissionGroup)
-					.build();
+				return ResponseEntity.ok(permissionGroup);
 			}
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			log.error("Error adding group", e);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+			return ResponseEntity.internalServerError().build();
 		}
 	}
 
-	@POST
-	@Path("/{groupId}/permissions/user/{userId}/{relationship}")
-	public Response addGroupUserPermissions(
-		@PathParam("groupId") final String groupId,
-		@PathParam("userId") final String userId,
-		@PathParam("relationship") final String relationship
+	@PostMapping("/{groupId}/permissions/user/{userId}/{relationship}")
+	public ResponseEntity<JsonNode> addGroupUserPermissions(
+		@PathVariable("groupId") final String groupId,
+		@PathVariable("userId") final String userId,
+		@PathVariable("relationship") final String relationship
 	) {
 		try {
 			RebacGroup what = new RebacGroup(userId, reBACService);
 			RebacGroup who = new RebacGroup(groupId, reBACService);
 			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
 				what.setPermissionRelationships(who, relationship);
-				return Response.ok().build();
+				return ResponseEntity.ok().build();
 			}
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			log.error("Error adding group user permission relationships", e);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+			return ResponseEntity.internalServerError().build();
 		}
 	}
 
-	@DELETE
-	@Path("/{groupId}/permissions/user/{userId}/{relationship}")
-	public Response removeGroupUserPermissions(
-		@PathParam("groupId") final String groupdId,
-		@PathParam("userId") final String userId,
-		@PathParam("relationship") final String relationship
+	@DeleteMapping("/{groupId}/permissions/user/{userId}/{relationship}")
+	public ResponseEntity<JsonNode> removeGroupUserPermissions(
+		@PathVariable("groupId") final String groupdId,
+		@PathVariable("userId") final String userId,
+		@PathVariable("relationship") final String relationship
 	) {
 		try {
 			RebacGroup what = new RebacGroup(groupdId, reBACService);
@@ -124,15 +116,15 @@ public class GroupsResource {
 			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					what.removePermissionRelationships(who, relationship);
-					return Response.ok().build();
+					return ResponseEntity.ok().build();
 				} catch (RelationshipAlreadyExistsException e) {
-					return Response.notModified().build();
+					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 				}
 			}
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			log.error("Error removing group user permission relationships", e);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+			return ResponseEntity.internalServerError().build();
 		}
 	}
 }
