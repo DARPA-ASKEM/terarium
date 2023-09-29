@@ -1,8 +1,6 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
 
-import javax.ws.rs.core.Response;
-
 import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
@@ -10,7 +8,6 @@ import io.grpc.ManagedChannelBuilder;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
@@ -21,17 +18,19 @@ import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.stereotype.Controller;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
-@Controller
+@Service
 @Slf4j
 @RequiredArgsConstructor
 public class ReBACService {
@@ -40,11 +39,11 @@ public class ReBACService {
 
 	private final Config config;
 
-	@ConfigProperty(name = "admin.keycloak.realm")
+	@Value("${terarium.keycloak.admin-realm}")
 	String REALM_NAME;
-	@ConfigProperty(name = "spicedb.shared-key")
+	@Value("${spicedb.shared-key}")
 	String SPICEDB_PRESHARED_KEY;
-	@ConfigProperty(name = "spicedb.url")
+	@Value("${spicedb.url}")
 	String SPICEDB_TARGET;
 
 	private BearerToken spiceDbBearerToken;

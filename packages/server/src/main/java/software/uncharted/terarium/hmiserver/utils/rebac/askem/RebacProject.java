@@ -6,11 +6,10 @@ import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExist
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
-import javax.inject.Inject;
 import java.util.List;
 
 public class RebacProject extends RebacObject {
-	@Inject
+
 	ReBACService reBACService;
 
 	private final AskemDatumType datumType = AskemDatumType.PROJECT;

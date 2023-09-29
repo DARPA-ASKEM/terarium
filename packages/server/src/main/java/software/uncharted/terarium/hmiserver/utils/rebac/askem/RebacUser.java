@@ -5,8 +5,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
-import javax.inject.Inject;
-
 public class RebacUser extends RebacObject {
 	private ReBACService reBACService;
 

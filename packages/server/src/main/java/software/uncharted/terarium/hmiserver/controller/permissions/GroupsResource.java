@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.permissions;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -11,12 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.permission.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+import org.keycloak.representations.JsonWebToken;
 
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -29,7 +30,7 @@ public class GroupsResource {
 	@Autowired
 	ReBACService reBACService;
 
-	JsonWebToken jwt;
+	private final CurrentUserService currentUserService;
 
 	@GetMapping
 	public ResponseEntity<List<PermissionGroup>> getGroups(
@@ -46,7 +47,7 @@ public class GroupsResource {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
 			PermissionGroup permissionGroup = reBACService.getGroup(groupId);
-			if (new RebacUser(jwt.getSubject(), reBACService).canRead(rebacGroup)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
 				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
 
 				PermissionRelationships permissions = new PermissionRelationships();
@@ -72,7 +73,7 @@ public class GroupsResource {
 		@RequestParam(name = "name") final String name
 	) {
 		try {
-			RebacUser rebacUser = new RebacUser(jwt.getSubject(), reBACService);
+			RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
 			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID, reBACService))) {
 				PermissionGroup permissionGroup = rebacUser.addGroup(name);
 				return ResponseEntity.ok(permissionGroup);
@@ -93,7 +94,7 @@ public class GroupsResource {
 		try {
 			RebacGroup what = new RebacGroup(userId, reBACService);
 			RebacGroup who = new RebacGroup(groupId, reBACService);
-			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				what.setPermissionRelationships(who, relationship);
 				return ResponseEntity.ok().build();
 			}
@@ -113,7 +114,7 @@ public class GroupsResource {
 		try {
 			RebacGroup what = new RebacGroup(groupdId, reBACService);
 			RebacUser who = new RebacUser(userId, reBACService);
-			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					what.removePermissionRelationships(who, relationship);
 					return ResponseEntity.ok().build();

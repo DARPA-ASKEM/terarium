@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-
 import org.keycloak.representations.JsonWebToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,15 +15,17 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.permission.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/projects")
 @RestController
@@ -33,8 +34,9 @@ public class ProjectResource {
 
 	@Autowired
 	ReBACService reBACService;
-	@Inject
-	JsonWebToken jwt;
+
+
+	CurrentUserService currentUserService;
 
 
 	@Autowired
@@ -56,7 +58,7 @@ public class ProjectResource {
 			.filter(Project::getActive)
 			.filter(project -> {
 				try {
-					return new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(project.getProjectID(), reBACService));
+					return new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(project.getProjectID(), reBACService));
 				} catch (Exception e) {
 					log.error("Error getting user's permissions for project", e);
 					return false;
@@ -94,7 +96,7 @@ public class ProjectResource {
 
 		try {
 			RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (new RebacUser(jwt.getSubject(), reBACService).canRead(rebacProject)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacProject)) {
 				return ResponseEntity.ok(proxy.getProject(id).getBody());
 			}
 			return ResponseEntity.notFound().build();
@@ -110,7 +112,7 @@ public class ProjectResource {
 	) {
 		try {
 			RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (new RebacUser(jwt.getSubject(), reBACService).canRead(rebacProject)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacProject)) {
 				PermissionRelationships permissions = new PermissionRelationships();
 				for (RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
@@ -198,7 +200,7 @@ public class ProjectResource {
 	}
 
 	private ResponseEntity<JsonNode> setProjectPermissions(RebacProject what, RebacObject who, String relationship) throws Exception {
-		if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 			what.setPermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();
 		}
@@ -206,7 +208,7 @@ public class ProjectResource {
 	}
 
 	private ResponseEntity<JsonNode> removeProjectPermissions(RebacProject what, RebacObject who, String relationship) throws Exception {
-		if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 			try {
 				what.removePermissionRelationships(who, relationship);
 				return ResponseEntity.ok().build();
@@ -231,7 +233,7 @@ public class ProjectResource {
 		Id id = mapper.treeToValue(res.getBody(), Id.class);
 
 		try {
-			new RebacUser(jwt.getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId()), reBACService));
+			new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId()), reBACService));
 		} catch (Exception e) {
 			log.error("Error getting user's permissions for project", e);
 			// TODO: Rollback potential?
@@ -246,7 +248,7 @@ public class ProjectResource {
 		final Project project
 	) {
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
 				return ResponseEntity.ok(proxy.updateProject(id, project).getBody());
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -263,7 +265,7 @@ public class ProjectResource {
 	) {
 
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canAdministrate(new RebacProject(id, reBACService))) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(new RebacProject(id, reBACService))) {
 				return ResponseEntity.ok(proxy.deleteProject(id).getBody());
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -282,7 +284,7 @@ public class ProjectResource {
 
 
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
 				return ResponseEntity.ok(proxy.getAssets(projectId, types).getBody());
 			}
 			return ResponseEntity.notFound().build();
@@ -303,7 +305,7 @@ public class ProjectResource {
 
 
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				return ResponseEntity.ok(proxy.createAsset(projectId, type, resourceId).getBody());
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -322,7 +324,7 @@ public class ProjectResource {
 	) {
 
 		try {
-			if (new RebacUser(jwt.getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				return ResponseEntity.ok(proxy.deleteAsset(projectId, type, resourceId).getBody());
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
