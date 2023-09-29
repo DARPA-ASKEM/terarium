@@ -42,9 +42,9 @@ public class ReBACService {
 
 	@ConfigProperty(name = "admin.keycloak.realm")
 	String REALM_NAME;
-	@ConfigProperty(name = "admin.spicedb.shared-key")
+	@ConfigProperty(name = "spicedb.shared-key")
 	String SPICEDB_PRESHARED_KEY;
-	@ConfigProperty(name = "admin.spicedb.target")
+	@ConfigProperty(name = "spicedb.url")
 	String SPICEDB_TARGET;
 
 	private BearerToken spiceDbBearerToken;
