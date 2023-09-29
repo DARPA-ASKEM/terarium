@@ -171,10 +171,6 @@ export const createParameterMatrix = (
 		}
 		rows.push(row);
 	}
-	console.log(childParameterIds);
-	console.log(transitionMatrixData);
-	console.log(rows, controllers);
-	// console.log(rows, inputs, outputs, controllers);
 	return {
 		matrix: rows,
 		controllers

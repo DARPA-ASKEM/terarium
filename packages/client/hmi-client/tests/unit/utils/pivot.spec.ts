@@ -69,7 +69,7 @@ describe('pivot table tests', () => {
 	});
 
 	it('create parameter table with one child parameter', () => {
-		const childParameterIds = ['p_undiagnosed_diagnosed'];
+		const childParameterIds = ['epsilon'];
 		const matrixData = filterParameterLocations(
 			amr as any,
 			getMiraAMRPresentationData(amr as any).transitionMatrixData,
@@ -80,9 +80,12 @@ describe('pivot table tests', () => {
 			matrixData,
 			childParameterIds
 		);
-		expect(matrix.length).to.eq(12);
-		expect(matrix[0].length).to.eq(18);
-		expect(controllers.length).to.eq(6);
+		expect(matrix.length).to.eq(3);
+		expect(matrix[0].length).to.eq(3);
+		expect(controllers.length).to.eq(1);
+		expect(matrix[0][0].content.value).to.not.eq(null);
+		expect(matrix[1][1].content.value).to.not.eq(null);
+		expect(matrix[2][2].content.value).to.not.eq(null);
 	});
 
 	it('create parameter table with multiple child parameters', () => {
@@ -100,5 +103,8 @@ describe('pivot table tests', () => {
 		expect(matrix.length).to.eq(3);
 		expect(matrix[0].length).to.eq(9);
 		expect(controllers.length).to.eq(6);
+		expect(matrix[0][0].content.value).to.not.eq(null);
+		expect(matrix[1][3].content.value).to.not.eq(null);
+		expect(matrix[2][8].content.value).to.not.eq(null);
 	});
 });
