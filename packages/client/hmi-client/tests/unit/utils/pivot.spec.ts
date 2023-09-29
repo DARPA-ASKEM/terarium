@@ -1,4 +1,9 @@
-import { createMatrix2D } from '@/utils/pivot';
+import * as amr from '@/examples/mira-petri.json';
+import {
+	getMiraAMRPresentationData,
+	filterParameterLocations
+} from '@/model-representation/petrinet/mira-petri';
+import { createMatrix2D, createParameterMatrix } from '@/utils/pivot';
 import { describe, expect, it } from 'vitest';
 
 const data: any[] = [
@@ -61,5 +66,39 @@ describe('pivot table tests', () => {
 		expect(r.matrix.length).to.eq(2);
 		expect(r.matrix[0][0].content).to.not.eq(undefined);
 		expect(r.matrix[1][1].content).to.not.eq(undefined);
+	});
+
+	it('create parameter table with one child parameter', () => {
+		const childParameterIds = ['p_undiagnosed_diagnosed'];
+		const matrixData = filterParameterLocations(
+			amr as any,
+			getMiraAMRPresentationData(amr as any).transitionMatrixData,
+			childParameterIds
+		);
+		const { matrix, controllers } = createParameterMatrix(
+			amr as any,
+			matrixData,
+			childParameterIds
+		);
+		expect(matrix.length).to.eq(12);
+		expect(matrix[0].length).to.eq(18);
+		expect(controllers.length).to.eq(6);
+	});
+
+	it('create parameter table with multiple child parameters', () => {
+		const childParameterIds = ['beta_c', 'beta_nc', 'beta_s'];
+		const matrixData = filterParameterLocations(
+			amr as any,
+			getMiraAMRPresentationData(amr as any).transitionMatrixData,
+			childParameterIds
+		);
+		const { matrix, controllers } = createParameterMatrix(
+			amr as any,
+			matrixData,
+			childParameterIds
+		);
+		expect(matrix.length).to.eq(3);
+		expect(matrix[0].length).to.eq(9);
+		expect(controllers.length).to.eq(6);
 	});
 });

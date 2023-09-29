@@ -65,7 +65,8 @@ import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-se
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import {
 	getMiraAMRPresentationData,
-	getUnstratifiedParameters
+	getUnstratifiedParameters,
+	filterParameterLocations
 } from '@/model-representation/petrinet/mira-petri';
 import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
@@ -256,20 +257,11 @@ function generateMatrix(populateDimensions = false) {
 
 		// IDs to find within the rates
 		childParameterIds = paramsMap.get(props.id) as string[];
-
 		// Holds all points that have the parameter
-		matrixData = transitionMatrixData.filter((d) => {
-			// Check if the transition's expression include the usage
-			const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
-			if (!rate) return false;
-
-			// FIXME: should check through sympy to be more accurate
-			if (rate.expression.includes(props.id)) return true;
-			for (let i = 0; i < childParameterIds.length; i++) {
-				if (rate.expression.includes(childParameterIds[i])) return true;
-			}
-			return false;
-		});
+		matrixData = filterParameterLocations(amr, transitionMatrixData, [
+			...childParameterIds,
+			props.id
+		]);
 	}
 
 	if (isEmpty(matrixData)) return matrixData;
@@ -281,8 +273,6 @@ function generateMatrix(populateDimensions = false) {
 			return Object.keys(d);
 		})[0];
 
-		console.log(dimensions);
-
 		rowDimensions.push(...dimensions);
 		colDimensions.push(...dimensions);
 	}
@@ -290,12 +280,10 @@ function generateMatrix(populateDimensions = false) {
 	const matrixAttributes: any =
 		props.nodeType === NodeType.State
 			? createMatrix1D(matrixData)
-			: createParameterMatrix(matrixData, amr, childParameterIds);
+			: createParameterMatrix(amr, matrixData, childParameterIds);
 
 	matrix.value = matrixAttributes.matrix;
 	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];
-
-	console.log(matrix.value);
 
 	return matrixData;
 }

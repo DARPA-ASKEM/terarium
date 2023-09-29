@@ -108,8 +108,8 @@ export const createMatrix1D = (data: any[]) => {
 };
 
 export const createParameterMatrix = (
-	transitionMatrixData: any[],
 	amr: Model,
+	transitionMatrixData: any[],
 	childParameterIds: string[]
 ) => {
 	const rows: any[] = [];
@@ -132,15 +132,12 @@ export const createParameterMatrix = (
 
 	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
-		// inputs.length
 		const row: PivotMatrixCell[] = [];
 		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
-			const content: { value: any; id: string; hasController: boolean } = {
+			const content: { value: any; id: string } = {
 				value: null,
-				id: '',
-				hasController: false
+				id: ''
 			};
-
 			// Go through transition data to see what inputs/outputs belong to certain transitions
 			for (let i = 0; i < transitionMatrixData.length; i++) {
 				const { input, output, id } = transitionMatrixData[i];
@@ -174,8 +171,9 @@ export const createParameterMatrix = (
 		}
 		rows.push(row);
 	}
-	// console.log(childParameterIds);
-	// console.log('matrix data', transitionMatrixData);
+	console.log(childParameterIds);
+	console.log(transitionMatrixData);
+	console.log(rows, controllers);
 	// console.log(rows, inputs, outputs, controllers);
 	return {
 		matrix: rows,
