@@ -219,6 +219,11 @@ export interface TypingSemantics {
     system: any;
 }
 
+export interface PermissionRelationships {
+    groups: Group[];
+    users: User[];
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
@@ -243,6 +248,13 @@ export interface DKG {
     name: string;
     description: string;
     link: string;
+}
+
+export interface PermissionUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
 }
 
 export interface CalibrationRequestCiemss {
@@ -405,6 +417,16 @@ export interface Properties {
     name: string;
     grounding?: ModelGrounding;
     description?: string;
+}
+
+export interface Group {
+    id: string;
+    relationship: string;
+}
+
+export interface User {
+    id: string;
+    relationship: string;
 }
 
 export interface PetriNetState {

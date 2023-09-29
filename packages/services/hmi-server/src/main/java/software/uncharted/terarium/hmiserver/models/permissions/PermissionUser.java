@@ -1,7 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.permissions;
 
 import lombok.Data;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
+@Data
+@TSModel
 public class PermissionUser {
 	private String id;
 	private String firstName;

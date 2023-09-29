@@ -3,7 +3,7 @@
 		<Avatar :label="userInitials" class="avatar m-2" shape="circle" />
 	</section>
 	<section>
-		<span class="name">{{ user.name }} {{ isYou() }}</span>
+		<span class="name">{{ user.firstName }} {{ user.lastName }} {{ isYou() }}</span>
 		<span class="email">{{ user.email }}</span>
 	</section>
 	<section v-if="isAuthor" class="permissions">Author</section>
@@ -17,9 +17,9 @@ import Avatar from 'primevue/avatar';
 import { computed, ref, watch } from 'vue';
 import useAuthStore from '@/stores/auth';
 import Dropdown from 'primevue/dropdown';
-import { User } from './tera-share-project.vue';
+import { PermissionUser } from '@/types/Types';
 
-const props = defineProps<{ user: User; isAuthor: boolean }>();
+const props = defineProps<{ user: PermissionUser; isAuthor: boolean }>();
 const emit = defineEmits(['remove-user']);
 
 const auth = useAuthStore();
@@ -27,13 +27,12 @@ const auth = useAuthStore();
 const selectedPermission = ref('Edit');
 const permissions = ref(['Edit', 'Write only', 'Remove access']);
 const userInitials = computed(() =>
-	props.user.name
-		.split(' ')
-		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
+	props.user.firstName.charAt(0).concat(props.user.firstName.charAt(0))
 );
 
 function isYou() {
-	return auth.name === props.user.name ? '(you)' : '';
+	console.log(auth);
+	return auth.name === props.user.firstName ? '(you)' : '';
 }
 
 watch(

@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.permission;
 
+import lombok.Data;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.permission.Group;
 import software.uncharted.terarium.hmiserver.models.dataservice.permission.User;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -7,6 +9,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
+@TSModel
 public class PermissionRelationships {
 	private List<Group> groups = new ArrayList<>();
 	private List<User> users = new ArrayList<>();

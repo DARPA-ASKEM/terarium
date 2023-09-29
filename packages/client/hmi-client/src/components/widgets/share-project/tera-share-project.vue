@@ -11,11 +11,11 @@
 		<section class="container">
 			<Dropdown
 				v-model="selectedUser"
-				:options="users"
+				:options="usersMenu"
 				optionLabel="name"
 				editable
 				placeholder="Add people and groups"
-				@update:model-value="addSelectedUser"
+				@update:model-value="(value) => addSelectedUser(value.id)"
 				class="w-full sm"
 			/>
 			<section class="selected-users" v-if="selectedUsers.size > 0">
@@ -24,7 +24,7 @@
 					<li v-for="(user, i) in selectedUsers" :key="i">
 						<tera-user-card
 							:user="user"
-							:is-author="project.username === user.name"
+							:is-author="isUserAuthor(user)"
 							@remove-user="removeUserAccess(user)"
 						/>
 					</li>
@@ -62,27 +62,21 @@ import Dropdown from 'primevue/dropdown';
 import { watch, ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { IProject } from '@/types/Project';
+import { getUsers } from '@/services/user';
+import { PermissionUser, PermissionRelationships } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 import TeraUserCard from './tera-user-card.vue';
-
-export interface User {
-	name: string;
-	email: string;
-}
 
 const props = defineProps<{ modelValue: boolean; project: IProject }>();
 
 const visible = ref(props.modelValue);
-const users = ref<User[]>([
-	{ name: 'Edwin Lai', email: 'elai@uncharted.ca' },
-	{ name: 'Bob Barker', email: 'bbarker@uncharted.ca' },
-	{ name: 'Emperor Adam', email: 'adam@test.io' }
-]);
-const userNames = computed<string[]>(() => users.value.map((user) => user.name));
-const selectedUser = ref<User | null>(null);
-const selectedUsers = ref<Set<User>>(new Set());
-const author = computed<User | null>(
-	() => users.value.find((user) => props.project.username === user.name) ?? null
+const permissions = ref<PermissionRelationships | null>(null);
+const users = ref<PermissionUser[]>([]);
+const usersMenu = computed(() =>
+	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
 );
+const selectedUser = ref(null);
+const selectedUsers = ref<Set<PermissionUser>>(new Set());
 const generalAccessOptions = ref([
 	{ label: 'Restricted', icon: 'pi pi-lock' },
 	{ label: 'Public', icon: 'pi pi-users' }
@@ -95,9 +89,12 @@ const generalAccessCaption = computed(() => {
 	return 'Anyone can view and copy this project.';
 });
 
-function addSelectedUser() {
-	if (selectedUser.value && userNames.value.includes(selectedUser.value.name)) {
-		selectedUsers.value.add(selectedUser.value);
+function addSelectedUser(id) {
+	if (id) {
+		const user = users.value.find((u) => u.id === id);
+		if (user) {
+			selectedUsers.value.add(user);
+		}
 	}
 }
 
@@ -106,7 +103,7 @@ function onAfterHide() {
 	selectedUsers.value = new Set();
 }
 
-function removeUserAccess(user: User) {
+function removeUserAccess(user: PermissionUser) {
 	selectedUsers.value.delete(user);
 	selectedUser.value = null;
 }
@@ -115,11 +112,20 @@ function shareProject() {
 	visible.value = false;
 }
 
+function isUserAuthor(user: PermissionUser) {
+	return permissions.value?.users.find(
+		(pUser) => pUser.id === user.id && pUser.relationship === 'creator'
+	);
+}
+
 watch(
 	() => props.project,
-	() => {
-		if (author.value) {
-			selectedUsers.value.add(author.value);
+	async () => {
+		users.value = (await getUsers()) ?? [];
+		permissions.value = await useProjects().getPermissions(props.project.id);
+		const author = permissions.value?.users.find((user) => user.relationship === 'creator');
+		if (author) {
+			addSelectedUser(author.id);
 		}
 	},
 	{ immediate: true }

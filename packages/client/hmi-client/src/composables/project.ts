@@ -9,7 +9,7 @@
 import { IProject } from '@/types/Project';
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import { AssetType } from '@/types/Types';
+import { AssetType, PermissionRelationships } from '@/types/Types';
 
 const TIMEOUT_MS = 100;
 
@@ -150,6 +150,12 @@ export function useProjects() {
 		return ProjectService.getPublicationAssets(projectId);
 	}
 
+	async function getPermissions(
+		projectId: IProject['id']
+	): Promise<PermissionRelationships | null> {
+		return ProjectService.getPermissions(projectId);
+	}
+
 	return {
 		activeProject,
 		allProjects,
@@ -160,6 +166,7 @@ export function useProjects() {
 		create,
 		update,
 		remove,
-		getPublicationAssets
+		getPublicationAssets,
+		getPermissions
 	};
 }
