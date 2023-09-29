@@ -72,7 +72,7 @@ const sidePanelTabStyle = computed(
 }
 
 .slider.right.closed .slider-tab,
-.slider.right.open .slider-content {
+.slider.right.open {
 	border-left: 1px solid var(--surface-border-light);
 }
 
@@ -110,6 +110,7 @@ footer:empty {
 footer {
 	position: relative;
 	border-top: 1px solid var(--surface-border-light);
+	box-shadow: 0px -4px 8px -7px #b8b8b8;
 	background-color: var(--surface-section);
 	height: 5rem;
 	width: 100%;
