@@ -1,13 +1,9 @@
 package software.uncharted.terarium.hmiserver.resources.knowledgemiddleware;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
-import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.knowledgemiddleware.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
@@ -50,49 +46,46 @@ public class KnowledgeResource {
 	}
 
 	/**
-	 * Post MathML to skema service to get AMR return
-	 *
-	 * @param		framework (String) the id of the model
-	 *
-	 * Args:
-	 *     mathMLPayload (List<String>): A list of MathML strings representing the functions that are
-	 * 													         used to convert to AMR model (str, optional): AMR model return type.
-	 * 													         Defaults to "petrinet". Options: "regnet", "petrinet".
-	 *
-	 * @return AMR model
-	 */
-	@POST
-	@Path("/mathml-to-amr")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response postMathMLToAMR(
-		@DefaultValue("petrinet") @QueryParam("framework") String framework,
-		List<String> mathMLPayload
-	) {
-		return knowledgeMiddlewareProxy.postMathMLToAMR(framework, mathMLPayload);
-	};
-
-	/**
 	 * Post LaTeX to SKEMA Unified service to get an AMR
-	 * @param   framework (String) the type of AMR to return. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param   framework (String) the type of AMR to return. Options: "regnet", "petrinet".
 	 * @param   modelId (String): the id of the model (to update) based on the set of equations
 	 * @param   equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
 	 * @return  (ExtractionResponse): The response from the extraction service
 	 */
 	@POST
-	@Path("/latex-to-amr/{framework}")
+	@Path("/mathml-to-amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public ExtractionResponse postMathMLToAMR(
+			@QueryParam("framework") String framework,
+			@QueryParam("modelId") String modelId,
+			List<String> equations
+	) {
+		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
+		return knowledgeMiddlewareProxy.postEquationsToAMR("mathml", framework, modelId, equations);
+	};
+
+	/**
+	 * Post LaTeX to SKEMA Unified service to get an AMR
+	 * @param   framework (String) the type of AMR to return. Options: "regnet", "petrinet".
+	 * @param   modelId (String): the id of the model (to update) based on the set of equations
+	 * @param   equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @return  (ExtractionResponse): The response from the extraction service
+	 */
+	@POST
+	@Path("/latex-to-amr")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public ExtractionResponse postLaTeXToAMR(
-		@DefaultValue("petrinet") @PathParam("framework") String framework,
+		@QueryParam("framework") String framework,
 		@QueryParam("modelId") String modelId,
 		List<String> equations
 	) {
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
-		return knowledgeMiddlewareProxy.postLaTeXToAMR("latex", framework, modelId, equations);
+		return knowledgeMiddlewareProxy.postEquationsToAMR("latex", framework, modelId, equations);
 	};
 
 	/**
 	 * Transform source code to AMR
-	 * @param 	artifactId (String): id of the code artifact
+	 * @param 	codeId (String): id of the code artifact
 	 * @param 	name (String): the name to set on the newly created model
 	 * @param 	description (String): the description to set on the newly created model
 	 * @return  (ExtractionResponse)
@@ -160,7 +153,7 @@ public class KnowledgeResource {
 	public Response postProfileModel(
 		@PathParam("model_id") String modelId,
 		@QueryParam("artifact_id") String artifactId
-	) { 
+	) {
 		return knowledgeMiddlewareProxy.postProfileModel(modelId, artifactId);
 	};
 
