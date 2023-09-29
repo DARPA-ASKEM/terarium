@@ -56,12 +56,11 @@ jobs:
           --health-retries 5
 
       spicedb:
-
         # Docker Hub image
         image: authzed/spicedb:v1.24.0
+        command: "serve"
         env:
           SPICEDB_GRPC_PRESHARED_KEY: "test"
-
         ports:
           - 50051:50051
         options: >-
