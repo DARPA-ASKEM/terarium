@@ -58,6 +58,7 @@ jobs:
       spicedb:
         # Docker Hub image
         image: authzed/spicedb:v1.24.0
+        command: [ "serve" ]
         env:
           SPICEDB_GRPC_PRESHARED_KEY: "test"
         ports:
