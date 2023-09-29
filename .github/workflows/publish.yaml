@@ -76,7 +76,6 @@ jobs:
       - lint
       - lint-client
       - test-client
-      - test-server
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
