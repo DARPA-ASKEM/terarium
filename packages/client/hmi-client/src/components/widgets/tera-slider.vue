@@ -66,13 +66,7 @@ const sidePanelTabStyle = computed(
 	transition: all 0.2s ease-out;
 }
 
-.slider.left.closed .slider-tab,
-.slider.left.open {
-	outline: 1px solid var(--surface-border-light);
-}
-
-.slider.right.closed .slider-tab,
-.slider.right.open {
+.slider {
 	outline: 1px solid var(--surface-border-light);
 }
 
