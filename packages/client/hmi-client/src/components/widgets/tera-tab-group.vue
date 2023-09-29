@@ -42,9 +42,9 @@ import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import { getAssetIcon } from '@/services/project';
 import { ref, watch } from 'vue';
-import useResourceStore from '@/stores/resources';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	tabs: Tab[];
@@ -52,32 +52,33 @@ const props = defineProps<{
 	loadingTabIndex: number | null;
 }>();
 
-const resourceStore = useResourceStore();
-
 const emit = defineEmits(['select-tab', 'close-tab']);
 const loadingTabIndex = ref();
 
 const getTabName = (tab: Tab) => {
 	if (tab.assetName) return tab.assetName;
 	if (tab.pageType === ProjectPages.OVERVIEW) return 'Overview';
-	const assets = resourceStore.activeProjectAssets;
+	const assets = useProjects().activeProject.value?.assets;
 
 	if (assets) {
 		const asset: any = assets[tab.pageType as string].find(
 			(assetItem: any) => assetItem.id?.toString() === tab.assetId?.toString()
 		);
-
-		// FIXME should unify upstream via a summary endpoint
-		let assetName = null;
-		if (asset?.header && asset?.header?.name) {
-			assetName = asset.header.name;
-		} else {
-			assetName = asset.name;
+		let assetName;
+		if (asset) {
+			// FIXME should unify upstream via a summary endpoint
+			if (asset?.header && asset?.header?.name) {
+				assetName = asset.header.name;
+			} else {
+				assetName = asset.name;
+			}
+			return assetName;
 		}
-
 		// FIXME: remove this check for title/name once the following github issue has been addressed
 		// https://github.com/DARPA-ASKEM/data-service/issues/299
-		return (tab.pageType === AssetType.Publications ? asset?.title : assetName) ?? 'n/a';
+		if (tab.pageType === AssetType.Publications) {
+			return asset?.title;
+		}
 	}
 
 	if (tab.pageType === AssetType.Code) return 'New File';

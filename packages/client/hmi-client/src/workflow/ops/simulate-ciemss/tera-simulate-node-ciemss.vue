@@ -57,13 +57,14 @@ import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { SimulationRequest } from '@/types/Types';
+import { logger } from '@/utils/logger';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state']);
-// const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
 // EXTRA section
@@ -85,7 +86,7 @@ const runSimulate = async () => {
 	const state = props.node.state as SimulateCiemssOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
-		const payload = {
+		const payload: SimulationRequest = {
 			modelConfigId: configId,
 			timespan: {
 				start: state.currentTimespan.start,
@@ -126,8 +127,10 @@ const getStatus = async (runIds: string[]) => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', runIds);
 		showSpinner.value = false;
+		logger.error(`Simulation: ${runIds} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
 		throw Error('Failed Runs');
 	}
 	completedRunIdList.value = runIds;

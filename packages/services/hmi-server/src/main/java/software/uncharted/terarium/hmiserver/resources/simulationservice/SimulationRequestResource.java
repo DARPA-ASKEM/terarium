@@ -6,12 +6,14 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.utils.Converter;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
+import software.uncharted.terarium.hmiserver.models.simulationservice.Intervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSimulationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleCalibrationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
@@ -20,11 +22,18 @@ import software.uncharted.terarium.hmiserver.proxies.simulationservice.Simulatio
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.*;
+
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurationProxy;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 
 @Path("/api/simulation-request")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation Service REST Endpoint")
+@Slf4j
 public class SimulationRequestResource {
 
 	@RestClient
@@ -35,6 +44,9 @@ public class SimulationRequestResource {
 
 	@RestClient
 	SimulationProxy simulationProxy;
+
+	@RestClient
+	ModelConfigurationProxy modelConfigProxy;
 
 	@GET
 	@Path("/{id}")
@@ -81,6 +93,9 @@ public class SimulationRequestResource {
 	public Simulation makeForecastRunCiemss(
 		final SimulationRequest request
 	) {
+		if (request.getInterventions() == null){
+			request.setInterventions(getInterventionFromId(request.getModelConfigId()));
+		}
 		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
 		Simulation sim = new Simulation();
@@ -177,5 +192,49 @@ public class SimulationRequestResource {
 		return res;
 	}
 
-
+	//Get modelConfigId
+	//Check if it has timeseries in its metadata
+	//If it does for each element convert it to type Intervention and add it to this.interventions
+	//Schema: http://json-schema.org/draft-07/schema#
+	private List<Intervention> getInterventionFromId(String modelConfigId){
+		List<Intervention> interventionList = new ArrayList<>();
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			ModelConfiguration modelConfig = modelConfigProxy.getModelConfiguration(modelConfigId);
+			JsonNode configuration =  mapper.convertValue(modelConfig.getConfiguration(), JsonNode.class);
+			// Parse the values found under the following path: 
+			// 		AMR -> configuration -> metadata -> timeseries -> parameter name -> value
+			// 		EG) "timeseries": {
+			//   			"beta": "1:0.05,2:0.04,3:0.01"
+			// 			}
+			// Into the following format: "interventions": [{"timestep":1,"name":"beta","value":0.05}, {"timestep":2,"name":"beta","value":0.04}, ...]
+			//This will later be scrapped after a redesign where our AMR -> configuration -> metadata -> timeseries -> parameter name -> value should be more typed. 
+			if (configuration.get("metadata").get("timeseries") != null){
+				JsonNode timeseries = mapper.convertValue(configuration.get("metadata").get("timeseries"), JsonNode.class);
+				List<String> fieldNames = new ArrayList<>();
+				timeseries.fieldNames().forEachRemaining(key -> fieldNames.add(key));
+				for (int i = 0; i < fieldNames.size(); i++){
+					// Eg) Beta
+					String interventionName = fieldNames.get(i).replaceAll("\"",",");
+					// Eg) "1:0.14, 10:0.1, 20:0.2, 30:0.3"
+					String tempString = timeseries.findValue(fieldNames.get(i)).toString().replaceAll("\"","").replaceAll(" ","");
+					String[] tempList = tempString.split(",");
+					for (String ele : tempList){
+						Integer timestep = Integer.parseInt(ele.split(":")[0]);
+						Double value = Double.parseDouble(ele.split(":")[1]);
+						Intervention temp = new Intervention();
+						temp.setName(interventionName);
+						temp.setValue(value);
+						temp.setTimestep(timestep);
+						interventionList.add(temp);
+					}
+				}
+			}
+		}
+		catch (RuntimeException e) {
+			log.error("Unable to parse model.configuration.metadata.timeseries for model config id: " + modelConfigId);
+			log.error(e.toString());
+		}
+		return interventionList;
+	}
 }

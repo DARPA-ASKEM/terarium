@@ -5,8 +5,8 @@
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
 			</router-link>
 			<div class="navigation-dropdown" @click="showNavigationMenu">
-				<h1 v-if="currentProjectId || isDataExplorer">
-					{{ currentProjectName ?? 'Explorer' }}
+				<h1 v-if="useProjects().activeProject.value?.id || isDataExplorer">
+					{{ useProjects().activeProject.value?.name ?? 'Explorer' }}
 				</h1>
 				<img
 					v-else
@@ -137,19 +137,16 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
-import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
+import { useProjects } from '@/composables/project';
 
-const props = defineProps<{
+defineProps<{
 	active: boolean;
-	currentProjectId: IProject['id'] | null;
-	projects: IProject[] | null;
 	showSuggestions: boolean;
 }>();
 
@@ -158,7 +155,6 @@ const props = defineProps<{
  */
 const router = useRouter();
 const navigationMenu = ref();
-const resources = useResourcesStore();
 
 /**
  * Evaluation scenario code
@@ -197,7 +193,7 @@ const isEvaluationScenarioValid = computed(
 const beginEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Started))
 	);
 	persistEvaluationScenario();
@@ -212,7 +208,7 @@ const beginEvaluationScenario = async () => {
 const stopEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Stopped))
 	);
 	clearEvaluationScenario();
@@ -226,7 +222,7 @@ const stopEvaluationScenario = async () => {
 const pauseEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
 	);
 	await refreshEvaluationScenario();
@@ -237,7 +233,7 @@ const pauseEvaluationScenario = async () => {
 const resumeEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
 	);
 	await refreshEvaluationScenario();
@@ -395,27 +391,18 @@ function searchByExampleModalToggled() {
 	*/
 }
 
-/*
- * Reactive
- */
-const currentProjectName = computed(
-	() => props.projects?.find((project) => project.id === props.currentProjectId?.toString())?.name
-);
-
 watch(
-	() => props.projects,
+	() => useProjects().allProjects.value,
 	() => {
-		if (props.projects) {
-			const items: MenuItem[] = [];
-			props.projects?.forEach((project) => {
-				items.push({
-					label: project.name,
-					icon: 'pi pi-folder',
-					command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
-				});
+		const items: MenuItem[] = [];
+		useProjects().allProjects.value?.forEach((project) => {
+			items.push({
+				label: project.name,
+				icon: 'pi pi-folder',
+				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
 			});
-			navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
-		}
+		});
+		navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
 	},
 	{ immediate: true }
 );

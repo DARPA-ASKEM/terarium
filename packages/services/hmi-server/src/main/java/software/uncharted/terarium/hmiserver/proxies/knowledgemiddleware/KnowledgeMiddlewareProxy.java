@@ -133,7 +133,7 @@ public interface KnowledgeMiddlewareProxy {
 	);
 
 	/**
-	 * Transform LaTeX equations to AMR
+	 * Transform Equations to AMR
 	 * @param 	equationType (String): [latex, mathml]
 	 * @param 	framework (String): AMR model return type. Defaults to "petrinet". Options: "regnet", "petrinet".
 	 * @param 	modelId (String): the id of the model (to update) based on the set of equations
@@ -143,7 +143,7 @@ public interface KnowledgeMiddlewareProxy {
 	@POST
 	@Path("/equations_to_amr")
 	@Consumes(MediaType.APPLICATION_JSON)
-	ExtractionResponse postLaTeXToAMR(
+	ExtractionResponse postEquationsToAMR(
 		@QueryParam("equation_type") String equationType,
 		@QueryParam("model") String framework,
 		@QueryParam("model_id") String modelId,

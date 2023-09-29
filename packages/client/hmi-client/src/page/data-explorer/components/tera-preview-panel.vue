@@ -24,7 +24,6 @@
 			<tera-model
 				v-else-if="previewItemResourceType === ResourceType.MODEL"
 				:asset-id="previewItemId"
-				:project="(resources.activeProject as IProject)"
 				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
@@ -50,16 +49,12 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import { PropType, computed, ref, watch } from 'vue';
-import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocument from '@/components/documents/tera-document.vue';
-import { IProject } from '@/types/Project';
-
-const resources = useResourcesStore();
 
 const props = defineProps({
 	// slider props

@@ -1,7 +1,6 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<span class="simulate-header-label">Simulate (probabilistic)</span>
 			<div class="simulate-header p-buttonset">
 				<Button
 					label="Input"
@@ -25,46 +24,6 @@
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
 			class="simulate-container"
 		>
-			<div class="datatable-header">
-				<div class="datatable-header-title">
-					{{ `${rawDataKeys.length} columns | ${parsedRawData.length} rows` }}
-				</div>
-				<div class="datatable-header-select-container">
-					<MultiSelect v-model="selectedCols" :options="rawDataKeys" placeholder="Select columns" />
-				</div>
-			</div>
-			<div
-				class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header"
-			>
-				<div class="p-datatable-wrapper">
-					<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-						<thead class="p-datatable-thead">
-							<tr>
-								<th
-									v-for="(header, i) of selectedCols.length ? selectedCols : rawDataKeys"
-									:key="i"
-									class="p-frozen-column"
-								>
-									{{ header }}
-								</th>
-							</tr>
-						</thead>
-						<tbody class="p-datatable-tbody">
-							<tr v-for="(data, i) of rawDataRenderedRows" :key="i">
-								<td v-for="(key, j) of selectedCols.length ? selectedCols : rawDataKeys" :key="j">
-									{{ data[key] }}
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<Paginator
-				v-model:first="paginatorFirst"
-				v-model:rows="paginatorRows"
-				:totalRecords="parsedRawData.length"
-				:rowsPerPageOptions="[5, 10, 20, 50]"
-			/>
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -81,6 +40,7 @@
 				label="Add chart"
 				icon="pi pi-plus"
 			/>
+			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 			<Button
 				class="add-chart"
 				title="Saves the current version of the model as a new Terarium asset"
@@ -97,13 +57,10 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -172,11 +129,9 @@ import _ from 'lodash';
 import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import Paginator from 'primevue/paginator';
-import { Model, TimeSpan, ModelConfiguration } from '@/types/Types';
+import { CsvAsset, Model, TimeSpan, ModelConfiguration } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel, getModelConfigurations } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -186,14 +141,14 @@ import TeraModelConfigurations from '@/components/model/petrinet/tera-model-conf
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { IProject } from '@/types/Project';
-import { saveDataset } from '@/services/dataset';
+import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import { useProjects } from '@/composables/project';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
@@ -215,10 +170,8 @@ const runConfigs = ref<any>({});
 const runResults = ref<RunResults>({});
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
-const selectedCols = ref<string[]>([]);
-const paginatorRows = ref(10);
-const paginatorFirst = ref(0);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
+const rawContent = ref<CsvAsset | null>(null);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
@@ -241,6 +194,16 @@ const addChart = () => {
 		state
 	});
 };
+
+async function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+			get();
+		}
+		showSaveInput.value = false;
+	}
+}
 
 onMounted(async () => {
 	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
@@ -265,6 +228,8 @@ onMounted(async () => {
 	parsedRawData.value = output.parsedRawData;
 	runResults.value = output.runResults;
 	runConfigs.value = output.runConfigs;
+
+	rawContent.value = createCsvAssetFromRunResults(runResults.value);
 });
 
 watch(
@@ -278,12 +243,6 @@ watch(
 			state
 		});
 	}
-);
-
-const rawDataKeys = computed(() => Object.keys(parsedRawData.value[0]));
-
-const rawDataRenderedRows = computed(() =>
-	parsedRawData.value.slice(paginatorFirst.value, paginatorFirst.value + paginatorRows.value)
 );
 </script>
 

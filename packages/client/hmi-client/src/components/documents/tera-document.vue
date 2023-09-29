@@ -150,7 +150,6 @@
 						<tera-import-github-file
 							:urlString="url"
 							:show-import-button="!featureConfig.isPreview"
-							:project="project"
 							@open-code="openCode"
 						/>
 					</li>
@@ -248,7 +247,6 @@ import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { IProject } from '@/types/Project';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -271,10 +269,6 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
-	},
-	project: {
-		type: Object as PropType<IProject> | null,
-		default: null
 	}
 });
 

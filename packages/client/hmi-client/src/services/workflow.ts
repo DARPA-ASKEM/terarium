@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import API from '@/api/api';
 import _ from 'lodash';
 import {
@@ -11,6 +10,7 @@ import {
 	WorkflowPortStatus,
 	WorkflowStatus
 } from '@/types/workflow';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are

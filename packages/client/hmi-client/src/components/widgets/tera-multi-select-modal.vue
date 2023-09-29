@@ -9,7 +9,7 @@
 		class="multi-selection-dialog"
 	>
 		<section class="flex align-items-center justify-content-center gap-2">
-			<span> {{ selectedResources.length }} items selected. </span>
+			<span> {{ selectedResources?.length }} items selected. </span>
 			<Button
 				v-for="(button, index) in buttons"
 				:key="index"
@@ -28,7 +28,7 @@ import Dialog from 'primevue/dialog';
 
 defineProps<{
 	isVisible: boolean;
-	selectedResources: any[];
+	selectedResources: any[] | undefined;
 	buttons?: { icon?: string; label: string; callback?: Function }[];
 }>();
 </script>

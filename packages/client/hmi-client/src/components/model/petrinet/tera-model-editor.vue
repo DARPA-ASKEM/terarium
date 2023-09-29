@@ -12,7 +12,7 @@
 			<tera-model-equation
 				:model="model"
 				:is-editable="!featureConfig.isPreview"
-				@update-diagram="updateDiagramFromEquation"
+				@model-updated="emit('model-updated')"
 			/>
 		</AccordionTab>
 		<AccordionTab header="Model observables">
@@ -69,7 +69,12 @@ const props = defineProps<{
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
-const emit = defineEmits(['update-model', 'update-configuration', 'add-configuration']);
+const emit = defineEmits([
+	'model-updated',
+	'update-model',
+	'update-configuration',
+	'add-configuration'
+]);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -82,9 +87,6 @@ const relatedTerariumDocuments = computed(
 );
 
 const teraModelDiagramRef = ref();
-function updateDiagramFromEquation(updatedModel: Model) {
-	teraModelDiagramRef.value.rendererGraph(updatedModel);
-}
 
 function updateModelContent(updatedModel: Model) {
 	emit('update-model', updatedModel);

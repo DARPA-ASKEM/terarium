@@ -1,7 +1,6 @@
 <template>
 	<section class="tera-ensemble">
 		<div class="ensemble-header p-buttonset">
-			<span class="ensemble-header-label">Ensemble</span>
 			<Button
 				label="Input"
 				severity="secondary"
@@ -52,13 +51,10 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -209,7 +205,6 @@ import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { saveDataset } from '@/services/dataset';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
@@ -220,15 +215,15 @@ import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { IProject } from '@/types/Project';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import { saveDataset } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 enum EnsembleTabs {
@@ -382,6 +377,16 @@ const addChart = () => {
 		state
 	});
 };
+
+async function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+			get();
+		}
+		showSaveInput.value = false;
+	}
+}
 
 // assume only one run for now
 const watchCompletedRunList = async () => {

@@ -14,11 +14,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, PropType, ref } from 'vue';
+import { PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
-import { IProject } from '@/types/Project';
-import * as ProjectService from '@/services/project';
 import Menu from 'primevue/menu';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 
@@ -36,8 +34,6 @@ const emit = defineEmits([
 ]);
 
 const contextMenu = ref();
-
-const projectsList = ref<IProject[]>([]);
 
 const getMenuItemsForItem = (item: ResultType) => [
 	{
@@ -66,13 +62,6 @@ const getType = (item: ResultType) => {
 	}
 	return ResourceType.ALL;
 };
-
-onMounted(async () => {
-	const all = (await ProjectService.getAll()) as unknown as IProject[];
-	if (all !== null) {
-		projectsList.value = all;
-	}
-});
 
 const toggleContextMenu = (event, idx: number) => {
 	contextMenu.value[idx].toggle(event);

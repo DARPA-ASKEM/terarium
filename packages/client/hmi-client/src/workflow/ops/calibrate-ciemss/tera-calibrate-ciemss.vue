@@ -1,6 +1,6 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset :name="'Calibrate & Simulate (probabilistic)'" stretch-content>
+	<tera-asset stretch-content>
 		<template #edit-buttons>
 			<span class="p-buttonset">
 				<Button

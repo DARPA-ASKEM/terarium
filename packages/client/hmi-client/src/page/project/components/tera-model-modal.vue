@@ -34,15 +34,14 @@ import { computed, ref } from 'vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import { IProject } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { addNewModelToProject } from '@/services/model';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import { AssetType } from '@/types/Types';
+import { addNewModelToProject } from '@/services/model';
+import { useProjects } from '@/composables/project';
 
-const props = defineProps<{
-	project: IProject;
+defineProps<{
 	isVisible: boolean;
 }>();
 const emit = defineEmits(['close-modal']);
@@ -54,7 +53,7 @@ const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : '')
 
 const existingModelNames = computed(() => {
 	const modelNames: string[] = [];
-	props.project.assets?.models.forEach((item) => {
+	useProjects().activeProject.value?.assets?.models.forEach((item) => {
 		modelNames.push(item.header.name);
 	});
 	return modelNames;
@@ -72,8 +71,12 @@ async function createNewModel() {
 		return;
 	}
 	isValidName.value = true;
-	const modelId = await addNewModelToProject(newModelName.value.trim(), props.project);
+	const modelId = await addNewModelToProject(newModelName.value.trim());
+	let newAsset;
 	if (modelId) {
+		newAsset = await useProjects().addAsset(AssetType.Models, modelId);
+	}
+	if (newAsset) {
 		router.push({
 			name: RouteName.Project,
 			params: {

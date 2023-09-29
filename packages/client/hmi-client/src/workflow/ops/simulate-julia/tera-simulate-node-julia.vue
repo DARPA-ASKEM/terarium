@@ -23,7 +23,7 @@ import _ from 'lodash';
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, SimulationRequest } from '@/types/Types';
 
 import {
 	makeForecastJob,
@@ -39,6 +39,7 @@ import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { logger } from '@/utils/logger';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -74,7 +75,7 @@ const runSimulate = async () => {
 	const state = props.node.state as SimulateJuliaOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
-		const payload = {
+		const payload: SimulationRequest = {
 			modelConfigId: configId,
 			timespan: {
 				start: state.currentTimespan.start,
@@ -102,8 +103,10 @@ const getStatus = async (runIds: string[]) => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', runIds);
 		showSpinner.value = false;
+		logger.error(`Simulate: ${runIds} has failed`, {
+			toastTitle: 'Error - Julia'
+		});
 		throw Error('Failed Runs');
 	}
 	completedRunIdList.value = runIds;

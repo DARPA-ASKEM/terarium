@@ -1,7 +1,6 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<span class="simulate-header-label">Simulate (deterministic)</span>
 			<div class="simulate-header p-buttonset">
 				<Button
 					label="Input"
@@ -12,7 +11,7 @@
 					@click="activeTab = SimulateTabs.input"
 				/>
 				<Button
-					label="Ouput"
+					label="Output"
 					severity="secondary"
 					icon="pi pi-sign-out"
 					size="small"
@@ -41,6 +40,7 @@
 				label="Add chart"
 				icon="pi pi-plus"
 			/>
+			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 			<Button
 				class="add-chart"
 				title="Saves the current version of the model as a new Terarium asset"
@@ -57,13 +57,10 @@
 					@click="saveAsName = ''"
 				></i>
 				<i
-					v-if="project?.id"
+					v-if="useProjects().activeProject.value?.id"
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveDataset(project.id, completedRunId, saveAsName);
-						showSaveInput = false;
-					"
+					@click="saveDatasetToProject"
 				></i>
 			</span>
 		</div>
@@ -110,7 +107,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { ModelConfiguration, Model, TimeSpan } from '@/types/Types';
+import { ModelConfiguration, Model, TimeSpan, CsvAsset } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -118,18 +115,18 @@ import ModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-
 
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { saveDataset } from '@/services/dataset';
+import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import { useProjects } from '@/composables/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	project?: IProject;
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
@@ -148,6 +145,7 @@ const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
+const rawContent = ref<CsvAsset | null>(null);
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
@@ -170,6 +168,16 @@ const addChart = () => {
 		state
 	});
 };
+
+async function saveDatasetToProject() {
+	const { activeProject, get } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+			get();
+		}
+		showSaveInput.value = false;
+	}
+}
 
 onMounted(async () => {
 	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
@@ -211,6 +219,9 @@ onMounted(async () => {
 			runResults.value[runId] = csvData as any;
 		})
 	);
+
+	// For now just get the CSV asset for a single run
+	rawContent.value = createCsvAssetFromRunResults(runResults.value, simulationId);
 });
 </script>
 

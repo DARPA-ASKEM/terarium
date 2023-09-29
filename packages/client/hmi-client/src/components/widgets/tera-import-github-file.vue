@@ -178,26 +178,25 @@
 import { computed, ComputedRef, ref, Ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { IProject } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { Artifact, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import { Artifact, AssetType, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
 import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
-import { createNewDatasetFromGithubFile } from '@/services/dataset';
-import { createNewArtifactFromGithubFile } from '@/services/artifact';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
+import { useProjects } from '@/composables/project';
 import { uploadCodeToProjectFromGithub } from '@/services/code';
+import { createNewArtifactFromGithubFile } from '@/services/artifact';
+import { createNewDatasetFromGithubFile } from '@/services/dataset';
 
 const props = defineProps<{
 	urlString: string;
 	showImportButton: boolean;
-	project?: IProject;
 }>();
 
 const repoOwnerAndName: Ref<string> = ref('');
@@ -333,13 +332,15 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 	// iterate through our files and fetch their contents
 	githubFiles.forEach(async (githubFile) => {
 		// Create a new dataset from this GitHub file
-		await createNewDatasetFromGithubFile(
+		const newDataset = await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
 			auth.name ?? '',
-			props.project?.id ?? '',
 			githubFile.htmlUrl
 		);
+		if (newDataset && newDataset.id) {
+			await useProjects().addAsset(AssetType.Datasets, newDataset.id);
+		}
 	});
 }
 
@@ -348,11 +349,13 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
 		const artifact: Artifact | null = await createNewArtifactFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
-			props.project?.id ?? ''
+			useProjects().activeProject.value?.username ?? ''
 		);
-
-		if (artifact && githubFile.name?.toLowerCase().endsWith('.pdf')) {
+		let newAsset;
+		if (artifact && artifact.id) {
+			newAsset = await useProjects().addAsset(AssetType.Artifacts, artifact.id);
+		}
+		if (artifact && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
 			extractPDF(artifact);
 		}
 	});
@@ -364,12 +367,14 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
  */
 async function openCodeFiles(githubFiles: GithubFile[]) {
 	githubFiles.forEach(async (githubFile) => {
-		await uploadCodeToProjectFromGithub(
+		const newCode = await uploadCodeToProjectFromGithub(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.id ?? '',
 			githubFile.htmlUrl
 		);
+		if (newCode && newCode.id) {
+			await useProjects().addAsset(AssetType.Code, newCode.id);
+		}
 	});
 }
 </script>

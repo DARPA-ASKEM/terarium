@@ -60,6 +60,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
+import { logger } from '@/utils/logger';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleCiemssOperation
@@ -146,8 +147,10 @@ const getStatus = async (simulationId: string) => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		console.error('Failed', simulationId);
 		showSpinner.value = false;
+		logger.error(`Simulate Ensemble: ${simulationId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
 		throw Error('Failed Runs');
 	}
 	completedRunId.value = simulationId;
