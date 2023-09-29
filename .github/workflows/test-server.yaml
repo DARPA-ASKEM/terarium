@@ -48,7 +48,7 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
-        # Set health checks to wait until postgres has started
+        # Set health checks to wait until redis has started
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -58,11 +58,11 @@ jobs:
       spicedb:
         # Docker Hub image
         image: authzed/spicedb:v1.24.0
-        command: ["serve"]
         env:
           SPICEDB_GRPC_PRESHARED_KEY: "test"
         ports:
           - 50051:50051
+        # Set health checks to wait until spicedb has started
         options: >-
           --health-cmd "grpc_health_probe -addr=:50051"
           --health-interval 10s
