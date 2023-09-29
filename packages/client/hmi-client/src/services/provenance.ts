@@ -59,6 +59,10 @@ async function getConnectedNodes(
 async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
+	if (rootType !== ProvenanceType.Publication) {
+		return response;
+	}
+
 	const connectedNodes = await getConnectedNodes(id, rootType);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
