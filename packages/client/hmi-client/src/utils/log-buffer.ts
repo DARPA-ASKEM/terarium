@@ -1,13 +1,14 @@
 // import API from '@/api/api';
 import { useToastService } from '@/services/toast';
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import { isEmpty } from 'lodash';
 import useAuthStore from '../stores/auth';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 const LOGS = axios.create({
-	baseURL: '/api'
+	baseURL: '/api',
+	headers: new AxiosHeaders()
 });
 
 // Hook in bearer tokens
@@ -16,12 +17,7 @@ const LOGS = axios.create({
 LOGS.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
-
-		if (config.headers) {
-			config.headers.Authorization = `Bearer ${auth.token}`;
-		} else {
-			config.headers = { Authorization: `Bearer ${auth.token}` };
-		}
+		config.headers.setAuthorization(`Bearer ${auth.token}`);
 		return config;
 	},
 	(error) => {
@@ -65,9 +61,7 @@ export class LogBuffer {
 	sendLogsToServer = async () => {
 		if (!this.isEmpty()) {
 			try {
-				const resp = await LOGS.post(`/logs/`, {
-					logs: this.getLogBuffer()
-				});
+				const resp = await LOGS.post(`/logs`, this.getLogBuffer());
 				const { status } = resp;
 				if (status === 200) {
 					this.clearLogs();

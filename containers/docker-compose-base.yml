@@ -1,0 +1,36 @@
+---
+version: '3.8'
+
+services:
+  redis:
+    image: ghcr.io/darpa-askem/redis:7.0.12-alpine
+    networks:
+      - terarium
+    ports:
+      - '6379:6379'
+    restart: always
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: '3s'
+      timeout: '3s'
+      retries: 30
+
+  spicedb:
+    image: authzed/spicedb:v1.24.0
+    networks:
+      - terarium
+    ports:
+      - '50051:50051'
+    command: ["serve"]
+    restart: always
+    environment:
+      SPICEDB_GRPC_PRESHARED_KEY: "test"
+    healthcheck:
+      test: ['CMD', 'grpc_health_probe', '-addr=:50051']
+      interval: '3s'
+      timeout: '3s'
+      retries: 30
+
+networks:
+  terarium:
+    name: terarium

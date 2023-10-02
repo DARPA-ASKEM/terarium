@@ -16,7 +16,7 @@ import { logger } from '@/utils/logger';
  */
 async function getFacets(types: string[], curies?: ClauseValue[]): Promise<ConceptFacets | null> {
 	try {
-		let url = '/concepts/facets/';
+		let url = '/concepts/facets';
 		if (types) {
 			types.forEach((type, indx) => {
 				url += `${indx === 0 ? '?' : '&'}types=${type}`;
