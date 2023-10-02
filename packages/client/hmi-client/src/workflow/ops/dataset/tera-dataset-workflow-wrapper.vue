@@ -1,5 +1,5 @@
 <template>
-	<tera-dataset :asset-id="props.node.state.datasetId" />
+	<tera-dataset :asset-id="props.node.state.datasetId as string" />
 </template>
 
 <script setup lang="ts">

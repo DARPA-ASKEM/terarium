@@ -93,10 +93,10 @@ export interface WorkflowEdge {
 	workflowId: string;
 	points: Position[];
 
-	source?: WorkflowNode['id'];
+	source?: WorkflowNode<any>['id'];
 	sourcePortId?: string;
 
-	target?: WorkflowNode['id'];
+	target?: WorkflowNode<any>['id'];
 	targetPortId?: string;
 
 	// is this edge being started from an input or output?
