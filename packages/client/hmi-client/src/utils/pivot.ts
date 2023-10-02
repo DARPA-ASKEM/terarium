@@ -1,6 +1,6 @@
 // Create pivot table
 import _ from 'lodash';
-import { Model, Transition } from '@/types/Types';
+import { Model } from '@/types/Types';
 
 export interface PivotMatrixCell {
 	row: number;
@@ -109,12 +109,16 @@ export const createMatrix1D = (data: any[]) => {
 
 export const createParameterMatrix = (
 	amr: Model,
-	transitions: Transition[],
+	transitionMatrixData: any[],
 	childParameterIds: string[]
 ) => {
 	let controllers: string[] = [];
 	let inputs: string[] = [];
 	let outputs: string[] = [];
+
+	const transitions = _.cloneDeep(
+		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
+	);
 
 	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
 	for (let i = 0; i < transitions.length; i++) {
