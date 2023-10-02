@@ -3528,9 +3528,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uncharted/pantera-server-type-generator@workspace:packages/server":
+"@uncharted/server-type-generator@workspace:packages/server":
   version: 0.0.0-use.local
-  resolution: "@uncharted/pantera-server-type-generator@workspace:packages/server"
+  resolution: "@uncharted/server-type-generator@workspace:packages/server"
   languageName: unknown
   linkType: soft
 

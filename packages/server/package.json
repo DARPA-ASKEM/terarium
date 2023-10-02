@@ -1,5 +1,5 @@
 {
-  "name": "@uncharted/pantera-server-type-generator",
+  "name": "@uncharted/server-type-generator",
   "packageManager": "yarn@3.5.0",
   "scripts": {
     "dev": "./gradlew -t generateTypeScript",
