@@ -90,7 +90,7 @@ const addOutputPort = async (data) => {
 			workflowEventBus.emit('append-output-port', {
 				node: props.node,
 				port: {
-					id: crypto.randomUUID(),
+					id: uuidv4(),
 					label: configuration.name,
 					type: 'modelConfigId',
 					value: [configuration.id]
