@@ -694,7 +694,7 @@ const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
 
-function createNewEdge(node: WorkflowNode, port: WorkflowPort, direction: WorkflowDirection) {
+function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',

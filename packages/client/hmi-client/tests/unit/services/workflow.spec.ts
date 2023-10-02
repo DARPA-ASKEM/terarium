@@ -66,7 +66,7 @@ const plusNode = (id: string) =>
 		width: 0,
 		height: 0,
 		statusCode: WorkflowStatus.INVALID
-	} as WorkflowNode);
+	} as WorkflowNode<any>);
 
 describe('basic tests to make sure it all works', () => {
 	it('simple workflow test (1 + 2) + (3 + 4)', () => {
