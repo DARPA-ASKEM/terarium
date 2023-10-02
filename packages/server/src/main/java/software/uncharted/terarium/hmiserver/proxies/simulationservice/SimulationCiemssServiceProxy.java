@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.proxies.simulationservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import com.fasterxml.jackson.databind.JsonNode;
-import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 

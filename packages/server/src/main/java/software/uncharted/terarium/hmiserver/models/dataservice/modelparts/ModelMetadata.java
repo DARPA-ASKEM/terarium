@@ -1,18 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
 
 import java.util.List;
 import java.util.Map;
-
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 
 @Data
 @Accessors(chain = true)

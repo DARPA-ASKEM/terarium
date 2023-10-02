@@ -5,9 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
-
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
 
 import java.util.List;
 
@@ -60,7 +59,7 @@ public interface ModelProxy {
 
 	@GetMapping("/{id}/model_configurations")
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
-			@PathVariable("id") String id,
-			@RequestParam("page_size") int pageSize
+		@PathVariable("id") String id,
+		@RequestParam("page_size") int pageSize
 	);
 }

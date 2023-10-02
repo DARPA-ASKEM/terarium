@@ -18,26 +18,38 @@ import java.util.Map;
 @TSModel
 public class DatasetColumn {
 
-	/** Name of the column **/
+	/**
+	 * Name of the column
+	 **/
 	private String name;
 
-	/** Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time **/
+	/**
+	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
+	 **/
 	@JsonAlias("data_type")
 	private ColumnType dataType;
 
-	/** (Optional) String that describes the formatting of the value **/
+	/**
+	 * (Optional) String that describes the formatting of the value
+	 **/
 	@TSOptional
 	@JsonAlias("format_str")
 	private String formatStr;
 
-	/** Column annotations from the MIT data profiling tool **/
+	/**
+	 * Column annotations from the MIT data profiling tool
+	 **/
 	private List<String> annotations;
 
-	/** (Optional) Unformatted metadata about the dataset **/
+	/**
+	 * (Optional) Unformatted metadata about the dataset
+	 **/
 	@TSOptional
 	private Map<String, Object> metadata;
 
-	/** (Optional) Grounding of ontological concepts related to the column **/
+	/**
+	 * (Optional) Grounding of ontological concepts related to the column
+	 **/
 	@TSOptional
 	private Grounding grounding;
 

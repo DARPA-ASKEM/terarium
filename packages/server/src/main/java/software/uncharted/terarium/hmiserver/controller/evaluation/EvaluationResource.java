@@ -1,36 +1,23 @@
 package software.uncharted.terarium.hmiserver.controller.evaluation;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.controller.services.AuthenticationFacade;
-
-import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioSummary;
 
-
-import javax.ws.rs.QueryParam;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.time.Instant;
-import java.util.*;
+import java.util.List;
 
 
 @RequestMapping("/evaluation")
@@ -45,7 +32,8 @@ public class EvaluationResource {
 
 	/**
 	 * Get a list of all evaluation scenarios
-	 * @return	A list of all evaluation scenarios
+	 *
+	 * @return A list of all evaluation scenarios
 	 */
 	@GetMapping("/scenarios")
 	public ResponseEntity<List<EvaluationScenarioSummary>> getScenarios() {
@@ -89,6 +77,7 @@ public class EvaluationResource {
 
 	/**
 	 * Get the status of the given scenario
+	 *
 	 * @param name
 	 * @return
 	 */
@@ -162,7 +151,7 @@ public class EvaluationResource {
 
 	@GetMapping("/download")
 	public ResponseEntity<String> getCSV(@RequestParam("username") final String username,
-											 @RequestParam("name") final String name) throws IOException {
+																			 @RequestParam("name") final String name) throws IOException {
 		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 
 		/*final List<Event> events = Event.findAllByUsername(username);
@@ -267,8 +256,8 @@ public class EvaluationResource {
 	/**
 	 * Gets a list of start/end timestamps for which the scenario was not paused. We use this to filter out events that
 	 * occurred outside of the scenario runtime.
-	 * @param scenarioEvents	All events for the scenario of type EVALUATION_SCENARIO
-	 * @return								A list of ranges for which the scenario was not paused
+	 * @param scenarioEvents  All events for the scenario of type EVALUATION_SCENARIO
+	 * @return A list of ranges for which the scenario was not paused
 	 */
 	/*private List<Range> getRangesForScenario(final List<Event> scenarioEvents) {
 		final List<Range> ranges = new ArrayList<>();

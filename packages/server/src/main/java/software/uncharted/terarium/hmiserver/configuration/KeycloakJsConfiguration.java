@@ -11,13 +11,13 @@ import java.io.Serializable;
 @Accessors(chain = true)
 @Data
 public class KeycloakJsConfiguration implements Serializable {
-  @JsonProperty("auth-server-url")
-  private String url;
-  private String realm;
-  @JsonProperty("resource")
-  private String clientId;
-  /**
-   * If true, signing out in one window signs out other windows
-   */
-  private Boolean checkLoginIFrame = true;
+	@JsonProperty("auth-server-url")
+	private String url;
+	private String realm;
+	@JsonProperty("resource")
+	private String clientId;
+	/**
+	 * If true, signing out in one window signs out other windows
+	 */
+	private Boolean checkLoginIFrame = true;
 }

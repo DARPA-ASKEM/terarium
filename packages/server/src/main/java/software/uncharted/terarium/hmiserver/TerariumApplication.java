@@ -9,8 +9,8 @@ import org.springframework.context.annotation.PropertySource;
 @EnableFeignClients
 @PropertySource("classpath:application.properties")
 public class TerariumApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(TerariumApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(TerariumApplication.class, args);
+	}
 
 }

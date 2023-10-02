@@ -11,7 +11,7 @@ public class RebacPermissionRelationship {
 	Schema.Type resourceType;
 	String resourceId;
 
-  public RebacPermissionRelationship(Core.ObjectReference subject, String relationship, Core.ObjectReference resource) {
+	public RebacPermissionRelationship(Core.ObjectReference subject, String relationship, Core.ObjectReference resource) {
 		this.subjectType = Schema.Type.valueOf(subject.getObjectType().toUpperCase());
 		this.subjectId = subject.getObjectId();
 		this.relationship = Schema.Relationship.valueOf(relationship.toUpperCase());
@@ -19,7 +19,15 @@ public class RebacPermissionRelationship {
 		this.resourceId = resource.getObjectId();
 	}
 
-	public Schema.Type getSubjectType() { return subjectType; }
-	public String getSubjectId() { return subjectId; }
-	public Schema.Relationship getRelationship() { return relationship; }
+	public Schema.Type getSubjectType() {
+		return subjectType;
+	}
+
+	public String getSubjectId() {
+		return subjectId;
+	}
+
+	public Schema.Relationship getRelationship() {
+		return relationship;
+	}
 }

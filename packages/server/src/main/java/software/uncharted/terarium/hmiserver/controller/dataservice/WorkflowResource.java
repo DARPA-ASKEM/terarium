@@ -1,18 +1,15 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.WorkflowProxy;
-import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
-
-import org.springframework.http.ResponseEntity;
-import java.util.Map;
-import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
+import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.WorkflowProxy;
+
+import java.util.List;
 
 @RequestMapping("/workflows")
 @RestController
@@ -20,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class WorkflowResource implements SnakeCaseResource {
 
 	@Autowired
-	WorkflowProxy workflowProxy; 
+	WorkflowProxy workflowProxy;
 
 	@GetMapping
 	public ResponseEntity<List<Workflow>> getWorkflows(

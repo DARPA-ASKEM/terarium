@@ -46,7 +46,7 @@ public class ConceptResource {
 	@GetMapping("/definitions")
 	public ResponseEntity<JsonNode> searchConceptDefinitions(
 		@RequestParam("term") String term,
-		@RequestParam(name ="limit", defaultValue = "100") Integer limit,
+		@RequestParam(name = "limit", defaultValue = "100") Integer limit,
 		@RequestParam(name = "offset", defaultValue = "100") Integer offset
 	) {
 		try {

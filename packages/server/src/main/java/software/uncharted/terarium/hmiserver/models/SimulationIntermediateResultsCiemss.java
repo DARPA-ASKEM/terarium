@@ -1,8 +1,8 @@
 package software.uncharted.terarium.hmiserver.models;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import com.fasterxml.jackson.annotation.JsonAlias;
 
 import java.io.Serializable;
 
@@ -14,7 +14,7 @@ public class SimulationIntermediateResultsCiemss implements Serializable {
 	private Double progress;
 
 	@Override
-	public String toString(){
+	public String toString() {
 		return "{job_id: '" + this.jobId + "', progress: " + Double.toString(this.progress) + "}";
 	}
 }

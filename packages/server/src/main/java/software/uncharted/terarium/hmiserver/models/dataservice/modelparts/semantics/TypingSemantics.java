@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
-import java.util.List;
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Accessors(chain = true)

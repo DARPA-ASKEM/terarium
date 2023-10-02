@@ -4,5 +4,5 @@ import org.springframework.cloud.openfeign.FeignClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 
 @FeignClient(name = "documents", url = "${terarium.dataservice.url}", path = "/documents")
-public interface DocumentProxy extends TDSProxy<DocumentAsset>{
+public interface DocumentProxy extends TDSProxy<DocumentAsset> {
 }

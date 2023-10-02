@@ -1,9 +1,5 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.authzed.api.v1.Core.ObjectReference;
 import com.authzed.api.v1.Core.Relationship;
 import com.authzed.api.v1.Core.RelationshipUpdate;
@@ -14,50 +10,53 @@ import com.authzed.api.v1.PermissionService.ReadRelationshipsResponse;
 import com.authzed.api.v1.PermissionService.RelationshipFilter;
 import com.authzed.api.v1.PermissionsServiceGrpc;
 import com.authzed.grpcutil.BearerToken;
-
 import io.grpc.ManagedChannel;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 public class ReBACFunctions {
-    final PermissionsServiceGrpc.PermissionsServiceBlockingStub permissionsService;
+	final PermissionsServiceGrpc.PermissionsServiceBlockingStub permissionsService;
 
-    public ReBACFunctions(ManagedChannel channel, BearerToken bearerToken) {
-        this.permissionsService = PermissionsServiceGrpc
-        .newBlockingStub(channel)
-        .withCallCredentials(bearerToken);
-    }
+	public ReBACFunctions(ManagedChannel channel, BearerToken bearerToken) {
+		this.permissionsService = PermissionsServiceGrpc
+			.newBlockingStub(channel)
+			.withCallCredentials(bearerToken);
+	}
 
-    private ObjectReference createObject(String type, String id) {
-        return ObjectReference.newBuilder()
-        .setObjectType(type)
-        .setObjectId(id)
-        .build();
-    }
+	private ObjectReference createObject(String type, String id) {
+		return ObjectReference.newBuilder()
+			.setObjectType(type)
+			.setObjectId(id)
+			.build();
+	}
 
-    private SubjectReference createSubject(String type, String id) {
-        return SubjectReference.newBuilder()
-        .setObject(createObject(type, id))
-        .build();
-    }
+	private SubjectReference createSubject(String type, String id) {
+		return SubjectReference.newBuilder()
+			.setObject(createObject(type, id))
+			.build();
+	}
 
-    private static String HAS_PERMISSION = "PERMISSIONSHIP_HAS_PERMISSION";
+	private static String HAS_PERMISSION = "PERMISSIONSHIP_HAS_PERMISSION";
 
-    public boolean checkPermission(SchemaObject subject, Schema.Permission permission, SchemaObject resource, Consistency consistency) throws Exception {
-        return checkPermission(subject.type.toString(), subject.id, permission.toString(), resource.type.toString(), resource.id, consistency);
-    }
+	public boolean checkPermission(SchemaObject subject, Schema.Permission permission, SchemaObject resource, Consistency consistency) throws Exception {
+		return checkPermission(subject.type.toString(), subject.id, permission.toString(), resource.type.toString(), resource.id, consistency);
+	}
 
-    public boolean checkPermission(String subjectType, String subjectId, String permission, String resourceType, String resourceId, Consistency consistency) throws Exception {
-        PermissionService.CheckPermissionRequest request = PermissionService.CheckPermissionRequest.newBuilder()
-        .setConsistency(consistency)
-        .setResource(createObject(resourceType, resourceId))
-        .setSubject(createSubject(subjectType, subjectId))
-        .setPermission(permission)
-        .build();
+	public boolean checkPermission(String subjectType, String subjectId, String permission, String resourceType, String resourceId, Consistency consistency) throws Exception {
+		PermissionService.CheckPermissionRequest request = PermissionService.CheckPermissionRequest.newBuilder()
+			.setConsistency(consistency)
+			.setResource(createObject(resourceType, resourceId))
+			.setSubject(createSubject(subjectType, subjectId))
+			.setPermission(permission)
+			.build();
 
-        PermissionService.CheckPermissionResponse response = permissionsService.checkPermission(request);
-        return response.getPermissionship().name().equalsIgnoreCase(HAS_PERMISSION);
-    }
+		PermissionService.CheckPermissionResponse response = permissionsService.checkPermission(request);
+		return response.getPermissionship().name().equalsIgnoreCase(HAS_PERMISSION);
+	}
 
 	public String createRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception {
 		return createRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
@@ -81,39 +80,41 @@ public class ReBACFunctions {
 		return response.getWrittenAt().getToken();
 	}
 
-    public String removeRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception, RelationshipAlreadyExistsException {
-        return removeRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
-    }
+	public String removeRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception, RelationshipAlreadyExistsException {
+		return removeRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
+	}
 
-		private static final String ALREADY_EXISTS_CREATE_RELATIONSHIP = "ALREADY_EXISTS: could not CREATE relationship";
-    public String removeRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception, RelationshipAlreadyExistsException {
-			PermissionService.DeleteRelationshipsRequest request = PermissionService.DeleteRelationshipsRequest.newBuilder()
-				.setRelationshipFilter(RelationshipFilter.newBuilder()
-					.setResourceType(targetType)
-					.setOptionalResourceId(targetId)
-					.setOptionalRelation(relationship)
-					.setOptionalSubjectFilter(PermissionService.SubjectFilter
-						.newBuilder()
-						.setSubjectType(subjectType)
-						.setOptionalSubjectId(subjectId)
-						.build()
-					).build()
-				).build();
+	private static final String ALREADY_EXISTS_CREATE_RELATIONSHIP = "ALREADY_EXISTS: could not CREATE relationship";
 
-			try {
-				PermissionService.DeleteRelationshipsResponse response = permissionsService.deleteRelationships(request);
-				return response.getDeletedAt().getToken();
-			} catch (Exception e) {
-				if (e.getMessage().startsWith(ALREADY_EXISTS_CREATE_RELATIONSHIP)) {
-					throw new RelationshipAlreadyExistsException(e);
-				}
-				throw e;
+	public String removeRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception, RelationshipAlreadyExistsException {
+		PermissionService.DeleteRelationshipsRequest request = PermissionService.DeleteRelationshipsRequest.newBuilder()
+			.setRelationshipFilter(RelationshipFilter.newBuilder()
+				.setResourceType(targetType)
+				.setOptionalResourceId(targetId)
+				.setOptionalRelation(relationship)
+				.setOptionalSubjectFilter(PermissionService.SubjectFilter
+					.newBuilder()
+					.setSubjectType(subjectType)
+					.setOptionalSubjectId(subjectId)
+					.build()
+				).build()
+			).build();
+
+		try {
+			PermissionService.DeleteRelationshipsResponse response = permissionsService.deleteRelationships(request);
+			return response.getDeletedAt().getToken();
+		} catch (Exception e) {
+			if (e.getMessage().startsWith(ALREADY_EXISTS_CREATE_RELATIONSHIP)) {
+				throw new RelationshipAlreadyExistsException(e);
 			}
-    }
+			throw e;
+		}
+	}
 
 	public List<RebacPermissionRelationship> getRelationship(SchemaObject resource, Consistency consistency) throws Exception {
 		return getRelationship(resource.type.toString(), resource.id, consistency);
 	}
+
 	public List<RebacPermissionRelationship> getRelationship(String resourceType, String resourceId, Consistency consistency) throws Exception {
 		List<RebacPermissionRelationship> relationships = new ArrayList<>();
 		PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()

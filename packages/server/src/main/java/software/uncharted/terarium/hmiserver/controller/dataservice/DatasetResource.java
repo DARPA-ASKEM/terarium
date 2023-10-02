@@ -5,19 +5,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.math.Quantiles;
 import com.google.common.math.Stats;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +31,6 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,8 +82,8 @@ public class DatasetResource implements SnakeCaseResource {
 
 	@PutMapping("/{id}")
 	public ResponseEntity<JsonNode> updateDataset(
-			@PathVariable("id") final String id,
-			@RequestBody final Dataset dataset
+		@PathVariable("id") final String id,
+		@RequestBody final Dataset dataset
 	) {
 		return ResponseEntity.ok(datasetProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(dataset)).getBody());
 	}
@@ -126,7 +124,7 @@ public class DatasetResource implements SnakeCaseResource {
 
 		final int linesToRead = limit != null ? limit == -1 ? csv.size() : limit : DEFAULT_CSV_LIMIT;
 
-		CsvAsset csvAsset = new CsvAsset(csv.subList(0,Math.min(linesToRead, csv.size()-1)), csvColumnStats, headers, csv.size());
+		CsvAsset csvAsset = new CsvAsset(csv.subList(0, Math.min(linesToRead, csv.size() - 1)), csvColumnStats, headers, csv.size());
 		return ResponseEntity.ok(csvAsset);
 	}
 
@@ -185,17 +183,17 @@ public class DatasetResource implements SnakeCaseResource {
 	/**
 	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS then push
 	 * the file to S3 via a presigned URL and update the dataset with the headers.
-	 *
+	 * <p>
 	 * If the headers fail to update there will be a print to the log, however, the response will
 	 * just be the status of the original csv upload.
 	 *
 	 * @param datasetId ID of the dataset to upload to
-	 * @param fileName CSV file to upload
+	 * @param fileName  CSV file to upload
 	 * @param csvEntity CSV file as an HttpEntity
-	 * @param headers headers of the CSV file
+	 * @param headers   headers of the CSV file
 	 * @return Response from the upload
 	 */
-	private ResponseEntity<JsonNode> uploadCSVAndUpdateColumns(String datasetId, String fileName, HttpEntity csvEntity, String[] headers){
+	private ResponseEntity<JsonNode> uploadCSVAndUpdateColumns(String datasetId, String fileName, HttpEntity csvEntity, String[] headers) {
 		int status;
 		try (CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
@@ -209,21 +207,21 @@ public class DatasetResource implements SnakeCaseResource {
 			status = response.getStatusLine().getStatusCode();
 
 			// update dataset with headers if the previous upload was successful
-			if(status == HttpStatus.OK.value()) {
+			if (status == HttpStatus.OK.value()) {
 				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
 
 				List<DatasetColumn> columns = new ArrayList<>(headers.length);
-				for(String header : headers) {
+				for (String header : headers) {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
 				Dataset updatedDataset = datasetProxy.getAsset(datasetId).getBody();
-				if(updatedDataset == null) {
+				if (updatedDataset == null) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
 				}
 				updatedDataset.setColumns(columns);
 				ResponseEntity<JsonNode> r = datasetProxy.updateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
-				if(r.getStatusCode().value() != HttpStatus.OK.value()) {
+				if (r.getStatusCode().value() != HttpStatus.OK.value()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
 				}
 			}
@@ -252,9 +250,9 @@ public class DatasetResource implements SnakeCaseResource {
 	private List<String> getColumn(List<List<String>> matrix, int columnNumber) {
 		List<String> column = new ArrayList<>();
 		for (List<String> strings : matrix) {
-				if (strings.size() > columnNumber) {
-						column.add(strings.get(columnNumber));
-				}
+			if (strings.size() > columnNumber) {
+				column.add(strings.get(columnNumber));
+			}
 
 		}
 		return column;

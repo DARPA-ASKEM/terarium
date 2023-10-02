@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 
 import java.util.List;
 
@@ -53,7 +53,9 @@ public class KnowledgeResource {
 		@RequestBody List<String> equations
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR("mathml", framework, modelId, equations).getBody());
-	};
+	}
+
+	;
 
 	/**
 	 * Post LaTeX to SKEMA Unified service to get an AMR
@@ -66,19 +68,22 @@ public class KnowledgeResource {
 	@PostMapping("/latex-to-amr")
 	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(
 		@RequestParam("framework") String framework,
-		@RequestParam ("modelId") String modelId,
+		@RequestParam("modelId") String modelId,
 		@RequestBody List<String> equations
 	) {
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR("latex", framework, modelId, equations).getBody());
-	};
+	}
+
+	;
 
 	/**
 	 * Transform source code to AMR
-	 * @param 	codeId (String): id of the code artifact
-	 * @param 	name (String): the name to set on the newly created model
-	 * @param 	description (String): the description to set on the newly created model
-	 * @return  (ExtractionResponse)
+	 *
+	 * @param codeId      (String): id of the code artifact
+	 * @param name        (String): the name to set on the newly created model
+	 * @param description (String): the description to set on the newly created model
+	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code-to-amr")
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
@@ -105,13 +110,15 @@ public class KnowledgeResource {
 	@PostMapping("/pdf-extractions")
 	public ResponseEntity<JsonNode> postPDFExtractions(
 		@RequestParam("artifact_id") String artifactId,
-		@RequestParam(name ="annotate_skema", defaultValue = "true") Boolean annotateSkema,
+		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 		@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
 		@RequestParam("name") String name,
 		@RequestParam("description") String description
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(artifactId, annotateSkema, annotateMIT, name, description).getBody());
-	};
+	}
+
+	;
 
 	/**
 	 * Post a PDF to the extraction service to get text
@@ -120,16 +127,16 @@ public class KnowledgeResource {
 	 * @return response status of queueing this operation
 	 */
 	@PostMapping("/pdf-to-text")
-	public ResponseEntity<JsonNode> postPDFToText(@RequestParam("artifact_id") String artifactId){
+	public ResponseEntity<JsonNode> postPDFToText(@RequestParam("artifact_id") String artifactId) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToText(artifactId).getBody());
 	}
 
 	/**
 	 * Profile a model
 	 *
+	 * @param modelId    (String): The ID of the model to profile
+	 * @param artifactId (String): The text of the document to profile
 	 * @return the profiled model
-	 * @param    modelId (String): The ID of the model to profile
-	 * @param    artifactId (String): The text of the document to profile
 	 */
 	@PostMapping("/profile-model/{model_id}")
 	public ResponseEntity<JsonNode> postProfileModel(
@@ -137,14 +144,16 @@ public class KnowledgeResource {
 		@RequestParam("artifact_id") String artifactId
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, artifactId).getBody());
-	};
+	}
+
+	;
 
 	/**
 	 * Profile a dataset
 	 *
+	 * @param datasetId  (String): The ID of the dataset to profile
+	 * @param artifactId (String): The ID of the artifact to profile
 	 * @return the profiled dataset
-	 * @param    datasetId (String): The ID of the dataset to profile
-	 * @param    artifactId (String): The ID of the artifact to profile
 	 */
 	@PostMapping("/profile-dataset/{dataset_id}")
 	public ResponseEntity<JsonNode> postProfileDataset(
@@ -152,7 +161,9 @@ public class KnowledgeResource {
 		@RequestParam("artifact_id") String artifactId
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, artifactId).getBody());
-	};
+	}
+
+	;
 
 
 }

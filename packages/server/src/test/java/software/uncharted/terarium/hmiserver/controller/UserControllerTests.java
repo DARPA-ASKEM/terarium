@@ -10,16 +10,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class UserControllerTests extends TerariumApplicationTests {
 
-    @Test
-    public void testItReturns401OnUnAuthorized() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/user/me"))
-                .andExpect(status().isUnauthorized());
-    }
+	@Test
+	public void testItReturns401OnUnAuthorized() throws Exception {
+		mockMvc.perform(MockMvcRequestBuilders.get("/user/me"))
+			.andExpect(status().isUnauthorized());
+	}
 
-    @Test
-    @WithUserDetails(MockUser.ADAM)
-    public void testItReturnsOkOnAuthorized() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/user/me"))
-                .andExpect(status().isOk());
-    }
+	@Test
+	@WithUserDetails(MockUser.ADAM)
+	public void testItReturnsOkOnAuthorized() throws Exception {
+		mockMvc.perform(MockMvcRequestBuilders.get("/user/me"))
+			.andExpect(status().isOk());
+	}
 }

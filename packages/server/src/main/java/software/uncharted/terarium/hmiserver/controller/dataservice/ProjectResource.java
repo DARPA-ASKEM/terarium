@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.representations.JsonWebToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExist
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -44,10 +42,10 @@ public class ProjectResource {
 
 	@GetMapping
 	public ResponseEntity<List<Project>> getProjects(
-		@RequestParam(name = "include_inactive", defaultValue="false") final Boolean includeInactive
+		@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive
 	) {
 		List<Project> projects = proxy.getProjects(includeInactive).getBody();
-		if(projects == null) {
+		if (projects == null) {
 			return ResponseEntity.noContent().build();
 		}
 
@@ -68,7 +66,7 @@ public class ProjectResource {
 
 		projects.forEach(project -> {
 			try {
-				List<AssetType> assetTypes= Arrays.asList(AssetType.datasets, AssetType.models, AssetType.publications);
+				List<AssetType> assetTypes = Arrays.asList(AssetType.datasets, AssetType.models, AssetType.publications);
 
 				Assets assets = proxy.getAssets(project.getProjectID(), assetTypes).getBody();
 				Map<String, String> metadata = new HashMap<>();
@@ -83,7 +81,6 @@ public class ProjectResource {
 				log.error("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}", project.getProjectID(), e);
 			}
 		});
-
 
 
 		return ResponseEntity.ok(projects);

@@ -24,10 +24,8 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 
 @RequestMapping("/artifacts")
@@ -44,14 +42,14 @@ public class ArtifactResource implements SnakeCaseResource {
 
 	@GetMapping
 	public ResponseEntity<List<Artifact>> getArtifacts(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
+		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		return ResponseEntity.ok(artifactProxy.getAssets(pageSize, page).getBody());
 	}
 
 	@PostMapping
-	public ResponseEntity<JsonNode> createArtifact(@RequestBody  Artifact artifact) {
+	public ResponseEntity<JsonNode> createArtifact(@RequestBody Artifact artifact) {
 		return ResponseEntity.ok(artifactProxy.createAsset(convertObjectToSnakeCaseJsonNode(artifact)).getBody());
 	}
 
@@ -64,6 +62,7 @@ public class ArtifactResource implements SnakeCaseResource {
 	public ResponseEntity<JsonNode> updateArtifact(@PathVariable("id") String artifactId, @RequestBody Artifact artifact) {
 		return ResponseEntity.ok(artifactProxy.updateAsset(artifactId, convertObjectToSnakeCaseJsonNode(artifact)).getBody());
 	}
+
 	@DeleteMapping("/{id}")
 	public ResponseEntity<JsonNode> deleteArtifact(@PathVariable("id") String artifactId) {
 		return ResponseEntity.ok(artifactProxy.deleteAsset(artifactId).getBody());
@@ -97,13 +96,13 @@ public class ArtifactResource implements SnakeCaseResource {
 
 
 		try (CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build()) {
+			.disableRedirectHandling()
+			.build()) {
 
 			final PresignedURL presignedURL = artifactProxy.getDownloadUrl(artifactId, filename).getBody();
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
-			if(response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
+			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
 				byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
 				return ResponseEntity.ok(fileAsBytes);
 			}
@@ -141,7 +140,7 @@ public class ArtifactResource implements SnakeCaseResource {
 		@RequestParam("path") final String path,
 		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 		@RequestParam("filename") final String filename
-	){
+	) {
 		log.debug("Uploading artifact file from github to dataset {}", artifactId);
 
 		//download file from GitHub
@@ -153,12 +152,13 @@ public class ArtifactResource implements SnakeCaseResource {
 
 	/**
 	 * Uploads an artifact inside the entity to TDS via a presigned URL
-	 * @param artifactId The ID of the artifact to upload to
-	 * @param fileName The name of the file to upload
+	 *
+	 * @param artifactId         The ID of the artifact to upload to
+	 * @param fileName           The name of the file to upload
 	 * @param artifactHttpEntity The entity containing the artifact to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadArtifactHelper(String artifactId, String fileName, HttpEntity artifactHttpEntity){
+	private ResponseEntity<Integer> uploadArtifactHelper(String artifactId, String fileName, HttpEntity artifactHttpEntity) {
 
 		try (CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
@@ -169,7 +169,7 @@ public class ArtifactResource implements SnakeCaseResource {
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(artifactHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
-;
+			;
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
@@ -179,10 +179,6 @@ public class ArtifactResource implements SnakeCaseResource {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
-
-
-
-
 
 
 }

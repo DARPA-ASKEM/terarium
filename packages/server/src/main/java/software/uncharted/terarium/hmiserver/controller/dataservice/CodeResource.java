@@ -12,7 +12,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,19 +20,12 @@ import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-
 import software.uncharted.terarium.hmiserver.proxies.dataservice.CodeProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 
-
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 @RequestMapping("/code-asset")
 @RestController
@@ -49,8 +41,8 @@ public class CodeResource implements SnakeCaseResource {
 
 	@GetMapping
 	public ResponseEntity<List<Code>> getCodes(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
+		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		return ResponseEntity.ok(codeProxy.getAssets(pageSize, page).getBody());
 	}
@@ -126,7 +118,7 @@ public class CodeResource implements SnakeCaseResource {
 		@RequestParam("path") final String path,
 		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 		@RequestParam("filename") final String filename
-	){
+	) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
 
 		//download file from GitHub
@@ -138,12 +130,13 @@ public class CodeResource implements SnakeCaseResource {
 
 	/**
 	 * Uploads an code inside the entity to TDS via a presigned URL
-	 * @param codeId The ID of the code to upload to
-	 * @param fileName The name of the file to upload
+	 *
+	 * @param codeId         The ID of the code to upload to
+	 * @param fileName       The name of the file to upload
 	 * @param codeHttpEntity The entity containing the code to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadCodeHelper(String codeId, String fileName, HttpEntity codeHttpEntity){
+	private ResponseEntity<Integer> uploadCodeHelper(String codeId, String fileName, HttpEntity codeHttpEntity) {
 
 		try (CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()

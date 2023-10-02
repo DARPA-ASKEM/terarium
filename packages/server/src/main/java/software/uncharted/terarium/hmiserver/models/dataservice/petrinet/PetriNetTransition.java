@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.petrinet;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
 import java.util.List;
 
@@ -18,6 +17,6 @@ public class PetriNetTransition {
 	@TSOptional
 	private ModelGrounding grounding;
 
-  private PetriNetTransitionProperties properties;
+	private PetriNetTransitionProperties properties;
 }
 

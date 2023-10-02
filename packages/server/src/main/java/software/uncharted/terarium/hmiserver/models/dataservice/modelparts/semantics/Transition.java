@@ -2,22 +2,21 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
 import java.util.List;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
 @Data
 @Accessors(chain = true)
 @TSModel
 public class Transition {
 	private String id;
-    private List<String> input;
-    private List<String> output;
-    @TSOptional
-    private ModelGrounding grounding;
-    @TSOptional
-    private Properties properties;
+	private List<String> input;
+	private List<String> output;
+	@TSOptional
+	private ModelGrounding grounding;
+	@TSOptional
+	private Properties properties;
 }

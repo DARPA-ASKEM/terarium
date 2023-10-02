@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.user;
 
 //import io.quarkus.security.identity.SecurityIdentity;
+
 import lombok.Data;
 
 import java.util.Set;

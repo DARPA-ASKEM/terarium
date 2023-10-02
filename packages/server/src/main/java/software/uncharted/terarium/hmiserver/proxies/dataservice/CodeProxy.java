@@ -8,6 +8,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
  */
 @FeignClient(name = "code", url = "${terarium.dataservice.url}", path = "/code")
 
-public interface CodeProxy extends TDSProxy<Code>{
+public interface CodeProxy extends TDSProxy<Code> {
 
 }

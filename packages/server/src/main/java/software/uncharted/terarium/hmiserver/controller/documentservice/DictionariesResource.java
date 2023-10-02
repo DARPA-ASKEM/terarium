@@ -7,9 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDDictionariesResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
-import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDDictionariesResponseOK;
 
 
 @RestController
@@ -20,7 +20,7 @@ public class DictionariesResource {
 	DocumentProxy proxy;
 
 	@GetMapping("/dictionaries")
-	public ResponseEntity<XDDResponse<XDDDictionariesResponseOK>> getAvailableDictionaries(@RequestParam(name = "all", defaultValue="") final String all) {
+	public ResponseEntity<XDDResponse<XDDDictionariesResponseOK>> getAvailableDictionaries(@RequestParam(name = "all", defaultValue = "") final String all) {
 		try {
 			XDDResponse<XDDDictionariesResponseOK> response = proxy.getAvailableDictionaries(all);
 

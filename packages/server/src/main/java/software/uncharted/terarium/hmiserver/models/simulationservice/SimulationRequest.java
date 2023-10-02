@@ -1,13 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
-
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import com.fasterxml.jackson.annotation.JsonAlias;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 import java.io.Serializable;
 import java.util.List;

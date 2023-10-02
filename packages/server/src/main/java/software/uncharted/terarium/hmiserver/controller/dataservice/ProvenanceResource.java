@@ -9,7 +9,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
 
 
-
 @RequestMapping("/provenance")
 @RestController
 public class ProvenanceResource {
@@ -31,8 +30,8 @@ public class ProvenanceResource {
 
 	@PostMapping("/connected-nodes")
 	public ResponseEntity<JsonNode> searchConnectedNodes(
-		@RequestBody  final ProvenanceQueryParam body,
-		@RequestParam(name = "search_type", defaultValue="connected_nodes") String searchType
+		@RequestBody final ProvenanceQueryParam body,
+		@RequestParam(name = "search_type", defaultValue = "connected_nodes") String searchType
 	) {
 		return ResponseEntity.ok(proxy.search(body, searchType).getBody());
 	}

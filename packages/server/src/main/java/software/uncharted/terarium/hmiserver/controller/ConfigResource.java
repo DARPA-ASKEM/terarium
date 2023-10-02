@@ -11,10 +11,10 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 @RequestMapping("/config")
 @RequiredArgsConstructor
 public class ConfigResource {
-  private final Config config;
+	private final Config config;
 
-  @GetMapping
-  public ResponseEntity<Config.ClientConfig> getConfig() {
-    return ResponseEntity.ok(config.getClientConfig());
-  }
+	@GetMapping
+	public ResponseEntity<Config.ClientConfig> getConfig() {
+		return ResponseEntity.ok(config.getClientConfig());
+	}
 }

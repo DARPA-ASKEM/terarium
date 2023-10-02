@@ -1,14 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import com.fasterxml.jackson.annotation.JsonAlias;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.DatasetLocation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
+
+import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)

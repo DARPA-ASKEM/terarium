@@ -21,11 +21,10 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 	ExternalPublicationProxy proxy;
 
 
-
 	@GetMapping
 	public ResponseEntity<List<ExternalPublication>> getPublications() {
 		try {
-			return ResponseEntity.ok(proxy.getAssets(100,0).getBody());
+			return ResponseEntity.ok(proxy.getAssets(100, 0).getBody());
 		} catch (Exception e) {
 			log.error("Unable to get publications", e);
 			return ResponseEntity.internalServerError().build();
@@ -70,8 +69,6 @@ public class ExternalPublicationResource implements SnakeCaseResource {
 	) {
 		return ResponseEntity.ok(proxy.deleteAsset(id).getBody());
 	}
-
-
 
 
 }

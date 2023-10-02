@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.models.documentservice.RelatedDocument;
 
-
 import java.util.List;
 
 @Data

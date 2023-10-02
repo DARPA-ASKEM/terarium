@@ -17,7 +17,7 @@ public class Ontology implements Serializable {
 	private String description;
 	private String link;
 
-	public Ontology (String input) {
+	public Ontology(String input) {
 		// We receive Petri Net models with ontology in a non JSON format
 		// i.e.  [('identity', 'ido:0000511'), ('identity', 'ido:0000514')]
 		final Matcher matcher = Pattern.compile("\\(\\'(.+?)\\', \\'(.+?)\\'\\)").matcher(input);

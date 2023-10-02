@@ -22,8 +22,8 @@ public class ModelConfigurationResource implements SnakeCaseResource {
 
 	@GetMapping
 	public ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
-		@RequestParam(name = "page_size", defaultValue="500") final Integer pageSize,
-		@RequestParam(name = "page", defaultValue="0") final Integer page
+		@RequestParam(name = "page_size", defaultValue = "500") final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0") final Integer page
 	) {
 		return ResponseEntity.ok(proxy.getAssets(pageSize, page).getBody());
 	}
@@ -36,7 +36,7 @@ public class ModelConfigurationResource implements SnakeCaseResource {
 
 	@GetMapping("/{id}")
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
-			@PathVariable("id") String id
+		@PathVariable("id") String id
 	) {
 		return ResponseEntity.ok(proxy.getAsset(id).getBody());
 	}

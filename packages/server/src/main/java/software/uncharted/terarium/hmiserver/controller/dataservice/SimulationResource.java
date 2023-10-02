@@ -7,13 +7,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseResource;
+import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResultsCiemss;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
@@ -21,8 +20,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
-
-import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResultsCiemss;
 
 import java.nio.charset.StandardCharsets;
 
@@ -54,7 +51,7 @@ public class SimulationResource implements SnakeCaseResource {
 	@Channel("scimlQueue") Publisher<JsonObject> scimlQueueStream;*/
 
 	@PostMapping
-	public ResponseEntity<JsonNode> createSimulation(@RequestBody final Simulation simulation){
+	public ResponseEntity<JsonNode> createSimulation(@RequestBody final Simulation simulation) {
 		return simulationProxy.createAsset(convertObjectToSnakeCaseJsonNode(simulation));
 	}
 
@@ -66,12 +63,12 @@ public class SimulationResource implements SnakeCaseResource {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<JsonNode> updateSimulation(@PathVariable("id") final String id, @RequestBody final Simulation simulation){
+	public ResponseEntity<JsonNode> updateSimulation(@PathVariable("id") final String id, @RequestBody final Simulation simulation) {
 		return ResponseEntity.ok(simulationProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(simulation)).getBody());
 	}
 
 	@DeleteMapping("/{id}")
-	public String deleteSimulation(@PathVariable("id") final String id){
+	public String deleteSimulation(@PathVariable("id") final String id) {
 		return ResponseEntity.ok(simulationProxy.deleteAsset(id).getBody()).toString();
 	}
 
@@ -82,11 +79,11 @@ public class SimulationResource implements SnakeCaseResource {
 		@RequestParam("filename") final String filename
 	) throws Exception {
 		CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build();
+			.disableRedirectHandling()
+			.build();
 
 		final PresignedURL presignedURL = simulationProxy.getDownloadUrl(id, filename).getBody();
-		if(presignedURL == null){
+		if (presignedURL == null) {
 			log.error("Failed to get presigned URL for simulation {} result", id);
 			return ResponseEntity.internalServerError().build();
 		}
@@ -113,15 +110,15 @@ public class SimulationResource implements SnakeCaseResource {
 		// Duplicate the simulation results to a new dataset
 		final Dataset dataset = simulationProxy.copyResultsToDataset(id).getBody();
 
-		if(dataset == null){
+		if (dataset == null) {
 			log.error("Failed to create dataset from simulation {} result", id);
 			return ResponseEntity.internalServerError().build();
 		}
 
-		if(datasetName != null){
+		if (datasetName != null) {
 			try {
 				dataset.setName(datasetName);
-				datasetProxy.updateAsset(dataset.getId(),  convertObjectToSnakeCaseJsonNode(dataset));
+				datasetProxy.updateAsset(dataset.getId(), convertObjectToSnakeCaseJsonNode(dataset));
 
 			} catch (Exception e) {
 				log.error("Failed to update dataset {} name", dataset.getId());

@@ -15,10 +15,14 @@ import java.util.Map;
 @TSModel
 public class Grounding {
 
-	/** Ontological identifier per DKG **/
+	/**
+	 * Ontological identifier per DKG
+	 **/
 	private Map<String, String> identifiers;
 
-	/** (Optional) Additional context that informs the grounding **/
+	/**
+	 * (Optional) Additional context that informs the grounding
+	 **/
 	@TSOptional
 	private Map<String, Object> context;
 }

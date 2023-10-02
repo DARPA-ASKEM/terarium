@@ -7,7 +7,9 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Data
 @Accessors(chain = true)

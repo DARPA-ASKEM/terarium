@@ -19,11 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,8 +53,8 @@ public class DownloadResource {
 	 */
 	private byte[] getPDF(final String url) throws IOException, URISyntaxException {
 		CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build();
+			.disableRedirectHandling()
+			.build();
 
 		final HttpGet get = new HttpGet(url);
 		final HttpResponse response = httpclient.execute(get);
@@ -81,10 +77,10 @@ public class DownloadResource {
 				final Document document = Jsoup.parse(html);
 				final Elements links = document.select("a");
 				final String pdfUrl = links.stream()
-						.map(element -> element.attributes().get("href"))
-						.map(String::toLowerCase)
-						.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
-						.findFirst().orElse(null);
+					.map(element -> element.attributes().get("href"))
+					.map(String::toLowerCase)
+					.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
+					.findFirst().orElse(null);
 
 				if (pdfUrl == null) {
 					return null;
@@ -111,8 +107,8 @@ public class DownloadResource {
 	 */
 	private String getPDFURL(final String url) throws IOException, URISyntaxException {
 		CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build();
+			.disableRedirectHandling()
+			.build();
 
 		final HttpGet get = new HttpGet(url);
 		final HttpResponse response = httpclient.execute(get);
@@ -135,10 +131,10 @@ public class DownloadResource {
 				final Document document = Jsoup.parse(html);
 				final Elements links = document.select("a");
 				final String pdfUrl = links.stream()
-						.map(element -> element.attributes().get("href"))
-						.map(String::toLowerCase)
-						.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
-						.findFirst().orElse(null);
+					.map(element -> element.attributes().get("href"))
+					.map(String::toLowerCase)
+					.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
+					.findFirst().orElse(null);
 
 				if (pdfUrl == null) {
 					return null;

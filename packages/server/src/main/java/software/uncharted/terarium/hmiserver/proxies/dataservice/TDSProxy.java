@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Generic Proxy for the Terarium Data Service
- *
+ * <p>
  * NOTE!!!! Patch is not supported by Feign, so we HAVE to use PUT for instead.
  *
  * @param <T> some TDS asset type
@@ -20,8 +20,8 @@ public interface TDSProxy<T> {
 
 	@GetMapping
 	ResponseEntity<List<T>> getAssets(
-		@RequestParam(name = "page_size", defaultValue="500") final Integer pageSize,
-		@RequestParam(name = "page", defaultValue="0") final Integer page
+		@RequestParam(name = "page_size", defaultValue = "500") final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0") final Integer page
 	);
 
 	@PostMapping
@@ -39,14 +39,14 @@ public interface TDSProxy<T> {
 		@PathVariable("id") String id
 	);
 
-	@PutMapping ("/{id}")
+	@PutMapping("/{id}")
 	ResponseEntity<JsonNode> updateAsset(
 		@PathVariable("id") String id,
 		@RequestBody JsonNode asset
 	);
 
 	@GetMapping("/{id}/upload-url")
-	ResponseEntity<PresignedURL>  getUploadUrl(
+	ResponseEntity<PresignedURL> getUploadUrl(
 		@PathVariable("id") String id,
 		@RequestParam("filename") String filename
 	);

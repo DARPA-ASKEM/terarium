@@ -8,7 +8,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 
-import java.util.*;
+import java.util.List;
 
 
 @FeignClient(name = "dataservice", url = "${terarium.dataservice.url}", path = "/projects")
@@ -16,7 +16,7 @@ public interface ProjectProxy {
 
 	@GetMapping
 	ResponseEntity<List<Project>> getProjects(
-		@RequestParam(name = "include_inactive", defaultValue="false") final Boolean includeInactive
+		@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive
 	);
 
 

@@ -3,8 +3,8 @@ package software.uncharted.terarium.hmiserver.controller.documentservice;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
@@ -36,10 +36,10 @@ public class ExtractionResource {
 
 	@GetMapping
 	public ResponseEntity<XDDResponse<XDDExtractionsResponseOK>> searchExtractions(
-		@RequestParam(required = false, name ="term") final String term,
-		@RequestParam(required = false, name ="page") final Integer page,
-		@RequestParam(required = false, name ="ASKEM_CLASS") String askemClass,
-		@RequestParam(required = false, name ="include_highlights") String include_highlights) {
+		@RequestParam(required = false, name = "term") final String term,
+		@RequestParam(required = false, name = "page") final Integer page,
+		@RequestParam(required = false, name = "ASKEM_CLASS") String askemClass,
+		@RequestParam(required = false, name = "include_highlights") String include_highlights) {
 
 
 		Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);

@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.user;
 
 import com.fasterxml.jackson.databind.JsonNode;
-//import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.EventType;

@@ -1,14 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import com.fasterxml.jackson.annotation.JsonAlias;
 
 @Data
 @Accessors(chain = true)
 public class Card {
-    @JsonAlias("DESCRIPTION")
+	@JsonAlias("DESCRIPTION")
 	@TSOptional
 	private String description;
 
@@ -25,7 +25,7 @@ public class Card {
 	private String authorEmail;
 
 	@JsonAlias("DATE")
-    @TSOptional
+	@TSOptional
 	private String date;
 
 	@JsonAlias("SCHEMA")

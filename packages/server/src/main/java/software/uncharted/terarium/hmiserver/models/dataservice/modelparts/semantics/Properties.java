@@ -2,9 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
 @Data
@@ -12,9 +10,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 public class Properties {
 	private String name;
 
-    @TSOptional
-    private ModelGrounding grounding;
+	@TSOptional
+	private ModelGrounding grounding;
 
-    @TSOptional
-    private String description;
+	@TSOptional
+	private String description;
 }

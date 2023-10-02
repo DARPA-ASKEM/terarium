@@ -96,8 +96,6 @@ public class GithubFile {
 	public GithubRepo.FileCategory fileCategory;
 
 
-
-
 	public enum FileType {
 		@JsonAlias("file")
 		FILE("file"),
@@ -110,6 +108,7 @@ public class GithubFile {
 
 
 		public final String fileType;
+
 		FileType(final String type) {
 			this.fileType = type;
 		}

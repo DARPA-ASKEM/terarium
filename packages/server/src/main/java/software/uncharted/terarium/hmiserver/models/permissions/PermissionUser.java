@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.permissions;
 
-import lombok.Data;
-
 public class PermissionUser {
 	private String id;
 	private String firstName;
@@ -15,8 +13,19 @@ public class PermissionUser {
 		this.email = email;
 	}
 
-	public String getId() { return id; }
-	public String getFirstName() { return firstName; }
-	public String getLastName() { return lastName; }
-	public String getEmail() { return email; }
+	public String getId() {
+		return id;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
 }

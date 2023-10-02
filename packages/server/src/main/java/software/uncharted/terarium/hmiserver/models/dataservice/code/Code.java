@@ -15,55 +15,55 @@ import java.time.Instant;
 @TSModel
 public class Code {
 
-    /* The id of the code. */
-    @TSOptional
-    private String id;
+	/* The id of the code. */
+	@TSOptional
+	private String id;
 
-    /* Timestamp of creation */
-    @TSOptional
-    private Instant timestamp;
+	/* Timestamp of creation */
+	@TSOptional
+	private Instant timestamp;
 
-    /* The name of the code. */
-    private String name;
+	/* The name of the code. */
+	private String name;
 
-    /* The description of the code. */
-    private String description;
+	/* The description of the code. */
+	private String description;
 
-    /* The name of the file in this code*/
-    private String filename;
+	/* The name of the file in this code*/
+	private String filename;
 
-    /* The optional URL for where this code came from */
-    @TSOptional
-    @JsonAlias("repo_url")
-    private String repoUrl;
+	/* The optional URL for where this code came from */
+	@TSOptional
+	@JsonAlias("repo_url")
+	private String repoUrl;
 
-    /* The programming language of this code */
-    private ProgrammingLanguage language;
+	/* The programming language of this code */
+	private ProgrammingLanguage language;
 
-    /* The optional metadata for this code */
-    @TSOptional
-    private JsonNode metadata;
+	/* The optional metadata for this code */
+	@TSOptional
+	private JsonNode metadata;
 
 
-    public enum ProgrammingLanguage {
-        PYTHON("python"),
-        R("r"),
-        Julia("julia");
+	public enum ProgrammingLanguage {
+		PYTHON("python"),
+		R("r"),
+		Julia("julia");
 
-        public final String language;
+		public final String language;
 
-        ProgrammingLanguage(final String language) {
-            this.language = language;
-        }
+		ProgrammingLanguage(final String language) {
+			this.language = language;
+		}
 
-        @Override
-        @JsonValue
-        public String toString() {
-            return language;
-        }
+		@Override
+		@JsonValue
+		public String toString() {
+			return language;
+		}
 
-        public static ProgrammingLanguage fromString(final String language) {
-            return ProgrammingLanguage.valueOf(language.toUpperCase());
-        }
-    }
+		public static ProgrammingLanguage fromString(final String language) {
+			return ProgrammingLanguage.valueOf(language.toUpperCase());
+		}
+	}
 }

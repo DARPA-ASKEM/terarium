@@ -16,42 +16,42 @@ import java.util.List;
 @Accessors(chain = true)
 public class DocumentAsset {
 
-    @TSOptional
-    private String id;
+	@TSOptional
+	private String id;
 
-    @TSOptional
-    private String name;
+	@TSOptional
+	private String name;
 
-    @TSOptional
-    private String description;
+	@TSOptional
+	private String description;
 
-    @TSOptional
-    private Instant timestamp;
+	@TSOptional
+	private Instant timestamp;
 
-    @TSOptional
-    private String username;
+	@TSOptional
+	private String username;
 
-    @TSOptional
-    @JsonAlias("file_names")
-    private List<String> fileNames;
+	@TSOptional
+	@JsonAlias("file_names")
+	private List<String> fileNames;
 
-    @TSOptional
-    @JsonAlias("document_url")
-    private List<String> documentUrl;
+	@TSOptional
+	@JsonAlias("document_url")
+	private List<String> documentUrl;
 
-    @TSOptional
-    private Object metadata;
+	@TSOptional
+	private Object metadata;
 
-    @TSOptional
-    private String source;
+	@TSOptional
+	private String source;
 
-    @TSOptional
-    private String text;
+	@TSOptional
+	private String text;
 
-    @TSOptional
-    private Grounding grounding;
+	@TSOptional
+	private Grounding grounding;
 
-    @TSOptional
-    private List<Concept> concepts;
+	@TSOptional
+	private List<Concept> concepts;
 
 }

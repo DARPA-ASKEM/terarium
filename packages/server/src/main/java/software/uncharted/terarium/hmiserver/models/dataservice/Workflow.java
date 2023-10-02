@@ -3,9 +3,8 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-
-import java.util.List;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * The workflow data structure is not very well defined. It is also meant to carry operations each with their own unique

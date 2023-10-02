@@ -4,7 +4,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @TSModel
 public enum RoleType {
-    ADMIN,
-    USER,
-    SPECIAL
+	ADMIN,
+	USER,
+	SPECIAL
 }

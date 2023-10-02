@@ -3,11 +3,10 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 
 import java.util.List;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 
 @Data
 @Accessors(chain = true)

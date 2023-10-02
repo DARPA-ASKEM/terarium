@@ -7,5 +7,5 @@ import java.util.Optional;
 
 @Repository
 public interface AuthorityRepository extends PSCrudRepository<Authority, Long> {
-    Optional<Authority> findFirstByName(String name);
+	Optional<Authority> findFirstByName(String name);
 }

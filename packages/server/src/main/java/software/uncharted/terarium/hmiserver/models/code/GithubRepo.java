@@ -19,7 +19,7 @@ import java.util.Map;
 public class GithubRepo {
 
 	@TSIgnore
-	private static final List<String> CODE_TYPES = new ArrayList<>(List.of(".py", ".R", ".jl" ));
+	private static final List<String> CODE_TYPES = new ArrayList<>(List.of(".py", ".R", ".jl"));
 
 	@TSIgnore
 	private static final List<String> DATA_TYPES = new ArrayList<>(List.of(".csv", ".json", ".tsv", ".xml", ".yaml", ".yml"));
@@ -36,47 +36,44 @@ public class GithubRepo {
 
 	/**
 	 * Constructor for GithubRepo. Requires a non-null list of files.
+	 *
 	 * @param files
 	 */
-	public GithubRepo(List<GithubFile> files){
+	public GithubRepo(List<GithubFile> files) {
 
 		//Initialize our map by adding an empty list for each category
 		this.files = Map.of(
-				FileCategory.DIRECTORY, new ArrayList<>(),
-				FileCategory.CODE, new ArrayList<>(),
-				FileCategory.DATA, new ArrayList<>(),
-				FileCategory.DOCUMENTS, new ArrayList<>(),
-				FileCategory.OTHER, new ArrayList<>()
+			FileCategory.DIRECTORY, new ArrayList<>(),
+			FileCategory.CODE, new ArrayList<>(),
+			FileCategory.DATA, new ArrayList<>(),
+			FileCategory.DOCUMENTS, new ArrayList<>(),
+			FileCategory.OTHER, new ArrayList<>()
 		);
 
 		//Add data to our map by iterating over our given files and adding them to the appropriate category
-		for(GithubFile file : files){
-			if(file.type == GithubFile.FileType.FILE){
-				if(CODE_TYPES.stream().anyMatch(file.name.toLowerCase()::endsWith)){
+		for (GithubFile file : files) {
+			if (file.type == GithubFile.FileType.FILE) {
+				if (CODE_TYPES.stream().anyMatch(file.name.toLowerCase()::endsWith)) {
 					file.setFileCategory(FileCategory.CODE);
 					this.files.get(FileCategory.CODE).add(file);
-				}
-				else if(DATA_TYPES.stream().anyMatch(file.name.toLowerCase()::endsWith)){
+				} else if (DATA_TYPES.stream().anyMatch(file.name.toLowerCase()::endsWith)) {
 					file.setFileCategory(FileCategory.DATA);
 					this.files.get(FileCategory.DATA).add(file);
-				}
-				else if(DOCUMENT_TYPES.stream().anyMatch(file.name.toLowerCase()::endsWith)){
+				} else if (DOCUMENT_TYPES.stream().anyMatch(file.name.toLowerCase()::endsWith)) {
 					file.setFileCategory(FileCategory.DOCUMENTS);
 					this.files.get(FileCategory.DOCUMENTS).add(file);
-				}
-				else{
+				} else {
 					file.setFileCategory(FileCategory.OTHER);
 					this.files.get(FileCategory.OTHER).add(file);
 				}
-			}
-			else if(file.type == GithubFile.FileType.DIR){
+			} else if (file.type == GithubFile.FileType.DIR) {
 				file.setFileCategory(FileCategory.DIRECTORY);
 				this.files.get(FileCategory.DIRECTORY).add(file);
 			}
 		}
 
 		//Alphabetically sort the sublists inside our map
-		for(List<GithubFile> fileList : this.files.values()){
+		for (List<GithubFile> fileList : this.files.values()) {
 			fileList.sort(Comparator.comparing(a -> a.name));
 		}
 
@@ -100,6 +97,7 @@ public class GithubRepo {
 
 
 		public final String fileCategory;
+
 		FileCategory(final String type) {
 			this.fileCategory = type;
 		}

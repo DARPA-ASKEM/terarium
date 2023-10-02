@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.permission;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.permission.Group;
-import software.uncharted.terarium.hmiserver.models.dataservice.permission.User;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 import java.util.ArrayList;
@@ -19,6 +17,11 @@ public class PermissionRelationships {
 		groups.add(new Group(id, relationship.toString()));
 	}
 
-	public List<Group> getGroups() { return groups; }
-	public List<User> getUsers() { return users; }
+	public List<Group> getGroups() {
+		return groups;
+	}
+
+	public List<User> getUsers() {
+		return users;
+	}
 }

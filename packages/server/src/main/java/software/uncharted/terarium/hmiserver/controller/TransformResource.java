@@ -1,16 +1,15 @@
 package software.uncharted.terarium.hmiserver.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
-
-import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 
 import java.util.List;
 

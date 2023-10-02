@@ -8,5 +8,5 @@ import java.util.Set;
 
 @Repository
 public interface RoleRepository extends PSCrudRepository<Role, Long> {
-    List<Role> findAllByNameIn(Set<String> roleName);
+	List<Role> findAllByNameIn(Set<String> roleName);
 }

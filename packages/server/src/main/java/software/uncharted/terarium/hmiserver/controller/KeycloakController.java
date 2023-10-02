@@ -12,15 +12,15 @@ import software.uncharted.terarium.hmiserver.configuration.KeycloakJsConfigurati
 @RestController
 @RequiredArgsConstructor
 public class KeycloakController {
-  private final Config config;
+	private final Config config;
 
-  @GetMapping("/config")
-  ResponseEntity<KeycloakJsConfiguration> keycloak() {
+	@GetMapping("/config")
+	ResponseEntity<KeycloakJsConfiguration> keycloak() {
 
-    KeycloakJsConfiguration keycloakJsConfiguration = new KeycloakJsConfiguration().setUrl(config.getKeycloak().getUrl())
-            .setRealm(config.getKeycloak().getRealm())
-            .setClientId(config.getKeycloak().getClientId());
+		KeycloakJsConfiguration keycloakJsConfiguration = new KeycloakJsConfiguration().setUrl(config.getKeycloak().getUrl())
+			.setRealm(config.getKeycloak().getRealm())
+			.setClientId(config.getKeycloak().getClientId());
 
-    return ResponseEntity.ok(keycloakJsConfiguration);
-  }
+		return ResponseEntity.ok(keycloakJsConfiguration);
+	}
 }

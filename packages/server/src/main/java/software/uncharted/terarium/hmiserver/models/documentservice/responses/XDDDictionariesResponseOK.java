@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.models.documentservice.Dictionary;
 
-
 import java.util.List;
 
 

@@ -9,7 +9,9 @@ public abstract class RebacObject {
 		this.id = id;
 	}
 
-	public String getId() { return id; }
+	public String getId() {
+		return id;
+	}
 
 	public abstract SchemaObject getSchemaObject();
 

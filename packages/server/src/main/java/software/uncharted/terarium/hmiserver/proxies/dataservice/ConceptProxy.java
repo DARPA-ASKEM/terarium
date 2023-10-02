@@ -9,11 +9,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
 import java.util.List;
 
 
-import javax.ws.rs.core.Response;
-
-
 @FeignClient(name = "concepts", url = "${terarium.dataservice.url}", path = "/concepts")
-public interface ConceptProxy{
+public interface ConceptProxy {
 
 	//TODO These endpoints are all using the wrong return type. They should be using ResponseEntity<Concept> instead of just JsonNode
 
@@ -30,7 +27,7 @@ public interface ConceptProxy{
 	@GetMapping("/definitions")
 	ResponseEntity<JsonNode> searchConceptDefinitions(
 		@RequestParam("term") String term,
-		@RequestParam(name ="limit", defaultValue = "100") Integer limit,
+		@RequestParam(name = "limit", defaultValue = "100") Integer limit,
 		@RequestParam(name = "offset", defaultValue = "100") Integer offset
 	);
 

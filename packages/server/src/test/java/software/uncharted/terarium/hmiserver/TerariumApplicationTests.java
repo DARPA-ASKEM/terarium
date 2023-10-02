@@ -14,20 +14,21 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 @AutoConfigureMockMvc
 @SpringBootTest
 public class TerariumApplicationTests {
-  @Autowired
-  private WebApplicationContext context;
+	@Autowired
+	private WebApplicationContext context;
 
-  @Autowired
-  public MockMvc mockMvc;
+	@Autowired
+	public MockMvc mockMvc;
 
-  @BeforeEach
-  public void beforeEach() {
-    mockMvc = MockMvcBuilders
-      .webAppContextSetup(this.context)
-      .apply(springSecurity())
-      .build();
-  }
-  @Test
-  void contextLoads() {
-  }
+	@BeforeEach
+	public void beforeEach() {
+		mockMvc = MockMvcBuilders
+			.webAppContextSetup(this.context)
+			.apply(springSecurity())
+			.build();
+	}
+
+	@Test
+	void contextLoads() {
+	}
 }

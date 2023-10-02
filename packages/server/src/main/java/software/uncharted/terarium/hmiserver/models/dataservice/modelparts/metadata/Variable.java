@@ -1,9 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 
 import java.util.List;
 

@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public interface MIRAProxy {
 	// This returns a MIRANet, not an AMR
 	@PostMapping("/reconstruct_ode_semantics")
 	ResponseEntity<JsonNode> reconstructODESemantics(
-			@RequestBody final Object amr
+		@RequestBody final Object amr
 	);
 
 	// This converts MIRANet (Petrinet) to AMR

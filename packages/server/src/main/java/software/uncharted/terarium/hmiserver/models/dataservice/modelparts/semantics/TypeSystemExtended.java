@@ -1,21 +1,21 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
-import java.util.Map;
-import com.fasterxml.jackson.annotation.Nulls;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
+
 import java.io.Serializable;
+import java.util.Map;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class TypeSystemExtended implements Serializable{
+public class TypeSystemExtended implements Serializable {
 	private String name;
 
 	@JsonSetter(nulls = Nulls.SKIP)

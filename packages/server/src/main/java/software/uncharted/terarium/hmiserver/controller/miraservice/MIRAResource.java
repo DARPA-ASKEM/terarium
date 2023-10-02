@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 
-
 import java.util.List;
 
 
@@ -24,7 +23,7 @@ public class MIRAResource {
 		@PathVariable("curies") final String curies
 	) {
 		try {
-			return  ResponseEntity.ok(proxy.getEntities(curies)).getBody();
+			return ResponseEntity.ok(proxy.getEntities(curies)).getBody();
 		} catch (RuntimeException e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();
@@ -37,7 +36,7 @@ public class MIRAResource {
 	// 3. Send AMR back
 	@PostMapping("/reconstruct_ode_semantics")
 	public ResponseEntity<JsonNode> reconstructODESemantics(
-			Object amr
+		Object amr
 	) {
 		return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
 

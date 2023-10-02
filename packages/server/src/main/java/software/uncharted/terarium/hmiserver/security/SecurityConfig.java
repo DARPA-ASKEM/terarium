@@ -16,29 +16,29 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-  private final KeycloakLogoutHandler keycloakLogoutHandler;
+	private final KeycloakLogoutHandler keycloakLogoutHandler;
 
-  @Autowired
-  private KeycloakJwtAuthenticationConverter authenticationConverter;
+	@Autowired
+	private KeycloakJwtAuthenticationConverter authenticationConverter;
 
-  @Autowired
-  private Config config;
+	@Autowired
+	private Config config;
 
-  SecurityConfig(KeycloakLogoutHandler keycloakLogoutHandler) {
-    this.keycloakLogoutHandler = keycloakLogoutHandler;
-  }
+	SecurityConfig(KeycloakLogoutHandler keycloakLogoutHandler) {
+		this.keycloakLogoutHandler = keycloakLogoutHandler;
+	}
 
-  @Bean
-  protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-    return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
-  }
+	@Bean
+	protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+		return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
+	}
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests((authorize) -> authorize
-      .requestMatchers(config.getUnauthenticatedUrlPatterns().toArray(new String[0])).permitAll()
-      .anyRequest().authenticated());
-    http.oauth2ResourceServer(configurer -> configurer.jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(authenticationConverter)));
-    return http.build();
-  }
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests((authorize) -> authorize
+			.requestMatchers(config.getUnauthenticatedUrlPatterns().toArray(new String[0])).permitAll()
+			.anyRequest().authenticated());
+		http.oauth2ResourceServer(configurer -> configurer.jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(authenticationConverter)));
+		return http.build();
+	}
 }

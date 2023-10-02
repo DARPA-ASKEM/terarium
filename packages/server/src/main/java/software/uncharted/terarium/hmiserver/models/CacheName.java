@@ -9,11 +9,11 @@ import java.util.stream.Collectors;
 
 @ToString
 public abstract class CacheName {
-  public static final String EXAMPLE="EXAMPLE";
+	public static final String EXAMPLE = "EXAMPLE";
 
-  public static List<String> getAll() {
-    return Arrays.stream(CacheName.class.getDeclaredFields())
-      .map(Field::getName)
-      .collect(Collectors.toList());
-  }
+	public static List<String> getAll() {
+		return Arrays.stream(CacheName.class.getDeclaredFields())
+			.map(Field::getName)
+			.collect(Collectors.toList());
+	}
 }

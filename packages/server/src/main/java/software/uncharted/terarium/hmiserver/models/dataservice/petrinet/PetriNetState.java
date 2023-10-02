@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.petrinet;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelExpression;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelExpression;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
 @Data
 @Accessors(chain = true)

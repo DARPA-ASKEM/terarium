@@ -8,13 +8,13 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @Entity
 @Table(
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = "NAME")
-    }
+	uniqueConstraints = {
+		@UniqueConstraint(columnNames = "NAME")
+	}
 )
 public class Authority {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-    private String name;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
+	private String name;
 }

@@ -4,8 +4,8 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
+import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.code.GithubFile;
 import software.uncharted.terarium.hmiserver.models.code.GithubRepo;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
@@ -13,7 +13,6 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
-
 
 import java.util.List;
 import java.util.Map;
@@ -47,9 +46,9 @@ public class CodeController {
 	public ResponseEntity<StoredModel> transformCode(final String code) {
 
 		// Convert from highlighted code a function network
-		final String skemaResponseStr  = skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
+		final String skemaResponseStr = skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
 
-		if(skemaResponseStr == null || skemaResponseStr.isEmpty()) {
+		if (skemaResponseStr == null || skemaResponseStr.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 
@@ -63,7 +62,7 @@ public class CodeController {
 		final String modelId = skemaRustProxy.addModel(unesescapedSkemaResponseStr).getBody();
 
 		final String odiResponseStr = skemaRustProxy.getModelNamedOpis(modelId).getBody();
-		final String odoResponseStr =  skemaRustProxy.getModelNamedOpos(modelId).getBody();
+		final String odoResponseStr = skemaRustProxy.getModelNamedOpos(modelId).getBody();
 
 		return ResponseEntity.ok(new StoredModel()
 			.setId(modelId)
@@ -108,9 +107,9 @@ public class CodeController {
 		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 		@RequestParam("path") final String path
 	) {
-		List<GithubFile> files =  githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
+		List<GithubFile> files = githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
 
-		if(files == null || files.isEmpty()) {
+		if (files == null || files.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 

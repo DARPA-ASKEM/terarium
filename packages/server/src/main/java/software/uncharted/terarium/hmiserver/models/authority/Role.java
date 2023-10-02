@@ -11,13 +11,13 @@ import java.util.Set;
 @Data
 @Accessors(chain = true)
 public class Role {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
 
-    private String name;
+	private String name;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL})
-    @JoinColumn(name = "ROLE_ID")
-    private Set<AuthorityInstance> authorities = new HashSet<>();
+	@OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL})
+	@JoinColumn(name = "ROLE_ID")
+	private Set<AuthorityInstance> authorities = new HashSet<>();
 }

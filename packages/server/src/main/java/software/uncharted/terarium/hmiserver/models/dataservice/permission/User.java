@@ -9,6 +9,11 @@ public class User {
 		this.relationship = relationship;
 	}
 
-	public String getId() { return id; }
-	public String getRelationship() { return relationship; }
+	public String getId() {
+		return id;
+	}
+
+	public String getRelationship() {
+		return relationship;
+	}
 }

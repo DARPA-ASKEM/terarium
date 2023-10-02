@@ -1,9 +1,6 @@
-
 package software.uncharted.terarium.hmiserver.proxies.knowledge;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,12 +9,12 @@ import software.uncharted.terarium.hmiserver.models.extractionservice.Extraction
 import java.util.List;
 
 
-
 @FeignClient(name = "knowledge-middleware", url = "${knowledge-middleware.url}")
 public interface KnowledgeMiddlewareProxy {
 
 	/**
 	 * Retrieve the status of an extraction job
+	 *
 	 * @param id (String) the id of the extraction job
 	 * @return the status of the extraction job
 	 */
@@ -29,14 +26,13 @@ public interface KnowledgeMiddlewareProxy {
 	/**
 	 * Post MathML to skema service to get AMR return
 	 *
-	 * @param		model (String) the id of the model
-	 *
-	 * Args:
-	 *     mathMLPayload (List<String>): A list of MathML strings representing the functions that are
-	 * 													         used to convert to AMR model (str, optional): AMR model return type.
-	 * 													         Defaults to "petrinet". Options: "regnet", "petrinet".
-	 *
 	 * @return AMR model
+	 * @param    model (String) the id of the model
+	 * <p>
+	 * Args:
+	 * mathMLPayload (List<String>): A list of MathML strings representing the functions that are
+	 * used to convert to AMR model (str, optional): AMR model return type.
+	 * Defaults to "petrinet". Options: "regnet", "petrinet".
 	 */
 	@PostMapping("/mathml_to_amr")
 	ResponseEntity<JsonNode> postMathMLToAMR(
@@ -47,14 +43,13 @@ public interface KnowledgeMiddlewareProxy {
 	/**
 	 * Post a PDF
 	 *
-	 * @param    annotateSkema (Boolean): Whether to annotate the PDF with Skema
-	 * @param    annotateMIT (Boolean): Whether to annotate the PDF with AMR
-	 * @param    name (String): The name of the PDF
-	 * @param    description (String): The description of the PDF
-	 *
-	 * Args:
-	 *     pdf (Object): The PDF file to upload
-	 *
+	 * @param annotateSkema (Boolean): Whether to annotate the PDF with Skema
+	 * @param annotateMIT   (Boolean): Whether to annotate the PDF with AMR
+	 * @param name          (String): The name of the PDF
+	 * @param description   (String): The description of the PDF
+	 *                      <p>
+	 *                      Args:
+	 *                      pdf (Object): The PDF file to upload
 	 * @return extractions of the pdf
 	 */
 	@PostMapping("/pdf_extractions")
@@ -68,6 +63,7 @@ public interface KnowledgeMiddlewareProxy {
 
 	/**
 	 * Post a PDF to get text
+	 *
 	 * @param artifactId (String): The ID of the artifact to extract text from
 	 * @return
 	 */
@@ -79,10 +75,9 @@ public interface KnowledgeMiddlewareProxy {
 	/**
 	 * Profile a model
 	 *
-	 * @param		modelId (String): The ID of the model to profile
-	 * @param		artifactId (String): The text of the document to profile
-	 *
 	 * @return the profiled model
+	 * @param    modelId (String): The ID of the model to profile
+	 * @param    artifactId (String): The text of the document to profile
 	 */
 	@PostMapping("/profile_model/{model_id}")
 	ResponseEntity<JsonNode> postProfileModel(
@@ -93,10 +88,9 @@ public interface KnowledgeMiddlewareProxy {
 	/**
 	 * Profile a dataset
 	 *
-	 * @param		datasetId (String): The ID of the dataset to profile
-	 * @param		artifactId (String): The text of the document to profile
-	 *
 	 * @return the profiled dataset
+	 * @param    datasetId (String): The ID of the dataset to profile
+	 * @param    artifactId (String): The text of the document to profile
 	 */
 	@PostMapping("/profile_dataset/{dataset_id}")
 	ResponseEntity<JsonNode> postProfileDataset(
@@ -106,10 +100,11 @@ public interface KnowledgeMiddlewareProxy {
 
 	/**
 	 * Transform source code to AMR
-	 * @param 	codeId (String): id of the code artifact
-	 * @param 	name (String): the name to set on the newly created model
-	 * @param 	description (String): the description to set on the newly created model
-	 * @return  (ExtractionResponse)
+	 *
+	 * @param codeId      (String): id of the code artifact
+	 * @param name        (String): the name to set on the newly created model
+	 * @param description (String): the description to set on the newly created model
+	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code_to_amr")
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
@@ -120,11 +115,12 @@ public interface KnowledgeMiddlewareProxy {
 
 	/**
 	 * Transform Equations equations to AMR
-	 * @param 	equationType (String): [latex, mathml]
-	 * @param 	framework (String): AMR model return type. Defaults to "petrinet". Options: "regnet", "petrinet".
-	 * @param 	modelId (String): the id of the model (to update) based on the set of equations
-	 * @param 	equations (List<String>): the list of LaTeX strings representing the functions that are used to convert to AMR
-	 * @return  (ExtractionResponse)
+	 *
+	 * @param equationType (String): [latex, mathml]
+	 * @param framework    (String): AMR model return type. Defaults to "petrinet". Options: "regnet", "petrinet".
+	 * @param modelId      (String): the id of the model (to update) based on the set of equations
+	 * @param equations    (List<String>): the list of LaTeX strings representing the functions that are used to convert to AMR
+	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/equations_to_amr")
 	ResponseEntity<ExtractionResponse> postEquationsToAMR(
