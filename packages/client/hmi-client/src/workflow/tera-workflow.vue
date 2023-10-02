@@ -126,10 +126,6 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<div v-else>
-						<Button @click="testNode(node)">Test run</Button
-						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
-					</div>
 				</template>
 			</tera-workflow-node>
 		</template>
@@ -349,20 +345,6 @@ const isEdgeTargetSim = (edge) =>
 	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
 	WorkflowOperationTypes.SIMULATE_JULIA;
 
-const testOperation: Operation = {
-	name: WorkflowOperationTypes.TEST,
-	displayName: 'Test Operation',
-	description: 'A test operation',
-	inputs: [
-		{ type: 'number', label: 'Number input', acceptMultiple: false },
-		{ type: 'number', label: 'Multi number input', acceptMultiple: true },
-		{ type: 'string', label: 'String input' }
-	],
-	outputs: [{ type: 'number', label: 'Number output' }],
-	action: () => {},
-	isRunnable: true
-};
-
 const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
 const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
@@ -470,12 +452,6 @@ function updateWorkflowNodeState(node: WorkflowNode<any>, state: any) {
 	workflowDirty = true;
 }
 
-// Run testOperation
-const testNode = (node: WorkflowNode<any>) => {
-	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
-	appendOutputPort(node, { type: 'number', label: value.toString(), value });
-};
-
 const drilldown = (event: WorkflowNode<any>) => {
 	currentActiveNode.value = event;
 	workflowEventBus.emit('drilldown', event);
@@ -541,13 +517,6 @@ const removeNode = (event) => {
 };
 
 const contextMenuItems = ref([
-	{
-		label: 'Test operation',
-		command: () => {
-			workflowService.addNode(wf.value, testOperation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
 	{
 		label: 'Model',
 		command: () => {
