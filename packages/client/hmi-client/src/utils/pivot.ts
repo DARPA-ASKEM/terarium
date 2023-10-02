@@ -107,6 +107,8 @@ export const createMatrix1D = (data: any[]) => {
 	return { matrix: rows };
 };
 
+// export const findTransition = (amr: Model, transitionId: string) => {};
+
 export const createParameterMatrix = (
 	amr: Model,
 	transitionMatrixData: any[],
@@ -117,9 +119,15 @@ export const createParameterMatrix = (
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
+	const inputMap = new Map<string, string>();
+	const outputMap = new Map<string, string>();
+
+	console.log(childParameterIds, inputMap, outputMap);
+
 	// Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
 	for (let i = 0; i < transitionMatrixData.length; i++) {
-		const { input, output } = transitionMatrixData[i];
+		const transition = amr.model.transitions.find(({ id }) => id === transitionMatrixData[i].id);
+		const { input, output } = transition;
 
 		// Extract and remove controllers out of inputs array
 		controllers.push(...input.filter((ip: string) => output.includes(ip)));
@@ -130,47 +138,64 @@ export const createParameterMatrix = (
 	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
 	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
 
-	// Go through every unique input/output combo
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
 		const row: PivotMatrixCell[] = [];
 		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
-			const content: { value: any; id: string } = {
-				value: null,
-				id: ''
-			};
-			// Go through transition data to see what inputs/outputs belong to certain transitions
-			for (let i = 0; i < transitionMatrixData.length; i++) {
-				const { input, output, id } = transitionMatrixData[i];
-				const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
-
-				// If the current input/output combo matches a combo in the transition data then a parameter belongs in this cell
-				if (rate && input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
-					// Find the parameter that's in the rate expression
-					for (let j = 0; j < childParameterIds.length; j++) {
-						// Fill cell content with parameter content
-						if (rate.expression.includes(childParameterIds[j])) {
-							const parameter = amr.semantics?.ode.parameters?.find(
-								(p) => p.id === childParameterIds[j]
-							);
-							if (parameter) {
-								content.id = parameter.id;
-								content.value = parameter.value;
-							}
-							break;
-						}
-					}
-				}
-			}
 			row.push({
 				row: rowIdx,
 				col: colIdx,
 				rowCriteria: inputs[rowIdx],
 				colCriteria: outputs[colIdx],
-				content
+				content: {
+					value: null,
+					id: ''
+				}
 			});
 		}
 		rows.push(row);
 	}
+
+	// Go through every unique input/output combo
+	// for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
+	// 	const row: PivotMatrixCell[] = [];
+	// 	for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
+	// 		const content: { value: any; id: string } = {
+	// 			value: null,
+	// 			id: ''
+	// 		};
+	// 		// Go through transition data to see what inputs/outputs belong to certain transitions
+	// 		for (let i = 0; i < transitionMatrixData.length; i++) {
+	// 			const { input, output, id } = transitionMatrixData[i];
+	// 			const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+
+	// 			// If the current input/output combo matches a combo in the transition data then a parameter belongs in this cell
+	// 			if (rate && input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
+	// 				// Find the parameter that's in the rate expression
+	// 				for (let j = 0; j < childParameterIds.length; j++) {
+	// 					// Fill cell content with parameter content
+	// 					if (rate.expression.includes(childParameterIds[j])) {
+	// 						const parameter = amr.semantics?.ode.parameters?.find(
+	// 							(p) => p.id === childParameterIds[j]
+	// 						);
+	// 						if (parameter) {
+	// 							content.id = parameter.id;
+	// 							content.value = parameter.value;
+	// 						}
+	// 						break;
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 		row.push({
+	// 			row: rowIdx,
+	// 			col: colIdx,
+	// 			rowCriteria: inputs[rowIdx],
+	// 			colCriteria: outputs[colIdx],
+	// 			content
+	// 		});
+	// 	}
+	// 	rows.push(row);
+	// }
 	return {
 		matrix: rows,
 		controllers
