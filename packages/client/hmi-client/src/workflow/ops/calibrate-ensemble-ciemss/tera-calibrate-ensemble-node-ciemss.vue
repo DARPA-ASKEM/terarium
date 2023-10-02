@@ -71,7 +71,7 @@ import {
 } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state']);
 
@@ -168,7 +168,7 @@ const updateOutputPorts = async (runId) => {
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -180,7 +180,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 
 // TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
 const addChart = () => {
-	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -217,7 +217,7 @@ watch(
 				};
 			}
 
-			const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+			const state = _.cloneDeep(props.node.state);
 			state.modelConfigIds = modelConfigIds.value;
 			state.mapping = mapping;
 			workflowEventBus.emitNodeStateChange({

@@ -41,7 +41,7 @@ export const addNode = (
 	pos: Position,
 	options: { size?: Size; state?: any } = { size: defaultNodeSize, state: {} }
 ) => {
-	const node: WorkflowNode = {
+	const node: WorkflowNode<any> = {
 		id: uuidv4(),
 		workflowId: wf.id,
 		operationType: op.name,

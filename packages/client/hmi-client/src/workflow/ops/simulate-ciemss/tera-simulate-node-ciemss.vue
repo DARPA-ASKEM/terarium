@@ -62,7 +62,7 @@ import { logger } from '@/utils/logger';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state']);
 
@@ -83,7 +83,7 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
-	const state = props.node.state as SimulateCiemssOperationState;
+	const state = props.node.state;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload: SimulationRequest = {
@@ -157,7 +157,7 @@ watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true }
 watch(
 	() => numSamples.value,
 	() => {
-		const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.numSamples = numSamples.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -171,7 +171,7 @@ watch(
 watch(
 	() => method.value,
 	() => {
-		const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.method = method.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -183,7 +183,7 @@ watch(
 );
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -194,7 +194,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({

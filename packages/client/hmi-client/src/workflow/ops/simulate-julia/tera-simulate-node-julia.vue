@@ -43,7 +43,7 @@ import { logger } from '@/utils/logger';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state']);
 
@@ -72,7 +72,7 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
-	const state = props.node.state as SimulateJuliaOperationState;
+	const state = props.node.state;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload: SimulationRequest = {
@@ -139,7 +139,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -190,7 +190,7 @@ onMounted(async () => {
 });
 
 const addChart = () => {
-	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
