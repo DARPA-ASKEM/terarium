@@ -25,7 +25,9 @@
 						<tera-user-card
 							:user="user"
 							:is-author="isUserAuthor(user)"
+							:permission="selectedUserPermissions.get(user.id)"
 							@remove-user="removeUserAccess(user)"
+							@select-permission="(permission) => selectNewPermissionForUser(permission, user.id)"
 						/>
 					</li>
 				</ul>
@@ -77,6 +79,8 @@ const usersMenu = computed(() =>
 );
 const selectedUser = ref(null);
 const selectedUsers = ref<Set<PermissionUser>>(new Set());
+const selectedUserPermissions: Map<string, string> = new Map();
+const newSelectedUserPermissions: Map<string, string> = new Map();
 const generalAccessOptions = ref([
 	{ label: 'Restricted', icon: 'pi pi-lock' },
 	{ label: 'Public', icon: 'pi pi-users' }
@@ -89,11 +93,14 @@ const generalAccessCaption = computed(() => {
 	return 'Anyone can view and copy this project.';
 });
 
-function addSelectedUser(id) {
+function addSelectedUser(id: string, relationship?: string) {
 	if (id) {
 		const user = users.value.find((u) => u.id === id);
 		if (user) {
 			selectedUsers.value.add(user);
+			if (relationship) {
+				selectedUserPermissions.set(id, relationship);
+			}
 		}
 	}
 }
@@ -108,14 +115,31 @@ function removeUserAccess(user: PermissionUser) {
 	selectedUser.value = null;
 }
 
+function selectNewPermissionForUser(permission: string, userId: string) {
+	const permissionToSet = permission === 'Edit' ? 'writer' : 'reader';
+	newSelectedUserPermissions.set(userId, permissionToSet);
+}
+
 function shareProject() {
 	visible.value = false;
+	selectedUsers.value.forEach(({ id }) => {
+		const permission = newSelectedUserPermissions.get(id);
+		if (permission) {
+			useProjects().setPermissions(props.project.id, id, permission);
+		}
+	});
+	newSelectedUserPermissions.clear();
 }
 
 function isUserAuthor(user: PermissionUser) {
-	return permissions.value?.users.find(
-		(pUser) => pUser.id === user.id && pUser.relationship === 'creator'
-	);
+	if (
+		permissions.value?.users.find(
+			(pUser) => pUser.id === user.id && pUser.relationship === 'creator'
+		)
+	) {
+		return true;
+	}
+	return false;
 }
 
 watch(
@@ -123,13 +147,17 @@ watch(
 	async () => {
 		users.value = (await getUsers()) ?? [];
 		permissions.value = await useProjects().getPermissions(props.project.id);
-		const author = permissions.value?.users.find((user) => user.relationship === 'creator');
-		if (author) {
-			addSelectedUser(author.id);
-		}
+		permissions.value?.users.forEach(({ id, relationship }) => addSelectedUser(id, relationship));
 	},
 	{ immediate: true }
 );
+
+// onMounted(async () => {
+// 	console.log('test');
+// 	users.value = (await getUsers()) ?? [];
+// 	permissions.value = await useProjects().getPermissions(props.project.id);
+// 	permissions.value?.users.forEach(({ id, relationship }) => addSelectedUser(id, relationship));
+// })
 
 watch(
 	() => props.modelValue,

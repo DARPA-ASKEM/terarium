@@ -8,32 +8,51 @@
 	</section>
 	<section v-if="isAuthor" class="permissions">Author</section>
 	<section v-else class="permissions">
-		<Dropdown v-model="selectedPermission" :options="permissions" class="sm" />
+		<Dropdown
+			v-model="selectedPermission"
+			:options="permissions"
+			class="sm"
+			@change="selectPermission"
+		/>
 	</section>
 </template>
 
 <script setup lang="ts">
 import Avatar from 'primevue/avatar';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import useAuthStore from '@/stores/auth';
 import Dropdown from 'primevue/dropdown';
 import { PermissionUser } from '@/types/Types';
 
-const props = defineProps<{ user: PermissionUser; isAuthor: boolean }>();
-const emit = defineEmits(['remove-user']);
+const props = defineProps<{ user: PermissionUser; isAuthor: boolean; permission?: string }>();
+const emit = defineEmits(['remove-user', 'select-permission']);
 
 const auth = useAuthStore();
 
-const selectedPermission = ref('Edit');
-const permissions = ref(['Edit', 'Write only', 'Remove access']);
+const selectedPermission = ref('');
+const permissions = ref(['Edit', 'Read only', 'Remove access']);
 const userInitials = computed(() =>
 	props.user.firstName.charAt(0).concat(props.user.firstName.charAt(0))
 );
 
 function isYou() {
-	console.log(auth);
 	return auth.name === props.user.firstName ? '(you)' : '';
 }
+
+function selectPermission(value: string) {
+	if (!props.isAuthor) {
+		console.log(value);
+		emit('select-permission', value);
+	}
+}
+
+onMounted(() => {
+	if (props.permission === 'writer') {
+		selectedPermission.value = 'Edit';
+	} else if (props.permission === 'reader') {
+		selectedPermission.value = 'Read only';
+	}
+});
 
 watch(
 	() => selectedPermission.value,

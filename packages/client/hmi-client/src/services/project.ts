@@ -227,6 +227,21 @@ async function getPermissions(projectId: IProject['id']): Promise<PermissionRela
 	}
 }
 
+async function setPermissions(projectId: IProject['id'], userId: string, relationship: string) {
+	try {
+		const { status, data } = await API.post(
+			`projects/${projectId}/permissions/user/${userId}/${relationship}`
+		);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
 /**
  * Get the icon associated with an Asset
  */
@@ -258,5 +273,6 @@ export {
 	getAssets,
 	getAssetIcon,
 	getPublicationAssets,
-	getPermissions
+	getPermissions,
+	setPermissions
 };
