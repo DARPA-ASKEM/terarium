@@ -258,7 +258,13 @@ function generateMatrix(populateDimensions = false) {
 	const matrixAttributes: any =
 		props.nodeType === NodeType.State
 			? createMatrix1D(matrixData)
-			: createParameterMatrix(amr, matrixData, childParameterIds);
+			: createParameterMatrix(
+					amr,
+					cloneDeep(
+						matrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
+					),
+					childParameterIds
+			  );
 
 	matrix.value = matrixAttributes.matrix;
 	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];

@@ -208,31 +208,27 @@ public class ReBACService {
 	}
 
 	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
-		return true;
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.READ, what, full);
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.READ, what, full);
 	}
 
 	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		return true;
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
 	}
 
 	public boolean hasMembership(SchemaObject who, SchemaObject what) throws Exception {
-		return true;
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, full);
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, full);
 	}
 
 	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		return true;
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
 	}
 
 	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception {
