@@ -3,6 +3,7 @@
 # Container Registry using HCL Bake file.
 
 name: Build and Publish
+
 # yamllint disable-line rule:truthy
 on:
   push:

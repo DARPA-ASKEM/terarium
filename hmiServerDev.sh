@@ -28,8 +28,11 @@ case ${COMMAND} in
 		cd ${SERVER_DIR} || exit
 		echo "Decrypting local secrets vault"
 		ansible-vault decrypt --vault-password-file ${VAULT_PASSWORD} --output ${DECRYPTED_FILE} ${ENCRYPTED_FILE}
+    echo "Deploying local containers"
+    docker compose -f ../../containers/docker-compose-base.yml up -d
+    echo "Starting local server"
     gradle bootRun --args='--spring.profiles.active=default,secrets'
-    echo "Deleting local secrets fault"
+    echo "Deleting local secrets vault"
     rm ${DECRYPTED_FILE}
     ;;
   decrypt)
