@@ -1,6 +1,6 @@
 <template>
 	<tera-model
-		:asset-id="props.node.state.modelId"
+		:asset-id="props.node.state.modelId as string"
 		@new-model-configuration="refreshModelNode"
 		@update-model-configuration="refreshModelNode"
 	/>

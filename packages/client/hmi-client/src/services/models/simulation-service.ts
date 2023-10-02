@@ -224,7 +224,7 @@ const deleteSimulationInProgress = (state: any, runIds: string[]) => {
 };
 
 // This function returns a string array of run ids.
-export const querySimulationInProgress = (node: WorkflowNode): string[] => {
+export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => {
 	const state = node.state;
 	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
 		// return all run ids on the node
@@ -237,7 +237,7 @@ export const querySimulationInProgress = (node: WorkflowNode): string[] => {
 
 export async function simulationPollAction(
 	simulationIds: string[],
-	node: WorkflowNode,
+	node: WorkflowNode<any>,
 	progress: Ref<{ status: ProgressState; value: number }>,
 	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
 ) {
