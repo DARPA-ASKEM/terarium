@@ -102,12 +102,50 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			Object.values(AssetType).forEach((type, indx) => {
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+				if (type !== AssetType.Documents) url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
 		}
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status !== 200) return null;
+		data.documents = [
+			{
+				id: '586e8b37-b79b-4ef3-ac3d-f240c0b8c8de',
+				name: 'SIDARTHE - Lack of practical identifiability may hamper reliable predictions in COVID-19 epidemic models',
+				username: 'Adam Smith',
+				description: 'string',
+				timestamp: '2023-09-27T13:54:50',
+				file_names: ['paper.pdf'],
+				metadata: {},
+				document_url:
+					'https://github.com/DARPA-ASKEM/knowledge-middleware/blob/main/tests/scenarios/sidarthe/paper.pdf',
+				source: 'Science Advances',
+				text: 'INTRODUCTION\nThe pandemic caused by severe acute respiratory syndrome\ncoronavirus-2 is challenging humanity in an unprecedented way\n(1), with the disease, which in a few months has spread around the\nworld, affecting large parts of the population (2, 3) and often requir-\ning hospitalization or even intensive care (4, 5). Mitigating the impact\nof coronavirus disease 2019 (COVID-19) urges synergistic efforts to\nunderstand, predict, and control the many, often elusive, facets of\n...',
+				grounding: {
+					identifiers: {},
+					context: {}
+				},
+				assets: [
+					{
+						file_name: 'figure1.png',
+						asset_type: 'image',
+						metadata: {
+							type: 'figures',
+							description: 'Figure showing the spread rate',
+							dimensions: '1200x800'
+						}
+					},
+					{
+						file_name: 'equation1.tex',
+						asset_type: 'equation',
+						metadata: {
+							type: 'equations',
+							content: '\\frac{dI}{dt} = \\beta SI'
+						}
+					}
+				]
+			}
+		];
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);

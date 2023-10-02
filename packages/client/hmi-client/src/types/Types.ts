@@ -719,6 +719,7 @@ export enum AssetType {
     Workflows = "workflows",
     Artifacts = "artifacts",
     Code = "code",
+    Documents = "documents"
 }
 
 export enum OntologicalField {

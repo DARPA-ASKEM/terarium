@@ -76,10 +76,10 @@ export const latexToAMR = async (
  * Given a model, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileModel = async (modelId: string, artifactId: string | null = null) => {
+export const profileModel = async (modelId: string, documentId: string | null = null) => {
 	let response: any = null;
-	if (artifactId) {
-		response = await API.post(`/knowledge/profile-model/${modelId}?artifact_id=${artifactId}`);
+	if (documentId) {
+		response = await API.post(`/knowledge/profile-model/${modelId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-model/${modelId}`);
 	}

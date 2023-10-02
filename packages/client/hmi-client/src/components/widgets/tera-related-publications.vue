@@ -17,7 +17,7 @@
 		>
 			<p class="constrain-width">
 				Terarium can extract information from artifacts to describe this
-				{{ assetType }}. Select the artifacts you would like to use.
+				{{ assetType }}. Select the documents you would like to use.
 			</p>
 			<DataTable
 				v-if="publications && publications.length > 0"
@@ -33,7 +33,7 @@
 				<div class="no-artifacts">
 					<img class="no-artifacts-img" src="@assets/svg/plants.svg" alt="" />
 					<div class="no-artifacts-text">
-						You don't have any resources that can be used. Try adding some artifacts.
+						You don't have any resources that can be used. Try adding some documents.
 					</div>
 					<div class="no-artifacts-text">
 						Would you like to generate descriptions without attaching additional context?
@@ -62,6 +62,8 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { ResourceType } from '@/types/common';
 import { profileDataset, profileModel, fetchExtraction } from '@/services/knowledge';
+import { createProvenance, RelationshipType } from '@/services/provenance';
+import { ProvenanceType } from '@/types/Types';
 
 const props = defineProps<{
 	publications?: Array<{ name: string; id: string | undefined }>;
@@ -87,7 +89,22 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 
 	// 2. Poll
 	await fetchExtraction(jobId);
+	await linkDocument();
+
 	emit('enriched');
+};
+
+const linkDocument = async () => {
+	if (props.assetType !== ResourceType.MODEL) return;
+	const provenancePayload = {
+		relation_type: RelationshipType.EXTRACTED_FROM,
+		left: props.assetId,
+		left_type: ProvenanceType.Model,
+		right: selectedResources?.value?.id,
+		right_type: ProvenanceType.Publication
+	};
+	await createProvenance(provenancePayload);
+	// if(!provenanceId) return;
 };
 </script>
 

@@ -126,9 +126,55 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 	//        are returned and the explorer view would have to decide to display them
 	return response;
 }
+// "id": 0,
+//   "timestamp": "2023-09-27T18:29:47.178125",
+//   "relation_type": "BEGINS_AT",
+//   "left": "string",
+//   "left_type": "Concept",
+//   "right": "string",
+//   "right_type": "Concept",
+//   "user_id": 0,
+//   "concept": "string"
 
+export enum RelationshipType {
+	BEGINS_AT = 'BEGINS_AT',
+	CITES = 'CITES',
+	COMBINED_FROM = 'COMBINED_FROM',
+	CONTAINS = 'CONTAINS',
+	COPIED_FROM = 'COPIED_FROM',
+	DECOMPOSED_FROM = 'DECOMPOSED_FROM',
+	DERIVED_FROM = 'DERIVED_FROM',
+	EDITED_FROM = 'EDITED_FROM',
+	EQUIVALENT_OF = 'EQUIVALENT_OF',
+	EXTRACTED_FROM = 'EXTRACTED_FROM',
+	GENERATED_BY = 'GENERATED_BY',
+	GLUED_FROM = 'GLUED_FROM',
+	IS_CONCEPT_OF = 'IS_CONCEPT_OF',
+	PARAMETER_OF = 'PARAMETER_OF',
+	REINTERPRETS = 'REINTERPRETS',
+	STRATIFIED_FROM = 'STRATIFIED_FROM',
+	USES = 'USES'
+}
+export interface ProvenanacePayload {
+	id?: number;
+	timestamp?: string;
+	relation_type: RelationshipType;
+	left: string;
+	left_type: ProvenanceType;
+	right: string;
+	right_type: ProvenanceType;
+	user_id?: number;
+	concept?: string;
+}
+async function createProvenance(payload: ProvenanacePayload) {
+	const response = await API.post('/provenance', payload);
+
+	const { status, data } = response;
+	if (status !== 201) return null;
+	return data ?? null;
+}
 //
 // FIXME: needs to create a similar function to "getRelatedArtifacts"
 //        for finding related datasets
 //
-export { getRelatedArtifacts };
+export { getRelatedArtifacts, createProvenance };
