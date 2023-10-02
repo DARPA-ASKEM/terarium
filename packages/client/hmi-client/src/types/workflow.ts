@@ -65,7 +65,7 @@ export interface WorkflowPort {
 
 // Node definition in the workflow
 // This is the graphical operation of the operation defined in operationType
-export interface WorkflowNode {
+export interface WorkflowNode<S> {
 	id: string;
 	displayName: string;
 	workflowId: string;
@@ -80,7 +80,7 @@ export interface WorkflowNode {
 	outputs: WorkflowPort[];
 
 	// Internal state. For example chosen model, display color ... etc
-	state: any;
+	state: S;
 
 	// FIXME: The section below is slated to be further spec'ed out later.
 	// State and progress, tracking of intermediate results

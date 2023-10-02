@@ -126,7 +126,7 @@ import { useProjects } from '@/composables/project';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);

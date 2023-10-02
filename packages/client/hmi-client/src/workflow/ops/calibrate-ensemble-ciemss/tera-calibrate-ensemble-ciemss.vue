@@ -232,7 +232,7 @@ import {
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
 
 enum EnsembleTabs {
@@ -282,7 +282,7 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -314,7 +314,7 @@ function addMapping() {
 		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
 	}
 
-	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -383,7 +383,7 @@ const setChartOptions = () => {
 };
 
 const addChart = () => {
-	const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -457,7 +457,7 @@ watch(
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -472,7 +472,7 @@ watch(
 watch(
 	() => extra.value,
 	async () => {
-		const state: CalibrateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.extra = extra.value;
 
 		workflowEventBus.emitNodeStateChange({
