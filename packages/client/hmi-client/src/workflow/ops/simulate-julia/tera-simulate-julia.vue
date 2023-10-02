@@ -148,7 +148,7 @@ const saveAsName = ref(<string | null>'');
 const rawContent = ref<CsvAsset | null>(null);
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -159,7 +159,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: SimulateJuliaOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
