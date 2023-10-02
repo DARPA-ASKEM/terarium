@@ -1,6 +1,6 @@
 // Create pivot table
 import _ from 'lodash';
-import { Model, Transition } from '@/types/Types';
+import { Model } from '@/types/Types';
 
 export interface PivotMatrixCell {
 	row: number;
@@ -112,27 +112,90 @@ export const createParameterMatrix = (
 	transitionMatrixData: any[],
 	childParameterIds: string[]
 ) => {
+	// const rows: any[] = [];
+	// let controllers: string[] = [];
+	// let inputs: string[] = [];
+	// let outputs: string[] = [];
+
+	// // Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
+	// for (let i = 0; i < transitionMatrixData.length; i++) {
+	// 	const { input, output, id } = amr.model.transitions.find(
+	// 		(t: Transition) => t.id === transitionMatrixData[i].id
+	// 	);
+	// 	// Extract and remove controllers out of inputs array
+	// 	controllers.push(...input.filter((ip: string) => output.includes(ip)));
+	// 	inputs.push(...input.filter((ip: string) => !output.includes(ip)));
+	// 	outputs.push(...output);
+	// }
+	// controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
+	// inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
+	// outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
+
+	// // Go through every unique input/output combo
+	// for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
+	// 	const row: PivotMatrixCell[] = [];
+	// 	for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
+	// 		const content: { value: any; id: string } = {
+	// 			value: null,
+	// 			id: ''
+	// 		};
+	// 		// Go through transition data to see what inputs/outputs belong to certain transitions
+	// 		for (let i = 0; i < transitionMatrixData.length; i++) {
+	// 			const { input, output, id } = amr.model.transitions.find(
+	// 				(t: Transition) => t.id === transitionMatrixData[i].id
+	// 			);
+	// 			const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+
+	// 			// If the current input/output combo matches a combo in the transition data then a parameter belongs in this cell
+	// 			if (rate && input.includes(inputs[rowIdx]) && output.includes(outputs[colIdx])) {
+	// 				// Find the parameter that's in the rate expression
+	// 				for (let j = 0; j < childParameterIds.length; j++) {
+	// 					// Fill cell content with parameter content
+	// 					if (rate.expression.includes(childParameterIds[j])) {
+	// 						const parameter = amr.semantics?.ode.parameters?.find(
+	// 							(p) => p.id === childParameterIds[j]
+	// 						);
+	// 						if (parameter) {
+	// 							content.id = parameter.id;
+	// 							content.value = parameter.value;
+	// 						}
+	// 						break;
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 		row.push({
+	// 			row: rowIdx,
+	// 			col: colIdx,
+	// 			rowCriteria: inputs[rowIdx],
+	// 			colCriteria: outputs[colIdx],
+	// 			content
+	// 		});
+	// 	}
+	// 	rows.push(row);
+	// }
+	// return {
+	// 	matrix: rows,
+	// 	controllers
+	// };
 	let controllers: string[] = [];
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
-	const inputMap = new Map<string, string>();
-	const outputMap = new Map<string, string>();
+	const transitions = _.cloneDeep(
+		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
+	);
 
-	// Get unique inputs and outputs and sort names alphabetically these are the rows and columns respectively
-	for (let i = 0; i < transitionMatrixData.length; i++) {
-		const { input, output, id } = amr.model.transitions.find(
-			(t: Transition) => t.id === transitionMatrixData[i].id
-		);
+	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
+	for (let i = 0; i < transitions.length; i++) {
+		const { input, output } = transitions[i];
 		// Extract and remove controllers out of inputs array
 		const newInputs = input.filter((ip: string) => !output.includes(ip));
 		inputs.push(...newInputs);
 		outputs.push(...output);
 		controllers.push(...input.filter((ip: string) => output.includes(ip)));
-
-		// Map input/outputs to their transition ids
-		for (let j = 0; j < newInputs.length; j++) inputMap.set(id, newInputs[j]);
-		for (let j = 0; j < output.length; j++) outputMap.set(id, output[j]);
+		// Update input for future transitions loop
+		transitions[i].input = newInputs;
 	}
 	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
 	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
@@ -163,27 +226,31 @@ export const createParameterMatrix = (
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) rowIndexMap.set(inputs[rowIdx], rowIdx);
 	for (let colIdx = 0; colIdx < outputs.length; colIdx++) colIndexMap.set(outputs[colIdx], colIdx);
 
-	// For every transition id grab its input/output and row/column index to fill its place in the matrix
-	for (let i = 0; i < transitionMatrixData.length; i++) {
-		const { id } = transitionMatrixData[i];
-		const input = inputMap.get(id);
-		const output = outputMap.get(id);
-		const rowIdx = rowIndexMap.get(input);
-		const colIdx = colIndexMap.get(output);
+	console.log(rowIndexMap, colIndexMap);
 
+	// For every transition id grab its input/output and row/column index to fill its place in the matrix
+	for (let i = 0; i < transitions.length; i++) {
+		const { input, output, id } = transitions[i];
 		const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+
 		if (rate) {
-			for (let j = 0; j < childParameterIds.length; j++) {
-				// Fill cell content with parameter content
-				if (rate.expression.includes(childParameterIds[j])) {
-					const parameter = amr.semantics?.ode.parameters?.find(
-						(p) => p.id === childParameterIds[j]
-					);
-					if (parameter) {
-						rows[rowIdx][colIdx].content.id = parameter.id;
-						rows[rowIdx][colIdx].content.value = parameter.value;
+			for (let j = 0; j < input.length; j++) {
+				for (let k = 0; k < output.length; k++) {
+					const rowIdx = rowIndexMap.get(input[j]);
+					const colIdx = colIndexMap.get(output[k]);
+					for (let l = 0; l < childParameterIds.length; l++) {
+						// Fill cell content with parameter content
+						if (rate.expression.includes(childParameterIds[l])) {
+							const parameter = amr.semantics?.ode.parameters?.find(
+								(p) => p.id === childParameterIds[l]
+							);
+							if (parameter) {
+								rows[rowIdx][colIdx].content.id = parameter.id;
+								rows[rowIdx][colIdx].content.value = parameter.value;
+							}
+							break;
+						}
 					}
-					break;
 				}
 			}
 		}
