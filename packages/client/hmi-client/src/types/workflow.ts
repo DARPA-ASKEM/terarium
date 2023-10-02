@@ -120,7 +120,7 @@ export interface Workflow {
 		y: number;
 		k: number;
 	};
-	nodes: WorkflowNode[];
+	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
 }
 

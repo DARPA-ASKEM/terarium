@@ -40,7 +40,7 @@ const workflow: Workflow = {
 const operationLib = new Map<string, Operation>();
 operationLib.set('add', addOperation);
 
-const runNode = (node: WorkflowNode): void => {
+const runNode = (node: WorkflowNode<any>): void => {
 	const opType = node.operationType;
 	const operation = operationLib.get(opType);
 
