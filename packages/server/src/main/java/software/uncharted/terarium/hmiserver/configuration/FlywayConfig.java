@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * This configuration class ensures that hiberate runs BEFORE flyway. This is to preserve the schema generation provided
+ * This configuration class ensures that hibernate runs BEFORE flyway. This is to preserve the schema generation provided
  * by Hibernate, but still get the benefits of having a proper version migration system in Flyway
  */
 @Configuration

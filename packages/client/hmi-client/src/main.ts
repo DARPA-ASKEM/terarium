@@ -49,7 +49,7 @@ const authStore = useAuthStore();
 const keycloak = new Keycloak('/api/keycloak/config');
 authStore.setKeycloak(keycloak);
 
-await keycloak
+keycloak
 	.init({
 		onLoad: 'login-required' as KeycloakOnLoad
 	})
@@ -58,19 +58,19 @@ await keycloak
 			window.location.reload();
 		} else {
 			await authStore.init();
+			logger.info('Authenticated');
+
 			app.use(router);
-			app.mount('#app');
+			app.mount('body');
+			logger.info('Application Mounted', { showToast: false, silent: true });
+
+			router.push(RoutePath.Home);
 
 			// Token Refresh
 			setInterval(async () => {
 				await keycloak.updateToken(70);
 			}, 6000);
 		}
-	})
-	.then(() => {
-		app.mount('body');
-		logger.info('Application Mounted', { showToast: false, silent: true });
-		router.push(RoutePath.Home);
 	})
 	.catch((e) => {
 		console.error('Authentication Failed', e);
