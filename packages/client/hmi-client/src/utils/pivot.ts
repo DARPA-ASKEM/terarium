@@ -125,11 +125,13 @@ export const createParameterMatrix = (
 		const { input, output } = transitions[i];
 		// Extract and remove controllers out of inputs array
 		const newInputs = input.filter((ip: string) => !output.includes(ip));
+		const newOutputs = output.filter((ip: string) => !input.includes(ip));
 		inputs.push(...newInputs);
-		outputs.push(...output);
+		outputs.push(...newOutputs);
 		controllers.push(...input.filter((ip: string) => output.includes(ip)));
-		// Update input for future transitions loop
+		// Update input/output for future transitions loop
 		transitions[i].input = newInputs;
+		transitions[i].output = newOutputs;
 	}
 	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
 	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
@@ -168,21 +170,19 @@ export const createParameterMatrix = (
 		if (rate) {
 			// Go through inputs and outputs of the current transition id
 			for (let j = 0; j < input.length; j++) {
-				for (let k = 0; k < output.length; k++) {
-					const rowIdx = rowIndexMap.get(input[j]);
-					const colIdx = colIndexMap.get(output[k]);
-					for (let l = 0; l < childParameterIds.length; l++) {
-						// Fill cell content with parameter content
-						if (rate.expression.includes(childParameterIds[l])) {
-							const parameter = amr.semantics?.ode.parameters?.find(
-								(p) => p.id === childParameterIds[l]
-							);
-							if (parameter) {
-								rows[rowIdx][colIdx].content.id = parameter.id;
-								rows[rowIdx][colIdx].content.value = parameter.value;
-							}
-							break;
+				const rowIdx = rowIndexMap.get(input[j]);
+				const colIdx = colIndexMap.get(output[j]);
+				for (let l = 0; l < childParameterIds.length; l++) {
+					// Fill cell content with parameter content
+					if (rate.expression.includes(childParameterIds[l])) {
+						const parameter = amr.semantics?.ode.parameters?.find(
+							(p) => p.id === childParameterIds[l]
+						);
+						if (parameter) {
+							rows[rowIdx][colIdx].content.id = parameter.id;
+							rows[rowIdx][colIdx].content.value = parameter.value;
 						}
+						break;
 					}
 				}
 			}

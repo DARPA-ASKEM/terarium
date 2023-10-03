@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 
 import java.util.List;
 
-
 @RequestMapping("/models")
 @RestController
 @Slf4j
@@ -24,37 +22,32 @@ public class ModelController {
 
 	@PostMapping("/frameworks")
 	ResponseEntity<JsonNode> createFramework(
-		@RequestBody final ModelFramework framework
-	) {
+			@RequestBody final ModelFramework framework) {
 		return ResponseEntity.ok(proxy.createFramework(framework).getBody());
 	}
 
 	@GetMapping("/frameworks/{name}")
 	ResponseEntity<JsonNode> getFramework(
-		@PathVariable("name") String name
-	) {
+			@PathVariable("name") String name) {
 		return ResponseEntity.ok(proxy.getFramework(name).getBody());
 	}
 
 	@DeleteMapping("/frameworks/{name}")
 	ResponseEntity<JsonNode> deleteFramework(
-		@PathVariable("name") String name
-	) {
+			@PathVariable("name") String name) {
 		return ResponseEntity.ok(proxy.deleteFramework(name).getBody());
 	}
 
 	@GetMapping("/descriptions")
 	ResponseEntity<JsonNode> getDescriptions(
-		@RequestParam(name = "page_size", defaultValue = "100") Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0") Integer page
-	) {
+			@RequestParam(name = "page_size", defaultValue = "100") Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0") Integer page) {
 		return ResponseEntity.ok(proxy.getDescriptions(pageSize, page).getBody());
 	}
 
 	@GetMapping("/{id}/descriptions")
 	ResponseEntity<JsonNode> getDescription(
-		@PathVariable("id") String id
-	) {
+			@PathVariable("id") String id) {
 		return ResponseEntity.ok(proxy.getDescription(id).getBody());
 	}
 
@@ -64,8 +57,7 @@ public class ModelController {
 	 */
 	@GetMapping("/{id}")
 	ResponseEntity<Model> getModel(
-		@PathVariable("id") String id
-	) {
+			@PathVariable("id") String id) {
 		Model model;
 
 		// Fetch the model from the data-service
@@ -86,25 +78,21 @@ public class ModelController {
 
 	@PutMapping("/{id}")
 	ResponseEntity<JsonNode> updateModel(
-		@PathVariable("id") String id,
-		@RequestBody Model model
-	) {
+			@PathVariable("id") String id,
+			@RequestBody Model model) {
 		return ResponseEntity.ok(proxy.updateModel(id, model).getBody());
 	}
 
 	@PostMapping
 	ResponseEntity<JsonNode> createModel(
-		@RequestBody Model model
-	) {
+			@RequestBody Model model) {
 		return ResponseEntity.ok(proxy.createModel(model).getBody());
 	}
 
-
 	@GetMapping("/{id}/model_configurations")
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
-		@PathVariable("id") String id,
-		@RequestParam("page_size") int pageSize
-	) {
+			@PathVariable("id") String id,
+			@RequestParam(value = "page_size", required = false, defaultValue = "100") int pageSize) {
 		return ResponseEntity.ok(proxy.getModelConfigurations(id, 100).getBody());
 	}
 }
