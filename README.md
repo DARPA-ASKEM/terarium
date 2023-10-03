@@ -105,8 +105,10 @@ create a new run config to decrypt the application secrets and then modify the d
 1) Create a new run profile named "Decrypt" which runs the `hmiServerDev decrypt` command:
    ![Decrypt run config](docs/decrypt.png)
 2) Navigate now to the default created Spring Boot run profile. If you don't have one, create one and set the properties to what you see below.
-   * Add a "Before Launch" option of "Run Another Configuration" and select the "Decrypt" run config you just created. Slot it first.
-![springboot-config.png](docs%2Fspringboot-config.png)
+   * Add a "Before Launch > Add before launch task" option
+     ![springboot-config-add-run-options.png](docs%2Fspringboot-config-add-run-options.png) 
+   * Select "Run Another Configuration" and select the "Decrypt" run config you just created. **Slot it first.**
+     ![springboot-config.png](docs%2Fspringboot-config.png)
 </details>
 
 
