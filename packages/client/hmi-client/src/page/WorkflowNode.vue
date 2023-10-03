@@ -41,7 +41,7 @@ import TeraStratifyJulia from '@/workflow/ops/stratify-julia/tera-stratify.vue';
 
 const props = defineProps<{ nodeId: string; workflowId: string }>();
 
-const node = ref<WorkflowNode>();
+const node = ref<WorkflowNode<any>>();
 
 function isNodeType(type: OperationType): boolean {
 	return node.value?.operationType === type;
