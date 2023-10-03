@@ -81,7 +81,6 @@ public class ReBACService {
 		} else {
 			channel = ManagedChannelBuilder
 				.forTarget(SPICEDB_TARGET)
-				.useTransportSecurity()
 				.build();
 		}
 

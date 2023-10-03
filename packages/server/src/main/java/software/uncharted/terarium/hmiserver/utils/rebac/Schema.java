@@ -2,33 +2,33 @@ package software.uncharted.terarium.hmiserver.utils.rebac;
 
 public class Schema {
 	public static String schema = """
-			definition user {}
+		definition user {}
 
-			definition group {
-				relation creator: user
-				relation admin: user
-				relation member: user
+		definition group {
+			relation creator: user
+			relation admin: user
+			relation member: user
 
-				permission administrate = admin + creator
-				permission membership = member + admin + creator
-			}
+			permission administrate = admin + creator
+			permission membership = member + admin + creator
+		}
 
-			definition datum {
-				relation creator: user
-				relation admin: user | group
-				relation reader: user | group
-				relation writer: user | group
+		definition project {
+			relation creator: user
+			relation admin: user | group
+			relation reader: user | group
+			relation writer: user | group
 
-				permission read = reader + reader->membership + writer + writer->membership + admin + admin->membership + creator
-				permission write = writer + writer->membership + admin + admin->membership + creator
-				permission administrate = admin + admin->membership + creator
-			}
+			permission read = reader + reader->membership + writer + writer->membership + admin + admin->membership + creator
+			permission write = writer + writer->membership + admin + admin->membership + creator
+			permission administrate = admin + admin->membership + creator
+		}
 		""";
 
 	public enum Type {
 		USER("user"),
 		GROUP("group"),
-		DATUM("datum");
+		PROJECT("project");
 
 		private final String text;
 
