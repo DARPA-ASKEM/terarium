@@ -33,7 +33,7 @@ public class ProjectResource {
 	@Autowired
 	ReBACService reBACService;
 
-
+	@Autowired
 	CurrentUserService currentUserService;
 
 
