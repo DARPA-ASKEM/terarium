@@ -7,9 +7,10 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<DatasetTransformerState>;
 }>();
 const emit = defineEmits(['append-input-port']);
 
