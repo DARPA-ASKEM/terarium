@@ -19,17 +19,17 @@
 
 <script setup lang="ts">
 import Avatar from 'primevue/avatar';
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import useAuthStore from '@/stores/auth';
-import Dropdown from 'primevue/dropdown';
+import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import { PermissionUser } from '@/types/Types';
 
 const props = defineProps<{ user: PermissionUser; isAuthor: boolean; permission?: string }>();
-const emit = defineEmits(['remove-user', 'select-permission']);
+const emit = defineEmits(['select-permission']);
 
 const auth = useAuthStore();
 
-const selectedPermission = ref('');
+const selectedPermission = ref('Edit');
 const permissions = ref(['Edit', 'Read only', 'Remove access']);
 const userInitials = computed(() =>
 	props.user.firstName.charAt(0).concat(props.user.firstName.charAt(0))
@@ -39,10 +39,9 @@ function isYou() {
 	return auth.name === props.user.firstName ? '(you)' : '';
 }
 
-function selectPermission(value: string) {
+function selectPermission(event: DropdownChangeEvent) {
 	if (!props.isAuthor) {
-		console.log(value);
-		emit('select-permission', value);
+		emit('select-permission', event.value);
 	}
 }
 
@@ -53,15 +52,6 @@ onMounted(() => {
 		selectedPermission.value = 'Read only';
 	}
 });
-
-watch(
-	() => selectedPermission.value,
-	() => {
-		if (selectedPermission.value === 'Remove access') {
-			emit('remove-user');
-		}
-	}
-);
 </script>
 
 <style scoped>

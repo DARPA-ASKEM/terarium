@@ -242,6 +242,21 @@ async function setPermissions(projectId: IProject['id'], userId: string, relatio
 	}
 }
 
+async function removePermissions(projectId: IProject['id'], userId: string, relationship: string) {
+	try {
+		const { status, data } = await API.delete(
+			`projects/${projectId}/permissions/user/${userId}/${relationship}`
+		);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
 /**
  * Get the icon associated with an Asset
  */
@@ -274,5 +289,6 @@ export {
 	getAssetIcon,
 	getPublicationAssets,
 	getPermissions,
-	setPermissions
+	setPermissions,
+	removePermissions
 };

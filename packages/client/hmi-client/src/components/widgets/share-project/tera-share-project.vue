@@ -15,7 +15,7 @@
 				optionLabel="name"
 				editable
 				placeholder="Add people and groups"
-				@update:model-value="(value) => addSelectedUser(value.id)"
+				@update:model-value="(value) => addNewSelectedUser(value.id)"
 				class="w-full sm"
 			/>
 			<section class="selected-users" v-if="selectedUsers.size > 0">
@@ -25,8 +25,7 @@
 						<tera-user-card
 							:user="user"
 							:is-author="isUserAuthor(user)"
-							:permission="selectedUserPermissions.get(user.id)"
-							@remove-user="removeUserAccess(user)"
+							:permission="existingUserPermissions.get(user.id)"
 							@select-permission="(permission) => selectNewPermissionForUser(permission, user.id)"
 						/>
 					</li>
@@ -53,7 +52,7 @@
 		</section>
 		<template #footer>
 			<Button label="Cancel" class="p-button-secondary xsm" @click="visible = false" />
-			<Button label="Done" class="xsm" @click="shareProject" />
+			<Button label="Done" class="xsm" @click="setPermissions" />
 		</template>
 	</Dialog>
 </template>
@@ -78,8 +77,10 @@ const usersMenu = computed(() =>
 	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
 );
 const selectedUser = ref(null);
-const selectedUsers = ref<Set<PermissionUser>>(new Set());
-const selectedUserPermissions: Map<string, string> = new Map();
+const existingUsers = ref<Set<PermissionUser>>(new Set());
+const newSelectedUsers = ref<Set<PermissionUser>>(new Set());
+const selectedUsers = computed(() => new Set([...existingUsers.value, ...newSelectedUsers.value]));
+const existingUserPermissions: Map<string, string> = new Map();
 const newSelectedUserPermissions: Map<string, string> = new Map();
 const generalAccessOptions = ref([
 	{ label: 'Restricted', icon: 'pi pi-lock' },
@@ -93,39 +94,58 @@ const generalAccessCaption = computed(() => {
 	return 'Anyone can view and copy this project.';
 });
 
-function addSelectedUser(id: string, relationship?: string) {
-	if (id) {
-		const user = users.value.find((u) => u.id === id);
-		if (user) {
-			selectedUsers.value.add(user);
-			if (relationship) {
-				selectedUserPermissions.set(id, relationship);
-			}
+function addExistingUser(id: string, relationship?: string) {
+	const user = users.value.find((u) => u.id === id);
+	if (user) {
+		existingUsers.value.add(user);
+		if (relationship) {
+			existingUserPermissions.set(id, relationship);
 		}
+	}
+}
+
+function addNewSelectedUser(id: string) {
+	const user = users.value.find((u) => u.id === id);
+	if (user) {
+		newSelectedUsers.value.add(user);
+		newSelectedUserPermissions.set(id, 'writer');
 	}
 }
 
 function onAfterHide() {
 	selectedUser.value = null;
-	selectedUsers.value = new Set();
-}
-
-function removeUserAccess(user: PermissionUser) {
-	selectedUsers.value.delete(user);
-	selectedUser.value = null;
+	newSelectedUsers.value = new Set();
 }
 
 function selectNewPermissionForUser(permission: string, userId: string) {
-	const permissionToSet = permission === 'Edit' ? 'writer' : 'reader';
+	let permissionToSet;
+	switch (permission) {
+		case 'Edit':
+			permissionToSet = 'writer';
+			break;
+		case 'Read only':
+			permissionToSet = 'reader';
+			break;
+		default:
+			permissionToSet = 'remove';
+			break;
+	}
 	newSelectedUserPermissions.set(userId, permissionToSet);
 }
 
-function shareProject() {
+async function setPermissions() {
 	visible.value = false;
-	selectedUsers.value.forEach(({ id }) => {
+	selectedUsers.value.forEach(async ({ id }) => {
 		const permission = newSelectedUserPermissions.get(id);
 		if (permission) {
-			useProjects().setPermissions(props.project.id, id, permission);
+			if (permission === 'remove') {
+				const currentRelationship = permissions.value?.users.find((u) => u.id === id)?.relationship;
+				if (currentRelationship) {
+					await useProjects().removePermissions(props.project.id, id, currentRelationship);
+				}
+			} else {
+				await useProjects().setPermissions(props.project.id, id, permission);
+			}
 		}
 	});
 	newSelectedUserPermissions.clear();
@@ -142,22 +162,30 @@ function isUserAuthor(user: PermissionUser) {
 	return false;
 }
 
+async function getPermissions() {
+	permissions.value = await useProjects().getPermissions(props.project.id);
+	existingUsers.value = new Set();
+	permissions.value?.users.forEach(({ id, relationship }) => addExistingUser(id, relationship));
+}
+
 watch(
 	() => props.project,
 	async () => {
+		existingUsers.value = new Set();
 		users.value = (await getUsers()) ?? [];
-		permissions.value = await useProjects().getPermissions(props.project.id);
-		permissions.value?.users.forEach(({ id, relationship }) => addSelectedUser(id, relationship));
+		// getPermissions();
 	},
 	{ immediate: true }
 );
 
-// onMounted(async () => {
-// 	console.log('test');
-// 	users.value = (await getUsers()) ?? [];
-// 	permissions.value = await useProjects().getPermissions(props.project.id);
-// 	permissions.value?.users.forEach(({ id, relationship }) => addSelectedUser(id, relationship));
-// })
+watch(
+	() => visible.value,
+	() => {
+		if (visible.value) {
+			getPermissions();
+		}
+	}
+);
 
 watch(
 	() => props.modelValue,
