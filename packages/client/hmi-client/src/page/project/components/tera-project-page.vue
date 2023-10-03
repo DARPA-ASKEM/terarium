@@ -44,7 +44,7 @@
 		/>
 		<tera-document-asset
 			v-if="pageType === AssetType.Documents"
-			:assetId="'586e8b37-b79b-4ef3-ac3d-f240c0b8c8de' ?? ''"
+			:assetId="'10e4d285-10dc-4a69-9c23-12e48f1a26b8' ?? ''"
 			:previewLineLimit="10"
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"

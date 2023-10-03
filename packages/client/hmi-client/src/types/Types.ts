@@ -175,15 +175,16 @@ export interface DocumentAsset {
     id?: string;
     name?: string;
     description?: string;
-    timestamp?: Date;
+    timestamp?: string;
     username?: string;
     fileNames?: string[];
-    documentUrl?: string[];
+    documentUrl?: string;
     metadata?: any;
     source?: string;
     text?: string;
     grounding?: Grounding;
     concepts?: Concept[];
+    assets?: any[];
 }
 
 export interface Model {
@@ -802,7 +803,7 @@ export enum AssetType {
     Workflows = "workflows",
     Artifacts = "artifacts",
     Code = "code",
-    Documents = "documents"
+    Documents = "documents",
 }
 
 export enum OntologicalField {

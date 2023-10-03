@@ -26,7 +26,7 @@ public class DocumentAsset {
 	private String description;
 
 	@TSOptional
-	private Instant timestamp;
+	private String timestamp;
 
 	@TSOptional
 	private String username;
@@ -37,7 +37,7 @@ public class DocumentAsset {
 
 	@TSOptional
 	@JsonAlias("document_url")
-	private List<String> documentUrl;
+	private String documentUrl;
 
 	@TSOptional
 	private Object metadata;
@@ -53,5 +53,8 @@ public class DocumentAsset {
 
 	@TSOptional
 	private List<Concept> concepts;
+
+	@TSOptional
+	private List<Object> assets;
 
 }

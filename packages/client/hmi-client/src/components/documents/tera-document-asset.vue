@@ -47,6 +47,50 @@
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(figures)">
+				<template #header>
+					<header id="Figures">
+						Figures<span class="artifact-amount">({{ figures.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
+						<Image id="img" class="extracted-image" :src="ex.metadata?.img_pth" :alt="''" preview />
+						<!-- <tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/> -->
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(tables)">
+				<template #header>
+					<header id="Tables">
+						Tables<span class="artifact-amount">({{ tables.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
+						<div class="extracted-image">
+							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+						</div>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(equations)">
+				<template #header>
+					<header id="Equations">
+						Equations<span class="artifact-amount">({{ equations.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
+						<div class="extracted-image">
+							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+						</div>
+					</li>
+				</ul>
+			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(associatedResources)">
 				<template #header>
 					<header id="Associated-Resources">
@@ -68,7 +112,7 @@
 		<tera-pdf-embed
 			v-else-if="documentView === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
-			:title="doc.name"
+			:title="doc.name || ''"
 		/>
 	</tera-asset>
 </template>
@@ -88,8 +132,8 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { Model, Document, Dataset, DocumentAsset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { getDocumentAsset } from '@/services/document-assets';
-import { generatePdfDownloadLink } from '@/services/generate-download-link';
+import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
+import Image from 'primevue/image';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -108,7 +152,17 @@ const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
 const docLink = computed(() =>
-	doc.value?.document_url && doc.value.document_url.length > 0 ? doc.value.document_url : null
+	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
+);
+
+const figures = computed(
+	() => doc.value?.assets?.filter((asset) => asset.asset_type === 'figure') || []
+);
+const tables = computed(
+	() => doc.value?.assets?.filter((asset) => asset.asset_type === 'table') || []
+);
+const equations = computed(
+	() => doc.value?.assets?.filter((asset) => asset.asset_type === 'equation') || []
 );
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
@@ -161,7 +215,7 @@ watch(docLink, async (currentValue, oldValue) => {
 		// fetchDocumentArtifacts();
 		// fetchAssociatedResources();
 		pdfLink.value = null;
-		pdfLink.value = await generatePdfDownloadLink(docLink.value!); // Generate PDF download link on (doi change)
+		pdfLink.value = await downloadDocumentAsset(props.assetId, docLink.value!); // Generate PDF download link on (doi change)
 	}
 });
 
