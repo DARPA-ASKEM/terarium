@@ -60,16 +60,12 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: authzed/action-spicedb@v1
-        with:
-          version: v1.24.0
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
       # Validate Gradle JAR
       - name: Validate GradleW JAR
-        uses: gradle/wrapper-validation-action@9aa31f26bc8e536d1faf4b332bb8365350743a18
+        uses: gradle/wrapper-validation-action@342dbebe7272035434f9baccc29a816ec6dd2c7b
 
       # Setup Java
       - name: Setup Java v17

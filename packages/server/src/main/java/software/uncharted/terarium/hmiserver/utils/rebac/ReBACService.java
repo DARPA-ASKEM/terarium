@@ -5,6 +5,7 @@ import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.inprocess.InProcessChannelBuilder;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,12 +44,14 @@ public class ReBACService {
 	String REALM_NAME;
 	@Value("${spicedb.shared-key}")
 	String SPICEDB_PRESHARED_KEY;
-	@Value("${spicedb.url}")
+	@Value("${spicedb.target}")
 	String SPICEDB_TARGET;
+	@Value("${rebac.launchmode}")
+	String REBAC_LAUNCHMODE;
 
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
-	private SchemaManager schemaManager = new SchemaManager();
+	private final SchemaManager schemaManager = new SchemaManager();
 
 	public static final String PUBLIC_GROUP_NAME = "Public";
 	public static String PUBLIC_GROUP_ID;
@@ -70,12 +73,16 @@ public class ReBACService {
 
 
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
-		channel = ManagedChannelBuilder
-			.forTarget(SPICEDB_TARGET)
-			//.useTransportSecurity() // for TLS communication
-			.usePlaintext()
-			.build();
-
+		if (REBAC_LAUNCHMODE.equals("TEST")) {
+			channel = InProcessChannelBuilder
+				.forName("TestSpiceDB")
+				.build();
+			return;
+		} else {
+			channel = ManagedChannelBuilder
+				.forTarget(SPICEDB_TARGET)
+				.build();
+		}
 
 		log.info("Init ReBAC");
 		if (!schemaManager.doesSchemaExist(channel, spiceDbBearerToken)) {
