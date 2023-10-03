@@ -34,7 +34,6 @@
 					:run-results="runResults"
 					:initial-data="csvAsset"
 					:mapping="mapping"
-					:run-type="RunType.Julia"
 					:chartConfig="cfg"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
@@ -118,7 +117,7 @@ import {
 	querySimulationInProgress
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';

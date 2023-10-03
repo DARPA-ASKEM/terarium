@@ -1,14 +1,13 @@
 <template>
 	<section v-if="!showSpinner">
-		<Dropdown :options="runList" v-model="selectedRun" option-label="label" />
 		<div class="chart-container">
 			<tera-simulate-chart
-				v-if="selectedRun"
-				:key="selectedRun.idx"
+				v-for="(cfg, index) of node.state.chartConfigs"
+				:key="index"
 				:run-results="runResults"
-				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
+				:chartConfig="cfg"
 				has-mean-line
-				@configuration-change="configurationChange(selectedRun.idx, $event)"
+				@configuration-change="configurationChange(index, $event)"
 			/>
 		</div>
 		<div class="button-container">
@@ -40,7 +39,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -78,43 +77,36 @@ const runResults = ref<RunResults>({});
 const runConfigs = ref<{ [paramKey: string]: number[] }>({});
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
-const runList = computed(() =>
-	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
-		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
-		idx
-	}))
-);
-const selectedRun = ref();
-
 const poller = new Poller();
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
-	// Since we've disabled multiple configs to a simulation node, we can assume only one config
-	const modelConfigId = modelConfigurationList[0];
-
 	const state = props.node.state;
 
-	const payload: SimulationRequest = {
-		modelConfigId,
-		timespan: {
-			start: state.currentTimespan.start,
-			end: state.currentTimespan.end
-		},
-		extra: {
-			num_samples: state.numSamples,
-			method: state.method
-		},
-		engine: 'ciemss'
-	};
-	const response = await makeForecastJob(payload);
-	getStatus([response.id]);
+	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
+		const payload: SimulationRequest = {
+			modelConfigId: configId,
+			timespan: {
+				start: state.currentTimespan.start,
+				end: state.currentTimespan.end
+			},
+			extra: {
+				num_samples: state.numSamples,
+				method: state.method
+			},
+			engine: 'ciemss'
+		};
+		const response = await makeForecastJob(payload);
+		return response.id;
+	});
+
+	const response = await Promise.all(simulationRequests);
+	getStatus(response);
 };
 
 onMounted(() => {
-	console.log(props.node.state.chartConfigs);
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
@@ -192,7 +184,6 @@ watch(
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	console.log(index, state.chartConfigs);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({

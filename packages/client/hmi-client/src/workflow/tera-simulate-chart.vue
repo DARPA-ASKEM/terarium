@@ -43,7 +43,6 @@ const props = defineProps<{
 }>();
 
 const renderedRuns = computed<RunResults>(() => {
-	console.log(props.runResults);
 	if (!props.hasMeanLine) return _.cloneDeep(props.runResults);
 
 	const runResult: RunResults = _.cloneDeep(props.runResults);

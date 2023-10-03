@@ -186,8 +186,6 @@ onMounted(async () => {
 
 	const nodeObj = props.node;
 
-	console.log(nodeObj);
-
 	if (!nodeObj.outputs[0]) return;
 	const port = nodeObj.outputs[0];
 	if (!port.value) return;
