@@ -40,7 +40,7 @@ public class ReBACService {
 
 	private final Config config;
 
-	@Value("${terarium.keycloak.admin-realm}")
+	@Value("${terarium.keycloak.realm}")
 	String REALM_NAME;
 	@Value("${spicedb.shared-key}")
 	String SPICEDB_PRESHARED_KEY;
