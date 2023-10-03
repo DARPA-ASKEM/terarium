@@ -22,8 +22,8 @@ public class SchemaManager {
 		log.info("Reading the Schema...");
 		try {
 			ReadSchemaResponse response = schemaService.readSchema(request);
-			log.info("Reading Schema errors: %s", response.getInitializationErrorString());
-			log.info("Schema:\n%s", response.getSchemaText());
+			log.info("Reading Schema errors: {}", response.getInitializationErrorString());
+			log.info("Schema:\n{}", response.getSchemaText());
 			return true;
 		} catch (StatusRuntimeException e) {
 			if (e.getMessage().startsWith("NOT_FOUND:")) {

@@ -15,22 +15,6 @@ services:
       timeout: '3s'
       retries: 30
 
-  spicedb:
-    image: authzed/spicedb:v1.24.0
-    networks:
-      - terarium
-    ports:
-      - '50051:50051'
-    command: ["serve"]
-    restart: always
-    environment:
-      SPICEDB_GRPC_PRESHARED_KEY: "test"
-    healthcheck:
-      test: ['CMD', 'grpc_health_probe', '-addr=:50051']
-      interval: '3s'
-      timeout: '3s'
-      retries: 30
-
 networks:
   terarium:
     name: terarium
