@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Description: This script is used to start the server locally for development purposes.
 #              It will decrypt the secrets file, start the server, then remove the secrets file.
