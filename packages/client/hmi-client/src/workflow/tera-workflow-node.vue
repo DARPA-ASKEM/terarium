@@ -93,7 +93,7 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<any>;
 	canDrag: boolean;
 	isActive: boolean;
 }>();

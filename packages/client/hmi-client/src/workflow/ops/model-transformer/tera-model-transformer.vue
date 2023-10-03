@@ -29,7 +29,7 @@ import { addDefaultConfiguration } from '@/services/model-configurations';
 import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<ModelTransformerState>;
 }>();
 const modelConfigurationId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
@@ -43,7 +43,7 @@ const modelConfigurationId = computed(() => {
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
 onMounted(async () => {
-	const state = cloneDeep(props.node.state) as ModelTransformerState;
+	const state = cloneDeep(props.node.state);
 	let notebookSessionId = state.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
@@ -75,7 +75,7 @@ const addOutputPort = async (data) => {
 
 	if (!model) return;
 
-	const state = cloneDeep(props.node.state) as ModelTransformerState;
+	const state = cloneDeep(props.node.state);
 	state.modelId = model?.id;
 	// update node state with the model id
 	workflowEventBus.emit('update-state', { node: props.node, state });

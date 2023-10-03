@@ -139,7 +139,7 @@ import {
 } from './calibrate-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
 
 const emit = defineEmits(['append-output-port', 'update-state']);
@@ -286,7 +286,7 @@ const updateOutputPorts = async (runId) => {
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -297,7 +297,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationStateJulia = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({

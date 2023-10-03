@@ -47,9 +47,10 @@ import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
+import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<DatasetOperationState>;
 	datasets: Dataset[];
 	droppedDatasetId: null | string;
 }>();
