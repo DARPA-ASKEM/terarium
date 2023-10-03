@@ -72,8 +72,6 @@ public class ReBACService {
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
 		channel = ManagedChannelBuilder
 			.forTarget(SPICEDB_TARGET)
-			//.useTransportSecurity() // for TLS communication
-			.usePlaintext()
 			.build();
 
 
