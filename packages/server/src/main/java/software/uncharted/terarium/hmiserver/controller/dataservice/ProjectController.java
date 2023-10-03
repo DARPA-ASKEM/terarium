@@ -198,8 +198,12 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> setProjectPermissions(RebacProject what, RebacObject who, String relationship) throws Exception {
 		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
-			what.setPermissionRelationships(who, relationship);
-			return ResponseEntity.ok().build();
+			try {
+				what.setPermissionRelationships(who, relationship);
+				return ResponseEntity.ok().build();
+			} catch (RelationshipAlreadyExistsException e) {
+				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+			}
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -232,11 +236,13 @@ public class ProjectController {
 		try {
 			new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId()), reBACService));
 		} catch (Exception e) {
-			log.error("Error getting user's permissions for project", e);
+			log.error("Error setting user's permissions for project", e);
+			// TODO: Rollback potential?
+		} catch (RelationshipAlreadyExistsException e) {
+			log.error("Error the user is already the creator of this project", e);
 			// TODO: Rollback potential?
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).header("Location", location).header("Server", server).body(res.getBody());
-
 	}
 
 	@PutMapping("/{id}")

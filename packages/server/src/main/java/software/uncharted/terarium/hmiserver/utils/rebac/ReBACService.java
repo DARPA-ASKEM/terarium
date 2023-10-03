@@ -107,11 +107,23 @@ public class ReBACService {
 					if (roleRepresentation.getDescription().isBlank()) {
 						switch (roleRepresentation.getName()) {
 							case "user":
-								createRelationship(user, publicGroup, Schema.Relationship.MEMBER);
+								try {
+									createRelationship(user, publicGroup, Schema.Relationship.MEMBER);
+								} catch (RelationshipAlreadyExistsException e) {
+									log.error("Failed to add user {} to Public Group", userId, e);
+								}
 								break;
 							case "admin":
-								createRelationship(user, publicGroup, Schema.Relationship.ADMIN);
-								createRelationship(user, adminGroup, Schema.Relationship.ADMIN);
+								try {
+										createRelationship(user, publicGroup, Schema.Relationship.ADMIN);
+								} catch (RelationshipAlreadyExistsException e) {
+									log.error("Failed to add admin {} to Public Group", userId, e);
+								}
+								try {
+									createRelationship(user, adminGroup, Schema.Relationship.ADMIN);
+								} catch (RelationshipAlreadyExistsException e) {
+									log.error("Failed to add admin {} to Admin Group", userId, e);
+								}
 								break;
 						}
 					}
@@ -250,7 +262,7 @@ public class ReBACService {
 		return true;
 	}
 
-	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception {
+	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		rebac.createRelationship(who, relationship, what);
 	}
