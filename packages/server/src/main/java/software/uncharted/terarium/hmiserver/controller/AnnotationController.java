@@ -44,7 +44,7 @@ public class AnnotationController {
 	@PostMapping
 
 	@Transactional
-	public ResponseEntity<Annotation> postEvent(final Annotation annotation) {
+	public ResponseEntity<Annotation> postEvent(@RequestBody final Annotation annotation) {
 		annotation.setUsername(currentUserService.get().getId());
 
 		return ResponseEntity
@@ -53,7 +53,7 @@ public class AnnotationController {
 
 	@PatchMapping
 	@Transactional
-	public ResponseEntity<Annotation> updateAnnotation(final Annotation newAnnotation){
+	public ResponseEntity<Annotation> updateAnnotation(@RequestBody final Annotation newAnnotation){
 		String id = newAnnotation.getId();
 		String content = newAnnotation.getContent();
 		String section = newAnnotation.getSection();
@@ -74,7 +74,7 @@ public class AnnotationController {
 
 	@DeleteMapping
 	@Transactional
-	public ResponseEntity<JsonNode> deleteAnnotations(@QueryParam("id") final String id) {
+	public ResponseEntity<JsonNode> deleteAnnotations(@RequestParam("id") final String id) {
 		if (id == null) {
 			return ResponseEntity.badRequest()
 				.build();
