@@ -4,6 +4,7 @@ version: '3.8'
 services:
   redis:
     image: ghcr.io/darpa-askem/redis:7.0.12-alpine
+    container_name: redis
     networks:
       - terarium
     ports:
