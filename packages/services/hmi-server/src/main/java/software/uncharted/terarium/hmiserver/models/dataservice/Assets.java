@@ -18,11 +18,10 @@ public class Assets implements Serializable {
 	List<Dataset> datasets;
 	List<Extraction> extractions;
 	List<Model> models;
-	List<ExternalPublication> publications;
+	List<DocumentAsset> publications;
 	List<Workflow> workflows;
 	List<Artifact> artifacts;
 	List<Code> code;
-	List<DocumentAsset> documents;
 
 
 	public enum AssetType {
@@ -33,8 +32,7 @@ public class Assets implements Serializable {
 		SIMULATIONS("simulations"),
 		WORKFLOWS("workflows"),
 		ARTIFACTS("artifacts"),
-		CODE("code"),
-		DOCUMENTS("documents");
+		CODE("code");
 
 
 
