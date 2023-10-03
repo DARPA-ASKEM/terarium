@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -11,7 +10,6 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Entity

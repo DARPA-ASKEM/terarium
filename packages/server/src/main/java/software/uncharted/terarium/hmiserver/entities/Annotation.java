@@ -3,14 +3,12 @@ package software.uncharted.terarium.hmiserver.entities;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 
