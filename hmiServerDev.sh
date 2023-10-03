@@ -83,7 +83,7 @@ case ${COMMAND} in
   	echo "
     	Usage:
     			${0} start              		Decrypts the secrets file, starts the application via 'gradle bootRun', then removes secrets after run
-    			${0} start-server-ide  Decrypts the secrets file, starts the application via IntelliJ, then removes secrets after run
+    			${0} start-server-ide  			Decrypts the secrets file, starts the application via IntelliJ, then removes secrets after run
     			${0} decrypt            		Decrypt secrets (${ENCRYPTED_FILE}) to an unencrypted file (${DECRYPTED_FILE})
     			${0} encrypt            		Encrypts ${DECRYPTED_FILE} to the checked in secrets file, ${ENCRYPTED_FILE}
     			${0} delete-secrets     		Deletes the decrypted secrets file (${DECRYPTED_FILE})"
