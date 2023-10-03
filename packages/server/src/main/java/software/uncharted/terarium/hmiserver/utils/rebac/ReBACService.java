@@ -46,8 +46,8 @@ public class ReBACService {
 	String SPICEDB_PRESHARED_KEY;
 	@Value("${spicedb.target}")
 	String SPICEDB_TARGET;
-	@Value("${rebac.launchmode}")
-	String REBAC_LAUNCHMODE;
+	@Value("${spicedb.launchmode}")
+	String SPICEDB_LAUNCHMODE;
 
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
@@ -73,16 +73,19 @@ public class ReBACService {
 
 
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
-		if (REBAC_LAUNCHMODE.equals("TEST")) {
+		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
 			channel = InProcessChannelBuilder
 				.forName("TestSpiceDB")
 				.build();
 			return;
 		} else {
-			channel = ManagedChannelBuilder
-				.forTarget(SPICEDB_TARGET)
-				.useTransportSecurity()
-				.build();
+			ManagedChannelBuilder builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
+			if (SPICEDB_LAUNCHMODE.equals("TLS")) {
+				builder.useTransportSecurity();
+			} else {
+				builder.usePlaintext();
+			}
+			channel = builder.build();
 		}
 
 		log.info("Init ReBAC");
