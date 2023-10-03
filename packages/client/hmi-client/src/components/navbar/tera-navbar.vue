@@ -357,11 +357,7 @@ const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
 
-const userInitials = computed(() =>
-	auth.name
-		?.split(' ')
-		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
-);
+const userInitials = computed(() => auth.userInitials);
 
 function closeLogoutDialog() {
 	isLogoutDialog.value = false;

@@ -1,0 +1,20 @@
+---
+version: '3.8'
+
+services:
+  redis:
+    image: ghcr.io/darpa-askem/redis:7.0.12-alpine
+    networks:
+      - terarium
+    ports:
+      - '6379:6379'
+    restart: always
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: '3s'
+      timeout: '3s'
+      retries: 30
+
+networks:
+  terarium:
+    name: terarium

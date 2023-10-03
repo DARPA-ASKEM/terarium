@@ -225,7 +225,7 @@ import TeraStratifyOutputModelDiagram from '@/components/model/petrinet/model-di
 import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<any>;
 }>();
 
 const emit = defineEmits(['open-asset', 'add-model-config']);

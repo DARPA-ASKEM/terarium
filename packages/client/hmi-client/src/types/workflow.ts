@@ -65,7 +65,7 @@ export interface WorkflowPort {
 
 // Node definition in the workflow
 // This is the graphical operation of the operation defined in operationType
-export interface WorkflowNode {
+export interface WorkflowNode<S> {
 	id: string;
 	displayName: string;
 	workflowId: string;
@@ -80,7 +80,7 @@ export interface WorkflowNode {
 	outputs: WorkflowPort[];
 
 	// Internal state. For example chosen model, display color ... etc
-	state: any;
+	state: S;
 
 	// FIXME: The section below is slated to be further spec'ed out later.
 	// State and progress, tracking of intermediate results
@@ -93,10 +93,10 @@ export interface WorkflowEdge {
 	workflowId: string;
 	points: Position[];
 
-	source?: WorkflowNode['id'];
+	source?: WorkflowNode<any>['id'];
 	sourcePortId?: string;
 
-	target?: WorkflowNode['id'];
+	target?: WorkflowNode<any>['id'];
 	targetPortId?: string;
 
 	// is this edge being started from an input or output?
@@ -120,7 +120,7 @@ export interface Workflow {
 		y: number;
 		k: number;
 	};
-	nodes: WorkflowNode[];
+	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
 }
 

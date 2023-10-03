@@ -126,10 +126,6 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<div v-else>
-						<Button @click="testNode(node)">Test run</Button
-						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
-					</div>
 				</template>
 			</tera-workflow-node>
 		</template>
@@ -247,10 +243,10 @@ import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useProjects } from '@/composables/project';
-import { ModelOperation, TeraModelNode } from './ops/model/mod';
+import { ModelOperation, TeraModelNode, ModelOperationState } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
-import { DatasetOperation, TeraDatasetNode } from './ops/dataset/mod';
+import { DatasetOperation, TeraDatasetNode, DatasetOperationState } from './ops/dataset/mod';
 import {
 	CalibrateEnsembleCiemssOperation,
 	TeraCalibrateEnsembleNodeCiemss
@@ -291,7 +287,7 @@ let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
-const currentActiveNode = ref<WorkflowNode | null>();
+const currentActiveNode = ref<WorkflowNode<any> | null>();
 
 workflowEventBus.on('clearActiveNode', () => {
 	currentActiveNode.value = null;
@@ -349,28 +345,14 @@ const isEdgeTargetSim = (edge) =>
 	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
 	WorkflowOperationTypes.SIMULATE_JULIA;
 
-const testOperation: Operation = {
-	name: WorkflowOperationTypes.TEST,
-	displayName: 'Test Operation',
-	description: 'A test operation',
-	inputs: [
-		{ type: 'number', label: 'Number input', acceptMultiple: false },
-		{ type: 'number', label: 'Multi number input', acceptMultiple: true },
-		{ type: 'string', label: 'String input' }
-	],
-	outputs: [{ type: 'number', label: 'Number output' }],
-	action: () => {},
-	isRunnable: true
-};
-
 const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
 const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
 );
 
-const refreshModelNode = async (node: WorkflowNode) => {
+const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023
-	const configurationList = await getModelConfigurations(node.state.modelId);
+	const configurationList = await getModelConfigurations(node.state.modelId as string);
 	configurationList.forEach((configuration) => {
 		// Only add new configurations
 		const existingConfig = node.outputs.find((port) => isEqual(port.value, [configuration.id]));
@@ -389,7 +371,7 @@ const refreshModelNode = async (node: WorkflowNode) => {
 	});
 };
 
-async function selectModel(node: WorkflowNode, data: { id: string }) {
+async function selectModel(node: WorkflowNode<ModelOperationState>, data: { id: string }) {
 	droppedAssetId.value = null;
 	node.state.modelId = data.id;
 	await refreshModelNode(node);
@@ -404,7 +386,10 @@ async function updateWorkflowName() {
 	// FIXME: Names aren't updated in sidebar
 }
 
-async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
+async function selectDataset(
+	node: WorkflowNode<DatasetOperationState>,
+	data: { id: string; name: string }
+) {
 	droppedAssetId.value = null;
 	node.state.datasetId = data.id;
 	node.outputs = [
@@ -418,7 +403,10 @@ async function selectDataset(node: WorkflowNode, data: { id: string; name: strin
 	];
 	workflowDirty = true;
 }
-function appendInputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
+function appendInputPort(
+	node: WorkflowNode<any>,
+	port: { type: string; label?: string; value: any }
+) {
 	node.inputs.push({
 		id: uuidv4(),
 		type: port.type,
@@ -427,7 +415,10 @@ function appendInputPort(node: WorkflowNode, port: { type: string; label?: strin
 	});
 }
 
-function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
+function appendOutputPort(
+	node: WorkflowNode<any>,
+	port: { type: string; label?: string; value: any }
+) {
 	node.outputs.push({
 		id: uuidv4(),
 		type: port.type,
@@ -456,18 +447,12 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	workflowDirty = true;
 }
 
-function updateWorkflowNodeState(node: WorkflowNode, state: any) {
+function updateWorkflowNodeState(node: WorkflowNode<any>, state: any) {
 	workflowService.updateNodeState(wf.value, node.id, state);
 	workflowDirty = true;
 }
 
-// Run testOperation
-const testNode = (node: WorkflowNode) => {
-	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
-	appendOutputPort(node, { type: 'number', label: value.toString(), value });
-};
-
-const drilldown = (event: WorkflowNode) => {
+const drilldown = (event: WorkflowNode<any>) => {
 	currentActiveNode.value = event;
 	workflowEventBus.emit('drilldown', event);
 };
@@ -507,7 +492,7 @@ workflowEventBus.on(
 workflowEventBus.on(
 	'append-output-port',
 	(payload: {
-		node: WorkflowNode;
+		node: WorkflowNode<any>;
 		port: { id: string; type: string; label: string; value: string };
 	}) => {
 		const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
@@ -520,7 +505,7 @@ workflowEventBus.on(
 	}
 );
 
-workflowEventBus.on('update-state', (payload: { node: WorkflowNode; state }) => {
+workflowEventBus.on('update-state', (payload: { node: WorkflowNode<any>; state }) => {
 	const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
 	if (foundNode) {
 		updateWorkflowNodeState(foundNode, payload.state);
@@ -532,13 +517,6 @@ const removeNode = (event) => {
 };
 
 const contextMenuItems = ref([
-	{
-		label: 'Test operation',
-		command: () => {
-			workflowService.addNode(wf.value, testOperation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
 	{
 		label: 'Model',
 		command: () => {
@@ -716,7 +694,7 @@ const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
 
-function createNewEdge(node: WorkflowNode, port: WorkflowPort, direction: WorkflowDirection) {
+function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
@@ -783,7 +761,7 @@ function mouseUpdate(event: MouseEvent) {
 }
 
 // TODO: rename/refactor
-function updateEdgePositions(node: WorkflowNode, { x, y }) {
+function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 	wf.value.edges.forEach((edge) => {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
@@ -796,7 +774,7 @@ function updateEdgePositions(node: WorkflowNode, { x, y }) {
 	});
 }
 
-const updatePosition = (node: WorkflowNode, { x, y }) => {
+const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
