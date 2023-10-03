@@ -101,10 +101,10 @@ describe('pivot table tests', () => {
 			childParameterIds
 		);
 		expect(matrix.length).to.eq(3);
-		expect(matrix[0].length).to.eq(9);
+		expect(matrix[0].length).to.eq(3);
 		expect(controllers.length).to.eq(6);
 		expect(matrix[0][0].content.value).to.not.eq(null);
-		expect(matrix[1][3].content.value).to.not.eq(null);
-		expect(matrix[2][8].content.value).to.not.eq(null);
+		expect(matrix[1][1].content.value).to.not.eq(null);
+		expect(matrix[2][2].content.value).to.not.eq(null);
 	});
 });
