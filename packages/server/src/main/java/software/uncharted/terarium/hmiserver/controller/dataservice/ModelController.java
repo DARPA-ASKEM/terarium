@@ -93,6 +93,6 @@ public class ModelController {
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
 			@PathVariable("id") String id,
 			@RequestParam(value = "page_size", required = false, defaultValue = "100") int pageSize) {
-		return ResponseEntity.ok(proxy.getModelConfigurations(id, 100).getBody());
+		return ResponseEntity.ok(proxy.getModelConfigurations(id, pageSize).getBody());
 	}
 }
