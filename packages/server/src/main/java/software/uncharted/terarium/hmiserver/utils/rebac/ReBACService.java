@@ -43,12 +43,12 @@ public class ReBACService {
 	String REALM_NAME;
 	@Value("${spicedb.shared-key}")
 	String SPICEDB_PRESHARED_KEY;
-	@Value("${spicedb.url}")
+	@Value("${spicedb.target}")
 	String SPICEDB_TARGET;
 
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
-	private SchemaManager schemaManager = new SchemaManager();
+	private final SchemaManager schemaManager = new SchemaManager();
 
 	public static final String PUBLIC_GROUP_NAME = "Public";
 	public static String PUBLIC_GROUP_ID;
