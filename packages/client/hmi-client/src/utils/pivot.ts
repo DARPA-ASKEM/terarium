@@ -120,9 +120,6 @@ export const createParameterMatrix = (
 		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
 	);
 
-	console.log(transitions);
-	console.log(amr);
-
 	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output } = transitions[i];
@@ -139,8 +136,6 @@ export const createParameterMatrix = (
 	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
 	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
 	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
-
-	console.log(transitions);
 
 	// Build empty matrix
 	const rows: any[] = [];
