@@ -102,11 +102,14 @@ Save your configuration, and choose Debug from the Run menu. You will now hit br
 The easiest way to debug the back end is to use the auto-created debug profile in IntelliJ. However first you'll have to
 create a new run config to decrypt the application secrets and then modify the default run profile to include it.
 
-1) Create a new run profile named "Decrypt" which runs the `hmiServerDev decrypt` command:
-   ![Decrypt run config](docs/decrypt.png)
+1) Create a new run profile named "start-server-ide" which runs the `./hmiServerDev start-server-ide` command:
+   ![start-server-ide.png](docs%2Fstart-server-ide.png)
 2) Navigate now to the default created Spring Boot run profile. If you don't have one, create one and set the properties to what you see below.
-   * Add a "Before Launch" option of "Run Another Configuration" and select the "Decrypt" run config you just created. Slot it first.
-![springboot-config.png](docs%2Fspringboot-config.png)
+   * Add a "Before Launch > Add before launch task" option 
+![springboot-config-add-run-options.png](docs%2Fspringboot-config-add-run-options.png) 
+   * Select "Run Another Configuration" and select the `start-server-ide` run config you just created. **Slot it first.**
+   * In the _Active profiles_ field, enter `default,secrets`
+![springboot-config-active-profiles.png](docs%2Fspringboot-config-active-profiles.png)
 </details>
 
 
