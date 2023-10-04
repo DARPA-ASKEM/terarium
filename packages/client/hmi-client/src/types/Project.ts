@@ -1,12 +1,12 @@
 import {
-	ExternalPublication,
+	DocumentAsset,
 	Document,
 	Dataset,
 	Model,
 	Artifact,
 	AssetType,
 	Code,
-	DocumentAsset
+	ExternalPublication
 } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
 

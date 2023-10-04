@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import { ExternalPublication, EventType, Project, AssetType } from '@/types/Types';
+import { EventType, Project, AssetType, ExternalPublication } from '@/types/Types';
 
 /**
  * Create a project
@@ -102,6 +102,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			Object.values(AssetType).forEach((type, indx) => {
+				// FIX: right now the we cannot get a documents assets, this condition is a temporary measure so that this endpoint doesnt break until we can get documents assets
 				if (type !== AssetType.Documents) url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
 		}

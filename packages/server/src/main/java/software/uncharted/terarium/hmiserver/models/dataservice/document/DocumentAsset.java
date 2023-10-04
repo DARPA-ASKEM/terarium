@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
+import software.uncharted.terarium.hmiserver.models.dataservice.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 import java.time.Instant;
@@ -26,7 +27,7 @@ public class DocumentAsset {
 	private String description;
 
 	@TSOptional
-	private Instant timestamp;
+	private String timestamp;
 
 	@TSOptional
 	private String username;
@@ -37,7 +38,7 @@ public class DocumentAsset {
 
 	@TSOptional
 	@JsonAlias("document_url")
-	private List<String> documentUrl;
+	private String documentUrl;
 
 	@TSOptional
 	private Object metadata;
@@ -53,5 +54,8 @@ public class DocumentAsset {
 
 	@TSOptional
 	private List<Concept> concepts;
+
+	@TSOptional
+	private List<DocumentExtraction> assets;
 
 }

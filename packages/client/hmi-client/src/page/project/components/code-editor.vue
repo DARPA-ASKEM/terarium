@@ -67,7 +67,7 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import { getDocumentById } from '@/services/data';
-import { AssetType, ExternalPublication, EventType } from '@/types/Types';
+import { AssetType, EventType, ExternalPublication } from '@/types/Types';
 import { PDFExtractionResponseType } from '@/types/common';
 import { getDocumentDoi } from '@/utils/data-util';
 import TeraAsset from '@/components/asset/tera-asset.vue';
