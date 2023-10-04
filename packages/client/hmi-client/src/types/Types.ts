@@ -7,20 +7,20 @@ export interface ClientConfig {
     clientLogShippingIntervalMillis: number;
 }
 
+export interface Event {
+    id?: string;
+    timestampMillis?: number;
+    projectId?: number;
+    userId?: string;
+    type: EventType;
+    value?: string;
+}
+
 export interface ClientLog {
     level: string;
     timestampMillis: number;
     message: string;
     args?: string[];
-}
-
-export interface Event {
-    id?: string;
-    timestampMillis?: number;
-    projectId?: number;
-    username?: string;
-    type: EventType;
-    value?: string;
 }
 
 export interface User {
