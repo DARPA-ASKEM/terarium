@@ -72,8 +72,12 @@ public class GroupsController {
 		try {
 			RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
 			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID, reBACService))) {
-				PermissionGroup permissionGroup = rebacUser.addGroup(name);
-				return ResponseEntity.ok(permissionGroup);
+				try {
+					PermissionGroup permissionGroup = rebacUser.addGroup(name);
+					return ResponseEntity.ok(permissionGroup);
+				} catch (RelationshipAlreadyExistsException e) {
+					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+				}
 			}
 			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
@@ -92,8 +96,38 @@ public class GroupsController {
 			RebacGroup what = new RebacGroup(userId, reBACService);
 			RebacGroup who = new RebacGroup(groupId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
-				what.setPermissionRelationships(who, relationship);
-				return ResponseEntity.ok().build();
+				try {
+					what.setPermissionRelationships(who, relationship);
+					return ResponseEntity.ok().build();
+				} catch (RelationshipAlreadyExistsException e) {
+					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+				}
+			}
+			return ResponseEntity.notFound().build();
+		} catch (Exception e) {
+			log.error("Error adding group user permission relationships", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	@PutMapping("/{groupId}/permissions/user/{userId}/{oldRelationship}")
+	public ResponseEntity<JsonNode> updateGroupUserPermissions(
+		@PathVariable("groupId") final String groupId,
+		@PathVariable("userId") final String userId,
+		@PathVariable("oldRelationship") final String oldRelationship,
+		@RequestParam("to") final String newRelationship
+	) {
+		try {
+			RebacGroup what = new RebacGroup(userId, reBACService);
+			RebacGroup who = new RebacGroup(groupId, reBACService);
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+				try {
+					 what.removePermissionRelationships(who, oldRelationship);
+					 what.setPermissionRelationships(who, newRelationship);
+					 return ResponseEntity.ok().build();
+				} catch (RelationshipAlreadyExistsException e) {
+					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+				}
 			}
 			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
