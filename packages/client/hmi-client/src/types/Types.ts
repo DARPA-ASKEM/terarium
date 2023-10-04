@@ -261,7 +261,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 
 export interface EvaluationScenarioSummary {
     name: string;
-    username: string;
+    userId: string;
     task: string;
     description: string;
     notes: string;
@@ -717,6 +717,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    TestType = "TEST_TYPE",
 }
 
 export enum AuthorityLevel {
