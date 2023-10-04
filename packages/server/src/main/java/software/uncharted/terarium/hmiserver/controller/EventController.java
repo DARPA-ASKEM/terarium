@@ -49,7 +49,7 @@ public class EventController {
 	@Transactional
 	@IgnoreRequestLogging
 	public ResponseEntity<Event> postEvent(@RequestBody final Event event) {
-		event.setUsername(currentUserService.get().getId());
+		event.setUserId(currentUserService.get().getId());
 
 		// Do not save the event to the database if the type is not specified as persistent
 		if (!event.getType().isPersistent()) {

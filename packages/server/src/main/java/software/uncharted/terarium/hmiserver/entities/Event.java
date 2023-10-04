@@ -38,7 +38,7 @@ public class Event implements Serializable {
 
 	@Column(nullable = false)
 	@TSOptional
-	private String username;
+	private String userId;
 
 	@Column(nullable = false)
 	private EventType type;

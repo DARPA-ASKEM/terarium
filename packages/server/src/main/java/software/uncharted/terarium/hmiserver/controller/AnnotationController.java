@@ -43,7 +43,7 @@ public class AnnotationController {
 
 	@Transactional
 	public ResponseEntity<Annotation> postEvent(@RequestBody final Annotation annotation) {
-		annotation.setUsername(currentUserService.get().getId());
+		annotation.setUserId(currentUserService.get().getId());
 
 		return ResponseEntity
 			.ok(annotationService.save(annotation));

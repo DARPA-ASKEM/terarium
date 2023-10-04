@@ -38,7 +38,7 @@ public class Annotation implements Serializable {
 	private String content;
 
 	@Column(nullable = false)
-	private String username;
+	private String userId;
 
 	@JsonProperty("artifact_id")
 	private String artifactId;
