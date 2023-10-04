@@ -11,7 +11,7 @@ export interface Event {
     id?: string;
     timestampMillis?: number;
     projectId?: number;
-    username?: string;
+    userId?: string;
     type: EventType;
     value?: string;
 }

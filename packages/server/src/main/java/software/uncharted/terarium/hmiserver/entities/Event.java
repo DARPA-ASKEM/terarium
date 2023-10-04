@@ -20,7 +20,7 @@ import java.util.UUID;
 @Table(indexes = {
 	@Index(columnList = "timestampmillis"),
 	@Index(columnList = "projectid"),
-	@Index(columnList = "username"),
+	@Index(columnList = "userid"),
 	@Index(columnList = "type"),
 	@Index(columnList = "value")
 })
