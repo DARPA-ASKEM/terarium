@@ -46,7 +46,6 @@ public class Annotation implements Serializable {
 	@JsonProperty("artifact_type")
 	private String artifactType;
 
-	@Column(nullable = true)
 	private String section;
 
 }

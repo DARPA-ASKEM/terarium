@@ -36,10 +36,6 @@ public class EventController {
 																								 @RequestParam(value = "projectId", required = false) final Long projectId,
 																								 @RequestParam(value = "search", required = false) final String likeValue,
 																								 @RequestParam(value = "limit", defaultValue = "10") final int limit) {
-		if (type == null) {
-			return ResponseEntity.badRequest()
-				.build();
-		}
 
 		return ResponseEntity.ok(eventService.findEvents(type, projectId, currentUserService.get().getId(), likeValue, limit));
 	}
@@ -54,8 +50,6 @@ public class EventController {
 	@IgnoreRequestLogging
 	public ResponseEntity<Event> postEvent(@RequestBody final Event event) {
 		event.setUsername(currentUserService.get().getId());
-
-		//structuredLog.log(StructuredLog.Type.EVENT, securityIdentity.getPrincipal().getName(), "event", event);
 
 		// Do not save the event to the database if the type is not specified as persistent
 		if (!event.getType().isPersistent()) {
