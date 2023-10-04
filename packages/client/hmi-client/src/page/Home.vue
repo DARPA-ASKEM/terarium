@@ -1,6 +1,5 @@
 <template>
 	<main>
-		<Button @click="getAll()">Get documents</Button>
 		<section class="menu">
 			<section class="projects">
 				<header>
@@ -234,7 +233,6 @@ import { computed, ref, onMounted, watch } from 'vue';
 import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { Document, Project } from '@/types/Types';
 import { getRelatedDocuments } from '@/services/data';
-import { getAll } from '@/services/document-assets';
 import useQueryStore from '@/stores/query';
 import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';

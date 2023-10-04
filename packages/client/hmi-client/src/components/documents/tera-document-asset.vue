@@ -1,3 +1,4 @@
+<!-- This template is a copy of tera-external-publication with some elements stripped out.  TODO: merge the concept of external publication and document asset -->
 <template>
 	<tera-asset
 		v-if="doc"
@@ -22,7 +23,7 @@
 					class="p-button-secondary p-button-sm"
 					label="PDF"
 					icon="pi pi-file"
-					:loading="!docLink"
+					:loading="!pdfLink"
 					@click="documentView = DocumentView.PDF"
 					:active="documentView === DocumentView.PDF"
 				/>
@@ -56,10 +57,10 @@
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
 						<Image id="img" class="extracted-image" :src="ex.metadata?.img_pth" :alt="''" preview />
-						<!-- <tera-show-more-text
-							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
-						/> -->
+						/>
 					</li>
 				</ul>
 			</AccordionTab>
@@ -73,6 +74,10 @@
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
 						<div class="extracted-image">
 							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<tera-show-more-text
+								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+								:lines="previewLineLimit"
+							/>
 						</div>
 					</li>
 				</ul>
@@ -87,26 +92,13 @@
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
 						<div class="extracted-image">
 							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<tera-show-more-text
+								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+								:lines="previewLineLimit"
+							/>
 						</div>
 					</li>
 				</ul>
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(associatedResources)">
-				<template #header>
-					<header id="Associated-Resources">
-						Associated resources
-						<span class="artifact-amount">({{ associatedResources.length }})</span>
-					</header>
-				</template>
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents"></Column>
-				</DataTable>
 			</AccordionTab>
 		</Accordion>
 		<tera-pdf-embed
@@ -122,18 +114,16 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
-import { isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType, FeatureConfig } from '@/types/common';
+import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import { Model, Document, Dataset, DocumentAsset } from '@/types/Types';
+import { DocumentAsset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
 import Image from 'primevue/image';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -196,19 +186,6 @@ const formattedAbstract = computed(() => {
 	if (!doc.value || !doc.value.description) return '';
 	return highlightSearchTerms(doc.value.description);
 });
-
-const associatedResources = ref<ResultType[]>([]);
-
-/* Provenance */
-const relatedTerariumModels = computed(
-	() => associatedResources.value.filter((d) => isModel(d)) as Model[]
-);
-const relatedTerariumDatasets = computed(
-	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => associatedResources.value.filter((d) => isDocument(d)) as Document[]
-);
 
 watch(docLink, async (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {

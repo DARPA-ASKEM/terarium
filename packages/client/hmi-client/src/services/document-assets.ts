@@ -23,7 +23,9 @@ async function getAll(): Promise<DocumentAsset[] | null> {
  */
 async function getDocumentAsset(documentId: string): Promise<DocumentAsset | null> {
 	const response = await API.get(`/document-asset/${documentId}`).catch((error) => {
-		logger.error(`Error: data-service was not able to retreive the dataset ${documentId} ${error}`);
+		logger.error(
+			`Error: data-service was not able to retreive the document asset ${documentId} ${error}`
+		);
 	});
 	return response?.data ?? null;
 }
@@ -104,13 +106,18 @@ async function addFileToDocumentAsset(
 }
 
 async function downloadDocumentAsset(documentId: string, fileName: string): Promise<any> {
-	const response = await API.get(
-		`document-asset/${documentId}/downloadDocument?filename=${fileName}`
-	);
-
-	const blob = new Blob([response?.data], { type: 'application/pdf' });
-	const pdfLink = window.URL.createObjectURL(blob);
-	return pdfLink ?? null;
+	try {
+		const response = await API.get(
+			`document-asset/${documentId}/downloadDocument?filename=${fileName}`,
+			{ responseType: 'arraybuffer' }
+		);
+		const blob = new Blob([response?.data], { type: 'application/pdf' });
+		const pdfLink = window.URL.createObjectURL(blob);
+		return pdfLink ?? null;
+	} catch (error) {
+		logger.error(`Error: Unable to download pdf for document asset ${documentId}: ${error}`);
+		return null;
+	}
 }
 
 export { getAll, getDocumentAsset, uploadDocumentAssetToProject, downloadDocumentAsset };
