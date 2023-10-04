@@ -150,7 +150,7 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
 
 enum CalibrationView {
@@ -180,7 +180,7 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -191,7 +191,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -209,7 +209,7 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state: CalibrationOperationStateCiemss = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	workflowEventBus.emitNodeStateChange({

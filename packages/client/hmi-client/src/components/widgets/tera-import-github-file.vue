@@ -335,7 +335,7 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		const newDataset = await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			auth.name ?? '',
+			auth.user?.name ?? '',
 			githubFile.htmlUrl
 		);
 		if (newDataset && newDataset.id) {
