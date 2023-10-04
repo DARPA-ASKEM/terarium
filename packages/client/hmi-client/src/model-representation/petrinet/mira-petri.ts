@@ -155,6 +155,45 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 };
 
 /**
+ * Given an amr, find the unstratified/root parameters.
+ *
+ * This requires some heuristics go backwards, may not work all the time.
+ * This works poorly if the parameter ids starts off with underscores.
+ *
+ * For example "beta_1_1", "beta_1_2" will collapse into "beta": ["beta_1_1", "beta_1_2"]
+ */
+export const getUnstratifiedParameters = (amr: Model) => {
+	const parameters = amr.semantics?.ode.parameters || [];
+	const map = new Map<string, string[]>();
+	parameters.forEach((p) => {
+		const rootName = _.first(p.id.split('_')) as string;
+		if (map.has(rootName)) {
+			map.get(rootName)?.push(p.id);
+		} else {
+			map.set(rootName, [p.id]);
+		}
+	});
+	return map;
+};
+
+// Holds all points that have the parameter
+export const filterParameterLocations = (
+	amr: Model,
+	transitionMatrixData: any[],
+	parameterIds: string[]
+) =>
+	transitionMatrixData.filter((d) => {
+		// Check if the transition's expression include the usage
+		const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
+		if (!rate) return false;
+		// FIXME: should check through sympy to be more accurate
+		for (let i = 0; i < parameterIds.length; i++) {
+			if (rate.expression.includes(parameterIds[i])) return true;
+		}
+		return false;
+	});
+
+/**
  * Given an MIRA AMR, extract and compute a presentation-layer data format
  */
 export const getMiraAMRPresentationData = (amr: Model) => {
