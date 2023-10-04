@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.utils.rebac.askem;
 
-import software.uncharted.terarium.hmiserver.utils.rebac.AskemDatumType;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -12,22 +11,20 @@ public class RebacProject extends RebacObject {
 
 	ReBACService reBACService;
 
-	private final AskemDatumType datumType = AskemDatumType.PROJECT;
-
 	public RebacProject(String id, ReBACService reBACService) {
 		super(id);
 		this.reBACService = reBACService;
 	}
 
 	public SchemaObject getSchemaObject() {
-		return new SchemaObject(Schema.Type.DATUM, datumType + getId());
+		return new SchemaObject(Schema.Type.PROJECT, getId());
 	}
 
 	public List<RebacPermissionRelationship> getPermissionRelationships() throws Exception {
 		return reBACService.getRelationships(getSchemaObject());
 	}
 
-	public void setPermissionRelationships(RebacObject who, String relationship) throws Exception {
+	public void setPermissionRelationships(RebacObject who, String relationship) throws Exception, RelationshipAlreadyExistsException {
 		Schema.Relationship relationshipEnum = Schema.Relationship.valueOf(relationship.toUpperCase());
 		reBACService.createRelationship(who.getSchemaObject(), getSchemaObject(), relationshipEnum);
 	}
