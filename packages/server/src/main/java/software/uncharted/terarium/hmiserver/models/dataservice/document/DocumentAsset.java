@@ -27,7 +27,7 @@ public class DocumentAsset {
 	private String description;
 
 	@TSOptional
-	private Instant timestamp;
+	private String timestamp;
 
 	@TSOptional
 	private String username;

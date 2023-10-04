@@ -155,7 +155,7 @@ const equations = computed(
 	() => doc.value?.assets?.filter((asset) => asset.asset_type === 'equation') || []
 );
 
-const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
+const emit = defineEmits(['close-preview', 'asset-loaded']);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {

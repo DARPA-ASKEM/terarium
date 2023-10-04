@@ -46,7 +46,6 @@
 			v-if="pageType === AssetType.Documents"
 			:assetId="assetId ?? ''"
 			:previewLineLimit="10"
-			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
