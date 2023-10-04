@@ -418,7 +418,7 @@ import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { Model, ModelConfiguration } from '@/types/Types';
+import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
@@ -432,7 +432,6 @@ import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
 import { useProjects } from '@/composables/project';
-import { DocumentAsset2 } from '@/types/Project';
 
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
@@ -485,12 +484,17 @@ const observables = computed(() => props.model?.semantics?.ode?.observables ?? [
 const publications = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents.filter((document: DocumentAsset2) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
-					document.file_names[0]?.endsWith(extension)
+			.activeProject.value?.assets?.documents.filter((document: DocumentAsset) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
+					(extension) => {
+						if (document.fileNames && !isEmpty(document.fileNames)) {
+							return document.fileNames[0]?.endsWith(extension);
+						}
+						return false;
+					}
 				)
 			)
-			.map((document: DocumentAsset2) => ({
+			.map((document: DocumentAsset) => ({
 				name: document.name,
 				id: document.id
 			})) ?? []

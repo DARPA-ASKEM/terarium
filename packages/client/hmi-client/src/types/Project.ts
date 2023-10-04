@@ -5,7 +5,8 @@ import {
 	Model,
 	Artifact,
 	AssetType,
-	Code
+	Code,
+	DocumentAsset
 } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
 
@@ -29,23 +30,8 @@ export type ProjectAssets = {
 	[AssetType.Code]: Code[];
 	[AssetType.Artifacts]: Artifact[];
 	[AssetType.Workflows]: Workflow[];
-	[AssetType.Documents]: DocumentAsset2[];
+	[AssetType.Documents]: DocumentAsset[];
 };
-
-export interface DocumentAsset2 {
-	id: string;
-	name: string;
-	username: string;
-	description?: string;
-	timestamp: string;
-	file_names: string[];
-	metadata: any;
-	document_url: string;
-	source: string;
-	text: string;
-	grounding: any;
-	assets: any[];
-}
 
 // TODO this is essentially the same as Project from Types.ts, however it references
 // the above ProjectAssets type instead of the Assets type. This should be fixed.

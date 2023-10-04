@@ -66,7 +66,7 @@ import { createProvenance, RelationshipType } from '@/services/provenance';
 import { ProvenanceType } from '@/types/Types';
 
 const props = defineProps<{
-	publications?: Array<{ name: string; id: string | undefined }>;
+	publications?: Array<{ name: string | undefined; id: string | undefined }>;
 	relatedPublications?: Array<{ name: string; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
