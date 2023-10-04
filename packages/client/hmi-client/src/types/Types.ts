@@ -175,7 +175,7 @@ export interface DocumentAsset {
     id?: string;
     name?: string;
     description?: string;
-    timestamp?: Date;
+    timestamp?: string;
     username?: string;
     fileNames?: string[];
     documentUrl?: string;
