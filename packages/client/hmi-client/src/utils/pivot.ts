@@ -1,12 +1,14 @@
 // Create pivot table
 import _ from 'lodash';
+import { Model } from '@/types/Types';
 
 export interface PivotMatrixCell {
 	row: number;
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
-	value: any;
+	controllers?: string[];
+	content: any;
 }
 
 // Helper function to expand the row and column terms into "lookup" axes
@@ -97,12 +99,99 @@ export const createMatrix1D = (data: any[]) => {
 			col: 0,
 			rowCriteria: data[rowIdx],
 			colCriteria: null,
-			value: data[rowIdx]
+			content: data[rowIdx]
 		});
 		rows.push(row);
 	}
 
 	return { matrix: rows };
+};
+
+export const createParameterMatrix = (
+	amr: Model,
+	transitionMatrixData: any[],
+	childParameterIds: string[]
+) => {
+	let controllers: string[] = [];
+	let inputs: string[] = [];
+	let outputs: string[] = [];
+
+	const transitions = _.cloneDeep(
+		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
+	);
+
+	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
+	for (let i = 0; i < transitions.length; i++) {
+		const { input, output } = transitions[i];
+		// Extract and remove controllers out of inputs array
+		const newInputs = input.filter((ip: string) => !output.includes(ip));
+		const newOutputs = output.filter((ip: string) => !input.includes(ip));
+		inputs.push(...newInputs);
+		outputs.push(...newOutputs);
+		controllers.push(...input.filter((ip: string) => output.includes(ip)));
+		// Update input/output for future transitions loop
+		transitions[i].input = newInputs;
+		transitions[i].output = newOutputs;
+	}
+	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
+	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
+	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
+
+	// Build empty matrix
+	const rows: any[] = [];
+	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
+		const row: PivotMatrixCell[] = [];
+		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
+			row.push({
+				row: rowIdx,
+				col: colIdx,
+				rowCriteria: inputs[rowIdx],
+				colCriteria: outputs[colIdx],
+				content: {
+					value: null,
+					id: ''
+				}
+			});
+		}
+		rows.push(row);
+	}
+
+	// Map inputs/outputs to their row/col positions
+	const rowIndexMap = new Map();
+	const colIndexMap = new Map();
+	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) rowIndexMap.set(inputs[rowIdx], rowIdx);
+	for (let colIdx = 0; colIdx < outputs.length; colIdx++) colIndexMap.set(outputs[colIdx], colIdx);
+
+	// For every transition id grab its input/output and row/column index to fill its place in the matrix
+	for (let i = 0; i < transitions.length; i++) {
+		const { input, output, id } = transitions[i];
+		const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+
+		if (rate) {
+			// Go through inputs and outputs of the current transition id
+			for (let j = 0; j < input.length; j++) {
+				const rowIdx = rowIndexMap.get(input[j]);
+				const colIdx = colIndexMap.get(output[j]);
+				for (let k = 0; k < childParameterIds.length; k++) {
+					// Fill cell content with parameter content
+					if (rate.expression.includes(childParameterIds[k])) {
+						const parameter = amr.semantics?.ode.parameters?.find(
+							(p) => p.id === childParameterIds[k]
+						);
+						if (parameter) {
+							rows[rowIdx][colIdx].content.id = parameter.id;
+							rows[rowIdx][colIdx].content.value = parameter.value;
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+	return {
+		matrix: rows,
+		controllers
+	};
 };
 
 // Creates a M x N matrix where
@@ -121,14 +210,14 @@ export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensio
 				col: colIdx,
 				rowCriteria: axes.rowAxis[rowIdx],
 				colCriteria: axes.colAxis[colIdx],
-				value: null
+				content: null
 			});
 		}
 		rows.push(row);
 	}
 
 	// Populate matrix
-	// A cell has a non-null value if the row and col criteria matches
+	// A cell has a non-null content if the row and col criteria matches
 	// with an element in the data array
 	for (let rowIdx = 0; rowIdx < axes.rowAxis.length; rowIdx++) {
 		for (let colIdx = 0; colIdx < axes.colAxis.length; colIdx++) {
@@ -157,7 +246,7 @@ export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensio
 				}
 				return found;
 			});
-			rows[rowIdx][colIdx].value = dataObj;
+			rows[rowIdx][colIdx].content = dataObj;
 		}
 	}
 
