@@ -7,7 +7,6 @@ export interface PivotMatrixCell {
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
-	controllers?: string[];
 	content: any;
 }
 
@@ -104,7 +103,7 @@ export const createMatrix1D = (data: any[]) => {
 		rows.push(row);
 	}
 
-	return { matrix: rows };
+	return rows;
 };
 
 export const createParameterMatrix = (
@@ -147,20 +146,19 @@ export const createParameterMatrix = (
 	// Build empty matrix
 	const rows: any[] = [];
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
-		const row: PivotMatrixCell[] = [];
-		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
-			row.push({
-				row: rowIdx,
-				col: colIdx,
-				rowCriteria: inputs[rowIdx],
-				colCriteria: outputs[colIdx],
-				content: {
-					value: null,
-					id: ''
-				}
-			});
+		for (let conIdx = 0; conIdx < controllers.length; conIdx++) {
+			const row: PivotMatrixCell[] = [];
+			for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
+				row.push({
+					row: rowIdx,
+					col: colIdx,
+					rowCriteria: inputs[rowIdx],
+					colCriteria: outputs[colIdx],
+					content: { value: null, id: '', controller: controllers[conIdx] }
+				});
+			}
+			rows.push(row);
 		}
-		rows.push(row);
 	}
 
 	// Map inputs/outputs to their row/col positions
@@ -177,28 +175,28 @@ export const createParameterMatrix = (
 		if (rate) {
 			// Go through inputs and outputs of the current transition id
 			for (let j = 0; j < input.length; j++) {
-				const rowIdx = rowIndexMap.get(input[j]);
-				const colIdx = colIndexMap.get(output[j]);
-				for (let k = 0; k < childParameterIds.length; k++) {
-					// Fill cell content with parameter content
-					if (rate.expression.includes(childParameterIds[k])) {
-						const parameter = amr.semantics?.ode.parameters?.find(
-							(p) => p.id === childParameterIds[k]
-						);
-						if (parameter) {
-							rows[rowIdx][colIdx].content.id = parameter.id;
-							rows[rowIdx][colIdx].content.value = parameter.value;
+				for (let conIdx = 0; conIdx < controllers.length; conIdx++) {
+					const rowIdx = rowIndexMap.get(input[j]) * controllers.length + conIdx;
+					const colIdx = colIndexMap.get(output[j]);
+					for (let k = 0; k < childParameterIds.length; k++) {
+						// Fill cell content with parameter content
+						if (rate.expression.includes(childParameterIds[k])) {
+							const parameter = amr.semantics?.ode.parameters?.find(
+								(p) => p.id === childParameterIds[k]
+							);
+							if (parameter) {
+								rows[rowIdx][colIdx].content.value = parameter.value;
+								rows[rowIdx][colIdx].content.id = parameter.id;
+							}
+							break;
 						}
-						break;
 					}
 				}
 			}
 		}
 	}
-	return {
-		matrix: rows,
-		controllers
-	};
+	console.log(rows);
+	return rows;
 };
 
 // Creates a M x N matrix where

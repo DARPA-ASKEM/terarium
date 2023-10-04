@@ -17,21 +17,4 @@ import java.util.List;
 @RestController
 @Slf4j
 public class EventController { 
-}
-
-
-	   
-	 
-	
-	
-	
-	
-	 
-	
-	
-	
-	
-	 
-
-	
-	  
+} 

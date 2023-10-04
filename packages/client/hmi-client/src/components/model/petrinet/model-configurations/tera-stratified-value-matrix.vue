@@ -12,53 +12,47 @@
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<template v-for="(row, i) in matrix" :key="i">
-						<tr v-for="(controller, j) in controllers" :key="j">
-							<td v-if="matrix.length > 1" class="p-frozen-column">
-								<template v-if="nodeType === NodeType.State">
-									{{ Object.values(row[0].rowCriteria).join(' / ') }}
+					<tr v-for="(row, i) in matrix" :key="i">
+						<td v-if="matrix.length > 1" class="p-frozen-column">
+							<template v-if="nodeType === NodeType.State">
+								{{ Object.values(row[0].rowCriteria).join(' / ') }}
+							</template>
+							<template v-else>
+								{{ row[0].rowCriteria
+								}}<template v-if="row[0].content.controller !== ''"
+									>, {{ row[0].content.controller }}
 								</template>
-								<template v-else>
-									{{ row[0].rowCriteria
-									}}<template v-if="controller !== ''">, {{ controller }} </template>
-								</template>
-							</td>
-							<td
-								v-for="(cell, k) in row"
-								:key="k"
-								tabindex="0"
-								:class="editableCellStates[i * controllers.length + j][k] && 'is-editing'"
-								@keyup.enter="onEnterValueCell(cell.content.id, i * controllers.length + j, k)"
-								@click="onEnterValueCell(cell.content.id, i * controllers.length + j, k)"
-							>
-								<template v-if="cell.content.id">
-									<InputText
-										v-if="editableCellStates[i * controllers.length + j][k]"
-										class="cell-input"
-										v-model.lazy="valueToEdit"
-										v-focus
-										@focusout="
-											updateModelConfigValue(cell.content.id, i * controllers.length + j, k)
-										"
-										@keyup.stop.enter="
-											updateModelConfigValue(cell.content.id, i * controllers.length + j, k)
-										"
-									/>
-									<div
-										v-else-if="nodeType === NodeType.State"
-										class="mathml-container"
-										v-html="matrixExpressionsList?.[i * controllers.length + j]?.[k] ?? '...'"
-									/>
-									<div v-else>
-										{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
-									</div>
-								</template>
-								<span v-else class="not-allowed">N/A</span>
-								<br />
-								{{ i * controllers.length + j }}{{ k }}
-							</td>
-						</tr>
-					</template>
+							</template>
+						</td>
+						<td
+							v-for="(cell, j) in row"
+							:key="j"
+							tabindex="0"
+							:class="editableCellStates[i][j] && 'is-editing'"
+							@keyup.enter="onEnterValueCell(cell.content.id, i, j)"
+							@click="onEnterValueCell(cell.content.id, i, j)"
+						>
+							<template v-if="cell.content.id">
+								<InputText
+									v-if="editableCellStates[i][j]"
+									class="cell-input"
+									v-model.lazy="valueToEdit"
+									v-focus
+									@focusout="updateModelConfigValue(cell.content.id, i, j)"
+									@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, j)"
+								/>
+								<div
+									v-else-if="nodeType === NodeType.State"
+									class="mathml-container"
+									v-html="matrixExpressionsList?.[i]?.[j] ?? '...'"
+								/>
+								<div v-else>
+									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+								</div>
+							</template>
+							<span v-else class="not-allowed">N/A</span>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>
@@ -95,7 +89,6 @@ const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
 
 const matrix = ref<any>([]);
-const controllers = ref<string[]>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
@@ -263,13 +256,10 @@ function generateMatrix(populateDimensions = false) {
 		colDimensions.push(...dimensions);
 	}
 
-	const matrixAttributes: any =
+	matrix.value =
 		props.nodeType === NodeType.State
 			? createMatrix1D(matrixData)
 			: createParameterMatrix(amr, matrixData, childParameterIds);
-
-	matrix.value = matrixAttributes.matrix;
-	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];
 
 	return matrixData;
 }
@@ -278,7 +268,7 @@ function configureMatrix() {
 	const matrixData = generateMatrix(true);
 	if (isEmpty(matrixData)) return;
 
-	for (let i = 0; i < matrix.value.length * controllers.value.length; i++) {
+	for (let i = 0; i < matrix.value.length; i++) {
 		editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
 	}
 }
