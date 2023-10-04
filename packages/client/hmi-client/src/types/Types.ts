@@ -175,7 +175,7 @@ export interface DocumentAsset {
     id?: string;
     name?: string;
     description?: string;
-    timestamp?: string;
+    timestamp?: Date;
     username?: string;
     fileNames?: string[];
     documentUrl?: string;
@@ -184,7 +184,7 @@ export interface DocumentAsset {
     text?: string;
     grounding?: Grounding;
     concepts?: Concept[];
-    assets?: any[];
+    assets?: DocumentExtraction[];
 }
 
 export interface Model {
@@ -411,6 +411,12 @@ export interface Document {
     knownEntities: KnownEntities;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
+}
+
+export interface DocumentExtraction {
+    file_name: string;
+    asset_type: string;
+    metadata: any;
 }
 
 export interface ModelHeader {
