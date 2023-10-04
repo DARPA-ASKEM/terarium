@@ -29,7 +29,7 @@ public class AnnotationController {
 	@Autowired
 	private CurrentUserService currentUserService;
 
-	@GET
+	@GetMapping
 	public ResponseEntity<List<Annotation>> getAnnotations(
 		@RequestParam("artifact_type") final String artifactType,
 		@RequestParam("artifact_id") final String artifactId,
@@ -40,7 +40,6 @@ public class AnnotationController {
 	}
 
 	@PostMapping
-
 	@Transactional
 	public ResponseEntity<Annotation> postEvent(@RequestBody final Annotation annotation) {
 		annotation.setUserId(currentUserService.get().getId());
