@@ -45,7 +45,7 @@
 					</div>
 					<!-- Handle code_cell type -->
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
-						<tera-chatty-code-cell
+						<tera-beaker-code-cell
 							ref="codeCell"
 							:jupyter-session="jupyterSession"
 							:language="m.content['language']"
@@ -104,8 +104,8 @@ import { SessionContext } from '@jupyterlab/apputils';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
-import TeraChattyCodeCell from '@/components/llm/tera-chatty-response-code-cell.vue';
-import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-thought.vue';
+import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.vue';
+import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { ref, computed, onMounted, watch } from 'vue';

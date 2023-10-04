@@ -1,5 +1,5 @@
 <template>
-	<main @scroll="updateScrollPosition" id="tango">
+	<main @scroll="updateScrollPosition">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />

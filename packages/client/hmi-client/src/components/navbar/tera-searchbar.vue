@@ -133,6 +133,7 @@ import {
 	extractResourceName
 } from '@/page/data-explorer/search-by-example';
 import { getResourceID } from '@/utils/data-util';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	showSuggestions: boolean;
@@ -167,8 +168,8 @@ function clearQuery() {
 
 const initiateSearch = () => {
 	emit('query-changed', query.value);
-	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
-	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
+	router.push({ name: RouteName.DataExplorer, query: { q: query.value } });
+	EventService.create(EventType.Search, useProjects().activeProject.value?.id, query.value);
 };
 
 function initiateSearchByExample() {
@@ -179,7 +180,7 @@ function initiateSearchByExample() {
 	// used to update the search bar text with the name of the search by example asset
 	query.value = extractResourceName(searchByExampleItem.value);
 	router.push({
-		name: RouteName.DataExplorerRoute,
+		name: RouteName.DataExplorer,
 		query: { resourceId: getResourceID(searchByExampleItem.value!) }
 	});
 }
@@ -253,7 +254,7 @@ watch(
 // Clear the query if not on the data explorer view
 watch(
 	() => route.name,
-	(name) => name !== RouteName.DataExplorerRoute && clearQuery()
+	(name) => name !== RouteName.DataExplorer && clearQuery()
 );
 </script>
 

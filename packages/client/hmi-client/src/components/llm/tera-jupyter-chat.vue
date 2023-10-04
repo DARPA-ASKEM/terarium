@@ -17,9 +17,9 @@
 				@preview-selected="previewSelected"
 			/>
 
-			<!-- Chatty Input -->
-			<tera-chatty-input
-				class="tera-chatty-input"
+			<!-- Beaker Input -->
+			<tera-beaker-input
+				class="tera-beaker-input"
 				:kernel-is-busy="props.kernelStatus !== KernelState.idle"
 				context="dataset"
 				@submitQuery="submitQuery"
@@ -30,7 +30,6 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onUnmounted, onMounted } from 'vue';
-import { IProject } from '@/types/Project';
 import {
 	getSessionManager,
 	JupyterMessage,
@@ -38,13 +37,14 @@ import {
 	createMessageId
 } from '@/services/jupyter';
 import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
-import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
+import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
+import { useProjects } from '@/composables/project';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -75,7 +75,6 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-	project?: IProject;
 	assetName?: string;
 	assetId?: string;
 	assetType?: AssetType;
@@ -221,7 +220,7 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'llm_response', 'chatty_response', 'dataset'].indexOf(
+		['stream', 'code_cell', 'llm_request', 'llm_response', 'beaker_response', 'dataset'].indexOf(
 			msgType
 		) > -1
 	) {
@@ -321,10 +320,10 @@ watch(
 watch(
 	() => [
 		props.assetId, // Once the route name changes, add/switch to another tab
-		props.project
+		useProjects().activeProject.value
 	],
 	() => {
-		console.log(props.project, props.assetId);
+		console.log(useProjects().activeProject.value, props.assetId);
 	}
 );
 

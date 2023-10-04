@@ -205,8 +205,10 @@ const filterAssets = <T extends Model | Dataset>(
 
 		AssetFilterAttributes.forEach((attribute) => {
 			finalAssets = allAssets.filter((d) => {
-				if (d[attribute as keyof T])
-					return (d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase());
+				const searchTarget = resourceType === ResourceType.MODEL ? (d as Model).header : d;
+
+				if (searchTarget[attribute])
+					return (searchTarget[attribute] as string).toLowerCase().includes(term.toLowerCase());
 				return '';
 			});
 		});

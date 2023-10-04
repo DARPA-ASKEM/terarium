@@ -12,17 +12,17 @@ import {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEqual } from 'lodash';
 import { Ref } from 'vue';
+import { useProjects } from '@/composables/project';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
 		const resp = await API.post('simulation-request/forecast', simulationParam);
 		EventService.create(
 			EventType.TransformPrompt,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				type: 'julia',
 				params: simulationParam
@@ -41,7 +41,7 @@ export async function makeForecastJobCiemss(simulationParam: SimulationRequest) 
 		const resp = await API.post('simulation-request/ciemss/forecast/', simulationParam);
 		EventService.create(
 			EventType.TransformPrompt,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				type: 'ciemss',
 				params: simulationParam
@@ -154,7 +154,7 @@ export async function makeCalibrateJobJulia(calibrationParams: CalibrationReques
 	try {
 		EventService.create(
 			EventType.RunCalibrate,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify(calibrationParams)
 		);
 		const resp = await API.post('simulation-request/calibrate', calibrationParams);
@@ -224,7 +224,7 @@ const deleteSimulationInProgress = (state: any, runIds: string[]) => {
 };
 
 // This function returns a string array of run ids.
-export const querySimulationInProgress = (node: WorkflowNode): string[] => {
+export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => {
 	const state = node.state;
 	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
 		// return all run ids on the node
@@ -237,7 +237,7 @@ export const querySimulationInProgress = (node: WorkflowNode): string[] => {
 
 export async function simulationPollAction(
 	simulationIds: string[],
-	node: WorkflowNode,
+	node: WorkflowNode<any>,
 	progress: Ref<{ status: ProgressState; value: number }>,
 	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
 ) {
@@ -268,7 +268,8 @@ export async function simulationPollAction(
 
 	// there are unhandled states - we will return an error and remove all simulation Ids
 	if (unhandledStateSimulationIds.length > 0) {
-		const newState = deleteSimulationInProgress(node, simulationIds);
+		const newState = cloneDeep(node.state);
+		deleteSimulationInProgress(newState, simulationIds);
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
 		}

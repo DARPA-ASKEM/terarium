@@ -1,10 +1,8 @@
 import API from '@/api/api';
-import { AssetType, EventType, Model, ModelConfiguration } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
+import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import * as EventService from '@/services/event';
-import { IProject } from '@/types/Project';
-import * as ProjectService from '@/services/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import { useProjects } from '@/composables/project';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -52,7 +50,7 @@ export async function updateModel(model: Model) {
 	const response = await API.put(`/models/${model.id}`, model);
 	EventService.create(
 		EventType.PersistModel,
-		useResourcesStore().activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify({
 			id: model.id
 		})
@@ -74,10 +72,7 @@ export async function reconstructAMR(amr: any) {
 }
 
 // function adds model to project, returns modelId if successful otherwise null
-export async function addNewModelToProject(
-	modelName: string,
-	project: IProject
-): Promise<string | null> {
+export async function addNewModelToProject(modelName: string): Promise<string | null> {
 	// 1. Load an empty AMR
 	const amr = newAMR(modelName);
 	(amr as any).id = undefined; // FIXME: id hack
@@ -85,10 +80,5 @@ export async function addNewModelToProject(
 	const response = await createModel(amr);
 	const modelId = response?.id;
 
-	// 2. Add the model to the project
-	if (modelId) {
-		await ProjectService.addAsset(project.id, AssetType.Models, modelId);
-		return modelId;
-	}
-	return null;
+	return modelId ?? null;
 }

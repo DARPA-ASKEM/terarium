@@ -12,11 +12,12 @@ import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
+import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import useAuthStore from './stores/auth';
-import router from './router';
+import router, { RoutePath } from './router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from './App.vue';
+import { useProjects } from './composables/project';
 
 import './assets/css/style.scss';
 
@@ -29,7 +30,7 @@ app.use(PrimeVue, { ripple: true });
 app.directive('tooltip', Tooltip);
 
 // Configure Google Analytics
-const GTAG = await axios.get('/configuration/ga');
+const GTAG = await axios.get('/api/configuration/ga');
 app.use(
 	VueGtag,
 	{
@@ -44,22 +45,46 @@ app.component('math-field', MathfieldElement);
 app.component(VueFeather.name, VueFeather);
 app.use(VueKatex);
 
-const auth = useAuthStore();
-await auth.fetchSSO();
+const authStore = useAuthStore();
+const keycloak = new Keycloak('/api/keycloak/config');
+authStore.setKeycloak(keycloak);
 
-app.mount('body');
-logger.info('Application Mounted', { showToast: false, silent: true });
+keycloak
+	.init({
+		onLoad: 'login-required' as KeycloakOnLoad
+	})
+	.then(async (auth) => {
+		if (!auth) {
+			window.location.reload();
+		} else {
+			await authStore.init();
+			logger.info('Authenticated');
+
+			app.use(router);
+			app.mount('body');
+			logger.info('Application Mounted', { showToast: false, silent: true });
+
+			router.push(RoutePath.Home);
+
+			// Token Refresh
+			setInterval(async () => {
+				await keycloak.updateToken(70);
+			}, 6000);
+		}
+	})
+	.catch((e) => {
+		console.error('Authentication Failed', e);
+	});
 
 let previousRoute;
 let routeStartedMillis = Date.now();
-const resources = useResourcesStore();
 router.beforeEach((to, _from, next) => {
 	if (previousRoute) {
 		const nowMillis = Date.now();
 		const timeSpent = nowMillis - routeStartedMillis;
 		EventService.create(
 			EventType.RouteTiming,
-			resources.activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				name: previousRoute.name,
 				path: previousRoute.path,

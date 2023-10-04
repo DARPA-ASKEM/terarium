@@ -5,12 +5,10 @@
 import API from '@/api/api';
 import { IProject, ProjectAssets } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { Tab } from '@/types/common';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
-import useResourcesStore from '@/stores/resources';
 import * as EventService from '@/services/event';
-import { DocumentAsset, EventType, Project, AssetType } from '@/types/Types';
+import { EventType, Project, AssetType, ExternalPublication } from '@/types/Types';
 
 /**
  * Create a project
@@ -50,7 +48,6 @@ async function update(project: IProject): Promise<IProject | null> {
 		if (status !== 200) {
 			return null;
 		}
-		useResourcesStore().setActiveProject(await get(project.id, true));
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);
@@ -79,7 +76,7 @@ async function remove(projectId: IProject['id']): Promise<boolean> {
  */
 async function getAll(): Promise<Project[] | null> {
 	try {
-		const response = await API.get('/projects');
+		const response = await API.get(`/projects`);
 		const { status, data } = response;
 		if (status !== 200 || !data) return null;
 		return (data as Project[]).reverse();
@@ -105,7 +102,8 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			Object.values(AssetType).forEach((type, indx) => {
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+				// FIX: right now the we cannot get a documents assets, this condition is a temporary measure so that this endpoint doesnt break until we can get documents assets
+				if (type !== AssetType.Documents) url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
 		}
 		const response = await API.get(url);
@@ -121,20 +119,20 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 /**
  * Get projects publication assets for a given project per id
  * @param projectId projet id to get assets for
- * @return DocumentAsset[] the documents assets for the project
+ * @return ExternalPublication[] the documents assets for the project
  */
-async function getPublicationAssets(projectId: string): Promise<DocumentAsset[]> {
+async function getPublicationAssets(projectId: string): Promise<ExternalPublication[]> {
 	try {
 		const url = `/projects/${projectId}/assets?types=${AssetType.Publications}`;
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status === 200) {
-			return data?.[AssetType.Publications] ?? ([] as DocumentAsset[]);
+			return data?.[AssetType.Publications] ?? ([] as ExternalPublication[]);
 		}
 	} catch (error) {
 		logger.error(error);
 	}
-	return [] as DocumentAsset[];
+	return [] as ExternalPublication[];
 }
 
 /**
@@ -157,10 +155,6 @@ async function addAsset(projectId: string, assetsType: string, assetId: string) 
 			assetId
 		})
 	);
-
-	if (response.data) {
-		useResourcesStore().setActiveProject(await get(projectId, true));
-	}
 	return response?.data ?? null;
 }
 
@@ -179,9 +173,6 @@ async function deleteAsset(
 	try {
 		const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 		const { status } = await API.delete(url);
-		if (status >= 200 && status < 300) {
-			useResourcesStore().setActiveProject(await get(projectId, true));
-		}
 		return status >= 200 && status < 300;
 	} catch (error) {
 		logger.error(error);
@@ -238,17 +229,6 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 	return 'circle';
 }
 
-/**
- * Get the xdd_uri of a Project Document
- */
-function getDocumentAssetXddUri(project: IProject, assetId: Tab['assetId']): string | null {
-	return (
-		project.assets?.[AssetType.Publications]?.find(
-			(document) => document?.id === Number.parseInt(assetId ?? '', 10)
-		)?.xdd_uri ?? null
-	);
-}
-
 export {
 	create,
 	update,
@@ -259,6 +239,5 @@ export {
 	deleteAsset,
 	getAssets,
 	getAssetIcon,
-	getPublicationAssets,
-	getDocumentAssetXddUri
+	getPublicationAssets
 };

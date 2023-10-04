@@ -229,6 +229,8 @@ export const cleanLatexEquations = (equations: Array<string>): Array<string> =>
 				.replaceAll('\\left', '')
 				.replaceAll('{align}', '')
 				.replaceAll('=&', '=')
+				// scientific variables such as \beta and \gamma are not parsed when there is a '*' (with no space) placed after them - other math operaters do work though
+				.replaceAll('*', ' *')
 				.trim()
 		);
 

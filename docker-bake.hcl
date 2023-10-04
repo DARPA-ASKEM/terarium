@@ -26,10 +26,9 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "hmi-server-native"]
+  targets = ["hmi-client", "hmi-server"]
 }
 
-# Simplified build without the `native` version for quicker turnaround staging deployments
 group "staging" {
   targets = ["hmi-client", "hmi-server"]
 }
@@ -54,17 +53,11 @@ target "hmi-client" {
 }
 
 target "hmi-server-base" {
-	context = "packages/services/hmi-server/docker/jvm"
-	dockerfile = "Dockerfile.jvm"
+	context = "." # root of the repo
+	dockerfile = "./packages/server/docker/Dockerfile"
 	tags = tag("hmi-server", "", "")
 }
 
 target "hmi-server" {
   inherits = ["_platforms", "hmi-server-base"]
-}
-
-target "hmi-server-native" {
-	context = "packages/services/hmi-server/docker/native"
-  dockerfile = "Dockerfile.native"
-  tags = tag("hmi-server", "", "native")
 }

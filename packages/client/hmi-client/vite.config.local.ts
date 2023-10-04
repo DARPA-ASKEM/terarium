@@ -29,22 +29,22 @@ config.server.proxy = {
 		}`,
 		changeOrigin: true
 	},
-	'/chatty_ws': {
+	'/beaker_ws': {
 		target: `ws://${process.env.jupyter_host || 'jupyter'}:${process.env.jupyter_port || 8888}`,
 		changeOrigin: true,
-		rewrite: (path_str) => path_str.replace(/^\/chatty_ws/, ''),
+		rewrite: (path_str) => path_str.replace(/^\/beaker_ws/, ''),
 		ws: true
 	},
-	'/chatty': {
+	'/beaker': {
 		target: `http://${process.env.jupyter_host || 'jupyter'}:${process.env.jupyter_port || 8888}`,
 		changeOrigin: true,
-		rewrite: (path_str) => path_str.replace(/^\/chatty/, ''),
+		rewrite: (path_str) => path_str.replace(/^\/beaker/, ''),
 		ws: true
 	}
 };
 // Fix HMR port to match port set in docker compose. https://vitejs.dev/config/server-options.html#server-hmr
 config.server.hmr = {
-	clientPort: 8078
+	clientPort: 8080
 };
 
 export default config;

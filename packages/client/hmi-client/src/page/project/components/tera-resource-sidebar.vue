@@ -57,10 +57,11 @@
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
-		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4]">
+		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5]">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
-					<template v-if="type === AssetType.Publications">Publications & Documents</template>
+					<template v-if="type === AssetType.Publications">External Publications</template>
+					<template v-else-if="type === AssetType.Documents">Documents</template>
 					<template v-else>{{ capitalize(type) }}</template>
 					<aside>({{ tabs.size }})</aside>
 				</template>
@@ -129,7 +130,7 @@
 				<template #default>
 					<p>
 						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ project.name }}.
+						{{ useProjects().activeProject.value?.name }}.
 					</p>
 				</template>
 				<template #footer>
@@ -150,16 +151,16 @@ import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 
 type IProjectAssetTabs = Map<AssetType, Set<Tab>>;
 
-const props = defineProps<{
-	project: IProject;
+defineProps<{
 	activeTab: Tab;
 }>();
 
@@ -174,7 +175,7 @@ const searchAsset = ref<string | null>('');
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<AssetType, Set<Tab>>();
 
-	const projectAssets = props.project?.assets;
+	const projectAssets = useProjects().activeProject?.value?.assets;
 	if (!projectAssets) return tabs;
 
 	// Run through all the assets type within the project

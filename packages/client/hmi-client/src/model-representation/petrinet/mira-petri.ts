@@ -24,7 +24,7 @@ export const getStates = (amr: Model) => {
 			let str = state.id;
 			modifierKeys.forEach((key) => {
 				str = str.replace(`_${grounding.modifiers[key]}`, '');
-				obj[key] = grounding.modifiers[key];
+				obj[key] = [grounding.modifiers[key]];
 			});
 			obj.base = str;
 
@@ -88,7 +88,23 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 			const modifiers = stateModifierMap.get(sid);
 			if (modifiers) {
 				Object.keys(modifiers).forEach((k) => {
-					obj[k] = modifiers[k];
+					if (obj[k] && !obj[k].includes(modifiers[k])) {
+						obj[k].push(modifiers[k]);
+					} else {
+						obj[k] = [modifiers[k]];
+					}
+				});
+			}
+		});
+		transition.output.forEach((sid: string) => {
+			const modifiers = stateModifierMap.get(sid);
+			if (modifiers) {
+				Object.keys(modifiers).forEach((k) => {
+					if (obj[k] && !obj[k].includes(modifiers[k])) {
+						obj[k].push(modifiers[k]);
+					} else {
+						obj[k] = [modifiers[k]];
+					}
 				});
 			}
 		});
@@ -112,11 +128,20 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 	if (stratas.length === 0) {
 		return {};
 	}
+	const strataKey = stratas[0];
 	let result: any = _.groupBy(matrixData, stratas[0]);
+
 	const nextStratas = _.clone(stratas);
 	nextStratas.shift();
 
+	// Bake in strata-type
+	if (!_.isEmpty(result)) {
+		result._key = strataKey;
+	}
+
 	Object.keys(result).forEach((key) => {
+		if (key === '_key') return;
+
 		if (key === 'undefined') {
 			// No result, skip and start on the next
 			result = extractNestedStratas(matrixData, nextStratas);
@@ -125,8 +150,48 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 			result[key] = extractNestedStratas(result[key], nextStratas);
 		}
 	});
+
 	return result;
 };
+
+/**
+ * Given an amr, find the unstratified/root parameters.
+ *
+ * This requires some heuristics go backwards, may not work all the time.
+ * This works poorly if the parameter ids starts off with underscores.
+ *
+ * For example "beta_1_1", "beta_1_2" will collapse into "beta": ["beta_1_1", "beta_1_2"]
+ */
+export const getUnstratifiedParameters = (amr: Model) => {
+	const parameters = amr.semantics?.ode.parameters || [];
+	const map = new Map<string, string[]>();
+	parameters.forEach((p) => {
+		const rootName = _.first(p.id.split('_')) as string;
+		if (map.has(rootName)) {
+			map.get(rootName)?.push(p.id);
+		} else {
+			map.set(rootName, [p.id]);
+		}
+	});
+	return map;
+};
+
+// Holds all points that have the parameter
+export const filterParameterLocations = (
+	amr: Model,
+	transitionMatrixData: any[],
+	parameterIds: string[]
+) =>
+	transitionMatrixData.filter((d) => {
+		// Check if the transition's expression include the usage
+		const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
+		if (!rate) return false;
+		// FIXME: should check through sympy to be more accurate
+		for (let i = 0; i < parameterIds.length; i++) {
+			if (rate.expression.includes(parameterIds[i])) return true;
+		}
+		return false;
+	});
 
 /**
  * Given an MIRA AMR, extract and compute a presentation-layer data format

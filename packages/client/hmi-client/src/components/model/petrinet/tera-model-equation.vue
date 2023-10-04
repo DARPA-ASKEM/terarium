@@ -18,7 +18,8 @@
 				@equation-updated="setNewEquation"
 				@delete="deleteEquation"
 				ref="equationsRef"
-		/></template>
+			/>
+		</template>
 	</tera-equation-container>
 </template>
 
@@ -27,10 +28,7 @@ import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
 import { Model } from '@/types/Types';
-import {
-	convertAMRToACSet,
-	updateExistingModelContent
-} from '@/model-representation/petrinet/petrinet-service';
+import { convertAMRToACSet } from '@/model-representation/petrinet/petrinet-service';
 import { latexToAMR } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { petriToLatex } from '@/petrinet/petrinet-service';
@@ -41,11 +39,11 @@ const props = defineProps<{
 	isEditable: boolean;
 }>();
 
-const emit = defineEmits(['update-diagram']);
+const emit = defineEmits(['model-updated']);
 
 const equationsRef = ref<any[]>([]);
 const equations = ref<string[]>([]);
-const orginalEquations = ref<string[]>([]);
+const originalEquations = ref<string[]>([]);
 const isEditing = ref(false);
 
 const setNewEquation = (index: number, latexEq: string) => {
@@ -62,7 +60,7 @@ const addEquation = () => {
 
 const cancelEdit = () => {
 	isEditing.value = false;
-	equations.value = orginalEquations.value.map((eq) => eq);
+	equations.value = originalEquations.value.map((eq) => eq);
 	equationsRef.value.forEach((eq) => {
 		eq.isEditingEquation = false;
 	});
@@ -70,14 +68,12 @@ const cancelEdit = () => {
 
 const updateLatexFormula = (equationsList: string[]) => {
 	equations.value = equationsList;
-	if (isEmpty(orginalEquations.value)) orginalEquations.value = equationsList.map((eq) => eq);
+	if (isEmpty(originalEquations.value)) originalEquations.value = Array.from(equationsList);
 };
 
 const updateModelFromEquations = async () => {
-	const updatedModel = await latexToAMR(equations.value, 'petrinet', props.model.id);
-	if (updatedModel) {
-		emit('update-diagram', updateExistingModelContent(updatedModel, props.model));
-	}
+	const updated = await latexToAMR(equations.value, 'petrinet', props.model.id);
+	if (updated) emit('model-updated');
 };
 
 watch(

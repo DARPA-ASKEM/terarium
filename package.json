@@ -4,7 +4,7 @@
 	"private": true,
 	"workspaces": [
 		"packages/client/*",
-		"packages/services/hmi-server"
+		"packages/server"
 	],
 	"scripts": {
 		"build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
@@ -31,8 +31,8 @@
 	},
 	"devDependencies": {
 		"@vue/eslint-config-airbnb-with-typescript": "7.0.0",
-		"eslint": "8.40.0",
-		"eslint-config-prettier": "8.8.0",
+		"eslint": "8.49.0",
+		"eslint-config-prettier": "8.10.0",
 		"eslint-plugin-vue": "9.10.0",
 		"husky": "8.0.3",
 		"lint-staged": "13.2.3",

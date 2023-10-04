@@ -33,7 +33,6 @@ export default defineConfig({
 			{ find: '@graph-scaffolder', replacement: path.resolve(__dirname, '../graph-scaffolder/src') }
 		]
 	},
-	base: '/app/',
 	server: {
 		port: 8080,
 		strictPort: true,
@@ -42,6 +41,14 @@ export default defineConfig({
 		// https://vitejs.dev/config/server-options.html#server-hmr
 		hmr: {
 			port: 8080
+		},
+
+		proxy: {
+			'/api': {
+				target: 'http://localhost:3000',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/api/, '')
+			}
 		}
 	},
 	preview: {

@@ -1,0 +1,1 @@
+-- The initial database version migration.  Intentionally does nothing

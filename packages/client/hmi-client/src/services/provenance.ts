@@ -5,7 +5,7 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { ResultType } from '@/types/common';
-import { DocumentAsset, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import { ExternalPublication, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
 // eslint-disable-next-line import/no-cycle
 import { getBulkDocuments } from './data';
@@ -36,7 +36,7 @@ async function getConnectedNodes(
 	id: string,
 	rootType: ProvenanceType
 ): Promise<ProvenanceResult | null> {
-	const publication: DocumentAsset | null = await getDocument(id);
+	const publication: ExternalPublication | null = await getDocument(id);
 	if (!publication) return null;
 
 	const body: ProvenanceQueryParam = {
@@ -58,6 +58,10 @@ async function getConnectedNodes(
  */
 async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promise<ResultType[]> {
 	const response: ResultType[] = [];
+
+	if (rootType !== ProvenanceType.Publication) {
+		return response;
+	}
 
 	const connectedNodes = await getConnectedNodes(id, rootType);
 	if (connectedNodes) {

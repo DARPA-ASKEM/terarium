@@ -1,0 +1,49 @@
+{
+  "id": "903b33bc-ff1f-4b1c-bb57-83b6ca1680ab",
+  "createdAtMs": null,
+  "lastLoginAtMs": null,
+  "authorities":
+  [
+    "READ_USERS",
+    "SCOPE_openid",
+    "UPDATE_USERS",
+    "SCOPE_email",
+    "ROLE_USER",
+    "READ_GRANT_AUTHORITY",
+    "SCOPE_profile"
+  ],
+  "roles":
+  [
+    {
+      "id": 2,
+      "name": "USER",
+      "authorities":
+      [
+        {
+          "id": 3,
+          "mask": 5,
+          "authority":
+          {
+            "id": 2,
+            "name": "USERS"
+          }
+        },
+        {
+          "id": 4,
+          "mask": 1,
+          "authority":
+          {
+            "id": 1,
+            "name": "GRANT_AUTHORITY"
+          }
+        }
+      ]
+    }
+  ],
+  "username": "ursula",
+  "email": "ursula@test.io",
+  "givenName": "Lady",
+  "familyName": "Ursula",
+  "name": "Lady Ursula",
+  "enabled": true
+}
