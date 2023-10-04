@@ -58,11 +58,11 @@ public class ReBACFunctions {
 		return response.getPermissionship().name().equalsIgnoreCase(HAS_PERMISSION);
 	}
 
-	public String createRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception {
+	public String createRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception, RelationshipAlreadyExistsException {
 		return createRelationship(subject.type.toString(), subject.id, relationship.toString(), target.type.toString(), target.id);
 	}
 
-	public String createRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception {
+	public String createRelationship(String subjectType, String subjectId, String relationship, String targetType, String targetId) throws Exception, RelationshipAlreadyExistsException {
 		PermissionService.WriteRelationshipsRequest request = PermissionService.WriteRelationshipsRequest.newBuilder()
 			.addUpdates(
 				RelationshipUpdate.newBuilder()
@@ -76,8 +76,15 @@ public class ReBACFunctions {
 					.build())
 			.build();
 
-		PermissionService.WriteRelationshipsResponse response = permissionsService.writeRelationships(request);
-		return response.getWrittenAt().getToken();
+		try {
+			PermissionService.WriteRelationshipsResponse response = permissionsService.writeRelationships(request);
+			return response.getWrittenAt().getToken();
+		} catch (Exception e) {
+			if (e.getMessage().startsWith(ALREADY_EXISTS_CREATE_RELATIONSHIP)) {
+				throw new RelationshipAlreadyExistsException(e);
+			}
+			throw e;
+		}
 	}
 
 	public String removeRelationship(SchemaObject subject, Schema.Relationship relationship, SchemaObject target) throws Exception, RelationshipAlreadyExistsException {

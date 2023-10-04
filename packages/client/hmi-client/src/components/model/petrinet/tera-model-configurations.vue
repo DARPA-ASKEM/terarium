@@ -52,7 +52,7 @@
 		/>
 		<Teleport to="body">
 			<!--
-			TODO: Not sure if these modals should be in the child config components or if they should 
+			TODO: Not sure if these modals should be in the child config components or if they should
 			be in their own since they are dealing with a different set of variables. Will deal with
 			this in another PR.
 			-->
@@ -204,7 +204,10 @@ import { ModelConfiguration, Model } from '@/types/Types';
 import SplitButton from 'primevue/splitbutton';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
-import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
+import {
+	getMiraAMRPresentationData,
+	getUnstratifiedParameters
+} from '@/model-representation/petrinet/mira-petri';
 import { FeatureConfig, ParamType } from '@/types/common';
 
 import TabView from 'primevue/tabview';
@@ -276,7 +279,8 @@ const headerStates = computed<any[]>(() =>
 );
 const headerTransitions = computed<any[]>(() =>
 	stratifiedModelType.value
-		? baseModel.value.transitions.map(({ id }) => id)
+		? // ? baseModel.value.transitions.map(({ id }) => id)
+		  [...getUnstratifiedParameters(props.model).keys()]
 		: configurations.value[0]?.semantics?.ode.parameters?.map(({ id }) => id) ?? []
 );
 const headerStatesAndTransitions = computed(() => [

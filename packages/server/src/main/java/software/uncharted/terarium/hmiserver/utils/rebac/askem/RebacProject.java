@@ -24,7 +24,7 @@ public class RebacProject extends RebacObject {
 		return reBACService.getRelationships(getSchemaObject());
 	}
 
-	public void setPermissionRelationships(RebacObject who, String relationship) throws Exception {
+	public void setPermissionRelationships(RebacObject who, String relationship) throws Exception, RelationshipAlreadyExistsException {
 		Schema.Relationship relationshipEnum = Schema.Relationship.valueOf(relationship.toUpperCase());
 		reBACService.createRelationship(who.getSchemaObject(), getSchemaObject(), relationshipEnum);
 	}

@@ -5,42 +5,53 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="nodeType === NodeType.Transition" class="p-datatable-thead">
+				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
-						<th class="choose-criteria"></th>
-						<th v-for="(row, i) in matrix[0]" :key="i">
-							{{ Object.values(row.colCriteria).join(' / ') }}
-						</th>
+						<th v-if="matrix.length > 1" class="choose-criteria"></th>
+						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr v-for="(row, i) in matrix" :key="i">
-						<td class="p-frozen-column">{{ Object.values(row[0].rowCriteria).join(' / ') }}</td>
-						<td
-							v-for="(cell, j) in row"
-							:key="j"
-							tabindex="0"
-							@keyup.enter="onEnterValueCell(cell?.value?.id, i, j)"
-							@click="onEnterValueCell(cell?.value?.id, i, j)"
-						>
-							<template v-if="cell?.value?.id">
-								<InputText
-									v-if="editableCellStates[i][j]"
-									class="cell-input"
-									v-model.lazy="valueToEdit"
-									v-focus
-									@focusout="updateModelConfigValue(cell.value.id, i, j)"
-									@keyup.stop.enter="updateModelConfigValue(cell.value.id, i, j)"
-								/>
-								<div
-									v-else
-									class="mathml-container"
-									v-html="matrixExpressionsList[i]?.[j] ?? '...'"
-								></div>
-							</template>
-							<span v-else class="not-allowed">N/A</span>
-						</td>
-					</tr>
+					<template v-for="(row, i) in matrix" :key="i">
+						<tr v-for="(controller, j) in controllers" :key="j">
+							<td v-if="matrix.length > 1" class="p-frozen-column">
+								<template v-if="nodeType === NodeType.State">
+									{{ Object.values(row[0].rowCriteria).join(' / ') }}
+								</template>
+								<template v-else>
+									{{ row[0].rowCriteria
+									}}<template v-if="controller !== ''">, {{ controller }} </template>
+								</template>
+							</td>
+							<td
+								v-for="(cell, k) in row"
+								:key="k"
+								tabindex="0"
+								@keyup.enter="onEnterValueCell(cell?.content?.id, i, k)"
+								@click="onEnterValueCell(cell?.content?.id, i, k)"
+							>
+								<template v-if="cell.content.id">
+									<InputText
+										v-if="editableCellStates[i][k]"
+										class="cell-input"
+										v-model.lazy="valueToEdit"
+										v-focus
+										@focusout="updateModelConfigValue(cell.content.id, i, k)"
+										@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, k)"
+									/>
+									<div
+										v-else-if="nodeType === NodeType.State"
+										class="mathml-container"
+										v-html="matrixExpressionsList?.[i]?.[k] ?? '...'"
+									/>
+									<div v-else>
+										{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+									</div>
+								</template>
+								<span v-else class="not-allowed">N/A</span>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -52,8 +63,12 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
-import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
-import { createMatrix1D, createMatrix2D } from '@/utils/pivot';
+import {
+	getMiraAMRPresentationData,
+	getUnstratifiedParameters,
+	filterParameterLocations
+} from '@/model-representation/petrinet/mira-petri';
+import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
@@ -73,14 +88,13 @@ const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
 
 const matrix = ref<any>([]);
-const chosenCol = ref('');
-const chosenRow = ref('');
+const controllers = ref<string[]>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
 const matrixExpressionsList = ref<string[][]>([]);
 
-const parametersValueList = computed(() =>
+const parametersValueMap = computed(() =>
 	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
 		acc[val.id] = val.value;
 		return acc;
@@ -95,11 +109,11 @@ watch(
 			matrix.value
 				.map((row) =>
 					row.map(async (cell) => {
-						if (cell.value?.id) {
+						if (cell.content?.id) {
 							if (!output[cell.row]) {
 								output[cell.row] = [];
 							}
-							output[cell.row][cell.col] = await getMatrixValue(cell.value.id, props.shouldEval);
+							output[cell.row][cell.col] = await getMatrixValue(cell.content.id, props.shouldEval);
 						}
 					})
 				)
@@ -154,6 +168,7 @@ function getMatrixExpression(variableName: string) {
 	return variableName;
 }
 
+// See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	const expressionBase = getMatrixExpression(variableName);
@@ -161,7 +176,7 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	if (shouldEvaluate) {
 		const expressionEval = await pythonInstance.evaluateExpression(
 			expressionBase,
-			parametersValueList.value
+			parametersValueMap.value
 		);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
@@ -203,16 +218,29 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 function generateMatrix(populateDimensions = false) {
 	const amr: Model = props.modelConfiguration.configuration;
 
-	const result =
+	const { stateMatrixData, transitionMatrixData } =
 		props.stratifiedModelType === StratifiedModelType.Catlab
 			? getCatlabAMRPresentationData(amr)
 			: getMiraAMRPresentationData(amr);
 
 	// Get only the states/transitions that are mapped to the base model
-	const matrixData =
-		props.nodeType === NodeType.State
-			? result.stateMatrixData.filter(({ base }) => base === props.id)
-			: result.transitionMatrixData.filter(({ base }) => base === props.id);
+	let matrixData: any[] = [];
+	let childParameterIds: string[] = [];
+
+	if (props.nodeType === NodeType.State) {
+		matrixData = stateMatrixData.filter(({ base }) => base === props.id);
+	} else {
+		const paramsMap = getUnstratifiedParameters(amr);
+		if (!paramsMap.has(props.id)) return [];
+
+		// IDs to find within the rates
+		childParameterIds = paramsMap.get(props.id) as string[];
+		// Holds all points that have the parameter
+		matrixData = filterParameterLocations(amr, transitionMatrixData, [
+			...childParameterIds,
+			props.id
+		]);
+	}
 
 	if (isEmpty(matrixData)) return matrixData;
 
@@ -227,12 +255,13 @@ function generateMatrix(populateDimensions = false) {
 		colDimensions.push(...dimensions);
 	}
 
-	const matrixAttributes =
+	const matrixAttributes: any =
 		props.nodeType === NodeType.State
 			? createMatrix1D(matrixData)
-			: createMatrix2D(matrixData, colDimensions, rowDimensions);
+			: createParameterMatrix(amr, matrixData, childParameterIds);
 
 	matrix.value = matrixAttributes.matrix;
+	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];
 
 	return matrixData;
 }
@@ -240,9 +269,6 @@ function generateMatrix(populateDimensions = false) {
 function configureMatrix() {
 	const matrixData = generateMatrix(true);
 	if (isEmpty(matrixData)) return;
-
-	chosenCol.value = colDimensions[0];
-	chosenRow.value = rowDimensions[0];
 
 	// Matrix for editable cell states
 	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
