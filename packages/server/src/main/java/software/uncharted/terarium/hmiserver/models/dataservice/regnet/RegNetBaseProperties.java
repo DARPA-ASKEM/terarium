@@ -12,12 +12,7 @@ import java.util.List;
 @Accessors(chain = true)
 @TSModel
 public class RegNetBaseProperties {
-	@TSOptional
 	private String name;
-
-	@TSOptional
 	private ModelGrounding grounding;
-
-	@TSOptional
 	private Object rate_constant;
 }

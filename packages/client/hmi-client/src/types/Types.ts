@@ -252,9 +252,9 @@ export interface ProvenanceQueryParam {
 }
 
 export interface RegNetBaseProperties {
-    name?: string;
-    grounding?: ModelGrounding;
-    rate_constant?: any;
+    name: string;
+    grounding: ModelGrounding;
+    rate_constant: any;
 }
 
 export interface RegNetEdge {
