@@ -23,7 +23,7 @@ services:
       POSTGRES_PASSWORD: "postgres"
       POSTGRES_DB: "terarium"
     networks:
-        - terarium
+      - terarium
     ports:
       - '5430:5432'
     restart: always
