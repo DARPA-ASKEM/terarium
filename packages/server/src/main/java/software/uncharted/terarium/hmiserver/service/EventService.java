@@ -23,15 +23,15 @@ public class EventService {
 		if (like != null && !like.isEmpty()) {
 			final String likeQuery = "%" + like + "%";
 			if (projectId != null) {
-				return eventRepository.findAllByTypeAndProjectIdAndUsernameAndValueLike(type, projectId, currentUserId, likeQuery, pageable);
+				return eventRepository.findAllByTypeAndProjectIdAndUserIdAndValueLike(type, projectId, currentUserId, likeQuery, pageable);
 			} else {
-				return eventRepository.findAllByTypeAndUsernameAndValueLike(type, currentUserId, likeQuery, pageable);
+				return eventRepository.findAllByTypeAndUserIdAndValueLike(type, currentUserId, likeQuery, pageable);
 			}
 		} else {
 			if (projectId != null) {
-				return eventRepository.findAllByTypeAndProjectIdAndUsername(type, projectId, currentUserId, pageable);
+				return eventRepository.findAllByTypeAndProjectIdAndUserId(type, projectId, currentUserId, pageable);
 			} else {
-				return eventRepository.findAllByTypeAndUsername(type, currentUserId, pageable);
+				return eventRepository.findAllByTypeAndUserId(type, currentUserId, pageable);
 			}
 		}
 	}

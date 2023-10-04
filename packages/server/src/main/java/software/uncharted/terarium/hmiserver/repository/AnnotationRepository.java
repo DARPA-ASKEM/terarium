@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface AnnotationRepository extends PSCrudRepository<Annotation, String>{
 
-	List<Annotation> findAllByArtifactTypeAndAndArtifactId(final String artifactType, final String artifactId, Pageable pagable);
+	List<Annotation> findAllByArtifactTypeAndArtifactId(final String artifactType, final String artifactId, Pageable pagable);
 
 	Annotation findByArtifactId(final String artifactId);
 

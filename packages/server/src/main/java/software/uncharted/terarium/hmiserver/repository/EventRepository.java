@@ -9,8 +9,9 @@ import java.util.List;
 
 @Repository
 public interface EventRepository extends PSCrudRepository<Event, String> {
-	List<Event> findAllByTypeAndProjectIdAndUsernameAndValueLike(final EventType type, final Long projectId, final String username, final String like, Pageable pageable);
-	List<Event> findAllByTypeAndUsernameAndValueLike(final EventType type, final String username, final String like, Pageable pageable);
-	List<Event> findAllByTypeAndProjectIdAndUsername(final EventType type, final Long projectId, final String username, Pageable pageable);
-	List<Event> findAllByTypeAndUsername(final EventType type, final String username, Pageable pageable);;
+	List<Event> findAllByTypeAndProjectIdAndUserIdAndValueLike(final EventType type, final Long projectId, final String userId, final String like, Pageable pageable);
+	List<Event> findAllByTypeAndUserIdAndValueLike(final EventType type, final String userId, final String like, Pageable pageable);
+	List<Event> findAllByTypeAndProjectIdAndUserId(final EventType type, final Long projectId, final String userId, Pageable pageable);
+	List<Event> findAllByTypeAndUserId(final EventType type, final String userId, Pageable pageable);
+
 }
