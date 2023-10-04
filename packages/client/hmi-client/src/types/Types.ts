@@ -414,8 +414,8 @@ export interface Document {
 }
 
 export interface DocumentExtraction {
-    file_name: string;
-    asset_type: string;
+    fileName: string;
+    assetType: string;
     metadata: any;
 }
 

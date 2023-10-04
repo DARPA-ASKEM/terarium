@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -9,9 +11,11 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class DocumentExtraction implements Serializable {
 
-	private String file_name;
+    @JsonAlias("file_name")
+	private String fileName;
 
-	private String asset_type;
+    @JsonAlias("asset_type")
+	private String assetType;
 
 	private Object metadata;
 }

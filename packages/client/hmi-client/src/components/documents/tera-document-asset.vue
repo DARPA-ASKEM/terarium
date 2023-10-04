@@ -146,13 +146,13 @@ const docLink = computed(() =>
 );
 
 const figures = computed(
-	() => doc.value?.assets?.filter((asset) => asset.asset_type === 'figure') || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === 'figure') || []
 );
 const tables = computed(
-	() => doc.value?.assets?.filter((asset) => asset.asset_type === 'table') || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === 'table') || []
 );
 const equations = computed(
-	() => doc.value?.assets?.filter((asset) => asset.asset_type === 'equation') || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === 'equation') || []
 );
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
