@@ -270,26 +270,31 @@ public class ProjectController {
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createProject(
-		@RequestBody final Project project,
-		@RequestHeader("Location") final String location,
-		@RequestHeader("Server") final String server
+		@RequestBody final Project project
 	) throws JsonProcessingException {
 
 		ResponseEntity<JsonNode> res = proxy.createProject(project);
+		if (res != null) {
 
-		ObjectMapper mapper = new ObjectMapper();
-		Id id = mapper.treeToValue(res.getBody(), Id.class);
+			ObjectMapper mapper = new ObjectMapper();
+			Id id = mapper.treeToValue(res.getBody(), Id.class);
+			String location = res.getHeaders().get("Location").get(0);
+			String server = res.getHeaders().get("Server").get(0);
 
-		try {
-			new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId()), reBACService));
-		} catch (Exception e) {
-			log.error("Error setting user's permissions for project", e);
-			// TODO: Rollback potential?
-		} catch (RelationshipAlreadyExistsException e) {
-			log.error("Error the user is already the creator of this project", e);
-			// TODO: Rollback potential?
+			try {
+				new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(Integer.toString(id.getId()), reBACService));
+			} catch (Exception e) {
+				log.error("Error setting user's permissions for project", e);
+				// TODO: Rollback potential?
+			} catch (RelationshipAlreadyExistsException e) {
+				log.error("Error the user is already the creator of this project", e);
+				// TODO: Rollback potential?
+			}
+			return ResponseEntity.status(HttpStatus.CREATED).header("Location", location).header("Server", server).body(res.getBody());
+		} else {
+			log.error("createProject proxy returned a null");
+			return ResponseEntity.internalServerError().build();
 		}
-		return ResponseEntity.status(HttpStatus.CREATED).header("Location", location).header("Server", server).body(res.getBody());
 	}
 
 	@PutMapping("/{id}")
