@@ -251,6 +251,43 @@ export interface ProvenanceQueryParam {
     userId?: number;
 }
 
+export interface RegNetBaseProperties {
+    name?: string;
+    grounding?: ModelGrounding;
+    rate_constant?: any;
+}
+
+export interface RegNetEdge {
+    source: string;
+    target: string;
+    id: string;
+    sign: boolean;
+    properties?: RegNetBaseProperties;
+}
+
+export interface RegNetModel {
+    vertices: RegNetVertex[];
+    edges: RegNetEdge[];
+    parameters?: RegNetParameter[];
+}
+
+export interface RegNetParameter {
+    id: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+}
+
+export interface RegNetVertex {
+    id: string;
+    name: string;
+    sign: boolean;
+    initial?: any;
+    rate_constant?: any;
+    grounding?: ModelGrounding;
+}
+
 export interface DocumentsResponseOK extends XDDResponseOK {
     data: Document[];
     nextPage: string;
@@ -471,6 +508,11 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
 export interface XDDFacetsItemResponse {
     buckets: XDDFacetBucket[];
     doc_count_error_upper_bound: number;
@@ -662,11 +704,6 @@ export interface VariableStatementMetadata {
 export interface ProvenanceInfo {
     method: string;
     description: string;
-}
-
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
 }
 
 export interface VariableMetadata {
