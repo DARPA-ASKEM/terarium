@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 /**
  * Get all documents
- * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
+ * @return Array<DocumentAsset>|null - the list of all document assets, or null if none returned by API
  */
 async function getAll(): Promise<DocumentAsset[] | null> {
 	const response = await API.get('/document-asset').catch((error) => {
@@ -18,8 +18,8 @@ async function getAll(): Promise<DocumentAsset[] | null> {
 }
 
 /**
- * Get Dataset from the data service
- * @return Dataset|null - the dataset, or null if none returned by API
+ * Get DocumentAsset from the data service
+ * @return DocumentAsset|null - the dataset, or null if none returned by API
  */
 async function getDocumentAsset(documentId: string): Promise<DocumentAsset | null> {
 	const response = await API.get(`/document-asset/${documentId}`).catch((error) => {
@@ -31,7 +31,7 @@ async function getDocumentAsset(documentId: string): Promise<DocumentAsset | nul
 }
 
 /**
- * This is a helper function which uploads an arbitrary document to TDS and creates a new artifact from it.
+ * This is a helper function which uploads an arbitrary document to TDS and creates a new document asset from it.
  * @param file the file to upload
  * @param userName owner of this project
  * @param projectId the project ID
@@ -62,8 +62,8 @@ async function uploadDocumentAssetToProject(
 }
 
 /**
- * Creates a new artifact in TDS and returns the new artifact object id
- * @param document the artifact to create
+ * Creates a new document asset in TDS and returns the new document asset object id
+ * @param document the document asset to create
  */
 async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<DocumentAsset | null> {
 	const response = await API.post('/document-asset', documentAsset);
