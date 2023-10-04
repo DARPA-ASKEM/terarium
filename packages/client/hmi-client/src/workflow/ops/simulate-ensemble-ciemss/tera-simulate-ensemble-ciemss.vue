@@ -223,7 +223,7 @@ import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss
 const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
 
 enum EnsembleTabs {
@@ -267,7 +267,7 @@ const runResults = ref<RunResults>({});
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -299,7 +299,7 @@ function addMapping() {
 		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
 	}
 
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 
 	workflowEventBus.emitNodeStateChange({
@@ -368,7 +368,7 @@ const setChartOptions = () => {
 };
 
 const addChart = () => {
-	const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -431,7 +431,7 @@ watch(
 		calculateWeights();
 		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -446,7 +446,7 @@ watch(
 watch(
 	() => timeSpan.value,
 	async () => {
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.timeSpan = timeSpan.value;
 
 		workflowEventBus.emitNodeStateChange({
@@ -461,7 +461,7 @@ watch(
 watch(
 	() => numSamples.value,
 	async () => {
-		const state: SimulateEnsembleCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.numSamples = numSamples.value;
 
 		workflowEventBus.emitNodeStateChange({

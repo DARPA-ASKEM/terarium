@@ -148,7 +148,7 @@ import { useProjects } from '@/composables/project';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
@@ -174,7 +174,7 @@ const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.
 const rawContent = ref<CsvAsset | null>(null);
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
 	workflowEventBus.emitNodeStateChange({
@@ -185,7 +185,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 };
 
 const addChart = () => {
-	const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
@@ -235,7 +235,7 @@ onMounted(async () => {
 watch(
 	() => numSamples.value,
 	(n) => {
-		const state: SimulateCiemssOperationState = _.cloneDeep(props.node.state);
+		const state = _.cloneDeep(props.node.state);
 		state.numSamples = n;
 		workflowEventBus.emitNodeStateChange({
 			workflowId: props.node.workflowId,

@@ -22,9 +22,10 @@ import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { WorkflowNode } from '@/types/workflow';
+import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<ModelOperationState>;
 	models: Model[];
 	droppedModelId: null | string;
 }>();

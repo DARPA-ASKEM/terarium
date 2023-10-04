@@ -425,7 +425,7 @@ async function processDataset(file: File, description: string) {
 	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
 		progress,
 		file,
-		auth.name ?? '',
+		auth.user?.name ?? '',
 		description
 	);
 

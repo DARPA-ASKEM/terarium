@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import { DocumentAsset, EventType, Project, AssetType } from '@/types/Types';
+import { EventType, Project, AssetType, ExternalPublication } from '@/types/Types';
 
 /**
  * Create a project
@@ -102,7 +102,8 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			Object.values(AssetType).forEach((type, indx) => {
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+				// FIX: right now the we cannot get a documents assets, this condition is a temporary measure so that this endpoint doesnt break until we can get documents assets
+				if (type !== AssetType.Documents) url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
 		}
 		const response = await API.get(url);
@@ -118,20 +119,20 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 /**
  * Get projects publication assets for a given project per id
  * @param projectId projet id to get assets for
- * @return DocumentAsset[] the documents assets for the project
+ * @return ExternalPublication[] the documents assets for the project
  */
-async function getPublicationAssets(projectId: string): Promise<DocumentAsset[]> {
+async function getPublicationAssets(projectId: string): Promise<ExternalPublication[]> {
 	try {
 		const url = `/projects/${projectId}/assets?types=${AssetType.Publications}`;
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status === 200) {
-			return data?.[AssetType.Publications] ?? ([] as DocumentAsset[]);
+			return data?.[AssetType.Publications] ?? ([] as ExternalPublication[]);
 		}
 	} catch (error) {
 		logger.error(error);
 	}
-	return [] as DocumentAsset[];
+	return [] as ExternalPublication[];
 }
 
 /**

@@ -1,4 +1,9 @@
-import { createMatrix2D } from '@/utils/pivot';
+import * as amr from '@/examples/mira-petri.json';
+import {
+	getMiraAMRPresentationData,
+	filterParameterLocations
+} from '@/model-representation/petrinet/mira-petri';
+import { createMatrix2D, createParameterMatrix } from '@/utils/pivot';
 import { describe, expect, it } from 'vitest';
 
 const data: any[] = [
@@ -33,13 +38,13 @@ describe('pivot table tests', () => {
 		let undefinedCells = 0;
 		r.matrix.forEach((row) => {
 			row.forEach((d: any) => {
-				if (!d.value) undefinedCells++;
+				if (!d.content) undefinedCells++;
 			});
 		});
 
-		expect(r.matrix[0][0].value).to.not.eq(undefined);
-		expect(r.matrix[1][1].value).to.not.eq(undefined);
-		expect(r.matrix[2][2].value).to.not.eq(undefined);
+		expect(r.matrix[0][0].content).to.not.eq(undefined);
+		expect(r.matrix[1][1].content).to.not.eq(undefined);
+		expect(r.matrix[2][2].content).to.not.eq(undefined);
 		expect(undefinedCells).to.eq(6);
 	});
 
@@ -50,7 +55,7 @@ describe('pivot table tests', () => {
 		let undefinedCells = 0;
 		r.matrix.forEach((row) => {
 			row.forEach((d: any) => {
-				if (!d.value) undefinedCells++;
+				if (!d.content) undefinedCells++;
 			});
 		});
 		expect(undefinedCells).to.eq(7);
@@ -59,7 +64,47 @@ describe('pivot table tests', () => {
 	it('2D pivot short form', () => {
 		const r = createMatrix2D(data4, ['fruit'], ['fruit']);
 		expect(r.matrix.length).to.eq(2);
-		expect(r.matrix[0][0].value).to.not.eq(undefined);
-		expect(r.matrix[1][1].value).to.not.eq(undefined);
+		expect(r.matrix[0][0].content).to.not.eq(undefined);
+		expect(r.matrix[1][1].content).to.not.eq(undefined);
+	});
+
+	it('create parameter table with one child parameter', () => {
+		const childParameterIds = ['epsilon'];
+		const matrixData = filterParameterLocations(
+			amr as any,
+			getMiraAMRPresentationData(amr as any).transitionMatrixData,
+			childParameterIds
+		);
+		const { matrix, controllers } = createParameterMatrix(
+			amr as any,
+			matrixData,
+			childParameterIds
+		);
+		expect(matrix.length).to.eq(3);
+		expect(matrix[0].length).to.eq(3);
+		expect(controllers.length).to.eq(1);
+		expect(matrix[0][0].content.value).to.not.eq(null);
+		expect(matrix[1][1].content.value).to.not.eq(null);
+		expect(matrix[2][2].content.value).to.not.eq(null);
+	});
+
+	it('create parameter table with multiple child parameters', () => {
+		const childParameterIds = ['beta_c', 'beta_nc', 'beta_s'];
+		const matrixData = filterParameterLocations(
+			amr as any,
+			getMiraAMRPresentationData(amr as any).transitionMatrixData,
+			childParameterIds
+		);
+		const { matrix, controllers } = createParameterMatrix(
+			amr as any,
+			matrixData,
+			childParameterIds
+		);
+		expect(matrix.length).to.eq(3);
+		expect(matrix[0].length).to.eq(3);
+		expect(controllers.length).to.eq(6);
+		expect(matrix[0][0].content.value).to.not.eq(null);
+		expect(matrix[1][1].content.value).to.not.eq(null);
+		expect(matrix[2][2].content.value).to.not.eq(null);
 	});
 });

@@ -26,7 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<DatasetTransformerState>;
 }>();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
@@ -39,7 +39,7 @@ const assetIds = computed(() =>
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
 onMounted(async () => {
-	const state = cloneDeep(props.node.state) as DatasetTransformerState;
+	const state = cloneDeep(props.node.state);
 	let notebookSessionId = props.node.state?.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist

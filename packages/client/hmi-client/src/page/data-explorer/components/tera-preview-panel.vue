@@ -6,7 +6,7 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<tera-document
+			<tera-external-publication
 				v-if="previewItemResourceType === ResourceType.XDD"
 				:xdd-uri="previewItemId"
 				:previewLineLimit="3"
@@ -54,7 +54,7 @@ import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
-import TeraDocument from '@/components/documents/tera-document.vue';
+import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 
 const props = defineProps({
 	// slider props
