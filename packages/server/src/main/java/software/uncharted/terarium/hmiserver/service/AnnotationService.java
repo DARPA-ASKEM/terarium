@@ -19,7 +19,7 @@ public class AnnotationService {
 	private AnnotationRepository annotationRepository;
 
 	public List<Annotation> findArtifacts(final String artifactType, final String artifactId, final int limit) {
-		final Pageable pagable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC));
+		final Pageable pagable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "timestampMillis"));
 		return annotationRepository.findAllByArtifactTypeAndArtifactId(artifactType, artifactId, pagable);
 	}
 
