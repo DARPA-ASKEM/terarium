@@ -27,28 +27,35 @@
 								v-for="(cell, k) in row"
 								:key="k"
 								tabindex="0"
-								@keyup.enter="onEnterValueCell(cell?.content?.id, i, k)"
-								@click="onEnterValueCell(cell?.content?.id, i, k)"
+								:class="editableCellStates[i * controllers.length + j][k] && 'is-editing'"
+								@keyup.enter="onEnterValueCell(cell.content.id, i * controllers.length + j, k)"
+								@click="onEnterValueCell(cell.content.id, i * controllers.length + j, k)"
 							>
 								<template v-if="cell.content.id">
 									<InputText
-										v-if="editableCellStates[i][k]"
+										v-if="editableCellStates[i * controllers.length + j][k]"
 										class="cell-input"
 										v-model.lazy="valueToEdit"
 										v-focus
-										@focusout="updateModelConfigValue(cell.content.id, i, k)"
-										@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, k)"
+										@focusout="
+											updateModelConfigValue(cell.content.id, i * controllers.length + j, k)
+										"
+										@keyup.stop.enter="
+											updateModelConfigValue(cell.content.id, i * controllers.length + j, k)
+										"
 									/>
 									<div
 										v-else-if="nodeType === NodeType.State"
 										class="mathml-container"
-										v-html="matrixExpressionsList?.[i]?.[k] ?? '...'"
+										v-html="matrixExpressionsList?.[i * controllers.length + j]?.[k] ?? '...'"
 									/>
 									<div v-else>
 										{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
 									</div>
 								</template>
 								<span v-else class="not-allowed">N/A</span>
+								<br />
+								{{ i * controllers.length + j }}{{ k }}
 							</td>
 						</tr>
 					</template>
@@ -101,6 +108,11 @@ const parametersValueMap = computed(() =>
 	}, {})
 );
 
+// Makes cell inputs focus once they appear
+const vFocus = {
+	mounted: (el) => el.focus()
+};
+
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
@@ -123,12 +135,8 @@ watch(
 	}
 );
 
-// Makes cell inputs focus once they appear
-const vFocus = {
-	mounted: (el) => el.focus()
-};
-
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
+	if (!variableName) return;
 	valueToEdit.value = getMatrixExpression(variableName);
 	editableCellStates.value[rowIdx][colIdx] = true;
 }
@@ -270,8 +278,9 @@ function configureMatrix() {
 	const matrixData = generateMatrix(true);
 	if (isEmpty(matrixData)) return;
 
-	// Matrix for editable cell states
-	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
+	for (let i = 0; i < matrix.value.length * controllers.value.length; i++) {
+		editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
+	}
 }
 
 onMounted(() => {
@@ -304,6 +313,10 @@ onMounted(() => {
 
 .p-datatable .p-datatable-thead > tr > th {
 	padding-bottom: 1rem;
+}
+
+.p-datatable .p-datatable-tbody > tr > td.is-editing {
+	padding: 0;
 }
 
 .editable-cell {

@@ -169,8 +169,6 @@ export const createParameterMatrix = (
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) rowIndexMap.set(inputs[rowIdx], rowIdx);
 	for (let colIdx = 0; colIdx < outputs.length; colIdx++) colIndexMap.set(outputs[colIdx], colIdx);
 
-	console.log(rowIndexMap, colIndexMap);
-
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output, id } = transitions[i];
@@ -181,8 +179,6 @@ export const createParameterMatrix = (
 			for (let j = 0; j < input.length; j++) {
 				const rowIdx = rowIndexMap.get(input[j]);
 				const colIdx = colIndexMap.get(output[j]);
-
-				console.log(rowIdx, colIdx);
 				for (let k = 0; k < childParameterIds.length; k++) {
 					// Fill cell content with parameter content
 					if (rate.expression.includes(childParameterIds[k])) {
