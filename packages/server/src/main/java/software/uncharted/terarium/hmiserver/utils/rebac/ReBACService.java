@@ -40,14 +40,14 @@ public class ReBACService {
 
 	private final Config config;
 
-	@Value("${terarium.keycloak.admin-realm}")
+	@Value("${terarium.keycloak.realm}")
 	String REALM_NAME;
 	@Value("${spicedb.shared-key}")
 	String SPICEDB_PRESHARED_KEY;
 	@Value("${spicedb.target}")
 	String SPICEDB_TARGET;
-	@Value("${rebac.launchmode}")
-	String REBAC_LAUNCHMODE;
+	@Value("${spicedb.launchmode}")
+	String SPICEDB_LAUNCHMODE;
 
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
@@ -73,15 +73,19 @@ public class ReBACService {
 
 
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
-		if (REBAC_LAUNCHMODE.equals("TEST")) {
+		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
 			channel = InProcessChannelBuilder
 				.forName("TestSpiceDB")
 				.build();
 			return;
 		} else {
-			channel = ManagedChannelBuilder
-				.forTarget(SPICEDB_TARGET)
-				.build();
+			ManagedChannelBuilder builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
+			if (SPICEDB_LAUNCHMODE.equals("TLS")) {
+				builder.useTransportSecurity();
+			} else {
+				builder.usePlaintext();
+			}
+			channel = builder.build();
 		}
 
 		log.info("Init ReBAC");
@@ -107,11 +111,23 @@ public class ReBACService {
 					if (roleRepresentation.getDescription().isBlank()) {
 						switch (roleRepresentation.getName()) {
 							case "user":
-								createRelationship(user, publicGroup, Schema.Relationship.MEMBER);
+								try {
+									createRelationship(user, publicGroup, Schema.Relationship.MEMBER);
+								} catch (RelationshipAlreadyExistsException e) {
+									log.error("Failed to add user {} to Public Group", userId, e);
+								}
 								break;
 							case "admin":
-								createRelationship(user, publicGroup, Schema.Relationship.ADMIN);
-								createRelationship(user, adminGroup, Schema.Relationship.ADMIN);
+								try {
+										createRelationship(user, publicGroup, Schema.Relationship.ADMIN);
+								} catch (RelationshipAlreadyExistsException e) {
+									log.error("Failed to add admin {} to Public Group", userId, e);
+								}
+								try {
+									createRelationship(user, adminGroup, Schema.Relationship.ADMIN);
+								} catch (RelationshipAlreadyExistsException e) {
+									log.error("Failed to add admin {} to Admin Group", userId, e);
+								}
 								break;
 						}
 					}
@@ -223,34 +239,30 @@ public class ReBACService {
 	}
 
 	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.READ, what, full);
-		return true;
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.READ, what, full);
 	}
 
 	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
-		return true;
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
 	}
 
 	public boolean hasMembership(SchemaObject who, SchemaObject what) throws Exception {
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, full);
-		return true;
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, full);
 	}
 
 	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		// Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
-		// ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		// return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
-		return true;
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
 	}
 
-	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception {
+	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		rebac.createRelationship(who, relationship, what);
 	}
