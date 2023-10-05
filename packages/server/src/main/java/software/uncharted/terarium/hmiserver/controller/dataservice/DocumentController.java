@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -98,8 +99,8 @@ public class DocumentController implements SnakeCaseController {
 			.build()) {
 
 			final PresignedURL presignedURL = proxy.getDownloadUrl(id, filename).getBody();
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(put);
+			final HttpGet get = new HttpGet(presignedURL.getUrl());
+			final HttpResponse response = httpclient.execute(get);
 			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
 				byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
 				return ResponseEntity.ok(fileAsBytes);

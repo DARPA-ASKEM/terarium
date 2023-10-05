@@ -7,20 +7,20 @@ export interface ClientConfig {
     clientLogShippingIntervalMillis: number;
 }
 
+export interface Event {
+    id?: string;
+    timestampMillis?: number;
+    projectId?: number;
+    userId?: string;
+    type: EventType;
+    value?: string;
+}
+
 export interface ClientLog {
     level: string;
     timestampMillis: number;
     message: string;
     args?: string[];
-}
-
-export interface Event {
-    id?: string;
-    timestampMillis?: number;
-    projectId?: number;
-    username?: string;
-    type: EventType;
-    value?: string;
 }
 
 export interface User {
@@ -175,15 +175,16 @@ export interface DocumentAsset {
     id?: string;
     name?: string;
     description?: string;
-    timestamp?: Date;
+    timestamp?: string;
     username?: string;
     fileNames?: string[];
-    documentUrl?: string[];
+    documentUrl?: string;
     metadata?: any;
     source?: string;
     text?: string;
     grounding?: Grounding;
     concepts?: Concept[];
+    assets?: DocumentExtraction[];
 }
 
 export interface Model {
@@ -254,6 +255,43 @@ export interface ProvenanceQueryParam {
     rootId?: number;
     rootType?: ProvenanceType;
     userId?: number;
+}
+
+export interface RegNetBaseProperties {
+    name: string;
+    grounding: ModelGrounding;
+    rate_constant: any;
+}
+
+export interface RegNetEdge {
+    source: string;
+    target: string;
+    id: string;
+    sign: boolean;
+    properties?: RegNetBaseProperties;
+}
+
+export interface RegNetModel {
+    vertices: RegNetVertex[];
+    edges: RegNetEdge[];
+    parameters?: RegNetParameter[];
+}
+
+export interface RegNetParameter {
+    id: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+}
+
+export interface RegNetVertex {
+    id: string;
+    name: string;
+    sign: boolean;
+    initial?: any;
+    rate_constant?: any;
+    grounding?: ModelGrounding;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -424,6 +462,12 @@ export interface Document {
     citedBy: { [index: string]: any }[];
 }
 
+export interface DocumentExtraction {
+    fileName: string;
+    assetType: string;
+    metadata: any;
+}
+
 export interface ModelHeader {
     name: string;
     schema: string;
@@ -491,6 +535,11 @@ export interface PetriNetTransition {
     output: string[];
     grounding?: ModelGrounding;
     properties: PetriNetTransitionProperties;
+}
+
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
 }
 
 export interface XDDFacetsItemResponse {
@@ -686,11 +735,6 @@ export interface ProvenanceInfo {
     description: string;
 }
 
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
-}
-
 export interface VariableMetadata {
     type: string;
     value: string;
@@ -824,6 +868,7 @@ export enum AssetType {
     Workflows = "workflows",
     Artifacts = "artifacts",
     Code = "code",
+    Documents = "documents",
 }
 
 export enum OntologicalField {
