@@ -72,7 +72,7 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const emit = defineEmits(['enriched', 'aligned']);
+const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
 
