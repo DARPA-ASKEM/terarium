@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
 import software.uncharted.terarium.hmiserver.models.modelservice.StratifyRequest;
 
-@FeignClient(name = "model-service", url = "${model-service.url}", path = "/model-service")
+@FeignClient(name = "model-service", url = "${model-service.url}", path = "/api")
 public interface ModelServiceProxy {
 	@PostMapping("/petri-to-latex")
 	ResponseEntity<JsonNode> petrinetToLatex(
@@ -19,5 +19,4 @@ public interface ModelServiceProxy {
 	ResponseEntity<JsonNode> stratify(
 		@RequestBody StratifyRequest req
 	);
-
 }
