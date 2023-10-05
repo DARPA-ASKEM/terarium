@@ -1,11 +1,11 @@
 <template>
 	<main>
 		<p>
-			Terarium can extract information from artifacts to add relevant information to this resource.
+			Terarium can extract information from documents to add relevant information to this resource.
 		</p>
 		<ul>
-			<li v-for="publication in relatedPublications" :key="publication.id">
-				{{ publication.name }}
+			<li v-for="document in relatedDocuments" :key="document.id">
+				{{ document.name }}
 			</li>
 		</ul>
 		<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
@@ -17,11 +17,11 @@
 		>
 			<p class="constrain-width">
 				Terarium can extract information from artifacts to describe this
-				{{ assetType }}. Select the artifacts you would like to use.
+				{{ assetType }}. Select the documents you would like to use.
 			</p>
 			<DataTable
-				v-if="publications && publications.length > 0"
-				:value="publications"
+				v-if="documents && documents.length > 0"
+				:value="documents"
 				v-model:selection="selectedResources"
 				tableStyle="min-width: 50rem"
 				selection-mode="single"
@@ -30,12 +30,12 @@
 				<Column field="name" sortable header="Name" />
 			</DataTable>
 			<div v-else>
-				<div class="no-artifacts">
-					<img class="no-artifacts-img" src="@assets/svg/plants.svg" alt="" />
-					<div class="no-artifacts-text">
-						You don't have any resources that can be used. Try adding some artifacts.
+				<div class="no-documents">
+					<img class="no-documents-img" src="@assets/svg/plants.svg" alt="" />
+					<div class="no-documents-text">
+						You don't have any resources that can be used. Try adding some documents.
 					</div>
-					<div class="no-artifacts-text">
+					<div class="no-documents-text">
 						Would you like to generate descriptions without attaching additional context?
 					</div>
 				</div>
@@ -66,8 +66,8 @@ import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
 
 const props = defineProps<{
-	publications?: Array<{ name: string | undefined; id: string | undefined }>;
-	relatedPublications?: Array<{ name: string; id: string | undefined }>;
+	documents?: Array<{ name: string | undefined; id: string | undefined }>;
+	relatedDocuments?: Array<{ name: string; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
 }>();
@@ -127,18 +127,18 @@ ul {
 	margin: 1rem 0;
 }
 
-.no-artifacts {
+.no-documents {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
 
-.no-artifacts-img {
+.no-documents-img {
 	width: 30%;
 	padding: 10px;
 }
 
-.no-artifacts-text {
+.no-documents-text {
 	padding: 5px;
 	font-size: var(--font-body);
 	font-family: var(--font-family);
