@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import Avatar from 'primevue/avatar';
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, watch } from 'vue';
 import useAuthStore from '@/stores/auth';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import { PermissionUser } from '@/types/Types';
@@ -45,13 +45,17 @@ function selectPermission(event: DropdownChangeEvent) {
 	}
 }
 
-onMounted(() => {
-	if (props.permission === 'writer') {
-		selectedPermission.value = 'Edit';
-	} else if (props.permission === 'reader') {
-		selectedPermission.value = 'Read only';
-	}
-});
+watch(
+	() => props.permission,
+	() => {
+		if (props.permission === 'writer') {
+			selectedPermission.value = 'Edit';
+		} else if (props.permission === 'reader') {
+			selectedPermission.value = 'Read only';
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>

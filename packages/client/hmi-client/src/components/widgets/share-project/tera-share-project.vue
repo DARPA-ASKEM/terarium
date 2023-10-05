@@ -138,11 +138,13 @@ async function setPermissions() {
 	selectedUsers.value.forEach(async ({ id }) => {
 		const permission = newSelectedUserPermissions.get(id);
 		if (permission) {
+			const currentPermission = permissions.value?.users.find((u) => u.id === id)?.relationship;
 			if (permission === 'remove') {
-				const currentRelationship = permissions.value?.users.find((u) => u.id === id)?.relationship;
-				if (currentRelationship) {
-					await useProjects().removePermissions(props.project.id, id, currentRelationship);
+				if (currentPermission) {
+					await useProjects().removePermissions(props.project.id, id, currentPermission);
 				}
+			} else if (currentPermission) {
+				await useProjects().updatePermissions(props.project.id, id, currentPermission, permission);
 			} else {
 				await useProjects().setPermissions(props.project.id, id, permission);
 			}
@@ -173,15 +175,14 @@ watch(
 	async () => {
 		existingUsers.value = new Set();
 		users.value = (await getUsers()) ?? [];
-		// getPermissions();
 	},
 	{ immediate: true }
 );
 
 watch(
-	() => visible.value,
+	() => [visible.value, users.value],
 	() => {
-		if (visible.value) {
+		if (visible.value && users.value) {
 			getPermissions();
 		}
 	}

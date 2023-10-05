@@ -8,7 +8,13 @@ import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import { EventType, Project, AssetType, ExternalPublication } from '@/types/Types';
+import {
+	EventType,
+	Project,
+	AssetType,
+	ExternalPublication,
+	PermissionRelationships
+} from '@/types/Types';
 
 /**
  * Create a project
@@ -252,6 +258,26 @@ async function removePermissions(projectId: IProject['id'], userId: string, rela
 	}
 }
 
+async function updatePermissions(
+	projectId: IProject['id'],
+	userId: string,
+	oldRelationship: string,
+	to: string
+): Promise<PermissionRelationships | null> {
+	try {
+		const { status, data } = await API.put(
+			`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`
+		);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
 /**
  * Get the icon associated with an Asset
  */
@@ -285,5 +311,6 @@ export {
 	getPublicationAssets,
 	getPermissions,
 	setPermissions,
-	removePermissions
+	removePermissions,
+	updatePermissions
 };

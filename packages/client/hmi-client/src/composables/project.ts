@@ -166,6 +166,15 @@ export function useProjects() {
 		return ProjectService.removePermissions(projectId, userId, relationship);
 	}
 
+	async function updatePermissions(
+		projectId: IProject['id'],
+		userId: string,
+		oldRelationship: string,
+		to: string
+	) {
+		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
+	}
+
 	return {
 		activeProject,
 		allProjects,
@@ -179,6 +188,7 @@ export function useProjects() {
 		getPublicationAssets,
 		getPermissions,
 		setPermissions,
-		removePermissions
+		removePermissions,
+		updatePermissions
 	};
 }
