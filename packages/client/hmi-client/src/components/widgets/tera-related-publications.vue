@@ -91,7 +91,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 		jobIds.push(profileModelJobId);
 	} else if (props.assetType === ResourceType.DATASET) {
 		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
-		extractionList.push(fetchExtraction(profileDatasetJobId));
+		jobIds.push(profileDatasetJobId);
 	}
 
 	// Create extractions list from job ids
