@@ -195,8 +195,7 @@ export const createParameterMatrix = (
 			}
 		}
 	}
-	console.log(rows);
-	return rows;
+	return { matrix: rows, controllers };
 };
 
 // Creates a M x N matrix where

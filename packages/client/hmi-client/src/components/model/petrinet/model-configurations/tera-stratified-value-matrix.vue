@@ -8,43 +8,51 @@
 				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
 						<th v-if="matrix.length > 1" class="choose-criteria"></th>
-						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
+						<th v-if="controllers.length > 1" class="choose-criteria"></th>
+						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr v-for="(row, i) in matrix" :key="i">
+					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
+						<td
+							v-if="controllers.length > 1 && rowIdx % controllers.length === 0"
+							class="p-frozen-column"
+							:rowspan="matrix.length / controllers.length"
+						>
+							{{ row[0].rowCriteria }}
+						</td>
 						<td v-if="matrix.length > 1" class="p-frozen-column">
 							<template v-if="nodeType === NodeType.State">
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
 							<template v-else>
 								{{ row[0].rowCriteria
-								}}<template v-if="row[0].content.controller !== ''"
-									>, {{ row[0].content.controller }}
+								}}<template v-if="!isEmpty(row[0].content.controller)"
+									>_{{ row[0].content.controller }}
 								</template>
 							</template>
 						</td>
 						<td
-							v-for="(cell, j) in row"
-							:key="j"
+							v-for="(cell, colIdx) in row"
+							:key="colIdx"
 							tabindex="0"
-							:class="editableCellStates[i][j] && 'is-editing'"
-							@keyup.enter="onEnterValueCell(cell.content.id, i, j)"
-							@click="onEnterValueCell(cell.content.id, i, j)"
+							:class="editableCellStates[rowIdx][colIdx] && 'is-editing'"
+							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
+							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
 							<template v-if="cell.content.id">
 								<InputText
-									v-if="editableCellStates[i][j]"
+									v-if="editableCellStates[rowIdx][colIdx]"
 									class="cell-input"
 									v-model.lazy="valueToEdit"
 									v-focus
-									@focusout="updateModelConfigValue(cell.content.id, i, j)"
-									@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, j)"
+									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 								/>
 								<div
 									v-else-if="nodeType === NodeType.State"
 									class="mathml-container"
-									v-html="matrixExpressionsList?.[i]?.[j] ?? '...'"
+									v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
 								/>
 								<div v-else>
 									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
@@ -78,6 +86,7 @@ import { pythonInstance } from '@/python/PyodideController';
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
+	configIndex: number;
 	stratifiedModelType: StratifiedModelType;
 	nodeType: NodeType;
 	shouldEval: boolean;
@@ -89,6 +98,7 @@ const colDimensions: string[] = [];
 const rowDimensions: string[] = [];
 
 const matrix = ref<any>([]);
+const controllers = ref<string[]>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
@@ -128,12 +138,6 @@ watch(
 	}
 );
 
-function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	if (!variableName) return;
-	valueToEdit.value = getMatrixExpression(variableName);
-	editableCellStates.value[rowIdx][colIdx] = true;
-}
-
 // Finds where to get the value within the AMR based on the variable name
 function findOdeObjectLocation(variableName: string): {
 	odeFieldObject: Rate & Initial & ModelParameter;
@@ -167,6 +171,12 @@ function getMatrixExpression(variableName: string) {
 		return odeFieldObject?.expression ?? odeFieldObject?.value;
 	}
 	return variableName;
+}
+
+function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
+	if (!variableName) return;
+	valueToEdit.value = getMatrixExpression(variableName);
+	editableCellStates.value[rowIdx][colIdx] = true;
 }
 
 // See ES2_2a_start in "Eval do not touch"
@@ -211,7 +221,7 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
-		emit('update-configuration', modelConfigurationClone);
+		emit('update-configuration', modelConfigurationClone, props.configIndex);
 		generateMatrix();
 	}
 }
@@ -256,10 +266,13 @@ function generateMatrix(populateDimensions = false) {
 		colDimensions.push(...dimensions);
 	}
 
-	matrix.value =
-		props.nodeType === NodeType.State
-			? createMatrix1D(matrixData)
-			: createParameterMatrix(amr, matrixData, childParameterIds);
+	if (props.nodeType === NodeType.State) {
+		matrix.value = createMatrix1D(matrixData);
+	} else {
+		const matrixAttributes = createParameterMatrix(amr, matrixData, childParameterIds);
+		matrix.value = matrixAttributes.matrix;
+		controllers.value = matrixAttributes.controllers;
+	}
 
 	return matrixData;
 }
