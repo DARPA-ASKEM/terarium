@@ -10,8 +10,8 @@ import software.uncharted.terarium.hmiserver.models.modelservice.StratifyRequest
 
 @FeignClient(name = "model-service", url = "${terarium.dataservice.url}", path = "/model-service")
 public interface ModelServiceProxy {
-	@PostMapping("/petri-to-latex")
-	ResponseEntity<JsonNode> petrinetToLatex(
+	@PostMapping(value = "/petri-to-latex", produces = {"text/plain", "application/*"})
+	ResponseEntity<String> petrinetToLatex(
 		@RequestBody PetriNet content
 	);
 
