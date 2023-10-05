@@ -1,11 +1,12 @@
 import {
-	ExternalPublication,
+	DocumentAsset,
 	Document,
 	Dataset,
 	Model,
 	Artifact,
 	AssetType,
-	Code
+	Code,
+	ExternalPublication
 } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
 
@@ -29,6 +30,7 @@ export type ProjectAssets = {
 	[AssetType.Code]: Code[];
 	[AssetType.Artifacts]: Artifact[];
 	[AssetType.Workflows]: Workflow[];
+	[AssetType.Documents]: DocumentAsset[];
 };
 
 // TODO this is essentially the same as Project from Types.ts, however it references
