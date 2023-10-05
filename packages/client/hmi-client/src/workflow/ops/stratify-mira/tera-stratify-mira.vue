@@ -21,7 +21,7 @@
 		<div class="left-side">
 			<h1>Stratify Model <i class="pi pi-info-circle" /></h1>
 			<p>The model will be stratified with the following settings.</p>
-			<stratificationGroupForm :modelStates="modelStates" />
+			<stratificationGroupForm :modelStates="modelStates" :colour="colour" />
 			<Button label="Add another strata group" size="small" />
 		</div>
 		<div class="right-side">
@@ -67,6 +67,7 @@ const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const modelStates = ref<string[]>([]);
 const teraModelDiagramRef = ref();
+const colour = '00c387';
 
 // Set model, modelConfiguration, modelStates
 watch(

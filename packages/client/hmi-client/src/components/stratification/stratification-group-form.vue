@@ -1,5 +1,5 @@
 <template>
-	<div class="strata-group">
+	<div class="strata-group" style="{border-left: 8px solid {{props.colour}};}">
 		<div class="sub-header">
 			<label for="strata-name">Cartesian product</label>
 			<InputSwitch v-model="cartesianProduct" />
@@ -39,6 +39,7 @@ import InputSwitch from 'primevue/inputswitch';
 
 const props = defineProps<{
 	modelStates: string[];
+	colour: string; // TOM TODO: gardrail this
 }>();
 
 const strataName = ref('');
@@ -55,7 +56,6 @@ const cartesianProduct = ref<boolean>(true);
 	justify-content: center;
 	align-items: flex-start;
 	border-radius: 0.375rem;
-	border-left: 8px solid #00c387;
 	background: #fff;
 	/* Shadow/medium */
 	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
