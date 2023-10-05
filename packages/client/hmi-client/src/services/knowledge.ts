@@ -44,14 +44,15 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @return {Promise<Boolean>}
  */
 export const latexToAMR = async (
-	latex: string[],
+	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
 ): Promise<Boolean> => {
 	try {
+		const body = { format: 'latex', framework, modelId, equations };
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
-			`/knowledge/latex-to-amr/?framework=${framework}&modelId=${modelId}`,
-			latex
+			`/knowledge/equations-to-model`,
+			body
 		);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
