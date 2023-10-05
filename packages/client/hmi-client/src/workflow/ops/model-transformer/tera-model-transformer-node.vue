@@ -12,9 +12,10 @@ import { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { onMounted, ref, watch } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<ModelTransformerState>;
 }>();
 
 const model = ref<Model | null>(null);

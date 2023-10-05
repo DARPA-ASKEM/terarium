@@ -179,6 +179,23 @@ export const getUnstratifiedParameters = (amr: Model) => {
 	return map;
 };
 
+// Holds all points that have the parameter
+export const filterParameterLocations = (
+	amr: Model,
+	transitionMatrixData: any[],
+	parameterIds: string[]
+) =>
+	transitionMatrixData.filter((d) => {
+		// Check if the transition's expression include the usage
+		const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
+		if (!rate) return false;
+		// FIXME: should check through sympy to be more accurate
+		for (let i = 0; i < parameterIds.length; i++) {
+			if (rate.expression.includes(parameterIds[i])) return true;
+		}
+		return false;
+	});
+
 /**
  * Given an MIRA AMR, extract and compute a presentation-layer data format
  */

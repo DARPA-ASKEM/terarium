@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
-import { AssetType, Document, DocumentAsset } from '@/types/Types';
+import { AssetType, Document, ExternalPublication } from '@/types/Types';
 import { addDocuments } from '@/services/external';
 import dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';
@@ -41,7 +41,7 @@ const projectsNames = computed(() => useProjects().allProjects?.value?.map((p) =
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
-	const body: DocumentAsset = {
+	const body: ExternalPublication = {
 		xdd_uri: props.selectedDocument.gddId,
 		title: props.selectedDocument.title
 	};

@@ -1,4 +1,13 @@
-import { DocumentAsset, Document, Dataset, Model, Artifact, AssetType, Code } from '@/types/Types';
+import {
+	DocumentAsset,
+	Document,
+	Dataset,
+	Model,
+	Artifact,
+	AssetType,
+	Code,
+	ExternalPublication
+} from '@/types/Types';
 import { Workflow } from '@/types/workflow';
 
 export enum ProjectPages {
@@ -15,12 +24,13 @@ export const isProjectAssetTypes = (type: AssetType | string): boolean =>
 // Workflows class referenced here is only implemented on the front end and not
 // driven by the TypeScrypt generation on the backend. This should be fixed.
 export type ProjectAssets = {
-	[AssetType.Publications]: DocumentAsset[];
+	[AssetType.Publications]: ExternalPublication[];
 	[AssetType.Models]: Model[];
 	[AssetType.Datasets]: Dataset[];
 	[AssetType.Code]: Code[];
 	[AssetType.Artifacts]: Artifact[];
 	[AssetType.Workflows]: Workflow[];
+	[AssetType.Documents]: DocumentAsset[];
 };
 
 // TODO this is essentially the same as Project from Types.ts, however it references

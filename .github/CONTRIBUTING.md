@@ -89,24 +89,12 @@ tag.
 
 ---
 
-## Debugging Backend
+## Debugging in IntelliJ
 
-### IntelliJ
+### Back End
 
-The easiest way to debug the back end is to use the auto-created debug profile in IntelliJ. However first you'll have to
-create a new run config to decrypt the application secrets and then modify the default run profile to include it.
 
-1) Create a new run profile named "Decrypt" which runs the `hmiServerDev decrypt` command:
-   ![Decrypt run config](decrypt.png)
-2) In your default run profile for the hmi-server, add a "Before Launch" step to run your previously created config.
-   Note that you may need to manually run the Decrypt run profile once for IntelliJ to pick it
-   up: ![before Launch](beforeLaunch.png)
-3) Now when you run your run/debug profile, the secrets will be decrypted correctly.
 
-### Other IDEs
-
-As previously mentioned you are able to start up the hmi-server by running the `hmiServerDev` script located in the main
-directory. Once launched you should be able to attach your favourite debugger to the process
 
 ## Application Secrets
 
@@ -121,7 +109,7 @@ brew install ansible
 ```
 
 * There is an ansible encrypted vault located
-  in `packages/services/hmi-server/src/main/resources/application-secrets.properties.encrypted`
+  in `packages/server/src/main/resources/application-secrets.properties.encrypted`
 * These instructions assume you have the vault password in your home directory in a file named `askem-vault-id.txt`
 * You can find this file in the **ASKEM TERArium (Shared External)** drive on Google Drive
 * There is a [husky script](.husky/secretsVerification.sh) which ensures that the secrets file is not committed
@@ -135,7 +123,7 @@ brew install ansible
 ```
 
 2. Notice that in the resources directory there is now a `application-secrets.properties` file. Add the secrets that you
-   want to this file, making sure to add the %dev prefix to everything as you do.
+   want to this file.
 3. Re-encrypt the file to commit via the command
 
 ```shell

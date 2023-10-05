@@ -40,7 +40,7 @@ const workflow: Workflow = {
 const operationLib = new Map<string, Operation>();
 operationLib.set('add', addOperation);
 
-const runNode = (node: WorkflowNode): void => {
+const runNode = (node: WorkflowNode<any>): void => {
 	const opType = node.operationType;
 	const operation = operationLib.get(opType);
 
@@ -66,7 +66,7 @@ const plusNode = (id: string) =>
 		width: 0,
 		height: 0,
 		statusCode: WorkflowStatus.INVALID
-	} as WorkflowNode);
+	} as WorkflowNode<any>);
 
 describe('basic tests to make sure it all works', () => {
 	it('simple workflow test (1 + 2) + (3 + 4)', () => {

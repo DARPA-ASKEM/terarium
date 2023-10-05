@@ -5,53 +5,62 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="odeType !== OdeSemantic.Initials" class="p-datatable-thead">
+				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
-						<th class="choose-criteria"></th>
-						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
+						<th v-if="matrix.length > 1" class="choose-criteria"></th>
+						<th v-if="!isEmpty(controllers)" class="choose-criteria"></th>
+						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<template v-for="(row, i) in matrix" :key="i">
-						<tr v-for="(controller, j) in controllers" :key="j">
-							<td class="p-frozen-column">
-								<template v-if="odeType === OdeSemantic.Initials">
-									{{ Object.values(row[0].rowCriteria).join(' / ') }}
+					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
+						<td
+							v-if="!isEmpty(controllers) && rowIdx % controllers.length === 0"
+							class="p-frozen-column"
+							:rowspan="matrix.length / controllers.length"
+						>
+							{{ row[0].rowCriteria }}
+						</td>
+						<td v-if="matrix.length > 1" class="p-frozen-column">
+							<template v-if="odeType === OdeSemantic.Initials">
+								{{ Object.values(row[0].rowCriteria).join(' / ') }}
+							</template>
+							<template v-else>
+								{{ row[0].rowCriteria
+								}}<template v-if="!isEmpty(row[0].content.controller)"
+									>_{{ row[0].content.controller }}
 								</template>
-								<template v-else>
-									{{ row[0].rowCriteria
-									}}<template v-if="controller !== ''">, {{ controller }} </template>
-								</template>
-							</td>
-							<td
-								v-for="(cell, k) in row"
-								:key="k"
-								tabindex="0"
-								@keyup.enter="onEnterValueCell(cell?.content?.id, i, k)"
-								@click="onEnterValueCell(cell?.content?.id, i, k)"
-							>
-								<template v-if="cell.content.id">
-									<InputText
-										v-if="editableCellStates[i][k]"
-										class="cell-input"
-										v-model.lazy="valueToEdit"
-										v-focus
-										@focusout="updateModelConfigValue(cell.content.id, i, k)"
-										@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, k)"
-									/>
-									<div
-										v-else-if="odeType !== OdeSemantic.Parameters"
-										class="mathml-container"
-										v-html="matrixExpressionsList?.[i]?.[k] ?? '...'"
-									/>
-									<div v-else>
-										{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
-									</div>
-								</template>
-								<span v-else class="not-allowed">N/A</span>
-							</td>
-						</tr>
-					</template>
+							</template>
+						</td>
+						<td
+							v-for="(cell, colIdx) in row"
+							:key="colIdx"
+							tabindex="0"
+							:class="editableCellStates[rowIdx][colIdx] && 'is-editing'"
+							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
+							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
+						>
+							<template v-if="cell.content.id">
+								<InputText
+									v-if="editableCellStates[rowIdx][colIdx]"
+									class="cell-input"
+									v-model.lazy="valueToEdit"
+									v-focus
+									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+								/>
+								<div
+									v-else-if="odeType !== OdeSemantic.Parameters"
+									class="mathml-container"
+									v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+								/>
+								<div v-else>
+									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+								</div>
+							</template>
+							<span v-else class="not-allowed">N/A</span>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>
@@ -65,9 +74,14 @@ import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-se
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import {
 	getMiraAMRPresentationData,
-	getUnstratifiedParameters
+	getUnstratifiedParameters,
+	filterParameterLocations
 } from '@/model-representation/petrinet/mira-petri';
-import { createMatrix1D, createParameterOrTransitionMatrix } from '@/utils/pivot';
+import {
+	createMatrix1D,
+	createParameterMatrix,
+	createParameterOrTransitionMatrix
+} from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
@@ -76,6 +90,7 @@ import { OdeSemantic } from '@/types/common';
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
+	configIndex: number;
 	stratifiedModelType: StratifiedModelType;
 	odeType: OdeSemantic;
 	shouldEval: boolean;
@@ -100,11 +115,10 @@ const parametersValueMap = computed(() =>
 	}, {})
 );
 
-// const initialsList = computed(() => {
-// 	const model = props.modelConfiguration.configuration as Model;
-// 	const initials = model.semantics?.ode.initials;
-// 	return initials?.map((initial) => initial.target);
-// });
+// Makes cell inputs focus once they appear
+const vFocus = {
+	mounted: (el) => el.focus()
+};
 
 watch(
 	() => [matrix.value, props.shouldEval],
@@ -127,16 +141,6 @@ watch(
 		matrixExpressionsList.value = output;
 	}
 );
-
-// Makes cell inputs focus once they appear
-const vFocus = {
-	mounted: (el) => el.focus()
-};
-
-function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	valueToEdit.value = getMatrixExpression(variableName);
-	editableCellStates.value[rowIdx][colIdx] = true;
-}
 
 // Finds where to get the value within the AMR based on the variable name
 function findOdeObjectLocation(variableName: string): {
@@ -173,26 +177,16 @@ function getMatrixExpression(variableName: string) {
 	return variableName;
 }
 
+function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
+	if (!variableName) return;
+	valueToEdit.value = getMatrixExpression(variableName);
+	editableCellStates.value[rowIdx][colIdx] = true;
+}
+
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	const expressionBase = getMatrixExpression(variableName);
-	// const expressionEvalTest = await pythonInstance.parseExpression(expressionBase);
-	// console.log('evaluted', expressionBase, expressionEvalTest.freeSymbols);
-
-	// Strip out initials the free symbols
-	// const freeParamSymbols = expressionEvalTest.freeSymbols.filter(
-	// 	(s) => initialsList.value?.includes(s) === false
-	// );
-	// if (freeParamSymbols.length === 1) {
-	// 	return freeParamSymbols[0];
-	// }
-
-	/*
-	console.log('debug', initialsList.value);
-	let simplifiedStr = await pythonInstance.removeExpressions(expressionBase, initialsList.value as string[]);
-	console.log('\tSimplified expr', expressionBase, simplifiedStr);
-	*/
 
 	if (shouldEvaluate) {
 		const expressionEval = await pythonInstance.evaluateExpression(
@@ -231,7 +225,7 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
-		emit('update-configuration', modelConfigurationClone);
+		emit('update-configuration', modelConfigurationClone, props.configIndex);
 		generateMatrix();
 	}
 }
@@ -258,20 +252,11 @@ function generateMatrix(populateDimensions = false) {
 
 		// IDs to find within the rates
 		childParameterIds = paramsMap.get(props.id) as string[];
-
 		// Holds all points that have the parameter
-		matrixData = transitionMatrixData.filter((d) => {
-			// Check if the transition's expression include the usage
-			const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
-			if (!rate) return false;
-
-			// FIXME: should check through sympy to be more accurate
-			if (rate.expression.includes(props.id)) return true;
-			for (let i = 0; i < childParameterIds.length; i++) {
-				if (rate.expression.includes(childParameterIds[i])) return true;
-			}
-			return false;
-		});
+		matrixData = filterParameterLocations(amr, transitionMatrixData, [
+			...childParameterIds,
+			props.id
+		]);
 	} else if (props.odeType === OdeSemantic.Rates) {
 		matrixData = transitionMatrixData.filter(({ base }) => base === props.id);
 	}
@@ -291,18 +276,17 @@ function generateMatrix(populateDimensions = false) {
 		colDimensions.push(...dimensions);
 	}
 
-	let matrixAttributes: any;
-
 	if (props.odeType === OdeSemantic.Initials) {
-		matrixAttributes = createMatrix1D(matrixData);
+		matrix.value = createMatrix1D(matrixData);
 	} else if (props.odeType === OdeSemantic.Parameters) {
-		matrixAttributes = createParameterOrTransitionMatrix(matrixData, amr, childParameterIds);
+		const matrixAttributes = createParameterMatrix(amr, matrixData, childParameterIds);
+		matrix.value = matrixAttributes.matrix;
+		controllers.value = matrixAttributes.controllers;
 	} else if (props.odeType === OdeSemantic.Rates) {
-		matrixAttributes = createParameterOrTransitionMatrix(matrixData, amr);
+		const matrixAttributes = createParameterOrTransitionMatrix(matrixData, amr);
+		matrix.value = matrixAttributes.matrix;
+		controllers.value = matrixAttributes.controllers;
 	}
-
-	matrix.value = matrixAttributes.matrix;
-	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];
 
 	return matrixData;
 }
@@ -311,8 +295,9 @@ function configureMatrix() {
 	const matrixData = generateMatrix(true);
 	if (isEmpty(matrixData)) return;
 
-	// Matrix for editable cell states
-	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
+	for (let i = 0; i < matrix.value.length; i++) {
+		editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
+	}
 }
 
 onMounted(() => {
@@ -345,6 +330,10 @@ onMounted(() => {
 
 .p-datatable .p-datatable-thead > tr > th {
 	padding-bottom: 1rem;
+}
+
+.p-datatable .p-datatable-tbody > tr > td.is-editing {
+	padding: 0;
 }
 
 .editable-cell {

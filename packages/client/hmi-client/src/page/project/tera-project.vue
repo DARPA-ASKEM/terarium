@@ -171,7 +171,7 @@ const router = useRouter();
 
 const dialogIsOpened = ref(false);
 
-const workflowNode = ref<WorkflowNode | null>(null);
+const workflowNode = ref<WorkflowNode<any> | null>(null);
 
 workflowEventBus.on('drilldown', (payload: any) => {
 	workflowNode.value = payload;
