@@ -52,9 +52,9 @@
 		<!--Full screen modal-->
 		<Teleport to="body">
 			<tera-fullscreen-modal v-if="dialogIsOpened" @on-close-clicked="dialogIsOpened = false">
-				<template #header
-					><h2>{{ workflowNode?.displayName }}</h2></template
-				>
+				<template #header>
+					<h2>{{ workflowNode?.displayName }}</h2>
+				</template>
 				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
