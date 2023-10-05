@@ -62,9 +62,11 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { ResourceType } from '@/types/common';
 import { profileDataset, profileModel, fetchExtraction, alignModel } from '@/services/knowledge';
+import { PollerResult } from '@/api/api';
+import { isEmpty } from 'lodash';
 
 const props = defineProps<{
-	publications?: Array<{ name: string; id: string | undefined }>;
+	publications?: Array<{ name: string | undefined; id: string | undefined }>;
 	relatedPublications?: Array<{ name: string; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
@@ -75,34 +77,36 @@ const visible = ref(false);
 const selectedResources = ref();
 
 const sendForEnrichments = async (/* _selectedResources */) => {
-	// 1. Send asset profile request
-	let jobId = null;
+	const jobIds: (string | null)[] = [];
+	const selectedResourceId = selectedResources.value?.id ?? null;
+	const extractionList: Promise<PollerResult<any>>[] = [];
 
+	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === ResourceType.MODEL) {
-		jobId = await profileModel(props.assetId, selectedResources?.value?.id ?? null);
+		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
+		if (selectedResourceId) {
+			const alignJobId = await alignModel(props.assetId, selectedResourceId);
+			jobIds.push(alignJobId);
+		}
+		jobIds.push(profileModelJobId);
 	} else if (props.assetType === ResourceType.DATASET) {
-		jobId = await profileDataset(props.assetId, selectedResources?.value?.id ?? null);
+		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
+		extractionList.push(fetchExtraction(profileDatasetJobId));
 	}
-	if (!jobId) return;
 
-	// 2. Poll
-	await fetchExtraction(jobId);
+	// Create extractions list from job ids
+	jobIds.forEach((jobId) => {
+		if (jobId) {
+			extractionList.push(fetchExtraction(jobId));
+		}
+	});
+
+	if (isEmpty(extractionList)) return;
+
+	// Poll all extractions
+	await Promise.all(extractionList);
+
 	emit('enriched');
-
-	// 3. Align models after fetching enrichments
-	await sendToAlignModel(props.assetId, selectedResources?.value?.id);
-};
-
-const sendToAlignModel = async (modelId: string, documentId: string) => {
-	if (modelId !== ResourceType.MODEL || !documentId) {
-		return;
-	}
-
-	const jobId = await alignModel(modelId, documentId);
-	if (!jobId) return;
-
-	await fetchExtraction(jobId);
-	emit('aligned');
 };
 </script>
 

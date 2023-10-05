@@ -141,9 +141,9 @@ public class KnowledgeController {
 	@PostMapping("/profile-model/{model_id}")
 	public ResponseEntity<JsonNode> postProfileModel(
 		@PathVariable("model_id") String modelId,
-		@RequestParam("artifact_id") String artifactId
+		@RequestParam("document_id") String documentId
 	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, artifactId).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, documentId).getBody());
 	}
 
 	;
@@ -161,6 +161,23 @@ public class KnowledgeController {
 		@RequestParam("artifact_id") String artifactId
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, artifactId).getBody());
+	}
+
+	;
+
+	/**
+	 * Profile a model
+	 *
+	 * @param modelId    (String): The ID of the model to profile
+	 * @param artifactId (String): The text of the document to profile
+	 * @return the profiled model
+	 */
+	@PostMapping("/link-amr")
+	public ResponseEntity<JsonNode> postLinkAmr(
+		@RequestParam("document_id") String documentId,
+		@RequestParam("model_id") String modelId
+	) {
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postLinkAmr(documentId, modelId).getBody());
 	}
 
 	;

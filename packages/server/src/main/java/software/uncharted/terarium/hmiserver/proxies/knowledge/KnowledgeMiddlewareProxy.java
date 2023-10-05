@@ -77,12 +77,12 @@ public interface KnowledgeMiddlewareProxy {
 	 *
 	 * @return the profiled model
 	 * @param    modelId (String): The ID of the model to profile
-	 * @param    artifactId (String): The text of the document to profile
+	 * @param    documentId (String): The ID of the document to profile
 	 */
 	@PostMapping("/profile_model/{model_id}")
 	ResponseEntity<JsonNode> postProfileModel(
 		@PathVariable("model_id") String modelId,
-		@RequestParam("paper_artifact_id") String artifactId
+		@RequestParam("document_id") String documentId
 	);
 
 	/**
@@ -128,5 +128,11 @@ public interface KnowledgeMiddlewareProxy {
 		@RequestParam("model") String framework,
 		@RequestParam("model_id") String modelId,
 		@RequestBody List<String> equations
+	);
+
+	@PostMapping("link_amr")
+	ResponseEntity<JsonNode> postLinkAmr(
+		@RequestParam("document_id") String documentId,
+		@RequestParam("model_id") String modelId
 	);
 }

@@ -418,7 +418,7 @@ import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { Artifact, Model, ModelConfiguration } from '@/types/Types';
+import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
@@ -484,14 +484,19 @@ const observables = computed(() => props.model?.semantics?.ode?.observables ?? [
 const publications = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.artifacts.filter((artifact: Artifact) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
-					artifact.fileNames[0].endsWith(extension)
+			.activeProject.value?.assets?.documents.filter((document: DocumentAsset) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
+					(extension) => {
+						if (document.fileNames && !isEmpty(document.fileNames)) {
+							return document.fileNames[0]?.endsWith(extension);
+						}
+						return false;
+					}
 				)
 			)
-			.map((artifact: Artifact) => ({
-				name: artifact.name,
-				id: artifact.id
+			.map((document: DocumentAsset) => ({
+				name: document.name,
+				id: document.id
 			})) ?? []
 );
 const relatedPublications = computed(() => []);
