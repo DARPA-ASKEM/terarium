@@ -8,14 +8,14 @@
 				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
 						<th v-if="matrix.length > 1" class="choose-criteria"></th>
-						<th v-if="controllers.length > 1" class="choose-criteria"></th>
+						<th v-if="!isEmpty(controllers)" class="choose-criteria"></th>
 						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
 						<td
-							v-if="controllers.length > 1 && rowIdx % controllers.length === 0"
+							v-if="!isEmpty(controllers) && rowIdx % controllers.length === 0"
 							class="p-frozen-column"
 							:rowspan="matrix.length / controllers.length"
 						>
