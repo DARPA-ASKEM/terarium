@@ -49,10 +49,9 @@ export const latexToAMR = async (
 	modelId?: string
 ): Promise<Boolean> => {
 	try {
-		const body = { format: 'latex', framework, modelId, equations };
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
 			`/knowledge/equations-to-model`,
-			body
+			{ format: 'latex', framework, modelId, equations }
 		);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
