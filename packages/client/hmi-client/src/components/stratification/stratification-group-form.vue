@@ -15,8 +15,8 @@
 				<MultiSelect
 					id="variables-select"
 					v-model="selectedVariables"
-					:options="variables"
-					placeholder="S, E, I, B, V"
+					:options="props.modelStates"
+					placeholder="Model states"
 					display="chip"
 				></MultiSelect>
 			</div>
@@ -37,8 +37,11 @@ import InputText from 'primevue/inputtext';
 import MultiSelect from 'primevue/multiselect';
 import InputSwitch from 'primevue/inputswitch';
 
+const props = defineProps<{
+	modelStates: string[];
+}>();
+
 const strataName = ref('');
-const variables = ['S', 'E', 'I', 'B', 'V'];
 const selectedVariables = ref<string[]>([]);
 const labels = ref('');
 const cartesianProduct = ref<boolean>(true);

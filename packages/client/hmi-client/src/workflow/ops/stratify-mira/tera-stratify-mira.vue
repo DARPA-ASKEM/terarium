@@ -21,7 +21,7 @@
 		<div class="left-side">
 			<h1>Stratify Model <i class="pi pi-info-circle" /></h1>
 			<p>The model will be stratified with the following settings.</p>
-			<stratificationGroupForm />
+			<stratificationGroupForm :modelStates="modelStates" />
 			<Button label="Add another strata group" size="small" />
 		</div>
 		<div class="right-side">
@@ -51,6 +51,7 @@ import { Model, ModelConfiguration } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
+import { WorkflowNode } from '@/types/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -64,9 +65,10 @@ enum SimulateTabs {
 const activeTab = ref(SimulateTabs.wizard);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
+const modelStates = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 
-// Set model and model configuration
+// Set model, modelConfiguration, modelStates
 watch(
 	() => props.node.inputs[0],
 	async () => {
@@ -75,6 +77,16 @@ watch(
 			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
 			if (modelConfiguration.value) {
 				model.value = await getModel(modelConfiguration.value.modelId);
+
+				const modelColumnNameOptions: string[] =
+					modelConfiguration.value.configuration.model.states.map((state) => state.id);
+				// add observables
+				if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+					modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+						modelColumnNameOptions.push(o.id);
+					});
+				}
+				modelStates.value = modelColumnNameOptions;
 			}
 		}
 	},
