@@ -313,7 +313,7 @@ const props = defineProps({
 const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents.filter((document: DocumentAsset) =>
+			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
 					(extension) => {
 						if (document.fileNames && !isEmpty(document.fileNames)) {
