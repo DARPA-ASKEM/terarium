@@ -42,13 +42,13 @@ public class RebacUser extends RebacObject {
 
 	public String getPermissionFor(RebacObject rebacObject) throws Exception {
 		if (reBACService.isCreator(getSchemaObject(), rebacObject.getSchemaObject())) {
-			return "creator";
+			return Schema.Relationship.CREATOR.toString();
 		} else if (canAdministrate(rebacObject)) {
-			return "admin";
+			return Schema.Relationship.ADMIN.toString();
 		} else if (canWrite(rebacObject)) {
-			return "writer";
+			return Schema.Relationship.WRITER.toString();
 		} else if (canRead(rebacObject)) {
-			return "reader";
+			return Schema.Relationship.READER.toString();
 		}
 		return "none";
 	}
