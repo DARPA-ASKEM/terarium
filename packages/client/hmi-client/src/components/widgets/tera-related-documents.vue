@@ -8,7 +8,24 @@
 				{{ document.name }}
 			</li>
 		</ul>
-		<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
+		<Button
+			label="Enrich Description"
+			text
+			@click="
+				dialogType = 'enrich';
+				visible = true;
+			"
+		/>
+		<Button
+			v-if="props.assetType === ResourceType.MODEL"
+			label="Align Model"
+			text
+			:loading="aligning"
+			@click="
+				dialogType = 'align';
+				visible = true;
+			"
+		/>
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -43,9 +60,13 @@
 			<template #footer>
 				<Button class="secondary-button" label="Cancel" @click="visible = false" />
 				<Button
-					label="Use these resources to enrich descriptions"
+					:label="
+						dialogType === 'enrich'
+							? 'Use these resources to enrich descriptions'
+							: 'Use these resources to align the model'
+					"
 					@click="
-						sendForEnrichments();
+						dialogType === 'enrich' ? sendForEnrichments() : sendToAlignModel();
 						visible = false;
 					"
 				/>
@@ -61,7 +82,13 @@ import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { ResourceType } from '@/types/common';
-import { profileDataset, profileModel, fetchExtraction, alignModel } from '@/services/knowledge';
+import {
+	profileDataset,
+	profileModel,
+	fetchExtraction,
+	alignModel,
+	pdfExtractions
+} from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
 
@@ -75,6 +102,8 @@ const props = defineProps<{
 const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
+const dialogType = ref<'enrich' | 'align'>('enrich');
+const aligning = ref(false);
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	const jobIds: (string | null)[] = [];
@@ -84,10 +113,6 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === ResourceType.MODEL) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
-		if (selectedResourceId) {
-			const alignJobId = await alignModel(props.assetId, selectedResourceId);
-			jobIds.push(alignJobId);
-		}
 		jobIds.push(profileModelJobId);
 	} else if (props.assetType === ResourceType.DATASET) {
 		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
@@ -107,6 +132,24 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	await Promise.all(extractionList);
 
 	emit('enriched');
+};
+
+const sendToAlignModel = async () => {
+	const selectedResourceId = selectedResources.value?.id ?? null;
+	if (props.assetType === ResourceType.MODEL && selectedResourceId) {
+		// fetch pdf extractions and link amr synchronously
+		aligning.value = true;
+		const pdfExtractionsJobId = await pdfExtractions(selectedResourceId);
+		if (!pdfExtractionsJobId) return;
+		await fetchExtraction(pdfExtractionsJobId);
+
+		const linkAmrJobId = await alignModel(props.assetId, selectedResourceId);
+		if (!linkAmrJobId) return;
+		await fetchExtraction(linkAmrJobId);
+
+		aligning.value = false;
+		emit('enriched');
+	}
 };
 </script>
 

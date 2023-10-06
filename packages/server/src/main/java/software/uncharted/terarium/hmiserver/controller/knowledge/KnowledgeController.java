@@ -109,13 +109,13 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/pdf-extractions")
 	public ResponseEntity<JsonNode> postPDFExtractions(
-		@RequestParam("artifact_id") String artifactId,
+		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 		@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description
 	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(artifactId, annotateSkema, annotateMIT, name, description).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(documentId, annotateSkema, annotateMIT, name, description).getBody());
 	}
 
 	;
