@@ -24,7 +24,7 @@ import useAuthStore from '@/stores/auth';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import { PermissionUser } from '@/types/Types';
 
-const props = defineProps<{ user: PermissionUser; isAuthor: boolean; permission?: string }>();
+const props = defineProps<{ user: PermissionUser; permission?: string }>();
 const emit = defineEmits(['select-permission']);
 
 const auth = useAuthStore();
@@ -34,13 +34,14 @@ const permissions = ref(['Edit', 'Read only', 'Remove access']);
 const userInitials = computed(() =>
 	props.user.firstName.charAt(0).concat(props.user.firstName.charAt(0))
 );
+const isAuthor = computed(() => props.permission === 'creator');
 
 function isYou() {
 	return auth.name === props.user.firstName ? '(you)' : '';
 }
 
 function selectPermission(event: DropdownChangeEvent) {
-	if (!props.isAuthor) {
+	if (!isAuthor.value) {
 		emit('select-permission', event.value);
 	}
 }

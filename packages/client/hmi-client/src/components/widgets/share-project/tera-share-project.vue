@@ -24,7 +24,6 @@
 					<li v-for="(user, i) in selectedUsers" :key="i">
 						<tera-user-card
 							:user="user"
-							:is-author="isUserAuthor(user)"
 							:permission="existingUserPermissions.get(user.id)"
 							@select-permission="(permission) => selectNewPermissionForUser(permission, user.id)"
 						/>
@@ -151,17 +150,6 @@ async function setPermissions() {
 		}
 	});
 	newSelectedUserPermissions.clear();
-}
-
-function isUserAuthor(user: PermissionUser) {
-	if (
-		permissions.value?.users.find(
-			(pUser) => pUser.id === user.id && pUser.relationship === 'creator'
-		)
-	) {
-		return true;
-	}
-	return false;
 }
 
 async function getPermissions() {
