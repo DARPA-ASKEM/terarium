@@ -8,6 +8,7 @@ import java.util.List;
 public class PermissionRelationships {
 	private List<Group> groups = new ArrayList<>();
 	private List<User> users = new ArrayList<>();
+	private List<Project>projects = new ArrayList<>();
 
 	public void addUser(String id, Schema.Relationship relationship) {
 		users.add(new User(id, relationship.toString()));
@@ -17,11 +18,19 @@ public class PermissionRelationships {
 		groups.add(new Group(id, relationship.toString()));
 	}
 
+	public void addProject(String id, Schema.Relationship relationship) {
+		projects.add(new Project(id, relationship.toString()));
+	}
+
 	public List<Group> getGroups() {
 		return groups;
 	}
 
 	public List<User> getUsers() {
 		return users;
+	}
+
+	public List<Project> getProjects() {
+		return projects;
 	}
 }
