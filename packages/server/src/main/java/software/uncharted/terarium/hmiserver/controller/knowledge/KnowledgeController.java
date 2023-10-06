@@ -152,15 +152,15 @@ public class KnowledgeController {
 	 * Profile a dataset
 	 *
 	 * @param datasetId  (String): The ID of the dataset to profile
-	 * @param artifactId (String): The ID of the artifact to profile
+	 * @param documentId (String): The ID of the document to profile
 	 * @return the profiled dataset
 	 */
 	@PostMapping("/profile-dataset/{dataset_id}")
 	public ResponseEntity<JsonNode> postProfileDataset(
 		@PathVariable("dataset_id") String datasetId,
-		@RequestParam("artifact_id") String artifactId
+		@RequestParam("document_id") String documentId
 	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, artifactId).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
 	}
 
 	;
