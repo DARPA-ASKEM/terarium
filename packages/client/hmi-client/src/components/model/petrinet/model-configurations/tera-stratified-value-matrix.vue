@@ -71,14 +71,9 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
-import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
-import {
-	getMiraAMRPresentationData,
-	getUnstratifiedParameters,
-	filterParameterLocations
-} from '@/model-representation/petrinet/mira-petri';
-import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
-import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
+import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
+import {} from '@/utils/pivot';
+import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
@@ -93,9 +88,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-configuration']);
-
-const colDimensions: string[] = [];
-const rowDimensions: string[] = [];
 
 const matrix = ref<any>([]);
 const controllers = ref<string[]>([]);
@@ -222,64 +214,20 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
 		emit('update-configuration', modelConfigurationClone, props.configIndex);
-		generateMatrix();
+		generateMatrix(props.modelConfiguration.configuration, props.id, props.nodeType);
 	}
-}
-
-function generateMatrix(populateDimensions = false) {
-	const amr: Model = props.modelConfiguration.configuration;
-
-	const { stateMatrixData, transitionMatrixData } =
-		props.stratifiedModelType === StratifiedModelType.Catlab
-			? getCatlabAMRPresentationData(amr)
-			: getMiraAMRPresentationData(amr);
-
-	// Get only the states/transitions that are mapped to the base model
-	let matrixData: any[] = [];
-	let childParameterIds: string[] = [];
-
-	if (props.nodeType === NodeType.State) {
-		matrixData = stateMatrixData.filter(({ base }) => base === props.id);
-	} else {
-		const paramsMap = getUnstratifiedParameters(amr);
-		if (!paramsMap.has(props.id)) return [];
-
-		// IDs to find within the rates
-		childParameterIds = paramsMap.get(props.id) as string[];
-		// Holds all points that have the parameter
-		matrixData = filterParameterLocations(amr, transitionMatrixData, [
-			...childParameterIds,
-			props.id
-		]);
-	}
-
-	if (isEmpty(matrixData)) return matrixData;
-
-	if (populateDimensions) {
-		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-			delete d.id;
-			delete d.base;
-			return Object.keys(d);
-		})[0];
-
-		rowDimensions.push(...dimensions);
-		colDimensions.push(...dimensions);
-	}
-
-	if (props.nodeType === NodeType.State) {
-		matrix.value = createMatrix1D(matrixData);
-	} else {
-		const matrixAttributes = createParameterMatrix(amr, matrixData, childParameterIds);
-		matrix.value = matrixAttributes.matrix;
-		controllers.value = matrixAttributes.controllers;
-	}
-
-	return matrixData;
 }
 
 function configureMatrix() {
-	const matrixData = generateMatrix(true);
-	if (isEmpty(matrixData)) return;
+	const matrixAttributes = generateMatrix(
+		props.modelConfiguration.configuration,
+		props.id,
+		props.nodeType
+	);
+	if (!matrixAttributes) return;
+
+	matrix.value = matrixAttributes.matrix;
+	controllers.value = matrixAttributes.controllers;
 
 	for (let i = 0; i < matrix.value.length; i++) {
 		editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
