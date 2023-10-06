@@ -1,5 +1,16 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
+export interface StratifyGroup {
+	borderColour: string;
+	name: string;
+	selectedVariables: string[];
+	groupLabels: string;
+}
+
+export interface StratifyOperationStateMira {
+	strataGroups: StratifyGroup[];
+}
+
 export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
 	displayName: 'Stratify MIRA',
@@ -7,5 +18,18 @@ export const StratifyMiraOperation: Operation = {
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'model' }],
 	isRunnable: false,
-	action: () => {}
+	action: () => {},
+	initState: () => {
+		const init: StratifyOperationStateMira = {
+			strataGroups: [
+				{
+					borderColour: '#c300a6',
+					name: '',
+					selectedVariables: [],
+					groupLabels: ''
+				}
+			]
+		};
+		return init;
+	}
 };

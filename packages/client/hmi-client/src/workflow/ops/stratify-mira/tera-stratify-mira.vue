@@ -21,8 +21,13 @@
 		<div class="left-side">
 			<h1>Stratify Model <i class="pi pi-info-circle" /></h1>
 			<p>The model will be stratified with the following settings.</p>
-			<stratificationGroupForm :modelStates="modelStates" :colour="colour" />
-			<Button label="Add another strata group" size="small" />
+			<stratificationGroupForm
+				v-for="(cfg, index) in node.state.strataGroups"
+				:key="index"
+				:modelStates="modelStates"
+				:config="cfg"
+			/>
+			<Button label="Add another strata group" size="small" @click="addGroupForm" />
 		</div>
 		<div class="right-side">
 			<tera-model-diagram
@@ -44,6 +49,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { watch, ref } from 'vue';
 import Button from 'primevue/button';
 import stratificationGroupForm from '@/components/stratification/stratification-group-form.vue';
@@ -52,9 +58,11 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
+import { workflowEventBus } from '@/services/workflow';
+import { StratifyOperationStateMira, StratifyGroup } from './stratify-mira-operation';
 
 const props = defineProps<{
-	node: WorkflowNode<any>;
+	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
 
 enum SimulateTabs {
@@ -67,7 +75,23 @@ const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const modelStates = ref<string[]>([]);
 const teraModelDiagramRef = ref();
-const colour = '00c387';
+
+const addGroupForm = () => {
+	const state = _.cloneDeep(props.node.state);
+	const newGroup: StratifyGroup = {
+		borderColour: '#00c387',
+		name: '',
+		selectedVariables: [],
+		groupLabels: ''
+	};
+	state.strataGroups.push(newGroup);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
 
 // Set model, modelConfiguration, modelStates
 watch(
@@ -128,18 +152,5 @@ watch(
 .right-side {
 	width: 45%;
 	padding-left: 2.5%;
-}
-
-.strata-group {
-	display: flex;
-	padding: 1rem 1rem 1rem 1.5rem;
-	flex-direction: column;
-	justify-content: center;
-	align-items: flex-start;
-	border-radius: 0.375rem;
-	border-left: 8px solid #00c387;
-	background: #fff;
-	/* Shadow/medium */
-	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 </style>

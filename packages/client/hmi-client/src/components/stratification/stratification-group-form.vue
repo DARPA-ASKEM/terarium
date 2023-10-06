@@ -1,5 +1,6 @@
 <template>
-	<div class="strata-group" style="{border-left: 8px solid {{props.colour}};}">
+	<div class="strata-group" style="{border-left: 9px solid {{ props.config.borderColour }};}">
+		<!-- TOM TODO ^ make colouring border read from props properly -->
 		<div class="sub-header">
 			<label for="strata-name">Cartesian product</label>
 			<InputSwitch v-model="cartesianProduct" />
@@ -36,10 +37,11 @@ import { ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import MultiSelect from 'primevue/multiselect';
 import InputSwitch from 'primevue/inputswitch';
+import { StratifyGroup } from '@/workflow/ops/stratify-mira/stratify-mira-operation';
 
 const props = defineProps<{
 	modelStates: string[];
-	colour: string; // TOM TODO: gardrail this
+	config: StratifyGroup;
 }>();
 
 const strataName = ref('');
@@ -57,6 +59,7 @@ const cartesianProduct = ref<boolean>(true);
 	align-items: flex-start;
 	border-radius: 0.375rem;
 	background: #fff;
+	border-left: 8px solid #00c387;
 	/* Shadow/medium */
 	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
