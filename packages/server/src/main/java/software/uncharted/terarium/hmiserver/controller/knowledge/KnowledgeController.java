@@ -10,7 +10,9 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -39,40 +41,24 @@ public class KnowledgeController {
 	}
 
 	/**
-	 * Post LaTeX to SKEMA Unified service to get an AMR
+	 * Post Equations to SKEMA Unified service to get an AMR
 	 *
-	 * @param framework (String) the type of AMR to return. Options: "regnet", "petrinet".
-	 * @param modelId   (String): the id of the model (to update) based on the set of equations
-	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @param requestMap (Map<String, Object>) JSON request body containing the following fields:
+	 *  	- format		(String) the format of the equations. Options: "latex", "mathml".
+	 *  	- framework (String) the type of AMR to return. Options: "regnet", "petrinet".
+	 *  	- modelId   (String): the id of the model (to update) based on the set of equations
+	 *  	- equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
 	 * @return (ExtractionResponse): The response from the extraction service
 	 */
-	@PostMapping("/mathml-to-amr")
-	public ResponseEntity<ExtractionResponse> postMathMLToAMR(
-		@RequestParam("framework") String framework,
-		@RequestParam("modelId") String modelId,
-		@RequestBody List<String> equations
-	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR("mathml", framework, modelId, equations).getBody());
-	}
+	@PostMapping("/equations-to-model")
+	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(@RequestBody Map<String, Object> requestMap) {
+		String format = (String) requestMap.getOrDefault("format", "latex");
+		String framework = (String) requestMap.getOrDefault("framework", "petrinet");
+		String modelId = (String) requestMap.get("modelId");
+		List<String> equations = (List<String>) requestMap.getOrDefault("equations", Collections.emptyList());
 
-	;
-
-	/**
-	 * Post LaTeX to SKEMA Unified service to get an AMR
-	 *
-	 * @param framework (String) the type of AMR to return. Options: "regnet", "petrinet".
-	 * @param modelId   (String): the id of the model (to update) based on the set of equations
-	 * @param equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
-	 * @return (ExtractionResponse): The response from the extraction service
-	 */
-	@PostMapping("/latex-to-amr")
-	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(
-		@RequestParam("framework") String framework,
-		@RequestParam("modelId") String modelId,
-		@RequestBody List<String> equations
-	) {
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR("latex", framework, modelId, equations).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId, equations).getBody());
 	}
 
 	;
