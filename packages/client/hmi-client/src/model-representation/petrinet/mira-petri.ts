@@ -9,7 +9,7 @@ import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
 export const getStates = (amr: Model) => {
 	const model = amr.model;
 	const lookup = new Map();
-	const matrixData: object[] = [];
+	const matrixData: any[] = [];
 
 	const dupe: Set<string> = new Set();
 	const uniqueStates: any[] = []; // FIXME: grounding typing incorrect
@@ -62,7 +62,7 @@ export const getStates = (amr: Model) => {
 export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	const model = amr.model;
 	const uniqueTransitions: Partial<PetriNetTransition>[] = [];
-	const matrixData: object[] = [];
+	const matrixData: any[] = [];
 
 	// Cache state-modifiers for faster fetch
 	const stateModifierMap = new Map();

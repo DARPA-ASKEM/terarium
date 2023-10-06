@@ -187,6 +187,18 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
+function renderMatrix() {
+	const matrixAttributes = generateMatrix(
+		props.modelConfiguration.configuration,
+		props.id,
+		props.nodeType
+	);
+	if (!matrixAttributes) return;
+
+	matrix.value = matrixAttributes.matrix;
+	controllers.value = matrixAttributes.controllers;
+}
+
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
 	editableCellStates.value[rowIdx][colIdx] = false;
 	const newValue = valueToEdit.value;
@@ -214,23 +226,17 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
 		emit('update-configuration', modelConfigurationClone, props.configIndex);
-		generateMatrix(props.modelConfiguration.configuration, props.id, props.nodeType);
+		renderMatrix();
 	}
 }
 
 function configureMatrix() {
-	const matrixAttributes = generateMatrix(
-		props.modelConfiguration.configuration,
-		props.id,
-		props.nodeType
-	);
-	if (!matrixAttributes) return;
+	renderMatrix();
 
-	matrix.value = matrixAttributes.matrix;
-	controllers.value = matrixAttributes.controllers;
-
-	for (let i = 0; i < matrix.value.length; i++) {
-		editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
+	if (!isEmpty(matrix.value)) {
+		for (let i = 0; i < matrix.value.length; i++) {
+			editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
+		}
 	}
 }
 

@@ -193,6 +193,7 @@ async function fetchConfigurations() {
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
+	console.log(model.value);
 }
 
 async function getModelWithConfigurations() {
