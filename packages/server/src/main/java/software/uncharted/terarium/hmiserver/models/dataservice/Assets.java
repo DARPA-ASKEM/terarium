@@ -7,6 +7,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 
 import java.io.Serializable;
 import java.util.List;
@@ -22,6 +23,6 @@ public class Assets implements Serializable {
 	List<Workflow> workflows;
 	List<Artifact> artifacts;
 	List<Code> code;
-
+	List<DocumentAsset> documents;
 
 }
