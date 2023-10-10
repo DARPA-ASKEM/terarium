@@ -39,7 +39,10 @@
 					<tera-import-github-file
 						:visible="isImportGithubFileModalVisible"
 						:url-string="urlToUpload"
-						@close="isImportGithubFileModalVisible = false"
+						@close="
+							isImportGithubFileModalVisible = false;
+							emit('close');
+						"
 					/>
 				</section>
 			</template>
