@@ -426,6 +426,7 @@ export interface Assets {
     workflows: Workflow[];
     artifacts: Artifact[];
     code: Code[];
+    documents: DocumentAsset[];
 }
 
 export interface Document {

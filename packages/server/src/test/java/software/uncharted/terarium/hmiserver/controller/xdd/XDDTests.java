@@ -19,8 +19,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class XDDTests extends TerariumApplicationTests {
 
-	@Autowired
-	DocumentProxy proxy;
 
 	@Test
 	public void canSearchForTermUnauthorized() throws Exception {
