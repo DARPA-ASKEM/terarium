@@ -6,6 +6,7 @@
 			:options="runList"
 			v-model="selectedRun"
 			option-label="label"
+			placeholder="Select a simulation run"
 			@update:model-value="handleSelectedRunChange"
 		/>
 		<div class="chart-container" v-if="selectedRun && runResults[selectedRun.runId]">
@@ -82,9 +83,12 @@ onMounted(() => {
 	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
 	if (runId) {
 		selectedRun.value = runList.value.find((run) => run.runId === runId);
-		lazyLoadRunResults(runId);
 	} else {
 		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
+
+	if (selectedRun.value?.runId) {
+		lazyLoadRunResults(selectedRun.value.runId);
 	}
 });
 

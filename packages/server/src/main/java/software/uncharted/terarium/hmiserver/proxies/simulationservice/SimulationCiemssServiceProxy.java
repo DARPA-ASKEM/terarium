@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 
-@FeignClient(name = "ciemss-service", url = "${ciemss-service.url}", path = "")
+@FeignClient(name = "ciemss-service", url = "${ciemss-service.url}")
 public interface SimulationCiemssServiceProxy {
 	@PostMapping("/simulate")
 	ResponseEntity<JobResponse> makeForecastRun(

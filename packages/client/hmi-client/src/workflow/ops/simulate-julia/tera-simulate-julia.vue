@@ -24,12 +24,20 @@
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
 			class="simulate-container"
 		>
+			<Dropdown
+				v-if="runList.length > 0"
+				:options="runList"
+				v-model="selectedRun"
+				option-label="label"
+				placeholder="Select a simulation run"
+				@update:model-value="handleSelectedRunChange"
+			/>
 			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				@configuration-change="configurationChange(index, $event)"
+				v-if="selectedRun && runResults[selectedRun.runId]"
+				:key="selectedRun.idx"
+				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
+				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
+				@configuration-change="configurationChange(selectedRun.idx, $event)"
 				color-by-run
 			/>
 			<Button
@@ -40,7 +48,11 @@
 				label="Add chart"
 				icon="pi pi-plus"
 			/>
-			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
+			<tera-dataset-datatable
+				v-if="selectedRun && rawContent[selectedRun.runId]"
+				:rows="10"
+				:raw-content="rawContent[selectedRun.runId]"
+			/>
 			<Button
 				class="add-chart"
 				title="Saves the current version of the model as a new Terarium asset"
@@ -69,7 +81,11 @@
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
 						<template #header> {{ modelConfiguration?.configuration.name }} </template>
-						<model-diagram v-if="model" :model="model" :is-editable="false" />
+						<model-diagram
+							v-if="selectedRun && model[selectedRun.runId]"
+							:model="model[selectedRun.runId]!"
+							:is-editable="false"
+						/>
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation time range </template>
@@ -106,6 +122,7 @@ import { ref, onMounted, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import { ModelConfiguration, Model, TimeSpan, CsvAsset } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -138,18 +155,45 @@ enum SimulateTabs {
 
 const activeTab = ref(SimulateTabs.input);
 
-const model = ref<Model | null>(null);
+const model = ref<{ [runId: string]: Model | null }>({});
 const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
-const rawContent = ref<CsvAsset | null>(null);
+const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
+const runList = computed(() =>
+	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
+		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
+		idx,
+		runId: cfg.selectedRun
+	}))
+);
+const selectedRun = ref();
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	lazyLoadSimulationData(selectedRun.value.runId);
+
+	const state = _.cloneDeep(props.node.state);
+	// set the active status for the selected run in the chart configs
+	state.chartConfigs.forEach((cfg, idx) => {
+		cfg.active = idx === selectedRun.value?.idx;
+	});
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -179,49 +223,45 @@ async function saveDatasetToProject() {
 	}
 }
 
-onMounted(async () => {
-	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
-	// e.g. just take the first one.
-	if (!props.node) return;
+const lazyLoadSimulationData = async (runId: string) => {
+	if (runResults.value[runId]) return;
 
-	const nodeObj = props.node;
-
-	if (!nodeObj.outputs[0]) return;
-	const port = nodeObj.outputs[0];
-	if (!port.value) return;
-	const simulationId = port.value[0];
-
-	const simulationObj = await getSimulation(simulationId as string);
+	const simulationObj = await getSimulation(runId);
 	if (!simulationObj) return;
 
 	const executionPayload = simulationObj.executionPayload;
-
 	if (!executionPayload) return;
 
 	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
 	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
 	const modelId = modelConfigurationObj.modelId;
-	model.value = await getModel(modelId);
+	model.value[runId] = await getModel(modelId);
 
-	// Fetch run results
-	await Promise.all(
-		port.value.map(async (runId) => {
-			const resultCsv = await getRunResult(runId, 'result.csv');
-			const csvData = csvParse(resultCsv);
-			if (modelConfigurationObj) {
-				const parameters = modelConfigurationObj.configuration.semantics.ode.parameters;
-				csvData.forEach((row) =>
-					parameters.forEach((parameter) => {
-						row[parameter.id] = parameter.value;
-					})
-				);
-			}
-			runResults.value[runId] = csvData as any;
-		})
-	);
+	const resultCsv = await getRunResult(runId, 'result.csv');
+	const csvData = csvParse(resultCsv);
+	if (modelConfigurationObj) {
+		const parameters = modelConfigurationObj.configuration.semantics.ode.parameters;
+		csvData.forEach((row) =>
+			parameters.forEach((parameter) => {
+				row[parameter.id] = parameter.value;
+			})
+		);
+	}
+	runResults.value[runId] = csvData as any;
+	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);
+};
 
-	// For now just get the CSV asset for a single run
-	rawContent.value = createCsvAssetFromRunResults(runResults.value, simulationId);
+onMounted(() => {
+	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
+
+	if (selectedRun.value?.runId) {
+		lazyLoadSimulationData(selectedRun.value.runId);
+	}
 });
 </script>
 
