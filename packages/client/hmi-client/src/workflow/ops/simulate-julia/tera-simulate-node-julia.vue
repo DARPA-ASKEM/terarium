@@ -2,10 +2,11 @@
 	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate">Run</Button>
 		<Dropdown
+			v-if="runList.length > 0"
 			:options="runList"
 			v-model="selectedRun"
 			option-label="label"
-			@update:model-value="selectedRunChange"
+			@update:model-value="handleSelectedRunChange"
 		/>
 		<div class="chart-container" v-if="selectedRun && runResults[selectedRun.runId]">
 			<tera-simulate-chart
@@ -76,6 +77,14 @@ onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
+	}
+
+	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+		lazyLoadRunResults(runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
 	}
 });
 
@@ -152,7 +161,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	// show the latest run in the dropdown
 	selectedRun.value = runList.value[runList.value.length - 1];
 	// persist the selected run in the chart config
-	selectedRunChange();
+	handleSelectedRunChange();
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
@@ -197,7 +206,7 @@ const lazyLoadRunResults = async (runId: string) => {
 	runResults.value[runId] = csvData as any;
 };
 
-const selectedRunChange = () => {
+const handleSelectedRunChange = () => {
 	if (!selectedRun.value) return;
 
 	lazyLoadRunResults(selectedRun.value.runId);
@@ -214,16 +223,6 @@ const selectedRunChange = () => {
 		state
 	});
 };
-
-onMounted(() => {
-	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
-	if (runId) {
-		selectedRun.value = runList.value.find((run) => run.runId === runId);
-		lazyLoadRunResults(runId);
-	} else {
-		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
-	}
-});
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);

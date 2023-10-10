@@ -43,7 +43,6 @@ const props = defineProps<{
 }>();
 
 const renderedRuns = computed<RunResults>(() => {
-	console.log(props.runResults);
 	if (!props.hasMeanLine) return _.cloneDeep(props.runResults);
 
 	const runResult: RunResults = _.cloneDeep(props.runResults);
@@ -188,9 +187,6 @@ const watchRunResults = async (runResults) => {
 		return;
 	}
 
-	console.log('runResults', runResults);
-	console.log('renderedRuns', renderedRuns.value);
-
 	// TODO: pass mappings here for easy variable list genreation
 
 	// assume that the state variables for all runs will be identical
@@ -212,8 +208,6 @@ const renderGraph = () => {
 
 	const datasets: DataseriesConfig[] = [];
 	selectedVariable.value.forEach((variable) => {
-		console.log('rendering variable', variable);
-
 		runIdList
 			.map((runId) => renderedRuns.value[runId])
 			.forEach((run, runIdx) => {
