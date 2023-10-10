@@ -1,6 +1,8 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
-		<Button @click="runSimulate">Run</Button>
+		<div class="button-container">
+			<Button label="Run" @click="runSimulate" icon="pi pi-play"></Button>
+		</div>
 		<Dropdown
 			v-if="runList.length > 0"
 			:options="runList"
@@ -17,7 +19,6 @@
 				:colorByRun="true"
 			/>
 		</div>
-		<Button class="add-chart" text @click="addChart" label="Add chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />
@@ -226,17 +227,6 @@ const handleSelectedRunChange = () => {
 		state
 	});
 };
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-};
 </script>
 
 <style scoped>
@@ -252,7 +242,7 @@ section {
 	margin: 1em 0em;
 }
 
-.add-chart {
-	width: 5rem;
+.button-container {
+	padding-bottom: 10px;
 }
 </style>

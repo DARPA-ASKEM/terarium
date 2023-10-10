@@ -1,5 +1,8 @@
 <template>
 	<section v-if="!showSpinner">
+		<div class="button-container">
+			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>
+		</div>
 		<Dropdown
 			v-if="runList.length > 0"
 			:options="runList"
@@ -15,17 +18,6 @@
 				has-mean-line
 				@configuration-change="configurationChange(selectedRun.idx, $event)"
 			/>
-		</div>
-		<div class="button-container">
-			<Button
-				class="add-chart"
-				size="small"
-				text
-				@click="addChart"
-				label="Add chart"
-				icon="pi pi-plus"
-			></Button>
-			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>
 		</div>
 		<Accordion :multiple="true" :active-index="[0]">
 			<AccordionTab header="EXTRAS">
@@ -243,17 +235,6 @@ const handleSelectedRunChange = () => {
 		state
 	});
 };
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-};
 </script>
 
 <style scoped>
@@ -261,6 +242,7 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	padding: 10px;
 	background: var(--surface-overlay);
 }
 
@@ -268,16 +250,11 @@ section {
 	margin: 1.5em 0em;
 }
 
-.add-chart {
-	width: 9em;
-}
-
 .extras {
 	display: grid;
 }
 
 .button-container {
-	display: flex;
-	justify-content: space-between;
+	padding-bottom: 10px;
 }
 </style>

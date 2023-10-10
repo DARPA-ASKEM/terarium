@@ -39,14 +39,6 @@
 				@configuration-change="configurationChange(selectedRun.idx, $event)"
 				color-by-run
 			/>
-			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add chart"
-				icon="pi pi-plus"
-			/>
 			<tera-dataset-datatable
 				v-if="rawContent[selectedRun?.runId]"
 				:rows="10"
@@ -202,17 +194,6 @@ const handleSelectedRunChange = () => {
 	});
 };
 
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-};
-
 async function saveDatasetToProject() {
 	const { activeProject, get } = useProjects();
 	if (activeProject.value?.id) {
@@ -267,12 +248,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.add-chart {
-	width: 9em;
-	margin: 0em 1em;
-	margin-bottom: 1em;
-}
-
 .tera-simulate {
 	background: white;
 	z-index: 1;
