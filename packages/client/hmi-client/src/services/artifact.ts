@@ -82,7 +82,7 @@ async function uploadArtifactToProject(
  * @param artifact the artifact to create
  */
 async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
-	const response = await API.put('/artifacts', artifact);
+	const response = await API.post('/artifacts', artifact);
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }
