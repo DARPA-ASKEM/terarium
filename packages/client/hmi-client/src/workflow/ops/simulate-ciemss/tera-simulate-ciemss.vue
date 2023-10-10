@@ -234,7 +234,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 	const modelConfiguration = await getModelConfigurationById(modelConfigId);
 	if (modelConfiguration) {
 		model.value[runId] = await getModel(modelConfiguration.modelId);
-		if (model.value) {
+		if (model.value[runId]) {
 			modelConfigurations.value = await getModelConfigurations(model.value[runId]!.id);
 		}
 	}
