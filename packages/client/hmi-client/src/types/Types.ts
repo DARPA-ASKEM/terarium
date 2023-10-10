@@ -150,7 +150,7 @@ export interface Code {
 
 export interface Dataset {
     id?: string;
-    timestamp?: any;
+    timestamp?: Date;
     username?: string;
     name: string;
     description?: string;
