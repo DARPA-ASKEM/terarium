@@ -7,7 +7,7 @@
 			<template #default>
 				<section class="main-section">
 					<section>
-						<p class="subheader">Add resources to your project here</p>
+						<label class="subheader">Add resources to your project here</label>
 						<tera-drag-and-drop-importer
 							:accept-types="[
 								AcceptedTypes.PDF,
@@ -34,7 +34,7 @@
 						></tera-drag-and-drop-importer>
 					</section>
 					<section v-if="importedFiles.length < 1">
-						<p>Or upload from a Github repository URL</p>
+						<label>Or upload from a Github repository URL</label>
 						<InputText v-model="urlToUpload" class="upload-from-github-url"></InputText>
 					</section>
 					<tera-import-github-file

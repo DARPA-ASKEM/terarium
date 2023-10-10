@@ -209,7 +209,6 @@ async function processFiles(files) {
 watch(
 	() => importFiles.value.length,
 	() => {
-		console.log('importFiles updated', importFiles.value);
 		emit('imported-files-updated', importFiles.value);
 	}
 );
