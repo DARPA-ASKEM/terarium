@@ -271,7 +271,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { capitalize, isEmpty } from 'lodash';
-import { Artifact, AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
@@ -284,7 +284,6 @@ import { downloadRawFile, createNewDatasetFromCSV } from '@/services/dataset';
 import { uploadCodeToProject } from '@/services/code';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { getAssetIcon } from '@/services/project';
-import { uploadArtifactToProject } from '@/services/artifact';
 
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
@@ -363,10 +362,9 @@ async function processFiles(files: File[], csvDescription: string) {
 			case AcceptedTypes.CSV:
 				return processDataset(file, csvDescription);
 			case AcceptedTypes.PDF:
-				return processDocument(file);
 			case AcceptedTypes.TXT:
 			case AcceptedTypes.MD:
-				return processArtifact(file);
+				return processDocument(file);
 			case AcceptedTypes.PY:
 			case AcceptedTypes.R:
 			case AcceptedTypes.JL:
@@ -412,29 +410,6 @@ async function processDocument(file: File) {
 	}
 	if (document && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
 		await extractPDF(document);
-		return { file, error: false, response: { text: '', images: [] } };
-	}
-	return { file, error: true, response: { text: '', images: [] } };
-}
-
-/*
- * Process a pdf, txt, md file into an artifact
- * @param file
- */
-async function processArtifact(file: File) {
-	// This is pdf, txt, md files
-	const artifact: Artifact | null = await uploadArtifactToProject(
-		file,
-		useProjects().activeProject.value?.username ?? '',
-		'',
-		progress
-	);
-	let newAsset;
-	if (artifact && artifact.id) {
-		newAsset = await useProjects().addAsset(AssetType.Artifacts, artifact.id);
-	}
-	if (artifact && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
-		await extractPDF(artifact);
 		return { file, error: false, response: { text: '', images: [] } };
 	}
 	return { file, error: true, response: { text: '', images: [] } };

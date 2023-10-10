@@ -20,12 +20,22 @@
 					:active="documentView === DocumentView.EXRACTIONS"
 				/>
 				<Button
+					v-if="documentType === DocumentView.PDF"
 					class="p-button-secondary p-button-sm"
 					label="PDF"
 					icon="pi pi-file"
 					:loading="!pdfLink"
 					@click="documentView = DocumentView.PDF"
 					:active="documentView === DocumentView.PDF"
+				/>
+				<Button
+					v-if="documentType === DocumentView.TXT"
+					class="p-button-secondary p-button-sm"
+					label="txt"
+					icon="pi pi-file"
+					:loading="!pdfLink"
+					@click="documentView = DocumentView.TXT"
+					:active="documentView === DocumentView.TXT"
 				/>
 			</span>
 		</template>
@@ -106,6 +116,7 @@
 			:pdf-link="pdfLink"
 			:title="doc.name || ''"
 		/>
+		<code-editor v-else-if="documentView === DocumentView.TXT" :initial-code="code" />
 	</tera-asset>
 </template>
 
@@ -121,13 +132,19 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { DocumentAsset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
+import {
+	downloadDocumentAsset,
+	getDocumentAsset,
+	getDocumentFileAsText
+} from '@/services/document-assets';
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import CodeEditor from '@/page/project/components/code-editor.vue';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
-	PDF = 'pdf'
+	PDF = 'pdf',
+	TXT = 'txt'
 }
 
 const props = defineProps<{
@@ -140,6 +157,7 @@ const props = defineProps<{
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
+const code = ref<string>();
 
 const docLink = computed(() =>
 	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
@@ -155,6 +173,16 @@ const equations = computed(
 	() => doc.value?.assets?.filter((asset) => asset.assetType === 'equation') || []
 );
 
+const documentType = computed(() => {
+	if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
+		return DocumentView.PDF;
+	}
+	if (doc.value?.fileNames?.at(0)?.endsWith('.txt')) {
+		return DocumentView.TXT;
+	}
+	return null;
+});
+
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 
 // Highlight strings based on props.highlight
@@ -165,6 +193,13 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
+async function openTextDocument() {
+	const filename: string | undefined = doc.value?.fileNames?.at(0);
+	const res: string | null = await getDocumentFileAsText(props.assetId!, filename!);
+	if (!res) return;
+	code.value = res;
+}
+
 watch(
 	() => props.assetId,
 	async () => {
@@ -172,6 +207,7 @@ watch(
 			const document = await getDocumentAsset(props.assetId);
 			if (document) {
 				doc.value = document;
+				openTextDocument();
 			}
 		} else {
 			doc.value = null;
