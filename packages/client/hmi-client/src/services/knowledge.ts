@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Artifact, ExtractionResponse } from '@/types/Types';
+import { DocumentAsset, ExtractionResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -76,10 +76,10 @@ export const latexToAMR = async (
  * Given a model, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileModel = async (modelId: string, artifactId: string | null = null) => {
+export const profileModel = async (modelId: string, documentId: string | null = null) => {
 	let response: any = null;
-	if (artifactId) {
-		response = await API.post(`/knowledge/profile-model/${modelId}?artifact_id=${artifactId}`);
+	if (documentId) {
+		response = await API.post(`/knowledge/profile-model/${modelId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-model/${modelId}`);
 	}
@@ -91,10 +91,10 @@ export const profileModel = async (modelId: string, artifactId: string | null = 
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (datasetId: string, artifactId: string | null = null) => {
+export const profileDataset = async (datasetId: string, documentId: string | null = null) => {
 	let response: any = null;
-	if (artifactId) {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?artifact_id=${artifactId}`);
+	if (documentId) {
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
@@ -126,14 +126,14 @@ const extractTextFromPDFDocument = async (documentId: string): Promise<string | 
 };
 
 const pdfExtractions = async (
-	artifactId: string,
+	documentId: string,
 	pdfName?: string,
 	description?: string
 ): Promise<string | null> => {
 	// I've purposefully excluded the MIT and SKEMA options here, so they're always
 	// defaulted to true.
 
-	let url = `/knowledge/pdf-extractions?artifact_id=${artifactId}`;
+	let url = `/knowledge/pdf-extractions?document_id=${documentId}`;
 	if (pdfName) {
 		url += `&pdf_name=${pdfName}`;
 	}
@@ -163,13 +163,13 @@ const pdfExtractions = async (
 	return null;
 };
 
-export const extractPDF = async (artifact: Artifact) => {
-	if (artifact.id) {
-		const resp: string | null = await extractTextFromPDFDocument(artifact.id);
+export const extractPDF = async (document: DocumentAsset) => {
+	if (document.id) {
+		const resp: string | null = await extractTextFromPDFDocument(document.id);
 		if (resp) {
 			const pollResult = await fetchExtraction(resp);
 			if (pollResult?.state === PollerState.Done) {
-				await pdfExtractions(artifact.id); // we don't care now. fire and forget.
+				await pdfExtractions(document.id); // we don't care now. fire and forget.
 			}
 		}
 	}
