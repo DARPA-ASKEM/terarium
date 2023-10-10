@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
@@ -26,12 +27,12 @@ public class TransformController {
 	ModelServiceProxy modelServiceProxy;
 
 	@PostMapping("/mathml-to-acset")
-	public ResponseEntity<JsonNode> mathML2ACSet(List<String> list) {
+	public ResponseEntity<JsonNode> mathML2ACSet(@RequestBody List<String> list) {
 		return skemaProxy.convertMathML2ACSet(list);
 	}
 
-	@PostMapping("/acset-to-latex")
-	public ResponseEntity<JsonNode> acet2Latex(PetriNet content) {
+	@PostMapping(value = "/acset-to-latex", produces = {"text/plain", "application/*"})
+	public ResponseEntity<String> acet2Latex(@RequestBody PetriNet content) {
 		return modelServiceProxy.petrinetToLatex(content);
 	}
 }
