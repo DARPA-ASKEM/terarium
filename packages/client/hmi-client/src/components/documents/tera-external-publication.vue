@@ -147,13 +147,21 @@
 				</template>
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<tera-import-github-file
-							:urlString="url"
-							:show-import-button="!featureConfig.isPreview"
-							@open-code="openCode"
+						<Button
+							v-if="!featureConfig.isPreview"
+							label="Import"
+							class="p-button-sm p-button-outlined"
+							icon="pi pi-cloud-download"
+							@click="openImportGithubFileModal(url)"
 						/>
+						<a :href="url" rel="noreferrer noopener">{{ url }}</a>
 					</li>
 				</ul>
+				<tera-import-github-file
+					:visible="isImportGithubFileModalVisible"
+					:url-string="openedUrl"
+					@close="isImportGithubFileModalVisible = false"
+				/>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(otherUrls)">
 				<template #header>
@@ -237,7 +245,7 @@ import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { CodeRequest, ResultType, FeatureConfig } from '@/types/common';
+import { ResultType, FeatureConfig } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
@@ -275,12 +283,10 @@ const props = defineProps({
 const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
+const isImportGithubFileModalVisible = ref(false);
+const openedUrl = ref('');
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
-
-function openCode(codeRequests: CodeRequest[]) {
-	emit('open-code', codeRequests);
-}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -457,6 +463,11 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	}
 	return highlightSearchTerms(citation);
 };
+
+function openImportGithubFileModal(url: string) {
+	openedUrl.value = url;
+	isImportGithubFileModalVisible.value = true;
+}
 
 onMounted(async () => {
 	fetchDocumentArtifacts();
