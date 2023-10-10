@@ -1,11 +1,15 @@
 package software.uncharted.terarium.hmiserver.controller.evaluation;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,21 +18,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.controller.services.AuthenticationFacade;
+import software.uncharted.terarium.hmiserver.entities.Event;
+import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioStatus;
 import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioSummary;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.EventService;
 
 import java.io.IOException;
-import java.util.List;
+import java.io.StringWriter;
+import java.time.Instant;
+import java.util.*;
 
 
 @RequestMapping("/evaluation")
 @RestController
 @Slf4j
 public class EvaluationController {
-	@Autowired
-	AuthenticationFacade authenticationFacade;
 
 	@Autowired
 	ObjectMapper mapper;
+
+	@Autowired
+	private EventService eventService;
+
+	@Autowired
+	private CurrentUserService currentUserService;
 
 	/**
 	 * Get a list of all evaluation scenarios
@@ -37,18 +52,20 @@ public class EvaluationController {
 	 */
 	@GetMapping("/scenarios")
 	public ResponseEntity<List<EvaluationScenarioSummary>> getScenarios() {
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-		/*Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
+
+		Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
+
+
 
 		// Find the first event for each summary
-		final List<Event> events = Event.find("type = ?1", Sort.descending("timestampmillis"), EventType.EVALUATION_SCENARIO).list();
+		final List<Event> events = eventService.findEvents(EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
 		events.forEach(event -> {
 			try {
 				final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
-				final String username = event.getUsername();
+				final String userId = event.getUserId();
 				final String scenarioName = value.at("/name").asText();
 				final Long timestampMillis = event.getTimestampMillis();
-				final Map<String, EvaluationScenarioSummary> scenarioNameToSummary = usernameToScenarioNameToSummary.getOrDefault(username, new HashMap<>());
+				final Map<String, EvaluationScenarioSummary> scenarioNameToSummary = usernameToScenarioNameToSummary.getOrDefault(userId, new HashMap<>());
 				final EvaluationScenarioSummary summary = scenarioNameToSummary.getOrDefault(scenarioName, null);
 
 				// If this event is earlier than the current one, store it
@@ -59,9 +76,9 @@ public class EvaluationController {
 						.setDescription(value.at("/description").asText())
 						.setNotes(value.at("/notes").asText())
 						.setTimestampMillis(timestampMillis)
-						.setUsername(username));
+						.setUserId(userId));
 				}
-				usernameToScenarioNameToSummary.put(username, scenarioNameToSummary);
+				usernameToScenarioNameToSummary.put(userId, scenarioNameToSummary);
 			} catch (JsonProcessingException e) {
 				log.error("Error parsing event value", e);
 			}
@@ -72,7 +89,7 @@ public class EvaluationController {
 		usernameToScenarioNameToSummary.forEach((username, scenarioNameToSummary) -> {
 			scenarioSummaries.addAll(scenarioNameToSummary.values());
 		});
-		return ResponseEntity.ok(scenarioSummaries);*/
+		return ResponseEntity.ok(scenarioSummaries);
 	}
 
 	/**
@@ -83,9 +100,7 @@ public class EvaluationController {
 	 */
 	@GetMapping("/status")
 	public ResponseEntity<String> getStatus(@RequestParam("name") String name) {
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-	/*	final String username = authenticationFacade.getAuthentication().getName();
-		final List<Event> events = Event.find("type = ?1 and username = ?2", Sort.descending("timestampmillis"), EventType.EVALUATION_SCENARIO, username).list();
+		final List<Event> events = eventService.findEvents(EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
 		final Event latestEvent = events
 			.stream()
 			.filter(event -> {
@@ -107,14 +122,12 @@ public class EvaluationController {
 				log.error("Error parsing event value", e);
 			}
 		}
-		return ResponseEntity.noContent().build();*/
+		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/runtime")
 	public ResponseEntity<Long> getRuntime(@RequestParam("name") String name) {
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-		/*final String username = authenticationFacade.getAuthentication().getName();
-		final List<Event> events = Event.find("type = ?1 and username = ?2", Sort.ascending("timestampmillis"), EventType.EVALUATION_SCENARIO, username).list();
+		final List<Event> events = eventService.findEvents(EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
 		final List<Event> scenarioEvents = events
 			.stream()
 			.filter(event -> {
@@ -146,15 +159,14 @@ public class EvaluationController {
 				log.error("Error parsing event value", e);
 			}
 		}
-		return ResponseEntity.ok(runtime);*/
+		return ResponseEntity.ok(runtime);
 	}
 
 	@GetMapping("/download")
-	public ResponseEntity<String> getCSV(@RequestParam("username") final String username,
+	public ResponseEntity<String> getCSV(@RequestParam("userId") final String userId,
 																			 @RequestParam("name") final String name) throws IOException {
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 
-		/*final List<Event> events = Event.findAllByUsername(username);
+		final List<Event> events = eventService.findAllByUserId(userId);
 
 		// Find the list of timeranges for the scenario
 		final List<Event> scenarioEvents = events.stream()
@@ -175,7 +187,7 @@ public class EvaluationController {
 			.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
 			.toList();
 
-		final List<String> headers = new ArrayList<>(Arrays.asList("timestamp", "projectId", "username", "type", "value"));
+		final List<String> headers = new ArrayList<>(Arrays.asList("timestamp", "projectId", "userId", "type", "value"));
 
 		// Iterate through the events and calculate the top level field access for the value type in jackson format
 		final Set<String> topLevelFields = new HashSet<>();
@@ -212,7 +224,7 @@ public class EvaluationController {
 					final List<String> values = new ArrayList<>();
 					values.add(event.getTimestampMillis().toString());
 					values.add(event.getProjectId() != null ? event.getProjectId().toString() : "");
-					values.add(event.getUsername());
+					values.add(event.getUserId());
 					values.add(event.getType().toString());
 					values.add(event.getValue());
 
@@ -238,7 +250,7 @@ public class EvaluationController {
 				}
 			});
 		}
-		return ResponseEntity.ok(sw.toString());*/
+		return ResponseEntity.ok(sw.toString());
 	}
 
 	@Accessors(chain = true)
@@ -259,7 +271,7 @@ public class EvaluationController {
 	 * @param scenarioEvents  All events for the scenario of type EVALUATION_SCENARIO
 	 * @return A list of ranges for which the scenario was not paused
 	 */
-	/*private List<Range> getRangesForScenario(final List<Event> scenarioEvents) {
+	private List<Range> getRangesForScenario(final List<Event> scenarioEvents) {
 		final List<Range> ranges = new ArrayList<>();
 		for (int i = 0; i < scenarioEvents.size() - 1; i++) {
 			final Event currentEvent = scenarioEvents.get(i);
@@ -275,5 +287,5 @@ public class EvaluationController {
 			}
 		}
 		return ranges;
-	}*/
+	}
 }
