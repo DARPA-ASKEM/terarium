@@ -34,8 +34,13 @@
 					</section>
 					<section>
 						<p>Or upload from a URL</p>
-						<InputText></InputText>
+						<InputText v-model="urlToUpload"></InputText>
 					</section>
+					<tera-import-github-file
+						:visible="isImportGithubFileModalVisible"
+						:url-string="urlToUpload"
+						@close="isImportGithubFileModalVisible = false"
+					/>
 				</section>
 			</template>
 			<template #footer>
@@ -60,6 +65,7 @@ import { ref } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
+import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 
 defineProps<{
 	visible: boolean;
@@ -68,6 +74,8 @@ const emit = defineEmits(['close']);
 
 const progress = ref(0);
 const results = ref<{ id: string; name: string; assetType: AssetType }[] | null>(null);
+const urlToUpload = ref('');
+const isImportGithubFileModalVisible = ref(false);
 
 async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
@@ -83,7 +91,7 @@ async function processFiles(files: File[], csvDescription: string) {
 			case AcceptedTypes.JL:
 				return processCode(file);
 			default:
-				return { file, error: true, response: { text: '', images: [] } };
+				return { id: '', assetType: '' };
 		}
 	});
 }
@@ -133,18 +141,26 @@ function importCompleted(newResults: { id: string; name: string; assetType: Asse
 	results.value = newResults?.filter((r) => r.id !== '') ?? [];
 }
 
+function uploadCompleted(uploadedFiles: { id: string; name: string; assetType: AssetType }[]) {
+	emit('close');
+	const resourceMsg = uploadedFiles.length > 1 ? 'resources were' : 'resource was';
+	useToastService().success(
+		'Success!',
+		`${uploadedFiles.length} ${resourceMsg} successfuly added to this project`
+	);
+}
+
 async function upload() {
 	if (results.value) {
 		await Promise.all(
 			results.value?.map(({ id, assetType }): Promise<any> => useProjects().addAsset(assetType, id))
 		).then((resolved) => {
-			emit('close');
-			const resourceMsg = resolved.length > 1 ? 'resources were' : 'resource was';
-			useToastService().success(
-				'Success!',
-				`${resolved.length} ${resourceMsg} successfuly added to this project`
-			);
+			uploadCompleted(resolved);
 		});
+	} else if (urlToUpload.value) {
+		isImportGithubFileModalVisible.value = true;
+	} else {
+		useToastService().error('Error!', 'No files were selected');
 	}
 }
 </script>
