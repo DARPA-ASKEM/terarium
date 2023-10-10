@@ -15,23 +15,6 @@ services:
       interval: '3s'
       timeout: '3s'
       retries: 30
-  postgres:
-    image: ghcr.io/darpa-askem/postgres:15.1
-    container_name: postgres
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: "terarium"
-    networks:
-      - terarium
-    ports:
-      - '5430:5432'
-    restart: always
-    healthcheck:
-      test: ['CMD', 'pg_isready', '-U', 'postgres']
-      interval: '3s'
-      timeout: '3s'
-      retries: 30
 
 networks:
   terarium:
