@@ -39,9 +39,8 @@ public class CodeController {
 	 * Stores a model from a code snippit
 	 *
 	 * @param code the python code snippit
-	 * @return a {@link StoredModel} instance containing the model id, inputs, and
-	 *         outputs of the model
-	 *         derived from the code input
+	 * @return a {@link StoredModel} instance containing the model id, inputs, and outputs of the model
+	 * derived from the code input
 	 */
 	@PostMapping
 	public ResponseEntity<StoredModel> transformCode(final String code) {
@@ -53,14 +52,11 @@ public class CodeController {
 			return ResponseEntity.noContent().build();
 		}
 
-		// The model is returned from Skema as escaped, quoted json. Eg:
+		// The model is returned from Skema as escaped, quoted json.  Eg:
 		// "{\"hello\": \"world\" .... }"
-		// We must remove the leading and trailing quotes, and un-escape the json in
-		// order to pass it on to the
-		// service that will store the model as it expects application/json and not a
-		// string
-		final String unesescapedSkemaResponseStr = StringEscapeUtils
-				.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length() - 1));
+		// We must remove the leading and trailing quotes, and un-escape the json in order to pass it on to the
+		// service that will store the model as it expects application/json and not a string
+		final String unesescapedSkemaResponseStr = StringEscapeUtils.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length() - 1));
 
 		// Store the model
 		final String modelId = skemaRustProxy.addModel(unesescapedSkemaResponseStr).getBody();
@@ -69,9 +65,10 @@ public class CodeController {
 		final String odoResponseStr = skemaRustProxy.getModelNamedOpos(modelId).getBody();
 
 		return ResponseEntity.ok(new StoredModel()
-				.setId(modelId)
-				.setInputs(odiResponseStr)
-				.setOutputs(odoResponseStr));
+			.setId(modelId)
+			.setInputs(odiResponseStr)
+			.setOutputs(odoResponseStr)
+		);
 	}
 
 	@PostMapping("/to-acset")
@@ -107,8 +104,9 @@ public class CodeController {
 
 	@GetMapping("/repo-content")
 	public ResponseEntity<GithubRepo> getGithubRepositoryContent(
-			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
-			@RequestParam("path") final String path) {
+		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+		@RequestParam("path") final String path
+	) {
 		List<GithubFile> files = githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
 
 		if (files == null || files.isEmpty()) {
@@ -120,8 +118,9 @@ public class CodeController {
 
 	@GetMapping("/repo-file-content")
 	public ResponseEntity<String> getGithubCode(
-			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
-			@RequestParam("path") final String path) {
+		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+		@RequestParam("path") final String path
+	) {
 		return ResponseEntity.ok(jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody());
 	}
 }
