@@ -161,6 +161,7 @@
 					:visible="isImportGithubFileModalVisible"
 					:url-string="openedUrl"
 					@close="isImportGithubFileModalVisible = false"
+					@open-code="openCode"
 				/>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(otherUrls)">
@@ -245,7 +246,7 @@ import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType, FeatureConfig } from '@/types/common';
+import { ResultType, FeatureConfig, CodeRequest } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
@@ -287,6 +288,10 @@ const isImportGithubFileModalVisible = ref(false);
 const openedUrl = ref('');
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
+
+function openCode(codeRequests: CodeRequest[]) {
+	emit('open-code', codeRequests);
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
