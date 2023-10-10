@@ -42,12 +42,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import API from '@/api/api';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
-const emit = defineEmits(['import-completed']);
+const emit = defineEmits(['import-completed', 'imported-files-updated']);
 const importFiles = ref(<File[]>[]);
 const fileInput = ref(<HTMLInputElement | null>null);
 const dragOver = ref(false);
@@ -205,6 +205,14 @@ async function processFiles(files) {
 	emit('import-completed', processResponse.value);
 	files.value = [];
 }
+
+watch(
+	() => importFiles.value.length,
+	() => {
+		console.log('importFiles updated', importFiles.value);
+		emit('imported-files-updated', importFiles.value);
+	}
+);
 </script>
 
 <style scoped>

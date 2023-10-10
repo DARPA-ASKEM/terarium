@@ -30,11 +30,12 @@
 							:import-action="processFiles"
 							:progress="progress"
 							@import-completed="importCompleted"
+							@imported-files-updated="(value) => (importedFiles = value)"
 						></tera-drag-and-drop-importer>
 					</section>
-					<section>
-						<p>Or upload from a URL</p>
-						<InputText v-model="urlToUpload"></InputText>
+					<section v-if="importedFiles.length < 1">
+						<p>Or upload from a Github repository URL</p>
+						<InputText v-model="urlToUpload" class="upload-from-github-url"></InputText>
 					</section>
 					<tera-import-github-file
 						:visible="isImportGithubFileModalVisible"
@@ -79,6 +80,7 @@ const progress = ref(0);
 const results = ref<{ id: string; name: string; assetType: AssetType }[] | null>(null);
 const urlToUpload = ref('');
 const isImportGithubFileModalVisible = ref(false);
+const importedFiles = ref<File[]>([]);
 
 async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
@@ -144,21 +146,19 @@ function importCompleted(newResults: { id: string; name: string; assetType: Asse
 	results.value = newResults?.filter((r) => r.id !== '') ?? [];
 }
 
-function uploadCompleted(uploadedFiles: { id: string; name: string; assetType: AssetType }[]) {
-	emit('close');
-	const resourceMsg = uploadedFiles.length > 1 ? 'resources were' : 'resource was';
-	useToastService().success(
-		'Success!',
-		`${uploadedFiles.length} ${resourceMsg} successfuly added to this project`
-	);
-}
-
 async function upload() {
 	if (results.value) {
 		await Promise.all(
 			results.value?.map(({ id, assetType }): Promise<any> => useProjects().addAsset(assetType, id))
 		).then((resolved) => {
-			uploadCompleted(resolved);
+			emit('close');
+			const resourceMsg = resolved.length > 1 ? 'resources were' : 'resource was';
+			useToastService().success(
+				'Success!',
+				`${resolved.length} ${resourceMsg} successfuly added to this project`
+			);
+			importedFiles.value = [];
+			results.value = null;
 		});
 	} else if (urlToUpload.value) {
 		isImportGithubFileModalVisible.value = true;
@@ -179,5 +179,9 @@ async function upload() {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+}
+
+:deep(.upload-from-github-url) {
+	margin-bottom: 0;
 }
 </style>
