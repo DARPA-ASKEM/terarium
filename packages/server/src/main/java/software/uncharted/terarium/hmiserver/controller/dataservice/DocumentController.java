@@ -20,6 +20,8 @@ import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
+import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import org.apache.http.entity.StringEntity;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,6 +33,9 @@ public class DocumentController implements SnakeCaseController {
 
 	@Autowired
 	DocumentProxy proxy;
+
+	@Autowired
+	JsDelivrProxy gitHubProxy;
 
 	@GetMapping
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
@@ -62,6 +67,35 @@ public class DocumentController implements SnakeCaseController {
 		return ResponseEntity.ok(proxy.deleteAsset(id).getBody());
 	}
 
+	/**
+	 * Uploads an artifact inside the entity to TDS via a presigned URL
+	 *
+	 * @param documentId         The ID of the document to upload to
+	 * @param fileName           The name of the file to upload
+	 * @param fileEntity  		 The entity containing the file to upload
+	 * @return A response containing the status of the upload
+	 */
+	private ResponseEntity<Integer> uploadDocumentHelper(String documentId, String fileName, HttpEntity fileEntity) {
+		try (CloseableHttpClient httpclient = HttpClients.custom()
+			.disableRedirectHandling()
+			.build()) {
+
+			// upload file to S3
+			final PresignedURL presignedURL = proxy.getUploadUrl(documentId, fileName).getBody();
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse response = httpclient.execute(put);
+
+			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
+
+		} catch (Exception e) {
+			log.error("Unable to PUT artifact data", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+
+
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Integer> uploadDocument(
 		@PathVariable("id") String id,
@@ -70,24 +104,28 @@ public class DocumentController implements SnakeCaseController {
 	) throws IOException {
 		byte[] fileAsBytes = file.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		try (CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build()) {
-
-			// upload file to S3
-			final PresignedURL presignedURL = proxy.getUploadUrl(id, filename).getBody();
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse response = httpclient.execute(put);
-
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
-
-
-		} catch (Exception e) {
-			log.error("Unable to PUT artifact data", e);
-			return ResponseEntity.internalServerError().build();
-		}
+		return uploadDocumentHelper(id, filename, fileEntity);
 	}
+
+	/**
+	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
+	 */
+	@PutMapping("/{documentId}/uploadDocumentFromGithub")
+	public ResponseEntity<Integer> uploadDocumentFromGithub(
+		@PathVariable("documentId") final String documentId,
+		@RequestParam("path") final String path,
+		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+		@RequestParam("filename") final String filename
+	) {
+		log.debug("Uploading Document file from github to dataset {}", documentId);
+
+		//download file from GitHub
+		String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+		return uploadDocumentHelper(documentId, filename, fileEntity);
+
+	}
+
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public ResponseEntity<byte[]> downloadDocument(
