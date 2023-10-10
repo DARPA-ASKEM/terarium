@@ -64,7 +64,9 @@ keycloak
 			app.mount('body');
 			logger.info('Application Mounted', { showToast: false, silent: true });
 
-			router.push(RoutePath.Home);
+			if (!router.currentRoute.value.name) {
+				router.push(RoutePath.Home);
+			}
 
 			// Token Refresh
 			setInterval(async () => {
