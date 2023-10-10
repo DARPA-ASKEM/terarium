@@ -102,8 +102,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		} else {
 			Object.values(AssetType).forEach((type, indx) => {
-				// FIX: right now the we cannot get a documents assets, this condition is a temporary measure so that this endpoint doesnt break until we can get documents assets
-				if (type !== AssetType.Documents) url += `${indx === 0 ? '?' : '&'}types=${type}`;
+				url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
 		}
 		const response = await API.get(url);
