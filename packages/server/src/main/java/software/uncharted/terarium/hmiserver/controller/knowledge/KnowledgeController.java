@@ -109,12 +109,12 @@ public class KnowledgeController {
 	/**
 	 * Post a PDF to the extraction service to get text
 	 *
-	 * @param artifactId (String): The ID of the artifact to extract text from
+	 * @param documentId (String): The ID of the document to extract text from
 	 * @return response status of queueing this operation
 	 */
-	@PostMapping("/pdf-to-text")
-	public ResponseEntity<JsonNode> postPDFToText(@RequestParam("artifact_id") String artifactId) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToText(artifactId).getBody());
+	@PostMapping("/pdf-to-cosmos")
+	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") String documentId) {
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToCosmos(documentId).getBody());
 	}
 
 	/**

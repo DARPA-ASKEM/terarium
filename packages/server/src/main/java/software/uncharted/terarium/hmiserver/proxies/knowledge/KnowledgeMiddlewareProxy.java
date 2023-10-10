@@ -64,12 +64,12 @@ public interface KnowledgeMiddlewareProxy {
 	/**
 	 * Post a PDF to get text
 	 *
-	 * @param artifactId (String): The ID of the artifact to extract text from
+	 * @param documentId (String): The ID of the document to extract text from
 	 * @return
 	 */
-	@PostMapping("/pdf_to_text")
-	ResponseEntity<JsonNode> postPDFToText(
-		@RequestParam("artifact_id") String artifactId
+	@PostMapping("/pdf_to_cosmos")
+	ResponseEntity<JsonNode> postPDFToCosmos(
+		@RequestParam("document_id") String documentId
 	);
 
 	/**
