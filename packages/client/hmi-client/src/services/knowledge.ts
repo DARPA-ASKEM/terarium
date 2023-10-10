@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Artifact, ExtractionResponse } from '@/types/Types';
+import { DocumentAsset, ExtractionResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -108,9 +108,9 @@ export const profileDataset = async (datasetId: string, documentId: string | nul
 	return response.data.id;
 };
 
-const extractTextFromPDFArtifact = async (artifactId: string): Promise<string | null> => {
+const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
 	try {
-		const response = await API.post(`/knowledge/pdf-to-text?artifact_id=${artifactId}`);
+		const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
 		if (response?.status === 200 && response?.data?.id) return response.data.id;
 		logger.error('pdf text extraction request failed', {
 			showToast: false,
@@ -169,13 +169,13 @@ export const pdfExtractions = async (
 	return null;
 };
 
-export const extractPDF = async (artifact: Artifact) => {
-	if (artifact.id) {
-		const resp: string | null = await extractTextFromPDFArtifact(artifact.id);
+export const extractPDF = async (document: DocumentAsset) => {
+	if (document.id) {
+		const resp: string | null = await extractTextFromPDFDocument(document.id);
 		if (resp) {
 			const pollResult = await fetchExtraction(resp);
 			if (pollResult?.state === PollerState.Done) {
-				await pdfExtractions(artifact.id); // we don't care now. fire and forget.
+				await pdfExtractions(document.id); // we don't care now. fire and forget.
 			}
 		}
 	}

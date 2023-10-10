@@ -55,10 +55,10 @@ async function createNewArtifactFromGithubFile(
  * @param description? description of the file. Optional. If not given description will be just the file name
  */
 async function uploadArtifactToProject(
-	progress: Ref<number>,
 	file: File,
 	userName: string,
-	description?: string
+	description?: string,
+	progress?: Ref<number>
 ): Promise<Artifact | null> {
 	// Create a new artifact with the same name as the file, and post the metadata to TDS
 	const artifact: Artifact = {
@@ -82,7 +82,7 @@ async function uploadArtifactToProject(
  * @param artifact the artifact to create
  */
 async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
-	const response = await API.put('/artifacts', artifact);
+	const response = await API.post('/artifacts', artifact);
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }
@@ -95,7 +95,7 @@ async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
 async function addFileToArtifact(
 	artifactId: string,
 	file: File,
-	progress: Ref<number>
+	progress?: Ref<number>
 ): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('file', file);
@@ -108,10 +108,12 @@ async function addFileToArtifact(
 			'Content-Type': 'multipart/form-data'
 		},
 		onUploadProgress(progressEvent) {
-			progress.value = Math.min(
-				90,
-				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
-			);
+			if (progress) {
+				progress.value = Math.min(
+					90,
+					Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
+				);
+			}
 		},
 		timeout: 30000
 	});
