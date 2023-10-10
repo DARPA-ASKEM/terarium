@@ -57,8 +57,8 @@ public interface KnowledgeMiddlewareProxy {
 		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 		@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description
 	);
 
 	/**
@@ -128,5 +128,11 @@ public interface KnowledgeMiddlewareProxy {
 		@RequestParam("model") String framework,
 		@RequestParam("model_id") String modelId,
 		@RequestBody List<String> equations
+	);
+
+	@PostMapping("link_amr")
+	ResponseEntity<JsonNode> postLinkAmr(
+		@RequestParam("document_id") String documentId,
+		@RequestParam("model_id") String modelId
 	);
 }

@@ -98,8 +98,8 @@ public class KnowledgeController {
 		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 		@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(documentId, annotateSkema, annotateMIT, name, description).getBody());
 	}
@@ -147,6 +147,23 @@ public class KnowledgeController {
 		@RequestParam("document_id") String documentId
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
+	}
+
+	;
+
+	/**
+	 * Profile a model
+	 *
+	 * @param modelId    (String): The ID of the model to profile
+	 * @param artifactId (String): The text of the document to profile
+	 * @return the profiled model
+	 */
+	@PostMapping("/link-amr")
+	public ResponseEntity<JsonNode> postLinkAmr(
+		@RequestParam("document_id") String documentId,
+		@RequestParam("model_id") String modelId
+	) {
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postLinkAmr(documentId, modelId).getBody());
 	}
 
 	;
