@@ -33,8 +33,7 @@
 				@update:model-value="handleSelectedRunChange"
 			/>
 			<tera-simulate-chart
-				v-if="selectedRun && runResults[selectedRun.runId]"
-				:key="selectedRun.idx"
+				v-if="runResults[selectedRun?.runId]"
 				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
 				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
 				@configuration-change="configurationChange(selectedRun.idx, $event)"
@@ -49,7 +48,7 @@
 				icon="pi pi-plus"
 			/>
 			<tera-dataset-datatable
-				v-if="selectedRun && rawContent[selectedRun.runId]"
+				v-if="rawContent[selectedRun?.runId]"
 				:rows="10"
 				:raw-content="rawContent[selectedRun.runId]"
 			/>
@@ -80,9 +79,11 @@
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ modelConfiguration?.configuration.name }} </template>
+						<template #header>
+							{{ modelConfiguration[selectedRun?.runId]?.configuration.name }}
+						</template>
 						<model-diagram
-							v-if="selectedRun && model[selectedRun.runId]"
+							v-if="model[selectedRun?.runId]"
 							:model="model[selectedRun.runId]!"
 							:is-editable="false"
 						/>
@@ -157,8 +158,7 @@ const activeTab = ref(SimulateTabs.input);
 
 const model = ref<{ [runId: string]: Model | null }>({});
 const runResults = ref<RunResults>({});
-const modelConfiguration = ref<ModelConfiguration | null>(null);
-const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
+const modelConfiguration = ref<{ [runId: string]: ModelConfiguration | null }>({});
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
@@ -216,7 +216,7 @@ const addChart = () => {
 async function saveDatasetToProject() {
 	const { activeProject, get } = useProjects();
 	if (activeProject.value?.id) {
-		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+		if (await saveDataset(activeProject.value.id, selectedRun.value.runId, saveAsName.value)) {
 			get();
 		}
 		showSaveInput.value = false;
@@ -234,6 +234,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 
 	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
 	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
+	modelConfiguration.value[runId] = modelConfigurationObj;
 	const modelId = modelConfigurationObj.modelId;
 	model.value[runId] = await getModel(modelId);
 

@@ -9,9 +9,8 @@
 			placeholder="Select a simulation run"
 			@update:model-value="handleSelectedRunChange"
 		/>
-		<div class="chart-container" v-if="selectedRun && runResults[selectedRun.runId]">
+		<div class="chart-container" v-if="runResults[selectedRun?.runId]">
 			<tera-simulate-chart
-				:key="selectedRun.idx"
 				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
 				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
 				@configuration-change="configurationChange(selectedRun.idx, $event)"
