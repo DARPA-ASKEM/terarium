@@ -99,11 +99,25 @@
 						<header>Description</header>
 					</template>
 					<p v-if="dataset?.description">{{ dataset.description }}</p>
-					<p v-else-if="dataset?.metadata?.dataCard">{{ dataset.metadata.dataCard }}</p>
 					<p v-else>
 						No information available. Add resources to generate a description. Or click edit icon to
 						edit this field directly.
 					</p>
+				</AccordionTab>
+				<AccordionTab v-if="dataset?.metadata?.data_card">
+					<template #header>
+						<header>Data Card</header>
+					</template>
+					<ul>
+						<li>Description: {{ dataset.metadata.data_card.DESCRIPTION }}</li>
+						<li>Author Name: {{ dataset.metadata.data_card.AUTHOR_NAME }}</li>
+						<li>Author Email: {{ dataset.metadata.data_card.AUTHOR_EMAIL }}</li>
+						<li>Date of Data: {{ dataset.metadata.data_card.DATE }}</li>
+						<li>Data Provenance: {{ dataset.metadata.data_card.PROVENANCE }}</li>
+						<li>Data Sensitivity: {{ dataset.metadata.data_card.SENSITIVITY }}</li>
+						<li>License Information: {{ dataset.metadata.data_card.LICENSE }}</li>
+						<li>Data Type: {{ dataset.metadata.data_card.DATASET_TYPE }}</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="enriched">
 					<template #header>
@@ -285,6 +299,7 @@ import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vu
 import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
 import Menu from 'primevue/menu';
 import { useProjects } from '@/composables/project';
+import { enrichDataset } from './utils';
 
 enum DatasetView {
 	DESCRIPTION,
@@ -326,18 +341,6 @@ const documents = computed(
 			})) ?? []
 );
 const relatedDocuments = computed(() => []);
-
-/*
-const headers = ref({
-	AUTHOR_NAME: 'Author Name',
-	AUTHOR_EMAIL: 'Author Email',
-	DATE: 'Date of Data',
-	SCHEMA: 'Data Schema',
-	PROVENANCE: 'Data Provenance',
-	SENSITIVITY: 'Data Sensitivity',
-	LICENSE: 'License Information'
-});
-*/
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const newCsvContent: any = ref(null);
@@ -442,7 +445,7 @@ const fetchDataset = async () => {
 				datasetTemp[key] = highlightSearchTerms(value);
 			}
 		});
-		dataset.value = datasetTemp;
+		dataset.value = enrichDataset(datasetTemp);
 	}
 };
 
