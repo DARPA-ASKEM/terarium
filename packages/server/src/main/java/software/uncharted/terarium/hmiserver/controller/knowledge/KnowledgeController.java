@@ -95,13 +95,13 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/pdf-extractions")
 	public ResponseEntity<JsonNode> postPDFExtractions(
-		@RequestParam("artifact_id") String artifactId,
+		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 		@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
 		@RequestParam("name") String name,
 		@RequestParam("description") String description
 	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(artifactId, annotateSkema, annotateMIT, name, description).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(documentId, annotateSkema, annotateMIT, name, description).getBody());
 	}
 
 	;
@@ -121,15 +121,15 @@ public class KnowledgeController {
 	 * Profile a model
 	 *
 	 * @param modelId    (String): The ID of the model to profile
-	 * @param artifactId (String): The text of the document to profile
+	 * @param documentId (String): The text of the document to profile
 	 * @return the profiled model
 	 */
 	@PostMapping("/profile-model/{model_id}")
 	public ResponseEntity<JsonNode> postProfileModel(
 		@PathVariable("model_id") String modelId,
-		@RequestParam("artifact_id") String artifactId
+		@RequestParam("document_id") String documentId
 	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, artifactId).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, documentId).getBody());
 	}
 
 	;
@@ -138,15 +138,15 @@ public class KnowledgeController {
 	 * Profile a dataset
 	 *
 	 * @param datasetId  (String): The ID of the dataset to profile
-	 * @param artifactId (String): The ID of the artifact to profile
+	 * @param documentId (String): The ID of the artifact to profile
 	 * @return the profiled dataset
 	 */
 	@PostMapping("/profile-dataset/{dataset_id}")
 	public ResponseEntity<JsonNode> postProfileDataset(
 		@PathVariable("dataset_id") String datasetId,
-		@RequestParam("artifact_id") String artifactId
+		@RequestParam("document_id") String documentId
 	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, artifactId).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
 	}
 
 	;
