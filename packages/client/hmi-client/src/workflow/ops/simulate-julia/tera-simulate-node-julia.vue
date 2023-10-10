@@ -1,10 +1,14 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate">Run</Button>
-		<Dropdown :options="runList" v-model="selectedRun" option-label="label" />
-		<div class="chart-container" v-if="runResults">
+		<Dropdown
+			:options="runList"
+			v-model="selectedRun"
+			option-label="label"
+			@update:model-value="selectedRunChange"
+		/>
+		<div class="chart-container" v-if="selectedRun && runResults[selectedRun.runId]">
 			<tera-simulate-chart
-				v-if="selectedRun"
 				:key="selectedRun.idx"
 				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
 				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
@@ -64,7 +68,7 @@ const runList = computed(() =>
 		runId: cfg.selectedRun
 	}))
 );
-const selectedRun = ref(runList.value.length > 0 ? runList.value[0] : undefined);
+const selectedRun = ref();
 
 const poller = new Poller();
 
@@ -138,21 +142,20 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	);
 	runResults.value = newRunResults;
 
-	console.log(runResults.value);
-
-	// TODO: outport ports should only show the port for the run selected from the dropdown
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateJuliaOperation.outputs[0].type,
-		label: `${port.label} Results`,
+		label: `${port.label} - Output ${runList.value.length + 1}`, // TODO: figure out more robust naming system
 		value: runIdList
 	});
+
 	// show the latest run in the dropdown
 	selectedRun.value = runList.value[runList.value.length - 1];
+	// persist the selected run in the chart config
+	selectedRunChange();
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	console.log(index, config);
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
@@ -175,66 +178,51 @@ watch(
 
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
-watch(
-	() => selectedRun.value,
-	async () => {
-		// if (!selectedRun.value) return;
+const lazyLoadRunResults = async (runId: string) => {
+	if (runResults.value[runId]) return;
 
-		// const state = _.cloneDeep(props.node.state);
-		// state.chartConfigs[selectedRun.value.idx].selectedRun = selectedRun.value.label;
+	const resultCsv = await getRunResult(runId, 'result.csv');
+	const csvData = csvParse(resultCsv);
 
-		// workflowEventBus.emitNodeStateChange({
-		// 	workflowId: props.node.workflowId,
-		// 	nodeId: props.node.id,
-		// 	state
-		// });
-		console.log('selectedRun', selectedRun.value);
-		const runId = selectedRun.value?.runId;
-		if (runId && !runResults.value[runId]) {
-			const resultCsv = await getRunResult(runId, 'result.csv');
-			const csvData = csvParse(resultCsv);
+	const configId = props.node.inputs[0].value?.[0];
+	if (configId) {
+		const modelConfig = await getModelConfigurationById(configId);
+		const parameters = modelConfig.configuration.semantics.ode.parameters;
+		csvData.forEach((row) =>
+			parameters.forEach((parameter) => {
+				row[parameter.id] = parameter.value;
+			})
+		);
+	}
+	runResults.value[runId] = csvData as any;
+};
 
-			const configId = props.node.inputs[0].value?.[0];
-			if (configId) {
-				const modelConfig = await getModelConfigurationById(configId);
-				const parameters = modelConfig.configuration.semantics.ode.parameters;
-				csvData.forEach((row) =>
-					parameters.forEach((parameter) => {
-						row[parameter.id] = parameter.value;
-					})
-				);
-			}
-			runResults.value[runId] = csvData as any;
-		}
-	},
-	{ immediate: true }
-);
+const selectedRunChange = () => {
+	if (!selectedRun.value) return;
 
-onMounted(async () => {
-	// const node = props.node;
-	// if (!node) return;
-	// const port = node.outputs[0];
-	// if (!port) return;
-	// console.log('PORT', port);
-	// console.log(props);
-	// const runIdList = port.value as string[];
-	// await Promise.all(
-	// 	runIdList.map(async (runId) => {
-	// 		const resultCsv = await getRunResult(runId, 'result.csv');
-	// 		const csvData = csvParse(resultCsv);
-	// 		const configId = props.node.inputs[0].value?.[0];
-	// 		if (configId) {
-	// 			const modelConfig = await getModelConfigurationById(configId);
-	// 			const parameters = modelConfig.configuration.semantics.ode.parameters;
-	// 			csvData.forEach((row) =>
-	// 				parameters.forEach((parameter) => {
-	// 					row[parameter.id] = parameter.value;
-	// 				})
-	// 			);
-	// 		}
-	// 		runResults.value[runId] = csvData as any;
-	// 	})
-	// );
+	lazyLoadRunResults(selectedRun.value.runId);
+
+	const state = _.cloneDeep(props.node.state);
+	// set the active status for the selected run in the chart configs
+	state.chartConfigs.forEach((cfg, idx) => {
+		cfg.active = idx === selectedRun.value?.idx;
+	});
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+onMounted(() => {
+	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+		lazyLoadRunResults(runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
 });
 
 const addChart = () => {
