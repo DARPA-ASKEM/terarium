@@ -39,4 +39,17 @@ public class RebacUser extends RebacObject {
 		reBACService.createRelationship(getSchemaObject(), new SchemaObject(Schema.Type.GROUP, group.getId()), Schema.Relationship.CREATOR);
 		return group;
 	}
+
+	public String getPermissionFor(RebacObject rebacObject) throws Exception {
+		if (reBACService.isCreator(getSchemaObject(), rebacObject.getSchemaObject())) {
+			return Schema.Relationship.CREATOR.toString();
+		} else if (canAdministrate(rebacObject)) {
+			return Schema.Relationship.ADMIN.toString();
+		} else if (canWrite(rebacObject)) {
+			return Schema.Relationship.WRITER.toString();
+		} else if (canRead(rebacObject)) {
+			return Schema.Relationship.READER.toString();
+		}
+		return "none";
+	}
 }
