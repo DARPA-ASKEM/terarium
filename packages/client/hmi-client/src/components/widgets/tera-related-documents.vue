@@ -91,10 +91,12 @@ import {
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
+import { ProvenanceType } from '@/types/Types';
+import { RelationshipType, createProvenance } from '@/services/provenance';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
-	relatedDocuments?: Array<{ name: string; id: string | undefined }>;
+	relatedDocuments?: Array<{ name: string | undefined; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
 }>();
@@ -114,6 +116,8 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	if (props.assetType === ResourceType.MODEL) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
 		jobIds.push(profileModelJobId);
+
+		await linkDocument();
 	} else if (props.assetType === ResourceType.DATASET) {
 		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
 		jobIds.push(profileDatasetJobId);
@@ -132,6 +136,24 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	await Promise.all(extractionList);
 
 	emit('enriched');
+};
+
+// This function creates a provenance link between the model and the document
+const linkDocument = async () => {
+	if (props.assetType !== ResourceType.MODEL) return;
+
+	// FIXME: currently we do not have the Document type on provenance, this will need tobe fixed...
+	// for now I am using publication as the right type.
+	const provenancePayload = {
+		relation_type: RelationshipType.EXTRACTED_FROM,
+		left: props.assetId,
+		left_type: ProvenanceType.Model,
+		right: selectedResources?.value?.id,
+		right_type: ProvenanceType.Publication
+	};
+	const provenanceId = await createProvenance(provenancePayload);
+
+	console.log(provenanceId);
 };
 
 const sendToAlignModel = async () => {

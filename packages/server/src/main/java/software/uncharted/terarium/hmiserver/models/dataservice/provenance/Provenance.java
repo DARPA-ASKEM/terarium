@@ -15,7 +15,7 @@ public class Provenance implements Serializable {
 
 	private String id;
 
-	private Instant timestamp;
+	private String timestamp;
 
 	@JsonProperty("relation_type")
 	private RelationType relationType;
@@ -23,12 +23,12 @@ public class Provenance implements Serializable {
 	private String left;
 
 	@JsonProperty("left_type")
-	private AssetType leftType;
+	private String leftType;
 
 	private String right;
 
 	@JsonProperty("right_type")
-	private AssetType rightType;
+	private String rightType;
 
 	@JsonProperty("user_id")
 	private String userId;
@@ -40,7 +40,8 @@ enum RelationType {
 	DERIVED_FROM("derivedfrom"),
 	EDITED_FROM("editedFrom"),
 	GLUED_FROM("gluedFrom"),
-	STRATIFIED_FROM("stratifiedFrom");
+	STRATIFIED_FROM("stratifiedFrom"),
+	EXTRACTED_FROM("EXTRACTED_FROM");
 
 	public final String type;
 

@@ -414,7 +414,7 @@
 
 <script setup lang="ts">
 import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
@@ -432,6 +432,7 @@ import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
+import { getManyProvenance } from '@/services/provenance';
 
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
@@ -499,7 +500,7 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = computed(() => []);
+const relatedDocuments = ref<{ name: string | undefined; id: string | undefined }[]>([]);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
@@ -635,6 +636,35 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 		}
 	};
 }
+
+async function getRelatedDocuments() {
+	const provenanceIds = props.model?.metadata?.provenance ?? [];
+
+	if (isEmpty(provenanceIds)) return;
+
+	const response = await getManyProvenance(provenanceIds);
+
+	const documentIds = response.map((prov) => prov?.right);
+
+	const projectDocuments = useProjects().activeProject.value?.assets?.documents ?? [];
+
+	relatedDocuments.value =
+		projectDocuments
+			.filter((document: DocumentAsset) => documentIds.includes(document.id))
+			.map((document: DocumentAsset) => ({
+				name: document.name,
+				id: document.id
+			})) ?? [];
+}
+
+onMounted(() => getRelatedDocuments());
+
+watch(
+	() => props.model.metadata?.provenance,
+	() => {
+		getRelatedDocuments();
+	}
+);
 </script>
 
 <style scoped>

@@ -484,6 +484,7 @@ export interface ModelMetadata {
     attributes?: any[];
     timeseries?: { [index: string]: any };
     card?: Card;
+    provenance?: string[];
 }
 
 export interface ModelGrounding {

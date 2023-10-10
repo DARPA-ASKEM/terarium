@@ -171,10 +171,28 @@ async function createProvenance(payload: ProvenanacePayload) {
 
 	const { status, data } = response;
 	if (status !== 201) return null;
+	return data?.id ?? null;
+}
+
+async function getProvenance(id: string) {
+	const response = await API.get(`/provenance/${id}`);
+	const { data } = response;
 	return data ?? null;
+}
+
+// wrapper method to get many provenance relationships at once.
+async function getManyProvenance(ids: string[]) {
+	const promiseList = [] as Promise<ProvenanacePayload | null>[];
+
+	ids.forEach((id) => {
+		promiseList.push(getProvenance(id));
+	});
+
+	const response = await Promise.all(promiseList);
+	return response;
 }
 //
 // FIXME: needs to create a similar function to "getRelatedArtifacts"
 //        for finding related datasets
 //
-export { getRelatedArtifacts, createProvenance };
+export { getRelatedArtifacts, createProvenance, getManyProvenance };
