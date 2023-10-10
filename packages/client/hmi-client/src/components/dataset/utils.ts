@@ -10,13 +10,6 @@ import { Dataset } from '@/types/Types';
  * @returns the enriched dataset
  */
 function enrichDataset(dataset: Dataset): Dataset {
-	console.group('enrichDataset');
-	console.log(dataset);
-	if (!dataset?.metadata?.dataCard) return dataset;
-
-	const dataCard = dataset.metadata.dataCard;
-	console.table(dataCard);
-
 	if (!dataset?.metadata?.dataCard?.DESCRIPTION) {
 		dataset.metadata.dataCard.DESCRIPTION = '-';
 	}
