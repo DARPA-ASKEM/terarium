@@ -118,10 +118,10 @@ async function processCode(file: File) {
 async function processArtifact(file: File) {
 	// This is pdf, txt, md files
 	const artifact: Artifact | null = await uploadArtifactToProject(
-		progress,
 		file,
 		useProjects().activeProject.value?.username ?? '',
-		''
+		'',
+		progress
 	);
 	return { id: artifact?.id ?? '', assetType: AssetType.Artifacts };
 }
