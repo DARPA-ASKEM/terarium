@@ -122,8 +122,6 @@ public class CodeController {
 	public ResponseEntity<String> getGithubCode(
 			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 			@RequestParam("path") final String path) {
-		System.out.println(repoOwnerAndName);
-		System.out.println(path);
 		return ResponseEntity.ok(jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody());
 	}
 }
