@@ -32,6 +32,9 @@ public class DocumentController implements SnakeCaseController {
 	@Autowired
 	DocumentProxy proxy;
 
+	@Autowired
+	JsDelivrProxy gitHubProxy;
+
 	@GetMapping
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
@@ -88,6 +91,26 @@ public class DocumentController implements SnakeCaseController {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
+
+	/**
+	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
+	 */
+	@PutMapping("/{documentId}/uploadDocumentFromGithub")
+	public ResponseEntity<Integer> uploadDocumentFromGithub(
+		@PathVariable("documentId") final String documentId,
+		@RequestParam("path") final String path,
+		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+		@RequestParam("filename") final String filename
+	) {
+		log.debug("Uploading Document file from github to dataset {}", documentId);
+
+		//download file from GitHub
+		String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+		return uploadDocumentHelper(documentId, filename, fileEntity);
+
+	}
+
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public ResponseEntity<byte[]> downloadDocument(

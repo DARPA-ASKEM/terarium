@@ -364,12 +364,13 @@ async function processFiles(files: File[], csvDescription: string) {
 			case AcceptedTypes.PDF:
 			case AcceptedTypes.TXT:
 			case AcceptedTypes.MD:
-				return processArtifact(file);
+				return processDocument(file);
 			case AcceptedTypes.PY:
 			case AcceptedTypes.R:
 			case AcceptedTypes.JL:
 				return processCode(file);
 			default:
+				// TODO: Should this be process Artifact?
 				return { file, error: true, response: { text: '', images: [] } };
 		}
 	});
@@ -396,7 +397,7 @@ async function processCode(file: File) {
  * Process a pdf, txt, md file into an artifact
  * @param file
  */
-async function processArtifact(file: File) {
+async function processDocument(file: File) {
 	// This is pdf, txt, md files
 	const document: DocumentAsset | null = await uploadArtifactToProject(
 		progress,
