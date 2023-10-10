@@ -32,7 +32,7 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
 			// Queued
 			return pollerResult;
 		})
-		.setThreshold(30);
+		.setThreshold(3000);
 	return poller.start();
 }
 
@@ -44,14 +44,14 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @return {Promise<Boolean>}
  */
 export const latexToAMR = async (
-	latex: string[],
+	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
 ): Promise<Boolean> => {
 	try {
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
-			`/knowledge/latex-to-amr/?framework=${framework}&modelId=${modelId}`,
-			latex
+			`/knowledge/equations-to-model`,
+			{ format: 'latex', framework, modelId, equations }
 		);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
@@ -87,14 +87,20 @@ export const profileModel = async (modelId: string, documentId: string | null = 
 	return response.data.id;
 };
 
+export const alignModel = async (modelId: string, documentId: string): Promise<string | null> => {
+	const response = await API.post(
+		`/knowledge/link-amr?document_id=${documentId}&model_id=${modelId}`
+	);
+	return response.data?.id ?? null;
+};
 /**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (datasetId: string, artifactId: string | null = null) => {
+export const profileDataset = async (datasetId: string, documentId: string | null = null) => {
 	let response: any = null;
-	if (artifactId) {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?artifact_id=${artifactId}`);
+	if (documentId) {
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
@@ -125,17 +131,17 @@ const extractTextFromPDFArtifact = async (artifactId: string): Promise<string | 
 	return null;
 };
 
-const pdfExtractions = async (
-	artifactId: string,
+export const pdfExtractions = async (
+	documentId: string,
 	pdfName?: string,
 	description?: string
 ): Promise<string | null> => {
 	// I've purposefully excluded the MIT and SKEMA options here, so they're always
 	// defaulted to true.
 
-	let url = `/knowledge/pdf-extractions?artifact_id=${artifactId}`;
+	let url = `/knowledge/pdf-extractions?document_id=${documentId}`;
 	if (pdfName) {
-		url += `&pdf_name=${pdfName}`;
+		url += `&name=${pdfName}`;
 	}
 	if (description) {
 		url += `&description=${description}`;

@@ -40,6 +40,13 @@ API.interceptors.response.use(
 					toastTitle: `${ToastSummaries.NETWORK_ERROR} (${status})`
 				});
 		}
+		if (status === 401) {
+			// redirect to login
+			const auth = useAuthStore();
+			auth.keycloak?.login({
+				redirectUri: window.location.href
+			});
+		}
 		return null;
 	}
 );

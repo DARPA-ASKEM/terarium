@@ -28,9 +28,8 @@ public class ModelConfigurationController implements SnakeCaseController {
 		return ResponseEntity.ok(proxy.getAssets(pageSize, page).getBody());
 	}
 
-	//TODO why isnt the param here a ModelConfiguration?
 	@PostMapping
-	public ResponseEntity<JsonNode> createModelConfiguration(Object config) {
+	public ResponseEntity<JsonNode> createModelConfiguration(@RequestBody ModelConfiguration config) {
 		return ResponseEntity.ok(proxy.createAsset(convertObjectToSnakeCaseJsonNode(config)).getBody());
 	}
 

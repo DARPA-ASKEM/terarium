@@ -38,9 +38,9 @@
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]">
 			<AccordionTab>
 				<template #header>Related publications</template>
-				<tera-related-publications
-					:publications="publications"
-					:related-publications="relatedPublications"
+				<tera-related-documents
+					:documents="documents"
+					:related-documents="relatedDocuments"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 					@enriched="fetchAsset"
@@ -430,7 +430,7 @@ import Button from 'primevue/button';
 import TeraModelExtraction from '@/components/model/petrinet/tera-model-extraction.vue';
 import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
-import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
 
 // Used to keep track of the values of the current row being edited
@@ -481,10 +481,10 @@ const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
-const publications = computed(
+const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents.filter((document: DocumentAsset) =>
+			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
 					(extension) => {
 						if (document.fileNames && !isEmpty(document.fileNames)) {
@@ -499,7 +499,7 @@ const publications = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedPublications = computed(() => []);
+const relatedDocuments = computed(() => []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
