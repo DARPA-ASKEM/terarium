@@ -36,6 +36,10 @@ public class EventService {
 		}
 	}
 
+	public List<Event> findAllByUserId(final String userId) {
+		return eventRepository.findAllByUserId(userId);
+	}
+
 	public Event save(final Event e) {
 		return eventRepository.save(e);
 	}
