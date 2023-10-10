@@ -41,19 +41,19 @@ const humanizeDate = (timestampMillis: number) => {
 };
 
 const downloadCSV = async (data) => {
-	const username = data.username;
+	const userId = data.userId;
 	const name = data.name;
-	console.log(`Fetching ${username}/${name}`);
+	console.log(`Fetching ${userId}/${name}`);
 
 	// Build the csv
-	const response = await API.get(`/evaluation/download?username=${username}&name=${name}`);
+	const response = await API.get(`/evaluation/download?userId=${userId}&name=${name}`);
 	const csv = response.data;
 
 	// Download the file
 	const link = document.createElement('a');
 	const file = new Blob([csv], { type: 'text/csv' });
 	link.href = URL.createObjectURL(file);
-	link.download = `${username}-${name}.csv`;
+	link.download = `${userId}-${name}.csv`;
 	link.click();
 	URL.revokeObjectURL(link.href);
 };
