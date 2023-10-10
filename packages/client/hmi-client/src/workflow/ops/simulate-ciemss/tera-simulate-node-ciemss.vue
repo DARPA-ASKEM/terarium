@@ -119,7 +119,6 @@ const runSimulate = async () => {
 };
 
 onMounted(() => {
-	console.log(props.node.state.chartConfigs);
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
