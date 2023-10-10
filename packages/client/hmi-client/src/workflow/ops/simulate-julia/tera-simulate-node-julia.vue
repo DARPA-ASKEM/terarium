@@ -197,6 +197,7 @@ const lazyLoadRunResults = async (runId: string) => {
 	const resultCsv = await getRunResult(runId, 'result.csv');
 	const csvData = csvParse(resultCsv);
 
+	// there's only a single input config
 	const configId = props.node.inputs[0].value?.[0];
 	if (configId) {
 		const modelConfig = await getModelConfigurationById(configId);

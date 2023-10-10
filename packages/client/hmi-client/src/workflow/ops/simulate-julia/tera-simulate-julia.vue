@@ -72,7 +72,7 @@
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
 						<template #header>
-							{{ modelConfiguration[selectedRun?.runId]?.configuration.name }}
+							{{ modelConfigurations[selectedRun?.runId]?.configuration.name }}
 						</template>
 						<model-diagram
 							v-if="model[selectedRun?.runId]"
@@ -123,7 +123,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import ModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 
-import { getSimulation, getRunResult } from '@/services/models/simulation-service';
+import { getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
@@ -150,7 +150,7 @@ const activeTab = ref(SimulateTabs.input);
 
 const model = ref<{ [runId: string]: Model | null }>({});
 const runResults = ref<RunResults>({});
-const modelConfiguration = ref<{ [runId: string]: ModelConfiguration | null }>({});
+const modelConfigurations = ref<{ [runId: string]: ModelConfiguration | null }>({});
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
@@ -207,28 +207,25 @@ async function saveDatasetToProject() {
 const lazyLoadSimulationData = async (runId: string) => {
 	if (runResults.value[runId]) return;
 
-	const simulationObj = await getSimulation(runId);
-	if (!simulationObj) return;
-
-	const executionPayload = simulationObj.executionPayload;
-	if (!executionPayload) return;
-
-	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
-	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
-	modelConfiguration.value[runId] = modelConfigurationObj;
-	const modelId = modelConfigurationObj.modelId;
-	model.value[runId] = await getModel(modelId);
+	// there's only a single input config
+	const modelConfigId = props.node.inputs[0].value?.[0];
+	const modelConfiguration = await getModelConfigurationById(modelConfigId);
+	modelConfigurations.value[runId] = modelConfiguration;
 
 	const resultCsv = await getRunResult(runId, 'result.csv');
 	const csvData = csvParse(resultCsv);
-	if (modelConfigurationObj) {
-		const parameters = modelConfigurationObj.configuration.semantics.ode.parameters;
+
+	if (modelConfiguration) {
+		model.value[runId] = await getModel(modelConfiguration.modelId);
+
+		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
 		csvData.forEach((row) =>
 			parameters.forEach((parameter) => {
 				row[parameter.id] = parameter.value;
 			})
 		);
 	}
+
 	runResults.value[runId] = csvData as any;
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);
 };

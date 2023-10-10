@@ -143,7 +143,7 @@ import { CsvAsset, Model, TimeSpan, ModelConfiguration } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel, getModelConfigurations } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getSimulation, getRunResultCiemss } from '@/services/models/simulation-service';
+import { getRunResultCiemss } from '@/services/models/simulation-service';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
@@ -229,19 +229,15 @@ async function saveDatasetToProject() {
 const lazyLoadSimulationData = async (runId: string) => {
 	if (runResults.value[runId]) return;
 
-	const simulationObj = await getSimulation(runId);
-	if (!simulationObj) return;
-
-	const executionPayload = simulationObj.executionPayload;
-	if (!executionPayload) return;
-
-	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
-	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
-	const modelId = modelConfigurationObj.modelId;
-	model.value[runId] = await getModel(modelId);
-
-	if (model.value[runId])
-		modelConfigurations.value = await getModelConfigurations(model.value[runId]!.id);
+	// there's only a single input config
+	const modelConfigId = props.node.inputs[0].value?.[0];
+	const modelConfiguration = await getModelConfigurationById(modelConfigId);
+	if (modelConfiguration) {
+		model.value[runId] = await getModel(modelConfiguration.modelId);
+		if (model.value) {
+			modelConfigurations.value = await getModelConfigurations(model.value[runId]!.id);
+		}
+	}
 
 	const output = await getRunResultCiemss(runId);
 	runResults.value[runId] = output.runResults;
