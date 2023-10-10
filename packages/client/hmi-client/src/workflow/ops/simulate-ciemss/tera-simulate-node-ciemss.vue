@@ -1,11 +1,16 @@
 <template>
 	<section v-if="!showSpinner">
-		<Dropdown :options="runList" v-model="selectedRun" option-label="label" />
-		<div class="chart-container">
+		<Dropdown
+			v-if="runList.length > 0"
+			:options="runList"
+			v-model="selectedRun"
+			option-label="label"
+			@update:model-value="handleSelectedRunChange"
+		/>
+		<div class="chart-container" v-if="selectedRun && runResults[selectedRun.runId]">
 			<tera-simulate-chart
-				v-if="selectedRun"
 				:key="selectedRun.idx"
-				:run-results="runResults"
+				:run-results="runResults[selectedRun.runId]"
 				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
 				has-mean-line
 				@configuration-change="configurationChange(selectedRun.idx, $event)"
@@ -74,14 +79,14 @@ const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const completedRunIdList = ref<string[]>([]);
-const runResults = ref<RunResults>({});
-const runConfigs = ref<{ [paramKey: string]: number[] }>({});
+const runResults = ref<{ [runId: string]: RunResults }>({});
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const runList = computed(() =>
 	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
 		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
-		idx
+		idx,
+		runId: cfg.selectedRun
 	}))
 );
 const selectedRun = ref();
@@ -119,6 +124,14 @@ onMounted(() => {
 	if (runIds.length > 0) {
 		getStatus(runIds);
 	}
+
+	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+		lazyLoadRunResults(runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
 });
 
 onUnmounted(() => {
@@ -149,16 +162,19 @@ const getStatus = async (runIds: string[]) => {
 const watchCompletedRunList = async (runIdList: string[]) => {
 	if (runIdList.length === 0) return;
 
-	const output = await getRunResultCiemss(runIdList[0]);
-	runResults.value = output.runResults;
-	runConfigs.value = output.runConfigs;
+	await lazyLoadRunResults(runIdList[0]);
 
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `${port.label} Results`,
+		label: `${port.label} - Output ${runList.value.length + 1}`, // TODO: figure out more robust naming system
 		value: runIdList
 	});
+
+	// show the latest run in the dropdown
+	selectedRun.value = runList.value[runList.value.length - 1];
+	// persist the selected run in the chart config
+	handleSelectedRunChange();
 };
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
@@ -192,8 +208,32 @@ watch(
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	console.log(index, state.chartConfigs);
 	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const lazyLoadRunResults = async (runId: string) => {
+	if (runResults.value[runId]) return;
+
+	const output = await getRunResultCiemss(runId);
+	runResults.value[runId] = output.runResults;
+};
+
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	lazyLoadRunResults(selectedRun.value.runId);
+
+	const state = _.cloneDeep(props.node.state);
+	// set the active status for the selected run in the chart configs
+	state.chartConfigs.forEach((cfg, idx) => {
+		cfg.active = idx === selectedRun.value?.idx;
+	});
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -212,16 +252,6 @@ const addChart = () => {
 		state
 	});
 };
-
-onMounted(async () => {
-	const port = props.node.outputs[0];
-	if (!port) return;
-
-	const runIdList = port.value as string[];
-	const output = await getRunResultCiemss(runIdList[0]);
-	runResults.value = output.runResults;
-	runConfigs.value = output.runConfigs;
-});
 </script>
 
 <style scoped>
