@@ -282,7 +282,7 @@ import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
 import { downloadRawFile, createNewDatasetFromCSV } from '@/services/dataset';
 import { uploadCodeToProject } from '@/services/code';
-import { uploadArtifactToProject } from '@/services/artifact';
+import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { getAssetIcon } from '@/services/project';
 
 const emit = defineEmits(['open-asset', 'open-new-asset']);
@@ -399,11 +399,11 @@ async function processCode(file: File) {
  */
 async function processDocument(file: File) {
 	// This is pdf, txt, md files
-	const document: DocumentAsset | null = await uploadArtifactToProject(
-		progress,
+	const document: DocumentAsset | null = await uploadDocumentAssetToProject(
 		file,
 		useProjects().activeProject.value?.username ?? '',
-		''
+		'',
+		progress
 	);
 	let newAsset;
 	if (document && document.id) {
