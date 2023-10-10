@@ -90,12 +90,12 @@ public interface KnowledgeMiddlewareProxy {
 	 *
 	 * @return the profiled dataset
 	 * @param    datasetId (String): The ID of the dataset to profile
-	 * @param    documentId (String): The text of the document to profile
+	 * @param    documentId= (String): The text of the document to profile
 	 */
 	@PostMapping("/profile_dataset/{dataset_id}")
 	ResponseEntity<JsonNode> postProfileDataset(
 		@PathVariable("dataset_id") String datasetId,
-		@RequestParam("document_id") String documentId
+		@RequestParam (name = "document_id", required = false) String documentId
 	);
 
 	/**

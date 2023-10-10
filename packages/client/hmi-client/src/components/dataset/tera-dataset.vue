@@ -71,12 +71,7 @@
 			<section class="metadata data-row">
 				<section>
 					<header>Source Name</header>
-					<section
-						v-if="dataset.datasetUrl === 'https://github.com/reichlab/covid19-forecast-hub/'"
-					>
-						The Reich Lab at UMass-Amherst
-					</section>
-					<section v-else>{{ dataset?.source || '-' }}</section>
+					<section>{{ dataset?.source || '-' }}</section>
 				</section>
 				<section>
 					<header>Source URL</header>
@@ -103,7 +98,9 @@
 					<template #header>
 						<header>Description</header>
 					</template>
-					<p>
+					<p v-if="dataset?.description">{{ dataset.description }}</p>
+					<p v-else-if="dataset?.metadata?.dataCard">{{ dataset.metadata.dataCard }}</p>
+					<p v-else>
 						No information available. Add resources to generate a description. Or click edit icon to
 						edit this field directly.
 					</p>
