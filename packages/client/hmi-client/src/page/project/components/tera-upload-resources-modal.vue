@@ -135,15 +135,16 @@ function importCompleted(newResults: { id: string; name: string; assetType: Asse
 
 async function upload() {
 	if (results.value) {
-		const resolved = await Promise.all(
+		await Promise.all(
 			results.value?.map(({ id, assetType }): Promise<any> => useProjects().addAsset(assetType, id))
-		);
-		emit('close');
-		const resourceMsg = resolved.length > 1 ? 'resources were' : 'resource was';
-		useToastService().success(
-			'Success!',
-			`${resolved.length} ${resourceMsg} successfuly added to this project`
-		);
+		).then((resolved) => {
+			emit('close');
+			const resourceMsg = resolved.length > 1 ? 'resources were' : 'resource was';
+			useToastService().success(
+				'Success!',
+				`${resolved.length} ${resourceMsg} successfuly added to this project`
+			);
+		});
 	}
 }
 </script>
