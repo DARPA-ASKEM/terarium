@@ -16,27 +16,25 @@
 				/>
 			</template>
 		</tera-slider-panel>
-		<Splitter>
-			<SplitterPanel class="project-page" :size="20">
-				<tera-tab-group
-					class="tab-group"
-					v-if="!isEmpty(tabs)"
-					:tabs="tabs"
-					:active-tab-index="activeTabIndex"
-					:loading-tab-index="loadingTabIndex"
-					@close-tab="removeClosedTab"
-					@select-tab="openAsset"
-				/>
-				<tera-project-page
-					:asset-id="assetId"
-					:page-type="pageType"
-					v-model:tabs="tabs"
-					@asset-loaded="setActiveTab"
-					@close-current-tab="removeClosedTab(activeTabIndex as number)"
-					@open-new-asset="openNewAsset"
-				/>
-			</SplitterPanel>
-		</Splitter>
+		<section class="project-page">
+			<tera-tab-group
+				class="tab-group"
+				v-if="!isEmpty(tabs)"
+				:tabs="tabs"
+				:active-tab-index="activeTabIndex"
+				:loading-tab-index="loadingTabIndex"
+				@close-tab="removeClosedTab"
+				@select-tab="openAsset"
+			/>
+			<tera-project-page
+				:asset-id="assetId"
+				:page-type="pageType"
+				v-model:tabs="tabs"
+				@asset-loaded="setActiveTab"
+				@close-current-tab="removeClosedTab(activeTabIndex as number)"
+				@open-new-asset="openNewAsset"
+			/>
+		</section>
 		<tera-slider-panel
 			v-model:is-open="isNotesSliderOpen"
 			content-width="240px"
@@ -150,8 +148,6 @@ import { useTabStore } from '@/stores/tabs';
 import { Tab } from '@/types/common';
 import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
 import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
@@ -395,29 +391,12 @@ onMounted(() => {
 	position: relative;
 }
 
-.p-splitter {
-	display: flex;
-	flex: 1;
-	background: none;
-	border: none;
-	overflow-x: hidden;
-}
-
-section,
-.p-splitter:deep(.project-page) {
+section {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
-}
-
-.p-splitter:deep(.p-splitter-gutter) {
-	z-index: 1000;
-}
-
-.top-z-index {
-	z-index: 1000;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
