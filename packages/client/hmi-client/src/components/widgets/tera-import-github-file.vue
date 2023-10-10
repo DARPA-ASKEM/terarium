@@ -185,6 +185,7 @@ import { useProjects } from '@/composables/project';
 import { uploadCodeToProjectFromGithub } from '@/services/code';
 import { createNewArtifactFromGithubFile } from '@/services/artifact';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
+import { useToastService } from '@/services/toast';
 
 const props = defineProps<{
 	visible: boolean;
@@ -286,6 +287,14 @@ async function openSelectedFiles() {
 		await importDocumentFiles(selectedDocumentFiles);
 	}
 
+	// TODO: make this number account for files that were not succussfully imported
+	const numUploadedFiles =
+		selectedCodeFiles.length + selectedDataFiles.length + selectedDocumentFiles.length;
+	const resourceMsg = numUploadedFiles > 1 ? 'resources were' : 'resource was';
+	useToastService().success(
+		'Success!',
+		`${numUploadedFiles} ${resourceMsg} successfuly added to this project`
+	);
 	// FIXME: Files aren't opening
 	emit('close');
 }
