@@ -115,6 +115,8 @@ export interface Project {
     assets?: Assets;
     metadata?: { [index: string]: string };
     username: string;
+    publicProject?: boolean;
+    userPermission?: string;
     id?: string;
     relatedDocuments?: Document[];
 }
