@@ -16,7 +16,8 @@ public enum EventType {
 	ADD_CODE_CELL(true),
 	RUN_SIMULATION(true),
 	RUN_CALIBRATE(true),
-	GITHUB_IMPORT(true);
+	GITHUB_IMPORT(true),
+	TEST_TYPE(true);
 
 	EventType(boolean persistent) {
 		this.persistent = persistent;
