@@ -18,14 +18,14 @@ public class FunmanController {
     public ResponseEntity<JsonNode> halt(@PathVariable String query_id) {
         ResponseEntity<JsonNode> response = funmanProxy.halt(query_id);
 
-        return response;
+        return ResponseEntity.ok(response.getBody());
     }
 
     @GetMapping("/{query_id}")
     public ResponseEntity<JsonNode> getQueries(@PathVariable String query_id) {
         ResponseEntity<JsonNode> response = funmanProxy.getQueries(query_id);
 
-        return response;
+        return ResponseEntity.ok(response.getBody());
     }
 
     @PostMapping
@@ -37,6 +37,6 @@ public class FunmanController {
         //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response.getBody());
         // }
 
-        return response;
+        return ResponseEntity.ok(response.getBody());
     }
 }
