@@ -271,7 +271,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { capitalize, isEmpty } from 'lodash';
-import { Artifact, AssetType, CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
@@ -398,18 +398,18 @@ async function processCode(file: File) {
  */
 async function processArtifact(file: File) {
 	// This is pdf, txt, md files
-	const artifact: Artifact | null = await uploadArtifactToProject(
+	const document: DocumentAsset | null = await uploadArtifactToProject(
 		progress,
 		file,
 		useProjects().activeProject.value?.username ?? '',
 		''
 	);
 	let newAsset;
-	if (artifact && artifact.id) {
-		newAsset = await useProjects().addAsset(AssetType.Artifacts, artifact.id);
+	if (document && document.id) {
+		newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
 	}
-	if (artifact && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
-		await extractPDF(artifact);
+	if (document && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
+		await extractPDF(document);
 		return { file, error: false, response: { text: '', images: [] } };
 	}
 	return { file, error: true, response: { text: '', images: [] } };
