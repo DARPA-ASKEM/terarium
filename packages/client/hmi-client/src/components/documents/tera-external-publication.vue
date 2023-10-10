@@ -501,6 +501,9 @@ onUpdated(() => {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;
 	border-radius: var(--border-radius);
+	gap: 1rem;
+	display: flex;
+	align-items: center;
 }
 
 .extracted-item > .extracted-image {
