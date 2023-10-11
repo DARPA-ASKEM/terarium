@@ -111,6 +111,11 @@ export type Tab = {
 	pageType?: AssetType | ProjectPages;
 };
 
+export type AssetRoute = {
+	assetId: string;
+	pageType: AssetType | ProjectPages;
+};
+
 export type CodeRequest = {
 	asset: Tab;
 	code?: string;

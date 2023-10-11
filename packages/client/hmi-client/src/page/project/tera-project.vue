@@ -9,31 +9,15 @@
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
-					:active-tab="openedAssetRoute"
-					@open-asset="(asset) => openAssetFromSidebar(asset)"
+					:opened-asset-route="openedAssetRoute"
+					@open-asset="openAsset"
 					@remove-asset="removeAsset"
 					@open-new-asset="openNewAsset"
 				/>
 			</template>
 		</tera-slider-panel>
 		<section class="project-page">
-			<tera-tab-group
-				class="tab-group"
-				v-if="!isEmpty(tabs)"
-				:tabs="tabs"
-				:active-tab-index="activeTabIndex"
-				:loading-tab-index="loadingTabIndex"
-				@close-tab="removeClosedTab"
-				@select-tab="openAsset"
-			/>
-			<tera-project-page
-				:asset-id="assetId"
-				:page-type="pageType"
-				v-model:tabs="tabs"
-				@asset-loaded="setActiveTab"
-				@close-current-tab="removeClosedTab(activeTabIndex as number)"
-				@open-new-asset="openNewAsset"
-			/>
+			<tera-project-page :asset-id="assetId" :page-type="pageType" @open-new-asset="openNewAsset" />
 		</section>
 		<tera-slider-panel
 			v-model:is-open="isNotesSliderOpen"
@@ -81,7 +65,7 @@
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
 					:node="workflowNode"
 					:key="workflowNode.id"
-					@open-asset="(asset) => openAssetFromSidebar(asset)"
+					@open-asset="(asset) => openAsset(asset)"
 				/>
 				<tera-simulate-ensemble-ciemss
 					v-if="
@@ -124,9 +108,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, PropType } from 'vue';
+import { isEqual } from 'lodash';
 import { useRouter } from 'vue-router';
-import { isEmpty } from 'lodash';
 import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
 import TeraDatasetWorkflowWrapper from '@//workflow/ops/dataset/tera-dataset-workflow-wrapper.vue';
 import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
@@ -140,12 +124,10 @@ import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-data
 import TeraModelTransformer from '@/workflow/ops/model-transformer/tera-model-transformer.vue';
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
 import { RouteName } from '@/router/routes';
-import { useTabStore } from '@/stores/tabs';
-import { Tab } from '@/types/common';
+import { AssetRoute } from '@/types/common';
 import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
@@ -156,94 +138,57 @@ import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
-const props = defineProps<{
-	assetId?: string;
-	pageType?: AssetType | ProjectPages;
-}>();
-
-const tabStore = useTabStore();
+const props = defineProps({
+	assetId: {
+		type: String,
+		default: ''
+	},
+	pageType: {
+		type: String as PropType<AssetType | ProjectPages>,
+		default: ProjectPages.OVERVIEW
+	}
+});
 
 const router = useRouter();
 
-const dialogIsOpened = ref(false);
-
 const workflowNode = ref<WorkflowNode<any> | null>(null);
-
 workflowEventBus.on('drilldown', (payload: any) => {
 	workflowNode.value = payload;
 	dialogIsOpened.value = true;
 });
 
+const dialogIsOpened = ref(false);
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
-
 const isNewModelModalVisible = ref(false);
 
-// Associated with tab storage
-const projectContext = computed(() => useProjects().activeProject.value?.id ?? '');
-const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
-const activeTabIndex = ref<number | null>(0);
-const openedAssetRoute = computed<Tab>(() => ({
+const openedAssetRoute = computed<AssetRoute>(() => ({
 	pageType: props.pageType,
 	assetId: props.assetId
 }));
-const loadingTabIndex = ref<number | null>(null);
 
-const isSameTab = (a: Tab, b: Tab) => a.assetId === b.assetId && a.pageType === b.pageType;
-
-function setActiveTab() {
-	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
-	loadingTabIndex.value = null;
-}
-
-async function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
-	activeTabIndex.value = null;
-	const asset: Tab = tabs.value[index];
-	if (asset) {
-		if (!(asset.assetId === props.assetId && asset.pageType === props.pageType)) {
-			loadingTabIndex.value = index;
-			router.push({
-				name: RouteName.Project,
-				params: { assetId: asset.assetId, pageType: asset.pageType }
-			});
-		}
+function openAsset(assetRoute: AssetRoute) {
+	if (!isEqual(assetRoute, openedAssetRoute.value)) {
+		console.log(assetRoute);
+		router.push({
+			name: RouteName.Project,
+			params: assetRoute
+		});
 	}
 }
 
-function openAssetFromSidebar(asset: Tab) {
-	router.push({
-		name: RouteName.Project,
-		params: { assetId: asset.assetId, pageType: asset.pageType }
-	});
-	loadingTabIndex.value = tabs.value.length;
-}
-
-function removeClosedTab(tabIndexToRemove: number) {
-	tabStore.removeTab(projectContext.value, tabIndexToRemove);
-	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
-
-	if (tabs.value.length > 0) {
-		openAsset();
-	} else {
-		tabStore.addTab(projectContext.value, overviewResource);
-		openAsset();
-	}
-}
-
-async function removeAsset(asset: Tab) {
-	const { assetId, pageType } = asset;
+async function removeAsset(assetRoute: AssetRoute) {
+	const { assetId, pageType } = assetRoute;
 
 	// Delete only Asset with an ID and of ProjectAssetType
 	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
 		const isRemoved = await useProjects().deleteAsset(pageType as AssetType, assetId);
 
 		if (isRemoved) {
-			removeClosedTab(tabs.value.findIndex((tab: Tab) => isSameTab(tab, asset)));
 			logger.info(`${assetId} was removed.`, { showToast: true });
 			return;
 		}
 	}
-
 	logger.error(`Failed to remove ${assetId}`, { showToast: true });
 }
 
@@ -261,20 +206,7 @@ const openWorkflow = async () => {
 	const workflowId = response.id;
 	await useProjects().addAsset(AssetType.Workflows, workflowId);
 
-	router.push({
-		name: RouteName.Project,
-		params: {
-			pageType: AssetType.Workflows,
-			assetId: workflowId
-		}
-	});
-};
-
-const openCode = () => {
-	router.push({
-		name: RouteName.Project,
-		params: codeResource
-	});
+	openAsset({ pageType: AssetType.Workflows, assetId: workflowId });
 };
 
 const openNewAsset = (assetType: string) => {
@@ -286,7 +218,10 @@ const openNewAsset = (assetType: string) => {
 			openWorkflow();
 			break;
 		case AssetType.Code:
-			openCode();
+			openAsset({
+				pageType: AssetType.Code,
+				assetId: 'code' // FIXME: hack to get around weird tab behaviour,
+			});
 			break;
 		default:
 			break;
@@ -297,85 +232,8 @@ const onCloseModelModal = () => {
 	isNewModelModalVisible.value = false;
 };
 
-const overviewResource = {
-	pageType: ProjectPages.OVERVIEW,
-	assetId: ''
-};
-
-const codeResource = {
-	pageType: AssetType.Code,
-	assetId: 'code', // FIXME: hack to get around weird tab behaviour,
-	assetName: 'New file'
-};
-
-const adjustTabsProjectChange = () => {
-	const pageType = openedAssetRoute.value.pageType;
-	const projectId = projectContext.value;
-
-	if (pageType || !projectContext.value) return;
-
-	if (tabs.value.length > 0) {
-		openAsset();
-		return;
-	}
-
-	// If there aren't anything, push in overview
-	if (tabs.value.length === 0) {
-		tabStore.addTab(projectId, overviewResource);
-		openAsset(0);
-	}
-};
-
-const adjustTabs = () => {
-	const projectId = projectContext.value;
-	const assetId = openedAssetRoute.value.assetId;
-	const pageType = openedAssetRoute.value.pageType;
-
-	if (!pageType) return;
-
-	// Handle new regular tab
-	const tabExist = tabs.value.some((tab) => isSameTab(tab, openedAssetRoute.value));
-	if (!tabExist && assetId) {
-		tabStore.addTab(projectContext.value, openedAssetRoute.value);
-		return;
-	}
-
-	// Handle existing tab
-	if (tabExist) {
-		const index = tabs.value.findIndex((tab) => isSameTab(tab, openedAssetRoute.value));
-		tabStore.setActiveTabIndex(projectContext.value, index);
-		return;
-	}
-
-	/** Quirky special logic for this that are not really assets * */
-
-	// If new code or overview
-	if (!tabExist && !assetId) {
-		if (pageType === AssetType.Code) {
-			tabStore.addTab(projectId, codeResource);
-			openAsset();
-		} else if (pageType === ProjectPages.OVERVIEW) {
-			tabStore.addTab(projectId, overviewResource);
-			openAsset(0);
-		}
-	}
-};
-
-watch(
-	() => projectContext.value,
-	() => adjustTabsProjectChange()
-);
-
-watch(
-	() => openedAssetRoute.value,
-	() => adjustTabs()
-);
-
 onMounted(() => {
-	setTimeout(() => {
-		adjustTabsProjectChange();
-		adjustTabs();
-	}, 1000);
+	openAsset(openedAssetRoute.value);
 });
 </script>
 

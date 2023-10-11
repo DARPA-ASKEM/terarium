@@ -247,17 +247,17 @@
 				</Teleport>
 			</section>
 		</section>
-		<tera-multi-select-modal
+		<!-- <tera-multi-select-modal
 			:is-visible="showMultiSelect"
 			:selected-resources="selectedResources"
 			:buttons="multiSelectButtons"
-		></tera-multi-select-modal>
+		></tera-multi-select-modal> -->
 	</main>
 </template>
 
 <script setup lang="ts">
 import { isProjectAssetTypes } from '@/types/Project';
-import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
+import { computed, nextTick, onMounted, Ref, ref } from 'vue'; // toRaw
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -275,8 +275,7 @@ import { Artifact, AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/T
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
-import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
-import { useTabStore } from '@/stores/tabs';
+// import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
@@ -299,23 +298,21 @@ const selectedResources = ref();
 
 const openedRow = ref(null);
 
-const tabStore = useTabStore();
-
 const auth = useAuthStore();
 
-const multiSelectButtons = [
-	{
-		label: 'Open',
-		callback: () => {
-			selectedResources.value.forEach((resource) => {
-				const { activeProject } = useProjects();
-				if (activeProject.value?.id) {
-					tabStore.addTab(activeProject.value.id, toRaw(resource), false);
-				}
-			});
-		}
-	}
-];
+// const multiSelectButtons = [
+// 	{
+// 		label: 'Open',
+// 		callback: () => {
+// 			selectedResources.value.forEach((resource) => {
+// 				const { activeProject } = useProjects();
+// 				if (activeProject.value?.id) {
+// 					tabStore.addTab(activeProject.value.id, toRaw(resource), false);
+// 				}
+// 			});
+// 		}
+// 	}
+// ];
 
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);

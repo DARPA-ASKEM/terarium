@@ -35,17 +35,11 @@
 		</header>
 		<Button
 			class="asset-button"
-			:active="activeTab.pageType === ProjectPages.OVERVIEW"
+			:active="openedAssetRoute.pageType === ProjectPages.OVERVIEW"
 			plain
 			text
 			size="small"
-			@click="
-				emit('open-asset', {
-					assetName: 'Overview',
-					pageType: ProjectPages.OVERVIEW,
-					assetId: undefined
-				})
-			"
+			@click="emit('open-asset', overview)"
 		>
 			<span>
 				<vue-feather
@@ -68,13 +62,13 @@
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
-					:active="tab.assetId === activeTab.assetId"
+					:active="tab.assetId === openedAssetRoute.assetId"
 					:title="tab.assetName"
 					class="asset-button"
 					plain
 					text
 					size="small"
-					@click="emit('open-asset', tab)"
+					@click="emit('open-asset', { assetId: tab.assetId, pageType: tab.pageType })"
 					@mouseover="activeAssetId = tab.assetId"
 					@mouseleave="activeAssetId = undefined"
 					@focus="activeAssetId = tab.assetId"
@@ -82,7 +76,7 @@
 				>
 					<span
 						:draggable="
-							activeTab.pageType === AssetType.Workflows &&
+							openedAssetRoute.pageType === AssetType.Workflows &&
 							(tab.pageType === AssetType.Models || tab.pageType === AssetType.Datasets)
 						"
 						@dragstart="startDrag(tab)"
@@ -145,7 +139,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
-import { Tab } from '@/types/common';
+import { Tab, AssetRoute } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
@@ -161,10 +155,12 @@ import { useProjects } from '@/composables/project';
 type IProjectAssetTabs = Map<AssetType, Set<Tab>>;
 
 defineProps<{
-	activeTab: Tab;
+	openedAssetRoute: AssetRoute;
 }>();
 
 const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
+
+const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
 
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
