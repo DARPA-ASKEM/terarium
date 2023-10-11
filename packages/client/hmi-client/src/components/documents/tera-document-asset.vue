@@ -177,10 +177,7 @@ const documentType = computed(() => {
 	if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
 		return DocumentView.PDF;
 	}
-	if (doc.value?.fileNames?.at(0)?.endsWith('.txt')) {
-		return DocumentView.TXT;
-	}
-	return null;
+	return DocumentView.TXT;
 });
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
