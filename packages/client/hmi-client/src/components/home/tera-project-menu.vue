@@ -51,8 +51,10 @@ const forkMenuItem = {
 	label: 'Fork this project',
 	icon: 'pi pi-clone',
 	command: async () => {
-		const cloned = await useProjects().clone(props.project.id, useAuthStore().user?.name);
-		emit('forked-project', cloned);
+		if (useAuthStore().user?.name) {
+			const cloned = await useProjects().clone(props.project.id, useAuthStore().user.name);
+			emit('forked-project', cloned);
+		}
 	}
 };
 const separatorMenuItem = { separator: true };
