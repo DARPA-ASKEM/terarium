@@ -3,6 +3,7 @@ import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import * as EventService from '@/services/event';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -81,4 +82,9 @@ export async function addNewModelToProject(modelName: string): Promise<string | 
 	const modelId = response?.id;
 
 	return modelId ?? null;
+}
+
+// A helper function to check if a model is empty.
+export function isModelEmpty(model: Model) {
+	return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
 }
