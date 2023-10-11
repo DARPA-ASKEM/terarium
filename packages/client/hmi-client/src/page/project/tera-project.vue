@@ -65,7 +65,7 @@
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
 					:node="workflowNode"
 					:key="workflowNode.id"
-					@open-asset="(asset) => openAsset(asset)"
+					@open-asset="openAsset"
 				/>
 				<tera-simulate-ensemble-ciemss
 					v-if="
@@ -169,7 +169,6 @@ const openedAssetRoute = computed<AssetRoute>(() => ({
 
 function openAsset(assetRoute: AssetRoute) {
 	if (!isEqual(assetRoute, openedAssetRoute.value)) {
-		console.log(assetRoute);
 		router.push({
 			name: RouteName.Project,
 			params: assetRoute
