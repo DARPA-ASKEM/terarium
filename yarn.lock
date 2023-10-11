@@ -1559,38 +1559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/apputils@npm:3.6.5, @jupyterlab/apputils@npm:^3.6.5":
-  version: 3.6.5
-  resolution: "@jupyterlab/apputils@npm:3.6.5"
-  dependencies:
-    "@jupyterlab/coreutils": ^5.6.5
-    "@jupyterlab/observables": ^4.6.5
-    "@jupyterlab/services": ^6.6.5
-    "@jupyterlab/settingregistry": ^3.6.5
-    "@jupyterlab/statedb": ^3.6.5
-    "@jupyterlab/translation": ^3.6.5
-    "@jupyterlab/ui-components": ^3.6.5
-    "@lumino/algorithm": ^1.9.0
-    "@lumino/commands": ^1.19.0
-    "@lumino/coreutils": ^1.11.0
-    "@lumino/disposable": ^1.10.0
-    "@lumino/domutils": ^1.8.0
-    "@lumino/messaging": ^1.10.0
-    "@lumino/polling": ^1.9.0
-    "@lumino/properties": ^1.8.0
-    "@lumino/signaling": ^1.10.0
-    "@lumino/virtualdom": ^1.14.0
-    "@lumino/widgets": ^1.37.2
-    "@types/react": ^17.0.0
-    react: ^17.0.1
-    react-dom: ^17.0.1
-    sanitize-html: ~2.7.3
-    url: ^0.11.0
-  checksum: bf5d510fa61fa96dd5e79ced92c1beded1a64dec7f81d32d101513141cfc7606daacdf5480176e9f28809406a0429682ac4f27cf7174f1686d0328aa4afab209
-  languageName: node
-  linkType: hard
-
-"@jupyterlab/apputils@npm:^3.6.6":
+"@jupyterlab/apputils@npm:3.6.6, @jupyterlab/apputils@npm:^3.6.6":
   version: 3.6.6
   resolution: "@jupyterlab/apputils@npm:3.6.6"
   dependencies:
@@ -1618,6 +1587,37 @@ __metadata:
     sanitize-html: ~2.7.3
     url: ^0.11.0
   checksum: 0936e709f249fd8f73b14df4d778c6b9ae69bc8da83a0f84967cebcd3c96c73fb5b31bd0d539dc539c91c731c9e72c322015c53102058ac00b95652d57a94702
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/apputils@npm:^3.6.5":
+  version: 3.6.5
+  resolution: "@jupyterlab/apputils@npm:3.6.5"
+  dependencies:
+    "@jupyterlab/coreutils": ^5.6.5
+    "@jupyterlab/observables": ^4.6.5
+    "@jupyterlab/services": ^6.6.5
+    "@jupyterlab/settingregistry": ^3.6.5
+    "@jupyterlab/statedb": ^3.6.5
+    "@jupyterlab/translation": ^3.6.5
+    "@jupyterlab/ui-components": ^3.6.5
+    "@lumino/algorithm": ^1.9.0
+    "@lumino/commands": ^1.19.0
+    "@lumino/coreutils": ^1.11.0
+    "@lumino/disposable": ^1.10.0
+    "@lumino/domutils": ^1.8.0
+    "@lumino/messaging": ^1.10.0
+    "@lumino/polling": ^1.9.0
+    "@lumino/properties": ^1.8.0
+    "@lumino/signaling": ^1.10.0
+    "@lumino/virtualdom": ^1.14.0
+    "@lumino/widgets": ^1.37.2
+    "@types/react": ^17.0.0
+    react: ^17.0.1
+    react-dom: ^17.0.1
+    sanitize-html: ~2.7.3
+    url: ^0.11.0
+  checksum: bf5d510fa61fa96dd5e79ced92c1beded1a64dec7f81d32d101513141cfc7606daacdf5480176e9f28809406a0429682ac4f27cf7174f1686d0328aa4afab209
   languageName: node
   linkType: hard
 
@@ -8776,7 +8776,7 @@ __metadata:
     "@hsorby/vue3-katex": 0.6.0-rc.5
     "@jupyter/ydoc": 1.0.2
     "@jupyterlab/application": 3.6.6
-    "@jupyterlab/apputils": 3.6.5
+    "@jupyterlab/apputils": 3.6.6
     "@jupyterlab/cells": 3.6.5
     "@jupyterlab/codemirror": 3.6.5
     "@jupyterlab/completer": 3.6.5
