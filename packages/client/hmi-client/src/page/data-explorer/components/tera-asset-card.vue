@@ -98,13 +98,22 @@
 				</template>
 				<div class="asset-nav-arrows">
 					<span class="asset-pages" v-if="!isEmpty(extractions)">
-						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-						<span class="asset-count">
-							{{ chosenExtractionFilter }}
-							<span class="asset-count-text">{{ relatedAssetPage + 1 }}</span> of
-							<span class="asset-count-text">{{ extractions.length }}</span>
+						<span v-if="totalExtractions > 1" class="asset-count">
+							<template v-for="(_, index) in extractions.length" :key="_">
+								<i
+									:class="
+										index === relatedAssetPage
+											? 'asset-count-selected-text'
+											: 'asset-count-selected'
+									"
+									@click.stop="previewMovement(index)"
+									>{{ index + 1 }}</i
+								>
+							</template>
+							<span v-if="totalExtractions > 5" class="asset-count-text">
+								(+{{ totalExtractions }})</span
+							>
 						</span>
-						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</span>
 				</div>
 			</figure>
@@ -188,6 +197,16 @@ const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => 
 	return [];
 });
 
+const totalExtractions: ComputedRef<number> = computed(() => {
+	if ((props.asset as Document).knownEntitiesCounts) {
+		return (
+			(props.asset as Document).knownEntitiesCounts.askemObjectCount +
+			(props.asset as Document).knownEntitiesCounts.urlExtractionCount
+		);
+	}
+	return 0;
+});
+
 const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() =>
 	(props.asset as Document).highlight
@@ -215,11 +234,9 @@ watch(
 );
 
 function previewMovement(movement: number) {
-	const newPage = relatedAssetPage.value + movement;
-	if (newPage > -1 && newPage < extractions.value.length) {
-		relatedAssetPage.value = newPage;
+	if (movement > -1 && movement < extractions.value.length) {
+		relatedAssetPage.value = movement;
 	}
-	// console.log(relatedAsset.value);
 }
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
@@ -376,6 +393,11 @@ function endDrag() {
 
 .asset-nav-arrows .asset-count-text {
 	color: var(--text-color-subdued);
+}
+
+.asset-count-selected-text {
+	font-weight: 1000;
+	color: var(--text-color-primary);
 }
 
 .title,

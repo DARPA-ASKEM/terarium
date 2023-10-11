@@ -20,6 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class XDDTests extends TerariumApplicationTests {
 
 
+	private static final String TEST_DOI = "10.1101/2020.08.18.20176354";
+
+
 	@Test
 	public void canSearchForTermUnauthorized() throws Exception {
 
@@ -115,6 +118,32 @@ public class XDDTests extends TerariumApplicationTests {
 			}
 		}
 
+	}
+
+	@Test
+	@WithUserDetails(MockUser.ADAM)
+	public void canItLimitExtractionsReturned() throws Exception {
+
+		ObjectMapper m = new ObjectMapper();
+
+		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
+						.queryParam("doi", TEST_DOI)
+						.queryParam("known_entities", "askem_object"))
+				.andExpect(status().isOk()).andReturn();
+
+		XDDResponse<DocumentsResponseOK> res = null;
+		try {
+			res = m.readValue(result.getResponse().getContentAsByteArray(), new TypeReference<>() {
+			});
+
+		} catch (Exception e) {
+			Assertions.fail("Unable to parse response", e);
+		}
+
+		Assertions.assertNotNull(res);
+		Assertions.assertEquals(res.getSuccess().getData().get(0).getKnownEntities().getAskemObjects().size(), 5);
+		// At the time of writing this was 49, but, its possible this number changes. Whats important is its more than 5!!
+		Assertions.assertTrue(res.getSuccess().getData().get(0).getKnownEntitiesCounts().getAskemObjectCount() >5);
 	}
 
 
