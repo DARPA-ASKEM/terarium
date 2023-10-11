@@ -3,6 +3,7 @@
 		icon="pi pi-ellipsis-v"
 		class="project-options p-button-icon-only p-button-text p-button-rounded"
 		@click.stop="toggle"
+		:disabled="projectMenuItems.length === 0"
 	/>
 	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="setProject">
 		<template #item="{ item }">
@@ -15,7 +16,7 @@
 
 <script setup lang="ts">
 import { IProject } from '@/types/Project';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { useProjectMenu } from '@/composables/project-menu';
@@ -23,24 +24,38 @@ import { useProjectMenu } from '@/composables/project-menu';
 const props = defineProps<{ project: IProject }>();
 
 const menu = ref();
-const projectMenuItems = ref([
-	{ label: 'Rename', icon: 'pi pi-pencil', command: () => {} },
-	{
-		label: 'Share',
-		icon: 'pi pi-user-plus',
-		command: () => {
-			useProjectMenu().isShareDialogVisible.value = true;
-		}
-	},
-	{ separator: true },
-	{
-		label: 'Remove',
-		icon: 'pi pi-trash',
-		command: () => {
-			useProjectMenu().isRemoveDialogVisible.value = true;
-		}
+const renameMenuItem = {
+	label: 'Rename',
+	icon: 'pi pi-pencil',
+	command: () => {}
+};
+const shareMenuItem = {
+	label: 'Share',
+	icon: 'pi pi-user-plus',
+	command: () => {
+		useProjectMenu().isShareDialogVisible.value = true;
 	}
-]);
+};
+const removeMenuItem = {
+	label: 'Remove',
+	icon: 'pi pi-trash',
+	command: () => {
+		useProjectMenu().isRemoveDialogVisible.value = true;
+	}
+};
+const separatorMenuItem = { separator: true };
+const projectMenuItems = computed(() => {
+	if (props.project.userPermission === 'creator') {
+		return [renameMenuItem, separatorMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem];
+	}
+	if (props.project.userPermission === 'writer') {
+		return [renameMenuItem, separatorMenuItem, shareMenuItem];
+	}
+	if (props.project.userPermission === 'reader') {
+		return [];
+	}
+	return [];
+});
 
 function setProject() {
 	useProjectMenu().selectedMenuProject.value = props.project;
