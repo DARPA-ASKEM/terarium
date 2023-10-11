@@ -21,13 +21,14 @@
 				<ProgressBar :value="props.progress"></ProgressBar>
 			</div>
 		</template>
-		<template v-else-if="props.showPreview">
-			<template v-if="file && file.type === AcceptedTypes.PDF">
-				<embed :src="getSrc(file)" />
-			</template>
-		</template>
 		<template v-else-if="props.showError">
 			<div>Error Please Try Again</div>
+		</template>
+		<template v-else>
+			<div class="ready">
+				<i class="pi pi-check-circle" />
+				<span>Ready</span>
+			</div>
 		</template>
 	</div>
 </template>
@@ -35,17 +36,11 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
-import { AcceptedTypes } from '@/types/common';
 
 const props = defineProps({
 	file: {
 		type: File,
 		default: undefined
-	},
-	showPreview: {
-		type: Boolean,
-		default: true,
-		required: true
 	},
 	isProcessing: {
 		type: Boolean,
@@ -60,13 +55,12 @@ const props = defineProps({
 	}
 });
 
-const getSrc = (file) => URL.createObjectURL(file);
-
 const emit = defineEmits(['remove-file']);
 </script>
 <style scoped>
 .file-preview {
 	overflow: hidden !important;
+	margin-top: 0.5rem;
 }
 
 .file-title-container {
@@ -99,5 +93,16 @@ const emit = defineEmits(['remove-file']);
 .file-preview embed html {
 	background-color: var(--surface-border-warning);
 	height: 100%;
+}
+
+.ready {
+	color: var(--primary-color);
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.ready i {
+	align-self: end;
 }
 </style>
