@@ -14,7 +14,7 @@
 			</aside>
 		</header>
 		<template v-if="!hideIntro">
-			<header id="asset-top" ref="headerRef">
+			<header id="asset-top" :class="isOverview && 'overview-banner'" ref="headerRef">
 				<section>
 					<!-- put the buttons above the title if there is an overline -->
 					<div v-if="overline" class="vertically-center">
@@ -46,8 +46,9 @@
 					<div class="header-buttons">
 						<slot name="bottom-header-buttons" />
 					</div>
+					<slot name="overview-summary" />
 				</section>
-				<aside class="spread-out">
+				<aside v-if="!isOverview" class="spread-out">
 					<Button
 						v-if="featureConfig.isPreview"
 						icon="pi pi-times"
@@ -94,6 +95,7 @@ const props = defineProps({
 		default: { isPreview: false } as FeatureConfig
 	},
 	// Booleans default to false if not specified
+	isOverview: Boolean,
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,
@@ -208,6 +210,16 @@ header aside {
 
 header.shrinked aside {
 	align-self: center;
+}
+header.overview-banner section {
+	width: 100%;
+	max-width: 100%;
+}
+
+.overview-banner {
+	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 20% center,
+		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
+	background-size: 25%, 100%;
 }
 
 .nudge-down {
