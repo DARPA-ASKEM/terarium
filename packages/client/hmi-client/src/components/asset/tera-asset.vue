@@ -52,7 +52,7 @@
 					</div>
 					<slot name="overview-summary" />
 				</section>
-				<aside v-if="pageType === ProjectPages.OVERVIEW" class="spread-out">
+				<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
 					<Button
 						v-if="featureConfig.isPreview"
 						icon="pi pi-times"
