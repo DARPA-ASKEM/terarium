@@ -10,8 +10,11 @@ import { Dataset } from '@/types/Types';
  * @returns the enriched dataset
  */
 function enrichDataset(dataset: Dataset): Dataset {
-	// Set a default data-card if it does not exist
-	if (!dataset?.metadata?.dataCard?.TITLE) {
+	// Set a default metadata and data-card if it does not exist
+	if (!dataset?.metadata) {
+		dataset.metadata = {};
+	}
+	if (!dataset.metadata?.dataCard) {
 		dataset.metadata.dataCard = {};
 	}
 
