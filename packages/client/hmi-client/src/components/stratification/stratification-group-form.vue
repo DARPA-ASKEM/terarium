@@ -59,16 +59,17 @@ const props = defineProps<{
 
 const emit = defineEmits(['delete-self', 'update-self']);
 
-const strataName = ref('');
-const selectedVariables = ref<string[]>([]);
-const labels = ref('');
-const cartesianProduct = ref<boolean>(true);
+const strataName = ref(props.config.name);
+const selectedVariables = ref<string[]>(props.config.selectedVariables);
+const labels = ref(props.config.groupLabels);
+const cartesianProduct = ref<boolean>(props.config.cartesianProduct);
 
 const updatedConfig = computed<StratifyGroup>(() => ({
 	borderColour: props.config.borderColour,
 	name: strataName.value,
 	selectedVariables: selectedVariables.value,
-	groupLabels: labels.value
+	groupLabels: labels.value,
+	cartesianProduct: cartesianProduct.value
 }));
 </script>
 

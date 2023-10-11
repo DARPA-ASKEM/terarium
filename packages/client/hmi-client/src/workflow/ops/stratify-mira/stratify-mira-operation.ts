@@ -5,6 +5,7 @@ export interface StratifyGroup {
 	name: string;
 	selectedVariables: string[];
 	groupLabels: string;
+	cartesianProduct: boolean;
 }
 
 export interface StratifyOperationStateMira {
@@ -26,7 +27,8 @@ export const StratifyMiraOperation: Operation = {
 					borderColour: '#c300a6',
 					name: '',
 					selectedVariables: [],
-					groupLabels: ''
+					groupLabels: '',
+					cartesianProduct: true
 				}
 			]
 		};

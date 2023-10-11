@@ -85,7 +85,8 @@ const addGroupForm = () => {
 		borderColour: '#00c387',
 		name: '',
 		selectedVariables: [],
-		groupLabels: ''
+		groupLabels: '',
+		cartesianProduct: true
 	};
 	state.strataGroups.push(newGroup);
 
