@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { DocumentAsset, ExtractionResponse } from '@/types/Types';
+import { ExtractionResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -169,13 +169,13 @@ export const pdfExtractions = async (
 	return null;
 };
 
-export const extractPDF = async (document: DocumentAsset) => {
-	if (document.id) {
-		const resp: string | null = await extractTextFromPDFDocument(document.id);
+export const extractPDF = async (documentId: string) => {
+	if (documentId) {
+		const resp: string | null = await extractTextFromPDFDocument(documentId);
 		if (resp) {
 			const pollResult = await fetchExtraction(resp);
 			if (pollResult?.state === PollerState.Done) {
-				await pdfExtractions(document.id); // we don't care now. fire and forget.
+				await pdfExtractions(documentId); // we don't care now. fire and forget.
 			}
 		}
 	}
