@@ -374,7 +374,6 @@ p,
 	display: flex;
 	justify-content: space-evenly;
 	padding: 1rem;
-	width: 100%;
 	background: rgba(255, 255, 255, 0.5);
 	border-radius: var(--border-radius);
 	backdrop-filter: blur(5px);
