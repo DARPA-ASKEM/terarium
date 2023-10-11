@@ -234,9 +234,8 @@ watch(
 );
 
 function previewMovement(movement: number) {
-	const newPage = movement;
-	if (newPage > -1 && newPage < extractions.value.length) {
-		relatedAssetPage.value = newPage;
+	if (movement > -1 && movement < extractions.value.length) {
+		relatedAssetPage.value = movement;
 	}
 }
 
