@@ -60,7 +60,8 @@
 		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5]">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
-					<template v-if="type === AssetType.Publications">Publications & Documents</template>
+					<template v-if="type === AssetType.Publications">External Publications</template>
+					<template v-else-if="type === AssetType.Documents">Documents</template>
 					<template v-else>{{ capitalize(type) }}</template>
 					<aside>({{ tabs.size }})</aside>
 				</template>

@@ -13,7 +13,8 @@ public enum AssetType {
 	simulations("simulations"),
 	workflows("workflows"),
 	artifacts("artifacts"),
-	code("code");
+	code("code"),
+	documents("documents");
 
 
 	public final String type;

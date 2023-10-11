@@ -43,7 +43,6 @@ public class GroupsController {
 	) {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
-			PermissionGroup permissionGroup = reBACService.getGroup(groupId);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
 				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
 
@@ -53,9 +52,12 @@ public class GroupsController {
 						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
 					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
 						permissions.addGroup(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
+						permissions.addProject(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
 					}
 				}
 
+				PermissionGroup permissionGroup = reBACService.getGroup(groupId);
 				return ResponseEntity.ok(permissionGroup);
 			}
 			return ResponseEntity.notFound().build();

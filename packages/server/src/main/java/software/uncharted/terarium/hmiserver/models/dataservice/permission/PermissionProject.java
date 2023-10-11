@@ -1,10 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.permission;
 
-public class Group {
+public class PermissionProject {
 	private String id;
 	private String relationship;
 
-	public Group(String id, String relationship) {
+	public PermissionProject(String id, String relationship) {
 		this.id = id;
 		this.relationship = relationship;
 	}
@@ -16,4 +16,5 @@ public class Group {
 	public String getRelationship() {
 		return relationship;
 	}
+
 }

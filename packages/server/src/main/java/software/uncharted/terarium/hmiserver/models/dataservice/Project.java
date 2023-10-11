@@ -51,6 +51,12 @@ public class Project implements Serializable {
 	@TSOptional
 	private List<Document> relatedDocuments;
 
+	@TSOptional
+	private Boolean publicProject;
+
+	@TSOptional
+	private String userPermission;
+
 	@Override
 	public String toString() {
 		return "Project: { id: " + this.projectID +

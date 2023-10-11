@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Artifact, ExtractionResponse } from '@/types/Types';
+import { DocumentAsset, ExtractionResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -32,7 +32,7 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
 			// Queued
 			return pollerResult;
 		})
-		.setThreshold(30);
+		.setThreshold(3000);
 	return poller.start();
 }
 
@@ -44,14 +44,14 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @return {Promise<Boolean>}
  */
 export const latexToAMR = async (
-	latex: string[],
+	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
 ): Promise<Boolean> => {
 	try {
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
-			`/knowledge/latex-to-amr/?framework=${framework}&modelId=${modelId}`,
-			latex
+			`/knowledge/equations-to-model`,
+			{ format: 'latex', framework, modelId, equations }
 		);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
@@ -76,10 +76,10 @@ export const latexToAMR = async (
  * Given a model, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileModel = async (modelId: string, artifactId: string | null = null) => {
+export const profileModel = async (modelId: string, documentId: string | null = null) => {
 	let response: any = null;
-	if (artifactId) {
-		response = await API.post(`/knowledge/profile-model/${modelId}?artifact_id=${artifactId}`);
+	if (documentId) {
+		response = await API.post(`/knowledge/profile-model/${modelId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-model/${modelId}`);
 	}
@@ -87,14 +87,20 @@ export const profileModel = async (modelId: string, artifactId: string | null = 
 	return response.data.id;
 };
 
+export const alignModel = async (modelId: string, documentId: string): Promise<string | null> => {
+	const response = await API.post(
+		`/knowledge/link-amr?document_id=${documentId}&model_id=${modelId}`
+	);
+	return response.data?.id ?? null;
+};
 /**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (datasetId: string, artifactId: string | null = null) => {
+export const profileDataset = async (datasetId: string, documentId: string | null = null) => {
 	let response: any = null;
-	if (artifactId) {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?artifact_id=${artifactId}`);
+	if (documentId) {
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
@@ -102,9 +108,9 @@ export const profileDataset = async (datasetId: string, artifactId: string | nul
 	return response.data.id;
 };
 
-const extractTextFromPDFArtifact = async (artifactId: string): Promise<string | null> => {
+const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
 	try {
-		const response = await API.post(`/knowledge/pdf-to-text?artifact_id=${artifactId}`);
+		const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
 		if (response?.status === 200 && response?.data?.id) return response.data.id;
 		logger.error('pdf text extraction request failed', {
 			showToast: false,
@@ -125,17 +131,17 @@ const extractTextFromPDFArtifact = async (artifactId: string): Promise<string | 
 	return null;
 };
 
-const pdfExtractions = async (
-	artifactId: string,
+export const pdfExtractions = async (
+	documentId: string,
 	pdfName?: string,
 	description?: string
 ): Promise<string | null> => {
 	// I've purposefully excluded the MIT and SKEMA options here, so they're always
 	// defaulted to true.
 
-	let url = `/knowledge/pdf-extractions?artifact_id=${artifactId}`;
+	let url = `/knowledge/pdf-extractions?document_id=${documentId}`;
 	if (pdfName) {
-		url += `&pdf_name=${pdfName}`;
+		url += `&name=${pdfName}`;
 	}
 	if (description) {
 		url += `&description=${description}`;
@@ -163,13 +169,13 @@ const pdfExtractions = async (
 	return null;
 };
 
-export const extractPDF = async (artifact: Artifact) => {
-	if (artifact.id) {
-		const resp: string | null = await extractTextFromPDFArtifact(artifact.id);
+export const extractPDF = async (document: DocumentAsset) => {
+	if (document.id) {
+		const resp: string | null = await extractTextFromPDFDocument(document.id);
 		if (resp) {
 			const pollResult = await fetchExtraction(resp);
 			if (pollResult?.state === PollerState.Done) {
-				await pdfExtractions(artifact.id); // we don't care now. fire and forget.
+				await pdfExtractions(document.id); // we don't care now. fire and forget.
 			}
 		}
 	}
