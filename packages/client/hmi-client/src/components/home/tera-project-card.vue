@@ -29,7 +29,10 @@
 		<template #footer>
 			<!--FIXME: There is no 'last updated' property in project yet-->
 			<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
-			<tera-project-menu :project="project" />
+			<tera-project-menu
+				:project="project"
+				@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
+			/>
 		</template>
 	</Card>
 	<Card v-else>
@@ -68,6 +71,7 @@ import TeraProjectMenu from './tera-project-menu.vue';
 const props = defineProps<{
 	project?: IProject;
 }>();
+const emit = defineEmits(['forked-project']);
 
 const titleRef = ref();
 const descriptionLines = computed(() => {

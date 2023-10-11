@@ -175,6 +175,33 @@ export function useProjects() {
 		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
 	}
 
+	async function clone(projectId: IProject['id'], username: string) {
+		const projectToClone = await ProjectService.get(projectId, true);
+		if (!projectToClone || !projectToClone.assets) {
+			return null;
+		}
+		const created = await ProjectService.create(
+			`Copy of ${projectToClone.name}`,
+			projectToClone.description,
+			username
+		);
+		if (!created || !created.id) {
+			return null;
+		}
+		// There doesn't seem to be a way to add multiple assets in one call yet
+		Object.entries(projectToClone.assets).forEach(async (projectAsset) => {
+			const [assetType, assets] = projectAsset;
+			if (assets.length) {
+				await Promise.all(
+					assets.map(async (asset) => {
+						await ProjectService.addAsset(created.id!, assetType, asset.id);
+					})
+				);
+			}
+		});
+		return created;
+	}
+
 	return {
 		activeProject,
 		allProjects,
@@ -189,6 +216,7 @@ export function useProjects() {
 		getPermissions,
 		setPermissions,
 		removePermissions,
-		updatePermissions
+		updatePermissions,
+		clone
 	};
 }

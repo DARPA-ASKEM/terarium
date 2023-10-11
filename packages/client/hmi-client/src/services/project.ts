@@ -48,8 +48,15 @@ async function create(
 
 async function update(project: IProject): Promise<IProject | null> {
 	try {
-		const { id, name, description, active, username } = project;
-		const response = await API.put(`/projects/${id}`, { id, name, description, active, username });
+		const { id, name, description, active, username, assets } = project;
+		const response = await API.put(`/projects/${id}`, {
+			id,
+			name,
+			description,
+			active,
+			username,
+			assets
+		});
 		const { status, data } = response;
 		if (status !== 200) {
 			return null;

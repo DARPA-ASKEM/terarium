@@ -20,8 +20,11 @@ import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { useProjectMenu } from '@/composables/project-menu';
+import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{ project: IProject }>();
+const emit = defineEmits(['forked-project']);
 
 const menu = ref();
 const renameMenuItem = {
@@ -43,8 +46,19 @@ const removeMenuItem = {
 		useProjectMenu().isRemoveDialogVisible.value = true;
 	}
 };
+const forkMenuItem = {
+	label: 'Fork this project',
+	icon: 'pi pi-clone',
+	command: async () => {
+		const cloned = await useProjects().clone(props.project.id, useAuthStore().user.name);
+		emit('forked-project', cloned);
+	}
+};
 const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
+	if (props.project.publicProject) {
+		return [forkMenuItem];
+	}
 	if (props.project.userPermission === 'creator') {
 		return [renameMenuItem, separatorMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem];
 	}

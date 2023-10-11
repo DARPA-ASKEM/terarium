@@ -75,7 +75,7 @@
 										/>. Your projects will be displayed on this page.
 									</div>
 								</template>
-								<template v-else-if="tab.title === TabTitles.SharedProjects">
+								<template v-else-if="tab.title === TabTitles.PublicProjects">
 									<h3>You don't have any shared projects</h3>
 									<p>Shared projects will be displayed on this page</p>
 								</template>
@@ -94,6 +94,7 @@
 											v-if="project.id"
 											:project="project"
 											@click="openProject(project.id)"
+											@forked-project="(forkedProject) => openProject(forkedProject.id)"
 										/>
 									</li>
 									<li>
@@ -268,7 +269,7 @@ enum ProjectsView {
 
 enum TabTitles {
 	MyProjects = 'My projects',
-	SharedProjects = 'Shared projects'
+	PublicProjects = 'Public projects'
 }
 
 const selectedSort = ref('Last updated (descending)');
@@ -283,18 +284,31 @@ const sortOptions = [
 const view = ref(ProjectsView.Cards);
 
 const myFilteredSortedProjects = computed(() => {
-	const filtered = useProjects().allProjects.value;
-	if (!filtered) return [];
+	const projects = useProjects().allProjects.value;
+	if (!projects) return [];
+	const myProjects = projects.filter(({ publicProject }) => publicProject === false);
+	return filterAndSortProjects(myProjects);
+});
+
+const publicFilteredSortedProjects = computed(() => {
+	const projects = useProjects().allProjects.value;
+	if (!projects) return [];
+	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
+	return filterAndSortProjects(publicProjects);
+});
+
+function filterAndSortProjects(projects: IProject[]) {
+	if (!projects) return [];
 
 	if (selectedSort.value === 'Alphabetical') {
-		filtered.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+		projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 	}
 	// FIXME: Last updated and creation date are the same at the moment
 	else if (
 		selectedSort.value === 'Last updated (descending)' ||
 		selectedSort.value === 'Creation date (descending)'
 	) {
-		filtered.sort((a, b) =>
+		projects.sort((a, b) =>
 			a.timestamp && b.timestamp
 				? new Date(b.timestamp).valueOf() - new Date(a.timestamp).valueOf()
 				: -1
@@ -303,18 +317,18 @@ const myFilteredSortedProjects = computed(() => {
 		selectedSort.value === 'Last updated (ascending)' ||
 		selectedSort.value === 'Creation date (ascending)'
 	) {
-		filtered.sort((a, b) =>
+		projects.sort((a, b) =>
 			a.timestamp && b.timestamp
 				? new Date(a.timestamp).valueOf() - new Date(b.timestamp).valueOf()
 				: -1
 		);
 	}
-	return filtered;
-});
+	return projects;
+}
 
 const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
 	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
-	{ title: TabTitles.SharedProjects, projects: [] } // Keep shared projects empty for now
+	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value }
 ]);
 
 // Table view
