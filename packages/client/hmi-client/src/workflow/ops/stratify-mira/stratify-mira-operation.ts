@@ -1,6 +1,8 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface StratifyGroup {
+	id: string;
 	borderColour: string;
 	name: string;
 	selectedVariables: string[];
@@ -23,6 +25,7 @@ export const StratifyMiraOperation: Operation = {
 		const init: StratifyOperationStateMira = {
 			strataGroups: [
 				{
+					id: uuidv4(),
 					borderColour: '#c300a6',
 					name: '',
 					selectedVariables: [],

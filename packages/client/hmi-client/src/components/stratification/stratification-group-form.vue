@@ -3,7 +3,7 @@
 		<div class="sub-header">
 			<label for="strata-name">Cartesian product</label>
 			<InputSwitch v-model="cartesianProduct" />
-			<i class="pi pi-trash" />
+			<i class="trash-button pi pi-trash" @click="emit('delete-self', { id: props.config.id })" />
 		</div>
 		<div class="first-row">
 			<div class="age-group">
@@ -43,10 +43,13 @@ const props = defineProps<{
 	config: StratifyGroup;
 }>();
 
+const emit = defineEmits(['delete-self']);
+
 const strataName = ref('');
 const selectedVariables = ref<string[]>([]);
 const labels = ref('');
 const cartesianProduct = ref<boolean>(true);
+console.log(props.config.id);
 </script>
 
 <style>
@@ -89,5 +92,9 @@ const cartesianProduct = ref<boolean>(true);
 
 .subdued-text {
 	color: var(--text-color-subdued);
+}
+
+.trash-button {
+	cursor: pointer;
 }
 </style>
