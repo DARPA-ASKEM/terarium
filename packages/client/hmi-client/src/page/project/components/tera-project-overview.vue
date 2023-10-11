@@ -1,55 +1,53 @@
 <template>
-	<main>
-		<tera-asset
-			:name="useProjects().activeProject.value?.name"
-			:authors="useProjects().activeProject.value?.username"
-			:is-naming-asset="isRenamingProject"
-			:publisher="`Last updated ${DateUtils.formatLong(
-				useProjects().activeProject.value?.timestamp
-			)}`"
-			class="overview-banner"
-		>
-			<template #name-input>
-				<InputText
-					v-if="isRenamingProject"
-					v-model="newProjectName"
-					ref="inputElement"
-					@keyup.enter="updateProjectName"
-				/>
-			</template>
-			<template #edit-buttons>
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="showProjectMenu"
-				/>
-				<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-			</template>
-			<section>
-				<section class="summary">
-					<!-- This div is so that child elements will automatically collapse margins -->
-					<div>
-						<!-- Description & Contributors -->
-						<section class="description">
-							<p>
-								{{ useProjects().activeProject.value?.description }}
-							</p>
-						</section>
-					</div>
-				</section>
-				<!-- Project summary KPIs -->
-				<section class="summary-KPI-bar">
-					<div
-						class="summary-KPI"
-						v-for="(assets, type) of useProjects().activeProject.value?.assets"
-						:key="type"
-					>
-						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
-						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
-					</div>
-				</section>
+	<tera-asset
+		:name="useProjects().activeProject.value?.name"
+		:authors="useProjects().activeProject.value?.username"
+		:is-naming-asset="isRenamingProject"
+		:publisher="`Last updated ${DateUtils.formatLong(
+			useProjects().activeProject.value?.timestamp
+		)}`"
+		class="overview-banner"
+	>
+		<template #name-input>
+			<InputText
+				v-if="isRenamingProject"
+				v-model="newProjectName"
+				ref="inputElement"
+				@keyup.enter="updateProjectName"
+			/>
+		</template>
+		<template #edit-buttons>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+		</template>
+		<section>
+			<section class="summary">
+				<!-- This div is so that child elements will automatically collapse margins -->
+				<div>
+					<!-- Description & Contributors -->
+					<section class="description">
+						<p>
+							{{ useProjects().activeProject.value?.description }}
+						</p>
+					</section>
+				</div>
 			</section>
-		</tera-asset>
+			<!-- Project summary KPIs -->
+			<section class="summary-KPI-bar">
+				<div
+					class="summary-KPI"
+					v-for="(assets, type) of useProjects().activeProject.value?.assets"
+					:key="type"
+				>
+					<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
+					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
+				</div>
+			</section>
+		</section>
 		<section class="content-container">
 			<h5>Quick links</h5>
 			<!-- Quick link buttons go here -->
@@ -175,12 +173,7 @@
 				/>
 			</section>
 		</section>
-		<!-- <tera-multi-select-modal
-			:is-visible="showMultiSelect"
-			:selected-resources="selectedResources"
-			:buttons="multiSelectButtons"
-		></tera-multi-select-modal> -->
-	</main>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -199,7 +192,6 @@ import { capitalize, isEmpty } from 'lodash';
 import { AssetType } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-// import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useProjects } from '@/composables/project';
 import { getAssetIcon } from '@/services/project';
 import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
@@ -212,20 +204,6 @@ const newProjectName = ref<string>('');
 const selectedResources = ref();
 
 const openedRow = ref(null);
-
-// const multiSelectButtons = [
-// 	{
-// 		label: 'Open',
-// 		callback: () => {
-// 			selectedResources.value.forEach((resource) => {
-// 				const { activeProject } = useProjects();
-// 				if (activeProject.value?.id) {
-// 					tabStore.addTab(activeProject.value.id, toRaw(resource), false);
-// 				}
-// 			});
-// 		}
-// 	}
-// ];
 
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
