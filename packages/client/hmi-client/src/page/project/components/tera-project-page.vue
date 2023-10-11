@@ -13,7 +13,7 @@
 	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
-		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
+		@open-new-asset="(assetType: AssetType) => emit('open-new-asset', assetType)"
 	/>
 	<tera-workflow v-else-if="pageType === AssetType.Workflows" :asset-id="assetId ?? ''" />
 	<!--Add new process/asset views here-->
@@ -31,20 +31,12 @@
 		/>
 		<tera-dataset v-else-if="pageType === AssetType.Datasets" :asset-id="assetId" />
 	</template>
-	<section v-else>
-		<img src="@assets/svg/seed.svg" alt="Seed" />
-		<p>You can open resources from the resource panel.</p>
-		<Button label="Open project overview" @click="openOverview" />
-	</section>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { ProjectPages } from '@/types/Project';
-import { useRouter } from 'vue-router';
-import { RouteName } from '@/router/routes';
 import { Tab } from '@/types/common';
-import Button from 'primevue/button';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
@@ -65,8 +57,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-new-asset']);
-
-const router = useRouter();
 
 const code = ref<string>();
 
@@ -99,12 +89,6 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 		(document) => document?.id === Number.parseInt(assetId ?? '', 10)
 	)?.xdd_uri ?? '';
 
-const openOverview = () => {
-	router.push({
-		name: RouteName.Project,
-		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
-	});
-};
 async function openCode() {
 	const res: string | null = await getCodeFileAsText(props.assetId!, assetName.value!);
 	if (!res) return;

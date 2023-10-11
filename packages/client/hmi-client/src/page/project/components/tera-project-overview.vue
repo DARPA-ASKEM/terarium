@@ -1,53 +1,55 @@
 <template>
-	<tera-asset
-		:name="useProjects().activeProject.value?.name"
-		:authors="useProjects().activeProject.value?.username"
-		:is-naming-asset="isRenamingProject"
-		:publisher="`Last updated ${DateUtils.formatLong(
-			useProjects().activeProject.value?.timestamp
-		)}`"
-		class="overview-banner"
-	>
-		<template #name-input>
-			<InputText
-				v-if="isRenamingProject"
-				v-model="newProjectName"
-				ref="inputElement"
-				@keyup.enter="updateProjectName"
-			/>
-		</template>
-		<template #edit-buttons>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-		</template>
-		<section>
-			<section class="summary">
-				<!-- This div is so that child elements will automatically collapse margins -->
-				<div>
-					<!-- Description & Contributors -->
-					<section class="description">
-						<p>
-							{{ useProjects().activeProject.value?.description }}
-						</p>
-					</section>
-				</div>
+	<main>
+		<tera-asset
+			:name="useProjects().activeProject.value?.name"
+			:authors="useProjects().activeProject.value?.username"
+			:is-naming-asset="isRenamingProject"
+			:publisher="`Last updated ${DateUtils.formatLong(
+				useProjects().activeProject.value?.timestamp
+			)}`"
+			class="overview-banner"
+		>
+			<template #name-input>
+				<InputText
+					v-if="isRenamingProject"
+					v-model="newProjectName"
+					ref="inputElement"
+					@keyup.enter="updateProjectName"
+				/>
+			</template>
+			<template #edit-buttons>
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="showProjectMenu"
+				/>
+				<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			</template>
+			<section>
+				<section class="summary">
+					<!-- This div is so that child elements will automatically collapse margins -->
+					<div>
+						<!-- Description & Contributors -->
+						<section class="description">
+							<p>
+								{{ useProjects().activeProject.value?.description }}
+							</p>
+						</section>
+					</div>
+				</section>
+				<!-- Project summary KPIs -->
+				<section class="summary-KPI-bar">
+					<div
+						class="summary-KPI"
+						v-for="(assets, type) of useProjects().activeProject.value?.assets"
+						:key="type"
+					>
+						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
+						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
+					</div>
+				</section>
 			</section>
-			<!-- Project summary KPIs -->
-			<section class="summary-KPI-bar">
-				<div
-					class="summary-KPI"
-					v-for="(assets, type) of useProjects().activeProject.value?.assets"
-					:key="type"
-				>
-					<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
-					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
-				</div>
-			</section>
-		</section>
+		</tera-asset>
 		<section class="content-container">
 			<h5>Quick links</h5>
 			<!-- Quick link buttons go here -->
@@ -173,7 +175,7 @@
 				/>
 			</section>
 		</section>
-	</tera-asset>
+	</main>
 </template>
 
 <script setup lang="ts">

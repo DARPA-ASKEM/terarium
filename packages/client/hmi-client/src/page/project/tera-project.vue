@@ -209,7 +209,7 @@ const openWorkflow = async () => {
 	openAsset({ pageType: AssetType.Workflows, assetId: workflowId });
 };
 
-const openNewAsset = (assetType: string) => {
+const openNewAsset = (assetType: AssetType) => {
 	switch (assetType) {
 		case AssetType.Models:
 			isNewModelModalVisible.value = true;
