@@ -16,7 +16,7 @@
 		<template v-if="!hideIntro">
 			<header
 				id="asset-top"
-				:class="pageType === ProjectPages.OVERVIEW && 'overview-banner'"
+				:class="{ 'overview-banner': pageType === ProjectPages.OVERVIEW }"
 				ref="headerRef"
 			>
 				<section>
