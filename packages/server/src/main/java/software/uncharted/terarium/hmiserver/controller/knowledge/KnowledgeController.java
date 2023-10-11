@@ -109,19 +109,19 @@ public class KnowledgeController {
 	/**
 	 * Post a PDF to the extraction service to get text
 	 *
-	 * @param artifactId (String): The ID of the artifact to extract text from
+	 * @param documentId (String): The ID of the document to extract text from
 	 * @return response status of queueing this operation
 	 */
-	@PostMapping("/pdf-to-text")
-	public ResponseEntity<JsonNode> postPDFToText(@RequestParam("artifact_id") String artifactId) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToText(artifactId).getBody());
+	@PostMapping("/pdf-to-cosmos")
+	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") String documentId) {
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToCosmos(documentId).getBody());
 	}
 
 	/**
 	 * Profile a model
 	 *
 	 * @param modelId    (String): The ID of the model to profile
-	 * @param artifactId (String): The text of the document to profile
+	 * @param documentId (String): The text of the document to profile
 	 * @return the profiled model
 	 */
 	@PostMapping("/profile-model/{model_id}")
@@ -138,13 +138,13 @@ public class KnowledgeController {
 	 * Profile a dataset
 	 *
 	 * @param datasetId  (String): The ID of the dataset to profile
-	 * @param documentId (String): The ID of the document to profile
+	 * @param documentId= (String): The ID of the document to profile
 	 * @return the profiled dataset
 	 */
 	@PostMapping("/profile-dataset/{dataset_id}")
 	public ResponseEntity<JsonNode> postProfileDataset(
 		@PathVariable("dataset_id") String datasetId,
-		@RequestParam("document_id") String documentId
+		@RequestParam(name = "document_id", required = false) String documentId
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
 	}
