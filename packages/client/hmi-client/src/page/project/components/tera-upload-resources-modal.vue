@@ -124,15 +124,7 @@ async function processDocument(file: File) {
 		'',
 		progress
 	);
-	let newAsset;
-	if (document && document.id) {
-		newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
-	}
-	if (document && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
-		await extractPDF(document);
-		return { file, error: false, response: { text: '', images: [] } };
-	}
-	return { file, error: true, response: { text: '', images: [] } };
+	return { id: document?.id ?? '', assetType: AssetType.Documents, name: file.name };
 }
 
 /**
@@ -141,7 +133,6 @@ async function processDocument(file: File) {
  * @param description
  */
 async function processDataset(file: File, description: string) {
-	// let addedCSV: CsvAsset | null = null;
 	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
 		progress,
 		file,
@@ -158,7 +149,13 @@ function importCompleted(newResults: { id: string; name: string; assetType: Asse
 async function upload() {
 	if (results.value) {
 		await Promise.all(
-			results.value?.map(({ id, assetType }): Promise<any> => useProjects().addAsset(assetType, id))
+			results.value?.map(({ id, assetType, name }): Promise<any> => {
+				const newAsset = useProjects().addAsset(assetType, id);
+				if (name && name.toLowerCase().endsWith('.pdf')) {
+					extractPDF(id);
+				}
+				return newAsset;
+			})
 		).then((resolved) => {
 			emit('close');
 			const resourceMsg = resolved.length > 1 ? 'resources were' : 'resource was';
