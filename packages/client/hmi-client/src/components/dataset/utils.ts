@@ -10,30 +10,29 @@ import { Dataset } from '@/types/Types';
  * @returns the enriched dataset
  */
 function enrichDataset(dataset: Dataset): Dataset {
-	if (!dataset?.metadata?.dataCard?.DESCRIPTION) {
-		dataset.metadata.dataCard.DESCRIPTION = '-';
+	// Set a default data-card if it does not exist
+	if (!dataset?.metadata?.dataCard?.TITLE) {
+		dataset.metadata.dataCard = {};
 	}
-	if (!dataset?.metadata?.dataCard?.AUTHOR_NAME) {
-		dataset.metadata.dataCard.AUTHOR_NAME = '-';
-	}
-	if (!dataset?.metadata?.dataCard?.AUTHOR_EMAIL) {
-		dataset.metadata.dataCard.AUTHOR_EMAIL = '-';
-	}
-	if (!dataset?.metadata?.dataCard?.DATE) {
-		dataset.metadata.dataCard.DATE = '-';
-	}
-	if (!dataset?.metadata?.dataCard?.PROVENANCE) {
-		dataset.metadata.dataCard.PROVENANCE = '-';
-	}
-	if (!dataset?.metadata?.dataCard?.SENSITIVITY) {
-		dataset.metadata.dataCard.SENSITIVITY = '-';
-	}
-	if (!dataset?.metadata?.dataCard?.LICENSE) {
-		dataset.metadata.dataCard.LICENSE = '-';
-	}
-	if (!dataset?.metadata?.dataCard?.DATASET_TYPE) {
-		dataset.metadata.dataCard.DATASET_TYPE = '-';
-	}
+
+	// Properties that should be set to a default value if they do not exist
+	const propertiesToSetDefault = [
+		'DESCRIPTION',
+		'AUTHOR_NAME',
+		'AUTHOR_EMAIL',
+		'DATE',
+		'PROVENANCE',
+		'SENSITIVITY',
+		'LICENSE',
+		'DATASET_TYPE'
+	];
+
+	// Set the default value for the properties
+	propertiesToSetDefault.forEach((property) => {
+		if (!dataset?.metadata?.dataCard?.[property]) {
+			dataset.metadata.dataCard[property] = '-';
+		}
+	});
 
 	return dataset;
 }
