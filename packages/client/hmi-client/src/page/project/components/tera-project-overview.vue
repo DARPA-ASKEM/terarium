@@ -178,7 +178,7 @@
 
 <script setup lang="ts">
 import { isProjectAssetTypes } from '@/types/Project';
-import { computed, nextTick, onMounted, ref } from 'vue'; // toRaw
+import { computed, nextTick, onMounted, ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
