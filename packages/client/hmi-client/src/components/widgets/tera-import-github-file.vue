@@ -1,15 +1,7 @@
 <template>
 	<main>
-		<Button
-			v-if="showImportButton"
-			label="Import"
-			class="p-button-sm p-button-outlined"
-			icon="pi pi-cloud-download"
-			@click="initializeCodeBrowser"
-		/>
-		<a :href="urlString" rel="noreferrer noopener">{{ urlString }}</a>
 		<Teleport to="body">
-			<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="!isModalVisible">
+			<tera-modal v-if="visible" class="modal" @modal-mask-clicked="emit('close')">
 				<template #header>
 					<h2>
 						https://github.com/{{ repoOwnerAndName
@@ -167,7 +159,7 @@
 							selectedFiles.length == 1 ? '' : 's'
 						}}</Button
 					>
-					<Button class="p-button-outlined" label="Cancel" @click="isModalVisible = false" />
+					<Button class="p-button-outlined" label="Cancel" @click="emit('close')" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -175,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ComputedRef, ref, Ref } from 'vue';
+import { computed, ComputedRef, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { isEmpty } from 'lodash';
@@ -193,16 +185,18 @@ import { useProjects } from '@/composables/project';
 import { uploadCodeToProjectFromGithub } from '@/services/code';
 import { createNewDocumentFromGithubFile } from '@/services/document-assets';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
+import { useToastService } from '@/services/toast';
 
 const props = defineProps<{
+	visible: boolean;
 	urlString: string;
-	showImportButton: boolean;
 }>();
+
+const emit = defineEmits(['close']);
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
 const directoryContent: Ref<GithubRepo | null> = ref(null);
-const isModalVisible: Ref<boolean> = ref(false);
 const selectedFiles: Ref<GithubFile[]> = ref([]);
 const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
@@ -240,7 +234,6 @@ const hasOther: ComputedRef<boolean> = computed(
 );
 
 async function initializeCodeBrowser() {
-	isModalVisible.value = true;
 	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
 	await openDirectory(''); // Goes back to root directory if modal is closed then opened again
 }
@@ -294,8 +287,16 @@ async function openSelectedFiles() {
 		await importDocumentFiles(selectedDocumentFiles);
 	}
 
+	// TODO: make this number account for files that were not succussfully imported
+	const numUploadedFiles =
+		selectedCodeFiles.length + selectedDataFiles.length + selectedDocumentFiles.length;
+	const resourceMsg = numUploadedFiles > 1 ? 'resources were' : 'resource was';
+	useToastService().success(
+		'Success!',
+		`${numUploadedFiles} ${resourceMsg} successfuly added to this project`
+	);
 	// FIXME: Files aren't opening
-	isModalVisible.value = false;
+	emit('close');
 }
 
 /**
@@ -377,6 +378,15 @@ async function openCodeFiles(githubFiles: GithubFile[]) {
 		}
 	});
 }
+
+watch(
+	() => props.visible,
+	() => {
+		if (props.visible) {
+			initializeCodeBrowser();
+		}
+	}
+);
 </script>
 
 <style scoped>
