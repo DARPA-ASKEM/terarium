@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
-@FeignClient(name = "simulation-service", url = "${terarium.dataservice.url}", path = "/simulation-service")
+@FeignClient(name = "simulation-service", url = "${simulation-service.url}")
 public interface SimulationServiceProxy {
 	@PostMapping("/simulate")
 	ResponseEntity<JobResponse> makeForecastRun(
