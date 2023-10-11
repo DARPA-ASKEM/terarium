@@ -642,12 +642,16 @@ async function getRelatedDocuments() {
 
 	if (isEmpty(provenanceIds)) return;
 
+	// get provenace payload of all provenace ids on the asset
 	const response = await getManyProvenance(provenanceIds);
 
+	// get the right link of the provenace (these are all documents asset ids right now)
 	const documentIds = response.map((prov) => prov?.right);
 
+	// get all the documents on the current project
 	const projectDocuments = useProjects().activeProject.value?.assets?.documents ?? [];
 
+	// map the document ids from the provenace on the asset to the documents ids on the current project
 	relatedDocuments.value =
 		projectDocuments
 			.filter((document: DocumentAsset) => documentIds.includes(document.id))
