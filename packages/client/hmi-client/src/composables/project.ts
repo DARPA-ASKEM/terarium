@@ -10,6 +10,7 @@ import { IProject } from '@/types/Project';
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import { AssetType, PermissionRelationships } from '@/types/Types';
+import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;
 
@@ -175,7 +176,11 @@ export function useProjects() {
 		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
 	}
 
-	async function clone(projectId: IProject['id'], username: string) {
+	async function clone(projectId: IProject['id']) {
+		const username = useAuthStore().user?.name;
+		if (!username) {
+			return null;
+		}
 		const projectToClone = await ProjectService.get(projectId, true);
 		if (!projectToClone || !projectToClone.assets) {
 			return null;

@@ -21,7 +21,6 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { useProjectMenu } from '@/composables/project-menu';
 import { useProjects } from '@/composables/project';
-import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{ project: IProject }>();
 const emit = defineEmits(['forked-project']);
@@ -51,10 +50,8 @@ const forkMenuItem = {
 	label: 'Fork this project',
 	icon: 'pi pi-clone',
 	command: async () => {
-		if (useAuthStore().user?.name) {
-			const cloned = await useProjects().clone(props.project.id, useAuthStore().user.name);
-			emit('forked-project', cloned);
-		}
+		const cloned = await useProjects().clone(props.project.id);
+		emit('forked-project', cloned);
 	}
 };
 const separatorMenuItem = { separator: true };
