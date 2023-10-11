@@ -6,7 +6,6 @@
 		:publisher="`Last updated ${DateUtils.formatLong(
 			useProjects().activeProject.value?.timestamp
 		)}`"
-		is-overview
 	>
 		<template #name-input>
 			<InputText

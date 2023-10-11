@@ -14,7 +14,11 @@
 			</aside>
 		</header>
 		<template v-if="!hideIntro">
-			<header id="asset-top" :class="isOverview && 'overview-banner'" ref="headerRef">
+			<header
+				id="asset-top"
+				:class="pageType === ProjectPages.OVERVIEW && 'overview-banner'"
+				ref="headerRef"
+			>
 				<section>
 					<!-- put the buttons above the title if there is an overline -->
 					<div v-if="overline" class="vertically-center">
@@ -48,7 +52,7 @@
 					</div>
 					<slot name="overview-summary" />
 				</section>
-				<aside v-if="!isOverview" class="spread-out">
+				<aside v-if="pageType === ProjectPages.OVERVIEW" class="spread-out">
 					<Button
 						v-if="featureConfig.isPreview"
 						icon="pi pi-times"
@@ -66,8 +70,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, PropType } from 'vue';
+import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
+import { ProjectPages } from '@/types/Project';
+import { AssetType } from '@/types/Types';
 
 const props = defineProps({
 	name: {
@@ -95,7 +102,6 @@ const props = defineProps({
 		default: { isPreview: false } as FeatureConfig
 	},
 	// Booleans default to false if not specified
-	isOverview: Boolean,
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,
@@ -115,6 +121,8 @@ const shrinkHeader = computed(() => {
 		!props.isNamingAsset // Don't appear while creating an asset eg. a model
 	);
 });
+
+const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
 const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
