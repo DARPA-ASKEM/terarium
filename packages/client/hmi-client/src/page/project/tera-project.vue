@@ -145,7 +145,7 @@ const props = defineProps({
 	},
 	pageType: {
 		type: String as PropType<AssetType | ProjectPages>,
-		default: ProjectPages.OVERVIEW
+		default: ProjectPages.EMPTY
 	}
 });
 
@@ -231,8 +231,9 @@ const onCloseModelModal = () => {
 	isNewModelModalVisible.value = false;
 };
 
+const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
 onMounted(() => {
-	openAsset(openedAssetRoute.value);
+	openAsset(overview);
 });
 </script>
 
