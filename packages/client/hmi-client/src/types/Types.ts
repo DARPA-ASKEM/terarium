@@ -449,6 +449,7 @@ export interface Document {
     relatedDocuments: Document[];
     relatedExtractions: Extraction[];
     knownEntities: KnownEntities;
+    knownEntitiesCounts: KnownEntitiesCounts;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
 }
@@ -568,6 +569,11 @@ export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
     summaries: string[];
+}
+
+export interface KnownEntitiesCounts {
+    askemObjectCount: number;
+    urlExtractionCount: number;
 }
 
 export interface OdeSemantics {
