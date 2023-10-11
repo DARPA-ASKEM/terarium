@@ -60,7 +60,7 @@
 						size="large"
 						icon="pi pi-cloud-upload"
 						class="p-button p-button-secondary quick-link-button"
-						@click="openImportModal"
+						@click="isUploadResourcesModalVisible = true"
 					/>
 					<Button
 						label="New model"
@@ -169,82 +169,10 @@
 				</DataTable>
 			</section>
 			<section class="drag-n-drop">
-				<Teleport to="body">
-					<tera-modal
-						v-if="isUploadResourcesModalVisible"
-						class="modal"
-						@modal-mask-clicked="isUploadResourcesModalVisible = false"
-					>
-						<template #header>
-							<h4>Upload resources</h4>
-						</template>
-						<template #default>
-							<p class="subheader">Add resources to your project here</p>
-							<tera-drag-and-drop-importer
-								:show-preview="true"
-								:accept-types="[
-									AcceptedTypes.PDF,
-									AcceptedTypes.CSV,
-									AcceptedTypes.TXT,
-									AcceptedTypes.MD,
-									AcceptedTypes.PY,
-									AcceptedTypes.R,
-									AcceptedTypes.JL
-								]"
-								:accept-extensions="[
-									AcceptedExtensions.PDF,
-									AcceptedExtensions.CSV,
-									AcceptedExtensions.TXT,
-									AcceptedExtensions.MD,
-									AcceptedExtensions.PY,
-									AcceptedExtensions.R,
-									AcceptedExtensions.JL
-								]"
-								:import-action="processFiles"
-								:progress="progress"
-								@import-completed="importCompleted"
-							></tera-drag-and-drop-importer>
-
-							<section v-if="isUploadResourcesModalVisible">
-								<Card v-for="(item, i) in results" :key="i" class="card">
-									<template #title>
-										<div class="card-img"></div>
-									</template>
-									<template #content>
-										<div class="card-content">
-											<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
-											<div v-if="item.response" class="file-content">
-												<br />
-												<div>Extracted Text</div>
-												<div>{{ item.response.text }}</div>
-												<br />
-												<div v-if="item.response.images">Images Found</div>
-												<div v-for="image in item.response.images" :key="image">
-													<img :src="`data:image/jpeg;base64,${image}`" alt="" />
-												</div>
-												<br />
-												<i class="pi pi-plus"></i>
-											</div>
-										</div>
-									</template>
-								</Card>
-							</section>
-						</template>
-						<template #footer>
-							<Button
-								label="Upload"
-								class="p-button-primary"
-								@click="isUploadResourcesModalVisible = false"
-								:disabled="!results"
-							/>
-							<Button
-								label="Cancel"
-								class="p-button-secondary"
-								@click="isUploadResourcesModalVisible = false"
-							/>
-						</template>
-					</tera-modal>
-				</Teleport>
+				<tera-upload-resources-modal
+					:visible="isUploadResourcesModalVisible"
+					@close="isUploadResourcesModalVisible = false"
+				/>
 			</section>
 		</section>
 		<tera-multi-select-modal
@@ -257,7 +185,7 @@
 
 <script setup lang="ts">
 import { isProjectAssetTypes } from '@/types/Project';
-import { computed, nextTick, onMounted, Ref, ref, toRaw } from 'vue';
+import { computed, nextTick, onMounted, ref, toRaw } from 'vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -266,41 +194,27 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { AcceptedExtensions, AcceptedTypes, Tab } from '@/types/common';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import Card from 'primevue/card';
-import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
+import { Tab } from '@/types/common';
 import { capitalize, isEmpty } from 'lodash';
-import { AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { logger } from '@/utils/logger';
 import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
 import { useTabStore } from '@/stores/tabs';
-import { extractPDF } from '@/services/knowledge';
-import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
-import { downloadRawFile, createNewDatasetFromCSV } from '@/services/dataset';
-import { uploadCodeToProject } from '@/services/code';
-import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { getAssetIcon } from '@/services/project';
+import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
 const isRenamingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
-const progress: Ref<number> = ref(0);
-const results = ref<
-	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
->(null);
 const selectedResources = ref();
 
 const openedRow = ref(null);
 
 const tabStore = useTabStore();
-
-const auth = useAuthStore();
 
 const multiSelectButtons = [
 	{
@@ -356,123 +270,10 @@ const assets = computed(() => {
 	return result;
 });
 
-async function processFiles(files: File[], csvDescription: string) {
-	return files.map(async (file) => {
-		switch (file.type) {
-			case AcceptedTypes.CSV:
-				return processDataset(file, csvDescription);
-			case AcceptedTypes.PDF:
-			case AcceptedTypes.TXT:
-			case AcceptedTypes.MD:
-				return processDocument(file);
-			case AcceptedTypes.PY:
-			case AcceptedTypes.R:
-			case AcceptedTypes.JL:
-				return processCode(file);
-			default:
-				return { file, error: true, response: { text: '', images: [] } };
-		}
-	});
-}
-
-/**
- * Process a python, R or Julia file into a code asset
- * @param file
- */
-async function processCode(file: File) {
-	// This is pdf, txt, md files
-	const newCode = await uploadCodeToProject(file, progress);
-	let newAsset;
-	if (newCode && newCode.id) {
-		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
-	}
-	if (newAsset) {
-		return { file, error: false, response: { text: '', images: [] } };
-	}
-	return { file, error: true, response: { text: '', images: [] } };
-}
-
-/**
- * Process a pdf, txt, md file into an artifact
- * @param file
- */
-async function processDocument(file: File) {
-	// This is pdf, txt, md files
-	const document: DocumentAsset | null = await uploadDocumentAssetToProject(
-		file,
-		useProjects().activeProject.value?.username ?? '',
-		'',
-		progress
-	);
-	let newAsset;
-	if (document && document.id) {
-		newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
-	}
-	if (document && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
-		await extractPDF(document);
-		return { file, error: false, response: { text: '', images: [] } };
-	}
-	return { file, error: true, response: { text: '', images: [] } };
-}
-
-/**
- * Process a csv file into a dataset
- * @param file
- * @param description
- */
-async function processDataset(file: File, description: string) {
-	let addedCSV: CsvAsset | null = null;
-	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
-		progress,
-		file,
-		auth.user?.name ?? '',
-		description
-	);
-
-	let newAsset;
-	if (addedDataset?.id) {
-		newAsset = await useProjects().addAsset(AssetType.Datasets, addedDataset.id);
-		addedCSV = await downloadRawFile(addedDataset.id, file.name);
-	}
-
-	if (addedCSV !== null && newAsset) {
-		const text: string = addedCSV?.csv?.join('\r\n') ?? '';
-		const images = [];
-
-		return { file, error: false, response: { text, images } };
-	}
-	return { file, error: true, response: { text: '', images: [] } };
-}
-
 const onRowSelect = (selectedRows) => {
 	// show multi select modal when there are selectedRows otherwise hide
 	showMultiSelect.value = selectedRows.length !== 0;
 };
-async function openImportModal() {
-	isUploadResourcesModalVisible.value = true;
-	results.value = null;
-}
-
-async function importCompleted(
-	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
-) {
-	// This is a hacky override for dealing with CSVs
-	if (
-		newResults &&
-		newResults.length === 1 &&
-		(newResults[0].file.type === AcceptedTypes.CSV ||
-			newResults[0].file.type === AcceptedTypes.TXT ||
-			newResults[0].file.type === AcceptedTypes.MD)
-	) {
-		if (newResults[0].error) {
-			logger.error('Failed to upload file. Is it too large?', { showToast: true });
-		}
-		results.value = null;
-		isUploadResourcesModalVisible.value = false;
-	} else {
-		results.value = newResults;
-	}
-}
 
 async function editProject() {
 	newProjectName.value = useProjects().activeProject.value?.name ?? '';
