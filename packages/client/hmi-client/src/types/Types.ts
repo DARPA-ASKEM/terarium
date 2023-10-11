@@ -244,8 +244,13 @@ export interface TypingSemantics {
 }
 
 export interface PermissionRelationships {
-    groups: Group[];
-    users: User[];
+    groups: Relationship[];
+    users: Relationship[];
+}
+
+export interface Relationship {
+    id: string;
+    relationship: string;
 }
 
 export interface PetriNetModel {
@@ -514,16 +519,6 @@ export interface Properties {
     name: string;
     grounding?: ModelGrounding;
     description?: string;
-}
-
-export interface Group {
-    id: string;
-    relationship: string;
-}
-
-export interface User {
-    id: string;
-    relationship: string;
 }
 
 export interface PetriNetState {
