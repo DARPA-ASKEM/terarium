@@ -30,6 +30,7 @@ const menu = ref();
 const renameMenuItem = {
 	label: 'Rename',
 	icon: 'pi pi-pencil',
+	disabled: true, // TODO: remove when rename is implemented
 	command: () => {}
 };
 const shareMenuItem = {
