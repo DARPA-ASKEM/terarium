@@ -1,6 +1,5 @@
 <template>
-	<div class="strata-group" style="{border-left: 9px solid {{ props.config.borderColour }};}">
-		<!-- TOM TODO ^ make colouring border read from props properly -->
+	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
 		<div class="sub-header">
 			<label for="strata-name">Cartesian product</label>
 			<InputSwitch v-model="cartesianProduct" />
@@ -52,6 +51,7 @@ const cartesianProduct = ref<boolean>(true);
 
 <style>
 .strata-group {
+	margin: 1rem;
 	display: flex;
 	padding: 1rem 1rem 1rem 1.5rem;
 	flex-direction: column;
@@ -59,7 +59,6 @@ const cartesianProduct = ref<boolean>(true);
 	align-items: flex-start;
 	border-radius: 0.375rem;
 	background: #fff;
-	border-left: 8px solid #00c387;
 	/* Shadow/medium */
 	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
