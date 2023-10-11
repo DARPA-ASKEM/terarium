@@ -26,7 +26,9 @@
 				:key="index"
 				:modelStates="modelStates"
 				:config="cfg"
+				:index="index"
 				@delete-self="deleteStratifyGroupForm"
+				@update-self="updateStratifyGroupForm"
 			/>
 			<Button label="Add another strata group" size="small" @click="addGroupForm" />
 		</div>
@@ -60,7 +62,6 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
-import { v4 as uuidv4 } from 'uuid';
 import { StratifyOperationStateMira, StratifyGroup } from './stratify-mira-operation';
 
 const props = defineProps<{
@@ -81,7 +82,6 @@ const teraModelDiagramRef = ref();
 const addGroupForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	const newGroup: StratifyGroup = {
-		id: uuidv4(),
 		borderColour: '#00c387',
 		name: '',
 		selectedVariables: [],
@@ -98,8 +98,18 @@ const addGroupForm = () => {
 
 const deleteStratifyGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	state.strataGroups.forEach((ele) => console.log(ele.id));
-	state.strataGroups = state.strataGroups.filter((ele) => ele.id !== data.id);
+	state.strataGroups.splice(data.index, 1);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const updateStratifyGroupForm = (data) => {
+	const state = _.cloneDeep(props.node.state);
+	state.strataGroups[data.index] = data.updatedConfig;
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,

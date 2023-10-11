@@ -3,12 +3,17 @@
 		<div class="sub-header">
 			<label for="strata-name">Cartesian product</label>
 			<InputSwitch v-model="cartesianProduct" />
-			<i class="trash-button pi pi-trash" @click="emit('delete-self', { id: props.config.id })" />
+			<i class="trash-button pi pi-trash" @click="emit('delete-self', { index: props.index })" />
 		</div>
 		<div class="first-row">
 			<div class="age-group">
 				<label for="strata-name">Name of strata</label>
-				<InputText id="strata-name" v-model="strataName" placeholder="Age group" />
+				<InputText
+					id="strata-name"
+					v-model="strataName"
+					placeholder="Age group"
+					@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
+				/>
 			</div>
 			<div class="select-variables">
 				<label for="variables-select">Select variables and parameters to stratify</label>
@@ -18,6 +23,9 @@
 					:options="props.modelStates"
 					placeholder="Model states"
 					display="chip"
+					@update:model-value="
+						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+					"
 				></MultiSelect>
 			</div>
 		</div>
@@ -26,13 +34,18 @@
 				>Enter a comma separated list of labels for each group.
 				<span class="subdued-text">(Max 100)</span></label
 			>
-			<InputText id="group-labels" v-model="labels" placeholder="Young, Old" />
+			<InputText
+				id="group-labels"
+				v-model="labels"
+				placeholder="Young, Old"
+				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
+			/>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import MultiSelect from 'primevue/multiselect';
 import InputSwitch from 'primevue/inputswitch';
@@ -41,15 +54,22 @@ import { StratifyGroup } from '@/workflow/ops/stratify-mira/stratify-mira-operat
 const props = defineProps<{
 	modelStates: string[];
 	config: StratifyGroup;
+	index: number;
 }>();
 
-const emit = defineEmits(['delete-self']);
+const emit = defineEmits(['delete-self', 'update-self']);
 
 const strataName = ref('');
 const selectedVariables = ref<string[]>([]);
 const labels = ref('');
 const cartesianProduct = ref<boolean>(true);
-console.log(props.config.id);
+
+const updatedConfig = computed<StratifyGroup>(() => ({
+	borderColour: props.config.borderColour,
+	name: strataName.value,
+	selectedVariables: selectedVariables.value,
+	groupLabels: labels.value
+}));
 </script>
 
 <style>
