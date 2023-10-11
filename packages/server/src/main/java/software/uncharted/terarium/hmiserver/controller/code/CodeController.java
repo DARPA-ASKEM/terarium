@@ -36,9 +36,9 @@ public class CodeController {
 	SkemaRustProxy skemaRustProxy;
 
 	/**
-	 * Stores a model from a code snippit
+	 * Stores a model from a code snippet
 	 *
-	 * @param code the python code snippit
+	 * @param code the python code snippet
 	 * @return a {@link StoredModel} instance containing the model id, inputs, and outputs of the model
 	 * derived from the code input
 	 */
