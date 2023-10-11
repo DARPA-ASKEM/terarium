@@ -22,6 +22,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import org.apache.http.entity.StringEntity;
+import org.apache.commons.io.IOUtils;
+import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
 import java.util.List;
@@ -149,4 +151,30 @@ public class DocumentController implements SnakeCaseController {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
+
+	@GetMapping("/{id}/download-document-as-text")
+	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") String documentId, @RequestParam("filename") String filename) {
+
+		log.debug("Downloading document file {} for document {}", filename, documentId);
+
+		try (CloseableHttpClient httpclient = HttpClients.custom()
+			.disableRedirectHandling()
+			.build()) {
+
+			PresignedURL presignedURL = proxy.getDownloadUrl(documentId, filename).getBody();
+			final HttpGet httpGet = new HttpGet(presignedURL.getUrl());
+			final HttpResponse response = httpclient.execute(httpGet);
+			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+
+			return ResponseEntity.ok(textFileAsString);
+
+
+		} catch (Exception e) {
+			log.error("Unable to GET document data", e);
+			return ResponseEntity.internalServerError().build();
+		}
+
+	}
+
+
 }

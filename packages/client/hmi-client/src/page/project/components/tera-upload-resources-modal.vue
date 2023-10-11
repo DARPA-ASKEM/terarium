@@ -61,8 +61,8 @@ import Button from 'primevue/button';
 import { AcceptedTypes, AcceptedExtensions } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import { useProjects } from '@/composables/project';
-import { Artifact, AssetType, Dataset } from '@/types/Types';
-import { uploadArtifactToProject } from '@/services/artifact';
+import { DocumentAsset, AssetType, Dataset } from '@/types/Types';
+import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
 import { ref } from 'vue';
@@ -70,6 +70,7 @@ import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-im
 import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
+import { extractPDF } from '@/services/knowledge';
 
 defineProps<{
 	visible: boolean;
@@ -90,7 +91,7 @@ async function processFiles(files: File[], csvDescription: string) {
 			case AcceptedTypes.PDF:
 			case AcceptedTypes.TXT:
 			case AcceptedTypes.MD:
-				return processArtifact(file);
+				return processDocument(file);
 			case AcceptedTypes.PY:
 			case AcceptedTypes.R:
 			case AcceptedTypes.JL:
@@ -115,15 +116,23 @@ async function processCode(file: File) {
  * Process a pdf, txt, md file into an artifact
  * @param file
  */
-async function processArtifact(file: File) {
+async function processDocument(file: File) {
 	// This is pdf, txt, md files
-	const artifact: Artifact | null = await uploadArtifactToProject(
+	const document: DocumentAsset | null = await uploadDocumentAssetToProject(
 		file,
 		useProjects().activeProject.value?.username ?? '',
 		'',
 		progress
 	);
-	return { id: artifact?.id ?? '', assetType: AssetType.Artifacts };
+	let newAsset;
+	if (document && document.id) {
+		newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
+	}
+	if (document && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
+		await extractPDF(document);
+		return { file, error: false, response: { text: '', images: [] } };
+	}
+	return { file, error: true, response: { text: '', images: [] } };
 }
 
 /**
