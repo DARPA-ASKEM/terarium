@@ -1,10 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.permission;
 
-public class User {
+public class PermissionGroup {
 	private String id;
 	private String relationship;
 
-	public User(String id, String relationship) {
+	public PermissionGroup(String id, String relationship) {
 		this.id = id;
 		this.relationship = relationship;
 	}

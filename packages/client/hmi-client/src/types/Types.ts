@@ -115,6 +115,8 @@ export interface Project {
     assets?: Assets;
     metadata?: { [index: string]: string };
     username: string;
+    publicProject?: boolean;
+    userPermission?: string;
     id?: string;
     relatedDocuments?: Document[];
 }
@@ -175,15 +177,16 @@ export interface DocumentAsset {
     id?: string;
     name?: string;
     description?: string;
-    timestamp?: Date;
+    timestamp?: string;
     username?: string;
     fileNames?: string[];
-    documentUrl?: string[];
+    documentUrl?: string;
     metadata?: any;
     source?: string;
     text?: string;
     grounding?: Grounding;
     concepts?: Concept[];
+    assets?: DocumentExtraction[];
 }
 
 export interface Model {
@@ -251,6 +254,43 @@ export interface ProvenanceQueryParam {
     userId?: number;
 }
 
+export interface RegNetBaseProperties {
+    name: string;
+    grounding: ModelGrounding;
+    rate_constant: any;
+}
+
+export interface RegNetEdge {
+    source: string;
+    target: string;
+    id: string;
+    sign: boolean;
+    properties?: RegNetBaseProperties;
+}
+
+export interface RegNetModel {
+    vertices: RegNetVertex[];
+    edges: RegNetEdge[];
+    parameters?: RegNetParameter[];
+}
+
+export interface RegNetParameter {
+    id: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+}
+
+export interface RegNetVertex {
+    id: string;
+    name: string;
+    sign: boolean;
+    initial?: any;
+    rate_constant?: any;
+    grounding?: ModelGrounding;
+}
+
 export interface DocumentsResponseOK extends XDDResponseOK {
     data: Document[];
     nextPage: string;
@@ -261,7 +301,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 
 export interface EvaluationScenarioSummary {
     name: string;
-    username: string;
+    userId: string;
     task: string;
     description: string;
     notes: string;
@@ -386,6 +426,7 @@ export interface Assets {
     workflows: Workflow[];
     artifacts: Artifact[];
     code: Code[];
+    documents: DocumentAsset[];
 }
 
 export interface Document {
@@ -408,8 +449,15 @@ export interface Document {
     relatedDocuments: Document[];
     relatedExtractions: Extraction[];
     knownEntities: KnownEntities;
+    knownEntitiesCounts: KnownEntitiesCounts;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
+}
+
+export interface DocumentExtraction {
+    fileName: string;
+    assetType: string;
+    metadata: any;
 }
 
 export interface ModelHeader {
@@ -471,6 +519,11 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
 export interface XDDFacetsItemResponse {
     buckets: XDDFacetBucket[];
     doc_count_error_upper_bound: number;
@@ -516,6 +569,11 @@ export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
     summaries: string[];
+}
+
+export interface KnownEntitiesCounts {
+    askemObjectCount: number;
+    urlExtractionCount: number;
 }
 
 export interface OdeSemantics {
@@ -664,11 +722,6 @@ export interface ProvenanceInfo {
     description: string;
 }
 
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
-}
-
 export interface VariableMetadata {
     type: string;
     value: string;
@@ -717,6 +770,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    TestType = "TEST_TYPE",
 }
 
 export enum AuthorityLevel {
@@ -802,6 +856,7 @@ export enum AssetType {
     Workflows = "workflows",
     Artifacts = "artifacts",
     Code = "code",
+    Documents = "documents",
 }
 
 export enum OntologicalField {

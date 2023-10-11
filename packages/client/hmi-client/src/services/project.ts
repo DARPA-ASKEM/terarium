@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import { ExternalPublication, EventType, Project, AssetType } from '@/types/Types';
+import { EventType, Project, AssetType, ExternalPublication } from '@/types/Types';
 
 /**
  * Create a project
