@@ -115,6 +115,8 @@ export interface Project {
     assets?: Assets;
     metadata?: { [index: string]: string };
     username: string;
+    publicProject?: boolean;
+    userPermission?: string;
     id?: string;
     relatedDocuments?: Document[];
 }
@@ -304,7 +306,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 
 export interface EvaluationScenarioSummary {
     name: string;
-    username: string;
+    userId: string;
     task: string;
     description: string;
     notes: string;
@@ -436,6 +438,7 @@ export interface Assets {
     workflows: Workflow[];
     artifacts: Artifact[];
     code: Code[];
+    documents: DocumentAsset[];
 }
 
 export interface Document {
@@ -783,6 +786,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    TestType = "TEST_TYPE",
 }
 
 export enum AuthorityLevel {

@@ -31,7 +31,7 @@ function deploy_containers() {
 function start_server() {
 	echo "Starting local server"
 	cd ${SERVER_DIR} || exit
-	gradle bootRun --args='--spring.profiles.active=default,secrets'
+	./gradlew bootRun --args='--spring.profiles.active=default,secrets'
 	cd - || exit
 }
 

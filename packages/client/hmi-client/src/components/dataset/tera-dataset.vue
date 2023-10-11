@@ -71,12 +71,7 @@
 			<section class="metadata data-row">
 				<section>
 					<header>Source Name</header>
-					<section
-						v-if="dataset.datasetUrl === 'https://github.com/reichlab/covid19-forecast-hub/'"
-					>
-						The Reich Lab at UMass-Amherst
-					</section>
-					<section v-else>{{ dataset?.source || '-' }}</section>
+					<section>{{ dataset?.source || '-' }}</section>
 				</section>
 				<section>
 					<header>Source URL</header>
@@ -91,10 +86,10 @@
 			<Accordion :multiple="true" :activeIndex="[0, 1, 2, 3]">
 				<AccordionTab>
 					<template #header>Related publications</template>
-					<tera-related-publications
+					<tera-related-documents
 						:asset-type="ResourceType.DATASET"
-						:publications="publications"
-						:related-publications="relatedPublications"
+						:documents="documents"
+						:related-documents="relatedDocuments"
 						:assetId="assetId"
 						@enriched="fetchDataset"
 					/>
@@ -103,10 +98,26 @@
 					<template #header>
 						<header>Description</header>
 					</template>
-					<p>
+					<p v-if="dataset?.description">{{ dataset.description }}</p>
+					<p v-else>
 						No information available. Add resources to generate a description. Or click edit icon to
 						edit this field directly.
 					</p>
+				</AccordionTab>
+				<AccordionTab v-if="dataset?.metadata?.data_card">
+					<template #header>
+						<header>Data Card</header>
+					</template>
+					<ul>
+						<li>Description: {{ dataset.metadata.data_card.DESCRIPTION }}</li>
+						<li>Author Name: {{ dataset.metadata.data_card.AUTHOR_NAME }}</li>
+						<li>Author Email: {{ dataset.metadata.data_card.AUTHOR_EMAIL }}</li>
+						<li>Date of Data: {{ dataset.metadata.data_card.DATE }}</li>
+						<li>Data Provenance: {{ dataset.metadata.data_card.PROVENANCE }}</li>
+						<li>Data Sensitivity: {{ dataset.metadata.data_card.SENSITIVITY }}</li>
+						<li>License Information: {{ dataset.metadata.data_card.LICENSE }}</li>
+						<li>Data Type: {{ dataset.metadata.data_card.DATASET_TYPE }}</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="enriched">
 					<template #header>
@@ -279,15 +290,16 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
-import { isString, cloneDeep } from 'lodash';
+import { isString, cloneDeep, isEmpty } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { Artifact, CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
+import { CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
 import Menu from 'primevue/menu';
 import { useProjects } from '@/composables/project';
+import { enrichDataset } from './utils';
 
 enum DatasetView {
 	DESCRIPTION,
@@ -310,32 +322,25 @@ const props = defineProps({
 	}
 });
 
-const publications = computed(
+const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.artifacts.filter((artifact: Artifact) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
-					artifact.fileNames[0].endsWith(extension)
+			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
+					(extension) => {
+						if (document.fileNames && !isEmpty(document.fileNames)) {
+							return document.fileNames[0]?.endsWith(extension);
+						}
+						return false;
+					}
 				)
 			)
-			.map((artifact: Artifact) => ({
-				name: artifact.name,
-				id: artifact.id
+			.map((document: DocumentAsset) => ({
+				name: document.name,
+				id: document.id
 			})) ?? []
 );
-const relatedPublications = computed(() => []);
-
-/*
-const headers = ref({
-	AUTHOR_NAME: 'Author Name',
-	AUTHOR_EMAIL: 'Author Email',
-	DATE: 'Date of Data',
-	SCHEMA: 'Data Schema',
-	PROVENANCE: 'Data Provenance',
-	SENSITIVITY: 'Data Sensitivity',
-	LICENSE: 'License Information'
-});
-*/
+const relatedDocuments = computed(() => []);
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const newCsvContent: any = ref(null);
@@ -394,7 +399,7 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-// temporary variable to allow user to click through related publications modal and simulate "getting" enriched data back
+// temporary variable to allow user to click through related documents modal and simulate "getting" enriched data back
 const enriched = ref(false);
 
 const groundingValues = ref<string[][]>([]);
@@ -440,7 +445,7 @@ const fetchDataset = async () => {
 				datasetTemp[key] = highlightSearchTerms(value);
 			}
 		});
-		dataset.value = datasetTemp;
+		dataset.value = enrichDataset(datasetTemp);
 	}
 };
 
