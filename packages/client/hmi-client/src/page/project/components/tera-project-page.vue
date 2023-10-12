@@ -36,7 +36,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { ProjectPages } from '@/types/Project';
-import { Tab } from '@/types/common';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
@@ -84,7 +83,7 @@ const assetName = computed<string>(() => {
 });
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
-const getXDDuri = (assetId: Tab['assetId']): string =>
+const getXDDuri = (assetId: string): string =>
 	useProjects().activeProject.value?.assets?.[AssetType.Publications]?.find(
 		(document) => document?.id === Number.parseInt(assetId ?? '', 10)
 	)?.xdd_uri ?? '';

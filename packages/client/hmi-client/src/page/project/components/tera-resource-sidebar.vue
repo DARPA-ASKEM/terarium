@@ -147,14 +147,13 @@ import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { ProjectPages } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-
-type IProjectAssetItems = Map<AssetType, Set<AssetItem>>;
+import { generateProjectAssetsList } from '@/utils/project-assets-list';
 
 defineProps<{
 	openedAssetRoute: AssetRoute;
@@ -168,46 +167,9 @@ const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<AssetRoute | null>(null);
 const assetToDelete = ref<AssetItem | null>(null);
-const searchAsset = ref<string | null>('');
+const searchAsset = ref<string>('');
 
-const assets = computed((): IProjectAssetItems => {
-	const assetItems = new Map<AssetType, Set<AssetItem>>();
-
-	const projectAssets = useProjects().activeProject?.value?.assets;
-	if (!projectAssets) return assetItems;
-
-	// Run through all the assets type within the project
-	Object.keys(projectAssets).forEach((type) => {
-		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType = type as AssetType;
-			const typeAssets = projectAssets[projectAssetType]
-				.map((asset) => {
-					let assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-
-					// FIXME should unify upstream via a summary endpoint
-					if (asset.header && asset.header.name) {
-						assetName = asset.header.name;
-					}
-
-					const pageType = asset?.type ?? projectAssetType;
-					const assetId = asset?.id?.toString();
-					return { assetName, pageType, assetId };
-				})
-				.filter((asset) => {
-					// filter assets
-					if (!searchAsset.value?.trim()) {
-						return true;
-					}
-					const searchTermLower = searchAsset.value?.trim().toLowerCase();
-					return asset.assetName.toLowerCase().includes(searchTermLower);
-				}) as AssetItem[];
-			if (!isEmpty(typeAssets)) {
-				assetItems.set(projectAssetType, new Set(typeAssets));
-			}
-		}
-	});
-	return assetItems;
-});
+const assets = computed(() => generateProjectAssetsList(searchAsset.value));
 
 function removeAsset() {
 	emit('remove-asset', assetToDelete.value);
