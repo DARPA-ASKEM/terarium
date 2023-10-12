@@ -23,9 +23,9 @@ import Avatar from 'primevue/avatar';
 import { computed, ref, watch } from 'vue';
 import useAuthStore from '@/stores/auth';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
-import { User } from '@/types/Types';
+import { PermissionUser } from '@/types/Types';
 
-const props = defineProps<{ user: User; permission?: string }>();
+const props = defineProps<{ user: PermissionUser; permission?: string }>();
 const emit = defineEmits(['select-permission']);
 
 const auth = useAuthStore();
@@ -33,13 +33,11 @@ const auth = useAuthStore();
 const selectedPermission = ref('Edit');
 const permissions = ref(['Edit', 'Read only', 'Remove access']);
 const userInitials = computed(() =>
-	// TODO: replace 'firstName' and 'lastName' with 'givenName' and 'familyName' once staging data is updated
 	props.user.firstName.charAt(0).concat(props.user.lastName.charAt(0))
 );
 const isAuthor = computed(() => props.permission === 'creator');
 
 function isYou() {
-	// TODO: replace 'firstName' and 'lastName' with 'givenName' and 'familyName' once staging data is updated
 	return auth.user?.name === props.user.firstName ? '(you)' : '';
 }
 
