@@ -38,7 +38,7 @@ export async function makeForecastJob(simulationParam: SimulationRequest) {
 
 export async function makeForecastJobCiemss(simulationParam: SimulationRequest) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/forecast/', simulationParam);
+		const resp = await API.post('simulation-request/ciemss/forecast', simulationParam);
 		EventService.create(
 			EventType.TransformPrompt,
 			useProjects().activeProject.value?.id,

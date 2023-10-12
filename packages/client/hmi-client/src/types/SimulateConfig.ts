@@ -11,6 +11,7 @@ export enum TspanUnits {
 export type ChartConfig = {
 	selectedVariable: string[];
 	selectedRun: string;
+	active?: boolean;
 };
 
 export type DataseriesConfig = {
