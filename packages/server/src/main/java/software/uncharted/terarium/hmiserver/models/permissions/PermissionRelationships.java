@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.permissions;
 
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 import java.util.ArrayList;
 import java.util.List;
