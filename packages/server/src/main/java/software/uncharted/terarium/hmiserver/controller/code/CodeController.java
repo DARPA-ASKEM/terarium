@@ -10,12 +10,10 @@ import software.uncharted.terarium.hmiserver.models.code.GithubFile;
 import software.uncharted.terarium.hmiserver.models.code.GithubRepo;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
-import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 
 import java.util.List;
-import java.util.Map;
 
 @RequestMapping("/code")
 @RestController
@@ -27,18 +25,15 @@ public class CodeController {
 	JsDelivrProxy jsdelivrProxy;
 
 	@Autowired
-	MitProxy mitProxy;
-
-	@Autowired
 	SkemaProxy skemaProxy;
 
 	@Autowired
 	SkemaRustProxy skemaRustProxy;
 
 	/**
-	 * Stores a model from a code snippit
+	 * Stores a model from a code snippet
 	 *
-	 * @param code the python code snippit
+	 * @param code the python code snippet
 	 * @return a {@link StoredModel} instance containing the model id, inputs, and outputs of the model
 	 * derived from the code input
 	 */
@@ -69,37 +64,6 @@ public class CodeController {
 			.setInputs(odiResponseStr)
 			.setOutputs(odoResponseStr)
 		);
-	}
-
-	@PostMapping("/to-acset")
-	public ResponseEntity<String> toAcset(final String code) {
-		String places = mitProxy.getPlaces(code).getBody();
-		String transitions = mitProxy.getTransitions(code).getBody();
-		String arcs = mitProxy.getArcs(code).getBody();
-		String pyAcset = mitProxy.getPyAcset(places, transitions, arcs).getBody();
-		return ResponseEntity.ok(pyAcset);
-	}
-
-	@PostMapping("/annotation/find-text-vars")
-	public ResponseEntity<String> findTextVars(final String text) {
-		String textVars = mitProxy.findTextVars("true", text).getBody();
-		return ResponseEntity.ok(textVars);
-	}
-
-	@PostMapping("/annotation/link-annos-to-pyacset")
-	public ResponseEntity<String> linkAnnotationsToAcset(@RequestBody final Map<String, String> data) {
-		String pyacset = data.get("pyacset");
-		String annotations = data.get("annotations");
-		String info = data.get("info");
-		String metadata = mitProxy.linkAnnotationsToAcset(pyacset, annotations, info).getBody();
-
-		return ResponseEntity.ok(metadata);
-	}
-
-	@GetMapping("/response")
-	public ResponseEntity<Object> getResponse(@RequestParam("id") final String id) {
-		String response = mitProxy.getResponse(id).getBody();
-		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/repo-content")
