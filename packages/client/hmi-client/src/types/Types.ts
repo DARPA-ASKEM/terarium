@@ -338,6 +338,31 @@ export interface DKG {
     link: string;
 }
 
+export interface PermissionGroup {
+    id: string;
+    name: string;
+    relationship?: string;
+}
+
+export interface PermissionProject {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionRelationships {
+    projects: PermissionProject[];
+    groups: PermissionGroup[];
+    users: PermissionUser[];
+}
+
+export interface PermissionUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    relationship?: string;
+}
+
 export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
