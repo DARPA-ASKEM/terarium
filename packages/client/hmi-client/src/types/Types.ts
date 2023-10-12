@@ -243,15 +243,6 @@ export interface TypingSemantics {
     system: any;
 }
 
-export interface PermissionRelationships {
-    permissionGroups: PermissionGroup[];
-    permissionUsers: PermissionUser[];
-    permissionProjects: PermissionProject[];
-    projects: PermissionProject[];
-    groups: PermissionGroup[];
-    users: PermissionUser[];
-}
-
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
@@ -536,21 +527,6 @@ export interface Properties {
     name: string;
     grounding?: ModelGrounding;
     description?: string;
-}
-
-export interface PermissionGroup {
-    id: string;
-    relationship: string;
-}
-
-export interface PermissionUser {
-    id: string;
-    relationship: string;
-}
-
-export interface PermissionProject {
-    id: string;
-    relationship: string;
 }
 
 export interface PetriNetState {
