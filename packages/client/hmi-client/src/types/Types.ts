@@ -244,13 +244,12 @@ export interface TypingSemantics {
 }
 
 export interface PermissionRelationships {
-    groups: Relationship[];
-    users: Relationship[];
-}
-
-export interface Relationship {
-    id: string;
-    relationship: string;
+    permissionGroups: PermissionGroup[];
+    permissionUsers: PermissionUser[];
+    permissionProjects: PermissionProject[];
+    projects: PermissionProject[];
+    groups: PermissionGroup[];
+    users: PermissionUser[];
 }
 
 export interface PetriNetModel {
@@ -337,13 +336,6 @@ export interface DKG {
     name: string;
     description: string;
     link: string;
-}
-
-export interface PermissionUser {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
 }
 
 export interface CalibrationRequestCiemss {
@@ -519,6 +511,21 @@ export interface Properties {
     name: string;
     grounding?: ModelGrounding;
     description?: string;
+}
+
+export interface PermissionGroup {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionUser {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionProject {
+    id: string;
+    relationship: string;
 }
 
 export interface PetriNetState {

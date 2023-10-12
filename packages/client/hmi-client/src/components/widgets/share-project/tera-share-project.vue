@@ -63,7 +63,7 @@ import { watch, ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { IProject } from '@/types/Project';
 import { getUsers } from '@/services/user';
-import { PermissionUser, PermissionRelationships } from '@/types/Types';
+import { PermissionRelationships, User } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraUserCard from './tera-user-card.vue';
 
@@ -71,13 +71,13 @@ const props = defineProps<{ modelValue: boolean; project: IProject }>();
 
 const visible = ref(props.modelValue);
 const permissions = ref<PermissionRelationships | null>(null);
-const users = ref<PermissionUser[]>([]);
+const users = ref<User[]>([]);
 const usersMenu = computed(() =>
-	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+	users.value.map((u) => ({ id: u.id, name: u.givenName.concat(' ').concat(u.familyName) }))
 );
 const selectedUser = ref(null);
-const existingUsers = ref<Set<PermissionUser>>(new Set());
-const newSelectedUsers = ref<Set<PermissionUser>>(new Set());
+const existingUsers = ref<Set<User>>(new Set());
+const newSelectedUsers = ref<Set<User>>(new Set());
 const selectedUsers = computed(() => new Set([...existingUsers.value, ...newSelectedUsers.value]));
 const existingUserPermissions: Map<string, string> = new Map();
 const newSelectedUserPermissions: Map<string, string> = new Map();
