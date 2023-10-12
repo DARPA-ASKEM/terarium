@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.permissions;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
