@@ -13,16 +13,16 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.admin.client.resource.GroupResource;
-import org.keycloak.admin.client.resource.UserResource;
-import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.admin.client.resource.*;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionRole;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
@@ -30,6 +30,9 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRe
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+
+import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.composeResourceUrl;
+import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.doDeleteJSON;
 
 @Service
 @Slf4j
@@ -58,6 +61,9 @@ public class ReBACService {
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
 	public String ASKEM_ADMIN_GROUP_ID;
 
+	private String getKeycloakBearerToken() {
+		return "Bearer " + keycloak.tokenManager().getAccessTokenString();
+	}
 
 	@PostConstruct
 	void startup() throws Exception {
@@ -194,23 +200,61 @@ public class ReBACService {
 				continue;
 			}
 			UserResource userResource = usersResource.get(userRepresentation.getId());
-			boolean hasUserRole = false;
-			for (RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+
+			List<PermissionRole> roles= new ArrayList<>();
+			for (RoleRepresentation roleRepresentation: userResource.roles().getAll().getRealmMappings()) {
 				if (roleRepresentation.getDescription().isBlank()) {
-					if (roleRepresentation.getName().equals("user")) {
-						hasUserRole = true;
-					}
+					PermissionRole role = new PermissionRole(
+						roleRepresentation.getId(),
+						roleRepresentation.getName()
+						// no users are acquired (to avoid circular references etc)
+					);
+					roles.add(role);
 				}
 			}
-			if (hasUserRole) {
-				PermissionUser user = new PermissionUser(
-					userRepresentation.getId(),
-					userRepresentation.getFirstName(),
-					userRepresentation.getLastName(),
-					userRepresentation.getEmail());
-				response.add(user);
-			}
+
+			 PermissionUser user = new PermissionUser(
+				 userRepresentation.getId(),
+				 userRepresentation.getFirstName(),
+				 userRepresentation.getLastName(),
+				 userRepresentation.getEmail(),
+				 roles);
+			 response.add(user);
 		}
+		return response;
+	}
+
+
+	public List<PermissionRole> getRoles() {
+		List<PermissionRole> response = new ArrayList<>();
+
+		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
+		for (RoleRepresentation roleRepresentation: rolesResource.list()) {
+			if (roleRepresentation.getDescription().isBlank()) {
+				RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
+				List<PermissionUser> users = new ArrayList<>();
+				for (UserRepresentation userRepresentation : roleResource.getRoleUserMembers()) {
+					if (userRepresentation.getEmail() != null) {
+						PermissionUser user = new PermissionUser(
+							userRepresentation.getId(),
+							userRepresentation.getFirstName(),
+							userRepresentation.getLastName(),
+							userRepresentation.getEmail()
+							// no roles are acquired (to avoid circular references etc)
+						);
+						users.add(user);
+					}
+				}
+
+				PermissionRole role = new PermissionRole(
+					roleRepresentation.getId(),
+					roleRepresentation.getName(),
+					users);
+				response.add(role);
+			}
+
+		}
+
 		return response;
 	}
 
@@ -282,5 +326,47 @@ public class ReBACService {
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.getRelationship(what, full);
+	}
+
+	public ResponseEntity<Void> deleteRoleFromUser(String roleName, String userId) {
+		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+		UserResource userResource = usersResource.get(userId);
+		try {
+			// test to see if user was found
+			userResource.toRepresentation();
+		} catch (Exception ignore) {
+			log.error("There is no user with id {}", userId);
+			return ResponseEntity.notFound().build();
+		}
+
+		RoleRepresentation roleToRemove = null;
+		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
+		for (RoleRepresentation roleRepresentation : rolesResource.list()) {
+			//RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
+			if (roleRepresentation.getName().equals(roleName)) {
+				roleToRemove = roleRepresentation;
+			}
+		}
+
+		if (roleToRemove == null) {
+			log.error("There is no role {}", roleName);
+			return ResponseEntity.notFound().build();
+		}
+
+		String resourceUrl = composeResourceUrl(
+			config.getKeycloak().getUrl(),
+			REALM_NAME,
+			"users/" + userId + "/role-mappings/realm");
+
+		List<RoleRepresentation> roles = new ArrayList<>();
+		roles.add(roleToRemove);
+
+		try {
+			doDeleteJSON(resourceUrl, getKeycloakBearerToken(), roles);
+			return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			return ResponseEntity.internalServerError().build();
+		}
 	}
 }
