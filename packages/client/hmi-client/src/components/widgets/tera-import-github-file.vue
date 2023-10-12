@@ -356,8 +356,8 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
 		if (document && document.id) {
 			newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
 		}
-		if (document && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
-			extractPDF(document);
+		if (document?.id && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
+			extractPDF(document.id);
 		}
 	});
 }

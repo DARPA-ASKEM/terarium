@@ -35,7 +35,8 @@ public interface DocumentProxy {
 		@RequestParam(required = false, name = "match") String match,
 		@RequestParam(required = false, name = "known_entities") String known_entities,
 		@RequestParam(required = false, name = "github_url") String github_url,
-		@RequestParam(required = false, name = "similar_to") String similar_to
+		@RequestParam(required = false, name = "similar_to") String similar_to,
+		@RequestParam(required = false, name = "entity_limit", defaultValue = "5") String entity_limit
 	);
 
 	@GetMapping("/sets")

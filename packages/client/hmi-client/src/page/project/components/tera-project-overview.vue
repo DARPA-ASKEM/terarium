@@ -1,98 +1,86 @@
 <template>
-	<main>
-		<tera-asset
-			:name="useProjects().activeProject.value?.name"
-			:authors="useProjects().activeProject.value?.username"
-			:is-naming-asset="isRenamingProject"
-			:publisher="`Last updated ${DateUtils.formatLong(
-				useProjects().activeProject.value?.timestamp
-			)}`"
-			class="overview-banner"
-		>
-			<template #name-input>
-				<InputText
-					v-if="isRenamingProject"
-					v-model="newProjectName"
-					ref="inputElement"
-					@keyup.enter="updateProjectName"
-				/>
-			</template>
-			<template #edit-buttons>
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="showProjectMenu"
-				/>
-				<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-			</template>
-			<section>
-				<section class="summary">
-					<!-- This div is so that child elements will automatically collapse margins -->
-					<div>
-						<!-- Description & Contributors -->
-						<section class="description">
-							<p>
-								{{ useProjects().activeProject.value?.description }}
-							</p>
-						</section>
-					</div>
-				</section>
-				<!-- Project summary KPIs -->
-				<section class="summary-KPI-bar">
-					<div
-						class="summary-KPI"
-						v-for="(assets, type) of useProjects().activeProject.value?.assets"
-						:key="type"
-					>
-						<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
-						<span class="summary-KPI-label">{{ capitalize(type) }}</span>
-					</div>
-				</section>
+	<tera-asset
+		:name="useProjects().activeProject.value?.name"
+		:authors="useProjects().activeProject.value?.username"
+		:is-naming-asset="isRenamingProject"
+		:publisher="`Last updated ${DateUtils.formatLong(
+			useProjects().activeProject.value?.timestamp
+		)}`"
+	>
+		<template #name-input>
+			<InputText
+				v-if="isRenamingProject"
+				v-model="newProjectName"
+				ref="inputElement"
+				@keyup.enter="updateProjectName"
+			/>
+		</template>
+		<template #edit-buttons>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+		</template>
+		<template #overview-summary>
+			<!-- Description & Contributors -->
+			<p>
+				{{ useProjects().activeProject.value?.description }}
+			</p>
+			<!-- Project summary KPIs -->
+			<section class="summary-KPI-bar">
+				<div
+					class="summary-KPI"
+					v-for="(assets, type) of useProjects().activeProject.value?.assets"
+					:key="type"
+				>
+					<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
+					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
+				</div>
 			</section>
-		</tera-asset>
+		</template>
 		<section class="content-container">
 			<h5>Quick links</h5>
 			<!-- Quick link buttons go here -->
-			<section>
-				<div class="quick-links">
-					<Button
-						label="Upload resources"
-						size="large"
-						icon="pi pi-cloud-upload"
-						class="p-button p-button-secondary quick-link-button"
-						@click="isUploadResourcesModalVisible = true"
+			<section class="quick-links">
+				<Button
+					label="Upload resources"
+					size="large"
+					icon="pi pi-cloud-upload"
+					class="p-button p-button-secondary quick-link-button"
+					@click="isUploadResourcesModalVisible = true"
+				/>
+				<Button
+					label="New model"
+					size="large"
+					icon="pi pi-share-alt"
+					class="p-button p-button-secondary quick-link-button"
+					@click="emit('open-new-asset', AssetType.Models)"
+				/>
+				<Button
+					size="large"
+					class="p-button p-button-secondary quick-link-button"
+					@click="emit('open-new-asset', AssetType.Workflows)"
+				>
+					<vue-feather
+						class="p-button-icon-left"
+						type="git-merge"
+						size="1.25rem"
+						stroke="rgb(16, 24, 40)"
 					/>
-					<Button
-						label="New model"
-						size="large"
-						icon="pi pi-share-alt"
-						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-new-asset', AssetType.Models)"
-					/>
-					<Button
-						size="large"
-						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-new-asset', AssetType.Workflows)"
-					>
-						<vue-feather
-							class="p-button-icon-left"
-							type="git-merge"
-							size="1.25rem"
-							stroke="rgb(16, 24, 40)"
-						/>
-						<span class="p-button-label">New workflow</span>
-					</Button>
-					<Button size="large" class="p-button p-button-secondary quick-link-button">
-						<compare-models-icon class="icon" />
-						<span class="p-button-label">Compare models</span>
-					</Button>
-					<Button
-						label="New simulation"
-						size="large"
-						icon="pi pi-play"
-						class="p-button p-button-secondary quick-link-button"
-					/>
-				</div>
+					<span class="p-button-label">New workflow</span>
+				</Button>
+				<Button size="large" class="p-button p-button-secondary quick-link-button">
+					<compare-models-icon class="icon" />
+					<span class="p-button-label">Compare models</span>
+				</Button>
+				<Button
+					label="New simulation"
+					size="large"
+					icon="pi pi-play"
+					class="p-button p-button-secondary quick-link-button"
+				/>
 			</section>
 			<!-- Resources list table goes here -->
 			<section class="resource-list">
@@ -168,19 +156,17 @@
 					</template>
 				</DataTable>
 			</section>
-			<section class="drag-n-drop">
-				<tera-upload-resources-modal
-					:visible="isUploadResourcesModalVisible"
-					@close="isUploadResourcesModalVisible = false"
-				/>
-			</section>
+			<tera-upload-resources-modal
+				:visible="isUploadResourcesModalVisible"
+				@close="isUploadResourcesModalVisible = false"
+			/>
 		</section>
 		<tera-multi-select-modal
 			:is-visible="showMultiSelect"
 			:selected-resources="selectedResources"
 			:buttons="multiSelectButtons"
-		></tera-multi-select-modal>
-	</main>
+		/>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -364,13 +350,6 @@ a {
 	text-decoration: underline;
 }
 
-.overview-banner {
-	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 20% center,
-		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
-	background-size: 25%, 100%;
-	height: auto;
-}
-
 .content-container {
 	overflow-y: auto;
 	padding: 1rem;
@@ -379,21 +358,20 @@ a {
 	flex-direction: column;
 }
 
-.description {
-	margin: 1rem;
-}
-
 .contributors {
 	flex-direction: row;
 	align-items: center;
 	gap: 0.75rem;
 }
 
+p,
+.summary-KPI-bar {
+	color: var(--text-color-primary);
+}
+
 .summary-KPI-bar {
 	display: flex;
-	flex-direction: row;
 	justify-content: space-evenly;
-	margin: 1rem;
 	padding: 1rem;
 	background: rgba(255, 255, 255, 0.5);
 	border-radius: var(--border-radius);
