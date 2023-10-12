@@ -11,7 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class EvaluationScenarioSummary {
 	private String name;
-	private String username;
+	private String userId;
 	private String task;
 	private String description;
 	private String notes;

@@ -13,5 +13,6 @@ public interface EventRepository extends PSCrudRepository<Event, String> {
 	List<Event> findAllByTypeAndUserIdAndValueLike(final EventType type, final String userId, final String like, Pageable pageable);
 	List<Event> findAllByTypeAndProjectIdAndUserId(final EventType type, final Long projectId, final String userId, Pageable pageable);
 	List<Event> findAllByTypeAndUserId(final EventType type, final String userId, Pageable pageable);
+	List<Event> findAllByUserId(final String userId);
 
 }

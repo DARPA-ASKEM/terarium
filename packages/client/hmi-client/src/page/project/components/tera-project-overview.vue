@@ -271,7 +271,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { capitalize, isEmpty } from 'lodash';
-import { Artifact, AssetType, CsvAsset, Dataset } from '@/types/Types';
+import { Artifact, AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
@@ -282,8 +282,9 @@ import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
 import { downloadRawFile, createNewDatasetFromCSV } from '@/services/dataset';
 import { uploadCodeToProject } from '@/services/code';
-import { uploadArtifactToProject } from '@/services/artifact';
+import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { getAssetIcon } from '@/services/project';
+import { uploadArtifactToProject } from '@/services/artifact';
 
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
@@ -362,6 +363,7 @@ async function processFiles(files: File[], csvDescription: string) {
 			case AcceptedTypes.CSV:
 				return processDataset(file, csvDescription);
 			case AcceptedTypes.PDF:
+				return processDocument(file);
 			case AcceptedTypes.TXT:
 			case AcceptedTypes.MD:
 				return processArtifact(file);
@@ -396,13 +398,36 @@ async function processCode(file: File) {
  * Process a pdf, txt, md file into an artifact
  * @param file
  */
+async function processDocument(file: File) {
+	// This is pdf, txt, md files
+	const document: DocumentAsset | null = await uploadDocumentAssetToProject(
+		file,
+		useProjects().activeProject.value?.username ?? '',
+		'',
+		progress
+	);
+	let newAsset;
+	if (document && document.id) {
+		newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
+	}
+	if (document && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
+		await extractPDF(document);
+		return { file, error: false, response: { text: '', images: [] } };
+	}
+	return { file, error: true, response: { text: '', images: [] } };
+}
+
+/*
+ * Process a pdf, txt, md file into an artifact
+ * @param file
+ */
 async function processArtifact(file: File) {
 	// This is pdf, txt, md files
 	const artifact: Artifact | null = await uploadArtifactToProject(
-		progress,
 		file,
 		useProjects().activeProject.value?.username ?? '',
-		''
+		'',
+		progress
 	);
 	let newAsset;
 	if (artifact && artifact.id) {

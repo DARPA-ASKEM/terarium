@@ -342,8 +342,6 @@ public class ProjectController {
 		@PathVariable("project_id") final String projectId,
 		@RequestParam("types") final List<AssetType> types
 	) {
-
-
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
 				return ResponseEntity.ok(proxy.getAssets(projectId, types).getBody());
