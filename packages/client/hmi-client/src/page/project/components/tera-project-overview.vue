@@ -166,7 +166,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
-import { generateProjectAssetsMap } from '@/utils/project-assets-list';
+import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -506,3 +506,4 @@ ul {
 	width: 40%;
 }
 </style>
+@/utils/map-project-assets

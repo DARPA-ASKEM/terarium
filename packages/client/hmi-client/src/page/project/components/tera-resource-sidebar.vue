@@ -153,7 +153,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { generateProjectAssetsMap } from '@/utils/project-assets-list';
+import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 
 defineProps<{
 	openedAssetRoute: AssetRoute;
@@ -347,3 +347,4 @@ header {
 	margin-right: 0.5rem;
 }
 </style>
+@/utils/map-project-assets
