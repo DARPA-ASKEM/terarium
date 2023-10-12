@@ -14,7 +14,11 @@
 			</aside>
 		</header>
 		<template v-if="!hideIntro">
-			<header id="asset-top" ref="headerRef">
+			<header
+				id="asset-top"
+				:class="{ 'overview-banner': pageType === ProjectPages.OVERVIEW }"
+				ref="headerRef"
+			>
 				<section>
 					<!-- put the buttons above the title if there is an overline -->
 					<div v-if="overline" class="vertically-center">
@@ -46,8 +50,9 @@
 					<div class="header-buttons">
 						<slot name="bottom-header-buttons" />
 					</div>
+					<slot name="overview-summary" />
 				</section>
-				<aside class="spread-out">
+				<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
 					<Button
 						v-if="featureConfig.isPreview"
 						icon="pi pi-times"
@@ -65,8 +70,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, PropType } from 'vue';
+import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
+import { ProjectPages } from '@/types/Project';
+import { AssetType } from '@/types/Types';
 
 const props = defineProps({
 	name: {
@@ -113,6 +121,8 @@ const shrinkHeader = computed(() => {
 		!props.isNamingAsset // Don't appear while creating an asset eg. a model
 	);
 });
+
+const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
 const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
@@ -208,6 +218,16 @@ header aside {
 
 header.shrinked aside {
 	align-self: center;
+}
+header.overview-banner section {
+	width: 100%;
+	max-width: 100%;
+}
+
+.overview-banner {
+	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 20% center,
+		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
+	background-size: 25%, 100%;
 }
 
 .nudge-down {
