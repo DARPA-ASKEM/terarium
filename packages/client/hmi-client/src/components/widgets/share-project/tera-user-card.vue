@@ -3,7 +3,8 @@
 		<Avatar :label="userInitials" class="avatar m-2" shape="circle" />
 	</section>
 	<section>
-		<span class="name">{{ user.givenName }} {{ user.familyName }} {{ isYou() }}</span>
+		<!-- TODO: replace 'firstName' and 'lastName' with 'givenName' and 'familyName' once staging data is updated -->
+		<span class="name">{{ user['firstName'] }} {{ user['lastName'] }} {{ isYou() }}</span>
 		<span class="email">{{ user.email }}</span>
 	</section>
 	<section v-if="isAuthor" class="permissions">Author</section>
@@ -32,12 +33,14 @@ const auth = useAuthStore();
 const selectedPermission = ref('Edit');
 const permissions = ref(['Edit', 'Read only', 'Remove access']);
 const userInitials = computed(() =>
-	props.user.givenName.charAt(0).concat(props.user.familyName.charAt(0))
+	// TODO: replace 'firstName' and 'lastName' with 'givenName' and 'familyName' once staging data is updated
+	props.user.firstName.charAt(0).concat(props.user.lastName.charAt(0))
 );
 const isAuthor = computed(() => props.permission === 'creator');
 
 function isYou() {
-	return auth.user?.name === props.user.givenName ? '(you)' : '';
+	// TODO: replace 'firstName' and 'lastName' with 'givenName' and 'familyName' once staging data is updated
+	return auth.user?.name === props.user.firstName ? '(you)' : '';
 }
 
 function selectPermission(event: DropdownChangeEvent) {

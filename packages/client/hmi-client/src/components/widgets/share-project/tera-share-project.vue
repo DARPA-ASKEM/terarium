@@ -73,7 +73,8 @@ const visible = ref(props.modelValue);
 const permissions = ref<PermissionRelationships | null>(null);
 const users = ref<User[]>([]);
 const usersMenu = computed(() =>
-	users.value.map((u) => ({ id: u.id, name: u.givenName.concat(' ').concat(u.familyName) }))
+	// TODO: replace 'firstName' and 'lastName' with 'givenName' and 'familyName' once staging data is updated
+	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
 );
 const selectedUser = ref(null);
 const existingUsers = ref<Set<User>>(new Set());
@@ -163,6 +164,7 @@ watch(
 	async () => {
 		existingUsers.value = new Set();
 		users.value = (await getUsers()) ?? [];
+		console.log(users.value);
 	},
 	{ immediate: true }
 );
