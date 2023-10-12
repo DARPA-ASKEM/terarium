@@ -96,7 +96,7 @@
 					v-model:selection="selectedResources"
 					dataKey="assetId"
 					tableStyle="min-width: 50rem"
-					:value="assets"
+					:value="assetItems"
 					row-hover
 					:row-class="() => 'p-selectable-row'"
 					@update:selection="onRowSelect"
@@ -166,7 +166,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
-import { generateProjectAssetsList } from '@/utils/project-assets-list';
+import { generateProjectAssetsMap } from '@/utils/project-assets-list';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -195,8 +195,8 @@ const openedRow = ref(null);
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const assets = computed(() =>
-	Array.from(generateProjectAssetsList(searchTable.value).values())
+const assetItems = computed(() =>
+	Array.from(generateProjectAssetsMap(searchTable.value).values())
 		.map((set) => Array.from(set))
 		.flat()
 );

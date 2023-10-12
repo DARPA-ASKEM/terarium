@@ -6,11 +6,11 @@ import { isProjectAssetTypes } from '@/types/Project';
 
 type IProjectAssetItems = Map<AssetType, Set<AssetItem>>;
 
-export const generateProjectAssetsList = (searchAsset: string): IProjectAssetItems => {
-	const assetItems = new Map<AssetType, Set<AssetItem>>();
+export const generateProjectAssetsMap = (searchAsset: string): IProjectAssetItems => {
+	const assetItemsMap = new Map<AssetType, Set<AssetItem>>();
 
 	const projectAssets = useProjects().activeProject?.value?.assets;
-	if (!projectAssets) return assetItems;
+	if (!projectAssets) return assetItemsMap;
 
 	// Run through all the assets type within the project
 	Object.keys(projectAssets).forEach((type) => {
@@ -19,11 +19,7 @@ export const generateProjectAssetsList = (searchAsset: string): IProjectAssetIte
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => {
 					let assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-
-					// FIXME should unify upstream via a summary endpoint
-					if (asset.header && asset.header.name) {
-						assetName = asset.header.name;
-					}
+					if (asset.header?.name) assetName = asset.header.name; // FIXME should unify upstream via a summary endpoint
 
 					const pageType = asset?.type ?? projectAssetType;
 					const assetId = asset?.id?.toString() ?? '';
@@ -38,9 +34,9 @@ export const generateProjectAssetsList = (searchAsset: string): IProjectAssetIte
 					return asset.assetName.toLowerCase().includes(searchTermLower);
 				}) as AssetItem[];
 			if (!isEmpty(typeAssets)) {
-				assetItems.set(projectAssetType, new Set(typeAssets));
+				assetItemsMap.set(projectAssetType, new Set(typeAssets));
 			}
 		}
 	});
-	return assetItems;
+	return assetItemsMap;
 };

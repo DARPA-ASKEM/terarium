@@ -114,7 +114,7 @@ export interface AssetItem extends AssetRoute {
 }
 
 export type CodeRequest = {
-	asset: Tab;
+	asset: AssetItem;
 	code?: string;
 };
 

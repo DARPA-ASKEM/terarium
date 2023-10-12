@@ -51,8 +51,8 @@
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
-		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5]">
-			<AccordionTab v-for="[type, assetItems] in assets" :key="type">
+		<Accordion v-if="!isEmpty(assetItemsMap)" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5]">
+			<AccordionTab v-for="[type, assetItems] in assetItemsMap" :key="type">
 				<template #header>
 					<template v-if="type === AssetType.Publications">External Publications</template>
 					<template v-else-if="type === AssetType.Documents">Documents</template>
@@ -153,7 +153,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { generateProjectAssetsList } from '@/utils/project-assets-list';
+import { generateProjectAssetsMap } from '@/utils/project-assets-list';
 
 defineProps<{
 	openedAssetRoute: AssetRoute;
@@ -169,7 +169,7 @@ const draggedAsset = ref<AssetRoute | null>(null);
 const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
 
-const assets = computed(() => generateProjectAssetsList(searchAsset.value));
+const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 
 function removeAsset() {
 	emit('remove-asset', assetToDelete.value);
