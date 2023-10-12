@@ -17,14 +17,16 @@ export const generateProjectAssetsMap = (searchAsset: string): IProjectAssetItem
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
 			const projectAssetType = type as AssetType;
 			const typeAssets = projectAssets[projectAssetType]
-				.map((asset) => {
-					let assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-					if (asset.header?.name) assetName = asset.header.name; // FIXME should unify upstream via a summary endpoint
-
-					const pageType = asset?.type ?? projectAssetType;
-					const assetId = asset?.id?.toString() ?? '';
-					return { assetName, pageType, assetId };
-				})
+				.map((asset) => ({
+					assetName: (
+						asset?.name ||
+						asset?.header?.name || // FIXME should unify upstream via a summary endpoint
+						asset?.title ||
+						asset?.id
+					)?.toString(),
+					pageType: asset?.type ?? projectAssetType,
+					assetId: asset?.id?.toString() ?? ''
+				}))
 				.filter((asset) => {
 					// filter assets
 					if (!searchAsset.trim()) {
