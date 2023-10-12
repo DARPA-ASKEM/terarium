@@ -52,8 +52,8 @@ import { useProjects } from '@/composables/project';
 import TeraWorkflow from '@/workflow/tera-workflow.vue';
 
 const props = defineProps<{
-	assetId?: string;
-	pageType?: AssetType | ProjectPages;
+	assetId: string;
+	pageType: AssetType | ProjectPages;
 }>();
 
 const emit = defineEmits(['open-new-asset']);

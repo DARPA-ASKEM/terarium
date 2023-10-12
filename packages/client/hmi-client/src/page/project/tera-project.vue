@@ -17,7 +17,11 @@
 			</template>
 		</tera-slider-panel>
 		<section class="project-page">
-			<tera-project-page :asset-id="assetId" :page-type="pageType" @open-new-asset="openNewAsset" />
+			<tera-project-page
+				:asset-id="openedAssetRoute.assetId"
+				:page-type="openedAssetRoute.pageType"
+				@open-new-asset="openNewAsset"
+			/>
 		</section>
 		<tera-slider-panel
 			v-model:is-open="isNotesSliderOpen"
@@ -26,7 +30,10 @@
 			header="Notes"
 		>
 			<template v-slot:content>
-				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
+				<tera-notes-sidebar
+					:asset-id="openedAssetRoute.assetId"
+					:page-type="openedAssetRoute.pageType"
+				/>
 			</template>
 		</tera-slider-panel>
 		<!-- New model modal -->
@@ -34,9 +41,9 @@
 		<!--Full screen modal-->
 		<Teleport to="body">
 			<tera-fullscreen-modal v-if="dialogIsOpened" @on-close-clicked="dialogIsOpened = false">
-				<template #header
-					><h2>{{ workflowNode?.displayName }}</h2></template
-				>
+				<template #header>
+					<h2>{{ workflowNode?.displayName }}</h2>
+				</template>
 				<tera-calibrate-julia
 					v-if="
 						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
@@ -108,9 +115,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, PropType } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { isEqual } from 'lodash';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
 import TeraDatasetWorkflowWrapper from '@//workflow/ops/dataset/tera-dataset-workflow-wrapper.vue';
 import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
@@ -137,18 +144,7 @@ import { useProjects } from '@/composables/project';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 
-// Asset props are extracted from route
-const props = defineProps({
-	assetId: {
-		type: String,
-		default: ''
-	},
-	pageType: {
-		type: String as PropType<AssetType | ProjectPages>,
-		default: ProjectPages.EMPTY
-	}
-});
-
+const route = useRoute();
 const router = useRouter();
 
 const workflowNode = ref<WorkflowNode<any> | null>(null);
@@ -162,9 +158,10 @@ const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);
 
+// Passed down to tera-project-page and tera-notes-sidebar
 const openedAssetRoute = computed<AssetRoute>(() => ({
-	pageType: props.pageType,
-	assetId: props.assetId
+	pageType: (route.params.pageType as ProjectPages | AssetType) ?? ProjectPages.EMPTY,
+	assetId: (route.params.assetId as string) ?? ''
 }));
 
 function openAsset(assetRoute: AssetRoute) {
