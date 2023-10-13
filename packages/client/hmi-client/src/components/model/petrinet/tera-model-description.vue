@@ -640,7 +640,9 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 }
 
 async function getRelatedDocuments() {
-	const provenanceNodes = await getRelatedArtifacts(props.model.id, ProvenanceType.Model);
+	const provenanceNodes = await getRelatedArtifacts(props.model.id, ProvenanceType.Model, [
+		ProvenanceType.Publication
+	]);
 
 	relatedDocuments.value =
 		(provenanceNodes.filter((res) => isDocumentAsset(res)) as DocumentAsset[]).map(
@@ -649,14 +651,6 @@ async function getRelatedDocuments() {
 				id: documentAsset.id
 			})
 		) ?? [];
-	// // map the document ids from the provenace on the asset to the documents ids on the current project
-	// relatedDocuments.value =
-	// 	projectDocuments
-	// 		.filter((document: DocumentAsset) => documentIds.includes(document.id))
-	// 		.map((document: DocumentAsset) => ({
-	// 			name: document.name,
-	// 			id: document.id
-	// 		})) ?? [];
 }
 
 onMounted(() => getRelatedDocuments());

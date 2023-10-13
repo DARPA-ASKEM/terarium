@@ -23,6 +23,14 @@ import { getBulkDocumentAssets } from './document-assets';
 //        so we are using the following limit to optimize things a bit
 const MAX_RELATED_ARTIFACT_COUNT = 5;
 
+// Allowed types to search by in provenance so far...
+const ALLOWED_PROVENANCE_TYPES = [
+	ProvenanceType.Concept,
+	ProvenanceType.Dataset,
+	ProvenanceType.Model,
+	ProvenanceType.Project,
+	ProvenanceType.Publication
+];
 /**
  For a document, find related artifacts
 	Find models that reference that document
@@ -36,7 +44,8 @@ const MAX_RELATED_ARTIFACT_COUNT = 5;
 // API helper function for fetching provenance data
 async function getConnectedNodes(
 	id: string,
-	rootType: ProvenanceType
+	rootType: ProvenanceType,
+	types: ProvenanceType[]
 ): Promise<ProvenanceResult | null> {
 	const body: ProvenanceQueryParam = {
 		rootId: id,
@@ -45,7 +54,7 @@ async function getConnectedNodes(
 		hops: 1,
 		limit: 10,
 		verbose: true,
-		types: [ProvenanceType.Publication]
+		types
 	};
 	const connectedNodesRaw = await API.post('/provenance/connected-nodes', body).catch((error) =>
 		logger.error(`Error: ${error}`)
@@ -60,10 +69,14 @@ async function getConnectedNodes(
  * @id: id to be used as the root
  * @return ResultType[]|null - the list of all artifacts, or null if none returned by API
  */
-async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promise<ResultType[]> {
+async function getRelatedArtifacts(
+	id: string,
+	rootType: ProvenanceType,
+	types: ProvenanceType[] = ALLOWED_PROVENANCE_TYPES
+): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
-	const connectedNodes = await getConnectedNodes(id, rootType);
+	const connectedNodes = await getConnectedNodes(id, rootType, types);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
 		const externalPublicationIds: string[] = [];
