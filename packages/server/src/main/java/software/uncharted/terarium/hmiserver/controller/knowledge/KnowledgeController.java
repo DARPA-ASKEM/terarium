@@ -6,18 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +35,6 @@ public class KnowledgeController {
 
 	@Autowired
 	ProvenanceProxy provenanceProxy;
-
-	@Autowired
-	ModelProxy modelProxy;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -146,15 +140,9 @@ public class KnowledgeController {
 		@RequestParam("document_id") String documentId
 	) {
 
-		Model currentModel = modelProxy.getModel(modelId).getBody();
 		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId, ProvenanceType.MODEL, documentId, ProvenanceType.PUBLICATION);
-		String provenanceId = provenanceProxy.createProvenance(provenancePayload).getBody().get("id").asText();
-		List<String> provenanceIdList = new ArrayList<String>();
-		provenanceIdList.add(provenanceId);
-		currentModel.getMetadata().setProvenance(provenanceIdList);
-		System.out.println(currentModel);
-		modelProxy.updateModel(modelId, currentModel);
-
+		provenanceProxy.createProvenance(provenancePayload);
+		
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, documentId).getBody());
 	}
 

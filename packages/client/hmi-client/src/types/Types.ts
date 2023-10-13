@@ -249,7 +249,12 @@ export interface PetriNetModel {
 }
 
 export interface ProvenanceQueryParam {
-    rootId?: number;
+    nodes?: boolean;
+    types?: ProvenanceType[];
+    hops?: number;
+    limit?: number;
+    verbose?: boolean;
+    rootId?: string;
     rootType?: ProvenanceType;
     userId?: number;
 }
@@ -327,6 +332,31 @@ export interface DKG {
     name: string;
     description: string;
     link: string;
+}
+
+export interface PermissionGroup {
+    id: string;
+    name: string;
+    relationship?: string;
+}
+
+export interface PermissionProject {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionRelationships {
+    projects: PermissionProject[];
+    groups: PermissionGroup[];
+    users: PermissionUser[];
+}
+
+export interface PermissionUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    relationship?: string;
 }
 
 export interface CalibrationRequestCiemss {

@@ -5,13 +5,15 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { ResultType } from '@/types/common';
-import { ExternalPublication, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import { ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
-// eslint-disable-next-line import/no-cycle
-import { getBulkDocuments } from './data';
+import { cloneDeep } from 'lodash';
 import { getBulkDatasets } from './dataset';
-import { getBulkDocumentAssets, getDocument } from './external';
+// eslint-disable-next-line import/no-cycle
+import { getBulkXDDDocuments } from './data';
+import { getBulkExternalPublications } from './external';
 import { getBulkModels } from './model';
+import { getBulkDocumentAssets } from './document-assets';
 
 //
 
@@ -36,12 +38,14 @@ async function getConnectedNodes(
 	id: string,
 	rootType: ProvenanceType
 ): Promise<ProvenanceResult | null> {
-	const publication: ExternalPublication | null = await getDocument(id);
-	if (!publication) return null;
-
 	const body: ProvenanceQueryParam = {
-		rootId: publication.id,
-		rootType
+		rootId: id,
+		rootType,
+		nodes: true,
+		hops: 1,
+		limit: 10,
+		verbose: true,
+		types: [ProvenanceType.Publication]
 	};
 	const connectedNodesRaw = await API.post('/provenance/connected-nodes', body).catch((error) =>
 		logger.error(`Error: ${error}`)
@@ -59,15 +63,12 @@ async function getConnectedNodes(
 async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
-	if (rootType !== ProvenanceType.Publication) {
-		return response;
-	}
-
 	const connectedNodes = await getConnectedNodes(id, rootType);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
-		const documentIDs: string[] = [];
+		const externalPublicationIds: string[] = [];
 		const datasetIDs: string[] = [];
+		let documentAssetIds: string[] = [];
 
 		// For a model/dataset root type:
 		//  	Find other model revisions
@@ -83,9 +84,9 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 			if (rootType !== ProvenanceType.Publication) {
 				if (
 					node.type === ProvenanceType.Publication &&
-					documentIDs.length < MAX_RELATED_ARTIFACT_COUNT
+					externalPublicationIds.length < MAX_RELATED_ARTIFACT_COUNT
 				) {
-					documentIDs.push(node.id.toString());
+					externalPublicationIds.push(node.id.toString());
 				}
 			}
 
@@ -115,10 +116,15 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 		const models = await getBulkModels(modelRevisionIDs);
 		response.push(...models);
 
-		const documentAssets = await getBulkDocumentAssets(documentIDs);
+		// FIXME
+		documentAssetIds = cloneDeep(externalPublicationIds);
+		const documentAssets = await getBulkDocumentAssets(documentAssetIds);
+		response.push(...documentAssets);
+
+		const externalPublications = await getBulkExternalPublications(externalPublicationIds);
 		// FIXME: xdd_uri
-		const documents = await getBulkDocuments(documentAssets.map((p) => p.xdd_uri));
-		response.push(...documents);
+		const xDDdocuments = await getBulkXDDDocuments(externalPublications.map((p) => p.xdd_uri));
+		response.push(...xDDdocuments);
 	}
 
 	// NOTE: performing a provenance search returns
@@ -180,19 +186,8 @@ async function getProvenance(id: string) {
 	return data ?? null;
 }
 
-// wrapper method to get many provenance relationships at once.
-async function getManyProvenance(ids: string[]) {
-	const promiseList = [] as Promise<ProvenanacePayload | null>[];
-
-	ids.forEach((id) => {
-		promiseList.push(getProvenance(id));
-	});
-
-	const response = await Promise.all(promiseList);
-	return response;
-}
 //
 // FIXME: needs to create a similar function to "getRelatedArtifacts"
 //        for finding related datasets
 //
-export { getRelatedArtifacts, createProvenance, getManyProvenance };
+export { getRelatedArtifacts, createProvenance, getProvenance };

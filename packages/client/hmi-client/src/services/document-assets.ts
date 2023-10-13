@@ -171,11 +171,27 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 	return response.data;
 }
 
+async function getBulkDocumentAssets(docIDs: string[]) {
+	const result: DocumentAsset[] = [];
+	const promiseList = [] as Promise<DocumentAsset | null>[];
+	docIDs.forEach((docId) => {
+		promiseList.push(getDocumentAsset(docId));
+	});
+	const responsesRaw = await Promise.all(promiseList);
+	responsesRaw.forEach((r) => {
+		if (r) {
+			result.push(r);
+		}
+	});
+	return result;
+}
+
 export {
 	getAll,
 	getDocumentAsset,
 	uploadDocumentAssetToProject,
 	downloadDocumentAsset,
 	createNewDocumentFromGithubFile,
-	getDocumentFileAsText
+	getDocumentFileAsText,
+	getBulkDocumentAssets
 };

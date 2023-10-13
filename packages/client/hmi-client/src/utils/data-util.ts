@@ -2,7 +2,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import { Model, Document, Dataset } from '@/types/Types';
+import { Model, Document, Dataset, DocumentAsset } from '@/types/Types';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
@@ -70,7 +70,9 @@ export function isDataset(item: ResultType): item is Dataset {
 export function isDocument(item: ResultType): item is Document {
 	return (<Document>item).publisher !== undefined;
 }
-
+export function isDocumentAsset(item: ResultType): item is DocumentAsset {
+	return (<DocumentAsset>item).fileNames !== undefined;
+}
 export function getResourceID(item: ResultType) {
 	if (isDocument(item)) {
 		return (item as Document).gddId;

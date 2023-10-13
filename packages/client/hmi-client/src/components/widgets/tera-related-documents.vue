@@ -5,7 +5,9 @@
 		</p>
 		<ul>
 			<li v-for="document in relatedDocuments" :key="document.id">
-				{{ document.name }}
+				<a @click="openAsset({ assetId: document.id!, pageType: AssetType.Documents })">{{
+					document.name
+				}}</a>
 			</li>
 		</ul>
 		<Button
@@ -81,7 +83,7 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { ResourceType } from '@/types/common';
+import { AssetRoute, ResourceType } from '@/types/common';
 import {
 	profileDataset,
 	profileModel,
@@ -91,6 +93,9 @@ import {
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
+import { AssetType } from '@/types/Types';
+import router from '@/router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
@@ -150,6 +155,13 @@ const sendToAlignModel = async () => {
 		aligning.value = false;
 		emit('enriched');
 	}
+};
+
+const openAsset = (assetRoute: AssetRoute) => {
+	router.push({
+		name: RouteName.Project,
+		params: assetRoute
+	});
 };
 </script>
 

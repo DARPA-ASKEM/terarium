@@ -418,7 +418,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
+import { DocumentAsset, Model, ModelConfiguration, ProvenanceType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
@@ -432,7 +432,8 @@ import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
-import { getManyProvenance } from '@/services/provenance';
+import { getRelatedArtifacts } from '@/services/provenance';
+import { isDocumentAsset } from '@/utils/data-util';
 
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
@@ -451,6 +452,7 @@ const emit = defineEmits(['update-model', 'fetch-model']);
 
 function fetchAsset() {
 	emit('fetch-model');
+	getRelatedDocuments();
 }
 
 const isSectionEditable = ref<string | null>();
@@ -638,33 +640,29 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 }
 
 async function getRelatedDocuments() {
-	const provenanceIds = props.model?.metadata?.provenance ?? [];
+	const provenanceNodes = await getRelatedArtifacts(props.model.id, ProvenanceType.Model);
 
-	if (isEmpty(provenanceIds)) return;
-
-	// get provenace payload of all provenace ids on the asset
-	const response = await getManyProvenance(provenanceIds);
-
-	// get the right link of the provenace (these are all documents asset ids right now)
-	const documentIds = response.map((prov) => prov?.right);
-
-	// get all the documents on the current project
-	const projectDocuments = useProjects().activeProject.value?.assets?.documents ?? [];
-
-	// map the document ids from the provenace on the asset to the documents ids on the current project
 	relatedDocuments.value =
-		projectDocuments
-			.filter((document: DocumentAsset) => documentIds.includes(document.id))
-			.map((document: DocumentAsset) => ({
-				name: document.name,
-				id: document.id
-			})) ?? [];
+		(provenanceNodes.filter((res) => isDocumentAsset(res)) as DocumentAsset[]).map(
+			(documentAsset) => ({
+				name: documentAsset.name,
+				id: documentAsset.id
+			})
+		) ?? [];
+	// // map the document ids from the provenace on the asset to the documents ids on the current project
+	// relatedDocuments.value =
+	// 	projectDocuments
+	// 		.filter((document: DocumentAsset) => documentIds.includes(document.id))
+	// 		.map((document: DocumentAsset) => ({
+	// 			name: document.name,
+	// 			id: document.id
+	// 		})) ?? [];
 }
 
 onMounted(() => getRelatedDocuments());
 
 watch(
-	() => props.model.metadata?.provenance,
+	() => props.model.id,
 	() => {
 		getRelatedDocuments();
 	}
