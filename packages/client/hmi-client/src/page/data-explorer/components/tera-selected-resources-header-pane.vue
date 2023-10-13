@@ -24,14 +24,15 @@
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
-import { isDataset, isModel, isDocument } from '@/utils/data-util';
+import { isDataset, isModel, isDocument, getDocumentDoi } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { AssetType, Document, ExternalPublication } from '@/types/Types';
+import { AssetType, Document, DocumentAsset } from '@/types/Types';
 import dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import { addDocuments } from '@/services/external';
 import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
+import { addDocumentFromDOI, createNewDocumentAsset } from '@/services/document-assets';
+import { get as getProject } from '@/services/project';
 
 const router = useRouter();
 
@@ -52,22 +53,30 @@ const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isDocument(selectedItem)) {
-			const body: ExternalPublication = {
-				xdd_uri: (selectedItem as Document).gddId,
-				title: (selectedItem as Document).title
+			const document = selectedItem as Document;
+			const name = document.title;
+
+			// get the project username
+			const project = await getProject(projectId);
+			const username = project?.username ?? '';
+
+			const doi = getDocumentDoi(document);
+
+			if (!doi) return;
+
+			const documentAsset: DocumentAsset = {
+				name,
+				description: name,
+				fileNames: ['paper.pdf'],
+				username
 			};
 
-			// FIXME: handle cases where assets is already added to the project
+			const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
 
-			// first, insert into the proper table/collection
-			const res = await addDocuments(body);
-			if (res) {
-				const documentId = res.id;
+			if (!newDocument || !newDocument.id) return;
+			await addDocumentFromDOI(newDocument.id, doi);
 
-				// then, link and store in the project assets
-				const assetsType = AssetType.Publications;
-				await useProjects().addAsset(assetsType, documentId, projectId);
-			}
+			await useProjects().addAsset(AssetType.Documents, newDocument.id, projectId);
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
