@@ -157,10 +157,25 @@ async function downloadDocumentAsset(documentId: string, fileName: string): Prom
 	}
 }
 
+async function getDocumentFileAsText(documentId: string, fileName: string): Promise<string | null> {
+	const response = await API.get(
+		`/document-asset/${documentId}/download-document-as-text?filename=${fileName}`,
+		{}
+	);
+
+	if (!response || response.status >= 400) {
+		logger.error('Error getting document file as text');
+		return null;
+	}
+
+	return response.data;
+}
+
 export {
 	getAll,
 	getDocumentAsset,
 	uploadDocumentAssetToProject,
 	downloadDocumentAsset,
-	createNewDocumentFromGithubFile
+	createNewDocumentFromGithubFile,
+	getDocumentFileAsText
 };

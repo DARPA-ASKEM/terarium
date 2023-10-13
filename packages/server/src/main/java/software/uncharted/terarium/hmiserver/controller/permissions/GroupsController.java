@@ -7,12 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.uncharted.terarium.hmiserver.models.dataservice.permission.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
@@ -46,16 +44,16 @@ public class GroupsController {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
 				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
 
-				PermissionRelationships permissions = new PermissionRelationships();
-				for (RebacPermissionRelationship permissionRelationship : relationships) {
-					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-						permissions.addGroup(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
-						permissions.addProject(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-					}
-				}
+//				PermissionRelationships permissions = new PermissionRelationships();
+//				for (RebacPermissionRelationship permissionRelationship : relationships) {
+//					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+//						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+//					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+//						permissions.addGroup(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+//					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
+//						permissions.addProject(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+//					}
+//				}
 
 				PermissionGroup permissionGroup = reBACService.getGroup(groupId);
 				return ResponseEntity.ok(permissionGroup);
