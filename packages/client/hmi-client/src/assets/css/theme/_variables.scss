@@ -856,6 +856,9 @@ $petri-nodeFill: var(--gray-500);
 $petri-lineColor: var(--gray-700);
 $petri-inputBox: var(--surface-0);
 
+//buttonsets and tabs
+$unselectedItem: var(--gray-300);
+$selectedItem: var(--surface-0);
 
 :root {
 	--editing-color: rgb(238, 238, 136);

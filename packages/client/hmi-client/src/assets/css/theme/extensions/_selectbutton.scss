@@ -1,13 +1,25 @@
 .p-selectbutton {
+    padding: 2px;
+    display: flex;
+    gap: 2px;
+    width: fit-content;
+    border-radius: 6px;
+    border: 1px solid var(--surface-border);
+    background-color: $unselectedItem;
+
     .p-button {
+        border-radius: 4px; 
+        background-color: $unselectedItem;
+        border: none;
         &:focus {
-            background: $toggleButtonActiveBg;
-            border-color: $toggleButtonActiveBorderColor;
+            background: $toggleButtonActiveBg; 
     
             &.p-highlight {
-                background: $toggleButtonActiveHoverBg;
-                border-color: $toggleButtonActiveHoverBorderColor;
+                background: $toggleButtonBg;
             }
+        }
+        &.p-highlight {
+            background: $toggleButtonBg;
         }
     }
 }
