@@ -1,21 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.permissions;
 
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @TSModel
-public class PermissionGroup {
+public class PermissionProject {
 	private String id;
-	private String name;
-	@TSOptional
 	private String relationship;
 
-	public PermissionGroup(String id, String name) {
+	public PermissionProject(String id, String relationship) {
 		this.id = id;
-		this.name = name;
-	}
-
-	public void setRelationship(String relationship) {
 		this.relationship = relationship;
 	}
 
@@ -23,11 +16,8 @@ public class PermissionGroup {
 		return id;
 	}
 
-	public String getName() {
-		return name;
-	}
-
 	public String getRelationship() {
 		return relationship;
 	}
+
 }

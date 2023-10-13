@@ -119,18 +119,18 @@ public class ReBACFunctions {
 	}
 
 	public List<RebacPermissionRelationship> getRelationship(SchemaObject resource, Consistency consistency) throws Exception {
-		return getRelationship(resource.type.toString(), resource.id, consistency);
-	}
-
-	public List<RebacPermissionRelationship> getRelationship(String resourceType, String resourceId, Consistency consistency) throws Exception {
-		List<RebacPermissionRelationship> relationships = new ArrayList<>();
 		PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
 			.setConsistency(consistency)
 			.setRelationshipFilter(
 				RelationshipFilter.newBuilder()
-					.setResourceType(resourceType)
-					.setOptionalResourceId(resourceId))
+					.setResourceType(resource.type.toString())
+					.setOptionalResourceId(resource.id))
 			.build();
+		return getRelationship(request);
+	}
+
+	public List<RebacPermissionRelationship> getRelationship(PermissionService.ReadRelationshipsRequest request) throws Exception {
+		List<RebacPermissionRelationship> relationships = new ArrayList<>();
 
 		Iterator<ReadRelationshipsResponse> iter = permissionsService.readRelationships(request);
 
@@ -142,5 +142,23 @@ public class ReBACFunctions {
 			relationships.add(rebacRelationship);
 		}
 		return relationships;
+	}
+
+	public boolean hasRelationship(SchemaObject who, Schema.Relationship relationship, SchemaObject what, Consistency consistency) throws Exception {
+		PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
+			.setConsistency(consistency)
+			.setRelationshipFilter(
+				RelationshipFilter.newBuilder()
+					.setResourceType(what.type.toString())
+					.setOptionalResourceId(what.id)
+					.setOptionalRelation(relationship.toString()))
+			.build();
+		List<RebacPermissionRelationship> relationships = getRelationship(request);
+		for (RebacPermissionRelationship permissionRelationship: relationships) {
+			if (Schema.Type.USER.equals(permissionRelationship.getSubjectType()) && who.id.equals(permissionRelationship.getSubjectId())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

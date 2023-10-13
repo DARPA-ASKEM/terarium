@@ -48,7 +48,8 @@ public class XDDDocumentController {
 		@RequestParam(required = false, name = "match") String match,
 		@RequestParam(required = false, name = "known_entities") String known_entities,
 		@RequestParam(required = false, name = "github_url") String github_url,
-		@RequestParam(required = false, name = "similar_to") String similar_to
+		@RequestParam(required = false, name = "similar_to") String similar_to,
+		@RequestParam(required = false, name = "entity_limit", defaultValue = "5") String entity_limit
 	) {
 
 		// only go ahead with the query if at least one param is present
@@ -84,7 +85,7 @@ public class XDDDocumentController {
 
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(apiKey,
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_to);
+					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_to, entity_limit);
 
 				if (doc.getErrorMessage() != null) {
 					return ResponseEntity.internalServerError().build();

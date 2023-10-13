@@ -44,7 +44,7 @@ async function uploadDocumentAssetToProject(
 	description?: string,
 	progress?: Ref<number>
 ): Promise<DocumentAsset | null> {
-	// Create a new artifact with the same name as the file, and post the metadata to TDS
+	// Create a new document with the same name as the file, and post the metadata to TDS
 	const documentAsset: DocumentAsset = {
 		name: file.name,
 		description: description || file.name,
@@ -59,6 +59,43 @@ async function uploadDocumentAssetToProject(
 	if (!successfulUpload) return null;
 
 	return newDocumentAsset;
+}
+
+async function createNewDocumentFromGithubFile(
+	repoOwnerAndName: string,
+	path: string,
+	userName: string,
+	description?: string
+) {
+	// Find the file name by removing the path portion
+	const fileName: string | undefined = path.split('/').pop();
+
+	if (!fileName) return null;
+
+	// Create a new document with the same name as the file, and post the metadata to TDS
+	const documentAsset: DocumentAsset = {
+		name: fileName,
+		description: description || fileName,
+		fileNames: [fileName],
+		username: userName
+	};
+
+	const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
+	if (!newDocument || !newDocument.id) return null;
+
+	const urlResponse = await API.put(
+		`/document-asset/${newDocument.id}/uploadDocumentFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		{
+			timeout: 30000
+		}
+	);
+
+	if (!urlResponse || urlResponse.status >= 400) {
+		logger.error(`Failed to upload document from github: ${urlResponse}`);
+		return null;
+	}
+
+	return newDocument;
 }
 
 /**
@@ -120,4 +157,25 @@ async function downloadDocumentAsset(documentId: string, fileName: string): Prom
 	}
 }
 
-export { getAll, getDocumentAsset, uploadDocumentAssetToProject, downloadDocumentAsset };
+async function getDocumentFileAsText(documentId: string, fileName: string): Promise<string | null> {
+	const response = await API.get(
+		`/document-asset/${documentId}/download-document-as-text?filename=${fileName}`,
+		{}
+	);
+
+	if (!response || response.status >= 400) {
+		logger.error('Error getting document file as text');
+		return null;
+	}
+
+	return response.data;
+}
+
+export {
+	getAll,
+	getDocumentAsset,
+	uploadDocumentAssetToProject,
+	downloadDocumentAsset,
+	createNewDocumentFromGithubFile,
+	getDocumentFileAsText
+};

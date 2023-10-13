@@ -63,6 +63,9 @@ public class Document implements Serializable {
 	@JsonAlias("known_entities")
 	private KnownEntities knownEntities;
 
+	@JsonAlias("known_entities_counts")
+	private KnownEntitiesCounts knownEntitiesCounts;
+
 	@JsonAlias("citation_list")
 	private List<Map<String, String>> citationList;
 
