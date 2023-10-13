@@ -357,7 +357,7 @@ const userMenuItems = ref([
 		command: () => {
 			isUserAdministrationModalVisible.value = true;
 		},
-		visible: auth.user.roles.some((r) => r.name === 'ADMIN')
+		visible: auth.user?.roles.some((r) => r.name === 'ADMIN')
 	},
 	{
 		label: 'Logout',
