@@ -1,5 +1,8 @@
-package software.uncharted.terarium.hmiserver.models.dataservice.permission;
+package software.uncharted.terarium.hmiserver.models.permissions;
 
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+
+@TSModel
 public class PermissionProject {
 	private String id;
 	private String relationship;
