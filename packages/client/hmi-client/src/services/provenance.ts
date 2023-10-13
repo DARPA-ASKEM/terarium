@@ -23,14 +23,6 @@ import { getBulkDocumentAssets } from './document-assets';
 //        so we are using the following limit to optimize things a bit
 const MAX_RELATED_ARTIFACT_COUNT = 5;
 
-// Allowed types to search by in provenance so far...
-const ALLOWED_PROVENANCE_TYPES = [
-	ProvenanceType.Concept,
-	ProvenanceType.Dataset,
-	ProvenanceType.Model,
-	ProvenanceType.Project,
-	ProvenanceType.Publication
-];
 /**
  For a document, find related artifacts
 	Find models that reference that document
@@ -72,7 +64,7 @@ async function getConnectedNodes(
 async function getRelatedArtifacts(
 	id: string,
 	rootType: ProvenanceType,
-	types: ProvenanceType[] = ALLOWED_PROVENANCE_TYPES
+	types: ProvenanceType[] = Object.values(ProvenanceType)
 ): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
@@ -109,6 +101,14 @@ async function getRelatedArtifacts(
 				datasetIDs.push(node.id.toString());
 			}
 
+			// will change to Document type when its available in provenance
+			if (
+				node.type === ProvenanceType.Artifact &&
+				documentAssetIds.length < MAX_RELATED_ARTIFACT_COUNT
+			) {
+				documentAssetIds.push(node.id.toString());
+			}
+
 			// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/880
 			// if (
 			// 	node.type === ProvenanceType.ModelRevision &&
@@ -129,7 +129,7 @@ async function getRelatedArtifacts(
 		const models = await getBulkModels(modelRevisionIDs);
 		response.push(...models);
 
-		// FIXME
+		// FIXME temporary until we have document types in provenace
 		documentAssetIds = cloneDeep(externalPublicationIds);
 		const documentAssets = await getBulkDocumentAssets(documentAssetIds);
 		response.push(...documentAssets);
