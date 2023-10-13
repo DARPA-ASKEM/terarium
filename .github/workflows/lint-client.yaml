@@ -60,6 +60,5 @@ jobs:
           if (( MODIFIED_FILES > 0 )); then
             echo "Error! Generated file Types.ts must be generated and committed"
             git status -s
-            git diff --exit-code
           fi
           exit $MODIFIED_FILES
