@@ -1,23 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.permissions;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @TSModel
+@Data
+@Accessors(chain = true)
+@AllArgsConstructor
 public class PermissionProject {
 	private String id;
 	private String relationship;
-
-	public PermissionProject(String id, String relationship) {
-		this.id = id;
-		this.relationship = relationship;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public String getRelationship() {
-		return relationship;
-	}
 
 }
