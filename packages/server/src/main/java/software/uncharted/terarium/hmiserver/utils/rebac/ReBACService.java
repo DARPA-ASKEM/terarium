@@ -191,6 +191,17 @@ public class ReBACService {
 			name);
 	}
 
+	public PermissionUser getUser(String id) {
+		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+		UserResource userResource = usersResource.get(id);
+		UserRepresentation userRepresentation = userResource.toRepresentation();
+		return new PermissionUser(
+			userRepresentation.getId(),
+			userRepresentation.getFirstName(),
+			userRepresentation.getLastName(),
+			userRepresentation.getEmail());
+	}
+
 	public List<PermissionUser> getUsers() {
 		List<PermissionUser> response = new ArrayList<>();
 		UsersResource usersResource = keycloak.realm(REALM_NAME).users();

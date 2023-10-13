@@ -2,12 +2,18 @@ package software.uncharted.terarium.hmiserver.models.permissions;
 
 import java.util.List;
 
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+
+@TSModel
 public class PermissionUser {
 	private String id;
 	private String firstName;
 	private String lastName;
 	private String email;
 	private List<PermissionRole> roles;
+	@TSOptional
+	private String relationship;
 
 	public PermissionUser(String id, String firstName, String lastName, String email, List<PermissionRole> roles) {
 		this.id = id;
@@ -22,6 +28,10 @@ public class PermissionUser {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
+	}
+
+	public void setRelationship(String relationship) {
+		this.relationship = relationship;
 	}
 
 	public String getId() {
@@ -41,4 +51,8 @@ public class PermissionUser {
 	}
 
 	public List<PermissionRole> getRoles() { return roles; }
+
+	public String getRelationship() {
+		return relationship;
+	}
 }
