@@ -17,6 +17,7 @@
 						<!-- <td
 							v-if="!isEmpty(controllers) && rowIdx % controllers.length === 0"
 							class="p-frozen-column"
+							:rowspan="matrix.length / controllers.length"
 						>
 							{{ row[0].rowCriteria }}
 						</td> -->
