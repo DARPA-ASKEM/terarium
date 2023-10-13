@@ -6,8 +6,10 @@
     border-radius: 6px;
     border: 1px solid var(--surface-border);
     background-color: $unselectedItem;
+    height: 40px;
 
     .p-button {
+        padding: 12px;
         border-radius: 4px; 
         background-color: $unselectedItem;
         border: none;
@@ -21,5 +23,15 @@
         &.p-highlight {
             background: $toggleButtonBg;
         }
+    }
+}
+
+.p-selectbutton.p-button-sm {
+    height: 24px;
+    border-radius: 4px;
+
+    .p-button {
+        padding: 8px;
+        border-radius: 2px;
     }
 }
