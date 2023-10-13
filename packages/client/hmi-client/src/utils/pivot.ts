@@ -196,6 +196,7 @@ export const createParameterMatrix = (
 		}
 	}
 	if (_.isEqual(controllers, [''])) controllers = [];
+	console.log(rows, controllers);
 	return { matrix: rows, controllers };
 };
 
