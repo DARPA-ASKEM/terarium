@@ -340,12 +340,6 @@ export interface PermissionProject {
     relationship: string;
 }
 
-export interface PermissionRelationships {
-    projects: PermissionProject[];
-    groups: PermissionGroup[];
-    users: PermissionUser[];
-}
-
 export interface PermissionUser {
     id: string;
     firstName: string;

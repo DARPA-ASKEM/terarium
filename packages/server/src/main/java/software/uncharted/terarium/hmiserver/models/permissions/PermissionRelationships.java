@@ -6,7 +6,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import java.util.ArrayList;
 import java.util.List;
 
-@TSModel
+
 public class PermissionRelationships {
 	private List<PermissionGroup> permissionGroups = new ArrayList<>();
 	private List<PermissionUser> permissionUsers = new ArrayList<>();
