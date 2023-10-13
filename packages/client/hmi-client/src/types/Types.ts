@@ -351,7 +351,7 @@ export interface PermissionUser {
     firstName: string;
     lastName: string;
     email: string;
-    roles: PermissionRole[];
+    roles?: PermissionRole[];
     relationship?: string;
 }
 

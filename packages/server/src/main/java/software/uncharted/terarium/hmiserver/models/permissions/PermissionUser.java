@@ -11,6 +11,7 @@ public class PermissionUser {
 	private String firstName;
 	private String lastName;
 	private String email;
+	@TSOptional
 	private List<PermissionRole> roles;
 	@TSOptional
 	private String relationship;
