@@ -26,10 +26,10 @@
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
 							<template v-else>
-								{{ row[0].rowCriteria
-								}}<template v-if="!isEmpty(row[0].content.controller)"
+								{{ row[0].rowCriteria }}
+								<!-- <template v-if="!isEmpty(row[0].content.controller)"
 									>_{{ row[0].content.controller }}
-								</template>
+								</template> -->
 							</template>
 						</td>
 						<td
@@ -57,6 +57,7 @@
 								<div v-else>
 									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
 								</div>
+								{{ cell?.content?.controller }}
 							</template>
 							<span v-else class="not-allowed">N/A</span>
 						</td>
