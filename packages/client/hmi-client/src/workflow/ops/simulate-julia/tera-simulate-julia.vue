@@ -1,29 +1,19 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<div class="simulate-header p-buttonset">
-				<Button
-					label="Input"
-					severity="secondary"
-					icon="pi pi-sign-in"
-					size="small"
-					:active="activeTab === SimulateTabs.input"
-					@click="activeTab = SimulateTabs.input"
-				/>
-				<Button
-					label="Output"
-					severity="secondary"
-					icon="pi pi-sign-out"
-					size="small"
-					:active="activeTab === SimulateTabs.output"
-					@click="activeTab = SimulateTabs.output"
-				/>
-			</div>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i :class="`${option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</div>
-		<div
-			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
-			class="simulate-container"
-		>
+		<div v-if="view === SimulateTabs.Output && node?.outputs.length" class="simulate-container">
 			<Dropdown
 				v-if="runList.length > 0"
 				:options="runList"
@@ -67,7 +57,7 @@
 				></i>
 			</span>
 		</div>
-		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
+		<div v-else-if="view === SimulateTabs.Input && node" class="simulate-container">
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
@@ -133,6 +123,7 @@ import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -142,11 +133,15 @@ const props = defineProps<{
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 
 enum SimulateTabs {
-	input,
-	output
+	Input = 'Input',
+	Output = 'Output'
 }
 
-const activeTab = ref(SimulateTabs.input);
+const view = ref(SimulateTabs.Input);
+const viewOptions = ref([
+	{ value: SimulateTabs.Input, icon: 'pi pi-sign-in' },
+	{ value: SimulateTabs.Output, icon: 'pi pi-sign-out' }
+]);
 
 const model = ref<{ [runId: string]: Model | null }>({});
 const runResults = ref<RunResults>({});
