@@ -96,7 +96,7 @@
 					v-model:selection="selectedResources"
 					dataKey="assetId"
 					tableStyle="min-width: 50rem"
-					:value="assets"
+					:value="assetItems"
 					row-hover
 					:row-class="() => 'p-selectable-row'"
 					@update:selection="onRowSelect"
@@ -161,17 +161,12 @@
 				@close="isUploadResourcesModalVisible = false"
 			/>
 		</section>
-		<tera-multi-select-modal
-			:is-visible="showMultiSelect"
-			:selected-resources="selectedResources"
-			:buttons="multiSelectButtons"
-		/>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { isProjectAssetTypes } from '@/types/Project';
-import { computed, nextTick, onMounted, ref, toRaw } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -180,13 +175,10 @@ import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { Tab } from '@/types/common';
-import { capitalize, isEmpty } from 'lodash';
+import { capitalize } from 'lodash';
 import { AssetType } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import TeraMultiSelectModal from '@/components/widgets/tera-multi-select-modal.vue';
-import { useTabStore } from '@/stores/tabs';
 import { useProjects } from '@/composables/project';
 import { getAssetIcon } from '@/services/project';
 import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
@@ -200,61 +192,14 @@ const selectedResources = ref();
 
 const openedRow = ref(null);
 
-const tabStore = useTabStore();
-
-const multiSelectButtons = [
-	{
-		label: 'Open',
-		callback: () => {
-			selectedResources.value.forEach((resource) => {
-				const { activeProject } = useProjects();
-				if (activeProject.value?.id) {
-					tabStore.addTab(activeProject.value.id, toRaw(resource), false);
-				}
-			});
-		}
-	}
-];
-
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
 
-const assets = computed(() => {
-	const tabs = new Map<AssetType, Set<Tab>>();
-
-	const projectAssets = useProjects().activeProject.value?.assets;
-	if (!projectAssets) return tabs;
-
-	const result = <any>[];
-	// Run through all the assets type within the project
-	Object.keys(projectAssets).forEach((type) => {
-		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType: AssetType = type as AssetType;
-			const typeAssets = projectAssets[projectAssetType]
-				.map((asset) => {
-					let assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-
-					// FIXME should unify upstream via a summary endpoint
-					if (asset.header && asset.header.name) {
-						assetName = asset.header.name;
-					}
-
-					const pageType = asset?.type ?? projectAssetType;
-					const assetId = asset?.id ?? '';
-					return { assetName, pageType, assetId };
-				})
-				.filter((asset) => {
-					if (!searchTable.value?.trim()) {
-						return true;
-					}
-					const searchTermLower = searchTable.value?.trim().toLowerCase();
-					return asset.assetName.toLowerCase().includes(searchTermLower);
-				});
-			result.push(...typeAssets);
-		}
-	});
-	return result;
-});
+const assetItems = computed(() =>
+	Array.from(generateProjectAssetsMap(searchTable.value).values())
+		.map((set) => Array.from(set))
+		.flat()
+);
 
 const onRowSelect = (selectedRows) => {
 	// show multi select modal when there are selectedRows otherwise hide
@@ -561,3 +506,4 @@ ul {
 	width: 40%;
 }
 </style>
+@/utils/map-project-assets

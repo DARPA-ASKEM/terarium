@@ -345,7 +345,7 @@ const userMenuItems = ref([
 		command: () => {
 			router.push(RoutePath.UserAdmin);
 		},
-		visible: auth.user.roles.some((r) => r.name === 'ADMIN')
+		visible: auth.user?.roles.some((r) => r.name === 'ADMIN')
 	},
 	{
 		label: 'Logout',

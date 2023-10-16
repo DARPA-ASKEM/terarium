@@ -174,9 +174,8 @@
 					text
 					@click="
 						emit('open-asset', {
-							assetName: `${stratifiedModel?.header.name}`,
 							pageType: AssetType.Models,
-							assetId: stratifiedModel?.id
+							assetId: stratifiedModel?.id ?? ''
 						})
 					"
 				/>

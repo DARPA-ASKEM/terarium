@@ -54,7 +54,7 @@
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:feature-config="featureConfig"
-			@model-updated="fetchModel"
+			@model-updated="getModelWithConfigurations"
 			@update-model="updateModelContent"
 			@update-configuration="updateConfiguration"
 			@add-configuration="addConfiguration"
@@ -76,7 +76,7 @@ import {
 	updateModelConfiguration,
 	addDefaultConfiguration
 } from '@/services/model-configurations';
-import { getModel, updateModel, getModelConfigurations } from '@/services/model';
+import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -137,7 +137,7 @@ const optionsMenuItems = ref([
 async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
-		await fetchModel(); // elastic search might still not update in time
+		await getModelWithConfigurations(); // elastic search might still not update in time
 		useProjects().get();
 	}, 800);
 }
@@ -181,11 +181,17 @@ async function fetchConfigurations() {
 
 		// Ensure that we always have a "default config" model configuration
 		if (
-			isEmpty(tempConfigurations) ||
-			!tempConfigurations.find((d) => d.name === 'Default config')
+			(isEmpty(tempConfigurations) ||
+				!tempConfigurations.find((d) => d.name === 'Default config')) &&
+			!isModelEmpty(model.value)
 		) {
 			await addDefaultConfiguration(model.value);
-			tempConfigurations = await getModelConfigurations(model.value.id);
+			setTimeout(async () => {
+				// elastic search might still not update in time
+				tempConfigurations = await getModelConfigurations(model.value?.id!);
+				modelConfigurations.value = tempConfigurations;
+			}, 800);
+			return;
 		}
 		modelConfigurations.value = tempConfigurations;
 	}

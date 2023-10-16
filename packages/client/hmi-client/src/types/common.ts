@@ -103,16 +103,18 @@ export type SidePanelTab = {
 	badgeCount?: number;
 };
 
-// Tabs
-export type Tab = {
-	icon?: string;
-	assetId?: string;
-	assetName?: string;
-	pageType?: AssetType | ProjectPages;
+export type AssetRoute = {
+	assetId: string;
+	pageType: AssetType | ProjectPages;
 };
 
+export interface AssetItem extends AssetRoute {
+	icon?: string;
+	assetName?: string;
+}
+
 export type CodeRequest = {
-	asset: Tab;
+	asset: AssetItem;
 	code?: string;
 };
 
