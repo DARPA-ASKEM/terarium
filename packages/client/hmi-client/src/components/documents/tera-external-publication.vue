@@ -29,9 +29,15 @@
 				:options="viewOptions"
 				option-value="value"
 			>
-				<template #option="slotProps">
-					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-					<span class="p-button-label">{{ slotProps.option.value }}</span>
+				<template #option="{ option }">
+					<i
+						:class="`${
+							!pdfLink && option.value !== DocumentView.EXRACTIONS
+								? 'pi pi-spin pi-spinner'
+								: option.icon
+						} p-button-icon-left`"
+					/>
+					<span class="p-button-label">{{ option.value }}</span>
 				</template>
 			</SelectButton>
 		</template>
