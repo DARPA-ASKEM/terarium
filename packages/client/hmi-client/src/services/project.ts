@@ -8,7 +8,13 @@ import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import { EventType, Project, AssetType, ExternalPublication } from '@/types/Types';
+import {
+	EventType,
+	Project,
+	AssetType,
+	ExternalPublication,
+	PermissionRelationships
+} from '@/types/Types';
 
 /**
  * Create a project
@@ -42,8 +48,15 @@ async function create(
 
 async function update(project: IProject): Promise<IProject | null> {
 	try {
-		const { id, name, description, active, username } = project;
-		const response = await API.put(`/projects/${id}`, { id, name, description, active, username });
+		const { id, name, description, active, username, assets } = project;
+		const response = await API.put(`/projects/${id}`, {
+			id,
+			name,
+			description,
+			active,
+			username,
+			assets
+		});
 		const { status, data } = response;
 		if (status !== 200) {
 			return null;
@@ -208,6 +221,69 @@ async function get(
 	}
 }
 
+async function getPermissions(projectId: IProject['id']): Promise<PermissionRelationships | null> {
+	try {
+		const { status, data } = await API.get(`projects/${projectId}/permissions`);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+async function setPermissions(projectId: IProject['id'], userId: string, relationship: string) {
+	try {
+		const { status, data } = await API.post(
+			`projects/${projectId}/permissions/user/${userId}/${relationship}`
+		);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+async function removePermissions(projectId: IProject['id'], userId: string, relationship: string) {
+	try {
+		const { status, data } = await API.delete(
+			`projects/${projectId}/permissions/user/${userId}/${relationship}`
+		);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+async function updatePermissions(
+	projectId: IProject['id'],
+	userId: string,
+	oldRelationship: string,
+	to: string
+): Promise<PermissionRelationships | null> {
+	try {
+		const { status, data } = await API.put(
+			`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`
+		);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
 /**
  * Get the icon associated with an Asset
  */
@@ -238,5 +314,9 @@ export {
 	deleteAsset,
 	getAssets,
 	getAssetIcon,
-	getPublicationAssets
+	getPublicationAssets,
+	getPermissions,
+	setPermissions,
+	removePermissions,
+	updatePermissions
 };
