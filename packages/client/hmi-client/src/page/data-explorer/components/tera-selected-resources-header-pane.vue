@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
-import { isDataset, isModel, isDocument, getDocumentDoi } from '@/utils/data-util';
+import { isDataset, isModel, isDocument, getDocumentDoi, pdfNameFromUrl } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import { AssetType, Document, DocumentAsset } from '@/types/Types';
 import dropdown from 'primevue/dropdown';
@@ -33,6 +33,7 @@ import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
 import { addDocumentFromDOI, createNewDocumentAsset } from '@/services/document-assets';
 import { get as getProject } from '@/services/project';
+import { getPDFURL } from '@/services/generate-download-link';
 
 const router = useRouter();
 
@@ -60,23 +61,30 @@ const addResourcesToProject = async (projectId: string) => {
 			const project = await getProject(projectId);
 			const username = project?.username ?? '';
 
+			// get document doi
 			const doi = getDocumentDoi(document);
-
 			if (!doi) return;
 
+			// get filename
+			const fileUrl = await getPDFURL(doi);
+			const filename = pdfNameFromUrl(fileUrl);
+
+			const filenames: string[] = [];
+			if (filename) filenames.push(filename);
+			// create document asset
 			const documentAsset: DocumentAsset = {
 				name,
 				description: name,
-				fileNames: ['paper.pdf'],
+				fileNames: filenames,
 				username
 			};
 
 			const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
-
 			if (!newDocument || !newDocument.id) return;
-			await addDocumentFromDOI(newDocument.id, doi);
-
+			// upload document rom doi and attach it to the document asset if the pdf exists
 			await useProjects().addAsset(AssetType.Documents, newDocument.id, projectId);
+			if (!filename) return;
+			await addDocumentFromDOI(newDocument.id, doi, filename);
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project

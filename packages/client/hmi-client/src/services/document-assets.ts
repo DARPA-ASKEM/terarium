@@ -172,11 +172,15 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 	return response.data;
 }
 
-async function addDocumentFromDOI(documentId: string, doi: string): Promise<string | null> {
+async function addDocumentFromDOI(
+	documentId: string,
+	doi: string,
+	filename: string
+): Promise<string | null> {
 	if (!documentId) return null;
-	const response = await API.put(`/document-asset/${documentId}/uploadDocumentFromDOI?doi=${doi}`, {
-		doi
-	});
+	const response = await API.put(
+		`/document-asset/${documentId}/uploadDocumentFromDOI?doi=${doi}&filename=${filename}`
+	);
 
 	if (!response || response.status >= 400) {
 		logger.error('Error upload file from doi');

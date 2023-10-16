@@ -142,7 +142,8 @@ public class DocumentController implements SnakeCaseController {
 	@PutMapping(value = "/{id}/uploadDocumentFromDOI")
 	public ResponseEntity<Integer> uploadDocumentFromDOI(
 		@PathVariable("id") String id,
-		@RequestParam("doi") String doi
+		@RequestParam("doi") String doi,
+		@RequestParam("filename") String filename
 	) {
 		try (CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
@@ -151,7 +152,7 @@ public class DocumentController implements SnakeCaseController {
 
 			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 
-			final PresignedURL presignedURL = proxy.getUploadUrl(id, "paper.pdf").getBody();
+			final PresignedURL presignedURL = proxy.getUploadUrl(id, filename).getBody();
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(fileEntity);
 			final HttpResponse response = httpclient.execute(put);
