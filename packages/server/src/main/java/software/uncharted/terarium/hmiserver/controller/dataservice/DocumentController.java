@@ -5,12 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +27,7 @@ import org.apache.commons.io.IOUtils;
 import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.List;
 
 @RequestMapping("/document-asset")
@@ -37,18 +35,14 @@ import java.util.List;
 @Slf4j
 public class DocumentController implements SnakeCaseController {
 
-	private final DownloadService downloadService;
 	@Autowired
 	DocumentProxy proxy;
 
 	@Autowired
 	JsDelivrProxy gitHubProxy;
 
-
     @Autowired
-    public DocumentController(DownloadService downloadService) {
-        this.downloadService = downloadService;
-    }
+	DownloadService downloadService;
 
 	@GetMapping
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
@@ -142,29 +136,12 @@ public class DocumentController implements SnakeCaseController {
 	@PutMapping(value = "/{id}/uploadDocumentFromDOI")
 	public ResponseEntity<Integer> uploadDocumentFromDOI(
 		@PathVariable("id") String id,
-		@RequestParam("doi") String doi,
-		@RequestParam("filename") String filename
-	) {
-		try (CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build()) {
+		@RequestParam(name = "doi", required = true) String doi,
+		@RequestParam(name = "filename", required = true) String filename
+	) throws IOException, URISyntaxException {		
 			byte[] fileAsBytes = downloadService.getPDF("https://unpaywall.org/" + doi);
-
 			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-
-			final PresignedURL presignedURL = proxy.getUploadUrl(id, filename).getBody();
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse response = httpclient.execute(put);
-
-
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
-			
-		} catch (Exception e) {
-			log.error("Unable to PUT document data", e);
-			return ResponseEntity.internalServerError().build();
-		}
-		
+			return uploadDocumentHelper(id, filename, fileEntity);					
 	}
 
 

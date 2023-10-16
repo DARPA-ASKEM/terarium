@@ -85,10 +85,10 @@ public class DownloadService {
 	}
 
 	/**
-	 * Gets a PDF file from a given url
+	 * Gets a PDF URL from a given url
 	 *
 	 * @param url the url location (that may contain redirects)
-	 * @return the pdf file
+	 * @return the pdf url
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */

@@ -33,12 +33,8 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class DownloadController {
 
-	private final DownloadService downloadService;
-
 	@Autowired
-    public DownloadController(DownloadService downloadService) {
-        this.downloadService = downloadService;
-    }
+	DownloadService downloadService;
 
 	@GetMapping
 	public ResponseEntity<Resource> get(@RequestParam("doi") final String doi) throws IOException, URISyntaxException {
