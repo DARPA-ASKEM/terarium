@@ -6,13 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 import java.util.List;
@@ -42,8 +42,7 @@ public class GroupsController {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
-				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
-
+//				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
 //				PermissionRelationships permissions = new PermissionRelationships();
 //				for (RebacPermissionRelationship permissionRelationship : relationships) {
 //					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
@@ -66,20 +65,18 @@ public class GroupsController {
 	}
 
 	@PostMapping
-	public ResponseEntity<PermissionGroup> addGroup(
+	@PreAuthorize("hasRole('GROUP')")
+	public ResponseEntity<PermissionGroup> createGroup(
 		@RequestParam(name = "name") final String name
 	) {
 		try {
 			RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
-			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID, reBACService))) {
-				try {
-					PermissionGroup permissionGroup = rebacUser.addGroup(name);
-					return ResponseEntity.ok(permissionGroup);
-				} catch (RelationshipAlreadyExistsException e) {
-					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-				}
+			try {
+				PermissionGroup permissionGroup = rebacUser.createGroup(name);
+				return ResponseEntity.ok(permissionGroup);
+			} catch (RelationshipAlreadyExistsException e) {
+				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 			}
-			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			log.error("Error adding group", e);
 			return ResponseEntity.internalServerError().build();

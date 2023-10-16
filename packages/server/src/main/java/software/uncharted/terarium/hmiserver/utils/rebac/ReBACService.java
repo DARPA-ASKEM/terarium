@@ -98,8 +98,8 @@ public class ReBACService {
 		if (!schemaManager.doesSchemaExist(channel, spiceDbBearerToken)) {
 			schemaManager.createSchema(channel, spiceDbBearerToken, Schema.schema);
 
-			PUBLIC_GROUP_ID = createGroup(PUBLIC_GROUP_NAME);
-			ASKEM_ADMIN_GROUP_ID = createGroup(ASKEM_ADMIN_GROUP_NAME);
+			PUBLIC_GROUP_ID = createGroup(PUBLIC_GROUP_NAME).getId();
+			ASKEM_ADMIN_GROUP_ID = createGroup(ASKEM_ADMIN_GROUP_NAME).getId();
 
 			UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 			List<UserRepresentation> users = usersResource.list();
@@ -164,14 +164,16 @@ public class ReBACService {
 		}
 	}
 
-	private String createGroup(String parentId, String name) {
+	private PermissionGroup createGroup(String parentId, String name) {
 		GroupRepresentation groupRepresentation = new GroupRepresentation();
 		groupRepresentation.setName(name);
 
 		Response response = createGroupMaybeParent(parentId, groupRepresentation);
 		switch (response.getStatus()) {
 			case 201:
-				return CreatedResponseUtil.getCreatedId(response);
+				return new PermissionGroup(
+					CreatedResponseUtil.getCreatedId(response),
+					name);
 			case 409:
 				System.err.println("Conflicting Name");
 				return null;
@@ -181,14 +183,8 @@ public class ReBACService {
 		}
 	}
 
-	private String createGroup(String name) {
+	public PermissionGroup createGroup(String name) {
 		return this.createGroup(null, name);
-	}
-
-	public PermissionGroup addGroup(String name) {
-		return new PermissionGroup(
-			createGroup(name),
-			name);
 	}
 
 	public PermissionUser getUser(String id) {

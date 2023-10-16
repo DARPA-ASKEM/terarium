@@ -34,8 +34,8 @@ public class RebacUser extends RebacObject {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 
-	public PermissionGroup addGroup(String name) throws Exception, RelationshipAlreadyExistsException {
-		PermissionGroup group = reBACService.addGroup(name);
+	public PermissionGroup createGroup(String name) throws Exception, RelationshipAlreadyExistsException {
+		PermissionGroup group = reBACService.createGroup(name);
 		reBACService.createRelationship(getSchemaObject(), new SchemaObject(Schema.Type.GROUP, group.getId()), Schema.Relationship.CREATOR);
 		return group;
 	}
