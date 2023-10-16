@@ -55,4 +55,3 @@ build
 # MISC
 create.sql
 .eslintcache
-/containers/docker/
