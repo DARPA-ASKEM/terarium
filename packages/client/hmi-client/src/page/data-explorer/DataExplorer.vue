@@ -18,13 +18,17 @@
 			</template>
 		</tera-slider-panel>
 		<div class="results-content">
-			<SelectButton v-model="resourceType" :options="assetOptions" option-value="value">
+			<SelectButton
+				:model-value="resourceType"
+				@change="if ($event.value) resourceType = $event.value;"
+				:options="assetOptions"
+				option-value="value"
+			>
 				<template #option="slotProps">
 					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
 					<span class="p-button-label">{{ slotProps.option.label }}</span>
 				</template>
 			</SelectButton>
-			<!-- class="p-button-secondary p-button-sm" -->
 			<tera-search-results-list
 				:data-items="dataItems"
 				:facets="filteredFacets"
@@ -475,7 +479,6 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 // Update asset type
 watch(resourceType, async (newResourceType, oldResourceType) => {
 	if (executeSearchByExample.value) return;
-	console.log(oldResourceType, newResourceType);
 
 	// if no data currently exist for the selected tab,
 	// or if data exists but outdated then we should refetch

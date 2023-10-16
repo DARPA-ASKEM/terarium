@@ -8,9 +8,9 @@
 		:doi="highlightSearchTerms(doi)"
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
-		:hide-intro="documentView === DocumentView.PDF"
-		:stretch-content="documentView === DocumentView.PDF"
-		:show-sticky-header="documentView === DocumentView.PDF"
+		:hide-intro="view === DocumentView.PDF"
+		:stretch-content="view === DocumentView.PDF"
+		:show-sticky-header="view === DocumentView.PDF"
 	>
 		<template #bottom-header-buttons>
 			<Button
@@ -23,23 +23,17 @@
 			/>
 		</template>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Extractions"
-					icon="pi pi-list"
-					@click="documentView = DocumentView.EXRACTIONS"
-					:active="documentView === DocumentView.EXRACTIONS"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="PDF"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.PDF"
-					:active="documentView === DocumentView.PDF"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="slotProps">
+					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ slotProps.option.value }}</span>
+				</template>
+			</SelectButton>
 		</template>
 		<template #info-bar>
 			<div class="container">
@@ -50,7 +44,7 @@
 			</div>
 		</template>
 		<Accordion
-			v-if="documentView === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -227,7 +221,7 @@
 			</AccordionTab>
 		</Accordion>
 		<tera-pdf-embed
-			v-else-if="documentView === DocumentView.PDF && pdfLink"
+			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.title"
 		/>
@@ -256,10 +250,11 @@ import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
-	EXRACTIONS = 'extractions',
-	PDF = 'pdf'
+	EXRACTIONS = 'Extractions',
+	PDF = 'PDF'
 }
 
 const props = defineProps({
@@ -283,9 +278,13 @@ const props = defineProps({
 
 const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
-const documentView = ref(DocumentView.EXRACTIONS);
 const isImportGithubFileModalVisible = ref(false);
 const openedUrl = ref('');
+const view = ref(DocumentView.EXRACTIONS);
+const viewOptions = ref([
+	{ value: DocumentView.EXRACTIONS, icon: 'pi pi-list' },
+	{ value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
+]);
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 

@@ -1,17 +1,17 @@
 .p-selectbutton {
-    padding: $smallBorderRadius;
+    padding: 2px;
     display: flex;
-    gap: $smallBorderRadius;
+    gap: 2px;
     width: fit-content;
     border-radius: 6px;
     border: 1px solid var(--surface-border);
-    background-color: var(--tab-background-unselected);
-    height: 40px;
+    background-color: var(--tab-backgroundcolor-unselected);
+    height: 40px; 
 
     .p-button {
-        padding: 1$smallBorderRadius;
+        padding: 12px;
         border-radius: $borderRadius; 
-        background-color: var(--tab-background-unselected);
+        background-color: var(--tab-backgroundcolor-unselected);
         border: none;
          &:hover {
                 background: $toggleButtonHoverBg;
@@ -39,11 +39,14 @@
 }
 
 .p-selectbutton.p-button-sm {
-    height: 2$borderRadius;
+    height:24px;
     border-radius: $borderRadius;
 
     .p-button {
         padding: 8px;
         border-radius: $smallBorderRadius;
+        &.p-highlight {
+            border-radius: $smallBorderRadius;
+        }
     }
 }

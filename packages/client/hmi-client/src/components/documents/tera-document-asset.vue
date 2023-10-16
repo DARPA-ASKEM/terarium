@@ -6,38 +6,22 @@
 		:name="highlightSearchTerms(doc.name)"
 		:overline="highlightSearchTerms(doc.source)"
 		@close-preview="emit('close-preview')"
-		:hide-intro="documentView === DocumentView.PDF"
-		:stretch-content="documentView === DocumentView.PDF"
-		:show-sticky-header="documentView === DocumentView.PDF"
+		:hide-intro="view === DocumentView.PDF"
+		:stretch-content="view === DocumentView.PDF"
+		:show-sticky-header="view === DocumentView.PDF"
 	>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Extractions"
-					icon="pi pi-list"
-					@click="documentView = DocumentView.EXRACTIONS"
-					:active="documentView === DocumentView.EXRACTIONS"
-				/>
-				<Button
-					v-if="documentType === DocumentView.PDF"
-					class="p-button-secondary p-button-sm"
-					label="PDF"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.PDF"
-					:active="documentView === DocumentView.PDF"
-				/>
-				<Button
-					v-if="documentType === DocumentView.TXT"
-					class="p-button-secondary p-button-sm"
-					label="txt"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.TXT"
-					:active="documentView === DocumentView.TXT"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="slotProps">
+					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ slotProps.option.value }}</span>
+				</template>
+			</SelectButton>
 		</template>
 		<template #info-bar>
 			<div class="container">
@@ -48,7 +32,7 @@
 			</div>
 		</template>
 		<Accordion
-			v-if="documentView === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -112,11 +96,11 @@
 			</AccordionTab>
 		</Accordion>
 		<tera-pdf-embed
-			v-else-if="documentView === DocumentView.PDF && pdfLink"
+			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.name || ''"
 		/>
-		<code-editor v-else-if="documentView === DocumentView.TXT" :initial-code="code" />
+		<code-editor v-else-if="view === DocumentView.TXT" :initial-code="code" />
 	</tera-asset>
 </template>
 
@@ -125,7 +109,6 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
@@ -140,10 +123,11 @@ import {
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
+import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
-	EXRACTIONS = 'extractions',
-	PDF = 'pdf',
+	EXRACTIONS = 'Extractions',
+	PDF = 'PDF',
 	TXT = 'txt'
 }
 
@@ -156,7 +140,8 @@ const props = defineProps<{
 
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
-const documentView = ref(DocumentView.EXRACTIONS);
+const view = ref(DocumentView.EXRACTIONS);
+const viewOptions = ref([{ value: DocumentView.EXRACTIONS, icon: 'pi pi-list' }]);
 const code = ref<string>();
 
 const docLink = computed(() =>
@@ -172,13 +157,6 @@ const tables = computed(
 const equations = computed(
 	() => doc.value?.assets?.filter((asset) => asset.assetType === 'equation') || []
 );
-
-const documentType = computed(() => {
-	if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
-		return DocumentView.PDF;
-	}
-	return DocumentView.TXT;
-});
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 
@@ -205,6 +183,11 @@ watch(
 			if (document) {
 				doc.value = document;
 				openTextDocument();
+				viewOptions.value.push(
+					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
+						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
+						: { value: DocumentView.TXT, icon: 'pi pi-file' }
+				);
 			}
 		} else {
 			doc.value = null;
