@@ -45,12 +45,6 @@
 			</Chip>
 		</aside>
 		<Teleport to="body">
-			<tera-useradmin
-				v-if="isUserAdministrationModalVisible"
-				class="modal"
-				ref="isUserAdministrationModalVisible"
-				@modal-mask-clicked="isUserAdministrationModalVisible = false"
-			/>
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
 				class="modal"
@@ -139,7 +133,6 @@ import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
-import TeraUseradmin from '@/components/navbar/tera-useradmin.vue';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
@@ -162,11 +155,6 @@ defineProps<{
  */
 const router = useRouter();
 const navigationMenu = ref();
-
-/**
- * User Administration code
- */
-const isUserAdministrationModalVisible = ref(false);
 
 /**
  * Evaluation scenario code
@@ -355,7 +343,7 @@ const userMenuItems = ref([
 	{
 		label: 'User Administration',
 		command: () => {
-			isUserAdministrationModalVisible.value = true;
+			router.push(RoutePath.UserAdmin);
 		},
 		visible: auth.user?.roles.some((r) => r.name === 'ADMIN')
 	},
