@@ -18,12 +18,7 @@
 			</template>
 		</tera-slider-panel>
 		<div class="results-content">
-			<SelectButton
-				class="p-button-sm"
-				v-model="resourceType"
-				:options="assetOptions"
-				option-value="value"
-			>
+			<SelectButton v-model="resourceType" :options="assetOptions" option-value="value">
 				<template #option="slotProps">
 					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
 					<span class="p-button-label">{{ slotProps.option.label }}</span>

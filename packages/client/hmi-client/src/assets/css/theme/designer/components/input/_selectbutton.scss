@@ -4,6 +4,7 @@
         border: $toggleButtonBorder;
         color: $toggleButtonTextColor;
         transition: $formElementTransition;
+        border-radius: $borderRadius;
 
         .p-button-icon-left,
         .p-button-icon-right {
@@ -14,6 +15,7 @@
             background: $toggleButtonHoverBg;
             border-color: $toggleButtonHoverBorderColor;
             color: $toggleButtonTextHoverColor;
+            border-radius: $borderRadius;
 
             .p-button-icon-left,
             .p-button-icon-right {
@@ -25,6 +27,7 @@
             background: $toggleButtonActiveBg;
             border-color: $toggleButtonActiveBorderColor;
             color: $toggleButtonTextActiveColor;
+            border-radius: $borderRadius;
 
             .p-button-icon-left,
             .p-button-icon-right {
@@ -32,7 +35,6 @@
             }
 
             &:hover {
-                background: $toggleButtonActiveHoverBg;
                 border-color: $toggleButtonActiveHoverBorderColor;
                 color: $toggleButtonTextActiveHoverColor;
 
@@ -42,6 +44,10 @@
                 }
             }
         }
+    }
+
+    .p-button, .p-button.p-highlight, .p-button:not(.p-disabled):not(.p-highlight):hover {
+        border-radius: $smallBorderRadius;
     }
 
     &.p-invalid > .p-button {
