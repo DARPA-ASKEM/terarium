@@ -5,6 +5,7 @@ import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/project/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';
+import UserAdminView from '@/components/navbar/tera-useradmin.vue';
 
 // These are test/experiment pages
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
@@ -20,6 +21,7 @@ export enum RoutePath {
 	Project = `/projects/:projectId/:pageType?/:assetId?`,
 	WorkflowNode = `/${RouteName.WorkflowNode}/:workflowId/:nodeId`,
 	DataExplorer = '/explorer',
+	UserAdmin = '/user-admin',
 	Unauthorized = '/unauthorized',
 
 	// Playground and experiments, these components are testing-only
@@ -50,6 +52,11 @@ const routes = [
 		name: RouteName.DataExplorer,
 		path: RoutePath.DataExplorer,
 		component: DataExplorerView
+	},
+	{
+		name: RouteName.UserAdmin,
+		path: RoutePath.UserAdmin,
+		component: UserAdminView
 	},
 
 	// Playground and experiments, these components are testing-only

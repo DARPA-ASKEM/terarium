@@ -9,7 +9,8 @@ export enum RouteName {
 	Provenance = 'provenance',
 	DataExplorer = 'dataExplorer',
 	Code = 'code',
-	WorkflowNode = 'workflow-node'
+	WorkflowNode = 'workflow-node',
+	UserAdmin = 'user-admin'
 }
 
 export const RouteMetadata: {
@@ -24,5 +25,6 @@ export const RouteMetadata: {
 	[RouteName.Provenance]: { displayName: 'Provenance', icon: IconFlow32 },
 	[RouteName.Home]: { displayName: 'Home', icon: 'pi pi-home' },
 	[RouteName.DataExplorer]: { displayName: 'Explorer', icon: 'pi pi-compass' },
-	[RouteName.WorkflowNode]: { displayName: 'Workflow Node', icon: 'pi pi-bolt' }
+	[RouteName.WorkflowNode]: { displayName: 'Workflow Node', icon: 'pi pi-bolt' },
+	[RouteName.UserAdmin]: { displayName: 'User Administration', icon: 'pi pi-users' }
 };
