@@ -4,23 +4,33 @@
 #              It will decrypt the secrets file, start the server, then remove the secrets file.
 
 SERVER_DIR="packages/server"
-ENCRYPTED_FILE="${SERVER_DIR}/src/main/resources/application-secrets.properties.encrypted"
-DECRYPTED_FILE="${SERVER_DIR}/src/main/resources/application-secrets.properties"
+SECRET_FILES=()
+SECRET_FILES+=("${SERVER_DIR}/src/main/resources/application-secrets.properties")
+SECRET_FILES+=("containers/secrets.env")
 VAULT_PASSWORD=""~/askem-vault-id.txt""
 
 function decrypt_secrets() {
 	echo "Decrypting local secrets vault"
-	ansible-vault decrypt --vault-password-file ${VAULT_PASSWORD} --output ${DECRYPTED_FILE} ${ENCRYPTED_FILE}
+	for SECRET_FILE in "${SECRET_FILES[@]}"; do
+		echo "decrypting file: ${SECRET_FILE}"
+		ansible-vault decrypt --vault-password-file ${VAULT_PASSWORD} --output ${SECRET_FILE} ${SECRET_FILE}.encrypted
+	done
 }
 
 function encrypt_secrets() {
 	echo "Encrypting local secrets vault"
-	ansible-vault encrypt --vault-password-file ${VAULT_PASSWORD} --output ${ENCRYPTED_FILE} ${DECRYPTED_FILE}
+	for SECRET_FILE in "${SECRET_FILES[@]}"; do
+		echo "encrypting file: ${SECRET_FILE}"
+		ansible-vault encrypt --vault-password-file ${VAULT_PASSWORD} --output ${SECRET_FILE}.encrypted ${SECRET_FILE}
+	done
 }
 
 function delete_secrets() {
 	echo "Deleting local secrets vault"
-	rm ${DECRYPTED_FILE}
+	for SECRET_FILE in "${SECRET_FILES[@]}"; do
+		echo "deleting file: ${SECRET_FILE}"
+		rm ${SECRET_FILE}
+	done
 }
 
 function deploy_containers() {
