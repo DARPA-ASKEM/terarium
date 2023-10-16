@@ -138,17 +138,13 @@ export const createParameterMatrix = (
 		}
 
 		if (!_.isEmpty(newControllers)) {
+			// Map controllers unique to these input/output combos
 			for (let j = 0; j < newInputs.length; j++) {
 				for (let k = 0; k < newOutputs.length; k++) {
-					//
-					controllerIndexMap.set(newInputs[j] + newOutputs[k], newControllers);
+					controllerIndexMap.set(newInputs[j].concat('|', newOutputs[k]), newControllers);
 				}
 			}
 		}
-
-		// if (!_.isEmpty(newControllers)) {
-		// 	controllerIndexMap.set({ input: newInputs, output: newOutputs }, newControllers);
-		// }
 		inputs.push(...newInputs);
 		outputs.push(...newOutputs);
 		controllers.push(...newControllers);
@@ -166,7 +162,8 @@ export const createParameterMatrix = (
 		const row: PivotMatrixCell[] = [];
 		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
 			//
-			const controller = controllerIndexMap.get(inputs[rowIdx] + outputs[colIdx]) ?? null;
+			const controller =
+				controllerIndexMap.get(inputs[rowIdx].concat('|', outputs[colIdx])) ?? null;
 
 			console.log([inputs[rowIdx], outputs[colIdx]], controller);
 
