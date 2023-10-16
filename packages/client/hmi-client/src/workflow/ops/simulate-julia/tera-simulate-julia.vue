@@ -13,7 +13,7 @@
 				</template>
 			</SelectButton>
 		</div>
-		<div v-if="view === SimulateTabs.Output && node?.outputs.length" class="simulate-container">
+		<div v-if="view === SimulateView.Output && node?.outputs.length" class="simulate-container">
 			<Dropdown
 				v-if="runList.length > 0"
 				:options="runList"
@@ -57,7 +57,7 @@
 				></i>
 			</span>
 		</div>
-		<div v-else-if="view === SimulateTabs.Input && node" class="simulate-container">
+		<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
@@ -132,15 +132,15 @@ const props = defineProps<{
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 
-enum SimulateTabs {
+enum SimulateView {
 	Input = 'Input',
 	Output = 'Output'
 }
 
-const view = ref(SimulateTabs.Input);
+const view = ref(SimulateView.Input);
 const viewOptions = ref([
-	{ value: SimulateTabs.Input, icon: 'pi pi-sign-in' },
-	{ value: SimulateTabs.Output, icon: 'pi pi-sign-out' }
+	{ value: SimulateView.Input, icon: 'pi pi-sign-in' },
+	{ value: SimulateView.Output, icon: 'pi pi-sign-out' }
 ]);
 
 const model = ref<{ [runId: string]: Model | null }>({});
