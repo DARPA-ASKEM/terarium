@@ -29,12 +29,10 @@
 		<template #footer>
 			<!--FIXME: There is no 'last updated' property in project yet-->
 			<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click.stop="showProjectMenu"
+			<tera-project-menu
+				:project="project"
+				@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
 			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
 		</template>
 	</Card>
 	<Card v-else>
@@ -62,27 +60,18 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import Button from 'primevue/button';
 import Card from 'primevue/card';
-import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { IProject } from '@/types/Project';
+import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
 	project?: IProject;
-	projectMenuItems?: any[];
 }>();
-
-const emit = defineEmits(['update-chosen-project-menu']);
-
-const projectMenu = ref();
-const showProjectMenu = (event) => {
-	projectMenu.value.toggle(event);
-	emit('update-chosen-project-menu');
-};
+const emit = defineEmits(['forked-project']);
 
 const titleRef = ref();
 const descriptionLines = computed(() => {
@@ -251,5 +240,16 @@ section {
 
 .p-dialog em {
 	font-weight: var(--font-weight-semibold);
+}
+
+.project-menu-item {
+	display: flex;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem 0.5rem 1rem;
+	color: var(--text-color-secondary);
+}
+
+.project-menu-item:hover {
+	background-color: var(--surface-highlight);
 }
 </style>
