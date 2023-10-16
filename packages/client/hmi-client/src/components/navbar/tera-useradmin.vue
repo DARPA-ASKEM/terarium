@@ -86,7 +86,7 @@ const onRowSelect = (event: DataTableRowSelectEvent) => {
 const addRole = async (role) => {
 	try {
 		const response = await API({
-			url: `/users/${selectedId.value}/roles/${role.id}`,
+			url: `/users/${selectedId.value}/roles/${role.name}`,
 			method: 'POST',
 			validateStatus: (status: number) => status < 400 //
 		});
@@ -100,7 +100,7 @@ const addRole = async (role) => {
 const removeRole = async (role) => {
 	try {
 		const response = await API({
-			url: `/users/${selectedId.value}/roles/${role.id}`,
+			url: `/users/${selectedId.value}/roles/${role.name}`,
 			method: 'DELETE',
 			validateStatus: (status: number) => status < 400 //
 		});
