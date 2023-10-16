@@ -52,7 +52,7 @@ public interface KnowledgeMiddlewareProxy {
 	 *                      pdf (Object): The PDF file to upload
 	 * @return extractions of the pdf
 	 */
-	@PostMapping("/pdf_extractions")
+	@PostMapping("/variable_extractions")
 	ResponseEntity<JsonNode> postPDFExtractions(
 		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
@@ -67,7 +67,7 @@ public interface KnowledgeMiddlewareProxy {
 	 * @param documentId (String): The ID of the document to extract text from
 	 * @return
 	 */
-	@PostMapping("/pdf_to_cosmos")
+	@PostMapping("/pdf_extraction")
 	ResponseEntity<JsonNode> postPDFToCosmos(
 		@RequestParam("document_id") String documentId
 	);
