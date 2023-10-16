@@ -341,7 +341,7 @@ export interface PermissionProject {
 }
 
 export interface PermissionRelationships {
-		permissionGroups: PermissionGroup[];
+    permissionGroups: PermissionGroup[];
     permissionUsers: PermissionUser[];
     permissionProjects: PermissionProject[];
 }
