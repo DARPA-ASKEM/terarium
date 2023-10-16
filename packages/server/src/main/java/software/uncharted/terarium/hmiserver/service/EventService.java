@@ -18,14 +18,12 @@ public class EventService {
 	@Autowired
 	private EventRepository eventRepository;
 
-	public List<Event> findEvents(final EventType type, final Long projectId, final String currentUserId,
-			final String like, final int limit) {
+	public List<Event> findEvents(final EventType type, final Long projectId, final String currentUserId, final String like, final int limit) {
 		final Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "timestampMillis"));
 		if (like != null && !like.isEmpty()) {
 			final String likeQuery = "%" + like + "%";
 			if (projectId != null) {
-				return eventRepository.findAllByTypeAndProjectIdAndUserIdAndValueLike(type, projectId, currentUserId,
-						likeQuery, pageable);
+				return eventRepository.findAllByTypeAndProjectIdAndUserIdAndValueLike(type, projectId, currentUserId, likeQuery, pageable);
 			} else {
 				return eventRepository.findAllByTypeAndUserIdAndValueLike(type, currentUserId, likeQuery, pageable);
 			}

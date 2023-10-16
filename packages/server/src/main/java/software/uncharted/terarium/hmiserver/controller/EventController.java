@@ -19,34 +19,31 @@ import java.util.List;
 public class EventController {
 	@Autowired
 	private EventService eventService;
-	
+
 	@Autowired
 	private CurrentUserService currentUserService;
 
+
 	/**
 	 * Gets a list of events sorted by timestamp descending
-	 * 
-	 * @param type      the {@link EventType} of the events to fetch
-	 * @param projectId the projectId to fetch events for
-	 * @param limit     the number of events to fetch
-	 * @return a list of {@link Event} for the given user/project/type sorted by
-	 *         most to least recent
+	 * @param type				the {@link EventType} of the events to fetch
+	 * @param projectId		the projectId to fetch events for
+	 * @param limit				the number of events to fetch
+	 * @return						a list of {@link Event} for the given user/project/type sorted by most to least recent
 	 */
 	@GetMapping
 	public ResponseEntity<List<Event>> getEvents(@RequestParam(value = "type") final EventType type,
-			@RequestParam(value = "projectId", required = false) final Long projectId,
-			@RequestParam(value = "search", required = false) final String likeValue,
-			@RequestParam(value = "limit", defaultValue = "10") final int limit) {
+																								 @RequestParam(value = "projectId", required = false) final Long projectId,
+																								 @RequestParam(value = "search", required = false) final String likeValue,
+																								 @RequestParam(value = "limit", defaultValue = "10") final int limit) {
 
-		return ResponseEntity
-				.ok(eventService.findEvents(type, projectId, currentUserService.get().getId(), likeValue, limit));
+		return ResponseEntity.ok(eventService.findEvents(type, projectId, currentUserService.get().getId(), likeValue, limit));
 	}
 
 	/**
 	 * Create an event
-	 * 
-	 * @param event the {@link Event} instance
-	 * @return the persisted event instance
+	 * @param event	the {@link Event} instance
+	 * @return			the persisted event instance
 	 */
 	@PostMapping
 	@Transactional
@@ -54,11 +51,10 @@ public class EventController {
 	public ResponseEntity<Event> postEvent(@RequestBody final Event event) {
 		event.setUserId(currentUserService.get().getId());
 
-		// Do not save the event to the database if the type is not specified as
-		// persistent
+		// Do not save the event to the database if the type is not specified as persistent
 		if (!event.getType().isPersistent()) {
 			return ResponseEntity
-					.ok(null);
+				.ok(null);
 		}
 
 		return ResponseEntity.ok(eventService.save(event));
