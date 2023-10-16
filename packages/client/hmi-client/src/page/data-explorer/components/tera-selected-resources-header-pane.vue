@@ -34,6 +34,9 @@ import { useProjects } from '@/composables/project';
 import { addDocumentFromDOI, createNewDocumentAsset } from '@/services/document-assets';
 import { get as getProject } from '@/services/project';
 import { getPDFURL } from '@/services/generate-download-link';
+import { useToastService } from '@/services/toast';
+
+const toast = useToastService();
 
 const router = useRouter();
 
@@ -81,10 +84,15 @@ const addResourcesToProject = async (projectId: string) => {
 
 			const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
 			if (!newDocument || !newDocument.id) return;
-			// upload document rom doi and attach it to the document asset if the pdf exists
+			// if there is no filename, we will not be able to upload the pdf, show error.
+			if (filename) {
+				await addDocumentFromDOI(newDocument.id, doi, filename);
+			} else {
+				toast.error('', `Unable to upload PDF for ${name}`);
+			}
+
+			// finally add asset to project
 			await useProjects().addAsset(AssetType.Documents, newDocument.id, projectId);
-			if (!filename) return;
-			await addDocumentFromDOI(newDocument.id, doi, filename);
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project

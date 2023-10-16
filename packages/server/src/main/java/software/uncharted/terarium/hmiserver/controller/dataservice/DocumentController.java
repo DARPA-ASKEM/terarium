@@ -18,10 +18,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
+
 import org.apache.http.entity.StringEntity;
 import org.apache.commons.io.IOUtils;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +47,12 @@ public class DocumentController implements SnakeCaseController {
 
     @Autowired
 	DownloadService downloadService;
+
+	@Autowired
+	KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
+
+	@Autowired
+	ProjectProxy projectProxy;
 
 	@GetMapping
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
@@ -138,10 +148,24 @@ public class DocumentController implements SnakeCaseController {
 		@PathVariable("id") String id,
 		@RequestParam(name = "doi", required = true) String doi,
 		@RequestParam(name = "filename", required = true) String filename
-	) throws IOException, URISyntaxException {		
+	) throws IOException, URISyntaxException {
+			CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build();	
+
 			byte[] fileAsBytes = downloadService.getPDF("https://unpaywall.org/" + doi);
 			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			return uploadDocumentHelper(id, filename, fileEntity);					
+			final PresignedURL presignedURL = proxy.getUploadUrl(id, filename).getBody();
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse response = httpclient.execute(put);
+
+			if(response.getStatusLine().getStatusCode() < 400) {
+				// fire and forgot pdf extractions
+				knowledgeMiddlewareProxy.postPDFToCosmos(id);
+			}
+
+			return ResponseEntity.ok(response.getStatusLine().getStatusCode());					
 	}
 
 

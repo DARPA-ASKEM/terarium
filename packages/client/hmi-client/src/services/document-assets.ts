@@ -6,7 +6,6 @@ import API from '@/api/api';
 import { DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { extractTextFromPDFDocument } from './knowledge';
 /**
  * Get all documents
  * @return Array<DocumentAsset>|null - the list of all document assets, or null if none returned by API
@@ -186,9 +185,6 @@ async function addDocumentFromDOI(
 		logger.error('Error upload file from doi');
 		return null;
 	}
-
-	// fire and forget pdf to cosmos
-	extractTextFromPDFDocument(documentId);
 
 	return response.data;
 }
