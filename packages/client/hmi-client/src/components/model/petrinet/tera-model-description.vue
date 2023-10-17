@@ -312,10 +312,12 @@
 						]"
 					>
 						<template v-if="isSectionEditable === `transition-${index}`">
-							<td>{{ transition.id }}</td>
+							<!-- Use of split is a hack to get a transition name since we don't have a name field for transitions for models created from equations -->
+							<td>{{ transition.id.split('-')[0] }}</td>
 							<td>{{ transition.name }}</td>
-							<td>{{ transition.input }}</td>
-							<td>{{ transition.output }}</td>
+							<!-- // Use of split is a hack to display state name instead of id -->
+							<td>{{ transition.input.split('-')[0] }}</td>
+							<td>{{ transition.output.split('-')[0] }}</td>
 							<td>
 								<katex-element
 									v-if="transition.expression"
@@ -334,10 +336,12 @@
 							</td>
 						</template>
 						<template v-else>
-							<td>{{ transition.id }}</td>
+							<!-- Use of split is a hack to get a transition name since we don't have a name field for transitions for models created from equations -->
+							<td>{{ transition.id.split('-')[0] }}</td>
 							<td>{{ transition.name }}</td>
-							<td>{{ transition.input }}</td>
-							<td>{{ transition.output }}</td>
+							<!-- // Use of split is a hack to display state name instead of id -->
+							<td>{{ transition.input.split('-')[0] }}</td>
+							<td>{{ transition.output.split('-')[0] }}</td>
 							<td>
 								<katex-element
 									v-if="transition.expression"
