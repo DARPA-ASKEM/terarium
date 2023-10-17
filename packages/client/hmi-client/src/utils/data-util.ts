@@ -103,3 +103,14 @@ export function getDocumentDoi(doc: Document | null) {
 	}
 	return docIdentifier;
 }
+
+export function pdfNameFromUrl(url: string): string | null {
+	const urlWithoutParams = url.split('?')[0]; // Remove query parameters
+	const regex = /\/([^/]+\.pdf)$/i;
+	const match = urlWithoutParams.match(regex);
+
+	if (match && match[1]) {
+		return match[1];
+	}
+	return null;
+}
