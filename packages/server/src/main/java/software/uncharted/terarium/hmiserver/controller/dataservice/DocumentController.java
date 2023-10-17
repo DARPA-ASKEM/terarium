@@ -12,15 +12,20 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
+import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
@@ -32,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequestMapping("/document-asset")
@@ -53,6 +59,9 @@ public class DocumentController implements SnakeCaseController {
 
 	@Autowired
 	ProjectProxy projectProxy;
+
+	@Autowired
+	DocumentAssetService documentAssetService;
 
 	@GetMapping
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
@@ -143,29 +152,82 @@ public class DocumentController implements SnakeCaseController {
 
 	}
 
-	@PutMapping(value = "/{id}/uploadDocumentFromDOI")
-	public ResponseEntity<Integer> uploadDocumentFromDOI(
-		@PathVariable("id") String id,
-		@RequestParam(name = "doi", required = true) String doi,
-		@RequestParam(name = "filename", required = true) String filename
-	) throws IOException, URISyntaxException {
-			CloseableHttpClient httpclient = HttpClients.custom()
+	@PostMapping(value = "/createDocumentFromXDD")
+	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
+		@RequestBody AddDocumentAssetFromXDDRequest body
+	) {
+			try(CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
-				.build();	
+				.build()){	
 
-			byte[] fileAsBytes = downloadService.getPDF("https://unpaywall.org/" + doi);
-			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			final PresignedURL presignedURL = proxy.getUploadUrl(id, filename).getBody();
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse response = httpclient.execute(put);
+			//build initial response
+			AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
+			response.setExtractionJobId(null);
+			response.setPdfUploadError(false);
+			response.setDocumentAssetId(null);
 
-			if(response.getStatusLine().getStatusCode() < 400) {
-				// fire and forgot pdf extractions
-				knowledgeMiddlewareProxy.postPDFToCosmos(id);
+
+			// get preliminary info to build document asset
+			Document document = body.getDocument();
+			String projectId = body.getProjectId();
+			String name = document.getTitle();
+			String username = projectProxy.getProject(projectId).getBody().getUsername();
+			String doi = documentAssetService.getDocumentDoi(document);
+			String fileUrl = downloadService.getPDFURL("https://unpaywall.org/" + doi);
+			String filename = downloadService.pdfNameFromUrl(fileUrl);
+			List<String> filenames = new ArrayList<String>();
+			if(filename != null){
+				filenames.add(filename);
+			}	
+
+			//create document asset
+			DocumentAsset documentAsset = new DocumentAsset();
+			documentAsset.setName(name);
+			documentAsset.setDescription(name);
+			documentAsset.setUsername(username);
+			documentAsset.setFileNames(filenames);
+			
+			String newDocumentAssetId = proxy.createAsset(convertObjectToSnakeCaseJsonNode(documentAsset)).getBody().get("id").asText();
+			response.setDocumentAssetId(newDocumentAssetId);
+
+			//add asset to project
+			projectProxy.createAsset(projectId, AssetType.documents, newDocumentAssetId);
+
+			//if there is no filename that means we cannot get the pdf return ok with errors.
+			if(filename == null || filename.isEmpty()){
+				response.setPdfUploadError(true);
+				return ResponseEntity.ok(response);
 			}
 
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());					
+			byte[] fileAsBytes = downloadService.getPDF("https://unpaywall.org/" + doi);
+
+			//if this service fails, return ok with errors
+			if(fileAsBytes == null || fileAsBytes.length == 0){
+				response.setPdfUploadError(true);
+				return ResponseEntity.ok(response);
+			}
+
+			// upload pdf to document asset
+			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final PresignedURL presignedURL = proxy.getUploadUrl(newDocumentAssetId, filename).getBody();
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse pdfUploadResponse = httpclient.execute(put);
+
+			if(pdfUploadResponse.getStatusLine().getStatusCode() >= 400) {
+				response.setPdfUploadError(true);
+				return ResponseEntity.ok(response); 
+			}
+			
+			// fire and forgot pdf extractions
+			String jobId = knowledgeMiddlewareProxy.postPDFToCosmos(newDocumentAssetId).getBody().get("id").asText();
+			response.setExtractionJobId(jobId);
+			
+			return ResponseEntity.ok(response);		
+		} catch (Exception e) {
+			log.error("Unable to GET document data", e);
+			return ResponseEntity.internalServerError().build();
+		}		
 	}
 
 

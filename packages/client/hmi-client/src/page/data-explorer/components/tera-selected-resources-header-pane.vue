@@ -24,19 +24,14 @@
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
-import { isDataset, isModel, isDocument, getDocumentDoi, pdfNameFromUrl } from '@/utils/data-util';
+import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { AssetType, Document, DocumentAsset } from '@/types/Types';
+import { AssetType, Document } from '@/types/Types';
 import dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
-import { addDocumentFromDOI, createNewDocumentAsset } from '@/services/document-assets';
-import { get as getProject } from '@/services/project';
-import { getPDFURL } from '@/services/generate-download-link';
-import { useToastService } from '@/services/toast';
-
-const toast = useToastService();
+import { createDocumentFromXDD } from '@/services/document-assets';
 
 const router = useRouter();
 
@@ -58,41 +53,9 @@ const addResourcesToProject = async (projectId: string) => {
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isDocument(selectedItem)) {
 			const document = selectedItem as Document;
-			const name = document.title;
-
-			// get the project username
-			const project = await getProject(projectId);
-			const username = project?.username ?? '';
-
-			// get document doi
-			const doi = getDocumentDoi(document);
-			if (!doi) return;
-
-			// get filename
-			const fileUrl = await getPDFURL(doi);
-			const filename = pdfNameFromUrl(fileUrl);
-
-			const filenames: string[] = [];
-			if (filename) filenames.push(filename);
-			// create document asset
-			const documentAsset: DocumentAsset = {
-				name,
-				description: name,
-				fileNames: filenames,
-				username
-			};
-
-			const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
-			if (!newDocument || !newDocument.id) return;
-			// if there is no filename, we will not be able to upload the pdf, show error.
-			if (filename) {
-				await addDocumentFromDOI(newDocument.id, doi, filename);
-			} else {
-				toast.error('', `Unable to upload PDF for ${name}`);
-			}
-
+			await createDocumentFromXDD(document, projectId);
 			// finally add asset to project
-			await useProjects().addAsset(AssetType.Documents, newDocument.id, projectId);
+			await useProjects().get(projectId);
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -136,5 +138,18 @@ public class DownloadService {
 			}
 		}
 		return url;
+	}
+
+	public String pdfNameFromUrl(String url) {
+		if(url == null) return null;
+		
+		Pattern pattern = Pattern.compile("/([^/]+\\.pdf)$", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(url);
+	
+		if (matcher.find() && matcher.group(1) != null) {
+			return matcher.group(1);
+		}
+	
+		return null;
 	}
 }
