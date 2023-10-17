@@ -160,7 +160,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.html((d) => d.id);
+			.html((d) => d.label);
 
 		// transitions expression text
 		transitions
@@ -219,7 +219,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.text((d) => d.id);
+			.text((d) => d.label);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {

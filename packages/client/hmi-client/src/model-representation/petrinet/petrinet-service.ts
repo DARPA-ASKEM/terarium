@@ -39,7 +39,8 @@ export const convertAMRToACSet = (amr: Model) => {
 	const petrinetModel = amr.model as PetriNetModel;
 
 	petrinetModel.states.forEach((s) => {
-		result.S.push({ sname: s.id });
+		// Use of split is a hack to display state name instead of id
+		result.S.push({ sname: s.id.split('-')[0] });
 	});
 
 	petrinetModel.transitions.forEach((t) => {
@@ -49,7 +50,8 @@ export const convertAMRToACSet = (amr: Model) => {
 	petrinetModel.transitions.forEach((transition) => {
 		transition.input.forEach((input) => {
 			result.I.push({
-				is: result.S.findIndex((s) => s.sname === input) + 1,
+				// Use of split is a hack to display state name instead of id
+				is: result.S.findIndex((s) => s.sname === input.split('-')[0]) + 1,
 				it: result.T.findIndex((t) => t.tname === transition.id) + 1
 			});
 		});
@@ -58,7 +60,8 @@ export const convertAMRToACSet = (amr: Model) => {
 	petrinetModel.transitions.forEach((transition) => {
 		transition.output.forEach((output) => {
 			result.O.push({
-				os: result.S.findIndex((s) => s.sname === output) + 1,
+				// Use of split is a hack to display state name instead of id
+				os: result.S.findIndex((s) => s.sname === output.split('-')[0]) + 1,
 				ot: result.T.findIndex((t) => t.tname === transition.id) + 1
 			});
 		});
@@ -120,7 +123,8 @@ export const convertToIGraph = (amr: Model) => {
 		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
 			id: transition.id,
-			label: transition.id,
+			// Use of split is a hack to get a transition name since we don't have a name field for transitions for models created from equations
+			label: transition.id.split('-')[0],
 			type: 'transition',
 			x: 0,
 			y: 0,
