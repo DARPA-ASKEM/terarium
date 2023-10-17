@@ -169,6 +169,7 @@ export const createParameterMatrix = (
 				}
 			});
 		}
+		rows.push(row);
 	}
 
 	// Map inputs/outputs to their row/col positions
@@ -197,6 +198,7 @@ export const createParameterMatrix = (
 							rows[rowIdx][colIdx].content.value = parameter.value;
 							rows[rowIdx][colIdx].content.id = parameter.id;
 						}
+						break;
 					}
 				}
 			}

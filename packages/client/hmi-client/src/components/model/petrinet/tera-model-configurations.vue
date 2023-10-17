@@ -102,7 +102,6 @@
 					<tera-stratified-value-matrix
 						:model-configuration="modelConfigurations[modalAttributes.configIndex]"
 						:id="modalAttributes.id"
-						:configIndex="modalAttributes.configIndex"
 						:stratified-model-type="stratifiedModelType"
 						:ode-type="modalAttributes.odeType"
 						:should-eval="matrixShouldEval"
