@@ -493,7 +493,7 @@ export interface Document {
 export interface DocumentExtraction {
     fileName: string;
     assetType: string;
-    metadata: any;
+    metadata: { [index: string]: any };
 }
 
 export interface ModelHeader {
