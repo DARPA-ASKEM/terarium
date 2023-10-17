@@ -56,19 +56,31 @@
 						<Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
 					</template> -->
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(usage)">
+			<AccordionTab
+				:headerStyle="{ display: isEmpty(usage) && 'none' }"
+				:contentStyle="{ display: isEmpty(usage) && 'none' }"
+			>
 				<template #header>Usage</template>
 				<p v-html="usage" />
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(sourceDataset)">
+			<AccordionTab
+				:headerStyle="{ display: isEmpty(sourceDataset) && 'none' }"
+				:contentStyle="{ display: isEmpty(sourceDataset) && 'none' }"
+			>
 				<template #header>Source dataset</template>
 				<p v-html="sourceDataset" />
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(provenance)">
+			<AccordionTab
+				:headerStyle="{ display: isEmpty(provenance) && 'none' }"
+				:contentStyle="{ display: isEmpty(provenance) && 'none' }"
+			>
 				<template #header>Provenance</template>
 				<p v-html="provenance" />
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(schema)">
+			<AccordionTab
+				:headerStyle="{ display: isEmpty(schema) && 'none' }"
+				:contentStyle="{ display: isEmpty(schema) && 'none' }"
+			>
 				<template #header>Schema</template>
 				<p v-html="schema" />
 			</AccordionTab>
@@ -642,6 +654,9 @@ section {
 	margin-left: 1rem;
 }
 
+.hidden-tab {
+	display: none;
+}
 .p-message.p-message-info {
 	max-width: 70rem;
 }
