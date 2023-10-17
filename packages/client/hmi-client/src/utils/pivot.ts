@@ -111,7 +111,6 @@ export const createParameterMatrix = (
 	transitionMatrixData: any[],
 	childParameterIds: string[]
 ) => {
-	let controllers: string[] = [];
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
@@ -119,7 +118,7 @@ export const createParameterMatrix = (
 		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
 	);
 
-	const controllerIndexMap = new Map();
+	const controllerIndexMap = new Map(); // Maps controllers to their input/output combo
 
 	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
 	for (let i = 0; i < transitions.length; i++) {
@@ -147,12 +146,10 @@ export const createParameterMatrix = (
 		}
 		inputs.push(...newInputs);
 		outputs.push(...newOutputs);
-		controllers.push(...newControllers);
 		// Update input/output for future transitions loop
 		transitions[i].input = newInputs;
 		transitions[i].output = newOutputs;
 	}
-	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
 	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
 	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
 
@@ -161,18 +158,17 @@ export const createParameterMatrix = (
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
 		const row: PivotMatrixCell[] = [];
 		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
-			//
-			const controller =
-				controllerIndexMap.get(inputs[rowIdx].concat('|', outputs[colIdx])) ?? null;
-
-			console.log([inputs[rowIdx], outputs[colIdx]], controller);
-
 			row.push({
 				row: rowIdx,
 				col: colIdx,
 				rowCriteria: inputs[rowIdx],
 				colCriteria: outputs[colIdx],
-				content: { value: null, id: '', controller }
+				content: {
+					value: null,
+					id: '',
+					// Insert controller(s) if they belong in this cell
+					controllers: controllerIndexMap.get(inputs[rowIdx].concat('|', outputs[colIdx])) ?? null
+				}
 			});
 		}
 		rows.push(row);
@@ -194,6 +190,7 @@ export const createParameterMatrix = (
 			for (let j = 0; j < input.length; j++) {
 				const rowIdx = rowIndexMap.get(input[j]);
 				const colIdx = colIndexMap.get(output[j]);
+				console.log(rowIdx, colIdx);
 				for (let k = 0; k < childParameterIds.length; k++) {
 					// Fill cell content with parameter content
 					if (rate.expression.includes(childParameterIds[k])) {
@@ -210,10 +207,7 @@ export const createParameterMatrix = (
 			}
 		}
 	}
-	if (_.isEqual(controllers, [''])) controllers = [];
-	console.log(rows, controllers);
-	console.log(controllerIndexMap);
-	return { matrix: rows, controllers };
+	return { matrix: rows };
 };
 
 // Creates a M x N matrix where

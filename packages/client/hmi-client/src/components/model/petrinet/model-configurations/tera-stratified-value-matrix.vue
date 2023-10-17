@@ -8,28 +8,17 @@
 				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
 						<th v-if="matrix.length > 1" class="choose-criteria"></th>
-						<!-- <th v-if="!isEmpty(controllers)" class="choose-criteria"></th> -->
 						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
-						<!-- <td
-							v-if="!isEmpty(controllers) && rowIdx % controllers.length === 0"
-							class="p-frozen-column"
-							:rowspan="matrix.length / controllers.length"
-						>
-							{{ row[0].rowCriteria }}
-						</td> -->
 						<td v-if="matrix.length > 1" class="p-frozen-column">
 							<template v-if="nodeType === NodeType.State">
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
 							<template v-else>
 								{{ row[0].rowCriteria }}
-								<!-- <template v-if="!isEmpty(row[0].content.controller)"
-									>_{{ row[0].content.controller }}
-								</template> -->
 							</template>
 						</td>
 						<td
@@ -56,8 +45,10 @@
 								/>
 								<div v-else>
 									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+									<div v-if="cell?.content?.controllers">
+										controllers: {{ cell?.content?.controllers }}
+									</div>
 								</div>
-								{{ cell?.content?.controller }}
 							</template>
 							<span v-else class="not-allowed">N/A</span>
 						</td>
@@ -91,7 +82,6 @@ const props = defineProps<{
 const emit = defineEmits(['update-configuration']);
 
 const matrix = ref<any>([]);
-const controllers = ref<string[]>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
@@ -197,7 +187,6 @@ function renderMatrix() {
 	if (!matrixAttributes) return;
 
 	matrix.value = matrixAttributes.matrix;
-	controllers.value = matrixAttributes.controllers;
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
