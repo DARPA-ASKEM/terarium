@@ -241,15 +241,13 @@ export const generateMatrix = (amr: Model, id: string, nodeType: NodeType) => {
 	if (_.isEmpty(matrixData)) return null;
 
 	let matrix: any[] = [];
-	let controllers: string[] = [];
 
 	if (nodeType === NodeType.State) {
 		matrix = createMatrix1D(matrixData);
 	} else {
 		const matrixAttributes = createParameterMatrix(amr, matrixData, childParameterIds);
 		matrix = matrixAttributes.matrix;
-		controllers = matrixAttributes.controllers;
 	}
 
-	return { matrix, controllers };
+	return matrix;
 };

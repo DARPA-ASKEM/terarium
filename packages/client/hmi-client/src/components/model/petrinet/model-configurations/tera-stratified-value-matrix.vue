@@ -64,7 +64,6 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
 import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
-import {} from '@/utils/pivot';
 import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
@@ -179,14 +178,7 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 }
 
 function renderMatrix() {
-	const matrixAttributes = generateMatrix(
-		props.modelConfiguration.configuration,
-		props.id,
-		props.nodeType
-	);
-	if (!matrixAttributes) return;
-
-	matrix.value = matrixAttributes.matrix;
+	matrix.value = generateMatrix(props.modelConfiguration.configuration, props.id, props.nodeType);
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
