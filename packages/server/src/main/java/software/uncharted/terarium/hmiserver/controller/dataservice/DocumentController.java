@@ -33,11 +33,15 @@ import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewa
 
 import org.apache.http.entity.StringEntity;
 import org.apache.commons.io.IOUtils;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @RequestMapping("/document-asset")
@@ -47,6 +51,9 @@ public class DocumentController implements SnakeCaseController {
 
 	@Autowired
 	DocumentProxy proxy;
+
+	@Autowired
+	SkemaUnifiedProxy skemaUnifiedProxy;
 
 	@Autowired
 	JsDelivrProxy gitHubProxy;
@@ -85,11 +92,41 @@ public class DocumentController implements SnakeCaseController {
 	) {
 		DocumentAsset document = proxy.getAsset(id).getBody();
 
-		// Add the S3 bucket url to each asset metadata
+		// Test if the document as any assets
+        if (document.getAssets() != null && document.getAssets().isEmpty()) {
+			return ResponseEntity.ok(document);
+		}
+
 		document.getAssets().forEach(asset -> {
-			asset.getMetadata().put("url", proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl());
+			try {
+				// Add the S3 bucket url to each asset metadata
+				String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
+				asset.getMetadata().put("url", url);
+
+				// if the asset os of type equation
+				if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
+					// Fetch the image from the URL
+					byte[] imagesByte = IOUtils.toByteArray(new URL(url));
+					// Encode the image in Base 64
+					String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+					// Send it to SKEMA to get the Presentation MathML equation
+					String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+
+					log.warn("Equation: {}", equation);
+
+					// Add the equations into the metadata
+					asset.getMetadata().put("equation", equation);
+				}
+			} catch (IOException e) {
+				log.error("Unable to extract S3 url for assets", e);
+			}
 		});
 
+		// Update data-service with the updated metadata
+		proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(document));
+
+		// Return the updated document
 		return ResponseEntity.ok(document);
 	}
 
