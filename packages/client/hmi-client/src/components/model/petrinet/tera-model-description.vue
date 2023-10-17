@@ -518,8 +518,8 @@ const transitions = computed(() => {
 			results.push({
 				id: t.id,
 				name: t?.properties?.name ?? '--',
-				input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
-				output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
+				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
+				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
 				expression:
 					props.model?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ??
 					null,

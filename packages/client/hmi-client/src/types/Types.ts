@@ -346,9 +346,9 @@ export interface PermissionProject {
 }
 
 export interface PermissionRelationships {
-    projects: PermissionProject[];
-    groups: PermissionGroup[];
-    users: PermissionUser[];
+    permissionGroups: PermissionGroup[];
+    permissionUsers: PermissionUser[];
+    permissionProjects: PermissionProject[];
 }
 
 export interface PermissionUser {
@@ -487,7 +487,7 @@ export interface Document {
 export interface DocumentExtraction {
     fileName: string;
     assetType: string;
-    metadata: any;
+    metadata: { [index: string]: any };
 }
 
 export interface ModelHeader {

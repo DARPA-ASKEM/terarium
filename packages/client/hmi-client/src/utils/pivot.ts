@@ -7,7 +7,6 @@ export interface PivotMatrixCell {
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
-	controllers?: string[];
 	content: any;
 }
 
@@ -112,7 +111,6 @@ export const createParameterMatrix = (
 	transitionMatrixData: any[],
 	childParameterIds: string[]
 ) => {
-	let controllers: string[] = [];
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
@@ -120,20 +118,36 @@ export const createParameterMatrix = (
 		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
 	);
 
+	const controllerIndexMap = new Map(); // Maps controllers to their input/output combo
+
 	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output } = transitions[i];
 		// Extract and remove controllers out of inputs array
-		const newInputs = input.filter((ip: string) => !output.includes(ip));
-		const newOutputs = output.filter((ip: string) => !input.includes(ip));
+		const newInputs: string[] = [];
+		const newOutputs: string[] = [];
+		const newControllers: string[] = [];
+		for (let j = 0; j < input.length; j++) {
+			if (input[j] !== output[j]) {
+				newInputs.push(input[j]);
+				newOutputs.push(output[j]);
+			} else {
+				newControllers.push(input[j]);
+			}
+		}
+
+		if (!_.isEmpty(newControllers)) {
+			// Map controllers unique to these input/output combos
+			for (let j = 0; j < newInputs.length; j++) {
+				controllerIndexMap.set(newInputs[j].concat('|', newOutputs[j]), newControllers);
+			}
+		}
 		inputs.push(...newInputs);
 		outputs.push(...newOutputs);
-		controllers.push(...input.filter((ip: string) => output.includes(ip)));
 		// Update input/output for future transitions loop
 		transitions[i].input = newInputs;
 		transitions[i].output = newOutputs;
 	}
-	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
 	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
 	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
 
@@ -149,7 +163,9 @@ export const createParameterMatrix = (
 				colCriteria: outputs[colIdx],
 				content: {
 					value: null,
-					id: ''
+					id: '',
+					// Insert controller(s) if they belong in this cell
+					controllers: controllerIndexMap.get(inputs[rowIdx].concat('|', outputs[colIdx])) ?? null
 				}
 			});
 		}
@@ -179,8 +195,8 @@ export const createParameterMatrix = (
 							(p) => p.id === childParameterIds[k]
 						);
 						if (parameter) {
-							rows[rowIdx][colIdx].content.id = parameter.id;
 							rows[rowIdx][colIdx].content.value = parameter.value;
+							rows[rowIdx][colIdx].content.id = parameter.id;
 						}
 						break;
 					}
@@ -188,10 +204,7 @@ export const createParameterMatrix = (
 			}
 		}
 	}
-	return {
-		matrix: rows,
-		controllers
-	};
+	return { matrix: rows };
 };
 
 // Creates a M x N matrix where

@@ -1,24 +1,17 @@
 <template>
 	<section class="tera-ensemble">
-		<div class="ensemble-header p-buttonset">
-			<Button
-				label="Input"
-				severity="secondary"
-				icon="pi pi-sign-in"
-				size="small"
-				:active="activeTab === EnsembleTabs.input"
-				@click="activeTab = EnsembleTabs.input"
-			/>
-			<Button
-				label="Ouput"
-				severity="secondary"
-				icon="pi pi-sign-out"
-				size="small"
-				:active="activeTab === EnsembleTabs.output"
-				@click="activeTab = EnsembleTabs.output"
-			/>
-		</div>
-		<div v-if="activeTab === EnsembleTabs.output && runResults" class="simulate-container">
+		<SelectButton
+			:model-value="view"
+			@change="if ($event.value) view = $event.value;"
+			:options="viewOptions"
+			option-value="value"
+		>
+			<template #option="{ option }">
+				<i :class="`${option.icon} p-button-icon-left`" />
+				<span class="p-button-label">{{ option.value }}</span>
+			</template>
+		</SelectButton>
+		<div v-if="view === CalibrateView.Output && runResults" class="simulate-container">
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -60,7 +53,7 @@
 			</span>
 		</div>
 
-		<div v-else-if="activeTab === EnsembleTabs.input && node" class="simulate-container">
+		<div v-else-if="view === CalibrateView.Input && node" class="simulate-container">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<AccordionTab header="Model Weights">
 					<div class="model-weights">
@@ -224,6 +217,7 @@ import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -235,9 +229,9 @@ const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
 
-enum EnsembleTabs {
-	input,
-	output
+enum CalibrateView {
+	Input = 'Input',
+	Output = 'Output'
 }
 enum EnsembleCalibrationMode {
 	EQUALWEIGHTS = 'equalWeights',
@@ -253,7 +247,11 @@ const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
-const activeTab = ref(EnsembleTabs.input);
+const view = ref(CalibrateView.Input);
+const viewOptions = ref([
+	{ value: CalibrateView.Input, icon: 'pi pi-sign-in' },
+	{ value: CalibrateView.Output, icon: 'pi pi-sign-out' }
+]);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
