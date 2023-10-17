@@ -142,9 +142,11 @@ public class DownloadService {
 
 	public String pdfNameFromUrl(String url) {
 		if(url == null) return null;
-		
+
+		String[] parts = url.split("\\?"); // Remove query parameters
+        String urlWithoutParams = parts[0];
 		Pattern pattern = Pattern.compile("/([^/]+\\.pdf)$", Pattern.CASE_INSENSITIVE);
-		Matcher matcher = pattern.matcher(url);
+		Matcher matcher = pattern.matcher(urlWithoutParams);
 	
 		if (matcher.find() && matcher.group(1) != null) {
 			return matcher.group(1);
