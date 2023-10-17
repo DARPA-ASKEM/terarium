@@ -132,9 +132,9 @@ import CodeEditor from '@/page/project/components/code-editor.vue';
 import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
-	EXTRACTIONS,
-	PDF,
-	TXT
+	EXTRACTIONS = 'Extractions',
+	PDF = 'PDF',
+	TXT = 'Text'
 }
 
 const props = defineProps<{
