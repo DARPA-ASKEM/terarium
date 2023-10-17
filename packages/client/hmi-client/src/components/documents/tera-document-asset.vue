@@ -56,7 +56,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image id="img" class="extracted-image" :src="ex.metadata?.img_pth" :alt="''" preview />
+						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
@@ -73,7 +73,7 @@
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"
@@ -91,7 +91,7 @@
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"

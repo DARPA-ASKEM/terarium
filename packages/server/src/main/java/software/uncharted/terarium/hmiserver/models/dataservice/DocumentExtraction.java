@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
@@ -17,5 +18,5 @@ public class DocumentExtraction implements Serializable {
     @JsonAlias("asset_type")
 	private String assetType;
 
-	private Object metadata;
+	private Map<String,Object> metadata;
 }
