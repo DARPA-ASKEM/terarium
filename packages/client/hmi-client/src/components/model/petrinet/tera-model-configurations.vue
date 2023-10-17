@@ -101,6 +101,7 @@
 						:stratified-model-type="stratifiedModelType"
 						:node-type="modalAttributes.nodeType"
 						:should-eval="matrixShouldEval"
+						@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
 					/>
 				</template>
 				<template #footer>
@@ -209,14 +210,12 @@ import {
 	getUnstratifiedParameters
 } from '@/model-representation/petrinet/mira-petri';
 import { FeatureConfig, ParamType } from '@/types/common';
-
 import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import Dropdown from 'primevue/dropdown';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
-// st
 import Checkbox from 'primevue/checkbox';
 import InputText from 'primevue/inputtext';
 import TeraStratifiedValueMatrix from './model-configurations/tera-stratified-value-matrix.vue';
@@ -427,12 +426,16 @@ function checkModelParameters() {
 	return true;
 }
 
+function updateConfiguration(configToUpdate: ModelConfiguration, index: number) {
+	emit('update-configuration', configToUpdate, index);
+}
+
 function updateName(index: number) {
 	const configToUpdate = cloneDeep(props.modelConfigurations[index]);
 	cellEditStates.value[index].name = false;
 	if (configToUpdate.name !== editValue.value && !isEmpty(editValue.value)) {
 		configToUpdate.name = editValue.value;
-		emit('update-configuration', configToUpdate, index);
+		updateConfiguration(configToUpdate, index);
 	}
 }
 
@@ -445,7 +448,7 @@ function updateValue(odeType: string, valueName: string, index: number, odeObjIn
 		!isEmpty(editValue.value)
 	) {
 		configToUpdate.configuration.semantics.ode[odeType][odeObjIndex][valueName] = editValue.value;
-		emit('update-configuration', configToUpdate, index);
+		updateConfiguration(configToUpdate, index);
 	}
 }
 
@@ -515,7 +518,7 @@ watch(
 );
 
 watch(
-	() => [props.model.id, props.modelConfigurations],
+	() => [props.model.id],
 	() => {
 		setupConfigurations();
 	},

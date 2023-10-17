@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
+import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -7,7 +9,7 @@ import { Model, PetriNetTransition } from '@/types/Types';
 export const getStates = (amr: Model) => {
 	const model = amr.model;
 	const lookup = new Map();
-	const matrixData: object[] = [];
+	const matrixData: any[] = [];
 
 	const dupe: Set<string> = new Set();
 	const uniqueStates: any[] = []; // FIXME: grounding typing incorrect
@@ -60,7 +62,7 @@ export const getStates = (amr: Model) => {
 export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	const model = amr.model;
 	const uniqueTransitions: Partial<PetriNetTransition>[] = [];
-	const matrixData: object[] = [];
+	const matrixData: any[] = [];
 
 	// Cache state-modifiers for faster fetch
 	const stateModifierMap = new Map();
@@ -215,4 +217,36 @@ export const getMiraAMRPresentationData = (amr: Model) => {
 		stateMatrixData: statesData.matrixData,
 		transitionMatrixData: transitionsData.matrixData
 	};
+};
+
+export const generateMatrix = (amr: Model, id: string, nodeType: NodeType) => {
+	const { stateMatrixData, transitionMatrixData } = getMiraAMRPresentationData(amr);
+
+	// Get only the states/transitions that are mapped to the base model
+	let matrixData: any[] = [];
+	let childParameterIds: string[] = [];
+
+	if (nodeType === NodeType.State) {
+		matrixData = stateMatrixData.filter(({ base }) => base === id);
+	} else {
+		const paramsMap = getUnstratifiedParameters(amr);
+		if (!paramsMap.has(id)) return null;
+
+		// IDs to find within the rates
+		childParameterIds = paramsMap.get(id) as string[];
+		// Holds all points that have the parameter
+		matrixData = filterParameterLocations(amr, transitionMatrixData, [...childParameterIds, id]);
+	}
+
+	if (_.isEmpty(matrixData)) return null;
+
+	let matrix: any[] = [];
+
+	if (nodeType === NodeType.State) {
+		matrix = createMatrix1D(matrixData).matrix;
+	} else {
+		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
+	}
+
+	return matrix;
 };
