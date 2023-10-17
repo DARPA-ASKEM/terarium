@@ -190,7 +190,6 @@ export const createParameterMatrix = (
 			for (let j = 0; j < input.length; j++) {
 				const rowIdx = rowIndexMap.get(input[j]);
 				const colIdx = colIndexMap.get(output[j]);
-				console.log(rowIdx, colIdx);
 				for (let k = 0; k < childParameterIds.length; k++) {
 					// Fill cell content with parameter content
 					if (rate.expression.includes(childParameterIds[k])) {
