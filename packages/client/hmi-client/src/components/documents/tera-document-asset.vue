@@ -20,7 +20,7 @@
 				<template #option="{ option }">
 					<i
 						:class="`${
-							!pdfLink && option.value !== DocumentView.EXRACTIONS
+							!pdfLink && option.value !== DocumentView.EXTRACTIONS
 								? 'pi pi-spin pi-spinner'
 								: option.icon
 						} p-button-icon-left`"
@@ -38,7 +38,7 @@
 			</div>
 		</template>
 		<Accordion
-			v-if="view === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -132,9 +132,9 @@ import CodeEditor from '@/page/project/components/code-editor.vue';
 import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
-	EXRACTIONS = 'Extractions',
-	PDF = 'PDF',
-	TXT = 'txt'
+	EXTRACTIONS,
+	PDF,
+	TXT
 }
 
 const props = defineProps<{
@@ -146,8 +146,8 @@ const props = defineProps<{
 
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
-const view = ref(DocumentView.EXRACTIONS);
-const viewOptions = ref([{ value: DocumentView.EXRACTIONS, icon: 'pi pi-list' }]);
+const view = ref(DocumentView.EXTRACTIONS);
+const viewOptions = ref([{ value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' }]);
 const code = ref<string>();
 
 const docLink = computed(() =>
