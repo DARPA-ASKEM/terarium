@@ -103,7 +103,7 @@ export const createMatrix1D = (data: any[]) => {
 		rows.push(row);
 	}
 
-	return rows;
+	return { matrix: rows };
 };
 
 export const createParameterMatrix = (

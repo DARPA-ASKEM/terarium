@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
-import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
+import { OdeSemantic } from '@/types/common';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -222,14 +222,14 @@ export const getMiraAMRPresentationData = (amr: Model) => {
 	};
 };
 
-export const generateMatrix = (amr: Model, id: string, nodeType: NodeType) => {
+export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => {
 	const { stateMatrixData, transitionMatrixData } = getMiraAMRPresentationData(amr);
 
 	// Get only the states/transitions that are mapped to the base model
 	let matrixData: any[] = [];
 	let childParameterIds: string[] = [];
 
-	if (nodeType === NodeType.State) {
+	if (odeType === OdeSemantic.Initials) {
 		matrixData = stateMatrixData.filter(({ base }) => base === id);
 	} else {
 		const paramsMap = getUnstratifiedParameters(amr);
@@ -245,7 +245,7 @@ export const generateMatrix = (amr: Model, id: string, nodeType: NodeType) => {
 
 	let matrix: any[] = [];
 
-	if (nodeType === NodeType.State) {
+	if (odeType === OdeSemantic.Initials) {
 		matrix = createMatrix1D(matrixData).matrix;
 	} else {
 		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
