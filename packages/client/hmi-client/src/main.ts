@@ -1,5 +1,6 @@
 import { logger } from '@/utils/logger';
 import { createApp } from 'vue';
+import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
 import axios from 'axios';
 import ConfirmationService from 'primevue/confirmationservice';
@@ -78,7 +79,7 @@ keycloak
 		console.error('Authentication Failed', e);
 	});
 
-let previousRoute;
+let previousRoute: RouteLocationNormalized | null = null;
 let routeStartedMillis = Date.now();
 router.beforeEach((to, _from, next) => {
 	if (previousRoute) {

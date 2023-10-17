@@ -59,7 +59,14 @@ public class DocumentController implements SnakeCaseController {
 	public ResponseEntity<DocumentAsset> getDocument(
 		@PathVariable("id") String id
 	) {
-		return ResponseEntity.ok(proxy.getAsset(id).getBody());
+		DocumentAsset document = proxy.getAsset(id).getBody();
+
+		// Add the S3 bucket url to each asset metadata
+		document.getAssets().forEach(asset -> {
+			asset.getMetadata().put("url", proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl());
+		});
+
+		return ResponseEntity.ok(document);
 	}
 
 	@DeleteMapping("/{id}")
@@ -96,8 +103,9 @@ public class DocumentController implements SnakeCaseController {
 		}
 	}
 
-
-
+	/**
+	 * Uploads a file to the project.
+	 */
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Integer> uploadDocument(
 		@PathVariable("id") String id,
