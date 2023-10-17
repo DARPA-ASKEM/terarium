@@ -97,6 +97,7 @@
 								:lines="previewLineLimit"
 							/>
 						</div>
+						{{ ex.metadata?.equation }}
 					</li>
 				</ul>
 			</AccordionTab>
