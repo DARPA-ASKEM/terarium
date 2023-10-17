@@ -129,8 +129,8 @@ import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 
 const props = defineProps<{
-	assetId?: string;
-	pageType?: AssetType | ProjectPages;
+	assetId: string;
+	pageType: AssetType | ProjectPages;
 }>();
 
 enum NoteSection {

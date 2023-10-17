@@ -115,6 +115,8 @@ export interface Project {
     assets?: Assets;
     metadata?: { [index: string]: string };
     username: string;
+    publicProject?: boolean;
+    userPermission?: string;
     id?: string;
     relatedDocuments?: Document[];
 }
@@ -299,7 +301,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 
 export interface EvaluationScenarioSummary {
     name: string;
-    username: string;
+    userId: string;
     task: string;
     description: string;
     notes: string;
@@ -325,6 +327,31 @@ export interface DKG {
     name: string;
     description: string;
     link: string;
+}
+
+export interface PermissionGroup {
+    id: string;
+    name: string;
+    relationship?: string;
+}
+
+export interface PermissionProject {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionRelationships {
+    permissionGroups: PermissionGroup[];
+    permissionUsers: PermissionUser[];
+    permissionProjects: PermissionProject[];
+}
+
+export interface PermissionUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    relationship?: string;
 }
 
 export interface CalibrationRequestCiemss {
@@ -424,6 +451,7 @@ export interface Assets {
     workflows: Workflow[];
     artifacts: Artifact[];
     code: Code[];
+    documents: DocumentAsset[];
 }
 
 export interface Document {
@@ -446,6 +474,7 @@ export interface Document {
     relatedDocuments: Document[];
     relatedExtractions: Extraction[];
     knownEntities: KnownEntities;
+    knownEntitiesCounts: KnownEntitiesCounts;
     citationList: { [index: string]: string }[];
     citedBy: { [index: string]: any }[];
 }
@@ -453,7 +482,7 @@ export interface Document {
 export interface DocumentExtraction {
     fileName: string;
     assetType: string;
-    metadata: any;
+    metadata: { [index: string]: any };
 }
 
 export interface ModelHeader {
@@ -565,6 +594,11 @@ export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
     summaries: string[];
+}
+
+export interface KnownEntitiesCounts {
+    askemObjectCount: number;
+    urlExtractionCount: number;
 }
 
 export interface OdeSemantics {
@@ -761,6 +795,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    TestType = "TEST_TYPE",
 }
 
 export enum AuthorityLevel {

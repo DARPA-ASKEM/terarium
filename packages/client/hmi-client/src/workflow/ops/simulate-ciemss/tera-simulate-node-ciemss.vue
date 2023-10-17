@@ -1,25 +1,23 @@
 <template>
 	<section v-if="!showSpinner">
-		<div class="chart-container">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				has-mean-line
-				@configuration-change="configurationChange(index, $event)"
-			/>
-		</div>
 		<div class="button-container">
-			<Button
-				class="add-chart"
-				size="small"
-				text
-				@click="addChart"
-				label="Add chart"
-				icon="pi pi-plus"
-			></Button>
 			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>
+		</div>
+		<Dropdown
+			v-if="runList.length > 0"
+			:options="runList"
+			v-model="selectedRun"
+			option-label="label"
+			placeholder="Select a simulation run"
+			@update:model-value="handleSelectedRunChange"
+		/>
+		<div class="chart-container" v-if="runResults[selectedRun?.runId]">
+			<tera-simulate-chart
+				:run-results="runResults[selectedRun.runId]"
+				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
+				has-mean-line
+				@configuration-change="configurationChange(selectedRun.idx, $event)"
+			/>
 		</div>
 		<Accordion :multiple="true" :active-index="[0]">
 			<AccordionTab header="EXTRAS">
@@ -39,7 +37,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -73,9 +71,17 @@ const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const completedRunIdList = ref<string[]>([]);
-const runResults = ref<RunResults>({});
-const runConfigs = ref<{ [paramKey: string]: number[] }>({});
+const runResults = ref<{ [runId: string]: RunResults }>({});
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+
+const runList = computed(() =>
+	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
+		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
+		idx,
+		runId: cfg.selectedRun
+	}))
+);
+const selectedRun = ref();
 
 const poller = new Poller();
 
@@ -83,33 +89,42 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
+	// Since we've disabled multiple configs to a simulation node, we can assume only one config
+	const modelConfigId = modelConfigurationList[0];
+
 	const state = props.node.state;
 
-	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
-		const payload: SimulationRequest = {
-			modelConfigId: configId,
-			timespan: {
-				start: state.currentTimespan.start,
-				end: state.currentTimespan.end
-			},
-			extra: {
-				num_samples: state.numSamples,
-				method: state.method
-			},
-			engine: 'ciemss'
-		};
-		const response = await makeForecastJob(payload);
-		return response.id;
-	});
-
-	const response = await Promise.all(simulationRequests);
-	getStatus(response);
+	const payload: SimulationRequest = {
+		modelConfigId,
+		timespan: {
+			start: state.currentTimespan.start,
+			end: state.currentTimespan.end
+		},
+		extra: {
+			num_samples: state.numSamples,
+			method: state.method
+		},
+		engine: 'ciemss'
+	};
+	const response = await makeForecastJob(payload);
+	getStatus([response.id]);
 };
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
+	}
+
+	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
+
+	if (selectedRun.value?.runId) {
+		lazyLoadRunResults(selectedRun.value.runId);
 	}
 });
 
@@ -141,16 +156,19 @@ const getStatus = async (runIds: string[]) => {
 const watchCompletedRunList = async (runIdList: string[]) => {
 	if (runIdList.length === 0) return;
 
-	const output = await getRunResultCiemss(runIdList[0]);
-	runResults.value = output.runResults;
-	runConfigs.value = output.runConfigs;
+	await lazyLoadRunResults(runIdList[0]);
 
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `${port.label} Results`,
+		label: `${port.label} - Output ${runList.value.length + 1}`, // TODO: figure out more robust naming system
 		value: runIdList
 	});
+
+	// show the latest run in the dropdown
+	selectedRun.value = runList.value[runList.value.length - 1];
+	// persist the selected run in the chart config
+	handleSelectedRunChange();
 };
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
@@ -193,9 +211,23 @@ const configurationChange = (index: number, config: ChartConfig) => {
 	});
 };
 
-const addChart = () => {
+const lazyLoadRunResults = async (runId: string) => {
+	if (runResults.value[runId]) return;
+
+	const output = await getRunResultCiemss(runId);
+	runResults.value[runId] = output.runResults;
+};
+
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	lazyLoadRunResults(selectedRun.value.runId);
+
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	// set the active status for the selected run in the chart configs
+	state.chartConfigs.forEach((cfg, idx) => {
+		cfg.active = idx === selectedRun.value?.idx;
+	});
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -203,16 +235,6 @@ const addChart = () => {
 		state
 	});
 };
-
-onMounted(async () => {
-	const port = props.node.outputs[0];
-	if (!port) return;
-
-	const runIdList = port.value as string[];
-	const output = await getRunResultCiemss(runIdList[0]);
-	runResults.value = output.runResults;
-	runConfigs.value = output.runConfigs;
-});
 </script>
 
 <style scoped>
@@ -220,6 +242,7 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	padding: 10px;
 	background: var(--surface-overlay);
 }
 
@@ -227,16 +250,11 @@ section {
 	margin: 1.5em 0em;
 }
 
-.add-chart {
-	width: 9em;
-}
-
 .extras {
 	display: grid;
 }
 
 .button-container {
-	display: flex;
-	justify-content: space-between;
+	padding-bottom: 10px;
 }
 </style>

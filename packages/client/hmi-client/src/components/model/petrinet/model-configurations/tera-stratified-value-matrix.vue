@@ -8,28 +8,17 @@
 				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
 						<th v-if="matrix.length > 1" class="choose-criteria"></th>
-						<th v-if="!isEmpty(controllers)" class="choose-criteria"></th>
 						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
-						<td
-							v-if="!isEmpty(controllers) && rowIdx % controllers.length === 0"
-							class="p-frozen-column"
-							:rowspan="matrix.length / controllers.length"
-						>
-							{{ row[0].rowCriteria }}
-						</td>
 						<td v-if="matrix.length > 1" class="p-frozen-column">
 							<template v-if="odeType === OdeSemantic.Initials">
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
 							<template v-else>
-								{{ row[0].rowCriteria
-								}}<template v-if="!isEmpty(row[0].content.controller)"
-									>_{{ row[0].content.controller }}
-								</template>
+								{{ row[0].rowCriteria }}
 							</template>
 						</td>
 						<td
@@ -50,12 +39,15 @@
 									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 								/>
 								<div
-									v-else-if="odeType !== OdeSemantic.Parameters"
+									v-else-if="odeType === OdeSemantic.Initials"
 									class="mathml-container"
 									v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
 								/>
 								<div v-else>
 									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+									<div v-if="cell?.content?.controllers">
+										controllers: {{ cell?.content?.controllers }}
+									</div>
 								</div>
 							</template>
 							<span v-else class="not-allowed">N/A</span>
@@ -71,18 +63,8 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
-import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
-import {
-	getMiraAMRPresentationData,
-	getUnstratifiedParameters,
-	filterParameterLocations
-} from '@/model-representation/petrinet/mira-petri';
-import {
-	createMatrix1D,
-	createParameterMatrix,
-	createParameterOrTransitionMatrix
-} from '@/utils/pivot';
-import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
+import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
+import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
 import { OdeSemantic } from '@/types/common';
@@ -90,7 +72,6 @@ import { OdeSemantic } from '@/types/common';
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
-	configIndex: number;
 	stratifiedModelType: StratifiedModelType;
 	odeType: OdeSemantic;
 	shouldEval: boolean;
@@ -98,11 +79,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-configuration']);
 
-const colDimensions: string[] = [];
-const rowDimensions: string[] = [];
-
 const matrix = ref<any>([]);
-const controllers = ref<string[]>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
@@ -199,6 +176,10 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
+function renderMatrix() {
+	matrix.value = generateMatrix(props.modelConfiguration.configuration, props.id, props.odeType);
+}
+
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
 	editableCellStates.value[rowIdx][colIdx] = false;
 	const newValue = valueToEdit.value;
@@ -225,78 +206,18 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
-		emit('update-configuration', modelConfigurationClone, props.configIndex);
-		generateMatrix();
+		emit('update-configuration', modelConfigurationClone);
+		renderMatrix();
 	}
-}
-
-function generateMatrix(populateDimensions = false) {
-	const amr: Model = props.modelConfiguration.configuration;
-
-	const { stateMatrixData, transitionMatrixData } =
-		props.stratifiedModelType === StratifiedModelType.Catlab
-			? getCatlabAMRPresentationData(amr)
-			: getMiraAMRPresentationData(amr);
-
-	console.log(props.odeType);
-
-	// Get only the states/transitions that are mapped to the base model
-	let matrixData: any[] = [];
-	let childParameterIds: string[] = [];
-
-	if (props.odeType === OdeSemantic.Initials) {
-		matrixData = stateMatrixData.filter(({ base }) => base === props.id);
-	} else if (props.odeType === OdeSemantic.Parameters) {
-		const paramsMap = getUnstratifiedParameters(amr);
-		if (!paramsMap.has(props.id)) return [];
-
-		// IDs to find within the rates
-		childParameterIds = paramsMap.get(props.id) as string[];
-		// Holds all points that have the parameter
-		matrixData = filterParameterLocations(amr, transitionMatrixData, [
-			...childParameterIds,
-			props.id
-		]);
-	} else if (props.odeType === OdeSemantic.Rates) {
-		matrixData = transitionMatrixData.filter(({ base }) => base === props.id);
-	}
-
-	if (isEmpty(matrixData)) return matrixData;
-
-	if (populateDimensions) {
-		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-			delete d.id;
-			delete d.base;
-			return Object.keys(d);
-		})[0];
-
-		console.log(dimensions);
-
-		rowDimensions.push(...dimensions);
-		colDimensions.push(...dimensions);
-	}
-
-	if (props.odeType === OdeSemantic.Initials) {
-		matrix.value = createMatrix1D(matrixData);
-	} else if (props.odeType === OdeSemantic.Parameters) {
-		const matrixAttributes = createParameterMatrix(amr, matrixData, childParameterIds);
-		matrix.value = matrixAttributes.matrix;
-		controllers.value = matrixAttributes.controllers;
-	} else if (props.odeType === OdeSemantic.Rates) {
-		const matrixAttributes = createParameterOrTransitionMatrix(matrixData, amr);
-		matrix.value = matrixAttributes.matrix;
-		controllers.value = matrixAttributes.controllers;
-	}
-
-	return matrixData;
 }
 
 function configureMatrix() {
-	const matrixData = generateMatrix(true);
-	if (isEmpty(matrixData)) return;
+	renderMatrix();
 
-	for (let i = 0; i < matrix.value.length; i++) {
-		editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
+	if (!isEmpty(matrix.value)) {
+		for (let i = 0; i < matrix.value.length; i++) {
+			editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
+		}
 	}
 }
 

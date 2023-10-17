@@ -1,21 +1,10 @@
 <template>
-	<tera-model
-		v-if="pageType === AssetType.Models"
-		:asset-id="assetId ?? ''"
-		@asset-loaded="emit('asset-loaded')"
-	/>
-	<tera-code
-		:asset-id="assetId ?? ''"
-		v-else-if="pageType === AssetType.Code"
-		@asset-loaded="emit('asset-loaded')"
-	/>
+	<tera-model v-if="pageType === AssetType.Models" :asset-id="assetId ?? ''" />
+	<tera-code :asset-id="assetId ?? ''" v-else-if="pageType === AssetType.Code" />
 	<code-editor
 		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
 		:initial-code="code"
-		@vue:mounted="
-			emit('asset-loaded');
-			openTextArtifact();
-		"
+		@vue:mounted="openTextArtifact()"
 	/>
 	<tera-pdf-embed
 		v-else-if="pageType === AssetType.Artifacts && assetName?.endsWith('.pdf')"
@@ -24,51 +13,29 @@
 	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
-		@vue:mounted="emit('asset-loaded')"
-		@open-new-asset="(assetType) => emit('open-new-asset', assetType)"
+		@open-new-asset="(assetType: AssetType) => emit('open-new-asset', assetType)"
 	/>
-	<tera-workflow
-		v-else-if="pageType === AssetType.Workflows"
-		:asset-id="assetId ?? ''"
-		@vue:mounted="emit('asset-loaded')"
-		@page-loaded="emit('asset-loaded')"
-	/>
+	<tera-workflow v-else-if="pageType === AssetType.Workflows" :asset-id="assetId ?? ''" />
 	<!--Add new process/asset views here-->
-	<template v-else-if="assetId && !isEmpty(tabs)">
+	<template v-else-if="assetId">
 		<tera-external-publication
 			v-if="pageType === AssetType.Publications"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			@open-code="openCode"
-			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-document-asset
 			v-if="pageType === AssetType.Documents"
 			:assetId="assetId ?? ''"
 			:previewLineLimit="10"
-			@asset-loaded="emit('asset-loaded')"
 		/>
-		<tera-dataset
-			v-else-if="pageType === AssetType.Datasets"
-			:asset-id="assetId"
-			@asset-loaded="emit('asset-loaded')"
-		/>
+		<tera-dataset v-else-if="pageType === AssetType.Datasets" :asset-id="assetId" />
 	</template>
-	<section v-else>
-		<img src="@assets/svg/seed.svg" alt="Seed" />
-		<p>You can open resources from the resource panel.</p>
-		<Button label="Open project overview" @click="openOverview" />
-	</section>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { ProjectPages } from '@/types/Project';
-import { useRouter } from 'vue-router';
-import { RouteName } from '@/router/routes';
-import { isEmpty } from 'lodash';
-import { Tab } from '@/types/common';
-import Button from 'primevue/button';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
@@ -84,15 +51,11 @@ import { useProjects } from '@/composables/project';
 import TeraWorkflow from '@/workflow/tera-workflow.vue';
 
 const props = defineProps<{
-	assetId?: string;
-	pageType?: AssetType | ProjectPages;
-	tabs?: Tab[];
-	activeTabIndex?: number;
+	assetId: string;
+	pageType: AssetType | ProjectPages;
 }>();
 
-const emit = defineEmits(['asset-loaded', 'open-new-asset']);
-
-const router = useRouter();
+const emit = defineEmits(['open-new-asset']);
 
 const code = ref<string>();
 
@@ -120,17 +83,11 @@ const assetName = computed<string>(() => {
 });
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
-const getXDDuri = (assetId: Tab['assetId']): string =>
+const getXDDuri = (assetId: string): string =>
 	useProjects().activeProject.value?.assets?.[AssetType.Publications]?.find(
 		(document) => document?.id === Number.parseInt(assetId ?? '', 10)
 	)?.xdd_uri ?? '';
 
-const openOverview = () => {
-	router.push({
-		name: RouteName.Project,
-		params: { pageType: ProjectPages.OVERVIEW, assetId: undefined }
-	});
-};
 async function openCode() {
 	const res: string | null = await getCodeFileAsText(props.assetId!, assetName.value!);
 	if (!res) return;

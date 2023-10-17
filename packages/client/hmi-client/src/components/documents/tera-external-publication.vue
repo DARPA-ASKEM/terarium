@@ -8,9 +8,9 @@
 		:doi="highlightSearchTerms(doi)"
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
-		:hide-intro="documentView === DocumentView.PDF"
-		:stretch-content="documentView === DocumentView.PDF"
-		:show-sticky-header="documentView === DocumentView.PDF"
+		:hide-intro="view === DocumentView.PDF"
+		:stretch-content="view === DocumentView.PDF"
+		:show-sticky-header="view === DocumentView.PDF"
 	>
 		<template #bottom-header-buttons>
 			<Button
@@ -23,23 +23,23 @@
 			/>
 		</template>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Extractions"
-					icon="pi pi-list"
-					@click="documentView = DocumentView.EXRACTIONS"
-					:active="documentView === DocumentView.EXRACTIONS"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="PDF"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.PDF"
-					:active="documentView === DocumentView.PDF"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i
+						:class="`${
+							!pdfLink && option.value !== DocumentView.EXRACTIONS
+								? 'pi pi-spin pi-spinner'
+								: option.icon
+						} p-button-icon-left`"
+					/>
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</template>
 		<template #info-bar>
 			<div class="container">
@@ -50,7 +50,7 @@
 			</div>
 		</template>
 		<Accordion
-			v-if="documentView === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -147,13 +147,22 @@
 				</template>
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<tera-import-github-file
-							:urlString="url"
-							:show-import-button="!featureConfig.isPreview"
-							@open-code="openCode"
+						<Button
+							v-if="!featureConfig.isPreview"
+							label="Import"
+							class="p-button-sm p-button-outlined"
+							icon="pi pi-cloud-download"
+							@click="openImportGithubFileModal(url)"
 						/>
+						<a :href="url" rel="noreferrer noopener">{{ url }}</a>
 					</li>
 				</ul>
+				<tera-import-github-file
+					:visible="isImportGithubFileModalVisible"
+					:url-string="openedUrl"
+					@close="isImportGithubFileModalVisible = false"
+					@open-code="openCode"
+				/>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(otherUrls)">
 				<template #header>
@@ -218,7 +227,7 @@
 			</AccordionTab>
 		</Accordion>
 		<tera-pdf-embed
-			v-else-if="documentView === DocumentView.PDF && pdfLink"
+			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.title"
 		/>
@@ -237,7 +246,7 @@ import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { CodeRequest, ResultType, FeatureConfig } from '@/types/common';
+import { ResultType, FeatureConfig, CodeRequest } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
@@ -247,10 +256,11 @@ import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
-	EXRACTIONS = 'extractions',
-	PDF = 'pdf'
+	EXRACTIONS = 'Extractions',
+	PDF = 'PDF'
 }
 
 const props = defineProps({
@@ -274,7 +284,13 @@ const props = defineProps({
 
 const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
-const documentView = ref(DocumentView.EXRACTIONS);
+const isImportGithubFileModalVisible = ref(false);
+const openedUrl = ref('');
+const view = ref(DocumentView.EXRACTIONS);
+const viewOptions = ref([
+	{ value: DocumentView.EXRACTIONS, icon: 'pi pi-list' },
+	{ value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
+]);
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
@@ -458,6 +474,11 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	return highlightSearchTerms(citation);
 };
 
+function openImportGithubFileModal(url: string) {
+	openedUrl.value = url;
+	isImportGithubFileModalVisible.value = true;
+}
+
 onMounted(async () => {
 	fetchDocumentArtifacts();
 	fetchAssociatedResources();
@@ -490,6 +511,9 @@ onUpdated(() => {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;
 	border-radius: var(--border-radius);
+	gap: 1rem;
+	display: flex;
+	align-items: center;
 }
 
 .extracted-item > .extracted-image {

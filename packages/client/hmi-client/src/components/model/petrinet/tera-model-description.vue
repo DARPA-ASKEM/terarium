@@ -38,9 +38,9 @@
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]">
 			<AccordionTab>
 				<template #header>Related publications</template>
-				<tera-related-publications
-					:publications="publications"
-					:related-publications="relatedPublications"
+				<tera-related-documents
+					:documents="documents"
+					:related-documents="relatedDocuments"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 					@enriched="fetchAsset"
@@ -418,7 +418,7 @@ import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { Artifact, Model, ModelConfiguration } from '@/types/Types';
+import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
@@ -430,7 +430,7 @@ import Button from 'primevue/button';
 import TeraModelExtraction from '@/components/model/petrinet/tera-model-extraction.vue';
 import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
-import TeraRelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
 
 // Used to keep track of the values of the current row being edited
@@ -481,20 +481,25 @@ const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
-const publications = computed(
+const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.artifacts.filter((artifact: Artifact) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some((extension) =>
-					artifact.fileNames[0].endsWith(extension)
+			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
+				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
+					(extension) => {
+						if (document.fileNames && !isEmpty(document.fileNames)) {
+							return document.fileNames[0]?.endsWith(extension);
+						}
+						return false;
+					}
 				)
 			)
-			.map((artifact: Artifact) => ({
-				name: artifact.name,
-				id: artifact.id
+			.map((document: DocumentAsset) => ({
+				name: document.name,
+				id: document.id
 			})) ?? []
 );
-const relatedPublications = computed(() => []);
+const relatedDocuments = computed(() => []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
@@ -510,8 +515,8 @@ const transitions = computed(() => {
 			results.push({
 				id: t.id,
 				name: t?.properties?.name ?? '--',
-				input: !isEmpty(t.input) ? t.input.sort().join(', ') : '--',
-				output: !isEmpty(t.output) ? t.output.sort().join(', ') : '--',
+				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
+				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
 				expression:
 					props.model?.semantics?.ode.rates.find((rate) => rate.target === t.id)?.expression ??
 					null,

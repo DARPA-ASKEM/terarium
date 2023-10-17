@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2, 3]">
+	<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
 		<AccordionTab header="Model diagram">
 			<tera-model-diagram
 				ref="teraModelDiagramRef"

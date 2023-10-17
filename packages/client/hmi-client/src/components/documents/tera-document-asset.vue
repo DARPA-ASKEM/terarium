@@ -6,28 +6,28 @@
 		:name="highlightSearchTerms(doc.name)"
 		:overline="highlightSearchTerms(doc.source)"
 		@close-preview="emit('close-preview')"
-		:hide-intro="documentView === DocumentView.PDF"
-		:stretch-content="documentView === DocumentView.PDF"
-		:show-sticky-header="documentView === DocumentView.PDF"
+		:hide-intro="view === DocumentView.PDF"
+		:stretch-content="view === DocumentView.PDF"
+		:show-sticky-header="view === DocumentView.PDF"
 	>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Extractions"
-					icon="pi pi-list"
-					@click="documentView = DocumentView.EXRACTIONS"
-					:active="documentView === DocumentView.EXRACTIONS"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="PDF"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.PDF"
-					:active="documentView === DocumentView.PDF"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i
+						:class="`${
+							!pdfLink && option.value !== DocumentView.EXTRACTIONS
+								? 'pi pi-spin pi-spinner'
+								: option.icon
+						} p-button-icon-left`"
+					/>
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</template>
 		<template #info-bar>
 			<div class="container">
@@ -38,7 +38,7 @@
 			</div>
 		</template>
 		<Accordion
-			v-if="documentView === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -56,7 +56,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image id="img" class="extracted-image" :src="ex.metadata?.img_pth" :alt="''" preview />
+						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
@@ -73,7 +73,7 @@
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"
@@ -91,7 +91,7 @@
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"
@@ -102,10 +102,11 @@
 			</AccordionTab>
 		</Accordion>
 		<tera-pdf-embed
-			v-else-if="documentView === DocumentView.PDF && pdfLink"
+			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.name || ''"
 		/>
+		<code-editor v-else-if="view === DocumentView.TXT" :initial-code="code" />
 	</tera-asset>
 </template>
 
@@ -114,20 +115,26 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { DocumentAsset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
+import {
+	downloadDocumentAsset,
+	getDocumentAsset,
+	getDocumentFileAsText
+} from '@/services/document-assets';
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import CodeEditor from '@/page/project/components/code-editor.vue';
+import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
-	EXRACTIONS = 'extractions',
-	PDF = 'pdf'
+	EXTRACTIONS = 'Extractions',
+	PDF = 'PDF',
+	TXT = 'Text'
 }
 
 const props = defineProps<{
@@ -139,7 +146,9 @@ const props = defineProps<{
 
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
-const documentView = ref(DocumentView.EXRACTIONS);
+const view = ref(DocumentView.EXTRACTIONS);
+const viewOptions = ref([{ value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' }]);
+const code = ref<string>();
 
 const docLink = computed(() =>
 	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
@@ -165,6 +174,13 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
+async function openTextDocument() {
+	const filename: string | undefined = doc.value?.fileNames?.at(0);
+	const res: string | null = await getDocumentFileAsText(props.assetId!, filename!);
+	if (!res) return;
+	code.value = res;
+}
+
 watch(
 	() => props.assetId,
 	async () => {
@@ -172,6 +188,12 @@ watch(
 			const document = await getDocumentAsset(props.assetId);
 			if (document) {
 				doc.value = document;
+				openTextDocument();
+				viewOptions.value.push(
+					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
+						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
+						: { value: DocumentView.TXT, icon: 'pi pi-file' }
+				);
 			}
 		} else {
 			doc.value = null;

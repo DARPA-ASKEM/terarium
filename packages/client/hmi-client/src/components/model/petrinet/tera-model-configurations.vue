@@ -106,7 +106,7 @@
 						:stratified-model-type="stratifiedModelType"
 						:ode-type="modalAttributes.odeType"
 						:should-eval="matrixShouldEval"
-						@update-configuration="updateConfiguration"
+						@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
 					/>
 				</template>
 				<template #footer>

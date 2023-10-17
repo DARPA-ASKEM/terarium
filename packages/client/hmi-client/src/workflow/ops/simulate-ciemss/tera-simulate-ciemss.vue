@@ -1,46 +1,39 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<div class="simulate-header p-buttonset">
-				<Button
-					label="Input"
-					severity="secondary"
-					icon="pi pi-sign-in"
-					size="small"
-					:active="activeTab === SimulateTabs.input"
-					@click="activeTab = SimulateTabs.input"
-				/>
-				<Button
-					label="Output"
-					severity="secondary"
-					icon="pi pi-sign-out"
-					size="small"
-					:active="activeTab === SimulateTabs.output"
-					@click="activeTab = SimulateTabs.output"
-				/>
-			</div>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i :class="`${option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</div>
-		<div
-			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
-			class="simulate-container"
-		>
+		<div v-if="view === SimulateView.Output && node?.outputs.length" class="simulate-container">
+			<Dropdown
+				v-if="runList.length > 0"
+				:options="runList"
+				v-model="selectedRun"
+				option-label="label"
+				placeholder="Select a simulation run"
+				@update:model-value="handleSelectedRunChange"
+			/>
 			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
+				v-if="runResults[selectedRun?.runId]"
+				:run-results="runResults[selectedRun.runId]"
+				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
 				has-mean-line
-				@configuration-change="configurationChange(index, $event)"
+				@configuration-change="configurationChange(selectedRun.idx, $event)"
 			/>
-			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add chart"
-				icon="pi pi-plus"
+			<tera-dataset-datatable
+				v-if="rawContent[selectedRun?.runId]"
+				:rows="10"
+				:raw-content="rawContent[selectedRun.runId]"
 			/>
-			<tera-dataset-datatable :rows="10" :raw-content="rawContent" />
 			<Button
 				class="add-chart"
 				title="Saves the current version of the model as a new Terarium asset"
@@ -64,18 +57,22 @@
 				></i>
 			</span>
 		</div>
-		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
+		<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
 						<template #header> Model </template>
-						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
+						<tera-model-diagram
+							v-if="model[selectedRun?.runId]"
+							:model="model[selectedRun.runId]!"
+							:is-editable="false"
+						/>
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configuration </template>
 						<tera-model-configurations
-							v-if="model"
-							:model="model"
+							v-if="model[selectedRun?.runId]"
+							:model="model[selectedRun.runId]!"
 							:model-configurations="modelConfigurations"
 							:feature-config="{ isPreview: true }"
 						/>
@@ -130,6 +127,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import { CsvAsset, Model, TimeSpan, ModelConfiguration } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -145,6 +143,7 @@ import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -156,22 +155,32 @@ const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
 
-enum SimulateTabs {
-	input,
-	output
+enum SimulateView {
+	Input = 'Input',
+	Output = 'Output'
 }
 
-const activeTab = ref(SimulateTabs.input);
+const view = ref(SimulateView.Input);
+const viewOptions = ref([
+	{ value: SimulateView.Input, icon: 'pi pi-sign-in' },
+	{ value: SimulateView.Output, icon: 'pi pi-sign-out' }
+]);
 
-const model = ref<Model | null>(null);
+const model = ref<{ [runId: string]: Model | null }>({});
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const parsedRawData = ref<any>();
-const runConfigs = ref<any>({});
-const runResults = ref<RunResults>({});
+const runResults = ref<{ [runId: string]: RunResults }>({});
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
-const completedRunId = computed<string | undefined>(() => props?.node?.outputs?.[0]?.value?.[0]);
-const rawContent = ref<CsvAsset | null>(null);
+const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
+const runList = computed(() =>
+	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
+		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
+		idx,
+		runId: cfg.selectedRun
+	}))
+);
+const selectedRun = ref();
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
@@ -184,9 +193,16 @@ const configurationChange = (index: number, config: ChartConfig) => {
 	});
 };
 
-const addChart = () => {
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	lazyLoadSimulationData(selectedRun.value.runId);
+
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	// set the active status for the selected run in the chart configs
+	state.chartConfigs.forEach((cfg, idx) => {
+		cfg.active = idx === selectedRun.value?.idx;
+	});
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -198,38 +214,42 @@ const addChart = () => {
 async function saveDatasetToProject() {
 	const { activeProject, get } = useProjects();
 	if (activeProject.value?.id) {
-		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
+		if (await saveDataset(activeProject.value.id, selectedRun.value.runId, saveAsName.value)) {
 			get();
 		}
 		showSaveInput.value = false;
 	}
 }
 
-onMounted(async () => {
-	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
-	// e.g. just take the first one.
-	if (!props.node) return;
+const lazyLoadSimulationData = async (runId: string) => {
+	if (runResults.value[runId]) return;
 
-	const nodeObj = props.node;
-
-	if (!nodeObj.outputs[0]) return;
-	const port = nodeObj.outputs[0];
-	if (!port.value) return;
-	const simulationId = port.value[0];
-
-	const modelConfigId = nodeObj.inputs[0].value?.[0];
+	// there's only a single input config
+	const modelConfigId = props.node.inputs[0].value?.[0];
 	const modelConfiguration = await getModelConfigurationById(modelConfigId);
 	if (modelConfiguration) {
-		model.value = await getModel(modelConfiguration.modelId);
-		if (model.value) modelConfigurations.value = await getModelConfigurations(model.value.id);
+		model.value[runId] = await getModel(modelConfiguration.modelId);
+		if (model.value[runId]) {
+			modelConfigurations.value = await getModelConfigurations(model.value[runId]!.id);
+		}
 	}
 
-	const output = await getRunResultCiemss(simulationId);
-	parsedRawData.value = output.parsedRawData;
-	runResults.value = output.runResults;
-	runConfigs.value = output.runConfigs;
+	const output = await getRunResultCiemss(runId);
+	runResults.value[runId] = output.runResults;
+	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value[runId]);
+};
 
-	rawContent.value = createCsvAssetFromRunResults(runResults.value);
+onMounted(() => {
+	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
+
+	if (selectedRun.value?.runId) {
+		lazyLoadSimulationData(selectedRun.value.runId);
+	}
 });
 
 watch(
@@ -247,12 +267,6 @@ watch(
 </script>
 
 <style scoped>
-.add-chart {
-	width: 9em;
-	margin: 0em 1em;
-	margin-bottom: 1em;
-}
-
 .tera-simulate {
 	background: white;
 	z-index: 1;

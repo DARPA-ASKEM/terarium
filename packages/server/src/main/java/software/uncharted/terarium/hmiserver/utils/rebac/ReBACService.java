@@ -54,9 +54,9 @@ public class ReBACService {
 	private final SchemaManager schemaManager = new SchemaManager();
 
 	public static final String PUBLIC_GROUP_NAME = "Public";
-	public static String PUBLIC_GROUP_ID;
+	public String PUBLIC_GROUP_ID;
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
-	public static String ASKEM_ADMIN_GROUP_ID;
+	public String ASKEM_ADMIN_GROUP_ID;
 
 
 	@PostConstruct
@@ -142,7 +142,7 @@ public class ReBACService {
 	private String getGroupId(String name) {
 		List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups(name, true, 0, Integer.MAX_VALUE, true);
 		for (GroupRepresentation group : groups) {
-			if (group.getName().equals(group.getPath())) {
+			if (group.getPath().equals("/" + name)) {
 				return group.getId();
 			}
 		}
@@ -183,6 +183,17 @@ public class ReBACService {
 		return new PermissionGroup(
 			createGroup(name),
 			name);
+	}
+
+	public PermissionUser getUser(String id) {
+		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+		UserResource userResource = usersResource.get(id);
+		UserRepresentation userRepresentation = userResource.toRepresentation();
+		return new PermissionUser(
+			userRepresentation.getId(),
+			userRepresentation.getFirstName(),
+			userRepresentation.getLastName(),
+			userRepresentation.getEmail());
 	}
 
 	public List<PermissionUser> getUsers() {
@@ -260,6 +271,12 @@ public class ReBACService {
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
+	}
+
+	public boolean isCreator(SchemaObject who, SchemaObject what) throws Exception {
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, full);
 	}
 
 	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {

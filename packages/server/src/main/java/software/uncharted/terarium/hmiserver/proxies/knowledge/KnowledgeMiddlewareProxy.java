@@ -52,24 +52,24 @@ public interface KnowledgeMiddlewareProxy {
 	 *                      pdf (Object): The PDF file to upload
 	 * @return extractions of the pdf
 	 */
-	@PostMapping("/pdf_extractions")
+	@PostMapping("/variable_extractions")
 	ResponseEntity<JsonNode> postPDFExtractions(
-		@RequestParam("artifact_id") String artifactId,
+		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 		@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description
 	);
 
 	/**
 	 * Post a PDF to get text
 	 *
-	 * @param artifactId (String): The ID of the artifact to extract text from
+	 * @param documentId (String): The ID of the document to extract text from
 	 * @return
 	 */
-	@PostMapping("/pdf_to_text")
-	ResponseEntity<JsonNode> postPDFToText(
-		@RequestParam("artifact_id") String artifactId
+	@PostMapping("/pdf_extraction")
+	ResponseEntity<JsonNode> postPDFToCosmos(
+		@RequestParam("document_id") String documentId
 	);
 
 	/**
@@ -77,12 +77,12 @@ public interface KnowledgeMiddlewareProxy {
 	 *
 	 * @return the profiled model
 	 * @param    modelId (String): The ID of the model to profile
-	 * @param    artifactId (String): The text of the document to profile
+	 * @param    documentId (String): The text of the document to profile
 	 */
 	@PostMapping("/profile_model/{model_id}")
 	ResponseEntity<JsonNode> postProfileModel(
 		@PathVariable("model_id") String modelId,
-		@RequestParam("paper_artifact_id") String artifactId
+		@RequestParam("document_id") String documentId
 	);
 
 	/**
@@ -90,12 +90,12 @@ public interface KnowledgeMiddlewareProxy {
 	 *
 	 * @return the profiled dataset
 	 * @param    datasetId (String): The ID of the dataset to profile
-	 * @param    artifactId (String): The text of the document to profile
+	 * @param    documentId= (String): The text of the document to profile
 	 */
 	@PostMapping("/profile_dataset/{dataset_id}")
 	ResponseEntity<JsonNode> postProfileDataset(
 		@PathVariable("dataset_id") String datasetId,
-		@RequestParam("artifact_id") String artifactId
+		@RequestParam (name = "document_id", required = false) String documentId
 	);
 
 	/**
@@ -128,5 +128,11 @@ public interface KnowledgeMiddlewareProxy {
 		@RequestParam("model") String framework,
 		@RequestParam("model_id") String modelId,
 		@RequestBody List<String> equations
+	);
+
+	@PostMapping("link_amr")
+	ResponseEntity<JsonNode> postLinkAmr(
+		@RequestParam("document_id") String documentId,
+		@RequestParam("model_id") String modelId
 	);
 }

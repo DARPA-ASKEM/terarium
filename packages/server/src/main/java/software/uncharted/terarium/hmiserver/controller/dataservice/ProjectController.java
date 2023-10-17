@@ -12,7 +12,7 @@ import software.uncharted.terarium.hmiserver.models.Id;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
-import software.uncharted.terarium.hmiserver.models.dataservice.permission.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
@@ -48,15 +48,14 @@ public class ProjectController {
 		if (projects == null) {
 			return ResponseEntity.noContent().build();
 		}
-
+		RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
 		// Remove non-active (soft-deleted) projects
-
 		projects = projects
 			.stream()
 			.filter(Project::getActive)
 			.filter(project -> {
 				try {
-					return new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(project.getProjectID(), reBACService));
+					return rebacUser.canRead(new RebacProject(project.getProjectID(), reBACService));
 				} catch (Exception e) {
 					log.error("Error getting user's permissions for project", e);
 					return false;
@@ -67,6 +66,10 @@ public class ProjectController {
 		projects.forEach(project -> {
 			try {
 				List<AssetType> assetTypes = Arrays.asList(AssetType.datasets, AssetType.models, AssetType.publications);
+
+				RebacProject rebacProject = new RebacProject(project.getProjectID(), reBACService);
+				project.setPublicProject(rebacProject.isPublic());
+				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 
 				Assets assets = proxy.getAssets(project.getProjectID(), assetTypes).getBody();
 				Map<String, String> metadata = new HashMap<>();
@@ -90,11 +93,14 @@ public class ProjectController {
 	public ResponseEntity<Project> getProject(
 		@PathVariable("id") final String id
 	) {
-
 		try {
+			RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
 			RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacProject)) {
-				return ResponseEntity.ok(proxy.getProject(id).getBody());
+			if (rebacUser.canRead(rebacProject)) {
+				Project project = proxy.getProject(id).getBody();
+				project.setPublicProject(rebacProject.isPublic());
+				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
+				return ResponseEntity.ok(project);
 			}
 			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
@@ -113,9 +119,9 @@ public class ProjectController {
 				PermissionRelationships permissions = new PermissionRelationships();
 				for (RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+						permissions.addUser(reBACService.getUser(permissionRelationship.getSubjectId()), permissionRelationship.getRelationship());
 					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-						permissions.addGroup(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
+						permissions.addGroup(reBACService.getGroup(permissionRelationship.getSubjectId()), permissionRelationship.getRelationship());
 					}
 				}
 
@@ -336,8 +342,6 @@ public class ProjectController {
 		@PathVariable("project_id") final String projectId,
 		@RequestParam("types") final List<AssetType> types
 	) {
-
-
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
 				return ResponseEntity.ok(proxy.getAssets(projectId, types).getBody());
