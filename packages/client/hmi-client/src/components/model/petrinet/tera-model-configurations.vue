@@ -274,21 +274,14 @@ const baseModel = computed<any>(() => {
 });
 const headerStates = computed<any[]>(() =>
 	stratifiedModelType.value
-		? baseModel.value.states.map(({ name }) => name)
-		: configurations.value[0]?.semantics?.ode.initials?.map(({ target }) =>
-				getInitialTargetStateNames(target)
-		  ) ?? []
+		? baseModel.value.states.map(({ id }) => id)
+		: configurations.value[0]?.semantics?.ode.initials?.map(({ target }) => target) ?? []
 );
-
-function getInitialTargetStateNames(target: string) {
-	return configurations.value[0]?.model.states.find(({ id }) => id === target)?.name ?? target;
-}
-
 const headerTransitions = computed<any[]>(() =>
 	stratifiedModelType.value
 		? // ? baseModel.value.transitions.map(({ id }) => id)
 		  [...getUnstratifiedParameters(props.model).keys()]
-		: configurations.value[0]?.semantics?.ode.parameters?.map(({ name }) => name) ?? []
+		: configurations.value[0]?.semantics?.ode.parameters?.map(({ id }) => id) ?? []
 );
 const headerStatesAndTransitions = computed(() => [
 	...headerStates.value,
