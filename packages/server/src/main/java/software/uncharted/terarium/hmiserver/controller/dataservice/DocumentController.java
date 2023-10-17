@@ -67,6 +67,12 @@ public class DocumentController implements SnakeCaseController {
 		@PathVariable("id") String id
 	) {
 		DocumentAsset document = proxy.getAsset(id).getBody();
+
+		// Test if the document as any assets
+		if (document.getAssets().isEmpty()) {
+			return ResponseEntity.ok(document);
+		}
+
 		document.getAssets().forEach(asset -> {
 			try {
 				// Add the S3 bucket url to each asset metadata
