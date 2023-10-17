@@ -68,17 +68,15 @@ public class DocumentController implements SnakeCaseController {
 	) {
 		DocumentAsset document = proxy.getAsset(id).getBody();
 		document.getAssets().forEach(asset -> {
-			String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
+			try {
+				// Add the S3 bucket url to each asset metadata
+				String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
+				asset.getMetadata().put("url", url);
 
-			// Add the S3 bucket url to each asset metadata
-			asset.getMetadata().put("url", url);
-
-			// if the asset os of type equation
-			if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
-				byte[] imagesByte = new byte[0];
-				try {
+				// if the asset os of type equation
+				if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
 					// Fetch the image from the URL
-					imagesByte = IOUtils.toByteArray(new URL(url));
+					byte[] imagesByte = IOUtils.toByteArray(new URL(url));
 					// Encode the image in Base 64
 					String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
 
@@ -89,10 +87,9 @@ public class DocumentController implements SnakeCaseController {
 
 					// Add the equations into the metadata
 					asset.getMetadata().put("equation", equation);
-
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
+			} catch (IOException e) {
+				log.error("Unable to extract S3 url for assets", e);
 			}
 		});
 
