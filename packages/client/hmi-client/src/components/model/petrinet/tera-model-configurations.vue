@@ -98,11 +98,10 @@
 					<tera-stratified-value-matrix
 						:model-configuration="modelConfigurations[modalAttributes.configIndex]"
 						:id="modalAttributes.id"
-						:configIndex="modalAttributes.configIndex"
 						:stratified-model-type="stratifiedModelType"
 						:node-type="modalAttributes.nodeType"
 						:should-eval="matrixShouldEval"
-						@update-configuration="updateConfiguration"
+						@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
 					/>
 				</template>
 				<template #footer>

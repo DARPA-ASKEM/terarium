@@ -103,7 +103,7 @@ export const createMatrix1D = (data: any[]) => {
 		rows.push(row);
 	}
 
-	return rows;
+	return { matrix: rows };
 };
 
 export const createParameterMatrix = (
@@ -139,9 +139,7 @@ export const createParameterMatrix = (
 		if (!_.isEmpty(newControllers)) {
 			// Map controllers unique to these input/output combos
 			for (let j = 0; j < newInputs.length; j++) {
-				for (let k = 0; k < newOutputs.length; k++) {
-					controllerIndexMap.set(newInputs[j].concat('|', newOutputs[k]), newControllers);
-				}
+				controllerIndexMap.set(newInputs[j].concat('|', newOutputs[j]), newControllers);
 			}
 		}
 		inputs.push(...newInputs);

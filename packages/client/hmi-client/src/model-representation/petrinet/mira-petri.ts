@@ -243,10 +243,9 @@ export const generateMatrix = (amr: Model, id: string, nodeType: NodeType) => {
 	let matrix: any[] = [];
 
 	if (nodeType === NodeType.State) {
-		matrix = createMatrix1D(matrixData);
+		matrix = createMatrix1D(matrixData).matrix;
 	} else {
-		const matrixAttributes = createParameterMatrix(amr, matrixData, childParameterIds);
-		matrix = matrixAttributes.matrix;
+		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
 	}
 
 	return matrix;

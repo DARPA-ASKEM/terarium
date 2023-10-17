@@ -72,7 +72,6 @@ import { pythonInstance } from '@/python/PyodideController';
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
-	configIndex: number;
 	stratifiedModelType: StratifiedModelType;
 	nodeType: NodeType;
 	shouldEval: boolean;
@@ -207,7 +206,7 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
-		emit('update-configuration', modelConfigurationClone, props.configIndex);
+		emit('update-configuration', modelConfigurationClone);
 		renderMatrix();
 	}
 }
