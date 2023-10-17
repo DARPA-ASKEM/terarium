@@ -1,24 +1,19 @@
 <template>
 	<main>
 		<header>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Input"
-					icon="pi pi-sign-in"
-					@click="stratifyView = StratifyView.Input"
-					:active="stratifyView === StratifyView.Input"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Output"
-					icon="pi pi-sign-out"
-					@click="stratifyView = StratifyView.Output"
-					:active="stratifyView === StratifyView.Output"
-					:disabled="!stratifiedModel"
-				/>
-			</span>
-			<div class="buttons" v-if="strataModel && stratifyView === StratifyView.Input">
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:disabled="!stratifiedModel"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i :class="`${option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
+			<div class="buttons" v-if="strataModel && view === StratifyView.Input">
 				<Button
 					class="p-button-outlined"
 					label="Go back"
@@ -50,7 +45,7 @@
 				/>
 			</div>
 		</header>
-		<section v-if="stratifyView === StratifyView.Input">
+		<section v-if="view === StratifyView.Input">
 			<nav>
 				<div class="step-header" :active="stratifyStep === 1">
 					<h5>Step 1</h5>
@@ -150,7 +145,7 @@
 				</div>
 			</section>
 		</section>
-		<section class="output" v-else-if="stratifyView === StratifyView.Output">
+		<section class="output" v-else-if="view === StratifyView.Output">
 			<div>If this is not what you expected, go back to the input page to make changes.</div>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Stratified model">
@@ -222,6 +217,7 @@ import TeraStrataModelDiagram from '@/components/model/petrinet/model-diagrams/t
 import TeraTypedModelDiagram from '@/components/model/petrinet/model-diagrams/tera-typed-model-diagram.vue';
 import TeraStratifyOutputModelDiagram from '@/components/model/petrinet/model-diagrams/tera-stratify-output-model-diagram.vue';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -230,10 +226,14 @@ const props = defineProps<{
 const emit = defineEmits(['open-asset', 'add-model-config']);
 
 enum StratifyView {
-	Input,
-	Output
+	Input = 'Input',
+	Output = 'Output'
 }
-const stratifyView = ref(StratifyView.Input);
+const view = ref(StratifyView.Input);
+const viewOptions = ref([
+	{ value: StratifyView.Input, icon: 'pi pi-sign-in' },
+	{ value: StratifyView.Output, icon: 'pi pi-sign-out' }
+]);
 const stratifyStep = ref(1);
 const strataType = ref();
 const labels = ref();
@@ -245,7 +245,7 @@ const typedStrataModel = ref<Model | null>(null);
 const stratifiedModel = ref<Model | null>();
 const numUntypedNodes = ref();
 const initialState = {
-	stratifyView: StratifyView.Input,
+	view: StratifyView.Input,
 	stratifyStep: 1,
 	strataType: null,
 	labels: null,
@@ -258,7 +258,7 @@ const initialState = {
 };
 
 function restoreState(state) {
-	stratifyView.value = state.stratifyView;
+	view.value = state.view;
 	stratifyStep.value = state.stratifyStep;
 	strataModel.value = state.strataModel;
 	strataType.value = state.strataType;
@@ -311,14 +311,14 @@ async function doStratify() {
 		const newModelId = response?.id;
 		if (newModelId) {
 			await useProjects().addAsset('models', newModelId);
-			stratifyView.value = StratifyView.Output;
+			view.value = StratifyView.Output;
 
 			workflowEventBus.emitNodeStateChange({
 				workflowId: props.node.workflowId,
 				nodeId: props.node.id,
 				state: {
 					...props.node.state,
-					stratifyView: stratifyView.value,
+					view: view.value,
 					stratifiedModel: stratifiedModel.value,
 					typedStrataModel: typedStrataModel.value
 				}

@@ -44,22 +44,17 @@
 								placeholder="Add or remove columns"
 								class="p-inputtext-sm"
 							/>
-							<span class="p-buttonset">
-								<Button
-									class="p-button-secondary p-button-sm"
-									label="Cards"
-									icon="pi pi-image"
-									@click="view = ProjectsView.Cards"
-									:active="view === ProjectsView.Cards"
-								/>
-								<Button
-									class="p-button-secondary p-button-sm"
-									label="Table"
-									icon="pi pi-list"
-									@click="view = ProjectsView.Table"
-									:active="view === ProjectsView.Table"
-								/>
-							</span>
+							<SelectButton
+								:model-value="view"
+								@change="if ($event.value) view = $event.value;"
+								:options="viewOptions"
+								option-value="value"
+							>
+								<template #option="slotProps">
+									<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+									<span class="p-button-label">{{ slotProps.option.value }}</span>
+								</template>
+							</SelectButton>
 						</section>
 						<section class="list-of-projects">
 							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
@@ -259,12 +254,13 @@ import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
 import Skeleton from 'primevue/skeleton';
 import { useProjectMenu } from '@/composables/project-menu';
+import SelectButton from 'primevue/selectbutton';
 
 const { isShareDialogVisible, isRemoveDialogVisible, selectedMenuProject } = useProjectMenu();
 
 enum ProjectsView {
-	Cards,
-	Table
+	Cards = 'Cards',
+	Table = 'Table'
 }
 
 enum TabTitles {
@@ -282,6 +278,10 @@ const sortOptions = [
 ];
 
 const view = ref(ProjectsView.Cards);
+const viewOptions = ref([
+	{ value: ProjectsView.Cards, icon: 'pi pi-image' },
+	{ value: ProjectsView.Table, icon: 'pi pi-list' }
+]);
 
 const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;

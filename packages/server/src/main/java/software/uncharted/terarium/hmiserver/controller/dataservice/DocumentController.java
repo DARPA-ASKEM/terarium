@@ -23,9 +23,13 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import org.apache.http.entity.StringEntity;
 import org.apache.commons.io.IOUtils;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 
 @RequestMapping("/document-asset")
@@ -35,6 +39,9 @@ public class DocumentController implements SnakeCaseController {
 
 	@Autowired
 	DocumentProxy proxy;
+
+	@Autowired
+	SkemaUnifiedProxy skemaUnifiedProxy;
 
 	@Autowired
 	JsDelivrProxy gitHubProxy;
@@ -59,7 +66,44 @@ public class DocumentController implements SnakeCaseController {
 	public ResponseEntity<DocumentAsset> getDocument(
 		@PathVariable("id") String id
 	) {
-		return ResponseEntity.ok(proxy.getAsset(id).getBody());
+		DocumentAsset document = proxy.getAsset(id).getBody();
+
+		// Test if the document as any assets
+        if (document.getAssets() != null && document.getAssets().isEmpty()) {
+			return ResponseEntity.ok(document);
+		}
+
+		document.getAssets().forEach(asset -> {
+			try {
+				// Add the S3 bucket url to each asset metadata
+				String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
+				asset.getMetadata().put("url", url);
+
+				// if the asset os of type equation
+				if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
+					// Fetch the image from the URL
+					byte[] imagesByte = IOUtils.toByteArray(new URL(url));
+					// Encode the image in Base 64
+					String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+					// Send it to SKEMA to get the Presentation MathML equation
+					String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+
+					log.warn("Equation: {}", equation);
+
+					// Add the equations into the metadata
+					asset.getMetadata().put("equation", equation);
+				}
+			} catch (IOException e) {
+				log.error("Unable to extract S3 url for assets", e);
+			}
+		});
+
+		// Update data-service with the updated metadata
+		proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(document));
+
+		// Return the updated document
+		return ResponseEntity.ok(document);
 	}
 
 	@DeleteMapping("/{id}")
@@ -96,8 +140,9 @@ public class DocumentController implements SnakeCaseController {
 		}
 	}
 
-
-
+	/**
+	 * Uploads a file to the project.
+	 */
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Integer> uploadDocument(
 		@PathVariable("id") String id,
