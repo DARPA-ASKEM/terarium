@@ -18,6 +18,7 @@ import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -31,8 +32,7 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
-import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.composeResourceUrl;
-import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.doDeleteJSON;
+import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.*;
 
 @Service
 @Slf4j
@@ -370,6 +370,54 @@ public class ReBACService {
 
 		try {
 			doDeleteJSON(resourceUrl, getKeycloakBearerToken(), roles);
+			return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	public ResponseEntity<Void> addRoleToUser(String roleName, String userId) {
+		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+		UserResource userResource = usersResource.get(userId);
+		try {
+			// test to see if user was found
+			userResource.toRepresentation();
+		} catch (Exception ignore) {
+			log.error("There is no user with id {}", userId);
+			return ResponseEntity.notFound().build();
+		}
+
+		RoleRepresentation roleToAdd = null;
+		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
+		for (RoleRepresentation roleRepresentation : rolesResource.list()) {
+			RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
+			if (roleRepresentation.getName().equals(roleName)) {
+				roleToAdd = roleRepresentation;
+				for (UserRepresentation user : roleResource.getRoleUserMembers()) {
+					if (user.getId().equals(userId)) {
+						log.debug("Add Role To User: already belongs");
+						return ResponseEntity.status(HttpStatusCode.valueOf(304)).build();
+					}
+				}
+			}
+		}
+
+		if (roleToAdd == null) {
+			log.debug("there is no role by that name");
+			return ResponseEntity.notFound().build();
+		}
+
+		String resourceUrl = composeResourceUrl(
+			config.getKeycloak().getUrl(),
+			REALM_NAME,
+			"users/" + userId + "/role-mappings/realm");
+
+		List<RoleRepresentation> roles = new ArrayList<>();
+		roles.add(roleToAdd);
+
+		try {
+			doPostJSON(resourceUrl, getKeycloakBearerToken(), roles);
 			return ResponseEntity.ok().build();
 		} catch (Exception e) {
 			log.error(e.getMessage());
