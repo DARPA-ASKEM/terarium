@@ -80,6 +80,39 @@ services:
       RABBITMQ_DEFAULT_PASS: "terarium123"
       RABBITMQ_MANAGEMENT_ENABLED: "true"
 
+  spicedb:
+    container_name: spicedb
+    image: authzed/spicedb:v1.24.0
+    networks:
+      - terarium
+    ports:
+      - '50051:50051'
+    command: [ "serve" ]
+    environment:
+      SPICEDB_GRPC_PRESHARED_KEY: "dev"
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_HTTP_ENABLED: "true"
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    healthcheck:
+      test: [ 'CMD', 'grpc_health_probe', '-addr=:50051' ]
+      interval: '3s'
+      timeout: '3s'
+      retries: 30
+    depends_on:
+      - migrate-spicedb
+
+  migrate-spicedb:
+    image: authzed/spicedb:v1.24.0
+    networks:
+      - terarium
+    command: [ "migrate", "head" ]
+    restart: "on-failure"
+    environment:
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    depends_on:
+      - postgres
+
 volumes:
   minio-data:
     driver: local

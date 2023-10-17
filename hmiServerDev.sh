@@ -33,50 +33,120 @@ function delete_secrets() {
 	done
 }
 
-function deploy_containers() {
-	echo "Deploying local containers"
-	docker compose --file containers/docker-compose-base.yml --project-name terarium up --detach --no-recreate --wait
+function deploy_remote() {
+	echo "Deploying containers for development against staging services"
+	cat containers/common.env containers/secrets.env > containers/.env
+	docker compose --env-file containers/.env --file containers/docker-compose-remote.yml up --detach --no-recreate --pull always --wait
 }
 
-function start_server() {
-	echo "Starting local server"
+function deploy_local() {
+	echo "Deploying containers for development against local services"
+	cat containers/common.env containers/secrets.env > containers/.env
+	docker compose --env-file containers/.env --file containers/docker-compose-local.yml up --detach --no-recreate --pull always --wait
+}
+
+function stop_remote() {
+	echo "stopping local containers used for remote dev"
+	cat containers/common.env containers/secrets.env > containers/.env
+	docker compose --env-file containers/.env --file containers/docker-compose-remote.yml down
+}
+
+function stop_local() {
+	echo "Stopping local dev containers"
+	cat containers/common.env containers/secrets.env > containers/.env
+	docker compose --env-file containers/.env --file containers/docker-compose-local.yml down
+}
+
+function start_remote() {
+	echo "Starting remote server"
 	cd ${SERVER_DIR} || exit
 	./gradlew bootRun --args='--spring.profiles.active=default,secrets'
 	cd - || exit
 }
 
-case ${1} in
+function start_local() {
+	echo "Starting local server"
+	cd ${SERVER_DIR} || exit
+	./gradlew bootRun --args='--spring.profiles.active=default,secrets,local'
+	cd - || exit
+}
+
+while [[ $# -gt 0 ]]; do
+	case ${1} in
 	-h | --help)
 		COMMAND="help"
 		;;
 	start)
 		COMMAND="start"
+		ENVIRONMENT="$2"
+		SERVER="$3"
+		shift
+		shift
 		;;
-	start-server-ide)
-  	COMMAND="start-server-ide"
-  	;;
-	decrypt)
-		COMMAND="decrypt"
-		;;
+	stop)
+		COMMAND="stop"
+    ENVIRONMENT="$2"
+    shift
+    ;;
 	encrypt)
 		COMMAND="encrypt"
 		;;
-esac
+	decrypt)
+		COMMAND="decrypt"
+		;;
+	*)
+		echo "hmiServerDev.sh: illegal option"
+		break
+		;;
+	esac
+	shift
+done
 
 # Default COMMAND to start if empty
-COMMAND=${COMMAND:-"start"}
+COMMAND=${COMMAND:-"help"}
+ENVIRONMENT=${ENVIRONMENT:-"remote"}
+SERVER=${SERVER:-"false"}
 
 case ${COMMAND} in
 	start)
 		decrypt_secrets
-    deploy_containers
-    start_server
-    delete_secrets
+		case ${ENVIRONMENT} in
+			remote)
+				deploy_remote
+				;;
+			local)
+				deploy_local
+				;;
+			*)
+				echo "Illegal ENVIRONMENT"
+        break
+        ;;
+    esac
+		if [ ${SERVER} == "run" ]; then
+			if [ ${ENVIRONMENT} == "remote" ]; then
+				start_remote
+			else
+				start_local
+			fi
+			delete_secrets
+		fi
     ;;
-	start-server-ide)
+  stop)
   	decrypt_secrets
-  	deploy_containers
-  	;;
+  	case ${ENVIRONMENT} in
+  		remote)
+  			stop_remote
+  			;;
+  		local)
+  			stop_local
+  			;;
+  		*)
+  			echo "Illegal ENVIRONMENT"
+         break
+         ;;
+     esac
+  	delete_secrets
+     ;;
   decrypt)
   	decrypt_secrets
   	;;
@@ -85,10 +155,29 @@ case ${COMMAND} in
    	;;
   help)
   	echo "
-    	Usage:
-    			${0} start              		Decrypts the secrets file, starts the application via 'gradle bootRun', then removes secrets after run
-    			${0} start-server-ide  			Decrypts the secrets file, starts the application via IntelliJ, then removes secrets after run
-    			${0} decrypt            		Decrypt secrets (${ENCRYPTED_FILE}) to an unencrypted file (${DECRYPTED_FILE})
-    			${0} encrypt            		Encrypts ${DECRYPTED_FILE} to the checked in secrets file, ${ENCRYPTED_FILE}"
+      DESCRIPTION:
+        Terarium Development scripts
+
+      SYNOPSIS:
+        hmiServerDev.sh [start ENVIRONMENT [run] (optional) | encrypt | decrypt]
+
+      start
+        ENVIRONMENT
+          remote | local (default: remote)	Indicate which environment to develop against
+
+        run (default: null) Indicate whether to run the server after starting the containers
+
+      stop
+        ENVIRONMENT
+          remote | local (default: remote)	Indicate which containers to stop
+
+      OTHER COMMANDS:
+        encrypt
+          Encrypts the secrets file
+        decrypt
+          Decrypts the secrets file
+        help
+          Displays this help message
+      "
     ;;
 esac
