@@ -74,7 +74,7 @@ public class DocumentController implements SnakeCaseController {
 			asset.getMetadata().put("url", url);
 
 			// if the asset os of type equation
-			if (asset.getAssetType().equals("equation")) {
+			if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
 				byte[] imagesByte = new byte[0];
 				try {
 					// Fetch the image from the URL
@@ -96,6 +96,10 @@ public class DocumentController implements SnakeCaseController {
 			}
 		});
 
+		// Update data-service with the updated metadata
+		proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(document));
+
+		// Return the updated document
 		return ResponseEntity.ok(document);
 	}
 
