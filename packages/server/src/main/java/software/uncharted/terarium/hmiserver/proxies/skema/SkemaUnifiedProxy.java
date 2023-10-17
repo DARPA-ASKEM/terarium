@@ -20,4 +20,7 @@ public interface SkemaUnifiedProxy {
 	 */
 	@PostMapping("/workflows/latex/equations-to-amr")
 	ResponseEntity<Model> postLaTeXToAMR(@RequestBody JsonNode request);
+
+	@PostMapping("/eqn2mml/image/base64/mml")
+	ResponseEntity<String> postImageToEquations(@RequestBody String request);
 }

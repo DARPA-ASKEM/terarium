@@ -97,6 +97,7 @@
 								:lines="previewLineLimit"
 							/>
 						</div>
+						<tera-math-editor v-if="ex.metadata.equation" :latex-equation="ex.metadata.equation" />
 					</li>
 				</ul>
 			</AccordionTab>
@@ -130,6 +131,7 @@ import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import SelectButton from 'primevue/selectbutton';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 
 enum DocumentView {
 	EXTRACTIONS = 'Extractions',
