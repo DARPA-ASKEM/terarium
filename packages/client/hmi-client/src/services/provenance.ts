@@ -145,15 +145,6 @@ async function getRelatedArtifacts(
 	//        are returned and the explorer view would have to decide to display them
 	return response;
 }
-// "id": 0,
-//   "timestamp": "2023-09-27T18:29:47.178125",
-//   "relation_type": "BEGINS_AT",
-//   "left": "string",
-//   "left_type": "Concept",
-//   "right": "string",
-//   "right_type": "Concept",
-//   "user_id": 0,
-//   "concept": "string"
 
 export enum RelationshipType {
 	BEGINS_AT = 'BEGINS_AT',
