@@ -282,8 +282,6 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const emit = defineEmits(['page-loaded']);
-
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
@@ -442,6 +440,16 @@ function appendOutputPort(
 	) {
 		const state = node.state as SimulateJuliaOperationState;
 		if (state.chartConfigs.length === 0) {
+			// This only ends up showing the output of the first run, perhaps we should consider showing
+			// the output of the last run, or all runs?
+			state.chartConfigs.push({
+				selectedRun: port.value[0],
+				selectedVariable: []
+			});
+		} else if (
+			node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
+			node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
+		) {
 			state.chartConfigs.push({
 				selectedRun: port.value[0],
 				selectedVariable: []
@@ -462,13 +470,13 @@ const drilldown = (event: WorkflowNode<any>) => {
 };
 
 workflowEventBus.on('node-state-change', (payload: any) => {
-	if (wf.value.id !== payload.workflowId) return;
+	if (wf.value?.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 	workflowDirty = true;
 });
 
 workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
-	if (wf.value.id !== payload.workflowId) return;
+	if (wf.value?.id !== payload.workflowId) return;
 	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
 	if (!node) return;
 
@@ -816,7 +824,6 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
-		emit('page-loaded');
 	},
 	{ immediate: true }
 );

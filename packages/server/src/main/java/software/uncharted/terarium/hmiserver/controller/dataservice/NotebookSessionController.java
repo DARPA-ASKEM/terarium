@@ -39,7 +39,8 @@ public class NotebookSessionController implements SnakeCaseController {
 	@PutMapping("/{id}")
 	public ResponseEntity<JsonNode> updateNotebookSession(
 		@PathVariable("id") String id,
-		NotebookSession config
+		@RequestBody NotebookSession config
+
 	) {
 		return ResponseEntity.ok(proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(config)).getBody());
 	}

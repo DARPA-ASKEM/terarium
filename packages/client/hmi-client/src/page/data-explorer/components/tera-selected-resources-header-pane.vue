@@ -26,12 +26,12 @@
 import { computed, PropType } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { AssetType, Document, ExternalPublication } from '@/types/Types';
+import { AssetType, Document } from '@/types/Types';
 import dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import { addDocuments } from '@/services/external';
 import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
+import { createDocumentFromXDD } from '@/services/document-assets';
 
 const router = useRouter();
 
@@ -52,22 +52,10 @@ const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isDocument(selectedItem)) {
-			const body: ExternalPublication = {
-				xdd_uri: (selectedItem as Document).gddId,
-				title: (selectedItem as Document).title
-			};
-
-			// FIXME: handle cases where assets is already added to the project
-
-			// first, insert into the proper table/collection
-			const res = await addDocuments(body);
-			if (res) {
-				const documentId = res.id;
-
-				// then, link and store in the project assets
-				const assetsType = AssetType.Publications;
-				await useProjects().addAsset(assetsType, documentId, projectId);
-			}
+			const document = selectedItem as Document;
+			await createDocumentFromXDD(document, projectId);
+			// finally add asset to project
+			await useProjects().get(projectId);
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project

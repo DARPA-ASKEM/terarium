@@ -85,16 +85,16 @@ const importedFiles = ref<File[]>([]);
 
 async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
-		switch (file.type) {
-			case AcceptedTypes.CSV:
+		switch (file.name.split('.').pop()) {
+			case AcceptedExtensions.CSV:
 				return processDataset(file, csvDescription);
-			case AcceptedTypes.PDF:
-			case AcceptedTypes.TXT:
-			case AcceptedTypes.MD:
+			case AcceptedExtensions.PDF:
+			case AcceptedExtensions.TXT:
+			case AcceptedExtensions.MD:
 				return processDocument(file);
-			case AcceptedTypes.PY:
-			case AcceptedTypes.R:
-			case AcceptedTypes.JL:
+			case AcceptedExtensions.PY:
+			case AcceptedExtensions.R:
+			case AcceptedExtensions.JL:
 				return processCode(file);
 			default:
 				return { id: '', assetType: '' };
@@ -107,7 +107,6 @@ async function processFiles(files: File[], csvDescription: string) {
  * @param file
  */
 async function processCode(file: File) {
-	// This is pdf, txt, md files
 	const newCode = await uploadCodeToProject(file, progress);
 	return { id: newCode?.id ?? '', assetType: AssetType.Code };
 }
@@ -124,15 +123,7 @@ async function processDocument(file: File) {
 		'',
 		progress
 	);
-	let newAsset;
-	if (document && document.id) {
-		newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
-	}
-	if (document && newAsset && file.name.toLowerCase().endsWith('.pdf')) {
-		await extractPDF(document);
-		return { file, error: false, response: { text: '', images: [] } };
-	}
-	return { file, error: true, response: { text: '', images: [] } };
+	return { id: document?.id ?? '', assetType: AssetType.Documents, name: file.name };
 }
 
 /**
@@ -141,7 +132,6 @@ async function processDocument(file: File) {
  * @param description
  */
 async function processDataset(file: File, description: string) {
-	// let addedCSV: CsvAsset | null = null;
 	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
 		progress,
 		file,
@@ -158,7 +148,13 @@ function importCompleted(newResults: { id: string; name: string; assetType: Asse
 async function upload() {
 	if (results.value) {
 		await Promise.all(
-			results.value?.map(({ id, assetType }): Promise<any> => useProjects().addAsset(assetType, id))
+			results.value?.map(({ id, assetType, name }): Promise<any> => {
+				const newAsset = useProjects().addAsset(assetType, id);
+				if (name && name.toLowerCase().endsWith('.pdf')) {
+					extractPDF(id);
+				}
+				return newAsset;
+			})
 		).then((resolved) => {
 			emit('close');
 			const resourceMsg = resolved.length > 1 ? 'resources were' : 'resource was';

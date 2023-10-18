@@ -3,6 +3,7 @@
 		:is-editing="isEditing"
 		:is-editable="isEditable"
 		:disable-save="disableSave"
+		:isUpdating="isUpdating"
 		equationType="observable"
 		@cancel-edit="cancelEdit"
 		@add-equation="addObservable"
@@ -45,6 +46,7 @@ const emit = defineEmits(['update-model']);
 const observablesRefs = ref<any[]>([]);
 const editableObservables = ref<Observable[]>([]);
 const isEditing = ref(false);
+const isUpdating = ref<boolean>(false);
 
 const disableSave = computed(() => {
 	const observablesWithoutId = editableObservables.value.filter((ob) => isEmpty(ob.id));
@@ -100,6 +102,7 @@ function updateModelFromObservables(observableMathMLList) {
 
 const updateObservables = () => {
 	isEditing.value = false;
+	isUpdating.value = true;
 
 	updateModelFromObservables(
 		observablesRefs.value.map((ob) => ({
@@ -113,6 +116,7 @@ const updateObservables = () => {
 	observablesRefs.value.forEach((ob) => {
 		ob.isEditingEquation = false;
 	});
+	isUpdating.value = false;
 };
 
 watch(

@@ -173,6 +173,17 @@ export interface DatasetColumn {
     description?: string;
 }
 
+export interface AddDocumentAssetFromXDDRequest {
+    document: Document;
+    projectId: string;
+}
+
+export interface AddDocumentAssetFromXDDResponse {
+    documentAssetId: string;
+    pdfUploadError: boolean;
+    extractionJobId: string;
+}
+
 export interface DocumentAsset {
     id?: string;
     name?: string;
@@ -329,6 +340,31 @@ export interface DKG {
     link: string;
 }
 
+export interface PermissionGroup {
+    id: string;
+    name: string;
+    relationship?: string;
+}
+
+export interface PermissionProject {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionRelationships {
+    permissionGroups: PermissionGroup[];
+    permissionUsers: PermissionUser[];
+    permissionProjects: PermissionProject[];
+}
+
+export interface PermissionUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    relationship?: string;
+}
+
 export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
@@ -457,7 +493,7 @@ export interface Document {
 export interface DocumentExtraction {
     fileName: string;
     assetType: string;
-    metadata: any;
+    metadata: { [index: string]: any };
 }
 
 export interface ModelHeader {

@@ -1,24 +1,19 @@
 <template>
 	<section class="tera-ensemble">
-		<div class="ensemble-header p-buttonset">
-			<Button
-				label="Input"
-				severity="secondary"
-				icon="pi pi-sign-in"
-				size="small"
-				:active="activeTab === EnsembleTabs.input"
-				@click="activeTab = EnsembleTabs.input"
-			/>
-			<Button
-				label="Ouput"
-				severity="secondary"
-				icon="pi pi-sign-out"
-				size="small"
-				:active="activeTab === EnsembleTabs.output"
-				@click="activeTab = EnsembleTabs.output"
-			/>
+		<div class="ensemble-header">
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i :class="`${option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</div>
-		<div v-if="activeTab === EnsembleTabs.output && runResults" class="simulate-container">
+		<div v-if="view === SimulateView.Output && runResults" class="simulate-container">
 			<tera-simulate-chart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -59,7 +54,7 @@
 			</span>
 		</div>
 
-		<div v-else-if="activeTab === EnsembleTabs.input && node" class="simulate-container">
+		<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<AccordionTab header="Model Weights">
 					<div class="model-weights">
@@ -218,6 +213,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const dataLabelPlugin = [ChartDataLabels];
@@ -226,9 +222,9 @@ const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
 
-enum EnsembleTabs {
-	input,
-	output
+enum SimulateView {
+	Input = 'Input',
+	Output = 'Output'
 }
 enum EnsembleCalibrationMode {
 	EQUALWEIGHTS = 'equalWeights',
@@ -240,7 +236,11 @@ const CATEGORYPERCENTAGE = 0.9;
 const BARPERCENTAGE = 0.6;
 const MINBARLENGTH = 1;
 
-const activeTab = ref(EnsembleTabs.input);
+const view = ref(SimulateView.Input);
+const viewOptions = ref([
+	{ value: SimulateView.Input, icon: 'pi pi-sign-in' },
+	{ value: SimulateView.Output, icon: 'pi pi-sign-out' }
+]);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);

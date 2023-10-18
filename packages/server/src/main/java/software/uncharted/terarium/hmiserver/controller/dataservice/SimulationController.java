@@ -108,7 +108,7 @@ public class SimulationController implements SnakeCaseController {
 		@RequestParam("datasetName") final String datasetName
 	) {
 		// Duplicate the simulation results to a new dataset
-		final Dataset dataset = simulationProxy.copyResultsToDataset(id).getBody();
+		Dataset dataset = simulationProxy.copyResultsToDataset(id).getBody();
 
 		if (dataset == null) {
 			log.error("Failed to create dataset from simulation {} result", id);
@@ -117,11 +117,12 @@ public class SimulationController implements SnakeCaseController {
 
 		if (datasetName != null) {
 			try {
+				// updateAsset actually makes a PUT request, hence why we have to fetch the whole dataset
+				dataset = datasetProxy.getAsset(dataset.getId()).getBody();
 				dataset.setName(datasetName);
 				datasetProxy.updateAsset(dataset.getId(), convertObjectToSnakeCaseJsonNode(dataset));
-
 			} catch (Exception e) {
-				log.error("Failed to update dataset {} name", dataset.getId());
+				log.error("Failed to update dataset {} name", dataset.getId(), e);
 				return ResponseEntity.internalServerError().build();
 			}
 		}
