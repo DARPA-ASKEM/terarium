@@ -20,7 +20,7 @@
 				<template #option="{ option }">
 					<i
 						:class="`${
-							!pdfLink && option.value !== DocumentView.EXRACTIONS
+							!pdfLink && option.value !== DocumentView.EXTRACTIONS
 								? 'pi pi-spin pi-spinner'
 								: option.icon
 						} p-button-icon-left`"
@@ -38,7 +38,7 @@
 			</div>
 		</template>
 		<Accordion
-			v-if="view === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -56,7 +56,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image id="img" class="extracted-image" :src="ex.metadata?.img_pth" :alt="''" preview />
+						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
@@ -73,7 +73,7 @@
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"
@@ -91,12 +91,13 @@
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"
 							/>
 						</div>
+						<tera-math-editor v-if="ex.metadata.equation" :latex-equation="ex.metadata.equation" />
 					</li>
 				</ul>
 			</AccordionTab>
@@ -130,11 +131,12 @@ import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import SelectButton from 'primevue/selectbutton';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 
 enum DocumentView {
-	EXRACTIONS = 'Extractions',
+	EXTRACTIONS = 'Extractions',
 	PDF = 'PDF',
-	TXT = 'txt'
+	TXT = 'Text'
 }
 
 const props = defineProps<{
@@ -146,8 +148,8 @@ const props = defineProps<{
 
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
-const view = ref(DocumentView.EXRACTIONS);
-const viewOptions = ref([{ value: DocumentView.EXRACTIONS, icon: 'pi pi-list' }]);
+const view = ref(DocumentView.EXTRACTIONS);
+const viewOptions = ref([{ value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' }]);
 const code = ref<string>();
 
 const docLink = computed(() =>
@@ -189,6 +191,9 @@ watch(
 			if (document) {
 				doc.value = document;
 				openTextDocument();
+				if (viewOptions.value.length > 1) {
+					viewOptions.value.pop();
+				}
 				viewOptions.value.push(
 					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
 						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
