@@ -18,7 +18,7 @@
 				v-else
 				class="p-button-sm p-button-outlined"
 				@click="emit('start-editing')"
-				:loading="isUpdating"
+				:loading="isUpdatingStyle"
 				label="Edit"
 			/>
 		</section>
@@ -45,7 +45,7 @@ const props = defineProps<{
 	isEditable: boolean;
 	disableSave?: boolean;
 	equationType?: string;
-	isUpdating: boolean;
+	isUpdating?: boolean;
 }>();
 
 const emit = defineEmits([
@@ -56,6 +56,7 @@ const emit = defineEmits([
 ]);
 
 const equationType = computed(() => props.equationType ?? 'equation');
+const isUpdatingStyle = computed(() => props.isUpdating ?? false);
 const isEditingStyle = computed(() => (props.isEditing ? 'is-editing' : ''));
 const mathContainerStyle = computed(() => (props.isEditable ? '-1rem' : '0rem'));
 </script>
