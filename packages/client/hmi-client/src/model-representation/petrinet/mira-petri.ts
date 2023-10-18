@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
-import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
+import { createMatrix1D, createParameterOrTransitionMatrix } from '@/utils/pivot';
 import { OdeSemantic } from '@/types/common';
 
 /**
@@ -247,10 +247,9 @@ export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => 
 	if (odeType === OdeSemantic.Initials) {
 		matrix = createMatrix1D(matrixData).matrix;
 	} else if (odeType === OdeSemantic.Parameters) {
-		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
+		matrix = createParameterOrTransitionMatrix(amr, matrixData, childParameterIds).matrix;
 	} else if (odeType === OdeSemantic.Rates) {
-		matrix = createParameterMatrix(amr, matrixData).matrix;
+		matrix = createParameterOrTransitionMatrix(amr, matrixData).matrix;
 	}
-	console.log(matrix);
 	return matrix;
 };

@@ -106,7 +106,7 @@ export const createMatrix1D = (data: any[]) => {
 	return { matrix: rows };
 };
 
-export const createParameterMatrix = (
+export const createParameterOrTransitionMatrix = (
 	amr: Model,
 	transitionMatrixData: any[],
 	childParameterIds?: string[]

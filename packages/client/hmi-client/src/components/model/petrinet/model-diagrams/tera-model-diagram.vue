@@ -293,6 +293,10 @@ watch(
 			graphLegendColors.value = renderer.depthColorList;
 		}
 
+		renderer.on('node-click', (_eventName, _event, selection, thisRenderer) => {
+			console.log(_eventName, _event, selection, thisRenderer);
+		});
+
 		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
 			if (isEditing.value === true) {
 				const data = selection.datum();
