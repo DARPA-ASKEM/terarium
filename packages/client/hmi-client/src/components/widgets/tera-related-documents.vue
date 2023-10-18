@@ -13,6 +13,7 @@
 		<Button
 			label="Enrich Description"
 			text
+			:loading="enriching"
 			@click="
 				dialogType = 'enrich';
 				visible = true;
@@ -109,12 +110,14 @@ const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<'enrich' | 'align'>('enrich');
 const aligning = ref(false);
+const enriching = ref(false);
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	const jobIds: (string | null)[] = [];
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
 
+	enriching.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === ResourceType.MODEL) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
@@ -136,6 +139,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	// Poll all extractions
 	await Promise.all(extractionList);
 
+	enriching.value = false;
 	emit('enriched');
 };
 

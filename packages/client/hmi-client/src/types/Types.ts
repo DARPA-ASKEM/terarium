@@ -173,6 +173,17 @@ export interface DatasetColumn {
     description?: string;
 }
 
+export interface AddDocumentAssetFromXDDRequest {
+    document: Document;
+    projectId: string;
+}
+
+export interface AddDocumentAssetFromXDDResponse {
+    documentAssetId: string;
+    pdfUploadError: boolean;
+    extractionJobId: string;
+}
+
 export interface DocumentAsset {
     id?: string;
     name?: string;
