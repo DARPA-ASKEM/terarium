@@ -249,7 +249,7 @@ export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => 
 	} else if (odeType === OdeSemantic.Parameters) {
 		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
 	} else if (odeType === OdeSemantic.Rates) {
-		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
+		matrix = createParameterMatrix(amr, matrixData).matrix;
 	}
 
 	return matrix;
