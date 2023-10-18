@@ -19,7 +19,7 @@
 	</div>
 	<div v-if="activeTab === SimulateTabs.wizard" class="container">
 		<div class="left-side">
-			<h1>Stratify Model <i class="pi pi-info-circle" /></h1>
+			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
 			<p>The model will be stratified with the following settings.</p>
 			<stratificationGroupForm
 				v-for="(cfg, index) in node.state.strataGroups"
