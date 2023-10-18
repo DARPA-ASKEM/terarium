@@ -42,12 +42,12 @@
 			<div v-else>
 				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h>No Model Provided</h>
+				<h4>No Model Provided</h4>
 			</div>
 		</div>
 	</div>
 	<div v-else class="container">
-		<p>TODO</p>
+		<h4>TODO</h4>
 	</div>
 </template>
 
