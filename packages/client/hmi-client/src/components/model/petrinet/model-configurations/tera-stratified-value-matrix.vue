@@ -38,19 +38,22 @@
 									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 								/>
-								<div
-									v-else-if="odeType === OdeSemantic.Initials"
-									class="mathml-container"
-									v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
-								/>
-								<div v-else>
-									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
-									<div v-if="cell?.content?.controllers">
-										controllers: {{ cell?.content?.controllers }}
+								<section v-else>
+									<div>
+										<div
+											class="mathml-container"
+											v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+										/>
+										<template v-if="cell?.content?.controllers">
+											controllers: {{ cell?.content?.controllers }}
+										</template>
 									</div>
-								</div>
+									<div class="subdue">
+										{{ cell?.content.id }}
+									</div>
+								</section>
 							</template>
-							<span v-else class="not-allowed">N/A</span>
+							<span v-else class="subdue">N/A</span>
 						</td>
 					</tr>
 				</tbody>
@@ -280,7 +283,12 @@ onMounted(() => {
 	min-width: 11rem;
 }
 
-.not-allowed {
+.subdue {
 	color: var(--text-color-subdued);
+}
+
+section {
+	display: flex;
+	justify-content: space-between;
 }
 </style>
