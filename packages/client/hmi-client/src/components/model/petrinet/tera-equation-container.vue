@@ -18,6 +18,7 @@
 				v-else
 				class="p-button-sm p-button-outlined"
 				@click="emit('start-editing')"
+				:loading="!!isUpdating"
 				label="Edit"
 			/>
 		</section>
@@ -44,6 +45,7 @@ const props = defineProps<{
 	isEditable: boolean;
 	disableSave?: boolean;
 	equationType?: string;
+	isUpdating?: boolean;
 }>();
 
 const emit = defineEmits([
