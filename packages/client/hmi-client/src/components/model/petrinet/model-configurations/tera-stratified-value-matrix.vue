@@ -7,7 +7,7 @@
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
-						<th v-if="matrix.length > 1" class="choose-criteria"></th>
+						<th v-if="matrix.length > 1" class="choose-criteria">&nbsp;</th>
 						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>

@@ -121,9 +121,6 @@ export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 		} else {
 			obj.base = existingTransition.id;
 		}
-		obj.input = transition.input;
-		obj.output = transition.output;
-
 		matrixData.push(obj);
 	}
 	return { uniqueTransitions, matrixData };
@@ -231,7 +228,7 @@ export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => 
 
 	if (odeType === OdeSemantic.Initials) {
 		matrixData = stateMatrixData.filter(({ base }) => base === id);
-	} else {
+	} else if (odeType === OdeSemantic.Parameters) {
 		const paramsMap = getUnstratifiedParameters(amr);
 		if (!paramsMap.has(id)) return null;
 
@@ -239,6 +236,8 @@ export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => 
 		childParameterIds = paramsMap.get(id) as string[];
 		// Holds all points that have the parameter
 		matrixData = filterParameterLocations(amr, transitionMatrixData, [...childParameterIds, id]);
+	} else if (odeType === OdeSemantic.Rates) {
+		matrixData = transitionMatrixData.filter(({ base }) => base === id);
 	}
 
 	if (_.isEmpty(matrixData)) return null;
@@ -247,7 +246,9 @@ export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => 
 
 	if (odeType === OdeSemantic.Initials) {
 		matrix = createMatrix1D(matrixData).matrix;
-	} else {
+	} else if (odeType === OdeSemantic.Parameters) {
+		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
+	} else if (odeType === OdeSemantic.Rates) {
 		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
 	}
 
