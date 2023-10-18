@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
@@ -94,13 +94,14 @@ import {
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
-import { AssetType } from '@/types/Types';
+import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import { getRelatedArtifacts } from '@/services/provenance';
+import { isDocumentAsset } from '@/utils/data-util';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
-	relatedDocuments?: Array<{ name: string | undefined; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
 }>();
@@ -111,6 +112,7 @@ const selectedResources = ref();
 const dialogType = ref<'enrich' | 'align'>('enrich');
 const aligning = ref(false);
 const enriching = ref(false);
+const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	const jobIds: (string | null)[] = [];
@@ -141,6 +143,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 
 	enriching.value = false;
 	emit('enriched');
+	getRelatedDocuments();
 };
 
 const sendToAlignModel = async () => {
@@ -158,6 +161,7 @@ const sendToAlignModel = async () => {
 
 		aligning.value = false;
 		emit('enriched');
+		getRelatedDocuments();
 	}
 };
 
@@ -167,6 +171,42 @@ const openAsset = (assetRoute: AssetRoute) => {
 		params: assetRoute
 	});
 };
+
+onMounted(() => {
+	getRelatedDocuments();
+});
+
+watch(
+	() => props.assetId,
+	() => {
+		getRelatedDocuments();
+	}
+);
+
+async function getRelatedDocuments() {
+	if (!props.assetType) return;
+	let provenanceType;
+	if (props.assetType === ResourceType.MODEL) {
+		provenanceType = ProvenanceType.Model;
+	}
+	if (props.assetType === ResourceType.DATASET) {
+		provenanceType = ProvenanceType.Dataset;
+	}
+
+	if (!provenanceType) return;
+
+	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
+		ProvenanceType.Publication
+	]);
+
+	relatedDocuments.value =
+		(provenanceNodes.filter((res) => isDocumentAsset(res)) as DocumentAsset[]).map(
+			(documentAsset) => ({
+				name: documentAsset.name,
+				id: documentAsset.id
+			})
+		) ?? [];
+}
 </script>
 
 <style scoped>

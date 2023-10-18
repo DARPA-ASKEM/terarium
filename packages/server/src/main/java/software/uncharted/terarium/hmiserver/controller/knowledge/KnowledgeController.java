@@ -160,6 +160,9 @@ public class KnowledgeController {
 		@PathVariable("dataset_id") String datasetId,
 		@RequestParam(name = "document_id", required = false) String documentId
 	) {
+
+		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId, ProvenanceType.DATASET, documentId, ProvenanceType.PUBLICATION);
+		provenanceProxy.createProvenance(provenancePayload);
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
 	}
 

@@ -40,7 +40,6 @@
 				<template #header>Related publications</template>
 				<tera-related-documents
 					:documents="documents"
-					:related-documents="relatedDocuments"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 					@enriched="fetchAsset"
@@ -414,11 +413,11 @@
 
 <script setup lang="ts">
 import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
-import { DocumentAsset, Model, ModelConfiguration, ProvenanceType } from '@/types/Types';
+import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
@@ -432,8 +431,6 @@ import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
-import { getRelatedArtifacts } from '@/services/provenance';
-import { isDocumentAsset } from '@/utils/data-util';
 
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
@@ -452,7 +449,6 @@ const emit = defineEmits(['update-model', 'fetch-model']);
 
 function fetchAsset() {
 	emit('fetch-model');
-	getRelatedDocuments();
 }
 
 const isSectionEditable = ref<string | null>();
@@ -502,7 +498,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = ref<{ name: string | undefined; id: string | undefined }[]>([]);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
@@ -638,29 +633,6 @@ function updateTable(tableType: string, idx: number, key: string, value: string)
 		}
 	};
 }
-
-async function getRelatedDocuments() {
-	const provenanceNodes = await getRelatedArtifacts(props.model.id, ProvenanceType.Model, [
-		ProvenanceType.Publication
-	]);
-
-	relatedDocuments.value =
-		(provenanceNodes.filter((res) => isDocumentAsset(res)) as DocumentAsset[]).map(
-			(documentAsset) => ({
-				name: documentAsset.name,
-				id: documentAsset.id
-			})
-		) ?? [];
-}
-
-onMounted(() => getRelatedDocuments());
-
-watch(
-	() => props.model.id,
-	() => {
-		getRelatedDocuments();
-	}
-);
 </script>
 
 <style scoped>
