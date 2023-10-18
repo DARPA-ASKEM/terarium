@@ -34,6 +34,7 @@ import { latexToAMR } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import { isEmpty } from 'lodash';
+import { useToastService } from '@/services/toast';
 
 const props = defineProps<{
 	model: Model;
@@ -77,7 +78,10 @@ const updateModelFromEquations = async () => {
 	isUpdating.value = true;
 	isEditing.value = false;
 	const updated = await latexToAMR(equations.value, 'petrinet', props.model.id);
-	if (updated) emit('model-updated');
+	if (updated) {
+		emit('model-updated');
+		useToastService().success('Success', `Model Updated from equation`);
+	}
 	isUpdating.value = false;
 };
 
