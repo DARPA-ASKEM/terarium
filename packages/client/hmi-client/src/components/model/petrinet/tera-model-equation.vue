@@ -2,6 +2,7 @@
 	<tera-equation-container
 		:is-editing="isEditing"
 		:is-editable="isEditable"
+		:isUpdating="isUpdating"
 		@cancel-edit="cancelEdit"
 		@add-equation="addEquation"
 		@start-editing="isEditing = true"
@@ -45,6 +46,7 @@ const equationsRef = ref<any[]>([]);
 const equations = ref<string[]>([]);
 const originalEquations = ref<string[]>([]);
 const isEditing = ref(false);
+const isUpdating = ref<boolean>(false);
 
 const setNewEquation = (index: number, latexEq: string) => {
 	equations.value[index] = latexEq;
@@ -72,9 +74,11 @@ const updateLatexFormula = (equationsList: string[]) => {
 };
 
 const updateModelFromEquations = async () => {
+	isUpdating.value = true;
 	isEditing.value = false;
 	const updated = await latexToAMR(equations.value, 'petrinet', props.model.id);
 	if (updated) emit('model-updated');
+	isUpdating.value = false;
 };
 
 watch(
