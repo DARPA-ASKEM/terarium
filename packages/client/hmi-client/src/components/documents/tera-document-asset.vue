@@ -40,21 +40,21 @@
 		<Accordion
 			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
+			:active-index="[0, 1, 2, 3]"
 		>
-			<AccordionTab v-if="!isEmpty(formattedAbstract)">
+			<AccordionTab>
 				<template #header>
 					<header id="Abstract">Abstract</header>
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(figures)">
+			<AccordionTab>
 				<template #header>
 					<header id="Figures">
 						Figures<span class="artifact-amount">({{ figures.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(figures)">
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
 						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
@@ -64,13 +64,13 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(tables)">
+			<AccordionTab>
 				<template #header>
 					<header id="Tables">
 						Tables<span class="artifact-amount">({{ tables.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(tables)">
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
 						<div class="extracted-image">
 							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
@@ -82,13 +82,13 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(equations)">
+			<AccordionTab>
 				<template #header>
 					<header id="Equations">
 						Equations<span class="artifact-amount">({{ equations.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(equations)">
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
 						<div class="extracted-image">
 							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />

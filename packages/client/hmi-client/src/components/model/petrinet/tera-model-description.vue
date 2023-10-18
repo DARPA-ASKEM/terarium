@@ -56,31 +56,19 @@
 						<Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
 					</template> -->
 			</AccordionTab>
-			<AccordionTab
-				:headerStyle="{ display: isEmpty(usage) && 'none' }"
-				:contentStyle="{ display: isEmpty(usage) && 'none' }"
-			>
+			<AccordionTab>
 				<template #header>Usage</template>
 				<p v-html="usage" />
 			</AccordionTab>
-			<AccordionTab
-				:headerStyle="{ display: isEmpty(sourceDataset) && 'none' }"
-				:contentStyle="{ display: isEmpty(sourceDataset) && 'none' }"
-			>
+			<AccordionTab>
 				<template #header>Source dataset</template>
 				<p v-html="sourceDataset" />
 			</AccordionTab>
-			<AccordionTab
-				:headerStyle="{ display: isEmpty(provenance) && 'none' }"
-				:contentStyle="{ display: isEmpty(provenance) && 'none' }"
-			>
+			<AccordionTab>
 				<template #header>Provenance</template>
 				<p v-html="provenance" />
 			</AccordionTab>
-			<AccordionTab
-				:headerStyle="{ display: isEmpty(schema) && 'none' }"
-				:contentStyle="{ display: isEmpty(schema) && 'none' }"
-			>
+			<AccordionTab>
 				<template #header>Schema</template>
 				<p v-html="schema" />
 			</AccordionTab>

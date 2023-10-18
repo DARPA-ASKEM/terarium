@@ -52,32 +52,32 @@
 		<Accordion
 			v-if="view === DocumentView.EXRACTIONS"
 			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
+			:active-index="[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
 		>
-			<AccordionTab v-if="!isEmpty(formattedAbstract)">
+			<AccordionTab>
 				<template #header>
 					<header id="Abstract">Abstract</header>
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
-			<AccordionTab v-if="doc?.knownEntities?.summaries">
+			<AccordionTab>
 				<template #header>
 					<header id="Section-Summaries">Section Summaries</header>
 				</template>
-				<ul>
+				<ul v-if="doc?.knownEntities?.summaries">
 					<li v-for="(section, index) of doc.knownEntities.summaries" :key="index">
 						<h6>{{ index }}</h6>
 						<p v-html="highlightSearchTerms(section[index])" />
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(figures)">
+			<AccordionTab>
 				<template #header>
 					<header id="Figures">
 						Figures<span class="artifact-amount">({{ figures.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(figures)">
 					<li v-for="ex in figures" :key="ex.askemId" class="extracted-item">
 						<Image
 							id="img"
@@ -93,13 +93,13 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(tables)">
+			<AccordionTab>
 				<template #header>
 					<header id="Tables">
 						Tables<span class="artifact-amount">({{ tables.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(tables)">
 					<li v-for="ex in tables" :key="ex.askemId" class="extracted-item">
 						<div class="extracted-image">
 							<Image
@@ -116,13 +116,13 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(equations)">
+			<AccordionTab>
 				<template #header>
 					<header id="Equations">
 						Equations<span class="artifact-amount">({{ equations.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(equations)">
 					<li v-for="ex in equations" :key="ex.askemId" class="extracted-item">
 						<div class="extracted-image">
 							<Image
@@ -139,13 +139,13 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(githubUrls)">
+			<AccordionTab>
 				<template #header>
 					<header id="Github-URLs">
 						GitHub URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(githubUrls)">
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
 						<Button
 							v-if="!featureConfig.isPreview"
@@ -164,13 +164,13 @@
 					@open-code="openCode"
 				/>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(otherUrls)">
+			<AccordionTab>
 				<template #header>
 					<header id="Other-URLs">
 						Other URLs<span class="artifact-amount">({{ otherUrls.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(otherUrls)">
 					<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -179,13 +179,13 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(otherExtractions)">
+			<AccordionTab>
 				<template #header>
 					<header id="Other-Extractions">
 						Other extractions<span class="artifact-amount">({{ otherExtractions.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(otherExtractions)">
 					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
@@ -194,13 +194,13 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(doc.citationList)">
+			<AccordionTab>
 				<template #header>
 					<header id="References">
 						References<span class="artifact-amount">({{ doc.citationList.length }})</span>
 					</header>
 				</template>
-				<ul>
+				<ul v-if="!isEmpty(doc.citationList)">
 					<li v-for="(citation, key) of doc.citationList" :key="key">
 						<template v-if="!isEmpty(formatCitation(citation))">
 							{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
@@ -208,22 +208,24 @@
 					</li>
 				</ul>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(associatedResources)">
+			<AccordionTab>
 				<template #header>
 					<header id="Associated-Resources">
 						Associated resources
 						<span class="artifact-amount">({{ associatedResources.length }})</span>
 					</header>
 				</template>
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents"></Column>
-				</DataTable>
+				<template v-if="!isEmpty(associatedResources)">
+					<DataTable :value="relatedTerariumModels">
+						<Column field="name" header="Models"></Column>
+					</DataTable>
+					<DataTable :value="relatedTerariumDatasets">
+						<Column field="name" header="Datasets"></Column>
+					</DataTable>
+					<DataTable :value="relatedTerariumDocuments">
+						<Column field="name" header="Documents"></Column>
+					</DataTable>
+				</template>
 			</AccordionTab>
 		</Accordion>
 		<tera-pdf-embed

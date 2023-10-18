@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
+	<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
 		<AccordionTab header="Model diagram">
 			<tera-model-diagram
 				ref="teraModelDiagramRef"
@@ -31,16 +31,17 @@
 				@update-configuration="updateConfiguration"
 				@add-configuration="addConfiguration"
 		/></AccordionTab>
-		<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-			<DataTable :value="relatedTerariumModels">
-				<Column field="name" header="Models" />
-			</DataTable>
-			<DataTable :value="relatedTerariumDatasets">
-				<Column field="name" header="Datasets" />
-			</DataTable>
-			<DataTable :value="relatedTerariumDocuments">
-				<Column field="name" header="Documents" />
-			</DataTable>
+		<AccordionTab header="Associated resources">
+			<template v-if="!isEmpty(relatedTerariumArtifacts)">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents" /> </DataTable
+			></template>
 		</AccordionTab>
 	</Accordion>
 </template>

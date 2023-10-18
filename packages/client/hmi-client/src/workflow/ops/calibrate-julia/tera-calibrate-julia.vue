@@ -62,8 +62,8 @@
 					/>
 				</div>
 			</AccordionTab>
-			<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
-				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
+			<AccordionTab :header="currentDatasetFileName">
+				<tera-dataset-datatable v-if="datasetId" preview-mode :raw-content="csvAsset ?? null" />
 			</AccordionTab>
 			<AccordionTab header="Train / Test ratio">
 				<section class="train-test-ratio">

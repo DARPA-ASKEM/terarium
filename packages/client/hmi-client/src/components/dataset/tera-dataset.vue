@@ -78,7 +78,7 @@
 					</section>
 				</section>
 			</section>
-			<Accordion :multiple="true" :activeIndex="[0, 1, 2, 3]">
+			<Accordion multiple :activeIndex="[0, 1, 2, 3, 4]">
 				<AccordionTab>
 					<template #header>Related publications</template>
 					<tera-related-documents
@@ -99,11 +99,11 @@
 						edit this field directly.
 					</p>
 				</AccordionTab>
-				<AccordionTab v-if="dataset?.metadata?.data_card">
+				<AccordionTab>
 					<template #header>
 						<header>Data Card</header>
 					</template>
-					<ul>
+					<ul v-if="dataset.metadata?.data_card">
 						<li>Description: {{ dataset.metadata.data_card.DESCRIPTION }}</li>
 						<li>Author Name: {{ dataset.metadata.data_card.AUTHOR_NAME }}</li>
 						<li>Author Email: {{ dataset.metadata.data_card.AUTHOR_EMAIL }}</li>
@@ -114,7 +114,7 @@
 						<li>Data Type: {{ dataset.metadata.data_card.DATASET_TYPE }}</li>
 					</ul>
 				</AccordionTab>
-				<AccordionTab v-if="enriched">
+				<AccordionTab>
 					<template #header>
 						<header id="Source">Source</header>
 					</template>
@@ -266,7 +266,7 @@
 			</Accordion>
 		</template>
 		<template v-else-if="view === DatasetView.DATA">
-			<Accordion :multiple="true" :activeIndex="[0, 1]">
+			<Accordion multiple :activeIndex="[0]">
 				<AccordionTab>
 					<template #header>
 						Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
@@ -398,9 +398,6 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
-
-// temporary variable to allow user to click through related documents modal and simulate "getting" enriched data back
-const enriched = ref(false);
 
 const groundingValues = ref<string[][]>([]);
 // groundingValuesUnsaved is set to the value of the grounding value being edited, and is the value that is reverted back to if the user does not save their changes

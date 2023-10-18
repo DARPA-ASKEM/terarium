@@ -47,6 +47,11 @@
 				}
 			}
 		}
+
+		// Will not show accordion tab if there is no content in it
+		&:has(.p-accordion-content:empty, .p-accordion-content > *:empty) {
+			display: none;
+		}
 	}
 
 	.p-accordion-tab[data-count] .p-accordion-header-text::after {
@@ -54,4 +59,6 @@
 		color: var(--text-color-subdued);
 		content: ' (' attr(data-count)')';
 	}
+
+	
 }
