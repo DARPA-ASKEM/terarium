@@ -191,6 +191,9 @@ watch(
 			if (document) {
 				doc.value = document;
 				openTextDocument();
+				if (viewOptions.value.length > 1) {
+					viewOptions.value.pop();
+				}
 				viewOptions.value.push(
 					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
 						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
