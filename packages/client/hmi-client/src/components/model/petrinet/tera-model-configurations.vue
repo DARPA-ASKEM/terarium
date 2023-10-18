@@ -60,7 +60,8 @@
 			be in their own since they are dealing with a different set of variables. Will deal with
 			this in another PR.
 			-->
-			<tera-modal
+
+			<!-- <tera-modal
 				v-if="openValueConfig && stratifiedModelType && modalAttributes.id"
 				@modal-mask-clicked="openValueConfig = false"
 			>
@@ -78,28 +79,7 @@
 					</div>
 				</template>
 				<template #default>
-					<!-- TODO: Implement value tabs for the modal once we are ready
-					<TabView v-model:activeIndex="activeIndex">
-					<TabPanel v-for="(extraction, i) in extractions" :key="i">
-						<template #header>
-							<span>{{ extraction.name }}</span>
-						</template>
-						<div>
-							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
-						</div>
-						<div>
-							<label for="name">Matrix</label>
-							<tera-stratified-value-matrix
-								:model-configuration="modelConfigurations[modalAttributes.configIndex]"
-								:id="modalAttributes.id"
-								:stratified-model-type="stratifiedModelType"
-								:node-type="modalAttributes.odeType"
-							/>
-						</div>
-					</TabPanel>
-				</TabView> -->
-					<tera-stratified-value-matrix
+					<tera-stratified-matrix
 						:model-configuration="modelConfigurations[modalAttributes.configIndex]"
 						:id="modalAttributes.id"
 						:stratified-model-type="stratifiedModelType"
@@ -112,7 +92,17 @@
 					<Button label="OK" @click="openValueConfig = false" />
 					<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
 				</template>
-			</tera-modal>
+			</tera-modal> -->
+			<tera-stratified-matrix-modal
+				v-if="openValueConfig && stratifiedModelType && modalAttributes.id"
+				:model-configuration="modelConfigurations[modalAttributes.configIndex]"
+				:id="modalAttributes.id"
+				:stratified-model-type="stratifiedModelType"
+				:ode-type="modalAttributes.odeType"
+				:open-value-config="openValueConfig"
+				@close-modal="openValueConfig = false"
+				@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
+			/>
 			<tera-modal
 				v-else-if="openValueConfig && modalAttributes.odeType && modalAttributes.odeObjIndex"
 				@modal-mask-clicked="openValueConfig = false"
@@ -219,10 +209,9 @@ import TabPanel from 'primevue/tabpanel';
 import Dropdown from 'primevue/dropdown';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
-import Checkbox from 'primevue/checkbox';
 import InputText from 'primevue/inputtext';
 import TeraTransitionMatrices from '@/temp/tera-transition-matrices.vue';
-import TeraStratifiedValueMatrix from './model-configurations/tera-stratified-value-matrix.vue';
+import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraRegularModelConfigurations from './model-configurations/tera-regular-model-configurations.vue';
 import TeraStratifiedModelConfigurations from './model-configurations/tera-stratified-model-configurations.vue';
 // import TabPanel from 'primevue/tabpanel';
@@ -243,7 +232,6 @@ const openValueConfig = ref(false);
 const editValue = ref<string>('');
 const activeIndex = ref(0);
 const errorMessage = ref('');
-const matrixShouldEval = ref(true);
 
 const addConfigurationItems = computed(() =>
 	props.modelConfigurations.map((config) => ({
