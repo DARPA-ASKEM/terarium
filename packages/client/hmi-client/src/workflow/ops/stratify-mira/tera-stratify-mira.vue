@@ -24,7 +24,7 @@
 			<stratificationGroupForm
 				v-for="(cfg, index) in node.state.strataGroups"
 				:key="index"
-				:modelStates="modelStates"
+				:modelNodeOptions="modelNodeOptions"
 				:config="cfg"
 				:index="index"
 				@delete-self="deleteStratifyGroupForm"
@@ -76,7 +76,7 @@ enum SimulateTabs {
 const activeTab = ref(SimulateTabs.wizard);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
-const modelStates = ref<string[]>([]);
+const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 
 const addGroupForm = () => {
@@ -119,7 +119,7 @@ const updateStratifyGroupForm = (data) => {
 	});
 };
 
-// Set model, modelConfiguration, modelStates
+// Set model, modelConfiguration, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
 	async () => {
@@ -137,7 +137,7 @@ watch(
 						modelColumnNameOptions.push(o.id);
 					});
 				}
-				modelStates.value = modelColumnNameOptions;
+				modelNodeOptions.value = modelColumnNameOptions;
 			}
 		}
 	},

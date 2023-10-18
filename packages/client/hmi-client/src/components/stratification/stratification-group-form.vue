@@ -20,7 +20,7 @@
 				<MultiSelect
 					id="variables-select"
 					v-model="selectedVariables"
-					:options="props.modelStates"
+					:options="props.modelNodeOptions"
 					placeholder="Model states"
 					display="chip"
 					@update:model-value="
@@ -52,7 +52,7 @@ import InputSwitch from 'primevue/inputswitch';
 import { StratifyGroup } from '@/workflow/ops/stratify-mira/stratify-mira-operation';
 
 const props = defineProps<{
-	modelStates: string[];
+	modelNodeOptions: string[];
 	config: StratifyGroup;
 	index: number;
 }>();
