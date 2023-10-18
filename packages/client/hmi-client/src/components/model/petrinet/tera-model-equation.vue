@@ -2,6 +2,7 @@
 	<tera-equation-container
 		:is-editing="isEditing"
 		:is-editable="isEditable"
+		:isUpdating="isUpdating"
 		@cancel-edit="cancelEdit"
 		@add-equation="addEquation"
 		@start-editing="isEditing = true"
@@ -33,6 +34,7 @@ import { latexToAMR } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { petriToLatex } from '@/petrinet/petrinet-service';
 import { isEmpty } from 'lodash';
+import { useToastService } from '@/services/toast';
 
 const props = defineProps<{
 	model: Model;
@@ -45,6 +47,7 @@ const equationsRef = ref<any[]>([]);
 const equations = ref<string[]>([]);
 const originalEquations = ref<string[]>([]);
 const isEditing = ref(false);
+const isUpdating = ref<boolean>(false);
 
 const setNewEquation = (index: number, latexEq: string) => {
 	equations.value[index] = latexEq;
@@ -72,9 +75,14 @@ const updateLatexFormula = (equationsList: string[]) => {
 };
 
 const updateModelFromEquations = async () => {
+	isUpdating.value = true;
 	isEditing.value = false;
 	const updated = await latexToAMR(equations.value, 'petrinet', props.model.id);
-	if (updated) emit('model-updated');
+	if (updated) {
+		emit('model-updated');
+		useToastService().success('Success', `Model Updated from equation`);
+	}
+	isUpdating.value = false;
 };
 
 watch(
