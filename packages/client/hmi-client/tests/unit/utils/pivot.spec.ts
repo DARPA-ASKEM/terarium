@@ -3,7 +3,7 @@ import {
 	getMiraAMRPresentationData,
 	filterParameterLocations
 } from '@/model-representation/petrinet/mira-petri';
-import { createMatrix2D, createParameterMatrix } from '@/utils/pivot';
+import { createMatrix2D, createParameterOrTransitionMatrix } from '@/utils/pivot';
 import { describe, expect, it } from 'vitest';
 
 const data: any[] = [
@@ -75,7 +75,7 @@ describe('pivot table tests', () => {
 			getMiraAMRPresentationData(amr as any).transitionMatrixData,
 			childParameterIds
 		);
-		const { matrix } = createParameterMatrix(amr as any, matrixData, childParameterIds);
+		const { matrix } = createParameterOrTransitionMatrix(amr as any, matrixData, childParameterIds);
 		expect(matrix.length).to.eq(3);
 		expect(matrix[0].length).to.eq(3);
 		expect(matrix[0][0].content.value).to.not.eq(null);
@@ -93,7 +93,7 @@ describe('pivot table tests', () => {
 			getMiraAMRPresentationData(amr as any).transitionMatrixData,
 			childParameterIds
 		);
-		const { matrix } = createParameterMatrix(amr as any, matrixData, childParameterIds);
+		const { matrix } = createParameterOrTransitionMatrix(amr as any, matrixData, childParameterIds);
 		expect(matrix.length).to.eq(3);
 		expect(matrix[0].length).to.eq(3);
 		expect(matrix[0][0].content.value).to.not.eq(null);
