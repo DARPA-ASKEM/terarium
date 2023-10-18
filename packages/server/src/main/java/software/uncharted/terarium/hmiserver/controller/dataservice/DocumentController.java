@@ -93,7 +93,7 @@ public class DocumentController implements SnakeCaseController {
 		DocumentAsset document = proxy.getAsset(id).getBody();
 
 		// Test if the document as any assets
-        if (document.getAssets() != null && document.getAssets().isEmpty()) {
+        if (document.getAssets() == null){
 			return ResponseEntity.ok(document);
 		}
 
