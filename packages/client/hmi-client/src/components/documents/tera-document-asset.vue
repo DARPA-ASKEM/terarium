@@ -107,7 +107,7 @@
 			:pdf-link="pdfLink"
 			:title="doc.name || ''"
 		/>
-		<code-editor v-else-if="view === DocumentView.TXT" :initial-code="code" />
+		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
 	</tera-asset>
 </template>
 
@@ -129,9 +129,9 @@ import {
 } from '@/services/document-assets';
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import CodeEditor from '@/page/project/components/code-editor.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
 	EXTRACTIONS = 'Extractions',
@@ -150,7 +150,7 @@ const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
 const view = ref(DocumentView.EXTRACTIONS);
 const viewOptions = ref([{ value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' }]);
-const code = ref<string>();
+const docText = ref<string>('');
 
 const docLink = computed(() =>
 	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
@@ -180,7 +180,7 @@ async function openTextDocument() {
 	const filename: string | undefined = doc.value?.fileNames?.at(0);
 	const res: string | null = await getDocumentFileAsText(props.assetId!, filename!);
 	if (!res) return;
-	code.value = res;
+	docText.value = res;
 }
 
 watch(
