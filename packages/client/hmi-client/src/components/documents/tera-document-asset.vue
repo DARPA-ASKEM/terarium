@@ -149,7 +149,15 @@ const props = defineProps<{
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
 const view = ref(DocumentView.EXTRACTIONS);
-const viewOptions = ref([{ value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' }]);
+const viewOptions = computed(() => {
+	if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
+		return [extractionsOption, pdfOption];
+	}
+	return [extractionsOption, txtOption];
+});
+const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' };
+const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
+const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
 const docText = ref<string>('');
 
 const docLink = computed(() =>
@@ -191,14 +199,6 @@ watch(
 			if (document) {
 				doc.value = document;
 				openTextDocument();
-				if (viewOptions.value.length > 1) {
-					viewOptions.value.pop();
-				}
-				viewOptions.value.push(
-					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
-						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
-						: { value: DocumentView.TXT, icon: 'pi pi-file' }
-				);
 			}
 		} else {
 			doc.value = null;
