@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
@@ -37,6 +37,13 @@ async function initialize(editorInstance) {
 function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
 }
+
+watch(
+	() => props.initialText,
+	() => {
+		text.value = props.initialText;
+	}
+);
 </script>
 
 <styled scoped></styled>

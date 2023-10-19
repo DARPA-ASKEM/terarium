@@ -196,9 +196,19 @@ watch(
 	async () => {
 		if (props.assetId) {
 			const document = await getDocumentAsset(props.assetId);
-			if (document) {
-				doc.value = document;
-				openTextDocument();
+			if (!document) {
+				return;
+			}
+			doc.value = document;
+			if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
+				if (view.value === DocumentView.TXT) {
+					view.value = DocumentView.PDF;
+				}
+			} else {
+				await openTextDocument();
+				if (view.value === DocumentView.PDF) {
+					view.value = DocumentView.TXT;
+				}
 			}
 		} else {
 			doc.value = null;
