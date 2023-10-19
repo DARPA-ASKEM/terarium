@@ -384,7 +384,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		useProjects().get();
+		useProjects().refresh();
 		isRenamingDataset.value = false;
 	}
 }
