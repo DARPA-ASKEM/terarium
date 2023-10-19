@@ -4,8 +4,8 @@
 		<tera-stratified-matrix
 			:id="baseTransition"
 			:model-configuration="modelConfiguration"
-			:stratified-model-type="StratifiedModelType.Mira"
-			:ode-type="OdeSemantic.Rates"
+			:stratified-model-type="StratifiedModel.Mira"
+			:stratified-matrix-type="StratifiedMatrix.Rates"
 			:should-eval="true"
 		/>
 	</div>
@@ -14,8 +14,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
-import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
-import { OdeSemantic } from '@/types/common';
+import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedMatrix } from '@/types/Model';
 import { ModelConfiguration } from '@/types/Types';
 import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 

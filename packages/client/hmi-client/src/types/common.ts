@@ -39,14 +39,6 @@ export interface AnyValueMap {
 	[key: string]: any;
 }
 
-export enum OdeSemantic {
-	Initials = 'initials',
-	Parameters = 'parameters',
-	Rates = 'rates',
-	Observables = 'observables',
-	Time = 'time'
-}
-
 export enum ViewType {
 	LIST = 'list',
 	MATRIX = 'matrix',

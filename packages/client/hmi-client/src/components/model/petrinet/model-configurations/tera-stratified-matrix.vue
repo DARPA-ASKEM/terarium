@@ -14,7 +14,7 @@
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
 						<td v-if="matrix.length > 1" class="p-frozen-column">
-							<template v-if="odeType === OdeSemantic.Initials">
+							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
 							<template v-else>
@@ -65,18 +65,18 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
 import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
-import { OdeSemantic } from '@/types/common';
+import { StratifiedMatrix } from '@/types/Model';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
-	stratifiedModelType: StratifiedModelType;
-	odeType: OdeSemantic;
+	stratifiedModelType: StratifiedModel;
+	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
 }>();
 
@@ -131,7 +131,11 @@ function findOdeObjectLocation(variableName: string): {
 	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 	if (!ode) return null;
 
-	const fieldNames = [OdeSemantic.Rates, OdeSemantic.Initials, OdeSemantic.Parameters];
+	const fieldNames = [
+		StratifiedMatrix.Rates,
+		StratifiedMatrix.Initials,
+		StratifiedMatrix.Parameters
+	];
 
 	for (let i = 0; i < fieldNames.length; i++) {
 		const fieldIndex = ode[fieldNames[i]].findIndex(
@@ -180,7 +184,11 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 }
 
 function renderMatrix() {
-	matrix.value = generateMatrix(props.modelConfiguration.configuration, props.id, props.odeType);
+	matrix.value = generateMatrix(
+		props.modelConfiguration.configuration,
+		props.id,
+		props.stratifiedMatrixType
+	);
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {

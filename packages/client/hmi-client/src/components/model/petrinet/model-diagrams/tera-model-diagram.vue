@@ -97,8 +97,8 @@
 				v-if="openValueConfig && modelConfiguration"
 				:id="selectedTransitionId"
 				:model-configuration="modelConfiguration"
-				:stratified-model-type="StratifiedModelType.Mira"
-				:ode-type="OdeSemantic.Rates"
+				:stratified-model-type="StratifiedModel.Mira"
+				:stratified-matrix-type="StratifiedMatrix.Rates"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
 				@update-configuration="(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate, 0)"
@@ -117,7 +117,7 @@ import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import {
 	getStratificationType,
-	StratifiedModelType
+	StratifiedModel
 } from '@/model-representation/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import {
@@ -130,7 +130,7 @@ import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrin
 import { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
-import { OdeSemantic } from '@/types/common';
+import { StratifiedMatrix } from '@/types/Model';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 

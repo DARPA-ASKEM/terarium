@@ -30,7 +30,7 @@
 								:model-configuration="modelConfigurations[modalAttributes.configIndex]"
 								:id="modalAttributes.id"
 								:stratified-model-type="stratifiedModelType"
-								:node-type="modalAttributes.odeType"
+								:node-type="modalAttributes.stratifiedMatrixType"
 							/>
 						</div>
 					</TabPanel>
@@ -50,19 +50,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { OdeSemantic } from '@/types/common';
-import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { ModelConfiguration } from '@/types/Types';
 import Checkbox from 'primevue/checkbox';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { StratifiedMatrix } from '@/types/Model';
 import TeraStratifiedMatrix from './tera-stratified-matrix.vue';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
-	stratifiedModelType: StratifiedModelType;
-	odeType: OdeSemantic;
+	stratifiedModelType: StratifiedModel;
+	stratifiedMatrixType: StratifiedMatrix;
 	openValueConfig: boolean;
 }>();
 

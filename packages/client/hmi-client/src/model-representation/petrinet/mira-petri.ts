@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
 import { createMatrix1D, createParameterOrTransitionMatrix } from '@/utils/pivot';
-import { OdeSemantic } from '@/types/common';
+import { StratifiedMatrix } from '@/types/Model';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -219,16 +219,16 @@ export const getMiraAMRPresentationData = (amr: Model) => {
 	};
 };
 
-export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => {
+export const generateMatrix = (amr: Model, id: string, stratifiedMatrixType: StratifiedMatrix) => {
 	const { stateMatrixData, transitionMatrixData } = getMiraAMRPresentationData(amr);
 
 	// Get only the states/transitions that are mapped to the base model
 	let matrixData: any[] = [];
 	let childParameterIds: string[] = [];
 
-	if (odeType === OdeSemantic.Initials) {
+	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
 		matrixData = stateMatrixData.filter(({ base }) => base === id);
-	} else if (odeType === OdeSemantic.Parameters) {
+	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
 		const paramsMap = getUnstratifiedParameters(amr);
 		if (!paramsMap.has(id)) return null;
 
@@ -236,7 +236,7 @@ export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => 
 		childParameterIds = paramsMap.get(id) as string[];
 		// Holds all points that have the parameter
 		matrixData = filterParameterLocations(amr, transitionMatrixData, [...childParameterIds, id]);
-	} else if (odeType === OdeSemantic.Rates) {
+	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
 		matrixData = transitionMatrixData.filter(({ base }) => base === id);
 	}
 
@@ -244,11 +244,11 @@ export const generateMatrix = (amr: Model, id: string, odeType: OdeSemantic) => 
 
 	let matrix: any[] = [];
 
-	if (odeType === OdeSemantic.Initials) {
+	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
 		matrix = createMatrix1D(matrixData).matrix;
-	} else if (odeType === OdeSemantic.Parameters) {
+	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
 		matrix = createParameterOrTransitionMatrix(amr, matrixData, childParameterIds).matrix;
-	} else if (odeType === OdeSemantic.Rates) {
+	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
 		matrix = createParameterOrTransitionMatrix(amr, matrixData).matrix;
 	}
 	return matrix;
