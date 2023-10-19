@@ -74,7 +74,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Figures">
-						Figures<span class="artifact-amount">({{ figures.length }})</span>
+						Figures<span class="artifact-amount">({{ figures?.length }})</span>
 					</header>
 				</template>
 				<ul v-if="!isEmpty(figures)">
@@ -96,7 +96,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Tables">
-						Tables<span class="artifact-amount">({{ tables.length }})</span>
+						Tables<span class="artifact-amount">({{ tables?.length }})</span>
 					</header>
 				</template>
 				<ul v-if="!isEmpty(tables)">
@@ -119,7 +119,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Equations">
-						Equations<span class="artifact-amount">({{ equations.length }})</span>
+						Equations<span class="artifact-amount">({{ equations?.length }})</span>
 					</header>
 				</template>
 				<ul v-if="!isEmpty(equations)">
@@ -142,7 +142,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Github-URLs">
-						GitHub URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
+						GitHub URLs<span class="artifact-amount">({{ githubUrls?.length }})</span>
 					</header>
 				</template>
 				<ul v-if="!isEmpty(githubUrls)">
@@ -167,7 +167,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Other-URLs">
-						Other URLs<span class="artifact-amount">({{ otherUrls.length }})</span>
+						Other URLs<span class="artifact-amount">({{ otherUrls?.length }})</span>
 					</header>
 				</template>
 				<ul v-if="!isEmpty(otherUrls)">
@@ -182,7 +182,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Other-Extractions">
-						Other extractions<span class="artifact-amount">({{ otherExtractions.length }})</span>
+						Other extractions<span class="artifact-amount">({{ otherExtractions?.length }})</span>
 					</header>
 				</template>
 				<ul v-if="!isEmpty(otherExtractions)">
@@ -197,7 +197,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="References">
-						References<span class="artifact-amount">({{ doc.citationList.length }})</span>
+						References<span class="artifact-amount">({{ doc?.citationList?.length }})</span>
 					</header>
 				</template>
 				<ul v-if="!isEmpty(doc.citationList)">
