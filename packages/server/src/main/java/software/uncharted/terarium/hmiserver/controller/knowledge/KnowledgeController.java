@@ -141,7 +141,13 @@ public class KnowledgeController {
 	) {
 
 		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId, ProvenanceType.MODEL, documentId, ProvenanceType.PUBLICATION);
-		provenanceProxy.createProvenance(provenancePayload);
+		try {
+			ResponseEntity<JsonNode> r = provenanceProxy.createProvenance(provenancePayload);
+			if (!r.getStatusCode().is2xxSuccessful())
+			   log.error("unable to create provenance");
+		} catch (Exception e) {
+			   log.error("unable to create provenance", e);
+		}
 		
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, documentId).getBody());
 	}
@@ -160,9 +166,15 @@ public class KnowledgeController {
 		@PathVariable("dataset_id") String datasetId,
 		@RequestParam(name = "document_id", required = false) String documentId
 	) {
-
+		
 		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId, ProvenanceType.DATASET, documentId, ProvenanceType.PUBLICATION);
-		provenanceProxy.createProvenance(provenancePayload);
+		try {
+			ResponseEntity<JsonNode> r = provenanceProxy.createProvenance(provenancePayload);
+			if (!r.getStatusCode().is2xxSuccessful())
+			   log.error("unable to create provenance");
+		} catch (Exception e) {
+			   log.error("unable to create provenance", e);
+		}
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
 	}
 
