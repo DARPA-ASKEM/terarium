@@ -3,7 +3,7 @@ import {
 	getMiraAMRPresentationData,
 	filterParameterLocations
 } from '@/model-representation/petrinet/mira-petri';
-import { createMatrix2D, createParameterOrTransitionMatrix } from '@/utils/pivot';
+import { createMatrix2D, createParameterMatrix, createTransitionMatrix } from '@/utils/pivot';
 import { describe, expect, it } from 'vitest';
 
 const data: any[] = [
@@ -75,7 +75,7 @@ describe('pivot table tests', () => {
 			getMiraAMRPresentationData(amr as any).transitionMatrixData,
 			childParameterIds
 		);
-		const { matrix } = createParameterOrTransitionMatrix(amr as any, matrixData, childParameterIds);
+		const { matrix } = createParameterMatrix(amr as any, matrixData, childParameterIds);
 		expect(matrix.length).to.eq(3);
 		expect(matrix[0].length).to.eq(3);
 		expect(matrix[0][0].content.value).to.not.eq(null);
@@ -93,7 +93,34 @@ describe('pivot table tests', () => {
 			getMiraAMRPresentationData(amr as any).transitionMatrixData,
 			childParameterIds
 		);
-		const { matrix } = createParameterOrTransitionMatrix(amr as any, matrixData, childParameterIds);
+		const { matrix } = createParameterMatrix(amr as any, matrixData, childParameterIds);
+		expect(matrix.length).to.eq(3);
+		expect(matrix[0].length).to.eq(3);
+		expect(matrix[0][0].content.value).to.not.eq(null);
+		expect(matrix[1][1].content.value).to.not.eq(null);
+		expect(matrix[2][2].content.value).to.not.eq(null);
+		expect(matrix[0][0].content.controllers).to.not.eq(null);
+		expect(matrix[1][1].content.controllers).to.not.eq(null);
+		expect(matrix[2][2].content.controllers).to.not.eq(null);
+	});
+
+	it('create transition table without controller', () => {
+		const matrixData = getMiraAMRPresentationData(amr as any).transitionMatrixData.filter(
+			({ base }) => base === 'T1'
+		);
+		const { matrix } = createTransitionMatrix(amr as any, matrixData);
+		expect(matrix.length).to.eq(3);
+		expect(matrix[0].length).to.eq(3);
+		expect(matrix[0][0].content.value).to.not.eq(null);
+		expect(matrix[1][1].content.value).to.not.eq(null);
+		expect(matrix[2][2].content.value).to.not.eq(null);
+	});
+
+	it('create transition table with controller', () => {
+		const matrixData = getMiraAMRPresentationData(amr as any).transitionMatrixData.filter(
+			({ base }) => base === 'T0'
+		);
+		const { matrix } = createTransitionMatrix(amr as any, matrixData);
 		expect(matrix.length).to.eq(3);
 		expect(matrix[0].length).to.eq(3);
 		expect(matrix[0][0].content.value).to.not.eq(null);
