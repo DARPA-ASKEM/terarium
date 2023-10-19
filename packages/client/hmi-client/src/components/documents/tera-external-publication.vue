@@ -58,13 +58,13 @@
 				<template #header>
 					<header id="Abstract">Abstract</header>
 				</template>
-				<p v-html="formattedAbstract" />
+				<p v-if="formattedAbstract" v-html="formattedAbstract" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
 					<header id="Section-Summaries">Section Summaries</header>
 				</template>
-				<ul v-if="doc?.knownEntities?.summaries">
+				<ul v-if="!isEmpty(doc?.knownEntities?.summaries)">
 					<li v-for="(section, index) of doc.knownEntities.summaries" :key="index">
 						<h6>{{ index }}</h6>
 						<p v-html="highlightSearchTerms(section[index])" />
@@ -142,27 +142,29 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Github-URLs">
-						GitHub URLs<span class="artifact-amount">({{ githubUrls?.length }})</span>
+						GitHub URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
 					</header>
 				</template>
-				<ul v-if="!isEmpty(githubUrls)">
-					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<Button
-							v-if="!featureConfig.isPreview"
-							label="Import"
-							class="p-button-sm p-button-outlined"
-							icon="pi pi-cloud-download"
-							@click="openImportGithubFileModal(url)"
-						/>
-						<a :href="url" rel="noreferrer noopener">{{ url }}</a>
-					</li>
-				</ul>
-				<tera-import-github-file
-					:visible="isImportGithubFileModalVisible"
-					:url-string="openedUrl"
-					@close="isImportGithubFileModalVisible = false"
-					@open-code="openCode"
-				/>
+				<template v-if="!isEmpty(githubUrls)">
+					<ul>
+						<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
+							<Button
+								v-if="!featureConfig.isPreview"
+								label="Import"
+								class="p-button-sm p-button-outlined"
+								icon="pi pi-cloud-download"
+								@click="openImportGithubFileModal(url)"
+							/>
+							<a :href="url" rel="noreferrer noopener">{{ url }}</a>
+						</li>
+					</ul>
+					<tera-import-github-file
+						:visible="isImportGithubFileModalVisible"
+						:url-string="openedUrl"
+						@close="isImportGithubFileModalVisible = false"
+						@open-code="openCode"
+					/>
+				</template>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>

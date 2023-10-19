@@ -49,7 +49,7 @@
 		}
 
 		// Will not show accordion tab if there is no content in it
-		&:has(.p-accordion-content:empty, .p-accordion-content > *:empty) {
+		&:has(.p-accordion-content:empty ) {
 			display: none;
 		}
 	}

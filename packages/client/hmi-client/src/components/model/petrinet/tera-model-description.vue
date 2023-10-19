@@ -48,7 +48,7 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>Description</template>
-				<p v-html="description" />
+				<p v-if="description" v-html="description" />
 				<!--
 					For model creation
 					<template v-else>
@@ -58,25 +58,25 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>Usage</template>
-				<p v-html="usage" />
+				<p v-if="usage" v-html="usage" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>Source dataset</template>
-				<p v-html="sourceDataset" />
+				<p v-if="sourceDataset" v-html="sourceDataset" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>Provenance</template>
-				<p v-html="provenance" />
+				<p v-if="provenance" v-html="provenance" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>Schema</template>
-				<p v-html="schema" />
+				<p v-if="schema" v-html="schema" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
 					Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 				</template>
-				<table v-if="parameters.length > 0" class="datatable" style="--columns: 5">
+				<table v-if="!isEmpty(parameters)" class="datatable" style="--columns: 5">
 					<tr>
 						<th>ID</th>
 						<th>Value</th>
@@ -159,7 +159,7 @@
 				<template #header>
 					State variables<span class="artifact-amount">({{ states.length }})</span>
 				</template>
-				<table v-if="states.length > 0" class="datatable" style="--columns: 5">
+				<table v-if="!isEmpty(states)" class="datatable" style="--columns: 5">
 					<tr>
 						<th>Id</th>
 						<th>Name</th>
@@ -320,7 +320,7 @@
 				<template #header>
 					Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 				</template>
-				<table v-if="transitions.length > 0" class="datatable" style="--columns: 6">
+				<table v-if="!isEmpty(transitions)" class="datatable" style="--columns: 6">
 					<tr>
 						<th>Id</th>
 						<th>Name</th>
@@ -397,7 +397,7 @@
 					Other concepts
 					<span class="artifact-amount">({{ otherConcepts.length }})</span>
 				</template>
-				<table v-if="otherConcepts.length > 0" class="datatable" style="--columns: 4">
+				<table v-if="!isEmpty(otherConcepts)" class="datatable" style="--columns: 4">
 					<tr>
 						<th>Payload id</th>
 						<th>Names</th>

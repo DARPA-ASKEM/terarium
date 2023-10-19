@@ -46,7 +46,7 @@
 				<template #header>
 					<header id="Abstract">Abstract</header>
 				</template>
-				<p v-html="formattedAbstract" />
+				<p v-if="formattedAbstract" v-html="formattedAbstract" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
