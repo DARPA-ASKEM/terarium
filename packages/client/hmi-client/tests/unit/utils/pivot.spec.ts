@@ -110,10 +110,13 @@ describe('pivot table tests', () => {
 		);
 		const { matrix } = createTransitionMatrix(amr as any, matrixData);
 		expect(matrix.length).to.eq(3);
-		expect(matrix[0].length).to.eq(3);
+		expect(matrix[0].length).to.eq(6);
 		expect(matrix[0][0].content.value).to.not.eq(null);
-		expect(matrix[1][1].content.value).to.not.eq(null);
-		expect(matrix[2][2].content.value).to.not.eq(null);
+		expect(matrix[0][1].content.value).to.not.eq(null);
+		expect(matrix[1][2].content.value).to.not.eq(null);
+		expect(matrix[1][3].content.value).to.not.eq(null);
+		expect(matrix[2][4].content.value).to.not.eq(null);
+		expect(matrix[2][5].content.value).to.not.eq(null);
 	});
 
 	it('create transition table with controller', () => {
