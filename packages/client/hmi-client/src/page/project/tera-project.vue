@@ -71,8 +71,6 @@
 				<tera-stratify-mira
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
 					:node="workflowNode"
-					:key="workflowNode.id"
-					@open-asset="(asset) => openAssetFromSidebar(asset)"
 				/>
 				<tera-stratify
 					v-if="
