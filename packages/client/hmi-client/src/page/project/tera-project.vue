@@ -228,9 +228,11 @@ const onCloseModelModal = () => {
 	isNewModelModalVisible.value = false;
 };
 
-const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
 onMounted(() => {
-	openAsset(overview);
+	if (!route.params.assetId || !route.params.pageType) {
+		const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
+		openAsset(overview);
+	}
 });
 </script>
 
