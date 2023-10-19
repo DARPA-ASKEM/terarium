@@ -50,10 +50,12 @@
 			icon="pi pi-plus"
 			:model="addConfigurationItems"
 		/>
-		<tera-transition-matrices
+		<!-- 
+			For viewing transition matrices without clicking nodes
+			<tera-transition-matrices
 			v-if="stratifiedModelType"
 			:model-configuration="modelConfigurations[0]"
-		/>
+		/> -->
 		<Teleport to="body">
 			<!--
 			TODO: Not sure if these modals should be in the child config components or if they should
@@ -213,7 +215,7 @@ import Dropdown from 'primevue/dropdown';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import TeraTransitionMatrices from '@/temp/tera-transition-matrices.vue';
+// import TeraTransitionMatrices from '@/temp/tera-transition-matrices.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraRegularModelConfigurations from './model-configurations/tera-regular-model-configurations.vue';
 import TeraStratifiedModelConfigurations from './model-configurations/tera-stratified-model-configurations.vue';
