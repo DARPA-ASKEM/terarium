@@ -106,11 +106,7 @@ export const createMatrix1D = (data: any[]) => {
 	return { matrix: rows };
 };
 
-export const createParameterOrTransitionMatrix = (
-	amr: Model,
-	transitionMatrixData: any[],
-	childParameterIds?: string[]
-) => {
+export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) => {
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
@@ -178,6 +174,15 @@ export const createParameterOrTransitionMatrix = (
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) rowIndexMap.set(inputs[rowIdx], rowIdx);
 	for (let colIdx = 0; colIdx < outputs.length; colIdx++) colIndexMap.set(outputs[colIdx], colIdx);
 
+	return { transitions, rowIndexMap, colIndexMap, rows };
+};
+
+export function createTransitionMatrix(amr: Model, transitionMatrixData: any[]) {
+	const { transitions, rowIndexMap, colIndexMap, rows } = prepareMatrixMapping(
+		amr,
+		transitionMatrixData
+	);
+
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output, id } = transitions[i];
@@ -188,7 +193,34 @@ export const createParameterOrTransitionMatrix = (
 			for (let j = 0; j < input.length; j++) {
 				const rowIdx = rowIndexMap.get(input[j]);
 				const colIdx = colIndexMap.get(output[j]);
-				// Parameter matrix
+				rows[rowIdx][colIdx].content.value = rate.expression;
+				rows[rowIdx][colIdx].content.id = rate.target;
+			}
+		}
+	}
+	return { matrix: rows };
+}
+
+export function createParameterMatrix(
+	amr: Model,
+	transitionMatrixData: any[],
+	childParameterIds: string[]
+) {
+	const { transitions, rowIndexMap, colIndexMap, rows } = prepareMatrixMapping(
+		amr,
+		transitionMatrixData
+	);
+
+	// For every transition id grab its input/output and row/column index to fill its place in the matrix
+	for (let i = 0; i < transitions.length; i++) {
+		const { input, output, id } = transitions[i];
+		const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+
+		if (rate) {
+			// Go through inputs and outputs of the current transition id
+			for (let j = 0; j < input.length; j++) {
+				const rowIdx = rowIndexMap.get(input[j]);
+				const colIdx = colIndexMap.get(output[j]);
 				if (childParameterIds) {
 					for (let k = 0; k < childParameterIds.length; k++) {
 						// Fill cell content with parameter content
@@ -204,16 +236,11 @@ export const createParameterOrTransitionMatrix = (
 						}
 					}
 				}
-				// Transition matrix
-				else {
-					rows[rowIdx][colIdx].content.value = rate.expression;
-					rows[rowIdx][colIdx].content.id = rate.target;
-				}
 			}
 		}
 	}
 	return { matrix: rows };
-};
+}
 
 // Creates a M x N matrix where
 // M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])

@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
-import { createMatrix1D, createParameterOrTransitionMatrix } from '@/utils/pivot';
+import { createMatrix1D, createParameterMatrix, createTransitionMatrix } from '@/utils/pivot';
 import { StratifiedMatrix } from '@/types/Model';
 
 /**
@@ -247,9 +247,9 @@ export const generateMatrix = (amr: Model, id: string, stratifiedMatrixType: Str
 	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
 		matrix = createMatrix1D(matrixData).matrix;
 	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
-		matrix = createParameterOrTransitionMatrix(amr, matrixData, childParameterIds).matrix;
+		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
 	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
-		matrix = createParameterOrTransitionMatrix(amr, matrixData).matrix;
+		matrix = createTransitionMatrix(amr, matrixData).matrix;
 	}
 	return matrix;
 };
