@@ -43,6 +43,7 @@
 			:highlight="highlight"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
+			:key="model?.id"
 		/>
 		<tera-model-editor
 			v-else-if="view === ModelView.MODEL"
