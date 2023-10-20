@@ -210,7 +210,7 @@ const handleSelectedRunChange = () => {
 	lazyLoadSimulationData(selectedRun.value.runId);
 
 	const state = _.cloneDeep(props.node.state);
-	// set the active status for the selected run in the chart configs
+	// set the active status for the selected run in the run configs
 	Object.keys(state.simConfigs.runConfigs).forEach((runId) => {
 		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
