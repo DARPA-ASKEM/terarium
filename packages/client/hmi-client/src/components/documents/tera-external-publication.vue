@@ -488,16 +488,6 @@ onUpdated(() => {
 	max-width: 70rem;
 }
 
-.inline-message:deep(.p-message-wrapper) {
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
-	border-width: 0px 0px 0px 6px;
-}
-
 .extracted-item {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;
