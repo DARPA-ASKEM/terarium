@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
-import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
-import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
+import { createMatrix1D, createParameterMatrix, createTransitionMatrix } from '@/utils/pivot';
+import { StratifiedMatrix } from '@/types/Model';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -219,16 +219,16 @@ export const getMiraAMRPresentationData = (amr: Model) => {
 	};
 };
 
-export const generateMatrix = (amr: Model, id: string, nodeType: NodeType) => {
+export const generateMatrix = (amr: Model, id: string, stratifiedMatrixType: StratifiedMatrix) => {
 	const { stateMatrixData, transitionMatrixData } = getMiraAMRPresentationData(amr);
 
 	// Get only the states/transitions that are mapped to the base model
 	let matrixData: any[] = [];
 	let childParameterIds: string[] = [];
 
-	if (nodeType === NodeType.State) {
+	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
 		matrixData = stateMatrixData.filter(({ base }) => base === id);
-	} else {
+	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
 		const paramsMap = getUnstratifiedParameters(amr);
 		if (!paramsMap.has(id)) return null;
 
@@ -236,17 +236,20 @@ export const generateMatrix = (amr: Model, id: string, nodeType: NodeType) => {
 		childParameterIds = paramsMap.get(id) as string[];
 		// Holds all points that have the parameter
 		matrixData = filterParameterLocations(amr, transitionMatrixData, [...childParameterIds, id]);
+	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
+		matrixData = transitionMatrixData.filter(({ base }) => base === id);
 	}
 
 	if (_.isEmpty(matrixData)) return null;
 
 	let matrix: any[] = [];
 
-	if (nodeType === NodeType.State) {
+	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
 		matrix = createMatrix1D(matrixData).matrix;
-	} else {
+	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
 		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
+	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
+		matrix = createTransitionMatrix(amr, matrixData).matrix;
 	}
-
 	return matrix;
 };
