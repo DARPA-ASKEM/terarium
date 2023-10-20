@@ -5,7 +5,10 @@
 		</p>
 		<ul>
 			<li v-for="document in relatedDocuments" :key="document.id">
-				{{ document.name }}
+				<tera-asset-link
+					:label="document.name!"
+					:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+				></tera-asset-link>
 			</li>
 		</ul>
 		<Button
@@ -77,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
@@ -92,10 +95,13 @@ import {
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
+import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
+import { getRelatedArtifacts, mapResourceTypeToProvenanceType } from '@/services/provenance';
+import { isDocumentAsset } from '@/utils/data-util';
+import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
-	relatedDocuments?: Array<{ name: string; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
 }>();
@@ -106,6 +112,7 @@ const selectedResources = ref();
 const dialogType = ref<'enrich' | 'align'>('enrich');
 const aligning = ref(false);
 const enriching = ref(false);
+const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	const jobIds: (string | null)[] = [];
@@ -136,6 +143,7 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 
 	enriching.value = false;
 	emit('enriched');
+	getRelatedDocuments();
 };
 
 const sendToAlignModel = async () => {
@@ -153,8 +161,39 @@ const sendToAlignModel = async () => {
 
 		aligning.value = false;
 		emit('enriched');
+		getRelatedDocuments();
 	}
 };
+
+onMounted(() => {
+	getRelatedDocuments();
+});
+
+watch(
+	() => props.assetId,
+	() => {
+		getRelatedDocuments();
+	}
+);
+
+async function getRelatedDocuments() {
+	if (!props.assetType) return;
+	const provenanceType = mapResourceTypeToProvenanceType(props.assetType);
+
+	if (!provenanceType) return;
+
+	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
+		ProvenanceType.Publication
+	]);
+
+	relatedDocuments.value =
+		(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
+			(documentAsset) => ({
+				name: documentAsset.name,
+				id: documentAsset.id
+			})
+		) ?? [];
+}
 </script>
 
 <style scoped>

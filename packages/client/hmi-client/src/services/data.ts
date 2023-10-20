@@ -495,7 +495,7 @@ const getDocumentById = async (docid: string): Promise<Document | null> => {
 	return null;
 };
 
-const getBulkDocuments = async (docIDs: string[]) => {
+const getBulkXDDDocuments = async (docIDs: string[]) => {
 	const result: Document[] = [];
 	const promiseList = [] as Promise<Document | null>[];
 	docIDs.forEach((docId) => {
@@ -684,7 +684,7 @@ export {
 	searchXDDDocuments,
 	getAssets,
 	getDocumentById,
-	getBulkDocuments,
+	getBulkXDDDocuments,
 	getRelatedDocuments,
 	getRelatedTerms,
 	getAutocomplete
