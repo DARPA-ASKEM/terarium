@@ -1,10 +1,6 @@
 <template>
 	<main>
 		<section>
-			<Message icon="none">
-				This page describes the model. Use the content switcher above to see the diagram and manage
-				configurations.
-			</Message>
 			<table class="bibliography">
 				<tr>
 					<th>Framework</th>
@@ -455,7 +451,6 @@ import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
 import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {

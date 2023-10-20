@@ -41,14 +41,6 @@
 				</template>
 			</SelectButton>
 		</template>
-		<template #info-bar>
-			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page contains extractions from the document. Use the content switcher above to see
-					the original PDF if it is available.</Message
-				>
-			</div>
-		</template>
 		<Accordion
 			v-if="view === DocumentView.EXRACTIONS"
 			:multiple="true"
@@ -242,7 +234,6 @@ import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
-import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';

@@ -29,14 +29,6 @@
 				</template>
 			</SelectButton>
 		</template>
-		<template #info-bar>
-			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page contains extractions from the document. Use the content switcher above to see
-					the original PDF if it is available.</Message
-				>
-			</div>
-		</template>
 		<Accordion
 			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
@@ -116,7 +108,6 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { DocumentAsset } from '@/types/Types';

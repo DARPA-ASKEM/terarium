@@ -37,12 +37,6 @@
 			</template>
 		</template>
 		<template v-if="view === DatasetView.DESCRIPTION">
-			<div class="container">
-				<Message class="inline-message" icon="none">
-					This page describes the dataset. Use the content switcher above to see the data table and
-					transformation tools.
-				</Message>
-			</div>
 			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
@@ -282,7 +276,6 @@ import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, cloneDeep, isEmpty } from 'lodash';
