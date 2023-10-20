@@ -63,11 +63,6 @@
 				</template>
 				<template #footer>
 					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isModelNamingModalVisible = false"
-					/>
-					<Button
 						label="Create model"
 						@click="
 							() => {
@@ -75,6 +70,12 @@
 								extractModel();
 							}
 						"
+					/>
+					<Button
+						label="Cancel"
+						severity="secondary"
+						outlined
+						@click="isModelNamingModalVisible = false"
 					/>
 				</template>
 			</tera-modal>

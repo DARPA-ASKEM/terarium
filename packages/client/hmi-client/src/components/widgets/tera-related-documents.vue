@@ -62,7 +62,7 @@
 				</div>
 			</div>
 			<template #footer>
-				<Button class="secondary-button" label="Cancel" @click="visible = false" />
+				<Button severity="secondary" outlined label="Cancel" @click="visible = false" />
 				<Button
 					:label="
 						dialogType === 'enrich'
@@ -197,18 +197,6 @@ async function getRelatedDocuments() {
 </script>
 
 <style scoped>
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
-.secondary-button {
-	color: var(--text-color-primary);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
-}
-
-.secondary-button:enabled:hover {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-highlight);
-}
-
 ul {
 	margin: 1rem 0;
 }

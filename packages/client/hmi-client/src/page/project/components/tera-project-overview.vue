@@ -48,19 +48,22 @@
 					label="Upload resources"
 					size="large"
 					icon="pi pi-cloud-upload"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 					@click="isUploadResourcesModalVisible = true"
 				/>
 				<Button
 					label="New model"
 					size="large"
 					icon="pi pi-share-alt"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 					@click="emit('open-new-asset', AssetType.Models)"
 				/>
 				<Button
 					size="large"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 					@click="emit('open-new-asset', AssetType.Workflows)"
 				>
 					<vue-feather
@@ -71,7 +74,7 @@
 					/>
 					<span class="p-button-label">New workflow</span>
 				</Button>
-				<Button size="large" class="p-button p-button-secondary quick-link-button">
+				<Button size="large" severity="secondary" outlined>
 					<compare-models-icon class="icon" />
 					<span class="p-button-label">Compare models</span>
 				</Button>
@@ -79,7 +82,8 @@
 					label="New simulation"
 					size="large"
 					icon="pi pi-play"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 				/>
 			</section>
 			<!-- Resources list table goes here -->
@@ -341,11 +345,7 @@ button .icon {
 	gap: 1rem;
 }
 
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
-.quick-links .p-button.p-button-secondary {
-	background-color: var(--surface);
-	color: var(--text-color-primary);
-	border: 1px solid var(--surface-border);
+.p-button.p-button-secondary {
 	width: 100%;
 	font-size: var(--font-body-small);
 }

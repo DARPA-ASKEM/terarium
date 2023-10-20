@@ -32,8 +32,8 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
-					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
+					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
+					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
 					<Menu
 						ref="addComponentMenu"
@@ -868,29 +868,5 @@ function resetZoom() {
 	align-items: center;
 	flex-direction: row;
 	gap: 1rem;
-}
-
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
-.toolbar .button-group .secondary-button {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border-light);
-}
-
-.toolbar .button-group .secondary-button:enabled:hover {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-highlight);
-}
-
-.toolbar .button-group .primary-dropdown {
-	background-color: var(--primary-color);
-	border: 1px solid var(--primary-color);
-}
-
-.toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
-.toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
-	color: var(--surface-0);
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
 }
 </style>
