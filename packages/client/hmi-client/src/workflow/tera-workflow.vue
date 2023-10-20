@@ -255,7 +255,11 @@ import {
 	DatasetTransformerOperation,
 	TeraDatasetTransformerNode
 } from './ops/dataset-transformer/mod';
-import { CalibrationOperationJulia, TeraCalibrateNodeJulia } from './ops/calibrate-julia/mod';
+import {
+	CalibrationOperationJulia,
+	TeraCalibrateNodeJulia,
+	CalibrationOperationStateJulia
+} from './ops/calibrate-julia/mod';
 import { CalibrationOperationCiemss, TeraCalibrateNodeCiemss } from './ops/calibrate-ciemss/mod';
 import {
 	SimulateEnsembleCiemssOperation,
@@ -429,12 +433,10 @@ function appendOutputPort(
 	// should be built into the Operation directly. What we are doing is to update the internal state
 	// and this feels it is leaking too much low-level information
 	if (
-		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
-		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
 		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
 		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 	) {
-		const state = node.state as SimulateJuliaOperationState;
+		const state = node.state as CalibrationOperationStateJulia;
 		if (state.chartConfigs.length === 0) {
 			// This only ends up showing the output of the first run, perhaps we should consider showing
 			// the output of the last run, or all runs?
@@ -442,16 +444,23 @@ function appendOutputPort(
 				selectedRun: port.value[0],
 				selectedVariable: []
 			});
-		} else if (
-			node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
-			node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
-		) {
-			state.chartConfigs.push({
-				selectedRun: port.value[0],
-				selectedVariable: []
-			});
 		}
 	}
+
+	if (
+		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
+		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
+	) {
+		const state = node.state as SimulateJuliaOperationState;
+		if (state.simConfigs.chartConfigs.length === 0) {
+			state.simConfigs.chartConfigs.push([]);
+		}
+		state.simConfigs.runConfigs[port.value[0]] = {
+			runId: port.value[0],
+			active: true
+		};
+	}
+
 	workflowDirty = true;
 }
 

@@ -13,11 +13,14 @@
 		/>
 		<div class="chart-container" v-if="runResults[selectedRun?.runId]">
 			<tera-simulate-chart
+				v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+				:key="idx"
 				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
-				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
-				@configuration-change="configurationChange(selectedRun.idx, $event)"
+				:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+				@configuration-change="configurationChange(idx, $event)"
 				:colorByRun="true"
 			/>
+			<Button class="add-chart" text @click="addChart" label="Add chart" icon="pi pi-plus"></Button>
 		</div>
 	</section>
 	<section v-else>
@@ -64,10 +67,9 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].va
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const runList = computed(() =>
-	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
-		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
-		idx,
-		runId: cfg.selectedRun
+	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
+		label: `Output ${idx + 1} - ${runId}`,
+		runId
 	}))
 );
 const selectedRun = ref();
@@ -80,7 +82,9 @@ onMounted(() => {
 		getStatus(runIds);
 	}
 
-	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	const runId = Object.values(props.node.state.simConfigs.runConfigs).find(
+		(metadata) => metadata.active
+	)?.runId;
 	if (runId) {
 		selectedRun.value = runList.value.find((run) => run.runId === runId);
 	} else {
@@ -170,7 +174,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -218,9 +222,20 @@ const handleSelectedRunChange = () => {
 
 	const state = _.cloneDeep(props.node.state);
 	// set the active status for the selected run in the chart configs
-	state.chartConfigs.forEach((cfg, idx) => {
-		cfg.active = idx === selectedRun.value?.idx;
+	Object.keys(state.simConfigs.runConfigs).forEach((runId) => {
+		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.simConfigs.chartConfigs.push([]);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -245,5 +260,9 @@ section {
 
 .button-container {
 	padding-bottom: 10px;
+}
+
+.add-chart {
+	width: 5rem;
 }
 </style>

@@ -22,40 +22,51 @@
 				placeholder="Select a simulation run"
 				@update:model-value="handleSelectedRunChange"
 			/>
-			<tera-simulate-chart
-				v-if="runResults[selectedRun?.runId]"
-				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
-				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
-				@configuration-change="configurationChange(selectedRun.idx, $event)"
-				color-by-run
-			/>
-			<tera-dataset-datatable
-				v-if="rawContent[selectedRun?.runId]"
-				:rows="10"
-				:raw-content="rawContent[selectedRun.runId]"
-			/>
-			<Button
-				class="add-chart"
-				title="Saves the current version of the model as a new Terarium asset"
-				@click="showSaveInput = !showSaveInput"
-			>
-				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Save as</span>
-			</Button>
-			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
-				<i
-					v-if="useProjects().activeProject.value?.id"
-					class="pi pi-check i"
-					:class="{ save: hasValidDatasetName }"
-					@click="saveDatasetToProject"
-				></i>
-			</span>
+			<template v-if="runResults[selectedRun?.runId]">
+				<tera-simulate-chart
+					v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+					:key="idx"
+					:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
+					:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+					@configuration-change="configurationChange(idx, $event)"
+					color-by-run
+				/>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="addChart"
+					label="Add chart"
+					icon="pi pi-plus"
+				/>
+				<tera-dataset-datatable
+					v-if="rawContent[selectedRun?.runId]"
+					:rows="10"
+					:raw-content="rawContent[selectedRun.runId]"
+				/>
+				<Button
+					class="add-chart"
+					title="Saves the current version of the model as a new Terarium asset"
+					@click="showSaveInput = !showSaveInput"
+				>
+					<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+					<span class="p-button-text">Save as</span>
+				</Button>
+				<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+					<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+					<i
+						class="pi pi-times i"
+						:class="{ clear: hasValidDatasetName }"
+						@click="saveAsName = ''"
+					></i>
+					<i
+						v-if="useProjects().activeProject.value?.id"
+						class="pi pi-check i"
+						:class="{ save: hasValidDatasetName }"
+						@click="saveDatasetToProject"
+					></i>
+				</span>
+			</template>
 		</div>
 		<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -152,17 +163,16 @@ const saveAsName = ref(<string | null>'');
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
 const runList = computed(() =>
-	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
-		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
-		idx,
-		runId: cfg.selectedRun
+	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
+		label: `Output ${idx + 1} - ${runId}`,
+		runId
 	}))
 );
 const selectedRun = ref();
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -178,9 +188,20 @@ const handleSelectedRunChange = () => {
 
 	const state = _.cloneDeep(props.node.state);
 	// set the active status for the selected run in the chart configs
-	state.chartConfigs.forEach((cfg, idx) => {
-		cfg.active = idx === selectedRun.value?.idx;
+	Object.keys(state.simConfigs.runConfigs).forEach((runId) => {
+		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.simConfigs.chartConfigs.push([]);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -226,7 +247,9 @@ const lazyLoadSimulationData = async (runId: string) => {
 };
 
 onMounted(() => {
-	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	const runId = Object.values(props.node.state.simConfigs.runConfigs).find(
+		(metadata) => metadata.active
+	)?.runId;
 	if (runId) {
 		selectedRun.value = runList.value.find((run) => run.runId === runId);
 	} else {
@@ -240,6 +263,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.add-chart {
+	width: 9em;
+	margin: 0em 1em;
+	margin-bottom: 1em;
+}
+
 .tera-simulate {
 	background: white;
 	z-index: 1;
