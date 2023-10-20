@@ -26,7 +26,17 @@ export function useProjects() {
 	 * @param {string} projectId Id of the project to set as the active project.
 	 * @returns {Promise<IProject | null>} Active project.
 	 */
-	async function get(projectId: IProject['id'] = activeProjectId.value): Promise<IProject | null> {
+	async function get(projectId: IProject['id']): Promise<IProject | null> {
+		if (projectId) {
+			activeProject.value = await ProjectService.get(projectId, true);
+		} else {
+			activeProject.value = null;
+		}
+		return activeProject.value;
+	}
+
+	async function refresh(): Promise<IProject | null> {
+		const projectId: IProject['id'] = activeProjectId.value;
 		if (projectId) {
 			activeProject.value = await ProjectService.get(projectId, true);
 		}
@@ -217,6 +227,7 @@ export function useProjects() {
 		create,
 		update,
 		remove,
+		refresh,
 		getPublicationAssets,
 		getPermissions,
 		setPermissions,

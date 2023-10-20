@@ -20,7 +20,7 @@ async function getDocument(docId: string): Promise<ExternalPublication | null> {
  * @docId string array - represents a list of specific project asset/doc id
  * @return ExternalPublication[]|null - the specific document info including its xdd url, or null if none returned by API
  */
-async function getBulkDocumentAssets(docIDs: string[]) {
+async function getBulkExternalPublications(docIDs: string[]) {
 	const result: ExternalPublication[] = [];
 	const promiseList = [] as Promise<ExternalPublication | null>[];
 	docIDs.forEach((docId) => {
@@ -46,4 +46,4 @@ async function addDocuments(body: ExternalPublication): Promise<{ id: string } |
 	return response?.data ?? null;
 }
 
-export { getDocument, getBulkDocumentAssets, addDocuments };
+export { getDocument, getBulkExternalPublications, addDocuments };

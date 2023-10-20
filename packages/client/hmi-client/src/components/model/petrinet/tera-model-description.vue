@@ -1,10 +1,6 @@
 <template>
 	<main>
 		<section>
-			<Message icon="none">
-				This page describes the model. Use the content switcher above to see the diagram and manage
-				configurations.
-			</Message>
 			<table class="bibliography">
 				<tr>
 					<th>Framework</th>
@@ -40,7 +36,6 @@
 				<template #header>Related publications</template>
 				<tera-related-documents
 					:documents="documents"
-					:related-documents="relatedDocuments"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 					@enriched="fetchAsset"
@@ -455,7 +450,6 @@ import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
 import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
@@ -545,7 +539,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = computed(() => []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
