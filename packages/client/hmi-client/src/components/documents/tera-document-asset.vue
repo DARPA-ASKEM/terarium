@@ -107,7 +107,7 @@
 			:pdf-link="pdfLink"
 			:title="doc.name || ''"
 		/>
-		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
+		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText"/>
 	</tera-asset>
 </template>
 

@@ -1,49 +1,22 @@
 <template>
-	<v-ace-editor
-		v-model:value="text"
-		@init="initialize"
-		theme="chrome"
-		style="height: 100%; width: 100%"
-		class="ace-editor"
-	/>
+    <QuillEditor theme="snow" v-model:content="text" contentType="html"/>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
 const props = defineProps<{
-	initialText: string;
+    initialText: string;
 }>();
 
 const text = ref(props.initialText);
-const selectedText = ref('');
-const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 
-/**
- * Editor initialization function
- * @param editorInstance	the Ace editor instance
- */
-async function initialize(editorInstance) {
-	editor.value = editorInstance;
-	editorInstance.session.selection.on('changeSelection', onSelectedTextChange);
-	editorInstance.setShowPrintMargin(false);
-}
-
-/**
- * Event handler for selected text change in the code editor
- */
-function onSelectedTextChange() {
-	selectedText.value = editor.value?.getSelectedText() ?? '';
-}
-
-watch(
-	() => props.initialText,
-	() => {
-		text.value = props.initialText;
-	}
-);
+watch(() => props.initialText, () => {
+    text.value = props.initialText;
+}, {immediate: true});
 </script>
 
-<styled scoped></styled>
+<style scoped>
+</style>
