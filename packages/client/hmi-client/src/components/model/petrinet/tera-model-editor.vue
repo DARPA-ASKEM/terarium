@@ -5,7 +5,9 @@
 				ref="teraModelDiagramRef"
 				:model="model"
 				:is-editable="!featureConfig.isPreview"
+				:model-configuration="modelConfigurations[0]"
 				@update-model="updateModelContent"
+				@update-configuration="updateConfiguration"
 			/>
 		</AccordionTab>
 		<AccordionTab header="Model equations">

@@ -60,7 +60,7 @@
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
-			<AccordionTab v-if="doc?.knownEntities?.summaries">
+			<AccordionTab v-if="!isEmpty(doc?.knownEntities?.summaries)">
 				<template #header>
 					<header id="Section-Summaries">Section Summaries</header>
 				</template>

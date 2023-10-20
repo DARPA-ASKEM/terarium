@@ -211,10 +211,10 @@ const addChart = () => {
 };
 
 async function saveDatasetToProject() {
-	const { activeProject, get } = useProjects();
+	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
 		if (await saveDataset(activeProject.value.id, selectedRun.value.runId, saveAsName.value)) {
-			get();
+			refresh();
 		}
 		showSaveInput.value = false;
 	}
