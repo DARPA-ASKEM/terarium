@@ -42,7 +42,7 @@
 		<Teleport to="body">
 			<tera-fullscreen-modal v-if="dialogIsOpened" @on-close-clicked="dialogIsOpened = false">
 				<template #header>
-					<h2>{{ workflowNode?.displayName }}</h2>
+					<h5>{{ workflowNode?.displayName }}</h5>
 				</template>
 				<tera-calibrate-julia
 					v-if="
@@ -228,9 +228,11 @@ const onCloseModelModal = () => {
 	isNewModelModalVisible.value = false;
 };
 
-const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
 onMounted(() => {
-	openAsset(overview);
+	if (!route.params.assetId || !route.params.pageType) {
+		const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
+		openAsset(overview);
+	}
 });
 </script>
 

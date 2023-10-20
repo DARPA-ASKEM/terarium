@@ -29,14 +29,6 @@
 				</template>
 			</SelectButton>
 		</template>
-		<template #info-bar>
-			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page contains extractions from the document. Use the content switcher above to see
-					the original PDF if it is available.</Message
-				>
-			</div>
-		</template>
 		<Accordion
 			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
@@ -116,7 +108,6 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { DocumentAsset } from '@/types/Types';
@@ -191,6 +182,9 @@ watch(
 			if (document) {
 				doc.value = document;
 				openTextDocument();
+				if (viewOptions.value.length > 1) {
+					viewOptions.value.pop();
+				}
 				viewOptions.value.push(
 					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
 						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
@@ -231,16 +225,6 @@ onUpdated(() => {
 	margin-left: 1rem;
 	margin-right: 1rem;
 	max-width: 70rem;
-}
-
-.inline-message:deep(.p-message-wrapper) {
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
-	border-width: 0px 0px 0px 6px;
 }
 
 .extracted-item {

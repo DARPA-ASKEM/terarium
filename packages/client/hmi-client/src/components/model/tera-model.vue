@@ -43,6 +43,7 @@
 			:highlight="highlight"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
+			:key="model?.id"
 		/>
 		<tera-model-editor
 			v-else-if="view === ModelView.MODEL"
@@ -139,7 +140,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().get();
+		useProjects().refresh();
 	}, 800);
 }
 
