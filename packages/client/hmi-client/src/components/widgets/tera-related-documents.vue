@@ -96,7 +96,7 @@ import {
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
 import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
-import { getRelatedArtifacts } from '@/services/provenance';
+import { getRelatedArtifacts, mapResourceTypeToProvenanceType } from '@/services/provenance';
 import { isDocumentAsset } from '@/utils/data-util';
 import TeraAssetLink from './tera-asset-link.vue';
 
@@ -178,13 +178,7 @@ watch(
 
 async function getRelatedDocuments() {
 	if (!props.assetType) return;
-	let provenanceType;
-	if (props.assetType === ResourceType.MODEL) {
-		provenanceType = ProvenanceType.Model;
-	}
-	if (props.assetType === ResourceType.DATASET) {
-		provenanceType = ProvenanceType.Dataset;
-	}
+	const provenanceType = mapResourceTypeToProvenanceType(props.assetType);
 
 	if (!provenanceType) return;
 

@@ -4,7 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { ResultType } from '@/types/common';
+import { ResourceType, ResultType } from '@/types/common';
 import { ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
 import { cloneDeep } from 'lodash';
@@ -68,6 +68,7 @@ async function getRelatedArtifacts(
 ): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
+	if (!rootType) return response;
 	const connectedNodes = await getConnectedNodes(id, rootType, types);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
@@ -188,6 +189,17 @@ async function getProvenance(id: string) {
 	const response = await API.get(`/provenance/${id}`);
 	const { data } = response;
 	return data ?? null;
+}
+
+export function mapResourceTypeToProvenanceType(resourceType: ResourceType): ProvenanceType | null {
+	switch (resourceType) {
+		case ResourceType.MODEL:
+			return ProvenanceType.Model;
+		case ResourceType.DATASET:
+			return ProvenanceType.Dataset;
+		default:
+			return null;
+	}
 }
 
 //
