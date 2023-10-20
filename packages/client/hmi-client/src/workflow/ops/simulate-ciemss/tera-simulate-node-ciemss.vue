@@ -189,7 +189,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `${port.label} - Output ${runList.value.length + 1}`, // TODO: figure out more robust naming system
+		label: `${port.label} - Output ${runList.value.length}`, // TODO: figure out more robust naming system
 		value: runIdList
 	});
 
