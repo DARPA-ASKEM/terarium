@@ -260,7 +260,12 @@ export interface PetriNetModel {
 }
 
 export interface ProvenanceQueryParam {
-    rootId?: number;
+    nodes?: boolean;
+    types?: ProvenanceType[];
+    hops?: number;
+    limit?: number;
+    verbose?: boolean;
+    rootId?: string;
     rootType?: ProvenanceType;
     userId?: number;
 }
@@ -521,6 +526,7 @@ export interface ModelMetadata {
     attributes?: any[];
     timeseries?: { [index: string]: any };
     card?: Card;
+    provenance?: string[];
 }
 
 export interface ModelGrounding {
@@ -871,16 +877,15 @@ export enum ColumnType {
 }
 
 export enum ProvenanceType {
-    Dataset = "Dataset",
-    Intermediate = "Intermediate",
-    Model = "Model",
-    ModelParameter = "ModelParameter",
-    ModelRevision = "ModelRevision",
-    Plan = "Plan",
-    PlanParameter = "PlanParameter",
-    Publication = "Publication",
-    Project = "Project",
     Concept = "Concept",
+    Dataset = "Dataset",
+    Model = "Model",
+    ModelConfiguration = "ModelConfiguration",
+    Project = "Project",
+    Publication = "Publication",
+    Simulation = "Simulation",
+    Artifact = "Artifact",
+    Code = "Code",
 }
 
 export enum AssetType {

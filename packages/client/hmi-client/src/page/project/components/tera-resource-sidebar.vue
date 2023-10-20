@@ -12,20 +12,9 @@
 				@click="toggleOptionsMenu"
 			/>
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
-				<!-- A way to use vue feather icons in the MenuItem component, it might be better to try to use 1 icon library for easier integration -->
 				<template #item="slotProps">
 					<a class="p-menuitem-link">
-						<vue-feather
-							v-if="typeof getAssetIcon(slotProps.item.key ?? null) === 'string'"
-							class="p-button-icon-left icon"
-							:type="getAssetIcon(slotProps.item.key ?? null)"
-							size="1rem"
-						/>
-						<component
-							v-else
-							:is="getAssetIcon(slotProps.item.key ?? null)"
-							class="p-button-icon-left icon"
-						/>
+						<tera-asset-icon :asset-type="(slotProps.item.key as AssetType)" />
 						<span class="p-menuitem-text">
 							{{ slotProps.item.label }}
 						</span>
@@ -85,20 +74,7 @@
 						fallback-class="original-asset"
 						:force-fallback="true"
 					>
-						<vue-feather
-							v-if="typeof getAssetIcon(assetItem.pageType ?? null) === 'string'"
-							class="p-button-icon-left icon"
-							:type="getAssetIcon(assetItem.pageType ?? null)"
-							size="1rem"
-							:stroke="
-								isEqual(draggedAsset, assetItem) ? 'var(--text-color-primary)' : 'rgb(16, 24, 40)'
-							"
-						/>
-						<component
-							v-else
-							:is="getAssetIcon(assetItem.pageType ?? null)"
-							class="p-button-icon-left icon"
-						/>
+						<tera-asset-icon :asset-type="(assetItem.pageType as AssetType)" />
 						<span class="p-button-label">{{ assetItem.assetName }}</span>
 					</span>
 					<!-- This 'x' only shows while hovering over the row -->
@@ -143,7 +119,6 @@ import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { AssetItem, AssetRoute } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -154,6 +129,7 @@ import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { generateProjectAssetsMap } from '@/utils/map-project-assets';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 
 defineProps<{
 	openedAssetRoute: AssetRoute;
