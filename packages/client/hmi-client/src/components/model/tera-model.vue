@@ -153,11 +153,14 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
+async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	await updateModelConfiguration(updatedConfiguration);
 	setTimeout(async () => {
 		emit('update-model-configuration');
-		modelConfigurations.value[index] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
+		const indexToUpdate = modelConfigurations.value.findIndex(
+			({ id }) => id === updatedConfiguration.id
+		);
+		modelConfigurations.value[indexToUpdate] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
 		// await fetchConfigurations(); // elastic search might still not update in time
 	}, 800);
 }
