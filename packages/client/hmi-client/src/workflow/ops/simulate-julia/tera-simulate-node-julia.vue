@@ -159,6 +159,20 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	);
 	runResults.value = newRunResults;
 
+	const state = _.cloneDeep(props.node.state);
+	if (state.simConfigs.chartConfigs.length === 0) {
+		state.simConfigs.chartConfigs.push([]);
+	}
+	state.simConfigs.runConfigs[runIdList[0]] = {
+		runId: runIdList[0],
+		active: true
+	};
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateJuliaOperation.outputs[0].type,

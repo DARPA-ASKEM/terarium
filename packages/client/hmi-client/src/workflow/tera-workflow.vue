@@ -266,11 +266,7 @@ import {
 	TeraSimulateEnsembleNodeCiemss
 } from './ops/simulate-ensemble-ciemss/mod';
 
-import {
-	SimulateJuliaOperation,
-	SimulateJuliaOperationState,
-	TeraSimulateNodeJulia
-} from './ops/simulate-julia/mod';
+import { SimulateJuliaOperation, TeraSimulateNodeJulia } from './ops/simulate-julia/mod';
 
 import { ModelTransformerOperation, TeraModelTransformerNode } from './ops/model-transformer/mod';
 
@@ -445,20 +441,6 @@ function appendOutputPort(
 				selectedVariable: []
 			});
 		}
-	}
-
-	if (
-		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
-		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
-	) {
-		const state = node.state as SimulateJuliaOperationState;
-		if (state.simConfigs.chartConfigs.length === 0) {
-			state.simConfigs.chartConfigs.push([]);
-		}
-		state.simConfigs.runConfigs[port.value[0]] = {
-			runId: port.value[0],
-			active: true
-		};
 	}
 
 	workflowDirty = true;
