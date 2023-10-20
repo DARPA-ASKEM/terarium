@@ -134,7 +134,7 @@
 				</template>
 				<template #footer>
 					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
-					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
+					<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
 				</template>
 			</tera-modal>
 		</Teleport>
