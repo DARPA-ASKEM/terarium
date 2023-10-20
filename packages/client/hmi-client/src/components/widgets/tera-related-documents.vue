@@ -187,7 +187,7 @@ async function getRelatedDocuments() {
 	]);
 
 	relatedDocuments.value =
-		(provenanceNodes.filter((res) => isDocumentAsset(res)) as DocumentAsset[]).map(
+		(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
 			(documentAsset) => ({
 				name: documentAsset.name,
 				id: documentAsset.id
