@@ -6,12 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { computed, ref } from 'vue';
 
 /**
- * Decode the OIDC token for additional information
- * @param token the OIDC token
- * @returns decoded JSON object representing the token
- * @throws an Error if token is not formatted as expected
- */
-/**
  * Main store used for authentication
  */
 const useAuthStore = defineStore('auth', () => {
