@@ -229,7 +229,6 @@
         }
 
         &:enabled:focus {
-            background: rgba($secondaryButtonBg, $textButtonActiveBgOpacity);
             color: $outlinedSecondaryButtonTextColor;
             box-shadow: $outlinedSecondaryBoxShadow;
         }
