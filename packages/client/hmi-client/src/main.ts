@@ -22,25 +22,28 @@ import { useProjects } from './composables/project';
 
 import './assets/css/style.scss';
 
-export const app = createApp(App);
-app.use(ToastService);
-app.use(createPinia());
-app.use(router);
-app.use(ConfirmationService);
-app.use(PrimeVue, { ripple: true });
-app.directive('tooltip', Tooltip);
+const app = createApp(App);
+app
+	.use(ToastService)
+	.use(createPinia())
+	.use(router)
+	.use(ConfirmationService)
+	.use(PrimeVue, { ripple: true })
+	.directive('tooltip', Tooltip);
 
 // Configure Google Analytics
 const GTAG = await axios.get('/api/configuration/ga');
-app.use(
-	VueGtag,
-	{
-		config: {
-			id: GTAG.data
-		}
-	},
-	router
-);
+if (GTAG.data) {
+	app.use(
+		VueGtag,
+		{
+			config: {
+				id: GTAG.data
+			}
+		},
+		router
+	);
+}
 
 app.component('math-field', MathfieldElement);
 app.component(VueFeather.name, VueFeather);
