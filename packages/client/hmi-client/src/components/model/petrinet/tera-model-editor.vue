@@ -1,11 +1,13 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2, 3]">
+	<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
 		<AccordionTab header="Model diagram">
 			<tera-model-diagram
 				ref="teraModelDiagramRef"
 				:model="model"
 				:is-editable="!featureConfig.isPreview"
+				:model-configuration="modelConfigurations[0]"
 				@update-model="updateModelContent"
+				@update-configuration="updateConfiguration"
 			/>
 		</AccordionTab>
 		<AccordionTab header="Model equations">

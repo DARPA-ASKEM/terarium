@@ -1,9 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.permissions;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @TSModel
+@Data
+@Accessors(chain = true)
 public class PermissionGroup {
 	private String id;
 	private String name;
@@ -15,19 +19,4 @@ public class PermissionGroup {
 		this.name = name;
 	}
 
-	public void setRelationship(String relationship) {
-		this.relationship = relationship;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public String getRelationship() {
-		return relationship;
-	}
 }

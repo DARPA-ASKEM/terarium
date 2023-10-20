@@ -2,25 +2,20 @@
 	<!--Probably rename tera-asset to something even more abstract-->
 	<tera-asset stretch-content>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Input"
-					icon="pi pi-sign-in"
-					@click="calibrationView = CalibrationView.INPUT"
-					:active="calibrationView === CalibrationView.INPUT"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Output"
-					icon="pi pi-sign-out"
-					@click="calibrationView = CalibrationView.OUTPUT"
-					:active="calibrationView === CalibrationView.OUTPUT"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i :class="`${option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</template>
 		<Accordion
-			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
+			v-if="view === CalibrationView.Input && modelConfig"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4]"
 		>
@@ -78,7 +73,7 @@
 			</AccordionTab>
 		</Accordion>
 		<Accordion
-			v-if="calibrationView === CalibrationView.OUTPUT && modelConfig"
+			v-if="view === CalibrationView.Output && modelConfig"
 			:multiple="true"
 			:active-index="[0, 1]"
 		>
@@ -147,6 +142,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import SelectButton from 'primevue/selectbutton';
 import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation';
 
 const props = defineProps<{
@@ -154,14 +150,18 @@ const props = defineProps<{
 }>();
 
 enum CalibrationView {
-	INPUT = 'input',
-	OUTPUT = 'output'
+	Input = 'Input',
+	Output = 'Output'
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelColumnNames = ref<string[] | undefined>();
 
-const calibrationView = ref(CalibrationView.INPUT);
+const view = ref(CalibrationView.Input);
+const viewOptions = ref([
+	{ value: CalibrationView.Input, icon: 'pi pi-sign-in' },
+	{ value: CalibrationView.Output, icon: 'pi pi-sign-out' }
+]);
 
 const trainTestValue = ref(80);
 

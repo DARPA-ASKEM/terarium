@@ -1,29 +1,19 @@
 <template>
 	<section class="tera-simulate">
 		<div class="simulate-header">
-			<div class="simulate-header p-buttonset">
-				<Button
-					label="Input"
-					severity="secondary"
-					icon="pi pi-sign-in"
-					size="small"
-					:active="activeTab === SimulateTabs.input"
-					@click="activeTab = SimulateTabs.input"
-				/>
-				<Button
-					label="Output"
-					severity="secondary"
-					icon="pi pi-sign-out"
-					size="small"
-					:active="activeTab === SimulateTabs.output"
-					@click="activeTab = SimulateTabs.output"
-				/>
-			</div>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i :class="`${option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</div>
-		<div
-			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
-			class="simulate-container"
-		>
+		<div v-if="view === SimulateView.Output && node?.outputs.length" class="simulate-container">
 			<Dropdown
 				v-if="runList.length > 0"
 				:options="runList"
@@ -67,7 +57,7 @@
 				></i>
 			</span>
 		</div>
-		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
+		<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
@@ -153,6 +143,7 @@ import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -164,12 +155,16 @@ const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
 
-enum SimulateTabs {
-	input,
-	output
+enum SimulateView {
+	Input = 'Input',
+	Output = 'Output'
 }
 
-const activeTab = ref(SimulateTabs.input);
+const view = ref(SimulateView.Input);
+const viewOptions = ref([
+	{ value: SimulateView.Input, icon: 'pi pi-sign-in' },
+	{ value: SimulateView.Output, icon: 'pi pi-sign-out' }
+]);
 
 const model = ref<{ [runId: string]: Model | null }>({});
 const modelConfigurations = ref<ModelConfiguration[]>([]);
@@ -217,10 +212,10 @@ const handleSelectedRunChange = () => {
 };
 
 async function saveDatasetToProject() {
-	const { activeProject, get } = useProjects();
+	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
 		if (await saveDataset(activeProject.value.id, selectedRun.value.runId, saveAsName.value)) {
-			get();
+			refresh();
 		}
 		showSaveInput.value = false;
 	}

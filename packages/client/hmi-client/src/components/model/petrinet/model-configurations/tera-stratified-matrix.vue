@@ -7,51 +7,55 @@
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
-						<th v-if="matrix.length > 1" class="choose-criteria"></th>
-						<th v-for="(row, i) in matrix[0]" :key="i">{{ row.colCriteria }}</th>
+						<th v-if="matrix.length > 1" class="choose-criteria">&nbsp;</th>
+						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<template v-for="(row, i) in matrix" :key="i">
-						<tr v-for="(controller, j) in controllers" :key="j">
-							<td v-if="matrix.length > 1" class="p-frozen-column">
-								<template v-if="nodeType === NodeType.State">
-									{{ Object.values(row[0].rowCriteria).join(' / ') }}
-								</template>
-								<template v-else>
-									{{ row[0].rowCriteria
-									}}<template v-if="controller !== ''">, {{ controller }} </template>
-								</template>
-							</td>
-							<td
-								v-for="(cell, k) in row"
-								:key="k"
-								tabindex="0"
-								@keyup.enter="onEnterValueCell(cell?.content?.id, i, k)"
-								@click="onEnterValueCell(cell?.content?.id, i, k)"
-							>
-								<template v-if="cell.content.id">
-									<InputText
-										v-if="editableCellStates[i][k]"
-										class="cell-input"
-										v-model.lazy="valueToEdit"
-										v-focus
-										@focusout="updateModelConfigValue(cell.content.id, i, k)"
-										@keyup.stop.enter="updateModelConfigValue(cell.content.id, i, k)"
-									/>
-									<div
-										v-else-if="nodeType === NodeType.State"
-										class="mathml-container"
-										v-html="matrixExpressionsList?.[i]?.[k] ?? '...'"
-									/>
-									<div v-else>
-										{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
+					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
+						<td v-if="matrix.length > 1" class="p-frozen-column">
+							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
+								{{ Object.values(row[0].rowCriteria).join(' / ') }}
+							</template>
+							<template v-else>
+								{{ row[0].rowCriteria }}
+							</template>
+						</td>
+						<td
+							v-for="(cell, colIdx) in row"
+							:key="colIdx"
+							tabindex="0"
+							:class="editableCellStates[rowIdx][colIdx] && 'is-editing'"
+							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
+							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
+						>
+							<template v-if="cell.content.id">
+								<InputText
+									v-if="editableCellStates[rowIdx][colIdx]"
+									class="cell-input"
+									v-model.lazy="valueToEdit"
+									v-focus
+									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+								/>
+								<section v-else>
+									<div>
+										<div
+											class="mathml-container"
+											v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+										/>
+										<template v-if="cell?.content?.controllers">
+											controllers: {{ cell?.content?.controllers }}
+										</template>
 									</div>
-								</template>
-								<span v-else class="not-allowed">N/A</span>
-							</td>
-						</tr>
-					</template>
+									<div class="subdue">
+										{{ cell?.content.id }}
+									</div>
+								</section>
+							</template>
+							<span v-else class="subdue">N/A</span>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>
@@ -61,34 +65,24 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
-import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
-import {
-	getMiraAMRPresentationData,
-	getUnstratifiedParameters,
-	filterParameterLocations
-} from '@/model-representation/petrinet/mira-petri';
-import { createMatrix1D, createParameterMatrix } from '@/utils/pivot';
-import { Initial, ModelConfiguration, ModelParameter, Rate, Model } from '@/types/Types';
-import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
+import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
+import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
+import { StratifiedMatrix } from '@/types/Model';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
-	stratifiedModelType: StratifiedModelType;
-	nodeType: NodeType;
+	stratifiedModelType: StratifiedModel;
+	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
 }>();
 
 const emit = defineEmits(['update-configuration']);
 
-const colDimensions: string[] = [];
-const rowDimensions: string[] = [];
-
 const matrix = ref<any>([]);
-const controllers = ref<string[]>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 
@@ -100,6 +94,11 @@ const parametersValueMap = computed(() =>
 		return acc;
 	}, {})
 );
+
+// Makes cell inputs focus once they appear
+const vFocus = {
+	mounted: (el) => el.focus()
+};
 
 watch(
 	() => [matrix.value, props.shouldEval],
@@ -123,16 +122,6 @@ watch(
 	}
 );
 
-// Makes cell inputs focus once they appear
-const vFocus = {
-	mounted: (el) => el.focus()
-};
-
-function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	valueToEdit.value = getMatrixExpression(variableName);
-	editableCellStates.value[rowIdx][colIdx] = true;
-}
-
 // Finds where to get the value within the AMR based on the variable name
 function findOdeObjectLocation(variableName: string): {
 	odeFieldObject: Rate & Initial & ModelParameter;
@@ -142,7 +131,11 @@ function findOdeObjectLocation(variableName: string): {
 	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 	if (!ode) return null;
 
-	const fieldNames = ['rates', 'initials', 'parameters'];
+	const fieldNames = [
+		StratifiedMatrix.Rates,
+		StratifiedMatrix.Initials,
+		StratifiedMatrix.Parameters
+	];
 
 	for (let i = 0; i < fieldNames.length; i++) {
 		const fieldIndex = ode[fieldNames[i]].findIndex(
@@ -168,6 +161,12 @@ function getMatrixExpression(variableName: string) {
 	return variableName;
 }
 
+function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
+	if (!variableName) return;
+	valueToEdit.value = getMatrixExpression(variableName);
+	editableCellStates.value[rowIdx][colIdx] = true;
+}
+
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
@@ -182,6 +181,14 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 	}
 
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
+}
+
+function renderMatrix() {
+	matrix.value = generateMatrix(
+		props.modelConfiguration.configuration,
+		props.id,
+		props.stratifiedMatrixType
+	);
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
@@ -211,67 +218,18 @@ async function updateModelConfigValue(variableName: string, rowIdx: number, colI
 		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
 		emit('update-configuration', modelConfigurationClone);
-		generateMatrix();
+		renderMatrix();
 	}
-}
-
-function generateMatrix(populateDimensions = false) {
-	const amr: Model = props.modelConfiguration.configuration;
-
-	const { stateMatrixData, transitionMatrixData } =
-		props.stratifiedModelType === StratifiedModelType.Catlab
-			? getCatlabAMRPresentationData(amr)
-			: getMiraAMRPresentationData(amr);
-
-	// Get only the states/transitions that are mapped to the base model
-	let matrixData: any[] = [];
-	let childParameterIds: string[] = [];
-
-	if (props.nodeType === NodeType.State) {
-		matrixData = stateMatrixData.filter(({ base }) => base === props.id);
-	} else {
-		const paramsMap = getUnstratifiedParameters(amr);
-		if (!paramsMap.has(props.id)) return [];
-
-		// IDs to find within the rates
-		childParameterIds = paramsMap.get(props.id) as string[];
-		// Holds all points that have the parameter
-		matrixData = filterParameterLocations(amr, transitionMatrixData, [
-			...childParameterIds,
-			props.id
-		]);
-	}
-
-	if (isEmpty(matrixData)) return matrixData;
-
-	if (populateDimensions) {
-		const dimensions = [cloneDeep(matrixData)[0]].map((d) => {
-			delete d.id;
-			delete d.base;
-			return Object.keys(d);
-		})[0];
-
-		rowDimensions.push(...dimensions);
-		colDimensions.push(...dimensions);
-	}
-
-	const matrixAttributes: any =
-		props.nodeType === NodeType.State
-			? createMatrix1D(matrixData)
-			: createParameterMatrix(amr, matrixData, childParameterIds);
-
-	matrix.value = matrixAttributes.matrix;
-	controllers.value = matrixAttributes.controllers ? matrixAttributes.controllers : [''];
-
-	return matrixData;
 }
 
 function configureMatrix() {
-	const matrixData = generateMatrix(true);
-	if (isEmpty(matrixData)) return;
+	renderMatrix();
 
-	// Matrix for editable cell states
-	matrix.value.forEach((m) => editableCellStates.value.push(Array(m.length).fill(false)));
+	if (!isEmpty(matrix.value)) {
+		for (let i = 0; i < matrix.value.length; i++) {
+			editableCellStates.value.push(Array(matrix.value[0].length).fill(false));
+		}
+	}
 }
 
 onMounted(() => {
@@ -306,6 +264,10 @@ onMounted(() => {
 	padding-bottom: 1rem;
 }
 
+.p-datatable .p-datatable-tbody > tr > td.is-editing {
+	padding: 0;
+}
+
 .editable-cell {
 	display: flex;
 	justify-content: space-between;
@@ -329,7 +291,12 @@ onMounted(() => {
 	min-width: 11rem;
 }
 
-.not-allowed {
+.subdue {
 	color: var(--text-color-subdued);
+}
+
+section {
+	display: flex;
+	justify-content: space-between;
 }
 </style>
