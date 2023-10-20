@@ -32,8 +32,8 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button label="Show all" severity="secondary" @click="resetZoom" />
-					<Button label="Clean up layout" severity="secondary" @click="cleanUpLayout" />
+					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
+					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
 					<Menu
 						ref="addComponentMenu"

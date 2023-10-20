@@ -158,14 +158,17 @@ $roundedButtonBorderRadius: 2rem !default;
 
 $textButtonHoverBgOpacity: .04 !default;
 $textButtonActiveBgOpacity: .16 !default;
-$outlinedButtonBorder: 0 none !default;
+$outlinedSecondaryButtonBg: #ffffff !default;
+$outlinedSecondaryButtonTextColor: var(--text-color-primary) !default;
+$outlinedSecondaryBoxShadow: #CACBCC inset 0 0 0 1px;
+$outlinedButtonBorder: none 0 !default;
 $plainButtonTextColor: $textColor !default;
 $plainButtonHoverBgColor: rgba(0, 0, 0, .04) !default;
 $plainButtonActiveBgColor: rgba(0, 0, 0, .16) !default;
 
-$secondaryButtonBg: #ffffff !default;
-$secondaryButtonTextColor: var(--text-color-primary) !default;
-$secondaryButtonBorder: #CACBCC 1px solid !default;
+$secondaryButtonBg: $accentColor !default;
+$secondaryButtonTextColor: var(--text-color-subdued) !default;
+$secondaryButtonBorder: none 0 !default;
 $secondaryButtonHoverBg: var(--surface-hover) !default;
 $secondaryButtonTextHoverColor: var(--text-color-primary) !default;
 $secondaryButtonHoverBorderColor: #CACBCC !default;

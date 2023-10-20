@@ -212,20 +212,26 @@
     }
 
     &.p-button-outlined {
-        background-color: transparent;
-        color: $secondaryButtonBg;
-        border: $outlinedButtonBorder;
+        background-color: $outlinedSecondaryButtonBg;
+        color: $outlinedSecondaryButtonTextColor;
+        box-shadow: $outlinedSecondaryBoxShadow;
 
         &:enabled:hover {
             background: rgba($secondaryButtonBg, $textButtonHoverBgOpacity);
-            color: $secondaryButtonBg;
-            border: $outlinedButtonBorder;
+            color: $outlinedSecondaryButtonTextColor;
+            box-shadow: $outlinedSecondaryBoxShadow;
         }
 
         &:enabled:active {
             background: rgba($secondaryButtonBg, $textButtonActiveBgOpacity);
-            color: $secondaryButtonBg;
-            border: $outlinedButtonBorder;
+            color: $outlinedSecondaryButtonTextColor;
+            box-shadow: $outlinedSecondaryBoxShadow;
+        }
+
+        &:enabled:focus {
+            background: rgba($secondaryButtonBg, $textButtonActiveBgOpacity);
+            color: $outlinedSecondaryButtonTextColor;
+            box-shadow: $outlinedSecondaryBoxShadow;
         }
     }
 
