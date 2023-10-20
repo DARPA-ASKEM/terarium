@@ -1,4 +1,4 @@
-// Create pivot table
+// Creates transition and parameter matrices for stratified models
 import _ from 'lodash';
 import { Model } from '@/types/Types';
 
