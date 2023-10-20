@@ -48,19 +48,22 @@
 					label="Upload resources"
 					size="large"
 					icon="pi pi-cloud-upload"
-					class="p-button p-button-secondary"
+					severity="secondary"
+					outlined
 					@click="isUploadResourcesModalVisible = true"
 				/>
 				<Button
 					label="New model"
 					size="large"
 					icon="pi pi-share-alt"
-					class="p-button p-button-secondary"
+					severity="secondary"
+					outlined
 					@click="emit('open-new-asset', AssetType.Models)"
 				/>
 				<Button
 					size="large"
-					class="p-button p-button-secondary"
+					severity="secondary"
+					outlined
 					@click="emit('open-new-asset', AssetType.Workflows)"
 				>
 					<vue-feather
@@ -71,7 +74,7 @@
 					/>
 					<span class="p-button-label">New workflow</span>
 				</Button>
-				<Button size="large" class="p-button p-button-secondary">
+				<Button size="large" severity="secondary" outlined>
 					<compare-models-icon class="icon" />
 					<span class="p-button-label">Compare models</span>
 				</Button>
@@ -79,7 +82,8 @@
 					label="New simulation"
 					size="large"
 					icon="pi pi-play"
-					class="p-button p-button-secondary"
+					severity="secondary"
+					outlined
 				/>
 			</section>
 			<!-- Resources list table goes here -->

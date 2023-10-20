@@ -6,9 +6,12 @@
 				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
 			</span>
 			<Button
+				class="new"
 				icon="pi pi-plus"
 				label="New"
-				class="p-button-sm secondary-button"
+				severity="secondary"
+				size="small"
+				outlined
 				@click="toggleOptionsMenu"
 			/>
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
@@ -329,22 +332,11 @@ header {
 	font-size: var(--font-caption);
 }
 
-/* We should make a proper secondary outline button. Until then this works. */
-.secondary-button {
-	color: var(--text-color-secondary);
-	font-size: var(--font-caption);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
+.new {
 	width: 6rem;
-}
-
-.secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
 }
 
 :deep(.p-button-icon-left.icon) {
 	margin-right: 0.5rem;
 }
 </style>
-@/utils/map-project-assets
