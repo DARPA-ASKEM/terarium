@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { User } from '@/types/Types';
 import Keycloak from 'keycloak-js';
 import axios, { AxiosHeaders } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
 import { computed, ref } from 'vue';
 
 /**
@@ -40,9 +39,6 @@ const useAuthStore = defineStore('auth', () => {
 		await loadUserModel();
 	};
 
-	// avatarKey
-	const avatarKey = ref(uuidv4());
-
 	return {
 		keycloak,
 		setKeycloak,
@@ -52,8 +48,7 @@ const useAuthStore = defineStore('auth', () => {
 		updateUser,
 		loadUserModel,
 		userInitials,
-		init,
-		avatarKey
+		init
 	};
 });
 
