@@ -5,9 +5,10 @@
 		</p>
 		<ul>
 			<li v-for="document in relatedDocuments" :key="document.id">
-				<a @click="openAsset({ assetId: document.id!, pageType: AssetType.Documents })">{{
-					document.name
-				}}</a>
+				<tera-asset-link
+					:label="document.name!"
+					:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+				></tera-asset-link>
 			</li>
 		</ul>
 		<Button
@@ -84,7 +85,7 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { AssetRoute, ResourceType } from '@/types/common';
+import { ResourceType } from '@/types/common';
 import {
 	profileDataset,
 	profileModel,
@@ -95,10 +96,9 @@ import {
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
 import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
-import router from '@/router';
-import { RouteName } from '@/router/routes';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { isDocumentAsset } from '@/utils/data-util';
+import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
@@ -163,13 +163,6 @@ const sendToAlignModel = async () => {
 		emit('enriched');
 		getRelatedDocuments();
 	}
-};
-
-const openAsset = (assetRoute: AssetRoute) => {
-	router.push({
-		name: RouteName.Project,
-		params: assetRoute
-	});
 };
 
 onMounted(() => {

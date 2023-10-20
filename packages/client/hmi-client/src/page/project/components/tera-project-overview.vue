@@ -105,18 +105,7 @@
 					<Column field="assetName" header="Name" sortable style="width: 75%">
 						<template #body="slotProps">
 							<div class="asset-button" @click="openResource(slotProps.data)">
-								<vue-feather
-									v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
-									:type="getAssetIcon(slotProps.data.pageType ?? null)"
-									size="1rem"
-									stroke="rgb(16, 24, 40)"
-									class="p-button-icon-left icon"
-								/>
-								<component
-									v-else
-									:is="getAssetIcon(slotProps.data.pageType ?? null)"
-									class="p-button-icon-left icon"
-								/>
+								<tera-asset-icon :assetType="slotProps.data.pageType" />
 								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
 							</div>
 						</template>
@@ -180,7 +169,7 @@ import { AssetType } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
-import { getAssetIcon } from '@/services/project';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 const emit = defineEmits(['open-asset', 'open-new-asset']);
