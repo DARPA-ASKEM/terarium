@@ -26,9 +26,7 @@ export enum RoutePath {
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	EvaluationScenariosPath = '/evaluation-scenarios',
-	ModelEditor = '/model-editor',
-	ModelRunner = '/model-runner'
+	EvaluationScenariosPath = '/evaluation-scenarios'
 }
 
 const routes = [

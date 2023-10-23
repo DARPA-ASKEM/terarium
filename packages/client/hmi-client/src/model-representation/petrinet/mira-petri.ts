@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
-import { createMatrix1D, createParameterMatrix, createTransitionMatrix } from '@/utils/pivot';
+import { createMatrix1D } from '@/utils/pivot';
 import { StratifiedMatrix } from '@/types/Model';
+import { createParameterMatrix, createTransitionMatrix } from './petri-matrix-service';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -12,7 +13,7 @@ export const getStates = (amr: Model) => {
 	const matrixData: any[] = [];
 
 	const dupe: Set<string> = new Set();
-	const uniqueStates: any[] = []; // FIXME: grounding typing incorrect
+	const uniqueStates: any[] = [];
 
 	for (let i = 0; i < model.states.length; i++) {
 		const state = model.states[i];

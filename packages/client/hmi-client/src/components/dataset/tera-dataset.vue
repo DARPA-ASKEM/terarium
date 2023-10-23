@@ -78,7 +78,6 @@
 					<tera-related-documents
 						:asset-type="ResourceType.DATASET"
 						:documents="documents"
-						:related-documents="relatedDocuments"
 						:assetId="assetId"
 						@enriched="fetchDataset"
 					/>
@@ -329,7 +328,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = computed(() => []);
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const newCsvContent: any = ref(null);
