@@ -114,8 +114,6 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(documentId, annotateSkema, annotateMIT, name, description).getBody());
 	}
 
-	;
-
 	/**
 	 * Post a PDF to the extraction service to get text
 	 *
