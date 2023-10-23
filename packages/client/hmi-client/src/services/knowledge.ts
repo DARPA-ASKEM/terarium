@@ -108,7 +108,7 @@ export const profileDataset = async (datasetId: string, documentId: string | nul
 	return response.data.id;
 };
 
-const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
+export const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
 	try {
 		const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
 		if (response?.status === 200 && response?.data?.id) return response.data.id;
@@ -181,11 +181,16 @@ export const extractPDF = async (documentId: string) => {
 	}
 };
 
-export async function codeToAMR(codeId: string, name: string = '', description: string = '') {
+export async function codeToAMR(
+	codeId: string,
+	name: string = '',
+	description: string = '',
+	dynamicsOnly: boolean = false
+) {
 	const response = await API.post(
-		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}`
+		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}`
 	);
-	if (response && response?.status === 200) {
+	if (response?.status === 200) {
 		const { id, status } = response.data;
 		if (status === 'queued') {
 			const extraction = await fetchExtraction(id);

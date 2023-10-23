@@ -3,13 +3,11 @@
 		<div class="add-selected-buttons">
 			<Button
 				v-if="selectedSearchItems.length > 0"
-				class="p-button-secondary spacer"
+				severity="secondary"
 				@click="emit('clear-selected')"
-			>
-				Remove all
-			</Button>
-
-			<dropdown
+				label="Remove all"
+			/>
+			<Dropdown
 				v-if="selectedSearchItems.length > 0"
 				placeholder="Add to project"
 				class="p-button dropdown-button"
@@ -26,12 +24,12 @@
 import { computed, PropType } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { AssetType, Document, ExternalPublication } from '@/types/Types';
-import dropdown from 'primevue/dropdown';
+import { AssetType, Document } from '@/types/Types';
+import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import { addDocuments } from '@/services/external';
 import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
+import { createDocumentFromXDD } from '@/services/document-assets';
 
 const router = useRouter();
 
@@ -52,22 +50,10 @@ const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isDocument(selectedItem)) {
-			const body: ExternalPublication = {
-				xdd_uri: (selectedItem as Document).gddId,
-				title: (selectedItem as Document).title
-			};
-
-			// FIXME: handle cases where assets is already added to the project
-
-			// first, insert into the proper table/collection
-			const res = await addDocuments(body);
-			if (res) {
-				const documentId = res.id;
-
-				// then, link and store in the project assets
-				const assetsType = AssetType.Publications;
-				await useProjects().addAsset(assetsType, documentId, projectId);
-			}
+			const document = selectedItem as Document;
+			await createDocumentFromXDD(document, projectId);
+			// finally add asset to project
+			await useProjects().get(projectId);
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
@@ -115,26 +101,10 @@ const addAssetsToProject = async (projectOption) => {
 	color: white;
 }
 
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .p-button.p-button-secondary {
-	box-shadow: none;
-	color: var(--text-color-subdued);
-	background-color: var(--surface-0);
-	font-weight: 400;
-	font-size: 14px;
-	padding-right: 16px;
-	padding-left: 16px;
 	height: 3rem;
-}
-
-.p-button.p-button-secondary:enabled:hover {
-	background-color: var(--surface-highlight);
-}
-
-.spacer {
 	margin-right: 16px;
 }
-
 .dropdown-button {
 	width: 156px;
 	height: 3rem;
@@ -165,11 +135,6 @@ const addAssetsToProject = async (projectOption) => {
 
 .cart-item {
 	border-bottom: 1px solid var(--surface-ground);
-}
-
-button {
-	height: min-content;
-	padding: 0;
 }
 
 i {

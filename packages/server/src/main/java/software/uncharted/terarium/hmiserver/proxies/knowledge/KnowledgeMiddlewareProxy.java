@@ -52,7 +52,7 @@ public interface KnowledgeMiddlewareProxy {
 	 *                      pdf (Object): The PDF file to upload
 	 * @return extractions of the pdf
 	 */
-	@PostMapping("/pdf_extractions")
+	@PostMapping("/variable_extractions")
 	ResponseEntity<JsonNode> postPDFExtractions(
 		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
@@ -67,7 +67,7 @@ public interface KnowledgeMiddlewareProxy {
 	 * @param documentId (String): The ID of the document to extract text from
 	 * @return
 	 */
-	@PostMapping("/pdf_to_cosmos")
+	@PostMapping("/pdf_extraction")
 	ResponseEntity<JsonNode> postPDFToCosmos(
 		@RequestParam("document_id") String documentId
 	);
@@ -101,16 +101,18 @@ public interface KnowledgeMiddlewareProxy {
 	/**
 	 * Transform source code to AMR
 	 *
-	 * @param codeId      (String): id of the code artifact
-	 * @param name        (String): the name to set on the newly created model
-	 * @param description (String): the description to set on the newly created model
+	 * @param codeId       (String): id of the code artifact
+	 * @param name         (String): the name to set on the newly created model
+	 * @param description  (String): the description to set on the newly created model
+	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over specified dynamics from the code object in TDS
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code_to_amr")
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
 		@RequestParam("code_id") String codeId,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description,
+		@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly
 	);
 
 	/**

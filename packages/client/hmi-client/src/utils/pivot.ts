@@ -1,13 +1,11 @@
 // Create pivot table
 import _ from 'lodash';
-import { Model } from '@/types/Types';
 
 export interface PivotMatrixCell {
 	row: number;
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
-	controllers?: string[];
 	content: any;
 }
 
@@ -105,93 +103,6 @@ export const createMatrix1D = (data: any[]) => {
 	}
 
 	return { matrix: rows };
-};
-
-export const createParameterMatrix = (
-	amr: Model,
-	transitionMatrixData: any[],
-	childParameterIds: string[]
-) => {
-	let controllers: string[] = [];
-	let inputs: string[] = [];
-	let outputs: string[] = [];
-
-	const transitions = _.cloneDeep(
-		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
-	);
-
-	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
-	for (let i = 0; i < transitions.length; i++) {
-		const { input, output } = transitions[i];
-		// Extract and remove controllers out of inputs array
-		const newInputs = input.filter((ip: string) => !output.includes(ip));
-		const newOutputs = output.filter((ip: string) => !input.includes(ip));
-		inputs.push(...newInputs);
-		outputs.push(...newOutputs);
-		controllers.push(...input.filter((ip: string) => output.includes(ip)));
-		// Update input/output for future transitions loop
-		transitions[i].input = newInputs;
-		transitions[i].output = newOutputs;
-	}
-	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
-	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
-	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
-
-	// Build empty matrix
-	const rows: any[] = [];
-	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
-		const row: PivotMatrixCell[] = [];
-		for (let colIdx = 0; colIdx < outputs.length; colIdx++) {
-			row.push({
-				row: rowIdx,
-				col: colIdx,
-				rowCriteria: inputs[rowIdx],
-				colCriteria: outputs[colIdx],
-				content: {
-					value: null,
-					id: ''
-				}
-			});
-		}
-		rows.push(row);
-	}
-
-	// Map inputs/outputs to their row/col positions
-	const rowIndexMap = new Map();
-	const colIndexMap = new Map();
-	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) rowIndexMap.set(inputs[rowIdx], rowIdx);
-	for (let colIdx = 0; colIdx < outputs.length; colIdx++) colIndexMap.set(outputs[colIdx], colIdx);
-
-	// For every transition id grab its input/output and row/column index to fill its place in the matrix
-	for (let i = 0; i < transitions.length; i++) {
-		const { input, output, id } = transitions[i];
-		const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
-
-		if (rate) {
-			// Go through inputs and outputs of the current transition id
-			for (let j = 0; j < input.length; j++) {
-				const rowIdx = rowIndexMap.get(input[j]);
-				const colIdx = colIndexMap.get(output[j]);
-				for (let k = 0; k < childParameterIds.length; k++) {
-					// Fill cell content with parameter content
-					if (rate.expression.includes(childParameterIds[k])) {
-						const parameter = amr.semantics?.ode.parameters?.find(
-							(p) => p.id === childParameterIds[k]
-						);
-						if (parameter) {
-							rows[rowIdx][colIdx].content.id = parameter.id;
-							rows[rowIdx][colIdx].content.value = parameter.value;
-						}
-						break;
-					}
-				}
-			}
-		}
-	}
-	return {
-		matrix: rows,
-		controllers
-	};
 };
 
 // Creates a M x N matrix where

@@ -32,8 +32,8 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
-					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
+					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
+					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
 					<Menu
 						ref="addComponentMenu"
@@ -255,18 +255,18 @@ import {
 	DatasetTransformerOperation,
 	TeraDatasetTransformerNode
 } from './ops/dataset-transformer/mod';
-import { CalibrationOperationJulia, TeraCalibrateNodeJulia } from './ops/calibrate-julia/mod';
+import {
+	CalibrationOperationJulia,
+	TeraCalibrateNodeJulia,
+	CalibrationOperationStateJulia
+} from './ops/calibrate-julia/mod';
 import { CalibrationOperationCiemss, TeraCalibrateNodeCiemss } from './ops/calibrate-ciemss/mod';
 import {
 	SimulateEnsembleCiemssOperation,
 	TeraSimulateEnsembleNodeCiemss
 } from './ops/simulate-ensemble-ciemss/mod';
 
-import {
-	SimulateJuliaOperation,
-	SimulateJuliaOperationState,
-	TeraSimulateNodeJulia
-} from './ops/simulate-julia/mod';
+import { SimulateJuliaOperation, TeraSimulateNodeJulia } from './ops/simulate-julia/mod';
 
 import { ModelTransformerOperation, TeraModelTransformerNode } from './ops/model-transformer/mod';
 
@@ -277,8 +277,6 @@ const WORKFLOW_SAVE_INTERVAL = 8000;
 const props = defineProps<{
 	assetId: string;
 }>();
-
-const emit = defineEmits(['page-loaded']);
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -431,19 +429,20 @@ function appendOutputPort(
 	// should be built into the Operation directly. What we are doing is to update the internal state
 	// and this feels it is leaking too much low-level information
 	if (
-		node.operationType === WorkflowOperationTypes.SIMULATE_JULIA ||
-		node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS ||
 		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
 		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
 	) {
-		const state = node.state as SimulateJuliaOperationState;
+		const state = node.state as CalibrationOperationStateJulia;
 		if (state.chartConfigs.length === 0) {
+			// This only ends up showing the output of the first run, perhaps we should consider showing
+			// the output of the last run, or all runs?
 			state.chartConfigs.push({
 				selectedRun: port.value[0],
 				selectedVariable: []
 			});
 		}
 	}
+
 	workflowDirty = true;
 }
 
@@ -458,13 +457,13 @@ const drilldown = (event: WorkflowNode<any>) => {
 };
 
 workflowEventBus.on('node-state-change', (payload: any) => {
-	if (wf.value.id !== payload.workflowId) return;
+	if (wf.value?.id !== payload.workflowId) return;
 	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 	workflowDirty = true;
 });
 
 workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
-	if (wf.value.id !== payload.workflowId) return;
+	if (wf.value?.id !== payload.workflowId) return;
 	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
 	if (!node) return;
 
@@ -805,7 +804,6 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
-		emit('page-loaded');
 	},
 	{ immediate: true }
 );
@@ -846,7 +844,6 @@ function resetZoom() {
 	justify-content: space-between;
 	align-items: center;
 	padding: 0.5rem 1rem;
-	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
 }
@@ -861,29 +858,5 @@ function resetZoom() {
 	align-items: center;
 	flex-direction: row;
 	gap: 1rem;
-}
-
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
-.toolbar .button-group .secondary-button {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border-light);
-}
-
-.toolbar .button-group .secondary-button:enabled:hover {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-highlight);
-}
-
-.toolbar .button-group .primary-dropdown {
-	background-color: var(--primary-color);
-	border: 1px solid var(--primary-color);
-}
-
-.toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
-.toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
-	color: var(--surface-0);
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
 }
 </style>

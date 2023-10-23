@@ -7,6 +7,7 @@ import VueFeather from 'vue-feather';
 import VueGtag from 'vue-gtag';
 import axios from 'axios';
 import { MathfieldElement } from 'mathlive';
+import { RouteLocationNormalized } from 'vue-router';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 
@@ -79,7 +80,7 @@ keycloak
 		console.error('Authentication Failed', e);
 	});
 
-let previousRoute;
+let previousRoute: RouteLocationNormalized | null = null;
 let routeStartedMillis = Date.now();
 router.beforeEach((to, _from, next) => {
 	if (previousRoute) {

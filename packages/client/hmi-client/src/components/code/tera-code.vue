@@ -31,7 +31,11 @@
 					/>
 					<Button label="Save" @click="saveCode" />
 					<Button label="Save as new" @click="isCodeNamingModalVisible = true" />
-					<Button label="Create model from code" @click="isModelNamingModalVisible = true" />
+					<Button
+						label="Create model from code"
+						@click="isModelNamingModalVisible = true"
+						:loading="isCodeToModelLoading"
+					/>
 				</section>
 			</section>
 		</template>
@@ -63,11 +67,6 @@
 				</template>
 				<template #footer>
 					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isModelNamingModalVisible = false"
-					/>
-					<Button
 						label="Create model"
 						@click="
 							() => {
@@ -75,6 +74,12 @@
 								extractModel();
 							}
 						"
+					/>
+					<Button
+						label="Cancel"
+						severity="secondary"
+						outlined
+						@click="isModelNamingModalVisible = false"
 					/>
 				</template>
 			</tera-modal>
@@ -159,6 +164,7 @@ const codeAsset = ref<Code | null>(null);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const progress = ref(0);
+const isCodeToModelLoading = ref(false);
 const isModelDiagramModalVisible = ref(false);
 const isModelNamingModalVisible = ref(false);
 const isCodeNamingModalVisible = ref(false);
@@ -241,12 +247,14 @@ async function saveNewCode() {
 
 async function extractModel() {
 	const newCodeAsset = await saveCode();
-	if (newCodeAsset && newCodeAsset.id) {
+	if (newCodeAsset?.id) {
+		isCodeToModelLoading.value = true;
 		const extractedModelId = await codeToAMR(
 			newCodeAsset.id,
 			newModelName.value,
 			newModelDescription.value
 		);
+		isCodeToModelLoading.value = false;
 		if (extractedModelId) {
 			router.push({
 				name: RouteName.Project,

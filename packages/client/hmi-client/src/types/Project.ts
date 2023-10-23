@@ -46,4 +46,6 @@ export interface IProject {
 	relatedDocuments: Document[];
 	username: string;
 	metadata?: { [index: string]: string };
+	publicProject?: boolean;
+	userPermission?: string;
 }

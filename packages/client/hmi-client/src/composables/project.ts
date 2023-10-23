@@ -9,7 +9,8 @@
 import { IProject } from '@/types/Project';
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import { AssetType } from '@/types/Types';
+import { AssetType, PermissionRelationships } from '@/types/Types';
+import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;
 
@@ -25,7 +26,17 @@ export function useProjects() {
 	 * @param {string} projectId Id of the project to set as the active project.
 	 * @returns {Promise<IProject | null>} Active project.
 	 */
-	async function get(projectId: IProject['id'] = activeProjectId.value): Promise<IProject | null> {
+	async function get(projectId: IProject['id']): Promise<IProject | null> {
+		if (projectId) {
+			activeProject.value = await ProjectService.get(projectId, true);
+		} else {
+			activeProject.value = null;
+		}
+		return activeProject.value;
+	}
+
+	async function refresh(): Promise<IProject | null> {
+		const projectId: IProject['id'] = activeProjectId.value;
 		if (projectId) {
 			activeProject.value = await ProjectService.get(projectId, true);
 		}
@@ -148,6 +159,64 @@ export function useProjects() {
 		return ProjectService.getPublicationAssets(projectId);
 	}
 
+	async function getPermissions(
+		projectId: IProject['id']
+	): Promise<PermissionRelationships | null> {
+		return ProjectService.getPermissions(projectId);
+	}
+
+	async function setPermissions(projectId: IProject['id'], userId: string, relationship: string) {
+		return ProjectService.setPermissions(projectId, userId, relationship);
+	}
+
+	async function removePermissions(
+		projectId: IProject['id'],
+		userId: string,
+		relationship: string
+	) {
+		return ProjectService.removePermissions(projectId, userId, relationship);
+	}
+
+	async function updatePermissions(
+		projectId: IProject['id'],
+		userId: string,
+		oldRelationship: string,
+		to: string
+	) {
+		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
+	}
+
+	async function clone(projectId: IProject['id']) {
+		const username = useAuthStore().user?.name;
+		if (!username) {
+			return null;
+		}
+		const projectToClone = await ProjectService.get(projectId, true);
+		if (!projectToClone || !projectToClone.assets) {
+			return null;
+		}
+		const created = await ProjectService.create(
+			`Copy of ${projectToClone.name}`,
+			projectToClone.description,
+			username
+		);
+		if (!created || !created.id) {
+			return null;
+		}
+		// There doesn't seem to be a way to add multiple assets in one call yet
+		Object.entries(projectToClone.assets).forEach(async (projectAsset) => {
+			const [assetType, assets] = projectAsset;
+			if (assets.length) {
+				await Promise.all(
+					assets.map(async (asset) => {
+						await ProjectService.addAsset(created.id!, assetType, asset.id);
+					})
+				);
+			}
+		});
+		return created;
+	}
+
 	return {
 		activeProject,
 		allProjects,
@@ -158,6 +227,12 @@ export function useProjects() {
 		create,
 		update,
 		remove,
-		getPublicationAssets
+		refresh,
+		getPublicationAssets,
+		getPermissions,
+		setPermissions,
+		removePermissions,
+		updatePermissions,
+		clone
 	};
 }

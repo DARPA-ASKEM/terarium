@@ -1,4 +1,11 @@
-import { XDDFacetsItemResponse, Document, Dataset, Model, AssetType } from '@/types/Types';
+import {
+	XDDFacetsItemResponse,
+	Document,
+	Dataset,
+	Model,
+	AssetType,
+	DocumentAsset
+} from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
@@ -58,7 +65,7 @@ export type SearchParameters = {
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | Dataset | Document;
+export type ResultType = Model | Dataset | Document | DocumentAsset;
 
 export type SearchResults = {
 	results: ResultType[];
@@ -103,16 +110,18 @@ export type SidePanelTab = {
 	badgeCount?: number;
 };
 
-// Tabs
-export type Tab = {
-	icon?: string;
-	assetId?: string;
-	assetName?: string;
-	pageType?: AssetType | ProjectPages;
+export type AssetRoute = {
+	assetId: string;
+	pageType: AssetType | ProjectPages;
 };
 
+export interface AssetItem extends AssetRoute {
+	icon?: string;
+	assetName?: string;
+}
+
 export type CodeRequest = {
-	asset: Tab;
+	asset: AssetItem;
 	code?: string;
 };
 

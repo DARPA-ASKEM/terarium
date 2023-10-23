@@ -8,6 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 
 import java.util.List;
 import java.util.Map;
@@ -43,4 +44,8 @@ public class ModelMetadata {
 	@JsonProperty("card")
 	@TSOptional
 	private Card card;
+
+	@JsonProperty("provenance")
+	@TSOptional
+	private List<String> provenance;
 }

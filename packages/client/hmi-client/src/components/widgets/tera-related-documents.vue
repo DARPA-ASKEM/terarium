@@ -5,12 +5,16 @@
 		</p>
 		<ul>
 			<li v-for="document in relatedDocuments" :key="document.id">
-				{{ document.name }}
+				<tera-asset-link
+					:label="document.name!"
+					:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+				></tera-asset-link>
 			</li>
 		</ul>
 		<Button
 			label="Enrich Description"
 			text
+			:loading="enriching"
 			@click="
 				dialogType = 'enrich';
 				visible = true;
@@ -58,7 +62,7 @@
 				</div>
 			</div>
 			<template #footer>
-				<Button class="secondary-button" label="Cancel" @click="visible = false" />
+				<Button severity="secondary" outlined label="Cancel" @click="visible = false" />
 				<Button
 					:label="
 						dialogType === 'enrich'
@@ -76,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
@@ -91,10 +95,13 @@ import {
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
+import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
+import { getRelatedArtifacts, mapResourceTypeToProvenanceType } from '@/services/provenance';
+import { isDocumentAsset } from '@/utils/data-util';
+import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
-	relatedDocuments?: Array<{ name: string; id: string | undefined }>;
 	assetType: ResourceType;
 	assetId: string;
 }>();
@@ -104,12 +111,15 @@ const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<'enrich' | 'align'>('enrich');
 const aligning = ref(false);
+const enriching = ref(false);
+const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	const jobIds: (string | null)[] = [];
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
 
+	enriching.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === ResourceType.MODEL) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
@@ -131,7 +141,9 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	// Poll all extractions
 	await Promise.all(extractionList);
 
+	enriching.value = false;
 	emit('enriched');
+	getRelatedDocuments();
 };
 
 const sendToAlignModel = async () => {
@@ -149,23 +161,42 @@ const sendToAlignModel = async () => {
 
 		aligning.value = false;
 		emit('enriched');
+		getRelatedDocuments();
 	}
 };
+
+onMounted(() => {
+	getRelatedDocuments();
+});
+
+watch(
+	() => props.assetId,
+	() => {
+		getRelatedDocuments();
+	}
+);
+
+async function getRelatedDocuments() {
+	if (!props.assetType) return;
+	const provenanceType = mapResourceTypeToProvenanceType(props.assetType);
+
+	if (!provenanceType) return;
+
+	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
+		ProvenanceType.Document
+	]);
+
+	relatedDocuments.value =
+		(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
+			(documentAsset) => ({
+				name: documentAsset.name,
+				id: documentAsset.id
+			})
+		) ?? [];
+}
 </script>
 
 <style scoped>
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
-.secondary-button {
-	color: var(--text-color-primary);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
-}
-
-.secondary-button:enabled:hover {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-highlight);
-}
-
 ul {
 	margin: 1rem 0;
 }

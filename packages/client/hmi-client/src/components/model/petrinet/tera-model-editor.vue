@@ -1,11 +1,13 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2, 3]">
+	<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
 		<AccordionTab header="Model diagram">
 			<tera-model-diagram
 				ref="teraModelDiagramRef"
 				:model="model"
 				:is-editable="!featureConfig.isPreview"
+				:model-configuration="modelConfigurations[0]"
 				@update-model="updateModelContent"
+				@update-configuration="updateConfiguration"
 			/>
 		</AccordionTab>
 		<AccordionTab header="Model equations">
@@ -47,21 +49,20 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import { FeatureConfig, ResultType } from '@/types/common';
-import { Document, Dataset, Model, ProvenanceType, ModelConfiguration } from '@/types/Types';
+import { Document, Dataset, Model, ModelConfiguration } from '@/types/Types';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import { getRelatedArtifacts } from '@/services/provenance';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 
-const props = defineProps<{
+defineProps<{
 	model: Model;
 	modelConfigurations: ModelConfiguration[];
 	featureConfig: FeatureConfig;
@@ -92,18 +93,11 @@ function updateModelContent(updatedModel: Model) {
 	emit('update-model', updatedModel);
 }
 
-function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
-	emit('update-configuration', updatedConfiguration, index);
+function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+	emit('update-configuration', updatedConfiguration);
 }
 
 function addConfiguration(configuration: ModelConfiguration) {
 	emit('add-configuration', configuration);
 }
-
-onMounted(async () => {
-	relatedTerariumArtifacts.value = await getRelatedArtifacts(
-		props.model.id,
-		ProvenanceType.ModelRevision
-	);
-});
 </script>

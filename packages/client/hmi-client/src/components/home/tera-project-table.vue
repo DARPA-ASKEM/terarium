@@ -44,42 +44,27 @@
 		</Column>
 		<Column style="width: 0">
 			<template #body="{ data }">
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="project-options p-button-icon-only p-button-text p-button-rounded"
-					@click.stop="(event) => showProjectMenu(event, data)"
-				/>
-				<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+				<tera-project-menu :project="data" />
 			</template>
 		</Column>
 	</DataTable>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import Menu from 'primevue/menu';
-import Button from 'primevue/button';
 import { IProject } from '@/types/Project';
+import TeraProjectMenu from './tera-project-menu.vue';
 
 defineProps<{
 	projects: IProject[];
-	projectMenuItems?: any[];
 	selectedColumns: { field: string; header: string }[];
 }>();
 
-const emit = defineEmits(['open-project', 'update-chosen-project-menu']);
-
-const projectMenu = ref();
-
-const showProjectMenu = (event, project: IProject) => {
-	projectMenu.value.toggle(event);
-	emit('update-chosen-project-menu', project);
-};
+const emit = defineEmits(['open-project']);
 
 function getColumnWidth(columnField: string) {
 	switch (columnField) {

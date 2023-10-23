@@ -173,6 +173,17 @@ export interface DatasetColumn {
     description?: string;
 }
 
+export interface AddDocumentAssetFromXDDRequest {
+    document: Document;
+    projectId: string;
+}
+
+export interface AddDocumentAssetFromXDDResponse {
+    documentAssetId: string;
+    pdfUploadError: boolean;
+    extractionJobId: string;
+}
+
 export interface DocumentAsset {
     id?: string;
     name?: string;
@@ -249,7 +260,12 @@ export interface PetriNetModel {
 }
 
 export interface ProvenanceQueryParam {
-    rootId?: number;
+    nodes?: boolean;
+    types?: ProvenanceType[];
+    hops?: number;
+    limit?: number;
+    verbose?: boolean;
+    rootId?: string;
     rootType?: ProvenanceType;
     userId?: number;
 }
@@ -327,6 +343,31 @@ export interface DKG {
     name: string;
     description: string;
     link: string;
+}
+
+export interface PermissionGroup {
+    id: string;
+    name: string;
+    relationship?: string;
+}
+
+export interface PermissionProject {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionRelationships {
+    permissionGroups: PermissionGroup[];
+    permissionUsers: PermissionUser[];
+    permissionProjects: PermissionProject[];
+}
+
+export interface PermissionUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    relationship?: string;
 }
 
 export interface CalibrationRequestCiemss {
@@ -457,7 +498,7 @@ export interface Document {
 export interface DocumentExtraction {
     fileName: string;
     assetType: string;
-    metadata: any;
+    metadata: { [index: string]: any };
 }
 
 export interface ModelHeader {
@@ -485,6 +526,7 @@ export interface ModelMetadata {
     attributes?: any[];
     timeseries?: { [index: string]: any };
     card?: Card;
+    provenance?: string[];
 }
 
 export interface ModelGrounding {
@@ -835,16 +877,16 @@ export enum ColumnType {
 }
 
 export enum ProvenanceType {
-    Dataset = "Dataset",
-    Intermediate = "Intermediate",
-    Model = "Model",
-    ModelParameter = "ModelParameter",
-    ModelRevision = "ModelRevision",
-    Plan = "Plan",
-    PlanParameter = "PlanParameter",
-    Publication = "Publication",
-    Project = "Project",
     Concept = "Concept",
+    Dataset = "Dataset",
+    Model = "Model",
+    ModelConfiguration = "ModelConfiguration",
+    Project = "Project",
+    Publication = "Publication",
+    Simulation = "Simulation",
+    Artifact = "Artifact",
+    Code = "Code",
+    Document = "Document",
 }
 
 export enum AssetType {

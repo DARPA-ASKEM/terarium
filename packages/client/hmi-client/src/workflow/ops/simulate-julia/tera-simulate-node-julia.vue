@@ -1,17 +1,27 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
-		<Button @click="runSimulate">Run</Button>
-		<div class="chart-container" v-if="runResults">
+		<div class="button-container">
+			<Button label="Run" @click="runSimulate" icon="pi pi-play"></Button>
+		</div>
+		<Dropdown
+			v-if="runList.length > 0"
+			:options="runList"
+			v-model="selectedRun"
+			option-label="label"
+			placeholder="Select a simulation run"
+			@update:model-value="handleSelectedRunChange"
+		/>
+		<div class="chart-container" v-if="runResults[selectedRun?.runId]">
 			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				@configuration-change="configurationChange(index, $event)"
+				v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+				:key="idx"
+				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
+				:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+				@configuration-change="configurationChange(idx, $event)"
 				:colorByRun="true"
 			/>
+			<Button class="add-chart" text @click="addChart" label="Add chart" icon="pi pi-plus"></Button>
 		</div>
-		<Button class="add-chart" text @click="addChart" label="Add chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />
@@ -22,6 +32,7 @@
 import _ from 'lodash';
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
 import { csvParse } from 'd3';
 import { ModelConfiguration, SimulationRequest } from '@/types/Types';
 
@@ -55,12 +66,33 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
+const runList = computed(() =>
+	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
+		label: `Output ${idx + 1} - ${runId}`,
+		runId
+	}))
+);
+const selectedRun = ref();
+
 const poller = new Poller();
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
 		getStatus(runIds);
+	}
+
+	const runId = Object.values(props.node.state.simConfigs.runConfigs).find(
+		(metadata) => metadata.active
+	)?.runId;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
+
+	if (selectedRun.value?.runId) {
+		lazyLoadRunResults(selectedRun.value.runId);
 	}
 });
 
@@ -72,25 +104,22 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
+	// Since we've disabled multiple configs to a simulation node, we can assume only one config
+	const configId = modelConfigurationList[0];
+
 	const state = props.node.state;
 
-	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
-		const payload: SimulationRequest = {
-			modelConfigId: configId,
-			timespan: {
-				start: state.currentTimespan.start,
-				end: state.currentTimespan.end
-			},
-			extra: {},
-			engine: 'sciml'
-		};
-		const response = await makeForecastJob(payload);
-		return response.id;
-	});
-
-	const response = await Promise.all(simulationRequests);
-	getStatus(response);
-	showSpinner.value = true;
+	const payload: SimulationRequest = {
+		modelConfigId: configId,
+		timespan: {
+			start: state.currentTimespan.start,
+			end: state.currentTimespan.end
+		},
+		extra: {},
+		engine: 'sciml'
+	};
+	const response = await makeForecastJob(payload);
+	getStatus([response.id]);
 };
 
 const getStatus = async (runIds: string[]) => {
@@ -130,17 +159,36 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	);
 	runResults.value = newRunResults;
 
+	const state = _.cloneDeep(props.node.state);
+	if (state.simConfigs.chartConfigs.length === 0) {
+		state.simConfigs.chartConfigs.push([]);
+	}
+	state.simConfigs.runConfigs[runIdList[0]] = {
+		runId: runIdList[0],
+		active: true
+	};
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateJuliaOperation.outputs[0].type,
-		label: `${port.label} Results`,
+		label: `${port.label} - Output ${runList.value.length}`, // TODO: figure out more robust naming system
 		value: runIdList
 	});
+
+	// show the latest run in the dropdown
+	selectedRun.value = runList.value[runList.value.length - 1];
+	// persist the selected run in the chart config
+	handleSelectedRunChange();
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -161,37 +209,47 @@ watch(
 
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
-onMounted(async () => {
-	const node = props.node;
-	if (!node) return;
+const lazyLoadRunResults = async (runId: string) => {
+	if (runResults.value[runId]) return;
 
-	const port = node.outputs[0];
-	if (!port) return;
+	const resultCsv = await getRunResult(runId, 'result.csv');
+	const csvData = csvParse(resultCsv);
 
-	const runIdList = port.value as string[];
-	await Promise.all(
-		runIdList.map(async (runId) => {
-			const resultCsv = await getRunResult(runId, 'result.csv');
-			const csvData = csvParse(resultCsv);
+	// there's only a single input config
+	const configId = props.node.inputs[0].value?.[0];
+	if (configId) {
+		const modelConfig = await getModelConfigurationById(configId);
+		const parameters = modelConfig.configuration.semantics.ode.parameters;
+		csvData.forEach((row) =>
+			parameters.forEach((parameter) => {
+				row[parameter.id] = parameter.value;
+			})
+		);
+	}
+	runResults.value[runId] = csvData as any;
+};
 
-			const configId = props.node.inputs[0].value?.[0];
-			if (configId) {
-				const modelConfig = await getModelConfigurationById(configId);
-				const parameters = modelConfig.configuration.semantics.ode.parameters;
-				csvData.forEach((row) =>
-					parameters.forEach((parameter) => {
-						row[parameter.id] = parameter.value;
-					})
-				);
-			}
-			runResults.value[runId] = csvData as any;
-		})
-	);
-});
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	lazyLoadRunResults(selectedRun.value.runId);
+
+	const state = _.cloneDeep(props.node.state);
+	// set the active status for the selected run in the run configs
+	Object.keys(state.simConfigs.runConfigs).forEach((runId) => {
+		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
+	});
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	state.simConfigs.chartConfigs.push([]);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -212,6 +270,10 @@ section {
 
 .simulate-chart {
 	margin: 1em 0em;
+}
+
+.button-container {
+	padding-bottom: 10px;
 }
 
 .add-chart {
