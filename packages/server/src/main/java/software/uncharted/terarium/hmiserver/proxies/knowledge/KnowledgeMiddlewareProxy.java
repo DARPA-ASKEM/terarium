@@ -110,9 +110,9 @@ public interface KnowledgeMiddlewareProxy {
 	@PostMapping("/code_to_amr")
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
 		@RequestParam("code_id") String codeId,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description,
-		@RequestParam("dynamics_only") Boolean dynamicsOnly
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description,
+		@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly
 	);
 
 	/**
