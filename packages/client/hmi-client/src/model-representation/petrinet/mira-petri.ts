@@ -13,7 +13,7 @@ export const getStates = (amr: Model) => {
 	const matrixData: any[] = [];
 
 	const dupe: Set<string> = new Set();
-	const uniqueStates: any[] = []; // FIXME: grounding typing incorrect
+	const uniqueStates: any[] = [];
 
 	for (let i = 0; i < model.states.length; i++) {
 		const state = model.states[i];
