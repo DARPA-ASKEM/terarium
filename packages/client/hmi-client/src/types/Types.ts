@@ -349,6 +349,7 @@ export interface PermissionGroup {
     id: string;
     name: string;
     relationship?: string;
+    permissionRelationships?: PermissionRelationships;
 }
 
 export interface PermissionProject {
