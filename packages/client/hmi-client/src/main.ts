@@ -36,9 +36,8 @@ authStore.setKeycloak(keycloak);
 function failedAuth(e: unknown) {
 	console.error(e);
 	logger.error('Authentication Failed, reloading a the page');
-	window.location.reload();
+	window.location.assign('/');
 }
-
 // Authentication
 try {
 	await keycloak
@@ -51,7 +50,6 @@ try {
 } catch (e) {
 	failedAuth(e);
 }
-
 // Initialize user
 await authStore.init();
 logger.info('Authenticated');
@@ -60,6 +58,11 @@ logger.info('Authenticated');
 setInterval(async () => {
 	await keycloak.updateToken(70);
 }, 6000);
+
+// Set the hash value of the window.location to null
+// This is to prevent the Keycloak from redirecting to the hash value
+// after the authentication
+window.location.hash = '';
 
 app
 	.use(router)
