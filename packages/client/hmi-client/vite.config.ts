@@ -42,6 +42,7 @@ export default defineConfig({
 		hmr: {
 			port: 8080
 		},
+
 		proxy: {
 			'/api': {
 				target: 'http://localhost:3000',
@@ -74,5 +75,8 @@ export default defineConfig({
 		// By default SVGs are imported as URL in order to easily reference them in img tags
 		// In order to import SVGs as components you must add '?component' as a suffix of an SVG's path
 		svgLoader({ defaultImport: 'url' })
-	]
+	],
+	test: {
+		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']
+	}
 });
