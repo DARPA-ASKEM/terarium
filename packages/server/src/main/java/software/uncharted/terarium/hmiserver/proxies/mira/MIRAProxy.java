@@ -13,26 +13,26 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import java.util.List;
 
 
-@FeignClient(name = "mira-api", url = "${mira-api.url}")
+@FeignClient(name = "mira-api", url = "${mira-api.url}/api")
 public interface MIRAProxy {
-	@GetMapping("/api/entity/{curie}")
+	@GetMapping("/entity/{curie}")
 	ResponseEntity<DKG> getEntity(
 		@PathVariable("curie") final String curie
 	);
 
-	@GetMapping("/api/entities/{curies}")
+	@GetMapping("/entities/{curies}")
 	ResponseEntity<List<DKG>> getEntities(
 		@PathVariable("curies") final String curies
 	);
 
 	// This returns a MIRANet, not an AMR
-	@PostMapping("/api/reconstruct_ode_semantics")
+	@PostMapping("/reconstruct_ode_semantics")
 	ResponseEntity<JsonNode> reconstructODESemantics(
 		@RequestBody final Object amr
 	);
 
 	// This converts MIRANet (Petrinet) to AMR
-	@PostMapping("/api/to_petrinet")
+	@PostMapping("/to_petrinet")
 	ResponseEntity<Model> toPetrinet(
 		@RequestBody Object obj
 	);
