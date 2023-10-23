@@ -140,7 +140,7 @@ public class KnowledgeController {
 		@RequestParam("document_id") String documentId
 	) {
 
-		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId, ProvenanceType.MODEL, documentId, ProvenanceType.PUBLICATION);
+		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId, ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
 		try {
 			ResponseEntity<JsonNode> r = provenanceProxy.createProvenance(provenancePayload);
 			if (!r.getStatusCode().is2xxSuccessful())
@@ -167,7 +167,7 @@ public class KnowledgeController {
 		@RequestParam(name = "document_id", required = false) String documentId
 	) {
 		
-		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId, ProvenanceType.DATASET, documentId, ProvenanceType.PUBLICATION);
+		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId, ProvenanceType.DATASET, documentId, ProvenanceType.DOCUMENT);
 		try {
 			ResponseEntity<JsonNode> r = provenanceProxy.createProvenance(provenancePayload);
 			if (!r.getStatusCode().is2xxSuccessful())
