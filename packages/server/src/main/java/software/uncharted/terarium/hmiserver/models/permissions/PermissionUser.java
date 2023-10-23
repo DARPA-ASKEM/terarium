@@ -5,6 +5,8 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
+import java.util.List;
+
 @TSModel
 @Data
 @Accessors(chain = true)
