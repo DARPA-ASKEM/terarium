@@ -74,20 +74,20 @@ public class KnowledgeController {
 	/**
 	 * Transform source code to AMR
 	 *
-	 * @param codeId      (String): id of the code artifact
-	 * @param name        (String): the name to set on the newly created model
-	 * @param description (String): the description to set on the newly created model
+	 * @param codeId       (String): id of the code artifact
+	 * @param name         (String): the name to set on the newly created model
+	 * @param description  (String): the description to set on the newly created model
+	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over specified dynamics from the code object in TDS
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code-to-amr")
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
 		@RequestParam("code_id") String codeId,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description,
+		@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly
 	) {
-
-	
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description, dynamicsOnly).getBody());
 	}
 
 
@@ -113,8 +113,6 @@ public class KnowledgeController {
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(documentId, annotateSkema, annotateMIT, name, description).getBody());
 	}
-
-	;
 
 	/**
 	 * Post a PDF to the extraction service to get text
