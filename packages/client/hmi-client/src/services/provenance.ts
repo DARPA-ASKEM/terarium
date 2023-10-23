@@ -7,7 +7,6 @@ import { logger } from '@/utils/logger';
 import { ResourceType, ResultType } from '@/types/common';
 import { ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
-import { cloneDeep } from 'lodash';
 import { getBulkDatasets } from './dataset';
 // eslint-disable-next-line import/no-cycle
 import { getBulkXDDDocuments } from './data';
@@ -74,7 +73,7 @@ async function getRelatedArtifacts(
 		const modelRevisionIDs: string[] = [];
 		const externalPublicationIds: string[] = [];
 		const datasetIDs: string[] = [];
-		let documentAssetIds: string[] = [];
+		const documentAssetIds: string[] = [];
 
 		// For a model/dataset root type:
 		//  	Find other model revisions
@@ -102,9 +101,8 @@ async function getRelatedArtifacts(
 				datasetIDs.push(node.id.toString());
 			}
 
-			// will change to Document type when its available in provenance
 			if (
-				node.type === ProvenanceType.Artifact &&
+				node.type === ProvenanceType.Document &&
 				documentAssetIds.length < MAX_RELATED_ARTIFACT_COUNT
 			) {
 				documentAssetIds.push(node.id.toString());
@@ -130,8 +128,6 @@ async function getRelatedArtifacts(
 		const models = await getBulkModels(modelRevisionIDs);
 		response.push(...models);
 
-		// FIXME temporary until we have document types in provenace
-		documentAssetIds = cloneDeep(externalPublicationIds);
 		const documentAssets = await getBulkDocumentAssets(documentAssetIds);
 		response.push(...documentAssets);
 
