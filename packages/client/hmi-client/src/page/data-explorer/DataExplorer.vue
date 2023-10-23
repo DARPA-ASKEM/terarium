@@ -18,31 +18,17 @@
 			</template>
 		</tera-slider-panel>
 		<div class="results-content">
-			<div class="secondary-header">
-				<span class="p-buttonset">
-					<Button
-						class="p-button-secondary p-button-sm"
-						:active="resourceType === ResourceType.XDD"
-						label="Documents"
-						icon="pi pi-file"
-						@click="updateAssetType(ResourceType.XDD)"
-					/>
-					<Button
-						class="p-button-secondary p-button-sm"
-						:active="resourceType === ResourceType.MODEL"
-						label="Models"
-						icon="pi pi-share-alt"
-						@click="updateAssetType(ResourceType.MODEL)"
-					/>
-					<Button
-						class="p-button-secondary p-button-sm"
-						:active="resourceType === ResourceType.DATASET"
-						label="Datasets"
-						icon="pi pi-database"
-						@click="updateAssetType(ResourceType.DATASET)"
-					/>
-				</span>
-			</div>
+			<SelectButton
+				:model-value="resourceType"
+				@change="if ($event.value) resourceType = $event.value;"
+				:options="assetOptions"
+				option-value="value"
+			>
+				<template #option="slotProps">
+					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ slotProps.option.label }}</span>
+				</template>
+			</SelectButton>
 			<tera-search-results-list
 				:data-items="dataItems"
 				:facets="filteredFacets"
@@ -111,6 +97,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import SelectButton from 'primevue/selectbutton';
 import { fetchData, getDocumentById, getXDDSets } from '@/services/data';
 import {
 	ResourceType,
@@ -133,7 +120,6 @@ import useResourcesStore from '@/stores/resources';
 import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
-import Button from 'primevue/button';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import TeraSelectedResourcesOptionsPane from '@/page/data-explorer/components/tera-selected-resources-options-pane.vue';
 import TeraSelectedResourcesHeaderPane from '@/page/data-explorer/components/tera-selected-resources-header-pane.vue';
@@ -178,6 +164,12 @@ const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
 	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'Terarium'
 );
+
+const assetOptions = ref([
+	{ label: 'Documents', value: ResourceType.XDD, icon: 'pi pi-file' },
+	{ label: 'Models', value: ResourceType.MODEL, icon: 'pi pi-share-alt' },
+	{ label: 'Datasets', value: ResourceType.DATASET, icon: 'pi pi-database' }
+]);
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
@@ -484,38 +476,32 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	}
 };
 
-const updateAssetType = async (newResourceType: ResourceType) => {
-	if (resourceType.value !== newResourceType) {
-		const oldResourceType = resourceType.value;
-		resourceType.value = newResourceType;
+// Update asset type
+watch(resourceType, async (newResourceType, oldResourceType) => {
+	if (executeSearchByExample.value) return;
 
-		if (executeSearchByExample.value) return;
+	// if no data currently exist for the selected tab,
+	// or if data exists but outdated then we should refetch
+	const resList = dataItemsUnfiltered.value.find((res) => res.searchSubsystem === newResourceType);
 
-		// if no data currently exist for the selected tab,
-		// or if data exists but outdated then we should refetch
-		const resList = dataItemsUnfiltered.value.find(
-			(res) => res.searchSubsystem === resourceType.value
-		);
-
-		/** clear filters if they exist, we when to set the old resource type to
-		 * have dirty results since now they will need to be refetched when the facets filters are cleared
-		 * */
-		if (!isEmpty(clientFilters.value.clauses)) {
-			queryStore.reset();
-			dirtyResults.value[oldResourceType] = true;
-		}
-
-		if (!resList || dirtyResults.value[resourceType.value]) {
-			disableSearchByExample();
-			await executeSearch();
-			dirtyResults.value[resourceType.value] = false;
-		} else {
-			// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
-			// re-calculate the facets
-			calculateFacets(dataItemsUnfiltered.value, dataItems.value);
-		}
+	/** clear filters if they exist, we when to set the old resource type to
+	 * have dirty results since now they will need to be refetched when the facets filters are cleared
+	 * */
+	if (!isEmpty(clientFilters.value.clauses)) {
+		queryStore.reset();
+		dirtyResults.value[oldResourceType] = true;
 	}
-};
+
+	if (!resList || dirtyResults.value[newResourceType]) {
+		disableSearchByExample();
+		await executeSearch();
+		dirtyResults.value[newResourceType] = false;
+	} else {
+		// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
+		// re-calculate the facets
+		calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+	}
+});
 
 const clearItemSelected = () => {
 	selectedSearchItems.value = [];
@@ -628,13 +614,6 @@ onUnmounted(() => {
 	flex-grow: 1;
 	gap: 0.5rem;
 	margin: 0.5rem 0.5rem 0;
-}
-
-.secondary-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	height: var(--nav-bar-height);
 }
 
 .facets-panel {

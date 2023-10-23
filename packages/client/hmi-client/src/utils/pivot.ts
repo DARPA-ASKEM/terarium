@@ -7,7 +7,6 @@ export interface PivotMatrixCell {
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
-	controllers?: string[];
 	content: any;
 }
 
@@ -107,12 +106,7 @@ export const createMatrix1D = (data: any[]) => {
 	return { matrix: rows };
 };
 
-export const createParameterMatrix = (
-	amr: Model,
-	transitionMatrixData: any[],
-	childParameterIds: string[]
-) => {
-	let controllers: string[] = [];
+export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) => {
 	let inputs: string[] = [];
 	let outputs: string[] = [];
 
@@ -120,20 +114,36 @@ export const createParameterMatrix = (
 		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
 	);
 
+	const controllerIndexMap = new Map(); // Maps controllers to their input/output combo
+
 	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output } = transitions[i];
 		// Extract and remove controllers out of inputs array
-		const newInputs = input.filter((ip: string) => !output.includes(ip));
-		const newOutputs = output.filter((ip: string) => !input.includes(ip));
+		const newInputs: string[] = [];
+		const newOutputs: string[] = [];
+		const newControllers: string[] = [];
+		for (let j = 0; j < input.length; j++) {
+			if (input[j] !== output[j]) {
+				newInputs.push(input[j]);
+				newOutputs.push(output[j]);
+			} else {
+				newControllers.push(input[j]);
+			}
+		}
+
+		if (!_.isEmpty(newControllers)) {
+			// Map controllers unique to these input/output combos
+			for (let j = 0; j < newInputs.length; j++) {
+				controllerIndexMap.set(newInputs[j].concat('|', newOutputs[j]), newControllers);
+			}
+		}
 		inputs.push(...newInputs);
 		outputs.push(...newOutputs);
-		controllers.push(...input.filter((ip: string) => output.includes(ip)));
 		// Update input/output for future transitions loop
 		transitions[i].input = newInputs;
 		transitions[i].output = newOutputs;
 	}
-	controllers = !_.isEmpty(controllers) ? [...new Set(controllers)].sort() : [''];
 	inputs = !_.isEmpty(inputs) ? [...new Set(inputs)].sort() : [''];
 	outputs = !_.isEmpty(outputs) ? [...new Set(outputs)].sort() : [''];
 
@@ -149,7 +159,9 @@ export const createParameterMatrix = (
 				colCriteria: outputs[colIdx],
 				content: {
 					value: null,
-					id: ''
+					id: '',
+					// Insert controller(s) if they belong in this cell
+					controllers: controllerIndexMap.get(inputs[rowIdx].concat('|', outputs[colIdx])) ?? null
 				}
 			});
 		}
@@ -162,6 +174,15 @@ export const createParameterMatrix = (
 	for (let rowIdx = 0; rowIdx < inputs.length; rowIdx++) rowIndexMap.set(inputs[rowIdx], rowIdx);
 	for (let colIdx = 0; colIdx < outputs.length; colIdx++) colIndexMap.set(outputs[colIdx], colIdx);
 
+	return { transitions, rowIndexMap, colIndexMap, rows };
+};
+
+export function createTransitionMatrix(amr: Model, transitionMatrixData: any[]) {
+	const { transitions, rowIndexMap, colIndexMap, rows } = prepareMatrixMapping(
+		amr,
+		transitionMatrixData
+	);
+
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output, id } = transitions[i];
@@ -172,27 +193,54 @@ export const createParameterMatrix = (
 			for (let j = 0; j < input.length; j++) {
 				const rowIdx = rowIndexMap.get(input[j]);
 				const colIdx = colIndexMap.get(output[j]);
-				for (let k = 0; k < childParameterIds.length; k++) {
-					// Fill cell content with parameter content
-					if (rate.expression.includes(childParameterIds[k])) {
-						const parameter = amr.semantics?.ode.parameters?.find(
-							(p) => p.id === childParameterIds[k]
-						);
-						if (parameter) {
-							rows[rowIdx][colIdx].content.id = parameter.id;
-							rows[rowIdx][colIdx].content.value = parameter.value;
+				rows[rowIdx][colIdx].content.value = rate.expression;
+				rows[rowIdx][colIdx].content.id = rate.target;
+			}
+		}
+	}
+	return { matrix: rows };
+}
+
+export function createParameterMatrix(
+	amr: Model,
+	transitionMatrixData: any[],
+	childParameterIds: string[]
+) {
+	const { transitions, rowIndexMap, colIndexMap, rows } = prepareMatrixMapping(
+		amr,
+		transitionMatrixData
+	);
+
+	// For every transition id grab its input/output and row/column index to fill its place in the matrix
+	for (let i = 0; i < transitions.length; i++) {
+		const { input, output, id } = transitions[i];
+		const rate = amr.semantics?.ode.rates.find((r) => r.target === id);
+
+		if (rate) {
+			// Go through inputs and outputs of the current transition id
+			for (let j = 0; j < input.length; j++) {
+				const rowIdx = rowIndexMap.get(input[j]);
+				const colIdx = colIndexMap.get(output[j]);
+				if (childParameterIds) {
+					for (let k = 0; k < childParameterIds.length; k++) {
+						// Fill cell content with parameter content
+						if (rate.expression.includes(childParameterIds[k])) {
+							const parameter = amr.semantics?.ode.parameters?.find(
+								(p) => p.id === childParameterIds[k]
+							);
+							if (parameter) {
+								rows[rowIdx][colIdx].content.value = parameter.value;
+								rows[rowIdx][colIdx].content.id = parameter.id;
+							}
+							break;
 						}
-						break;
 					}
 				}
 			}
 		}
 	}
-	return {
-		matrix: rows,
-		controllers
-	};
-};
+	return { matrix: rows };
+}
 
 // Creates a M x N matrix where
 // M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])

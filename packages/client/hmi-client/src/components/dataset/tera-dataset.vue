@@ -4,7 +4,7 @@
 		:name="dataset?.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isRenamingDataset"
-		:stretch-content="datasetView === DatasetView.DATA"
+		:stretch-content="view === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 	>
 		<template #name-input>
@@ -16,22 +16,17 @@
 			/>
 		</template>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Description"
-					icon="pi pi-list"
-					@click="datasetView = DatasetView.DESCRIPTION"
-					:active="datasetView === DatasetView.DESCRIPTION"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Data"
-					icon="pi pi-file"
-					@click="datasetView = DatasetView.DATA"
-					:active="datasetView === DatasetView.DATA"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="slotProps">
+					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ slotProps.option.value }}</span>
+				</template>
+			</SelectButton>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -41,13 +36,7 @@
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
 		</template>
-		<template v-if="datasetView === DatasetView.DESCRIPTION">
-			<div class="container">
-				<Message class="inline-message" icon="none">
-					This page describes the dataset. Use the content switcher above to see the data table and
-					transformation tools.
-				</Message>
-			</div>
+		<template v-if="view === DatasetView.DESCRIPTION">
 			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
@@ -89,7 +78,6 @@
 					<tera-related-documents
 						:asset-type="ResourceType.DATASET"
 						:documents="documents"
-						:related-documents="relatedDocuments"
 						:assetId="assetId"
 						@enriched="fetchDataset"
 					/>
@@ -270,7 +258,7 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.DATA">
+		<template v-else-if="view === DatasetView.DATA">
 			<Accordion :multiple="true" :activeIndex="[0, 1]">
 				<AccordionTab>
 					<template #header>
@@ -287,7 +275,6 @@ import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, cloneDeep, isEmpty } from 'lodash';
@@ -299,12 +286,13 @@ import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vu
 import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
 import Menu from 'primevue/menu';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 import { enrichDataset } from './utils';
 
 enum DatasetView {
-	DESCRIPTION,
-	DATA,
-	LLM
+	DESCRIPTION = 'Description',
+	DATA = 'Data',
+	LLM = 'LLM'
 }
 
 const props = defineProps({
@@ -340,7 +328,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = computed(() => []);
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const newCsvContent: any = ref(null);
@@ -356,7 +343,11 @@ function formatName(name: string) {
 	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
 }
 
-const datasetView = ref(DatasetView.DESCRIPTION);
+const view = ref(DatasetView.DESCRIPTION);
+const viewOptions = ref([
+	{ value: DatasetView.DESCRIPTION, icon: 'pi pi-list' },
+	{ value: DatasetView.DATA, icon: 'pi pi-file' }
+]);
 
 const csvContent = computed(() => rawContent.value?.csv);
 
@@ -386,7 +377,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		useProjects().get();
+		useProjects().refresh();
 		isRenamingDataset.value = false;
 	}
 }
@@ -503,21 +494,6 @@ watch(
 	margin-left: 1rem;
 	margin-right: 1rem;
 	max-width: 70rem;
-}
-
-.inline-message:deep(.p-message-wrapper) {
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
-	border-width: 0px 0px 0px 6px;
-}
-
-.p-buttonset {
-	white-space: nowrap;
-	margin-left: 0.5rem;
 }
 
 .metadata {

@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { DocumentAsset } from '@/types/Types';
+import { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 /**
@@ -171,11 +171,46 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 	return response.data;
 }
 
+async function getBulkDocumentAssets(docIDs: string[]) {
+	const result: DocumentAsset[] = [];
+	const promiseList = [] as Promise<DocumentAsset | null>[];
+	docIDs.forEach((docId) => {
+		promiseList.push(getDocumentAsset(docId));
+	});
+	const responsesRaw = await Promise.all(promiseList);
+	responsesRaw.forEach((r) => {
+		if (r) {
+			result.push(r);
+		}
+	});
+	return result;
+}
+
+async function createDocumentFromXDD(
+	document: Document,
+	projectId: string
+): Promise<AddDocumentAssetFromXDDResponse | null> {
+	if (!document || !projectId) return null;
+	const response = await API.post(`/document-asset/createDocumentFromXDD`, {
+		document,
+		projectId
+	});
+
+	if (!response || response.status >= 400) {
+		logger.error('Error upload file from doi');
+		return null;
+	}
+
+	return response.data;
+}
 export {
 	getAll,
 	getDocumentAsset,
 	uploadDocumentAssetToProject,
 	downloadDocumentAsset,
 	createNewDocumentFromGithubFile,
-	getDocumentFileAsText
+	getDocumentFileAsText,
+	getBulkDocumentAssets,
+	createDocumentFromXDD,
+	createNewDocumentAsset
 };

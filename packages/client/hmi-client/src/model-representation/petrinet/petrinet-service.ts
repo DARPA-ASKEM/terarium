@@ -21,7 +21,7 @@ export interface EdgeData {
 	numEdges: number;
 }
 
-export enum StratifiedModelType {
+export enum StratifiedModel {
 	Mira = 'mira',
 	Catlab = 'catlab'
 }
@@ -589,13 +589,19 @@ export const stratify = async (baseModel: Model, strataModel: Model) => {
 
 // Check if AMR is a stratified AMR
 export const getStratificationType = (amr: Model) => {
-	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModelType.Catlab;
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
 
 	const hasModifiers = some(
 		(amr.model as PetriNetModel).states,
-		(s) => s.grounding && s.grounding.modifiers && !isEmpty(Object.keys(s.grounding.modifiers))
+		(s) =>
+			s.grounding &&
+			s.grounding.modifiers &&
+			!isEmpty(Object.keys(s.grounding.modifiers)) &&
+			// Temp hack to reject SBML type models with actual groundings, may not work
+			// all the time, MIRA will move strata info to metadata section - Oct 2023
+			s.id.includes('_')
 	);
-	if (hasModifiers) return StratifiedModelType.Mira;
+	if (hasModifiers) return StratifiedModel.Mira;
 
 	return null;
 };

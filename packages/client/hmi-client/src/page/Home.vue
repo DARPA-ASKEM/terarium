@@ -44,22 +44,17 @@
 								placeholder="Add or remove columns"
 								class="p-inputtext-sm"
 							/>
-							<span class="p-buttonset">
-								<Button
-									class="p-button-secondary p-button-sm"
-									label="Cards"
-									icon="pi pi-image"
-									@click="view = ProjectsView.Cards"
-									:active="view === ProjectsView.Cards"
-								/>
-								<Button
-									class="p-button-secondary p-button-sm"
-									label="Table"
-									icon="pi pi-list"
-									@click="view = ProjectsView.Table"
-									:active="view === ProjectsView.Table"
-								/>
-							</span>
+							<SelectButton
+								:model-value="view"
+								@change="if ($event.value) view = $event.value;"
+								:options="viewOptions"
+								option-value="value"
+							>
+								<template #option="slotProps">
+									<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+									<span class="p-button-label">{{ slotProps.option.value }}</span>
+								</template>
+							</SelectButton>
 						</section>
 						<section class="list-of-projects">
 							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
@@ -75,7 +70,7 @@
 										/>. Your projects will be displayed on this page.
 									</div>
 								</template>
-								<template v-else-if="tab.title === TabTitles.SharedProjects">
+								<template v-else-if="tab.title === TabTitles.PublicProjects">
 									<h3>You don't have any shared projects</h3>
 									<p>Shared projects will be displayed on this page</p>
 								</template>
@@ -93,9 +88,8 @@
 										<tera-project-card
 											v-if="project.id"
 											:project="project"
-											:project-menu-items="projectMenuItems"
 											@click="openProject(project.id)"
-											@update-chosen-project-menu="updateChosenProjectMenu(project)"
+											@forked-project="(forkedProject) => openProject(forkedProject.id)"
 										/>
 									</li>
 									<li>
@@ -111,10 +105,8 @@
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
 								:projects="tab.projects"
-								:project-menu-items="projectMenuItems"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
-								@update-chosen-project-menu="updateChosenProjectMenu"
 							/>
 						</section>
 					</TabPanel>
@@ -208,23 +200,28 @@
 				</template>
 				<template #footer>
 					<Button @click="createNewProject">Create</Button>
-					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+					<Button severity="secondary" outlined @click="isNewProjectModalVisible = false"
 						>Cancel</Button
 					>
 				</template>
 			</tera-modal>
 		</Teleport>
-		<Dialog :header="`Remove ${selectedProjectMenu?.name}`" v-model:visible="isRemoveDialog">
+		<Dialog :header="`Remove ${selectedMenuProject?.name}`" v-model:visible="isRemoveDialogVisible">
 			<p>
-				You are about to remove project <em>{{ selectedProjectMenu?.name }}</em
+				You are about to remove project <em>{{ selectedMenuProject?.name }}</em
 				>.
 			</p>
 			<p>Are you sure?</p>
 			<template #footer>
-				<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
+				<Button label="Cancel" class="p-button-secondary" @click="isRemoveDialogVisible = false" />
 				<Button label="Remove project" @click="removeProject" />
 			</template>
 		</Dialog>
+		<tera-share-project
+			v-if="selectedMenuProject"
+			v-model="isShareDialogVisible"
+			:project="selectedMenuProject"
+		/>
 	</main>
 </template>
 
@@ -248,6 +245,7 @@ import { isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraCardCarousel from '@/components/home/tera-card-carousel.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
@@ -255,15 +253,19 @@ import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
 import Skeleton from 'primevue/skeleton';
+import { useProjectMenu } from '@/composables/project-menu';
+import SelectButton from 'primevue/selectbutton';
+
+const { isShareDialogVisible, isRemoveDialogVisible, selectedMenuProject } = useProjectMenu();
 
 enum ProjectsView {
-	Cards,
-	Table
+	Cards = 'Cards',
+	Table = 'Table'
 }
 
 enum TabTitles {
 	MyProjects = 'My projects',
-	SharedProjects = 'Shared projects'
+	PublicProjects = 'Public projects'
 }
 
 const selectedSort = ref('Last updated (descending)');
@@ -276,20 +278,37 @@ const sortOptions = [
 ];
 
 const view = ref(ProjectsView.Cards);
+const viewOptions = ref([
+	{ value: ProjectsView.Cards, icon: 'pi pi-image' },
+	{ value: ProjectsView.Table, icon: 'pi pi-list' }
+]);
 
 const myFilteredSortedProjects = computed(() => {
-	const filtered = useProjects().allProjects.value;
-	if (!filtered) return [];
+	const projects = useProjects().allProjects.value;
+	if (!projects) return [];
+	const myProjects = projects.filter(({ publicProject }) => publicProject === false);
+	return filterAndSortProjects(myProjects);
+});
+
+const publicFilteredSortedProjects = computed(() => {
+	const projects = useProjects().allProjects.value;
+	if (!projects) return [];
+	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
+	return filterAndSortProjects(publicProjects);
+});
+
+function filterAndSortProjects(projects: IProject[]) {
+	if (!projects) return [];
 
 	if (selectedSort.value === 'Alphabetical') {
-		filtered.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+		projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 	}
 	// FIXME: Last updated and creation date are the same at the moment
 	else if (
 		selectedSort.value === 'Last updated (descending)' ||
 		selectedSort.value === 'Creation date (descending)'
 	) {
-		filtered.sort((a, b) =>
+		projects.sort((a, b) =>
 			a.timestamp && b.timestamp
 				? new Date(b.timestamp).valueOf() - new Date(a.timestamp).valueOf()
 				: -1
@@ -298,18 +317,18 @@ const myFilteredSortedProjects = computed(() => {
 		selectedSort.value === 'Last updated (ascending)' ||
 		selectedSort.value === 'Creation date (ascending)'
 	) {
-		filtered.sort((a, b) =>
+		projects.sort((a, b) =>
 			a.timestamp && b.timestamp
 				? new Date(a.timestamp).valueOf() - new Date(b.timestamp).valueOf()
 				: -1
 		);
 	}
-	return filtered;
-});
+	return projects;
+}
 
 const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
 	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
-	{ title: TabTitles.SharedProjects, projects: [] } // Keep shared projects empty for now
+	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value }
 ]);
 
 // Table view
@@ -327,36 +346,11 @@ const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
 
-/*
- * User Menu
- */
-const selectedProjectMenu = ref<IProject | null>(null);
-
-const isRemoveDialog = ref(false);
-const closeRemoveDialog = () => {
-	isRemoveDialog.value = false;
-};
-const openRemoveDialog = () => {
-	isRemoveDialog.value = true;
-};
-
-const projectMenuItems = ref([
-	{
-		label: 'Remove',
-		command: openRemoveDialog
-	}
-]);
-
-function updateChosenProjectMenu(project: IProject) {
-	selectedProjectMenu.value = project;
-}
-
 const removeProject = async () => {
-	if (!selectedProjectMenu.value?.id) return;
-	const { name, id } = selectedProjectMenu.value;
-
+	if (!selectedMenuProject.value) return;
+	const { name, id } = selectedMenuProject.value;
 	const isDeleted = await useProjects().remove(id);
-	closeRemoveDialog();
+	isRemoveDialogVisible.value = false;
 	if (isDeleted) {
 		useProjects().getAll();
 		logger.info(`The project ${name} was removed`, { showToast: true });

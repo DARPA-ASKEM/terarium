@@ -246,7 +246,7 @@ const renderGraph = () => {
 
 const updateSelectedVariable = () => {
 	emit('configuration-change', {
-		selectedVariable,
+		selectedVariable: selectedVariable.value,
 		selectedRun: props.chartConfig.selectedRun
 	});
 };

@@ -108,7 +108,7 @@ export const profileDataset = async (datasetId: string, documentId: string | nul
 	return response.data.id;
 };
 
-const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
+export const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
 	try {
 		const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
 		if (response?.status === 200 && response?.data?.id) return response.data.id;

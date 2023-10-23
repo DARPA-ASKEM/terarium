@@ -6,49 +6,31 @@
 		:name="highlightSearchTerms(doc.name)"
 		:overline="highlightSearchTerms(doc.source)"
 		@close-preview="emit('close-preview')"
-		:hide-intro="documentView === DocumentView.PDF"
-		:stretch-content="documentView === DocumentView.PDF"
-		:show-sticky-header="documentView === DocumentView.PDF"
+		:hide-intro="view === DocumentView.PDF"
+		:stretch-content="view === DocumentView.PDF"
+		:show-sticky-header="view === DocumentView.PDF"
 	>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Extractions"
-					icon="pi pi-list"
-					@click="documentView = DocumentView.EXRACTIONS"
-					:active="documentView === DocumentView.EXRACTIONS"
-				/>
-				<Button
-					v-if="documentType === DocumentView.PDF"
-					class="p-button-secondary p-button-sm"
-					label="PDF"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.PDF"
-					:active="documentView === DocumentView.PDF"
-				/>
-				<Button
-					v-if="documentType === DocumentView.TXT"
-					class="p-button-secondary p-button-sm"
-					label="txt"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.TXT"
-					:active="documentView === DocumentView.TXT"
-				/>
-			</span>
-		</template>
-		<template #info-bar>
-			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page contains extractions from the document. Use the content switcher above to see
-					the original PDF if it is available.</Message
-				>
-			</div>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="{ option }">
+					<i
+						:class="`${
+							!pdfLink && option.value !== DocumentView.EXTRACTIONS
+								? 'pi pi-spin pi-spinner'
+								: option.icon
+						} p-button-icon-left`"
+					/>
+					<span class="p-button-label">{{ option.value }}</span>
+				</template>
+			</SelectButton>
 		</template>
 		<Accordion
-			v-if="documentView === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -66,7 +48,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image id="img" class="extracted-image" :src="ex.metadata?.img_pth" :alt="''" preview />
+						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
@@ -83,7 +65,7 @@
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"
@@ -101,22 +83,23 @@
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
 						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.img_pth" :alt="''" preview />
+							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
 							<tera-show-more-text
 								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 								:lines="previewLineLimit"
 							/>
 						</div>
+						<tera-math-editor v-if="ex.metadata.equation" :latex-equation="ex.metadata.equation" />
 					</li>
 				</ul>
 			</AccordionTab>
 		</Accordion>
 		<tera-pdf-embed
-			v-else-if="documentView === DocumentView.PDF && pdfLink"
+			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.name || ''"
 		/>
-		<code-editor v-else-if="documentView === DocumentView.TXT" :initial-code="code" />
+		<code-editor v-else-if="view === DocumentView.TXT" :initial-code="code" />
 	</tera-asset>
 </template>
 
@@ -125,8 +108,6 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Button from 'primevue/button';
-import Message from 'primevue/message';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { DocumentAsset } from '@/types/Types';
@@ -140,11 +121,13 @@ import {
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
+import SelectButton from 'primevue/selectbutton';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 
 enum DocumentView {
-	EXRACTIONS = 'extractions',
-	PDF = 'pdf',
-	TXT = 'txt'
+	EXTRACTIONS = 'Extractions',
+	PDF = 'PDF',
+	TXT = 'Text'
 }
 
 const props = defineProps<{
@@ -156,7 +139,8 @@ const props = defineProps<{
 
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
-const documentView = ref(DocumentView.EXRACTIONS);
+const view = ref(DocumentView.EXTRACTIONS);
+const viewOptions = ref([{ value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' }]);
 const code = ref<string>();
 
 const docLink = computed(() =>
@@ -172,13 +156,6 @@ const tables = computed(
 const equations = computed(
 	() => doc.value?.assets?.filter((asset) => asset.assetType === 'equation') || []
 );
-
-const documentType = computed(() => {
-	if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
-		return DocumentView.PDF;
-	}
-	return DocumentView.TXT;
-});
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 
@@ -205,6 +182,14 @@ watch(
 			if (document) {
 				doc.value = document;
 				openTextDocument();
+				if (viewOptions.value.length > 1) {
+					viewOptions.value.pop();
+				}
+				viewOptions.value.push(
+					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
+						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
+						: { value: DocumentView.TXT, icon: 'pi pi-file' }
+				);
 			}
 		} else {
 			doc.value = null;
@@ -240,16 +225,6 @@ onUpdated(() => {
 	margin-left: 1rem;
 	margin-right: 1rem;
 	max-width: 70rem;
-}
-
-.inline-message:deep(.p-message-wrapper) {
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
-	border-width: 0px 0px 0px 6px;
 }
 
 .extracted-item {

@@ -16,7 +16,7 @@ public class ProvenanceController {
 	@Autowired
 	ProvenanceProxy proxy;
 
-	@GetMapping("/id")
+	@GetMapping("/{id}")
 	public ResponseEntity<Provenance> getProvenance(@PathVariable("id") String id) {
 		return ResponseEntity.ok(proxy.getProvenance(id).getBody());
 	}

@@ -16,22 +16,17 @@
 			/>
 		</template>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Description"
-					icon="pi pi-list"
-					@click="view = ModelView.DESCRIPTION"
-					:active="view === ModelView.DESCRIPTION"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Model"
-					icon="pi pi-share-alt"
-					@click="view = ModelView.MODEL"
-					:active="view === ModelView.MODEL"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="slotProps">
+					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ slotProps.option.value }}</span>
+				</template>
+			</SelectButton>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -48,6 +43,7 @@
 			:highlight="highlight"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
+			:key="model?.id"
 		/>
 		<tera-model-editor
 			v-else-if="view === ModelView.MODEL"
@@ -80,10 +76,11 @@ import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/s
 import { FeatureConfig } from '@/types/common';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 
 enum ModelView {
-	DESCRIPTION,
-	MODEL
+	DESCRIPTION = 'Description',
+	MODEL = 'Model'
 }
 
 const props = defineProps({
@@ -109,9 +106,14 @@ const emit = defineEmits([
 
 const model = ref<Model | null>(null);
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const view = ref(ModelView.DESCRIPTION);
 const newName = ref('New Model');
 const isRenaming = ref(false);
+
+const view = ref(ModelView.DESCRIPTION);
+const viewOptions = ref([
+	{ value: ModelView.DESCRIPTION, icon: 'pi pi-list' },
+	{ value: ModelView.MODEL, icon: 'pi pi-share-alt' }
+]);
 
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 
@@ -138,7 +140,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().get();
+		useProjects().refresh();
 	}, 800);
 }
 
