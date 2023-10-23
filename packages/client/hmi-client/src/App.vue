@@ -4,7 +4,7 @@
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<tera-navbar class="header" :active="!isErrorState" :show-suggestions="showSuggestions" />
+	<tera-navbar class="header" :active="displayNavBar" :show-suggestions="showSuggestions" />
 	<main>
 		<router-view v-slot="{ Component }">
 			<component class="page" ref="pageRef" :is="Component" />
@@ -97,7 +97,7 @@ const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
 
-const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
+const displayNavBar = computed(() => currentRoute.value.name !== 'unauthorized');
 
 // This pageRef is used to grab the assetType being searched for in data-explorer.vue, it is accessed using defineExpose
 const pageRef = ref();
