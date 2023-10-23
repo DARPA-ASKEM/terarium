@@ -15,24 +15,24 @@ import java.util.List;
 
 @FeignClient(name = "mira-api", url = "${mira-api.url}")
 public interface MIRAProxy {
-	@GetMapping("/entity/{curie}")
+	@GetMapping("/api/entity/{curie}")
 	ResponseEntity<DKG> getEntity(
 		@PathVariable("curie") final String curie
 	);
 
-	@GetMapping("/entities/{curies}")
+	@GetMapping("/api/entities/{curies}")
 	ResponseEntity<List<DKG>> getEntities(
 		@PathVariable("curies") final String curies
 	);
 
 	// This returns a MIRANet, not an AMR
-	@PostMapping("/reconstruct_ode_semantics")
+	@PostMapping("/api/reconstruct_ode_semantics")
 	ResponseEntity<JsonNode> reconstructODESemantics(
 		@RequestBody final Object amr
 	);
 
 	// This converts MIRANet (Petrinet) to AMR
-	@PostMapping("/to_petrinet")
+	@PostMapping("/api/to_petrinet")
 	ResponseEntity<Model> toPetrinet(
 		@RequestBody Object obj
 	);
