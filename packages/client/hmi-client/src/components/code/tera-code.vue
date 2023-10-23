@@ -67,6 +67,10 @@
 						<InputText id="model-name" type="text" v-model="newModelName" />
 						<label for="model-description">Enter a description (optional)</label>
 						<Textarea v-model="newModelDescription" />
+						<div class="form-checkbox">
+							<Checkbox v-model="willGenerateFromDynamics" binary />
+							<label>Generate from dynamics</label>
+						</div>
 					</form>
 				</template>
 				<template #footer>
@@ -131,6 +135,7 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
 import {
 	getCodeFileAsText,
 	getCodeAsset,
@@ -172,6 +177,7 @@ const selectedText = ref('');
 const selectionRange = ref<Ace.Range | null>(null);
 const progress = ref(0);
 const isCodeToModelLoading = ref(false);
+const willGenerateFromDynamics = ref(false);
 const isModelDiagramModalVisible = ref(false);
 const isModelNamingModalVisible = ref(false);
 const isCodeNamingModalVisible = ref(false);
@@ -277,7 +283,8 @@ async function extractModel() {
 		const extractedModelId = await codeToAMR(
 			newCodeAsset.id,
 			newModelName.value,
-			newModelDescription.value
+			newModelDescription.value,
+			willGenerateFromDynamics.value
 		);
 		isCodeToModelLoading.value = false;
 		if (extractedModelId) {
@@ -385,6 +392,11 @@ h4 {
 	font-weight: var(--font-weight-semibold);
 	width: 100%;
 	border: 0;
+}
+
+.form-checkbox {
+	display: flex;
+	gap: 0.5rem;
 }
 
 :deep(.p-inputtext:enabled:hover) {
