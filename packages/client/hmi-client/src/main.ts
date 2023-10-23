@@ -15,80 +15,77 @@ import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import useAuthStore from './stores/auth';
-import router, { RoutePath } from './router';
+import router from './router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from './App.vue';
 import { useProjects } from './composables/project';
 
 import './assets/css/style.scss';
 
+// Create the Vue application
 const app = createApp(App);
+// Set up the pinia store to be able to use for useAuthStore()
+app.use(createPinia());
+
+// Set up the Keycloak authentication
+const authStore = useAuthStore();
+const keycloak = new Keycloak('/api/keycloak/config');
+authStore.setKeycloak(keycloak);
+
+// If the authentication failed, reload the page
+function failedAuth(e: unknown) {
+	console.error(e);
+	logger.error('Authentication Failed, reloading a the page');
+	window.location.reload();
+}
+
+// Authentication
+try {
+	await keycloak
+		.init({
+			onLoad: 'login-required' as KeycloakOnLoad
+		})
+		.catch((e) => {
+			failedAuth(e);
+		});
+} catch (e) {
+	failedAuth(e);
+}
+
+// Initialize user
+await authStore.init();
+logger.info('Authenticated');
+
+// Token Refresh
+setInterval(async () => {
+	await keycloak.updateToken(70);
+}, 6000);
+
 app
 	.use(ToastService)
-	.use(createPinia())
 	.use(router)
 	.use(ConfirmationService)
 	.use(PrimeVue, { ripple: true })
+	.use(VueKatex)
 	.directive('tooltip', Tooltip);
 
 // Configure Google Analytics
 const GTAG = await axios.get('/api/configuration/ga');
 if (GTAG.data) {
-	app.use(
-		VueGtag,
-		{
-			config: {
-				id: GTAG.data
-			}
-		},
-		router
-	);
+	app.use(VueGtag, { config: { id: GTAG.data } });
 }
 
 app.component('math-field', MathfieldElement);
 app.component(VueFeather.name, VueFeather);
-app.use(VueKatex);
-
-const authStore = useAuthStore();
-const keycloak = new Keycloak('/api/keycloak/config');
-authStore.setKeycloak(keycloak);
-
-keycloak
-	.init({
-		onLoad: 'login-required' as KeycloakOnLoad
-	})
-	.then(async (auth) => {
-		if (!auth) {
-			window.location.reload();
-		} else {
-			await authStore.init();
-			logger.info('Authenticated');
-
-			app.use(router);
-			app.mount('body');
-			logger.info('Application Mounted', { showToast: false, silent: true });
-
-			if (!router.currentRoute.value.name) {
-				router.push(RoutePath.Home);
-			}
-
-			// Token Refresh
-			setInterval(async () => {
-				await keycloak.updateToken(70);
-			}, 6000);
-		}
-	})
-	.catch((e) => {
-		console.error('Authentication Failed', e);
-	});
+app.mount('body');
 
 let previousRoute: RouteLocationNormalized | null = null;
 let routeStartedMillis = Date.now();
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
 	if (previousRoute) {
 		const nowMillis = Date.now();
 		const timeSpent = nowMillis - routeStartedMillis;
-		EventService.create(
+		await EventService.create(
 			EventType.RouteTiming,
 			useProjects().activeProject.value?.id,
 			JSON.stringify({
