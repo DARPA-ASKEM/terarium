@@ -35,7 +35,11 @@
 						@click="isModelNamingModalVisible = true"
 						:loading="isCodeToModelLoading"
 					/>
-					<Button label="Make highlight dynamic" @click="createDynamic" />
+					<Button
+						label="Make highlight dynamics"
+						:disabled="selectionRange === null"
+						@click="saveCode"
+					/>
 				</section>
 			</section>
 		</template>
@@ -120,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
@@ -147,6 +151,8 @@ import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
+import { Ace } from 'ace-builds';
+import { isEmpty } from 'lodash';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -163,6 +169,7 @@ const codeText = ref(INITIAL_TEXT);
 const codeAsset = ref<Code | null>(null);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
+const selectionRange = ref<Ace.Range | null>(null);
 const progress = ref(0);
 const isCodeToModelLoading = ref(false);
 const isModelDiagramModalVisible = ref(false);
@@ -177,6 +184,12 @@ const programmingLanguages = [
 	ProgrammingLanguage.Python,
 	ProgrammingLanguage.R
 ];
+
+const selectedRangeToString = computed(() =>
+	selectionRange.value
+		? `L${selectionRange.value.start.row + 1}-L${selectionRange.value.end.row + 1}`
+		: ''
+);
 
 /**
  * Editor initialization function
@@ -193,21 +206,33 @@ async function initialize(editorInstance) {
  */
 function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
+	selectionRange.value =
+		!isEmpty(selectedText.value) && editor.value ? editor.value.getSelectionRange() : null;
 }
 
 async function saveCode() {
-	// programmingLanguage.value = getProgrammingLanguage(codeName.value);
 	const existingCode = useProjects().activeProject.value?.assets?.code.find(
 		(c) => c.id === props.assetId
 	);
 	if (existingCode?.id) {
 		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
+		const code = { ...existingCode, name: codeName.value };
 		const file = new File([codeText.value], codeName.value);
-		const updatedCode = await updateCodeAsset(
-			{ ...existingCode, name: codeName.value, files: {} },
-			file,
-			progress
-		);
+
+		if (selectedRangeToString.value) {
+			code.files = {
+				[codeName.value]: {
+					language: getProgrammingLanguage(codeName.value),
+					dynamics: {
+						name: 'Main Dynamics',
+						description: 'Test description',
+						block: [selectedRangeToString.value]
+					}
+				}
+			};
+		}
+
+		const updatedCode = await updateCodeAsset(code, file, progress);
 		if (!updatedCode) {
 			toast.error('', 'Unable to save file');
 		} else {
@@ -276,10 +301,6 @@ async function onFileOpen(event) {
 		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
 		codeName.value = file.name;
 	};
-}
-
-function createDynamic() {
-	console.log(editor.value);
 }
 
 watch(
