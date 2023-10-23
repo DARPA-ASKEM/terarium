@@ -9,12 +9,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionProject;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -28,33 +34,52 @@ public class GroupsController {
 	private final CurrentUserService currentUserService;
 
 	@GetMapping
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<List<PermissionGroup>> getGroups(
 		@RequestParam(name = "page_size", defaultValue = "1000") Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
-		return ResponseEntity.ok(reBACService.getGroups());
+		List<PermissionGroup> groups = (List<PermissionGroup>) reBACService.getGroups();
+//		.stream()
+//			.filter(group -> {
+//				RebacGroup rebacGroup = new RebacGroup(group.getId(), reBACService);
+//				try {
+//					if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
+//						return true;
+//					}
+//				} catch (Exception e) {
+//					log.error("Error checking group", e);
+//				}
+//				return false;
+//			});
+		return ResponseEntity.ok(groups);
 	}
 
 	@GetMapping("/{groupId}")
+	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
 	public ResponseEntity<PermissionGroup> getGroup(
 		@PathVariable("groupId") final String groupId
 	) {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
-//				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
-//				PermissionRelationships permissions = new PermissionRelationships();
-//				for (RebacPermissionRelationship permissionRelationship : relationships) {
-//					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-//						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-//					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-//						permissions.addGroup(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-//					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
-//						permissions.addProject(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-//					}
-//				}
+				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
+				PermissionRelationships permissions = new PermissionRelationships();
+				for (RebacPermissionRelationship permissionRelationship : relationships) {
+					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+						PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+						permissions.addUser(user, permissionRelationship.getRelationship());
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+						PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
+						permissions.addGroup(group, permissionRelationship.getRelationship());
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
+						PermissionProject project = new PermissionProject(permissionRelationship.getSubjectId());
+						permissions.addProject(project, permissionRelationship.getRelationship());
+					}
+				}
 
 				PermissionGroup permissionGroup = reBACService.getGroup(groupId);
+				permissionGroup.setPermissionRelationships(permissions);
 				return ResponseEntity.ok(permissionGroup);
 			}
 			return ResponseEntity.notFound().build();
@@ -65,7 +90,7 @@ public class GroupsController {
 	}
 
 	@PostMapping
-	@PreAuthorize("hasRole('GROUP')")
+	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
 	public ResponseEntity<PermissionGroup> createGroup(
 		@RequestParam(name = "name") final String name
 	) {
@@ -84,6 +109,7 @@ public class GroupsController {
 	}
 
 	@PostMapping("/{groupId}/permissions/user/{userId}/{relationship}")
+	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
 	public ResponseEntity<JsonNode> addGroupUserPermissions(
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("userId") final String userId,
@@ -108,6 +134,7 @@ public class GroupsController {
 	}
 
 	@PutMapping("/{groupId}/permissions/user/{userId}/{oldRelationship}")
+	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
 	public ResponseEntity<JsonNode> updateGroupUserPermissions(
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("userId") final String userId,
@@ -134,6 +161,7 @@ public class GroupsController {
 	}
 
 	@DeleteMapping("/{groupId}/permissions/user/{userId}/{relationship}")
+	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
 	public ResponseEntity<JsonNode> removeGroupUserPermissions(
 		@PathVariable("groupId") final String groupdId,
 		@PathVariable("userId") final String userId,
