@@ -16,6 +16,7 @@ const useAuthStore = defineStore('auth', () => {
 	const logout = async (options?: Keycloak.KeycloakLogoutOptions) => {
 		await keycloak.value?.logout(options);
 	};
+
 	const token = computed(() => keycloak.value?.token);
 
 	// user
@@ -26,6 +27,7 @@ const useAuthStore = defineStore('auth', () => {
 		});
 		user.value = response.data;
 	};
+
 	const loadUserModel = async () => {
 		const response = await axios.get('/api/user/me', {
 			headers: new AxiosHeaders().setAuthorization(`Bearer ${token.value}`)
@@ -35,6 +37,7 @@ const useAuthStore = defineStore('auth', () => {
 	const userInitials = computed(
 		() => `${user.value?.givenName?.charAt(0)}${user.value?.familyName?.charAt(0)}`
 	);
+
 	const init = async () => {
 		await loadUserModel();
 	};
