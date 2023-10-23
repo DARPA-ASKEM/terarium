@@ -844,7 +844,6 @@ function resetZoom() {
 	justify-content: space-between;
 	align-items: center;
 	padding: 0.5rem 1rem;
-	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
 }
