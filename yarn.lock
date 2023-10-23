@@ -3771,7 +3771,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vueup/vue-quill@npm:latest":
+"@vueup/vue-quill@npm:1.2.0":
   version: 1.2.0
   resolution: "@vueup/vue-quill@npm:1.2.0"
   dependencies:
@@ -8524,7 +8524,7 @@ __metadata:
     "@vitejs/plugin-vue": 4.3.4
     "@vitest/coverage-c8": 0.24.5
     "@vue/runtime-dom": 3.3.4
-    "@vueup/vue-quill": latest
+    "@vueup/vue-quill": 1.2.0
     ace-builds: 1.22.1
     axios: 1.5.1
     chart.js: 4.2.1
