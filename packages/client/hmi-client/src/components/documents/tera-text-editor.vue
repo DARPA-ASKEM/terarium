@@ -22,4 +22,13 @@ watch(
 );
 </script>
 
-<style scoped></style>
+<!-- scoped is omitted because :deep modifier was not working -->
+<style>
+.ql-snow strong {
+	font-weight: 600;
+}
+
+.ql-snow em {
+	font-style: italic;
+}
+</style>
