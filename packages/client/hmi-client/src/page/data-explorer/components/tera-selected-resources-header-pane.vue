@@ -3,13 +3,11 @@
 		<div class="add-selected-buttons">
 			<Button
 				v-if="selectedSearchItems.length > 0"
-				class="p-button-secondary spacer"
+				severity="secondary"
 				@click="emit('clear-selected')"
-			>
-				Remove all
-			</Button>
-
-			<dropdown
+				label="Remove all"
+			/>
+			<Dropdown
 				v-if="selectedSearchItems.length > 0"
 				placeholder="Add to project"
 				class="p-button dropdown-button"
@@ -27,7 +25,7 @@ import { computed, PropType } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import { AssetType, Document } from '@/types/Types';
-import dropdown from 'primevue/dropdown';
+import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
@@ -103,26 +101,10 @@ const addAssetsToProject = async (projectOption) => {
 	color: white;
 }
 
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
 .p-button.p-button-secondary {
-	box-shadow: none;
-	color: var(--text-color-subdued);
-	background-color: var(--surface-0);
-	font-weight: 400;
-	font-size: 14px;
-	padding-right: 16px;
-	padding-left: 16px;
 	height: 3rem;
-}
-
-.p-button.p-button-secondary:enabled:hover {
-	background-color: var(--surface-highlight);
-}
-
-.spacer {
 	margin-right: 16px;
 }
-
 .dropdown-button {
 	width: 156px;
 	height: 3rem;
@@ -153,11 +135,6 @@ const addAssetsToProject = async (projectOption) => {
 
 .cart-item {
 	border-bottom: 1px solid var(--surface-ground);
-}
-
-button {
-	height: min-content;
-	padding: 0;
 }
 
 i {
