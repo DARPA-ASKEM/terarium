@@ -27,7 +27,6 @@
 						mode="basic"
 						auto
 						chooseLabel="Load file"
-						class="p-button-secondary"
 					/>
 					<Button label="Save" @click="saveCode" />
 					<Button label="Save as new" @click="isCodeNamingModalVisible = true" />
@@ -36,6 +35,7 @@
 						@click="isModelNamingModalVisible = true"
 						:loading="isCodeToModelLoading"
 					/>
+					<Button label="Make highlight dynamic" @click="createDynamic" />
 				</section>
 			</section>
 		</template>
@@ -204,7 +204,7 @@ async function saveCode() {
 		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
 		const file = new File([codeText.value], codeName.value);
 		const updatedCode = await updateCodeAsset(
-			{ ...existingCode, name: codeName.value },
+			{ ...existingCode, name: codeName.value, files: {} },
 			file,
 			progress
 		);
@@ -276,6 +276,10 @@ async function onFileOpen(event) {
 		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
 		codeName.value = file.name;
 	};
+}
+
+function createDynamic() {
+	console.log(editor.value);
 }
 
 watch(
