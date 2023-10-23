@@ -101,7 +101,7 @@
 				:stratified-matrix-type="StratifiedMatrix.Rates"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
-				@update-configuration="(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate, 0)"
+				@update-configuration="(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)"
 			/>
 		</Teleport>
 	</main>
