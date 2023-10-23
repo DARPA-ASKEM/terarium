@@ -340,6 +340,7 @@ watch(
 	height: calc(100vh - 150px);
 	overflow-y: scroll;
 }
+
 .simulate-chart {
 	margin: 2em 1.5em;
 }
