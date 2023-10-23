@@ -301,6 +301,7 @@ onMounted(() => {
 }
 
 .simulate-container {
+	height: calc(100vh - 150px);
 	overflow-y: scroll;
 }
 
