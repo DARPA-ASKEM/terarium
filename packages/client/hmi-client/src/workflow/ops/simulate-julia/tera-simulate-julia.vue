@@ -23,19 +23,19 @@
 				@update:model-value="handleSelectedRunChange"
 			/>
 			<template v-if="runResults[selectedRun?.runId]">
-				<div class="metadata-container">
-					<Text><b>Run ID:</b> {{ selectedRun.runId }}</Text>
-					<Text
-						><b>Configuration name:</b>
-						{{ node.state.simConfigs.runConfigs[selectedRun.runId].configName }}</Text
-					>
-					<Text
-						><b>Start step:</b>
+				<ul>
+					<li><span>Run ID:</span> {{ selectedRun.runId }}</li>
+					<li>
+						<span>Configuration name:</span>
+						{{ node.state.simConfigs.runConfigs[selectedRun.runId].configName }}
+					</li>
+					<li>
+						<span>Start step:</span>
 						{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.start }}
-						<b>End step:</b>
-						{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.end }}</Text
-					>
-				</div>
+						<span>End step:</span>
+						{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.end }}
+					</li>
+				</ul>
 				<tera-simulate-chart
 					v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
 					:key="idx"
@@ -330,5 +330,10 @@ onMounted(() => {
 	display: flex;
 	flex-direction: column;
 	gap: 1em;
+	list-style: none;
+}
+
+li > span {
+	font-weight: bold;
 }
 </style>

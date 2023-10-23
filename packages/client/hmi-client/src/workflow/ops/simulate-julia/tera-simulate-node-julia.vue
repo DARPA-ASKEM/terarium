@@ -169,7 +169,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 		runId: runIdList[0],
 		active: true,
 		configName: port.label,
-		timeSpan: state.currentTimespan
+		timeSpan: { ...state.currentTimespan }
 	};
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
