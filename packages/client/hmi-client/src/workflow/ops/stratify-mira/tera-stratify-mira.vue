@@ -21,7 +21,7 @@
 		<div class="left-side">
 			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
 			<p>The model will be stratified with the following settings.</p>
-			<stratificationGroupForm
+			<teraStratificationGroupForm
 				v-for="(cfg, index) in node.state.strataGroups"
 				:key="index"
 				:modelNodeOptions="modelNodeOptions"
@@ -47,7 +47,22 @@
 		</div>
 	</div>
 	<div v-else class="container">
-		<h4>TODO</h4>
+		<div class="left-side">
+			<teraMiraNotebook />
+		</div>
+		<div class="right-side">
+			<tera-model-diagram
+				v-if="model"
+				ref="teraModelDiagramRef"
+				:model="model"
+				:is-editable="false"
+			/>
+			<div v-else>
+				<!-- TODO -->
+				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+				<h4>No Model Provided</h4>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -55,7 +70,8 @@
 import _ from 'lodash';
 import { watch, ref } from 'vue';
 import Button from 'primevue/button';
-import stratificationGroupForm from '@/components/stratification/stratification-group-form.vue';
+import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
+import teraMiraNotebook from '@/components/stratification/tera-mira-notebook.vue';
 import { Model, ModelConfiguration } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
