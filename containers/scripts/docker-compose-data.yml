@@ -86,7 +86,7 @@ services:
     networks:
       - terarium
     ports:
-      - '50051:50051'
+      - "50051:50051"
     command: [ "serve" ]
     environment:
       SPICEDB_GRPC_PRESHARED_KEY: "dev"
@@ -94,12 +94,13 @@ services:
       SPICEDB_HTTP_ENABLED: "true"
       SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
     healthcheck:
-      test: [ 'CMD', 'grpc_health_probe', '-addr=:50051' ]
-      interval: '3s'
-      timeout: '3s'
+      test: [ "CMD", "grpc_health_probe", "-addr=:50051" ]
+      interval: "3s"
+      timeout: "3s"
       retries: 30
     depends_on:
-      - migrate-spicedb
+      migrate-spicedb:
+        condition: service_completed_successfully
 
   migrate-spicedb:
     image: authzed/spicedb:v1.24.0
@@ -111,7 +112,8 @@ services:
       SPICEDB_DATASTORE_ENGINE: "postgres"
       SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
 volumes:
   minio-data:

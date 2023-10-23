@@ -8,28 +8,28 @@ services:
       - terarium
     entrypoint: /run_migrations.sh
     environment:
-      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DATASET_STORAGE_BASE_URL: "s3://datasets/"
       STORAGE_HOST: "http://${local_host_name}:4566"
-      S3_BUCKET: askem
-      S3_DATASET_PATH: datasets
-      S3_RESULT_PATH: simulations
-      OPENAI_KEY: sk
-      SQL_URL: postgres
-      SQL_PORT: 5432
-      SQL_USER: terarium_user
-      SQL_PASSWORD: terarium
-      SQL_DB: askem
-      NEO4J_ENABLED: true
+      S3_BUCKET: "askem"
+      S3_DATASET_PATH: "datasets"
+      S3_RESULT_PATH: "simulations"
+      OPENAI_KEY: "sk"
+      SQL_URL: "postgres"
+      SQL_PORT: "5432"
+      SQL_USER: "terarium_user"
+      SQL_PASSWORD: "terarium"
+      SQL_DB: "askem"
+      NEO4J_ENABLED: "true"
       NEO4J_driver: "neo4j://${local_host_name}:7687"
-      AWS_ACCESS_KEY_ID: miniouser
-      AWS_SECRET_ACCESS_KEY: miniopass
-      ES_INDEX_PREFIX: tds_
+      AWS_ACCESS_KEY_ID: "miniouser"
+      AWS_SECRET_ACCESS_KEY: "miniopass"
+      ES_INDEX_PREFIX: "tds_"
       ES_URL: "http://${local_host_name}:9200"
-      ES_USERNAME: tds
-      ES_PASSWORD: tdsElasticPass
-      ELASTIC_PASSWORD: tdsElasticPass
-      KIBANA_PASSWORD: tdsKibanaPass
-      SEED_DATA: true
+      ES_USERNAME: "tds"
+      ES_PASSWORD: "tdsElasticPass"
+      ELASTIC_PASSWORD: "tdsElasticPass"
+      KIBANA_PASSWORD: "tdsKibanaPass"
+      SEED_DATA: "true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,24 +46,24 @@ services:
     ports:
       - "3020:8000"
     environment:
-      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DATASET_STORAGE_BASE_URL: "s3://datasets/"
       STORAGE_HOST: "http://localstack:4566"
-      S3_BUCKET: askem
-      S3_DATASET_PATH: datasets
-      S3_RESULT_PATH: simulations
-      OPENAI_KEY: sk
-      SQL_URL: postgres
-      SQL_PORT: 5432
-      SQL_USER: terarium_user
-      SQL_PASSWORD: terarium
-      SQL_DB: askem
-      NEO4J_ENABLED: true
+      S3_BUCKET: "askem"
+      S3_DATASET_PATH: "datasets"
+      S3_RESULT_PATH: "simulations"
+      OPENAI_KEY: "sk"
+      SQL_URL: "postgres"
+      SQL_PORT: "5432"
+      SQL_USER: "terarium_user"
+      SQL_PASSWORD: "terarium"
+      SQL_DB: "askem"
+      NEO4J_ENABLED: "true"
       NEO4J_driver: "neo4j://neo4j:7687"
-      AWS_ACCESS_KEY_ID: miniouser
-      AWS_SECRET_ACCESS_KEY: miniopass
+      AWS_ACCESS_KEY_ID: "miniouser"
+      AWS_SECRET_ACCESS_KEY: "miniopass"
       ES_URL: "http://elasticsearch:9200"
-      ELASTIC_PASSWORD: tdsElasticPass
-      KIBANA_PASSWORD: tdsKibanaPass
+      ELASTIC_PASSWORD: "tdsElasticPass"
+      KIBANA_PASSWORD: "tdsKibanaPass"
     depends_on:
       data-service-migrations:
         condition: service_completed_successfully
@@ -98,7 +98,7 @@ services:
       SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
       MIT_TR_URL: "https://mit-tr.staging.terarium.ai"
       TA1_UNIFIED_URL: "https://skema-unified.staging.terarium.ai"
-      OPENAI_API_KEY: "${mit_openai_key}"
+      OPENAI_API_KEY: "${secret_mit_openai_key}"
 
   knowledge-middleware-worker:
     container_name: knowledge-middleware-worker
@@ -111,4 +111,4 @@ services:
       SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
       MIT_TR_URL: "https://mit-tr.staging.terarium.ai"
       TA1_UNIFIED_URL: "https://skema-unified.staging.terarium.ai"
-      OPENAI_API_KEY: "${mit_openai_key}"
+      OPENAI_API_KEY: "${secret_mit_openai_key}"

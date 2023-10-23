@@ -1,5 +1,5 @@
 ---
-version: '3.8'
+version: "3.8"
 
 services:
   redis:
@@ -8,12 +8,12 @@ services:
     networks:
       - terarium
     ports:
-      - '6379:6379'
+      - "6379:6379"
     restart: always
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: '3s'
-      timeout: '3s'
+      test: ["CMD", "redis-cli", "ping"]
+      interval: "3s"
+      timeout: "3s"
       retries: 30
 
   postgres:
@@ -37,6 +37,21 @@ services:
     volumes:
       - terarium-db:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  reverse-proxy:
+    image: ghcr.io/darpa-askem/reverse-proxy:dev_test
+    container_name: reverse-proxy
+    networks:
+      - terarium
+    ports:
+      - "8888:80"
+      - "443:443"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
 
 volumes:
   terarium-db:

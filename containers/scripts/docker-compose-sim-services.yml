@@ -11,12 +11,12 @@ services:
       - "3030:8080"
     environment:
       SIMSERVICE_TDS_URL: "http://${local_host_name}:3020"
-      SIMSERVICE_RABBITMQ_ENABLED: 'true'
-      SIMSERVICE_RABBITMQ_LOGIN: 'terarium'
-      SIMSERVICE_RABBITMQ_PASSWORD: 'terarium123'
-      SIMSERVICE_RABBITMQ_ROUTE: 'sciml-queue'
-      SIMSERVICE_RABBITMQ_HOST: '${local_host_name}'
-      SIMSERVICE_RABBITMQ_PORT: '5672'
+      SIMSERVICE_RABBITMQ_ENABLED: "true"
+      SIMSERVICE_RABBITMQ_LOGIN: "terarium"
+      SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"
+      SIMSERVICE_RABBITMQ_ROUTE: "sciml-queue"
+      SIMSERVICE_RABBITMQ_HOST: "${local_host_name}"
+      SIMSERVICE_RABBITMQ_PORT: "5672"
     depends_on:
       message-queue:
         condition: service_started
@@ -32,10 +32,10 @@ services:
       - "3040:8000"
     environment:
       TDS_URL: "http://${local_host_name}:3020"
-      STANDALONE_MODE: 'False'
+      STANDALONE_MODE: "False"
       PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
-      REDIS_HOST: "${local_host_name}"
-      REDIS_PORT: '6379'
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
     depends_on:
       redis:
         condition: service_started
@@ -49,10 +49,10 @@ services:
       - terarium
     environment:
       TDS_URL: "http://${local_host_name}:3020"
-      STANDALONE_MODE: 'False'
+      STANDALONE_MODE: "False"
       PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
-      REDIS_HOST: "${local_host_name}"
-      REDIS_PORT: '6379'
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
     depends_on:
       redis:
         condition: service_started
