@@ -84,7 +84,7 @@ public class KnowledgeController {
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
 		@RequestParam("code_id") String codeId,
 		@RequestParam(name = "name", required = false) String name,
-		@RequestParam(name = "description", required = false) String description
+		@RequestParam(name = "description", required = false) String description,
 		@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly
 	) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description, dynamicsOnly).getBody());
