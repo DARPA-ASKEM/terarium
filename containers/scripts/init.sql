@@ -2,7 +2,7 @@
 CREATE USER terarium_user;
 ALTER USER terarium_user WITH PASSWORD 'terarium';
 
--- Create askem DB for TDS
+-- Create askem DB for data-service
 CREATE DATABASE askem;
 GRANT ALL PRIVILEGES ON DATABASE askem TO terarium_user;
 
