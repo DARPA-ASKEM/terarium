@@ -23,6 +23,24 @@
 				@update:model-value="handleSelectedRunChange"
 			/>
 			<template v-if="runResults[selectedRun?.runId]">
+				<div class="metadata-container">
+					<Text><b>Run ID:</b> {{ selectedRun.runId }}</Text>
+					<Text
+						><b>Configuration name:</b>
+						{{ node.state.simConfigs.runConfigs[selectedRun.runId].configName }}</Text
+					>
+					<Text
+						><b>Method selected:</b>
+						{{ node.state.simConfigs.runConfigs[selectedRun.runId].method }}</Text
+					>
+					<Text><b>Number of samples:</b> {{ node.state.numSamples }}</Text>
+					<Text
+						><b>Start step:</b>
+						{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.start }}
+						<b>End step:</b>
+						{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.end }}</Text
+					>
+				</div>
 				<tera-simulate-chart
 					v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
 					:key="idx"
@@ -355,5 +373,12 @@ watch(
 .datatable-header-title {
 	white-space: nowrap;
 	margin-right: 1em;
+}
+
+.metadata-container {
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
 }
 </style>

@@ -1,3 +1,5 @@
+import { TimeSpan } from './Types';
+
 export const enum RunType {
 	Julia = 'julia',
 	Ciemss = 'ciemss'
@@ -21,10 +23,10 @@ export type SimulationConfig = {
 export type InputMetadata = {
 	runId: string;
 	active: boolean;
-	// TODO: the following properties aren't used yet, but will be used later
 	configName?: string;
+	numSamples?: number;
 	method?: string;
-	timeSpan?: string;
+	timeSpan?: TimeSpan;
 };
 
 export type DataseriesConfig = {
