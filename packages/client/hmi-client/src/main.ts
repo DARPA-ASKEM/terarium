@@ -2,7 +2,6 @@ import { logger } from '@/utils/logger';
 import { createApp } from 'vue';
 import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
-import axios from 'axios';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
@@ -14,12 +13,12 @@ import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
-import useAuthStore from './stores/auth';
+import API from '@/api/api';
+import useAuthStore from '@/stores/auth';
 import router from './router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from './App.vue';
 import { useProjects } from './composables/project';
-
 import './assets/css/style.scss';
 
 // Create the Vue application
@@ -73,7 +72,7 @@ app
 	.directive('tooltip', Tooltip);
 
 // Configure Google Analytics
-const GTAG = await axios.get('/api/configuration/ga');
+const GTAG = await API.get('/configuration/ga');
 if (GTAG.data) {
 	app.use(VueGtag, { config: { id: GTAG.data } });
 }
