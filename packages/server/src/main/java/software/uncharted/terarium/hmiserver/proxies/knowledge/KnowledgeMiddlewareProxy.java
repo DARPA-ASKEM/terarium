@@ -101,16 +101,18 @@ public interface KnowledgeMiddlewareProxy {
 	/**
 	 * Transform source code to AMR
 	 *
-	 * @param codeId      (String): id of the code artifact
-	 * @param name        (String): the name to set on the newly created model
-	 * @param description (String): the description to set on the newly created model
+	 * @param codeId       (String): id of the code artifact
+	 * @param name         (String): the name to set on the newly created model
+	 * @param description  (String): the description to set on the newly created model
+	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over specified dynamics from the code object in TDS
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code_to_amr")
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
 		@RequestParam("code_id") String codeId,
 		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam("description") String description,
+		@RequestParam("dynamics_only") Boolean dynamicsOnly
 	);
 
 	/**
