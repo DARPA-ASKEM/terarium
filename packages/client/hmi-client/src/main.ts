@@ -62,8 +62,8 @@ setInterval(async () => {
 }, 6000);
 
 app
-	.use(ToastService)
 	.use(router)
+	.use(ToastService)
 	.use(ConfirmationService)
 	.use(PrimeVue, { ripple: true })
 	.use(VueKatex)
