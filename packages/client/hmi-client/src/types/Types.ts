@@ -886,6 +886,7 @@ export enum ProvenanceType {
     Simulation = "Simulation",
     Artifact = "Artifact",
     Code = "Code",
+    Document = "Document",
 }
 
 export enum AssetType {

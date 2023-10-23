@@ -183,7 +183,7 @@ async function getRelatedDocuments() {
 	if (!provenanceType) return;
 
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
-		ProvenanceType.Publication
+		ProvenanceType.Document
 	]);
 
 	relatedDocuments.value =
