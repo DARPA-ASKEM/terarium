@@ -1,25 +1,26 @@
-import { logger } from '@/utils/logger';
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import axios from 'axios';
 import ConfirmationService from 'primevue/confirmationservice';
-import ToastService from 'primevue/toastservice';
+import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import PrimeVue from 'primevue/config';
+import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
 import VueFeather from 'vue-feather';
 import VueGtag from 'vue-gtag';
+import axios from 'axios';
 import { MathfieldElement } from 'mathlive';
-import VueKatex from '@hsorby/vue3-katex';
-import { EventType } from '@/types/Types';
-import * as EventService from '@/services/event';
-import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
-import useAuthStore from './stores/auth';
-import router, { RoutePath } from './router';
-import '@node_modules/katex/dist/katex.min.css';
-import App from './App.vue';
-import { useProjects } from './composables/project';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 
-import './assets/css/style.scss';
+import App from '@/App.vue';
+import * as EventService from '@/services/event';
+import VueKatex from '@hsorby/vue3-katex';
+import router, { RoutePath } from '@/router';
+import useAuthStore from '@/stores/auth';
+import { EventType } from '@/types/Types';
+import { logger } from '@/utils/logger';
+import { useProjects } from '@/composables/project';
+
+import '@/assets/css/style.scss';
+import '@node_modules/katex/dist/katex.min.css';
 
 export const app = createApp(App);
 app.use(ToastService);
@@ -46,7 +47,7 @@ app.component(VueFeather.name, VueFeather);
 app.use(VueKatex);
 
 const authStore = useAuthStore();
-const keycloak = new Keycloak('/api/keycloak/config');
+const keycloak = new Keycloak('/api/configuration/keycloak');
 authStore.setKeycloak(keycloak);
 
 keycloak
