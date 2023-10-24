@@ -14,12 +14,12 @@ import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
+import { init } from '@/services/ClientEventService';
 import useAuthStore from './stores/auth';
 import router, { RoutePath } from './router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from './App.vue';
 import { useProjects } from './composables/project';
-
 import './assets/css/style.scss';
 
 export const app = createApp(App);
@@ -64,6 +64,9 @@ keycloak
 			app.use(router);
 			app.mount('body');
 			logger.info('Application Mounted', { showToast: false, silent: true });
+
+			// SSE subcription
+			await init();
 
 			if (!router.currentRoute.value.name) {
 				router.push(RoutePath.Home);

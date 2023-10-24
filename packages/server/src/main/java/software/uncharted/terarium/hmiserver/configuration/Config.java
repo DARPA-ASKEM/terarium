@@ -42,6 +42,11 @@ public class Config {
 	 */
 	ClientConfig clientConfig;
 
+	/**
+	 * If queues should be declared durable.  IF running Rabbit inside docker, this should be false
+	 */
+	Boolean durableQueues = true;
+
 	@Data
 	@Accessors(chain = true)
 	public static class Caching {

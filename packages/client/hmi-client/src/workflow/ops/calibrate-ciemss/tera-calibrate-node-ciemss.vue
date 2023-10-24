@@ -115,7 +115,13 @@ import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import InputNumber from 'primevue/inputnumber';
-import { CalibrationRequestCiemss, CsvAsset, ModelConfiguration } from '@/types/Types';
+import {
+	CalibrationRequestCiemss,
+	ClientEvent,
+	ClientEventType,
+	CsvAsset,
+	ModelConfiguration
+} from '@/types/Types';
 import {
 	makeCalibrateJobCiemss,
 	getRunResultCiemss,
@@ -127,11 +133,11 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
-import { EventSourceManager } from '@/api/event-source-manager';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import {
 	CalibrationOperationCiemss,
 	CalibrationOperationStateCiemss,
@@ -170,7 +176,6 @@ const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const poller = new Poller();
-const eventSourceManager = new EventSourceManager();
 
 const disableRunButton = computed(
 	() =>
@@ -243,12 +248,16 @@ const runCalibrate = async () => {
 	}
 };
 
-const handlingProgress = (message: string) => {
+/* const handlingProgress = (message: string) => {
 	const parsedMessage = JSON.parse(message);
 	if (parsedMessage.progress) {
 		progress.value.value = Math.round(parsedMessage.progress * 100);
 	}
-};
+}; */
+
+function getMessageHandler(event: ClientEvent<any>) {
+	console.log(event);
+}
 
 const getStatus = async (simulationId: string) => {
 	console.log('Getting status');
@@ -261,10 +270,11 @@ const getStatus = async (simulationId: string) => {
 	const runIds = [simulationId];
 
 	// open a connection for each run id and handle the messages
-	runIds.forEach((id) => {
-		eventSourceManager.openConnection(id, `/simulations/${id}/ciemss/partial-result`);
-		eventSourceManager.setMessageHandler(id, handlingProgress);
-	});
+	// runIds.forEach((id) => {
+	//	eventSourceManager.openConnection(id, `/simulations/${id}/ciemss/partial-result`);
+	//	eventSourceManager.setMessageHandler(id, handlingProgress);
+	// });
+	await subscribe(ClientEventType.Simulation, getMessageHandler);
 
 	poller
 		.setInterval(3000)
@@ -274,7 +284,8 @@ const getStatus = async (simulationId: string) => {
 	const pollerResults = await poller.start();
 
 	// closing event source connections
-	runIds.forEach((id) => eventSourceManager.closeConnection(id));
+	// runIds.forEach((id) => eventSourceManager.closeConnection(id));
+	await unsubscribe(ClientEventType.Simulation, getMessageHandler);
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now

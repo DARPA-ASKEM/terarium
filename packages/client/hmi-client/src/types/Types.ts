@@ -16,6 +16,13 @@ export interface Event {
     value?: string;
 }
 
+export interface ClientEvent<T> {
+    id: string;
+    createdAtMs: number;
+    type: ClientEventType;
+    data: T;
+}
+
 export interface ClientLog {
     level: string;
     timestampMillis: number;
@@ -838,6 +845,11 @@ export enum EvaluationScenarioStatus {
     Paused = "PAUSED",
     Resumed = "RESUMED",
     Stopped = "STOPPED",
+}
+
+export enum ClientEventType {
+    Notification = "NOTIFICATION",
+    Simulation = "SIMULATION",
 }
 
 export enum FileType {
