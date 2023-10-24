@@ -35,11 +35,7 @@
 						@click="isModelNamingModalVisible = true"
 						:loading="isCodeToModelLoading"
 					/>
-					<Button
-						label="Make highlight dynamics"
-						:disabled="selectionRange === null"
-						@click="saveCode"
-					/>
+					<Button label="Add to dynamics" :disabled="selectionRange === null" @click="saveCode" />
 				</section>
 			</section>
 		</template>
@@ -156,7 +152,7 @@ import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
-import { Ace } from 'ace-builds';
+import { Ace, Range } from 'ace-builds';
 import { isEmpty } from 'lodash';
 
 const INITIAL_TEXT = '# Paste some code here';
@@ -205,6 +201,7 @@ async function initialize(editorInstance) {
 	editor.value = editorInstance;
 	editorInstance.session.selection.on('changeSelection', onSelectedTextChange);
 	editorInstance.setShowPrintMargin(false);
+	highlightDynamics();
 }
 
 /**
@@ -214,6 +211,17 @@ function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
 	selectionRange.value =
 		!isEmpty(selectedText.value) && editor.value ? editor.value.getSelectionRange() : null;
+}
+
+function highlightDynamics() {
+	if (selectionRange.value) {
+		const { start, end } = selectionRange.value;
+		editor.value?.session.addMarker(
+			new Range(start.row, 0, end.row, 0),
+			'ace_active-line',
+			'fullLine'
+		);
+	}
 }
 
 async function saveCode() {
@@ -226,14 +234,14 @@ async function saveCode() {
 		const file = new File([codeText.value], codeName.value);
 
 		if (selectedRangeToString.value) {
-			code.files = {
-				[codeName.value]: {
-					language: getProgrammingLanguage(codeName.value),
-					dynamics: {
-						name: 'Main Dynamics',
-						description: 'Test description',
-						block: [selectedRangeToString.value]
-					}
+			if (!code.files) code.files = {};
+
+			code.files[codeName.value] = {
+				language: getProgrammingLanguage(codeName.value),
+				dynamics: {
+					name: 'Main Dynamics',
+					description: 'Test description',
+					block: [selectedRangeToString.value]
 				}
 			};
 		}
@@ -244,6 +252,7 @@ async function saveCode() {
 		} else {
 			toast.success('', `File saved as ${codeName.value}`);
 			codeAsset.value = updatedCode;
+			if (selectedRangeToString.value) highlightDynamics();
 		}
 		return updatedCode;
 	}
@@ -256,7 +265,7 @@ async function saveNewCode() {
 	const file = new File([codeText.value], newCodeName.value);
 	const newCode = await uploadCodeToProject(file, progress);
 	let newAsset;
-	if (newCode && newCode.id) {
+	if (newCode?.id) {
 		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
 	}
 	if (newAsset) {
@@ -313,7 +322,16 @@ async function onFileOpen(event) {
 watch(
 	() => props.assetId,
 	async () => {
-		if (props.assetId !== 'code') {
+		// Remove dynamics
+		if (editor.value) {
+			const prevMarkers = editor.value.session.getMarkers();
+			if (prevMarkers) {
+				Object.keys(prevMarkers).forEach((item) =>
+					editor.value?.session.removeMarker(prevMarkers[item].id)
+				);
+			}
+		}
+		if (props.assetId !== AssetType.Code) {
 			// FIXME: assetId is 'code' for a newly opened code asset; a hack to get around some weird tab behaviour
 			const code = await getCodeAsset(props.assetId);
 			if (code) {
@@ -373,6 +391,12 @@ h4 {
 
 .ace-editor {
 	border-top: 1px solid var(--surface-border-light);
+}
+
+.dynamic {
+	position: absolute;
+	background-color: var(--surface-highlight);
+	z-index: 20;
 }
 
 .header {
