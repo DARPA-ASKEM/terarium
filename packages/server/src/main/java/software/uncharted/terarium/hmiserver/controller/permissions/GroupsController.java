@@ -6,12 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionProject;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
@@ -34,7 +35,7 @@ public class GroupsController {
 	private final CurrentUserService currentUserService;
 
 	@GetMapping
-	@PreAuthorize("hasRole('USER')")
+	@Secured(Roles.USER)
 	public ResponseEntity<List<PermissionGroup>> getGroups(
 		@RequestParam(name = "page_size", defaultValue = "1000") Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0") Integer page
@@ -56,7 +57,7 @@ public class GroupsController {
 	}
 
 	@GetMapping("/{groupId}")
-	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<PermissionGroup> getGroup(
 		@PathVariable("groupId") final String groupId
 	) {
@@ -90,7 +91,7 @@ public class GroupsController {
 	}
 
 	@PostMapping
-	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<PermissionGroup> createGroup(
 		@RequestParam(name = "name") final String name
 	) {
@@ -109,7 +110,7 @@ public class GroupsController {
 	}
 
 	@PostMapping("/{groupId}/permissions/user/{userId}/{relationship}")
-	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<JsonNode> addGroupUserPermissions(
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("userId") final String userId,
@@ -134,7 +135,7 @@ public class GroupsController {
 	}
 
 	@PutMapping("/{groupId}/permissions/user/{userId}/{oldRelationship}")
-	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<JsonNode> updateGroupUserPermissions(
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("userId") final String userId,
@@ -161,7 +162,7 @@ public class GroupsController {
 	}
 
 	@DeleteMapping("/{groupId}/permissions/user/{userId}/{relationship}")
-	@PreAuthorize("hasRole('GROUP') or hasRole('ADMIN')")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<JsonNode> removeGroupUserPermissions(
 		@PathVariable("groupId") final String groupdId,
 		@PathVariable("userId") final String userId,
