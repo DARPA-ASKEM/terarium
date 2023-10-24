@@ -35,6 +35,6 @@ public class FunmanController {
 public ResponseEntity<FunmanPostQueriesResponse> postQueries(@RequestBody FunmanPostQueries requestBody) {
     ResponseEntity<FunmanPostQueriesResponse> response = funmanProxy.postQueries(requestBody);
 
-    return response;
+    return ResponseEntity.ok(response.getBody());
 }
 }
