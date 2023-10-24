@@ -33,12 +33,12 @@ async function hitMira() {
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	console.log(jupyterSession.value.session);
-	jupyterSession.value?.session?.kernel?.sendJupyterMessage(message);
+	jupyterSession.value.session?.kernel?.sendJupyterMessage(message);
 	console.log(jupyterSession.value.session);
 }
 
 onMounted(async () => {
-	jupyterSession.value = await newSession('testName', 'TestName');
+	jupyterSession.value = await newSession('beaker', 'TestName');
 	console.log('Finished mounting');
 	console.log(jupyterSession.value);
 });
