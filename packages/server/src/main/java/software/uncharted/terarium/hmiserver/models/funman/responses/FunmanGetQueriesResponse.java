@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.funman.responses;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -12,7 +11,6 @@ import software.uncharted.terarium.hmiserver.models.funman.utils.ParameterSpace;
 
 @Data
 @Accessors(chain = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @TSModel
 public class FunmanGetQueriesResponse {
     private String id;

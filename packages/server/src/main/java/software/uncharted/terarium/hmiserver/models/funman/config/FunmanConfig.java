@@ -2,13 +2,10 @@ package software.uncharted.terarium.hmiserver.models.funman.config;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Data
 @Accessors(chain = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @TSModel
 public class FunmanConfig {
 	private Double tolerance;

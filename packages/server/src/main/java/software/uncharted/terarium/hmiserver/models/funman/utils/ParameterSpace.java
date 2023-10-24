@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.funman.utils;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -12,7 +11,6 @@ import java.util.List;
 
 @Data
 @Accessors(chain = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @TSModel
 public class ParameterSpace {
 		@JsonProperty("true_points")

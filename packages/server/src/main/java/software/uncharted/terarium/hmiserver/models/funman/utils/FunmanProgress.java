@@ -7,7 +7,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Data
 @Accessors(chain = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @TSModel
 public class FunmanProgress {
     private Double coverage_of_representable_space;
