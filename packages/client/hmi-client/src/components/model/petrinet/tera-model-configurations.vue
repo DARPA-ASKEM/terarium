@@ -87,7 +87,7 @@
 						:stratified-model-type="stratifiedModelType"
 						:stratified-matrix-type="modalAttributes.stratifiedMatrixType"
 						:should-eval="matrixShouldEval"
-						@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
+						@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)"
 					/>
 				</template>
 				<template #footer>
@@ -103,7 +103,7 @@
 				:stratified-matrix-type="modalAttributes.stratifiedMatrixType"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
-				@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
+				@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)"
 			/>
 			<tera-modal
 				v-else-if="
@@ -427,8 +427,8 @@ function checkModelParameters() {
 	return true;
 }
 
-function updateConfiguration(configToUpdate: ModelConfiguration, index: number) {
-	emit('update-configuration', configToUpdate, index);
+function updateConfiguration(configToUpdate: ModelConfiguration) {
+	emit('update-configuration', configToUpdate);
 }
 
 function updateName(index: number) {
@@ -436,7 +436,7 @@ function updateName(index: number) {
 	cellEditStates.value[index].name = false;
 	if (configToUpdate.name !== editValue.value && !isEmpty(editValue.value)) {
 		configToUpdate.name = editValue.value;
-		updateConfiguration(configToUpdate, index);
+		updateConfiguration(configToUpdate);
 	}
 }
 
@@ -456,7 +456,7 @@ function updateValue(
 	) {
 		configToUpdate.configuration.semantics.ode[stratifiedMatrixType][odeObjIndex][valueName] =
 			editValue.value;
-		updateConfiguration(configToUpdate, index);
+		updateConfiguration(configToUpdate);
 	}
 }
 
@@ -495,7 +495,7 @@ function setModelParameters() {
 			delete modelParameter.distribution;
 			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
-		emit('update-configuration', configToUpdate, configIndex);
+		emit('update-configuration', configToUpdate);
 	}
 }
 

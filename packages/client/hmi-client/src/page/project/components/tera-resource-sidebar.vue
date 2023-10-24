@@ -6,26 +6,18 @@
 				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
 			</span>
 			<Button
+				class="new"
 				icon="pi pi-plus"
 				label="New"
-				class="p-button-sm secondary-button"
+				severity="secondary"
+				size="small"
+				outlined
 				@click="toggleOptionsMenu"
 			/>
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
-				<!-- A way to use vue feather icons in the MenuItem component, it might be better to try to use 1 icon library for easier integration -->
 				<template #item="slotProps">
 					<a class="p-menuitem-link">
-						<vue-feather
-							v-if="typeof getAssetIcon(slotProps.item.key ?? null) === 'string'"
-							class="p-button-icon-left icon"
-							:type="getAssetIcon(slotProps.item.key ?? null)"
-							size="1rem"
-						/>
-						<component
-							v-else
-							:is="getAssetIcon(slotProps.item.key ?? null)"
-							class="p-button-icon-left icon"
-						/>
+						<tera-asset-icon :asset-type="(slotProps.item.key as AssetType)" />
 						<span class="p-menuitem-text">
 							{{ slotProps.item.label }}
 						</span>
@@ -85,20 +77,7 @@
 						fallback-class="original-asset"
 						:force-fallback="true"
 					>
-						<vue-feather
-							v-if="typeof getAssetIcon(assetItem.pageType ?? null) === 'string'"
-							class="p-button-icon-left icon"
-							:type="getAssetIcon(assetItem.pageType ?? null)"
-							size="1rem"
-							:stroke="
-								isEqual(draggedAsset, assetItem) ? 'var(--text-color-primary)' : 'rgb(16, 24, 40)'
-							"
-						/>
-						<component
-							v-else
-							:is="getAssetIcon(assetItem.pageType ?? null)"
-							class="p-button-icon-left icon"
-						/>
+						<tera-asset-icon :asset-type="(assetItem.pageType as AssetType)" />
 						<span class="p-button-label">{{ assetItem.assetName }}</span>
 					</span>
 					<!-- This 'x' only shows while hovering over the row -->
@@ -131,7 +110,7 @@
 				</template>
 				<template #footer>
 					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
-					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
+					<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -143,7 +122,6 @@ import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { AssetItem, AssetRoute } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -154,6 +132,7 @@ import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { generateProjectAssetsMap } from '@/utils/map-project-assets';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 
 defineProps<{
 	openedAssetRoute: AssetRoute;
@@ -329,22 +308,11 @@ header {
 	font-size: var(--font-caption);
 }
 
-/* We should make a proper secondary outline button. Until then this works. */
-.secondary-button {
-	color: var(--text-color-secondary);
-	font-size: var(--font-caption);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
+.new {
 	width: 6rem;
-}
-
-.secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
 }
 
 :deep(.p-button-icon-left.icon) {
 	margin-right: 0.5rem;
 }
 </style>
-@/utils/map-project-assets

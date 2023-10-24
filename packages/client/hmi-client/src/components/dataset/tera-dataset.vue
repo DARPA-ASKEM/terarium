@@ -37,12 +37,6 @@
 			</template>
 		</template>
 		<template v-if="view === DatasetView.DESCRIPTION">
-			<div class="container">
-				<Message class="inline-message" icon="none">
-					This page describes the dataset. Use the content switcher above to see the data table and
-					transformation tools.
-				</Message>
-			</div>
 			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
@@ -84,7 +78,6 @@
 					<tera-related-documents
 						:asset-type="ResourceType.DATASET"
 						:documents="documents"
-						:related-documents="relatedDocuments"
 						:assetId="assetId"
 						@enriched="fetchDataset"
 					/>
@@ -282,7 +275,6 @@ import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, cloneDeep, isEmpty } from 'lodash';
@@ -336,7 +328,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = computed(() => []);
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const newCsvContent: any = ref(null);
@@ -503,16 +494,6 @@ watch(
 	margin-left: 1rem;
 	margin-right: 1rem;
 	max-width: 70rem;
-}
-
-.inline-message:deep(.p-message-wrapper) {
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
-	border-width: 0px 0px 0px 6px;
 }
 
 .metadata {

@@ -200,7 +200,7 @@
 				</template>
 				<template #footer>
 					<Button @click="createNewProject">Create</Button>
-					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+					<Button severity="secondary" outlined @click="isNewProjectModalVisible = false"
 						>Cancel</Button
 					>
 				</template>

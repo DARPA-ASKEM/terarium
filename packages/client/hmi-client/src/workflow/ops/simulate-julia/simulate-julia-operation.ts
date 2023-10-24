@@ -1,9 +1,9 @@
 import { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { ChartConfig } from '@/types/SimulateConfig';
+import { SimulationConfig } from '@/types/SimulateConfig';
 
 export interface SimulateJuliaOperationState {
-	chartConfigs: ChartConfig[];
+	simConfigs: SimulationConfig;
 	currentTimespan: TimeSpan;
 	simulationsInProgress: string[];
 }
@@ -18,7 +18,7 @@ export const SimulateJuliaOperation: Operation = {
 
 	initState: () => {
 		const init: SimulateJuliaOperationState = {
-			chartConfigs: [],
+			simConfigs: { runConfigs: {}, chartConfigs: [] },
 			currentTimespan: { start: 1, end: 100 },
 			simulationsInProgress: []
 		};
