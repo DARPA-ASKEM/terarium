@@ -28,14 +28,19 @@
 						auto
 						chooseLabel="Load file"
 					/>
-					<Button label="Save" @click="saveCode" />
+					<Button label="Save" @click="saveCode()" />
 					<Button label="Save as new" @click="isCodeNamingModalVisible = true" />
 					<Button
 						label="Create model from code"
 						@click="isModelNamingModalVisible = true"
 						:loading="isCodeToModelLoading"
 					/>
-					<Button label="Add to dynamics" :disabled="selectionRange === null" @click="saveCode" />
+					<Button label="Add to dynamics" :disabled="selectionRange === null" @click="addDynamic" />
+					<Button
+						label="Remove all dynamics"
+						:disabled="!codeAsset?.files"
+						@click="removeAllDynamics"
+					/>
 				</section>
 			</section>
 		</template>
@@ -239,36 +244,55 @@ function highlightDynamics() {
 				}
 			}
 		});
+	} else {
+		removeMarkers();
 	}
 }
 
-async function saveCode() {
-	const existingCode = useProjects().activeProject.value?.assets?.code.find(
-		(c) => c.id === props.assetId
-	);
-	if (existingCode?.id) {
-		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
-		const code = { ...existingCode, name: codeName.value };
-		const file = new File([codeText.value], codeName.value);
-
-		// Add highlighted block to dynamics
-		if (selectedRangeToString.value) {
-			if (!code.files) code.files = {};
-
-			// For now we are supporting one file per asset
-			if (code.files[codeName.value]) {
-				code.files[codeName.value].dynamics.block.push(selectedRangeToString.value);
-			} else {
-				code.files[codeName.value] = {
-					language: getProgrammingLanguage(codeName.value),
-					dynamics: {
-						name: 'Main Dynamics',
-						description: 'Test description',
-						block: [selectedRangeToString.value]
-					}
-				};
-			}
+function removeMarkers() {
+	existingMarkers.clear();
+	if (editor.value) {
+		const markers = editor.value.session.getMarkers();
+		if (markers) {
+			Object.keys(markers).forEach((item) => editor.value?.session.removeMarker(markers[item].id));
 		}
+	}
+}
+
+async function removeAllDynamics() {
+	const codeAssetClone = codeAsset.value;
+	delete codeAssetClone?.files;
+	saveCode(codeAssetClone);
+}
+
+async function addDynamic() {
+	const codeAssetClone = codeAsset.value;
+	// Add highlighted block to dynamics
+	if (selectedRangeToString.value && codeAssetClone) {
+		if (!codeAssetClone.files) codeAssetClone.files = {};
+
+		// For now we are supporting one file per asset
+		if (codeAssetClone.files[codeName.value]) {
+			codeAssetClone.files[codeName.value].dynamics.block.push(selectedRangeToString.value);
+		} else {
+			codeAssetClone.files[codeName.value] = {
+				language: getProgrammingLanguage(codeName.value),
+				dynamics: {
+					name: 'Main Dynamics',
+					description: 'Test description',
+					block: [selectedRangeToString.value]
+				}
+			};
+		}
+	}
+	saveCode(codeAssetClone);
+}
+
+async function saveCode(codeAssetToSave: Code | null = codeAsset.value) {
+	if (codeAssetToSave?.id) {
+		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
+		const code = { ...codeAssetToSave, name: codeName.value };
+		const file = new File([codeText.value], codeName.value);
 
 		const res = await updateCodeAsset(code, file, progress); // This returns an object with an id not the whole code asset...
 		if (!res?.id) {
@@ -369,16 +393,8 @@ watch(
 			}
 		}
 		// Remove dynamics of previous file then add the new ones
-		existingMarkers.clear();
-		if (editor.value) {
-			const prevMarkers = editor.value.session.getMarkers();
-			if (prevMarkers) {
-				Object.keys(prevMarkers).forEach((item) =>
-					editor.value?.session.removeMarker(prevMarkers[item].id)
-				);
-			}
-			highlightDynamics();
-		}
+		removeMarkers();
+		highlightDynamics();
 		emit('asset-loaded');
 	},
 	{ immediate: true }
@@ -405,13 +421,14 @@ h4 {
 	margin-top: 0.25rem;
 }
 
-.buttons {
-	display: flex;
-	gap: 0.5rem;
+.p-dropdown {
+	height: 2.75rem;
 }
 
-.buttons > * {
-	height: 2.5rem;
+.buttons {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 }
 
 .ace-editor {
