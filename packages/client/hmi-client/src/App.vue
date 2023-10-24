@@ -132,9 +132,8 @@ API.interceptors.response.use(
 // Update the project when the projectId changes
 watch(
 	() => route.params.projectId,
-	async (projectId) => {
-		await useProjects().get(projectId as IProject['id']);
-		await useProjects().getAll();
+	(projectId) => {
+		useProjects().get(projectId as IProject['id']);
 	},
 	{ immediate: true }
 );
