@@ -35,7 +35,11 @@
 						@click="isModelNamingModalVisible = true"
 						:loading="isCodeToModelLoading"
 					/>
-					<Button label="Add to dynamics" :disabled="selectionRange === null" @click="addDynamic" />
+					<Button
+						label="Add dynamics"
+						:disabled="selectionRange === null"
+						@click="isDynamicsModalVisible = true"
+					/>
 					<Button
 						label="Remove all dynamics"
 						:disabled="!codeAsset?.files"
@@ -89,6 +93,41 @@
 						severity="secondary"
 						outlined
 						@click="isModelNamingModalVisible = false"
+					/>
+				</template>
+			</tera-modal>
+			<tera-modal
+				v-if="isDynamicsModalVisible"
+				class="modal"
+				@modal-mask-clicked="isDynamicsModalVisible = false"
+				@modal-enter-press="isDynamicsModalVisible = false"
+			>
+				<template #header>
+					<h4>Add dynamics</h4>
+				</template>
+				<template #default>
+					<form @submit.prevent>
+						<label for="model-name">Dynamics name</label>
+						<InputText id="model-name" type="text" v-model="newDynamicsName" />
+						<label for="model-description">Enter a description (optional)</label>
+						<Textarea v-model="newDynamicsDescription" />
+					</form>
+				</template>
+				<template #footer>
+					<Button
+						label="Add dynamics"
+						@click="
+							() => {
+								isDynamicsModalVisible = false;
+								addDynamic();
+							}
+						"
+					/>
+					<Button
+						label="Cancel"
+						severity="secondary"
+						outlined
+						@click="isDynamicsModalVisible = false"
 					/>
 				</template>
 			</tera-modal>
@@ -184,9 +223,12 @@ const willGenerateFromDynamics = ref(false);
 const isModelDiagramModalVisible = ref(false);
 const isModelNamingModalVisible = ref(false);
 const isCodeNamingModalVisible = ref(false);
+const isDynamicsModalVisible = ref(false);
 const newCodeName = ref('');
 const newModelName = ref('');
 const newModelDescription = ref('');
+const newDynamicsName = ref('');
+const newDynamicsDescription = ref('');
 const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
 const programmingLanguages = [
 	ProgrammingLanguage.Julia,
@@ -244,7 +286,7 @@ function highlightDynamics() {
 				}
 			}
 		});
-	} else {
+	} else if (!isEmpty(existingMarkers)) {
 		removeMarkers();
 	}
 }
@@ -278,8 +320,8 @@ async function addDynamic() {
 			codeAssetClone.files[codeName.value] = {
 				language: getProgrammingLanguage(codeName.value),
 				dynamics: {
-					name: 'Main Dynamics',
-					description: 'Test description',
+					name: newDynamicsName.value,
+					description: newDynamicsDescription.value,
 					block: [selectedRangeToString.value]
 				}
 			};
@@ -344,11 +386,15 @@ async function extractModel() {
 		);
 		isCodeToModelLoading.value = false;
 		if (extractedModelId) {
+			await useProjects().addAsset(
+				AssetType.Models,
+				extractedModelId,
+				useProjects().activeProject.value?.id
+			);
 			router.push({
 				name: RouteName.Project,
 				params: {
 					pageType: AssetType.Models,
-					projectId: useProjects().activeProject.value?.id,
 					assetId: extractedModelId
 				}
 			});
