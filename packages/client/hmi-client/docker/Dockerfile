@@ -10,7 +10,3 @@ COPY api-proxy.conf timeouts.conf upstream.conf /etc/nginx/
 
 # copy the web assets
 COPY ./dist /var/www
-
-# install wait-for-it
-ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/81b1373f17855a4dc21156cfe1694c31d7d1792e/wait-for-it.sh /usr/local/bin/wait-for-it.sh
-RUN chmod +x /usr/local/bin/wait-for-it.sh
