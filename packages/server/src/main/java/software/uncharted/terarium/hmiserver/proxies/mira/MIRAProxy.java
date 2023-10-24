@@ -13,7 +13,7 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import java.util.List;
 
 
-@FeignClient(name = "mira-api", url = "${mira-api.url}")
+@FeignClient(name = "mira-api", url = "${mira-api.url}", path = "/api")
 public interface MIRAProxy {
 	@GetMapping("/entity/{curie}")
 	ResponseEntity<DKG> getEntity(
