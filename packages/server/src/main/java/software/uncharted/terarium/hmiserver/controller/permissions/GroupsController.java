@@ -63,7 +63,7 @@ public class GroupsController {
 	) {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).hasMembership(rebacGroup)) {
 				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
 				PermissionRelationships permissions = new PermissionRelationships();
 				for (RebacPermissionRelationship permissionRelationship : relationships) {
