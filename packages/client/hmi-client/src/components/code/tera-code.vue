@@ -165,6 +165,8 @@ const emit = defineEmits(['asset-loaded']);
 
 const toast = useToastService();
 
+const existingMarkers = new Set();
+
 const codeName = ref('');
 const codeText = ref(INITIAL_TEXT);
 const codeAsset = ref<Code | null>(null);
@@ -201,7 +203,6 @@ async function initialize(editorInstance) {
 	editor.value = editorInstance;
 	editorInstance.session.selection.on('changeSelection', onSelectedTextChange);
 	editorInstance.setShowPrintMargin(false);
-	highlightDynamics();
 }
 
 /**
@@ -214,13 +215,30 @@ function onSelectedTextChange() {
 }
 
 function highlightDynamics() {
-	if (selectionRange.value) {
-		const { start, end } = selectionRange.value;
-		editor.value?.session.addMarker(
-			new Range(start.row, 0, end.row, 0),
-			'ace_active-line',
-			'fullLine'
-		);
+	if (codeAsset.value?.files) {
+		const { name, files } = codeAsset.value;
+
+		Object.keys(files).forEach((fileName) => {
+			if (fileName === name) {
+				const { block } = files[fileName].dynamics;
+				// Loop through every highlighted block
+				for (let i = 0; i < block.length; i++) {
+					// Avoids rehighlighting
+					if (!existingMarkers.has(block[i])) {
+						// Extract start and end rows and highlight them in the editor
+						const match = block[i].match(/L(\d+)-L(\d+)/) || [];
+						const startRow = parseInt(match[1], 10) - 1;
+						const endRow = parseInt(match[2], 10) - 1;
+						editor.value?.session.addMarker(
+							new Range(startRow, 0, endRow, 0),
+							'ace_active-line',
+							'fullLine'
+						);
+						existingMarkers.add(block[i]);
+					}
+				}
+			}
+		});
 	}
 }
 
@@ -233,31 +251,37 @@ async function saveCode() {
 		const code = { ...existingCode, name: codeName.value };
 		const file = new File([codeText.value], codeName.value);
 
+		// Add highlighted block to dynamics
 		if (selectedRangeToString.value) {
 			if (!code.files) code.files = {};
 
-			code.files[codeName.value] = {
-				language: getProgrammingLanguage(codeName.value),
-				dynamics: {
-					name: 'Main Dynamics',
-					description: 'Test description',
-					block: [selectedRangeToString.value]
-				}
-			};
+			// For now we are supporting one file per asset
+			if (code.files[codeName.value]) {
+				code.files[codeName.value].dynamics.block.push(selectedRangeToString.value);
+			} else {
+				code.files[codeName.value] = {
+					language: getProgrammingLanguage(codeName.value),
+					dynamics: {
+						name: 'Main Dynamics',
+						description: 'Test description',
+						block: [selectedRangeToString.value]
+					}
+				};
+			}
 		}
 
-		const updatedCode = await updateCodeAsset(code, file, progress);
-		if (!updatedCode) {
+		const res = await updateCodeAsset(code, file, progress); // This returns an object with an id not the whole code asset...
+		if (!res?.id) {
 			toast.error('', 'Unable to save file');
 		} else {
 			toast.success('', `File saved as ${codeName.value}`);
-			codeAsset.value = updatedCode;
-			if (selectedRangeToString.value) highlightDynamics();
+			codeAsset.value = await getCodeAsset(res.id);
+			highlightDynamics();
 		}
-		return updatedCode;
+	} else {
+		newCodeName.value = codeName.value;
+		saveNewCode();
 	}
-	newCodeName.value = codeName.value;
-	return saveNewCode();
 }
 
 async function saveNewCode() {
@@ -271,6 +295,7 @@ async function saveNewCode() {
 	if (newAsset) {
 		toast.success('', `File saved as ${codeName.value}`);
 		codeAsset.value = newCode;
+
 		router.push({
 			name: RouteName.Project,
 			params: {
@@ -279,18 +304,16 @@ async function saveNewCode() {
 				assetId: codeAsset?.value?.id
 			}
 		});
-		return newCode;
 	}
 	toast.error('', 'Unable to save file');
-	return newCode;
 }
 
 async function extractModel() {
-	const newCodeAsset = await saveCode();
-	if (newCodeAsset?.id) {
+	await saveCode();
+	if (codeAsset.value?.id) {
 		isCodeToModelLoading.value = true;
 		const extractedModelId = await codeToAMR(
-			newCodeAsset.id,
+			codeAsset.value.id,
 			newModelName.value,
 			newModelDescription.value,
 			willGenerateFromDynamics.value
@@ -322,17 +345,13 @@ async function onFileOpen(event) {
 watch(
 	() => props.assetId,
 	async () => {
-		// Remove dynamics
-		if (editor.value) {
-			const prevMarkers = editor.value.session.getMarkers();
-			if (prevMarkers) {
-				Object.keys(prevMarkers).forEach((item) =>
-					editor.value?.session.removeMarker(prevMarkers[item].id)
-				);
-			}
-		}
-		if (props.assetId !== AssetType.Code) {
+		if (props.assetId === AssetType.Code) {
 			// FIXME: assetId is 'code' for a newly opened code asset; a hack to get around some weird tab behaviour
+			codeAsset.value = null;
+			codeName.value = 'newcode.py';
+			codeText.value = INITIAL_TEXT;
+			programmingLanguage.value = ProgrammingLanguage.Python;
+		} else {
 			const code = await getCodeAsset(props.assetId);
 			if (code) {
 				codeAsset.value = code;
@@ -348,11 +367,17 @@ watch(
 				codeText.value = INITIAL_TEXT;
 				programmingLanguage.value = ProgrammingLanguage.Python;
 			}
-		} else {
-			codeAsset.value = null;
-			codeName.value = 'newcode.py';
-			codeText.value = INITIAL_TEXT;
-			programmingLanguage.value = ProgrammingLanguage.Python;
+		}
+		// Remove dynamics of previous file then add the new ones
+		existingMarkers.clear();
+		if (editor.value) {
+			const prevMarkers = editor.value.session.getMarkers();
+			if (prevMarkers) {
+				Object.keys(prevMarkers).forEach((item) =>
+					editor.value?.session.removeMarker(prevMarkers[item].id)
+				);
+			}
+			highlightDynamics();
 		}
 		emit('asset-loaded');
 	},
