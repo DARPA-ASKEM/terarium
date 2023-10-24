@@ -107,7 +107,9 @@
 			/>
 			<tera-modal
 				v-else-if="
-					openValueConfig && modalAttributes.stratifiedMatrixType && modalAttributes.odeObjIndex
+					openValueConfig &&
+					modalAttributes.stratifiedMatrixType &&
+					isNumber(modalAttributes.odeObjIndex)
 				"
 				@modal-mask-clicked="openValueConfig = false"
 				@modal-enter-press="setModelParameters"
@@ -194,7 +196,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty, cloneDeep, isNumber } from 'lodash';
 import {
 	StratifiedModel,
 	getStratificationType
@@ -465,7 +467,8 @@ function setModelParameters() {
 	if (
 		checkModelParameters() &&
 		modalAttributes.value.stratifiedMatrixType &&
-		modalAttributes.value.odeObjIndex
+		modalAttributes.value.valueName &&
+		isNumber(modalAttributes.value.odeObjIndex)
 	) {
 		const { stratifiedMatrixType, valueName, configIndex, odeObjIndex } = modalAttributes.value;
 		const configToUpdate = cloneDeep(props.modelConfigurations[configIndex]);
@@ -496,6 +499,7 @@ function setModelParameters() {
 			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
 		emit('update-configuration', configToUpdate);
+		openValueConfig.value = false;
 	}
 }
 
