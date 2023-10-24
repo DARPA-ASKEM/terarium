@@ -87,7 +87,7 @@ services:
       - terarium
     ports:
       - "50051:50051"
-    command: [ "serve" ]
+    command: ["serve"]
     environment:
       SPICEDB_GRPC_PRESHARED_KEY: "dev"
       SPICEDB_DATASTORE_ENGINE: "postgres"
