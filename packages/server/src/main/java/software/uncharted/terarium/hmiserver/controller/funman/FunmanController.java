@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.proxies.funman.FunmanProxy;
+import software.uncharted.terarium.hmiserver.models.funman.requests.FunmanPostQueries;
+import software.uncharted.terarium.hmiserver.models.funman.responses.FunmanGetQueriesResponse;
+import software.uncharted.terarium.hmiserver.models.funman.responses.FunmanPostQueriesResponse;
 
 @RestController
 @RequestMapping("/funman/queries")
@@ -22,21 +25,16 @@ public class FunmanController {
     }
 
     @GetMapping("/{query_id}")
-    public ResponseEntity<JsonNode> getQueries(@PathVariable String query_id) {
-        ResponseEntity<JsonNode> response = funmanProxy.getQueries(query_id);
+    public ResponseEntity<FunmanGetQueriesResponse> getQueries(@PathVariable String query_id) {
+        ResponseEntity<FunmanGetQueriesResponse> response = funmanProxy.getQueries(query_id);
 
         return ResponseEntity.ok(response.getBody());
     }
 
     @PostMapping
-    public ResponseEntity<JsonNode> postQueries(@RequestBody JsonNode requestBody) {
-        ResponseEntity<JsonNode> response = funmanProxy.postQueries(requestBody);
+public ResponseEntity<FunmanPostQueriesResponse> postQueries(@RequestBody FunmanPostQueries requestBody) {
+    ResponseEntity<FunmanPostQueriesResponse> response = funmanProxy.postQueries(requestBody);
 
-        // Check and override the status code if it's 404
-        // if(response.getStatusCode().value() == 404) {
-        //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response.getBody());
-        // }
-
-        return ResponseEntity.ok(response.getBody());
-    }
+    return response;
+}
 }
