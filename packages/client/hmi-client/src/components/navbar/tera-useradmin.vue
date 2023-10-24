@@ -1,9 +1,11 @@
 <template>
 	<main>
 		<header>
-			<h4>User Administration</h4>
+			<h4>Administration</h4>
+			<SelectButton v-model="view" :options="views" />
 		</header>
 		<DataTable
+			v-if="view === View.USER"
 			:value="adminTableData"
 			v-model:selection="selectedAdminRow"
 			selectionMode="single"
@@ -37,15 +39,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import DataTable, { DataTableRowSelectEvent } from 'primevue/datatable';
 import Column from 'primevue/column';
 import API from '@/api/api';
 import MultiSelect from 'primevue/multiselect';
+import SelectButton from 'primevue/selectbutton';
 
 interface Role {
 	id: string;
 	name: string;
+}
+
+enum View {
+	USER = 'User',
+	GROUP = 'Group'
 }
 
 const systemRoles = ref<Role[]>([]);
@@ -53,6 +61,9 @@ const adminTableData = ref();
 const selectedId = ref();
 const selectedAdminRow = ref();
 const selectedRoles = ref<Role[]>([]);
+
+const view = ref(View.USER);
+const views = [View.USER, View.GROUP];
 
 const getRoles = async () => {
 	try {
@@ -76,11 +87,26 @@ const getUsers = async () => {
 	}
 	return null;
 };
+const getGroups = async () => {
+	try {
+		const response = await API.get('/groups');
+		if (response.status >= 200 && response.status < 300) {
+			// adminTableData.value = response.data;
+			console.log(response.data);
+			response.data.forEach(async (r) => {
+				const group = await API.get(`/groups/${r.id}`);
+				console.log(group.data);
+			});
+		}
+	} catch (err) {
+		console.log(err);
+	}
+	return null;
+};
 
 const onRowSelect = (event: DataTableRowSelectEvent) => {
 	selectedId.value = event.data.id;
 	selectedRoles.value = event.data.roles;
-	console.log('rowselect');
 };
 
 const addRole = async (role) => {
@@ -125,8 +151,6 @@ function getRoleNames(roles: Role[]) {
 const updateRoles = () => {
 	if (selectedId.value) {
 		const existingRoles = adminTableData.value.find((user) => user.id === selectedId.value).roles;
-		console.log(existingRoles);
-		console.log(selectedRoles.value);
 		const rolesToAdd =
 			selectedRoles.value.filter(
 				({ name }) => !existingRoles.map((role) => role.name).includes(name)
@@ -135,8 +159,6 @@ const updateRoles = () => {
 			existingRoles.filter(
 				({ name }) => !selectedRoles.value.map((role) => role.name).includes(name)
 			) ?? [];
-		console.log(rolesToAdd);
-		console.log(rolesToRemove);
 		rolesToAdd.forEach((role) => {
 			console.log(`add ${role.name}`);
 			addRole(role);
@@ -147,6 +169,18 @@ const updateRoles = () => {
 		});
 	}
 };
+
+watch(
+	() => view.value,
+	() => {
+		if (view.value === View.USER) {
+			getRoles();
+			getUsers();
+		} else if (view.value === View.GROUP) {
+			getGroups();
+		}
+	}
+);
 
 onMounted(() => {
 	getRoles();
@@ -159,6 +193,12 @@ main {
 	display: flex;
 	flex-direction: column;
 	padding: 1rem 1rem 0 1rem;
+}
+
+header {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr),
