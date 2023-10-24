@@ -10,7 +10,7 @@ services:
     ports:
       - "3000:3000"
     healthcheck:
-      test: [ "CMD", "curl", "--head", "0.0.0.0:3000/actuator/health" ]
+      test: ["CMD", "curl", "--head", "0.0.0.0:3000/actuator/health"]
       interval: "3s"
       timeout: "3s"
       retries: 30
@@ -73,7 +73,7 @@ services:
       - "8080:80"
     restart: always
     healthcheck:
-      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
+      test: ["CMD", "curl", "--head", "0.0.0.0:80/healthcheck"]
       interval: "3s"
       timeout: "3s"
       retries: 30
@@ -90,7 +90,7 @@ services:
       - "8082:80"
     restart: always
     healthcheck:
-      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
+      test: ["CMD", "curl", "--head", "0.0.0.0:80/healthcheck"]
       interval: "3s"
       timeout: "3s"
       retries: 30
