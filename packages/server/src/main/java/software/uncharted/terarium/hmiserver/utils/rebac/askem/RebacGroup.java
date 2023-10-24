@@ -14,7 +14,7 @@ public class RebacGroup extends RebacObject {
 	}
 
 	public SchemaObject getSchemaObject() {
-		return new SchemaObject(Schema.Type.USER, getId());
+		return new SchemaObject(Schema.Type.GROUP, getId());
 	}
 
 	public boolean hasMembership(RebacObject rebacObject) throws Exception {
