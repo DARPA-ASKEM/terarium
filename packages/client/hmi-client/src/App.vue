@@ -4,7 +4,7 @@
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<tera-navbar class="header" :active="!isErrorState" :show-suggestions="showSuggestions" />
+	<tera-navbar class="header" :active="displayNavBar" :show-suggestions="showSuggestions" />
 	<main>
 		<router-view v-slot="{ Component }">
 			<component class="page" ref="pageRef" :is="Component" />
@@ -15,15 +15,16 @@
 		<div class="footer-group">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
-			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue"
-				>Report an issue</a
-			>
+			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue">
+				Report an issue
+			</a>
 			<a
 				target="_blank"
 				rel="noopener noreferrer"
 				href="https://terarium.canny.io/request-a-feature"
-				>Request a feature</a
 			>
+				Request a feature
+			</a>
 		</div>
 	</footer>
 	<tera-modal
@@ -88,6 +89,7 @@ import { useProjects } from '@/composables/project';
 import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
+
 /**
  * Router
  */
@@ -95,12 +97,13 @@ const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
 
-const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
+const displayNavBar = computed(() => currentRoute.value.name !== 'unauthorized');
 
 // This pageRef is used to grab the assetType being searched for in data-explorer.vue, it is accessed using defineExpose
 const pageRef = ref();
 // For navbar.vue -> search-bar.vue
-// Later the asset type searched for in the data explorer should be in the route so we won't have to pass this from here
+// Later the asset type searched for in the data explorer should be in the route,
+// so we won't have to pass this from here
 const showSuggestions = computed(() => {
 	const assetType = pageRef.value?.resourceType ?? ResourceType.XDD;
 	return assetType === ResourceType.XDD;
@@ -126,12 +129,11 @@ API.interceptors.response.use(
 	}
 );
 
+// Update the project when the projectId changes
 watch(
 	() => route.params.projectId,
-	async (projectId) => {
+	(projectId) => {
 		useProjects().get(projectId as IProject['id']);
-		// Refetch the list of all projects
-		useProjects().getAll();
 	},
 	{ immediate: true }
 );
