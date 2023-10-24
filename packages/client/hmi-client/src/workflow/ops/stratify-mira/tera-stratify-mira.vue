@@ -48,7 +48,9 @@
 	</div>
 	<div v-else class="container">
 		<div class="left-side">
-			<teraMiraNotebook />
+			<Suspense>
+				<teraMiraNotebook />
+			</Suspense>
 		</div>
 		<div class="right-side">
 			<tera-model-diagram
