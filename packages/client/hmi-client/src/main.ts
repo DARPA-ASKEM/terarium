@@ -3,8 +3,9 @@ import { createApp } from 'vue';
 import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
 import ConfirmationService from 'primevue/confirmationservice';
-import ToastService from 'primevue/toastservice';
+import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import PrimeVue from 'primevue/config';
+import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
 import VueFeather from 'vue-feather';
 import VueGtag from 'vue-gtag';
@@ -12,15 +13,14 @@ import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
-import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import API from '@/api/api';
 import useAuthStore from '@/stores/auth';
 import { init } from '@/services/ClientEventService';
-import router from './router';
+import router from '@/router';
 import '@node_modules/katex/dist/katex.min.css';
-import App from './App.vue';
-import { useProjects } from './composables/project';
-import './assets/css/style.scss';
+import App from '@/App.vue';
+import { useProjects } from '@/composables/project';
+import '@/assets/css/style.scss';
 
 // Create the Vue application
 const app = createApp(App);
@@ -29,7 +29,7 @@ app.use(createPinia());
 
 // Set up the Keycloak authentication
 const authStore = useAuthStore();
-const keycloak = new Keycloak('/api/keycloak/config');
+const keycloak = new Keycloak('/api/configuration/keycloak');
 authStore.setKeycloak(keycloak);
 
 // If the authentication failed, reload the page
