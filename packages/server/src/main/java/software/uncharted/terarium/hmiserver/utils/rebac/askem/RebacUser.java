@@ -30,8 +30,8 @@ public class RebacUser extends RebacObject {
 		return reBACService.canAdministrate(getSchemaObject(), rebacObject.getSchemaObject());
 	}
 
-	public boolean hasMembership(RebacGroup rebacGroup) throws Exception {
-		return reBACService.hasMembership(getSchemaObject(), rebacGroup.getSchemaObject());
+	public boolean isMemberOf(RebacGroup rebacGroup) throws Exception {
+		return reBACService.isMemberOf(getSchemaObject(), rebacGroup.getSchemaObject());
 	}
 
 	public void createCreatorRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {

@@ -21,7 +21,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -41,18 +40,6 @@ public class GroupsController {
 		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
 		List<PermissionGroup> groups = (List<PermissionGroup>) reBACService.getGroups();
-//		.stream()
-//			.filter(group -> {
-//				RebacGroup rebacGroup = new RebacGroup(group.getId(), reBACService);
-//				try {
-//					if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
-//						return true;
-//					}
-//				} catch (Exception e) {
-//					log.error("Error checking group", e);
-//				}
-//				return false;
-//			});
 		return ResponseEntity.ok(groups);
 	}
 
@@ -63,7 +50,7 @@ public class GroupsController {
 	) {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).hasMembership(rebacGroup)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).isMemberOf(rebacGroup)) {
 				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
 				PermissionRelationships permissions = new PermissionRelationships();
 				for (RebacPermissionRelationship permissionRelationship : relationships) {

@@ -301,7 +301,7 @@ public class ReBACService {
 		return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
 	}
 
-	public boolean hasMembership(SchemaObject who, SchemaObject what) throws Exception {
+	public boolean isMemberOf(SchemaObject who, SchemaObject what) throws Exception {
 		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, full);
