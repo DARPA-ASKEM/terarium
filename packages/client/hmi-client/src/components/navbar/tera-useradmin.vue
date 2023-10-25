@@ -6,14 +6,14 @@
 		</header>
 		<DataTable
 			v-if="view === View.USER"
-			:value="adminTableData"
+			:value="userTableData"
 			v-model:selection="selectedAdminRow"
 			selectionMode="single"
 			dataKey="id"
-			@rowSelect="onRowSelect"
+			@rowSelect="onUserRowSelect"
 			scrollable
 			scrollHeight="flex"
-			class="p-datatable-sm"
+			class="p-datatable-sm user"
 			sortMode="multiple"
 		>
 			<Column field="email" header="Email" sortable></Column>
@@ -35,6 +35,27 @@
 				</template>
 			</Column>
 		</DataTable>
+		<DataTable
+			v-else-if="view === View.GROUP"
+			v-model:expandedRows="expandedRows"
+			:value="groupTableData"
+			dataKey="id"
+			scrollable
+			scrollHeight="flex"
+			class="p-datatable-sm group"
+			selectionMode="single"
+		>
+			<Column expander style="width: 5rem" />
+			<Column field="name" header="Name" sortable></Column>
+			<template #expansion="slotProps">
+				<DataTable :value="slotProps.data.permissionRelationships.permissionUsers" id="user">
+					<Column field="email" header="Email" sortable></Column>
+					<Column field="firstName" header="First name" sortable></Column>
+					<Column field="lastName" header="Last name" sortable></Column>
+				</DataTable>
+			</template>
+		</DataTable>
+		<tera-share-group v-model="isShareDialogVisible" />
 	</main>
 </template>
 
@@ -45,6 +66,9 @@ import Column from 'primevue/column';
 import API from '@/api/api';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
+import { PermissionGroup } from '@/types/Types';
+import TeraShareGroup from '@/components/widgets/share-project/tera-share-group.vue';
+import { getAllGroups } from '@/services/groups';
 
 interface Role {
 	id: string;
@@ -56,14 +80,21 @@ enum View {
 	GROUP = 'Group'
 }
 
+// User admin table
 const systemRoles = ref<Role[]>([]);
-const adminTableData = ref();
+const userTableData = ref();
 const selectedId = ref();
 const selectedAdminRow = ref();
 const selectedRoles = ref<Role[]>([]);
 
+// Group admin table
+const groupTableData = ref<PermissionGroup[] | null>(null);
+const expandedRows = ref([]);
+
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];
+
+const isShareDialogVisible = ref(false);
 
 const getRoles = async () => {
 	try {
@@ -80,23 +111,7 @@ const getUsers = async () => {
 	try {
 		const response = await API.get('/users');
 		if (response.status >= 200 && response.status < 300) {
-			adminTableData.value = response.data;
-		}
-	} catch (err) {
-		console.log(err);
-	}
-	return null;
-};
-const getGroups = async () => {
-	try {
-		const response = await API.get('/groups');
-		if (response.status >= 200 && response.status < 300) {
-			// adminTableData.value = response.data;
-			console.log(response.data);
-			response.data.forEach(async (r) => {
-				const group = await API.get(`/groups/${r.id}`);
-				console.log(group.data);
-			});
+			userTableData.value = response.data;
 		}
 	} catch (err) {
 		console.log(err);
@@ -104,7 +119,7 @@ const getGroups = async () => {
 	return null;
 };
 
-const onRowSelect = (event: DataTableRowSelectEvent) => {
+const onUserRowSelect = (event: DataTableRowSelectEvent) => {
 	selectedId.value = event.data.id;
 	selectedRoles.value = event.data.roles;
 };
@@ -150,7 +165,7 @@ function getRoleNames(roles: Role[]) {
 
 const updateRoles = () => {
 	if (selectedId.value) {
-		const existingRoles = adminTableData.value.find((user) => user.id === selectedId.value).roles;
+		const existingRoles = userTableData.value.find((user) => user.id === selectedId.value).roles;
 		const rolesToAdd =
 			selectedRoles.value.filter(
 				({ name }) => !existingRoles.map((role) => role.name).includes(name)
@@ -172,12 +187,12 @@ const updateRoles = () => {
 
 watch(
 	() => view.value,
-	() => {
+	async () => {
 		if (view.value === View.USER) {
 			getRoles();
 			getUsers();
 		} else if (view.value === View.GROUP) {
-			getGroups();
+			groupTableData.value = await getAllGroups();
 		}
 	}
 );
@@ -201,10 +216,30 @@ header {
 	gap: 1rem;
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr),
-.p-datatable:deep(.p-datatable-thead > tr) {
+.p-datatable.user:deep(.p-datatable-tbody > tr),
+.p-datatable.user:deep(.p-datatable-thead > tr) {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
+}
+
+.p-datatable#user:deep(.p-datatable-tbody > tr),
+.p-datatable#user:deep(.p-datatable-thead > tr) {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+}
+
+.p-datatable.group:deep(.p-datatable-tbody > tr),
+.p-datatable.group:deep(.p-datatable-thead > tr) {
+	display: flex;
+}
+
+.p-datatable.group:deep(.p-datatable-tbody > tr > td:last-child),
+.p-datatable.group:deep(.p-datatable-thead > tr > th:last-child) {
+	flex-grow: 1;
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr.p-datatable-row-expansion > td) {
+	background: var(--surface-100);
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td),
