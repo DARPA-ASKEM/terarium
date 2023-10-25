@@ -63,6 +63,10 @@ services:
         condition: service_started
       model-service:
         condition: service_started
+      redis:
+        condition: service_started
+      message-queue:
+        condition: service_started
 
   hmi-client:
     image: ghcr.io/darpa-askem/hmi-client:latest

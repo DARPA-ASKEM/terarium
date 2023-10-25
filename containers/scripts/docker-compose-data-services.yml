@@ -3,7 +3,8 @@ version: "3.8"
 
 services:
   data-service-migrations:
-    image: ghcr.io/darpa-askem/data-service-migrations:latest
+    image: ghcr.io/darpa-askem/data-service:latest
+    command: ['/api/migrations/run_migrations.sh']
     networks:
       - terarium
     entrypoint: /run_migrations.sh
