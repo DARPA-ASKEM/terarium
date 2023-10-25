@@ -37,6 +37,7 @@
 		"@uncharted.software/facets-core": "3.2.6",
 		"@uncharted.software/facets-plugins": "3.2.5",
 		"@vue/runtime-dom": "3.3.4",
+		"@vueup/vue-quill": "1.2.0",
 		"ace-builds": "1.22.1",
 		"axios": "1.5.1",
 		"chart.js": "4.2.1",
