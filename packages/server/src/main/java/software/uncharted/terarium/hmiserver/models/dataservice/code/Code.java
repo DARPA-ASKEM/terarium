@@ -34,6 +34,7 @@ public class Code {
 	/* The name of the file in this code*/
 	private String filename;
 
+	/* Files that contain dynamics */
 	@TSOptional
 	private Map<String, CodeFile> files;
 

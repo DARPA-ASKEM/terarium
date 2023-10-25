@@ -261,6 +261,13 @@ function onSelectedTextChange() {
 		!isEmpty(selectedText.value) && editor.value ? editor.value.getSelectionRange() : null;
 }
 
+function extractDynamicRows(range: string) {
+	const match = range.match(/L(\d+)-L(\d+)/) || [];
+	const startRow = parseInt(match[1], 10) - 1;
+	const endRow = parseInt(match[2], 10) - 1;
+	return { startRow, endRow };
+}
+
 function highlightDynamics() {
 	if (codeAsset.value?.files) {
 		const { name, files } = codeAsset.value;
@@ -273,15 +280,15 @@ function highlightDynamics() {
 					// Avoids rehighlighting
 					if (!existingMarkers.has(block[i])) {
 						// Extract start and end rows and highlight them in the editor
-						const match = block[i].match(/L(\d+)-L(\d+)/) || [];
-						const startRow = parseInt(match[1], 10) - 1;
-						const endRow = parseInt(match[2], 10) - 1;
-						editor.value?.session.addMarker(
-							new Range(startRow, 0, endRow, 0),
-							'ace_active-line',
-							'fullLine'
-						);
-						existingMarkers.add(block[i]);
+						const { startRow, endRow } = extractDynamicRows(block[i]);
+						if (!Number.isNaN(startRow) && !Number.isNaN(endRow)) {
+							editor.value?.session.addMarker(
+								new Range(startRow, 0, endRow, 0),
+								'ace_active-line',
+								'fullLine'
+							);
+							existingMarkers.add(block[i]);
+						}
 					}
 				}
 			}
