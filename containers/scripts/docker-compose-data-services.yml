@@ -7,7 +7,6 @@ services:
     command: ['/api/migrations/run_migrations.sh']
     networks:
       - terarium
-    entrypoint: /run_migrations.sh
     environment:
       DATASET_STORAGE_BASE_URL: "s3://datasets/"
       STORAGE_HOST: "http://${local_host_name}:4566"
