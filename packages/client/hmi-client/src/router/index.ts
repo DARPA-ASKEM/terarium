@@ -1,5 +1,5 @@
 import { computed } from 'vue';
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
@@ -60,10 +60,7 @@ const routes = [
 ];
 
 const router = createRouter({
-	// 4. Provide the history implementation to use. We are using the hash history for simplicity here.
-	history: createWebHashHistory(),
-
-	// short for `routes: routes`
+	history: createWebHistory(),
 	routes
 });
 

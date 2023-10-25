@@ -1,16 +1,6 @@
 <template>
 	<tera-model v-if="pageType === AssetType.Models" :asset-id="assetId ?? ''" />
 	<tera-code :asset-id="assetId ?? ''" v-else-if="pageType === AssetType.Code" />
-	<code-editor
-		v-else-if="pageType === AssetType.Artifacts && !assetName?.endsWith('.pdf')"
-		:initial-code="code"
-		@vue:mounted="openTextArtifact()"
-	/>
-	<tera-pdf-embed
-		v-else-if="pageType === AssetType.Artifacts && assetName?.endsWith('.pdf')"
-		:title="assetName"
-		:file-promise="getPDFBytes()"
-	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
 		@open-new-asset="(assetType: AssetType) => emit('open-new-asset', assetType)"
@@ -40,10 +30,7 @@ import TeraExternalPublication from '@/components/documents/tera-external-public
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
-import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import { getArtifactArrayBuffer, getArtifactFileAsText } from '@/services/artifact';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { AssetType } from '@/types/Types';
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
@@ -90,16 +77,6 @@ const getXDDuri = (assetId: string): string =>
 
 async function openCode() {
 	const res: string | null = await getCodeFileAsText(props.assetId!, assetName.value!);
-	if (!res) return;
-	code.value = res;
-}
-
-function getPDFBytes(): Promise<ArrayBuffer | null> {
-	return getArtifactArrayBuffer(props.assetId!, assetName.value!);
-}
-
-async function openTextArtifact() {
-	const res: string | null = await getArtifactFileAsText(props.assetId!, assetName.value!);
 	if (!res) return;
 	code.value = res;
 }

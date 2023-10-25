@@ -8,7 +8,7 @@
 				access.
 			</li>
 			<li>
-				Once you have been authroized please <a href="#" @click="auth.logout">Sign-in</a> again.
+				Once you have been authorized please <a href="#" @click="auth.logout">Sign-in</a> again.
 			</li>
 		</ol>
 	</section>
