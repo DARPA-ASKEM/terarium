@@ -175,11 +175,9 @@ const updateRoles = () => {
 				({ name }) => !selectedRoles.value.map((role) => role.name).includes(name)
 			) ?? [];
 		rolesToAdd.forEach((role) => {
-			console.log(`add ${role.name}`);
 			addRole(role);
 		});
 		rolesToRemove.forEach((role) => {
-			console.log(`remove ${role.name}`);
 			removeRole(role);
 		});
 	}
@@ -192,7 +190,6 @@ const onRowExpand = async (event) => {
 		groupTableData.value?.forEach((g) => {
 			if (g.id === group.id) {
 				g.permissionRelationships = group.permissionRelationships;
-				console.log(group.permissionRelationships);
 			}
 		});
 	}
