@@ -87,7 +87,7 @@
 						:stratified-model-type="stratifiedModelType"
 						:stratified-matrix-type="modalAttributes.stratifiedMatrixType"
 						:should-eval="matrixShouldEval"
-						@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
+						@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)"
 					/>
 				</template>
 				<template #footer>
@@ -103,11 +103,13 @@
 				:stratified-matrix-type="modalAttributes.stratifiedMatrixType"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
-				@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate, modalAttributes.configIndex)"
+				@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)"
 			/>
 			<tera-modal
 				v-else-if="
-					openValueConfig && modalAttributes.stratifiedMatrixType && modalAttributes.odeObjIndex
+					openValueConfig &&
+					modalAttributes.stratifiedMatrixType &&
+					isNumber(modalAttributes.odeObjIndex)
 				"
 				@modal-mask-clicked="openValueConfig = false"
 				@modal-enter-press="setModelParameters"
@@ -194,7 +196,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty, cloneDeep, isNumber } from 'lodash';
 import {
 	StratifiedModel,
 	getStratificationType
@@ -427,8 +429,8 @@ function checkModelParameters() {
 	return true;
 }
 
-function updateConfiguration(configToUpdate: ModelConfiguration, index: number) {
-	emit('update-configuration', configToUpdate, index);
+function updateConfiguration(configToUpdate: ModelConfiguration) {
+	emit('update-configuration', configToUpdate);
 }
 
 function updateName(index: number) {
@@ -436,7 +438,7 @@ function updateName(index: number) {
 	cellEditStates.value[index].name = false;
 	if (configToUpdate.name !== editValue.value && !isEmpty(editValue.value)) {
 		configToUpdate.name = editValue.value;
-		updateConfiguration(configToUpdate, index);
+		updateConfiguration(configToUpdate);
 	}
 }
 
@@ -456,7 +458,7 @@ function updateValue(
 	) {
 		configToUpdate.configuration.semantics.ode[stratifiedMatrixType][odeObjIndex][valueName] =
 			editValue.value;
-		updateConfiguration(configToUpdate, index);
+		updateConfiguration(configToUpdate);
 	}
 }
 
@@ -465,7 +467,8 @@ function setModelParameters() {
 	if (
 		checkModelParameters() &&
 		modalAttributes.value.stratifiedMatrixType &&
-		modalAttributes.value.odeObjIndex
+		modalAttributes.value.valueName &&
+		isNumber(modalAttributes.value.odeObjIndex)
 	) {
 		const { stratifiedMatrixType, valueName, configIndex, odeObjIndex } = modalAttributes.value;
 		const configToUpdate = cloneDeep(props.modelConfigurations[configIndex]);
@@ -495,7 +498,8 @@ function setModelParameters() {
 			delete modelParameter.distribution;
 			delete modelMetadata.timeseries?.[modelParameter.id];
 		}
-		emit('update-configuration', configToUpdate, configIndex);
+		emit('update-configuration', configToUpdate);
+		openValueConfig.value = false;
 	}
 }
 

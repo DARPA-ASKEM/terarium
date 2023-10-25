@@ -172,13 +172,19 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 	await lazyLoadRunResults(runIdList[0]);
 
+	const port = props.node.inputs[0];
+
 	const state = _.cloneDeep(props.node.state);
 	if (state.simConfigs.chartConfigs.length === 0) {
 		state.simConfigs.chartConfigs.push([]);
 	}
 	state.simConfigs.runConfigs[runIdList[0]] = {
 		runId: runIdList[0],
-		active: true
+		active: true,
+		configName: port.label,
+		numSamples: state.numSamples,
+		method: state.method,
+		timeSpan: { ...state.currentTimespan }
 	};
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -186,7 +192,6 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 		state
 	});
 
-	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: `${port.label} - Output ${runList.value.length}`, // TODO: figure out more robust naming system
