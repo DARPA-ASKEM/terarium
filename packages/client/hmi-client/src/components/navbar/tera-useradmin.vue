@@ -44,6 +44,7 @@
 			scrollHeight="flex"
 			class="p-datatable-sm group"
 			selectionMode="single"
+			@row-expand="onRowExpand"
 		>
 			<Column expander style="width: 5rem" />
 			<Column field="name" header="Name" sortable></Column>
@@ -67,8 +68,7 @@ import API from '@/api/api';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { PermissionGroup } from '@/types/Types';
-import TeraShareGroup from '@/components/widgets/share-project/tera-share-group.vue';
-import { getAllGroups } from '@/services/groups';
+import { getAllGroups, getGroup } from '@/services/groups';
 
 interface Role {
 	id: string;
@@ -181,6 +181,19 @@ const updateRoles = () => {
 		rolesToRemove.forEach((role) => {
 			console.log(`remove ${role.name}`);
 			removeRole(role);
+		});
+	}
+};
+
+const onRowExpand = async (event) => {
+	const selectedGroup = event.data as PermissionGroup;
+	const group = await getGroup(selectedGroup.id);
+	if (group) {
+		groupTableData.value?.forEach((g) => {
+			if (g.id === group.id) {
+				g.permissionRelationships = group.permissionRelationships;
+				console.log(group.permissionRelationships);
+			}
 		});
 	}
 };

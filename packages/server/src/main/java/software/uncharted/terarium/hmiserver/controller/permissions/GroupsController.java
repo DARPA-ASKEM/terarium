@@ -40,7 +40,10 @@ public class GroupsController {
 		@RequestParam(name = "page_size", defaultValue = "1000") Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
-		List<PermissionGroup> groups = (List<PermissionGroup>) reBACService.getGroups();
+			List<PermissionGroup> groups = (List<PermissionGroup>) reBACService.getGroups();
+			groups.forEach(group -> {
+				group.setPermissionRelationships((new PermissionRelationships()));
+				});
 //		.stream()
 //			.filter(group -> {
 //				RebacGroup rebacGroup = new RebacGroup(group.getId(), reBACService);
