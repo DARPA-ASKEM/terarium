@@ -307,10 +307,6 @@ public class ProjectController {
 		@PathVariable("project_id") final String id,
 		@RequestBody final Project project
 	) {
-		System.out.println("\n\n");
-		System.out.println(id);
-		System.out.println(project);
-		System.out.println("\n\n");
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
 				return ResponseEntity.ok(proxy.updateProject(id, project).getBody());
