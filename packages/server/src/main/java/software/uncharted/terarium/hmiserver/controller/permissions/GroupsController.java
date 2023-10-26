@@ -104,8 +104,8 @@ public class GroupsController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			RebacGroup what = new RebacGroup(userId, reBACService);
-			RebacGroup who = new RebacGroup(groupId, reBACService);
+			RebacGroup what = new RebacGroup(groupId, reBACService);
+			RebacUser who = new RebacUser(userId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					what.setPermissionRelationships(who, relationship);
@@ -130,8 +130,8 @@ public class GroupsController {
 		@RequestParam("to") final String newRelationship
 	) {
 		try {
-			RebacGroup what = new RebacGroup(userId, reBACService);
-			RebacGroup who = new RebacGroup(groupId, reBACService);
+			RebacGroup what = new RebacGroup(groupId, reBACService);
+			RebacUser who = new RebacUser(userId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					 what.removePermissionRelationships(who, oldRelationship);
