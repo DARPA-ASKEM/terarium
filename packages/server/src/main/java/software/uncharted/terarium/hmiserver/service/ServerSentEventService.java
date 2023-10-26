@@ -36,8 +36,18 @@ public class ServerSentEventService {
     private ClientEvent<T> event;
   }
 
+  /**
+   * Connects a user to the SSE service
+   * @param user  the user to connect
+   * @return      the emitter to send messages to the user
+   */
   public SseEmitter connect(final User user) {
     final SseEmitter emitter = new SseEmitter();
+    if (userIdToEmitter.containsKey(user.getId())) {
+      try {
+        userIdToEmitter.get(user.getId()).complete();
+      } catch (IllegalStateException ignored) { }
+    }
     userIdToEmitter.put(user.getId(), emitter);
     return emitter;
   }

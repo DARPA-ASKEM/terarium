@@ -1,6 +1,7 @@
 import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
 import { ClientEvent, ClientEventType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
+import { logger } from '@/utils/logger';
 
 const subscribers = new Map<ClientEventType, ((data: ClientEvent<any>) => void)[]>();
 
@@ -26,10 +27,19 @@ export async function init(): Promise<void> {
 			Authorization: `Bearer ${authStore.token}`
 		},
 		onmessage: handleMessage,
-		onerror: () => {
+		async onopen(response: Response) {
 			init();
+			if (response.status === 401) {
+				// redirect to login
+				authStore.keycloak?.login({
+					redirectUri: window.location.href
+				});
+			}
 		},
-		onclose: () => {
+		onerror(error: any) {
+			logger.error(`EventSource error: ${error}`);
+		},
+		onclose() {
 			init();
 		}
 	};

@@ -95,10 +95,11 @@ public class ClientEventService{
   private void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = ServerSentEventService.decodeMessage(message, JsonNode.class);
     if (messageJson == null) {
-      ServerSentEventService.nack(message, channel);
+      //ServerSentEventService.nack(message, channel);
       return;
     }
     synchronized (serverSentEventService.getUserIdToEmitter()) {
+      // Send the message to each user connected and remove disconnected users
       final Set<String> userIdsToRemove = new HashSet<>();
       serverSentEventService.getUserIdToEmitter().forEach((userId, emitter) -> {
         try {
@@ -110,6 +111,7 @@ public class ClientEventService{
           log.error("Error sending all users message to user {}", userId, e);
         }
       });
+      // Clean up and remove disconnected users
       userIdsToRemove.forEach(serverSentEventService.getUserIdToEmitter()::remove);
     }
   }
@@ -132,12 +134,13 @@ public class ClientEventService{
     }
     final SseEmitter emitter = serverSentEventService.getUserIdToEmitter().get(messageJson.at("/userId").asText());
     synchronized (serverSentEventService.getUserIdToEmitter()) {
+      final String userId = messageJson.at("/userId").asText();
       if (emitter != null) {
         try {
           emitter.send(messageJson.at("/event"));
         } catch (IllegalStateException | ClientAbortException e) {
           log.warn("Error sending user message to user {}. User likely disconnected", messageJson.at("/userId").asText());
-          serverSentEventService.getUserIdToEmitter().remove(messageJson.at("/userId").asText());
+          serverSentEventService.getUserIdToEmitter().remove(userId);
         } catch (IOException e) {
           log.error("Error sending user message to user {}", messageJson.at("/userId").asText(), e);
         }
