@@ -302,7 +302,7 @@ const deleteAllKernels = () => {
 
 const confirmReset = () => {
 	confirm.require({
-		message: `Are you sure you want to rese the kernel?
+		message: `Are you sure you want to reset the kernel?
 
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
