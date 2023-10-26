@@ -6,7 +6,7 @@
 		</header>
 		<DataTable
 			v-if="view === View.USER"
-			:value="userTableData"
+			:value="users"
 			v-model:selection="selectedUserRow"
 			selectionMode="single"
 			dataKey="id"
@@ -53,41 +53,42 @@
 					<Column field="email" header="Email" sortable></Column>
 					<Column field="firstName" header="First name" sortable></Column>
 					<Column field="lastName" header="Last name" sortable></Column>
-					<Column field="lastName" header="Last name" sortable></Column>
+					<Column field="relationship" header="Permission" sortable></Column>
 				</DataTable>
-			</template>
-			<Column>
-				<template #body="slotProps">
-					<Button
-						icon="pi pi-pencil"
-						class="project-options p-button-icon-only p-button-text p-button-rounded"
-						@click="
-							selectedGroupId = slotProps.data.id;
-							isShareDialogVisible = true;
-						"
+				<section class="add-user">
+					<Dropdown
+						v-model="userDropdownValue"
+						:options="usersMenu"
+						optionLabel="name"
+						editable
+						placeholder="Add user to group"
+						class="w-full"
+						@update:model-value="(value) => onSelectUser(value.id)"
 					/>
-				</template>
-			</Column>
+					<Button
+						icon="pi pi-user"
+						label="Add user"
+						class="p-button"
+						:disabled="!selectedUser"
+						@click="addSelectedUserToGroup(slotProps.data.id)"
+					/>
+				</section>
+			</template>
 		</DataTable>
-		<tera-share-group
-			v-if="selectedGroupId"
-			v-model="isShareDialogVisible"
-			:group-id="selectedGroupId"
-		/>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import DataTable, { DataTableRowSelectEvent } from 'primevue/datatable';
 import Column from 'primevue/column';
 import API from '@/api/api';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
-import { PermissionGroup } from '@/types/Types';
-import { getAllGroups, getGroup } from '@/services/groups';
+import { PermissionGroup, PermissionUser } from '@/types/Types';
+import { getAllGroups, getGroup, addGroupUserPermissions } from '@/services/groups';
 import Button from 'primevue/button';
-import TeraShareGroup from '@/components/widgets/share-project/tera-share-group.vue';
+import Dropdown from 'primevue/dropdown';
 
 interface Role {
 	id: string;
@@ -101,7 +102,7 @@ enum View {
 
 // User admin table
 const systemRoles = ref<Role[]>([]);
-const userTableData = ref();
+const users = ref();
 const selectedId = ref();
 const selectedUserRow = ref();
 const selectedRoles = ref<Role[]>([]);
@@ -109,12 +110,14 @@ const selectedRoles = ref<Role[]>([]);
 // Group admin table
 const groupTableData = ref<PermissionGroup[] | null>(null);
 const expandedRows = ref([]);
-const selectedGroupId = ref('');
+const userDropdownValue = ref('');
+const selectedUser = ref<PermissionUser | null>();
+const usersMenu = computed(() =>
+	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+);
 
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];
-
-const isShareDialogVisible = ref(false);
 
 const getRoles = async () => {
 	try {
@@ -131,7 +134,7 @@ const getUsers = async () => {
 	try {
 		const response = await API.get('/users');
 		if (response.status >= 200 && response.status < 300) {
-			userTableData.value = response.data;
+			users.value = response.data;
 		}
 	} catch (err) {
 		console.log(err);
@@ -185,7 +188,7 @@ function getRoleNames(roles: Role[]) {
 
 const updateRoles = () => {
 	if (selectedId.value) {
-		const existingRoles = userTableData.value.find((user) => user.id === selectedId.value).roles;
+		const existingRoles = users.value.find((user) => user.id === selectedId.value).roles;
 		const rolesToAdd =
 			selectedRoles.value.filter(
 				({ name }) => !existingRoles.map((role) => role.name).includes(name)
@@ -215,21 +218,35 @@ const onRowExpand = async (event) => {
 	}
 };
 
+const onSelectUser = (userId: string) => {
+	const found = users.value.find(({ id }) => id === userId);
+	if (found) {
+		selectedUser.value = found;
+	}
+};
+
+const addSelectedUserToGroup = (groupId: string) => {
+	if (selectedUser.value?.id) {
+		addGroupUserPermissions(groupId, selectedUser.value?.id, 'member');
+	}
+};
+
 watch(
 	() => view.value,
 	async () => {
+		getUsers();
 		if (view.value === View.USER) {
 			getRoles();
-			getUsers();
 		} else if (view.value === View.GROUP) {
 			groupTableData.value = await getAllGroups();
 		}
 	}
 );
 
-onMounted(() => {
+onMounted(async () => {
 	getRoles();
 	getUsers();
+	groupTableData.value = await getAllGroups();
 });
 </script>
 
@@ -244,6 +261,10 @@ header {
 	display: flex;
 	align-items: center;
 	gap: 1rem;
+}
+
+.add-user {
+	display: flex;
 }
 
 .p-datatable.user:deep(.p-datatable-tbody > tr),

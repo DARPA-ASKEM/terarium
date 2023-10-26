@@ -16,7 +16,7 @@ export async function addGroupUserPermissions(
 	userId: string,
 	relationship: string
 ) {
-	const response = await API.post(`/${groupId}/permissions/user/${userId}/${relationship}`);
+	const response = await API.post(`/groups/${groupId}/permissions/user/${userId}/${relationship}`);
 	console.log(response);
 	return response?.data ?? null;
 }
