@@ -1,0 +1,11 @@
+---
+version: "3.8"
+
+services:
+  model-service:
+    container_name: model-service
+    image: ghcr.io/darpa-askem/model-service:latest
+    networks:
+      - terarium
+    ports:
+      - "3010:8888"
