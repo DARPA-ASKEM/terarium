@@ -48,12 +48,32 @@
 		>
 			<Column expander />
 			<Column field="name" header="Name" sortable></Column>
-			<template #expansion="slotProps">
-				<DataTable :value="slotProps.data.permissionRelationships.permissionUsers" id="user">
+			<template #expansion="groupSlotProps">
+				<DataTable
+					:value="groupSlotProps.data.permissionRelationships.permissionUsers"
+					id="user"
+					v-model:selection="selectedGroupUser"
+					selectionMode="single"
+					@row-select="onGroupUserRowSelect"
+				>
 					<Column field="email" header="Email" sortable></Column>
 					<Column field="firstName" header="First name" sortable></Column>
 					<Column field="lastName" header="Last name" sortable></Column>
-					<Column field="relationship" header="Permission" sortable></Column>
+					<!-- <Column field="relationship" header="Permission" sortable></Column> -->
+					<Column>
+						<template #body="groupUserSlotProps">
+							<div v-if="selectedGroupUser && selectedGroupUser.id === groupUserSlotProps.data.id">
+								<Dropdown
+									v-model="selectedGroupRelationship"
+									:options="groupRelationships"
+									@change="(event) => updateGroupUserRelationship(event, groupSlotProps.data.id)"
+								/>
+							</div>
+							<div v-else>
+								{{ groupUserSlotProps.data.relationship }}
+							</div>
+						</template>
+					</Column>
 				</DataTable>
 				<section class="add-user">
 					<Dropdown
@@ -86,9 +106,14 @@ import API from '@/api/api';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { PermissionGroup, PermissionUser } from '@/types/Types';
-import { getAllGroups, getGroup, addGroupUserPermissions } from '@/services/groups';
+import {
+	getAllGroups,
+	getGroup,
+	addGroupUserPermissions,
+	updateGroupUserPermissions
+} from '@/services/groups';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
+import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 
 interface Role {
 	id: string;
@@ -115,6 +140,9 @@ const selectedUser = ref<PermissionUser | null>();
 const usersMenu = computed(() =>
 	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
 );
+const selectedGroupUser = ref<PermissionUser | null>(null);
+const selectedGroupRelationship = ref('');
+const groupRelationships = ref(['admin', 'member']);
 
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];
@@ -231,6 +259,22 @@ const addSelectedUserToGroup = (groupId: string) => {
 	}
 };
 
+const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
+	selectedGroupRelationship.value =
+		groupRelationships.value.find((r) => r === event.data.relationship) ?? '';
+};
+
+const updateGroupUserRelationship = (event: DropdownChangeEvent, groupId: string) => {
+	if (selectedGroupUser.value) {
+		updateGroupUserPermissions(
+			groupId,
+			selectedGroupUser.value?.id,
+			selectedGroupRelationship.value,
+			event.value
+		);
+	}
+};
+
 watch(
 	() => view.value,
 	async () => {
@@ -337,7 +381,8 @@ header {
 	background: var(--surface-ground);
 }
 
-.p-multiselect {
+.p-multiselect,
+.p-dropdown {
 	height: 2.5rem;
 }
 

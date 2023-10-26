@@ -17,6 +17,17 @@ export async function addGroupUserPermissions(
 	relationship: string
 ) {
 	const response = await API.post(`/groups/${groupId}/permissions/user/${userId}/${relationship}`);
-	console.log(response);
+	return response?.data ?? null;
+}
+
+export async function updateGroupUserPermissions(
+	groupId: string,
+	userId: string,
+	oldRelationship: string,
+	newRelationship: string
+) {
+	const response = await API.put(
+		`/groups/${groupId}/permissions/user/${userId}/${oldRelationship}?to=${newRelationship}`
+	);
 	return response?.data ?? null;
 }
