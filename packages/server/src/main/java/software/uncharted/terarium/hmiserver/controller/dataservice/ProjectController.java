@@ -278,7 +278,6 @@ public class ProjectController {
 	public ResponseEntity<JsonNode> createProject(
 		@RequestBody final Project project
 	) throws JsonProcessingException {
-
 		ResponseEntity<JsonNode> res = proxy.createProject(project);
 		if (res != null) {
 
@@ -303,10 +302,10 @@ public class ProjectController {
 		}
 	}
 
-	@PutMapping("/{id}")
+	@PutMapping("/{project_id}")
 	public ResponseEntity<JsonNode> updateProject(
-		@PathVariable("id") final String id,
-		final Project project
+		@PathVariable("project_id") final String id,
+		@RequestBody final Project project
 	) {
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
