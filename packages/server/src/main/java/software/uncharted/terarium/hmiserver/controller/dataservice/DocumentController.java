@@ -118,8 +118,8 @@ public class DocumentController implements SnakeCaseController {
 					// Add the equations into the metadata
 					asset.getMetadata().put("equation", equation);
 				}
-			} catch (IOException e) {
-				log.error("Unable to extract S3 url for assets", e);
+			} catch (Exception e) {
+				log.error("Unable to extract S3 url for assets or extract equations", e);
 			}
 		});
 
