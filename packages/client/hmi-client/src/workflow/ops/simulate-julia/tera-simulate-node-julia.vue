@@ -169,7 +169,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 	const sim = await getSimulation(runIdList[0]);
 	if (sim) {
-		state.simConfigs.runConfigs[runIdList[0]] = {
+		state.simConfigs.runConfigs[sim.id] = {
 			runId: sim.id,
 			active: true,
 			configName: port.label,
