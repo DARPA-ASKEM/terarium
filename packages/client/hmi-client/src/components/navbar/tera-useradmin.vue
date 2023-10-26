@@ -7,7 +7,7 @@
 		<DataTable
 			v-if="view === View.USER"
 			:value="userTableData"
-			v-model:selection="selectedAdminRow"
+			v-model:selection="selectedUserRow"
 			selectionMode="single"
 			dataKey="id"
 			@rowSelect="onUserRowSelect"
@@ -57,16 +57,23 @@
 				</DataTable>
 			</template>
 			<Column>
-				<template #body>
+				<template #body="slotProps">
 					<Button
 						icon="pi pi-pencil"
 						class="project-options p-button-icon-only p-button-text p-button-rounded"
-						@click="isShareDialogVisible = true"
+						@click="
+							selectedGroupId = slotProps.data.id;
+							isShareDialogVisible = true;
+						"
 					/>
 				</template>
 			</Column>
 		</DataTable>
-		<tera-share-group v-model="isShareDialogVisible" />
+		<tera-share-group
+			v-if="selectedGroupId"
+			v-model="isShareDialogVisible"
+			:group-id="selectedGroupId"
+		/>
 	</main>
 </template>
 
@@ -96,12 +103,13 @@ enum View {
 const systemRoles = ref<Role[]>([]);
 const userTableData = ref();
 const selectedId = ref();
-const selectedAdminRow = ref();
+const selectedUserRow = ref();
 const selectedRoles = ref<Role[]>([]);
 
 // Group admin table
 const groupTableData = ref<PermissionGroup[] | null>(null);
 const expandedRows = ref([]);
+const selectedGroupId = ref('');
 
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];

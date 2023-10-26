@@ -8,7 +8,7 @@
 		<span class="email">{{ user.email }}</span>
 	</section>
 	<section v-if="isAuthor" class="permissions">Author</section>
-	<section v-else class="permissions">
+	<section v-else-if="permission" class="permissions">
 		<Dropdown
 			v-model="selectedPermission"
 			:options="permissions"
