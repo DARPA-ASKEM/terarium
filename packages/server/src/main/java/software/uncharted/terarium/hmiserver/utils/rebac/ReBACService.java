@@ -361,7 +361,7 @@ public class ReBACService {
 		}
 
 		String resourceUrl = composeResourceUrl(
-			config.getKeycloak().getUrl(),
+			config.getKeycloak().getUrl() + "/admin/",
 			REALM_NAME,
 			"users/" + userId + "/role-mappings/realm");
 
@@ -409,7 +409,7 @@ public class ReBACService {
 		}
 
 		String resourceUrl = composeResourceUrl(
-			config.getKeycloak().getUrl(),
+			config.getKeycloak().getUrl() + "/admin/",
 			REALM_NAME,
 			"users/" + userId + "/role-mappings/realm");
 
