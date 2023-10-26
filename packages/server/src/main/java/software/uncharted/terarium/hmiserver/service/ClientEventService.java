@@ -19,7 +19,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
-import software.uncharted.terarium.hmiserver.models.User;
 
 
 import java.io.IOException;
@@ -92,10 +91,9 @@ public class ClientEventService{
     queues = {CLIENT_ALL_USERS_EVENT_QUEUE},
     exclusive = true,
     concurrency = "1")
-  private void onSendToAllUsersEvent(final Message message, final Channel channel) {
+  void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = ServerSentEventService.decodeMessage(message, JsonNode.class);
     if (messageJson == null) {
-      //ServerSentEventService.nack(message, channel);
       return;
     }
     synchronized (serverSentEventService.getUserIdToEmitter()) {
@@ -126,10 +124,9 @@ public class ClientEventService{
     queues = {CLIENT_USER_EVENT_QUEUE},
     exclusive = true,
     concurrency = "1")
-  private void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
+  void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
     final JsonNode messageJson = ServerSentEventService.decodeMessage(message, JsonNode.class);
     if (messageJson == null) {
-      ServerSentEventService.nack(message, channel);
       return;
     }
     final SseEmitter emitter = serverSentEventService.getUserIdToEmitter().get(messageJson.at("/userId").asText());
@@ -148,28 +145,18 @@ public class ClientEventService{
     }
   }
 
-  @Scheduled(fixedDelay = 5000)
-  public void testSendToAll() {
-    final ClientEvent<String> event = new ClientEvent<>();
-    event.setType(ClientEventType.NOTIFICATION)
-      .setData("Hello, world!");
+/**
+ * Heartbeat to ensure that the clients are subscribed to the SSE service. If the client does
+ * not receive a heartbeat within the configured interval, it will attempt to reconnect.
+ */
+  @Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}")
+  public void sendHeartbeat() {
+    final ClientEvent<Void> event = ClientEvent.<Void>builder()
+      .type(ClientEventType.HEARTBEAT)
+            .data(null)
+            .build();
 
     sendToAllUsers(event);
   }
 
-  @Scheduled(fixedDelay = 5000)
-  public void testSendToUser() {
-    // Get a random connected userid
-    final String[] userIds = serverSentEventService.getUserIdToEmitter().keySet().toArray(new String[0]);
-    if (userIds.length == 0) {
-      return;
-    }
-    final String userId = userIds[(int) (Math.random() * userIds.length)];
-
-    final ClientEvent<String> event = new ClientEvent<>();
-    event.setType(ClientEventType.NOTIFICATION)
-      .setData("Hello user " + userId + "!");
-
-    sendToUser(event, userId);
-  }
 }

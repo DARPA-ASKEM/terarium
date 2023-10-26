@@ -5,6 +5,7 @@ export interface ClientConfig {
     baseUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
+    sseHeartbeatIntervalMillis: number;
 }
 
 export interface Event {
@@ -860,6 +861,7 @@ export enum EvaluationScenarioStatus {
 }
 
 export enum ClientEventType {
+    Heartbeat = "HEARTBEAT",
     Notification = "NOTIFICATION",
     Simulation = "SIMULATION",
 }

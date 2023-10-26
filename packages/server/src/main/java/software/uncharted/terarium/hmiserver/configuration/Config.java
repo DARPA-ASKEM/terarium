@@ -112,5 +112,10 @@ public class Config {
 		 * The interval, in milliseconds, at which we will ship client-side logs to the server
 		 */
 		Long clientLogShippingIntervalMillis;
+
+		/**
+		 * The interval, in milliseconds, at which we will send a heartbeat to connected clients for server-side-events
+		 */
+		Long sseHeartbeatIntervalMillis;
 	}
 }

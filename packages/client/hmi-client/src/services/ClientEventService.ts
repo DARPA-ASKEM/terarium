@@ -1,21 +1,33 @@
 import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
 import { ClientEvent, ClientEventType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
-import { logger } from '@/utils/logger';
+import getConfiguration from '@/services/ConfigService';
 
+/**
+ * A map of event types to message handlers
+ */
 const subscribers = new Map<ClientEventType, ((data: ClientEvent<any>) => void)[]>();
 
 /**
- * Message handler. Parse the {@link EventSourceMessage} and call the subscribers for the {@link ClientEventType}
- * @param event The {@link EventSourceMessage} from the SSE emitter
+ * The last time a heartbeat was received
  */
-function handleMessage(event: EventSourceMessage) {
-	const data = JSON.parse(event.data) as ClientEvent<any>;
-	const handlers = subscribers.get(data.type);
-	if (handlers) {
-		handlers.forEach((handler) => handler(data));
-	}
-}
+let lastHeartbeat = new Date().valueOf();
+
+/**
+ * The initial backoff time in milliseconds for resubscribing to the SSE endpoint
+ * in the event of a retriable error
+ */
+let backoffMs = 1000;
+
+/**
+ * Whether we are currently reconnecting to the SSE endpoint
+ */
+let reconnecting = false;
+
+/**
+ * An error that can be retried
+ */
+class RetriableError extends Error {}
 
 /**
  * Connects to the SSE endpoint and adds a message handler to pass on the messages to the subscribers
@@ -26,7 +38,18 @@ export async function init(): Promise<void> {
 		headers: {
 			Authorization: `Bearer ${authStore.token}`
 		},
-		onmessage: handleMessage,
+		onmessage(message: EventSourceMessage) {
+			// Parse the data as a ClientEvent and pass it on to the subscribers
+			const data = JSON.parse(message.data) as ClientEvent<any>;
+			if (data.type === ClientEventType.Heartbeat) {
+				lastHeartbeat = new Date().valueOf();
+				return;
+			}
+			const handlers = subscribers.get(data.type);
+			if (handlers) {
+				handlers.forEach((handler) => handler(data));
+			}
+		},
 		async onopen(response: Response) {
 			init();
 			if (response.status === 401) {
@@ -34,17 +57,44 @@ export async function init(): Promise<void> {
 				authStore.keycloak?.login({
 					redirectUri: window.location.href
 				});
+			} else if (response.status === 500) {
+				throw new RetriableError('Internal server error');
+			} else {
+				// Reset the backoff time as we've made a connection successfully
+				backoffMs = 1000;
 			}
 		},
 		onerror(error: any) {
-			logger.error(`EventSource error: ${error}`);
+			// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
+			if (error instanceof RetriableError) {
+				backoffMs *= 2;
+				return Math.min(backoffMs, 60000);
+			}
+			throw error; // fatal
 		},
 		onclose() {
 			init();
-		}
+		},
+		openWhenHidden: true
 	};
 	await fetchEventSource('/api/client-event', options);
 }
+
+/**
+ * Periodically checks if we have received a heartbeat within the configured interval
+ * and reconnects if not
+ */
+setInterval(async () => {
+	if (!reconnecting) {
+		const config = await getConfiguration();
+		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
+		if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
+			reconnecting = true;
+			await init();
+			reconnecting = false;
+		}
+	}
+}, 1000);
 
 /**
  * Subscribes to a specific event type
