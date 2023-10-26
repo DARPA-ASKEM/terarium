@@ -1,7 +1,7 @@
 <!-- This template is a copy of tera-external-publication with some elements stripped out.  TODO: merge the concept of external publication and document asset -->
 <template>
 	<tera-asset
-		v-if="doc"
+		v-if="doc && !documentLoading"
 		:feature-config="featureConfig"
 		:name="highlightSearchTerms(doc.name)"
 		:overline="highlightSearchTerms(doc.source)"
@@ -94,6 +94,17 @@
 				</ul>
 			</AccordionTab>
 		</Accordion>
+		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
+		<p
+			class="pl-3"
+			v-if="
+				isEmpty(doc.assets) &&
+				view === DocumentView.EXTRACTIONS &&
+				viewOptions[1]?.value === DocumentView.PDF
+			"
+		>
+			PDF Extractions may still be processsing please refresh in some time...
+		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
@@ -101,6 +112,9 @@
 		/>
 		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
 	</tera-asset>
+	<section v-else class="flex justify-content-center">
+		<tera-progress-spinner :font-size="2" />
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -122,6 +136,7 @@ import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -150,6 +165,8 @@ const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' 
 const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
 const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
 const docText = ref<string>('');
+
+const documentLoading = ref(false);
 
 const docLink = computed(() =>
 	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
@@ -186,7 +203,9 @@ watch(
 	() => props.assetId,
 	async () => {
 		if (props.assetId) {
+			documentLoading.value = true;
 			const document = await getDocumentAsset(props.assetId);
+			documentLoading.value = false;
 			if (!document) {
 				return;
 			}
