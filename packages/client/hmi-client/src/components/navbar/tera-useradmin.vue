@@ -46,15 +46,25 @@
 			selectionMode="single"
 			@row-expand="onRowExpand"
 		>
-			<Column expander style="width: 5rem" />
+			<Column expander />
 			<Column field="name" header="Name" sortable></Column>
 			<template #expansion="slotProps">
 				<DataTable :value="slotProps.data.permissionRelationships.permissionUsers" id="user">
 					<Column field="email" header="Email" sortable></Column>
 					<Column field="firstName" header="First name" sortable></Column>
 					<Column field="lastName" header="Last name" sortable></Column>
+					<Column field="lastName" header="Last name" sortable></Column>
 				</DataTable>
 			</template>
+			<Column>
+				<template #body>
+					<Button
+						icon="pi pi-pencil"
+						class="project-options p-button-icon-only p-button-text p-button-rounded"
+						@click="isShareDialogVisible = true"
+					/>
+				</template>
+			</Column>
 		</DataTable>
 		<tera-share-group v-model="isShareDialogVisible" />
 	</main>
@@ -69,6 +79,8 @@ import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { PermissionGroup } from '@/types/Types';
 import { getAllGroups, getGroup } from '@/services/groups';
+import Button from 'primevue/button';
+import TeraShareGroup from '@/components/widgets/share-project/tera-share-group.vue';
 
 interface Role {
 	id: string;
@@ -238,13 +250,13 @@ header {
 	grid-template-columns: repeat(4, 1fr);
 }
 
-.p-datatable.group:deep(.p-datatable-tbody > tr),
+.p-datatable.group:deep(.p-datatable-tbody > tr:not(.p-datatable-row-expansion)),
 .p-datatable.group:deep(.p-datatable-thead > tr) {
 	display: flex;
 }
 
-.p-datatable.group:deep(.p-datatable-tbody > tr > td:last-child),
-.p-datatable.group:deep(.p-datatable-thead > tr > th:last-child) {
+.p-datatable.group:deep(.p-datatable-tbody > tr > td:nth-child(2)),
+.p-datatable.group:deep(.p-datatable-thead > tr > th:nth-child(2)) {
 	flex-grow: 1;
 }
 
