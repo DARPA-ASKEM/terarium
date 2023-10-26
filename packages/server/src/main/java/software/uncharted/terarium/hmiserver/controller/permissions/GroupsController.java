@@ -114,7 +114,7 @@ public class GroupsController {
 					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 				}
 			}
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		} catch (Exception e) {
 			log.error("Error adding group user permission relationships", e);
 			return ResponseEntity.internalServerError().build();
@@ -141,7 +141,7 @@ public class GroupsController {
 					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 				}
 			}
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		} catch (Exception e) {
 			log.error("Error adding group user permission relationships", e);
 			return ResponseEntity.internalServerError().build();
@@ -166,7 +166,7 @@ public class GroupsController {
 					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 				}
 			}
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		} catch (Exception e) {
 			log.error("Error removing group user permission relationships", e);
 			return ResponseEntity.internalServerError().build();
