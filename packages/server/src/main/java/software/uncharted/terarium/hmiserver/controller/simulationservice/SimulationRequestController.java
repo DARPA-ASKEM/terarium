@@ -66,7 +66,6 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setProjectId(0);
 		sim.setEngine("sciml");
 
-		System.out.println("Simulation: " + sim.toString());
 		return ResponseEntity.ok(simulationProxy.createAsset(convertObjectToSnakeCaseJsonNode(sim)).getBody());
 	}
 
