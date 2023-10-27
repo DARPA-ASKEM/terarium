@@ -1,20 +1,10 @@
 <template>
 	<main>
 		<section class="menu">
-			<section class="projects">
-				<header>
-					<h3>Projects</h3>
-					<Button
-						icon="pi pi-plus"
-						label="New project"
-						size="large"
-						@click="isNewProjectModalVisible = true"
-					/>
-				</header>
-				<TabView>
-					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
-						<section class="filter-and-sort">
-							<!-- TODO: Add project search back in once we are ready
+			<TabView>
+				<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
+					<section class="filter-and-sort">
+						<!-- TODO: Add project search back in once we are ready
 								<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
 								<InputText
@@ -24,94 +14,85 @@
 									placeholder="Filter by keyword"
 								/>
 							</span> -->
-							<span v-if="view === ProjectsView.Cards"
-								><label>Sort by:</label>
-								<Dropdown
-									v-model="selectedSort"
-									:options="sortOptions"
-									@update:model-value="tab.projects = myFilteredSortedProjects"
-									class="p-inputtext-sm"
-								/>
-							</span>
-							<MultiSelect
-								v-if="view === ProjectsView.Table"
-								:modelValue="selectedColumns"
-								:options="columns"
-								:maxSelectedLabels="1"
-								:selected-items-label="`{0} columns displayed`"
-								optionLabel="header"
-								@update:modelValue="onToggle"
-								placeholder="Add or remove columns"
+						<span v-if="view === ProjectsView.Cards"
+							><label>Sort by:</label>
+							<Dropdown
+								v-model="selectedSort"
+								:options="sortOptions"
+								@update:model-value="tab.projects = myFilteredSortedProjects"
 								class="p-inputtext-sm"
 							/>
-							<SelectButton
-								:model-value="view"
-								@change="if ($event.value) view = $event.value;"
-								:options="viewOptions"
-								option-value="value"
-							>
-								<template #option="slotProps">
-									<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-									<span class="p-button-label">{{ slotProps.option.value }}</span>
-								</template>
-							</SelectButton>
-						</section>
-						<section class="list-of-projects">
-							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
-								<img src="@assets/svg/seed.svg" alt="" />
-								<template v-if="tab.title === TabTitles.MyProjects">
-									<h3>Welcome to Terarium</h3>
-									<div>
-										Get started by creating a
-										<Button
-											label="new project"
-											class="p-button-text new-project-button"
-											@click="isNewProjectModalVisible = true"
-										/>. Your projects will be displayed on this page.
-									</div>
-								</template>
-								<template v-else-if="tab.title === TabTitles.PublicProjects">
-									<h3>You don't have any shared projects</h3>
-									<p>Shared projects will be displayed on this page</p>
-								</template>
-							</div>
-							<tera-card-carousel
-								v-else-if="view === ProjectsView.Cards"
-								:is-loading="isLoadingProjects"
-								:amount-of-cards="tab.projects.length"
-							>
-								<template #skeleton-card>
-									<tera-project-card />
-								</template>
-								<template #card-list-items>
-									<li v-for="project in tab.projects" :key="project.id">
-										<tera-project-card
-											v-if="project.id"
-											:project="project"
-											@click="openProject(project.id)"
-											@forked-project="(forkedProject) => openProject(forkedProject.id)"
-										/>
-									</li>
-									<li>
-										<section class="new-project-card" @click="isNewProjectModalVisible = true">
-											<div>
-												<img src="@assets/svg/plus.svg" alt="" />
-											</div>
-											<p>New project</p>
-										</section>
-									</li>
-								</template>
-							</tera-card-carousel>
-							<tera-project-table
-								v-else-if="view === ProjectsView.Table"
-								:projects="tab.projects"
-								:selected-columns="selectedColumns"
-								@open-project="openProject"
-							/>
-						</section>
-					</TabPanel>
-				</TabView>
-			</section>
+						</span>
+						<MultiSelect
+							v-if="view === ProjectsView.Table"
+							:modelValue="selectedColumns"
+							:options="columns"
+							:maxSelectedLabels="1"
+							:selected-items-label="`{0} columns displayed`"
+							optionLabel="header"
+							@update:modelValue="onToggle"
+							placeholder="Add or remove columns"
+							class="p-inputtext-sm"
+						/>
+						<SelectButton
+							:model-value="view"
+							@change="if ($event.value) view = $event.value;"
+							:options="viewOptions"
+							option-value="value"
+						>
+							<template #option="slotProps">
+								<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+								<span class="p-button-label">{{ slotProps.option.value }}</span>
+							</template>
+						</SelectButton>
+						<Button
+							icon="pi pi-plus"
+							label="New project"
+							@click="isNewProjectModalVisible = true"
+						/>
+					</section>
+					<section class="list-of-projects">
+						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+							<img src="@assets/svg/seed.svg" alt="" />
+							<template v-if="tab.title === TabTitles.MyProjects">
+								<h3>Welcome to Terarium</h3>
+								<div>
+									Get started by creating a
+									<Button
+										label="new project"
+										class="p-button-text new-project-button"
+										@click="isNewProjectModalVisible = true"
+									/>. Your projects will be displayed on this page.
+								</div>
+							</template>
+							<template v-else-if="tab.title === TabTitles.PublicProjects">
+								<h3>You don't have any shared projects</h3>
+								<p>Shared projects will be displayed on this page</p>
+							</template>
+						</div>
+						<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
+							<li v-for="project in tab.projects" :key="project.id">
+								<tera-project-card
+									v-if="project.id"
+									:project="project"
+									@click="openProject(project.id)"
+									@forked-project="(forkedProject) => openProject(forkedProject.id)"
+								/>
+							</li>
+						</ul>
+						<!--
+							:is-loading="isLoadingProjects"
+							:amount-of-cards="tab.projects.length"
+						-->
+						<tera-project-table
+							v-else-if="view === ProjectsView.Table"
+							:projects="tab.projects"
+							:selected-columns="selectedColumns"
+							@open-project="openProject"
+						/>
+					</section>
+				</TabPanel>
+			</TabView>
 		</section>
 		<!-- New project modal -->
 		<Teleport to="body">
@@ -183,7 +164,6 @@ import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
-import TeraCardCarousel from '@/components/home/tera-card-carousel.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
 import { useProjects } from '@/composables/project';
@@ -204,7 +184,8 @@ enum ProjectsView {
 
 enum TabTitles {
 	MyProjects = 'My projects',
-	PublicProjects = 'Public projects'
+	PublicProjects = 'Public projects',
+	SampleProjects = 'Sample projects'
 }
 
 const selectedSort = ref('Last updated (descending)');
@@ -267,7 +248,8 @@ function filterAndSortProjects(projects: IProject[]) {
 
 const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
 	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
-	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value }
+	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
+	{ title: TabTitles.SampleProjects, projects: [] }
 ]);
 
 // Table view
@@ -341,14 +323,8 @@ onMounted(async () => {
 	flex-direction: column;
 }
 
-.projects {
-	background-color: var(--surface-section);
-	color: var(--text-color-secondary);
-	padding: 1rem;
-}
-
 .list-of-projects {
-	min-height: 25rem;
+	flex: 1;
 }
 
 .p-dropdown,
@@ -363,13 +339,12 @@ onMounted(async () => {
 }
 
 .filter-and-sort {
-	background-color: var(--surface-ground);
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border-light);
-	padding: 0.75rem;
+	background-color: #e9e9e9;
+	border: 1px solid var(--surface-border);
+	padding: 16px;
 	display: flex;
 	align-items: center;
-	gap: 1rem;
+	gap: 16px;
 }
 
 .filter-and-sort label {
@@ -377,8 +352,21 @@ onMounted(async () => {
 	font-size: var(--font-caption);
 }
 
+.filter-and-sort > * {
+	height: 40px;
+}
+
 .p-buttonset {
 	margin-left: auto;
+}
+
+.project-cards-grid {
+	background-color: #f9f9f9;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 16px;
+	padding: 16px;
+	list-style: none;
 }
 
 .papers {
@@ -411,8 +399,6 @@ h3 {
 .p-tabview:deep(.p-tabview-panel) {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
-	margin: 1rem 0;
 }
 
 header svg {
