@@ -27,11 +27,11 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class SimulationController implements SnakeCaseController {
 
-	SimulationProxy simulationProxy;
+	final SimulationProxy simulationProxy;
 
-	ProjectProxy projectProxy;
+	final ProjectProxy projectProxy;
 
-	DatasetProxy datasetProxy;
+	final DatasetProxy datasetProxy;
 
 
 	@PostMapping
