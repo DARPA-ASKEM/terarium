@@ -59,7 +59,8 @@ import {
 	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	getSimulation
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
@@ -178,14 +179,19 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	if (state.simConfigs.chartConfigs.length === 0) {
 		state.simConfigs.chartConfigs.push([]);
 	}
-	state.simConfigs.runConfigs[runIdList[0]] = {
-		runId: runIdList[0],
-		active: true,
-		configName: port.label,
-		numSamples: state.numSamples,
-		method: state.method,
-		timeSpan: { ...state.currentTimespan }
-	};
+
+	const sim = await getSimulation(runIdList[0]);
+	if (sim) {
+		state.simConfigs.runConfigs[sim.id] = {
+			runId: sim.id,
+			active: true,
+			configName: port.label,
+			numSamples: sim.executionPayload.extra.num_samples,
+			method: sim.executionPayload.extra.method,
+			timeSpan: sim.executionPayload.timespan
+		};
+	}
+
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id,
