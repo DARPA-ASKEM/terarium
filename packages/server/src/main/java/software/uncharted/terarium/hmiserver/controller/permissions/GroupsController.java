@@ -39,7 +39,7 @@ public class GroupsController {
 		@RequestParam(name = "page_size", defaultValue = "1000") Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
-		List<PermissionGroup> groups = (List<PermissionGroup>) reBACService.getGroups();
+		List<PermissionGroup> groups = reBACService.getGroups();
 		groups.forEach(group -> {
 			group.setPermissionRelationships((new PermissionRelationships()));
 		});
@@ -133,6 +133,9 @@ public class GroupsController {
 		@RequestParam("to") final String newRelationship
 	) {
 		try {
+			if (oldRelationship.equals(newRelationship)) {
+				return ResponseEntity.badRequest().build();
+			}
 			RebacGroup what = new RebacGroup(groupId, reBACService);
 			RebacUser who = new RebacUser(userId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
