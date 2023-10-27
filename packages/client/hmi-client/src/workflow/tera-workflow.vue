@@ -1,6 +1,7 @@
 <template>
 	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
+		v-if="!isWorkflowLoading"
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -211,6 +212,7 @@
 			/>
 		</template>
 	</tera-infinite-canvas>
+	<section v-else><tera-progress-spinner :font-size="2" /></section>
 </template>
 
 <script setup lang="ts">
@@ -243,6 +245,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useProjects } from '@/composables/project';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelOperation, TeraModelNode, ModelOperationState } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
@@ -284,6 +287,8 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
+
+const isWorkflowLoading = ref(false);
 
 const currentActiveNode = ref<WorkflowNode<any> | null>();
 
@@ -803,7 +808,9 @@ watch(
 		}
 		const workflowId = props.assetId;
 		if (!workflowId) return;
+		isWorkflowLoading.value = true;
 		wf.value = await workflowService.getWorkflow(workflowId);
+		isWorkflowLoading.value = false;
 	},
 	{ immediate: true }
 );
