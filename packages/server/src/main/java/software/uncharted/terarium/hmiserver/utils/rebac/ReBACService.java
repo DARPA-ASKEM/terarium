@@ -57,9 +57,9 @@ public class ReBACService {
 	private final SchemaManager schemaManager = new SchemaManager();
 
 	public static final String PUBLIC_GROUP_NAME = "Public";
-	public String PUBLIC_GROUP_ID;
+	public static String PUBLIC_GROUP_ID;
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
-	public String ASKEM_ADMIN_GROUP_ID;
+	public static String ASKEM_ADMIN_GROUP_ID;
 
 	private String getKeycloakBearerToken() {
 		return "Bearer " + keycloak.tokenManager().getAccessTokenString();
@@ -125,7 +125,7 @@ public class ReBACService {
 								break;
 							case "admin":
 								try {
-										createRelationship(user, publicGroup, Schema.Relationship.ADMIN);
+									createRelationship(user, publicGroup, Schema.Relationship.ADMIN);
 								} catch (RelationshipAlreadyExistsException e) {
 									log.error("Failed to add admin {} to Public Group", userId, e);
 								}

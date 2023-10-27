@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 import java.util.List;
 
@@ -38,8 +42,20 @@ public class UsersController {
 		}
 
 		try {
+			if (roleName.equals(Roles.ADMIN)) {
+				RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+				RebacUser who = new RebacUser(userId, reBACService);
+				adminGroup.removePermissionRelationships(who, Schema.Relationship.ADMIN.toString());
+				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+				publicGroup.removePermissionRelationships(who, Schema.Relationship.ADMIN.toString());
+			}
+			if (roleName.equals(Roles.USER)) {
+				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+				RebacUser who = new RebacUser(userId, reBACService);
+				publicGroup.removePermissionRelationships(who, Schema.Relationship.MEMBER.toString());
+			}
 			return reBACService.deleteRoleFromUser(roleName, userId);
-		} catch (Exception e) {
+		} catch (Exception | RelationshipAlreadyExistsException e) {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
@@ -55,8 +71,20 @@ public class UsersController {
 		}
 
 		try {
+			if (roleName.equals(Roles.ADMIN)) {
+				RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+				RebacUser who = new RebacUser(userId, reBACService);
+				adminGroup.setPermissionRelationships(who, Schema.Relationship.ADMIN.toString());
+				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+				publicGroup.setPermissionRelationships(who, Schema.Relationship.ADMIN.toString());
+			}
+			if (roleName.equals(Roles.USER)) {
+				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+				RebacUser who = new RebacUser(userId, reBACService);
+				publicGroup.setPermissionRelationships(who, Schema.Relationship.MEMBER.toString());
+			}
 			return reBACService.addRoleToUser(roleName, userId);
-		} catch (Exception e) {
+		} catch (Exception | RelationshipAlreadyExistsException e) {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
