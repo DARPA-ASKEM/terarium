@@ -6,6 +6,7 @@
 		:is-naming-asset="isNaming"
 		:stretch-content="view === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
+		:is-loading="isModelLoading"
 	>
 		<template #name-input>
 			<InputText
@@ -108,6 +109,7 @@ const model = ref<Model | null>(null);
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const newName = ref('New Model');
 const isRenaming = ref(false);
+const isModelLoading = ref(false);
 
 const view = ref(ModelView.DESCRIPTION);
 const viewOptions = ref([
@@ -217,7 +219,11 @@ watch(
 		// Reset view of model page
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
-		if (!isEmpty(props.assetId)) await getModelWithConfigurations();
+		if (!isEmpty(props.assetId)) {
+			isModelLoading.value = true;
+			await getModelWithConfigurations();
+			isModelLoading.value = false;
+		}
 	},
 	{ immediate: true }
 );

@@ -369,6 +369,7 @@ export interface PermissionGroup {
     id: string;
     name: string;
     relationship?: string;
+    permissionRelationships?: PermissionRelationships;
 }
 
 export interface PermissionProject {
@@ -387,6 +388,7 @@ export interface PermissionUser {
     firstName: string;
     lastName: string;
     email: string;
+    roles?: PermissionRole[];
     relationship?: string;
 }
 
@@ -595,6 +597,12 @@ export interface XDDFacetsItemResponse {
 export interface XDDResponseOK {
     v: number;
     license: string;
+}
+
+export interface PermissionRole {
+    id: string;
+    name: string;
+    users: PermissionUser[];
 }
 
 export interface UserOld {

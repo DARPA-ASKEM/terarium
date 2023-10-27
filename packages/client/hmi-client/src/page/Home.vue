@@ -112,63 +112,7 @@
 					</TabPanel>
 				</TabView>
 			</section>
-			<section class="papers">
-				<header>
-					<h3>Papers related to your projects</h3>
-				</header>
-				<section v-for="(project, i) in projectsWithRelatedDocuments" :key="i">
-					<p>{{ project.name }}</p>
-					<tera-card-carousel
-						:is-loading="isLoadingProjectsWithRelatedDocs"
-						:amount-of-cards="project.relatedDocuments.length"
-					>
-						<template #skeleton-card>
-							<tera-document-card />
-						</template>
-						<template #card-list-items>
-							<li v-for="document in project.relatedDocuments" :key="document.gddId">
-								<tera-document-card :document="document" @click="selectDocument(document)" />
-							</li>
-						</template>
-					</tera-card-carousel>
-				</section>
-				<template v-if="isLoadingProjectsWithRelatedDocs">
-					<p><Skeleton width="6rem" /></p>
-					<tera-card-carousel :is-loading="isLoadingProjectsWithRelatedDocs">
-						<template #skeleton-card>
-							<tera-document-card />
-						</template> </tera-card-carousel
-				></template>
-			</section>
 		</section>
-		<!-- modal window for showing selected document -->
-		<div
-			v-if="selectedDocument !== undefined"
-			class="selected-document-modal-mask"
-			@click="close()"
-		>
-			<div class="selected-document-modal" @click.stop>
-				<header class="modal-header">
-					Document
-					<i class="pi pi-times close-button" @click="close()" />
-				</header>
-				<div class="modal-subheader-text">
-					<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
-					<em>{{ selectedDocument.journal }}</em>
-					{{ ', ' + selectedDocument.year + ' ' + selectedDocument.volume }}
-				</div>
-				<h3>{{ selectedDocument.title }}</h3>
-				<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
-				<div class="modal-subheader-text">
-					<em> {{ listAuthorNames(selectedDocument.author) }} </em>
-				</div>
-				<tera-selected-document-pane
-					class="selected-document-pane"
-					:selected-document="selectedDocument"
-					@close="close()"
-				/>
-			</div>
-		</div>
 		<!-- New project modal -->
 		<Teleport to="body">
 			<tera-modal
@@ -226,12 +170,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
-import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
-import { Document, Project } from '@/types/Types';
-import { getRelatedDocuments } from '@/services/data';
+import { computed, ref, onMounted } from 'vue';
 import useQueryStore from '@/stores/query';
-import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -252,7 +192,6 @@ import MultiSelect from 'primevue/multiselect';
 import { logger } from '@/utils/logger';
 import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
-import Skeleton from 'primevue/skeleton';
 import { useProjectMenu } from '@/composables/project-menu';
 import SelectButton from 'primevue/selectbutton';
 
@@ -359,36 +298,6 @@ const removeProject = async () => {
 	}
 };
 
-/**
- * Display Related Documents for the latest 3 project with at least one publication.
- */
-type RelatedDocumentFromProject = { name: Project['name']; relatedDocuments: Document[] };
-const projectsWithRelatedDocuments = ref([] as RelatedDocumentFromProject[]);
-async function updateProjectsWithRelatedDocuments() {
-	projectsWithRelatedDocuments.value = await Promise.all(
-		useProjects()
-			.allProjects.value // filter out the ones with no publications
-			?.filter((project) => parseInt(project?.metadata?.['publications-count'] ?? '0', 10) > 0)
-			// get the first three project with a publication
-			.slice(0, 3)
-			// get the related documents for each project first publication
-			.map(async (project) => {
-				let relatedDocuments = [] as Document[];
-				if (project.id) {
-					// Fetch the publications for the project
-					const publications = await useProjects().getPublicationAssets(project.id);
-					if (!isEmpty(publications)) {
-						// Fetch the related documents for the first publication
-						relatedDocuments = await getRelatedDocuments(publications[0].xdd_uri);
-					}
-				}
-				return { name: project.name, relatedDocuments } as RelatedDocumentFromProject;
-			}) ?? ([] as RelatedDocumentFromProject[])
-	);
-	isLoadingProjectsWithRelatedDocs.value = false;
-}
-
-const selectedDocument = ref<Document>();
 const queryStore = useQueryStore();
 const router = useRouter();
 const auth = useAuthStore();
@@ -396,17 +305,7 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjectsWithRelatedDocs = ref(true);
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
-
-const selectDocument = (item: Document) => {
-	const itemID = item as Document;
-	selectedDocument.value = itemID;
-};
-
-const close = () => {
-	selectedDocument.value = undefined;
-};
 
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
@@ -424,15 +323,6 @@ async function createNewProject() {
 		openProject(project.id);
 	}
 }
-
-function listAuthorNames(authors) {
-	return authors.map((author) => author.name).join(', ');
-}
-
-watch(
-	() => useProjects().allProjects.value,
-	() => updateProjectsWithRelatedDocuments()
-);
 
 onMounted(async () => {
 	// Clear all...
@@ -586,30 +476,6 @@ a {
 	border-color: var(--surface-border);
 }
 
-.selected-document-modal-mask {
-	position: fixed;
-	z-index: 998;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-}
-
-.selected-document-modal {
-	position: relative;
-	width: 65%;
-	margin: 0px auto;
-	background-color: var(--surface-section);
-	border-radius: 16px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-	overflow-y: auto;
-	max-height: 75%;
-	padding: 1rem;
-}
-
 .modal label {
 	display: block;
 	margin-bottom: 0.5em;
@@ -620,11 +486,6 @@ a {
 	display: block;
 	margin-bottom: 2rem;
 	width: 100%;
-}
-
-.selected-document-modal header {
-	display: flex;
-	justify-content: space-between;
 }
 
 .modal-subheader-text {
@@ -644,9 +505,5 @@ a {
 
 .close-button:hover {
 	opacity: 100%;
-}
-
-.selected-document-pane {
-	margin: 2rem 0;
 }
 </style>

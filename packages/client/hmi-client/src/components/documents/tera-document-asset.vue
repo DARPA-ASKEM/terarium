@@ -9,6 +9,7 @@
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
 		:show-sticky-header="view === DocumentView.PDF"
+		:is-loading="documentLoading"
 	>
 		<template #edit-buttons>
 			<SelectButton
@@ -94,6 +95,17 @@
 				</ul>
 			</AccordionTab>
 		</Accordion>
+		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
+		<p
+			class="pl-3"
+			v-if="
+				isEmpty(doc.assets) &&
+				view === DocumentView.EXTRACTIONS &&
+				viewOptions[1]?.value === DocumentView.PDF
+			"
+		>
+			PDF Extractions may still be processsing please refresh in some time...
+		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
@@ -151,6 +163,8 @@ const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
 const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
 const docText = ref<string>('');
 
+const documentLoading = ref(false);
+
 const docLink = computed(() =>
 	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
 );
@@ -186,7 +200,9 @@ watch(
 	() => props.assetId,
 	async () => {
 		if (props.assetId) {
+			documentLoading.value = true;
 			const document = await getDocumentAsset(props.assetId);
+			documentLoading.value = false;
 			if (!document) {
 				return;
 			}
