@@ -85,13 +85,7 @@
 						class="w-full"
 						@update:model-value="(value) => onSelectUser(value.id)"
 					/>
-					<Button
-						icon="pi pi-user"
-						label="Add user"
-						class="p-button"
-						:disabled="!selectedUser"
-						@click="addSelectedUserToGroup(slotProps.data.id)"
-					/>
+					<Button icon="pi pi-user" label="Add user" class="p-button" :disabled="!selectedUser" />
 				</section>
 			</template>
 		</DataTable>
@@ -109,7 +103,7 @@ import { PermissionGroup, PermissionUser } from '@/types/Types';
 import {
 	getAllGroups,
 	getGroup,
-	addGroupUserPermissions,
+	// addGroupUserPermissions,
 	updateGroupUserPermissions
 } from '@/services/groups';
 import Button from 'primevue/button';
@@ -254,11 +248,11 @@ const onSelectUser = (userId: string) => {
 	}
 };
 
-const addSelectedUserToGroup = (groupId: string) => {
-	if (selectedUser.value?.id) {
-		addGroupUserPermissions(groupId, selectedUser.value?.id, 'member');
-	}
-};
+// const addSelectedUserToGroup = (groupId: string) => {
+// 	if (selectedUser.value?.id) {
+// 		addGroupUserPermissions(groupId, selectedUser.value?.id, 'member');
+// 	}
+// };
 
 const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
 	selectedGroupRelationship.value =
