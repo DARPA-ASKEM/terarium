@@ -306,10 +306,9 @@ async function createNewProject() {
 	}
 }
 
-onMounted(async () => {
+onMounted(() => {
 	// Clear all...
 	queryStore.reset(); // Facets queries.
-	await useProjects().getAll();
 });
 </script>
 
