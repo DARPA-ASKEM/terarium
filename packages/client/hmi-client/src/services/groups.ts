@@ -29,10 +29,13 @@ export async function updateGroupUserPermissions(
 	const response = await API.put(
 		`/groups/${groupId}/permissions/user/${userId}/${oldRelationship}?to=${newRelationship}`
 	);
-	return response;
+	if (response.status === 200) {
+		return true;
+	}
+	return false;
 }
 
-export async function deleteGroupUserPermissions(
+export async function removeGroupUserPermissions(
 	groupId: string,
 	userId: string,
 	relationship: string
@@ -40,5 +43,8 @@ export async function deleteGroupUserPermissions(
 	const response = await API.delete(
 		`/groups/${groupId}/permissions/user/${userId}/${relationship}`
 	);
-	return response;
+	if (response.status === 200) {
+		return true;
+	}
+	return false;
 }

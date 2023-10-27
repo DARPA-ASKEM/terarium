@@ -59,20 +59,30 @@
 					<Column field="email" header="Email" sortable></Column>
 					<Column field="firstName" header="First name" sortable></Column>
 					<Column field="lastName" header="Last name" sortable></Column>
-					<!-- <Column field="relationship" header="Permission" sortable></Column> -->
 					<Column>
 						<template #body="groupUserSlotProps">
-							<div v-if="selectedGroupUser && selectedGroupUser.id === groupUserSlotProps.data.id">
-								<Dropdown
-									v-model="selectedGroupRelationship"
-									:options="groupRelationships"
-									@change="(event) => updateGroupUserRelationship(event, groupSlotProps.data.id)"
-									:loading="loadingId === selectedGroupUser.id"
+							<section class="group-user-end-col">
+								<div
+									v-if="selectedGroupUser && selectedGroupUser.id === groupUserSlotProps.data.id"
+								>
+									<Dropdown
+										v-model="selectedGroupRelationship"
+										:options="groupRelationships"
+										@change="(event) => updateGroupUserRelationship(event, groupSlotProps.data.id)"
+										:loading="loadingId === selectedGroupUser.id"
+									/>
+								</div>
+								<div v-else>
+									{{ groupUserSlotProps.data.relationship }}
+								</div>
+								<Button
+									icon="pi pi-times"
+									rounded
+									text
+									class="p-button-icon-only remove-user"
+									@click="onRemoveUser(groupSlotProps.data.id, groupUserSlotProps.data.id)"
 								/>
-							</div>
-							<div v-else>
-								{{ groupUserSlotProps.data.relationship }}
-							</div>
+							</section>
 						</template>
 					</Column>
 				</DataTable>
@@ -96,6 +106,17 @@
 				</section>
 			</template>
 		</DataTable>
+		<Dialog v-model:visible="isRemoveUserDialogVisible" modal header="Remove user">
+			<p>Are you sure you want to remove this user from the group?</p>
+			<template #footer>
+				<Button
+					label="Cancel"
+					class="p-button-secondary"
+					@click="isRemoveUserDialogVisible = false"
+				/>
+				<Button label="Remove project" @click="removeUserCallback" />
+			</template>
+		</Dialog>
 	</main>
 </template>
 
@@ -111,12 +132,13 @@ import {
 	getAllGroups,
 	getGroup,
 	addGroupUserPermissions,
-	updateGroupUserPermissions
-	// deleteGroupUserPermissions
+	updateGroupUserPermissions,
+	removeGroupUserPermissions
 } from '@/services/groups';
 import Button from 'primevue/button';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import { useToastService } from '@/services/toast';
+import Dialog from 'primevue/dialog';
 
 interface Role {
 	id: string;
@@ -148,6 +170,9 @@ const selectedGroupRelationship = ref('');
 let currentGroupRelationship = '';
 const groupRelationships = ref(['admin', 'member']);
 const loadingId = ref<string | null>(null);
+
+const isRemoveUserDialogVisible = ref(false);
+let removeUserCallback;
 
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];
@@ -244,16 +269,17 @@ const onRowExpand = async (event) => {
 	getAndPopulateGroup(selectedGroup.id);
 };
 
-const getAndPopulateGroup = async (groupId: string) => {
-	const group = await getGroup(groupId);
-	if (group) {
-		groupTableData.value?.forEach((g) => {
-			if (g.id === group.id) {
-				g.permissionRelationships = group.permissionRelationships;
-			}
-		});
-	}
-};
+const getAndPopulateGroup = async (groupId: string) =>
+	getGroup(groupId).then((group) => {
+		if (group) {
+			groupTableData.value?.forEach((g) => {
+				if (g.id === group.id) {
+					g.permissionRelationships = group.permissionRelationships;
+				}
+			});
+		}
+		return group;
+	});
 
 const onSelectUser = (userId: string) => {
 	const found = users.value.find(({ id }) => id === userId);
@@ -264,7 +290,7 @@ const onSelectUser = (userId: string) => {
 
 const addSelectedUserToGroup = (groupId: string) => {
 	if (selectedUser.value?.id) {
-		addGroupUserPermissions(groupId, selectedUser.value?.id, 'member');
+		addGroupUserPermissions(groupId, selectedUser.value.id, 'member');
 	}
 };
 
@@ -283,16 +309,39 @@ const updateGroupUserRelationship = (event: DropdownChangeEvent, groupId: string
 			currentGroupRelationship,
 			event.value
 		).then((response) => {
-			if (response.status === 200) {
+			if (response) {
 				getAndPopulateGroup(groupId).then(() => {
 					loadingId.value = null;
 					selectedGroupUser.value = null;
+					useToastService().success('', 'User group permission updated');
 				});
 			} else {
 				useToastService().error('', 'Failed to update user group permission');
 			}
 		});
 	}
+};
+
+const removeUserFromGroup = async (groupId: string, userId: string) => {
+	const relationship = groupTableData.value
+		?.find((g) => g.id === groupId)
+		?.permissionRelationships?.permissionUsers?.find((u) => u.id === userId)?.relationship;
+	if (relationship) {
+		const removed = await removeGroupUserPermissions(groupId, userId, relationship);
+		if (removed) {
+			getAndPopulateGroup(groupId).then(() => {
+				useToastService().success('', 'User removed from group');
+			});
+		} else {
+			useToastService().error('', 'Failed to remove user from group');
+		}
+	}
+	isRemoveUserDialogVisible.value = false;
+};
+
+const onRemoveUser = (groupId: string, userId: string) => {
+	removeUserCallback = () => removeUserFromGroup(groupId, userId);
+	isRemoveUserDialogVisible.value = true;
 };
 
 watch(
@@ -329,6 +378,15 @@ header {
 
 .add-user {
 	display: flex;
+}
+
+.group-user-end-col {
+	display: flex;
+	justify-content: space-between;
+}
+
+.p-button.p-button-text.remove-user:hover {
+	color: var(--text-color-danger);
 }
 
 .p-datatable.user:deep(.p-datatable-tbody > tr),
