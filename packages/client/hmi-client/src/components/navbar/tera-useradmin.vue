@@ -67,6 +67,7 @@
 									v-model="selectedGroupRelationship"
 									:options="groupRelationships"
 									@change="(event) => updateGroupUserRelationship(event, groupSlotProps.data.id)"
+									:loading="loadingId === selectedGroupUser.id"
 								/>
 							</div>
 							<div v-else>
@@ -85,7 +86,13 @@
 						class="w-full"
 						@update:model-value="(value) => onSelectUser(value.id)"
 					/>
-					<Button icon="pi pi-user" label="Add user" class="p-button" :disabled="!selectedUser" />
+					<Button
+						icon="pi pi-user"
+						label="Add user"
+						class="p-button"
+						:disabled="!selectedUser"
+						@click="addSelectedUserToGroup(groupSlotProps.data.id)"
+					/>
 				</section>
 			</template>
 		</DataTable>
@@ -103,11 +110,13 @@ import { PermissionGroup, PermissionUser } from '@/types/Types';
 import {
 	getAllGroups,
 	getGroup,
-	// addGroupUserPermissions,
+	addGroupUserPermissions,
 	updateGroupUserPermissions
+	// deleteGroupUserPermissions
 } from '@/services/groups';
 import Button from 'primevue/button';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
+import { useToastService } from '@/services/toast';
 
 interface Role {
 	id: string;
@@ -138,6 +147,7 @@ const selectedGroupUser = ref<PermissionUser | null>(null);
 const selectedGroupRelationship = ref('');
 let currentGroupRelationship = '';
 const groupRelationships = ref(['admin', 'member']);
+const loadingId = ref<string | null>(null);
 
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];
@@ -231,7 +241,11 @@ const updateRoles = () => {
 
 const onRowExpand = async (event) => {
 	const selectedGroup = event.data as PermissionGroup;
-	const group = await getGroup(selectedGroup.id);
+	getAndPopulateGroup(selectedGroup.id);
+};
+
+const getAndPopulateGroup = async (groupId: string) => {
+	const group = await getGroup(groupId);
 	if (group) {
 		groupTableData.value?.forEach((g) => {
 			if (g.id === group.id) {
@@ -248,11 +262,11 @@ const onSelectUser = (userId: string) => {
 	}
 };
 
-// const addSelectedUserToGroup = (groupId: string) => {
-// 	if (selectedUser.value?.id) {
-// 		addGroupUserPermissions(groupId, selectedUser.value?.id, 'member');
-// 	}
-// };
+const addSelectedUserToGroup = (groupId: string) => {
+	if (selectedUser.value?.id) {
+		addGroupUserPermissions(groupId, selectedUser.value?.id, 'member');
+	}
+};
 
 const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
 	selectedGroupRelationship.value =
@@ -262,12 +276,22 @@ const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
 
 const updateGroupUserRelationship = (event: DropdownChangeEvent, groupId: string) => {
 	if (selectedGroupUser.value) {
+		loadingId.value = selectedGroupUser.value.id;
 		updateGroupUserPermissions(
 			groupId,
 			selectedGroupUser.value?.id,
 			currentGroupRelationship,
 			event.value
-		);
+		).then((response) => {
+			if (response.status === 200) {
+				getAndPopulateGroup(groupId).then(() => {
+					loadingId.value = null;
+					selectedGroupUser.value = null;
+				});
+			} else {
+				useToastService().error('', 'Failed to update user group permission');
+			}
+		});
 	}
 };
 
