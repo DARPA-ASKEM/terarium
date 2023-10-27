@@ -59,7 +59,8 @@ import {
 	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	getSimulation
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
@@ -172,21 +173,31 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 	await lazyLoadRunResults(runIdList[0]);
 
+	const port = props.node.inputs[0];
+
 	const state = _.cloneDeep(props.node.state);
 	if (state.simConfigs.chartConfigs.length === 0) {
 		state.simConfigs.chartConfigs.push([]);
 	}
-	state.simConfigs.runConfigs[runIdList[0]] = {
-		runId: runIdList[0],
-		active: true
-	};
+
+	const sim = await getSimulation(runIdList[0]);
+	if (sim) {
+		state.simConfigs.runConfigs[sim.id] = {
+			runId: sim.id,
+			active: true,
+			configName: port.label,
+			numSamples: sim.executionPayload.extra.num_samples,
+			method: sim.executionPayload.extra.method,
+			timeSpan: sim.executionPayload.timespan
+		};
+	}
+
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id,
 		state
 	});
 
-	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: `${port.label} - Output ${runList.value.length}`, // TODO: figure out more robust naming system

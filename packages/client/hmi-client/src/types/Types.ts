@@ -143,9 +143,21 @@ export interface Code {
     name: string;
     description: string;
     filename: string;
+    files?: { [index: string]: CodeFile };
     repoUrl?: string;
     language: ProgrammingLanguage;
     metadata?: any;
+}
+
+export interface CodeFile {
+    language: string;
+    dynamics: Dynamics;
+}
+
+export interface Dynamics {
+    name: string;
+    description: string;
+    block: string[];
 }
 
 export interface Dataset {
@@ -894,6 +906,7 @@ export enum ProvenanceType {
     Simulation = "Simulation",
     Artifact = "Artifact",
     Code = "Code",
+    Document = "Document",
 }
 
 export enum AssetType {

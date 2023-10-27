@@ -40,7 +40,8 @@ import {
 	makeForecastJob,
 	getRunResult,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -159,21 +160,28 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	);
 	runResults.value = newRunResults;
 
+	const port = props.node.inputs[0];
+
 	const state = _.cloneDeep(props.node.state);
 	if (state.simConfigs.chartConfigs.length === 0) {
 		state.simConfigs.chartConfigs.push([]);
 	}
-	state.simConfigs.runConfigs[runIdList[0]] = {
-		runId: runIdList[0],
-		active: true
-	};
+
+	const sim = await getSimulation(runIdList[0]);
+	if (sim) {
+		state.simConfigs.runConfigs[sim.id] = {
+			runId: sim.id,
+			active: true,
+			configName: port.label,
+			timeSpan: sim.executionPayload.timespan
+		};
+	}
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id,
 		state
 	});
 
-	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateJuliaOperation.outputs[0].type,
 		label: `${port.label} - Output ${runList.value.length}`, // TODO: figure out more robust naming system

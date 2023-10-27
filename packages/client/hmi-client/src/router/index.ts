@@ -1,5 +1,5 @@
 import { computed } from 'vue';
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
@@ -28,9 +28,7 @@ export enum RoutePath {
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	EvaluationScenariosPath = '/evaluation-scenarios',
-	ModelEditor = '/model-editor',
-	ModelRunner = '/model-runner'
+	EvaluationScenariosPath = '/evaluation-scenarios'
 }
 
 const routes = [
@@ -69,10 +67,7 @@ const routes = [
 ];
 
 const router = createRouter({
-	// 4. Provide the history implementation to use. We are using the hash history for simplicity here.
-	history: createWebHashHistory(),
-
-	// short for `routes: routes`
+	history: createWebHistory(),
 	routes
 });
 

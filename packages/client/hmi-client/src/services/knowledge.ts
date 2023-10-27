@@ -181,11 +181,16 @@ export const extractPDF = async (documentId: string) => {
 	}
 };
 
-export async function codeToAMR(codeId: string, name: string = '', description: string = '') {
+export async function codeToAMR(
+	codeId: string,
+	name: string = '',
+	description: string = '',
+	dynamicsOnly: boolean = false
+) {
 	const response = await API.post(
-		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}`
+		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}`
 	);
-	if (response && response?.status === 200) {
+	if (response?.status === 200) {
 		const { id, status } = response.data;
 		if (status === 'queued') {
 			const extraction = await fetchExtraction(id);
