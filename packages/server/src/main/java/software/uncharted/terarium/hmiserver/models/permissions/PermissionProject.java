@@ -9,9 +9,11 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 @Data
 @Accessors(chain = true)
-@AllArgsConstructor
 public class PermissionProject {
 	private String id;
 	private String relationship;
 
+	public PermissionProject(String id) {
+		this.id = id;
+	}
 }
