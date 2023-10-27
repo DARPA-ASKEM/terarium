@@ -142,6 +142,7 @@ const usersMenu = computed(() =>
 );
 const selectedGroupUser = ref<PermissionUser | null>(null);
 const selectedGroupRelationship = ref('');
+let currentGroupRelationship = '';
 const groupRelationships = ref(['admin', 'member']);
 
 const view = ref(View.USER);
@@ -262,6 +263,7 @@ const addSelectedUserToGroup = (groupId: string) => {
 const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
 	selectedGroupRelationship.value =
 		groupRelationships.value.find((r) => r === event.data.relationship) ?? '';
+	currentGroupRelationship = selectedGroupRelationship.value;
 };
 
 const updateGroupUserRelationship = (event: DropdownChangeEvent, groupId: string) => {
@@ -269,7 +271,7 @@ const updateGroupUserRelationship = (event: DropdownChangeEvent, groupId: string
 		updateGroupUserPermissions(
 			groupId,
 			selectedGroupUser.value?.id,
-			selectedGroupRelationship.value,
+			currentGroupRelationship,
 			event.value
 		);
 	}
