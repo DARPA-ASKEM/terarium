@@ -6,6 +6,7 @@
 		:is-naming-asset="isRenamingDataset"
 		:stretch-content="view === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
+		:is-loading="isDatasetLoading"
 	>
 		<template #name-input>
 			<InputText
@@ -338,6 +339,7 @@ const newDatasetName = ref('');
 const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
+const isDatasetLoading = ref(false);
 
 function formatName(name: string) {
 	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
@@ -479,7 +481,9 @@ watch(
 	async () => {
 		isRenamingDataset.value = false;
 		if (props.assetId !== '') {
-			fetchDataset();
+			isDatasetLoading.value = true;
+			await fetchDataset();
+			isDatasetLoading.value = false;
 		} else {
 			dataset.value = null;
 			rawContent.value = null;

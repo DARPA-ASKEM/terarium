@@ -1,7 +1,7 @@
 <!-- This template is a copy of tera-external-publication with some elements stripped out.  TODO: merge the concept of external publication and document asset -->
 <template>
 	<tera-asset
-		v-if="doc && !documentLoading"
+		v-if="doc"
 		:feature-config="featureConfig"
 		:name="highlightSearchTerms(doc.name)"
 		:overline="highlightSearchTerms(doc.source)"
@@ -9,6 +9,7 @@
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
 		:show-sticky-header="view === DocumentView.PDF"
+		:is-loading="documentLoading"
 	>
 		<template #edit-buttons>
 			<SelectButton
@@ -112,9 +113,6 @@
 		/>
 		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
 	</tera-asset>
-	<section v-else class="flex justify-content-center">
-		<tera-progress-spinner :font-size="2" />
-	</section>
 </template>
 
 <script setup lang="ts">
@@ -136,7 +134,6 @@ import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
