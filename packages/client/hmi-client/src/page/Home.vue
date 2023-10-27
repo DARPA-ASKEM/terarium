@@ -4,7 +4,8 @@
 			<TabView>
 				<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 					<section class="filter-and-sort">
-						<!-- TODO: Add project search back in once we are ready
+						<div v-if="!isEmpty(tab.projects)">
+							<!-- TODO: Add project search back in once we are ready
 								<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
 								<InputText
@@ -14,56 +15,60 @@
 									placeholder="Filter by keyword"
 								/>
 							</span> -->
-						<span v-if="view === ProjectsView.Cards"
-							><label>Sort by:</label>
-							<Dropdown
-								v-model="selectedSort"
-								:options="sortOptions"
-								@update:model-value="tab.projects = myFilteredSortedProjects"
+							<span v-if="view === ProjectsView.Cards"
+								><label>Sort by:</label>
+								<Dropdown
+									v-model="selectedSort"
+									:options="sortOptions"
+									@update:model-value="tab.projects = myFilteredSortedProjects"
+									class="p-inputtext-sm"
+								/>
+							</span>
+							<MultiSelect
+								v-if="view === ProjectsView.Table"
+								:modelValue="selectedColumns"
+								:options="columns"
+								:maxSelectedLabels="1"
+								:selected-items-label="`{0} columns displayed`"
+								optionLabel="header"
+								@update:modelValue="onToggle"
+								placeholder="Add or remove columns"
 								class="p-inputtext-sm"
 							/>
-						</span>
-						<MultiSelect
-							v-if="view === ProjectsView.Table"
-							:modelValue="selectedColumns"
-							:options="columns"
-							:maxSelectedLabels="1"
-							:selected-items-label="`{0} columns displayed`"
-							optionLabel="header"
-							@update:modelValue="onToggle"
-							placeholder="Add or remove columns"
-							class="p-inputtext-sm"
-						/>
-						<SelectButton
-							:model-value="view"
-							@change="if ($event.value) view = $event.value;"
-							:options="viewOptions"
-							option-value="value"
-						>
-							<template #option="slotProps">
-								<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-								<span class="p-button-label">{{ slotProps.option.value }}</span>
-							</template>
-						</SelectButton>
-						<Button
-							icon="pi pi-plus"
-							label="New project"
-							@click="isNewProjectModalVisible = true"
-						/>
+						</div>
+						<div>
+							<SelectButton
+								v-if="!isEmpty(tab.projects)"
+								:model-value="view"
+								@change="if ($event.value) view = $event.value;"
+								:options="viewOptions"
+								option-value="value"
+							>
+								<template #option="slotProps">
+									<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+									<span class="p-button-label">{{ slotProps.option.value }}</span>
+								</template>
+							</SelectButton>
+							<Button
+								icon="pi pi-plus"
+								label="New project"
+								@click="isNewProjectModalVisible = true"
+							/>
+						</div>
 					</section>
-					<section class="list-of-projects">
+					<section class="projects">
 						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
 							<template v-if="tab.title === TabTitles.MyProjects">
-								<h3>Welcome to Terarium</h3>
-								<div>
+								<p>
 									Get started by creating a
 									<Button
 										label="new project"
 										class="p-button-text new-project-button"
 										@click="isNewProjectModalVisible = true"
-									/>. Your projects will be displayed on this page.
-								</div>
+									/>.
+								</p>
+								<p>Your projects will be displayed on this page.</p>
 							</template>
 							<template v-else-if="tab.title === TabTitles.PublicProjects">
 								<h3>You don't have any shared projects</h3>
@@ -71,7 +76,12 @@
 							</template>
 						</div>
 						<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
-							<li v-for="project in tab.projects" :key="project.id">
+							<template v-if="isLoadingProjects">
+								<li v-for="i in 3" :key="i">
+									<tera-project-card />
+								</li>
+							</template>
+							<li v-else v-for="project in tab.projects" :key="project.id">
 								<tera-project-card
 									v-if="project.id"
 									:project="project"
@@ -316,14 +326,21 @@ onMounted(() => {
 .menu {
 	overflow-y: auto;
 	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
 	flex: 1;
-	padding: 0;
+}
+
+.p-tabview {
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 }
 
-.list-of-projects {
+.p-tabview:deep(.p-tabview-panels) {
+	padding: 0;
 	flex: 1;
+	background-color: #f9f9f9;
 }
 
 .p-dropdown,
@@ -339,9 +356,11 @@ onMounted(() => {
 
 .filter-and-sort {
 	background-color: #e9e9e9;
-	border: 1px solid var(--surface-border);
+	border-top: 1px solid var(--surface-border);
+	border-bottom: 1px solid var(--surface-border);
 	padding: 16px;
 	display: flex;
+	justify-content: space-between;
 	align-items: center;
 	gap: 16px;
 }
@@ -351,16 +370,17 @@ onMounted(() => {
 	font-size: var(--font-caption);
 }
 
-.filter-and-sort > * {
+.filter-and-sort > div {
+	display: flex;
+	gap: 16px;
 	height: 40px;
 }
 
-.p-buttonset {
+.filter-and-sort > div:last-child {
 	margin-left: auto;
 }
 
 .project-cards-grid {
-	background-color: #f9f9f9;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 	gap: 16px;
@@ -368,36 +388,9 @@ onMounted(() => {
 	list-style: none;
 }
 
-.papers {
-	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
-	padding: 1rem;
-	border-top: 1px solid var(--gray-100);
-	flex-grow: 1;
-}
-
-.papers p {
-	color: var(--text-color-primary);
-	margin: 1rem 0 1rem 0rem;
-}
-
 h3 {
 	font-size: 24px;
 	color: var(--text-color-primary);
-}
-
-.projects header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.p-tabview:deep(.p-tabview-panels) {
-	padding: 0;
-}
-
-.p-tabview:deep(.p-tabview-panel) {
-	display: flex;
-	flex-direction: column;
 }
 
 header svg {
@@ -405,51 +398,21 @@ header svg {
 	margin-right: 0.5rem;
 }
 .no-projects {
-	background-color: var(--gray-0);
-	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
-	background-size: 12px 12px;
-	background-position: 0 0;
-	background-repeat: repeat;
+	margin-top: 8rem;
+	color: var(--text-color-subdued);
 }
-
 .no-projects > * {
 	margin: auto;
-	margin-top: 1rem;
 	text-align: center;
 }
 
 .no-projects > img {
-	height: 203px;
+	height: 10rem;
+	margin-bottom: 2rem;
 }
 
 a {
 	color: var(--primary-color);
-}
-
-.new-project-card {
-	width: 17rem;
-	height: 20rem;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	border-radius: var(--border-radius-big);
-	transition: background-color 0.2s ease, box-shadow 0.2s ease;
-	cursor: pointer;
-}
-
-.new-project-card > p {
-	text-align: center;
-	color: var(--text-color-primary);
-}
-
-.new-project-card img {
-	margin: auto;
-}
-
-.new-project-card:hover {
-	background-color: var(--surface);
-	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
 .new-project-button {
