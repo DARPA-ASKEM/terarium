@@ -175,10 +175,10 @@ public class ReBACService {
 					CreatedResponseUtil.getCreatedId(response),
 					name);
 			case 409:
-				System.err.println("Conflicting Name");
+				log.error("Conflicting Name");
 				return null;
 			default:
-				System.err.println("Other Error: " + response.getStatus());
+				log.error("Other Error: " + response.getStatus());
 				return null;
 		}
 	}

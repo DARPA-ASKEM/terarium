@@ -24,6 +24,8 @@ package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 //import org.jboss.aesh.console.command.invocation.CommandInvocation;
 //import org.keycloak.client.admin.cli.aesh.Globals;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -55,6 +57,7 @@ import static java.nio.file.Files.isRegularFile;
 /**
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
  */
+@Slf4j
 public class IoUtil {
 
     public static String readFileOrStdin(String file) {
@@ -214,34 +217,34 @@ public class IoUtil {
     }
 
     public static void printOut(String msg) {
-        System.out.println(msg);
+        log.info(msg);
     }
 
     public static void printErr(String msg) {
-        System.err.println(msg);
+        log.error(msg);
     }
 
     public static void printfOut(String format, String ... params) {
-        System.out.println(new Formatter().format("WARN: " + format, params));
+        log.info(new Formatter().format("WARN: " + format, params).toString());
     }
 
     public static void warnOut(String msg) {
-        System.out.println("WARN: " + msg);
+        log.info("WARN: " + msg);
     }
 
     public static void warnErr(String msg) {
-        System.err.println("WARN: " + msg);
+        log.error("WARN: " + msg);
     }
 
     public static void warnfOut(String format, String ... params) {
-        System.out.println(new Formatter().format("WARN: " + format, params));
+        log.info(new Formatter().format("WARN: " + format, params).toString());
     }
 
     public static void warnfErr(String format, String ... params) {
-        System.err.println(new Formatter().format("WARN: " + format, params));
+        log.error(new Formatter().format("WARN: " + format, params).toString());
     }
 
     public static void logOut(String msg) {
-        System.out.println("LOG: " + msg);
+        log.info("LOG: " + msg);
     }
 }

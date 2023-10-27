@@ -18,6 +18,7 @@ package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -63,6 +64,7 @@ import static org.keycloak.common.util.ObjectUtil.capitalize;
 /**
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
  */
+@Slf4j
 public class HttpUtil {
 
     public static final String APPLICATION_XML = "application/xml";
@@ -273,8 +275,8 @@ public class HttpUtil {
             // Since this is a static util, it may happen that TLS is setup many times in one command
             // invocation (e.g. when a command requires logging in). However, we would like to
             // prevent this warning from appearing multiple times. That's why we need to guard it with a boolean.
-            System.err.println("The server is configured to use TLS but there is no truststore specified.");
-            System.err.println("The tool will skip certificate validation. This is highly discouraged for production use cases");
+            log.error("The server is configured to use TLS but there is no truststore specified.");
+            log.error("The tool will skip certificate validation. This is highly discouraged for production use cases");
         }
 
         SSLContextBuilder builder = new SSLContextBuilder();
