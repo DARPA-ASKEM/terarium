@@ -38,7 +38,6 @@ public class TransformController {
 		// since the model service returns headers that are duplicated in the hmi-server response,
 		// we need to strip them out. This stops our nginx reverse proxy from thinking that there
 		// is an HTTP smuggling attack.
-		final ResponseEntity<String> res = new ResponseEntity<>(proxyRes.getBody(), proxyRes.getStatusCode());
- 		return res;
+		return new ResponseEntity<>(proxyRes.getBody(), proxyRes.getStatusCode());
 	}
 }
