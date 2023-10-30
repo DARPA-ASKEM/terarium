@@ -178,7 +178,7 @@ const assetOptions = ref([
 
 const topicOptions = ref([
 	{ label: 'Covid-19', value: 'xdd-covid-19' },
-	{ label: 'Climate Change', value: 'climate-change-modeling' }
+	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
 const sliderWidth = computed(() =>
