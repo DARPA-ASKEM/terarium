@@ -1,5 +1,15 @@
 <template>
 	<main>
+		<header>
+			<article>
+				<h3>From data to discovery</h3>
+				<p>
+					Accelerate scientific modeling and simulation using AI. Search available knowledge,
+					enhance extracted models and data, and test scenarios to simulate real-world problems.
+				</p>
+				<Button label="Show me around" icon="pi pi-play" outlined />
+			</article>
+		</header>
 		<section class="menu">
 			<TabView>
 				<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
@@ -90,10 +100,6 @@
 								/>
 							</li>
 						</ul>
-						<!--
-							:is-loading="isLoadingProjects"
-							:amount-of-cards="tab.projects.length"
-						-->
 						<tera-project-table
 							v-else-if="view === ProjectsView.Table"
 							:projects="tab.projects"
@@ -323,6 +329,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
+main {
+	display: flex;
+	flex-direction: column;
+}
+
+header {
+	height: 10rem;
+	display: flex;
+	align-items: center;
+	padding: 1.5rem;
+	height: 240px;
+	background: url('@/assets/svg/terarium-logo-outline.svg') no-repeat right 20% center,
+		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
+	/* background: radial-gradient(105.92% 916.85% at 101.3% -5.92%, #75d5c8 0%, white 100%); */
+	/* background-image: url("../img/logo-outline.svg");
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  background-position: right -150px top; */
+	background-size: 25%, 100%;
+}
+
+header h3 {
+	font-size: 24px;
+	margin-bottom: 1rem;
+}
+
+header p {
+	max-width: 40%;
+	line-height: 1.5;
+}
+
 .menu {
 	overflow-y: auto;
 	overflow-x: hidden;
@@ -386,11 +423,6 @@ onMounted(() => {
 	gap: 16px;
 	padding: 16px;
 	list-style: none;
-}
-
-h3 {
-	font-size: 24px;
-	color: var(--text-color-primary);
 }
 
 header svg {
