@@ -11,34 +11,16 @@
 				/>
 			</li>
 		</ul>
-		<Button
-			label="Enrich description"
-			text
-			:loading="enriching"
-			@click="
-				dialogType = DialogType.ENRICH;
-				visible = true;
-			"
-		/>
-		<Button
-			label="Extract variables"
-			text
-			:loading="enriching"
-			@click="
-				dialogType = DialogType.EXTRACT;
-				visible = true;
-			"
-		/>
+		<Button label="Enrich description" text :loading="enriching" @click="dialogForEnrichment" />
+		<Button label="Extract variables" text :loading="enriching" @click="dialogForExtraction" />
 		<Button
 			v-if="props.assetType === ResourceType.MODEL"
 			label="Align extractions to model"
 			text
 			:loading="aligning"
-			@click="
-				dialogType = DialogType.ALIGN;
-				visible = true;
-			"
+			@click="dialogForAlignement"
 		/>
+
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -128,6 +110,21 @@ const dialogType = ref<DialogType>(DialogType.ENRICH);
 const aligning = ref(false);
 const enriching = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
+
+const dialogForEnrichment = () => {
+	dialogType.value = DialogType.ENRICH;
+	visible.value = true;
+};
+
+const dialogForExtraction = () => {
+	dialogType.value = DialogType.EXTRACT;
+	visible.value = true;
+};
+
+const dialogForAlignement = () => {
+	dialogType.value = DialogType.ALIGN;
+	visible.value = true;
+};
 
 const sendForEnrichments = async (/* _selectedResources */) => {
 	const jobIds: (string | null)[] = [];
