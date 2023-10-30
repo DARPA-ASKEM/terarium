@@ -7,7 +7,7 @@
 	<tera-navbar class="header" :active="displayNavBar" :show-suggestions="showSuggestions" />
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" />
+			<component class="page" ref="pageRef" :is="Component" :key="route.path" />
 		</router-view>
 	</main>
 	<footer class="footer">
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import Toast from 'primevue/toast';
 import Button from 'primevue/button';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
@@ -147,6 +147,10 @@ const documentation = computed(() => {
 	}
 	const url = host.replace(/\bapp\b/g, 'documentation');
 	return `https://${url}`;
+});
+
+onMounted(async () => {
+	await useProjects().getAll();
 });
 </script>
 

@@ -126,7 +126,7 @@
 						<div class="variables-header">
 							<div
 								v-for="(title, index) in [
-									'ID',
+									'COLUMN',
 									'NAME',
 									'DATA TYPE',
 									'UNITS',
