@@ -350,6 +350,34 @@ export interface ExtractionResponseResult {
     job_result: any;
 }
 
+export interface FunmanPostQueriesRequest {
+    query: any;
+    parameters: any[];
+    config: FunmanConfig;
+    structureParameters: any[];
+}
+
+export interface FunmanConfig {
+    tolerance: number;
+    queueTimeout: number;
+    numberOfProcesses: number;
+    waitTimeout: number;
+    waitActionTimeout: number;
+    solver: string;
+    numSteps: number;
+    stepSize: number;
+    numInitialBoxes: number;
+    saveSmtlib: boolean;
+    drealPrecision: number;
+    drealLogLevel: string;
+    constraintNoise: number;
+    initialStateTolerance: number;
+    drealMcts: boolean;
+    substituteSubformulas: boolean;
+    useCompartmentalConstraints: boolean;
+    normalize: boolean;
+}
+
 export interface DKG {
     curie: string;
     name: string;
