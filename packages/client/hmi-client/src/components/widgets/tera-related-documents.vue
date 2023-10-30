@@ -18,7 +18,7 @@
 			:disabled="props.assetType != ResourceType.MODEL"
 			:label="`Align extractions to ${assetType}`"
 			:loading="isLoading"
-			@click="dialogForAlignement"
+			@click="dialogForAlignment"
 		/>
 
 		<Dialog
@@ -116,7 +116,7 @@ enum Extractor {
 	MIT = 'MIT'
 }
 
-const emit = defineEmits(['enriched']);
+const emit = defineEmits(['enriched', 'extracted']);
 const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
@@ -132,27 +132,27 @@ function closeDialog() {
 	visible.value = false;
 }
 
-const dialogForEnrichment = () => {
+function dialogForEnrichment() {
 	dialogType.value = DialogType.ENRICH;
 	dialogActionCopy.value = 'Use these resources to enrich descriptions';
 	openDialog();
-};
+}
 
-const dialogForExtraction = () => {
+function dialogForExtraction() {
 	dialogType.value = DialogType.EXTRACT;
 	dialogActionCopy.value = 'Use these resources to extract variables';
 	openDialog();
-};
+}
 
-const dialogForAlignement = () => {
+function dialogForAlignment() {
 	dialogType.value = DialogType.ALIGN;
 	dialogActionCopy.value = `Use these resources to align the ${props.assetType}`;
 	openDialog();
-};
+}
 
 const acceptDialog = () => {
 	if (dialogType.value === DialogType.ENRICH) {
-		sendForEnrichments();
+		sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
 		sendForExtractions();
 	} else if (dialogType.value === DialogType.ALIGN) {
@@ -161,7 +161,7 @@ const acceptDialog = () => {
 	closeDialog();
 };
 
-const sendForEnrichments = async () => {
+const sendForEnrichment = async () => {
 	const jobIds: (string | null)[] = [];
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
@@ -190,42 +190,25 @@ const sendForEnrichments = async () => {
 
 	isLoading.value = false;
 	emit('enriched');
-	getRelatedDocuments();
+	await getRelatedDocuments();
 };
 
 const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
-	const extractionList: Promise<PollerResult<any>>[] = [];
 
-	isLoading.value = true;
-	const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
-	jobIds.push(profileModelJobId);
-
-	// Create extractions list from job ids
-	jobIds.forEach((jobId) => {
-		if (jobId) {
-			extractionList.push(fetchExtraction(jobId));
-		}
-	});
-
-	if (isEmpty(extractionList)) return;
-
-	// Poll all extractions
-	await Promise.all(extractionList);
+	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId);
+	if (!pdfExtractionsJobId) return;
+	await fetchExtraction(pdfExtractionsJobId);
 
 	isLoading.value = false;
-	emit('enriched');
-	getRelatedDocuments();
+	emit('extracted');
+	await getRelatedDocuments();
 };
 
 const sendToAlignModel = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	if (props.assetType === ResourceType.MODEL && selectedResourceId) {
-		// fetch pdf extractions and link amr synchronously
 		isLoading.value = true;
-		const pdfExtractionsJobId = await pdfExtractions(selectedResourceId);
-		if (!pdfExtractionsJobId) return;
-		await fetchExtraction(pdfExtractionsJobId);
 
 		const linkAmrJobId = await alignModel(props.assetId, selectedResourceId);
 		if (!linkAmrJobId) return;
@@ -233,7 +216,7 @@ const sendToAlignModel = async () => {
 
 		isLoading.value = false;
 		emit('enriched');
-		getRelatedDocuments();
+		await getRelatedDocuments();
 	}
 };
 
@@ -253,7 +236,6 @@ async function getRelatedDocuments() {
 	const provenanceType = mapResourceTypeToProvenanceType(props.assetType);
 
 	if (!provenanceType) return;
-
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
 		ProvenanceType.Document
 	]);
