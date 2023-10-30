@@ -189,7 +189,6 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import DataTable, { DataTableRowSelectEvent } from 'primevue/datatable';
 import Column from 'primevue/column';
-import API from '@/api/api';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { PermissionGroup, PermissionUser } from '@/types/Types';
@@ -205,6 +204,8 @@ import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import { useToastService } from '@/services/toast';
 import Dialog from 'primevue/dialog';
 import Skeleton from 'primevue/skeleton';
+import { getUsers, addRole, removeRole } from '@/services/user';
+import { getRoles } from '@/services/roles';
 
 interface Role {
 	id: string;
@@ -218,7 +219,7 @@ enum View {
 
 // User admin table
 const systemRoles = ref<Role[]>([]);
-const users = ref();
+const users = ref<PermissionUser[] | null>(null);
 const selectedId = ref();
 const selectedUserRow = ref();
 const selectedRoles = ref<Role[]>([]);
@@ -229,7 +230,7 @@ const expandedRows = ref([]);
 const userDropdownValue = ref('');
 const selectedUser = ref<PermissionUser | null>();
 const usersMenu = computed(() =>
-	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+	users.value?.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
 );
 const selectedGroupUser = ref<PermissionUser | null>(null);
 const selectedGroupRelationship = ref('');
@@ -243,60 +244,10 @@ let removeUserCallback;
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];
 
-const getRoles = async () => {
-	try {
-		const response = await API.get('/roles');
-		if (response.status >= 200 && response.status < 300 && response.data) {
-			systemRoles.value = response.data.map(({ id, name }) => ({ id, name }));
-		}
-	} catch (err) {
-		console.log(err);
-	}
-	return null;
-};
-const getUsers = async () => {
-	try {
-		const response = await API.get('/users');
-		if (response.status >= 200 && response.status < 300) {
-			users.value = response.data;
-		}
-	} catch (err) {
-		console.log(err);
-	}
-	return null;
-};
-
 const onUserRowSelect = (event: DataTableRowSelectEvent) => {
-	selectedId.value = event.data.id;
-	selectedRoles.value = event.data.roles;
-};
-
-const addRole = async (role) => {
-	try {
-		const response = await API({
-			url: `/users/${selectedId.value}/roles/${role.name}`,
-			method: 'POST',
-			validateStatus: (status: number) => status < 400 //
-		});
-		if (response.status >= 200 && response.status < 300) {
-			await getUsers();
-		}
-	} catch (err) {
-		console.log(err);
-	}
-};
-const removeRole = async (role) => {
-	try {
-		const response = await API({
-			url: `/users/${selectedId.value}/roles/${role.name}`,
-			method: 'DELETE',
-			validateStatus: (status: number) => status < 400 //
-		});
-		if (response.status >= 200 && response.status < 300) {
-			getUsers();
-		}
-	} catch (err) {
-		console.log(err);
+	if (selectedId.value !== event.data.id) {
+		selectedId.value = event.data.id;
+		selectedRoles.value = event.data.roles;
 	}
 };
 
@@ -313,18 +264,18 @@ function getRoleNames(roles: Role[]) {
 const updateRoles = async () => {
 	if (selectedId.value) {
 		loadingId.value = selectedId.value;
-		const existingRoles = users.value.find((user) => user.id === selectedId.value).roles;
+		const existingRoles = users.value?.find((user) => user.id === selectedId.value)?.roles;
 		const rolesToAdd =
 			selectedRoles.value.filter(
-				({ name }) => !existingRoles.map((role) => role.name).includes(name)
+				({ name }) => !existingRoles?.map((role) => role.name).includes(name)
 			) ?? [];
 		const rolesToRemove =
-			existingRoles.filter(
+			existingRoles?.filter(
 				({ name }) => !selectedRoles.value.map((role) => role.name).includes(name)
 			) ?? [];
-		await Promise.all(rolesToAdd.map((role) => addRole(role)));
-		await Promise.all(rolesToRemove.map((role) => removeRole(role)));
-		await getUsers();
+		await Promise.all(rolesToAdd.map((role) => addRole(selectedId.value, role.name)));
+		await Promise.all(rolesToRemove.map((role) => removeRole(selectedId.value, role.name)));
+		users.value = await getUsers();
 		selectedUserRow.value = null;
 		loadingId.value = null;
 	}
@@ -348,7 +299,7 @@ const getAndPopulateGroup = async (groupId: string) =>
 	});
 
 const onSelectUser = (userId: string) => {
-	const found = users.value.find(({ id }) => id === userId);
+	const found = users.value?.find(({ id }) => id === userId);
 	if (found) {
 		selectedUser.value = found;
 	}
@@ -423,8 +374,9 @@ watch(
 	() => view.value,
 	async () => {
 		if (view.value === View.USER) {
-			getUsers();
-			getRoles();
+			users.value = await getUsers();
+			const roles = await getRoles();
+			systemRoles.value = roles?.map(({ id, name }) => ({ id, name })) ?? [];
 		} else if (view.value === View.GROUP) {
 			groupTableData.value = await getAllGroups();
 			if (!users.value) {
@@ -435,8 +387,9 @@ watch(
 );
 
 onMounted(async () => {
-	getRoles();
-	getUsers();
+	const roles = await getRoles();
+	systemRoles.value = roles?.map(({ id, name }) => ({ id, name })) ?? [];
+	users.value = await getUsers();
 	groupTableData.value = await getAllGroups();
 });
 </script>
