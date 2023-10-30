@@ -53,6 +53,7 @@
 							:options="systemRoles"
 							optionLabel="name"
 							@change="updateRoles"
+							:loading="loadingId === selectedId"
 						/>
 					</div>
 					<div v-else>
@@ -309,8 +310,9 @@ function getRoleNames(roles: Role[]) {
 	return names;
 }
 
-const updateRoles = () => {
+const updateRoles = async () => {
 	if (selectedId.value) {
+		loadingId.value = selectedId.value;
 		const existingRoles = users.value.find((user) => user.id === selectedId.value).roles;
 		const rolesToAdd =
 			selectedRoles.value.filter(
@@ -320,12 +322,11 @@ const updateRoles = () => {
 			existingRoles.filter(
 				({ name }) => !selectedRoles.value.map((role) => role.name).includes(name)
 			) ?? [];
-		rolesToAdd.forEach((role) => {
-			addRole(role);
-		});
-		rolesToRemove.forEach((role) => {
-			removeRole(role);
-		});
+		await Promise.all(rolesToAdd.map((role) => addRole(role)));
+		await Promise.all(rolesToRemove.map((role) => removeRole(role)));
+		await getUsers();
+		selectedUserRow.value = null;
+		loadingId.value = null;
 	}
 };
 
