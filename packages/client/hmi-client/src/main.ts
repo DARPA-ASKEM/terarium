@@ -21,6 +21,13 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import '@/assets/css/style.scss';
 
+function cleanLocationHash(): void {
+	// Set the hash value of the window.location to null
+	// This is to prevent the Keycloak from redirecting to the hash value
+	// after the authentication
+	window.location.hash = '';
+}
+
 // Create the Vue application
 const app = createApp(App);
 // Set up the pinia store to be able to use for useAuthStore()
@@ -46,6 +53,7 @@ try {
 		.catch((e) => {
 			failedAuth(e);
 		});
+	cleanLocationHash();
 } catch (e) {
 	failedAuth(e);
 }
@@ -56,12 +64,8 @@ logger.info('Authenticated');
 // Token Refresh
 setInterval(async () => {
 	await keycloak.updateToken(70);
+	cleanLocationHash();
 }, 6000);
-
-// Set the hash value of the window.location to null
-// This is to prevent the Keycloak from redirecting to the hash value
-// after the authentication
-window.location.hash = '';
 
 app
 	.use(router)
