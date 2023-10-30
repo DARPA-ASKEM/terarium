@@ -11,13 +11,13 @@
 				/>
 			</li>
 		</ul>
-		<Button text label="Enrich description" :loading="enriching" @click="dialogForEnrichment" />
-		<Button text label="Extract variables" :loading="enriching" @click="dialogForExtraction" />
+		<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
+		<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
 		<Button
 			text
 			:disabled="props.assetType != ResourceType.MODEL"
 			:label="`Align extractions to ${assetType}`"
-			:loading="isAligning"
+			:loading="isLoading"
 			@click="dialogForAlignement"
 		/>
 
@@ -52,6 +52,23 @@
 					</div>
 				</div>
 			</div>
+			<aside v-if="dialogType === DialogType.EXTRACT && assetType === ResourceType.MODEL">
+				<p>Which extraction service would you like to use?</p>
+				<RadioButton
+					v-model="extractionService"
+					inputId="extractionServiceSkema"
+					name="skema"
+					:value="Extractor.SKEMA"
+				/>
+				<label for="extractionServiceSkema">SKEMA</label>
+				<RadioButton
+					v-model="extractionService"
+					inputId="extractionServiceMit"
+					name="mit"
+					:value="Extractor.MIT"
+				/>
+				<label for="extractionServiceMit">MIT</label>
+			</aside>
 			<template #footer>
 				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
 				<Button :label="dialogActionCopy" @click="acceptDialog" />
@@ -66,13 +83,14 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import RadioButton from 'primevue/radiobutton';
 import { ResourceType } from '@/types/common';
 import {
-	profileDataset,
-	profileModel,
-	fetchExtraction,
 	alignModel,
-	pdfExtractions
+	fetchExtraction,
+	pdfExtractions,
+	profileDataset,
+	profileModel
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
@@ -93,12 +111,17 @@ enum DialogType {
 	ALIGN
 }
 
+enum Extractor {
+	SKEMA = 'SKEMA',
+	MIT = 'MIT'
+}
+
 const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
-const isAligning = ref(false);
-const isEnriching = ref(false);
+const extractionService = ref<Extractor>(Extractor.SKEMA);
+const isLoading = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
 const dialogActionCopy = ref('');
@@ -143,7 +166,7 @@ const sendForEnrichments = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
 
-	isEnriching.value = true;
+	isLoading.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === ResourceType.MODEL) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
@@ -165,7 +188,7 @@ const sendForEnrichments = async () => {
 	// Poll all extractions
 	await Promise.all(extractionList);
 
-	isEnriching.value = false;
+	isLoading.value = false;
 	emit('enriched');
 	getRelatedDocuments();
 };
@@ -174,7 +197,7 @@ const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
 
-	isEnriching.value = true;
+	isLoading.value = true;
 	const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
 	jobIds.push(profileModelJobId);
 
@@ -190,7 +213,7 @@ const sendForExtractions = async () => {
 	// Poll all extractions
 	await Promise.all(extractionList);
 
-	isEnriching.value = false;
+	isLoading.value = false;
 	emit('enriched');
 	getRelatedDocuments();
 };
@@ -199,7 +222,7 @@ const sendToAlignModel = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	if (props.assetType === ResourceType.MODEL && selectedResourceId) {
 		// fetch pdf extractions and link amr synchronously
-		isAligning.value = true;
+		isLoading.value = true;
 		const pdfExtractionsJobId = await pdfExtractions(selectedResourceId);
 		if (!pdfExtractionsJobId) return;
 		await fetchExtraction(pdfExtractionsJobId);
@@ -208,7 +231,7 @@ const sendToAlignModel = async () => {
 		if (!linkAmrJobId) return;
 		await fetchExtraction(linkAmrJobId);
 
-		isAligning.value = false;
+		isLoading.value = false;
 		emit('enriched');
 		getRelatedDocuments();
 	}
@@ -268,5 +291,12 @@ ul {
 	font-weight: 500;
 	color: var(--text-color-secondary);
 	text-align: left;
+}
+
+.p-dialog aside > * {
+	margin-top: 1rem;
+}
+.p-dialog aside label {
+	margin: 0 1rem 0 0.5rem;
 }
 </style>
