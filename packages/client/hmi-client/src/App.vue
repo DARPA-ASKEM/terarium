@@ -7,7 +7,7 @@
 	<tera-navbar class="header" :active="displayNavBar" :show-suggestions="showSuggestions" />
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" :key="route.fullPath" />
+			<component class="page" ref="pageRef" :is="Component" :key="route.path" />
 		</router-view>
 	</main>
 	<footer class="footer">
