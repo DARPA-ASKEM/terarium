@@ -112,7 +112,7 @@ enum DialogType {
 	ALIGN
 }
 
-const emit = defineEmits(['enriched', 'extracted']);
+const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
@@ -197,7 +197,7 @@ const sendForExtractions = async () => {
 	await fetchExtraction(pdfExtractionsJobId);
 
 	isLoading.value = false;
-	emit('extracted');
+	emit('enriched');
 	await getRelatedDocuments();
 };
 
