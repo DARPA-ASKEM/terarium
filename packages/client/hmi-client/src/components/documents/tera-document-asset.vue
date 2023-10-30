@@ -160,6 +160,7 @@ const view = ref(DocumentView.EXTRACTIONS);
 const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' };
 const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
 const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
+const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true };
 
 const viewOptions = computed(() => {
 	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
@@ -170,7 +171,7 @@ const viewOptions = computed(() => {
 			options.push(txtOption);
 		}
 	} else {
-		options.push({ value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true });
+		options.push(notFoundOption);
 	}
 	return options;
 });

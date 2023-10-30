@@ -19,7 +19,8 @@
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"
-				:loading="!pdfLink && !linkIsPDF()"
+				:loading="pdfIsLoading"
+				:disabled="!pdfLink && !linkIsPDF()"
 			/>
 		</template>
 		<template #edit-buttons>
@@ -28,11 +29,14 @@
 				@change="if ($event.value) view = $event.value;"
 				:options="viewOptions"
 				option-value="value"
+				option-disabled="disabled"
 			>
 				<template #option="{ option }">
 					<i
 						:class="`${
-							!pdfLink && option.value !== DocumentView.EXRACTIONS
+							pdfIsLoading &&
+							option.value !== DocumentView.EXTRACTIONS &&
+							option.value !== DocumentView.NOT_FOUND
 								? 'pi pi-spin pi-spinner'
 								: option.icon
 						} p-button-icon-left`"
@@ -42,7 +46,7 @@
 			</SelectButton>
 		</template>
 		<Accordion
-			v-if="view === DocumentView.EXRACTIONS"
+			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
@@ -250,8 +254,10 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
-	EXRACTIONS = 'Extractions',
-	PDF = 'PDF'
+	EXTRACTIONS = 'Extractions',
+	PDF = 'PDF',
+	TXT = 'Text',
+	NOT_FOUND = 'Not found'
 }
 
 const props = defineProps({
@@ -275,13 +281,15 @@ const props = defineProps({
 
 const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
+const pdfIsLoading = ref(false);
 const isImportGithubFileModalVisible = ref(false);
 const openedUrl = ref('');
-const view = ref(DocumentView.EXRACTIONS);
-const viewOptions = ref([
-	{ value: DocumentView.EXRACTIONS, icon: 'pi pi-list' },
-	{ value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
-]);
+const view = ref(DocumentView.EXTRACTIONS);
+
+const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' };
+const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
+const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true };
+const viewOptions = ref([extractionsOption, pdfOption]);
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
@@ -297,30 +305,11 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-watch(
-	props,
-	async () => {
-		const id = props.xddUri;
-		if (id !== '') {
-			// fetch doc from XDD
-			const d = await getDocumentById(id);
-			if (d) {
-				doc.value = d;
-			}
-		} else {
-			doc.value = null;
-		}
-	},
-	{
-		immediate: true
-	}
-);
-
 const formatDocumentAuthors = (d: Document) =>
 	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
 const docLink = computed(() =>
-	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
+	doc?.value && !isEmpty(doc?.value?.link) ? doc.value.link[0].url : null
 );
 
 const formattedAbstract = computed(() => {
@@ -421,30 +410,57 @@ function downloadPDF() {
 }
 */
 function linkIsPDF() {
-	const link = docLink.value ?? doi.value;
-	return link.toLowerCase().endsWith('.pdf');
+	const link = (docLink.value ?? doi.value).toLowerCase().endsWith('.pdf');
+	return link;
 }
 
 const openPDF = () => {
 	if (linkIsPDF()) {
-		if (docLink.value) window.open(docLink.value as string);
+		if (docLink.value) window.open(docLink.value);
 		else if (doi.value) window.open(`https://doi.org/${doi.value}`);
-		return;
-	}
-	if (pdfLink.value) {
+	} else if (pdfLink.value) {
 		const pdfWindow = window.open(pdfLink.value);
 		if (pdfWindow) pdfWindow.document.title = doi.value;
 	}
 };
 
-watch(doi, async (currentValue, oldValue) => {
-	if (currentValue !== oldValue) {
-		fetchDocumentArtifacts();
-		fetchAssociatedResources();
-		pdfLink.value = null;
-		pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
+watch(
+	props,
+	async () => {
+		const id = props.xddUri;
+
+		if (id !== '') {
+			// fetch doc from XDD
+			const d = await getDocumentById(id);
+			if (d) {
+				doc.value = d;
+			}
+		} else {
+			doc.value = null;
+		}
+	},
+	{
+		immediate: true
 	}
-});
+);
+
+watch(
+	doi,
+	async (currentValue, oldValue) => {
+		if (currentValue !== oldValue) {
+			fetchDocumentArtifacts();
+			fetchAssociatedResources();
+			viewOptions.value = [extractionsOption, pdfOption];
+			view.value = DocumentView.EXTRACTIONS;
+			pdfLink.value = null;
+			pdfIsLoading.value = true;
+			pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
+			if (!pdfLink.value && !linkIsPDF()) viewOptions.value[1] = notFoundOption;
+			pdfIsLoading.value = false;
+		}
+	},
+	{ immediate: true }
+);
 
 /**
  * Format from xDD citation_list object.
