@@ -71,14 +71,14 @@
 			</aside>
 			<template #footer>
 				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
-				<Button :label="dialogActionCopy" @click="acceptDialog" />
+				<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
 			</template>
 		</Dialog>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
@@ -130,19 +130,19 @@ function closeDialog() {
 
 function dialogForEnrichment() {
 	dialogType.value = DialogType.ENRICH;
-	dialogActionCopy.value = 'Use these resources to enrich descriptions';
+	dialogActionCopy.value = 'Use this resource to enrich descriptions';
 	openDialog();
 }
 
 function dialogForExtraction() {
 	dialogType.value = DialogType.EXTRACT;
-	dialogActionCopy.value = 'Use these resources to extract variables';
+	dialogActionCopy.value = 'Use this resource to extract variables';
 	openDialog();
 }
 
 function dialogForAlignment() {
 	dialogType.value = DialogType.ALIGN;
-	dialogActionCopy.value = `Use these resources to align the ${props.assetType}`;
+	dialogActionCopy.value = `Use this resource to align the ${props.assetType}`;
 	openDialog();
 }
 
@@ -156,6 +156,13 @@ const acceptDialog = () => {
 	}
 	closeDialog();
 };
+
+// Disable the dialog action button if no resources are selected
+// and the dialog type is not enrichment
+const isDialogDisabled = computed(() => {
+	if (dialogType.value === DialogType.ENRICH) return false;
+	return !selectedResources.value;
+});
 
 const sendForEnrichment = async () => {
 	const jobIds: (string | null)[] = [];
@@ -191,6 +198,7 @@ const sendForEnrichment = async () => {
 
 const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
+	isLoading.value = true;
 
 	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId, extractionService.value);
 	if (!pdfExtractionsJobId) return;
