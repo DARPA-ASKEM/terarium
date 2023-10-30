@@ -11,12 +11,12 @@
 				/>
 			</li>
 		</ul>
-		<Button label="Enrich description" text :loading="enriching" @click="dialogForEnrichment" />
-		<Button label="Extract variables" text :loading="enriching" @click="dialogForExtraction" />
+		<Button text label="Enrich description" :loading="enriching" @click="dialogForEnrichment" />
+		<Button text label="Extract variables" :loading="enriching" @click="dialogForExtraction" />
 		<Button
-			v-if="props.assetType === ResourceType.MODEL"
-			label="Align extractions to model"
 			text
+			:disabled="props.assetType != ResourceType.MODEL"
+			:label="`Align extractions to ${assetType}`"
 			:loading="aligning"
 			@click="dialogForAlignement"
 		/>
