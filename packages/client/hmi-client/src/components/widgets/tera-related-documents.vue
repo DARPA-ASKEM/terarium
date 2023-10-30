@@ -53,18 +53,8 @@
 				</div>
 			</div>
 			<template #footer>
-				<Button severity="secondary" outlined label="Cancel" @click="visible = false" />
-				<Button
-					:label="
-						dialogType === 'enrich'
-							? 'Use these resources to enrich descriptions'
-							: 'Use these resources to align the model'
-					"
-					@click="
-						dialogType === 'enrich' ? sendForEnrichments() : sendToAlignModel();
-						visible = false;
-					"
-				/>
+				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
+				<Button :label="dialogActionCopy" @click="acceptDialog" />
 			</template>
 		</Dialog>
 	</main>
@@ -98,9 +88,9 @@ const props = defineProps<{
 }>();
 
 enum DialogType {
-	ENRICH = 'enrich',
-	EXTRACT = 'extract',
-	ALIGN = 'align'
+	ENRICH,
+	EXTRACT,
+	ALIGN
 }
 
 const emit = defineEmits(['enriched']);
@@ -111,22 +101,44 @@ const aligning = ref(false);
 const enriching = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
+const dialogActionCopy = ref('');
+function openDialog() {
+	visible.value = true;
+}
+function closeDialog() {
+	visible.value = false;
+}
+
 const dialogForEnrichment = () => {
 	dialogType.value = DialogType.ENRICH;
-	visible.value = true;
+	dialogActionCopy.value = 'Use these resources to enrich descriptions';
+	openDialog();
 };
 
 const dialogForExtraction = () => {
 	dialogType.value = DialogType.EXTRACT;
-	visible.value = true;
+	dialogActionCopy.value = 'Use these resources to extract variables';
+	openDialog();
 };
 
 const dialogForAlignement = () => {
 	dialogType.value = DialogType.ALIGN;
-	visible.value = true;
+	dialogActionCopy.value = `Use these resources to align the ${props.assetType}`;
+	openDialog();
 };
 
-const sendForEnrichments = async (/* _selectedResources */) => {
+const acceptDialog = () => {
+	if (dialogType.value === DialogType.ENRICH) {
+		sendForEnrichments();
+	} else if (dialogType.value === DialogType.EXTRACT) {
+		sendForExtractions();
+	} else if (dialogType.value === DialogType.ALIGN) {
+		sendToAlignModel();
+	}
+	closeDialog();
+};
+
+const sendForEnrichments = async () => {
 	const jobIds: (string | null)[] = [];
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
@@ -140,6 +152,31 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
 		jobIds.push(profileDatasetJobId);
 	}
+
+	// Create extractions list from job ids
+	jobIds.forEach((jobId) => {
+		if (jobId) {
+			extractionList.push(fetchExtraction(jobId));
+		}
+	});
+
+	if (isEmpty(extractionList)) return;
+
+	// Poll all extractions
+	await Promise.all(extractionList);
+
+	enriching.value = false;
+	emit('enriched');
+	getRelatedDocuments();
+};
+
+const sendForExtractions = async () => {
+	const selectedResourceId = selectedResources.value?.id ?? null;
+	const extractionList: Promise<PollerResult<any>>[] = [];
+
+	enriching.value = true;
+	const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
+	jobIds.push(profileModelJobId);
 
 	// Create extractions list from job ids
 	jobIds.forEach((jobId) => {
