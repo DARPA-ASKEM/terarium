@@ -28,7 +28,12 @@ public class TransformController {
 
 	@PostMapping("/mathml-to-acset")
 	public ResponseEntity<JsonNode> mathML2ACSet(@RequestBody final List<String> list) {
-		return skemaProxy.convertMathML2ACSet(list);
+		final ResponseEntity<JsonNode> proxyRes =  skemaProxy.convertMathML2ACSet(list);
+
+		// since the model service returns headers that are duplicated in the hmi-server response,
+		// we need to strip them out. This stops our nginx reverse proxy from thinking that there
+		// is an HTTP smuggling attack.
+		return ResponseEntity.status(proxyRes.getStatusCode()).body(proxyRes.getBody());
 	}
 
 	@PostMapping(value = "/acset-to-latex", produces = {"text/plain", "application/*"})
