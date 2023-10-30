@@ -1,10 +1,7 @@
 <template>
 	<main class="data-explorer-container flex flex-column">
 		<section class="filter-bar">
-			<tera-filter-bar
-				:topic-options="topicOptions"
-				@filter-changed="executeNewQuery"
-			/>
+			<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
 		</section>
 		<section class="flex h-full relative overflow-hidden">
 			<tera-slider-panel
@@ -602,7 +599,7 @@ onUnmounted(() => {
 
 <style scoped>
 .data-explorer-container {
-	background-color: var(--explorer-background-colour);
+	background-color: var(--surface-100);
 }
 .results-content {
 	display: flex;
