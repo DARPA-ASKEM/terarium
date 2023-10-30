@@ -27,12 +27,17 @@ public class TransformController {
 	ModelServiceProxy modelServiceProxy;
 
 	@PostMapping("/mathml-to-acset")
-	public ResponseEntity<JsonNode> mathML2ACSet(@RequestBody List<String> list) {
+	public ResponseEntity<JsonNode> mathML2ACSet(@RequestBody final List<String> list) {
 		return skemaProxy.convertMathML2ACSet(list);
 	}
 
 	@PostMapping(value = "/acset-to-latex", produces = {"text/plain", "application/*"})
-	public ResponseEntity<String> acet2Latex(@RequestBody PetriNet content) {
-		return modelServiceProxy.petrinetToLatex(content);
+	public ResponseEntity<String> acset2Latex(@RequestBody final PetriNet content) {
+		final ResponseEntity<String> res = modelServiceProxy.petrinetToLatex(content);
+
+		// since the model-service returns headers that are duplicated in the hmi-server response,
+		// we need to strip them out. This stops our nginx reverse proxy from thinking that there
+		// is an HTTP smuggling attack.
+		return ResponseEntity.status(res.getStatusCode()).body(res.getBody());
 	}
 }

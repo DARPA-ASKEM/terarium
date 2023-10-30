@@ -71,9 +71,10 @@
 				<template #header>
 					Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 				</template>
-				<table v-if="parameters.length > 0" class="datatable" style="--columns: 5">
+				<table v-if="parameters.length > 0" class="datatable" style="--columns: 6">
 					<tr>
-						<th>ID</th>
+						<th>Symbol</th>
+						<th>Name</th>
 						<th>Value</th>
 						<th>Distribution</th>
 						<th>Extractions</th>
@@ -97,6 +98,13 @@
 							<td>
 								<input
 									type="text"
+									:value="parameter?.name ?? '--'"
+									@input="updateTable('parameters', i, 'name', $event.target?.['value'])"
+								/>
+							</td>
+							<td>
+								<input
+									type="text"
 									:value="parameter?.value ?? '--'"
 									@input="updateTable('parameters', i, 'value', $event.target?.['value'])"
 								/>
@@ -115,6 +123,7 @@
 						</template>
 						<template v-else>
 							<td>{{ parameter?.id }}</td>
+							<td>{{ parameter?.name }}</td>
 							<td>{{ parameter?.value }}</td>
 							<td>
 								<template v-if="parameter?.distribution?.parameters">
@@ -156,7 +165,7 @@
 				</template>
 				<table v-if="states.length > 0" class="datatable" style="--columns: 5">
 					<tr>
-						<th>Id</th>
+						<th>Symbol</th>
 						<th>Name</th>
 						<th>Unit</th>
 						<th>Concept</th>
@@ -247,7 +256,7 @@
 				</template>
 				<table v-if="!isEmpty(observables)" class="datatable" style="--columns: 4">
 					<tr>
-						<th>ID</th>
+						<th>Symbol</th>
 						<th>Name</th>
 						<th>Expression</th>
 						<th>Extractions</th>
@@ -317,7 +326,7 @@
 				</template>
 				<table v-if="transitions.length > 0" class="datatable" style="--columns: 6">
 					<tr>
-						<th>Id</th>
+						<th>Symbol</th>
 						<th>Name</th>
 						<th>Input</th>
 						<th>Output</th>
@@ -431,7 +440,7 @@
 				</template>
 				<table v-if="!isEmpty(time)" class="datatable" style="--columns: 3">
 					<tr>
-						<th>ID</th>
+						<th>Symbol</th>
 						<th>Units</th>
 						<th>Extractions</th>
 					</tr>
