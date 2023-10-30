@@ -4,7 +4,7 @@
 			<tera-filter-bar
 				:topic-options="topicOptions"
 				@filter-changed="executeNewQuery"
-			></tera-filter-bar>
+			/>
 		</section>
 		<section class="flex h-full relative overflow-hidden">
 			<tera-slider-panel
