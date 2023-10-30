@@ -11,7 +11,8 @@ export enum WorkflowOperationTypes {
 	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
 	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms',
 	DATASET_TRANSFORMER = 'DatasetTransformer',
-	MODEL_TRANSFORMER = 'ModelTransformer'
+	MODEL_TRANSFORMER = 'ModelTransformer',
+	FUNMAN = 'Funman'
 }
 
 export enum WorkflowStatus {
