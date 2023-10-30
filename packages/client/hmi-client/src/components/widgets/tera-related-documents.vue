@@ -192,7 +192,7 @@ const sendForEnrichment = async () => {
 const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 
-	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId);
+	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId, extractionService.value);
 	if (!pdfExtractionsJobId) return;
 	await fetchExtraction(pdfExtractionsJobId);
 
