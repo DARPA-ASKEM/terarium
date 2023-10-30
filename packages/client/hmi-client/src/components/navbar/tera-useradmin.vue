@@ -5,7 +5,33 @@
 			<SelectButton v-model="view" :options="views" />
 		</header>
 		<DataTable
-			v-if="view === View.USER"
+			v-if="view === View.USER && !users"
+			class="p-datatable-sm user"
+			:value="Array.from(Array(10).keys())"
+		>
+			<Column header="Email">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+			<Column header="First name">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+			<Column header="Last name">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+			<Column header="Roles">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+		</DataTable>
+		<DataTable
+			v-if="view === View.USER && users"
 			:value="users"
 			v-model:selection="selectedUserRow"
 			selectionMode="single"
@@ -36,7 +62,18 @@
 			</Column>
 		</DataTable>
 		<DataTable
-			v-else-if="view === View.GROUP"
+			v-if="view === View.GROUP && !groupTableData"
+			class="p-datatable-sm group"
+			:value="Array.from(Array(10).keys())"
+		>
+			<Column header="Name">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+		</DataTable>
+		<DataTable
+			v-if="view === View.GROUP && groupTableData"
 			v-model:expandedRows="expandedRows"
 			:value="groupTableData"
 			dataKey="id"
@@ -50,6 +87,33 @@
 			<Column field="name" header="Name" sortable></Column>
 			<template #expansion="groupSlotProps">
 				<DataTable
+					v-if="!groupSlotProps.data.permissionRelationships?.permissionUsers"
+					:value="Array.from(Array(10).keys())"
+					id="user"
+				>
+					<Column header="Email">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+					<Column header="First name">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+					<Column header="Last name">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+					<Column header="Permission">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+				</DataTable>
+				<DataTable
+					v-if="groupSlotProps.data.permissionRelationships?.permissionUsers"
 					:value="groupSlotProps.data.permissionRelationships.permissionUsers"
 					id="user"
 					v-model:selection="selectedGroupUser"
@@ -59,7 +123,7 @@
 					<Column field="email" header="Email" sortable></Column>
 					<Column field="firstName" header="First name" sortable></Column>
 					<Column field="lastName" header="Last name" sortable></Column>
-					<Column>
+					<Column header="Permission">
 						<template #body="groupUserSlotProps">
 							<section class="group-user-end-col">
 								<div
@@ -139,6 +203,7 @@ import Button from 'primevue/button';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import { useToastService } from '@/services/toast';
 import Dialog from 'primevue/dialog';
+import Skeleton from 'primevue/skeleton';
 
 interface Role {
 	id: string;
@@ -356,11 +421,14 @@ const onRemoveUser = (groupId: string, userId: string) => {
 watch(
 	() => view.value,
 	async () => {
-		getUsers();
 		if (view.value === View.USER) {
+			getUsers();
 			getRoles();
 		} else if (view.value === View.GROUP) {
 			groupTableData.value = await getAllGroups();
+			if (!users.value) {
+				getUsers();
+			}
 		}
 	}
 );
