@@ -71,7 +71,7 @@
 				<template #header>
 					Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 				</template>
-				<table v-if="parameters.length > 0" class="datatable" style="--columns: 5">
+				<table v-if="parameters.length > 0" class="datatable" style="--columns: 6">
 					<tr>
 						<th>Symbol</th>
 						<th>Name</th>
