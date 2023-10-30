@@ -8,25 +8,34 @@
 				<tera-asset-link
 					:label="document.name!"
 					:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
-				></tera-asset-link>
+				/>
 			</li>
 		</ul>
 		<Button
-			label="Enrich Description"
+			label="Enrich description"
 			text
 			:loading="enriching"
 			@click="
-				dialogType = 'enrich';
+				dialogType = DialogType.ENRICH;
+				visible = true;
+			"
+		/>
+		<Button
+			label="Extract variables"
+			text
+			:loading="enriching"
+			@click="
+				dialogType = DialogType.EXTRACT;
 				visible = true;
 			"
 		/>
 		<Button
 			v-if="props.assetType === ResourceType.MODEL"
-			label="Align Model"
+			label="Align extractions to model"
 			text
 			:loading="aligning"
 			@click="
-				dialogType = 'align';
+				dialogType = DialogType.ALIGN;
 				visible = true;
 			"
 		/>
@@ -106,10 +115,16 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
+enum DialogType {
+	ENRICH = 'enrich',
+	EXTRACT = 'extract',
+	ALIGN = 'align'
+}
+
 const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
-const dialogType = ref<'enrich' | 'align'>('enrich');
+const dialogType = ref<DialogType>(DialogType.ENRICH);
 const aligning = ref(false);
 const enriching = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
@@ -214,7 +229,7 @@ ul {
 
 .no-documents-text {
 	padding: 5px;
-	font-size: var(--font-body);
+	font-size: var(--font-body-medium);
 	font-family: var(--font-family);
 	font-weight: 500;
 	color: var(--text-color-secondary);
