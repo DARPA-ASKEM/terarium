@@ -288,9 +288,18 @@ const onSelectUser = (userId: string) => {
 	}
 };
 
-const addSelectedUserToGroup = (groupId: string) => {
+const addSelectedUserToGroup = async (groupId: string) => {
 	if (selectedUser.value?.id) {
-		addGroupUserPermissions(groupId, selectedUser.value.id, 'member');
+		const added = await addGroupUserPermissions(groupId, selectedUser.value.id, 'member');
+		if (added) {
+			getAndPopulateGroup(groupId).then(() => {
+				loadingId.value = null;
+				selectedGroupUser.value = null;
+				useToastService().success('', 'User added to group');
+			});
+		} else {
+			useToastService().error('', 'Failed to add user to group');
+		}
 	}
 };
 
