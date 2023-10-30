@@ -33,11 +33,11 @@ public class TransformController {
 
 	@PostMapping(value = "/acset-to-latex", produces = {"text/plain", "application/*"})
 	public ResponseEntity<String> acet2Latex(@RequestBody final PetriNet content) {
-		final ResponseEntity<String> proxyRes = modelServiceProxy.petrinetToLatex(content);
+		final ResponseEntity<String> res = modelServiceProxy.petrinetToLatex(content);
 
 		// since the model service returns headers that are duplicated in the hmi-server response,
 		// we need to strip them out. This stops our nginx reverse proxy from thinking that there
 		// is an HTTP smuggling attack.
-		return new ResponseEntity<>(proxyRes.getBody(), proxyRes.getStatusCode());
+		return ResponseEntity.status(res.getStatusCode()).body(res.getBody());
 	}
 }
