@@ -3,7 +3,6 @@ import { createApp } from 'vue';
 import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
 import ConfirmationService from 'primevue/confirmationservice';
-import Keycloak, { KeycloakOnLoad } from 'keycloak-js';
 import PrimeVue from 'primevue/config';
 import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
@@ -21,6 +20,14 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import '@/assets/css/style.scss';
 
+try {
+	await window.kc_init;
+} catch (e) {
+	console.error(e);
+	logger.error('Authentication Failed, reloading a the page');
+	window.location.assign('/');
+}
+
 // Create the Vue application
 const app = createApp(App);
 // Set up the pinia store to be able to use for useAuthStore()
@@ -28,34 +35,15 @@ app.use(createPinia());
 
 // Set up the Keycloak authentication
 const authStore = useAuthStore();
-const keycloak = new Keycloak('/api/configuration/keycloak');
-authStore.setKeycloak(keycloak);
+authStore.setKeycloak(window?.keycloak);
 
-// If the authentication failed, reload the page
-function failedAuth(e: unknown) {
-	console.error(e);
-	logger.error('Authentication Failed, reloading a the page');
-	window.location.assign('/');
-}
-// Authentication
-try {
-	await keycloak
-		.init({
-			onLoad: 'login-required' as KeycloakOnLoad
-		})
-		.catch((e) => {
-			failedAuth(e);
-		});
-} catch (e) {
-	failedAuth(e);
-}
 // Initialize user
 await authStore.init();
 logger.info('Authenticated');
 
 // Token Refresh
 setInterval(async () => {
-	await keycloak.updateToken(70);
+	await window.keycloak.updateToken(70);
 }, 6000);
 
 // Set the hash value of the window.location to null
