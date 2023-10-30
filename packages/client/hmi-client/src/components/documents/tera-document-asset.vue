@@ -9,6 +9,7 @@
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
 		:show-sticky-header="view === DocumentView.PDF"
+		:is-loading="documentLoading"
 	>
 		<template #edit-buttons>
 			<SelectButton
@@ -28,14 +29,6 @@
 					<span class="p-button-label">{{ option.value }}</span>
 				</template>
 			</SelectButton>
-		</template>
-		<template #info-bar>
-			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page contains extractions from the document. Use the content switcher above to see
-					the original PDF if it is available.</Message
-				>
-			</div>
 		</template>
 		<Accordion
 			v-if="view === DocumentView.EXTRACTIONS"
@@ -102,12 +95,23 @@
 				</ul>
 			</AccordionTab>
 		</Accordion>
+		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
+		<p
+			class="pl-3"
+			v-if="
+				isEmpty(doc.assets) &&
+				view === DocumentView.EXTRACTIONS &&
+				viewOptions[1]?.value === DocumentView.PDF
+			"
+		>
+			PDF Extractions may still be processsing please refresh in some time...
+		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.name || ''"
 		/>
-		<code-editor v-else-if="view === DocumentView.TXT" :initial-code="code" />
+		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
 	</tera-asset>
 </template>
 
@@ -116,7 +120,6 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { DocumentAsset } from '@/types/Types';
@@ -129,9 +132,9 @@ import {
 } from '@/services/document-assets';
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import CodeEditor from '@/page/project/components/code-editor.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
 	EXTRACTIONS = 'Extractions',
@@ -149,8 +152,18 @@ const props = defineProps<{
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
 const view = ref(DocumentView.EXTRACTIONS);
-const viewOptions = ref([{ value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' }]);
-const code = ref<string>();
+const viewOptions = computed(() => {
+	if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
+		return [extractionsOption, pdfOption];
+	}
+	return [extractionsOption, txtOption];
+});
+const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' };
+const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
+const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
+const docText = ref<string>('');
+
+const documentLoading = ref(false);
 
 const docLink = computed(() =>
 	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
@@ -180,25 +193,29 @@ async function openTextDocument() {
 	const filename: string | undefined = doc.value?.fileNames?.at(0);
 	const res: string | null = await getDocumentFileAsText(props.assetId!, filename!);
 	if (!res) return;
-	code.value = res;
+	docText.value = res;
 }
 
 watch(
 	() => props.assetId,
 	async () => {
 		if (props.assetId) {
+			documentLoading.value = true;
 			const document = await getDocumentAsset(props.assetId);
-			if (document) {
-				doc.value = document;
-				openTextDocument();
-				if (viewOptions.value.length > 1) {
-					viewOptions.value.pop();
+			documentLoading.value = false;
+			if (!document) {
+				return;
+			}
+			doc.value = document;
+			if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
+				if (view.value === DocumentView.TXT) {
+					view.value = DocumentView.PDF;
 				}
-				viewOptions.value.push(
-					doc.value?.fileNames?.at(0)?.endsWith('.pdf')
-						? { value: DocumentView.PDF, icon: 'pi pi-file-pdf' }
-						: { value: DocumentView.TXT, icon: 'pi pi-file' }
-				);
+			} else {
+				await openTextDocument();
+				if (view.value === DocumentView.PDF) {
+					view.value = DocumentView.TXT;
+				}
 			}
 		} else {
 			doc.value = null;
@@ -234,16 +251,6 @@ onUpdated(() => {
 	margin-left: 1rem;
 	margin-right: 1rem;
 	max-width: 70rem;
-}
-
-.inline-message:deep(.p-message-wrapper) {
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
-	border-width: 0px 0px 0px 6px;
 }
 
 .extracted-item {

@@ -6,6 +6,7 @@
 		:is-naming-asset="isNaming"
 		:stretch-content="view === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
+		:is-loading="isModelLoading"
 	>
 		<template #name-input>
 			<InputText
@@ -43,6 +44,7 @@
 			:highlight="highlight"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
+			:key="model?.id"
 		/>
 		<tera-model-editor
 			v-else-if="view === ModelView.MODEL"
@@ -107,6 +109,7 @@ const model = ref<Model | null>(null);
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const newName = ref('New Model');
 const isRenaming = ref(false);
+const isModelLoading = ref(false);
 
 const view = ref(ModelView.DESCRIPTION);
 const viewOptions = ref([
@@ -139,7 +142,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().get();
+		useProjects().refresh();
 	}, 800);
 }
 
@@ -152,11 +155,14 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
+async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	await updateModelConfiguration(updatedConfiguration);
 	setTimeout(async () => {
 		emit('update-model-configuration');
-		modelConfigurations.value[index] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
+		const indexToUpdate = modelConfigurations.value.findIndex(
+			({ id }) => id === updatedConfiguration.id
+		);
+		modelConfigurations.value[indexToUpdate] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
 		// await fetchConfigurations(); // elastic search might still not update in time
 	}, 800);
 }
@@ -213,7 +219,11 @@ watch(
 		// Reset view of model page
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
-		if (!isEmpty(props.assetId)) await getModelWithConfigurations();
+		if (!isEmpty(props.assetId)) {
+			isModelLoading.value = true;
+			await getModelWithConfigurations();
+			isModelLoading.value = false;
+		}
 	},
 	{ immediate: true }
 );

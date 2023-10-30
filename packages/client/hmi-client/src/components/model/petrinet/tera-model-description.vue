@@ -1,10 +1,6 @@
 <template>
 	<main>
 		<section>
-			<Message icon="none">
-				This page describes the model. Use the content switcher above to see the diagram and manage
-				configurations.
-			</Message>
 			<table class="bibliography">
 				<tr>
 					<th>Framework</th>
@@ -40,7 +36,6 @@
 				<template #header>Related publications</template>
 				<tera-related-documents
 					:documents="documents"
-					:related-documents="relatedDocuments"
 					:asset-type="ResourceType.MODEL"
 					:assetId="model.id"
 					@enriched="fetchAsset"
@@ -76,9 +71,10 @@
 				<template #header>
 					Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 				</template>
-				<table v-if="parameters.length > 0" class="datatable" style="--columns: 5">
+				<table v-if="parameters.length > 0" class="datatable" style="--columns: 6">
 					<tr>
-						<th>ID</th>
+						<th>Symbol</th>
+						<th>Name</th>
 						<th>Value</th>
 						<th>Distribution</th>
 						<th>Extractions</th>
@@ -87,16 +83,23 @@
 						v-for="(parameter, i) in parameters"
 						:key="parameter.id"
 						:class="[
-							{ active: isRowEditable === `parameter-${parameter.id}` },
-							`parameter-${parameter.id}`
+							{ active: isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}` },
+							`${VariableTypes.PARAMETER}-${parameter.id}`
 						]"
 					>
-						<template v-if="isRowEditable === `parameter-${parameter.id}`">
+						<template v-if="isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}`">
 							<td>
 								<input
 									type="text"
 									:value="parameter?.id ?? '--'"
 									@input="updateTable('parameters', i, 'id', $event.target?.['value'])"
+								/>
+							</td>
+							<td>
+								<input
+									type="text"
+									:value="parameter?.name ?? '--'"
+									@input="updateTable('parameters', i, 'name', $event.target?.['value'])"
 								/>
 							</td>
 							<td>
@@ -120,6 +123,7 @@
 						</template>
 						<template v-else>
 							<td>{{ parameter?.id }}</td>
+							<td>{{ parameter?.name }}</td>
 							<td>{{ parameter?.value }}</td>
 							<td>
 								<template v-if="parameter?.distribution?.parameters">
@@ -130,7 +134,11 @@
 							</td>
 							<td>
 								<template v-if="extractions?.[parameter.id]">
-									<Tag :value="extractions?.[parameter.id].length" />
+									<Tag
+										class="clickable-tag"
+										:value="extractions?.[parameter?.id].length"
+										@click="openExtractions(VariableTypes.PARAMETER, parameter?.id)"
+									/>
 								</template>
 								<template v-else>--</template>
 							</td>
@@ -138,9 +146,15 @@
 						<td v-if="!isRowEditable">
 							<Button icon="pi pi-file-edit" text @click="editRow" />
 						</td>
-						<td v-else-if="isRowEditable === `parameter-${parameter.id}`">
+						<td v-else-if="isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}`">
 							<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
 							<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
+						</td>
+						<td
+							v-if="shouldShowExtractions(VariableTypes.PARAMETER, parameter.id)"
+							style="grid-column: 1 / span 4"
+						>
+							<tera-model-extraction :extractions="extractions[parameter.id]" />
 						</td>
 					</tr>
 				</table>
@@ -151,7 +165,7 @@
 				</template>
 				<table v-if="states.length > 0" class="datatable" style="--columns: 5">
 					<tr>
-						<th>Id</th>
+						<th>Symbol</th>
 						<th>Name</th>
 						<th>Unit</th>
 						<th>Concept</th>
@@ -160,9 +174,12 @@
 					<tr
 						v-for="(state, i) in states"
 						:key="state.id"
-						:class="[{ active: isRowEditable === `state-${state.id}` }, `state-${state.id}`]"
+						:class="[
+							{ active: isRowEditable === `${VariableTypes.STATE}-${state.id}` },
+							`${VariableTypes.STATE}-${state.id}`
+						]"
 					>
-						<template v-if="isRowEditable === `state-${state.id}`">
+						<template v-if="isRowEditable === `${VariableTypes.STATE}-${state.id}`">
 							<td>
 								<input
 									type="text"
@@ -215,18 +232,21 @@
 							</td>
 							<td>
 								<template v-if="extractions?.[state?.id]">
-									<Tag :value="extractions?.[state?.id].length" />
+									<Tag
+										class="clickable-tag"
+										:value="extractions?.[state?.id].length"
+										@click="openExtractions(VariableTypes.STATE, state?.id)"
+									/>
 								</template>
 								<template v-else>--</template>
 							</td>
 						</template>
-						<!-- <div v-if="!isRowEditable">
-								<Button icon="pi pi-file-edit" text @click="editRow" />
-							</div>
-							<div v-else-if="isRowEditable === `state-${state.id}`">
-								<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
-								<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
-							</div> -->
+						<td
+							v-if="shouldShowExtractions(VariableTypes.STATE, state.id)"
+							style="grid-column: 1 / span 4"
+						>
+							<tera-model-extraction :extractions="extractions[state.id]" />
+						</td>
 					</tr>
 				</table>
 			</AccordionTab>
@@ -236,7 +256,7 @@
 				</template>
 				<table v-if="!isEmpty(observables)" class="datatable" style="--columns: 4">
 					<tr>
-						<th>ID</th>
+						<th>Symbol</th>
 						<th>Name</th>
 						<th>Expression</th>
 						<th>Extractions</th>
@@ -245,11 +265,11 @@
 						v-for="observable in observables"
 						:key="observable.id"
 						:class="[
-							{ active: isSectionEditable === `observable-${observable.id}` },
+							{ active: isSectionEditable === `${VariableTypes.OBSERVABLE}-${observable.id}` },
 							`observable-${observable.id}`
 						]"
 					>
-						<template v-if="isSectionEditable === `observable-${observable.id}`">
+						<template v-if="isSectionEditable === `${VariableTypes.OBSERVABLE}-${observable.id}`">
 							<td>{{ observable.id }}</td>
 							<td>{{ observable.name }}</td>
 							<td>
@@ -282,9 +302,19 @@
 							</td>
 							<td>
 								<template v-if="extractions?.[observable.id]">
-									<Tag :value="extractions?.[observable.id].length" />
+									<Tag
+										class="clickable-tag"
+										:value="extractions?.[observable?.id].length"
+										@click="openExtractions(VariableTypes.OBSERVABLE, observable?.id)"
+									/>
 								</template>
 								<template v-else>--</template>
+							</td>
+							<td
+								v-if="shouldShowExtractions(VariableTypes.OBSERVABLE, observable.id)"
+								style="grid-column: 1 / span 4"
+							>
+								<tera-model-extraction :extractions="extractions[observable.id]" />
 							</td>
 						</template>
 					</tr>
@@ -296,7 +326,7 @@
 				</template>
 				<table v-if="transitions.length > 0" class="datatable" style="--columns: 6">
 					<tr>
-						<th>Id</th>
+						<th>Symbol</th>
 						<th>Name</th>
 						<th>Input</th>
 						<th>Output</th>
@@ -307,11 +337,11 @@
 						v-for="(transition, index) in transitions"
 						:key="index"
 						:class="[
-							{ active: isSectionEditable === `transition-${index}` },
+							{ active: isSectionEditable === `${VariableTypes.TRANSITION}-${index}` },
 							`transition-${index}`
 						]"
 					>
-						<template v-if="isSectionEditable === `transition-${index}`">
+						<template v-if="isSectionEditable === `${VariableTypes.TRANSITION}-${index}`">
 							<td>{{ transition.id }}</td>
 							<td>{{ transition.name }}</td>
 							<td>{{ transition.input }}</td>
@@ -347,8 +377,20 @@
 								<template v-else>--</template>
 							</td>
 							<td>
-								<Tag v-if="transition?.extractions" :value="extractions?.[transition.id].length" />
+								<template v-if="transition?.extractions">
+									<Tag
+										class="clickable-tag"
+										:value="extractions?.[transition?.id].length"
+										@click="openExtractions(VariableTypes.TRANSITION, transition?.id)"
+									/>
+								</template>
 								<template v-else>--</template>
+							</td>
+							<td
+								v-if="shouldShowExtractions(VariableTypes.TRANSITION, transition.id)"
+								style="grid-column: 1 / span 4"
+							>
+								<tera-model-extraction :extractions="extractions[transition.id]" />
 							</td>
 						</template>
 					</tr>
@@ -398,7 +440,7 @@
 				</template>
 				<table v-if="!isEmpty(time)" class="datatable" style="--columns: 3">
 					<tr>
-						<th>ID</th>
+						<th>Symbol</th>
 						<th>Units</th>
 						<th>Extractions</th>
 					</tr>
@@ -417,7 +459,6 @@ import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
 import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
@@ -432,7 +473,14 @@ import * as textUtil from '@/utils/text';
 import { getCuriesEntities } from '@/services/concept';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
+import { Dictionary } from 'vue-gtag';
 
+enum VariableTypes {
+	STATE = 'state',
+	OBSERVABLE = 'observable',
+	PARAMETER = 'parameter',
+	TRANSITION = 'transition'
+}
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
 	tableType: string;
@@ -454,6 +502,7 @@ function fetchAsset() {
 
 const isSectionEditable = ref<string | null>();
 const isRowEditable = ref<string | null>();
+const showExtractions = ref<string | null>();
 const transientTableValue = ref<ModelTableTypes | null>(null);
 const nameOfCurieCache = ref(new Map<string, string>());
 
@@ -499,7 +548,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = computed(() => []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
@@ -531,11 +579,18 @@ const otherConcepts = computed(() => {
 		...(states.value?.map((s) => s.id) ?? []),
 		...(transitions.value?.map((t) => t.id) ?? [])
 	];
-	const key = Object.keys(extractions.value).find((k) => !ids.includes(k));
-	if (key) {
-		return extractions.value[key.toString()].filter((e) => e.type === 'anchored_extraction');
-	}
-	return [];
+
+	// find keys that are not aligned
+	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
+
+	let unalignedExtractions: Dictionary<any>[] = [];
+	unalignedKeys.forEach((key) => {
+		unalignedExtractions = unalignedExtractions.concat(
+			extractions.value[key.toString()].filter((e) => e.type === 'anchored_extraction')
+		);
+	});
+
+	return unalignedExtractions ?? [];
 });
 
 // Highlight strings based on props.highlight
@@ -622,6 +677,24 @@ async function confirmEdit() {
 function cancelEdit() {
 	isRowEditable.value = null;
 	transientTableValue.value = null;
+}
+
+function shouldShowExtractions(variableType: VariableTypes, id: string) {
+	return (
+		showExtractions.value === `${variableType}-${id}` &&
+		extractions.value[id] &&
+		isRowEditable.value !== `${variableType}-${id}` &&
+		isSectionEditable.value !== `${variableType}-${id}`
+	);
+}
+
+function openExtractions(variableType: VariableTypes, id: string) {
+	if (showExtractions.value === `${variableType}-${id}`) {
+		showExtractions.value = null;
+		return;
+	}
+
+	showExtractions.value = `${variableType}-${id}`;
 }
 
 function updateTable(tableType: string, idx: number, key: string, value: string) {
@@ -718,5 +791,9 @@ table.datatable tr.active {
 
 table.datatable input {
 	width: 100%;
+}
+
+.clickable-tag:hover {
+	cursor: pointer;
 }
 </style>

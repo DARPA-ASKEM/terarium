@@ -1,5 +1,5 @@
 <template>
-	<main @scroll="updateScrollPosition">
+	<main v-if="!isLoading" @scroll="updateScrollPosition">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
@@ -66,6 +66,7 @@
 			<slot name="default" />
 		</section>
 	</main>
+	<section v-else><tera-progress-spinner :font-size="2" /></section>
 </template>
 
 <script setup lang="ts">
@@ -75,6 +76,7 @@ import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
+import teraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps({
 	name: {
@@ -105,7 +107,8 @@ const props = defineProps({
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,
-	stretchContent: Boolean
+	stretchContent: Boolean,
+	isLoading: Boolean
 });
 
 const emit = defineEmits(['close-preview']);

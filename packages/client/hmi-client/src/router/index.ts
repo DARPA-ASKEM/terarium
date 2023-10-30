@@ -1,10 +1,11 @@
 import { computed } from 'vue';
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/project/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';
+import UserAdminView from '@/components/navbar/tera-useradmin.vue';
 
 // These are test/experiment pages
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
@@ -20,15 +21,14 @@ export enum RoutePath {
 	Project = `/projects/:projectId/:pageType?/:assetId?`,
 	WorkflowNode = `/${RouteName.WorkflowNode}/:workflowId/:nodeId`,
 	DataExplorer = '/explorer',
+	UserAdmin = '/user-admin',
 	Unauthorized = '/unauthorized',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	EvaluationScenariosPath = '/evaluation-scenarios',
-	ModelEditor = '/model-editor',
-	ModelRunner = '/model-runner'
+	EvaluationScenariosPath = '/evaluation-scenarios'
 }
 
 const routes = [
@@ -51,6 +51,11 @@ const routes = [
 		path: RoutePath.DataExplorer,
 		component: DataExplorerView
 	},
+	{
+		name: RouteName.UserAdmin,
+		path: RoutePath.UserAdmin,
+		component: UserAdminView
+	},
 
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
@@ -62,10 +67,7 @@ const routes = [
 ];
 
 const router = createRouter({
-	// 4. Provide the history implementation to use. We are using the hash history for simplicity here.
-	history: createWebHashHistory(),
-
-	// short for `routes: routes`
+	history: createWebHistory(),
 	routes
 });
 
