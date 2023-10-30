@@ -17,10 +17,7 @@ export async function addGroupUserPermissions(
 	relationship: string
 ) {
 	const response = await API.post(`/groups/${groupId}/permissions/user/${userId}/${relationship}`);
-	if (response.status === 200) {
-		return true;
-	}
-	return false;
+	return response.status === 200;
 }
 
 export async function updateGroupUserPermissions(
