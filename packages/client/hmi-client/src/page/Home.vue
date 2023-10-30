@@ -1,21 +1,29 @@
 <template>
 	<main>
-		<header>
-			<article>
-				<h3>From data to discovery</h3>
-				<p>
-					Accelerate scientific modeling and simulation using AI. Search available knowledge,
-					enhance extracted models and data, and test scenarios to simulate real-world problems.
-				</p>
-				<Button label="Show me around" icon="pi pi-play" outlined />
-			</article>
-		</header>
-		<section class="menu">
-			<TabView>
-				<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
-					<section class="filter-and-sort">
-						<div v-if="!isEmpty(tab.projects)">
-							<!-- TODO: Add project search back in once we are ready
+		<div>
+			<header>
+				<article>
+					<h3>From data to discovery</h3>
+					<p>
+						Accelerate scientific modeling and simulation using AI. Search available knowledge,
+						enhance extracted models and data, and test scenarios to simulate real-world problems.
+					</p>
+					<!--Placeholder - button is disabled for now-->
+					<Button
+						label="Show me around"
+						icon="pi pi-play"
+						icon-pos="right"
+						outlined
+						:disabled="true"
+					/>
+				</article>
+			</header>
+			<section class="menu">
+				<TabView>
+					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
+						<section class="filter-and-sort">
+							<div v-if="!isEmpty(tab.projects)">
+								<!-- TODO: Add project search back in once we are ready
 								<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
 								<InputText
@@ -25,144 +33,162 @@
 									placeholder="Filter by keyword"
 								/>
 							</span> -->
-							<span v-if="view === ProjectsView.Cards"
-								><label>Sort by:</label>
-								<Dropdown
-									v-model="selectedSort"
-									:options="sortOptions"
-									@update:model-value="tab.projects = myFilteredSortedProjects"
+								<span v-if="view === ProjectsView.Cards"
+									><label>Sort by:</label>
+									<Dropdown
+										v-model="selectedSort"
+										:options="sortOptions"
+										@update:model-value="tab.projects = myFilteredSortedProjects"
+										class="p-inputtext-sm"
+									/>
+								</span>
+								<MultiSelect
+									v-if="view === ProjectsView.Table"
+									:modelValue="selectedColumns"
+									:options="columns"
+									:maxSelectedLabels="1"
+									:selected-items-label="`{0} columns displayed`"
+									optionLabel="header"
+									@update:modelValue="onToggle"
+									placeholder="Add or remove columns"
 									class="p-inputtext-sm"
 								/>
-							</span>
-							<MultiSelect
-								v-if="view === ProjectsView.Table"
-								:modelValue="selectedColumns"
-								:options="columns"
-								:maxSelectedLabels="1"
-								:selected-items-label="`{0} columns displayed`"
-								optionLabel="header"
-								@update:modelValue="onToggle"
-								placeholder="Add or remove columns"
-								class="p-inputtext-sm"
-							/>
-						</div>
-						<div>
-							<SelectButton
-								v-if="!isEmpty(tab.projects)"
-								:model-value="view"
-								@change="if ($event.value) view = $event.value;"
-								:options="viewOptions"
-								option-value="value"
-							>
-								<template #option="slotProps">
-									<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-									<span class="p-button-label">{{ slotProps.option.value }}</span>
-								</template>
-							</SelectButton>
-							<Button
-								icon="pi pi-plus"
-								label="New project"
-								@click="isNewProjectModalVisible = true"
-							/>
-						</div>
-					</section>
-					<section class="projects">
-						<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
-							<img src="@assets/svg/seed.svg" alt="" />
-							<template v-if="tab.title === TabTitles.MyProjects">
-								<p>
-									Get started by creating a
-									<Button
-										label="new project"
-										class="p-button-text new-project-button"
-										@click="isNewProjectModalVisible = true"
-									/>.
-								</p>
-								<p>Your projects will be displayed on this page.</p>
-							</template>
-							<template v-else-if="tab.title === TabTitles.PublicProjects">
-								<h3>You don't have any shared projects</h3>
-								<p>Shared projects will be displayed on this page</p>
-							</template>
-						</div>
-						<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
-							<template v-if="isLoadingProjects">
-								<li v-for="i in 3" :key="i">
-									<tera-project-card />
-								</li>
-							</template>
-							<li v-else v-for="project in tab.projects" :key="project.id">
-								<tera-project-card
-									v-if="project.id"
-									:project="project"
-									@click="openProject(project.id)"
-									@forked-project="(forkedProject) => openProject(forkedProject.id)"
+							</div>
+							<div>
+								<SelectButton
+									v-if="!isEmpty(tab.projects)"
+									:model-value="view"
+									@change="if ($event.value) view = $event.value;"
+									:options="viewOptions"
+									option-value="value"
+								>
+									<template #option="slotProps">
+										<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+										<span class="p-button-label">{{ slotProps.option.value }}</span>
+									</template>
+								</SelectButton>
+								<Button
+									icon="pi pi-plus"
+									label="New project"
+									@click="isNewProjectModalVisible = true"
 								/>
-							</li>
-						</ul>
-						<tera-project-table
-							v-else-if="view === ProjectsView.Table"
-							:projects="tab.projects"
-							:selected-columns="selectedColumns"
-							@open-project="openProject"
-						/>
-					</section>
-				</TabPanel>
-			</TabView>
-		</section>
-		<!-- New project modal -->
-		<Teleport to="body">
-			<tera-modal
-				v-if="isNewProjectModalVisible"
-				class="modal"
-				@modal-mask-clicked="isNewProjectModalVisible = false"
-				@modal-enter-press="createNewProject"
+							</div>
+						</section>
+						<section class="projects">
+							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+								<img src="@assets/svg/seed.svg" alt="" />
+								<template v-if="tab.title === TabTitles.MyProjects">
+									<p>
+										Get started by creating a
+										<Button
+											label="new project"
+											class="p-button-text new-project-button"
+											@click="isNewProjectModalVisible = true"
+										/>.
+									</p>
+									<p>Your projects will be displayed on this page.</p>
+								</template>
+								<template v-else-if="tab.title === TabTitles.PublicProjects">
+									<h3>You don't have any shared projects</h3>
+									<p>Shared projects will be displayed on this page</p>
+								</template>
+							</div>
+							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
+								<template v-if="isLoadingProjects">
+									<li v-for="i in 3" :key="i">
+										<tera-project-card />
+									</li>
+								</template>
+								<li
+									v-else
+									v-for="project in [
+										tab.projects,
+										tab.projects,
+										tab.projects,
+										tab.projects,
+										tab.projects
+									].flat()"
+									:key="project.id"
+								>
+									<tera-project-card
+										v-if="project.id"
+										:project="project"
+										@click="openProject(project.id)"
+										@forked-project="(forkedProject) => openProject(forkedProject.id)"
+									/>
+								</li>
+							</ul>
+							<tera-project-table
+								v-else-if="view === ProjectsView.Table"
+								:projects="tab.projects"
+								:selected-columns="selectedColumns"
+								@open-project="openProject"
+							/>
+						</section>
+					</TabPanel>
+				</TabView>
+			</section>
+			<!-- New project modal -->
+			<Teleport to="body">
+				<tera-modal
+					v-if="isNewProjectModalVisible"
+					class="modal"
+					@modal-mask-clicked="isNewProjectModalVisible = false"
+					@modal-enter-press="createNewProject"
+				>
+					<template #header>
+						<h4>Create project</h4>
+					</template>
+					<template #default>
+						<form @submit.prevent>
+							<label for="new-project-name">Name</label>
+							<InputText
+								id="new-project-name"
+								type="text"
+								v-model="newProjectName"
+								placeholder="What do you want to call your project?"
+							/>
+							<label for="new-project-description">Description</label>
+							<Textarea
+								id="new-project-description"
+								rows="5"
+								v-model="newProjectDescription"
+								placeholder="Add a short description"
+							/>
+						</form>
+					</template>
+					<template #footer>
+						<Button @click="createNewProject">Create</Button>
+						<Button severity="secondary" outlined @click="isNewProjectModalVisible = false"
+							>Cancel</Button
+						>
+					</template>
+				</tera-modal>
+			</Teleport>
+			<Dialog
+				:header="`Remove ${selectedMenuProject?.name}`"
+				v-model:visible="isRemoveDialogVisible"
 			>
-				<template #header>
-					<h4>Create project</h4>
-				</template>
-				<template #default>
-					<form @submit.prevent>
-						<label for="new-project-name">Name</label>
-						<InputText
-							id="new-project-name"
-							type="text"
-							v-model="newProjectName"
-							placeholder="What do you want to call your project?"
-						/>
-						<label for="new-project-description">Description</label>
-						<Textarea
-							id="new-project-description"
-							rows="5"
-							v-model="newProjectDescription"
-							placeholder="Add a short description"
-						/>
-					</form>
-				</template>
+				<p>
+					You are about to remove project <em>{{ selectedMenuProject?.name }}</em
+					>.
+				</p>
+				<p>Are you sure?</p>
 				<template #footer>
-					<Button @click="createNewProject">Create</Button>
-					<Button severity="secondary" outlined @click="isNewProjectModalVisible = false"
-						>Cancel</Button
-					>
+					<Button
+						label="Cancel"
+						class="p-button-secondary"
+						@click="isRemoveDialogVisible = false"
+					/>
+					<Button label="Remove project" @click="removeProject" />
 				</template>
-			</tera-modal>
-		</Teleport>
-		<Dialog :header="`Remove ${selectedMenuProject?.name}`" v-model:visible="isRemoveDialogVisible">
-			<p>
-				You are about to remove project <em>{{ selectedMenuProject?.name }}</em
-				>.
-			</p>
-			<p>Are you sure?</p>
-			<template #footer>
-				<Button label="Cancel" class="p-button-secondary" @click="isRemoveDialogVisible = false" />
-				<Button label="Remove project" @click="removeProject" />
-			</template>
-		</Dialog>
-		<tera-share-project
-			v-if="selectedMenuProject"
-			v-model="isShareDialogVisible"
-			:project="selectedMenuProject"
-		/>
+			</Dialog>
+			<tera-share-project
+				v-if="selectedMenuProject"
+				v-model="isShareDialogVisible"
+				:project="selectedMenuProject"
+			/>
+		</div>
 	</main>
 </template>
 
@@ -329,25 +355,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
-main {
+main > div {
+	width: 100%;
 	display: flex;
 	flex-direction: column;
+	overflow: auto;
 }
 
 header {
-	height: 10rem;
 	display: flex;
 	align-items: center;
 	padding: 1.5rem;
-	height: 240px;
-	background: url('@/assets/svg/terarium-logo-outline.svg') no-repeat right 20% center,
-		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
-	/* background: radial-gradient(105.92% 916.85% at 101.3% -5.92%, #75d5c8 0%, white 100%); */
-	/* background-image: url("../img/logo-outline.svg");
-  background-repeat: no-repeat;
-  background-size: auto 100%;
-  background-position: right -150px top; */
+	min-height: 240px;
+	background: url('@/assets/svg/terarium-logo-outline.svg'),
+		radial-gradient(105.92% 916.85% at 101.3% -5.92%, #75d5c8 0%, white 100%);
+	background-repeat: no-repeat;
 	background-size: 25%, 100%;
+	background-position: right 100px top -60px, 100%;
 }
 
 header h3 {
@@ -360,9 +384,11 @@ header p {
 	line-height: 1.5;
 }
 
+header > article > button {
+	margin-top: 2rem;
+}
+
 .menu {
-	overflow-y: auto;
-	overflow-x: hidden;
 	display: flex;
 	flex-direction: column;
 	flex: 1;
@@ -372,6 +398,16 @@ header p {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
+}
+
+.p-tabview:deep(.p-tabview-nav-container) {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.p-tabview:deep(.p-tabview-nav li .p-tabview-nav-link:focus) {
+	background-color: transparent;
 }
 
 .p-tabview:deep(.p-tabview-panels) {
@@ -392,6 +428,8 @@ header p {
 }
 
 .filter-and-sort {
+	position: sticky;
+	z-index: 1;
 	background-color: #e9e9e9;
 	border-top: 1px solid var(--surface-border);
 	border-bottom: 1px solid var(--surface-border);
@@ -400,6 +438,8 @@ header p {
 	justify-content: space-between;
 	align-items: center;
 	gap: 16px;
+	/*Accomodate for height of projects tabs*/
+	top: 44px;
 }
 
 .filter-and-sort label {
