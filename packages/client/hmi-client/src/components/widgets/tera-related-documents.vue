@@ -90,7 +90,8 @@ import {
 	fetchExtraction,
 	pdfExtractions,
 	profileDataset,
-	profileModel
+	profileModel,
+	Extractor
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
@@ -109,11 +110,6 @@ enum DialogType {
 	ENRICH,
 	EXTRACT,
 	ALIGN
-}
-
-enum Extractor {
-	SKEMA = 'SKEMA',
-	MIT = 'MIT'
 }
 
 const emit = defineEmits(['enriched', 'extracted']);
