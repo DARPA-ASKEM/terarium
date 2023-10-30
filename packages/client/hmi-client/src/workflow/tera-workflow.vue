@@ -127,6 +127,7 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
+					<tera-funman-node v-else-if="node.operationType === WorkflowOperationTypes.FUNMAN" />
 				</template>
 			</tera-workflow-node>
 		</template>
@@ -249,6 +250,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { ModelOperation, TeraModelNode, ModelOperationState } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
+import { FunmanOperation, TeraFunmanNode } from './ops/funman/mod';
 import { DatasetOperation, TeraDatasetNode, DatasetOperationState } from './ops/dataset/mod';
 import {
 	CalibrateEnsembleCiemssOperation,
@@ -553,6 +555,13 @@ const contextMenuItems = ref([
 		label: 'Stratify',
 		command: () => {
 			workflowService.addNode(wf.value, StratifyOperation, newNodePosition, { state: null });
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Validate model configuration',
+		command: () => {
+			workflowService.addNode(wf.value, FunmanOperation, newNodePosition, { state: null });
 			workflowDirty = true;
 		}
 	},
