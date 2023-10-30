@@ -17,7 +17,7 @@
 			text
 			:disabled="props.assetType != ResourceType.MODEL"
 			:label="`Align extractions to ${assetType}`"
-			:loading="aligning"
+			:loading="isAligning"
 			@click="dialogForAlignement"
 		/>
 
@@ -97,8 +97,8 @@ const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
-const aligning = ref(false);
-const enriching = ref(false);
+const isAligning = ref(false);
+const isEnriching = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
 const dialogActionCopy = ref('');
@@ -143,7 +143,7 @@ const sendForEnrichments = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
 
-	enriching.value = true;
+	isEnriching.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === ResourceType.MODEL) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
@@ -165,7 +165,7 @@ const sendForEnrichments = async () => {
 	// Poll all extractions
 	await Promise.all(extractionList);
 
-	enriching.value = false;
+	isEnriching.value = false;
 	emit('enriched');
 	getRelatedDocuments();
 };
@@ -174,7 +174,7 @@ const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
 
-	enriching.value = true;
+	isEnriching.value = true;
 	const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
 	jobIds.push(profileModelJobId);
 
@@ -190,7 +190,7 @@ const sendForExtractions = async () => {
 	// Poll all extractions
 	await Promise.all(extractionList);
 
-	enriching.value = false;
+	isEnriching.value = false;
 	emit('enriched');
 	getRelatedDocuments();
 };
@@ -199,7 +199,7 @@ const sendToAlignModel = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	if (props.assetType === ResourceType.MODEL && selectedResourceId) {
 		// fetch pdf extractions and link amr synchronously
-		aligning.value = true;
+		isAligning.value = true;
 		const pdfExtractionsJobId = await pdfExtractions(selectedResourceId);
 		if (!pdfExtractionsJobId) return;
 		await fetchExtraction(pdfExtractionsJobId);
@@ -208,7 +208,7 @@ const sendToAlignModel = async () => {
 		if (!linkAmrJobId) return;
 		await fetchExtraction(linkAmrJobId);
 
-		aligning.value = false;
+		isAligning.value = false;
 		emit('enriched');
 		getRelatedDocuments();
 	}
