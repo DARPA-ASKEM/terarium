@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.DocumentExtracti
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 
 @Data
@@ -41,7 +42,7 @@ public class DocumentAsset {
 	private String documentUrl;
 
 	@TSOptional
-	private Object metadata;
+	private HashMap<String, Object> metadata;
 
 	@TSOptional
 	private String source;

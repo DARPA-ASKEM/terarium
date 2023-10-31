@@ -204,7 +204,7 @@ export interface DocumentAsset {
     username?: string;
     fileNames?: string[];
     documentUrl?: string;
-    metadata?: any;
+    metadata?: { [index: string]: any };
     source?: string;
     text?: string;
     grounding?: Grounding;

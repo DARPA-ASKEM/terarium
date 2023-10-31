@@ -12,10 +12,16 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class DocumentExtraction implements Serializable {
 
-    @JsonAlias("file_name")
+	public static final String TABLE_ASSETTYPE = "table";
+	public static final String EQUATION_ASSETTYPE = "equation";
+	public static final String FIGURE_ASSETTYPE = "figure";
+
+
+
+	@JsonAlias("file_name")
 	private String fileName;
 
-    @JsonAlias("asset_type")
+	@JsonAlias("asset_type")
 	private String assetType;
 
 	private Map<String,Object> metadata;
