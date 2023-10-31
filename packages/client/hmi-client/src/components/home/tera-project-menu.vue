@@ -1,7 +1,8 @@
 <template>
 	<Button
 		icon="pi pi-ellipsis-v"
-		class="project-options p-button-icon-only p-button-text p-button-rounded"
+		rounded
+		text
 		@click.stop="toggle"
 		:disabled="projectMenuItems.length === 0"
 	/>

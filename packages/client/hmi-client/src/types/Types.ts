@@ -266,6 +266,38 @@ export interface TypingSemantics {
     system: any;
 }
 
+export interface DecapodesComponent {
+    modelInterface: string[];
+    model: DecapodesExpression;
+    _type: string;
+}
+
+export interface DecapodesEquation {
+    lhs: any;
+    rhs: any;
+    _type: string;
+}
+
+export interface DecapodesExpression {
+    context: any[];
+    equations: DecapodesEquation[];
+    _type: string;
+}
+
+export interface DecapodesTerm {
+    name?: string;
+    var?: DecapodesTerm;
+    symbol?: string;
+    space?: string;
+    fs?: string[];
+    arg?: DecapodesTerm;
+    f?: string;
+    arg1?: DecapodesTerm;
+    arg2?: DecapodesTerm;
+    args?: DecapodesTerm[];
+    _type: string;
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
