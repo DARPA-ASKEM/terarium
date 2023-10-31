@@ -8,19 +8,18 @@
 			</header>
 			<ul>
 				<li v-for="({ name, code, programmingLanguage }, i) in codeBlocks" :key="i">
-					<Card>
-						<header>
-							<h5>{{ name }}</h5>
-						</header>
-						<v-ace-editor
-							:value="code"
-							@init="initialize"
-							:lang="programmingLanguage"
-							theme="chrome"
-							style="height: 100%; width: 100%"
-							class="ace-editor"
-						/>
-					</Card>
+					<header>
+						<h5>{{ name }}</h5>
+						<section></section>
+					</header>
+					<v-ace-editor
+						:value="code"
+						@init="initialize"
+						:lang="programmingLanguage"
+						theme="chrome"
+						style="height: 100%; width: 100%"
+						class="ace-editor"
+					/>
 				</li>
 			</ul>
 			<footer>
@@ -38,7 +37,6 @@
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import Card from 'primevue/card';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
@@ -67,8 +65,6 @@ const codeBlocks = ref([codeBlock]);
  */
 async function initialize(editorInstance) {
 	editor.value = editorInstance;
-	editorInstance.session.selection.on('changeSelection', onSelectedTextChange);
-	editorInstance.setShowPrintMargin(false);
 }
 
 function addCodeBlock() {
@@ -87,11 +83,12 @@ main > section {
 	flex: 1;
 }
 
-header,
+section > header,
 footer {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	padding: 1rem 0;
 }
 
 footer {
@@ -107,5 +104,14 @@ header > * {
 
 ul {
 	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+li {
+	border: 1px solid var(--surface-border-light);
+	border-radius: 4px;
+	padding: 0.5rem;
 }
 </style>
