@@ -8,28 +8,19 @@
 				<tera-asset-link
 					:label="document.name!"
 					:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
-				></tera-asset-link>
+				/>
 			</li>
 		</ul>
+		<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
+		<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
 		<Button
-			label="Enrich Description"
 			text
-			:loading="enriching"
-			@click="
-				dialogType = 'enrich';
-				visible = true;
-			"
+			:disabled="props.assetType != ResourceType.MODEL"
+			:label="`Align extractions to ${assetType}`"
+			:loading="isLoading"
+			@click="dialogForAlignment"
 		/>
-		<Button
-			v-if="props.assetType === ResourceType.MODEL"
-			label="Align Model"
-			text
-			:loading="aligning"
-			@click="
-				dialogType = 'align';
-				visible = true;
-			"
-		/>
+
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -61,37 +52,46 @@
 					</div>
 				</div>
 			</div>
-			<template #footer>
-				<Button severity="secondary" outlined label="Cancel" @click="visible = false" />
-				<Button
-					:label="
-						dialogType === 'enrich'
-							? 'Use these resources to enrich descriptions'
-							: 'Use these resources to align the model'
-					"
-					@click="
-						dialogType === 'enrich' ? sendForEnrichments() : sendToAlignModel();
-						visible = false;
-					"
+			<aside v-if="dialogType === DialogType.EXTRACT && assetType === ResourceType.MODEL">
+				<p>Which extraction service would you like to use?</p>
+				<RadioButton
+					v-model="extractionService"
+					inputId="extractionServiceSkema"
+					name="skema"
+					:value="Extractor.SKEMA"
 				/>
+				<label for="extractionServiceSkema">SKEMA</label>
+				<RadioButton
+					v-model="extractionService"
+					inputId="extractionServiceMit"
+					name="mit"
+					:value="Extractor.MIT"
+				/>
+				<label for="extractionServiceMit">MIT</label>
+			</aside>
+			<template #footer>
+				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
+				<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
 			</template>
 		</Dialog>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import RadioButton from 'primevue/radiobutton';
 import { ResourceType } from '@/types/common';
 import {
+	alignModel,
+	fetchExtraction,
+	pdfExtractions,
 	profileDataset,
 	profileModel,
-	fetchExtraction,
-	alignModel,
-	pdfExtractions
+	Extractor
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
@@ -106,20 +106,70 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
+enum DialogType {
+	ENRICH,
+	EXTRACT,
+	ALIGN
+}
+
 const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
-const dialogType = ref<'enrich' | 'align'>('enrich');
-const aligning = ref(false);
-const enriching = ref(false);
+const dialogType = ref<DialogType>(DialogType.ENRICH);
+const extractionService = ref<Extractor>(Extractor.SKEMA);
+const isLoading = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
-const sendForEnrichments = async (/* _selectedResources */) => {
+const dialogActionCopy = ref('');
+function openDialog() {
+	visible.value = true;
+}
+function closeDialog() {
+	visible.value = false;
+}
+
+function dialogForEnrichment() {
+	dialogType.value = DialogType.ENRICH;
+	dialogActionCopy.value = 'Use this resource to enrich descriptions';
+	openDialog();
+}
+
+function dialogForExtraction() {
+	dialogType.value = DialogType.EXTRACT;
+	dialogActionCopy.value = 'Use this resource to extract variables';
+	openDialog();
+}
+
+function dialogForAlignment() {
+	dialogType.value = DialogType.ALIGN;
+	dialogActionCopy.value = `Use this resource to align the ${props.assetType}`;
+	openDialog();
+}
+
+const acceptDialog = () => {
+	if (dialogType.value === DialogType.ENRICH) {
+		sendForEnrichment();
+	} else if (dialogType.value === DialogType.EXTRACT) {
+		sendForExtractions();
+	} else if (dialogType.value === DialogType.ALIGN) {
+		sendToAlignModel();
+	}
+	closeDialog();
+};
+
+// Disable the dialog action button if no resources are selected
+// and the dialog type is not enrichment
+const isDialogDisabled = computed(() => {
+	if (dialogType.value === DialogType.ENRICH) return false;
+	return !selectedResources.value;
+});
+
+const sendForEnrichment = async () => {
 	const jobIds: (string | null)[] = [];
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	const extractionList: Promise<PollerResult<any>>[] = [];
 
-	enriching.value = true;
+	isLoading.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === ResourceType.MODEL) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
@@ -141,27 +191,36 @@ const sendForEnrichments = async (/* _selectedResources */) => {
 	// Poll all extractions
 	await Promise.all(extractionList);
 
-	enriching.value = false;
+	isLoading.value = false;
 	emit('enriched');
-	getRelatedDocuments();
+	await getRelatedDocuments();
+};
+
+const sendForExtractions = async () => {
+	const selectedResourceId = selectedResources.value?.id ?? null;
+	isLoading.value = true;
+
+	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId, extractionService.value);
+	if (!pdfExtractionsJobId) return;
+	await fetchExtraction(pdfExtractionsJobId);
+
+	isLoading.value = false;
+	emit('enriched');
+	await getRelatedDocuments();
 };
 
 const sendToAlignModel = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	if (props.assetType === ResourceType.MODEL && selectedResourceId) {
-		// fetch pdf extractions and link amr synchronously
-		aligning.value = true;
-		const pdfExtractionsJobId = await pdfExtractions(selectedResourceId);
-		if (!pdfExtractionsJobId) return;
-		await fetchExtraction(pdfExtractionsJobId);
+		isLoading.value = true;
 
 		const linkAmrJobId = await alignModel(props.assetId, selectedResourceId);
 		if (!linkAmrJobId) return;
 		await fetchExtraction(linkAmrJobId);
 
-		aligning.value = false;
+		isLoading.value = false;
 		emit('enriched');
-		getRelatedDocuments();
+		await getRelatedDocuments();
 	}
 };
 
@@ -181,7 +240,6 @@ async function getRelatedDocuments() {
 	const provenanceType = mapResourceTypeToProvenanceType(props.assetType);
 
 	if (!provenanceType) return;
-
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
 		ProvenanceType.Document
 	]);
@@ -214,10 +272,17 @@ ul {
 
 .no-documents-text {
 	padding: 5px;
-	font-size: var(--font-body);
+	font-size: var(--font-body-medium);
 	font-family: var(--font-family);
 	font-weight: 500;
 	color: var(--text-color-secondary);
 	text-align: left;
+}
+
+.p-dialog aside > * {
+	margin-top: 1rem;
+}
+.p-dialog aside label {
+	margin: 0 1rem 0 0.5rem;
 }
 </style>
