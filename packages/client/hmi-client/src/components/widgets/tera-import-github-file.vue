@@ -153,12 +153,23 @@
 				</template>
 				<template #footer>
 					<Button
+						v-if="useProjects().activeProject.value"
 						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
 						@click="openSelectedFiles()"
 						>Import {{ selectedFiles.length + selectedUnknownFiles.length }} file{{
 							selectedFiles.length == 1 ? '' : 's'
 						}}</Button
 					>
+					<Dropdown
+						v-else
+						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
+						placeholder="Import files to project"
+						class="p-button dropdown-button"
+						:is-dropdown-left-aligned="false"
+						:options="projectOptions"
+						option-label="name"
+						@change="openSelectedFiles"
+					/>
 					<Button class="p-button-outlined" label="Cancel" @click="emit('close')" />
 				</template>
 			</tera-modal>
@@ -177,7 +188,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
 import Checkbox from 'primevue/checkbox';
-import Dropdown from 'primevue/dropdown';
+import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
@@ -233,6 +244,10 @@ const hasOther: ComputedRef<boolean> = computed(
 	() => !isEmpty(directoryContent?.value?.files?.Other)
 );
 
+const projectOptions = computed(() =>
+	useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
+);
+
 async function initializeCodeBrowser() {
 	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
 	await openDirectory(''); // Goes back to root directory if modal is closed then opened again
@@ -259,7 +274,8 @@ function onSelectedTextChange() {
 /**
  * Opens the selected files in the code editor
  */
-async function openSelectedFiles() {
+async function openSelectedFiles(event?: DropdownChangeEvent) {
+	const projectId = event?.value?.id;
 	// split the selected files into their respective categories
 	const selectedCodeFiles: GithubFile[] = [
 		...selectedFiles.value,
@@ -284,7 +300,7 @@ async function openSelectedFiles() {
 	);
 
 	if (selectedDocumentFiles.length > 0) {
-		await importDocumentFiles(selectedDocumentFiles);
+		await importDocumentFiles(selectedDocumentFiles, projectId);
 	}
 
 	// TODO: make this number account for files that were not succussfully imported
@@ -345,7 +361,7 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 	});
 }
 
-async function importDocumentFiles(githubFiles: GithubFile[]) {
+async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string) {
 	githubFiles.forEach(async (githubFile) => {
 		const document: DocumentAsset | null = await createNewDocumentFromGithubFile(
 			repoOwnerAndName.value,
@@ -354,7 +370,7 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
 		);
 		let newAsset;
 		if (document && document.id) {
-			newAsset = await useProjects().addAsset(AssetType.Documents, document.id);
+			newAsset = await useProjects().addAsset(AssetType.Documents, document.id, projectId);
 		}
 		if (document?.id && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
 			extractPDF(document.id);
@@ -455,5 +471,24 @@ ul li:hover {
 
 .unknown-icon {
 	padding-left: 10px;
+}
+
+.dropdown-button {
+	height: 3rem;
+	border-radius: var(--border-radius);
+	gap: 16px;
+}
+
+.dropdown-button:hover {
+	background-color: var(--primary-color-dark);
+}
+
+:deep(.dropdown-button.p-dropdown .p-dropdown-label.p-placeholder) {
+	display: contents;
+	color: white;
+	font-size: small;
+}
+:deep .dropdown-button.p-dropdown .p-dropdown-trigger {
+	color: white;
 }
 </style>
