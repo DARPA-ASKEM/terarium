@@ -21,7 +21,7 @@
 		<div class="left-side">
 			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
 			<p>The model will be stratified with the following settings.</p>
-			<teraStratificationGroupForm
+			<tera-stratification-group-form
 				v-for="(cfg, index) in node.state.strataGroups"
 				:key="index"
 				:modelNodeOptions="modelNodeOptions"
@@ -49,7 +49,7 @@
 	<div v-else class="container">
 		<div class="left-side">
 			<Suspense>
-				<teraMiraNotebook />
+				<tera-mira-notebook />
 			</Suspense>
 		</div>
 		<div class="right-side">
