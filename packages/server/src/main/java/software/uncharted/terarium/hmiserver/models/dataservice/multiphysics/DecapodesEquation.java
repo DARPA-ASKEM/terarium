@@ -8,7 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class DecapodesEquation {
-	private DecapodesTerm lhs;
-	private DecapodesTerm rhs;
+	private Object lhs;
+	private Object rhs;
 	private String _type;
 }

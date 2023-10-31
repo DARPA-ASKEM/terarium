@@ -15,7 +15,7 @@ import java.util.List;
 @Accessors(chain = true)
 @TSModel
 public class DecapodesExpression {
-	private List<DecapodesTerm> context;
+	private List<Object> context;
 	private List<DecapodesEquation> equations;
 	private String _type;
 }
