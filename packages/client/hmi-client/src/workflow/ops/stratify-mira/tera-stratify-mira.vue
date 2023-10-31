@@ -5,19 +5,19 @@
 			severity="secondary"
 			icon="pi pi-sign-in"
 			size="small"
-			:active="activeTab === SimulateTabs.wizard"
-			@click="activeTab = SimulateTabs.wizard"
+			:active="activeTab === StratifyTabs.wizard"
+			@click="activeTab = StratifyTabs.wizard"
 		/>
 		<Button
 			label="Notebook"
 			severity="secondary"
 			icon="pi pi-sign-out"
 			size="small"
-			:active="activeTab === SimulateTabs.notebook"
-			@click="activeTab = SimulateTabs.notebook"
+			:active="activeTab === StratifyTabs.notebook"
+			@click="activeTab = StratifyTabs.notebook"
 		/>
 	</div>
-	<div v-if="activeTab === SimulateTabs.wizard" class="container">
+	<div v-if="activeTab === StratifyTabs.wizard" class="container">
 		<div class="left-side">
 			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
 			<p>The model will be stratified with the following settings.</p>
@@ -86,12 +86,12 @@ const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
 
-enum SimulateTabs {
+enum StratifyTabs {
 	wizard,
 	notebook
 }
 
-const activeTab = ref(SimulateTabs.wizard);
+const activeTab = ref(StratifyTabs.wizard);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
