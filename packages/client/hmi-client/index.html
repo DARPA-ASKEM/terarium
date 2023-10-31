@@ -8,6 +8,7 @@
 	<title>Terarium</title>
 	<script src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.3/dist/keycloak.min.js"></script>
 	<script>
+		import Keycloak from 'keycloak-js';
 		window.keycloak = new Keycloak('/api/configuration/keycloak');
 		const kc_options = {
 			onLoad: "login-required",

@@ -19,6 +19,15 @@ import '@node_modules/katex/dist/katex.min.css';
 import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import '@/assets/css/style.scss';
+import Keycloak from 'keycloak-js';
+
+// Extend the window object to include the Keycloak object
+declare global {
+	interface Window {
+		kc_init: boolean;
+		keycloak: Keycloak;
+	}
+}
 
 try {
 	await window.kc_init;
@@ -35,7 +44,7 @@ app.use(createPinia());
 
 // Set up the Keycloak authentication
 const authStore = useAuthStore();
-authStore.setKeycloak(window?.keycloak);
+authStore.setKeycloak(window.keycloak);
 
 // Initialize user
 await authStore.init();
