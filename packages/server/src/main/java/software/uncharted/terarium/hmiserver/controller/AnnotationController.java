@@ -43,8 +43,8 @@ public class AnnotationController {
 	}
 
 	@PostMapping
-	@Transactional
 	@Secured(Roles.USER)
+	@Transactional
 	public ResponseEntity<Annotation> postEvent(@RequestBody final Annotation annotation) {
 		annotation.setUserId(currentUserService.get().getId());
 
@@ -53,8 +53,8 @@ public class AnnotationController {
 	}
 
 	@PatchMapping
-	@Transactional
 	@Secured(Roles.USER)
+	@Transactional
 	public ResponseEntity<Annotation> updateAnnotation(@RequestBody final Annotation newAnnotation){
 		String id = newAnnotation.getId();
 		String content = newAnnotation.getContent();
@@ -75,8 +75,8 @@ public class AnnotationController {
 	}
 
 	@DeleteMapping
-	@Transactional
 	@Secured(Roles.USER)
+	@Transactional
 	public ResponseEntity<JsonNode> deleteAnnotations(@RequestParam("id") final String id) {
 
 		Annotation annotation = annotationService.findArtifact(id);
