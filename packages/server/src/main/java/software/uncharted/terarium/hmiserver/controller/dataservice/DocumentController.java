@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -34,6 +35,7 @@ import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewa
 import org.apache.http.entity.StringEntity;
 import org.apache.commons.io.IOUtils;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -71,6 +73,7 @@ public class DocumentController implements SnakeCaseController {
 	DocumentAssetService documentAssetService;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
@@ -80,6 +83,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createDocument(
 		@RequestBody DocumentAsset document
 	) {
@@ -87,6 +91,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<DocumentAsset> getDocument(
 		@PathVariable("id") String id
 	) {
@@ -131,6 +136,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteDocument(
 		@PathVariable("id") String id
 	) {
@@ -168,6 +174,7 @@ public class DocumentController implements SnakeCaseController {
 	 * Uploads a file to the project.
 	 */
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocument(
 		@PathVariable("id") String id,
 		@RequestParam("filename") final String filename,
@@ -182,6 +189,7 @@ public class DocumentController implements SnakeCaseController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
 	 */
 	@PutMapping("/{documentId}/uploadDocumentFromGithub")
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocumentFromGithub(
 		@PathVariable("documentId") final String documentId,
 		@RequestParam("path") final String path,
@@ -198,12 +206,13 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@PostMapping(value = "/createDocumentFromXDD")
+	@Secured(Roles.USER)
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
 		@RequestBody AddDocumentAssetFromXDDRequest body
 	) {
 			try(CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
-				.build()){	
+				.build()){
 
 			//build initial response
 			AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
@@ -223,7 +232,7 @@ public class DocumentController implements SnakeCaseController {
 			List<String> filenames = new ArrayList<String>();
 			if(filename != null){
 				filenames.add(filename);
-			}	
+			}
 
 			//create document asset
 			DocumentAsset documentAsset = new DocumentAsset();
@@ -231,7 +240,7 @@ public class DocumentController implements SnakeCaseController {
 			documentAsset.setDescription(name);
 			documentAsset.setUsername(username);
 			documentAsset.setFileNames(filenames);
-			
+
 			String newDocumentAssetId = proxy.createAsset(convertObjectToSnakeCaseJsonNode(documentAsset)).getBody().get("id").asText();
 			response.setDocumentAssetId(newDocumentAssetId);
 
@@ -261,22 +270,23 @@ public class DocumentController implements SnakeCaseController {
 
 			if(pdfUploadResponse.getStatusLine().getStatusCode() >= 400) {
 				response.setPdfUploadError(true);
-				return ResponseEntity.ok(response); 
+				return ResponseEntity.ok(response);
 			}
-			
+
 			// fire and forgot pdf extractions
 			String jobId = knowledgeMiddlewareProxy.postPDFToCosmos(newDocumentAssetId).getBody().get("id").asText();
 			response.setExtractionJobId(jobId);
-			
-			return ResponseEntity.ok(response);		
+
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
 			log.error("Unable to GET document data", e);
 			return ResponseEntity.internalServerError().build();
-		}		
+		}
 	}
 
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> downloadDocument(
 		@PathVariable("id") String id,
 		@RequestParam("filename") final String filename
@@ -300,6 +310,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}/download-document-as-text")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") String documentId, @RequestParam("filename") String filename) {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);

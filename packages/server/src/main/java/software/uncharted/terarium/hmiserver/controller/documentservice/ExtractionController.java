@@ -4,11 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -35,6 +37,7 @@ public class ExtractionController {
 
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<XDDResponse<XDDExtractionsResponseOK>> searchExtractions(
 		@RequestParam(required = false, name = "term") final String term,
 		@RequestParam(required = false, name = "page") final Integer page,
@@ -80,6 +83,7 @@ public class ExtractionController {
 	}
 
 	@GetMapping("/askem-autocomplete/{term}")
+	@Secured(Roles.USER)
 	public ResponseEntity<List<String>> getAutocomplete(@PathVariable("term") String term) {
 		try {
 

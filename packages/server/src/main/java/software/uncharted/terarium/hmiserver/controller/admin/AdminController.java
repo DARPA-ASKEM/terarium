@@ -5,12 +5,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.authority.Role;
 import software.uncharted.terarium.hmiserver.repository.RoleRepository;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.AdminClientService;
 
 import java.util.List;
@@ -29,6 +31,7 @@ public class AdminController {
 	 * Get a list of all users
 	 */
 	@GetMapping("/users")
+	@Secured(Roles.ADMIN)
 	public ResponseEntity<List<User>> getUsers(@RequestParam(required = false, defaultValue = "0") Integer page,
 																						 @RequestParam(required = false, defaultValue = "5") Integer rows,
 																						 @RequestParam(required = false) String sortField,
@@ -52,6 +55,7 @@ public class AdminController {
 	 * @return the total number of users
 	 */
 	@GetMapping("/users/total")
+	@Secured(Roles.ADMIN)
 	public ResponseEntity<Long> getUserTotal() {
 		return ResponseEntity.ok(userRepository.count());
 	}
@@ -63,6 +67,7 @@ public class AdminController {
 	 * @return the total number of roles
 	 */
 	@GetMapping("/roles/total")
+	@Secured(Roles.ADMIN)
 	public ResponseEntity<Long> getRolesTotal() {
 		return ResponseEntity.ok(roleRepository.count());
 	}
@@ -73,6 +78,7 @@ public class AdminController {
 	 * @return a list of all roles
 	 */
 	@GetMapping("/roles")
+	@Secured(Roles.ADMIN)
 	public ResponseEntity<List<Role>> getRoles(@RequestParam(required = false, defaultValue = "0") Integer page,
 																						 @RequestParam(required = false, defaultValue = "5") Integer rows,
 																						 @RequestParam(required = false) String sortField,
@@ -97,6 +103,7 @@ public class AdminController {
 	 * @return the role with the given id
 	 */
 	@GetMapping("/roles/{id}")
+	@Secured(Roles.ADMIN)
 	public ResponseEntity<Role> getRole(@PathVariable String id) {
 		return roleRepository.findById(Long.parseLong(id))
 			.map(ResponseEntity::ok)
@@ -111,6 +118,7 @@ public class AdminController {
 	 * @return the updated role
 	 */
 	@PutMapping("/roles/{id}")
+	@Secured(Roles.ADMIN)
 	public ResponseEntity<Role> updateRole(@PathVariable String id, @RequestBody Role role) {
 		return roleRepository.findById(Long.parseLong(id))
 			.map(roleData -> {
@@ -123,6 +131,7 @@ public class AdminController {
 
 	//returns updated user if successful, null otherwise
 	@PutMapping("/users/{id}")
+	@Secured(Roles.ADMIN)
 	public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
 		User retUser = null;
 		if (adminClientService.updateUserRepresentation(user)) {

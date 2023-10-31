@@ -15,6 +15,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -22,6 +23,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.CodeProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +42,7 @@ public class TDSCodeController implements SnakeCaseController {
 
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<Code>> getCodes(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
@@ -48,28 +51,33 @@ public class TDSCodeController implements SnakeCaseController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createCode(@RequestBody Code code) {
 
 		return ResponseEntity.ok(codeProxy.createAsset(convertObjectToSnakeCaseJsonNode(code)).getBody());
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<Code> getCode(@PathVariable("id") String codeId) {
 
 		return ResponseEntity.ok(codeProxy.getAsset(codeId).getBody());
 	}
 
 	@PutMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateCode(@PathVariable("id") String codeId, @RequestBody Code code) {
 		return ResponseEntity.ok(codeProxy.updateAsset(codeId, convertObjectToSnakeCaseJsonNode(code)).getBody());
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteCode(@PathVariable("id") String codeId) {
 		return ResponseEntity.ok(codeProxy.deleteAsset(codeId).getBody());
 	}
 
 	@GetMapping("/{id}/download-code-as-text")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getCodeFileAsText(@PathVariable("id") String codeId, @RequestParam("filename") String filename) {
 
 		log.debug("Downloading code file {} for code {}", filename, codeId);
@@ -94,6 +102,7 @@ public class TDSCodeController implements SnakeCaseController {
 	}
 
 	@PutMapping(value = "/{codeId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadFile(
 		@PathVariable("codeId") final String codeId,
 		@RequestParam("filename") final String filename,
@@ -113,6 +122,7 @@ public class TDSCodeController implements SnakeCaseController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
 	 */
 	@PutMapping("/{codeId}/uploadCodeFromGithub")
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadCodeFromGithub(
 		@PathVariable("codeId") final String codeId,
 		@RequestParam("path") final String path,

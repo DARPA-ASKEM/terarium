@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.controller.code;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
 import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
@@ -12,6 +13,7 @@ import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.List;
 
@@ -38,6 +40,7 @@ public class CodeController {
 	 * derived from the code input
 	 */
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<StoredModel> transformCode(final String code) {
 
 		// Convert from highlighted code a function network
@@ -67,6 +70,7 @@ public class CodeController {
 	}
 
 	@GetMapping("/repo-content")
+	@Secured(Roles.USER)
 	public ResponseEntity<GithubRepo> getGithubRepositoryContent(
 		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 		@RequestParam("path") final String path
@@ -81,6 +85,7 @@ public class CodeController {
 	}
 
 	@GetMapping("/repo-file-content")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getGithubCode(
 		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 		@RequestParam("path") final String path

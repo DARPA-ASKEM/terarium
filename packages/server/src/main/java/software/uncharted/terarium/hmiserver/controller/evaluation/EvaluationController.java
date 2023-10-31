@@ -13,6 +13,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,6 +23,7 @@ import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioStatus;
 import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioSummary;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.EventService;
 
@@ -51,6 +53,7 @@ public class EvaluationController {
 	 * @return A list of all evaluation scenarios
 	 */
 	@GetMapping("/scenarios")
+	@Secured(Roles.USER)
 	public ResponseEntity<List<EvaluationScenarioSummary>> getScenarios() {
 
 		Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
@@ -99,6 +102,7 @@ public class EvaluationController {
 	 * @return
 	 */
 	@GetMapping("/status")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getStatus(@RequestParam("name") String name) {
 		final List<Event> events = eventService.findEvents(EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
 		final Event latestEvent = events
@@ -126,6 +130,7 @@ public class EvaluationController {
 	}
 
 	@GetMapping("/runtime")
+	@Secured(Roles.USER)
 	public ResponseEntity<Long> getRuntime(@RequestParam("name") String name) {
 		final List<Event> events = eventService.findEvents(EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
 		final List<Event> scenarioEvents = events
@@ -163,6 +168,7 @@ public class EvaluationController {
 	}
 
 	@GetMapping("/download")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getCSV(@RequestParam("userId") final String userId,
 																			 @RequestParam("name") final String name) throws IOException {
 

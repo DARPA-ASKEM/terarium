@@ -10,6 +10,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResultsCiemss;
@@ -20,6 +21,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.nio.charset.StandardCharsets;
 
@@ -51,11 +53,13 @@ public class SimulationController implements SnakeCaseController {
 	@Channel("scimlQueue") Publisher<JsonObject> scimlQueueStream;*/
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createSimulation(@RequestBody final Simulation simulation) {
 		return simulationProxy.createAsset(convertObjectToSnakeCaseJsonNode(simulation));
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> getSimulation(
 		@PathVariable("id") final String id
 	) {
@@ -63,17 +67,20 @@ public class SimulationController implements SnakeCaseController {
 	}
 
 	@PutMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateSimulation(@PathVariable("id") final String id, @RequestBody final Simulation simulation) {
 		return ResponseEntity.ok(simulationProxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(simulation)).getBody());
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public String deleteSimulation(@PathVariable("id") final String id) {
 		return ResponseEntity.ok(simulationProxy.deleteAsset(id).getBody()).toString();
 	}
 
 
 	@GetMapping("/{id}/result")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getSimulation(
 		@PathVariable("id") final String id,
 		@RequestParam("filename") final String filename
@@ -102,6 +109,7 @@ public class SimulationController implements SnakeCaseController {
 	 * @return Dataset the new dataset created
 	 */
 	@GetMapping("/{id}/add-result-as-dataset-to-project/{projectId}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createFromSimulationResult(
 		@PathVariable("id") final String id,
 		@PathVariable("projectId") final String projectId,
@@ -138,6 +146,7 @@ public class SimulationController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{jobId}/ciemss/partial-result")
+	@Secured(Roles.USER)
 	//TODO @SseElementType(MediaType.APPLICATION_JSON)
 	public ResponseEntity<JsonNode> stream(
 		@PathVariable("jobId") final String jobId
@@ -168,6 +177,7 @@ public class SimulationController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{jobId}/sciml/partial-result")
+	@Secured(Roles.USER)
 	//TODO @SseElementType(MediaType.APPLICATION_JSON)
 	public ResponseEntity<JsonNode> scimlResult(
 		@PathVariable("jobId") final String jobId
@@ -193,6 +203,7 @@ public class SimulationController implements SnakeCaseController {
 	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
 	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
 	@PutMapping("/{jobId}/ciemss/create-partial-result")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createPartialResult(
 		@PathVariable("jobId") final String jobId
 	) {
