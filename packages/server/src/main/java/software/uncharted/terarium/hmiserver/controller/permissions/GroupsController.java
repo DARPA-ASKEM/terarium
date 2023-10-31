@@ -40,9 +40,6 @@ public class GroupsController {
 		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
 		List<PermissionGroup> groups = reBACService.getGroups();
-		groups.forEach(group -> {
-			group.setPermissionRelationships((new PermissionRelationships()));
-		});
 		return ResponseEntity.ok(groups);
 	}
 
