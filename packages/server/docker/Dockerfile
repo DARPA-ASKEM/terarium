@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17.0.8_7-jdk-focal AS builder
+FROM eclipse-temurin:17.0.9_9-jdk-focal AS builder
 
 WORKDIR /app
 COPY /packages/server .
@@ -10,7 +10,7 @@ RUN mkdir -p ./layers
 RUN cp ./build/libs/*-SNAPSHOT.jar ./layers
 RUN (cd layers; java -Djarmode=layertools -jar *-SNAPSHOT.jar extract)
 
-FROM eclipse-temurin:17.0.8_7-jre-focal
+FROM eclipse-temurin:17.0.9_9-jre-focal
 RUN groupadd -r terarium && useradd --no-log-init -r -g terarium terarium
 VOLUME /tmp
 USER terarium
