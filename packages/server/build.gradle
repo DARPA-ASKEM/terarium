@@ -59,7 +59,7 @@ dependencies {
     implementation 'org.eclipse.microprofile.jwt:microprofile-jwt-auth-api:2.1'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.jsoup:jsoup:1.7.2'
-    implementation 'org.keycloak:keycloak-admin-client:20.0.3'
+    implementation 'org.keycloak:keycloak-admin-client:20.0.5'
     implementation 'org.redisson:redisson-spring-boot-starter:3.23.4'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
