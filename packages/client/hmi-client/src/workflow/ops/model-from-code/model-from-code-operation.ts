@@ -9,7 +9,7 @@ export interface ModelFromCodeState {
 export const ModelFromCodeOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_FROM_CODE,
 	description: 'Create model',
-	displayName: 'Create Model from Code',
+	displayName: 'Create model from code',
 	isRunnable: true,
 	inputs: [],
 	outputs: [],
