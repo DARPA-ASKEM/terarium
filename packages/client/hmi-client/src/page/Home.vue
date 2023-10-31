@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<div>
+		<div class="scrollable">
 			<header>
 				<article>
 					<h3>From data to discovery</h3>
@@ -99,17 +99,7 @@
 										<tera-project-card />
 									</li>
 								</template>
-								<li
-									v-else
-									v-for="project in [
-										tab.projects,
-										tab.projects,
-										tab.projects,
-										tab.projects,
-										tab.projects
-									].flat()"
-									:key="project.id"
-								>
+								<li v-else v-for="project in tab.projects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -120,6 +110,7 @@
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
+								Y
 								:projects="tab.projects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
@@ -355,7 +346,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-main > div {
+main > .scrollable {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
