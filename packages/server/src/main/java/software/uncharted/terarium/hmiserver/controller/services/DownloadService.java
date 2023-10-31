@@ -1,5 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.services;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -9,13 +16,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class DownloadService {
@@ -27,56 +27,9 @@ public class DownloadService {
 	 * @return a fully qualified url
 	 * @throws URISyntaxException
 	 */
-	private static String normalizeRelativeUrl(final String relativeUrl, final String baseUrl) throws URISyntaxException {
+	private String normalizeRelativeUrl(final String relativeUrl, final String baseUrl) throws URISyntaxException {
 		final URI uri = new URI(baseUrl);
 		return uri.getScheme() + "://" + uri.getHost() + relativeUrl;
-	}
-
-	/**
-	 * Checks if the given byte array is a PDF file
-	 *
-	 * @param data the byte array
-	 * @throws IOException
-	 */
-	public static Boolean IsPdf(final byte[] data) {
-		// check if data is null or less than 5 bytes
-		if (data == null || data.length < 8) {
-			return false;
-		}
-
-		// check if data starts with %PDF
-		if (data[0] != 0x25 ||
-			data[1] != 0x50 ||
-			data[2] != 0x44 ||
-			data[3] != 0x46
-		) {
-			return false;
-		}
-
-		// for pdf version 1.3
-		// check if data ends with %%EOF
-		if (data[5]==0x31 && data[6]==0x2E && data[7]==0x33) {
-			return data[data.length - 7] == 0x25 &&
-				data[data.length - 6] == 0x25 &&
-				data[data.length - 5] == 0x45 &&
-				data[data.length - 4] == 0x4F &&
-				data[data.length - 3] == 0x46 &&
-				data[data.length - 2] == 0x20 &&
-				data[data.length - 1] == 0x0A;
-		}
-
-		// for pdf version 1.4
-		// check if data ends with %%EOF
-		else if (data[5]==0x31 && data[6]==0x2E && data[7]==0x34) {
-			return data[data.length - 6] == 0x25 &&
-				data[data.length - 5] == 0x25 &&
-				data[data.length - 4] == 0x45 &&
-				data[data.length - 3] == 0x4F &&
-				data[data.length - 2] == 0x46 &&
-				data[data.length - 1] == 0x0A;
-		}
-
-		return true;
 	}
 
 	/**
@@ -87,8 +40,8 @@ public class DownloadService {
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	public static byte[] getPDF(final String url) throws IOException, URISyntaxException {
-		final CloseableHttpClient httpclient = HttpClients.custom()
+	public byte[] getPDF(final String url) throws IOException, URISyntaxException {
+		CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build();
 
@@ -141,8 +94,8 @@ public class DownloadService {
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	public static String getPDFURL(final String url) throws IOException, URISyntaxException {
-		final CloseableHttpClient httpclient = HttpClients.custom()
+	public String getPDFURL(final String url) throws IOException, URISyntaxException {
+		CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build();
 
@@ -187,18 +140,18 @@ public class DownloadService {
 		return url;
 	}
 
-	public static String pdfNameFromUrl(final String url) {
+	public String pdfNameFromUrl(String url) {
 		if(url == null) return null;
 
-		final String[] parts = url.split("\\?"); // Remove query parameters
-        final String urlWithoutParams = parts[0];
-		final Pattern pattern = Pattern.compile("/([^/]+\\.pdf)$", Pattern.CASE_INSENSITIVE);
-		final Matcher matcher = pattern.matcher(urlWithoutParams);
-
+		String[] parts = url.split("\\?"); // Remove query parameters
+        String urlWithoutParams = parts[0];
+		Pattern pattern = Pattern.compile("/([^/]+\\.pdf)$", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(urlWithoutParams);
+	
 		if (matcher.find() && matcher.group(1) != null) {
 			return matcher.group(1);
 		}
-
+	
 		return null;
 	}
 }
