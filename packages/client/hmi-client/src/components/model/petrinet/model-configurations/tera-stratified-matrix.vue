@@ -7,14 +7,14 @@
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
 					<tr>
-						<th v-if="matrix.length > 1" class="choose-criteria"></th>
+						<th v-if="matrix.length > 1" class="choose-criteria">&nbsp;</th>
 						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
 						<td v-if="matrix.length > 1" class="p-frozen-column">
-							<template v-if="nodeType === NodeType.State">
+							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
 							<template v-else>
@@ -38,19 +38,22 @@
 									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 								/>
-								<div
-									v-else-if="nodeType === NodeType.State"
-									class="mathml-container"
-									v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
-								/>
-								<div v-else>
-									{{ shouldEval ? cell?.content.value : cell?.content.id ?? '...' }}
-									<div v-if="cell?.content?.controllers">
-										controllers: {{ cell?.content?.controllers }}
+								<section v-else>
+									<div>
+										<div
+											class="mathml-container"
+											v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+										/>
+										<template v-if="cell?.content?.controllers">
+											controllers: {{ cell?.content?.controllers }}
+										</template>
 									</div>
-								</div>
+									<div class="subdue">
+										{{ cell?.content.id }}
+									</div>
+								</section>
 							</template>
-							<span v-else class="not-allowed">N/A</span>
+							<span v-else class="subdue">N/A</span>
 						</td>
 					</tr>
 				</tbody>
@@ -62,18 +65,18 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import { StratifiedModelType } from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
 import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
-import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
+import { StratifiedMatrix } from '@/types/Model';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
-	stratifiedModelType: StratifiedModelType;
-	nodeType: NodeType;
+	stratifiedModelType: StratifiedModel;
+	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
 }>();
 
@@ -128,7 +131,11 @@ function findOdeObjectLocation(variableName: string): {
 	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 	if (!ode) return null;
 
-	const fieldNames = ['rates', 'initials', 'parameters'];
+	const fieldNames = [
+		StratifiedMatrix.Rates,
+		StratifiedMatrix.Initials,
+		StratifiedMatrix.Parameters
+	];
 
 	for (let i = 0; i < fieldNames.length; i++) {
 		const fieldIndex = ode[fieldNames[i]].findIndex(
@@ -177,7 +184,11 @@ async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
 }
 
 function renderMatrix() {
-	matrix.value = generateMatrix(props.modelConfiguration.configuration, props.id, props.nodeType);
+	matrix.value = generateMatrix(
+		props.modelConfiguration.configuration,
+		props.id,
+		props.stratifiedMatrixType
+	);
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
@@ -280,7 +291,12 @@ onMounted(() => {
 	min-width: 11rem;
 }
 
-.not-allowed {
+.subdue {
 	color: var(--text-color-subdued);
+}
+
+section {
+	display: flex;
+	justify-content: space-between;
 }
 </style>

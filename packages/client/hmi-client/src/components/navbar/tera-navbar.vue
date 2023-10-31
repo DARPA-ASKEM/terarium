@@ -341,6 +341,13 @@ const userMenuItems = ref([
 		}
 	},
 	{
+		label: 'User Administration',
+		command: () => {
+			router.push(RoutePath.UserAdmin);
+		},
+		visible: auth.user?.roles.some((r) => r.name === 'ADMIN')
+	},
+	{
 		label: 'Logout',
 		command: () => {
 			isLogoutDialog.value = true;

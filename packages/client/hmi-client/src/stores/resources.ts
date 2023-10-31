@@ -25,7 +25,8 @@ const useResourcesStore = defineStore('resources', {
 		activeProject: null as null | IProject
 	}),
 	getters: {
-		activeProjectAssets: (state) => state.activeProject?.assets
+		activeProjectAssets: (state) => state.activeProject?.assets,
+		getXddDataset: (state) => state.xddDataset
 	},
 	actions: {
 		setXDDDataset(dataset: string | null) {

@@ -1,23 +1,20 @@
 <template>
 	<aside class="overlay-container">
-		<div>
-			<section>
-				<header ref="header">
-					<div>
-						<slot name="header" />
-					</div>
-					<Button
-						class="close-button"
-						icon="pi pi-times"
-						text
-						rounded
-						aria-label="Close"
-						@click="emit('on-close-clicked')"
-					/>
-				</header>
-				<main class="content"><slot /></main>
-			</section>
-		</div>
+		<section>
+			<header ref="header">
+				<div>
+					<slot name="header" />
+				</div>
+				<Button
+					icon="pi pi-times"
+					text
+					rounded
+					aria-label="Close"
+					@click="emit('on-close-clicked')"
+				/>
+			</header>
+			<main><slot /></main>
+		</section>
 	</aside>
 </template>
 
@@ -43,44 +40,37 @@ us the main application behind the modal temporarily as content loads when scrol
 An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather
 than the main application behind the modal when these render issues come, however this is still an issue regardless.
 */
-.overlay-container > div {
-	overflow-y: auto;
-	width: 100%;
-	height: 100%;
-}
-
-.overlay-container > div > section {
-	height: fit-content;
-	min-height: 98%;
-	width: 98vw;
-	margin-top: 1%;
-	margin-bottom: 1%;
-	margin-left: 1%;
+.overlay-container > section {
+	height: calc(100vh - 1rem);
+	margin: 0.5rem;
 	background: #fff;
-	border-radius: 0.5rem;
+	border-radius: var(--modal-border-radius);
 	overflow: hidden;
 }
 
-.content {
-	padding: 0 2rem;
-	max-width: inherit;
-}
-
 header {
-	margin-bottom: 1rem;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	gap: 0.5rem;
 	background-color: var(--surface-highlight);
-	padding: 0.5rem 1.5rem;
-}
-.close-button.p-button.p-button-icon-only {
-	height: 4rem;
-	width: 4rem;
+	padding: 20px 16px;
+	height: 56px;
 }
 
-.close-button.p-button.p-button-icon-only:deep(.p-button-icon) {
-	font-size: 1.75rem;
+main {
+	margin: 0 0 0.5rem;
+	max-width: inherit;
+	/* contentHeight = fullscreen - modalMargin - headerHeight*/
+	height: calc(100vh - 1rem - 56px);
+}
+
+.p-button.p-button-icon-only.p-button-rounded {
+	height: 24px;
+	width: 24px;
+}
+.p-button:deep(.p-button-icon) {
+	font-size: 16px;
+	color: var(--text-color-primary);
 }
 </style>

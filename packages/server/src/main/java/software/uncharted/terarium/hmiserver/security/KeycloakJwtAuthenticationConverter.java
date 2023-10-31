@@ -63,8 +63,12 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 			databaseUser = userService.save(jwtUser.merge(databaseUser));
 		}
 
-		return roleService.getAuthorities(databaseUser.getRoles()).stream()
-			.map(SimpleGrantedAuthority::new)
+//		return roleService.getAuthorities(databaseUser.getRoles()).stream()
+//			.map(SimpleGrantedAuthority::new)
+//			.collect(Collectors.toSet());
+
+		return realmRoles.stream()
+			.map(role -> new SimpleGrantedAuthority("ROLE_" + role))
 			.collect(Collectors.toSet());
 	}
 

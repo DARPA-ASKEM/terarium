@@ -1,0 +1,60 @@
+---
+version: "3.8"
+
+services:
+  sciml-service:
+    container_name: sciml-service
+    image: ghcr.io/darpa-askem/sciml-service:latest
+    networks:
+      - terarium
+    ports:
+      - "3030:8080"
+    environment:
+      SIMSERVICE_TDS_URL: "http://${local_host_name}:3020"
+      SIMSERVICE_RABBITMQ_ENABLED: "true"
+      SIMSERVICE_RABBITMQ_LOGIN: "terarium"
+      SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"
+      SIMSERVICE_RABBITMQ_ROUTE: "sciml-queue"
+      SIMSERVICE_RABBITMQ_HOST: "${local_host_name}"
+      SIMSERVICE_RABBITMQ_PORT: "5672"
+    depends_on:
+      message-queue:
+        condition: service_started
+      data-service:
+        condition: service_started
+
+  pyciemss-api:
+    container_name: pyciemss-api
+    image: ghcr.io/darpa-askem/pyciemss-api:latest
+    networks:
+      - terarium
+    ports:
+      - "3040:8000"
+    environment:
+      TDS_URL: "http://${local_host_name}:3020"
+      STANDALONE_MODE: "False"
+      PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    depends_on:
+      redis:
+        condition: service_started
+      data-service:
+        condition: service_started
+
+  pyciemss-worker:
+    container_name: pyciemss-worker
+    image: ghcr.io/darpa-askem/pyciemss-worker:latest
+    networks:
+      - terarium
+    environment:
+      TDS_URL: "http://${local_host_name}:3020"
+      STANDALONE_MODE: "False"
+      PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    depends_on:
+      redis:
+        condition: service_started
+      data-service:
+        condition: service_started

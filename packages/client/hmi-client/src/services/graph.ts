@@ -50,7 +50,6 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		g.setEdge(edge.source, edge.target);
 	}
 
-	// FIXME: Hackathon show-n-tell, remove
 	if (lr === true) {
 		g.graph().rankDir = 'LR';
 		g.graph().nodesep = 100;

@@ -23,8 +23,12 @@ public class MIRAController {
 		@PathVariable("curies") final String curies
 	) {
 		try {
-			return ResponseEntity.ok(proxy.getEntities(curies)).getBody();
-		} catch (RuntimeException e) {
+			ResponseEntity<List<DKG>> response = proxy.getEntities(curies);
+			if(response.getStatusCode().is2xxSuccessful()){
+				return ResponseEntity.ok(response.getBody());
+			}
+			return ResponseEntity.internalServerError().build();
+		} catch (Exception e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();
 		}

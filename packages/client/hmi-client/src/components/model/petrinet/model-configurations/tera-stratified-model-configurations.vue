@@ -31,7 +31,7 @@
 					{{ name }}
 				</span>
 			</td>
-			<td v-for="(id, j) in baseStatesAndTransitions" :key="j">
+			<td v-for="(id, j) in baseInitialsAndParameters" :key="j">
 				<section class="editable-cell" @click="emit('open-modal', i, id)">
 					<span>{{ id }}<i class="pi pi-table" /></span>
 					<Button
@@ -54,7 +54,7 @@ defineProps<{
 	modelConfigurations: ModelConfiguration[];
 	calibrationConfig?: boolean;
 	cellEditStates: any[];
-	baseStatesAndTransitions: any;
+	baseInitialsAndParameters: any;
 }>();
 
 const emit = defineEmits([

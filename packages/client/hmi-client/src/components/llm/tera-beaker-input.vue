@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import InputText from 'primevue/inputtext';
 import * as EventService from '@/services/event';

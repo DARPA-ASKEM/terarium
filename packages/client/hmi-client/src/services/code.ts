@@ -33,7 +33,7 @@ async function updateCodeAsset(
 		return null;
 	}
 
-	return response.data as Code;
+	return response.data;
 }
 
 async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise<string | null> {

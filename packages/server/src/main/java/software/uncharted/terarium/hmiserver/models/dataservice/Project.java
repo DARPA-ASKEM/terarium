@@ -56,14 +56,4 @@ public class Project implements Serializable {
 
 	@TSOptional
 	private String userPermission;
-
-	@Override
-	public String toString() {
-		return "Project: { id: " + this.projectID +
-			" name: " + this.name +
-			" description: " + this.description +
-			" Assets: " + this.assets +
-			" Related Documents: " + this.relatedDocuments +
-			" }";
-	}
 }

@@ -4,14 +4,15 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { ResultType } from '@/types/common';
-import { ExternalPublication, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import { ResourceType, ResultType } from '@/types/common';
+import { ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
-// eslint-disable-next-line import/no-cycle
-import { getBulkDocuments } from './data';
 import { getBulkDatasets } from './dataset';
-import { getBulkDocumentAssets, getDocument } from './external';
+// eslint-disable-next-line import/no-cycle
+import { getBulkXDDDocuments } from './data';
+import { getBulkExternalPublications } from './external';
 import { getBulkModels } from './model';
+import { getBulkDocumentAssets } from './document-assets';
 
 //
 
@@ -34,14 +35,17 @@ const MAX_RELATED_ARTIFACT_COUNT = 5;
 // API helper function for fetching provenance data
 async function getConnectedNodes(
 	id: string,
-	rootType: ProvenanceType
+	rootType: ProvenanceType,
+	types: ProvenanceType[]
 ): Promise<ProvenanceResult | null> {
-	const publication: ExternalPublication | null = await getDocument(id);
-	if (!publication) return null;
-
 	const body: ProvenanceQueryParam = {
-		rootId: publication.id,
-		rootType
+		rootId: id,
+		rootType,
+		nodes: true,
+		hops: 1,
+		limit: 10,
+		verbose: true,
+		types
 	};
 	const connectedNodesRaw = await API.post('/provenance/connected-nodes', body).catch((error) =>
 		logger.error(`Error: ${error}`)
@@ -56,18 +60,20 @@ async function getConnectedNodes(
  * @id: id to be used as the root
  * @return ResultType[]|null - the list of all artifacts, or null if none returned by API
  */
-async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promise<ResultType[]> {
+async function getRelatedArtifacts(
+	id: string,
+	rootType: ProvenanceType,
+	types: ProvenanceType[] = Object.values(ProvenanceType)
+): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
-	if (rootType !== ProvenanceType.Publication) {
-		return response;
-	}
-
-	const connectedNodes = await getConnectedNodes(id, rootType);
+	if (!rootType) return response;
+	const connectedNodes = await getConnectedNodes(id, rootType, types);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
-		const documentIDs: string[] = [];
+		const externalPublicationIds: string[] = [];
 		const datasetIDs: string[] = [];
+		const documentAssetIds: string[] = [];
 
 		// For a model/dataset root type:
 		//  	Find other model revisions
@@ -83,9 +89,9 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 			if (rootType !== ProvenanceType.Publication) {
 				if (
 					node.type === ProvenanceType.Publication &&
-					documentIDs.length < MAX_RELATED_ARTIFACT_COUNT
+					externalPublicationIds.length < MAX_RELATED_ARTIFACT_COUNT
 				) {
-					documentIDs.push(node.id.toString());
+					externalPublicationIds.push(node.id.toString());
 				}
 			}
 
@@ -93,6 +99,13 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 				// FIXME: provenance data return IDs as number(s)
 				// but the fetch service expects IDs as string(s)
 				datasetIDs.push(node.id.toString());
+			}
+
+			if (
+				node.type === ProvenanceType.Document &&
+				documentAssetIds.length < MAX_RELATED_ARTIFACT_COUNT
+			) {
+				documentAssetIds.push(node.id.toString());
 			}
 
 			// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/880
@@ -115,10 +128,13 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 		const models = await getBulkModels(modelRevisionIDs);
 		response.push(...models);
 
-		const documentAssets = await getBulkDocumentAssets(documentIDs);
+		const documentAssets = await getBulkDocumentAssets(documentAssetIds);
+		response.push(...documentAssets);
+
+		const externalPublications = await getBulkExternalPublications(externalPublicationIds);
 		// FIXME: xdd_uri
-		const documents = await getBulkDocuments(documentAssets.map((p) => p.xdd_uri));
-		response.push(...documents);
+		const xDDdocuments = await getBulkXDDDocuments(externalPublications.map((p) => p.xdd_uri));
+		response.push(...xDDdocuments);
 	}
 
 	// NOTE: performing a provenance search returns
@@ -127,8 +143,63 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 	return response;
 }
 
+export enum RelationshipType {
+	BEGINS_AT = 'BEGINS_AT',
+	CITES = 'CITES',
+	COMBINED_FROM = 'COMBINED_FROM',
+	CONTAINS = 'CONTAINS',
+	COPIED_FROM = 'COPIED_FROM',
+	DECOMPOSED_FROM = 'DECOMPOSED_FROM',
+	DERIVED_FROM = 'DERIVED_FROM',
+	EDITED_FROM = 'EDITED_FROM',
+	EQUIVALENT_OF = 'EQUIVALENT_OF',
+	EXTRACTED_FROM = 'EXTRACTED_FROM',
+	GENERATED_BY = 'GENERATED_BY',
+	GLUED_FROM = 'GLUED_FROM',
+	IS_CONCEPT_OF = 'IS_CONCEPT_OF',
+	PARAMETER_OF = 'PARAMETER_OF',
+	REINTERPRETS = 'REINTERPRETS',
+	STRATIFIED_FROM = 'STRATIFIED_FROM',
+	USES = 'USES'
+}
+export interface ProvenanacePayload {
+	id?: number;
+	timestamp?: string;
+	relation_type: RelationshipType;
+	left: string;
+	left_type: ProvenanceType;
+	right: string;
+	right_type: ProvenanceType;
+	user_id?: number;
+	concept?: string;
+}
+async function createProvenance(payload: ProvenanacePayload) {
+	const response = await API.post('/provenance', payload);
+
+	const { status, data } = response;
+	if (status !== 201) return null;
+	return data?.id ?? null;
+}
+
+async function getProvenance(id: string) {
+	const response = await API.get(`/provenance/${id}`);
+	const { data } = response;
+	return data ?? null;
+}
+
+export function mapResourceTypeToProvenanceType(resourceType: ResourceType): ProvenanceType | null {
+	switch (resourceType) {
+		case ResourceType.MODEL:
+			return ProvenanceType.Model;
+		case ResourceType.DATASET:
+			return ProvenanceType.Dataset;
+		default:
+			return null;
+	}
+}
+
 //
 // FIXME: needs to create a similar function to "getRelatedArtifacts"
 //        for finding related datasets
 //
-export { getRelatedArtifacts };
+export { getRelatedArtifacts, createProvenance, getProvenance };

@@ -100,7 +100,7 @@ public class DatasetController implements SnakeCaseController {
 
 		String rawCSV = "";
 
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build()) {
 
@@ -109,22 +109,27 @@ public class DatasetController implements SnakeCaseController {
 			final HttpResponse response = httpclient.execute(get);
 			rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to GET csv data", e);
 			return ResponseEntity.internalServerError().build();
 		}
 
-		List<List<String>> csv = csvToRecords(rawCSV);
-		List<String> headers = csv.get(0);
-		List<CsvColumnStats> csvColumnStats = new ArrayList<>();
+		final List<List<String>> csv = csvToRecords(rawCSV);
+		final List<String> headers = csv.get(0);
+		final List<CsvColumnStats> csvColumnStats = new ArrayList<>();
 		for (int i = 0; i < csv.get(0).size(); i++) {
-			List<String> column = getColumn(csv, i);
+			final List<String> column = getColumn(csv, i);
 			csvColumnStats.add(getStats(column.subList(1, column.size()))); //remove first as it is header:
 		}
 
 		final int linesToRead = limit != null ? limit == -1 ? csv.size() : limit : DEFAULT_CSV_LIMIT;
 
-		CsvAsset csvAsset = new CsvAsset(csv.subList(0, Math.min(linesToRead, csv.size() - 1)), csvColumnStats, headers, csv.size());
+		final CsvAsset csvAsset = new CsvAsset(
+			csv.subList(0, Math.min(linesToRead, csv.size() - 1)),
+			csvColumnStats,
+			headers,
+			csv.size()
+		);
 		return ResponseEntity.ok(csvAsset);
 	}
 
@@ -142,11 +147,11 @@ public class DatasetController implements SnakeCaseController {
 
 
 		//download CSV from github
-		String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 
-		HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
-		String[] csvRows = csvString.split("\\R");
-		String[] headers = csvRows[0].split(",");
+		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
+		final String[] csvRows = csvString.split("\\R");
+		final String[] headers = csvRows[0].split(",");
 		return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
 
 	}
@@ -164,18 +169,18 @@ public class DatasetController implements SnakeCaseController {
 	public ResponseEntity<JsonNode> uploadCsv(
 		@PathVariable("datasetId") final String datasetId,
 		@RequestParam("filename") final String filename,
-		@RequestPart("file") MultipartFile input
+		@RequestPart("file") final MultipartFile input
 	) throws IOException {
 
 		log.debug("Uploading CSV file to dataset {}", datasetId);
 		int status;
-		byte[] csvBytes = input.getBytes();
+		final byte[] csvBytes = input.getBytes();
 
 
-		HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
-		String csvString = new String(csvBytes);
-		String[] csvRows = csvString.split("\\R");
-		String[] headers = csvRows[0].split(",");
+		final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
+		final String csvString = new String(csvBytes);
+		final String[] csvRows = csvString.split("\\R");
+		final String[] headers = csvRows[0].split(",");
 		return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
 
 	}
@@ -193,9 +198,9 @@ public class DatasetController implements SnakeCaseController {
 	 * @param headers   headers of the CSV file
 	 * @return Response from the upload
 	 */
-	private ResponseEntity<JsonNode> uploadCSVAndUpdateColumns(String datasetId, String fileName, HttpEntity csvEntity, String[] headers) {
-		int status;
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+	private ResponseEntity<JsonNode> uploadCSVAndUpdateColumns(final String datasetId, final String fileName, final HttpEntity csvEntity, final String[] headers) {
+		final int status;
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build()) {
 
@@ -210,17 +215,17 @@ public class DatasetController implements SnakeCaseController {
 			if (status == HttpStatus.OK.value()) {
 				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
 
-				List<DatasetColumn> columns = new ArrayList<>(headers.length);
-				for (String header : headers) {
+				final List<DatasetColumn> columns = new ArrayList<>(headers.length);
+				for (final String header : headers) {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
-				Dataset updatedDataset = datasetProxy.getAsset(datasetId).getBody();
+				final Dataset updatedDataset = datasetProxy.getAsset(datasetId).getBody();
 				if (updatedDataset == null) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
 				}
 				updatedDataset.setColumns(columns);
-				ResponseEntity<JsonNode> r = datasetProxy.updateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
+				final ResponseEntity<JsonNode> r = datasetProxy.updateAsset(datasetId, convertObjectToSnakeCaseJsonNode(updatedDataset));
 				if (r.getStatusCode().value() != HttpStatus.OK.value()) {
 					log.error("Failed to update dataset {} with headers", datasetId);
 				}
@@ -229,7 +234,7 @@ public class DatasetController implements SnakeCaseController {
 			return ResponseEntity.status(status).build();
 
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to PUT csv data", e);
 			return ResponseEntity.internalServerError().build();
 		}
@@ -237,19 +242,19 @@ public class DatasetController implements SnakeCaseController {
 
 	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
 	// warning this is not sufficient for the long term. Should likely use a library for this conversion formatting may break this.
-	private List<List<String>> csvToRecords(String rawCsvString) {
-		String[] csvRows = rawCsvString.split("\n");
-		String[] headers = csvRows[0].split(",");
-		List<List<String>> csv = new ArrayList<>();
-		for (String csvRow : csvRows) {
+	private static List<List<String>> csvToRecords(final String rawCsvString) {
+		final String[] csvRows = rawCsvString.split("\n");
+		final String[] headers = csvRows[0].split(",");
+		final List<List<String>> csv = new ArrayList<>();
+		for (final String csvRow : csvRows) {
 			csv.add(Arrays.asList(csvRow.split(",")));
 		}
 		return csv;
 	}
 
-	private List<String> getColumn(List<List<String>> matrix, int columnNumber) {
-		List<String> column = new ArrayList<>();
-		for (List<String> strings : matrix) {
+	private static List<String> getColumn(final List<List<String>> matrix, final int columnNumber) {
+		final List<String> column = new ArrayList<>();
+		for (final List<String> strings : matrix) {
 			if (strings.size() > columnNumber) {
 				column.add(strings.get(columnNumber));
 			}
@@ -264,35 +269,35 @@ public class DatasetController implements SnakeCaseController {
 	 * @param aCol column to get stats for
 	 * @return CsvColumnStats object
 	 */
-	private CsvColumnStats getStats(List<String> aCol) {
-		List<Integer> bins = new ArrayList<>();
+	private static CsvColumnStats getStats(final List<String> aCol) {
+		final List<Integer> bins = new ArrayList<>();
 		try {
 			// set up row as numbers. may fail here.
 			// List<Integer> numberList = aCol.stream().map(String s -> Integer.parseInt(s.trim()));
-			List<Double> numberList = aCol.stream().map(Double::valueOf).collect(Collectors.toList());
+			final List<Double> numberList = aCol.stream().map(Double::valueOf).collect(Collectors.toList());
 			Collections.sort(numberList);
-			double minValue = numberList.get(0);
-			double maxValue = numberList.get(numberList.size() - 1);
-			double meanValue = Stats.meanOf(numberList);
-			double medianValue = Quantiles.median().compute(numberList);
-			double sdValue = Stats.of(numberList).populationStandardDeviation();
-			int binCount = 10;
+			final double minValue = numberList.get(0);
+			final double maxValue = numberList.get(numberList.size() - 1);
+			final double meanValue = Stats.meanOf(numberList);
+			final double medianValue = Quantiles.median().compute(numberList);
+			final double sdValue = Stats.of(numberList).populationStandardDeviation();
+			final int binCount = 10;
 			//Set up bins
 			for (int i = 0; i < binCount; i++) {
 				bins.add(0);
 			}
-			double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
+			final double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
 
 			// Fill bins:
-			for (Double aDouble : numberList) {
-				int index = (int) Math.abs(Math.floor((aDouble - numberList.get(0)) / stepSize));
-				Integer value = bins.get(index);
+			for (final Double aDouble : numberList) {
+				final int index = (int) Math.abs(Math.floor((aDouble - numberList.get(0)) / stepSize));
+				final Integer value = bins.get(index);
 				bins.set(index, value + 1);
 			}
 
 			return new CsvColumnStats(bins, minValue, maxValue, meanValue, medianValue, sdValue);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			//Cannot convert column to double, just return empty list.
 			return new CsvColumnStats(bins, 0, 0, 0, 0, 0);
 		}

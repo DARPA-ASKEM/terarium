@@ -27,7 +27,8 @@ public class PermissionRelationships {
 		permissionGroups.add(permissionGroup);
 	}
 
-	public void addProject(String id, Schema.Relationship relationship) {
-		permissionProjects.add(new PermissionProject(id, relationship.toString()));
+	public void addProject(PermissionProject permissionProject, Schema.Relationship relationship) {
+		permissionProject.setRelationship(relationship.toString());
+		permissionProjects.add(permissionProject);
 	}
 }

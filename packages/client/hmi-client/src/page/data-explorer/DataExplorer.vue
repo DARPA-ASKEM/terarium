@@ -1,96 +1,101 @@
 <template>
-	<main>
-		<tera-slider-panel
-			content-width="240px"
-			direction="left"
-			header="Facets"
-			v-model:is-open="isSliderFacetsOpen"
-		>
-			<template v-slot:content>
-				<tera-facets-panel
-					v-if="viewType === ViewType.LIST"
-					class="facets-panel"
-					:facets="facets"
-					:filtered-facets="filteredFacets"
-					:result-type="resourceType"
-					:docCount="docCount"
-				/>
-			</template>
-		</tera-slider-panel>
-		<div class="results-content">
-			<SelectButton
-				:model-value="resourceType"
-				@change="if ($event.value) resourceType = $event.value;"
-				:options="assetOptions"
-				option-value="value"
+	<main class="data-explorer-container flex flex-column">
+		<section class="filter-bar">
+			<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+		</section>
+		<section class="flex h-full relative overflow-hidden">
+			<tera-slider-panel
+				content-width="240px"
+				direction="left"
+				header="Facets"
+				v-model:is-open="isSliderFacetsOpen"
 			>
-				<template #option="slotProps">
-					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-					<span class="p-button-label">{{ slotProps.option.label }}</span>
+				<template v-slot:content>
+					<tera-facets-panel
+						v-if="viewType === ViewType.LIST"
+						class="facets-panel"
+						:facets="facets"
+						:filtered-facets="filteredFacets"
+						:result-type="resourceType"
+						:docCount="docCount"
+					/>
 				</template>
-			</SelectButton>
-			<tera-search-results-list
-				:data-items="dataItems"
-				:facets="filteredFacets"
-				:result-type="resourceType"
+			</tera-slider-panel>
+			<div class="results-content">
+				<SelectButton
+					:model-value="resourceType"
+					@change="if ($event.value) resourceType = $event.value;"
+					:options="assetOptions"
+					option-value="value"
+				>
+					<template #option="slotProps">
+						<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+						<span class="p-button-label">{{ slotProps.option.label }}</span>
+					</template>
+				</SelectButton>
+				<tera-search-results-list
+					:data-items="dataItems"
+					:facets="filteredFacets"
+					:result-type="resourceType"
+					:selected-search-items="selectedSearchItems"
+					:search-term="searchTerm"
+					:is-loading="isLoading"
+					:doc-count="docCount"
+					@toggle-data-item-selected="toggleDataItemSelected"
+				/>
+			</div>
+			<tera-preview-panel
+				:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
+				tab-width="0"
+				direction="right"
+				v-model:preview-item="previewItem"
+				:resource-type="resourceType"
 				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
-				:is-loading="isLoading"
-				:doc-count="docCount"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
-		</div>
-		<tera-preview-panel
-			:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
-			tab-width="0"
-			direction="right"
-			v-model:preview-item="previewItem"
-			:resource-type="resourceType"
-			:selected-search-items="selectedSearchItems"
-			:search-term="searchTerm"
-			@toggle-data-item-selected="toggleDataItemSelected"
-		/>
-		<tera-slider-panel
-			class="resources-slider"
-			:content-width="sliderWidth"
-			direction="right"
-			header="Selected resources"
-			v-model:is-open="isSliderResourcesOpen"
-			:indicator-value="selectedSearchItems.length"
-		>
-			<template v-slot:header>
-				<tera-selected-resources-header-pane
-					:selected-search-items="selectedSearchItems"
-					@close="isSliderResourcesOpen = false"
-					@clear-selected="clearItemSelected"
-				/>
-			</template>
-			<template v-slot:subHeader>
-				<div v-if="selectedSearchItems.length == 1" class="sub-header-title">
-					{{ selectedSearchItems.length }} item
-				</div>
-				<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
-					{{ selectedSearchItems.length }} items
-				</div>
-				<div v-if="selectedSearchItems.length == 0">
-					<div class="sub-header-title">Empty</div>
-				</div>
-			</template>
-			<template v-slot:content>
-				<div v-if="selectedSearchItems.length == 0" class="empty-cart-image-container">
-					<div class="empty-cart-image">
-						<img src="@/assets/svg/seed.svg" alt="Picture of a seed" />
+			<tera-slider-panel
+				class="resources-slider"
+				:content-width="sliderWidth"
+				direction="right"
+				header="Selected resources"
+				v-model:is-open="isSliderResourcesOpen"
+				:indicator-value="selectedSearchItems.length"
+			>
+				<template v-slot:header>
+					<tera-selected-resources-header-pane
+						:selected-search-items="selectedSearchItems"
+						@close="isSliderResourcesOpen = false"
+						@clear-selected="clearItemSelected"
+					/>
+				</template>
+				<template v-slot:subHeader>
+					<div v-if="selectedSearchItems.length == 1" class="sub-header-title">
+						{{ selectedSearchItems.length }} item
 					</div>
-					<p>Selected resources will appear here</p>
-				</div>
-				<tera-selected-resources-options-pane
-					:selected-search-items="selectedSearchItems"
-					@toggle-data-item-selected="toggleDataItemSelected"
-					@find-related-content="onFindRelatedContent"
-					@find-similar-content="onFindSimilarContent"
-				/>
-			</template>
-		</tera-slider-panel>
+					<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
+						{{ selectedSearchItems.length }} items
+					</div>
+					<div v-if="selectedSearchItems.length == 0">
+						<div class="sub-header-title">Empty</div>
+					</div>
+				</template>
+				<template v-slot:content>
+					<div v-if="selectedSearchItems.length == 0" class="empty-cart-image-container">
+						<div class="empty-cart-image">
+							<img src="@/assets/svg/seed.svg" alt="Picture of a seed" />
+						</div>
+						<p>Selected resources will appear here</p>
+					</div>
+					<tera-selected-resources-options-pane
+						:selected-search-items="selectedSearchItems"
+						@toggle-data-item-selected="toggleDataItemSelected"
+						@find-related-content="onFindRelatedContent"
+						@find-similar-content="onFindSimilarContent"
+					/>
+				</template>
+			</tera-slider-panel>
+		</section>
 	</main>
 </template>
 
@@ -98,7 +103,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
-import { fetchData, getDocumentById, getXDDSets } from '@/services/data';
+import { fetchData, getDocumentById } from '@/services/data';
 import {
 	ResourceType,
 	ResultType,
@@ -127,6 +132,7 @@ import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.v
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { XDDFacetsItemResponse } from '@/types/Types';
 import { useSearchByExampleOptions } from './search-by-example';
+import TeraFilterBar from './components/tera-filter-bar.vue';
 
 // FIXME: page count is not taken into consideration
 
@@ -146,7 +152,6 @@ const isSliderFacetsOpen = ref(true);
 const isSliderResourcesOpen = ref(false);
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
-const xddDatasets = ref<string[]>([]);
 const dictNames = ref<string[]>([]);
 const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
 // facets
@@ -161,14 +166,16 @@ const isLoading = ref<boolean>(false);
 const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 
 const clientFilters = computed(() => queryStore.clientFilters);
-const xddDataset = computed(() =>
-	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'Terarium'
-);
 
 const assetOptions = ref([
 	{ label: 'Documents', value: ResourceType.XDD, icon: 'pi pi-file' },
 	{ label: 'Models', value: ResourceType.MODEL, icon: 'pi pi-share-alt' },
 	{ label: 'Datasets', value: ResourceType.DATASET, icon: 'pi pi-database' }
+]);
+
+const topicOptions = ref([
+	{ label: 'Covid-19', value: 'xdd-covid-19' },
+	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
 const sliderWidth = computed(() =>
@@ -183,12 +190,6 @@ watch(isSliderResourcesOpen, () => {
 		previewItem.value = null;
 	}
 });
-
-const xddDatasetSelectionChanged = (newDataset: string) => {
-	if (xddDataset.value !== newDataset) {
-		resources.setXDDDataset(newDataset);
-	}
-};
 
 const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
 	// retrieves filtered & unfiltered facet data
@@ -247,10 +248,7 @@ const executeSearch = async () => {
 	const searchParams: SearchParameters = {
 		[ResourceType.XDD]: {
 			dict: dictNames.value,
-			dataset:
-				xddDataset.value === ResourceType.ALL || xddDataset.value === 'Terarium'
-					? null
-					: xddDataset.value,
+			dataset: resources.getXddDataset,
 			max: pageSize.value,
 			perPage: pageSize.value,
 			fullResults: !rankedResults.value,
@@ -273,7 +271,7 @@ const executeSearch = async () => {
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
 		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
-			searchParams.xdd.dataset = xddDataset.value;
+			searchParams.xdd.dataset = resources.getXddDataset;
 			if (searchByExampleOptions.value.similarContent) {
 				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
 			}
@@ -584,14 +582,7 @@ watch(
 
 // Default query on reload
 onMounted(async () => {
-	xddDatasets.value = await getXDDSets();
-	if (!isEmpty(xddDatasets.value) && xddDataset.value === null) {
-		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
-		xddDatasets.value.push(ResourceType.ALL);
-	} else {
-		resources.setXDDDataset('xdd-covid-19'); // give xdd dataset a default value
-	}
-
+	resources.setXDDDataset('xdd-covid-19'); // give xdd dataset a default value
 	// On reload, if the url has a resourceId, we know that a user just did a search by example
 	// so we want to preserve the search by example so we perform a search by example instead of a normal search
 	if (route.query.resourceId) {
@@ -607,6 +598,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.data-explorer-container {
+	background-color: var(--surface-100);
+}
 .results-content {
 	display: flex;
 	flex-direction: column;

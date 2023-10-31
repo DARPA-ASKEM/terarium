@@ -59,8 +59,9 @@ aside {
 
 main > section {
 	max-height: 95vh;
+	max-width: 640px;
 	background-color: #fff;
-	border-radius: 0.5rem;
+	border-radius: var(--modal-border-radius);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	margin: 0px auto;
 	padding: 2rem 0;

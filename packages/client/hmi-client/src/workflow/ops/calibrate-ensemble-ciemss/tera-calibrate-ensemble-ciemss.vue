@@ -400,10 +400,10 @@ const watchCompletedRunList = async () => {
 };
 
 async function saveDatasetToProject() {
-	const { activeProject, get } = useProjects();
+	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
 		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
-			get();
+			refresh();
 		}
 		showSaveInput.value = false;
 	}

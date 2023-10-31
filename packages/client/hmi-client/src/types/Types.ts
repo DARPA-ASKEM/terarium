@@ -143,9 +143,21 @@ export interface Code {
     name: string;
     description: string;
     filename: string;
+    files?: { [index: string]: CodeFile };
     repoUrl?: string;
     language: ProgrammingLanguage;
     metadata?: any;
+}
+
+export interface CodeFile {
+    language: string;
+    dynamics: Dynamics;
+}
+
+export interface Dynamics {
+    name: string;
+    description: string;
+    block: string[];
 }
 
 export interface Dataset {
@@ -260,7 +272,12 @@ export interface PetriNetModel {
 }
 
 export interface ProvenanceQueryParam {
-    rootId?: number;
+    nodes?: boolean;
+    types?: ProvenanceType[];
+    hops?: number;
+    limit?: number;
+    verbose?: boolean;
+    rootId?: string;
     rootType?: ProvenanceType;
     userId?: number;
 }
@@ -333,6 +350,34 @@ export interface ExtractionResponseResult {
     job_result: any;
 }
 
+export interface FunmanPostQueriesRequest {
+    query: any;
+    parameters: any[];
+    config: FunmanConfig;
+    structureParameters: any[];
+}
+
+export interface FunmanConfig {
+    tolerance: number;
+    queueTimeout: number;
+    numberOfProcesses: number;
+    waitTimeout: number;
+    waitActionTimeout: number;
+    solver: string;
+    numSteps: number;
+    stepSize: number;
+    numInitialBoxes: number;
+    saveSmtlib: boolean;
+    drealPrecision: number;
+    drealLogLevel: string;
+    constraintNoise: number;
+    initialStateTolerance: number;
+    drealMcts: boolean;
+    substituteSubformulas: boolean;
+    useCompartmentalConstraints: boolean;
+    normalize: boolean;
+}
+
 export interface DKG {
     curie: string;
     name: string;
@@ -344,6 +389,7 @@ export interface PermissionGroup {
     id: string;
     name: string;
     relationship?: string;
+    permissionRelationships?: PermissionRelationships;
 }
 
 export interface PermissionProject {
@@ -362,6 +408,7 @@ export interface PermissionUser {
     firstName: string;
     lastName: string;
     email: string;
+    roles?: PermissionRole[];
     relationship?: string;
 }
 
@@ -521,6 +568,7 @@ export interface ModelMetadata {
     attributes?: any[];
     timeseries?: { [index: string]: any };
     card?: Card;
+    provenance?: string[];
 }
 
 export interface ModelGrounding {
@@ -569,6 +617,12 @@ export interface XDDFacetsItemResponse {
 export interface XDDResponseOK {
     v: number;
     license: string;
+}
+
+export interface PermissionRole {
+    id: string;
+    name: string;
+    users: PermissionUser[];
 }
 
 export interface UserOld {
@@ -871,16 +925,16 @@ export enum ColumnType {
 }
 
 export enum ProvenanceType {
-    Dataset = "Dataset",
-    Intermediate = "Intermediate",
-    Model = "Model",
-    ModelParameter = "ModelParameter",
-    ModelRevision = "ModelRevision",
-    Plan = "Plan",
-    PlanParameter = "PlanParameter",
-    Publication = "Publication",
-    Project = "Project",
     Concept = "Concept",
+    Dataset = "Dataset",
+    Model = "Model",
+    ModelConfiguration = "ModelConfiguration",
+    Project = "Project",
+    Publication = "Publication",
+    Simulation = "Simulation",
+    Artifact = "Artifact",
+    Code = "Code",
+    Document = "Document",
 }
 
 export enum AssetType {

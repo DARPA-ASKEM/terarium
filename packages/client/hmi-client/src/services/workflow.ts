@@ -17,10 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
  * not optimized, on the account that we don't expect most workflow graphs to
  * exceed say ... 10-12 nodes with 30-40 edges.
  *
- * TODO:
- * - Should we update workflow node status on modification???
  */
-
 export const emptyWorkflow = (name: string = 'test', description: string = '') => {
 	const workflow: Workflow = {
 		id: uuidv4(),
