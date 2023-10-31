@@ -29,10 +29,9 @@ declare global {
 	}
 }
 
-try {
-	await window.keycloak_init;
-} catch (e) {
-	console.error(e);
+// if keycloak has not been initialized, reload the page
+const initialized = await window.keycloak_init;
+if (!initialized) {
 	logger.error('Authentication Failed, reloading a the page');
 	window.location.assign('/');
 }
