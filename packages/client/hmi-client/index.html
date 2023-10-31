@@ -10,11 +10,11 @@
 	<script>
 		import Keycloak from 'keycloak-js';
 		window.keycloak = new Keycloak('/api/configuration/keycloak');
-		const kc_options = {
+		const keycloak_options = {
 			onLoad: "login-required",
 			checkLoginIframe: false,
 		};
-		window.kc_init = keycloak.init(kc_options);
+		window.keycloak_init = keycloak.init(keycloak_options);
 	</script>
 	<script src="https://documentservices.adobe.com/view-sdk/viewer.js" async></script>
 	<script type="module" src="/src/main.ts"></script>

@@ -24,13 +24,13 @@ import Keycloak from 'keycloak-js';
 // Extend the window object to include the Keycloak object
 declare global {
 	interface Window {
-		kc_init: boolean;
+		keycloak_init: Promise<boolean>;
 		keycloak: Keycloak;
 	}
 }
 
 try {
-	await window.kc_init;
+	await window.keycloak_init;
 } catch (e) {
 	console.error(e);
 	logger.error('Authentication Failed, reloading a the page');
