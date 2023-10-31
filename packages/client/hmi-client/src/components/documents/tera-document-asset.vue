@@ -9,6 +9,7 @@
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
 		:show-sticky-header="view === DocumentView.PDF"
+		:is-loading="documentLoading"
 	>
 		<template #edit-buttons>
 			<SelectButton
@@ -16,11 +17,14 @@
 				@change="if ($event.value) view = $event.value;"
 				:options="viewOptions"
 				option-value="value"
+				option-disabled="disabled"
 			>
 				<template #option="{ option }">
 					<i
 						:class="`${
-							!pdfLink && option.value !== DocumentView.EXTRACTIONS
+							!pdfLink &&
+							option.value !== DocumentView.EXTRACTIONS &&
+							option.value !== DocumentView.NOT_FOUND
 								? 'pi pi-spin pi-spinner'
 								: option.icon
 						} p-button-icon-left`"
@@ -94,6 +98,17 @@
 				</ul>
 			</AccordionTab>
 		</Accordion>
+		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
+		<p
+			class="pl-3"
+			v-if="
+				isEmpty(doc.assets) &&
+				view === DocumentView.EXTRACTIONS &&
+				viewOptions[1]?.value === DocumentView.PDF
+			"
+		>
+			PDF Extractions may still be processsing please refresh in some time...
+		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
@@ -127,7 +142,8 @@ import TeraTextEditor from './tera-text-editor.vue';
 enum DocumentView {
 	EXTRACTIONS = 'Extractions',
 	PDF = 'PDF',
-	TXT = 'Text'
+	TXT = 'Text',
+	NOT_FOUND = 'Not found'
 }
 
 const props = defineProps<{
@@ -140,16 +156,29 @@ const props = defineProps<{
 const doc = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
 const view = ref(DocumentView.EXTRACTIONS);
-const viewOptions = computed(() => {
-	if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
-		return [extractionsOption, pdfOption];
-	}
-	return [extractionsOption, txtOption];
-});
+
 const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' };
 const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
 const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
+const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true };
+
+const viewOptions = computed(() => {
+	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
+	if (!isEmpty(doc.value?.fileNames)) {
+		if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
+			options.push(pdfOption);
+		} else {
+			options.push(txtOption);
+		}
+	} else {
+		options.push(notFoundOption);
+	}
+	return options;
+});
+
 const docText = ref<string>('');
+
+const documentLoading = ref(false);
 
 const docLink = computed(() =>
 	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
@@ -186,7 +215,9 @@ watch(
 	() => props.assetId,
 	async () => {
 		if (props.assetId) {
+			documentLoading.value = true;
 			const document = await getDocumentAsset(props.assetId);
+			documentLoading.value = false;
 			if (!document) {
 				return;
 			}

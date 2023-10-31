@@ -23,7 +23,7 @@
 				@update:model-value="handleSelectedRunChange"
 			/>
 			<template v-if="runResults[selectedRun?.runId]">
-				<ul>
+				<ul class="metadata-container">
 					<li><span>Run ID:</span> {{ selectedRun.runId }}</li>
 					<li>
 						<span>Configuration name:</span>

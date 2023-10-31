@@ -31,9 +31,9 @@ public interface ProjectProxy {
 	);
 
 
-	@PutMapping("/{id}")
+	@PutMapping("/{project_id}")
 	ResponseEntity<JsonNode> updateProject(
-		@PathVariable("id") String id,
+		@PathVariable("project_id") String id,
 		@RequestBody Project project
 	);
 

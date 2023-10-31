@@ -350,6 +350,34 @@ export interface ExtractionResponseResult {
     job_result: any;
 }
 
+export interface FunmanPostQueriesRequest {
+    query: any;
+    parameters: any[];
+    config: FunmanConfig;
+    structureParameters: any[];
+}
+
+export interface FunmanConfig {
+    tolerance: number;
+    queueTimeout: number;
+    numberOfProcesses: number;
+    waitTimeout: number;
+    waitActionTimeout: number;
+    solver: string;
+    numSteps: number;
+    stepSize: number;
+    numInitialBoxes: number;
+    saveSmtlib: boolean;
+    drealPrecision: number;
+    drealLogLevel: string;
+    constraintNoise: number;
+    initialStateTolerance: number;
+    drealMcts: boolean;
+    substituteSubformulas: boolean;
+    useCompartmentalConstraints: boolean;
+    normalize: boolean;
+}
+
 export interface DKG {
     curie: string;
     name: string;
@@ -361,6 +389,7 @@ export interface PermissionGroup {
     id: string;
     name: string;
     relationship?: string;
+    permissionRelationships?: PermissionRelationships;
 }
 
 export interface PermissionProject {
@@ -379,6 +408,7 @@ export interface PermissionUser {
     firstName: string;
     lastName: string;
     email: string;
+    roles?: PermissionRole[];
     relationship?: string;
 }
 
@@ -587,6 +617,12 @@ export interface XDDFacetsItemResponse {
 export interface XDDResponseOK {
     v: number;
     license: string;
+}
+
+export interface PermissionRole {
+    id: string;
+    name: string;
+    users: PermissionUser[];
 }
 
 export interface UserOld {
