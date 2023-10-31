@@ -3,21 +3,33 @@
 		<section>
 			<header>
 				<h5>Code</h5>
-				<Dropdown v-model="programmingLanguages" />
-				<Button label="Add code block" icon="pi pi-plus" @click="addCodeBlock" />
+				<Dropdown
+					class="w-full md:w-14rem"
+					v-model="programmingLanguage"
+					:options="programmingLanguages"
+				/>
+				<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
 			</header>
 			<ul>
-				<li v-for="({ name, code, programmingLanguage }, i) in codeBlocks" :key="i">
+				<li v-for="({ name, programmingLanguage }, i) in codeBlocks" :key="i">
 					<header>
-						<h5>{{ name }}</h5>
-						<section></section>
+						<section>
+							<h5>{{ name }}</h5>
+							<Button icon="pi pi-pencil" text rounded />
+						</section>
+						<section>
+							<label>Include in process</label>
+							<InputSwitch v-model="codeBlocks[i].includeInProcess" />
+							<Button icon="pi pi-trash" text rounded />
+							<Button icon="pi pi-chevron-up" text rounded />
+						</section>
 					</header>
 					<v-ace-editor
-						:value="code"
+						v-model:value="codeBlocks[i].code"
 						@init="initialize"
 						:lang="programmingLanguage"
 						theme="chrome"
-						style="height: 100%; width: 100%"
+						style="height: 10rem; width: 100%"
 						class="ace-editor"
 					/>
 				</li>
@@ -37,14 +49,18 @@
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import InputSwitch from 'primevue/inputswitch';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage } from '@/types/Types';
+import { cloneDeep } from 'lodash';
 
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
+
+const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
 const programmingLanguages = [
 	ProgrammingLanguage.Julia,
 	ProgrammingLanguage.Python,
@@ -54,7 +70,8 @@ const programmingLanguages = [
 const codeBlock = {
 	name: 'Code block 1',
 	code: '',
-	programmingLanguage: ProgrammingLanguage.Python
+	programmingLanguage: ProgrammingLanguage.Python,
+	includeInProcess: true
 };
 
 const codeBlocks = ref([codeBlock]);
@@ -68,7 +85,7 @@ async function initialize(editorInstance) {
 }
 
 function addCodeBlock() {
-	codeBlocks.value.push(codeBlock);
+	codeBlocks.value.push(cloneDeep(codeBlock));
 }
 </script>
 
@@ -113,5 +130,17 @@ li {
 	border: 1px solid var(--surface-border-light);
 	border-radius: 4px;
 	padding: 0.5rem;
+}
+
+li > header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+li > header > section {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
 }
 </style>
