@@ -5,66 +5,69 @@
 			severity="secondary"
 			icon="pi pi-sign-in"
 			size="small"
-			:active="activeTab === Tabs.wizard"
-			@click="activeTab = Tabs.wizard"
+			:active="activeTab === FunmanTabs.wizard"
+			@click="activeTab = FunmanTabs.wizard"
 		/>
 		<Button
 			label="Notebook"
 			severity="secondary"
 			icon="pi pi-sign-out"
 			size="small"
-			:active="activeTab === Tabs.notebook"
-			@click="activeTab = Tabs.notebook"
+			:active="activeTab === FunmanTabs.notebook"
+			@click="activeTab = FunmanTabs.notebook"
 		/>
 	</div>
-	<div v-if="activeTab === Tabs.wizard" class="container">
+	<div v-if="activeTab === FunmanTabs.wizard" class="container">
 		<div class="left-side">
-			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
-			<p>The model will be stratified with the following settings.</p>
+			<h4>Set validation parameters <i class="pi pi-info-circle" /></h4>
+			<p>The calidator will use these parameters to execute the sanity checks.</p>
 		</div>
 		<div class="right-side">
-			<tera-model-diagram
-				v-if="model"
-				ref="teraModelDiagramRef"
-				:model="model"
-				:is-editable="false"
-			/>
+			<div v-if="false">
+				<h4>Output graph goes here</h4>
+			</div>
 			<div v-else>
 				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Model Provided</h4>
+				<h4>No Output</h4>
 			</div>
 		</div>
 	</div>
 	<div v-else class="container">
 		<div class="left-side">
-			<Suspense>
+			<h4>TODO: Are we demoing notebook?</h4>
+			<!-- <Suspense>
 				<teraMiraNotebook />
-			</Suspense>
+			</Suspense> -->
 		</div>
 		<div class="right-side">
-			<tera-model-diagram
-				v-if="model"
-				ref="teraModelDiagramRef"
-				:model="model"
-				:is-editable="false"
-			/>
+			<div v-if="false">
+				<h4>Output graph goes here</h4>
+			</div>
 			<div v-else>
 				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Model Provided</h4>
+				<h4>No Output</h4>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Button from 'primevue/button';
+// import { WorkflowNode } from '@/types/workflow';
+// import { FunmanOperationState } from './funman-operation';
 
-enum Tabs {
+// const props = defineProps<{
+// 	node: WorkflowNode<FunmanOperationState>;
+// }>();
+
+enum FunmanTabs {
 	wizard,
 	notebook
 }
+const activeTab = ref(FunmanTabs.wizard);
 </script>
 
 <style>
