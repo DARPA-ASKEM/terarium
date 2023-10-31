@@ -2,7 +2,7 @@
 	<main>
 		<div class="scrollable">
 			<header>
-				<article>
+				<section>
 					<h3>From data to discovery</h3>
 					<p>
 						Accelerate scientific modeling and simulation using AI. Search available knowledge,
@@ -16,7 +16,7 @@
 						outlined
 						:disabled="true"
 					/>
-				</article>
+				</section>
 			</header>
 			<section class="menu">
 				<TabView>
@@ -375,7 +375,7 @@ header p {
 	line-height: 1.5;
 }
 
-header > article > button {
+header > section > button {
 	margin-top: 2rem;
 }
 
