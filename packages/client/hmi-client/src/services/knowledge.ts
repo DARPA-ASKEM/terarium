@@ -131,15 +131,24 @@ export const extractTextFromPDFDocument = async (documentId: string): Promise<st
 	return null;
 };
 
+export enum Extractor {
+	SKEMA = 'SKEMA',
+	MIT = 'MIT'
+}
 export const pdfExtractions = async (
 	documentId: string,
+	extractor: Extractor,
 	pdfName?: string,
 	description?: string
 ): Promise<string | null> => {
-	// I've purposefully excluded the MIT and SKEMA options here, so they're always
-	// defaulted to true.
-
 	let url = `/knowledge/pdf-extractions?document_id=${documentId}`;
+
+	if (extractor === Extractor.SKEMA) {
+		url += '&annotate_skema=true&annotate_mit=false';
+	} else if (extractor === Extractor.MIT) {
+		url += '&annotate_skema=false&annotate_mit=true';
+	}
+
 	if (pdfName) {
 		url += `&name=${pdfName}`;
 	}
@@ -175,7 +184,8 @@ export const extractPDF = async (documentId: string) => {
 		if (resp) {
 			const pollResult = await fetchExtraction(resp);
 			if (pollResult?.state === PollerState.Done) {
-				await pdfExtractions(documentId); // we don't care now. fire and forget.
+				pdfExtractions(documentId, Extractor.SKEMA);
+				pdfExtractions(documentId, Extractor.MIT);
 			}
 		}
 	}
