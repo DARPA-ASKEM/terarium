@@ -284,7 +284,7 @@ async function openSelectedFiles(event?: DropdownChangeEvent) {
 
 	// Import code files, if any were selected
 	if (selectedCodeFiles.length > 0) {
-		await openCodeFiles(selectedCodeFiles);
+		await openCodeFiles(selectedCodeFiles, projectId);
 	}
 	const selectedDataFiles: GithubFile[] = [
 		...selectedFiles.value,
@@ -382,7 +382,7 @@ async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string
  * Opens the code editor with the selected file
  * @param githubFiles The code files to open
  */
-async function openCodeFiles(githubFiles: GithubFile[]) {
+async function openCodeFiles(githubFiles: GithubFile[], projectId?: string) {
 	githubFiles.forEach(async (githubFile) => {
 		const newCode = await uploadCodeToProjectFromGithub(
 			repoOwnerAndName.value,
@@ -390,7 +390,7 @@ async function openCodeFiles(githubFiles: GithubFile[]) {
 			githubFile.htmlUrl
 		);
 		if (newCode && newCode.id) {
-			await useProjects().addAsset(AssetType.Code, newCode.id);
+			await useProjects().addAsset(AssetType.Code, newCode.id, projectId);
 		}
 	});
 }
