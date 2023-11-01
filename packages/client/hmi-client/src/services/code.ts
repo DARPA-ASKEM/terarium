@@ -112,6 +112,42 @@ async function uploadCodeToProjectFromGithub(
 	return newCode;
 }
 
+async function uploadCodeFromGithubRepo(
+	repoOwnerAndName: string,
+	path: string,
+	url: string
+): Promise<Code | null> {
+	const fileName: string | undefined = path.split('/').pop();
+
+	if (!fileName) return null;
+
+	// Create a new code asset with the same name as the file and post the metadata to TDS
+	const codeAsset: Code = {
+		name: fileName,
+		description: path,
+		filename: fileName,
+		language: getProgrammingLanguage(fileName),
+		repoUrl: url
+	};
+
+	const newCode: Code | null = await createNewCodeAsset(codeAsset);
+	if (!newCode || !newCode.id) return null;
+
+	const urlResponse = await API.put(
+		`/code-asset/${newCode.id}/uploadCodeFromGithubRepo?path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		{
+			timeout: 30000
+		}
+	);
+
+	if (!urlResponse || urlResponse.status >= 400) {
+		logger.error(`Failed to upload code from github: ${urlResponse}`);
+		return null;
+	}
+
+	return newCode;
+}
+
 async function createNewCodeAsset(codeAsset: Code): Promise<Code | null> {
 	const response = await API.post('/code-asset', codeAsset);
 	if (!response || response.status >= 400) return null;
@@ -191,5 +227,6 @@ export {
 	addFileToCodeAsset,
 	getFileExtension,
 	getProgrammingLanguage,
-	setFileExtension
+	setFileExtension,
+	uploadCodeFromGithubRepo
 };

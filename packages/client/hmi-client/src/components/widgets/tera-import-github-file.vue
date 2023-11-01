@@ -152,6 +152,15 @@
 					</div>
 				</template>
 				<template #footer>
+					<Dropdown
+						v-if="!useProjects().activeProject.value"
+						placeholder="Import repo to project"
+						class="p-button dropdown-button"
+						:is-dropdown-left-aligned="false"
+						:options="projectOptions"
+						option-label="name"
+						@change="addRepoToCodeAsset"
+					/>
 					<Button
 						v-if="useProjects().activeProject.value"
 						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
@@ -193,7 +202,7 @@ import Breadcrumb from 'primevue/breadcrumb';
 import { extractPDF } from '@/services/knowledge';
 import useAuthStore from '@/stores/auth';
 import { useProjects } from '@/composables/project';
-import { uploadCodeToProjectFromGithub } from '@/services/code';
+import { uploadCodeFromGithubRepo, uploadCodeToProjectFromGithub } from '@/services/code';
 import { createNewDocumentFromGithubFile } from '@/services/document-assets';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
 import { useToastService } from '@/services/toast';
@@ -393,6 +402,15 @@ async function openCodeFiles(githubFiles: GithubFile[], projectId?: string) {
 			await useProjects().addAsset(AssetType.Code, newCode.id, projectId);
 		}
 	});
+}
+
+async function addRepoToCodeAsset(event?: DropdownChangeEvent) {
+	const projectId = event?.value?.id;
+
+	const newCodeAsset = await uploadCodeFromGithubRepo('test', 'test', 'test');
+
+	console.log(projectId, newCodeAsset);
+	return null;
 }
 
 watch(

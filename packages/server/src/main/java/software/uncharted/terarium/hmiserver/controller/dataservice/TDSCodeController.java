@@ -18,14 +18,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
+import software.uncharted.terarium.hmiserver.models.code.GithubFile;
+import software.uncharted.terarium.hmiserver.models.code.GithubRepo;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.CodeProxy;
+import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/code-asset")
 @RestController
@@ -36,7 +42,10 @@ public class TDSCodeController implements SnakeCaseController {
 	CodeProxy codeProxy;
 
 	@Autowired
-	JsDelivrProxy gitHubProxy;
+	JsDelivrProxy jsdelivrProxy;
+
+	@Autowired
+	GithubProxy githubProxy;
 
 
 	@GetMapping
@@ -122,12 +131,55 @@ public class TDSCodeController implements SnakeCaseController {
 		log.debug("Uploading code file from github to dataset {}", codeId);
 
 		//download file from GitHub
-		String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
 		HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadCodeHelper(codeId, filename, fileEntity);
 
 	}
 
+	@PutMapping("/{codeId}/uploadCodeFromGithubRepo")
+	public ResponseEntity<Integer> uploadCodeFromGithub(
+		@PathVariable("codeId") final String codeId,
+		@RequestParam("path") final String path,
+		@RequestParam("repoOwnerAndName") final String repoOwnerAndName
+	) {
+		log.debug("Uploading code files from github repo", codeId);
+
+		//download files from GitHub
+		final List<GithubFile> files = githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
+
+		if (files == null || files.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		final GithubRepo repo = new GithubRepo(files);
+		bfsTraversal(repo);
+
+		//upload all github
+		for (Map.Entry<GithubRepo.FileCategory,List<GithubFile>> entry : repo.files.entrySet())  {
+            GithubRepo.FileCategory category = entry.getKey();
+            List<GithubFile> fileList = entry.getValue();
+			if (category == GithubRepo.FileCategory.DIRECTORY) {
+                for (GithubFile directoryFile : fileList) {
+                    // Process the GithubRepo objects in the DIRECTORY category
+                    System.out.println("Directory File: " + directoryFile.name);
+                    // Add your logic here
+                }
+            } else {
+                for (GithubFile file : fileList) {
+                    // Process the GithubFile objects in other categories (CODE, DATA, DOCUMENTS, OTHER)
+                    System.out.println("File in " + category + ": " + file.name);
+                    // Add your logic here
+                }
+            }
+
+		}
+
+		return ResponseEntity.ok(200);
+		// String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		// HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+		// return uploadCodeHelper(codeId, path, fileEntity);
+
+	}
 	/**
 	 * Uploads an code inside the entity to TDS via a presigned URL
 	 *
@@ -148,6 +200,18 @@ public class TDSCodeController implements SnakeCaseController {
 			put.setEntity(codeHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
 
+			final Code code = codeProxy.getAsset(codeId).getBody();
+			final CodeFile codeFile = new CodeFile();
+			codeFile.setLanguage("python");
+
+			Map<String, CodeFile> fileMap = code.getFiles();
+
+			if(fileMap == null){
+				fileMap = new HashMap<>();
+			}
+			fileMap.put(fileName, codeFile);
+			code.setFiles(fileMap);
+			codeProxy.updateAsset(codeId, convertObjectToSnakeCaseJsonNode(code)).getBody();
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
@@ -156,6 +220,10 @@ public class TDSCodeController implements SnakeCaseController {
 			log.error("Unable to PUT code data", e);
 			return ResponseEntity.internalServerError().build();
 		}
+	}
+
+	private void bfsTraversal(GithubRepo repo) {
+
 	}
 
 }
