@@ -4,7 +4,13 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { AssetType, Model, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import {
+	AssetType,
+	DocumentAsset,
+	Model,
+	ProvenanceQueryParam,
+	ProvenanceType
+} from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
 import { ResultType } from '@/types/common';
 import { getBulkDatasets } from './dataset';
@@ -55,14 +61,14 @@ async function getConnectedNodes(
  * Find all the document assets that are used by a given model
  * with an EXTRACTED_FROM relationship.
  */
-async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<AssetType.Documents[]> {
+async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<DocumentAsset[]> {
 	const query: ProvenanceQueryParam = {
 		rootId: modelId,
 		rootType: ProvenanceType.Model,
 		types: [ProvenanceType.Document]
 	};
 
-	const documentAssets: AssetType.Documents[] = [];
+	const documentAssets: DocumentAsset[] = [];
 
 	try {
 		const response = await API.post(
@@ -76,11 +82,7 @@ async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<Asset
 			return documentAssets;
 		}
 
-		console.log(response.data);
-		// documentAssets = response.data.map((node) => {
-		//
-		// });
-		return documentAssets;
+		return await getBulkDocumentAssets(response.data?.result ?? []);
 	} catch (error) {
 		logger.error(`Error: ${error}`);
 	}
