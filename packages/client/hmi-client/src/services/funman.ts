@@ -80,7 +80,7 @@ export const getBoxes = (
 
 export const getTrajectories = (result: any) => processFunman(result).trajs;
 
-export const createBoundaryChart = (element: HTMLElement, payload: any, options: any) => {
+export const createBoundaryChart = (element: string, payload: any, options: any) => {
 	const { width, height, xAxis, yAxis } = options;
 
 	const svg = d3.select(element).attr('width', width).attr('height', height);
