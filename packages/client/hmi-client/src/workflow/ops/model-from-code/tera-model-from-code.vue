@@ -7,6 +7,7 @@
 					class="w-full md:w-14rem"
 					v-model="selectedProgrammingLanguage"
 					:options="programmingLanguages"
+					@change="setKernelContext"
 				/>
 				<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
 			</header>
@@ -48,8 +49,12 @@
 						class="w-full md:w-14rem"
 						v-model="selectedModelFramework"
 						:options="modelFrameworks"
+						@change="setKernelContext"
 				/></span>
-				<Button label="Run" icon="pi pi-play" severity="secondary" outlined size="large" />
+				<Button
+					label="Run" icon="pi pi-play" severity="secondary" outlined size="large"
+					@click="handleCode"
+				/>
 			</footer>
 		</section>
 		<section>
@@ -70,12 +75,23 @@
 					<!--Potentially put tera-model-diagram here just for petrinets-->
 					<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
 				</template>
+				<template v-if="selectedModelFramework === ModelFramework.Decapodes">
+					<div :innerHTML="previewHTML"/>
+				</template>
 			</section>
 			<footer>
-				<Button disabled label="Save as new model" severity="secondary" outlined size="large" />
+				<Button
+					:disabled="!modelValid || modelName === ''" label="Save as new model" severity="secondary"
+					outlined size="large" @click="saveAsNewModel"
+				/>
 				<span class="btn-group">
 					<Button label="Cancel" severity="secondary" outlined size="large" />
-					<Button disabled label="Apply changes and close" size="large" />
+					<Button
+						:disabled="!modelValid || modelName === ''"
+						label="Apply changes and close"
+						size="large"
+						@click="getModel"
+					/>
 				</span>
 			</footer>
 		</section>
@@ -83,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
@@ -98,6 +114,14 @@ import { ProgrammingLanguage } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEmpty } from 'lodash';
 import { ModelFromCodeState } from './model-from-code-operation';
+import {
+	 newSession,
+     JupyterMessage,
+     createMessageId
+ } from '@/services/jupyter';
+import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
+import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+
 
 const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
@@ -118,6 +142,9 @@ const selectedModelFramework = ref(
 		? ModelFramework.Decapodes
 		: props.node.state.modelFramework
 );
+const modelValid = ref(false);
+const jupyterSession = ref<SessionContext | null>(null);
+const previewHTML = ref("");
 
 const codeBlock = {
 	...props.node.state,
@@ -126,6 +153,137 @@ const codeBlock = {
 };
 
 const codeBlocks = ref([codeBlock]);
+
+
+onMounted(async () => {
+	const session = await newSession('beaker', 'Beaker');
+	jupyterSession.value = session;
+
+	session.kernelChanged.connect((_context, kernelInfo) => {
+		const kernel = kernelInfo.newValue;
+		if (kernel?.name === 'beaker') {
+			session.iopubMessage.connect(iopubMessageHandler);
+			setKernelContext();
+		}
+	});
+});
+
+onUnmounted(async () => {
+	// Get rid of session/kernels on unmount, otherwise we end upwith lots of kernels hanging
+	// around using up memory.
+	jupyterSession.value?.shutdown();
+});
+
+function setKernelContext() {
+	const kernel = jupyterSession.value?.session?.kernel;
+	if (!kernel) {
+		return;
+	}
+	const contextName = (selectedModelFramework.value === ModelFramework.Decapodes ? "decapodes_creation" : null);
+	const languageName = (selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? "julia-1.9" : null);
+	if (contextName === null || languageName === null) {
+		console.log("Can't work with current language. Do nothing.")
+		return;
+	}
+	const context_message: JupyterMessage = createMessage({
+		session: jupyterSession?.value?.name || '',
+		channel: 'shell',
+		content: {
+            context: contextName,
+			language: languageName,
+            context_info: {},
+		},
+		msgType: 'context_setup_request',
+		msgId: createMessageId('context_setup'),
+	});
+
+	kernel.sendJupyterMessage(context_message);
+};
+
+function handleCode() {
+	const kernel = jupyterSession.value?.session?.kernel;
+	if (!kernel) {
+		return;
+	}
+	const code = editor.value?.getValue();
+	const compileExprMessage: JupyterMessage = createMessage({
+		session: jupyterSession?.value?.name || '',
+		channel: 'shell',
+		content: {
+			declaration: code,
+		},
+		msgType: 'compile_expr_request',
+		msgId: createMessageId('context_setup'),
+	});
+
+	modelValid.value = false;
+	kernel.sendJupyterMessage(compileExprMessage);
+};
+
+function getModel() {
+	const kernel = jupyterSession.value?.session?.kernel;
+	if (!kernel) {
+		return;
+	}
+	const constructModelMessage: JupyterMessage = createMessage({
+		session: jupyterSession?.value?.name || '',
+		channel: 'shell',
+		content: {
+			name: modelName.value,
+		},
+		msgType: 'construct_amr_request',
+		msgId: createMessageId('context_setup'),
+	});
+
+	modelValid.value = false;
+	kernel.sendJupyterMessage(constructModelMessage);
+}
+
+function saveAsNewModel() {
+	const kernel = jupyterSession.value?.session?.kernel;
+	if (!kernel) {
+		return;
+	}
+	const saveAsNewMessage: JupyterMessage = createMessage({
+		session: jupyterSession?.value?.name || '',
+		channel: 'shell',
+		content: {
+			"header": {
+				"description": modelName.value,
+				"name": modelName.value,
+				"_type": "Header",
+				"model_version": "v1.0",
+				"schema": "modelreps.io/DecaExpr",
+				"schema_name": "DecaExpr"
+			}
+		},
+		msgType: 'save_amr_request',
+		msgId: createMessageId('context_setup'),
+	});
+
+	modelValid.value = false;
+	kernel.sendJupyterMessage(saveAsNewMessage);
+}
+
+const iopubMessageHandler = (_session, message) => {
+	if (message.header.msg_type === 'status') {
+		return;
+	}
+	if (message.header.msg_type === 'compile_expr_response') {
+		modelValid.value = true;
+	}
+	else if (message.header.msg_type === 'decapodes_preview') {
+		console.log("Decapode preview", message.content);
+		previewHTML.value = message.content["image/svg"];
+	}
+	else if (message.header.msg_type === 'construct_amr_response') {
+		// console.log("Decapode preview", message.content);
+		// previewHTML.value = message.content["image/svg"];
+		alert(JSON.stringify(message.content, null, 2))
+	}
+};
+
+
 
 /**
  * Editor initialization function
