@@ -44,12 +44,6 @@
 			<AccordionTab>
 				<template #header>Description</template>
 				<p v-html="description" />
-				<!--
-					For model creation
-					<template v-else>
-						<label for="placeholder" />
-						<Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
-					</template> -->
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(usage)">
 				<template #header>Usage</template>
@@ -481,6 +475,7 @@ enum VariableTypes {
 	PARAMETER = 'parameter',
 	TRANSITION = 'transition'
 }
+
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
 	tableType: string;

@@ -69,8 +69,6 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId, equations).getBody());
 	}
 
-	;
-
 	/**
 	 * Transform source code to AMR
 	 *
@@ -146,7 +144,7 @@ public class KnowledgeController {
 		} catch (Exception e) {
 			   log.error("unable to create provenance", e);
 		}
-		
+
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, documentId).getBody());
 	}
 
@@ -164,7 +162,7 @@ public class KnowledgeController {
 		@PathVariable("dataset_id") String datasetId,
 		@RequestParam(name = "document_id", required = false) String documentId
 	) {
-		
+
 		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId, ProvenanceType.DATASET, documentId, ProvenanceType.DOCUMENT);
 		try {
 			ResponseEntity<JsonNode> r = provenanceProxy.createProvenance(provenancePayload);
@@ -182,7 +180,7 @@ public class KnowledgeController {
 	 * Profile a model
 	 *
 	 * @param modelId    (String): The ID of the model to profile
-	 * @param artifactId (String): The text of the document to profile
+	 * @param documentId (String): The text of the document to profile
 	 * @return the profiled model
 	 */
 	@PostMapping("/link-amr")

@@ -4,11 +4,10 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { ResourceType, ResultType } from '@/types/common';
-import { ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import { AssetType, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
 import { getBulkDatasets } from './dataset';
-// eslint-disable-next-line import/no-cycle
+/* eslint-disable-next-line import/no-cycle */
 import { getBulkXDDDocuments } from './data';
 import { getBulkExternalPublications } from './external';
 import { getBulkModels } from './model';
@@ -58,14 +57,14 @@ async function getConnectedNodes(
 /**
  * Find related artifacts of a given root type
  * @id: id to be used as the root
- * @return ResultType[]|null - the list of all artifacts, or null if none returned by API
+ * @return AssetType[]|null - the list of all artifacts, or null if none returned by API
  */
 async function getRelatedArtifacts(
 	id: string,
 	rootType: ProvenanceType,
 	types: ProvenanceType[] = Object.values(ProvenanceType)
-): Promise<ResultType[]> {
-	const response: ResultType[] = [];
+): Promise<AssetType[]> {
+	const response: AssetType[] = [];
 
 	if (!rootType) return response;
 	const connectedNodes = await getConnectedNodes(id, rootType, types);
@@ -162,7 +161,7 @@ export enum RelationshipType {
 	STRATIFIED_FROM = 'STRATIFIED_FROM',
 	USES = 'USES'
 }
-export interface ProvenanacePayload {
+export interface ProvenancePayload {
 	id?: number;
 	timestamp?: string;
 	relation_type: RelationshipType;
@@ -173,7 +172,8 @@ export interface ProvenanacePayload {
 	user_id?: number;
 	concept?: string;
 }
-async function createProvenance(payload: ProvenanacePayload) {
+
+async function createProvenance(payload: ProvenancePayload) {
 	const response = await API.post('/provenance', payload);
 
 	const { status, data } = response;
@@ -187,12 +187,25 @@ async function getProvenance(id: string) {
 	return data ?? null;
 }
 
-export function mapResourceTypeToProvenanceType(resourceType: ResourceType): ProvenanceType | null {
-	switch (resourceType) {
-		case ResourceType.MODEL:
+export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceType | null {
+	switch (assetType) {
+		case AssetType.Models:
 			return ProvenanceType.Model;
-		case ResourceType.DATASET:
+		case AssetType.Datasets:
 			return ProvenanceType.Dataset;
+		case AssetType.ModelConfigurations:
+			return ProvenanceType.ModelConfiguration;
+		case AssetType.Publications:
+			return ProvenanceType.Publication;
+		case AssetType.Simulations:
+			return ProvenanceType.Simulation;
+		case AssetType.Artifacts:
+			return ProvenanceType.Artifact;
+		case AssetType.Code:
+			return ProvenanceType.Code;
+		case AssetType.Documents:
+			return ProvenanceType.Document;
+		case AssetType.Workflows:
 		default:
 			return null;
 	}

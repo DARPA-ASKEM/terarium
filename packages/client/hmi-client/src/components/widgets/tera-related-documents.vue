@@ -87,22 +87,27 @@ import RadioButton from 'primevue/radiobutton';
 import { ResourceType } from '@/types/common';
 import {
 	alignModel,
+	Extractor,
 	fetchExtraction,
 	pdfExtractions,
 	profileDataset,
-	profileModel,
-	Extractor
+	profileModel
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
 import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
-import { getRelatedArtifacts, mapResourceTypeToProvenanceType } from '@/services/provenance';
+import {
+	createProvenance,
+	getRelatedArtifacts,
+	mapAssetTypeToProvenanceType,
+	RelationshipType
+} from '@/services/provenance';
 import { isDocumentAsset } from '@/utils/data-util';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
-	assetType: ResourceType;
+	assetType: AssetType;
 	assetId: string;
 }>();
 
@@ -203,6 +208,13 @@ const sendForExtractions = async () => {
 	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId, extractionService.value);
 	if (!pdfExtractionsJobId) return;
 	await fetchExtraction(pdfExtractionsJobId);
+	createProvenance({
+		relation_type: RelationshipType.EXTRACTED_FROM,
+		left: selectedResourceId,
+		left_type: ProvenanceType.Document,
+		right: props.assetId,
+		right_type: mapAssetTypeToProvenanceType(props.assetType)
+	});
 
 	isLoading.value = false;
 	emit('enriched');
@@ -237,7 +249,7 @@ watch(
 
 async function getRelatedDocuments() {
 	if (!props.assetType) return;
-	const provenanceType = mapResourceTypeToProvenanceType(props.assetType);
+	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 
 	if (!provenanceType) return;
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
