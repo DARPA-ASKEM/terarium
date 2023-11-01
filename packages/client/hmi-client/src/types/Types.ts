@@ -383,10 +383,9 @@ export interface ExtractionResponseResult {
 }
 
 export interface FunmanPostQueriesRequest {
-    query: any;
-    parameters: any[];
-    config: FunmanConfig;
-    structureParameters: any[];
+    model: any;
+    request: FunmanWorkRequest;
+    worker: any;
 }
 
 export interface FunmanConfig {
@@ -408,6 +407,14 @@ export interface FunmanConfig {
     substituteSubformulas: boolean;
     useCompartmentalConstraints: boolean;
     normalize: boolean;
+}
+
+export interface FunmanWorkRequest {
+    query?: any;
+    constraints?: any;
+    parameters?: any;
+    config?: FunmanConfig;
+    structure_parameters?: any;
 }
 
 export interface DKG {
