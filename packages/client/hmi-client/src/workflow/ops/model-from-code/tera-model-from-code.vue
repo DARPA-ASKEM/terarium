@@ -12,26 +12,30 @@
 			</header>
 			<ul>
 				<li v-for="({ name, programmingLanguage }, i) in codeBlocks" :key="i">
-					<header>
-						<section>
-							<h5>{{ name }}</h5>
-							<Button icon="pi pi-pencil" text rounded />
-						</section>
-						<section>
+					<Panel toggleable>
+						<template #header>
+							<section>
+								<h5>{{ name }}</h5>
+								<Button icon="pi pi-pencil" text rounded />
+							</section>
+						</template>
+						<template #icons>
 							<label>Include in process</label>
 							<InputSwitch v-model="codeBlocks[i].includeInProcess" />
-							<Button icon="pi pi-trash" text rounded />
-							<Button icon="pi pi-chevron-up" text rounded />
-						</section>
-					</header>
-					<v-ace-editor
-						v-model:value="codeBlocks[i].code"
-						@init="initialize"
-						:lang="programmingLanguage"
-						theme="chrome"
-						style="height: 10rem; width: 100%"
-						class="ace-editor"
-					/>
+							<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
+						</template>
+						<template #toggler-icon>
+							<Button icon="pi pi-chevon-down" text rounded />
+						</template>
+						<v-ace-editor
+							v-model:value="codeBlocks[i].code"
+							@init="initialize"
+							:lang="programmingLanguage"
+							theme="chrome"
+							style="height: 10rem; width: 100%"
+							class="ace-editor"
+						/>
+					</Panel>
 				</li>
 			</ul>
 			<footer>
@@ -48,6 +52,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
+import Panel from 'primevue/panel';
 import Button from 'primevue/button';
 import InputSwitch from 'primevue/inputswitch';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -87,6 +92,10 @@ async function initialize(editorInstance) {
 function addCodeBlock() {
 	codeBlocks.value.push(cloneDeep(codeBlock));
 }
+
+function removeCodeBlock(index: number) {
+	codeBlocks.value.splice(index, 1);
+}
 </script>
 
 <style scoped>
@@ -98,6 +107,9 @@ main {
 
 main > section {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
 }
 
 section > header,
@@ -105,7 +117,6 @@ footer {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 1rem 0;
 }
 
 footer {
@@ -122,14 +133,24 @@ header > * {
 ul {
 	list-style: none;
 	display: flex;
+	overflow: auto;
 	flex-direction: column;
 	gap: 0.5rem;
+	/* flex: 1; */
+}
+.p-panel {
+	border: 1px solid var(--surface-border-light);
 }
 
-li {
-	border: 1px solid var(--surface-border-light);
-	border-radius: 4px;
-	padding: 0.5rem;
+.p-panel:deep(section) {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.p-panel:deep(.p-panel-icons) {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
 }
 
 li > header {
@@ -142,5 +163,10 @@ li > header > section {
 	display: flex;
 	align-items: center;
 	gap: 1rem;
+}
+
+.ace-editor {
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
 }
 </style>
