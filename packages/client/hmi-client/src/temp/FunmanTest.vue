@@ -9,9 +9,9 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import funModel from '@/examples/fun-example.json';
-import { processFunman, getBoxes, getTrajectories } from '@/utils/funman-util';
 import * as d3 from 'd3';
+import funModel from '@/examples/fun-example.json';
+import { processFunman, getBoxes, getTrajectories } from '@/services/funman';
 
 onMounted(() => {
 	console.log(processFunman(funModel));

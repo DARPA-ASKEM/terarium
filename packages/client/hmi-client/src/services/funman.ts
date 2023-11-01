@@ -1,4 +1,4 @@
-export const processFunman = (result) => {
+export const processFunman = (result: any) => {
 	// List of states and parameters
 	const states = result.model.petrinet.model.states.map((s) => s.id);
 	const params = result.model.petrinet.semantics.ode.parameters.map((p) => p.id);
@@ -12,7 +12,9 @@ export const processFunman = (result) => {
 	let i = 0;
 	let j = 0;
 
-	[...result.parameter_space.true_boxes, ...result.parameter_space.false_boxes].forEach((box) => {
+	const parameterSpace = result.parameter_space;
+
+	[...parameterSpace.true_boxes, ...parameterSpace.false_boxes].forEach((box) => {
 		box.id = `box${i}`;
 		i++;
 
@@ -20,7 +22,7 @@ export const processFunman = (result) => {
 		const bounds = params.map((p) => [box.bounds[p].lb, box.bounds[p].ub]);
 		boxes.push([box.id, box.label, box.bounds.timestep.ub, ...bounds]);
 
-		Object.values(box.points).forEach((point) => {
+		Object.values(box.points).forEach((point: any) => {
 			point.id = `point${j}`;
 			j++;
 
@@ -55,14 +57,20 @@ export const processFunman = (result) => {
 	return { boxes, points, trajs };
 };
 
-export const getBoxes = (result, param1, param2, timestep, box_type) =>
-	result.parameter_space[box_type]
-		.filter((box) => box.bounds.timestep.ub === timestep)
-		.map((box) => ({
+export const getBoxes = (
+	result: any,
+	param1: string,
+	param2: string,
+	timestep: number,
+	boxType: string
+) =>
+	result.parameter_space[boxType]
+		.filter((box: any) => box.bounds.timestep.ub === timestep)
+		.map((box: any) => ({
 			x1: box.bounds[param1].lb,
 			x2: box.bounds[param1].ub,
 			y1: box.bounds[param2].lb,
 			y2: box.bounds[param2].ub
 		}));
 
-export const getTrajectories = (result) => processFunman(result).trajs;
+export const getTrajectories = (result: any) => processFunman(result).trajs;
