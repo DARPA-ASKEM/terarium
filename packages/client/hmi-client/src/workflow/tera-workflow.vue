@@ -113,7 +113,10 @@
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-stratify-node-julia
-						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY"
+						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_JULIA"
+					/>
+					<tera-stratify-node-mira
+						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
 					/>
 					<tera-simulate-ensemble-node-ciemss
 						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
@@ -250,6 +253,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { ModelOperation, TeraModelNode, ModelOperationState } from './ops/model/mod';
 import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
 import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
+import { StratifyMiraOperation, TeraStratifyNodeMira } from './ops/stratify-mira/mod';
 import { FunmanOperation, TeraFunmanNode } from './ops/funman/mod';
 import { DatasetOperation, TeraDatasetNode, DatasetOperationState } from './ops/dataset/mod';
 import {
@@ -552,7 +556,14 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Stratify',
+		label: 'Stratify Mira',
+		command: () => {
+			workflowService.addNode(wf.value, StratifyMiraOperation, newNodePosition, { state: null });
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Stratify Julia',
 		command: () => {
 			workflowService.addNode(wf.value, StratifyOperation, newNodePosition, { state: null });
 			workflowDirty = true;

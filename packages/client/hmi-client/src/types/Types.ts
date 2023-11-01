@@ -266,6 +266,38 @@ export interface TypingSemantics {
     system: any;
 }
 
+export interface DecapodesComponent {
+    modelInterface: string[];
+    model: DecapodesExpression;
+    _type: string;
+}
+
+export interface DecapodesEquation {
+    lhs: any;
+    rhs: any;
+    _type: string;
+}
+
+export interface DecapodesExpression {
+    context: any[];
+    equations: DecapodesEquation[];
+    _type: string;
+}
+
+export interface DecapodesTerm {
+    name?: string;
+    var?: DecapodesTerm;
+    symbol?: string;
+    space?: string;
+    fs?: string[];
+    arg?: DecapodesTerm;
+    f?: string;
+    arg1?: DecapodesTerm;
+    arg2?: DecapodesTerm;
+    args?: DecapodesTerm[];
+    _type: string;
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
@@ -351,10 +383,9 @@ export interface ExtractionResponseResult {
 }
 
 export interface FunmanPostQueriesRequest {
-    query: any;
-    parameters: any[];
-    config: FunmanConfig;
-    structureParameters: any[];
+    model: any;
+    request: FunmanWorkRequest;
+    worker: any;
 }
 
 export interface FunmanConfig {
@@ -376,6 +407,14 @@ export interface FunmanConfig {
     substituteSubformulas: boolean;
     useCompartmentalConstraints: boolean;
     normalize: boolean;
+}
+
+export interface FunmanWorkRequest {
+    query?: any;
+    constraints?: any;
+    parameters?: any;
+    config?: FunmanConfig;
+    structure_parameters?: any;
 }
 
 export interface DKG {

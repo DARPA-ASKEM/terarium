@@ -68,8 +68,14 @@
 					"
 					:node="workflowNode"
 				/>
+				<tera-stratify-mira
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
+					:node="workflowNode"
+				/>
 				<tera-stratify
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY_JULIA
+					"
 					:node="workflowNode"
 					:key="workflowNode.id"
 					@open-asset="openAsset"
@@ -127,6 +133,7 @@ import TeraDatasetWorkflowWrapper from '@//workflow/ops/dataset/tera-dataset-wor
 import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
 import TeraCalibrateCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
 import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';
+import TeraStratifyMira from '@/workflow/ops/stratify-mira/tera-stratify-mira.vue';
 import TeraStratify from '@/workflow/ops/stratify-julia/tera-stratify.vue';
 import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
 import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
