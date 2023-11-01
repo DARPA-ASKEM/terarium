@@ -1,9 +1,20 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { TimeSpan } from '@/types/Types';
 
+export interface ConstraintGroup {
+	borderColour: string;
+	name: string;
+	target: string;
+	currentTimespan: TimeSpan;
+	lowerBound?: number;
+	upperBound?: number;
+}
+
 export interface FunmanOperationState {
 	currentTimespan: TimeSpan;
-	dummy: String;
+	numSteps: number;
+	tolerance: number;
+	constraintGroups: ConstraintGroup[];
 }
 
 export const FunmanOperation: Operation = {
@@ -16,8 +27,18 @@ export const FunmanOperation: Operation = {
 	action: () => {},
 	initState: () => {
 		const init: FunmanOperationState = {
-			dummy: 'Temp',
-			currentTimespan: { start: 0, end: 100 }
+			currentTimespan: { start: 0, end: 100 },
+			numSteps: 10,
+			tolerance: 0.89,
+			constraintGroups: [
+				{
+					borderColour: '#c300a6',
+					name: '',
+					currentTimespan: { start: 0, end: 100 },
+					target: 'All variables',
+					lowerBound: 0
+				}
+			]
 		};
 		return init;
 	}
