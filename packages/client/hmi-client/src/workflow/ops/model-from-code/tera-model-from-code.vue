@@ -98,7 +98,7 @@ import { cloneDeep } from 'lodash';
 
 enum ModelFramework {
 	Petrinet = 'Petrinet',
-	Decapode = 'Decapode'
+	Decapodes = 'Decapodes'
 }
 
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
@@ -106,7 +106,7 @@ const modelName = ref('');
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const selectedProgrammingLanguage = ref(ProgrammingLanguage.Python);
 const modelFrameworks = Object.values(ModelFramework);
-const selectedModelFramework = ref(ModelFramework.Petrinet);
+const selectedModelFramework = ref(ModelFramework.Decapodes);
 
 const codeBlock = {
 	name: 'Code block 1',
