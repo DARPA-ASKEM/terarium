@@ -1,3 +1,5 @@
+import * as d3 from 'd3';
+
 export const processFunman = (result: any) => {
 	// List of states and parameters
 	const states = result.model.petrinet.model.states.map((s) => s.id);
@@ -6,6 +8,7 @@ export const processFunman = (result: any) => {
 	// "dataframes"
 	const boxes = [['id', 'label', 'timestep', ...params]];
 	const points = [['id', 'label', 'box_id', ...params]];
+	// const trajs = [['box_id', 'point_id', 'timestep_id', 'time', ...states]];
 	const trajs = [['box_id', 'point_id', 'timestep_id', 'time', ...states]];
 
 	// Give IDs to all boxes (i) and points (j)
@@ -77,3 +80,21 @@ export const getBoxes = (
 		}));
 
 export const getTrajectories = (result: any) => processFunman(result).trajs;
+
+export const renderFumanTrajectories = (element: HTMLElement, result: any, options: any) => {
+	const width = options.width || 400;
+	const height = options.height || 200;
+
+	const elemSelection = d3.select(element);
+	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
+
+	svg.append('g');
+
+	const traj = processFunman(result).trajs;
+	console.log('...............');
+	console.log(traj);
+	console.log('...............');
+
+	// const xScale = d3.scaleLinear().domain([0, 100]).range([0, width]);
+	// const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+};

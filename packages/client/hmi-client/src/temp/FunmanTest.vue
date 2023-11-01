@@ -2,16 +2,35 @@
 	<div class="test-container">
 		<h2>FUNMAN Test</h2>
 		<svg></svg>
+
+		<div ref="traj"></div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
 import funModel from '@/examples/fun-example.json';
-import { processFunman, getBoxes, getTrajectories } from '@/services/funman';
+import {
+	processFunman,
+	getBoxes,
+	getTrajectories,
+	renderFumanTrajectories
+} from '@/services/funman';
+
+const traj = ref();
+
+const handleFunmanTrajectories = () => {
+	console.log('hihi');
+
+	if (traj) {
+		renderFumanTrajectories(traj.value as HTMLElement, funModel, {});
+	}
+};
 
 onMounted(() => {
+	handleFunmanTrajectories();
+
 	console.log(processFunman(funModel));
 	console.log(getTrajectories(funModel));
 
