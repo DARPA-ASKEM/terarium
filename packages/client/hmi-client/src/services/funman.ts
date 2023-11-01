@@ -8,7 +8,7 @@ export const processFunman = (result: any) => {
 	const points = [['id', 'label', 'box_id', ...params]];
 	const trajs = [['box_id', 'point_id', 'timestep_id', 'time', ...states]];
 
-	// Give IDs to all boxes
+	// Give IDs to all boxes (i) and points (j)
 	let i = 0;
 	let j = 0;
 
@@ -40,14 +40,17 @@ export const processFunman = (result: any) => {
 					return obj;
 				}, {});
 
-			const timesteps = new Set(
-				Object.keys(filteredVals).map((key) => {
-					const splitKey = key.split('_');
-					return +splitKey[splitKey.length - 1]; // timestep
-				})
-			);
+			const timesteps = [
+				...new Set(
+					Object.keys(filteredVals).map((key) => {
+						const splitKey = key.split('_');
+						return +splitKey[splitKey.length - 1]; // timestep
+					})
+				)
+			].sort((a, b) => a - b);
 
 			timesteps.forEach((t) => {
+				// box_id, point_id, timestep_id, time, state values
 				const stateVals = states.map((s) => filteredVals[`${s}_${t}`]);
 				trajs.push([box.id, point.id, t, filteredVals[`timer_t_${t}`], ...stateVals]);
 			});
