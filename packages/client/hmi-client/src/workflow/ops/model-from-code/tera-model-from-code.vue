@@ -11,7 +11,7 @@
 				<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
 			</header>
 			<ul>
-				<li v-for="({ name, programmingLanguage }, i) in codeBlocks" :key="i">
+				<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
 					<Panel toggleable>
 						<template #header>
 							<section>
@@ -30,9 +30,9 @@
 							<Button icon="pi pi-chevon-down" text rounded />
 						</template>
 						<v-ace-editor
-							v-model:value="codeBlocks[i].code"
+							v-model:value="codeBlocks[i].codeContent"
 							@init="initialize"
-							:lang="programmingLanguage"
+							:lang="codeLanguage"
 							theme="chrome"
 							style="height: 10rem; width: 100%"
 							class="ace-editor"
@@ -94,7 +94,13 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage } from '@/types/Types';
-import { cloneDeep } from 'lodash';
+import { WorkflowNode } from '@/types/workflow';
+import { cloneDeep, isEmpty } from 'lodash';
+import { ModelFromCodeState } from './model-from-code-operation';
+
+const props = defineProps<{
+	node: WorkflowNode<ModelFromCodeState>;
+}>();
 
 enum ModelFramework {
 	Petrinet = 'Petrinet',
@@ -106,12 +112,15 @@ const modelName = ref('');
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const selectedProgrammingLanguage = ref(ProgrammingLanguage.Python);
 const modelFrameworks = Object.values(ModelFramework);
-const selectedModelFramework = ref(ModelFramework.Decapodes);
+const selectedModelFramework = ref(
+	isEmpty(props.node.state.modelFramework)
+		? ModelFramework.Decapodes
+		: props.node.state.modelFramework
+);
 
 const codeBlock = {
+	...props.node.state,
 	name: 'Code block 1',
-	code: '',
-	programmingLanguage: ProgrammingLanguage.Python,
 	includeInProcess: true
 };
 
