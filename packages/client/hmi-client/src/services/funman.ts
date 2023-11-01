@@ -98,3 +98,40 @@ export const renderFumanTrajectories = (element: HTMLElement, result: any, optio
 	// const xScale = d3.scaleLinear().domain([0, 100]).range([0, width]);
 	// const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
 };
+
+export const createBoundaryChart = (element: string, payload: any, options: any) => {
+	const { width, height, xAxis, yAxis } = options;
+
+	const svg = d3.select(element).attr('width', width).attr('height', height);
+	const g = svg.append('g');
+
+	const xScale = d3
+		.scaleLinear()
+		.domain([0, xAxis]) // input domain
+		.range([0, width]); // output range
+
+	const yScale = d3
+		.scaleLinear()
+		.domain([0, yAxis]) // input domain
+		.range([0, height]); // output range
+
+	const drawRects = (data, fill) => {
+		g.selectAll('.rect')
+			.data(data)
+			.enter()
+			.append('rect')
+			.attr('x', (d: any) => xScale(d.x1))
+			.attr('y', (d: any) => yScale(d.y1))
+			.attr('width', (d: any) => xScale(d.x2) - xScale(d.x1))
+			.attr('height', (d: any) => yScale(d.y2) - yScale(d.y1))
+			.attr('stroke', 'black')
+			.attr('fill-opacity', 0.5)
+			.attr('fill', fill);
+	};
+
+	const trueBoxes = getBoxes(payload, 'beta', 'gamma', 7, 'true_boxes');
+	const falseBoxes = getBoxes(payload, 'beta', 'gamma', 7, 'false_boxes');
+
+	drawRects(trueBoxes, 'teal');
+	drawRects(falseBoxes, 'orange');
+};
