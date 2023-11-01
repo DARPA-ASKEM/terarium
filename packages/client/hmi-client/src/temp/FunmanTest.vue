@@ -7,7 +7,6 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import * as d3 from 'd3';
 import funModel from '@/examples/fun-example.json';
 import { processFunman, getTrajectories, createBoundaryChart } from '@/services/funman';
 
