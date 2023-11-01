@@ -43,8 +43,17 @@
 				<Button label="Run" icon="pi pi-play" severity="secondary" outlined size="large" />
 			</footer>
 		</section>
-		<section class="preview">
-			<h5>Preview</h5>
+		<section>
+			<section class="preview">
+				<h5>Preview</h5>
+			</section>
+			<footer>
+				<Button disabled label="Save as new model" severity="secondary" outlined size="large" />
+				<span class="apply-cancel">
+					<Button label="Cancel" severity="secondary" outlined size="large" />
+					<Button disabled label="Apply changes and close" size="large" />
+				</span>
+			</footer>
 		</section>
 	</main>
 </template>
@@ -100,9 +109,11 @@ function removeCodeBlock(index: number) {
 
 <style scoped>
 main {
-	margin: 1rem;
+	padding: 16px;
 	display: flex;
 	gap: 2rem;
+	flex: 1;
+	height: 100%;
 }
 
 main > section {
@@ -110,6 +121,8 @@ main > section {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	overflow-y: auto;
+	height: 100%;
 }
 
 section > header,
@@ -124,6 +137,16 @@ footer {
 }
 
 .preview {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background-color: var(--surface-ground);
+	padding: 1rem;
+	flex: 1;
+}
+
+.apply-cancel {
+	display: flex;
+	gap: 1rem;
 }
 
 header > * {
