@@ -36,7 +36,7 @@
 				<template #header>Related publications</template>
 				<tera-related-documents
 					:documents="documents"
-					:asset-type="ResourceType.MODEL"
+					:asset-type="AssetType.Models"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>
@@ -453,14 +453,14 @@ import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
 import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
 	updateParameterId
 } from '@/model-representation/petrinet/petrinet-service';
 import Tag from 'primevue/tag';
-import { AcceptedExtensions, ResourceType } from '@/types/common';
+import { AcceptedExtensions } from '@/types/common';
 import Button from 'primevue/button';
 import TeraModelExtraction from '@/components/model/petrinet/tera-model-extraction.vue';
 import * as textUtil from '@/utils/text';
