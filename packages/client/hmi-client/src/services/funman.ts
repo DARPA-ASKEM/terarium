@@ -99,21 +99,48 @@ export const renderFumanTrajectories = (element: HTMLElement, result: any, optio
 	// const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
 };
 
-export const createBoundaryChart = (element: string, payload: any, options: any) => {
-	const { width, height, xAxis, yAxis } = options;
+const getBoxesDomain = (boxes: any[]) => {
+	let minX = Number.MAX_VALUE;
+	let maxX = Number.MIN_VALUE;
+	let minY = Number.MAX_VALUE;
+	let maxY = Number.MIN_VALUE;
+
+	boxes.forEach((box) => {
+		minX = Math.min(minX, box.x1);
+		maxX = Math.max(maxX, box.x2);
+		minY = Math.min(minY, box.y1);
+		maxY = Math.max(maxY, box.y2);
+	});
+
+	return { minX, maxX, minY, maxY };
+};
+
+export const createBoundaryChart = (
+	element: string,
+	payload: any,
+	param1: string,
+	param2: string,
+	options: any
+) => {
+	const { width, height } = options;
+
+	const trueBoxes = getBoxes(payload, param1, param2, 7, 'true_boxes');
+	const falseBoxes = getBoxes(payload, param1, param2, 7, 'false_boxes');
+
+	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
 
 	const svg = d3.select(element).attr('width', width).attr('height', height);
 	const g = svg.append('g');
 
 	const xScale = d3
 		.scaleLinear()
-		.domain([0, xAxis]) // input domain
+		.domain([minX, maxX]) // input domain
 		.range([0, width]); // output range
 
 	const yScale = d3
 		.scaleLinear()
-		.domain([0, yAxis]) // input domain
-		.range([0, height]); // output range
+		.domain([maxY, minY]) // input domain (inverted)
+		.range([0, height]); // output range (inverted)
 
 	const drawRects = (data, fill) => {
 		g.selectAll('.rect')
@@ -121,16 +148,13 @@ export const createBoundaryChart = (element: string, payload: any, options: any)
 			.enter()
 			.append('rect')
 			.attr('x', (d: any) => xScale(d.x1))
-			.attr('y', (d: any) => yScale(d.y1))
+			.attr('y', (d: any) => yScale(d.y2)) // (inverted)
 			.attr('width', (d: any) => xScale(d.x2) - xScale(d.x1))
-			.attr('height', (d: any) => yScale(d.y2) - yScale(d.y1))
+			.attr('height', (d: any) => yScale(d.y1) - yScale(d.y2)) // (inverted)
 			.attr('stroke', 'black')
 			.attr('fill-opacity', 0.5)
 			.attr('fill', fill);
 	};
-
-	const trueBoxes = getBoxes(payload, 'beta', 'gamma', 7, 'true_boxes');
-	const falseBoxes = getBoxes(payload, 'beta', 'gamma', 7, 'false_boxes');
 
 	drawRects(trueBoxes, 'teal');
 	drawRects(falseBoxes, 'orange');

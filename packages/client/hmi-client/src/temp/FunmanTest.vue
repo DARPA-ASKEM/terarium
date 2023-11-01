@@ -35,10 +35,10 @@ onMounted(() => {
 
 	const width = 800;
 	const height = 500;
-	const xAxis = 1;
-	const yAxis = 1;
+	const param1 = 'beta';
+	const param2 = 'gamma';
 
-	createBoundaryChart('svg', funModel, { width, height, xAxis, yAxis });
+	createBoundaryChart('svg', funModel, param1, param2, { width, height });
 });
 </script>
 
