@@ -43,14 +43,32 @@
 			<footer>
 				<span
 					><label>Model framework:</label
-					><Dropdown v-model="selectedModelFramework" :options="modelFrameworks"
+					><Dropdown
+						class="w-full md:w-14rem"
+						v-model="selectedModelFramework"
+						:options="modelFrameworks"
 				/></span>
 				<Button label="Run" icon="pi pi-play" severity="secondary" outlined size="large" />
 			</footer>
 		</section>
 		<section>
 			<section class="preview">
-				<h5>Preview</h5>
+				<header>
+					<h5>Preview</h5>
+					<Dropdown
+						class="w-full md:w-14rem"
+						v-model="selectedModelFramework"
+						:options="modelFrameworks"
+					/>
+				</header>
+				<div class="flex flex-column gap-2">
+					<label>Model name</label>
+					<InputText v-model="modelName" />
+				</div>
+				<template v-if="selectedModelFramework === ModelFramework.Petrinet">
+					<!--Potentially put tera-model-diagram here just for petrinets-->
+					<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
+				</template>
 			</section>
 			<footer>
 				<Button disabled label="Save as new model" severity="secondary" outlined size="large" />
@@ -68,6 +86,7 @@ import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import InputSwitch from 'primevue/inputswitch';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -83,10 +102,9 @@ enum ModelFramework {
 }
 
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
-
+const modelName = ref('');
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const selectedProgrammingLanguage = ref(ProgrammingLanguage.Python);
-
 const modelFrameworks = Object.values(ModelFramework);
 const selectedModelFramework = ref(ModelFramework.Petrinet);
 
@@ -151,6 +169,14 @@ footer {
 	background-color: var(--surface-ground);
 	padding: 1rem;
 	flex: 1;
+	flex-direction: column;
+	display: flex;
+	gap: 0.5rem;
+}
+
+.preview > section {
+	display: flex;
+	justify-content: space-between;
 }
 
 span {
