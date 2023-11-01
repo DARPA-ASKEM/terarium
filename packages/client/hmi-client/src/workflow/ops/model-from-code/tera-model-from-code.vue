@@ -5,7 +5,7 @@
 				<h5>Code</h5>
 				<Dropdown
 					class="w-full md:w-14rem"
-					v-model="programmingLanguage"
+					v-model="selectedProgrammingLanguage"
 					:options="programmingLanguages"
 				/>
 				<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
@@ -20,8 +20,10 @@
 							</section>
 						</template>
 						<template #icons>
-							<label>Include in process</label>
-							<InputSwitch v-model="codeBlocks[i].includeInProcess" />
+							<span>
+								<label>Include in process</label>
+								<InputSwitch v-model="codeBlocks[i].includeInProcess" />
+							</span>
 							<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
 						</template>
 						<template #toggler-icon>
@@ -39,7 +41,10 @@
 				</li>
 			</ul>
 			<footer>
-				<span><label>Model framework:</label><Dropdown /></span>
+				<span
+					><label>Model framework:</label
+					><Dropdown v-model="selectedModelFramework" :options="modelFrameworks"
+				/></span>
 				<Button label="Run" icon="pi pi-play" severity="secondary" outlined size="large" />
 			</footer>
 		</section>
@@ -49,7 +54,7 @@
 			</section>
 			<footer>
 				<Button disabled label="Save as new model" severity="secondary" outlined size="large" />
-				<span class="apply-cancel">
+				<span class="btn-group">
 					<Button label="Cancel" severity="secondary" outlined size="large" />
 					<Button disabled label="Apply changes and close" size="large" />
 				</span>
@@ -72,14 +77,18 @@ import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 
+enum ModelFramework {
+	Petrinet = 'Petrinet',
+	Decapode = 'Decapode'
+}
+
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 
-const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
-const programmingLanguages = [
-	ProgrammingLanguage.Julia,
-	ProgrammingLanguage.Python,
-	ProgrammingLanguage.R
-];
+const programmingLanguages = Object.values(ProgrammingLanguage);
+const selectedProgrammingLanguage = ref(ProgrammingLanguage.Python);
+
+const modelFrameworks = Object.values(ModelFramework);
+const selectedModelFramework = ref(ModelFramework.Petrinet);
 
 const codeBlock = {
 	name: 'Code block 1',
@@ -144,12 +153,16 @@ footer {
 	flex: 1;
 }
 
-.apply-cancel {
+span {
 	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.btn-group {
 	gap: 1rem;
 }
 
-header > * {
+.p-dropdown {
 	max-height: 40px;
 }
 
@@ -159,7 +172,7 @@ ul {
 	overflow: auto;
 	flex-direction: column;
 	gap: 0.5rem;
-	/* flex: 1; */
+	flex: 1;
 }
 .p-panel {
 	border: 1px solid var(--surface-border-light);
