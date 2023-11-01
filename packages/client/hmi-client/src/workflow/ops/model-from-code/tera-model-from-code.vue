@@ -26,9 +26,10 @@
 							</span>
 							<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
 						</template>
-						<template #toggler-icon>
-							<Button icon="pi pi-chevon-down" text rounded />
-						</template>
+						<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
+						<template #togglericon="{ collapsed }">
+							<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
+						</template> -->
 						<v-ace-editor
 							v-model:value="codeBlocks[i].codeContent"
 							@init="initialize"
