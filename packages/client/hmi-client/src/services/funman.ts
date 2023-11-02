@@ -1,14 +1,24 @@
 import * as d3 from 'd3';
 
+interface FunmanProcessedData {
+	boxes: any[];
+	points: any[];
+	states: string[];
+	trajs: any[];
+}
+
+interface RenderOptions {
+	width: number;
+	height: number;
+}
+
 export const processFunman = (result: any) => {
 	// List of states and parameters
 	const states = result.model.petrinet.model.states.map((s) => s.id);
 	const params = result.model.petrinet.semantics.ode.parameters.map((p) => p.id);
 
 	// "dataframes"
-	// const boxes = [['id', 'label', 'timestep', ...params]];
 	const points = [['id', 'label', 'box_id', ...params]];
-
 	const boxes: any[] = [];
 	const trajs: any[] = [];
 
@@ -21,10 +31,6 @@ export const processFunman = (result: any) => {
 	[...parameterSpace.true_boxes, ...parameterSpace.false_boxes].forEach((box) => {
 		const boxId = `box${i}`;
 		i++;
-
-		// id, label, timestep, param bounds
-		// const bounds = params.map((p) => [box.bounds[p].lb, box.bounds[p].ub]);
-		// boxes.push([box.id, box.label, box.bounds.timestep.ub, ...bounds]);
 
 		const temp = {
 			id: boxId,
@@ -77,41 +83,53 @@ export const processFunman = (result: any) => {
 		});
 	});
 
-	return { boxes, points, states, trajs };
+	return { boxes, points, states, trajs } as FunmanProcessedData;
 };
 
+interface FunmanBox {
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
+}
 export const getBoxes = (
-	processedData: any,
+	processedData: FunmanProcessedData,
 	param1: string,
 	param2: string,
 	timestep: number,
 	boxType: string
-) =>
+) => {
+	const result: FunmanBox[] = [];
 	processedData.boxes
 		.filter((d: any) => d.label === boxType)
 		.filter((d: any) => d.timestep.ub === timestep)
-		.map((d: any) => ({
-			x1: d[param1][0],
-			x2: d[param1][1],
-			y1: d[param2][0],
-			y2: d[param2][1]
-		}));
+		.forEach((d: any) => {
+			result.push({
+				x1: d[param1][0],
+				x2: d[param1][1],
+				y1: d[param2][0],
+				y2: d[param2][1]
+			});
+		});
+
+	return result;
+};
 
 export const renderFumanTrajectories = (
 	element: HTMLElement,
-	processedResult: any,
+	processedData: FunmanProcessedData,
 	boxId: string,
-	options: any
+	options: RenderOptions
 ) => {
-	const width = options.width || 300;
-	const height = options.height || 100;
+	const width = options.width;
+	const height = options.height;
 
 	const elemSelection = d3.select(element);
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 
 	const group = svg.append('g');
 
-	const { trajs, states } = processedResult;
+	const { trajs, states } = processedData;
 
 	const points = trajs.filter((d: any) => d.boxId === boxId);
 
@@ -135,7 +153,7 @@ export const renderFumanTrajectories = (
 	});
 };
 
-const getBoxesDomain = (boxes: any[]) => {
+const getBoxesDomain = (boxes: FunmanBox[]) => {
 	let minX = Number.MAX_VALUE;
 	let maxX = Number.MIN_VALUE;
 	let minY = Number.MAX_VALUE;
@@ -153,11 +171,11 @@ const getBoxesDomain = (boxes: any[]) => {
 
 export const createBoundaryChart = (
 	element: HTMLElement,
-	processedData: any,
+	processedData: FunmanProcessedData,
 	param1: string,
 	param2: string,
 	timestep: number,
-	options: any
+	options: RenderOptions
 ) => {
 	const { width, height } = options;
 
@@ -178,20 +196,25 @@ export const createBoundaryChart = (
 		.domain([maxY, minY]) // input domain (inverted)
 		.range([0, height]); // output range (inverted)
 
-	const drawRects = (data: any, fill: string) => {
-		g.selectAll('.rect')
-			.data(data)
-			.enter()
-			.append('rect')
-			.attr('x', (d: any) => xScale(d.x1))
-			.attr('y', (d: any) => yScale(d.y2))
-			.attr('width', (d: any) => xScale(d.x2) - xScale(d.x1))
-			.attr('height', (d: any) => yScale(d.y1) - yScale(d.y2))
-			.attr('stroke', 'black')
-			.attr('fill-opacity', 0.5)
-			.attr('fill', fill);
-	};
+	g.selectAll('.true-box')
+		.data(trueBoxes)
+		.enter()
+		.append('rect')
+		.classed('true-box', true)
+		.attr('fill', 'teal');
 
-	drawRects(trueBoxes, 'teal');
-	drawRects(falseBoxes, 'orange');
+	g.selectAll('.false-box')
+		.data(falseBoxes)
+		.enter()
+		.append('rect')
+		.classed('false-box', true)
+		.attr('fill', 'orange');
+
+	g.selectAll<any, FunmanBox>('rect')
+		.attr('x', (d) => xScale(d.x1))
+		.attr('y', (d) => yScale(d.y2))
+		.attr('width', (d) => xScale(d.x2) - xScale(d.x1))
+		.attr('height', (d) => yScale(d.y1) - yScale(d.y2))
+		.attr('stroke', 'black')
+		.attr('fill-opacity', 0.5);
 };

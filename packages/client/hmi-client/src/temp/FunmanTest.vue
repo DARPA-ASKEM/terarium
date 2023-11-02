@@ -26,7 +26,10 @@ onMounted(() => {
 	const param1 = 'beta';
 	const param2 = 'gamma';
 	createBoundaryChart(boxRef.value, processedData, param1, param2, timestep, { width, height });
-	renderFumanTrajectories(trajRef.value as HTMLElement, processedData, boxId, {});
+	renderFumanTrajectories(trajRef.value as HTMLElement, processedData, boxId, {
+		width: 300,
+		height: 100
+	});
 });
 </script>
 
