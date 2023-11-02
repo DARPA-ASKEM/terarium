@@ -7,11 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.proxies.funman.FunmanProxy;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
-import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 
 @RestController
 @RequestMapping("/funman/queries")
-public class FunmanController implements SnakeCaseController {
+public class FunmanController {
 
     @Autowired
     private FunmanProxy funmanProxy;
@@ -34,7 +33,7 @@ public class FunmanController implements SnakeCaseController {
     public ResponseEntity<JsonNode> postQueries(
         @RequestBody final FunmanPostQueriesRequest requestBody
     ) {
-        ResponseEntity<JsonNode> response = funmanProxy.postQueries(convertObjectToSnakeCaseJsonNode(requestBody));
+        ResponseEntity<JsonNode> response = funmanProxy.postQueries(requestBody);
         return ResponseEntity.ok(response.getBody());
     }
 } 

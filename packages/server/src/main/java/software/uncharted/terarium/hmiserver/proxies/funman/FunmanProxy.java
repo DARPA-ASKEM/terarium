@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
 
 @FeignClient(name = "funman-api", url = "${funman-service.url}", path="/queries")
 public interface FunmanProxy {
@@ -18,5 +19,5 @@ public interface FunmanProxy {
     ResponseEntity<JsonNode> getQueries(@PathVariable("queryId") String queryId);
 
     @PostMapping
-    ResponseEntity<JsonNode> postQueries(@RequestBody JsonNode requestBody);
+    ResponseEntity<JsonNode> postQueries(@RequestBody FunmanPostQueriesRequest requestBody);
 }

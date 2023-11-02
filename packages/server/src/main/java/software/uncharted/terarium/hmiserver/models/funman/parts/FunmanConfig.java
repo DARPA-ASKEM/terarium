@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import com.fasterxml.jackson.annotation.JsonAlias;
 
 @Data
 @Accessors(chain = true)
@@ -43,11 +42,9 @@ public class FunmanConfig {
 	@TSOptional
 	private Boolean substituteSubformulas;
 	@TSOptional
-	@JsonAlias("use_compartmental_constraints")
-	private Boolean useCompartmentalConstraints;
+	private Boolean use_compartmental_constraints;
 	@TSOptional
 	private Boolean normalize;
 	@TSOptional
-	@JsonAlias("normalization_constant")
-	private Integer normalizationConstant;
+	private Integer normalization_constant;
 }

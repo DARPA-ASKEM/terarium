@@ -404,9 +404,9 @@ export interface FunmanConfig {
     initialStateTolerance?: number;
     drealMcts?: boolean;
     substituteSubformulas?: boolean;
-    useCompartmentalConstraints?: boolean;
+    use_compartmental_constraints?: boolean;
     normalize?: boolean;
-    normalizationConstant?: number;
+    normalization_constant?: number;
 }
 
 export interface FunmanInterval {
