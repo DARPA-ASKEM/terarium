@@ -31,7 +31,9 @@ public class FunmanController implements SnakeCaseController {
     }
 
     @PostMapping
-    public ResponseEntity<JsonNode> postQueries(@RequestBody FunmanPostQueriesRequest requestBody) {
+    public ResponseEntity<JsonNode> postQueries(
+        @RequestBody final FunmanPostQueriesRequest requestBody
+    ) {
         ResponseEntity<JsonNode> response = funmanProxy.postQueries(convertObjectToSnakeCaseJsonNode(requestBody));
         return ResponseEntity.ok(response.getBody());
     }

@@ -385,7 +385,6 @@ export interface ExtractionResponseResult {
 export interface FunmanPostQueriesRequest {
     model: Model;
     request: FunmanWorkRequest;
-    worker: any;
 }
 
 export interface FunmanConfig {
@@ -407,6 +406,7 @@ export interface FunmanConfig {
     substituteSubformulas?: boolean;
     useCompartmentalConstraints?: boolean;
     normalize?: boolean;
+    normalizationConstant?: number;
 }
 
 export interface FunmanWorkRequest {
