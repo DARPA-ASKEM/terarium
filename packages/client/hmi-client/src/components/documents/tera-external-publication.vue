@@ -144,7 +144,6 @@
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
 						<Button
-							v-if="!featureConfig.isPreview"
 							label="Import"
 							class="p-button-sm p-button-outlined"
 							icon="pi pi-cloud-download"
