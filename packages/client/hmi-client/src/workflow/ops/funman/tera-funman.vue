@@ -92,7 +92,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -166,6 +166,31 @@ const updateConstraintGroupForm = (data) => {
 		state
 	});
 };
+
+// Set model, modelConfiguration, modelNodeOptions
+watch(
+	() => props.node.inputs[0],
+	async () => {
+		const modelConfigurationId = props.node.inputs[0].value?.[0];
+		if (modelConfigurationId) {
+			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+			if (modelConfiguration.value) {
+				model.value = await getModel(modelConfiguration.value.modelId);
+
+				const modelColumnNameOptions: string[] =
+					modelConfiguration.value.configuration.model.states.map((state) => state.id);
+				// add observables
+				if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+					modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+						modelColumnNameOptions.push(o.id);
+					});
+				}
+				modelNodeOptions.value = modelColumnNameOptions;
+			}
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style>
