@@ -1,13 +1,13 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { TimeSpan } from '@/types/Types';
+import { TimeSpan, FunmanInterval } from '@/types/Types';
 
 export interface ConstraintGroup {
 	borderColour: string;
 	name: string;
-	target: string;
-	currentTimespan: TimeSpan;
-	lowerBound?: number;
-	upperBound?: number;
+	variables: string[]; // If len = 1, need to rename to variable for request
+	weights?: number[]; // 1 to 1 mapping with variables
+	timepoints?: FunmanInterval;
+	interval?: FunmanInterval;
 }
 
 export interface FunmanOperationState {
@@ -34,9 +34,9 @@ export const FunmanOperation: Operation = {
 				{
 					borderColour: '#c300a6',
 					name: '',
-					currentTimespan: { start: 0, end: 100 },
-					target: 'All variables',
-					lowerBound: 0
+					timepoints: { lb: 0, ub: 100 },
+					variables: [],
+					interval: { lb: 0 }
 				}
 			]
 		};

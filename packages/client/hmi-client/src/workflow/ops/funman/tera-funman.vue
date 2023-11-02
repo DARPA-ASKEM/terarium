@@ -55,6 +55,7 @@
 				:key="index"
 				:config="cfg"
 				:index="index"
+				:model-node-options="modelNodeOptions"
 				@delete-self="deleteConstraintGroupForm"
 				@update-self="updateConstraintGroupForm"
 			/>
@@ -108,7 +109,7 @@ import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 // TODO List:
 // 2) computedParameters
-// 4) fix constraintGroups typing
+// 4) fix constraintGroups typing -> mostly just adding weights, and if 1 variable then change it to linear
 // 5) fix css for overlow
 
 const props = defineProps<{
@@ -207,9 +208,8 @@ const addConstraintForm = () => {
 	const newGroup: ConstraintGroup = {
 		borderColour: '#00c387',
 		name: '',
-		currentTimespan: { start: 0, end: 100 },
-		target: 'All variables',
-		lowerBound: 0
+		timepoints: { lb: 0, ub: 100 },
+		variables: []
 	};
 	state.constraintGroups.push(newGroup);
 

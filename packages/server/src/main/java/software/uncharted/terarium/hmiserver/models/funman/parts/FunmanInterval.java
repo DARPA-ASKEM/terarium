@@ -13,4 +13,6 @@ public class FunmanInterval {
 	private Double ub; //Upper bound
 	@TSOptional
 	private Double lb;  //Lower Bound
+	@TSOptional
+	private Boolean closed_upper_bound;
 }

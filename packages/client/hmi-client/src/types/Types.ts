@@ -412,6 +412,7 @@ export interface FunmanConfig {
 export interface FunmanInterval {
     ub?: number;
     lb?: number;
+    closed_upper_bound?: boolean;
 }
 
 export interface FunmanParameter {

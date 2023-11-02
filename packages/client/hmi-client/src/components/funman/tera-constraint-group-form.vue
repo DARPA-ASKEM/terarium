@@ -9,13 +9,16 @@
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
 			/>
 			<label for="target">Target</label>
-			<!-- TODO: This needs to be a dropdown -->
-			<InputText
-				id="target"
-				v-model="target"
-				placeholder="target variables"
-				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
-			/>
+			<MultiSelect
+				id="variables-select"
+				v-model="variables"
+				:options="props.modelNodeOptions"
+				placeholder="Model states"
+				display="chip"
+				@update:model-value="
+					emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+				"
+			></MultiSelect>
 		</div>
 		<div class="second-row">
 			<label for="start">Start time</label>
@@ -34,12 +37,12 @@
 import { ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-// import MultiSelect from 'primevue/multiselect';
+import MultiSelect from 'primevue/multiselect';
 // import InputSwitch from 'primevue/inputswitch';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
 
 const props = defineProps<{
-	// modelNodeOptions: string[];
+	modelNodeOptions: string[];
 	config: ConstraintGroup;
 	index: number;
 }>();
@@ -47,21 +50,20 @@ const props = defineProps<{
 const emit = defineEmits(['delete-self', 'update-self']);
 
 const constraintName = ref(props.config.name);
-const upperBound = ref(props.config.upperBound);
-const lowerBound = ref(props.config.lowerBound);
-const startTime = ref(props.config.currentTimespan.start);
-const endTime = ref(props.config.currentTimespan.end);
-const target = ref(props.config.target);
+const upperBound = ref(props.config.interval?.ub);
+const lowerBound = ref(props.config.interval?.lb);
+const startTime = ref(props.config.timepoints?.lb);
+const endTime = ref(props.config.timepoints?.ub);
+const variables = ref(props.config.variables);
 
 const updatedConfig = computed<ConstraintGroup>(
 	() =>
 		({
 			borderColour: props.config.borderColour,
 			name: constraintName.value,
-			target: target.value,
+			variables: variables.value,
 			currentTimespan: { start: startTime.value, end: endTime.value },
-			lowerBound: lowerBound.value,
-			upperBound: upperBound.value
+			interval: { lb: lowerBound.value, ub: upperBound.value }
 		} as ConstraintGroup)
 );
 </script>
