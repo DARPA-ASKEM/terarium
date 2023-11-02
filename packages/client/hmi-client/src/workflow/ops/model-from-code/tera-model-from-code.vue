@@ -52,6 +52,7 @@
 						@change="setKernelContext"
 				/></span>
 				<Button
+					:disabled="isProcessing"
 					label="Run"
 					icon="pi pi-play"
 					severity="secondary"
@@ -71,10 +72,8 @@
 						:options="modelFrameworks"
 					/>
 				</header>
-				<div class="flex flex-column gap-2">
-					<label>Model name</label>
-					<InputText v-model="modelName" />
-				</div>
+				<div>Processing: {{ isProcessing }}</div>
+
 				<template v-if="selectedModelFramework === ModelFramework.Petrinet">
 					<!--Potentially put tera-model-diagram here just for petrinets-->
 					<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
@@ -82,6 +81,10 @@
 				<template v-if="selectedModelFramework === ModelFramework.Decapodes">
 					<div :innerHTML="previewHTML" />
 				</template>
+				<div class="flex flex-column gap-2">
+					<label>Model name</label>
+					<InputText v-model="modelName" />
+				</div>
 			</section>
 			<footer>
 				<Button
@@ -135,10 +138,12 @@ enum ModelFramework {
 	Decapodes = 'Decapodes'
 }
 
+const isProcessing = ref(false);
+
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const modelName = ref('');
 const programmingLanguages = Object.values(ProgrammingLanguage);
-const selectedProgrammingLanguage = ref(ProgrammingLanguage.Python);
+const selectedProgrammingLanguage = ref(ProgrammingLanguage.Julia);
 const modelFrameworks = Object.values(ModelFramework);
 const selectedModelFramework = ref(
 	isEmpty(props.node.state.modelFramework)
@@ -209,6 +214,8 @@ function handleCode() {
 	if (!kernel) {
 		return;
 	}
+	isProcessing.value = true;
+
 	const code = editor.value?.getValue();
 	const compileExprMessage: JupyterMessage = createMessage({
 		session: jupyterSession?.value?.name || '',
@@ -276,6 +283,7 @@ const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'compile_expr_response') {
 		modelValid.value = true;
 	} else if (message.header.msg_type === 'decapodes_preview') {
+		isProcessing.value = false;
 		console.log('Decapode preview', message.content);
 		previewHTML.value = message.content['image/svg'];
 	} else if (message.header.msg_type === 'construct_amr_response') {
