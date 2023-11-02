@@ -421,9 +421,9 @@ header > section > button {
 .filter-and-sort {
 	position: sticky;
 	z-index: 1;
-	background-color: #e9e9e9;
-	border-top: 1px solid var(--surface-border);
-	border-bottom: 1px solid var(--surface-border);
+	background-color: #f4f4f4;
+	border-top: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border-light);
 	padding: 16px;
 	display: flex;
 	justify-content: space-between;
