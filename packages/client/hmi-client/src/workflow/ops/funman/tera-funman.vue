@@ -44,7 +44,7 @@
 					:disabled="true"
 					class="p-inputtext-sm"
 					inputId="integeronly"
-					v-model="calculatedStepList"
+					v-model="calculatedStepListString"
 				/>
 			</div>
 
@@ -107,7 +107,6 @@ import { getModel } from '@/services/model';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 // TODO List:
-// 1) Fix calculatedStepList
 // 2) computedParameters
 // 3) modelParameters
 // 4) fix constraintGroups typing
@@ -126,7 +125,8 @@ const tolerance = ref(props.node.state.tolerance);
 const startTime = ref(props.node.state.currentTimespan.start);
 const endTime = ref(props.node.state.currentTimespan.end);
 const numberOfSteps = ref(props.node.state.numSteps);
-const calculatedStepList = computed(() => '[1,2,3]'); // TOM TODO
+const calculatedStepList = computed(() => getStepList());
+const calculatedStepListString = computed(() => calculatedStepList.value.join()); // Just used to display. dont like this but need to be quick
 // TOM TODO
 const computedParameters = computed(() => [
 	{
@@ -242,6 +242,18 @@ const updateConstraintGroupForm = (data) => {
 		state
 	});
 };
+
+// Used to set calculatedStepList.
+// Grab startTime, endTime, numberOfSteps and create list.
+function getStepList() {
+	const aList = [startTime.value];
+	const stepSize = (endTime.value - startTime.value) / numberOfSteps.value;
+	for (let i = 1; i < numberOfSteps.value - 1; i++) {
+		aList[i] = i * stepSize;
+	}
+	aList.push(endTime.value);
+	return aList;
+}
 
 // Set model, modelConfiguration, modelNodeOptions
 
