@@ -256,7 +256,13 @@ const runCalibrate = async () => {
 }; */
 
 function getMessageHandler(event: ClientEvent<any>) {
-	console.log(event);
+	const runIds: string[] = querySimulationInProgress(props.node);
+	if (runIds.length === 0) return;
+
+	if (runIds.includes(event.data.id)) {
+		// perform some action here
+		console.log(`Event received for: ${event.data.id}`);
+	}
 }
 
 const getStatus = async (simulationId: string) => {
@@ -270,11 +276,7 @@ const getStatus = async (simulationId: string) => {
 	const runIds = [simulationId];
 
 	// open a connection for each run id and handle the messages
-	// runIds.forEach((id) => {
-	//	eventSourceManager.openConnection(id, `/simulations/${id}/ciemss/partial-result`);
-	//	eventSourceManager.setMessageHandler(id, handlingProgress);
-	// });
-	await subscribe(ClientEventType.Simulation, getMessageHandler);
+	await subscribe(ClientEventType.SimulationPyciemss, getMessageHandler);
 
 	poller
 		.setInterval(3000)
@@ -284,8 +286,7 @@ const getStatus = async (simulationId: string) => {
 	const pollerResults = await poller.start();
 
 	// closing event source connections
-	// runIds.forEach((id) => eventSourceManager.closeConnection(id));
-	await unsubscribe(ClientEventType.Simulation, getMessageHandler);
+	await unsubscribe(ClientEventType.SimulationPyciemss, getMessageHandler);
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now

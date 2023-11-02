@@ -3,5 +3,6 @@ package software.uncharted.terarium.hmiserver.models;
 public enum ClientEventType {
 	HEARTBEAT,
 	NOTIFICATION,
-  SIMULATION
+  	SIMULATION_SCIML,
+	SIMULATION_PYCIEMSS
 }

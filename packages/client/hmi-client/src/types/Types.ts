@@ -938,7 +938,8 @@ export enum EvaluationScenarioStatus {
 export enum ClientEventType {
     Heartbeat = "HEARTBEAT",
     Notification = "NOTIFICATION",
-    Simulation = "SIMULATION",
+    SimulationSciml = "SIMULATION_SCIML",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
 }
 
 export enum FileType {

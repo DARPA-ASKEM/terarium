@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 
 import java.io.IOException;
 
@@ -21,8 +24,8 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 public class SimulationEventService {
-
-  private final ServerSentEventService serverSentEventService;
+    private final ObjectMapper mapper;
+  private final ClientEventService clientEventService;
 
   private final Config config;
   private final RabbitTemplate rabbitTemplate;
@@ -53,24 +56,10 @@ public class SimulationEventService {
     exclusive = true,
     concurrency = "1")
   private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
-    final JsonNode messageJson = ServerSentEventService.decodeMessage(message, JsonNode.class);
-    if (messageJson == null) {
-      ServerSentEventService.nack(message, channel);
-      return;
-    }
-    final SseEmitter emitter = serverSentEventService.getUserIdToEmitter().get(messageJson.at("/userId").asText());
-    synchronized (serverSentEventService.getUserIdToEmitter()) {
-      if (emitter != null) {
-        try {
-          emitter.send(messageJson);
-        } catch (IllegalStateException | ClientAbortException e) {
-          log.warn("Error sending user message to user {}. User likely disconnected", messageJson.at("/userId").asText());
-          serverSentEventService.getUserIdToEmitter().remove(messageJson.at("/userId").asText());
-        } catch (IOException e) {
-          log.error("Error sending user message to user {}", messageJson.at("/userId").asText(), e);
-        }
-      }
-    }
+		final JsonNode messageJson = decodeMessage(message);
+
+		ClientEvent<Object> status = ClientEvent.builder().type(ClientEventType.SIMULATION_SCIML).data(messageJson).build();
+		clientEventService.sendToAllUsers(status);
   }
 
   /**
@@ -85,23 +74,17 @@ public class SimulationEventService {
           concurrency = "1")
   private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
     //SimulationIntermediateResultsCiemss
-    final JsonNode messageJson = ServerSentEventService.decodeMessage(message, JsonNode.class);
-    if (messageJson == null) {
-      ServerSentEventService.nack(message, channel);
-      return;
-    }
-    final SseEmitter emitter = serverSentEventService.getUserIdToEmitter().get(messageJson.at("/userId").asText());
-    synchronized (serverSentEventService.getUserIdToEmitter()) {
-      if (emitter != null) {
-        try {
-          emitter.send(messageJson);
-        } catch (IllegalStateException | ClientAbortException e) {
-          log.warn("Error sending user message to user {}. User likely disconnected", messageJson.at("/userId").asText());
-          serverSentEventService.getUserIdToEmitter().remove(messageJson.at("/userId").asText());
-        } catch (IOException e) {
-          log.error("Error sending user message to user {}", messageJson.at("/userId").asText(), e);
-        }
-      }
-    }
+		final JsonNode messageJson = decodeMessage(message);
+		ClientEvent<Object> status = ClientEvent.builder().type(ClientEventType.SIMULATION_PYCIEMSS).data(messageJson).build();
+		clientEventService.sendToAllUsers(status);
   }
+
+private JsonNode decodeMessage(final Message message) {
+    try {
+        return mapper.readValue(message.getBody(), JsonNode.class);
+    } catch (IOException e) {
+        log.error("Error decoding message", e);
+        return null;
+    }
+}
 }
