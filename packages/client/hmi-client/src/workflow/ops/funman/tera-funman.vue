@@ -24,7 +24,7 @@
 			<p class="secondary-text">
 				The validator will use these parameters to execute the sanity checks.
 			</p>
-			<div class="first-row">
+			<div class="button-row">
 				<label>Tolerance</label>
 				<InputNumber
 					mode="decimal"
@@ -33,23 +33,30 @@
 					v-model="tolerance"
 				/>
 			</div>
-			<div class="second-row">
-				<label>Start time</label>
-				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
-				<label>End time</label>
-				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="endTime" />
-				<label>Number of steps</label>
-				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numberOfSteps" />
-				<InputText
-					:disabled="true"
-					class="p-inputtext-sm"
-					inputId="integeronly"
-					v-model="calculatedStepListString"
-				/>
+			<div class="section-row">
+				<div class="button-row">
+					<label>Start time</label>
+					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
+				</div>
+				<div class="button-row">
+					<label>End time</label>
+					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="endTime" />
+				</div>
+				<div class="button-row">
+					<label>Number of steps</label>
+					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numberOfSteps" />
+				</div>
 			</div>
-
-			<h4>Add sanity checks</h4>
-			<p>Model configurations will be tested against these constraints</p>
+			<InputText
+				:disabled="true"
+				class="p-inputtext-sm"
+				inputId="integeronly"
+				v-model="requestStepListString"
+			/>
+			<div class="spacer">
+				<h4>Add sanity checks</h4>
+				<p>Model configurations will be tested against these constraints</p>
+			</div>
 			<tera-constraint-group-form
 				v-for="(cfg, index) in node.state.constraintGroups"
 				:key="index"
@@ -76,7 +83,9 @@
 	<div v-else class="container">
 		<div class="left-side">
 			<!-- TODO: Are we demoing notebook? -->
-			<!-- <InputText v-model="sampleRequest"/> -->
+			<p>{{ requestConstraints }}</p>
+			>
+			<!-- <p> {{ sampleRequest }} </p> -->
 		</div>
 		<div class="right-side">
 			<div v-if="false">
@@ -105,11 +114,11 @@ import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
+import { useToastService } from '@/services/toast';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 // TODO List:
 // 2) computedParameters
-// 4) fix constraintGroups typing -> mostly just adding weights, and if 1 variable then change it to linear
 // 5) fix css for overlow
 
 const props = defineProps<{
@@ -120,15 +129,17 @@ enum FunmanTabs {
 	wizard,
 	notebook
 }
+const toast = useToastService();
+
 const activeTab = ref(FunmanTabs.wizard);
 const tolerance = ref(props.node.state.tolerance);
 const startTime = ref(props.node.state.currentTimespan.start);
 const endTime = ref(props.node.state.currentTimespan.end);
 const numberOfSteps = ref(props.node.state.numSteps);
-const calculatedStepList = computed(() => getStepList());
-const calculatedStepListString = computed(() => calculatedStepList.value.join()); // Just used to display. dont like this but need to be quick
+const requestStepList = computed(() => getStepList());
+const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 // TOM TODO
-const computedParameters = computed(() => [
+const requestParameters = computed(() => [
 	{
 		name: 'beta',
 		interval: {
@@ -170,6 +181,29 @@ const computedParameters = computed(() => [
 		label: 'any'
 	}
 ]);
+
+const requestConstraints = computed(() =>
+	props.node.state.constraintGroups.map((ele) => {
+		if (ele.variables.length === 0) {
+			// State Variable Constraint
+			return {
+				name: ele.name,
+				variable: ele.variables[0],
+				interval: ele.interval,
+				timepoints: ele.timepoints
+			};
+		}
+		return {
+			// Linear Constraint
+			name: ele.name,
+			variables: ele.variables,
+			weights: ele.weights,
+			interval: ele.interval,
+			timepoints: ele.timepoints
+		};
+	})
+);
+
 const response = ref();
 const model = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
@@ -179,20 +213,20 @@ const modelNodeOptions = ref<string[]>([]);
 
 const runMakeQuery = async () => {
 	if (!model.value) {
-		console.log('No Model provided');
+		toast.error('', 'No Model provided for request');
 		return;
 	}
 
 	const request: FunmanPostQueriesRequest = {
 		model: model.value,
 		request: {
-			constraints: props.node.state.constraintGroups,
-			parameters: computedParameters.value,
+			constraints: requestConstraints.value,
+			parameters: requestParameters.value,
 			structure_parameters: {
 				name: 'schedules',
 				schedules: [
 					{
-						timepoints: calculatedStepList.value
+						timepoints: requestStepList.value
 					}
 				]
 			}
@@ -242,7 +276,7 @@ const updateConstraintGroupForm = (data) => {
 	});
 };
 
-// Used to set calculatedStepList.
+// Used to set requestStepList.
 // Grab startTime, endTime, numberOfSteps and create list.
 function getStepList() {
 	const aList = [startTime.value];
@@ -286,6 +320,9 @@ watch(
 	margin-top: 1rem;
 }
 .left-side {
+	display: flex;
+	flex-direction: column;
+	overflow: auto;
 	width: 45%;
 	padding-right: 2.5%;
 }
@@ -335,19 +372,25 @@ watch(
 	letter-spacing: 0.01563rem;
 }
 
-.first-row {
+.button-row {
 	display: flex;
+	flex-direction: column;
 	padding: 1rem 0rem 0.5rem 0rem;
 	align-items: flex-start;
-	gap: 2.5rem;
 	align-self: stretch;
 }
 
-.second-row {
+.section-row {
 	display: flex;
+	/* flex-direction: column; */
 	padding: 0.5rem 0rem;
 	align-items: center;
 	gap: 0.8125rem;
 	align-self: stretch;
+}
+
+.spacer {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
 }
 </style>

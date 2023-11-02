@@ -1,6 +1,6 @@
 <template>
 	<div class="constraint-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
-		<div class="first-row">
+		<div class="button-row">
 			<label for="constraint-name">Name of constraint</label>
 			<InputText
 				id="constraint-name"
@@ -20,15 +20,23 @@
 				"
 			></MultiSelect>
 		</div>
-		<div class="second-row">
-			<label for="start">Start time</label>
-			<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
-			<label for="end">End time</label>
-			<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="endTime" />
-			<label for="lower">Lower bound</label>
-			<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="lowerBound" />
-			<label for="upper">Upper bound</label>
-			<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="upperBound" />
+		<div class="section-row">
+			<div class="button-row">
+				<label for="start">Start time</label>
+				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
+			</div>
+			<div class="button-row">
+				<label for="end">End time</label>
+				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="endTime" />
+			</div>
+			<div class="button-row">
+				<label for="lower">Lower bound</label>
+				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="lowerBound" />
+			</div>
+			<div class="button-row">
+				<label for="upper">Upper bound</label>
+				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="upperBound" />
+			</div>
 		</div>
 	</div>
 </template>
@@ -91,9 +99,23 @@ const updatedConfig = computed<ConstraintGroup>(
 	align-self: stretch;
 }
 
-.first-row {
+.button-row {
 	display: flex;
+	flex-direction: column;
+	padding: 1rem 0rem 0.5rem 0rem;
+	align-items: flex-start;
+	align-self: stretch;
 }
+
+.section-row {
+	display: flex;
+	/* flex-direction: column; */
+	padding: 0.5rem 0rem;
+	align-items: center;
+	gap: 0.8125rem;
+	align-self: stretch;
+}
+
 .age-group {
 	display: flex;
 	flex-direction: column;
