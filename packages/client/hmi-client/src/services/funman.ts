@@ -8,7 +8,6 @@ export const processFunman = (result: any) => {
 	// "dataframes"
 	// const boxes = [['id', 'label', 'timestep', ...params]];
 	const points = [['id', 'label', 'box_id', ...params]];
-	// const trajs = [['box_id', 'point_id', 'timestep_id', 'time', ...states]];
 
 	const boxes: any[] = [];
 	const trajs: any[] = [];
@@ -32,7 +31,7 @@ export const processFunman = (result: any) => {
 			label: box.label,
 			timestep: box.bounds.timestep
 		};
-		params.forEacth((p: any) => {
+		params.forEach((p: any) => {
 			temp[p] = [box.bounds[p].lb, box.bounds[p].ub];
 		});
 		boxes.push(temp);
@@ -65,8 +64,6 @@ export const processFunman = (result: any) => {
 			].sort((a, b) => a - b);
 
 			timesteps.forEach((t) => {
-				// box_id, point_id, timestep_id, time, state values
-				// const stateVals = states.map((s: string) => filteredVals[`${s}_${t}`]);
 				const traj: any = {
 					boxId,
 					pointId: point.id,
@@ -76,7 +73,6 @@ export const processFunman = (result: any) => {
 					traj[s] = filteredVals[`${s}_${t}`];
 				});
 				trajs.push(traj);
-				// trajs.push([box.id, point.id, t, filteredVals[`timer_t_${t}`], ...stateVals]);
 			});
 		});
 	});
@@ -120,7 +116,7 @@ export const renderFumanTrajectories = (
 	const points = trajs.filter((d: any) => d.boxId === boxId);
 
 	// FIXME: domain
-	const xScale = d3.scaleLinear().domain([0, 1]).range([0, width]);
+	const xScale = d3.scaleLinear().domain([0, 10]).range([0, width]);
 	const yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]);
 
 	const pathFn = d3
@@ -131,6 +127,10 @@ export const renderFumanTrajectories = (
 
 	states.forEach((s: string) => {
 		const path = points.map((p: any) => ({ x: p.t, y: p[s] }));
+		console.log(
+			s,
+			path.map((p) => p.y)
+		);
 		group.append('path').attr('d', pathFn(path)).style('stroke', '#888').style('fill', 'none');
 	});
 };
@@ -178,15 +178,15 @@ export const createBoundaryChart = (
 		.domain([maxY, minY]) // input domain (inverted)
 		.range([0, height]); // output range (inverted)
 
-	const drawRects = (data, fill) => {
+	const drawRects = (data: any, fill: string) => {
 		g.selectAll('.rect')
 			.data(data)
 			.enter()
 			.append('rect')
 			.attr('x', (d: any) => xScale(d.x1))
-			.attr('y', (d: any) => yScale(d.y2)) // (inverted)
+			.attr('y', (d: any) => yScale(d.y2))
 			.attr('width', (d: any) => xScale(d.x2) - xScale(d.x1))
-			.attr('height', (d: any) => yScale(d.y1) - yScale(d.y2)) // (inverted)
+			.attr('height', (d: any) => yScale(d.y1) - yScale(d.y2))
 			.attr('stroke', 'black')
 			.attr('fill-opacity', 0.5)
 			.attr('fill', fill);
