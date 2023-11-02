@@ -34,6 +34,14 @@
 				/>
 			</div>
 			<div class="section-row">
+				<!-- This will definitely require a proper tool tip. -->
+				<label>Select parameters to synthesize<i class="pi pi-info-circle" /></label>
+				<div v-for="(parameter, index) of requestParameters" :key="index" class="button-row">
+					<label>{{ parameter.name }}</label>
+					<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
+				</div>
+			</div>
+			<div class="section-row">
 				<div class="button-row">
 					<label>Start time</label>
 					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
@@ -84,7 +92,6 @@
 		<div class="left-side">
 			<!-- TODO: Are we demoing notebook? -->
 			<p>{{ requestConstraints }}</p>
-			>
 			<!-- <p> {{ sampleRequest }} </p> -->
 		</div>
 		<div class="right-side">
@@ -106,8 +113,9 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
+import Dropdown from 'primevue/dropdown';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
-import { makeQueries } from '@/services/models/funman-service';
+import { getQueries, makeQueries } from '@/services/models/funman-service';
 // import { request } from '@/temp/funmanRequest';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
@@ -118,7 +126,6 @@ import { useToastService } from '@/services/toast';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 // TODO List:
-// 2) computedParameters
 // 5) fix css for overlow
 
 const props = defineProps<{
@@ -132,57 +139,15 @@ enum FunmanTabs {
 const toast = useToastService();
 
 const activeTab = ref(FunmanTabs.wizard);
+const labelOptions = ['any', 'all'];
 const tolerance = ref(props.node.state.tolerance);
 const startTime = ref(props.node.state.currentTimespan.start);
 const endTime = ref(props.node.state.currentTimespan.end);
 const numberOfSteps = ref(props.node.state.numSteps);
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
-// TOM TODO
-const requestParameters = computed(() => [
-	{
-		name: 'beta',
-		interval: {
-			lb: 1e-8,
-			ub: 0.01
-		},
-		label: 'all'
-	},
-	{
-		name: 'gamma',
-		interval: {
-			lb: 0.1,
-			ub: 0.18
-		},
-		label: 'all'
-	},
-	{
-		name: 'S0',
-		interval: {
-			lb: 999,
-			ub: 999
-		},
-		label: 'any'
-	},
-	{
-		name: 'I0',
-		interval: {
-			lb: 1,
-			ub: 1
-		},
-		label: 'any'
-	},
-	{
-		name: 'R0',
-		interval: {
-			lb: 0,
-			ub: 0
-		},
-		label: 'any'
-	}
-]);
-
 const requestConstraints = computed(() =>
+	// Same as node state's except typing for state vs linear constraint
 	props.node.state.constraintGroups.map((ele) => {
 		if (ele.variables.length === 0) {
 			// State Variable Constraint
@@ -203,11 +168,11 @@ const requestConstraints = computed(() =>
 		};
 	})
 );
-
+const requestParameters = ref();
 const response = ref();
-const model = ref<Model | null>(null);
+const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
-const modelNodeOptions = ref<string[]>([]);
+const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
 
 // const sampleRequest: FunmanPostQueriesRequest = request;
 
@@ -233,8 +198,13 @@ const runMakeQuery = async () => {
 		}
 	};
 
+	console.log('Hitting with the following request:');
+	console.log(request);
 	response.value = await makeQueries(request);
-	console.log(response.value);
+	console.log(response.value.id);
+	console.log('Getting results:');
+	const getResponse = await getQueries(response.value.id);
+	console.log(getResponse);
 };
 
 const addConstraintForm = () => {
@@ -297,7 +267,6 @@ watch(
 			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
 			if (modelConfiguration.value) {
 				model.value = await getModel(modelConfiguration.value.modelId);
-
 				const modelColumnNameOptions: string[] =
 					modelConfiguration.value.configuration.model.states.map((state) => state.id);
 				// add observables
@@ -307,6 +276,19 @@ watch(
 					});
 				}
 				modelNodeOptions.value = modelColumnNameOptions;
+
+				if (model.value && model.value.semantics?.ode.parameters) {
+					requestParameters.value = model.value.semantics?.ode.parameters.map((ele) => ({
+						name: ele.id,
+						interval: {
+							lb: ele.distribution?.parameters.minimum,
+							ub: ele.distribution?.parameters.maximum
+						},
+						label: 'any'
+					}));
+				} else {
+					toast.error('', 'Provided model has no parameters');
+				}
 			}
 		}
 	},
@@ -315,6 +297,10 @@ watch(
 </script>
 
 <style>
+main {
+	overflow: auto;
+}
+
 .container {
 	display: flex;
 	margin-top: 1rem;
@@ -323,7 +309,7 @@ watch(
 	display: flex;
 	flex-direction: column;
 	overflow: auto;
-	width: 45%;
+	width: 55%;
 	padding-right: 2.5%;
 }
 .left-side h1 {
@@ -346,14 +332,13 @@ watch(
 	letter-spacing: 0.01563rem;
 }
 .right-side {
-	width: 45%;
+	width: 35%;
 	padding-left: 2.5%;
 }
 
 .primary-text {
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */
-	font-family: Inter;
 	font-size: 1rem;
 	font-style: normal;
 	font-weight: 600;
@@ -364,7 +349,6 @@ watch(
 .secondary-text {
 	color: var(--Text-Secondary, #667085);
 	/* Body Small/Regular */
-	font-family: Figtree;
 	font-size: 0.875rem;
 	font-style: normal;
 	font-weight: 400;

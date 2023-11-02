@@ -19,6 +19,26 @@
 					emit('update-self', { index: props.index, updatedConfig: updatedConfig })
 				"
 			></MultiSelect>
+			<label for="weights">Weights</label>
+			<div v-for="(variable, index) of variables" :key="index">
+				<div class="button-row">
+					<label v-if="weights">
+						{{ variable + ' Weight' }}
+					</label>
+					<InputNumber
+						v-if="weights"
+						:key="index"
+						:placeholder="variable"
+						mode="decimal"
+						:min-fraction-digits="3"
+						:max-fraction-digits="3"
+						v-model="weights[index]"
+						@update:model-value="
+							emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+						"
+					/>
+				</div>
+			</div>
 		</div>
 		<div class="section-row">
 			<div class="button-row">
@@ -42,12 +62,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { watch, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 // import InputSwitch from 'primevue/inputswitch';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
+
+// TODO: Need to add weights
 
 const props = defineProps<{
 	modelNodeOptions: string[];
@@ -63,6 +85,7 @@ const lowerBound = ref(props.config.interval?.lb);
 const startTime = ref(props.config.timepoints?.lb);
 const endTime = ref(props.config.timepoints?.ub);
 const variables = ref(props.config.variables);
+const weights = ref(props.config.weights);
 
 const updatedConfig = computed<ConstraintGroup>(
 	() =>
@@ -70,9 +93,18 @@ const updatedConfig = computed<ConstraintGroup>(
 			borderColour: props.config.borderColour,
 			name: constraintName.value,
 			variables: variables.value,
+			weights: weights.value,
 			currentTimespan: { start: startTime.value, end: endTime.value },
 			interval: { lb: lowerBound.value, ub: upperBound.value }
 		} as ConstraintGroup)
+);
+
+watch(
+	() => variables.value,
+	async () => {
+		weights.value = Array<number>(props.config.variables.length).fill(0);
+	},
+	{ immediate: true }
 );
 </script>
 
