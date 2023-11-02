@@ -108,7 +108,6 @@ import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 // TODO List:
 // 2) computedParameters
-// 3) modelParameters
 // 4) fix constraintGroups typing
 // 5) fix css for overlow
 
@@ -256,8 +255,6 @@ function getStepList() {
 }
 
 // Set model, modelConfiguration, modelNodeOptions
-
-// TOM TODO: modelParameters should probably be here right?
 watch(
 	() => props.node.inputs[0],
 	async () => {
