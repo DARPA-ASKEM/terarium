@@ -21,8 +21,8 @@ const boxId = 'box2';
 onMounted(() => {
 	const processedData = processFunman(funModel);
 
-	const width = 300;
-	const height = 200;
+	const width = 800;
+	const height = 250;
 	const param1 = 'beta';
 	const param2 = 'gamma';
 	createBoundaryChart(boxRef.value, processedData, param1, param2, timestep, { width, height });

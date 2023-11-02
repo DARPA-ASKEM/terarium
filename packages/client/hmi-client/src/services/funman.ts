@@ -73,7 +73,7 @@ export const processFunman = (result: any) => {
 				const traj: any = {
 					boxId,
 					pointId: point.id,
-					t
+					timestep: t
 				};
 				states.forEach((s) => {
 					traj[s] = filteredVals[`${s}_${t}`];
@@ -87,6 +87,7 @@ export const processFunman = (result: any) => {
 };
 
 interface FunmanBox {
+	id: string;
 	x1: number;
 	y1: number;
 	x2: number;
@@ -105,6 +106,7 @@ export const getBoxes = (
 		.filter((d: any) => d.timestep.ub === timestep)
 		.forEach((d: any) => {
 			result.push({
+				id: d.id,
 				x1: d[param1][0],
 				x2: d[param1][1],
 				y1: d[param2][0],
@@ -144,11 +146,7 @@ export const renderFumanTrajectories = (
 		.curve(d3.curveBasis);
 
 	states.forEach((s: string) => {
-		const path = points.map((p: any) => ({ x: p.t, y: p[s] }));
-		console.log(
-			s,
-			path.map((p) => p.y)
-		);
+		const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
 		group.append('path').attr('d', pathFn(path)).style('stroke', '#888').style('fill', 'none');
 	});
 };
@@ -193,8 +191,8 @@ export const createBoundaryChart = (
 
 	const yScale = d3
 		.scaleLinear()
-		.domain([maxY, minY]) // input domain (inverted)
-		.range([0, height]); // output range (inverted)
+		.domain([minY, maxY]) // input domain (inverted)
+		.range([height, 0]); // output range (inverted)
 
 	g.selectAll('.true-box')
 		.data(trueBoxes)
@@ -215,6 +213,16 @@ export const createBoundaryChart = (
 		.attr('y', (d) => yScale(d.y2))
 		.attr('width', (d) => xScale(d.x2) - xScale(d.x1))
 		.attr('height', (d) => yScale(d.y1) - yScale(d.y2))
-		.attr('stroke', 'black')
+		.attr('stroke', '#888')
 		.attr('fill-opacity', 0.5);
+
+	g.selectAll('text')
+		.data([...trueBoxes, ...falseBoxes])
+		.enter()
+		.append('text')
+		.attr('x', (d) => xScale(d.x1))
+		.attr('y', (d) => 15 + yScale(d.y2))
+		.style('stroke', 'none')
+		.style('fill', '#333')
+		.text((d) => d.id);
 };
