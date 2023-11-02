@@ -75,7 +75,7 @@
 	<div v-else class="container">
 		<div class="left-side">
 			<!-- TODO: Are we demoing notebook? -->
-			<!-- <InputText type="text" v-model="sampleRequest"/> -->
+			<!-- <InputText v-model="sampleRequest"/> -->
 		</div>
 		<div class="right-side">
 			<div v-if="false">
@@ -96,12 +96,22 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-// import { FunmanPostQueriesRequest } from '@/types/Types';
-// import { makeQueries } from '@/services/models/funman-service';
+import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
+import { makeQueries } from '@/services/models/funman-service';
+// import { request } from '@/temp/funmanRequest';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModel } from '@/services/model';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
+
+// TODO List:
+// 1) Fix calculatedStepList
+// 2) computedParameters
+// 3) modelParameters
+// 4) fix constraintGroups typing
+// 5) fix css for overlow
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -117,14 +127,80 @@ const startTime = ref(props.node.state.currentTimespan.start);
 const endTime = ref(props.node.state.currentTimespan.end);
 const numberOfSteps = ref(props.node.state.numSteps);
 const calculatedStepList = computed(() => '[1,2,3]'); // TOM TODO
+// TOM TODO
+const computedParameters = computed(() => [
+	{
+		name: 'beta',
+		interval: {
+			lb: 1e-8,
+			ub: 0.01
+		},
+		label: 'all'
+	},
+	{
+		name: 'gamma',
+		interval: {
+			lb: 0.1,
+			ub: 0.18
+		},
+		label: 'all'
+	},
+	{
+		name: 'S0',
+		interval: {
+			lb: 999,
+			ub: 999
+		},
+		label: 'any'
+	},
+	{
+		name: 'I0',
+		interval: {
+			lb: 1,
+			ub: 1
+		},
+		label: 'any'
+	},
+	{
+		name: 'R0',
+		interval: {
+			lb: 0,
+			ub: 0
+		},
+		label: 'any'
+	}
+]);
+const response = ref();
+const model = ref<Model | null>(null);
+const modelConfiguration = ref<ModelConfiguration>();
+const modelNodeOptions = ref<string[]>([]);
 
-// const sampleRequest: FunmanPostQueriesRequest = {
-
-// }
+// const sampleRequest: FunmanPostQueriesRequest = request;
 
 const runMakeQuery = async () => {
-	// const response = await makeQueries(sampleRequest);
-	console.log('TODO');
+	if (!model.value) {
+		console.log('No Model provided');
+		return;
+	}
+
+	const request: FunmanPostQueriesRequest = {
+		model: model.value,
+		request: {
+			constraints: props.node.state.constraintGroups,
+			parameters: computedParameters.value,
+			structure_parameters: {
+				name: 'schedules',
+				schedules: [
+					{
+						timepoints: calculatedStepList.value
+					}
+				]
+			}
+		}
+	};
+
+	response.value = await makeQueries(request);
+	console.log(response.value);
 };
 
 const addConstraintForm = () => {
@@ -168,6 +244,8 @@ const updateConstraintGroupForm = (data) => {
 };
 
 // Set model, modelConfiguration, modelNodeOptions
+
+// TOM TODO: modelParameters should probably be here right?
 watch(
 	() => props.node.inputs[0],
 	async () => {

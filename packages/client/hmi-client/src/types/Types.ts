@@ -409,10 +409,21 @@ export interface FunmanConfig {
     normalizationConstant?: number;
 }
 
+export interface FunmanInterval {
+    ub: number;
+    lb: number;
+}
+
+export interface FunmanParameter {
+    name: string;
+    interval: FunmanInterval;
+    label: string;
+}
+
 export interface FunmanWorkRequest {
     query?: any;
     constraints?: any;
-    parameters?: any;
+    parameters?: FunmanParameter[];
     config?: FunmanConfig;
     structure_parameters?: any;
 }

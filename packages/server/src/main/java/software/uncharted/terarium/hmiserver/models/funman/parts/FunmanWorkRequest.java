@@ -5,6 +5,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import java.util.List;
 
 @Data
 @Accessors(chain = true)
@@ -15,7 +16,7 @@ public class FunmanWorkRequest {
 	@TSOptional
 	private JsonNode constraints;
 	@TSOptional
-	private JsonNode parameters;
+	private List<FunmanParameter> parameters;
 	@TSOptional
 	private FunmanConfig config;
 	@TSOptional
