@@ -5,7 +5,33 @@
 			<SelectButton v-model="view" :options="views" />
 		</header>
 		<DataTable
-			v-if="view === View.USER"
+			v-if="view === View.USER && !users"
+			class="p-datatable-sm user"
+			:value="Array.from(Array(10).keys())"
+		>
+			<Column header="Email">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+			<Column header="First name">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+			<Column header="Last name">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+			<Column header="Roles">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+		</DataTable>
+		<DataTable
+			v-if="view === View.USER && users"
 			:value="users"
 			v-model:selection="selectedUserRow"
 			selectionMode="single"
@@ -27,6 +53,7 @@
 							:options="systemRoles"
 							optionLabel="name"
 							@change="updateRoles"
+							:loading="loadingId === selectedId"
 						/>
 					</div>
 					<div v-else>
@@ -36,7 +63,18 @@
 			</Column>
 		</DataTable>
 		<DataTable
-			v-else-if="view === View.GROUP"
+			v-if="view === View.GROUP && !groupTableData"
+			class="p-datatable-sm group"
+			:value="Array.from(Array(10).keys())"
+		>
+			<Column header="Name">
+				<template #body>
+					<Skeleton></Skeleton>
+				</template>
+			</Column>
+		</DataTable>
+		<DataTable
+			v-if="view === View.GROUP && groupTableData"
 			v-model:expandedRows="expandedRows"
 			:value="groupTableData"
 			dataKey="id"
@@ -50,6 +88,33 @@
 			<Column field="name" header="Name" sortable></Column>
 			<template #expansion="groupSlotProps">
 				<DataTable
+					v-if="!groupSlotProps.data.permissionRelationships?.permissionUsers"
+					:value="Array.from(Array(10).keys())"
+					id="user"
+				>
+					<Column header="Email">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+					<Column header="First name">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+					<Column header="Last name">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+					<Column header="Permission">
+						<template #body>
+							<Skeleton></Skeleton>
+						</template>
+					</Column>
+				</DataTable>
+				<DataTable
+					v-if="groupSlotProps.data.permissionRelationships?.permissionUsers"
 					:value="groupSlotProps.data.permissionRelationships.permissionUsers"
 					id="user"
 					v-model:selection="selectedGroupUser"
@@ -59,19 +124,30 @@
 					<Column field="email" header="Email" sortable></Column>
 					<Column field="firstName" header="First name" sortable></Column>
 					<Column field="lastName" header="Last name" sortable></Column>
-					<!-- <Column field="relationship" header="Permission" sortable></Column> -->
-					<Column>
+					<Column header="Permission">
 						<template #body="groupUserSlotProps">
-							<div v-if="selectedGroupUser && selectedGroupUser.id === groupUserSlotProps.data.id">
-								<Dropdown
-									v-model="selectedGroupRelationship"
-									:options="groupRelationships"
-									@change="(event) => updateGroupUserRelationship(event, groupSlotProps.data.id)"
+							<section class="group-user-end-col">
+								<div
+									v-if="selectedGroupUser && selectedGroupUser.id === groupUserSlotProps.data.id"
+								>
+									<Dropdown
+										v-model="selectedGroupRelationship"
+										:options="groupRelationships"
+										@change="(event) => updateGroupUserRelationship(event, groupSlotProps.data.id)"
+										:loading="loadingId === selectedGroupUser.id"
+									/>
+								</div>
+								<div v-else>
+									{{ groupUserSlotProps.data.relationship }}
+								</div>
+								<Button
+									icon="pi pi-times"
+									rounded
+									text
+									class="p-button-icon-only remove-user"
+									@click="onRemoveUser(groupSlotProps.data.id, groupUserSlotProps.data.id)"
 								/>
-							</div>
-							<div v-else>
-								{{ groupUserSlotProps.data.relationship }}
-							</div>
+							</section>
 						</template>
 					</Column>
 				</DataTable>
@@ -85,10 +161,27 @@
 						class="w-full"
 						@update:model-value="(value) => onSelectUser(value.id)"
 					/>
-					<Button icon="pi pi-user" label="Add user" class="p-button" :disabled="!selectedUser" />
+					<Button
+						icon="pi pi-user"
+						label="Add user"
+						class="p-button"
+						:disabled="!selectedUser"
+						@click="addSelectedUserToGroup(groupSlotProps.data.id)"
+					/>
 				</section>
 			</template>
 		</DataTable>
+		<Dialog v-model:visible="isRemoveUserDialogVisible" modal header="Remove user">
+			<p>Are you sure you want to remove this user from the group?</p>
+			<template #footer>
+				<Button
+					label="Cancel"
+					class="p-button-secondary"
+					@click="isRemoveUserDialogVisible = false"
+				/>
+				<Button label="Remove project" @click="removeUserCallback" />
+			</template>
+		</Dialog>
 	</main>
 </template>
 
@@ -96,18 +189,23 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import DataTable, { DataTableRowSelectEvent } from 'primevue/datatable';
 import Column from 'primevue/column';
-import API from '@/api/api';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { PermissionGroup, PermissionUser } from '@/types/Types';
 import {
 	getAllGroups,
 	getGroup,
-	// addGroupUserPermissions,
-	updateGroupUserPermissions
+	addGroupUserPermissions,
+	updateGroupUserPermissions,
+	removeGroupUserPermissions
 } from '@/services/groups';
 import Button from 'primevue/button';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
+import { useToastService } from '@/services/toast';
+import Dialog from 'primevue/dialog';
+import Skeleton from 'primevue/skeleton';
+import { getUsers, addRole, removeRole } from '@/services/user';
+import { getRoles } from '@/services/roles';
 
 interface Role {
 	id: string;
@@ -121,7 +219,7 @@ enum View {
 
 // User admin table
 const systemRoles = ref<Role[]>([]);
-const users = ref();
+const users = ref<PermissionUser[] | null>(null);
 const selectedId = ref();
 const selectedUserRow = ref();
 const selectedRoles = ref<Role[]>([]);
@@ -132,70 +230,24 @@ const expandedRows = ref([]);
 const userDropdownValue = ref('');
 const selectedUser = ref<PermissionUser | null>();
 const usersMenu = computed(() =>
-	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+	users.value?.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
 );
 const selectedGroupUser = ref<PermissionUser | null>(null);
 const selectedGroupRelationship = ref('');
 let currentGroupRelationship = '';
 const groupRelationships = ref(['admin', 'member']);
+const loadingId = ref<string | null>(null);
+
+const isRemoveUserDialogVisible = ref(false);
+let removeUserCallback;
 
 const view = ref(View.USER);
 const views = [View.USER, View.GROUP];
 
-const getRoles = async () => {
-	try {
-		const response = await API.get('/roles');
-		if (response.status >= 200 && response.status < 300 && response.data) {
-			systemRoles.value = response.data.map(({ id, name }) => ({ id, name }));
-		}
-	} catch (err) {
-		console.log(err);
-	}
-	return null;
-};
-const getUsers = async () => {
-	try {
-		const response = await API.get('/users');
-		if (response.status >= 200 && response.status < 300) {
-			users.value = response.data;
-		}
-	} catch (err) {
-		console.log(err);
-	}
-	return null;
-};
-
 const onUserRowSelect = (event: DataTableRowSelectEvent) => {
-	selectedId.value = event.data.id;
-	selectedRoles.value = event.data.roles;
-};
-
-const addRole = async (role) => {
-	try {
-		const response = await API({
-			url: `/users/${selectedId.value}/roles/${role.name}`,
-			method: 'POST',
-			validateStatus: (status: number) => status < 400 //
-		});
-		if (response.status >= 200 && response.status < 300) {
-			await getUsers();
-		}
-	} catch (err) {
-		console.log(err);
-	}
-};
-const removeRole = async (role) => {
-	try {
-		const response = await API({
-			url: `/users/${selectedId.value}/roles/${role.name}`,
-			method: 'DELETE',
-			validateStatus: (status: number) => status < 400 //
-		});
-		if (response.status >= 200 && response.status < 300) {
-			getUsers();
-		}
-	} catch (err) {
-		console.log(err);
+	if (selectedId.value !== event.data.id) {
+		selectedId.value = event.data.id;
+		selectedRoles.value = event.data.roles;
 	}
 };
 
@@ -209,50 +261,64 @@ function getRoleNames(roles: Role[]) {
 	return names;
 }
 
-const updateRoles = () => {
+const updateRoles = async () => {
 	if (selectedId.value) {
-		const existingRoles = users.value.find((user) => user.id === selectedId.value).roles;
+		loadingId.value = selectedId.value;
+		const existingRoles = users.value?.find((user) => user.id === selectedId.value)?.roles;
 		const rolesToAdd =
 			selectedRoles.value.filter(
-				({ name }) => !existingRoles.map((role) => role.name).includes(name)
+				({ name }) => !existingRoles?.map((role) => role.name).includes(name)
 			) ?? [];
 		const rolesToRemove =
-			existingRoles.filter(
+			existingRoles?.filter(
 				({ name }) => !selectedRoles.value.map((role) => role.name).includes(name)
 			) ?? [];
-		rolesToAdd.forEach((role) => {
-			addRole(role);
-		});
-		rolesToRemove.forEach((role) => {
-			removeRole(role);
-		});
+		await Promise.all(rolesToAdd.map((role) => addRole(selectedId.value, role.name)));
+		await Promise.all(rolesToRemove.map((role) => removeRole(selectedId.value, role.name)));
+		users.value = await getUsers();
+		selectedUserRow.value = null;
+		loadingId.value = null;
 	}
 };
 
 const onRowExpand = async (event) => {
 	const selectedGroup = event.data as PermissionGroup;
-	const group = await getGroup(selectedGroup.id);
-	if (group) {
-		groupTableData.value?.forEach((g) => {
-			if (g.id === group.id) {
-				g.permissionRelationships = group.permissionRelationships;
-			}
-		});
-	}
+	getAndPopulateGroup(selectedGroup.id);
 };
 
+const getAndPopulateGroup = async (groupId: string) =>
+	getGroup(groupId).then((group) => {
+		if (group) {
+			groupTableData.value?.forEach((g) => {
+				if (g.id === group.id) {
+					g.permissionRelationships = group.permissionRelationships;
+				}
+			});
+		}
+		return group;
+	});
+
 const onSelectUser = (userId: string) => {
-	const found = users.value.find(({ id }) => id === userId);
+	const found = users.value?.find(({ id }) => id === userId);
 	if (found) {
 		selectedUser.value = found;
 	}
 };
 
-// const addSelectedUserToGroup = (groupId: string) => {
-// 	if (selectedUser.value?.id) {
-// 		addGroupUserPermissions(groupId, selectedUser.value?.id, 'member');
-// 	}
-// };
+const addSelectedUserToGroup = async (groupId: string) => {
+	if (selectedUser.value?.id) {
+		const added = await addGroupUserPermissions(groupId, selectedUser.value.id, 'member');
+		if (added) {
+			getAndPopulateGroup(groupId).then(() => {
+				loadingId.value = null;
+				selectedGroupUser.value = null;
+				useToastService().success('', 'User added to group');
+			});
+		} else {
+			useToastService().error('', 'Failed to add user to group');
+		}
+	}
+};
 
 const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
 	selectedGroupRelationship.value =
@@ -262,30 +328,68 @@ const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
 
 const updateGroupUserRelationship = (event: DropdownChangeEvent, groupId: string) => {
 	if (selectedGroupUser.value) {
+		loadingId.value = selectedGroupUser.value.id;
 		updateGroupUserPermissions(
 			groupId,
 			selectedGroupUser.value?.id,
 			currentGroupRelationship,
 			event.value
-		);
+		).then((response) => {
+			if (response) {
+				getAndPopulateGroup(groupId).then(() => {
+					loadingId.value = null;
+					selectedGroupUser.value = null;
+					useToastService().success('', 'User group permission updated');
+				});
+			} else {
+				useToastService().error('', 'Failed to update user group permission');
+			}
+		});
 	}
+};
+
+const removeUserFromGroup = async (groupId: string, userId: string) => {
+	const relationship = groupTableData.value
+		?.find((g) => g.id === groupId)
+		?.permissionRelationships?.permissionUsers?.find((u) => u.id === userId)?.relationship;
+	if (relationship) {
+		const removed = await removeGroupUserPermissions(groupId, userId, relationship);
+		if (removed) {
+			getAndPopulateGroup(groupId).then(() => {
+				useToastService().success('', 'User removed from group');
+			});
+		} else {
+			useToastService().error('', 'Failed to remove user from group');
+		}
+	}
+	isRemoveUserDialogVisible.value = false;
+};
+
+const onRemoveUser = (groupId: string, userId: string) => {
+	removeUserCallback = () => removeUserFromGroup(groupId, userId);
+	isRemoveUserDialogVisible.value = true;
 };
 
 watch(
 	() => view.value,
 	async () => {
-		getUsers();
 		if (view.value === View.USER) {
-			getRoles();
+			users.value = await getUsers();
+			const roles = await getRoles();
+			systemRoles.value = roles?.map(({ id, name }) => ({ id, name })) ?? [];
 		} else if (view.value === View.GROUP) {
 			groupTableData.value = await getAllGroups();
+			if (!users.value) {
+				getUsers();
+			}
 		}
 	}
 );
 
 onMounted(async () => {
-	getRoles();
-	getUsers();
+	const roles = await getRoles();
+	systemRoles.value = roles?.map(({ id, name }) => ({ id, name })) ?? [];
+	users.value = await getUsers();
 	groupTableData.value = await getAllGroups();
 });
 </script>
@@ -305,6 +409,15 @@ header {
 
 .add-user {
 	display: flex;
+}
+
+.group-user-end-col {
+	display: flex;
+	justify-content: space-between;
+}
+
+.p-button.p-button-text.remove-user:hover {
+	color: var(--text-color-danger);
 }
 
 .p-datatable.user:deep(.p-datatable-tbody > tr),

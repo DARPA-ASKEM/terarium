@@ -100,7 +100,6 @@ const image = computed(() => (stats.value ? placeholder(stats.value) : undefined
 
 <style scoped>
 .p-card {
-	width: 17rem;
 	height: 20rem;
 }
 

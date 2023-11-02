@@ -8545,7 +8545,7 @@ __metadata:
     feather-icons: 4.29.1
     graph-scaffolder: "*"
     katex: 0.16.9
-    keycloak-js: 22.0.3
+    keycloak-js: 22.0.5
     lodash: 4.17.21
     mathlive: 0.89.2
     mathml-to-latex: 1.2.0
@@ -10237,13 +10237,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"keycloak-js@npm:22.0.3":
-  version: 22.0.3
-  resolution: "keycloak-js@npm:22.0.3"
+"keycloak-js@npm:22.0.5":
+  version: 22.0.5
+  resolution: "keycloak-js@npm:22.0.5"
   dependencies:
     base64-js: ^1.5.1
     js-sha256: ^0.9.0
-  checksum: b505e5398b4cd2950736dc0c03e176a834f8b47b69a5e3b816b50414092d5f418d0b46775013ced05399c5f008f326dc53d1b85e2d39e68f1e0d30c0ae9c0a1e
+  checksum: e3790656f5cfd25b2e89e508d7d96d47c4557f4125ecef131905a7c1f3177a89ed7d38163a1af7d6a739ba7af0397dba726ca337254eb675a22d8a9340710313
   languageName: node
   linkType: hard
 
