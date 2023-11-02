@@ -284,6 +284,11 @@ const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
 		return;
 	}
+
+	console.log('');
+	console.log('header', message.header.msg_type);
+	console.log('');
+
 	if (message.header.msg_type === 'compile_expr_response') {
 		modelValid.value = true;
 	} else if (message.header.msg_type === 'decapodes_preview') {
@@ -294,6 +299,8 @@ const iopubMessageHandler = (_session, message) => {
 		// console.log("Decapode preview", message.content);
 		// previewHTML.value = message.content["image/svg"];
 		alert(JSON.stringify(message.content, null, 2));
+	} else if (message.header.msg_type === 'save_model_response') {
+		// TODO: Save into project
 	}
 };
 
