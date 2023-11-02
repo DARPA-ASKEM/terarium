@@ -52,7 +52,11 @@
 						@change="setKernelContext"
 				/></span>
 				<Button
-					label="Run" icon="pi pi-play" severity="secondary" outlined size="large"
+					label="Run"
+					icon="pi pi-play"
+					severity="secondary"
+					outlined
+					size="large"
 					@click="handleCode"
 				/>
 			</footer>
@@ -76,13 +80,17 @@
 					<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
 				</template>
 				<template v-if="selectedModelFramework === ModelFramework.Decapodes">
-					<div :innerHTML="previewHTML"/>
+					<div :innerHTML="previewHTML" />
 				</template>
 			</section>
 			<footer>
 				<Button
-					:disabled="!modelValid || modelName === ''" label="Save as new model" severity="secondary"
-					outlined size="large" @click="saveAsNewModel"
+					:disabled="!modelValid || modelName === ''"
+					label="Save as new model"
+					severity="secondary"
+					outlined
+					size="large"
+					@click="saveAsNewModel"
 				/>
 				<span class="btn-group">
 					<Button label="Cancel" severity="secondary" outlined size="large" />
@@ -113,15 +121,10 @@ import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEmpty } from 'lodash';
-import { ModelFromCodeState } from './model-from-code-operation';
-import {
-	 newSession,
-     JupyterMessage,
-     createMessageId
- } from '@/services/jupyter';
+import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
-
+import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
@@ -144,7 +147,7 @@ const selectedModelFramework = ref(
 );
 const modelValid = ref(false);
 const jupyterSession = ref<SessionContext | null>(null);
-const previewHTML = ref("");
+const previewHTML = ref('');
 
 const codeBlock = {
 	...props.node.state,
@@ -153,7 +156,6 @@ const codeBlock = {
 };
 
 const codeBlocks = ref([codeBlock]);
-
 
 onMounted(async () => {
 	const session = await newSession('beaker', 'Beaker');
@@ -179,26 +181,28 @@ function setKernelContext() {
 	if (!kernel) {
 		return;
 	}
-	const contextName = (selectedModelFramework.value === ModelFramework.Decapodes ? "decapodes_creation" : null);
-	const languageName = (selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? "julia-1.9" : null);
+	const contextName =
+		selectedModelFramework.value === ModelFramework.Decapodes ? 'decapodes_creation' : null;
+	const languageName =
+		selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 	if (contextName === null || languageName === null) {
-		console.log("Can't work with current language. Do nothing.")
+		console.log("Can't work with current language. Do nothing.");
 		return;
 	}
-	const context_message: JupyterMessage = createMessage({
+	const contextMessage: JupyterMessage = createMessage({
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
 		content: {
-            context: contextName,
+			context: contextName,
 			language: languageName,
-            context_info: {},
+			context_info: {}
 		},
 		msgType: 'context_setup_request',
-		msgId: createMessageId('context_setup'),
+		msgId: createMessageId('context_setup')
 	});
 
-	kernel.sendJupyterMessage(context_message);
-};
+	kernel.sendJupyterMessage(contextMessage);
+}
 
 function handleCode() {
 	const kernel = jupyterSession.value?.session?.kernel;
@@ -210,15 +214,15 @@ function handleCode() {
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
 		content: {
-			declaration: code,
+			declaration: code
 		},
 		msgType: 'compile_expr_request',
-		msgId: createMessageId('context_setup'),
+		msgId: createMessageId('context_setup')
 	});
 
 	modelValid.value = false;
 	kernel.sendJupyterMessage(compileExprMessage);
-};
+}
 
 function getModel() {
 	const kernel = jupyterSession.value?.session?.kernel;
@@ -229,10 +233,10 @@ function getModel() {
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
 		content: {
-			name: modelName.value,
+			name: modelName.value
 		},
 		msgType: 'construct_amr_request',
-		msgId: createMessageId('context_setup'),
+		msgId: createMessageId('context_setup')
 	});
 
 	modelValid.value = false;
@@ -248,17 +252,17 @@ function saveAsNewModel() {
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
 		content: {
-			"header": {
-				"description": modelName.value,
-				"name": modelName.value,
-				"_type": "Header",
-				"model_version": "v1.0",
-				"schema": "modelreps.io/DecaExpr",
-				"schema_name": "DecaExpr"
+			header: {
+				description: modelName.value,
+				name: modelName.value,
+				_type: 'Header',
+				model_version: 'v1.0',
+				schema: 'modelreps.io/DecaExpr',
+				schema_name: 'DecaExpr'
 			}
 		},
 		msgType: 'save_amr_request',
-		msgId: createMessageId('context_setup'),
+		msgId: createMessageId('context_setup')
 	});
 
 	modelValid.value = false;
@@ -271,19 +275,15 @@ const iopubMessageHandler = (_session, message) => {
 	}
 	if (message.header.msg_type === 'compile_expr_response') {
 		modelValid.value = true;
-	}
-	else if (message.header.msg_type === 'decapodes_preview') {
-		console.log("Decapode preview", message.content);
-		previewHTML.value = message.content["image/svg"];
-	}
-	else if (message.header.msg_type === 'construct_amr_response') {
+	} else if (message.header.msg_type === 'decapodes_preview') {
+		console.log('Decapode preview', message.content);
+		previewHTML.value = message.content['image/svg'];
+	} else if (message.header.msg_type === 'construct_amr_response') {
 		// console.log("Decapode preview", message.content);
 		// previewHTML.value = message.content["image/svg"];
-		alert(JSON.stringify(message.content, null, 2))
+		alert(JSON.stringify(message.content, null, 2));
 	}
 };
-
-
 
 /**
  * Editor initialization function
