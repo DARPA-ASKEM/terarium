@@ -48,6 +48,11 @@
 						/>
 					</template>
 					<template v-else>
+						<Button
+							label="Create model from code"
+							@click="isModelNamingModalVisible = true"
+							:loading="isCodeToModelLoading"
+						/>
 						<Button label="Download Zip" />
 					</template>
 				</section>
@@ -247,7 +252,7 @@ const programmingLanguages = [
 ];
 const isLoading = ref(false);
 
-const repoUrl = ref('');
+const repoUrl = computed(() => codeAsset.value?.repoUrl ?? '');
 
 const selectedRangeToString = computed(() =>
 	selectionRange.value
@@ -448,15 +453,14 @@ watch(
 				codeAsset.value = code;
 				codeName.value = code.name;
 
-				repoUrl.value = code.repoUrl ?? '';
-
 				const filename = Object.keys(code.files)[0];
 
 				const text = await getCodeFileAsText(props.assetId, filename);
 				if (text) {
 					codeText.value = text;
 				}
-				programmingLanguage.value = code.files[filename].language;
+				programmingLanguage.value =
+					code.files[filename].language ?? getProgrammingLanguage(codeName.value);
 			} else {
 				codeAsset.value = null;
 				codeName.value = 'newcode.py';
