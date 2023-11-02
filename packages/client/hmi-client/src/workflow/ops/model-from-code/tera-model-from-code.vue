@@ -62,7 +62,12 @@
 				/>
 			</footer>
 		</section>
-		<section>
+		<section v-if="modelValid === false">
+			<div v-if="isProcessing">
+				<i class="pi pi-spin pi-spinner" :style="{ fontSize: '2rem' }"></i>
+			</div>
+		</section>
+		<section v-if="modelValid === true">
 			<section class="preview">
 				<header>
 					<h5>Preview</h5>
@@ -72,7 +77,6 @@
 						:options="modelFrameworks"
 					/>
 				</header>
-				<div>Processing: {{ isProcessing }}</div>
 
 				<template v-if="selectedModelFramework === ModelFramework.Petrinet">
 					<!--Potentially put tera-model-diagram here just for petrinets-->
