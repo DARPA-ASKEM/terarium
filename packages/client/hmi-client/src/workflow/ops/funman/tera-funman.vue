@@ -150,7 +150,7 @@ const requestStepListString = computed(() => requestStepList.value.join()); // J
 const requestConstraints = computed(() =>
 	// Same as node state's except typing for state vs linear constraint
 	props.node.state.constraintGroups.map((ele) => {
-		if (ele.variables.length === 0) {
+		if (ele.variables.length === 1) {
 			// State Variable Constraint
 			return {
 				name: ele.name,
