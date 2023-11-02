@@ -125,20 +125,22 @@ export const renderFumanTrajectories = (
 ) => {
 	const width = options.width;
 	const height = options.height;
+	const { trajs, states } = processedData;
 
 	const elemSelection = d3.select(element);
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
-
 	const group = svg.append('g');
-
-	const { trajs, states } = processedData;
 
 	const points = trajs.filter((d: any) => d.boxId === boxId);
 
-	// FIXME: domain
-	const xScale = d3.scaleLinear().domain([0, 10]).range([0, width]);
-	const yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]);
+	// Find max/min across timesteps
+	const xDomain = d3.extent(points.map((d) => d.timestep)) as [number, number];
 
+	// Find max/min across all state values
+	const yDomain = d3.extent(points.map((d) => states.map((s) => d[s])).flat()) as [number, number];
+
+	const xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
+	const yScale = d3.scaleLinear().domain(yDomain).range([height, 0]);
 	const pathFn = d3
 		.line<{ x: number; y: number }>()
 		.x((d) => xScale(d.x))
@@ -167,7 +169,7 @@ const getBoxesDomain = (boxes: FunmanBox[]) => {
 	return { minX, maxX, minY, maxY };
 };
 
-export const createBoundaryChart = (
+export const renderFunmanBoundaryChart = (
 	element: HTMLElement,
 	processedData: FunmanProcessedData,
 	param1: string,

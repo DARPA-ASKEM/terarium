@@ -10,7 +10,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import funModel from '@/examples/fun-example.json';
-import { processFunman, renderFumanTrajectories, createBoundaryChart } from '@/services/funman';
+import {
+	processFunman,
+	renderFumanTrajectories,
+	renderFunmanBoundaryChart
+} from '@/services/funman';
 
 const boxRef = ref();
 const trajRef = ref();
@@ -25,7 +29,10 @@ onMounted(() => {
 	const height = 250;
 	const param1 = 'beta';
 	const param2 = 'gamma';
-	createBoundaryChart(boxRef.value, processedData, param1, param2, timestep, { width, height });
+	renderFunmanBoundaryChart(boxRef.value, processedData, param1, param2, timestep, {
+		width,
+		height
+	});
 	renderFumanTrajectories(trajRef.value as HTMLElement, processedData, boxId, {
 		width: 300,
 		height: 100
