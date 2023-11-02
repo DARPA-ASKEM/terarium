@@ -410,8 +410,8 @@ export interface FunmanConfig {
 }
 
 export interface FunmanInterval {
-    ub: number;
-    lb: number;
+    ub?: number;
+    lb?: number;
 }
 
 export interface FunmanParameter {
