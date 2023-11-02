@@ -141,7 +141,7 @@ public class ProjectController {
 
 
 	@PostMapping("/{projectId}/permissions/group/{groupId}/{relationship}")
-	@Secured(Roles.USER)
+	@Secured({Roles.USER, Roles.SERVICE})
 	public ResponseEntity<JsonNode> setProjectGroupPermissions(
 		@PathVariable("projectId") final String projectId,
 		@PathVariable("groupId") final String groupId,
