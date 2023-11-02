@@ -127,6 +127,7 @@ import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 // TODO List:
 // 5) fix css for overlow
+// 6) Need to fix when things are not set to not send (ub and lb) rather than send as null
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -187,14 +188,16 @@ const runMakeQuery = async () => {
 		request: {
 			constraints: requestConstraints.value,
 			parameters: requestParameters.value,
-			structure_parameters: {
-				name: 'schedules',
-				schedules: [
-					{
-						timepoints: requestStepList.value
-					}
-				]
-			}
+			structure_parameters: [
+				{
+					name: 'schedules',
+					schedules: [
+						{
+							timepoints: requestStepList.value
+						}
+					]
+				}
+			]
 		}
 	};
 
@@ -236,6 +239,7 @@ const deleteConstraintGroupForm = (data) => {
 };
 
 const updateConstraintGroupForm = (data) => {
+	console.log('Update constraint form');
 	const state = _.cloneDeep(props.node.state);
 	state.constraintGroups[data.index] = data.updatedConfig;
 

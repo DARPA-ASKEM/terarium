@@ -1,5 +1,8 @@
 <template>
 	<div class="constraint-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
+		<div>
+			<i class="trash-button pi pi-trash" @click="emit('delete-self', { index: props.index })" />
+		</div>
 		<div class="button-row">
 			<label for="constraint-name">Name of constraint</label>
 			<InputText
@@ -43,19 +46,47 @@
 		<div class="section-row">
 			<div class="button-row">
 				<label for="start">Start time</label>
-				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="startTime"
+					@update:model-value="
+						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+					"
+				/>
 			</div>
 			<div class="button-row">
 				<label for="end">End time</label>
-				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="endTime" />
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="endTime"
+					@update:model-value="
+						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+					"
+				/>
 			</div>
 			<div class="button-row">
 				<label for="lower">Lower bound</label>
-				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="lowerBound" />
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="lowerBound"
+					@update:model-value="
+						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+					"
+				/>
 			</div>
 			<div class="button-row">
 				<label for="upper">Upper bound</label>
-				<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="upperBound" />
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="upperBound"
+					@update:model-value="
+						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+					"
+				/>
 			</div>
 		</div>
 	</div>
@@ -66,10 +97,7 @@ import { watch, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
-// import InputSwitch from 'primevue/inputswitch';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
-
-// TODO: Need to add weights
 
 const props = defineProps<{
 	modelNodeOptions: string[];
@@ -94,7 +122,7 @@ const updatedConfig = computed<ConstraintGroup>(
 			name: constraintName.value,
 			variables: variables.value,
 			weights: weights.value,
-			currentTimespan: { start: startTime.value, end: endTime.value },
+			timepoints: { lb: startTime.value, ub: endTime.value },
 			interval: { lb: lowerBound.value, ub: upperBound.value }
 		} as ConstraintGroup)
 );
@@ -162,6 +190,15 @@ watch(
 
 .subdued-text {
 	color: var(--text-color-subdued);
+}
+
+.sub-header {
+	display: flex;
+	padding-bottom: 0px;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 1rem;
+	align-self: stretch;
 }
 
 .trash-button {
