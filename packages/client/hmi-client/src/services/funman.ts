@@ -6,10 +6,12 @@ export const processFunman = (result: any) => {
 	const params = result.model.petrinet.semantics.ode.parameters.map((p) => p.id);
 
 	// "dataframes"
-	const boxes = [['id', 'label', 'timestep', ...params]];
+	// const boxes = [['id', 'label', 'timestep', ...params]];
 	const points = [['id', 'label', 'box_id', ...params]];
 	// const trajs = [['box_id', 'point_id', 'timestep_id', 'time', ...states]];
-	const trajs = [['box_id', 'point_id', 'timestep_id', 'time', ...states]];
+
+	const boxes: any[] = [];
+	const trajs: any[] = [];
 
 	// Give IDs to all boxes (i) and points (j)
 	let i = 0;
@@ -18,20 +20,30 @@ export const processFunman = (result: any) => {
 	const parameterSpace = result.parameter_space;
 
 	[...parameterSpace.true_boxes, ...parameterSpace.false_boxes].forEach((box) => {
-		box.id = `box${i}`;
+		const boxId = `box${i}`;
 		i++;
 
 		// id, label, timestep, param bounds
-		const bounds = params.map((p) => [box.bounds[p].lb, box.bounds[p].ub]);
-		boxes.push([box.id, box.label, box.bounds.timestep.ub, ...bounds]);
+		// const bounds = params.map((p) => [box.bounds[p].lb, box.bounds[p].ub]);
+		// boxes.push([box.id, box.label, box.bounds.timestep.ub, ...bounds]);
+
+		const temp = {
+			id: boxId,
+			label: box.label,
+			timestep: box.bounds.timestep
+		};
+		params.forEacth((p: any) => {
+			temp[p] = [box.bounds[p].lb, box.bounds[p].ub];
+		});
+		boxes.push(temp);
 
 		Object.values(box.points).forEach((point: any) => {
 			point.id = `point${j}`;
 			j++;
 
 			// id, label, box_id, param values
-			const values = params.map((p) => point.values[p]);
-			points.push([point.id, point.label, box.id, ...values]);
+			const values = params.map((p: any) => point.values[p]);
+			points.push([point.id, point.label, boxId, ...values]);
 
 			// Get trajectories
 			const filteredVals = Object.keys(point.values)
@@ -54,49 +66,73 @@ export const processFunman = (result: any) => {
 
 			timesteps.forEach((t) => {
 				// box_id, point_id, timestep_id, time, state values
-				const stateVals = states.map((s) => filteredVals[`${s}_${t}`]);
-				trajs.push([box.id, point.id, t, filteredVals[`timer_t_${t}`], ...stateVals]);
+				// const stateVals = states.map((s: string) => filteredVals[`${s}_${t}`]);
+				const traj: any = {
+					boxId,
+					pointId: point.id,
+					t
+				};
+				states.forEach((s) => {
+					traj[s] = filteredVals[`${s}_${t}`];
+				});
+				trajs.push(traj);
+				// trajs.push([box.id, point.id, t, filteredVals[`timer_t_${t}`], ...stateVals]);
 			});
 		});
 	});
 
-	return { boxes, points, trajs };
+	return { boxes, points, states, trajs };
 };
 
 export const getBoxes = (
-	result: any,
+	processedData: any,
 	param1: string,
 	param2: string,
 	timestep: number,
 	boxType: string
 ) =>
-	result.parameter_space[boxType]
-		.filter((box: any) => box.bounds.timestep.ub === timestep)
-		.map((box: any) => ({
-			x1: box.bounds[param1].lb,
-			x2: box.bounds[param1].ub,
-			y1: box.bounds[param2].lb,
-			y2: box.bounds[param2].ub
+	processedData.boxes
+		.filter((d: any) => d.label === boxType)
+		.filter((d: any) => d.timestep.ub === timestep)
+		.map((d: any) => ({
+			x1: d[param1][0],
+			x2: d[param1][1],
+			y1: d[param2][0],
+			y2: d[param2][1]
 		}));
 
-export const getTrajectories = (result: any) => processFunman(result).trajs;
-
-export const renderFumanTrajectories = (element: HTMLElement, result: any, options: any) => {
-	const width = options.width || 400;
-	const height = options.height || 200;
+export const renderFumanTrajectories = (
+	element: HTMLElement,
+	processedResult: any,
+	boxId: string,
+	options: any
+) => {
+	const width = options.width || 300;
+	const height = options.height || 100;
 
 	const elemSelection = d3.select(element);
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 
-	svg.append('g');
+	const group = svg.append('g');
 
-	const traj = processFunman(result).trajs;
-	console.log('...............');
-	console.log(traj);
-	console.log('...............');
+	const { trajs, states } = processedResult;
 
-	// const xScale = d3.scaleLinear().domain([0, 100]).range([0, width]);
-	// const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+	const points = trajs.filter((d: any) => d.boxId === boxId);
+
+	// FIXME: domain
+	const xScale = d3.scaleLinear().domain([0, 1]).range([0, width]);
+	const yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]);
+
+	const pathFn = d3
+		.line<{ x: number; y: number }>()
+		.x((d) => xScale(d.x))
+		.y((d) => yScale(d.y))
+		.curve(d3.curveBasis);
+
+	states.forEach((s: string) => {
+		const path = points.map((p: any) => ({ x: p.t, y: p[s] }));
+		group.append('path').attr('d', pathFn(path)).style('stroke', '#888').style('fill', 'none');
+	});
 };
 
 const getBoxesDomain = (boxes: any[]) => {
@@ -116,20 +152,20 @@ const getBoxesDomain = (boxes: any[]) => {
 };
 
 export const createBoundaryChart = (
-	element: string,
-	payload: any,
+	element: HTMLElement,
+	processedData: any,
 	param1: string,
 	param2: string,
+	timestep: number,
 	options: any
 ) => {
 	const { width, height } = options;
 
-	const trueBoxes = getBoxes(payload, param1, param2, 7, 'true_boxes');
-	const falseBoxes = getBoxes(payload, param1, param2, 7, 'false_boxes');
-
+	const trueBoxes = getBoxes(processedData, param1, param2, timestep, 'true');
+	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
 	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
 
-	const svg = d3.select(element).attr('width', width).attr('height', height);
+	const svg = d3.select(element).append('svg').attr('width', width).attr('height', height);
 	const g = svg.append('g');
 
 	const xScale = d3

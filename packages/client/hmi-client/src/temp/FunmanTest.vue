@@ -1,44 +1,32 @@
 <template>
 	<div class="test-container">
 		<h2>FUNMAN Test</h2>
-		<svg></svg>
 
-		<div ref="traj"></div>
+		<div ref="boxRef"></div>
+		<div ref="trajRef"></div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import funModel from '@/examples/fun-example.json';
-import {
-	processFunman,
-	getTrajectories,
-	renderFumanTrajectories,
-	createBoundaryChart
-} from '@/services/funman';
+import { processFunman, renderFumanTrajectories, createBoundaryChart } from '@/services/funman';
 
-const traj = ref();
+const boxRef = ref();
+const trajRef = ref();
 
-const handleFunmanTrajectories = () => {
-	console.log('hihi');
-
-	if (traj) {
-		renderFumanTrajectories(traj.value as HTMLElement, funModel, {});
-	}
-};
+const timestep = 7;
+const boxId = 'box2';
 
 onMounted(() => {
-	handleFunmanTrajectories();
+	const processedData = processFunman(funModel);
 
-	console.log(processFunman(funModel));
-	console.log(getTrajectories(funModel));
-
-	const width = 800;
-	const height = 500;
+	const width = 300;
+	const height = 200;
 	const param1 = 'beta';
 	const param2 = 'gamma';
-
-	createBoundaryChart('svg', funModel, param1, param2, { width, height });
+	createBoundaryChart(boxRef.value, processedData, param1, param2, timestep, { width, height });
+	renderFumanTrajectories(trajRef.value as HTMLElement, processedData, boxId, {});
 });
 </script>
 
