@@ -1362,8 +1362,8 @@ export const request: FunmanPostQueriesRequest = {
 			}
 		],
 		config: {
-			useCompartmentalConstraints: true,
-			normalizationConstant: 1000,
+			use_compartmental_constraints: true,
+			normalization_constant: 1000,
 			tolerance: 0.1
 		}
 	}
