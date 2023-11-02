@@ -407,10 +407,11 @@ async function openCodeFiles(githubFiles: GithubFile[], projectId?: string) {
 async function addRepoToCodeAsset(event?: DropdownChangeEvent) {
 	const projectId = event?.value?.id;
 
-	const newCodeAsset = await uploadCodeFromGithubRepo('test', 'test', 'test');
+	const newCodeAsset = await uploadCodeFromGithubRepo(repoOwnerAndName.value, props.urlString);
 
-	console.log(projectId, newCodeAsset);
-	return null;
+	if (newCodeAsset && newCodeAsset.id) {
+		await useProjects().addAsset(AssetType.Code, newCodeAsset.id, projectId);
+	}
 }
 
 watch(

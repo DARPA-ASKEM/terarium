@@ -140,44 +140,27 @@ public class TDSCodeController implements SnakeCaseController {
 	@PutMapping("/{codeId}/uploadCodeFromGithubRepo")
 	public ResponseEntity<Integer> uploadCodeFromGithub(
 		@PathVariable("codeId") final String codeId,
-		@RequestParam("path") final String path,
-		@RequestParam("repoOwnerAndName") final String repoOwnerAndName
+		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+		@RequestParam("repoName") final String repoName
 	) {
-		log.debug("Uploading code files from github repo", codeId);
+		try(final CloseableHttpClient httpClient = HttpClients.custom()
+			.build()) {
 
-		//download files from GitHub
-		final List<GithubFile> files = githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
+			String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
 
-		if (files == null || files.isEmpty()) {
-			return ResponseEntity.noContent().build();
+			// get github repo zip
+			HttpGet httpGet = new HttpGet(githubApiUrl);
+            HttpResponse response = httpClient.execute(httpGet);
+			final byte[] zipBytes = response.getEntity().getContent().readAllBytes();
+
+			HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
+
+			return uploadCodeHelper(codeId, repoName, fileEntity);
+
+		} catch (Exception e){
+			log.error(e.toString());
+			return ResponseEntity.internalServerError().build();
 		}
-		final GithubRepo repo = new GithubRepo(files);
-		bfsTraversal(repo);
-
-		//upload all github
-		for (Map.Entry<GithubRepo.FileCategory,List<GithubFile>> entry : repo.files.entrySet())  {
-            GithubRepo.FileCategory category = entry.getKey();
-            List<GithubFile> fileList = entry.getValue();
-			if (category == GithubRepo.FileCategory.DIRECTORY) {
-                for (GithubFile directoryFile : fileList) {
-                    // Process the GithubRepo objects in the DIRECTORY category
-                    System.out.println("Directory File: " + directoryFile.name);
-                    // Add your logic here
-                }
-            } else {
-                for (GithubFile file : fileList) {
-                    // Process the GithubFile objects in other categories (CODE, DATA, DOCUMENTS, OTHER)
-                    System.out.println("File in " + category + ": " + file.name);
-                    // Add your logic here
-                }
-            }
-
-		}
-
-		return ResponseEntity.ok(200);
-		// String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		// HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		// return uploadCodeHelper(codeId, path, fileEntity);
 
 	}
 	/**
@@ -202,7 +185,7 @@ public class TDSCodeController implements SnakeCaseController {
 
 			final Code code = codeProxy.getAsset(codeId).getBody();
 			final CodeFile codeFile = new CodeFile();
-			codeFile.setLanguage("python");
+			codeFile.setProgrammingLanguageFromFileName(fileName);
 
 			Map<String, CodeFile> fileMap = code.getFiles();
 
@@ -221,9 +204,4 @@ public class TDSCodeController implements SnakeCaseController {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
-
-	private void bfsTraversal(GithubRepo repo) {
-
-	}
-
 }

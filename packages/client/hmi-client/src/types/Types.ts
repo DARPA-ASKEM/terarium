@@ -142,15 +142,13 @@ export interface Code {
     timestamp?: Date;
     name: string;
     description: string;
-    filename: string;
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
-    language: ProgrammingLanguage;
     metadata?: any;
 }
 
 export interface CodeFile {
-    language: string;
+    language: ProgrammingLanguage;
     dynamics: Dynamics;
 }
 
@@ -939,6 +937,7 @@ export enum ProgrammingLanguage {
     Python = "python",
     R = "r",
     Julia = "julia",
+    Zip = "zip",
 }
 
 export enum ColumnType {
