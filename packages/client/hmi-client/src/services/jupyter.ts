@@ -48,6 +48,12 @@ export type JupyterMessageType =
 	| 'visualization'
 	| 'llm_request'
 	| 'llm_response'
+	| 'compile_expr_request'
+	| 'save_amr_request'
+	| 'construct_amr_request'
+	| 'compile_expr_response'
+	| 'save_amr_response'
+	| 'construct_amr_response'
 	| messages.MessageType;
 
 export interface IJupyterHeader<T extends JupyterMessageType> {
@@ -92,6 +98,7 @@ export interface IJupyterMessageContent {
 	request?: string;
 	response?: string;
 	text?: string;
+	declaration?: any;
 	code?: string;
 	language?: string;
 	data?: any;

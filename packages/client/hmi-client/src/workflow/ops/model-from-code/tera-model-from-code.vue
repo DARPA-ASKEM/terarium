@@ -127,6 +127,7 @@ import { cloneDeep, isEmpty } from 'lodash';
 import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { JSONObject } from '@lumino/coreutils';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -194,7 +195,7 @@ function setKernelContext() {
 		console.log("Can't work with current language. Do nothing.");
 		return;
 	}
-	const contextMessage: JupyterMessage = createMessage({
+	const messageBody = {
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
 		content: {
@@ -204,7 +205,8 @@ function setKernelContext() {
 		},
 		msgType: 'context_setup_request',
 		msgId: createMessageId('context_setup')
-	});
+	};
+	const contextMessage: JupyterMessage = createMessage(messageBody);
 
 	kernel.sendJupyterMessage(contextMessage);
 }
@@ -217,15 +219,16 @@ function handleCode() {
 	isProcessing.value = true;
 
 	const code = editor.value?.getValue();
-	const compileExprMessage: JupyterMessage = createMessage({
-		session: jupyterSession?.value?.name || '',
+	const messageBody: JSONObject = {
+		session: jupyterSession?.value?.name || 'shell',
 		channel: 'shell',
-		content: {
+		content: <JSONObject>{
 			declaration: code
 		},
 		msgType: 'compile_expr_request',
 		msgId: createMessageId('context_setup')
-	});
+	};
+	const compileExprMessage: JupyterMessage = createMessage(messageBody);
 
 	modelValid.value = false;
 	kernel.sendJupyterMessage(compileExprMessage);
@@ -255,7 +258,7 @@ function saveAsNewModel() {
 	if (!kernel) {
 		return;
 	}
-	const saveAsNewMessage: JupyterMessage = createMessage({
+	const messageBody = {
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
 		content: {
@@ -270,7 +273,8 @@ function saveAsNewModel() {
 		},
 		msgType: 'save_amr_request',
 		msgId: createMessageId('context_setup')
-	});
+	};
+	const saveAsNewMessage: JupyterMessage = createMessage(messageBody);
 
 	modelValid.value = false;
 	kernel.sendJupyterMessage(saveAsNewMessage);
