@@ -54,7 +54,10 @@
 				<Button
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
-					:active="assetItem.assetId === openedAssetRoute.assetId"
+					:active="
+						assetItem.assetId === openedAssetRoute.assetId &&
+						assetItem.pageType === openedAssetRoute.pageType
+					"
 					:title="assetItem.assetName"
 					class="asset-button"
 					plain
