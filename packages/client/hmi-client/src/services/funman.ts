@@ -128,7 +128,7 @@ export const renderFumanTrajectories = (
 	const { trajs, states } = processedData;
 
 	const elemSelection = d3.select(element);
-	// d3.select(element).selectAll("*").remove();
+	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 	const group = svg.append('g');
 
