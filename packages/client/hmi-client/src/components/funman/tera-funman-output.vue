@@ -33,8 +33,6 @@ const selectedParamTwo = ref();
 const boxRef = ref();
 const trajRef = ref();
 
-// const width = 300;
-// const height = 100;
 const timestep = 7;
 const boxId = 'box2';
 
@@ -50,12 +48,6 @@ const setParameters = async () => {
 onMounted(() => {
 	setParameters();
 });
-
-// watch (
-// 	() => props.funModel, async() => {
-// 			setParameters();
-// 	}, { immediate: true }
-// );
 
 watch(
 	() => [selectedParamOne.value, selectedParamTwo.value],
