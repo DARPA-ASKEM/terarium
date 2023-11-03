@@ -1,7 +1,7 @@
 <template>
-	<footer>
+	<section>
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
-		<div class="footer-group">
+		<nav>
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
 			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue">
@@ -14,7 +14,7 @@
 			>
 				Request a feature
 			</a>
-		</div>
+		</nav>
 		<Teleport to="body">
 			<tera-modal
 				v-if="isAboutModalVisible"
@@ -24,32 +24,29 @@
 				<template #header>
 					<h4>About Terarium</h4>
 				</template>
-				<section>
-					<article>
-						<img
-							src="@/assets/svg/terarium-logo.svg"
-							alt="Terarium logo"
-							class="about-terarium-logo"
-						/>
-						<p>
-							Terarium is a comprehensive modeling and simulation platform designed to help
-							researchers and analysts find models in academic literature, parameterize and
-							calibrate them, run simulations to test a variety of scenarios, and analyze the
-							results.
-						</p>
-					</article>
-					<article>
-						<img
-							src="@/assets/svg/uncharted-logo-official.svg"
-							alt="Uncharted Software logo"
-							class="about-uncharted-logo"
-						/>
-						<p>
-							Uncharted Software provides design, development and consulting services related to
-							data visualization and analysis software.
-						</p>
-					</article>
-				</section>
+				<article>
+					<img
+						src="@/assets/svg/terarium-logo.svg"
+						alt="Terarium logo"
+						class="about-terarium-logo"
+					/>
+					<p>
+						Terarium is a comprehensive modeling and simulation platform designed to help
+						researchers and analysts find models in academic literature, parameterize and calibrate
+						them, run simulations to test a variety of scenarios, and analyze the results.
+					</p>
+				</article>
+				<article>
+					<img
+						src="@/assets/svg/uncharted-logo-official.svg"
+						alt="Uncharted Software logo"
+						class="about-uncharted-logo"
+					/>
+					<p>
+						Uncharted Software provides design, development and consulting services related to data
+						visualization and analysis software.
+					</p>
+				</article>
 				<template #footer>
 					<div class="modal-footer">
 						<p>&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
@@ -58,7 +55,7 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-	</footer>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -79,7 +76,7 @@ const documentation = computed(() => {
 </script>
 
 <style scoped>
-footer {
+section {
 	align-items: center;
 	background-color: var(--surface-section);
 	border-top: 1px solid var(--surface-border-light);
@@ -89,7 +86,7 @@ footer {
 	justify-content: space-between;
 }
 
-.footer-group {
+nav {
 	font-size: var(--font-caption);
 	margin: 0 2rem;
 	display: flex;
@@ -100,12 +97,6 @@ footer {
 
 a {
 	text-decoration: none;
-}
-
-section {
-	display: flex;
-	flex-direction: column;
-	gap: 2rem;
 }
 
 p {
@@ -122,6 +113,7 @@ img {
 
 .about-uncharted-logo {
 	width: 10rem;
+	margin-top: 3rem;
 }
 
 .modal-footer {

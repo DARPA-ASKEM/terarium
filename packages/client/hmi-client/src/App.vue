@@ -4,13 +4,17 @@
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<tera-navbar class="header" :active="displayNavBar" :show-suggestions="showSuggestions" />
+	<header>
+		<tera-navbar :active="displayNavBar" :show-suggestions="showSuggestions" />
+	</header>
 	<main>
 		<router-view v-slot="{ Component }">
 			<component class="page" ref="pageRef" :is="Component" :key="route.path" />
 		</router-view>
 	</main>
-	<tera-footer class="footer" />
+	<footer>
+		<tera-footer />
+	</footer>
 </template>
 
 <script setup lang="ts">
@@ -92,11 +96,11 @@ main {
 	position: relative;
 }
 
-.header {
+header {
 	grid-area: header;
 }
 
-.footer {
+footer {
 	grid-area: footer;
 }
 
