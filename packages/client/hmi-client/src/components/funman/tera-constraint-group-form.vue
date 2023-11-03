@@ -130,7 +130,7 @@ const updatedConfig = computed<ConstraintGroup>(
 watch(
 	() => variables.value,
 	async () => {
-		weights.value = Array<number>(props.config.variables.length).fill(0);
+		weights.value = Array<number>(props.config.variables.length).fill(1);
 	},
 	{ immediate: true }
 );

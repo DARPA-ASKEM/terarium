@@ -22,7 +22,7 @@ export const FunmanOperation: Operation = {
 	displayName: 'Validate model configuration',
 	description: 'Validate model configuration',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
-	outputs: [],
+	outputs: [{ type: 'number' }],
 	isRunnable: true,
 	action: () => {},
 	initState: () => {

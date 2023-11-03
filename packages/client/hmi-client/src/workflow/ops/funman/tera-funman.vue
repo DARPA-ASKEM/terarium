@@ -78,9 +78,7 @@
 			<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 		</div>
 		<div class="right-side">
-			<div v-if="false">
-				<h4>Output graph goes here</h4>
-			</div>
+			<tera-funman-output v-if="outputValue" :fun-model="outputValue" />
 			<div v-else>
 				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -95,9 +93,7 @@
 			<!-- <p> {{ sampleRequest }} </p> -->
 		</div>
 		<div class="right-side">
-			<div v-if="false">
-				<h4>Output graph goes here</h4>
-			</div>
+			<tera-funman-output v-if="outputValue" :fun-model="outputValue" />
 			<div v-else>
 				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -115,15 +111,18 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
-import { getQueries, makeQueries } from '@/services/models/funman-service';
+// import { getQueries, makeQueries } from '@/services/models/funman-service';
 // import { request } from '@/temp/funmanRequest';
+import funModel from '@/examples/fun-example.json';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import teraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { useToastService } from '@/services/toast';
-import { FunmanOperationState, ConstraintGroup } from './funman-operation';
+import { v4 as uuidv4 } from 'uuid';
+import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 // TODO List:
 // 5) fix css for overlow
@@ -170,10 +169,11 @@ const requestConstraints = computed(() =>
 	})
 );
 const requestParameters = ref();
-const response = ref();
+// const response = ref();
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
+const outputValue = ref();
 
 // const sampleRequest: FunmanPostQueriesRequest = request;
 
@@ -203,11 +203,26 @@ const runMakeQuery = async () => {
 
 	console.log('Hitting with the following request:');
 	console.log(request);
-	response.value = await makeQueries(request);
-	console.log(response.value.id);
-	console.log('Getting results:');
-	const getResponse = await getQueries(response.value.id);
-	console.log(getResponse);
+	// response.value = await makeQueries(request); //Just commented out so i do not break funman
+	updateOutputPorts('123'); // response.value.id);
+};
+
+const updateOutputPorts = async (runId) => {
+	const portLabel = props.node.inputs[0].label;
+	console.log(runId);
+	console.log(FunmanOperation.outputs[0].type);
+	console.log(portLabel);
+	workflowEventBus.emit('append-output-port', {
+		node: props.node,
+		port: {
+			id: uuidv4(),
+			label: `${portLabel} Result`,
+			type: FunmanOperation.outputs[0].type,
+			value: {
+				runId
+			}
+		}
+	});
 };
 
 const addConstraintForm = () => {
@@ -295,6 +310,15 @@ watch(
 				}
 			}
 		}
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.outputs[0],
+	async () => {
+		// outputValue.value = await getQueries(props.node.outputs[0].id);
+		outputValue.value = funModel;
 	},
 	{ immediate: true }
 );

@@ -128,6 +128,7 @@ export const renderFumanTrajectories = (
 	const { trajs, states } = processedData;
 
 	const elemSelection = d3.select(element);
+	// d3.select(element).selectAll("*").remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 	const group = svg.append('g');
 
@@ -183,6 +184,7 @@ export const renderFunmanBoundaryChart = (
 	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
 	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
 
+	d3.select(element).selectAll('*').remove();
 	const svg = d3.select(element).append('svg').attr('width', width).attr('height', height);
 	const g = svg.append('g');
 
