@@ -62,12 +62,12 @@
 				/>
 			</footer>
 		</section>
-		<section v-if="modelValid === false">
+		<section v-if="modelValid === false || previewHTML === ''">
 			<div v-if="isProcessing">
 				<i class="pi pi-spin pi-spinner" :style="{ fontSize: '2rem' }"></i>
 			</div>
 		</section>
-		<section v-if="modelValid === true">
+		<section v-if="previewHTML !== ''">
 			<section class="preview">
 				<header>
 					<h5>Preview</h5>
@@ -296,9 +296,9 @@ const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'compile_expr_response') {
 		modelValid.value = true;
 	} else if (message.header.msg_type === 'decapodes_preview') {
-		isProcessing.value = false;
 		console.log('Decapode preview', message.content);
 		previewHTML.value = message.content['image/svg'];
+		isProcessing.value = false;
 	} else if (message.header.msg_type === 'construct_amr_response') {
 		// console.log("Decapode preview", message.content);
 		// previewHTML.value = message.content["image/svg"];
