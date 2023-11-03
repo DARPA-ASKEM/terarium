@@ -5,6 +5,7 @@ export interface ClientConfig {
     baseUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
+    sseHeartbeatIntervalMillis: number;
 }
 
 export interface Event {
@@ -14,6 +15,13 @@ export interface Event {
     userId?: string;
     type: EventType;
     value?: string;
+}
+
+export interface ClientEvent<T> {
+    id: string;
+    createdAtMs: number;
+    type: ClientEventType;
+    data: T;
 }
 
 export interface ClientLog {
@@ -935,6 +943,13 @@ export enum EvaluationScenarioStatus {
     Paused = "PAUSED",
     Resumed = "RESUMED",
     Stopped = "STOPPED",
+}
+
+export enum ClientEventType {
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationSciml = "SIMULATION_SCIML",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
 }
 
 export enum FileType {
