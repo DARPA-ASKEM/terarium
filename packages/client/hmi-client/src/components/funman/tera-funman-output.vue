@@ -7,6 +7,10 @@
 		<label>Select Parameter Two</label>
 		<Dropdown v-model="selectedParamTwo" :options="parameterOptions"> </Dropdown>
 	</div>
+	<div class="section-row">
+		<label>Timestep</label>
+		<Dropdown v-model="timestep" :options="timestepOptions"> </Dropdown>
+	</div>
 	<div class="container">
 		<div ref="boxRef"></div>
 		<div ref="trajRef"></div>
@@ -15,7 +19,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-// import funModel from '@/examples/fun-example.json';
 import {
 	processFunman,
 	renderFumanTrajectories,
@@ -30,10 +33,12 @@ const props = defineProps<{
 const parameterOptions = ref<string[]>([]);
 const selectedParamOne = ref();
 const selectedParamTwo = ref();
+const timestepOptions = ref();
+const timestep = ref();
+
 const boxRef = ref();
 const trajRef = ref();
 
-const timestep = 7;
 const boxId = 'box2';
 
 const setParameters = async () => {
@@ -43,6 +48,31 @@ const setParameters = async () => {
 	);
 	selectedParamOne.value = parameterOptions.value[0];
 	selectedParamTwo.value = parameterOptions.value[0];
+	console.log(props.funModel.request.structure_parameters);
+	timestepOptions.value = props.funModel.request.structure_parameters[0].schedules[0].timepoints;
+	timestep.value = timestepOptions.value[1];
+};
+
+const renderGraph = async () => {
+	const width = 800;
+	const height = 250;
+	console.log('Render Graph');
+	const processedData = processFunman(props.funModel);
+	renderFunmanBoundaryChart(
+		boxRef.value,
+		processedData,
+		selectedParamOne.value,
+		selectedParamTwo.value,
+		timestep.value,
+		{
+			width,
+			height
+		}
+	);
+	renderFumanTrajectories(trajRef.value as HTMLElement, processedData, boxId, {
+		width,
+		height
+	});
 };
 
 onMounted(() => {
@@ -50,29 +80,19 @@ onMounted(() => {
 });
 
 watch(
-	() => [selectedParamOne.value, selectedParamTwo.value],
+	// When props change reset params rerender graph
+	() => props.funModel,
 	async () => {
-		const width = 800;
-		const height = 250;
-		console.log('Selected Param changed, update rengerer');
-		const processedData = processFunman(props.funModel);
-		renderFunmanBoundaryChart(
-			boxRef.value,
-			processedData,
-			selectedParamOne.value,
-			selectedParamTwo.value,
-			timestep,
-			{
-				width,
-				height
-			}
-		);
-		renderFumanTrajectories(trajRef.value as HTMLElement, processedData, boxId, {
-			width,
-			height
-		});
-	},
-	{ immediate: true }
+		setParameters();
+	}
+);
+
+watch(
+	// Whenever user changes options rerender.
+	() => [selectedParamOne.value, selectedParamTwo.value, timestep.value],
+	async () => {
+		renderGraph();
+	}
 );
 </script>
 

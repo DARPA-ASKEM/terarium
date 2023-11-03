@@ -297,14 +297,27 @@ watch(
 				modelNodeOptions.value = modelColumnNameOptions;
 
 				if (model.value && model.value.semantics?.ode.parameters) {
-					requestParameters.value = model.value.semantics?.ode.parameters.map((ele) => ({
-						name: ele.id,
-						interval: {
-							lb: ele.distribution?.parameters.minimum,
-							ub: ele.distribution?.parameters.maximum
-						},
-						label: 'any'
-					}));
+					requestParameters.value = model.value.semantics?.ode.parameters.map((ele) => {
+						if (ele.distribution) {
+							return {
+								name: ele.id,
+								interval: {
+									lb: ele.distribution.parameters.minimum,
+									ub: ele.distribution.parameters.maximum
+								},
+								label: 'any'
+							};
+						}
+
+						return {
+							name: ele.id,
+							interval: {
+								lb: ele.value,
+								ub: ele.value
+							},
+							label: 'any'
+						};
+					});
 				} else {
 					toast.error('', 'Provided model has no parameters');
 				}
