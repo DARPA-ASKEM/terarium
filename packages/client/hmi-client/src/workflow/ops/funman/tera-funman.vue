@@ -204,23 +204,18 @@ const runMakeQuery = async () => {
 	console.log('Hitting with the following request:');
 	console.log(request);
 	response.value = await makeQueries(request); // Just commented out so i do not break funman
-	updateOutputPorts('123'); // response.value.id);
+	updateOutputPorts(response.value.id);
 };
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
-	console.log(runId);
-	console.log(FunmanOperation.outputs[0].type);
-	console.log(portLabel);
 	workflowEventBus.emit('append-output-port', {
 		node: props.node,
 		port: {
 			id: uuidv4(),
 			label: `${portLabel} Result`,
 			type: FunmanOperation.outputs[0].type,
-			value: {
-				runId
-			}
+			value: runId
 		}
 	});
 };
@@ -254,7 +249,6 @@ const deleteConstraintGroupForm = (data) => {
 };
 
 const updateConstraintGroupForm = (data) => {
-	console.log('Update constraint form');
 	const state = _.cloneDeep(props.node.state);
 	state.constraintGroups[data.index] = data.updatedConfig;
 
@@ -270,7 +264,7 @@ const updateConstraintGroupForm = (data) => {
 function getStepList() {
 	const aList = [startTime.value];
 	const stepSize = (endTime.value - startTime.value) / numberOfSteps.value;
-	for (let i = 1; i < numberOfSteps.value - 1; i++) {
+	for (let i = 1; i < numberOfSteps.value; i++) {
 		aList[i] = i * stepSize;
 	}
 	aList.push(endTime.value);
@@ -330,7 +324,12 @@ watch(
 watch(
 	() => props.node.outputs[0],
 	async () => {
-		outputValue.value = await getQueries(props.node.outputs[0].id);
+		if (!props.node.outputs[0]) {
+			return;
+		}
+		outputValue.value = await getQueries(props.node.outputs[0].value);
+		console.log('Recieved output:');
+		console.log(outputValue.value);
 		// outputValue.value = funModel;
 	},
 	{ immediate: true }
