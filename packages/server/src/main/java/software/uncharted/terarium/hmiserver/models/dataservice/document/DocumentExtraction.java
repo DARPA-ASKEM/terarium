@@ -12,9 +12,9 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class DocumentExtraction implements Serializable {
 
-	public static final String TABLE_ASSETTYPE = "table";
-	public static final String EQUATION_ASSETTYPE = "equation";
-	public static final String FIGURE_ASSETTYPE = "figure";
+	public static final String TABLE_ASSETTYPE = "Table";
+	public static final String EQUATION_ASSETTYPE = "Equation";
+	public static final String FIGURE_ASSETTYPE = "Figure";
 
 
 
