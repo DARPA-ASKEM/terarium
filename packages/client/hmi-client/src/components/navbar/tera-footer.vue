@@ -103,7 +103,7 @@ p {
 	max-width: 40rem;
 }
 
-img {
+article > img {
 	margin: 1rem 0;
 }
 
