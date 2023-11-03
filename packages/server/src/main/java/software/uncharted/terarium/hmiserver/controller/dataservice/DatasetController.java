@@ -264,7 +264,7 @@ public class DatasetController implements SnakeCaseController {
 	}
 
 	/**
-	 * Given a column and an amount of bins create a CsvColumnStats object.
+	 * Given a column and an amount of bins creates a CsvColumnStats object.
 	 *
 	 * @param aCol column to get stats for
 	 * @return CsvColumnStats object

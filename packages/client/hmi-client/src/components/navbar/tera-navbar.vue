@@ -1,5 +1,5 @@
 <template>
-	<header>
+	<nav>
 		<section class="header-left">
 			<router-link :to="RoutePath.Home">
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
@@ -119,7 +119,7 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-	</header>
+	</nav>
 </template>
 
 <script setup lang="ts">
@@ -412,7 +412,7 @@ watch(
 </script>
 
 <style scoped>
-header {
+nav {
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
