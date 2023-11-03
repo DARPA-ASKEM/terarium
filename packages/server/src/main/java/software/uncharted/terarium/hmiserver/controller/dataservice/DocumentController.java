@@ -4,12 +4,14 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,16 +37,12 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
-
-import org.apache.http.entity.StringEntity;
-import org.apache.commons.io.IOUtils;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -86,44 +84,44 @@ public class DocumentController implements SnakeCaseController {
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createDocument(
-		@RequestBody DocumentAsset document
+		@RequestBody final DocumentAsset document
 	) {
 		return ResponseEntity.ok(proxy.createAsset(convertObjectToSnakeCaseJsonNode(document)).getBody());
 	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<DocumentAsset> getDocument(
-		@PathVariable("id") String id
+		@PathVariable("id") final String id
 	) {
-		DocumentAsset document = proxy.getAsset(id).getBody();
+		final DocumentAsset document = proxy.getAsset(id).getBody();
 
 		// Test if the document as any assets
-        if (document.getAssets() == null){
+		if (document.getAssets() == null) {
 			return ResponseEntity.ok(document);
 		}
 
 		document.getAssets().forEach(asset -> {
 			try {
 				// Add the S3 bucket url to each asset metadata
-				String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
+				final String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
 				asset.getMetadata().put("url", url);
 
 				// if the asset os of type equation
 				if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
 					// Fetch the image from the URL
-					byte[] imagesByte = IOUtils.toByteArray(new URL(url));
+					final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
 					// Encode the image in Base 64
-					String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+					final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
 
 					// Send it to SKEMA to get the Presentation MathML equation
-					String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+					final String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
 
 					log.warn("Equation: {}", equation);
 
 					// Add the equations into the metadata
 					asset.getMetadata().put("equation", equation);
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				log.error("Unable to extract S3 url for assets or extract equations", e);
 			}
 		});
@@ -137,7 +135,7 @@ public class DocumentController implements SnakeCaseController {
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<JsonNode> deleteDocument(
-		@PathVariable("id") String id
+		@PathVariable("id") final String id
 	) {
 		return ResponseEntity.ok(proxy.deleteAsset(id).getBody());
 	}
@@ -150,8 +148,8 @@ public class DocumentController implements SnakeCaseController {
 	 * @param fileEntity  		 The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadDocumentHelper(String documentId, String fileName, HttpEntity fileEntity) {
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+	private ResponseEntity<Integer> uploadDocumentHelper(final String documentId, final String fileName, final HttpEntity fileEntity) {
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build()) {
 
@@ -161,9 +159,18 @@ public class DocumentController implements SnakeCaseController {
 			put.setEntity(fileEntity);
 			final HttpResponse response = httpclient.execute(put);
 
+			// if the fileEntity is not a PDF, then we need to extract the text and update the document asset
+			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
+				final JsonNode node = this.convertObjectToSnakeCaseJsonNode(proxy.getAsset(documentId).getBody().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8)));
+				final ResponseEntity<JsonNode> updateRes = proxy.updateAsset(documentId, node);
+				if (updateRes.getStatusCode().isError()) {
+					return ResponseEntity.status(updateRes.getStatusCode()).build();
+				}
+			}
+
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to PUT artifact data", e);
 			return ResponseEntity.internalServerError().build();
 		}
@@ -174,12 +181,12 @@ public class DocumentController implements SnakeCaseController {
 	 */
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Integer> uploadDocument(
-		@PathVariable("id") String id,
+		@PathVariable("id") final String id,
 		@RequestParam("filename") final String filename,
-		@RequestPart("file") MultipartFile file
+		@RequestPart("file") final MultipartFile file
 	) throws IOException {
-		byte[] fileAsBytes = file.getBytes();
-		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+		final byte[] fileAsBytes = file.getBytes();
+		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadDocumentHelper(id, filename, fileEntity);
 	}
 
@@ -196,15 +203,15 @@ public class DocumentController implements SnakeCaseController {
 		log.debug("Uploading Document file from github to dataset {}", documentId);
 
 		//download file from GitHub
-		String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadDocumentHelper(documentId, filename, fileEntity);
 
 	}
 
 	@PostMapping(value = "/createDocumentFromXDD")
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
-		@RequestBody AddDocumentAssetFromXDDRequest body
+		@RequestBody final AddDocumentAssetFromXDDRequest body
 	) {
 
 
@@ -262,10 +269,10 @@ public class DocumentController implements SnakeCaseController {
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public ResponseEntity<byte[]> downloadDocument(
-		@PathVariable("id") String id,
+		@PathVariable("id") final String id,
 		@RequestParam("filename") final String filename
 	) throws IOException {
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build()) {
 
@@ -273,34 +280,32 @@ public class DocumentController implements SnakeCaseController {
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
-				byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
+				final byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
 				return ResponseEntity.ok(fileAsBytes);
 			}
 			return ResponseEntity.status(response.getStatusLine().getStatusCode()).build();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to GET document data", e);
 			return ResponseEntity.internalServerError().build();
 		}
 	}
 
 	@GetMapping("/{id}/download-document-as-text")
-	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") String documentId, @RequestParam("filename") String filename) {
+	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);
 
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build()) {
 
-			PresignedURL presignedURL = proxy.getDownloadUrl(documentId, filename).getBody();
+			final PresignedURL presignedURL = proxy.getDownloadUrl(documentId, filename).getBody();
 			final HttpGet httpGet = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(httpGet);
 			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 
 			return ResponseEntity.ok(textFileAsString);
-
-
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to GET document data", e);
 			return ResponseEntity.internalServerError().build();
 		}

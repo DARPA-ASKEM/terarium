@@ -142,15 +142,13 @@ export interface Code {
     timestamp?: Date;
     name: string;
     description: string;
-    filename: string;
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
-    language: ProgrammingLanguage;
     metadata?: any;
 }
 
 export interface CodeFile {
-    language: string;
+    language: ProgrammingLanguage;
     dynamics: Dynamics;
 }
 
@@ -383,10 +381,9 @@ export interface ExtractionResponseResult {
 }
 
 export interface FunmanPostQueriesRequest {
-    query: any;
-    parameters: any[];
-    config: FunmanConfig;
-    structureParameters: any[];
+    model: any;
+    request: FunmanWorkRequest;
+    worker: any;
 }
 
 export interface FunmanConfig {
@@ -408,6 +405,14 @@ export interface FunmanConfig {
     substituteSubformulas: boolean;
     useCompartmentalConstraints: boolean;
     normalize: boolean;
+}
+
+export interface FunmanWorkRequest {
+    query?: any;
+    constraints?: any;
+    parameters?: any;
+    config?: FunmanConfig;
+    structure_parameters?: any;
 }
 
 export interface DKG {
@@ -939,6 +944,7 @@ export enum ProgrammingLanguage {
     Python = "python",
     R = "r",
     Julia = "julia",
+    Zip = "zip",
 }
 
 export enum ColumnType {

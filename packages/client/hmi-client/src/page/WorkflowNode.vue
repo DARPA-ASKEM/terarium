@@ -1,7 +1,8 @@
 <template>
 	<template v-if="node">
 		<tera-model-workflow-wrapper v-if="isNodeType(OperationType.MODEL)" :node="node" />
-		<tera-stratify-julia v-else-if="isNodeType(OperationType.STRATIFY)" :node="node" />
+		<tera-stratify-julia v-else-if="isNodeType(OperationType.STRATIFY_JULIA)" :node="node" />
+		<tera-stratify-mira v-else-if="isNodeType(OperationType.STRATIFY_MIRA)" :node="node" />
 		<tera-dataset-transformer
 			v-else-if="isNodeType(OperationType.DATASET_TRANSFORMER)"
 			:node="node"
@@ -38,6 +39,7 @@ import TeraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciems
 import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
 import TeraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
 import TeraStratifyJulia from '@/workflow/ops/stratify-julia/tera-stratify.vue';
+import teraStratifyMira from '@/workflow/ops/stratify-mira/tera-stratify-mira.vue';
 
 const props = defineProps<{ nodeId: string; workflowId: string }>();
 
