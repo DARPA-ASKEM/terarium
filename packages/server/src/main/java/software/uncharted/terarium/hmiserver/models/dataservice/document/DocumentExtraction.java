@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import java.io.Serializable;
 import java.util.Map;

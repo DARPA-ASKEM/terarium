@@ -23,7 +23,7 @@ import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.dataservice.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
