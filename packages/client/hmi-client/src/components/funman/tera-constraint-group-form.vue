@@ -71,6 +71,9 @@
 				<InputNumber
 					class="p-inputtext-sm"
 					inputId="integeronly"
+					mode="decimal"
+					:min-fraction-digits="3"
+					:max-fraction-digits="3"
 					v-model="lowerBound"
 					@update:model-value="
 						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
@@ -82,6 +85,9 @@
 				<InputNumber
 					class="p-inputtext-sm"
 					inputId="integeronly"
+					mode="decimal"
+					:min-fraction-digits="3"
+					:max-fraction-digits="3"
 					v-model="upperBound"
 					@update:model-value="
 						emit('update-self', { index: props.index, updatedConfig: updatedConfig })

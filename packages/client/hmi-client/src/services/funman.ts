@@ -27,8 +27,17 @@ export const processFunman = (result: any) => {
 	let j = 0;
 
 	const parameterSpace = result.parameter_space;
+	let trueBoxes = [];
+	let falseBoxes = [];
 
-	[...parameterSpace.true_boxes, ...parameterSpace.false_boxes].forEach((box) => {
+	if (parameterSpace.true_boxes) {
+		trueBoxes = parameterSpace.true_boxes;
+	}
+	if (parameterSpace.false_boxes) {
+		falseBoxes = parameterSpace.false_boxes;
+	}
+
+	[...trueBoxes, ...falseBoxes].forEach((box) => {
 		const boxId = `box${i}`;
 		i++;
 

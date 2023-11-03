@@ -14,7 +14,7 @@ export interface FunmanOperationState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;
-	constraintGroups: ConstraintGroup[];
+	constraintGroups: ConstraintGroup[]; // This should be optional not required.
 }
 
 export const FunmanOperation: Operation = {
