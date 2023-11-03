@@ -1,14 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -20,35 +19,20 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
-
 import java.nio.charset.StandardCharsets;
 
 @RequestMapping("/simulations")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class SimulationController implements SnakeCaseController {
 
-	@Autowired
-	SimulationProxy simulationProxy;
+	final SimulationProxy simulationProxy;
 
-	@Autowired
-	ProjectProxy projectProxy;
+	final ProjectProxy projectProxy;
 
-	@Autowired
-	DatasetProxy datasetProxy;
+	final DatasetProxy datasetProxy;
 
-	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
-
-	//TODO: @tszendrey is taking these on or becoming a bartender trying.
-	/*@Inject
-	@Channel("simulationStatus") Publisher<byte[]> simulationStatusStream;
-
-	@Broadcast
-	@Channel("simulationStatus")
-	Emitter<SimulationIntermediateResultsCiemss> simulationStatusEmitter;
-
-	@Inject
-	@Channel("scimlQueue") Publisher<JsonObject> scimlQueueStream;*/
 
 	@PostMapping
 	public ResponseEntity<JsonNode> createSimulation(@RequestBody final Simulation simulation) {
@@ -135,72 +119,5 @@ public class SimulationController implements SnakeCaseController {
 			log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
 			return ResponseEntity.internalServerError().build();
 		}
-	}
-
-	@GetMapping("/{jobId}/ciemss/partial-result")
-	//TODO @SseElementType(MediaType.APPLICATION_JSON)
-	public ResponseEntity<JsonNode> stream(
-		@PathVariable("jobId") final String jobId
-	) {
-
-		// return not implemented until we have a working solution
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-
-		/*TODO
-		ObjectMapper mapper = new ObjectMapper();
-		return Multi.createFrom().publisher(simulationStatusStream).filter(event -> {
-			try{
-				//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
-				String jsonString = new String(event);
-				jsonString = jsonString.replace(" ","");
-
-				SimulationIntermediateResultsCiemss interResult = mapper.readValue(jsonString, SimulationIntermediateResultsCiemss.class);
-
-				return interResult.getJobId().equals(jobId);
-			}
-			catch(Exception e){
-				log.error("Error occurred while trying to convert simulation-status message to type: SimulationIntermediateResultsCiemss");
-				log.error(event.toString());
-				log.error(e.toString());
-				return false;
-			}
-		});*/
-	}
-
-	@GetMapping("/{jobId}/sciml/partial-result")
-	//TODO @SseElementType(MediaType.APPLICATION_JSON)
-	public ResponseEntity<JsonNode> scimlResult(
-		@PathVariable("jobId") final String jobId
-	) {
-
-		// return not implemented until we have a working solution
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-
-		/* TODO
-		return Multi.createFrom().publisher(scimlQueueStream).filter(event -> {
-			try {
-				return event.getValue("id").equals(jobId);
-			}
-			catch(Exception e) {
-				log.error("Error occured while trying to consume sciml-queue message");
-				log.error(event.toString());
-				log.error(e.toString());
-				return false;
-			}
-		});*/
-	}
-
-	// When we finalize the SimulationIntermediateResults object this end point will need to be passed more parameters
-	//TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1757
-	@PutMapping("/{jobId}/ciemss/create-partial-result")
-	public ResponseEntity<JsonNode> createPartialResult(
-		@PathVariable("jobId") final String jobId
-	) {
-		Double progress = 0.01;
-		SimulationIntermediateResultsCiemss event = new SimulationIntermediateResultsCiemss();
-		event.setJobId(jobId);
-		event.setProgress(progress);
-		//TODO simulationStatusEmitter.send(event);
-		return ResponseEntity.ok().build();
 	}
 }
