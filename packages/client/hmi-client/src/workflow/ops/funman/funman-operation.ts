@@ -36,7 +36,7 @@ export const FunmanOperation: Operation = {
 					name: '',
 					timepoints: { lb: 0, ub: 100 },
 					variables: [],
-					interval: { lb: 0 }
+					interval: { lb: 0, ub: 100 }
 				}
 			]
 		};

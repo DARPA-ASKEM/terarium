@@ -111,9 +111,9 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
-// import { getQueries, makeQueries } from '@/services/models/funman-service';
+import { getQueries, makeQueries } from '@/services/models/funman-service';
 // import { request } from '@/temp/funmanRequest';
-import funModel from '@/examples/fun-example.json';
+// import funModel from '@/examples/fun-example.json';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
@@ -169,7 +169,7 @@ const requestConstraints = computed(() =>
 	})
 );
 const requestParameters = ref();
-// const response = ref();
+const response = ref();
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
@@ -203,7 +203,7 @@ const runMakeQuery = async () => {
 
 	console.log('Hitting with the following request:');
 	console.log(request);
-	// response.value = await makeQueries(request); //Just commented out so i do not break funman
+	response.value = await makeQueries(request); // Just commented out so i do not break funman
 	updateOutputPorts('123'); // response.value.id);
 };
 
@@ -330,8 +330,8 @@ watch(
 watch(
 	() => props.node.outputs[0],
 	async () => {
-		// outputValue.value = await getQueries(props.node.outputs[0].id);
-		outputValue.value = funModel;
+		outputValue.value = await getQueries(props.node.outputs[0].id);
+		// outputValue.value = funModel;
 	},
 	{ immediate: true }
 );
