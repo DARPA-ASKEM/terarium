@@ -131,6 +131,7 @@ import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman
 // 8) renderer needs true and needs false boxes (mightve fixed)
 // 9) need to make renderer a lot prettier
 // 10) check for progress on run results. keep polling until success flag
+// 11) Make sure grabbing the correct config when provided an input
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
