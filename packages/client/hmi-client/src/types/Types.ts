@@ -5,6 +5,7 @@ export interface ClientConfig {
     baseUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
+    sseHeartbeatIntervalMillis: number;
 }
 
 export interface Event {
@@ -14,6 +15,13 @@ export interface Event {
     userId?: string;
     type: EventType;
     value?: string;
+}
+
+export interface ClientEvent<T> {
+    id: string;
+    createdAtMs: number;
+    type: ClientEventType;
+    data: T;
 }
 
 export interface ClientLog {
@@ -142,15 +150,13 @@ export interface Code {
     timestamp?: Date;
     name: string;
     description: string;
-    filename: string;
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
-    language: ProgrammingLanguage;
     metadata?: any;
 }
 
 export interface CodeFile {
-    language: string;
+    language: ProgrammingLanguage;
     dynamics: Dynamics;
 }
 
@@ -383,10 +389,9 @@ export interface ExtractionResponseResult {
 }
 
 export interface FunmanPostQueriesRequest {
-    query: any;
-    parameters: any[];
-    config: FunmanConfig;
-    structureParameters: any[];
+    model: any;
+    request: FunmanWorkRequest;
+    worker: any;
 }
 
 export interface FunmanConfig {
@@ -408,6 +413,14 @@ export interface FunmanConfig {
     substituteSubformulas: boolean;
     useCompartmentalConstraints: boolean;
     normalize: boolean;
+}
+
+export interface FunmanWorkRequest {
+    query?: any;
+    constraints?: any;
+    parameters?: any;
+    config?: FunmanConfig;
+    structure_parameters?: any;
 }
 
 export interface DKG {
@@ -920,6 +933,13 @@ export enum EvaluationScenarioStatus {
     Stopped = "STOPPED",
 }
 
+export enum ClientEventType {
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationSciml = "SIMULATION_SCIML",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
+}
+
 export enum FileType {
     File = "file",
     Dir = "dir",
@@ -939,6 +959,7 @@ export enum ProgrammingLanguage {
     Python = "python",
     R = "r",
     Julia = "julia",
+    Zip = "zip",
 }
 
 export enum ColumnType {

@@ -2,41 +2,35 @@
 	<main>
 		<header>
 			<h2>Test SSE</h2>
-			<Button label="Start listening" @click="listen" />
-			<Button label="Create empty models" @click="createEmptyModel" />
+			<Button label="Subscribe" @click="listen" />
+			<Button label="Unsubscribe" @click="stop" />
 		</header>
-		<ul>
-			<li v-for="modelId in models" :key="modelId">{{ modelId }}</li>
-		</ul>
+		<template v-for="message in messages" :key="message.id">
+			<div>{{ message.id }} : {{ message.data }}</div>
+		</template>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import API from '@/api/api';
-import { EventSourcePolyfill } from 'event-source-polyfill';
-import useAuthStore from '../stores/auth';
+import { ClientEvent, ClientEventType } from '@/types/Types';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
+const messages = ref<ClientEvent<any>[]>([]);
 
-const models = ref<Array<string>>([]);
-
-function listen() {
-	const auth = useAuthStore();
-	const events = new EventSourcePolyfill('/api/user/server-sent-events', {
-		headers: {
-			Authorization: `Bearer ${auth.token}`
-		}
-	});
-	//const events = new EventSource("/api/server-sent-events", { withCredentials: true });
-	events.onmessage = (event) => {
-		const id: string = JSON.parse(event.data)?.id;
-		models.value.push(id);
-		console.log(id);
-	};
+function getMessageHandler(event: ClientEvent<any>) {
+	messages.value.push(event);
+	if (messages.value.length > 10) {
+		messages.value.shift();
+	}
 }
 
-async function createEmptyModel() {
-	await API.put('/dev-tests/user-event');
+function listen() {
+	subscribe(ClientEventType.Notification, getMessageHandler);
+}
+
+function stop() {
+	unsubscribe(ClientEventType.Notification, getMessageHandler);
 }
 </script>
 

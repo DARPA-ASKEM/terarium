@@ -163,7 +163,7 @@ watch(
 );
 </script>
 
-<style>
+<style scoped>
 .container {
 	display: flex;
 	margin-top: 1rem;
