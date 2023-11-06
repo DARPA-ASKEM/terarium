@@ -185,13 +185,13 @@ const docLink = computed(() =>
 );
 
 const figures = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === 'figure') || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === 'Figure') || []
 );
 const tables = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === 'table') || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === 'Table') || []
 );
 const equations = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === 'equation') || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === 'Equation') || []
 );
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
