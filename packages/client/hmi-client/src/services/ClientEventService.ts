@@ -68,7 +68,9 @@ export async function init(): Promise<void> {
 			// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
 			if (error instanceof RetriableError) {
 				backoffMs *= 2;
-				return Math.min(backoffMs, 60000);
+				const retriesTime = Math.min(backoffMs, 60000);
+				console.log(`Retrying SSE connection in ${retriesTime}ms`);
+				return retriesTime;
 			}
 			throw error; // fatal
 		},
