@@ -54,9 +54,7 @@ async function uploadCodeToProject(file: File, progress: Ref<number>): Promise<C
 	// Create a new code asset with the same name as the file and post the metadata to TDS
 	const codeAsset: Code = {
 		name: file.name,
-		description: file.name,
-		filename: file.name,
-		language: getProgrammingLanguage(file.name)
+		description: file.name
 	};
 
 	const newCodeAsset: Code | null = await createNewCodeAsset(codeAsset);
@@ -89,8 +87,6 @@ async function uploadCodeToProjectFromGithub(
 	const codeAsset: Code = {
 		name: fileName,
 		description: path,
-		filename: fileName,
-		language: getProgrammingLanguage(fileName),
 		repoUrl: url
 	};
 
@@ -99,6 +95,39 @@ async function uploadCodeToProjectFromGithub(
 
 	const urlResponse = await API.put(
 		`/code-asset/${newCode.id}/uploadCodeFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		{
+			timeout: 30000
+		}
+	);
+
+	if (!urlResponse || urlResponse.status >= 400) {
+		logger.error(`Failed to upload code from github: ${urlResponse}`);
+		return null;
+	}
+
+	return newCode;
+}
+
+async function uploadCodeFromGithubRepo(
+	repoOwnerAndName: string,
+	repoUrl: string
+): Promise<Code | null> {
+	// Create a new code asset with the same name as the file and post the metadata to TDS
+	const repoName = `${repoOwnerAndName.split('/')[1]}.zip`;
+
+	if (!repoName) return null;
+
+	const codeAsset: Code = {
+		name: repoName,
+		description: repoName,
+		repoUrl
+	};
+
+	const newCode: Code | null = await createNewCodeAsset(codeAsset);
+	if (!newCode || !newCode.id) return null;
+
+	const urlResponse = await API.put(
+		`/code-asset/${newCode.id}/uploadCodeFromGithubRepo?repoOwnerAndName=${repoOwnerAndName}&repoName=${repoName}`,
 		{
 			timeout: 30000
 		}
@@ -154,6 +183,8 @@ function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 			return ProgrammingLanguage.Julia;
 		case 'r':
 			return ProgrammingLanguage.R;
+		case 'zip':
+			return ProgrammingLanguage.Zip;
 		default:
 			return ProgrammingLanguage.Python; // TODO do we need an "unknown" language?
 	}
@@ -167,6 +198,8 @@ function getFileExtension(language: ProgrammingLanguage): string {
 			return 'jl';
 		case ProgrammingLanguage.R:
 			return 'r';
+		case ProgrammingLanguage.Zip:
+			return 'zip';
 		default:
 			return '';
 	}
@@ -191,5 +224,6 @@ export {
 	addFileToCodeAsset,
 	getFileExtension,
 	getProgrammingLanguage,
-	setFileExtension
+	setFileExtension,
+	uploadCodeFromGithubRepo
 };

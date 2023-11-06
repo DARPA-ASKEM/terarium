@@ -5,6 +5,7 @@ export interface ClientConfig {
     baseUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
+    sseHeartbeatIntervalMillis: number;
 }
 
 export interface Event {
@@ -14,6 +15,13 @@ export interface Event {
     userId?: string;
     type: EventType;
     value?: string;
+}
+
+export interface ClientEvent<T> {
+    id: string;
+    createdAtMs: number;
+    type: ClientEventType;
+    data: T;
 }
 
 export interface ClientLog {
@@ -142,15 +150,13 @@ export interface Code {
     timestamp?: Date;
     name: string;
     description: string;
-    filename: string;
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
-    language: ProgrammingLanguage;
     metadata?: any;
 }
 
 export interface CodeFile {
-    language: string;
+    language: ProgrammingLanguage;
     dynamics: Dynamics;
 }
 
@@ -204,7 +210,7 @@ export interface DocumentAsset {
     username?: string;
     fileNames?: string[];
     documentUrl?: string;
-    metadata?: any;
+    metadata?: { [index: string]: any };
     source?: string;
     text?: string;
     grounding?: Grounding;
@@ -927,6 +933,13 @@ export enum EvaluationScenarioStatus {
     Stopped = "STOPPED",
 }
 
+export enum ClientEventType {
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationSciml = "SIMULATION_SCIML",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
+}
+
 export enum FileType {
     File = "file",
     Dir = "dir",
@@ -946,6 +959,7 @@ export enum ProgrammingLanguage {
     Python = "python",
     R = "r",
     Julia = "julia",
+    Zip = "zip",
 }
 
 export enum ColumnType {

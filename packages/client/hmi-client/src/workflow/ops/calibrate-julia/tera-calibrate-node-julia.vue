@@ -110,7 +110,13 @@ import Button from 'primevue/button';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { CalibrationRequestJulia, CsvAsset, ModelConfiguration } from '@/types/Types';
+import {
+	CalibrationRequestJulia,
+	ClientEvent,
+	ClientEventType,
+	CsvAsset,
+	ModelConfiguration
+} from '@/types/Types';
 import {
 	makeCalibrateJobJulia,
 	getRunResultJulia,
@@ -126,11 +132,11 @@ import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { Poller, PollerState } from '@/api/api';
-import { EventSourceManager } from '@/api/event-source-manager';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -167,7 +173,6 @@ const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const poller = new Poller();
-const eventSourceManager = new EventSourceManager();
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
@@ -235,10 +240,20 @@ const runCalibrate = async () => {
 	}
 };
 
-const handleIntermediateResult = (message: string) => {
+/* const handleIntermediateResult = (message: string) => {
 	const parsedMessage = JSON.parse(message);
 	console.log(parsedMessage);
-};
+}; */
+
+function getMessageHandler(event: ClientEvent<any>) {
+	const runIds: string[] = querySimulationInProgress(props.node);
+	if (runIds.length === 0) return;
+
+	if (runIds.includes(event.data.id)) {
+		// perform some action here
+		console.log(`Event received for: ${event.data.id}`);
+	}
+}
 
 const getStatus = async (simulationId: string) => {
 	showSpinner.value = true;
@@ -246,11 +261,7 @@ const getStatus = async (simulationId: string) => {
 
 	const runIds = [simulationId];
 
-	// open a connection for each run id and handle the messages
-	runIds.forEach((id) => {
-		eventSourceManager.openConnection(id, `/simulations/${id}/sciml/partial-result`);
-		eventSourceManager.setMessageHandler(id, handleIntermediateResult);
-	});
+	await subscribe(ClientEventType.SimulationSciml, getMessageHandler);
 
 	poller
 		.setInterval(3000)
@@ -258,8 +269,7 @@ const getStatus = async (simulationId: string) => {
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
 	const pollerResults = await poller.start();
 
-	// closing event source connections
-	runIds.forEach((id) => eventSourceManager.closeConnection(id));
+	await unsubscribe(ClientEventType.SimulationSciml, getMessageHandler);
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now

@@ -1,5 +1,5 @@
 <template>
-	<tera-asset>
+	<tera-asset :is-loading="isLoading">
 		<template #name-input>
 			<section class="header">
 				<section class="name">
@@ -15,36 +15,41 @@
 					/>
 				</section>
 				<section class="buttons">
-					<Dropdown
-						v-model="programmingLanguage"
-						:options="programmingLanguages"
-						@change="codeName = setFileExtension(codeName, programmingLanguage)"
-					/>
-					<FileUpload
-						name="demo[]"
-						:customUpload="true"
-						@uploader="onFileOpen"
-						mode="basic"
-						auto
-						chooseLabel="Load file"
-					/>
-					<Button label="Save" @click="saveCode()" />
-					<Button label="Save as new" @click="isCodeNamingModalVisible = true" />
-					<Button
-						label="Create model from code"
-						@click="isModelNamingModalVisible = true"
-						:loading="isCodeToModelLoading"
-					/>
-					<Button
-						label="Add dynamics"
-						:disabled="selectionRange === null"
-						@click="isDynamicsModalVisible = true"
-					/>
-					<Button
-						label="Remove all dynamics"
-						:disabled="!codeAsset?.files"
-						@click="removeAllDynamics"
-					/>
+					<template v-if="programmingLanguage !== ProgrammingLanguage.Zip">
+						<Dropdown
+							v-model="programmingLanguage"
+							:options="programmingLanguages"
+							@change="codeName = setFileExtension(codeName, programmingLanguage)"
+						/>
+						<FileUpload
+							name="demo[]"
+							:customUpload="true"
+							@uploader="onFileOpen"
+							mode="basic"
+							auto
+							chooseLabel="Load file"
+						/>
+						<Button label="Save" @click="saveCode()" />
+						<Button label="Save as new" @click="isCodeNamingModalVisible = true" />
+						<Button
+							label="Create model from code"
+							@click="isModelNamingModalVisible = true"
+							:loading="isCodeToModelLoading"
+						/>
+						<Button
+							label="Add dynamics"
+							:disabled="selectionRange === null"
+							@click="isDynamicsModalVisible = true"
+						/>
+						<Button
+							label="Remove all dynamics"
+							:disabled="!codeAsset?.files"
+							@click="removeAllDynamics"
+						/>
+					</template>
+					<template v-else>
+						<Button label="Download Zip" />
+					</template>
 				</section>
 			</section>
 		</template>
@@ -55,7 +60,12 @@
 			theme="chrome"
 			style="height: 100%; width: 100%"
 			class="ace-editor"
+			v-if="programmingLanguage !== ProgrammingLanguage.Zip"
 		/>
+		<div v-else>
+			<!-- TODO: show entire file tree for github -->
+			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{ repoUrl }}</a>
+		</div>
 		<Teleport to="body">
 			<tera-modal
 				v-if="isModelNamingModalVisible"
@@ -235,6 +245,9 @@ const programmingLanguages = [
 	ProgrammingLanguage.Python,
 	ProgrammingLanguage.R
 ];
+const isLoading = ref(false);
+
+const repoUrl = ref('');
 
 const selectedRangeToString = computed(() =>
 	selectionRange.value
@@ -429,15 +442,21 @@ watch(
 			codeText.value = INITIAL_TEXT;
 			programmingLanguage.value = ProgrammingLanguage.Python;
 		} else {
+			isLoading.value = true;
 			const code = await getCodeAsset(props.assetId);
-			if (code) {
+			if (code && code.files && Object.keys(code.files)[0]) {
 				codeAsset.value = code;
 				codeName.value = code.name;
-				const text = await getCodeFileAsText(props.assetId, code.name);
+
+				repoUrl.value = code.repoUrl ?? '';
+
+				const filename = Object.keys(code.files)[0];
+
+				const text = await getCodeFileAsText(props.assetId, filename);
 				if (text) {
 					codeText.value = text;
 				}
-				programmingLanguage.value = getProgrammingLanguage(codeName.value);
+				programmingLanguage.value = code.files[filename].language;
 			} else {
 				codeAsset.value = null;
 				codeName.value = 'newcode.py';
@@ -446,6 +465,7 @@ watch(
 			}
 		}
 		// Remove dynamics of previous file then add the new ones
+		isLoading.value = false;
 		removeMarkers();
 		highlightDynamics();
 		emit('asset-loaded');

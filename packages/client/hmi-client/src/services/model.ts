@@ -43,7 +43,7 @@ export async function getBulkModels(modelIDs: string[]) {
  * @return Array<Model>|null - the list of all models, or null if none returned by API
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions');
+	const response = await API.get('/models/descriptions?page_size=200');
 	return response?.data ?? null;
 }
 
