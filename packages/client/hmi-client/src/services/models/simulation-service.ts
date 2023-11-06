@@ -8,7 +8,9 @@ import {
 	CalibrationRequestCiemss,
 	EventType,
 	EnsembleSimulationCiemssRequest,
-	EnsembleCalibrationCiemssRequest
+	EnsembleCalibrationCiemssRequest,
+	ClientEventType,
+	ClientEvent
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
@@ -16,6 +18,7 @@ import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEqual } from 'lodash';
 import { Ref } from 'vue';
 import { useProjects } from '@/composables/project';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -234,6 +237,24 @@ export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => 
 	// return an empty array if no run ids are present
 	return [];
 };
+
+export async function subscribeToUpdateMessages(
+	simulationIds: string[],
+	eventType: ClientEventType,
+	messageHandler: (data: ClientEvent<any>) => void
+) {
+	await API.get(`/simulations/subscribe?simulationIds=${simulationIds}`);
+	await subscribe(eventType, messageHandler);
+}
+
+export async function unsubscribeToUpdateMessages(
+	simulationIds: string[],
+	eventType: ClientEventType,
+	messageHandler: (data: ClientEvent<any>) => void
+) {
+	await API.get(`/simulations/unsubscribe?simulationIds=${simulationIds}`);
+	await unsubscribe(eventType, messageHandler);
+}
 
 export async function simulationPollAction(
 	simulationIds: string[],
