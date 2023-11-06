@@ -43,7 +43,19 @@
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
-		<Accordion v-if="!isEmpty(assetItemsMap)" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5]">
+		<Accordion
+			v-if="!isEmpty(assetItemsMap)"
+			:multiple="true"
+			:active-index="Array.from(activeAccordionTabs)"
+			@tab-open="
+				activeAccordionTabs.add($event.index);
+				saveAccordionTabsState();
+			"
+			@tab-close="
+				activeAccordionTabs.delete($event.index);
+				saveAccordionTabsState();
+			"
+		>
 			<AccordionTab v-for="[type, assetItems] in assetItemsMap" :key="type">
 				<template #header>
 					<template v-if="type === AssetType.Publications">External Publications</template>
@@ -54,7 +66,10 @@
 				<Button
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
-					:active="assetItem.assetId === openedAssetRoute.assetId"
+					:active="
+						assetItem.assetId === openedAssetRoute.assetId &&
+						assetItem.pageType === openedAssetRoute.pageType
+					"
 					:title="assetItem.assetName"
 					class="asset-button"
 					plain
@@ -147,12 +162,21 @@ const isRemovalModal = ref(false);
 const draggedAsset = ref<AssetRoute | null>(null);
 const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
+const activeAccordionTabs = ref(
+	new Set(
+		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
+	)
+);
 
 const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 
 function removeAsset() {
 	emit('remove-asset', assetToDelete.value);
 	isRemovalModal.value = false;
+}
+
+function saveAccordionTabsState() {
+	localStorage.setItem('activeResourceBarTabs', Array.from(activeAccordionTabs.value).join());
 }
 
 const { setDragData, deleteDragData } = useDragEvent();

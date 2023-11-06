@@ -86,6 +86,11 @@ function start_local() {
   cd - || exit
 }
 
+function build_docker_compose() {
+  cat containers/common.env containers/secrets.env > containers/.env
+  docker compose --env-file containers/.env --file containers/docker-compose-full.yml $(for customfile in `ls docker-compose.custom*.y*ml 2> /dev/null`; do echo -n " -f $customfile"; done) config > ./docker-compose.yml
+}
+
 while [[ $# -gt 0 ]]; do
   case ${1} in
   -h | --help)
@@ -108,6 +113,9 @@ while [[ $# -gt 0 ]]; do
     ;;
   decrypt)
     COMMAND="decrypt"
+    ;;
+  docker-compose)
+    COMMAND="docker-compose"
     ;;
   *)
     echo "hmiServerDev.sh: illegal option"
@@ -165,7 +173,7 @@ case ${COMMAND} in
         echo "Illegal ENVIRONMENT"
         break
         ;;
-     esac
+    esac
     delete_secrets
      ;;
   decrypt)
@@ -173,6 +181,11 @@ case ${COMMAND} in
     ;;
   encrypt)
     encrypt_secrets
+     ;;
+  docker-compose)
+    decrypt_secrets
+    build_docker_compose
+    delete_secrets
     ;;
   help)
     echo "
@@ -192,11 +205,14 @@ case ${COMMAND} in
         ENVIRONMENT
           remote | local | full (default: remote)  Indicate which containers to stop
 
+
       OTHER COMMANDS:
         encrypt
           Encrypts the secrets file
         decrypt
           Decrypts the secrets file
+        docker-compose
+          Generates a combined single docker-compose.yml file for local development
         help
           Displays this help message
       "
