@@ -75,7 +75,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref, onMounted } from 'vue';
+import { watch, ref, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import teraMiraNotebook from '@/components/stratification/tera-mira-notebook.vue';
@@ -177,6 +177,28 @@ watch(
 	{ immediate: true }
 );
 
+const stratifyRequest = () => {
+	const kernel = jupyterSession.value?.session?.kernel;
+	if (!kernel) return;
+
+	console.log('test stratification');
+
+	const messageBody = {
+		session: jupyterSession?.value?.name || '',
+		channel: 'shell',
+		content: {
+			stratify_args: {
+				key: 'city',
+				strata: ['nyc', 'boston', 'toronto', 'vancouver', 'calgary']
+			}
+		},
+		msgType: 'stratify_request',
+		msgId: createMessageId('stratify_request')
+	};
+	const contextMessage: JupyterMessage = createMessage(messageBody);
+	kernel.sendJupyterMessage(contextMessage);
+};
+
 const setKernelContext = () => {
 	const kernel = jupyterSession.value?.session?.kernel;
 	if (!kernel) {
@@ -205,18 +227,26 @@ const iopubMessageHandler = (_session, message: any) => {
 		return;
 	}
 	console.log('');
-	console.log('header', message.header.msg_type);
+	console.log('message received', message);
 	console.log('');
 
-	if (message.header.msg_type === 'compile_expr_response') {
-		// TODO
-	} else if (message.header.msg_type === 'decapodes_preview') {
-		// TODO
-	} else if (message.header.msg_type === 'construct_amr_response') {
-		// TODO
-	} else if (message.header.msg_type === 'save_model_response') {
-		// TODO
+	const msgType = message.header.msg_type;
+
+	if (msgType === 'stratify_response') {
+		console.log(message.content);
+	} else if (msgType === 'model_preview') {
+		console.log(message.content);
 	}
+
+	// if (message.header.msg_type === 'compile_expr_response') {
+	// 	// TODO
+	// } else if (message.header.msg_type === 'decapodes_preview') {
+	// 	// TODO
+	// } else if (message.header.msg_type === 'construct_amr_response') {
+	// 	// TODO
+	// } else if (message.header.msg_type === 'save_model_response') {
+	// 	// TODO
+	// }
 };
 
 onMounted(async () => {
@@ -224,12 +254,22 @@ onMounted(async () => {
 	jupyterSession.value = session;
 
 	session.kernelChanged.connect((_context, kernelInfo) => {
+		if (!kernelInfo.newValue) return;
+
 		const kernel = kernelInfo.newValue;
 		if (kernel?.name === 'beaker') {
 			session.iopubMessage.connect(iopubMessageHandler);
 			setKernelContext();
 		}
+
+		setTimeout(() => {
+			stratifyRequest();
+		}, 3000);
 	});
+});
+
+onUnmounted(async () => {
+	await jupyterSession.value?.shutdown();
 });
 </script>
 
