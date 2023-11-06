@@ -31,6 +31,11 @@
 				@update-self="updateStratifyGroupForm"
 			/>
 			<Button label="Add another strata group" size="small" @click="addGroupForm" />
+			<Button label="Stratify" size="small" @click="stratifyModel" />
+
+			<div>
+				<p>{{ node.state }}</p>
+			</div>
 		</div>
 		<div class="right-side">
 			<tera-model-diagram
@@ -70,7 +75,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref } from 'vue';
+import { watch, ref, onMounted } from 'vue';
 import Button from 'primevue/button';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import teraMiraNotebook from '@/components/stratification/tera-mira-notebook.vue';
@@ -80,6 +85,11 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
+
+/* Jupyter imports */
+import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
+import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
+import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { StratifyOperationStateMira, StratifyGroup } from './stratify-mira-operation';
 
 const props = defineProps<{
@@ -90,6 +100,8 @@ enum StratifyTabs {
 	wizard,
 	notebook
 }
+
+const jupyterSession = ref<SessionContext | null>(null);
 
 const activeTab = ref(StratifyTabs.wizard);
 const modelConfiguration = ref<ModelConfiguration>();
@@ -104,7 +116,8 @@ const addGroupForm = () => {
 		name: '',
 		selectedVariables: [],
 		groupLabels: '',
-		cartesianProduct: true
+		cartesianProduct: true,
+		isPending: true
 	};
 	state.strataGroups.push(newGroup);
 
@@ -137,6 +150,8 @@ const updateStratifyGroupForm = (data) => {
 	});
 };
 
+const stratifyModel = () => {};
+
 // Set model, modelConfiguration, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
@@ -161,6 +176,61 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const setKernelContext = () => {
+	const kernel = jupyterSession.value?.session?.kernel;
+	if (!kernel) {
+		return;
+	}
+
+	const messageBody = {
+		session: jupyterSession?.value?.name || '',
+		channel: 'shell',
+		content: {
+			context: 'mira_model',
+			language: 'python3',
+			context_info: {
+				id: 'sir-model-id'
+			}
+		},
+		msgType: 'context_setup_request',
+		msgId: createMessageId('context_setup')
+	};
+	const contextMessage: JupyterMessage = createMessage(messageBody);
+	kernel.sendJupyterMessage(contextMessage);
+};
+
+const iopubMessageHandler = (_session, message: any) => {
+	if (message.header.msg_type === 'status') {
+		return;
+	}
+	console.log('');
+	console.log('header', message.header.msg_type);
+	console.log('');
+
+	if (message.header.msg_type === 'compile_expr_response') {
+		// TODO
+	} else if (message.header.msg_type === 'decapodes_preview') {
+		// TODO
+	} else if (message.header.msg_type === 'construct_amr_response') {
+		// TODO
+	} else if (message.header.msg_type === 'save_model_response') {
+		// TODO
+	}
+};
+
+onMounted(async () => {
+	const session = await newSession('beaker', 'Beaker');
+	jupyterSession.value = session;
+
+	session.kernelChanged.connect((_context, kernelInfo) => {
+		const kernel = kernelInfo.newValue;
+		if (kernel?.name === 'beaker') {
+			session.iopubMessage.connect(iopubMessageHandler);
+			setKernelContext();
+		}
+	});
+});
 </script>
 
 <style scoped>
