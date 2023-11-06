@@ -82,6 +82,7 @@ dependencies {
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'com.c4-soft.springaddons:spring-addons-starter-oidc-test:7.0.0'
 }
 
 tasks.named('test') {

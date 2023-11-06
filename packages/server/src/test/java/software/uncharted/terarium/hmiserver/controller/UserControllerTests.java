@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller;
 
+import com.c4_soft.springaddons.security.oauth2.test.annotations.WithMockAuthentication;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,7 +25,7 @@ public class UserControllerTests extends TerariumApplicationTests {
 	}
 
 	@Test
-	@WithMockUser(username="ursula",roles={"user"})
+	@WithMockAuthentication(Roles.USER)
 	public void testItReturnsOkOnAuthorized() throws Exception {
 		mockMvc.perform(MockMvcRequestBuilders.get("/user/me"))
 			.andExpect(status().isOk());
