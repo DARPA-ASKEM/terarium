@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -13,7 +14,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,46 +23,55 @@ import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
+import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
+import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
+import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 
 @RequestMapping("/document-asset")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class DocumentController implements SnakeCaseController {
 
-	@Autowired
-	DocumentProxy proxy;
+	final DocumentProxy proxy;
 
-	@Autowired
-	SkemaUnifiedProxy skemaUnifiedProxy;
+	final ExtractionProxy extractionProxy;
 
-	@Autowired
-	JsDelivrProxy gitHubProxy;
+	final SkemaUnifiedProxy skemaUnifiedProxy;
 
-	@Autowired
-	KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
+	final JsDelivrProxy gitHubProxy;
 
-	@Autowired
-	ProjectProxy projectProxy;
+	final DownloadService downloadService;
 
-	@Autowired
-	DocumentAssetService documentAssetService;
+	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
+
+	final ProjectProxy projectProxy;
+
+	final DocumentAssetService documentAssetService;
+
+	@Value("${xdd.api-key}")
+	String apikey;
 
 	@GetMapping
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
@@ -203,78 +213,57 @@ public class DocumentController implements SnakeCaseController {
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
 		@RequestBody final AddDocumentAssetFromXDDRequest body
 	) {
-		try (final CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build()) {
-
-			//build initial response
-			final AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
-			response.setExtractionJobId(null);
-			response.setPdfUploadError(false);
-			response.setDocumentAssetId(null);
 
 
-			// get preliminary info to build document asset
-			final Document document = body.getDocument();
-			final String projectId = body.getProjectId();
-			final String name = document.getTitle();
-			final String username = projectProxy.getProject(projectId).getBody().getUsername();
-			final String doi = documentAssetService.getDocumentDoi(document);
-			final String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
-			final String filename = DownloadService.pdfNameFromUrl(fileUrl);
-			final List<String> filenames = new ArrayList<String>();
-			if(filename != null){
-				filenames.add(filename);
-			}
+		//build initial response
+		AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
+		response.setExtractionJobId(null);
+		response.setPdfUploadError(false);
+		response.setDocumentAssetId(null);
 
-			//create document asset
-			final DocumentAsset documentAsset = new DocumentAsset();
-			documentAsset.setName(name);
-			documentAsset.setDescription(name);
-			documentAsset.setUsername(username);
-			documentAsset.setFileNames(filenames);
 
-			final String newDocumentAssetId = proxy.createAsset(convertObjectToSnakeCaseJsonNode(documentAsset)).getBody().get("id").asText();
-			response.setDocumentAssetId(newDocumentAssetId);
+		// get preliminary info to build document asset
+		Document document = body.getDocument();
+		String projectId = body.getProjectId();
+		String doi = documentAssetService.getDocumentDoi(document);
+		String username = projectProxy.getProject(projectId).getBody().getUsername();
 
-			//add asset to project
-			projectProxy.createAsset(projectId, AssetType.documents, newDocumentAssetId);
-
-			//if there is no filename that means we cannot get the pdf return ok with errors.
-			if(filename == null || filename.isEmpty()){
-				response.setPdfUploadError(true);
-				return ResponseEntity.ok(response);
-			}
-
-			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
-
-			//if this service fails, return ok with errors
-			if(fileAsBytes == null || fileAsBytes.length == 0){
-				response.setPdfUploadError(true);
-				return ResponseEntity.ok(response);
-			}
-
-			// upload pdf to document asset
-			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			final PresignedURL presignedURL = proxy.getUploadUrl(newDocumentAssetId, filename).getBody();
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse pdfUploadResponse = httpclient.execute(put);
-
-			if(pdfUploadResponse.getStatusLine().getStatusCode() >= 400) {
-				response.setPdfUploadError(true);
-				return ResponseEntity.ok(response);
-			}
-
-			// fire and forgot pdf extractions
-			final String jobId = knowledgeMiddlewareProxy.postPDFToCosmos(newDocumentAssetId).getBody().get("id").asText();
-			response.setExtractionJobId(jobId);
-
-			return ResponseEntity.ok(response);
-		} catch (final Exception e) {
-			log.error("Unable to GET document data", e);
-			return ResponseEntity.internalServerError().build();
+		// get pdf url and filename
+		String fileUrl = null;
+		String filename = null;
+		try {
+			fileUrl = downloadService.getPDFURL("https://unpaywall.org/" + doi);
+			filename = downloadService.pdfNameFromUrl(fileUrl);
+		} catch (IOException | URISyntaxException e) {
+			throw new RuntimeException(e);
 		}
+
+		XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null, null, null, null, apikey);
+
+		// create a new document asset from the metadata in the xdd document
+		DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, username, extractionResponse.getSuccess().getData());
+		if(filename != null)
+			documentAsset.getFileNames().add(filename);
+
+		// Upload the document to TDS in order to get a new ID to pair our files we want to upload with.
+		String newDocumentAssetId = proxy.createAsset(convertObjectToSnakeCaseJsonNode(documentAsset)).getBody().get("id").asText();
+		response.setDocumentAssetId(newDocumentAssetId);
+
+		// Upload the PDF from unpaywall
+		String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
+		if(extractionJobId == null)
+			response.setPdfUploadError(true);
+		else
+			response.setExtractionJobId(extractionJobId);
+
+		// Now upload additional extraction files
+		uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
+
+		//add asset to project
+		projectProxy.createAsset(projectId, AssetType.documents, newDocumentAssetId);
+
+		return ResponseEntity.ok(response);
+
 	}
 
 
@@ -320,5 +309,125 @@ public class DocumentController implements SnakeCaseController {
 			log.error("Unable to GET document data", e);
 			return ResponseEntity.internalServerError().build();
 		}
+
 	}
+
+	/**
+	 * Creates a document asset from an XDD document
+	 * @param document xdd document
+	 * @param username current user name
+	 * @param extractions list of extractions associated with the document
+	 * @return
+	 */
+	private DocumentAsset createDocumentAssetFromXDDDocument(Document document, String username, List<Extraction> extractions) {
+		String name = document.getTitle();
+
+		//create document asset
+		DocumentAsset documentAsset = new DocumentAsset();
+		documentAsset.setName(name);
+		documentAsset.setDescription(name);
+		documentAsset.setUsername(username);
+		documentAsset.setFileNames(new ArrayList<>());
+
+		if(extractions != null) {
+			documentAsset.setAssets(new ArrayList<>());
+			for(int i = 0; i < extractions.size(); i++) {
+				Extraction extraction = extractions.get(i);
+				if(extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.EQUATION_ASSETTYPE)
+				|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.FIGURE_ASSETTYPE)
+				|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.TABLE_ASSETTYPE) ) {
+					DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
+					documentExtraction.setAssetType(extraction.getAskemClass());
+					documentExtraction.setFileName("extraction_" + i + ".png");
+					documentExtraction.getMetadata().put("title", extraction.getProperties().getTitle());
+					documentExtraction.getMetadata().put("description", extraction.getProperties().getCaption());
+					documentAsset.getAssets().add(documentExtraction);
+					documentAsset.getFileNames().add(documentExtraction.getFileName());
+				}
+			}
+
+		}
+
+		if(document.getGithubUrls() != null && !document.getGithubUrls().isEmpty()){
+			documentAsset.setMetadata(new HashMap<>());
+			documentAsset.getMetadata().put("github_urls", document.getGithubUrls());
+		}
+
+		return documentAsset;
+	}
+
+	/**
+	 * Uploads the extractions associated with an XDD document
+	 * @param docId
+	 * @param extractions
+	 */
+	private void uploadXDDExtractions(String docId, List<Extraction> extractions){
+
+		if(extractions != null) {
+			for (int i = 0; i < extractions.size(); i++) {
+				Extraction extraction = extractions.get(i);
+				if (extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.EQUATION_ASSETTYPE)
+					|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.FIGURE_ASSETTYPE)
+					|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.TABLE_ASSETTYPE)) {
+					String filename = "extraction_" + i + ".png";
+
+					try(CloseableHttpClient httpclient = HttpClients.custom()
+						.disableRedirectHandling()
+						.build()){
+						byte[] imageAsBytes = Base64.getDecoder().decode(extraction.getProperties().getImage().getBytes("UTF-8"));
+						HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+						final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
+
+						final HttpPut put = new HttpPut(presignedURL.getUrl());
+						put.setEntity(fileEntity);
+						final HttpResponse pdfUploadResponse = httpclient.execute(put);
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Uploads a PDF file to a document asset and then fires and forgets the extraction
+	 * @param doi
+	 * @param filename
+	 * @param docId
+	 * @return
+	 */
+	private String uploadPDFFileToDocumentThenExtract(String doi, String filename, String docId){
+		try(CloseableHttpClient httpclient = HttpClients.custom()
+			.disableRedirectHandling()
+			.build()){
+
+			byte[] fileAsBytes = downloadService.getPDF("https://unpaywall.org/" + doi);
+
+			//if this service fails, return ok with errors
+			if(fileAsBytes == null || fileAsBytes.length == 0){
+				return null;
+			}
+
+			// upload pdf to document asset
+			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse pdfUploadResponse = httpclient.execute(put);
+
+			if(pdfUploadResponse.getStatusLine().getStatusCode() >= 400) {
+				return null;
+			}
+
+			// fire and forgot pdf extractions
+			return knowledgeMiddlewareProxy.postPDFToCosmos(docId).getBody().get("id").asText();
+
+		} catch (Exception e){
+			log.error("Unable to upload PDF document then extract", e);
+			return null;
+		}
+
+	}
+
+
 }
