@@ -58,12 +58,8 @@
 				</section>
 			</section>
 		</template>
-		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="flex h-full">
-			<tera-directory
-				v-if="fileNames.length > 1"
-				:files="fileNames"
-				@fileClicked="onFileSelect"
-			></tera-directory>
+		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
+			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
 			<v-ace-editor
 				v-model:value="codeText"
 				@init="initialize"
@@ -517,6 +513,10 @@ h4 {
 	margin-top: 0.25rem;
 }
 
+.code-asset-content {
+	display: flex;
+	width: 100%;
+}
 .p-dropdown {
 	height: 2.75rem;
 }

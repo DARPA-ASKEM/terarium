@@ -1,5 +1,5 @@
 <template>
-	<aside class="min-w-10rem max-w-20rem">
+	<aside class="tree-container">
 		<Tree
 			v-model:selectionKeys="selectedKey"
 			:value="directoryTree"
@@ -8,8 +8,7 @@
 			filterMode="lenient"
 			filter-placeholder="Find"
 			@node-select="onNodeSelect"
-		>
-		</Tree>
+		/>
 	</aside>
 </template>
 
@@ -84,4 +83,9 @@ const onNodeSelect = (node: TreeNode) => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.tree-container {
+	min-width: 10rem;
+	max-width: 20rem;
+}
+</style>
