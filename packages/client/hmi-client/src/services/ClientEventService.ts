@@ -52,11 +52,12 @@ export async function init(): Promise<void> {
 		},
 		async onopen(response: Response) {
 			if (response.status === 401) {
-				// redirect to login
+				// redirect to the login page
 				authStore.keycloak?.login({
 					redirectUri: window.location.href
 				});
-			} else if (response.status === 500) {
+			} else if (response.status >= 500) {
+				console.log('SSE connection error');
 				throw new RetriableError('Internal server error');
 			} else {
 				// Reset the backoff time as we've made a connection successfully
