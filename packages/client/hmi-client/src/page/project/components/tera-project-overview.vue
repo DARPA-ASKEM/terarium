@@ -108,7 +108,12 @@
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
 					<Column field="assetName" header="Name" sortable style="width: 75%">
 						<template #body="slotProps">
-							<div class="asset-button" @click="openResource(slotProps.data)">
+							<div
+								class="asset-button"
+								@click="
+									openAsset({ pageType: slotProps.data.pageType, assetId: slotProps.data.assetId })
+								"
+							>
 								<tera-asset-icon :assetType="slotProps.data.pageType" />
 								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
 							</div>
@@ -132,7 +137,13 @@
 								plain
 								text
 								rounded
-								@click.stop="(e) => showRowActions(e, slotProps.data)"
+								@click.stop="
+									(e) =>
+										showAssetActions(e, {
+											pageType: slotProps.data.pageType,
+											assetId: slotProps.data.assetId
+										})
+								"
 							/>
 							<Menu ref="rowActionMenu" :model="rowActionMenuItems" :popup="true" />
 						</template>
@@ -173,6 +184,7 @@ import { AssetType } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
+import { AssetRoute } from '@/types/common';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
@@ -183,7 +195,7 @@ const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 const selectedResources = ref();
 
-const openedRow = ref(null);
+const assetRouteToOpen = ref<AssetRoute | null>(null);
 
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
@@ -207,8 +219,8 @@ async function editProject() {
 	inputElement.value?.$el.focus();
 }
 
-async function openResource(data) {
-	router.push({ name: RouteName.Project, params: data });
+function openAsset(assetRoute: AssetRoute) {
+	router.push({ name: RouteName.Project, params: assetRoute });
 }
 
 async function updateProjectName() {
@@ -251,16 +263,18 @@ function setRowHover() {
 /* Row Action Menu */
 const rowActionMenu = ref();
 const rowActionMenuItems = ref([
-	{ label: 'Open', command: () => openResource(openedRow.value) }
-
+	{
+		label: 'Open',
+		command: () => assetRouteToOpen.value && openAsset(assetRouteToOpen.value)
+	}
 	// TODO add the follow commands
 	// { label: 'Rename' },
 	// { label: 'Make a copy' },
 	// { label: 'Delete' },
 	// { label: 'Download' }
 ]);
-const showRowActions = (event, data) => {
-	openedRow.value = data;
+const showAssetActions = (event, assetRoute: AssetRoute) => {
+	assetRouteToOpen.value = assetRoute;
 	rowActionMenu.value.toggle(event);
 };
 
