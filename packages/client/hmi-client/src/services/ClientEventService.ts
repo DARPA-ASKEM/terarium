@@ -20,11 +20,6 @@ let lastHeartbeat = new Date().valueOf();
 let backoffMs = 1000;
 
 /**
- * Whether we are currently reconnecting to the SSE endpoint
- */
-let reconnecting = false;
-
-/**
  * An error that can be retried
  */
 class RetriableError extends Error {}
@@ -87,14 +82,10 @@ export async function init(): Promise<void> {
  * and reconnects if not
  */
 setInterval(async () => {
-	if (!reconnecting) {
-		const config = await getConfiguration();
-		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
-		if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
-			reconnecting = true;
-			await init();
-			reconnecting = false;
-		}
+	const config = await getConfiguration();
+	const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
+	if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
+		await init();
 	}
 }, 1000);
 
