@@ -130,6 +130,12 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
+					<tera-model-from-code-node
+						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_FROM_CODE"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
+					/>
 				</template>
 			</tera-workflow-node>
 		</template>
@@ -272,6 +278,8 @@ import {
 	SimulateEnsembleCiemssOperation,
 	TeraSimulateEnsembleNodeCiemss
 } from './ops/simulate-ensemble-ciemss/mod';
+
+import { ModelFromCodeOperation, TeraModelFromCodeNode } from './ops/model-from-code/mod';
 
 import { SimulateJuliaOperation, TeraSimulateNodeJulia } from './ops/simulate-julia/mod';
 
@@ -564,6 +572,14 @@ const contextMenuItems = ref([
 		label: 'Stratify Julia',
 		command: () => {
 			workflowService.addNode(wf.value, StratifyOperation, newNodePosition, { state: null });
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Create model',
+		disabled: false,
+		command: () => {
+			workflowService.addNode(wf.value, ModelFromCodeOperation, newNodePosition);
 			workflowDirty = true;
 		}
 	},

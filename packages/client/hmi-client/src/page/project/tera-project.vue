@@ -80,6 +80,12 @@
 					:key="workflowNode.id"
 					@open-asset="openAsset"
 				/>
+				<tera-model-from-code
+					v-if="
+						workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL_FROM_CODE
+					"
+					:node="workflowNode"
+				/>
 				<tera-simulate-ensemble-ciemss
 					v-if="
 						workflowNode &&
@@ -136,6 +142,7 @@ import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/
 import teraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
 import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
 import TeraModelTransformer from '@/workflow/ops/model-transformer/tera-model-transformer.vue';
+import TeraModelFromCode from '@/workflow/ops/model-from-code/tera-model-from-code.vue';
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
