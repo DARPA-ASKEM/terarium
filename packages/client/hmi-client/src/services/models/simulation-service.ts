@@ -118,7 +118,7 @@ export async function getRunResultCiemss(runId: string, filename = 'result.csv')
 			const keySuffix = keyArr.pop();
 			const keyName = keyArr.join('_');
 
-			if (keySuffix === 'param') {
+			if (keySuffix === 'param' || keySuffix === 'state') {
 				outputRowRunResults[keyName] = inputRow[key];
 				if (!runConfigs[keyName]) {
 					runConfigs[keyName] = [];
