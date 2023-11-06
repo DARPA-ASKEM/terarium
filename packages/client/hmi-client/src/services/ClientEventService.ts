@@ -51,7 +51,6 @@ export async function init(): Promise<void> {
 			}
 		},
 		async onopen(response: Response) {
-			init();
 			if (response.status === 401) {
 				// redirect to login
 				authStore.keycloak?.login({
