@@ -58,15 +58,21 @@
 				</section>
 			</section>
 		</template>
-		<v-ace-editor
-			v-model:value="codeText"
-			@init="initialize"
-			:lang="programmingLanguage"
-			theme="chrome"
-			style="height: 100%; width: 100%"
-			class="ace-editor"
-			v-if="programmingLanguage !== ProgrammingLanguage.Zip"
-		/>
+		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="flex h-full">
+			<tera-directory
+				v-if="fileNames.length > 1"
+				:files="fileNames"
+				@fileClicked="onFileSelect"
+			></tera-directory>
+			<v-ace-editor
+				v-model:value="codeText"
+				@init="initialize"
+				:lang="programmingLanguage"
+				theme="chrome"
+				style="height: 100%; width: 100%"
+				class="ace-editor"
+			/>
+		</div>
 		<div v-else>
 			<!-- TODO: show entire file tree for github -->
 			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{ repoUrl }}</a>
@@ -213,6 +219,7 @@ import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import { Ace, Range } from 'ace-builds';
 import { isEmpty } from 'lodash';
+import TeraDirectory from './tera-directory.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -259,6 +266,11 @@ const selectedRangeToString = computed(() =>
 		? `L${selectionRange.value.start.row + 1}-L${selectionRange.value.end.row + 1}`
 		: ''
 );
+
+const fileNames = computed<string[]>(() => {
+	if (!codeAsset.value?.files) return [];
+	return Object.keys(codeAsset.value?.files);
+});
 
 /**
  * Editor initialization function
@@ -435,6 +447,13 @@ async function onFileOpen(event) {
 		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
 		codeName.value = file.name;
 	};
+}
+
+async function onFileSelect(filePath: string) {
+	const text = await getCodeFileAsText(props.assetId, filePath);
+	if (text) {
+		codeText.value = text;
+	}
 }
 
 watch(
