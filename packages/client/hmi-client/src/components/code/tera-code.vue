@@ -515,7 +515,7 @@ h4 {
 
 .code-asset-content {
 	display: flex;
-	width: 100%;
+	height: 100%;
 }
 .p-dropdown {
 	height: 2.75rem;

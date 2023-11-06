@@ -2,6 +2,7 @@
 	<aside class="tree-container">
 		<Tree
 			v-model:selectionKeys="selectedKey"
+			v-model:expanded-keys="expandedKeys"
 			:value="directoryTree"
 			selectionMode="single"
 			:filter="true"
@@ -14,7 +15,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import Tree, { TreeNode, TreeSelectionKeys } from 'primevue/tree';
+import Tree, { TreeExpandedKeys, TreeNode, TreeSelectionKeys } from 'primevue/tree';
 
 const directoryTree = ref<TreeNode[]>([]);
 
@@ -25,8 +26,11 @@ const props = defineProps<{
 const emit = defineEmits(['file-clicked']);
 
 const selectedKey = ref<TreeSelectionKeys>();
+const expandedKeys = ref<TreeExpandedKeys>();
+
 onMounted(() => {
-	directoryTree.value = buildDirectoryTree(props.files);
+	directoryTree.value = buildDirectoryTree(props.files)[0].children ?? [];
+	expandFirstDirectory(directoryTree.value);
 });
 
 function buildDirectoryTree(files) {
@@ -78,6 +82,13 @@ function buildDirectoryTree(files) {
 	return [root];
 }
 
+// function to find if an inital directory exists, if so expand it when first loaded
+function expandFirstDirectory(nodes: TreeNode[]) {
+	const directoryNode = nodes.find((node) => node.data.isDirectory);
+	if (!directoryNode || !directoryNode.key) return;
+
+	expandedKeys.value = { [directoryNode.key]: true };
+}
 const onNodeSelect = (node: TreeNode) => {
 	emit('file-clicked', node.data.fullPath);
 };
