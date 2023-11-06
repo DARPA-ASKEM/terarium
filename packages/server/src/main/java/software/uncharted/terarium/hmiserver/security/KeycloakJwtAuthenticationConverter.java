@@ -53,15 +53,15 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 
 
 		// Merge with existing roles (or create the new user if this is first login
-		final String userId = jwt.getClaimAsString(StandardClaimNames.SUB);
-		User databaseUser = userService.getById(userId);
-		User jwtUser = adminClientService.getUserFromJwt(jwt);
-		if (databaseUser == null) {
-			databaseUser = initializeUser(jwt, realmRoles);
-		}
-		if (User.isDirty(databaseUser, jwtUser)) {
-			databaseUser = userService.save(jwtUser.merge(databaseUser));
-		}
+//		final String userId = jwt.getClaimAsString(StandardClaimNames.SUB);
+//		User databaseUser = userService.getById(userId);
+//		User jwtUser = adminClientService.getUserFromJwt(jwt);
+//		if (databaseUser == null) {
+//			databaseUser = initializeUser(jwt, realmRoles);
+//		}
+//		if (User.isDirty(databaseUser, jwtUser)) {
+//			databaseUser = userService.save(jwtUser.merge(databaseUser));
+//		}
 
 //		return roleService.getAuthorities(databaseUser.getRoles()).stream()
 //			.map(SimpleGrantedAuthority::new)
@@ -72,19 +72,19 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 			.collect(Collectors.toSet());
 	}
 
-	@Transactional
-	public User initializeUser(Jwt jwt, final List<String> keycloakRoles) {
-		final User user = adminClientService.getUserFromJwt(jwt);
-
-		final Set<RoleType> roleTypes = KeycloakRole.get(keycloakRoles).stream()
-			.map(keycloakRole -> dataInitializationService.getRoleTypesForKeycloakRole(keycloakRole))
-			.flatMap(Collection::stream)
-			.collect(toSet());
-
-		final List<Role> roles = roleService.getAllByTypes(roleTypes.stream().map(Enum::name).collect(toSet()));
-
-		user.setRoles(roles);
-
-		return userService.createUser(user);
-	}
+//	@Transactional
+//	public User initializeUser(Jwt jwt, final List<String> keycloakRoles) {
+//		final User user = adminClientService.getUserFromJwt(jwt);
+//
+//		final Set<RoleType> roleTypes = KeycloakRole.get(keycloakRoles).stream()
+//			.map(keycloakRole -> dataInitializationService.getRoleTypesForKeycloakRole(keycloakRole))
+//			.flatMap(Collection::stream)
+//			.collect(toSet());
+//
+//		final List<Role> roles = roleService.getAllByTypes(roleTypes.stream().map(Enum::name).collect(toSet()));
+//
+//		user.setRoles(roles);
+//
+//		return userService.createUser(user);
+//	}
 }
