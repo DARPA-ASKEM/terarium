@@ -15,11 +15,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
-<<<<<<< Updated upstream
 import software.uncharted.terarium.hmiserver.security.Roles;
-=======
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
->>>>>>> Stashed changes
 
 import java.util.ArrayList;
 import java.util.Collection;
