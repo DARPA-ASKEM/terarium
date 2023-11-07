@@ -25,10 +25,14 @@
 						/>
 					</div>
 					<div>
+						<!--
+							TODO: Disabled until there is a domain property for IProject. 
+							This section might have similarities to tera-filter-bar.vue.
+						-->
 						<label>Domain</label>
 						<span>
-							<Dropdown />
-							<Button label="Suggest" text />
+							<Dropdown placeholder="Select domain" disabled />
+							<Button disabled label="Suggest" text />
 						</span>
 					</div>
 				</form>
@@ -58,7 +62,11 @@
 			</section>
 		</template>
 		<template #footer>
-			<Button @click="applyConfiguration" :label="confirmText" />
+			<Button
+				@click="applyConfiguration"
+				:loading="isApplyingConfiguration"
+				:label="isApplyingConfiguration ? 'Loading' : confirmText"
+			/>
 			<Button severity="secondary" outlined @click="emit('close-modal')" label="Cancel" />
 		</template>
 	</tera-modal>
@@ -90,8 +98,10 @@ const author = auth.user?.name ?? '';
 const title = ref(props.project?.name ?? '');
 const description = ref(props.project?.description ?? '');
 const imageSearch = ref('');
+const isApplyingConfiguration = ref(false);
 
 async function createProject() {
+	isApplyingConfiguration.value = true;
 	const project = await useProjects().create(title.value, description.value, author);
 	if (project?.id) {
 		emit('open-project', project.id);
@@ -104,6 +114,7 @@ async function updateProjectConfiguration() {
 		const updatedProject = cloneDeep(props.project);
 		updatedProject.name = title.value;
 		updatedProject.description = description.value;
+		isApplyingConfiguration.value = true;
 		await useProjects().update(updatedProject);
 		emit('close-modal');
 	}

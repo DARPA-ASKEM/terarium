@@ -29,7 +29,6 @@ export function useProjects() {
 	async function get(projectId: IProject['id']): Promise<IProject | null> {
 		if (projectId) {
 			activeProject.value = await ProjectService.get(projectId, true);
-			console.log(activeProject.value);
 		} else {
 			activeProject.value = null;
 		}

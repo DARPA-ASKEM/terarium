@@ -6,13 +6,7 @@
 		@click.stop="toggle"
 		:disabled="isEmpty(projectMenuItems)"
 	/>
-	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="setProject">
-		<template #item="{ item }">
-			<div>
-				<span :class="item.icon"></span><span>{{ item.label }}</span>
-			</div>
-		</template>
-	</Menu>
+	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="setProject" />
 	<Teleport to="body">
 		<tera-project-configuration-modal
 			v-if="isProjectConfigModalVisible && project"
@@ -96,17 +90,3 @@ function toggle(event) {
 	menu.value.toggle(event);
 }
 </script>
-
-<style scoped>
-div > span {
-	margin-right: 0.5rem;
-}
-
-div {
-	padding: 0.5rem 1rem;
-}
-
-div:hover {
-	background: rgba(0, 0, 0, 0.04);
-}
-</style>
