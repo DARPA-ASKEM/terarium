@@ -115,13 +115,16 @@ import {
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
-	ModelConfiguration
+	ModelConfiguration,
+	ScimlStatusUpdate
 } from '@/types/Types';
 import {
 	makeCalibrateJobJulia,
 	getRunResultJulia,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	subscribeToUpdateMessages,
+	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
@@ -136,7 +139,6 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
-import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
@@ -245,7 +247,7 @@ const runCalibrate = async () => {
 	console.log(parsedMessage);
 }; */
 
-function getMessageHandler(event: ClientEvent<any>) {
+function getMessageHandler(event: ClientEvent<ScimlStatusUpdate>) {
 	const runIds: string[] = querySimulationInProgress(props.node);
 	if (runIds.length === 0) return;
 
@@ -261,7 +263,7 @@ const getStatus = async (simulationId: string) => {
 
 	const runIds = [simulationId];
 
-	await subscribe(ClientEventType.SimulationSciml, getMessageHandler);
+	await subscribeToUpdateMessages(runIds, ClientEventType.SimulationSciml, getMessageHandler);
 
 	poller
 		.setInterval(3000)
@@ -269,7 +271,7 @@ const getStatus = async (simulationId: string) => {
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
 	const pollerResults = await poller.start();
 
-	await unsubscribe(ClientEventType.SimulationSciml, getMessageHandler);
+	await unsubscribeToUpdateMessages(runIds, ClientEventType.SimulationSciml, getMessageHandler);
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now

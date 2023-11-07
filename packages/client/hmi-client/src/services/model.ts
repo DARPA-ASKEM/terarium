@@ -88,5 +88,9 @@ export async function addNewModelToProject(modelName: string): Promise<string | 
 
 // A helper function to check if a model is empty.
 export function isModelEmpty(model: Model) {
-	return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
+	if (model.header.schema_name === 'petrinet') {
+		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
+	}
+	// TODO: support different frameworks' version of empty
+	return false;
 }

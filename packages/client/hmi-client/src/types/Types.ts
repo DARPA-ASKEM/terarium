@@ -210,7 +210,7 @@ export interface DocumentAsset {
     username?: string;
     fileNames?: string[];
     documentUrl?: string;
-    metadata?: any;
+    metadata?: { [index: string]: any };
     source?: string;
     text?: string;
     grounding?: Grounding;
@@ -486,6 +486,14 @@ export interface EnsembleSimulationCiemssRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
+}
+
+export interface ScimlStatusUpdate {
+    loss: number;
+    iter: number;
+    params: { [index: string]: number };
+    id: string;
+    solData: { [index: string]: any };
 }
 
 export interface SimulationRequest {

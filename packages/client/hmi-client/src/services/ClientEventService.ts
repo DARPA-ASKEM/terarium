@@ -20,11 +20,6 @@ let lastHeartbeat = new Date().valueOf();
 let backoffMs = 1000;
 
 /**
- * Whether we are currently reconnecting to the SSE endpoint
- */
-let reconnecting = false;
-
-/**
  * An error that can be retried
  */
 class RetriableError extends Error {}
@@ -51,13 +46,13 @@ export async function init(): Promise<void> {
 			}
 		},
 		async onopen(response: Response) {
-			init();
 			if (response.status === 401) {
-				// redirect to login
+				// redirect to the login page
 				authStore.keycloak?.login({
 					redirectUri: window.location.href
 				});
-			} else if (response.status === 500) {
+			} else if (response.status >= 500) {
+				console.log('SSE connection error');
 				throw new RetriableError('Internal server error');
 			} else {
 				// Reset the backoff time as we've made a connection successfully
@@ -68,7 +63,9 @@ export async function init(): Promise<void> {
 			// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
 			if (error instanceof RetriableError) {
 				backoffMs *= 2;
-				return Math.min(backoffMs, 60000);
+				const retriesTime = Math.min(backoffMs, 60000);
+				console.log(`Retrying SSE connection in ${retriesTime}ms`);
+				return retriesTime;
 			}
 			throw error; // fatal
 		},
@@ -85,14 +82,10 @@ export async function init(): Promise<void> {
  * and reconnects if not
  */
 setInterval(async () => {
-	if (!reconnecting) {
-		const config = await getConfiguration();
-		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
-		if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
-			reconnecting = true;
-			await init();
-			reconnecting = false;
-		}
+	const config = await getConfiguration();
+	const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
+	if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
+		await init();
 	}
 }, 1000);
 
