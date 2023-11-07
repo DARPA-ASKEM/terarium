@@ -27,10 +27,10 @@ import software.uncharted.terarium.hmiserver.models.User;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -44,7 +44,8 @@ public class ClientEventService{
   private static final String CLIENT_USER_EVENT_QUEUE = "clientUserEventQueue";
   private static final String CLIENT_ALL_USERS_EVENT_QUEUE = "clientAllUsersEventQueue";
 
-  final Map<String, SseEmitter> userIdToEmitter = new HashMap<>();
+  final Map<String, SseEmitter> userIdToEmitter = new ConcurrentHashMap<>();
+
   Queue allUsersQueue;
   Queue userQueue;
 
@@ -118,7 +119,6 @@ public class ClientEventService{
    */
   @RabbitListener(
           queues = {CLIENT_ALL_USERS_EVENT_QUEUE},
-          exclusive = true,
           concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = decodeMessage(message);
@@ -152,7 +152,6 @@ public class ClientEventService{
    */
   @RabbitListener(
           queues = {CLIENT_USER_EVENT_QUEUE},
-          exclusive = true,
           concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
     final JsonNode messageJson = decodeMessage(message);
