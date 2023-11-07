@@ -68,6 +68,12 @@
 				style="height: 100%; width: 100%"
 				class="ace-editor"
 			/>
+			<div>
+				<h2>Code Blocks</h2>
+				<p>Identify the code blocks that represent the core dynamics of your model.</p>
+				<Button text icon="pi pi-plus" label="Add a code block" />
+				<tera-code-dynamic :dynamic="'string'" />
+			</div>
 		</div>
 		<div v-else>
 			<!-- TODO: show entire file tree for github -->
@@ -216,6 +222,7 @@ import Dropdown from 'primevue/dropdown';
 import { Ace, Range } from 'ace-builds';
 import { isEmpty } from 'lodash';
 import TeraDirectory from './tera-directory.vue';
+import TeraCodeDynamic from './tera-code-dynamic.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
