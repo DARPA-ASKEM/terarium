@@ -4,7 +4,7 @@
 		rounded
 		text
 		@click.stop="toggle"
-		:disabled="projectMenuItems.length === 0"
+		:disabled="isEmpty(projectMenuItems)"
 	/>
 	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="setProject">
 		<template #item="{ item }">
@@ -13,25 +13,44 @@
 			</div>
 		</template>
 	</Menu>
+	<Teleport to="body">
+		<tera-project-configuration-modal
+			v-if="isProjectConfigModalVisible"
+			confirm-text="Update"
+			modal-title="Edit project"
+			:project="project"
+			@close-modal="isProjectConfigModalVisible = false"
+		/>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
 import { IProject } from '@/types/Project';
-import { ref, computed } from 'vue';
+import { ref, computed, PropType } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { useProjectMenu } from '@/composables/project-menu';
 import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
+import TeraProjectConfigurationModal from '@/page/project/components/tera-project-configuration-modal.vue';
 
-const props = defineProps<{ project: IProject }>();
+const props = defineProps({
+	project: {
+		type: Object as PropType<IProject>,
+		default: useProjects().activeProject.value
+	}
+});
+
 const emit = defineEmits(['forked-project']);
 
+const isProjectConfigModalVisible = ref(false);
 const menu = ref();
 const renameMenuItem = {
-	label: 'Rename',
+	label: 'Edit project details',
 	icon: 'pi pi-pencil',
-	disabled: true, // TODO: remove when rename is implemented
-	command: () => {}
+	command: () => {
+		isProjectConfigModalVisible.value = true;
+	}
 };
 const shareMenuItem = {
 	label: 'Share',

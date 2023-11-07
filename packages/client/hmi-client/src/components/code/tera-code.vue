@@ -69,7 +69,6 @@
 		<Teleport to="body">
 			<tera-modal
 				v-if="isModelNamingModalVisible"
-				class="modal"
 				@modal-mask-clicked="isModelDiagramModalVisible = false"
 				@modal-enter-press="isModelDiagramModalVisible = false"
 			>
@@ -108,7 +107,6 @@
 			</tera-modal>
 			<tera-modal
 				v-if="isDynamicsModalVisible"
-				class="modal"
 				@modal-mask-clicked="isDynamicsModalVisible = false"
 				@modal-enter-press="isDynamicsModalVisible = false"
 			>
@@ -143,7 +141,6 @@
 			</tera-modal>
 			<tera-modal
 				v-if="isCodeNamingModalVisible"
-				class="modal"
 				@modal-mask-clicked="isCodeNamingModalVisible = false"
 				@modal-enter-press="isCodeNamingModalVisible = false"
 			>

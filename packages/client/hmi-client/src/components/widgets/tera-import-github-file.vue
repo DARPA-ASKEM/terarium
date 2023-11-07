@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<Teleport to="body">
-			<tera-modal v-if="visible" class="modal" @modal-mask-clicked="emit('close')">
+			<tera-modal v-if="visible" @modal-mask-clicked="emit('close')">
 				<template #header>
 					<h2>
 						https://github.com/{{ repoOwnerAndName

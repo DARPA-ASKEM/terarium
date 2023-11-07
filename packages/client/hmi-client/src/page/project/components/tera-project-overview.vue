@@ -7,21 +7,8 @@
 			useProjects().activeProject.value?.timestamp
 		)}`"
 	>
-		<template #name-input>
-			<InputText
-				v-if="isRenamingProject"
-				v-model="newProjectName"
-				ref="inputElement"
-				@keyup.enter="updateProjectName"
-			/>
-		</template>
 		<template #edit-buttons>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			<tera-project-menu />
 		</template>
 		<template #overview-summary>
 			<!-- Description & Contributors -->
@@ -169,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -186,13 +173,12 @@ import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
 import { AssetRoute } from '@/types/common';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
+import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
 const isRenamingProject = ref(false);
-const inputElement = ref<HTMLInputElement | null>(null);
-const newProjectName = ref<string>('');
 const selectedResources = ref();
 
 const assetRouteToOpen = ref<AssetRoute | null>(null);
@@ -211,38 +197,8 @@ const onRowSelect = (selectedRows) => {
 	showMultiSelect.value = selectedRows.length !== 0;
 };
 
-async function editProject() {
-	newProjectName.value = useProjects().activeProject.value?.name ?? '';
-	isRenamingProject.value = true;
-	await nextTick();
-	// @ts-ignore
-	inputElement.value?.$el.focus();
-}
-
 function openAsset(assetRoute: AssetRoute) {
 	router.push({ name: RouteName.Project, params: assetRoute });
-}
-
-async function updateProjectName() {
-	const { activeProject } = useProjects();
-	if (activeProject.value) {
-		isRenamingProject.value = false;
-		const updatedProject = activeProject.value;
-		updatedProject.name = newProjectName.value;
-		await useProjects().update(updatedProject);
-	}
-}
-
-const projectMenu = ref();
-const projectMenuItems = ref([
-	{
-		label: 'Edit',
-		command: editProject
-	}
-]);
-
-function showProjectMenu(event: any) {
-	projectMenu.value.toggle(event);
 }
 
 /* hacky way of listening to row hover events to display/hide the action button, prime vue unfortunately doesn't have the capability to listen to row hover */
@@ -439,10 +395,6 @@ ul {
 	margin-bottom: 1rem;
 }
 
-.modal:deep(main) {
-	width: 50rem;
-}
-
 .asset-button {
 	display: flex;
 	flex-direction: row;
@@ -509,4 +461,3 @@ ul {
 	width: 40%;
 }
 </style>
-@/utils/map-project-assets

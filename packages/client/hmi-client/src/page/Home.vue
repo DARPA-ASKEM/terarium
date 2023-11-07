@@ -110,7 +110,6 @@
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								Y
 								:projects="tab.projects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
@@ -121,40 +120,13 @@
 			</section>
 			<!-- New project modal -->
 			<Teleport to="body">
-				<tera-modal
+				<tera-project-configuration-modal
 					v-if="isNewProjectModalVisible"
-					class="modal"
-					@modal-mask-clicked="isNewProjectModalVisible = false"
-					@modal-enter-press="createNewProject"
-				>
-					<template #header>
-						<h4>Create project</h4>
-					</template>
-					<template #default>
-						<form @submit.prevent>
-							<label for="new-project-name">Name</label>
-							<InputText
-								id="new-project-name"
-								type="text"
-								v-model="newProjectName"
-								placeholder="What do you want to call your project?"
-							/>
-							<label for="new-project-description">Description</label>
-							<Textarea
-								id="new-project-description"
-								rows="5"
-								v-model="newProjectDescription"
-								placeholder="Add a short description"
-							/>
-						</form>
-					</template>
-					<template #footer>
-						<Button @click="createNewProject">Create</Button>
-						<Button severity="secondary" outlined @click="isNewProjectModalVisible = false"
-							>Cancel</Button
-						>
-					</template>
-				</tera-modal>
+					confirm-text="Create"
+					modal-title="Create project"
+					@open-project="openProject"
+					@close-modal="isNewProjectModalVisible = false"
+				/>
 			</Teleport>
 			<Dialog
 				:header="`Remove ${selectedMenuProject?.name}`"
@@ -187,13 +159,9 @@
 import { computed, ref, onMounted } from 'vue';
 import useQueryStore from '@/stores/query';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
-import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
@@ -207,6 +175,7 @@ import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
 import { useProjectMenu } from '@/composables/project-menu';
 import SelectButton from 'primevue/selectbutton';
+import TeraProjectConfigurationModal from '@/page/project/components/tera-project-configuration-modal.vue';
 
 const { isShareDialogVisible, isRemoveDialogVisible, selectedMenuProject } = useProjectMenu();
 
@@ -315,28 +284,12 @@ const removeProject = async () => {
 
 const queryStore = useQueryStore();
 const router = useRouter();
-const auth = useAuthStore();
 
 const isNewProjectModalVisible = ref(false);
-const newProjectName = ref('');
-const newProjectDescription = ref('');
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
-}
-
-async function createNewProject() {
-	const author = auth.user?.name ?? '';
-	const project = await useProjects().create(
-		newProjectName.value,
-		newProjectDescription.value,
-		author
-	);
-	if (project?.id) {
-		isNewProjectModalVisible.value = false;
-		openProject(project.id);
-	}
 }
 
 onMounted(() => {
@@ -480,31 +433,6 @@ a {
 
 .new-project-button {
 	padding: 0;
-}
-
-#new-project-name,
-#new-project-description {
-	border-color: var(--surface-border);
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
-}
-
-.modal-subheader-text {
-	color: var(--text-color-subdued);
-}
-
-.modal-subheader-text em {
-	color: var(--primary-color);
 }
 
 .close-button {
