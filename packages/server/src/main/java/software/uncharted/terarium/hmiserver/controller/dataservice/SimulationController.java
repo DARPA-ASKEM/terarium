@@ -10,6 +10,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.SimulationIntermediateResultsCiemss;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -19,7 +20,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.SimulationEventService;
+
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @RequestMapping("/simulations")
 @RestController
@@ -27,11 +32,15 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class SimulationController implements SnakeCaseController {
 
-	final SimulationProxy simulationProxy;
+	private final SimulationProxy simulationProxy;
 
-	final ProjectProxy projectProxy;
+	private final ProjectProxy projectProxy;
 
-	final DatasetProxy datasetProxy;
+	private final DatasetProxy datasetProxy;
+
+	private final CurrentUserService currentUserService;
+
+	private final SimulationEventService simulationEventService;
 
 
 	@PostMapping
@@ -119,5 +128,19 @@ public class SimulationController implements SnakeCaseController {
 			log.error("Failed to add simulation {} result as dataset to project {}", id, projectId);
 			return ResponseEntity.internalServerError().build();
 		}
+	}
+
+	@GetMapping("/subscribe")
+	public ResponseEntity<Void> subscribe(@RequestParam("simulationIds") final List<String> simulationIds) {
+
+		simulationEventService.subscribe(simulationIds, currentUserService.get());
+		return ResponseEntity.ok().build();
+	}
+
+	@GetMapping("/unsubscribe")
+	public ResponseEntity<Void> unsubscribe(@RequestParam("simulationIds") final List<String> simulationIds) {
+
+		simulationEventService.unsubscribe(simulationIds, currentUserService.get());
+		return ResponseEntity.ok().build();
 	}
 }
