@@ -63,6 +63,8 @@ main {
 	max-width: inherit;
 	/* contentHeight = fullscreen - modalMargin - headerHeight*/
 	height: calc(100vh - 1rem - 56px);
+	display: flex;
+	flex-direction: column;
 }
 
 .p-button.p-button-icon-only.p-button-rounded {
