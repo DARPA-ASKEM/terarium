@@ -14,7 +14,6 @@ import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import API from '@/api/api';
 import useAuthStore from '@/stores/auth';
-import { init } from '@/services/ClientEventService';
 import router from '@/router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from '@/App.vue';
@@ -54,9 +53,6 @@ logger.info('Authenticated');
 setInterval(async () => {
 	await window.keycloak.updateToken(70);
 }, 6000);
-
-// init sse
-init();
 
 // Set the hash value of the window.location to null
 // This is to prevent the Keycloak from redirecting to the hash value
