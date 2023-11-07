@@ -581,7 +581,9 @@ const otherConcepts = computed(() => {
 	let unalignedExtractions: Dictionary<any>[] = [];
 	unalignedKeys.forEach((key) => {
 		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) => e.type === 'anchored_extraction')
+			extractions.value[key.toString()].filter((e) =>
+				['anchored_extraction', 'anchored_entity'].includes(e.type)
+			)
 		);
 	});
 
