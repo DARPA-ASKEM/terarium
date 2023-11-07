@@ -52,6 +52,9 @@ public class DataInitializationService {
 		return switch (keycloakRole) {
 			case ADMIN -> Set.of(RoleType.ADMIN, RoleType.USER);
 			case USER -> Set.of(RoleType.USER);
+			case GROUP -> Set.of(RoleType.GROUP);
+			case TEST -> Set.of(RoleType.TEST);
+			case SERVICE -> Set.of(RoleType.SERVICE);
 		};
 	}
 }

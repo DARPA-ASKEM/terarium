@@ -17,6 +17,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -38,6 +39,7 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionP
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -74,6 +76,7 @@ public class DocumentController implements SnakeCaseController {
 	String apikey;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
@@ -83,6 +86,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createDocument(
 		@RequestBody final DocumentAsset document
 	) {
@@ -90,6 +94,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<DocumentAsset> getDocument(
 		@PathVariable("id") final String id
 	) {
@@ -134,6 +139,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteDocument(
 		@PathVariable("id") final String id
 	) {
@@ -180,6 +186,7 @@ public class DocumentController implements SnakeCaseController {
 	 * Uploads a file to the project.
 	 */
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocument(
 		@PathVariable("id") final String id,
 		@RequestParam("filename") final String filename,
@@ -194,6 +201,7 @@ public class DocumentController implements SnakeCaseController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
 	 */
 	@PutMapping("/{documentId}/uploadDocumentFromGithub")
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocumentFromGithub(
 		@PathVariable("documentId") final String documentId,
 		@RequestParam("path") final String path,
@@ -210,6 +218,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@PostMapping(value = "/createDocumentFromXDD")
+	@Secured(Roles.USER)
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
 		@RequestBody final AddDocumentAssetFromXDDRequest body
 	) {
@@ -268,6 +277,7 @@ public class DocumentController implements SnakeCaseController {
 
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> downloadDocument(
 		@PathVariable("id") final String id,
 		@RequestParam("filename") final String filename
@@ -291,6 +301,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}/download-document-as-text")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);

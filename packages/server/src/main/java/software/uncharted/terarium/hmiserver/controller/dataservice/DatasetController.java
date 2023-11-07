@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -29,6 +30,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -51,6 +53,7 @@ public class DatasetController implements SnakeCaseController {
 	JsDelivrProxy githubProxy;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<Dataset>> getDatasets(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
@@ -60,6 +63,7 @@ public class DatasetController implements SnakeCaseController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createDataset(
 		@RequestBody final Dataset dataset
 	) {
@@ -67,6 +71,7 @@ public class DatasetController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<Dataset> getDataset(
 		@PathVariable("id") final String id
 	) {
@@ -74,6 +79,7 @@ public class DatasetController implements SnakeCaseController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteDataset(
 		@PathVariable("id") final String id
 	) {
@@ -81,6 +87,7 @@ public class DatasetController implements SnakeCaseController {
 	}
 
 	@PutMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateDataset(
 		@PathVariable("id") final String id,
 		@RequestBody final Dataset dataset
@@ -90,6 +97,7 @@ public class DatasetController implements SnakeCaseController {
 
 
 	@GetMapping("/{datasetId}/downloadCSV")
+	@Secured(Roles.USER)
 	public ResponseEntity<CsvAsset> getCsv(
 		@PathVariable("datasetId") final String datasetId,
 		@RequestParam("filename") final String filename,
@@ -137,6 +145,7 @@ public class DatasetController implements SnakeCaseController {
 	 * Downloads a CSV file from github given the path and owner name, then uploads it to the dataset.
 	 */
 	@PutMapping("/{datasetId}/uploadCSVFromGithub")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> uploadCsvFromGithub(
 		@PathVariable("datasetId") final String datasetId,
 		@RequestParam("path") final String path,
@@ -166,6 +175,7 @@ public class DatasetController implements SnakeCaseController {
 	 * @return Response
 	 */
 	@PutMapping(value = "/{datasetId}/uploadCSV", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> uploadCsv(
 		@PathVariable("datasetId") final String datasetId,
 		@RequestParam("filename") final String filename,

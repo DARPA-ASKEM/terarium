@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
@@ -15,6 +16,7 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurat
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	private ModelConfigurationProxy modelConfigProxy;
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> getSimulation(
 		@PathVariable("id") final String id
 	) {
@@ -45,6 +48,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("/forecast")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeForecastRun(
 		@RequestBody final SimulationRequest request
 	) {
@@ -71,6 +75,7 @@ public class SimulationRequestController implements SnakeCaseController {
 
 
 	@PostMapping("ciemss/forecast")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeForecastRunCiemss(
 		@RequestBody final SimulationRequest request
 	) {
@@ -101,6 +106,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("/calibrate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJob(
 		@RequestBody final CalibrationRequestJulia request
 	) {
@@ -108,6 +114,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/calibrate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
 		@RequestBody final CalibrationRequestCiemss request
 	) {
@@ -115,6 +122,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 		@RequestBody final EnsembleSimulationCiemssRequest request
 	) {
@@ -122,6 +130,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 		@RequestBody final EnsembleCalibrationCiemssRequest request
 	) {
