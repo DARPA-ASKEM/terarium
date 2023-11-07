@@ -931,6 +931,9 @@ export enum AuthorityType {
 export enum RoleType {
     Admin = "ADMIN",
     User = "USER",
+    Group = "GROUP",
+    Test = "TEST",
+    Service = "SERVICE",
     Special = "SPECIAL",
 }
 
