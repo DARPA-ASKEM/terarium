@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.annotation.Secured;
+
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 
 import javax.ws.rs.QueryParam;
@@ -22,6 +25,7 @@ import java.net.URISyntaxException;
 public class DownloadController {
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<Resource> get(@RequestParam("doi") final String doi) throws IOException, URISyntaxException {
 		final byte[] pdfBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 		if (pdfBytes != null) {
@@ -37,6 +41,7 @@ public class DownloadController {
 	}
 
 	@GetMapping("/url")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getURL(@QueryParam("url") final String url) throws IOException, URISyntaxException {
 		final String pdfLink = DownloadService.getPDFURL("https://unpaywall.org/" + url);
 		if (pdfLink != null) {

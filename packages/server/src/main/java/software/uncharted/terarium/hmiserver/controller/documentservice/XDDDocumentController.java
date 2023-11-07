@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 @RequestMapping("/documents")
 @RestController
@@ -26,6 +28,7 @@ public class XDDDocumentController {
 
 	// NOTE: the query parameters match the proxy version and the type XDDSearchPayload
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<XDDResponse<DocumentsResponseOK>> getDocuments(
 		@RequestParam(required = false, name = "docid") String docid,
 		@RequestParam(required = false, name = "doi") String doi,
