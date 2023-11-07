@@ -15,7 +15,7 @@
 	</Menu>
 	<Teleport to="body">
 		<tera-project-configuration-modal
-			v-if="isProjectConfigModalVisible"
+			v-if="isProjectConfigModalVisible && project"
 			confirm-text="Update"
 			modal-title="Edit project"
 			:project="project"
@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { IProject } from '@/types/Project';
-import { ref, computed, PropType } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { useProjectMenu } from '@/composables/project-menu';
@@ -34,12 +34,7 @@ import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
 import TeraProjectConfigurationModal from '@/page/project/components/tera-project-configuration-modal.vue';
 
-const props = defineProps({
-	project: {
-		type: Object as PropType<IProject>,
-		default: useProjects().activeProject.value
-	}
-});
+const props = defineProps<{ project: IProject | null }>();
 
 const emit = defineEmits(['forked-project']);
 
@@ -70,29 +65,31 @@ const forkMenuItem = {
 	label: 'Fork this project',
 	icon: 'pi pi-clone',
 	command: async () => {
-		const cloned = await useProjects().clone(props.project.id);
-		emit('forked-project', cloned);
+		if (props.project) {
+			const cloned = await useProjects().clone(props.project.id);
+			emit('forked-project', cloned);
+		}
 	}
 };
 const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
-	if (props.project.publicProject) {
+	if (props.project?.publicProject) {
 		return [forkMenuItem];
 	}
-	if (props.project.userPermission === 'creator') {
+	if (props.project?.userPermission === 'creator') {
 		return [renameMenuItem, separatorMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem];
 	}
-	if (props.project.userPermission === 'writer') {
+	if (props.project?.userPermission === 'writer') {
 		return [renameMenuItem, separatorMenuItem, shareMenuItem];
 	}
-	if (props.project.userPermission === 'reader') {
+	if (props.project?.userPermission === 'reader') {
 		return [];
 	}
 	return [];
 });
 
 function setProject() {
-	useProjectMenu().selectedMenuProject.value = props.project;
+	if (props.project) useProjectMenu().selectedMenuProject.value = props.project;
 }
 
 function toggle(event) {

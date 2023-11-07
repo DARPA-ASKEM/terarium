@@ -8,7 +8,7 @@
 		)}`"
 	>
 		<template #edit-buttons>
-			<tera-project-menu />
+			<tera-project-menu :project="useProjects().activeProject.value" />
 		</template>
 		<template #overview-summary>
 			<!-- Description & Contributors -->
