@@ -118,7 +118,7 @@
 					</TabPanel>
 				</TabView>
 			</section>
-			<!-- New project modal -->
+			<!-- Create project modal -->
 			<Teleport to="body">
 				<tera-project-configuration-modal
 					v-if="isNewProjectModalVisible"
@@ -128,29 +128,6 @@
 					@close-modal="isNewProjectModalVisible = false"
 				/>
 			</Teleport>
-			<Dialog
-				:header="`Remove ${selectedMenuProject?.name}`"
-				v-model:visible="isRemoveDialogVisible"
-			>
-				<p>
-					You are about to remove project <em>{{ selectedMenuProject?.name }}</em
-					>.
-				</p>
-				<p>Are you sure?</p>
-				<template #footer>
-					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isRemoveDialogVisible = false"
-					/>
-					<Button label="Remove project" @click="removeProject" />
-				</template>
-			</Dialog>
-			<tera-share-project
-				v-if="selectedMenuProject"
-				v-model="isShareDialogVisible"
-				:project="selectedMenuProject"
-			/>
 		</div>
 	</main>
 </template>
@@ -166,18 +143,12 @@ import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
-import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import { logger } from '@/utils/logger';
-import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
-import { useProjectMenu } from '@/composables/project-menu';
 import SelectButton from 'primevue/selectbutton';
 import TeraProjectConfigurationModal from '@/page/project/components/tera-project-configuration-modal.vue';
-
-const { isShareDialogVisible, isRemoveDialogVisible, selectedMenuProject } = useProjectMenu();
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -267,19 +238,6 @@ const columns = ref([
 const selectedColumns = ref(columns.value);
 const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
-};
-
-const removeProject = async () => {
-	if (!selectedMenuProject.value) return;
-	const { name, id } = selectedMenuProject.value;
-	const isDeleted = await useProjects().remove(id);
-	isRemoveDialogVisible.value = false;
-	if (isDeleted) {
-		useProjects().getAll();
-		logger.info(`The project ${name} was removed`, { showToast: true });
-	} else {
-		logger.error(`Unable to delete the project ${name}`, { showToast: true });
-	}
 };
 
 const queryStore = useQueryStore();
