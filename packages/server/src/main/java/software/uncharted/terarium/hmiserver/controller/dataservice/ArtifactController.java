@@ -15,6 +15,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -22,6 +23,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -41,6 +43,7 @@ public class ArtifactController implements SnakeCaseController {
 
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<Artifact>> getArtifacts(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
@@ -49,26 +52,31 @@ public class ArtifactController implements SnakeCaseController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createArtifact(@RequestBody Artifact artifact) {
 		return ResponseEntity.ok(artifactProxy.createAsset(convertObjectToSnakeCaseJsonNode(artifact)).getBody());
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") String artifactId) {
 		return ResponseEntity.ok(artifactProxy.getAsset(artifactId).getBody());
 	}
 
 	@PutMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateArtifact(@PathVariable("id") String artifactId, @RequestBody Artifact artifact) {
 		return ResponseEntity.ok(artifactProxy.updateAsset(artifactId, convertObjectToSnakeCaseJsonNode(artifact)).getBody());
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteArtifact(@PathVariable("id") String artifactId) {
 		return ResponseEntity.ok(artifactProxy.deleteAsset(artifactId).getBody());
 	}
 
 	@GetMapping("/{id}/download-file-as-text")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> downloadFileAsText(@PathVariable("id") String artifactId, @RequestParam("filename") String filename) {
 
 		try (CloseableHttpClient httpclient = HttpClients.custom()
@@ -90,6 +98,7 @@ public class ArtifactController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}/download-file")
+	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> downloadFile(@PathVariable("id") String artifactId, @RequestParam("filename") String filename) {
 
 		log.debug("Downloading artifact {} from project", artifactId);
@@ -116,6 +125,7 @@ public class ArtifactController implements SnakeCaseController {
 	}
 
 	@PutMapping(value = "/{artifactId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadFile(
 		@PathVariable("artifactId") final String artifactId,
 		@RequestParam("filename") final String filename,
@@ -135,6 +145,7 @@ public class ArtifactController implements SnakeCaseController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
 	 */
 	@PutMapping("/{artifactId}/uploadArtifactFromGithub")
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
 		@PathVariable("artifactId") final String artifactId,
 		@RequestParam("path") final String path,
