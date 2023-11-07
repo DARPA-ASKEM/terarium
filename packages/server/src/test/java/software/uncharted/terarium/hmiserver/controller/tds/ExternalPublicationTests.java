@@ -6,13 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
-
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -31,13 +32,13 @@ public class ExternalPublicationTests extends TerariumApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails(MockUser.ADAM)
+	@WithMockUser(username="ursula",authorities={Roles.USER})
 	public void testCanGetPublicationsAuthorized() throws Exception {
 		mockMvc.perform(MockMvcRequestBuilders.get("/external/publications")).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test
-	@WithUserDetails(MockUser.ADAM)
+	@WithMockUser(username="ursula",authorities={Roles.USER})
 	public void testCanItCreateGetUpdateDeletePublication() throws Exception {
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/external/publications")).andExpect(status().isOk()).andReturn();
