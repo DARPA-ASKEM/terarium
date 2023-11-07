@@ -48,20 +48,27 @@
 						/>
 					</template>
 					<template v-else>
+						<Button
+							label="Create model from code"
+							@click="isModelNamingModalVisible = true"
+							:loading="isCodeToModelLoading"
+						/>
 						<Button label="Download Zip" />
 					</template>
 				</section>
 			</section>
 		</template>
-		<v-ace-editor
-			v-model:value="codeText"
-			@init="initialize"
-			:lang="programmingLanguage"
-			theme="chrome"
-			style="height: 100%; width: 100%"
-			class="ace-editor"
-			v-if="programmingLanguage !== ProgrammingLanguage.Zip"
-		/>
+		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
+			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
+			<v-ace-editor
+				v-model:value="codeText"
+				@init="initialize"
+				:lang="programmingLanguage"
+				theme="chrome"
+				style="height: 100%; width: 100%"
+				class="ace-editor"
+			/>
+		</div>
 		<div v-else>
 			<!-- TODO: show entire file tree for github -->
 			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{ repoUrl }}</a>
@@ -205,6 +212,7 @@ import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import { Ace, Range } from 'ace-builds';
 import { isEmpty } from 'lodash';
+import TeraDirectory from './tera-directory.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -244,13 +252,18 @@ const programmingLanguages = [
 ];
 const isLoading = ref(false);
 
-const repoUrl = ref('');
+const repoUrl = computed(() => codeAsset.value?.repoUrl ?? '');
 
 const selectedRangeToString = computed(() =>
 	selectionRange.value
 		? `L${selectionRange.value.start.row + 1}-L${selectionRange.value.end.row + 1}`
 		: ''
 );
+
+const fileNames = computed<string[]>(() => {
+	if (!codeAsset.value?.files) return [];
+	return Object.keys(codeAsset.value?.files);
+});
 
 /**
  * Editor initialization function
@@ -429,6 +442,13 @@ async function onFileOpen(event) {
 	};
 }
 
+async function onFileSelect(filePath: string) {
+	const text = await getCodeFileAsText(props.assetId, filePath);
+	if (text) {
+		codeText.value = text;
+	}
+}
+
 watch(
 	() => props.assetId,
 	async () => {
@@ -445,15 +465,14 @@ watch(
 				codeAsset.value = code;
 				codeName.value = code.name;
 
-				repoUrl.value = code.repoUrl ?? '';
-
 				const filename = Object.keys(code.files)[0];
 
 				const text = await getCodeFileAsText(props.assetId, filename);
 				if (text) {
 					codeText.value = text;
 				}
-				programmingLanguage.value = code.files[filename].language;
+				programmingLanguage.value =
+					code.files[filename].language ?? getProgrammingLanguage(codeName.value);
 			} else {
 				codeAsset.value = null;
 				codeName.value = 'newcode.py';
@@ -491,6 +510,10 @@ h4 {
 	margin-top: 0.25rem;
 }
 
+.code-asset-content {
+	display: flex;
+	height: 100%;
+}
 .p-dropdown {
 	height: 2.75rem;
 }
