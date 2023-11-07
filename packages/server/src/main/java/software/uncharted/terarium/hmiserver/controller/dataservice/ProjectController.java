@@ -321,7 +321,7 @@ public class ProjectController {
 		@RequestBody final Project project
 	) {
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) { 
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
 				return ResponseEntity.ok(proxy.updateProject(id, project).getBody());
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
