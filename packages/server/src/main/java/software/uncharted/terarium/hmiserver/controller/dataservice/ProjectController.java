@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.Id;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -14,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
@@ -41,6 +43,7 @@ public class ProjectController {
 	private ProjectProxy proxy;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<Project>> getProjects(
 		@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive
 	) {
@@ -90,6 +93,7 @@ public class ProjectController {
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<Project> getProject(
 		@PathVariable("id") final String id
 	) {
@@ -110,6 +114,7 @@ public class ProjectController {
 	}
 
 	@GetMapping("/{id}/permissions")
+	@Secured(Roles.USER)
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(
 		@PathVariable("id") final String id
 	) {
@@ -136,6 +141,7 @@ public class ProjectController {
 
 
 	@PostMapping("/{projectId}/permissions/group/{groupId}/{relationship}")
+	@Secured({Roles.USER, Roles.SERVICE})
 	public ResponseEntity<JsonNode> setProjectGroupPermissions(
 		@PathVariable("projectId") final String projectId,
 		@PathVariable("groupId") final String groupId,
@@ -152,6 +158,7 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{projectId}/permissions/group/{groupId}/{oldRelationship}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateProjectGroupPermissions(
 		@PathVariable("projectId") final String projectId,
 		@PathVariable("groupId") final String groupId,
@@ -169,6 +176,7 @@ public class ProjectController {
 	}
 
 	@DeleteMapping("/{projectId}/permissions/group/{groupId}/{relationship}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> removeProjectGroupPermissions(
 		@PathVariable("projectId") final String projectId,
 		@PathVariable("groupId") final String groupId,
@@ -188,6 +196,7 @@ public class ProjectController {
 	}
 
 	@PostMapping("/{projectId}/permissions/user/{userId}/{relationship}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> setProjectUserPermissions(
 		@PathVariable("projectId") final String projectId,
 		@PathVariable("userId") final String userId,
@@ -204,6 +213,7 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{projectId}/permissions/user/{userId}/{oldRelationship}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
 		@PathVariable("projectId") final String projectId,
 		@PathVariable("userId") final String userId,
@@ -221,6 +231,7 @@ public class ProjectController {
 	}
 
 	@DeleteMapping("/{projectId}/permissions/user/{userId}/{relationship}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> removeProjectUserPermissions(
 		@PathVariable("projectId") final String projectId,
 		@PathVariable("userId") final String userId,
@@ -275,6 +286,7 @@ public class ProjectController {
 
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createProject(
 		@RequestBody final Project project
 	) throws JsonProcessingException {
@@ -303,6 +315,7 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{project_id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateProject(
 		@PathVariable("project_id") final String id,
 		@RequestBody final Project project
@@ -320,6 +333,7 @@ public class ProjectController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteProject(
 		@PathVariable("id") final String id
 	) {
@@ -337,6 +351,7 @@ public class ProjectController {
 	}
 
 	@GetMapping("/{project_id}/assets")
+	@Secured(Roles.USER)
 	public ResponseEntity<Assets> getAssets(
 		@PathVariable("project_id") final String projectId,
 		@RequestParam("types") final List<AssetType> types
@@ -355,6 +370,7 @@ public class ProjectController {
 	}
 
 	@PostMapping("/{project_id}/assets/{resource_type}/{resource_id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createAsset(
 		@PathVariable("project_id") final String projectId,
 		@PathVariable("resource_type") final AssetType type,
@@ -375,6 +391,7 @@ public class ProjectController {
 	}
 
 	@DeleteMapping("/{project_id}/assets/{resource_type}/{resource_id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteAsset(
 		@PathVariable("project_id") final String projectId,
 		@PathVariable("resource_type") final AssetType type,

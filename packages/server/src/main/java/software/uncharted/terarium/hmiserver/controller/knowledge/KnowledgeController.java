@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -14,6 +15,7 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,6 +45,7 @@ public class KnowledgeController {
 	 * @return the status of the extraction job
 	 */
 	@GetMapping("/status/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> getTaskStatus(
 		@PathVariable("id") final String id) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.getTaskStatus(id).getBody());
@@ -59,6 +62,7 @@ public class KnowledgeController {
 	 * @return (ExtractionResponse): The response from the extraction service
 	 */
 	@PostMapping("/equations-to-model")
+	@Secured(Roles.USER)
 	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(@RequestBody Map<String, Object> requestMap) {
 		String format = (String) requestMap.getOrDefault("format", "latex");
 		String framework = (String) requestMap.getOrDefault("framework", "petrinet");
@@ -79,6 +83,7 @@ public class KnowledgeController {
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code-to-amr")
+	@Secured(Roles.USER)
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
 		@RequestParam("code_id") String codeId,
 		@RequestParam(name = "name", required = false) String name,
@@ -102,6 +107,7 @@ public class KnowledgeController {
 	 * @return response status of queueing this operation
 	 */
 	@PostMapping("/pdf-extractions")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFExtractions(
 		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
@@ -119,6 +125,7 @@ public class KnowledgeController {
 	 * @return response status of queueing this operation
 	 */
 	@PostMapping("/pdf-to-cosmos")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") String documentId) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToCosmos(documentId).getBody());
 	}
@@ -131,6 +138,7 @@ public class KnowledgeController {
 	 * @return the profiled model
 	 */
 	@PostMapping("/profile-model/{model_id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileModel(
 		@PathVariable("model_id") String modelId,
 		@RequestParam("document_id") String documentId
@@ -158,6 +166,7 @@ public class KnowledgeController {
 	 * @return the profiled dataset
 	 */
 	@PostMapping("/profile-dataset/{dataset_id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileDataset(
 		@PathVariable("dataset_id") String datasetId,
 		@RequestParam(name = "document_id", required = false) String documentId
@@ -184,6 +193,7 @@ public class KnowledgeController {
 	 * @return the profiled model
 	 */
 	@PostMapping("/link-amr")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postLinkAmr(
 		@RequestParam("document_id") String documentId,
 		@RequestParam("model_id") String modelId

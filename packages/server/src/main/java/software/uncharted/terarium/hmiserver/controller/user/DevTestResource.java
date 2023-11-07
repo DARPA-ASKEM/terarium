@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.models.user.UserEvent;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.UUID;
 
@@ -20,7 +22,7 @@ public class DevTestResource {
 	//Emitter<UserEvent> userEventEmitter;
 
 	@PutMapping("/user-event")
-
+	@Secured(Roles.TEST)
 	public ResponseEntity<JsonNode> createModel() {
 		final UUID id = UUID.randomUUID();
 		final UserEvent event = new UserEvent();

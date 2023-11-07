@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.List;
 
@@ -19,6 +21,7 @@ public class MIRAController {
 	MIRAProxy proxy;
 
 	@GetMapping("/{curies}")
+	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> searchConcept(
 		@PathVariable("curies") final String curies
 	) {
@@ -39,6 +42,7 @@ public class MIRAController {
 	// 2. Send MIRANet to MIRA to convert back to AMR Petrinet
 	// 3. Send AMR back
 	@PostMapping("/reconstruct_ode_semantics")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> reconstructODESemantics(
 		Object amr
 	) {
