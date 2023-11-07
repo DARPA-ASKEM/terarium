@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +83,7 @@ public class ModelController {
 	ResponseEntity<Model> getModel(
 			@PathVariable("id") String id) {
 		Model model;
+		final ObjectMapper mapper = new ObjectMapper();
 
 		// Fetch the model from the data-service
 		try {
@@ -105,16 +107,16 @@ public class ModelController {
 
 		// If there are results, fetch the Document Assets, gather their extractions
 		if (resultsNode != null && resultsNode.isArray() && !resultsNode.isEmpty()) {
-//			ObjectMapper mapper = new ObjectMapper();
+			final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {});
 			final List<JsonNode> extractions = new ArrayList<>();
 			resultsNode.forEach(documentId -> {
 				final DocumentAsset document = documentProxy.getAsset(documentId.asText()).getBody();
-//				final JsonNode documentExtractions = mapper.convertValue(document.getMetadata().get("attributes"), JsonNode.class);
-//				final List<JsonNode> documentExtractions = (List<JsonNode>) document.getMetadata().get("attributes");
-//				extractions.addAll(documentExtractions);
+				final JsonNode documentExtractions = mapper.convertValue(document.getMetadata().get("attributes"), JsonNode.class);
+				final List<JsonNode> documentExtractionsAsList = mapper.convertValue(documentExtractions, new TypeReference<List<JsonNode>>() {});
+				extractions.addAll(documentExtractionsAsList);
 			});
 
-			// Set the extractions to the model metadata
+			model.setMetadata(model.getMetadata().setProvenance(documentIds));
 			model.setMetadata(model.getMetadata().setAttributes(extractions));
 		}
 
