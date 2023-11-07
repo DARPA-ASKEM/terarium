@@ -31,6 +31,12 @@ public class ModelController {
 	@Autowired
 	ModelProxy modelProxy;
 
+	@Autowired
+	DocumentProxy documentProxy;
+
+	@Autowired
+	ProvenanceProxy provenanceProxy;
+
 	@PostMapping("/frameworks")
 	@Secured(Roles.USER)
 	ResponseEntity<JsonNode> createFramework(
@@ -87,6 +93,29 @@ public class ModelController {
 
 		if (model == null) {
 			return ResponseEntity.noContent().build();
+		}
+
+		// Find the Document Assets linked via provenance to the model
+		ProvenanceQueryParam body = new ProvenanceQueryParam();
+		body.setRootId(id);
+		body.setRootType(ProvenanceType.MODEL);
+		body.setTypes(List.of(ProvenanceType.DOCUMENT));
+		final JsonNode provenanceResults = provenanceProxy.search(body, "models_from_document").getBody();
+		final JsonNode resultsNode = provenanceResults.get("result");
+
+		// If there are results, fetch the Document Assets, gather their extractions
+		if (resultsNode != null && resultsNode.isArray() && !resultsNode.isEmpty()) {
+//			ObjectMapper mapper = new ObjectMapper();
+			final List<JsonNode> extractions = new ArrayList<>();
+			resultsNode.forEach(documentId -> {
+				final DocumentAsset document = documentProxy.getAsset(documentId.asText()).getBody();
+//				final JsonNode documentExtractions = mapper.convertValue(document.getMetadata().get("attributes"), JsonNode.class);
+//				final List<JsonNode> documentExtractions = (List<JsonNode>) document.getMetadata().get("attributes");
+//				extractions.addAll(documentExtractions);
+			});
+
+			// Set the extractions to the model metadata
+			model.setMetadata(model.getMetadata().setAttributes(extractions));
 		}
 
 		// Return the model
