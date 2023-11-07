@@ -109,14 +109,13 @@ public class ModelController {
 		if (resultsNode != null && resultsNode.isArray() && !resultsNode.isEmpty()) {
 			final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {});
 			final List<JsonNode> extractions = new ArrayList<>();
-			resultsNode.forEach(documentId -> {
-				final DocumentAsset document = documentProxy.getAsset(documentId.asText()).getBody();
+			documentIds.forEach(documentId -> {
+				final DocumentAsset document = documentProxy.getAsset(documentId).getBody();
 				final JsonNode documentExtractions = mapper.convertValue(document.getMetadata().get("attributes"), JsonNode.class);
 				final List<JsonNode> documentExtractionsAsList = mapper.convertValue(documentExtractions, new TypeReference<List<JsonNode>>() {});
 				extractions.addAll(documentExtractionsAsList);
 			});
 
-			model.setMetadata(model.getMetadata().setProvenance(documentIds));
 			model.setMetadata(model.getMetadata().setAttributes(extractions));
 		}
 
