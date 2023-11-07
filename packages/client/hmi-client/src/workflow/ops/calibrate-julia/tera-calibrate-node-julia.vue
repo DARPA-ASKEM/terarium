@@ -115,7 +115,8 @@ import {
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
-	ModelConfiguration
+	ModelConfiguration,
+	ScimlStatusUpdate
 } from '@/types/Types';
 import {
 	makeCalibrateJobJulia,
@@ -246,7 +247,7 @@ const runCalibrate = async () => {
 	console.log(parsedMessage);
 }; */
 
-function getMessageHandler(event: ClientEvent<any>) {
+function getMessageHandler(event: ClientEvent<ScimlStatusUpdate>) {
 	const runIds: string[] = querySimulationInProgress(props.node);
 	if (runIds.length === 0) return;
 

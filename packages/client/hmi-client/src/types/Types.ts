@@ -488,6 +488,14 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface ScimlStatusUpdate {
+    loss: number;
+    iter: number;
+    params: { [index: string]: number };
+    id: string;
+    solData: { [index: string]: any };
+}
+
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
