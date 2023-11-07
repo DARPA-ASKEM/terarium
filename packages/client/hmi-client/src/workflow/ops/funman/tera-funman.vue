@@ -127,11 +127,9 @@ import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman
 // TODO List:
 // 5) fix css for overlow
 // 6) Need to fix when things are not set to not send (ub and lb) rather than send as null
-// 7) constraints are optional not required
 // 8) renderer needs true and needs false boxes (mightve fixed)
 // 9) need to make renderer a lot prettier
 // 10) check for progress on run results. keep polling until success flag
-// 11) Make sure grabbing the correct config when provided an input
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -334,7 +332,7 @@ watch(
 watch(
 	() => props.node.outputs[0],
 	async () => {
-		if (!props.node.outputs[0]) {
+		if (!props.node.outputs[0] || !props.node.outputs[0].value) {
 			return;
 		}
 		outputValue.value = await getQueries(props.node.outputs[0].value);

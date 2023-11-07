@@ -130,7 +130,11 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
-					<tera-funman-node v-else-if="node.operationType === WorkflowOperationTypes.FUNMAN" />
+					<tera-funman-node
+						v-else-if="node.operationType === WorkflowOperationTypes.FUNMAN"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
 				</template>
 			</tera-workflow-node>
 		</template>

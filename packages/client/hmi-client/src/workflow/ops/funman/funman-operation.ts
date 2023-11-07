@@ -22,7 +22,7 @@ export const FunmanOperation: Operation = {
 	displayName: 'Validate model configuration',
 	description: 'Validate model configuration',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
-	outputs: [{ type: 'number' }],
+	outputs: [{ type: 'funmanQueryId' }],
 	isRunnable: true,
 	action: () => {},
 	initState: () => {
@@ -30,15 +30,7 @@ export const FunmanOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSteps: 10,
 			tolerance: 0.89,
-			constraintGroups: [
-				{
-					borderColour: '#c300a6',
-					name: '',
-					timepoints: { lb: 0, ub: 100 },
-					variables: [],
-					interval: { lb: 0, ub: 100 }
-				}
-			]
+			constraintGroups: []
 		};
 		return init;
 	}
