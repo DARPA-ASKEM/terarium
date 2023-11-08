@@ -40,11 +40,11 @@ services:
 
   tds-migration:
     container_name: tds-migration
-    image: ghcr.io/darpa-askem/tds-migration:migration_test
+    image: ghcr.io/darpa-askem/tds-migration:latest
     networks:
       - terarium
     environment:
-      SPRING_PROFILES_ACTIVE: "default, secrets, local-docker"
+      SPRING_PROFILES_ACTIVE: "default, local-docker"
       TERARIUM_DB_PASSWORD: "postgres"
       TERARIUM_DB_USERNAME: "postgres"
     depends_on:
