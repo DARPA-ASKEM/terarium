@@ -41,7 +41,7 @@ public class SimulationEventService {
     Queue pyciemssQueue;
 
 
-    //@PostConstruct // TODO: dvince reenable
+    @PostConstruct
     void init() {
         scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues());
         rabbitAdmin.declareQueue(scimlQueue);
@@ -74,10 +74,9 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-   // @RabbitListener(
-   //         queues = {SCIML_QUEUE},
-   //         concurrency = "1")
-    // TODO: dvince reenable
+    @RabbitListener(
+            queues = {SCIML_QUEUE},
+            concurrency = "1")
     private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
 
         final ScimlStatusUpdate update = decodeMessage(message, ScimlStatusUpdate.class);
@@ -96,10 +95,9 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-   // @RabbitListener(
-   //         queues = {PYCIEMSS_QUEUE},
-   //         concurrency = "1")
-    // TODO: dvince reenable
+    @RabbitListener(
+            queues = {PYCIEMSS_QUEUE},
+            concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
         //SimulationIntermediateResultsCiemss
         final JsonNode messageJson = decodeMessage(message, JsonNode.class);

@@ -22,9 +22,7 @@ public class ClientEventController {
   @GetMapping
   @IgnoreRequestLogging
   public SseEmitter subscribe() {
-    return null;
-    // TODO: dvince reenable
-    //return clientEventService.connect(currentUserService.get());
+    return clientEventService.connect(currentUserService.get());
   }
 
 
