@@ -27,10 +27,10 @@ import software.uncharted.terarium.hmiserver.models.User;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -44,7 +44,8 @@ public class ClientEventService{
   private static final String CLIENT_USER_EVENT_QUEUE = "clientUserEventQueue";
   private static final String CLIENT_ALL_USERS_EVENT_QUEUE = "clientAllUsersEventQueue";
 
-  final Map<String, SseEmitter> userIdToEmitter = new HashMap<>();
+  final Map<String, SseEmitter> userIdToEmitter = new ConcurrentHashMap<>();
+
   Queue allUsersQueue;
   Queue userQueue;
 
@@ -57,7 +58,7 @@ public class ClientEventService{
   }
 
 
-  @PostConstruct
+  //@PostConstruct // TODO: dvince reenable
   void init() {
     allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE, config.getDurableQueues());
     rabbitAdmin.declareQueue(allUsersQueue);
@@ -116,10 +117,9 @@ public class ClientEventService{
    * @param message the message to send
    * @param channel the channel to send the message on
    */
-  @RabbitListener(
-          queues = {CLIENT_ALL_USERS_EVENT_QUEUE},
-          exclusive = true,
-          concurrency = "1")
+  //@RabbitListener( // TODO: dvince reenable
+  //        queues = {CLIENT_ALL_USERS_EVENT_QUEUE},
+  //        concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = decodeMessage(message);
     if (messageJson == null) {
@@ -150,10 +150,9 @@ public class ClientEventService{
    * @param channel       the channel to send the message on
    * @throws IOException  if there was an error sending the message
    */
-  @RabbitListener(
-          queues = {CLIENT_USER_EVENT_QUEUE},
-          exclusive = true,
-          concurrency = "1")
+  //@RabbitListener( // TODO: dvince reenable
+  //        queues = {CLIENT_USER_EVENT_QUEUE},
+  //        concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
     final JsonNode messageJson = decodeMessage(message);
     if (messageJson == null) {
@@ -193,7 +192,7 @@ public class ClientEventService{
    * Heartbeat to ensure that the clients are subscribed to the SSE service. If the client does
    * not receive a heartbeat within the configured interval, it will attempt to reconnect.
    */
-  @Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}")
+  //@Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}") // TODO: dvince reenable
   public void sendHeartbeat() {
     final ClientEvent<Void> event = ClientEvent.<Void>builder()
             .type(ClientEventType.HEARTBEAT)

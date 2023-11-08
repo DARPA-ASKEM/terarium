@@ -931,6 +931,9 @@ export enum AuthorityType {
 export enum RoleType {
     Admin = "ADMIN",
     User = "USER",
+    Group = "GROUP",
+    Test = "TEST",
+    Service = "SERVICE",
     Special = "SPECIAL",
 }
 
@@ -996,6 +999,7 @@ export enum ProvenanceType {
     Artifact = "Artifact",
     Code = "Code",
     Document = "Document",
+    Workflow = "Workflow",
 }
 
 export enum AssetType {
