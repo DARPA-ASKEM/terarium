@@ -103,35 +103,33 @@ public class ModelController {
 		body.setRootType(ProvenanceType.MODEL);
 		body.setTypes(List.of(ProvenanceType.DOCUMENT));
 		final JsonNode provenanceResults = provenanceProxy.search(body, "models_from_document").getBody();
-		JsonNode resultsNode = null;
 		if (provenanceResults != null) {
-			resultsNode = provenanceResults.get("result");
+			final JsonNode resultsNode = provenanceResults.get("result");
 
-			// If there are results, fetch the Document Assets, gather their extractions
+			// If there are results, fetch the Documents
 			if (resultsNode != null && resultsNode.isArray() && !resultsNode.isEmpty()) {
-				final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {
-				});
-				final List<JsonNode> extractions = new ArrayList<>();
+				// Get the list as Document Ids
+				final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {});
+
+				// Make sure we have an attributes list
+				if (model.getMetadata().getAttributes() == null)
+					model.getMetadata().setAttributes(new ArrayList<>());
+
 				documentIds.forEach(documentId -> {
 					try {
+						// Fetch the Document extractions
 						final DocumentAsset document = documentProxy.getAsset(documentId).getBody();
-						final JsonNode documentExtractions;
 						if (document != null) {
-							documentExtractions = mapper.convertValue(document.getMetadata().get("attributes"), JsonNode.class);
-							final List<JsonNode> documentExtractionsAsList = mapper.convertValue(documentExtractions, new TypeReference<List<JsonNode>>() {
-							});
-							extractions.addAll(documentExtractionsAsList);
+							final List<JsonNode> extractions = mapper.convertValue(document.getMetadata().get("attributes"), new TypeReference<List<JsonNode>>() {});
+
+							// Append the Document extractions to the Model extractions, just for the front-end.
+							// Those are NOT to be saved back to the data-service.
+							model.getMetadata().getAttributes().addAll(extractions);
 						}
 					} catch (RuntimeException e) {
 						log.error("Unable to get the document " + documentId, e);
 					}
 				});
-
-				// Append the Documents extractions to the model extractions, just for the front-end.
-				// Those are NOT to be saved back to the data-service.
-				if (model.getMetadata().getAttributes() == null)
-					model.getMetadata().setAttributes(new ArrayList<>());
-				model.getMetadata().getAttributes().addAll(extractions);
 			}
 		} else {
 			log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
