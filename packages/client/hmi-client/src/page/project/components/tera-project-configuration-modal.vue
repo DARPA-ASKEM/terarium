@@ -83,16 +83,19 @@ import { useProjects } from '@/composables/project';
 import useAuthStore from '@/stores/auth';
 import { IProject } from '@/types/Project';
 import { cloneDeep } from 'lodash';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	confirmText: string;
 	modalTitle: string;
-	project?: IProject;
+	project: IProject | null;
 }>();
 
-const emit = defineEmits(['open-project', 'close-modal']);
+const emit = defineEmits(['close-modal']);
 
 const auth = useAuthStore();
+const router = useRouter();
 const author = auth.user?.name ?? '';
 
 const title = ref(props.project?.name ?? '');
@@ -104,7 +107,7 @@ async function createProject() {
 	isApplyingConfiguration.value = true;
 	const project = await useProjects().create(title.value, description.value, author);
 	if (project?.id) {
-		emit('open-project', project.id);
+		router.push({ name: RouteName.Project, params: { projectId: project.id } });
 		emit('close-modal');
 	}
 }

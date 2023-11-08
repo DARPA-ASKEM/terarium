@@ -67,11 +67,7 @@
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
-								<Button
-									icon="pi pi-plus"
-									label="New project"
-									@click="isNewProjectModalVisible = true"
-								/>
+								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
 						</section>
 						<section class="projects">
@@ -83,7 +79,7 @@
 										<Button
 											label="new project"
 											class="p-button-text new-project-button"
-											@click="isNewProjectModalVisible = true"
+											@click="openCreateProjectModal"
 										/>.
 									</p>
 									<p>Your projects will be displayed on this page.</p>
@@ -118,16 +114,6 @@
 					</TabPanel>
 				</TabView>
 			</section>
-			<!-- Create project modal -->
-			<Teleport to="body">
-				<tera-project-configuration-modal
-					v-if="isNewProjectModalVisible"
-					confirm-text="Create"
-					modal-title="Create project"
-					@open-project="openProject"
-					@close-modal="isNewProjectModalVisible = false"
-				/>
-			</Teleport>
 		</div>
 	</main>
 </template>
@@ -148,7 +134,9 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import { IProject } from '@/types/Project';
 import SelectButton from 'primevue/selectbutton';
-import TeraProjectConfigurationModal from '@/page/project/components/tera-project-configuration-modal.vue';
+import { useProjectMenu } from '@/composables/project-menu';
+
+const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -189,6 +177,11 @@ const publicFilteredSortedProjects = computed(() => {
 	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
 	return filterAndSortProjects(publicProjects);
 });
+
+function openCreateProjectModal() {
+	isProjectConfigDialogVisible.value = true;
+	menuProject.value = null;
+}
 
 function filterAndSortProjects(projects: IProject[]) {
 	if (!projects) return [];
@@ -243,7 +236,6 @@ const onToggle = (val) => {
 const queryStore = useQueryStore();
 const router = useRouter();
 
-const isNewProjectModalVisible = ref(false);
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
 function openProject(projectId: string) {
