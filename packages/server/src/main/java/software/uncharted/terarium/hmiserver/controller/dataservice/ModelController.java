@@ -103,20 +103,38 @@ public class ModelController {
 		body.setRootType(ProvenanceType.MODEL);
 		body.setTypes(List.of(ProvenanceType.DOCUMENT));
 		final JsonNode provenanceResults = provenanceProxy.search(body, "models_from_document").getBody();
-		final JsonNode resultsNode = provenanceResults.get("result");
+		JsonNode resultsNode = null;
+		if (provenanceResults != null) {
+			resultsNode = provenanceResults.get("result");
 
-		// If there are results, fetch the Document Assets, gather their extractions
-		if (resultsNode != null && resultsNode.isArray() && !resultsNode.isEmpty()) {
-			final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {});
-			final List<JsonNode> extractions = new ArrayList<>();
-			documentIds.forEach(documentId -> {
-				final DocumentAsset document = documentProxy.getAsset(documentId).getBody();
-				final JsonNode documentExtractions = mapper.convertValue(document.getMetadata().get("attributes"), JsonNode.class);
-				final List<JsonNode> documentExtractionsAsList = mapper.convertValue(documentExtractions, new TypeReference<List<JsonNode>>() {});
-				extractions.addAll(documentExtractionsAsList);
-			});
+			// If there are results, fetch the Document Assets, gather their extractions
+			if (resultsNode != null && resultsNode.isArray() && !resultsNode.isEmpty()) {
+				final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {
+				});
+				final List<JsonNode> extractions = new ArrayList<>();
+				documentIds.forEach(documentId -> {
+					try {
+						final DocumentAsset document = documentProxy.getAsset(documentId).getBody();
+						final JsonNode documentExtractions;
+						if (document != null) {
+							documentExtractions = mapper.convertValue(document.getMetadata().get("attributes"), JsonNode.class);
+							final List<JsonNode> documentExtractionsAsList = mapper.convertValue(documentExtractions, new TypeReference<List<JsonNode>>() {
+							});
+							extractions.addAll(documentExtractionsAsList);
+						}
+					} catch (RuntimeException e) {
+						log.error("Unable to get the document " + documentId, e);
+					}
+				});
 
-			model.setMetadata(model.getMetadata().setAttributes(extractions));
+				// Append the Documents extractions to the model extractions, just for the front-end.
+				// Those are NOT to be saved back to the data-service.
+				if (model.getMetadata().getAttributes() == null)
+					model.getMetadata().setAttributes(new ArrayList<>());
+				model.getMetadata().getAttributes().addAll(extractions);
+			}
+		} else {
+			log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
 		}
 
 		// Return the model
