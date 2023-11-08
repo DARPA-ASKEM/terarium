@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.annotation.Validated;
 
 @Configuration
-@ConfigurationProperties(prefix = "tds")
+@ConfigurationProperties(prefix = "tds.migration")
 @Validated
 @Data
 public class TdsConfig {
-    String databaseVersion;
+    String baselineVersion;
 }

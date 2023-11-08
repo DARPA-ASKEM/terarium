@@ -32,7 +32,7 @@ public class FlywayConfiguration {
             .ignoreMigrationPatterns("*:missing")
             .loggers("auto")
             .baselineOnMigrate(true)
-            .baselineVersion(MigrationVersion.fromVersion(config.getDatabaseVersion()))
+            .baselineVersion(MigrationVersion.fromVersion(config.getBaselineVersion()))
             .callbacks(new FlywayMigrationCompleteCallback(applicationContext))
             .locations(getLocations())
             .load();

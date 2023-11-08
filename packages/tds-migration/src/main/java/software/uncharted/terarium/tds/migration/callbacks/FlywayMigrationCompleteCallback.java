@@ -34,7 +34,6 @@ public record FlywayMigrationCompleteCallback(
         }
       });
       System.exit(0);
-
     }
   }
 
