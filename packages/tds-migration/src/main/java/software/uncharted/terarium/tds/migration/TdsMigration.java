@@ -9,7 +9,12 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:application.properties")
 @Slf4j
 public class TdsMigration {
-    public static void main(final String[] args) {
-        SpringApplication.run(TdsMigration.class, args);
-    }
+	public static void main(final String[] args) {
+  	try {
+			SpringApplication.run(TdsMigration.class, args);
+			log.info("Terarium TDS database migration finished.");
+		} catch (final Exception e) {
+			System.exit(1);
+		}
+	}
 }
