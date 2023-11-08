@@ -1,24 +1,20 @@
 <template>
-	<Card class="code-dynamic-card-container">
+	<h3>{{ filename ?? '' }}</h3>
+	<Card
+		v-for="(block, index) in codefile?.dynamics?.block"
+		class="code-dynamic-card-container"
+		:key="index"
+	>
 		<template #title>
 			Code Block
-			<div>
-				<Button text icon="pi pi-pencil" @click="editable = !editable" />
-				<Button text icon="pi pi-trash" />
+			<div v-if="!editable">
+				<!-- <Button text icon="pi pi-pencil" @click="editable = true" /> -->
+				<Button text icon="pi pi-trash" @click="deleteCodeBlock(index)" />
 			</div>
 		</template>
 		<template #content>
-			<div v-if="!editable">Lines 1 to 9</div>
-			<div class="edit-container" v-else>
-				<div class="edit-input-container">
-					<label for="code-dynamic-start">Start</label>
-					<InputNumber input-id="code-dynamic-start" />
-				</div>
-
-				<div class="edit-input-container">
-					<label for="code-dynamic-start">End</label>
-					<InputNumber input-id="code-dynamic-end" />
-				</div>
+			<div>
+				Lines {{ extractDynamicRows(block).startRow }} to {{ extractDynamicRows(block).endRow }}
 			</div>
 		</template>
 	</Card>
@@ -26,21 +22,41 @@
 
 <script setup lang="ts">
 import Card from 'primevue/card';
-import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import { ref } from 'vue';
+import { CodeFile } from '@/types/Types';
+import { extractDynamicRows } from '@/utils/code-asset';
+import { cloneDeep } from 'lodash';
 
-defineProps<{
-	dynamic: string;
+const props = defineProps<{
+	filename: string;
+	codefile: CodeFile;
 }>();
 
+const emit = defineEmits(['remove-code-block']);
 const editable = ref(false);
+
+const deleteCodeBlock = (index: number) => {
+	const clonedCodefile = cloneDeep(props.codefile);
+	clonedCodefile.dynamics.block.splice(index, 1);
+
+	emit('remove-code-block', {
+		[props.filename]: {
+			...clonedCodefile
+		}
+	});
+};
 </script>
 
 <style scoped>
+h3 {
+	padding-top: 2rem;
+}
 .code-dynamic-card-container {
 	width: 240px;
 	max-width: 240px;
+	border-left: solid 0.5rem var(--primary-color);
+	margin-top: 1rem;
 }
 
 .code-dynamic-card-container:deep(.p-card-title) {
@@ -55,5 +71,10 @@ const editable = ref(false);
 
 .edit-input-container:deep(.p-inputnumber-input) {
 	width: 100px;
+}
+
+.footer-container {
+	display: flex;
+	justify-content: flex-end;
 }
 </style>

@@ -16,15 +16,18 @@ async function getCodeAsset(codeAssetId: string): Promise<Code | null> {
 
 async function updateCodeAsset(
 	code: Code,
-	file: File,
-	progress: Ref<number>
+	file?: File,
+	progress?: Ref<number>
 ): Promise<Code | null> {
 	if (!code.id) {
 		return null;
 	}
-	const successfulUpload = await addFileToCodeAsset(code.id, file, progress);
-	if (!successfulUpload) {
-		return null;
+
+	if (file && progress) {
+		const successfulUpload = await addFileToCodeAsset(code.id, file, progress);
+		if (!successfulUpload) {
+			return null;
+		}
 	}
 	const response = await API.put(`/code-asset/${code.id}`, code);
 

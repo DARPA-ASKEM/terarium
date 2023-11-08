@@ -36,16 +36,6 @@
 							@click="isModelNamingModalVisible = true"
 							:loading="isCodeToModelLoading"
 						/>
-						<Button
-							label="Add dynamics"
-							:disabled="selectionRange === null"
-							@click="isDynamicsModalVisible = true"
-						/>
-						<Button
-							label="Remove all dynamics"
-							:disabled="!codeAsset?.files"
-							@click="removeAllDynamics"
-						/>
 					</template>
 					<template v-else>
 						<Button
@@ -68,11 +58,41 @@
 				style="height: 100%; width: 100%"
 				class="ace-editor"
 			/>
-			<div>
-				<h2>Code Blocks</h2>
-				<p>Identify the code blocks that represent the core dynamics of your model.</p>
-				<Button text icon="pi pi-plus" label="Add a code block" />
-				<tera-code-dynamic :dynamic="'string'" />
+			<div class="code-blocks-container">
+				<div>
+					<h2>Code Blocks</h2>
+					<p>Identify the code blocks that represent the core dynamics of your model.</p>
+					<Button
+						:disabled="selectionRange === null"
+						text
+						icon="pi pi-plus"
+						label="Add a code block"
+						@click="isDynamicsModalVisible = true"
+					/>
+					<tera-code-dynamic
+						v-for="(dynamic, index) in dynamics"
+						:filename="dynamic[0]"
+						:codefile="dynamic[1]"
+						@removeCodeBlock="onRemoveCodeBlock"
+						:key="index"
+					/>
+				</div>
+				<div class="code-blocks-buttons-container">
+					<Button
+						:loading="savingAsset"
+						label="Cancel"
+						outlined
+						size="large"
+						@click="onCancelChanges"
+					/>
+					<Button
+						:loading="savingAsset"
+						:disabled="isEqual(codeAsset, codeAssetCopy)"
+						label="Apply changes"
+						size="large"
+						@click="onSaveChanges"
+					/>
+				</div>
 			</div>
 		</div>
 		<div v-else>
@@ -209,7 +229,7 @@ import {
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/knowledge';
-import { AssetType, Code, ProgrammingLanguage } from '@/types/Types';
+import { AssetType, Code, CodeFile, ProgrammingLanguage } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import router from '@/router';
@@ -220,7 +240,8 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import { Ace, Range } from 'ace-builds';
-import { isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, isEqual } from 'lodash';
+import { extractDynamicRows } from '@/utils/code-asset';
 import TeraDirectory from './tera-directory.vue';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 
@@ -237,6 +258,7 @@ const toast = useToastService();
 const existingMarkers = new Set();
 
 const codeName = ref('');
+const codeSelectedFile = ref('');
 const codeText = ref(INITIAL_TEXT);
 const codeAsset = ref<Code | null>(null);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
@@ -275,6 +297,14 @@ const fileNames = computed<string[]>(() => {
 	return Object.keys(codeAsset.value?.files);
 });
 
+const codeAssetCopy = ref<Code | null>(null);
+const dynamics = computed(() => {
+	if (!codeAssetCopy.value?.files) return [];
+	return Object.entries(codeAssetCopy.value?.files).filter(
+		(fileEntry) => fileEntry[1].dynamics?.block?.length > 0
+	);
+});
+const savingAsset = ref(false);
 /**
  * Editor initialization function
  * @param editorInstance	the Ace editor instance
@@ -292,13 +322,6 @@ function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
 	selectionRange.value =
 		!isEmpty(selectedText.value) && editor.value ? editor.value.getSelectionRange() : null;
-}
-
-function extractDynamicRows(range: string) {
-	const match = range.match(/L(\d+)-L(\d+)/) || [];
-	const startRow = parseInt(match[1], 10) - 1;
-	const endRow = parseInt(match[2], 10) - 1;
-	return { startRow, endRow };
 }
 
 function highlightDynamics() {
@@ -341,23 +364,16 @@ function removeMarkers() {
 	}
 }
 
-async function removeAllDynamics() {
-	const codeAssetClone = codeAsset.value;
-	delete codeAssetClone?.files;
-	saveCode(codeAssetClone);
-}
-
 async function addDynamic() {
-	const codeAssetClone = codeAsset.value;
 	// Add highlighted block to dynamics
-	if (selectedRangeToString.value && codeAssetClone) {
-		if (!codeAssetClone.files) codeAssetClone.files = {};
-
-		// For now we are supporting one file per asset
-		if (codeAssetClone.files[codeName.value]) {
-			codeAssetClone.files[codeName.value].dynamics.block.push(selectedRangeToString.value);
+	if (selectedRangeToString.value && codeAssetCopy.value) {
+		if (!codeAssetCopy.value.files) codeAssetCopy.value.files = {};
+		if (codeAssetCopy.value.files[codeSelectedFile.value]?.dynamics?.block) {
+			codeAssetCopy.value.files[codeSelectedFile.value].dynamics.block.push(
+				selectedRangeToString.value
+			);
 		} else {
-			codeAssetClone.files[codeName.value] = {
+			codeAssetCopy.value.files[codeSelectedFile.value] = {
 				language: getProgrammingLanguage(codeName.value),
 				dynamics: {
 					name: newDynamicsName.value,
@@ -367,7 +383,6 @@ async function addDynamic() {
 			};
 		}
 	}
-	saveCode(codeAssetClone);
 }
 
 async function saveCode(codeAssetToSave: Code | null = codeAsset.value) {
@@ -453,10 +468,37 @@ async function onFileOpen(event) {
 }
 
 async function onFileSelect(filePath: string) {
+	codeSelectedFile.value = filePath;
 	const text = await getCodeFileAsText(props.assetId, filePath);
 	if (text) {
 		codeText.value = text;
 	}
+}
+
+function onRemoveCodeBlock(dynamic: { [index: string]: CodeFile }) {
+	if (!codeAssetCopy.value?.files) return;
+	codeAssetCopy.value.files = {
+		...codeAssetCopy.value?.files,
+		...dynamic
+	};
+}
+
+function onCancelChanges() {
+	codeAssetCopy.value = cloneDeep(codeAsset.value);
+}
+
+async function onSaveChanges() {
+	if (!codeAssetCopy.value) return;
+	savingAsset.value = true;
+	const updateResponse = await updateCodeAsset(codeAssetCopy.value);
+	if (!updateResponse || !updateResponse.id) {
+		savingAsset.value = false;
+		return;
+	}
+	const code = await getCodeAsset(updateResponse.id);
+	codeAsset.value = code;
+	codeAssetCopy.value = cloneDeep(codeAsset.value);
+	savingAsset.value = false;
 }
 
 watch(
@@ -476,6 +518,7 @@ watch(
 				codeName.value = code.name;
 
 				const filename = Object.keys(code.files)[0];
+				codeSelectedFile.value = filename;
 
 				const text = await getCodeFileAsText(props.assetId, filename);
 				if (text) {
@@ -490,6 +533,7 @@ watch(
 				programmingLanguage.value = ProgrammingLanguage.Python;
 			}
 		}
+		codeAssetCopy.value = cloneDeep(codeAsset.value);
 		// Remove dynamics of previous file then add the new ones
 		isLoading.value = false;
 		removeMarkers();
@@ -579,5 +623,22 @@ h4 {
 :deep(header section) {
 	gap: 0;
 	max-width: 100%;
+}
+.code-blocks-container {
+	padding: 2rem;
+	max-width: 300px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+.code-blocks-buttons-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.code-blocks-buttons-container > * {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
 }
 </style>
