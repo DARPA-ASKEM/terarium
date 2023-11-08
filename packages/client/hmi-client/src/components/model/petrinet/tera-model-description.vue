@@ -36,7 +36,7 @@
 				<template #header>Related publications</template>
 				<tera-related-documents
 					:documents="documents"
-					:asset-type="ResourceType.MODEL"
+					:asset-type="AssetType.Models"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>
@@ -44,12 +44,6 @@
 			<AccordionTab>
 				<template #header>Description</template>
 				<p v-html="description" />
-				<!--
-					For model creation
-					<template v-else>
-						<label for="placeholder" />
-						<Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
-					</template> -->
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(usage)">
 				<template #header>Usage</template>
@@ -401,17 +395,34 @@
 					Other concepts
 					<span class="artifact-amount">({{ otherConcepts.length }})</span>
 				</template>
-				<table v-if="otherConcepts.length > 0" class="datatable" style="--columns: 4">
+				<table v-if="otherConcepts.length > 0" class="datatable" style="--columns: 5">
 					<tr>
 						<th>Payload id</th>
 						<th>Names</th>
+						<th>Values</th>
 						<th>Descriptions</th>
 						<th>Concept</th>
 					</tr>
 					<tr v-for="item in otherConcepts" :key="item.payload?.id?.id">
 						<td>{{ item.payload?.id?.id }}</td>
-						<td>{{ item.payload?.names?.map((n) => n?.name).join(', ') }}</td>
-						<td>{{ item.payload?.descriptions?.map((d) => d?.source).join(', ') }}</td>
+						<td>
+							{{
+								item.payload?.names?.map((n) => n?.name).join(', ') ||
+								item.payload?.mentions?.map((m) => m?.name).join(', ')
+							}}
+						</td>
+						<td>
+							{{
+								item.payload?.values?.map((n) => n?.value?.amount).join(', ') ||
+								item.payload?.value_descriptions?.map((m) => m?.value?.amount).join(', ')
+							}}
+						</td>
+						<td>
+							{{
+								item.payload?.descriptions?.map((d) => d?.source).join(', ') ||
+								item.payload?.text_descriptions?.map((d) => d?.description).join(', ')
+							}}
+						</td>
 						<td>
 							<template v-if="!item.payload.groundings || item.payload.groundings.length < 1"
 								>--</template
@@ -459,14 +470,14 @@ import { round, groupBy, cloneDeep, isEmpty } from 'lodash';
 import { ref, computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import {
 	updateConfigFields,
 	updateParameterId
 } from '@/model-representation/petrinet/petrinet-service';
 import Tag from 'primevue/tag';
-import { AcceptedExtensions, ResourceType } from '@/types/common';
+import { AcceptedExtensions } from '@/types/common';
 import Button from 'primevue/button';
 import TeraModelExtraction from '@/components/model/petrinet/tera-model-extraction.vue';
 import * as textUtil from '@/utils/text';
@@ -481,6 +492,7 @@ enum VariableTypes {
 	PARAMETER = 'parameter',
 	TRANSITION = 'transition'
 }
+
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
 	tableType: string;
@@ -586,7 +598,9 @@ const otherConcepts = computed(() => {
 	let unalignedExtractions: Dictionary<any>[] = [];
 	unalignedKeys.forEach((key) => {
 		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) => e.type === 'anchored_extraction')
+			extractions.value[key.toString()].filter((e) =>
+				['anchored_extraction', 'anchored_entity'].includes(e.type)
+			)
 		);
 	});
 

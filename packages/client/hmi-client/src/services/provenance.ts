@@ -4,19 +4,22 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { ResourceType, ResultType } from '@/types/common';
-import { ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import {
+	AssetType,
+	DocumentAsset,
+	Model,
+	ProvenanceQueryParam,
+	ProvenanceType
+} from '@/types/Types';
 import { ProvenanceResult } from '@/types/Provenance';
+import { ResultType } from '@/types/common';
 import { getBulkDatasets } from './dataset';
-// eslint-disable-next-line import/no-cycle
+/* eslint-disable-next-line import/no-cycle */
 import { getBulkXDDDocuments } from './data';
 import { getBulkExternalPublications } from './external';
 import { getBulkModels } from './model';
 import { getBulkDocumentAssets } from './document-assets';
 
-//
-
-//
 // FIXME: currently related artifacts extracted from the provenance graph will be provided
 //        as IDs that needs to be fetched, and since no bulk fetch API exists
 //        so we are using the following limit to optimize things a bit
@@ -51,14 +54,46 @@ async function getConnectedNodes(
 		logger.error(`Error: ${error}`)
 	);
 
-	const connectedNodes: ProvenanceResult = connectedNodesRaw?.data ?? null;
-	return connectedNodes;
+	return connectedNodesRaw?.data ?? null;
+}
+
+/**
+ * Find all the document assets that are used by a given model
+ * with an EXTRACTED_FROM relationship.
+ */
+async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<DocumentAsset[]> {
+	const query: ProvenanceQueryParam = {
+		rootId: modelId,
+		rootType: ProvenanceType.Model,
+		types: [ProvenanceType.Document]
+	};
+
+	const documentAssets: DocumentAsset[] = [];
+
+	try {
+		const response = await API.post(
+			'/provenance/connected-nodes?search_type=models_from_document',
+			query
+		);
+
+		// If we get an error returns an empty array
+		if (response.status !== 200) {
+			logger.info('No document assets found');
+			return documentAssets;
+		}
+
+		return await getBulkDocumentAssets(response.data?.result ?? []);
+	} catch (error) {
+		logger.error(`Error: ${error}`);
+	}
+
+	return documentAssets;
 }
 
 /**
  * Find related artifacts of a given root type
  * @id: id to be used as the root
- * @return ResultType[]|null - the list of all artifacts, or null if none returned by API
+ * @return AssetType[]|null - the list of all artifacts, or null if none returned by API
  */
 async function getRelatedArtifacts(
 	id: string,
@@ -108,19 +143,15 @@ async function getRelatedArtifacts(
 				documentAssetIds.push(node.id.toString());
 			}
 
-			// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/880
-			// if (
-			// 	node.type === ProvenanceType.ModelRevision &&
-			// 	modelRevisionIDs.length < MAX_RELATED_ARTIFACT_COUNT
-			// ) {
-			// 	modelRevisionIDs.push(node.id.toString());
-			// }
+			/* TODO: https://github.com/DARPA-ASKEM/Terarium/issues/880
+				if (
+					node.type === ProvenanceType.ModelRevision &&
+					modelRevisionIDs.length < MAX_RELATED_ARTIFACT_COUNT
+				) {
+					modelRevisionIDs.push(node.id.toString());
+				}
+			*/
 		});
-
-		//
-		// FIXME: the provenance API return artifact IDs, but we need the actual objects
-		//        so we need to fetch all artifacts using provided IDs
-		//
 
 		const datasets = await getBulkDatasets(datasetIDs);
 		response.push(...datasets);
@@ -162,7 +193,8 @@ export enum RelationshipType {
 	STRATIFIED_FROM = 'STRATIFIED_FROM',
 	USES = 'USES'
 }
-export interface ProvenanacePayload {
+
+export interface ProvenancePayload {
 	id?: number;
 	timestamp?: string;
 	relation_type: RelationshipType;
@@ -173,33 +205,45 @@ export interface ProvenanacePayload {
 	user_id?: number;
 	concept?: string;
 }
-async function createProvenance(payload: ProvenanacePayload) {
-	const response = await API.post('/provenance', payload);
 
-	const { status, data } = response;
-	if (status !== 201) return null;
-	return data?.id ?? null;
+async function createProvenance(payload: ProvenancePayload) {
+	const response = await API.post('/provenance', payload);
+	if (response?.status !== 201) return null;
+	return response?.data?.id ?? null;
 }
 
 async function getProvenance(id: string) {
 	const response = await API.get(`/provenance/${id}`);
-	const { data } = response;
-	return data ?? null;
+	return response?.data ?? null;
 }
 
-export function mapResourceTypeToProvenanceType(resourceType: ResourceType): ProvenanceType | null {
-	switch (resourceType) {
-		case ResourceType.MODEL:
+/**
+ * Map an asset type to a provenance type
+ * @param AssetType
+ * @return ProvenanceType - default to Document
+ */
+export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceType {
+	switch (assetType) {
+		case AssetType.Models:
 			return ProvenanceType.Model;
-		case ResourceType.DATASET:
+		case AssetType.Datasets:
 			return ProvenanceType.Dataset;
+		case AssetType.ModelConfigurations:
+			return ProvenanceType.ModelConfiguration;
+		case AssetType.Publications:
+			return ProvenanceType.Publication;
+		case AssetType.Simulations:
+			return ProvenanceType.Simulation;
+		case AssetType.Artifacts:
+			return ProvenanceType.Artifact;
+		case AssetType.Code:
+			return ProvenanceType.Code;
+		case AssetType.Workflows:
+			return ProvenanceType.Workflow;
+		case AssetType.Documents:
 		default:
-			return null;
+			return ProvenanceType.Document;
 	}
 }
 
-//
-// FIXME: needs to create a similar function to "getRelatedArtifacts"
-//        for finding related datasets
-//
-export { getRelatedArtifacts, createProvenance, getProvenance };
+export { getRelatedArtifacts, getDocumentAssetsUsedByModel, createProvenance, getProvenance };

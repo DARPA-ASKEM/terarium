@@ -77,7 +77,7 @@
 				<AccordionTab>
 					<template #header>Related publications</template>
 					<tera-related-documents
-						:asset-type="ResourceType.DATASET"
+						:asset-type="AssetType.Datasets"
 						:documents="documents"
 						:assetId="assetId"
 						@enriched="fetchDataset"
@@ -280,11 +280,11 @@ import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, cloneDeep, isEmpty } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
+import { AcceptedExtensions, FeatureConfig } from '@/types/common';
 import Menu from 'primevue/menu';
 import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
