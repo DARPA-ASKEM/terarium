@@ -18,8 +18,7 @@
 	</Teleport>
 	<Dialog :header="`Remove ${project?.name}`" v-model:visible="isRemoveDialogVisible">
 		<p>
-			You are about to remove project <em>{{ project?.name }}</em
-			>.
+			You are about to remove project <em>{{ project?.name }}</em>.
 		</p>
 		<p>Are you sure?</p>
 		<template #footer>
