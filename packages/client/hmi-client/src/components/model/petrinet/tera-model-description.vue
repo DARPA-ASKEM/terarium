@@ -395,17 +395,34 @@
 					Other concepts
 					<span class="artifact-amount">({{ otherConcepts.length }})</span>
 				</template>
-				<table v-if="otherConcepts.length > 0" class="datatable" style="--columns: 4">
+				<table v-if="otherConcepts.length > 0" class="datatable" style="--columns: 5">
 					<tr>
 						<th>Payload id</th>
 						<th>Names</th>
+						<th>Values</th>
 						<th>Descriptions</th>
 						<th>Concept</th>
 					</tr>
 					<tr v-for="item in otherConcepts" :key="item.payload?.id?.id">
 						<td>{{ item.payload?.id?.id }}</td>
-						<td>{{ item.payload?.names?.map((n) => n?.name).join(', ') }}</td>
-						<td>{{ item.payload?.descriptions?.map((d) => d?.source).join(', ') }}</td>
+						<td>
+							{{
+								item.payload?.names?.map((n) => n?.name).join(', ') ||
+								item.payload?.mentions?.map((m) => m?.name).join(', ')
+							}}
+						</td>
+						<td>
+							{{
+								item.payload?.values?.map((n) => n?.value?.amount).join(', ') ||
+								item.payload?.value_descriptions?.map((m) => m?.value?.amount).join(', ')
+							}}
+						</td>
+						<td>
+							{{
+								item.payload?.descriptions?.map((d) => d?.source).join(', ') ||
+								item.payload?.text_descriptions?.map((d) => d?.description).join(', ')
+							}}
+						</td>
 						<td>
 							<template v-if="!item.payload.groundings || item.payload.groundings.length < 1"
 								>--</template
