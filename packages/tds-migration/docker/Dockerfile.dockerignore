@@ -1,0 +1,8 @@
+# Ignore everything except what is needed for building
+*
+
+!packages/tds-migration/gradle
+!packages/tds-migration/docker
+!packages/tds-migration/src
+!packages/tds-migration/*gradle*
+

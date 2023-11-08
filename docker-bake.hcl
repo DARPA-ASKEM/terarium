@@ -26,15 +26,15 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server"]
+  targets = ["hmi-client", "hmi-server", "tds-migration"]
 }
 
 group "staging" {
-  targets = ["hmi-client", "hmi-server"]
+  targets = ["hmi-client", "hmi-server", "tds-migration"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "tds-migration-base"]
 }
 
 # ---------------------------------
@@ -60,4 +60,14 @@ target "hmi-server-base" {
 
 target "hmi-server" {
   inherits = ["_platforms", "hmi-server-base"]
+}
+
+target "tds-migration-base" {
+	context = "." # root of the repo
+	dockerfile = "./packages/tds-migration/docker/Dockerfile"
+	tags = tag("tds-migration", "", "")
+}
+
+target "tds-migration" {
+  inherits = ["_platforms", "tds-migration-base"]
 }
