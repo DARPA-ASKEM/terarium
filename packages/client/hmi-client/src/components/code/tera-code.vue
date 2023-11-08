@@ -498,6 +498,7 @@ async function onSaveChanges() {
 	const code = await getCodeAsset(updateResponse.id);
 	codeAsset.value = code;
 	codeAssetCopy.value = cloneDeep(codeAsset.value);
+	toast.success('', 'Changes applied succesfully');
 	savingAsset.value = false;
 }
 
