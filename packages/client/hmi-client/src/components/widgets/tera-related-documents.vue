@@ -15,7 +15,7 @@
 		<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
 		<Button
 			text
-			:disabled="props.assetType != ResourceType.MODEL"
+			:disabled="props.assetType != AssetType.Models"
 			:label="`Align extractions to ${assetType}`"
 			:loading="isLoading"
 			@click="dialogForAlignment"
@@ -52,7 +52,7 @@
 					</div>
 				</div>
 			</div>
-			<aside v-if="dialogType === DialogType.EXTRACT && assetType === ResourceType.MODEL">
+			<aside v-if="dialogType === DialogType.EXTRACT && assetType === AssetType.Models">
 				<p>Which extraction service would you like to use?</p>
 				<RadioButton
 					v-model="extractionService"
@@ -84,25 +84,29 @@ import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import RadioButton from 'primevue/radiobutton';
-import { ResourceType } from '@/types/common';
 import {
 	alignModel,
+	Extractor,
 	fetchExtraction,
 	pdfExtractions,
 	profileDataset,
-	profileModel,
-	Extractor
+	profileModel
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
 import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
-import { getRelatedArtifacts, mapResourceTypeToProvenanceType } from '@/services/provenance';
+import {
+	createProvenance,
+	getRelatedArtifacts,
+	mapAssetTypeToProvenanceType,
+	RelationshipType
+} from '@/services/provenance';
 import { isDocumentAsset } from '@/utils/data-util';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
-	assetType: ResourceType;
+	assetType: AssetType;
 	assetId: string;
 }>();
 
@@ -171,10 +175,10 @@ const sendForEnrichment = async () => {
 
 	isLoading.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
-	if (props.assetType === ResourceType.MODEL) {
+	if (props.assetType === AssetType.Models) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
 		jobIds.push(profileModelJobId);
-	} else if (props.assetType === ResourceType.DATASET) {
+	} else if (props.assetType === AssetType.Datasets) {
 		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
 		jobIds.push(profileDatasetJobId);
 	}
@@ -202,6 +206,13 @@ const sendForExtractions = async () => {
 
 	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId, extractionService.value);
 	if (!pdfExtractionsJobId) return;
+	await createProvenance({
+		relation_type: RelationshipType.EXTRACTED_FROM,
+		left: props.assetId,
+		left_type: mapAssetTypeToProvenanceType(props.assetType),
+		right: selectedResourceId,
+		right_type: ProvenanceType.Document
+	});
 	await fetchExtraction(pdfExtractionsJobId);
 
 	isLoading.value = false;
@@ -211,7 +222,7 @@ const sendForExtractions = async () => {
 
 const sendToAlignModel = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
-	if (props.assetType === ResourceType.MODEL && selectedResourceId) {
+	if (props.assetType === AssetType.Models && selectedResourceId) {
 		isLoading.value = true;
 
 		const linkAmrJobId = await alignModel(props.assetId, selectedResourceId);
@@ -237,7 +248,7 @@ watch(
 
 async function getRelatedDocuments() {
 	if (!props.assetType) return;
-	const provenanceType = mapResourceTypeToProvenanceType(props.assetType);
+	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 
 	if (!provenanceType) return;
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [

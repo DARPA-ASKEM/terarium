@@ -110,4 +110,16 @@ footer {
 	-webkit-transform: scale(0.9);
 	transform: scale(0.9);
 }
+
+.content:deep(label) {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.content:deep(input),
+.content:deep(textarea) {
+	display: block;
+	margin-bottom: 1rem;
+	width: 100%;
+}
 </style>

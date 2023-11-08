@@ -73,8 +73,6 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId, equations).getBody());
 	}
 
-	;
-
 	/**
 	 * Transform source code to AMR
 	 *
@@ -191,7 +189,7 @@ public class KnowledgeController {
 	 * Profile a model
 	 *
 	 * @param modelId    (String): The ID of the model to profile
-	 * @param artifactId (String): The text of the document to profile
+	 * @param documentId (String): The text of the document to profile
 	 * @return the profiled model
 	 */
 	@PostMapping("/link-amr")
