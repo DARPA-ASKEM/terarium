@@ -85,7 +85,7 @@
 			<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 		</div>
 		<div class="right-side">
-			<tera-funman-output v-if="outputValue" :fun-model="outputValue" />
+			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 			<div v-else>
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				<h4>No Output</h4>
@@ -98,7 +98,7 @@
 			<p>{{ requestConstraints }}</p>
 		</div>
 		<div class="right-side">
-			<tera-funman-output v-if="outputValue" :fun-model="outputValue" />
+			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 			<div v-else>
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				<h4>No Output</h4>
@@ -172,7 +172,7 @@ const requestParameters = ref();
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
-const outputValue = ref();
+const outputId = computed(() => String(props.node.outputs[0].value));
 
 const runMakeQuery = async () => {
 	if (!model.value) {
@@ -335,17 +335,6 @@ watch(
 				}
 			}
 		}
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => props.node.outputs[0],
-	async () => {
-		if (!props.node.outputs[0] || !props.node.outputs[0].value) {
-			return;
-		}
-		outputValue.value = await getQueries(String(props.node.outputs[0].value));
 	},
 	{ immediate: true }
 );

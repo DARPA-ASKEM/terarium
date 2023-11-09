@@ -20,6 +20,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import {
+	getQueries,
 	processFunman,
 	renderFumanTrajectories,
 	renderFunmanBoundaryChart
@@ -27,7 +28,7 @@ import {
 import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
-	funModel: any;
+	funModelId: string;
 }>();
 
 const parameterOptions = ref<string[]>([]);
@@ -35,29 +36,27 @@ const selectedParamOne = ref();
 const selectedParamTwo = ref();
 const timestepOptions = ref();
 const timestep = ref();
-
 const boxRef = ref();
 const trajRef = ref();
-
 const boxId = 'box2';
 
-const setParameters = async () => {
+const initalizeParameters = async () => {
+	const funModel = await getQueries(props.funModelId);
 	parameterOptions.value = [];
-	props.funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
+	funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
 		parameterOptions.value.push(ele.id)
 	);
 	selectedParamOne.value = parameterOptions.value[0];
 	selectedParamTwo.value = parameterOptions.value[0];
-	console.log(props.funModel.request.structure_parameters);
-	timestepOptions.value = props.funModel.request.structure_parameters[0].schedules[0].timepoints;
+	timestepOptions.value = funModel.request.structure_parameters[0].schedules[0].timepoints;
 	timestep.value = timestepOptions.value[1];
 };
 
 const renderGraph = async () => {
+	const funModel = await getQueries(props.funModelId);
 	const width = 800;
 	const height = 250;
-	console.log('Render Graph');
-	const processedData = processFunman(props.funModel);
+	const processedData = processFunman(funModel);
 	renderFunmanBoundaryChart(
 		boxRef.value,
 		processedData,
@@ -76,14 +75,14 @@ const renderGraph = async () => {
 };
 
 onMounted(() => {
-	setParameters();
+	initalizeParameters();
 });
 
 watch(
 	// When props change reset params rerender graph
-	() => props.funModel,
+	() => props.funModelId,
 	async () => {
-		setParameters();
+		initalizeParameters();
 	}
 );
 
