@@ -4,7 +4,7 @@ import { TimeSpan, FunmanInterval } from '@/types/Types';
 export interface ConstraintGroup {
 	borderColour: string;
 	name: string;
-	variables: string[]; // If len = 1, need to rename to variable for request
+	variables: string[]; // If len = 1, need to rename to "variable" for request formatting
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
 	interval?: FunmanInterval;
@@ -14,7 +14,7 @@ export interface FunmanOperationState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;
-	constraintGroups: ConstraintGroup[]; // This should be optional not required.
+	constraintGroups?: ConstraintGroup[];
 }
 
 export const FunmanOperation: Operation = {

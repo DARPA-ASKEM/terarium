@@ -148,7 +148,7 @@ const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 const requestConstraints = computed(() =>
 	// Same as node state's except typing for state vs linear constraint
-	props.node.state.constraintGroups.map((ele) => {
+	props.node.state.constraintGroups?.map((ele) => {
 		if (ele.variables.length === 1) {
 			// State Variable Constraint
 			return {
@@ -246,6 +246,9 @@ const addConstraintForm = () => {
 		timepoints: { lb: 0, ub: 100 },
 		variables: []
 	};
+	if (!state.constraintGroups) {
+		state.constraintGroups = [];
+	}
 	state.constraintGroups.push(newGroup);
 
 	workflowEventBus.emitNodeStateChange({
@@ -257,6 +260,9 @@ const addConstraintForm = () => {
 
 const deleteConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) {
+		return;
+	}
 	state.constraintGroups.splice(data.index, 1);
 
 	workflowEventBus.emitNodeStateChange({
@@ -268,6 +274,9 @@ const deleteConstraintGroupForm = (data) => {
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) {
+		return;
+	}
 	state.constraintGroups[data.index] = data.updatedConfig;
 
 	workflowEventBus.emitNodeStateChange({
