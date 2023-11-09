@@ -87,7 +87,6 @@
 		<div class="right-side">
 			<tera-funman-output v-if="outputValue" :fun-model="outputValue" />
 			<div v-else>
-				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				<h4>No Output</h4>
 			</div>
@@ -95,14 +94,12 @@
 	</div>
 	<div v-else class="container">
 		<div class="left-side">
-			<!-- TODO: Are we demoing notebook? -->
+			<!-- TODO: notebook functionality -->
 			<p>{{ requestConstraints }}</p>
-			<!-- <p> {{ sampleRequest }} </p> -->
 		</div>
 		<div class="right-side">
 			<tera-funman-output v-if="outputValue" :fun-model="outputValue" />
 			<div v-else>
-				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				<h4>No Output</h4>
 			</div>
@@ -119,8 +116,6 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
-// import { request } from '@/temp/funmanRequest';
-// import funModel from '@/examples/fun-example.json';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
@@ -133,7 +128,6 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 // TODO List:
-// 5) fix css for overlow
 // 6) Need to fix when things are not set to not send (ub and lb) rather than send as null
 // 8) renderer needs true and needs false boxes (mightve fixed)
 // 9) need to make renderer a lot prettier
@@ -185,8 +179,6 @@ const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
 const outputValue = ref();
 
-// const sampleRequest: FunmanPostQueriesRequest = request;
-
 const runMakeQuery = async () => {
 	if (!model.value) {
 		toast.error('', 'No Model provided for request');
@@ -216,8 +208,6 @@ const runMakeQuery = async () => {
 		}
 	};
 
-	console.log('Hitting with the following request:');
-	console.log(request);
 	const response = await makeQueries(request); // Just commented out so i do not break funman
 	getStatus(response.id);
 };
@@ -225,7 +215,6 @@ const runMakeQuery = async () => {
 // TODO: Poller? https://github.com/DARPA-ASKEM/terarium/issues/2196
 const getStatus = async (runId) => {
 	showSpinner.value = true;
-	console.log('Getting status');
 	const response = await getQueries(runId);
 	if (response?.error === true) {
 		showSpinner.value = false;
@@ -233,8 +222,6 @@ const getStatus = async (runId) => {
 		console.log(response);
 	} else if (response?.done === true) {
 		showSpinner.value = false;
-		console.log('reponse:');
-		console.log(response);
 		updateOutputPorts(runId);
 	} else {
 		setTimeout(async () => {
@@ -364,9 +351,6 @@ watch(
 			return;
 		}
 		outputValue.value = await getQueries(props.node.outputs[0].value);
-		console.log('Recieved output:');
-		console.log(outputValue.value);
-		// outputValue.value = funModel;
 	},
 	{ immediate: true }
 );
