@@ -15,6 +15,7 @@
 	<footer>
 		<tera-footer />
 	</footer>
+	<tera-common-modal-dialogs />
 </template>
 
 <script setup lang="ts">
@@ -29,6 +30,7 @@ import TeraFooter from '@/components/navbar/tera-footer.vue';
 import { IProject } from '@/types/Project';
 import { ResourceType } from '@/types/common';
 import { useProjects } from '@/composables/project';
+import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
 import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
