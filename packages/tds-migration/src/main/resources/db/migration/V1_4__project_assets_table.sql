@@ -5,8 +5,8 @@ CREATE TABLE project_asset (
 	resource_type resource_type            NOT NULL,
 	external_ref  CHARACTER VARYING,
 	created_on    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-	updated_on  	TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-	deleted_on  	TIMESTAMP WITH TIME ZONE
+	updated_on    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+	deleted_on    TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TRIGGER project_asset_updated
