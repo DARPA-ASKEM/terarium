@@ -6,14 +6,12 @@
 		<div class="button-row">
 			<label for="constraint-name">Name of constraint</label>
 			<InputText
-				id="constraint-name"
 				v-model="constraintName"
 				placeholder="Add constraint name"
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
 			/>
 			<label for="target">Target</label>
 			<MultiSelect
-				id="variables-select"
 				v-model="variables"
 				:options="props.modelNodeOptions"
 				placeholder="Model states"
