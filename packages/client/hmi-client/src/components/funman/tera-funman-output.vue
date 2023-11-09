@@ -23,7 +23,7 @@ import {
 	processFunman,
 	renderFumanTrajectories,
 	renderFunmanBoundaryChart
-} from '@/services/funman';
+} from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
