@@ -1,6 +1,6 @@
-# TDS Database Migration
+# Database Migration
 
-Once run, this application will update the TDS database to the latest version (if needed) and then exit.
+Once run, this application will update the database to the latest version (if needed) and then exit.
 
 To migrate the database, create a new file in /resources/db/migration and add your SQL file there. You must
 prefix your file with the next version number (e.g. V1_35__what_i_am_changing.sql).

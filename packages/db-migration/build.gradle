@@ -40,8 +40,8 @@ configurations {
 }
 
 project.ext {
-  artifactName = 'tds-migration'
-  description = 'runs migrations on the TDS database'
+  artifactName = 'db-migration'
+  description = 'runs migrations on the terarium data database'
 }
 
 test {

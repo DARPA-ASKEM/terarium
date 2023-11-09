@@ -9,4 +9,4 @@ pluginManagement {
 rootProject.name = "terarium"
 
 include ":packages:server"
-include ":packages:tds-migration"
+include ':packages:db-migration'

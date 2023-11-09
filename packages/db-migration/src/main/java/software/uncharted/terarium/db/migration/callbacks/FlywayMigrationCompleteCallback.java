@@ -1,4 +1,4 @@
-package software.uncharted.terarium.tds.migration.callbacks;
+package software.uncharted.terarium.db.migration.callbacks;
 
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.api.callback.Callback;
@@ -9,8 +9,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 
 @Slf4j
-public record FlywayMigrationCompleteCallback(
-  ApplicationContext applicationContext) implements Callback {
+public record FlywayMigrationCompleteCallback(ApplicationContext applicationContext) implements Callback {
 
   @Override
   public boolean supports(final Event event, final Context context) {
@@ -24,7 +23,7 @@ public record FlywayMigrationCompleteCallback(
 
   @Override
   public void handle(final Event event, final Context context) {
-    if (event == Event.AFTER_MIGRATE) {
+    if (this.supports(event, context)) {
       log.info("Migration Completed Successfully, shutting down");
 
       SpringApplication.exit(applicationContext, new ExitCodeGenerator() {

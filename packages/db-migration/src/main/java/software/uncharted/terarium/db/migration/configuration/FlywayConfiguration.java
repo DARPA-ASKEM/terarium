@@ -1,4 +1,4 @@
-package software.uncharted.terarium.tds.migration.configuration;
+package software.uncharted.terarium.db.migration.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.flywaydb.core.Flyway;
@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.uncharted.terarium.tds.migration.callbacks.FlywayMigrationCompleteCallback;
+import software.uncharted.terarium.db.migration.callbacks.FlywayMigrationCompleteCallback;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 public class FlywayConfiguration {
 
-    private final TdsConfig config;
+    private final Config config;
     private final DataSource dataSource;
     private final ApplicationContext applicationContext;
 

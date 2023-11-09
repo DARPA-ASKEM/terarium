@@ -1,7 +1,7 @@
 FROM eclipse-temurin:17.0.9_9-jdk-focal AS builder
 
 WORKDIR /app
-COPY /packages/tds-migration .
+COPY /packages/db-migration .
 
 RUN --mount=type=cache,target=/root/.gradle ./gradlew clean bootJar
 
