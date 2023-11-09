@@ -16,7 +16,14 @@
 			:active="activeTab === FunmanTabs.notebook"
 			@click="activeTab = FunmanTabs.notebook"
 		/>
-		<Button class="p-button-sm run-button" label="Run" icon="pi pi-play" @click="runMakeQuery" />
+		<Button
+			v-if="!showSpinner"
+			class="p-button-sm run-button"
+			label="Run"
+			icon="pi pi-play"
+			@click="runMakeQuery"
+		/>
+		<tera-progress-spinner v-if="showSpinner" :font-size="2" />
 	</div>
 	<div v-if="activeTab === FunmanTabs.wizard" class="container">
 		<div class="left-side">
@@ -122,6 +129,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { useToastService } from '@/services/toast';
 import { v4 as uuidv4 } from 'uuid';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 // TODO List:
@@ -129,7 +137,6 @@ import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman
 // 6) Need to fix when things are not set to not send (ub and lb) rather than send as null
 // 8) renderer needs true and needs false boxes (mightve fixed)
 // 9) need to make renderer a lot prettier
-// 10) check for progress on run results. keep polling until success flag
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -143,6 +150,7 @@ const toast = useToastService();
 
 const activeTab = ref(FunmanTabs.wizard);
 const labelOptions = ['any', 'all'];
+const showSpinner = ref(false);
 const tolerance = ref(props.node.state.tolerance);
 const startTime = ref(props.node.state.currentTimespan.start);
 const endTime = ref(props.node.state.currentTimespan.end);
@@ -172,7 +180,6 @@ const requestConstraints = computed(() =>
 	})
 );
 const requestParameters = ref();
-const response = ref();
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
@@ -211,8 +218,29 @@ const runMakeQuery = async () => {
 
 	console.log('Hitting with the following request:');
 	console.log(request);
-	response.value = await makeQueries(request); // Just commented out so i do not break funman
-	updateOutputPorts(response.value.id);
+	const response = await makeQueries(request); // Just commented out so i do not break funman
+	getStatus(response.id);
+};
+
+// TODO: Poller? https://github.com/DARPA-ASKEM/terarium/issues/2196
+const getStatus = async (runId) => {
+	showSpinner.value = true;
+	console.log('Getting status');
+	const response = await getQueries(runId);
+	if (response?.error === true) {
+		showSpinner.value = false;
+		toast.error('', 'An error occured Funman');
+		console.log(response);
+	} else if (response?.done === true) {
+		showSpinner.value = false;
+		console.log('reponse:');
+		console.log(response);
+		updateOutputPorts(runId);
+	} else {
+		setTimeout(async () => {
+			getStatus(runId);
+		}, 2000);
+	}
 };
 
 const updateOutputPorts = async (runId) => {
