@@ -1,7 +1,7 @@
 import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
 import { ClientEvent, ClientEventType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
-import getConfiguration from '@/services/ConfigService';
+// import getConfiguration from '@/services/ConfigService';
 
 /**
  * A map of event types to message handlers
@@ -11,7 +11,7 @@ const subscribers = new Map<ClientEventType, ((data: ClientEvent<any>) => void)[
 /**
  * The last time a heartbeat was received
  */
-let lastHeartbeat = new Date().valueOf();
+// let lastHeartbeat = new Date().valueOf(); // TODO: dvince reenable
 
 /**
  * The initial backoff time in milliseconds for resubscribing to the SSE endpoint
@@ -22,7 +22,7 @@ let backoffMs = 1000;
 /**
  * Whether we are currently reconnecting to the SSE endpoint
  */
-let reconnecting = false;
+// let reconnecting = false; // TODO: dvince reenable
 
 /**
  * An error that can be retried
@@ -42,7 +42,7 @@ export async function init(): Promise<void> {
 			// Parse the data as a ClientEvent and pass it on to the subscribers
 			const data = JSON.parse(message.data) as ClientEvent<any>;
 			if (data.type === ClientEventType.Heartbeat) {
-				lastHeartbeat = new Date().valueOf();
+				// lastHeartbeat = new Date().valueOf(); // TODO: dvince reenable
 				return;
 			}
 			const handlers = subscribers.get(data.type);
@@ -51,13 +51,13 @@ export async function init(): Promise<void> {
 			}
 		},
 		async onopen(response: Response) {
-			init();
 			if (response.status === 401) {
-				// redirect to login
+				// redirect to the login page
 				authStore.keycloak?.login({
 					redirectUri: window.location.href
 				});
-			} else if (response.status === 500) {
+			} else if (response.status >= 500) {
+				console.log('SSE connection error');
 				throw new RetriableError('Internal server error');
 			} else {
 				// Reset the backoff time as we've made a connection successfully
@@ -68,12 +68,14 @@ export async function init(): Promise<void> {
 			// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
 			if (error instanceof RetriableError) {
 				backoffMs *= 2;
-				return Math.min(backoffMs, 60000);
+				const retriesTime = Math.min(backoffMs, 60000);
+				console.log(`Retrying SSE connection in ${retriesTime}ms`);
+				return retriesTime;
 			}
 			throw error; // fatal
 		},
 		onclose() {
-			init();
+			// init(); // TODO: dvince reenable
 		},
 		openWhenHidden: true
 	};
@@ -84,7 +86,8 @@ export async function init(): Promise<void> {
  * Periodically checks if we have received a heartbeat within the configured interval
  * and reconnects if not
  */
-setInterval(async () => {
+// TODO: dvince reenable
+/* setInterval(async () => {
 	if (!reconnecting) {
 		const config = await getConfiguration();
 		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
@@ -94,7 +97,7 @@ setInterval(async () => {
 			reconnecting = false;
 		}
 	}
-}, 1000);
+}, 1000); */
 
 /**
  * Subscribes to a specific event type

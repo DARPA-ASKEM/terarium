@@ -210,7 +210,7 @@ export interface DocumentAsset {
     username?: string;
     fileNames?: string[];
     documentUrl?: string;
-    metadata?: any;
+    metadata?: { [index: string]: any };
     source?: string;
     text?: string;
     grounding?: Grounding;
@@ -498,6 +498,14 @@ export interface EnsembleSimulationCiemssRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
+}
+
+export interface ScimlStatusUpdate {
+    loss: number;
+    iter: number;
+    params: { [index: string]: number };
+    id: string;
+    solData: { [index: string]: any };
 }
 
 export interface SimulationRequest {
@@ -935,6 +943,9 @@ export enum AuthorityType {
 export enum RoleType {
     Admin = "ADMIN",
     User = "USER",
+    Group = "GROUP",
+    Test = "TEST",
+    Service = "SERVICE",
     Special = "SPECIAL",
 }
 
@@ -1000,6 +1011,7 @@ export enum ProvenanceType {
     Artifact = "Artifact",
     Code = "Code",
     Document = "Document",
+    Workflow = "Workflow",
 }
 
 export enum AssetType {

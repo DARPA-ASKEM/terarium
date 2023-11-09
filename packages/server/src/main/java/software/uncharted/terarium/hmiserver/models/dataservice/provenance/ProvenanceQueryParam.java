@@ -33,11 +33,11 @@ public class ProvenanceQueryParam implements Serializable {
 	private List<ProvenanceType> types;
 
 	@TSOptional
-	private Number hops; 
+	private Number hops;
 
 	@TSOptional
 	private Number limit;
-	
+
 	@TSOptional
 	private Boolean verbose;
 
@@ -81,6 +81,4 @@ public class ProvenanceQueryParam implements Serializable {
 	public Number getUserId() {
 		return userId;
 	}
-
-
 }

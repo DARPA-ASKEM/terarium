@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<Teleport to="body">
-			<tera-modal v-if="visible" class="modal" @modal-mask-clicked="emit('close')">
+			<tera-modal v-if="visible" @modal-mask-clicked="emit('close')">
 				<template #header>
 					<h2>
 						https://github.com/{{ repoOwnerAndName
@@ -152,8 +152,11 @@
 					</div>
 				</template>
 				<template #footer>
+					<Button v-if="useProjects().activeProject.value" @click="addRepoToCodeAsset()"
+						>Import repo to project</Button
+					>
 					<Dropdown
-						v-if="!useProjects().activeProject.value"
+						v-else
 						placeholder="Import repo to project"
 						class="p-button dropdown-button"
 						:is-dropdown-left-aligned="false"
@@ -410,7 +413,14 @@ async function addRepoToCodeAsset(event?: DropdownChangeEvent) {
 	const newCodeAsset = await uploadCodeFromGithubRepo(repoOwnerAndName.value, props.urlString);
 
 	if (newCodeAsset && newCodeAsset.id) {
-		await useProjects().addAsset(AssetType.Code, newCodeAsset.id, projectId);
+		const assetId = await useProjects().addAsset(AssetType.Code, newCodeAsset.id, projectId);
+
+		if (assetId) {
+			useToastService().success(
+				'Success!',
+				'The Github repository was successfuly added to this project'
+			);
+		}
 	}
 }
 
