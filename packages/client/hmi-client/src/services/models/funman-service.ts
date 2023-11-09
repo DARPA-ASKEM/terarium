@@ -15,7 +15,7 @@ interface RenderOptions {
 	height: number;
 }
 
-export async function getQueries(id: String) {
+export async function getQueries(id: string) {
 	try {
 		const response = await API.get(`/funman/queries/${id}`);
 		return response.data;
@@ -36,7 +36,7 @@ export async function makeQueries(body: FunmanPostQueriesRequest) {
 	}
 }
 
-export async function haltQuery(id: String) {
+export async function haltQuery(id: string) {
 	try {
 		const response = await API.get(`/funman/queries/${id}/halt`);
 		return response.data;
