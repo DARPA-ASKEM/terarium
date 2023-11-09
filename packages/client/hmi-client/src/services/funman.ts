@@ -27,8 +27,8 @@ export const processFunman = (result: any) => {
 	let j = 0;
 
 	const parameterSpace = result.parameter_space;
-	let trueBoxes = [];
-	let falseBoxes = [];
+	let trueBoxes: any[] = [];
+	let falseBoxes: any[] = [];
 
 	if (parameterSpace.true_boxes) {
 		trueBoxes = parameterSpace.true_boxes;
