@@ -17,5 +17,4 @@ import java.io.Serializable;
 public class FunmanPostQueriesRequest implements Serializable{
    private Model model;
    private FunmanWorkRequest request;
-   // private JsonNode worker;
 }
