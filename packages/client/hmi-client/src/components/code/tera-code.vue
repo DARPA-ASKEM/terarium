@@ -629,6 +629,7 @@ h4 {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	border-left: solid var(--surface-500);
 }
 .code-blocks-buttons-container {
 	display: flex;
