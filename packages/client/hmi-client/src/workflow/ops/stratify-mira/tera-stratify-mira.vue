@@ -30,7 +30,9 @@
 				@delete-self="deleteStratifyGroupForm"
 				@update-self="updateStratifyGroupForm"
 			/>
+			<!--
 			<Button label="Add another strata group" size="small" @click="addGroupForm" />
+			-->
 			<Button label="Stratify" size="small" @click="stratifyModel" />
 
 			<div>
@@ -90,7 +92,8 @@ import { workflowEventBus } from '@/services/workflow';
 import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
-import { StratifyOperationStateMira, StratifyGroup } from './stratify-mira-operation';
+// import { StratifyOperationStateMira, StratifyGroup, StratifyMiraOperation } from './stratify-mira-operation';
+import { StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
@@ -109,26 +112,27 @@ const model = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 
-const addGroupForm = () => {
-	const state = _.cloneDeep(props.node.state);
-	const newGroup: StratifyGroup = {
-		borderColour: '#00c387',
-		name: '',
-		selectedVariables: [],
-		groupLabels: '',
-		cartesianProduct: true,
-		isPending: true
-	};
-	state.strataGroups.push(newGroup);
+// TODO: Limit to single strata for now - DC, Nov 2023
+// const addGroupForm = () => {
+// 	const state = _.cloneDeep(props.node.state);
+// 	const newGroup: StratifyGroup = {
+// 		borderColour: '#00c387',
+// 		name: '',
+// 		selectedVariables: [],
+// 		groupLabels: '',
+// 		cartesianProduct: true,
+// 		isPending: true
+// 	};
+// 	state.strataGroups.push(newGroup);
+//
+// 	workflowEventBus.emitNodeStateChange({
+// 		workflowId: props.node.workflowId,
+// 		nodeId: props.node.id,
+// 		state
+// 	});
+// };
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-};
-
-const deleteStratifyGroupForm = (data) => {
+const deleteStratifyGroupForm = (data: any) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroups.splice(data.index, 1);
 
@@ -139,7 +143,7 @@ const deleteStratifyGroupForm = (data) => {
 	});
 };
 
-const updateStratifyGroupForm = (data) => {
+const updateStratifyGroupForm = (data: any) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroups[data.index] = data.updatedConfig;
 
@@ -150,46 +154,25 @@ const updateStratifyGroupForm = (data) => {
 	});
 };
 
-const stratifyModel = () => {};
-
-// Set model, modelConfiguration, modelNodeOptions
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		const modelConfigurationId = props.node.inputs[0].value?.[0];
-		if (modelConfigurationId) {
-			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-			if (modelConfiguration.value) {
-				model.value = await getModel(modelConfiguration.value.modelId);
-
-				const modelColumnNameOptions: string[] =
-					modelConfiguration.value.configuration.model.states.map((state) => state.id);
-				// add observables
-				if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-					modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
-						modelColumnNameOptions.push(o.id);
-					});
-				}
-				modelNodeOptions.value = modelColumnNameOptions;
-			}
-		}
-	},
-	{ immediate: true }
-);
+const stratifyModel = () => {
+	stratifyRequest();
+};
 
 const stratifyRequest = () => {
 	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel) return;
+	if (!kernel || !model.value) return;
 
-	console.log('test stratification');
+	const strataOption = props.node.state.strataGroups[0];
+	console.log('test stratification', strataOption);
 
 	const messageBody = {
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
 		content: {
 			stratify_args: {
-				key: 'city',
-				strata: ['nyc', 'boston', 'toronto', 'vancouver', 'calgary']
+				key: strataOption.name,
+				strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
+				concepts_to_stratify: strataOption.selectedVariables
 			}
 		},
 		msgType: 'stratify_request',
@@ -201,7 +184,7 @@ const stratifyRequest = () => {
 
 const setKernelContext = () => {
 	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel) {
+	if (!kernel || !model.value) {
 		return;
 	}
 
@@ -212,44 +195,39 @@ const setKernelContext = () => {
 			context: 'mira_model',
 			language: 'python3',
 			context_info: {
-				id: 'sir-model-id'
+				id: model.value.id
 			}
 		},
 		msgType: 'context_setup_request',
 		msgId: createMessageId('context_setup')
 	};
-	const contextMessage: JupyterMessage = createMessage(messageBody);
+	const contextMessage: JupyterMessage = createMessage(messageBody as any);
 	kernel.sendJupyterMessage(contextMessage);
 };
 
-const iopubMessageHandler = (_session, message: any) => {
+const iopubMessageHandler = (_session: any, message: any) => {
 	if (message.header.msg_type === 'status') {
 		return;
 	}
-	console.log('');
-	console.log('message received', message);
-	console.log('');
+	// console.log('');
+	// console.log('message received', message);
+	// console.log('');
 
 	const msgType = message.header.msg_type;
 
 	if (msgType === 'stratify_response') {
-		console.log(message.content);
+		console.log('stratification response', message.content);
+		const codes = message.content.executed_code.split('\n');
+		codes.forEach((c) => {
+			console.log(c);
+		});
 	} else if (msgType === 'model_preview') {
-		console.log(message.content);
+		console.log('model_preview', message);
+		model.value = message.content['application/json'];
 	}
-
-	// if (message.header.msg_type === 'compile_expr_response') {
-	// 	// TODO
-	// } else if (message.header.msg_type === 'decapodes_preview') {
-	// 	// TODO
-	// } else if (message.header.msg_type === 'construct_amr_response') {
-	// 	// TODO
-	// } else if (message.header.msg_type === 'save_model_response') {
-	// 	// TODO
-	// }
 };
 
-onMounted(async () => {
+const createSession = async () => {
 	const session = await newSession('beaker', 'Beaker');
 	jupyterSession.value = session;
 
@@ -261,16 +239,59 @@ onMounted(async () => {
 			session.iopubMessage.connect(iopubMessageHandler);
 			setKernelContext();
 		}
-
-		setTimeout(() => {
-			stratifyRequest();
-		}, 3000);
 	});
-});
+};
+
+const inputChangeHandler = async () => {
+	const modelConfigurationId = props.node.inputs[0].value?.[0];
+	if (!modelConfigurationId) return;
+
+	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+
+	if (!modelConfiguration.value) return;
+	model.value = await getModel(modelConfiguration.value.modelId);
+
+	const modelColumnNameOptions: string[] = modelConfiguration.value.configuration.model.states.map(
+		(state) => state.id
+	);
+	// add observables
+	if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+		modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+			modelColumnNameOptions.push(o.id);
+		});
+	}
+	modelNodeOptions.value = modelColumnNameOptions;
+
+	// Create a new session and context based on model
+	await createSession();
+};
+
+// Set model, modelConfiguration, modelNodeOptions
+watch(
+	() => props.node.inputs[0],
+	async () => {
+		await inputChangeHandler();
+	},
+	{ immediate: true }
+);
+
+onMounted(async () => {});
 
 onUnmounted(async () => {
-	await jupyterSession.value?.shutdown();
+	if (jupyterSession.value) {
+		await jupyterSession.value.shutdown();
+	}
 });
+
+/* random workflow thoughts
+input
+state
+output
+emit
+  - update state
+	- update output
+	- append output
+*/
 </script>
 
 <style scoped>
