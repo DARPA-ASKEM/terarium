@@ -3,24 +3,10 @@
 		<template #name-input>
 			<section class="header">
 				<section class="name">
-					<InputText
-						v-model="codeName"
-						class="name-input"
-						@change="
-							() => {
-								programmingLanguage = getProgrammingLanguage(codeName);
-								saveCode();
-							}
-						"
-					/>
+					<InputText v-model="codeName" class="name-input" @change="() => saveCode" />
 				</section>
 				<section class="buttons">
 					<template v-if="programmingLanguage !== ProgrammingLanguage.Zip">
-						<Dropdown
-							v-model="programmingLanguage"
-							:options="programmingLanguages"
-							@change="codeName = setFileExtension(codeName, programmingLanguage)"
-						/>
 						<FileUpload
 							name="demo[]"
 							:customUpload="true"
@@ -29,8 +15,8 @@
 							auto
 							chooseLabel="Load file"
 						/>
-						<Button label="Save" @click="saveCode()" />
-						<Button label="Save as new" @click="isCodeNamingModalVisible = true" />
+						<Button outlined label="Save" @click="saveCode()" />
+						<Button outlined label="Save as new" @click="isCodeNamingModalVisible = true" />
 						<Button
 							label="Create model from code"
 							@click="isModelNamingModalVisible = true"
@@ -50,14 +36,24 @@
 		</template>
 		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
 			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
-			<v-ace-editor
-				v-model:value="codeText"
-				@init="initialize"
-				:lang="programmingLanguage"
-				theme="chrome"
-				style="height: 100%; width: 100%"
-				class="ace-editor"
-			/>
+			<div class="code-asset-editor">
+				<header class="code-asset-editor-header">
+					<h1>{{ codeSelectedFile }}</h1>
+					<Dropdown
+						v-model="programmingLanguage"
+						:options="programmingLanguages"
+						@change="onFileTypeChange"
+					/>
+				</header>
+				<v-ace-editor
+					v-model:value="codeText"
+					@init="initialize"
+					:lang="programmingLanguage"
+					theme="chrome"
+					style="height: 100%; width: 100%"
+					class="ace-editor"
+				/>
+			</div>
 			<div class="code-blocks-container">
 				<div>
 					<h2>Code Blocks</h2>
@@ -290,8 +286,8 @@ const selectedRangeToString = computed(() =>
 );
 
 const fileNames = computed<string[]>(() => {
-	if (!codeAsset.value?.files) return [];
-	return Object.keys(codeAsset.value?.files);
+	if (!codeAssetCopy.value?.files) return [];
+	return Object.keys(codeAssetCopy.value?.files);
 });
 
 const codeAssetCopy = ref<Code | null>(null);
@@ -322,14 +318,14 @@ function onSelectedTextChange() {
 }
 
 function highlightDynamics() {
-	if (codeAsset.value?.files) {
-		const { name, files } = codeAsset.value;
+	if (codeAssetCopy.value?.files) {
+		const { files } = codeAssetCopy.value;
 
 		Object.keys(files).forEach((fileName) => {
-			if (fileName === name) {
-				const { block } = files[fileName].dynamics;
+			if (fileName === codeSelectedFile.value) {
+				const block = files[fileName]?.dynamics?.block;
 				// Loop through every highlighted block
-				for (let i = 0; i < block.length; i++) {
+				for (let i = 0; i < block?.length; i++) {
 					// Avoids rehighlighting
 					if (!existingMarkers.has(block[i])) {
 						// Extract start and end rows and highlight them in the editor
@@ -337,7 +333,7 @@ function highlightDynamics() {
 						if (!Number.isNaN(startRow) && !Number.isNaN(endRow)) {
 							editor.value?.session.addMarker(
 								new Range(startRow, 0, endRow, 0),
-								'ace_active-line',
+								'ace-active-line',
 								'fullLine'
 							);
 							existingMarkers.add(block[i]);
@@ -380,22 +376,23 @@ async function addDynamic() {
 			};
 		}
 	}
+
+	highlightDynamics();
 }
 
-async function saveCode(codeAssetToSave: Code | null = codeAsset.value) {
+async function saveCode(codeAssetToSave: Code | null = codeAssetCopy.value) {
 	if (codeAssetToSave?.id) {
-		codeName.value = setFileExtension(codeName.value, programmingLanguage.value);
 		const code = { ...codeAssetToSave, name: codeName.value };
-		const file = new File([codeText.value], codeName.value);
+		const file = new File([codeText.value], codeSelectedFile.value);
 
 		const res = await updateCodeAsset(code, file, progress); // This returns an object with an id not the whole code asset...
 		if (!res?.id) {
 			toast.error('', 'Unable to save file');
-		} else {
-			toast.success('', `File saved as ${codeName.value}`);
-			codeAsset.value = await getCodeAsset(res.id);
-			highlightDynamics();
+			return;
 		}
+		await refreshCodeAsset(res.id);
+		toast.success('', `Saved Code Asset`);
+		highlightDynamics();
 	} else {
 		newCodeName.value = codeName.value;
 		saveNewCode();
@@ -410,20 +407,29 @@ async function saveNewCode() {
 	if (newCode?.id) {
 		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
 	}
-	if (newAsset) {
-		toast.success('', `File saved as ${codeName.value}`);
-		codeAsset.value = newCode;
-
-		router.push({
-			name: RouteName.Project,
-			params: {
-				pageType: AssetType.Code,
-				projectId: useProjects().activeProject.value?.id,
-				assetId: codeAsset?.value?.id
-			}
-		});
+	if (!newAsset) {
+		toast.error('', 'Unable to save file');
+		return;
 	}
-	toast.error('', 'Unable to save file');
+	toast.success('', `File saved as ${codeName.value}`);
+	codeAsset.value = newCode;
+
+	router.push({
+		name: RouteName.Project,
+		params: {
+			pageType: AssetType.Code,
+			projectId: useProjects().activeProject.value?.id,
+			assetId: codeAsset?.value?.id
+		}
+	});
+}
+
+async function refreshCodeAsset(codeId: string) {
+	const code = await getCodeAsset(codeId);
+	if (code) {
+		codeAsset.value = code;
+		codeAssetCopy.value = cloneDeep(codeAsset.value);
+	}
 }
 
 async function extractModel() {
@@ -459,8 +465,13 @@ async function onFileOpen(event) {
 	const reader = new FileReader();
 	reader.readAsText(file, 'UTF-8');
 	reader.onload = (evt) => {
+		removeMarkers();
+
+		if (codeAssetCopy.value) {
+			codeAssetCopy.value.files = { ...codeAssetCopy.value.files, [file.name]: {} };
+		}
 		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
-		codeName.value = file.name;
+		codeSelectedFile.value = file.name;
 	};
 }
 
@@ -470,6 +481,9 @@ async function onFileSelect(filePath: string) {
 	if (text) {
 		codeText.value = text;
 	}
+
+	removeMarkers();
+	highlightDynamics();
 }
 
 function onRemoveCodeBlock(dynamic: { [index: string]: CodeFile }) {
@@ -478,26 +492,52 @@ function onRemoveCodeBlock(dynamic: { [index: string]: CodeFile }) {
 		...codeAssetCopy.value?.files,
 		...dynamic
 	};
+
+	removeMarkers();
+	highlightDynamics();
 }
 
 function onCancelChanges() {
 	codeAssetCopy.value = cloneDeep(codeAsset.value);
 }
 
+// delete old file key, copy to new file key
+function onFileTypeChange() {
+	// TODO: changing the file type messes with the ordering in the directory tree by bringing the file to the bottom, but more of an aethetic issue.
+	if (codeAssetCopy.value?.files) {
+		const oldCodefile = codeAssetCopy.value.files[codeSelectedFile.value];
+		delete codeAssetCopy.value.files[codeSelectedFile.value];
+		codeSelectedFile.value = setFileExtension(codeSelectedFile.value, programmingLanguage.value);
+		codeAssetCopy.value.files[codeSelectedFile.value] = { ...oldCodefile };
+	}
+
+	programmingLanguage.value = getProgrammingLanguage(codeSelectedFile.value);
+}
+
 async function onSaveChanges() {
 	if (!codeAssetCopy.value) return;
 	savingAsset.value = true;
-	const updateResponse = await updateCodeAsset(codeAssetCopy.value);
+	const file = new File([codeText.value], codeSelectedFile.value);
+	const updateResponse = await updateCodeAsset(codeAssetCopy.value, file, progress);
 	if (!updateResponse || !updateResponse.id) {
 		savingAsset.value = false;
 		return;
 	}
-	const code = await getCodeAsset(updateResponse.id);
-	codeAsset.value = code;
-	codeAssetCopy.value = cloneDeep(codeAsset.value);
+	refreshCodeAsset(updateResponse.id);
 	toast.success('', 'Changes applied succesfully');
 	savingAsset.value = false;
 }
+
+watch(
+	// need to wait for the ace editor to render to show initial highlights
+	() => editor.value,
+	() => {
+		if (editor.value) {
+			removeMarkers();
+			highlightDynamics();
+		}
+	}
+);
 
 watch(
 	() => props.assetId,
@@ -534,8 +574,6 @@ watch(
 		codeAssetCopy.value = cloneDeep(codeAsset.value);
 		// Remove dynamics of previous file then add the new ones
 		isLoading.value = false;
-		removeMarkers();
-		highlightDynamics();
 		emit('asset-loaded');
 	},
 	{ immediate: true }
@@ -639,5 +677,24 @@ h4 {
 .code-blocks-buttons-container > * {
 	margin-top: 1rem;
 	margin-bottom: 1rem;
+}
+
+.code-asset-editor {
+	height: 100%;
+	width: 100%;
+	overflow-y: auto;
+}
+
+.code-asset-editor-header {
+	display: flex;
+	align-items: center;
+	background-color: var(--surface-200);
+	justify-content: space-between;
+	border-bottom: solid var(--surface-500);
+}
+
+:deep(.ace-active-line) {
+	background-color: var(--surface-highlight);
+	position: absolute;
 }
 </style>

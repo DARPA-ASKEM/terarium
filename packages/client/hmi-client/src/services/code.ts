@@ -209,12 +209,14 @@ function getFileExtension(language: ProgrammingLanguage): string {
 }
 
 function setFileExtension(fileName: string, language: ProgrammingLanguage) {
-	// check name for file extension
+	// find the last '.' to find the file extension index.  Anything before this is the filename.
 	// if there is no extension, add the appropriate one based on the selected language
-	const name = fileName.split('.');
-	if (name.length > 0) {
-		return name[0].concat('.').concat(getFileExtension(language));
+	const fileExtensionIndex = fileName.lastIndexOf('.');
+
+	if (fileExtensionIndex !== -1) {
+		return fileName.slice(0, fileExtensionIndex).concat('.').concat(getFileExtension(language));
 	}
+
 	return fileName;
 }
 

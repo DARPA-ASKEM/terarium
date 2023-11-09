@@ -14,7 +14,8 @@
 		</template>
 		<template #content>
 			<div>
-				Lines {{ extractDynamicRows(block).startRow }} to {{ extractDynamicRows(block).endRow }}
+				Lines {{ extractDynamicRows(block).startRow + 1 }} to
+				{{ extractDynamicRows(block).endRow + 1 }}
 			</div>
 		</template>
 	</Card>
