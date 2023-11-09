@@ -127,11 +127,6 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
-// TODO List:
-// 6) Need to fix when things are not set to not send (ub and lb) rather than send as null
-// 8) renderer needs true and needs false boxes (mightve fixed)
-// 9) need to make renderer a lot prettier
-
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
@@ -350,7 +345,7 @@ watch(
 		if (!props.node.outputs[0] || !props.node.outputs[0].value) {
 			return;
 		}
-		outputValue.value = await getQueries(props.node.outputs[0].value);
+		outputValue.value = await getQueries(String(props.node.outputs[0].value));
 	},
 	{ immediate: true }
 );
