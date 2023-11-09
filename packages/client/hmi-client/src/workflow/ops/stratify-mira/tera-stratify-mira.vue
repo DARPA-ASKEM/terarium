@@ -17,8 +17,8 @@
 			@click="activeTab = StratifyTabs.notebook"
 		/>
 	</div>
-	<div v-if="activeTab === StratifyTabs.wizard" class="container">
-		<div class="left-side">
+	<div class="container">
+		<div class="left-side" v-if="activeTab === StratifyTabs.wizard">
 			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
 			<p>The model will be stratified with the following settings.</p>
 			<tera-stratification-group-form
@@ -34,31 +34,14 @@
 			<Button label="Add another strata group" size="small" @click="addGroupForm" />
 			-->
 			<Button label="Stratify" size="small" @click="stratifyModel" />
-
-			<div>
-				<p>{{ node.state }}</p>
-			</div>
+			<Button label="Reset" size="small" @click="resetModel" />
 		</div>
-		<div class="right-side">
-			<tera-model-diagram
-				v-if="model"
-				ref="teraModelDiagramRef"
-				:model="model"
-				:is-editable="false"
-			/>
-			<div v-else>
-				<!-- TODO -->
-				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Model Provided</h4>
-			</div>
-		</div>
-	</div>
-	<div v-else class="container">
-		<div class="left-side">
+		<div class="left-side" v-if="activeTab === StratifyTabs.notebook">
 			<Suspense>
 				<tera-mira-notebook />
 			</Suspense>
 		</div>
+
 		<div class="right-side">
 			<tera-model-diagram
 				v-if="model"
@@ -67,9 +50,17 @@
 				:is-editable="false"
 			/>
 			<div v-else>
-				<!-- TODO -->
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				<h4>No Model Provided</h4>
+			</div>
+			<div v-if="model">
+				<InputText
+					v-model="newModelName"
+					placeholder="model name"
+					type="text"
+					class="input-small"
+				/>
+				<Button label="Save as new Model" size="small" @click="saveNewModel" />
 			</div>
 		</div>
 	</div>
@@ -77,16 +68,18 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref, onMounted, onUnmounted } from 'vue';
+import { watch, ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import teraMiraNotebook from '@/components/stratification/tera-mira-notebook.vue';
-import { Model, ModelConfiguration } from '@/types/Types';
+import { Model, ModelConfiguration, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel } from '@/services/model';
+import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
+import { useProjects } from '@/composables/project';
 
 /* Jupyter imports */
 import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
@@ -97,6 +90,7 @@ import { StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
+	projectId: string;
 }>();
 
 enum StratifyTabs {
@@ -111,6 +105,7 @@ const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
+const newModelName = ref('');
 
 // TODO: Limit to single strata for now - DC, Nov 2023
 // const addGroupForm = () => {
@@ -158,13 +153,26 @@ const stratifyModel = () => {
 	stratifyRequest();
 };
 
+const resetModel = () => {
+	const kernel = jupyterSession.value?.session?.kernel;
+	if (!kernel || !model.value) return;
+
+	const messageBody = {
+		session: jupyterSession?.value?.name || '',
+		channel: 'shell',
+		content: {},
+		msgType: 'reset_request',
+		msgId: createMessageId('stratify_request')
+	};
+	const contextMessage: JupyterMessage = createMessage(messageBody);
+	kernel.sendJupyterMessage(contextMessage);
+};
+
 const stratifyRequest = () => {
 	const kernel = jupyterSession.value?.session?.kernel;
 	if (!kernel || !model.value) return;
 
 	const strataOption = props.node.state.strataGroups[0];
-	console.log('test stratification', strataOption);
-
 	const messageBody = {
 		session: jupyterSession?.value?.name || '',
 		channel: 'shell',
@@ -172,7 +180,8 @@ const stratifyRequest = () => {
 			stratify_args: {
 				key: strataOption.name,
 				strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
-				concepts_to_stratify: strataOption.selectedVariables
+				concepts_to_stratify: strataOption.selectedVariables,
+				cartesian_control: strataOption.cartesianProduct
 			}
 		},
 		msgType: 'stratify_request',
@@ -209,20 +218,17 @@ const iopubMessageHandler = (_session: any, message: any) => {
 	if (message.header.msg_type === 'status') {
 		return;
 	}
-	// console.log('');
-	// console.log('message received', message);
-	// console.log('');
 
 	const msgType = message.header.msg_type;
 
 	if (msgType === 'stratify_response') {
-		console.log('stratification response', message.content);
 		const codes = message.content.executed_code.split('\n');
-		codes.forEach((c) => {
+		codes.forEach((c: any) => {
 			console.log(c);
 		});
+	} else if (msgType === 'reset_response') {
+		console.log(message.content);
 	} else if (msgType === 'model_preview') {
-		console.log('model_preview', message);
 		model.value = message.content['application/json'];
 	}
 };
@@ -252,7 +258,7 @@ const inputChangeHandler = async () => {
 	model.value = await getModel(modelConfiguration.value.modelId);
 
 	const modelColumnNameOptions: string[] = modelConfiguration.value.configuration.model.states.map(
-		(state) => state.id
+		(state: any) => state.id
 	);
 	// add observables
 	if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
@@ -266,6 +272,18 @@ const inputChangeHandler = async () => {
 	await createSession();
 };
 
+const saveNewModel = async () => {
+	if (!model.value || !newModelName.value) return;
+	model.value.header.name = newModelName.value;
+
+	const projectResource = useProjects();
+	const modelData = await createModel(model.value);
+	const projectId = projectResource.activeProject.value?.id;
+
+	if (!modelData) return;
+	await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+};
+
 // Set model, modelConfiguration, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
@@ -275,23 +293,11 @@ watch(
 	{ immediate: true }
 );
 
-onMounted(async () => {});
-
 onUnmounted(async () => {
 	if (jupyterSession.value) {
 		await jupyterSession.value.shutdown();
 	}
 });
-
-/* random workflow thoughts
-input
-state
-output
-emit
-  - update state
-	- update output
-	- append output
-*/
 </script>
 
 <style scoped>
@@ -327,5 +333,9 @@ emit
 .right-side {
 	width: 45%;
 	padding-left: 2.5%;
+}
+
+.input-small {
+	padding: 0.5rem;
 }
 </style>
