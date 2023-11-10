@@ -6,7 +6,6 @@ export interface StratifyGroup {
 	selectedVariables: string[];
 	groupLabels: string;
 	cartesianProduct: boolean;
-	isPending: boolean;
 }
 
 export interface StratifyCode {
@@ -35,8 +34,7 @@ export const StratifyMiraOperation: Operation = {
 					name: '',
 					selectedVariables: [],
 					groupLabels: '',
-					cartesianProduct: true,
-					isPending: true
+					cartesianProduct: true
 				}
 			],
 			strataCodeHistory: []
