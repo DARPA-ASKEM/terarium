@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { floor } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -293,7 +293,7 @@ const updateConstraintGroupForm = (data) => {
 // Grab startTime, endTime, numberOfSteps and create list.
 function getStepList() {
 	const aList = [startTime.value];
-	const stepSize = (endTime.value - startTime.value) / numberOfSteps.value;
+	const stepSize = floor((endTime.value - startTime.value) / numberOfSteps.value);
 	for (let i = 1; i < numberOfSteps.value; i++) {
 		aList[i] = i * stepSize;
 	}
