@@ -14,12 +14,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 @Accessors(chain = true)
 public class DocumentExtraction implements Serializable {
 
-	public static final String TABLE_ASSETTYPE = "Table";
-	public static final String EQUATION_ASSETTYPE = "Equation";
-	public static final String FIGURE_ASSETTYPE = "Figure";
-
-
-
 	@JsonAlias("file_name")
 	private String fileName;
 
