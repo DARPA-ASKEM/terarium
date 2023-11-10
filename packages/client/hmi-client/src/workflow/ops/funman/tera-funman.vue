@@ -172,7 +172,10 @@ const requestParameters = ref();
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
-const outputId = computed(() => String(props.node.outputs[0].value));
+const outputId = computed(() => {
+	if (props.node.outputs[0]?.value) return String(props.node.outputs[0].value);
+	return undefined;
+});
 
 const runMakeQuery = async () => {
 	if (!model.value) {
