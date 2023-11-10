@@ -105,5 +105,6 @@ watch(
 .tree-container {
 	min-width: 10rem;
 	max-width: 20rem;
+	overflow-y: auto;
 }
 </style>

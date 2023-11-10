@@ -1,5 +1,5 @@
 <template>
-	<tera-asset :is-loading="isLoading">
+	<tera-asset :is-loading="isLoading" stretch-content>
 		<template #name-input>
 			<section class="header">
 				<section class="name">
@@ -668,6 +668,7 @@ h4 {
 	flex-direction: column;
 	justify-content: space-between;
 	border-left: solid var(--surface-500);
+	overflow-y: auto;
 }
 .code-blocks-buttons-container {
 	display: flex;
@@ -680,7 +681,6 @@ h4 {
 }
 
 .code-asset-editor {
-	height: 100%;
 	width: 100%;
 	overflow-y: auto;
 }

@@ -62,7 +62,7 @@
 				</aside>
 			</header>
 		</template>
-		<section :style="stretchContentStyle">
+		<section class="overflow-hidden" :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
 	</main>
