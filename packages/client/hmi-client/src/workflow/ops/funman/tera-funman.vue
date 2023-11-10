@@ -309,12 +309,12 @@ const setModelOptions = async () => {
 			model.value = await getModel(modelConfiguration.value.modelId);
 			const modelColumnNameOptions: string[] =
 				modelConfiguration.value.configuration.model.states.map((state) => state.id);
-			// add observables
-			if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-				modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
-					modelColumnNameOptions.push(o.id);
-				});
-			}
+			// observables are not currently supported
+			// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+			// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+			// 		modelColumnNameOptions.push(o.id);
+			// 	});
+			// }
 			modelNodeOptions.value = modelColumnNameOptions;
 
 			if (model.value && model.value.semantics?.ode.parameters) {
