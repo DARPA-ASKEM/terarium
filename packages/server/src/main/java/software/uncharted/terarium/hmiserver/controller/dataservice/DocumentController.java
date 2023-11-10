@@ -385,13 +385,16 @@ public class DocumentController implements SnakeCaseController {
 					try(CloseableHttpClient httpclient = HttpClients.custom()
 						.disableRedirectHandling()
 						.build()){
-						byte[] imageAsBytes = Base64.getDecoder().decode(extraction.getProperties().getImage().getBytes("UTF-8"));
-						HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-						final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
+						String image = extraction.getProperties().getImage();
+						if(image != null){
+							byte[] imageAsBytes = Base64.getDecoder().decode(image.getBytes("UTF-8"));
+							HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+							final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
 
-						final HttpPut put = new HttpPut(presignedURL.getUrl());
-						put.setEntity(fileEntity);
-						final HttpResponse pdfUploadResponse = httpclient.execute(put);
+							final HttpPut put = new HttpPut(presignedURL.getUrl());
+							put.setEntity(fileEntity);
+							final HttpResponse pdfUploadResponse = httpclient.execute(put);
+						}
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}

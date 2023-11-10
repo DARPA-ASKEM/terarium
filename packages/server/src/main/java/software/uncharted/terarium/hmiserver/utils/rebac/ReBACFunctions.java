@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
-
 import com.authzed.api.v1.Core.ObjectReference;
 import com.authzed.api.v1.Core.Relationship;
 import com.authzed.api.v1.Core.RelationshipUpdate;
 import com.authzed.api.v1.Core.SubjectReference;
 import com.authzed.api.v1.PermissionService;
 import com.authzed.api.v1.PermissionService.Consistency;
+import com.authzed.api.v1.PermissionService.LookupResourcesResponse;
 import com.authzed.api.v1.PermissionService.ReadRelationshipsResponse;
 import com.authzed.api.v1.PermissionService.RelationshipFilter;
 import com.authzed.api.v1.PermissionsServiceGrpc;
@@ -160,5 +160,26 @@ public class ReBACFunctions {
 			}
 		}
 		return false;
+	}
+
+	public List<String> lookupResources(Schema.Type resourceType, Schema.Permission permission, SchemaObject who, Consistency consistency) throws Exception {
+		List<String> results = new ArrayList<>();
+
+		PermissionService.LookupResourcesRequest request = PermissionService.LookupResourcesRequest.newBuilder()
+			.setConsistency(consistency)
+			.setResourceObjectType(resourceType.toString())
+			.setSubject(createSubject(who.type.toString(), who.id))
+			.setPermission(permission.toString())
+			.build();
+
+		Iterator<LookupResourcesResponse> iter = permissionsService.lookupResources(request);
+		while (iter.hasNext()) {
+			PermissionService.LookupResourcesResponse response = iter.next();
+
+			if( response.getPermissionshipValue() == PermissionService.LookupPermissionship.LOOKUP_PERMISSIONSHIP_HAS_PERMISSION.getNumber()) {
+				results.add(response.getResourceObjectId());
+			}
+		}
+		return results;
 	}
 }
