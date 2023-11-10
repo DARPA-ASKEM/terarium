@@ -146,6 +146,11 @@ enum DocumentView {
 	NOT_FOUND = 'Not found'
 }
 
+enum AssetType {
+	FIGURE = 'figure',
+	TABLE = 'table',
+	EQUATION = 'equation'
+}
 const props = defineProps<{
 	assetId: string;
 	highlight?: string;
@@ -185,13 +190,17 @@ const docLink = computed(() =>
 );
 
 const figures = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === 'Figure') || []
+	() =>
+		doc.value?.assets?.filter((asset) => asset.assetType?.toLowerCase() === AssetType.FIGURE) || []
 );
 const tables = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === 'Table') || []
+	() =>
+		doc.value?.assets?.filter((asset) => asset.assetType?.toLowerCase() === AssetType.TABLE) || []
 );
 const equations = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === 'Equation') || []
+	() =>
+		doc.value?.assets?.filter((asset) => asset.assetType?.toLowerCase() === AssetType.EQUATION) ||
+		[]
 );
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
