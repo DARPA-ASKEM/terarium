@@ -6,6 +6,7 @@
 SERVER_DIR="packages/server"
 SECRET_FILES=()
 SECRET_FILES+=("${SERVER_DIR}/src/main/resources/application-secrets.properties")
+SECRET_FILES+=("packages/db-migration/src/main/resources/application-secrets.properties")
 SECRET_FILES+=("containers/secrets.env")
 VAULT_PASSWORD=""~/askem-vault-id.txt""
 
