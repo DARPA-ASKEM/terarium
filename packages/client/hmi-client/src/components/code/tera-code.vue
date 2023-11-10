@@ -1,5 +1,5 @@
 <template>
-	<tera-asset :is-loading="isLoading" stretch-content>
+	<tera-asset :is-loading="isLoading" stretch-content overflow-hidden>
 		<template #name-input>
 			<section class="header">
 				<section class="name">
@@ -499,6 +499,8 @@ function onRemoveCodeBlock(dynamic: { [index: string]: CodeFile }) {
 
 function onCancelChanges() {
 	codeAssetCopy.value = cloneDeep(codeAsset.value);
+	removeMarkers();
+	highlightDynamics();
 }
 
 // delete old file key, copy to new file key
