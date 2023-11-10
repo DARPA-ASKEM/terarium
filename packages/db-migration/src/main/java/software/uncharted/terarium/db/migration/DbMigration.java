@@ -1,17 +1,19 @@
-package software.uncharted.terarium.hmiserver;
+package software.uncharted.terarium.db.migration;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableFeignClients
-@EnableScheduling
 @PropertySource("classpath:application.properties")
-public class TerariumApplication {
+@Slf4j
+public class DbMigration {
 	public static void main(final String[] args) {
-		SpringApplication.run(TerariumApplication.class, args);
+  	try {
+			SpringApplication.run(DbMigration.class, args);
+		} catch (final Exception e) {
+			System.exit(1);
+		}
 	}
 }
