@@ -8,8 +8,14 @@ export interface StratifyGroup {
 	cartesianProduct: boolean;
 }
 
+export interface StratifyCode {
+	code: string;
+	timestamp: number;
+}
+
 export interface StratifyOperationStateMira {
 	strataGroups: StratifyGroup[];
+	strataCodeHistory: StratifyCode[];
 }
 
 export const StratifyMiraOperation: Operation = {
@@ -30,7 +36,8 @@ export const StratifyMiraOperation: Operation = {
 					groupLabels: '',
 					cartesianProduct: true
 				}
-			]
+			],
+			strataCodeHistory: []
 		};
 		return init;
 	}
