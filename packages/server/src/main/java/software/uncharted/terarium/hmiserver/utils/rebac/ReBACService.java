@@ -424,4 +424,9 @@ public class ReBACService {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
+	public List<String> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type) throws Exception {
+		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
+		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		return rebac.lookupResources(type, permission, who, full);
+	}
 }
