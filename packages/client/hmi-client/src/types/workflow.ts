@@ -16,12 +16,16 @@ export enum WorkflowOperationTypes {
 	MODEL_FROM_CODE = 'ModelFromCode'
 }
 
-export enum WorkflowStatus {
-	INVALID = 'invalid',
-	FAILED = 'failed',
-	COMPLETED = 'completed',
-	IN_PROGRESS = 'in progress',
-	ERROR = 'error'
+export enum OperatorStatus {
+	DEFAULT,
+	FOCUS,
+	LOADING,
+	SUCCESS,
+	INVALID,
+	FAILED,
+	WARNING,
+	ERROR,
+	DISABLED
 }
 
 export enum WorkflowPortStatus {
@@ -86,7 +90,7 @@ export interface WorkflowNode<S> {
 
 	// FIXME: The section below is slated to be further spec'ed out later.
 	// State and progress, tracking of intermediate results
-	statusCode: WorkflowStatus;
+	statusCode: OperatorStatus;
 	intermediateIds?: WorkflowPort[];
 }
 

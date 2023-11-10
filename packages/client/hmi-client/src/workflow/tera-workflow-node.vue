@@ -1,26 +1,12 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
-		<header :class="{ 'active-node': isActive }">
-			<h5 class="truncate">{{ node.displayName }}</h5>
-			<span>
-				<Button
-					icon="pi pi-search-plus"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="showNodeDrilldown"
-				/>
-				<Button
-					icon="pi pi-bolt"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="openDrilldown"
-				/>
-				<!-- 3-dot options menu -->
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleNodeMenu"
-				/>
-				<Menu ref="nodeMenu" :model="nodeMenuItems" :popup="true" />
-			</span>
+		<header>
+			<tera-operator-header
+				:name="node.displayName"
+				:status="node.statusCode"
+				@open-in-new-window="openDrilldown"
+				@remove-node="emit('remove-node', props.node.id)"
+			/>
 		</header>
 		<ul class="inputs">
 			<li
@@ -44,7 +30,7 @@
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"
 							class="input-label"
-							:style="{ color: getInputLabelColor(labelIdx) }"
+							:style="{ color: getInputLabelColor(labelIdx, node) }"
 						>
 							{{ label }}
 						</span>
@@ -54,6 +40,7 @@
 		</ul>
 		<section>
 			<slot name="body" />
+			<Button label="Open Drilldown" @click="showNodeDrilldown" severity="secondary" outlined />
 		</section>
 		<ul class="outputs">
 			<li
@@ -78,19 +65,14 @@
 </template>
 
 <script setup lang="ts">
-import {
-	Position,
-	WorkflowNode,
-	WorkflowPortStatus,
-	WorkflowDirection,
-	WorkflowOperationTypes
-} from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { getInputLabelColor } from '@/utils/generate-color';
 import Button from 'primevue/button';
-import Menu from 'primevue/menu';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import TeraOperatorHeader from './operator/tera-operator-header.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -156,30 +138,6 @@ onMounted(() => {
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
 
-// FIXME: temporary function to color input port labels of simulate
-const VIRIDIS_14 = [
-	'#440154',
-	'#481c6e',
-	'#453581',
-	'#3d4d8a',
-	'#34618d',
-	'#2b748e',
-	'#24878e',
-	'#1f998a',
-	'#25ac82',
-	'#40bd72',
-	'#67cc5c',
-	'#98d83e',
-	'#cde11d',
-	'#fde725'
-];
-const getInputLabelColor = (edgeIdx: number) => {
-	const numRuns = props.node.inputs[0].value?.length ?? 0;
-	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE_JULIA
-		? VIRIDIS_14[Math.floor((edgeIdx / numRuns) * VIRIDIS_14.length)]
-		: 'inherit';
-};
-
 function showNodeDrilldown() {
 	emit('drilldown', props.node);
 }
@@ -210,28 +168,6 @@ onBeforeUnmount(() => {
 		workflowNode.value.removeEventListener('mouseup', stopDrag);
 	}
 });
-
-function removeNode() {
-	emit('remove-node', props.node.id);
-}
-function bringToFront() {
-	// TODO: bring to front
-	// maybe there can be a z-index variable in the parent component
-	// and we can just increment it here, and add a z-index style to the node
-	// console.log('bring to front');
-}
-
-/*
- * User Menu
- */
-const nodeMenu = ref();
-const nodeMenuItems = ref([
-	{ icon: 'pi pi-clone', label: 'Bring to front', command: bringToFront },
-	{ icon: 'pi pi-trash', label: 'Remove', command: removeNode }
-]);
-const toggleNodeMenu = (event) => {
-	nodeMenu.value.toggle(event);
-};
 </script>
 
 <style scoped>
@@ -248,42 +184,6 @@ main {
 main:hover {
 	box-shadow: var(--overlayMenuShadowHover);
 	z-index: 2;
-}
-
-main:hover > header:not(.active-node) {
-	background-color: var(--node-header-hover);
-}
-
-header {
-	display: flex;
-	padding: 0.25rem 0.25rem 0.25rem 1rem;
-	justify-content: space-between;
-	align-items: center;
-	color: var(--gray-0);
-	background-color: var(--node-header);
-	white-space: nowrap;
-	border-top-right-radius: var(--border-radius);
-	border-top-left-radius: var(--border-radius);
-}
-
-header.active-node {
-	background-color: var(--primary-color);
-}
-
-.truncate {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-header .p-button.p-button-icon-only,
-header .p-button.p-button-text:enabled:hover {
-	color: var(--gray-0);
-	width: 1.5rem;
-	margin-right: 0.25rem;
-}
-
-header .p-button.p-button-text:enabled:hover {
-	color: var(--surface-highlight);
 }
 
 section {

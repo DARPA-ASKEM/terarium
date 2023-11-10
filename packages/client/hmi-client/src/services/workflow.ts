@@ -8,7 +8,7 @@ import {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPortStatus,
-	WorkflowStatus
+	OperatorStatus
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -65,7 +65,7 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		statusCode: WorkflowStatus.INVALID,
+		statusCode: OperatorStatus.INVALID,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height

@@ -153,7 +153,12 @@
 				refX="5"
 				refY="5"
 			>
-				<circle cx="5" cy="5" r="3" :style="`fill: ${getVariableColorByRunIdx(i - 1)}`" />
+				<circle
+					cx="5"
+					cy="5"
+					r="3"
+					:style="`fill: ${getVariableColorByRunIdx(i - 1, wf.edges.length)}`"
+				/>
 			</marker>
 			<marker
 				id="arrow"
@@ -196,7 +201,7 @@
 			>
 				<path
 					d="M 0 0 L 8 8 L 0 16 z"
-					:style="`fill: ${getVariableColorByRunIdx(i - 1)}; fill-opacity: 1`"
+					:style="`fill: ${getVariableColorByRunIdx(i - 1, wf.edges.length)}; fill-opacity: 1`"
 				></path>
 			</marker>
 		</template>
@@ -213,7 +218,9 @@
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				:stroke="isEdgeTargetSim(edge) ? getVariableColorByRunIdx(index) : '#1B8073'"
+				:stroke="
+					isEdgeTargetSim(edge) ? getVariableColorByRunIdx(index, wf.edges.length) : '#1B8073'
+				"
 				stroke-width="2"
 				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
 				:key="index"
@@ -240,7 +247,7 @@ import {
 	WorkflowDirection,
 	WorkflowOperationTypes
 } from '@/types/workflow';
-
+import { getVariableColorByRunIdx } from '@/utils/generate-color';
 // Operation imports
 import TeraWorkflowNode from '@/workflow/tera-workflow-node.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
@@ -315,24 +322,6 @@ const isMouseOverCanvas = ref<boolean>(false);
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
 const contextMenu = ref();
 
-// FIXME: temporary function to color edges with simulate
-const VIRIDIS_14 = [
-	'#440154',
-	'#481c6e',
-	'#453581',
-	'#3d4d8a',
-	'#34618d',
-	'#2b748e',
-	'#24878e',
-	'#1f998a',
-	'#25ac82',
-	'#40bd72',
-	'#67cc5c',
-	'#98d83e',
-	'#cde11d',
-	'#fde725'
-];
-
 const isRenamingWorkflow = ref(false);
 const newWorkflowName = ref('');
 
@@ -352,10 +341,6 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-const getVariableColorByRunIdx = (edgeIdx: number) =>
-	wf.value.edges.length > 1
-		? VIRIDIS_14[Math.floor((edgeIdx / wf.value.edges.length) * VIRIDIS_14.length)]
-		: '#1B8073';
 const isEdgeTargetSim = (edge) =>
 	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
 	WorkflowOperationTypes.SIMULATE_JULIA;
