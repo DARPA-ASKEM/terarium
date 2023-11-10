@@ -90,7 +90,6 @@ import { StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
-	projectId: string;
 }>();
 
 enum StratifyTabs {
