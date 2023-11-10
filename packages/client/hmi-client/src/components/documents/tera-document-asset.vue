@@ -125,7 +125,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import { DocumentAsset } from '@/types/Types';
+import { DocumentAsset, ExtractionAssetType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import {
@@ -144,12 +144,6 @@ enum DocumentView {
 	PDF = 'PDF',
 	TXT = 'Text',
 	NOT_FOUND = 'Not found'
-}
-
-enum AssetType {
-	FIGURE = 'figure',
-	TABLE = 'table',
-	EQUATION = 'equation'
 }
 const props = defineProps<{
 	assetId: string;
@@ -190,17 +184,13 @@ const docLink = computed(() =>
 );
 
 const figures = computed(
-	() =>
-		doc.value?.assets?.filter((asset) => asset.assetType?.toLowerCase() === AssetType.FIGURE) || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
 );
 const tables = computed(
-	() =>
-		doc.value?.assets?.filter((asset) => asset.assetType?.toLowerCase() === AssetType.TABLE) || []
+	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
 );
 const equations = computed(
-	() =>
-		doc.value?.assets?.filter((asset) => asset.assetType?.toLowerCase() === AssetType.EQUATION) ||
-		[]
+	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) || []
 );
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
