@@ -301,52 +301,60 @@ function getStepList() {
 	return aList;
 }
 
+const setModelOptions = async () => {
+	const modelConfigurationId = props.node.inputs[0].value?.[0];
+	if (modelConfigurationId) {
+		modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+		if (modelConfiguration.value) {
+			model.value = await getModel(modelConfiguration.value.modelId);
+			const modelColumnNameOptions: string[] =
+				modelConfiguration.value.configuration.model.states.map((state) => state.id);
+			// add observables
+			if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+				modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+					modelColumnNameOptions.push(o.id);
+				});
+			}
+			modelNodeOptions.value = modelColumnNameOptions;
+
+			if (model.value && model.value.semantics?.ode.parameters) {
+				setRequestParameters(model.value.semantics?.ode.parameters);
+			} else {
+				toast.error('', 'Provided model has no parameters');
+			}
+		}
+	}
+};
+
+const setRequestParameters = async (modelParameters) => {
+	requestParameters.value = modelParameters.map((ele) => {
+		if (ele.distribution) {
+			return {
+				name: ele.id,
+				interval: {
+					lb: ele.distribution.parameters.minimum,
+					ub: ele.distribution.parameters.maximum
+				},
+				label: 'any'
+			};
+		}
+
+		return {
+			name: ele.id,
+			interval: {
+				lb: ele.value,
+				ub: ele.value
+			},
+			label: 'any'
+		};
+	});
+};
+
 // Set model, modelConfiguration, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
 	async () => {
-		const modelConfigurationId = props.node.inputs[0].value?.[0];
-		if (modelConfigurationId) {
-			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-			if (modelConfiguration.value) {
-				model.value = await getModel(modelConfiguration.value.modelId);
-				const modelColumnNameOptions: string[] =
-					modelConfiguration.value.configuration.model.states.map((state) => state.id);
-				// add observables
-				if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-					modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
-						modelColumnNameOptions.push(o.id);
-					});
-				}
-				modelNodeOptions.value = modelColumnNameOptions;
-
-				if (model.value && model.value.semantics?.ode.parameters) {
-					requestParameters.value = model.value.semantics?.ode.parameters.map((ele) => {
-						if (ele.distribution) {
-							return {
-								name: ele.id,
-								interval: {
-									lb: ele.distribution.parameters.minimum,
-									ub: ele.distribution.parameters.maximum
-								},
-								label: 'any'
-							};
-						}
-
-						return {
-							name: ele.id,
-							interval: {
-								lb: ele.value,
-								ub: ele.value
-							},
-							label: 'any'
-						};
-					});
-				} else {
-					toast.error('', 'Provided model has no parameters');
-				}
-			}
-		}
+		setModelOptions();
 	},
 	{ immediate: true }
 );
