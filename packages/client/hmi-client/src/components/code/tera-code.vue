@@ -69,7 +69,7 @@
 						v-for="(dynamic, index) in dynamics"
 						:filename="dynamic[0]"
 						:codefile="dynamic[1]"
-						@removeCodeBlock="onRemoveCodeBlock"
+						@remove="onRemoveCodeBlock"
 						:key="index"
 					/>
 				</div>

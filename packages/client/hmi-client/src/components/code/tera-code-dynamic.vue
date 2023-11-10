@@ -34,14 +34,14 @@ const props = defineProps<{
 	codefile: CodeFile;
 }>();
 
-const emit = defineEmits(['remove-code-block']);
+const emit = defineEmits(['remove']);
 const editable = ref(false);
 
 const deleteCodeBlock = (index: number) => {
 	const clonedCodefile = cloneDeep(props.codefile);
 	clonedCodefile.dynamics.block.splice(index, 1);
 
-	emit('remove-code-block', {
+	emit('remove', {
 		[props.filename]: {
 			...clonedCodefile
 		}
