@@ -75,7 +75,10 @@ import teraStratificationGroupForm from '@/components/stratification/tera-strati
 import teraMiraNotebook from '@/components/stratification/tera-mira-notebook.vue';
 import { Model, ModelConfiguration, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import {
+	getModelConfigurationById,
+	addDefaultConfiguration
+} from '@/services/model-configurations';
 import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
@@ -91,6 +94,8 @@ import { StratifyOperationStateMira } from './stratify-mira-operation';
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
+
+const emit = defineEmits(['append-output-port']);
 
 enum StratifyTabs {
 	wizard,
@@ -276,11 +281,23 @@ const saveNewModel = async () => {
 	model.value.header.name = newModelName.value;
 
 	const projectResource = useProjects();
-	const modelData = await createModel(model.value);
 	const projectId = projectResource.activeProject.value?.id;
 
+	// 1. Create model
+	const modelData = await createModel(model.value);
 	if (!modelData) return;
+
+	// 2. Associate model with proejct
 	await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+
+	// 3. Create default config
+	const modelConfig = await addDefaultConfiguration(model.value);
+
+	emit('append-output-port', {
+		type: 'modelConfigId',
+		label: `${newModelName.value}: Default config`,
+		value: modelConfig.id
+	});
 };
 
 // Set model, modelConfiguration, modelNodeOptions
