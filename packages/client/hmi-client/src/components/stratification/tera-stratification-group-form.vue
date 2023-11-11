@@ -2,14 +2,16 @@
 	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
 		<div class="sub-header">
 			<label for="strata-name">Cartesian product</label>
-			<InputSwitch v-model="cartesianProduct" />
+			<InputSwitch
+				@change="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
+				v-model="cartesianProduct"
+			/>
 			<i class="trash-button pi pi-trash" @click="emit('delete-self', { index: props.index })" />
 		</div>
 		<div class="first-row">
 			<div class="age-group">
 				<label for="strata-name">Name of strata</label>
 				<InputText
-					id="strata-name"
 					v-model="strataName"
 					placeholder="Age group"
 					@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
@@ -18,7 +20,6 @@
 			<div class="select-variables">
 				<label for="variables-select">Select variables and parameters to stratify</label>
 				<MultiSelect
-					id="variables-select"
 					v-model="selectedVariables"
 					:options="props.modelNodeOptions"
 					placeholder="Model states"
@@ -35,7 +36,6 @@
 				<span class="subdued-text">(Max 100)</span></label
 			>
 			<InputText
-				id="group-labels"
 				v-model="labels"
 				placeholder="Young, Old"
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
