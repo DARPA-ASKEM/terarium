@@ -80,7 +80,7 @@ import {
 	addDefaultConfiguration
 } from '@/services/model-configurations';
 import { getModel, createModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { useProjects } from '@/composables/project';
 
@@ -95,7 +95,7 @@ const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+// const emit = defineEmits(['append-output-port']);
 
 enum StratifyTabs {
 	wizard,
@@ -287,17 +287,31 @@ const saveNewModel = async () => {
 	const modelData = await createModel(model.value);
 	if (!modelData) return;
 
+	const modelCopy = _.cloneDeep(model.value);
+	modelCopy.id = modelData.id;
+
 	// 2. Associate model with proejct
 	await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
 
 	// 3. Create default config
-	const modelConfig = await addDefaultConfiguration(model.value);
+	const modelConfig = await addDefaultConfiguration(modelCopy);
 
-	emit('append-output-port', {
+	// FIXME: Temp hack, waiting for drilldowns to be moved into tera-workflow for
+	// emits to work
+	// eslint-disable-next-line
+	props.node.outputs.push({
+		id: `${Date.now()}`,
 		type: 'modelConfigId',
 		label: `${newModelName.value}: Default config`,
-		value: modelConfig.id
+		value: [modelConfig.id],
+		status: WorkflowPortStatus.NOT_CONNECTED
 	});
+
+	// emit('append-output-port', {
+	// 	type: 'modelConfigId',
+	// 	label: `${newModelName.value}: Default config`,
+	// 	value: modelConfig.id
+	// });
 };
 
 // Set model, modelConfiguration, modelNodeOptions

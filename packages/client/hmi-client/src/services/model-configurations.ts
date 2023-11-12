@@ -28,8 +28,13 @@ export const createModelConfiguration = async (
 };
 
 export const addDefaultConfiguration = async (model: Model): Promise<ModelConfiguration> => {
-	const data = await createModelConfiguration(model.id, 'Default config', 'Default config', model);
-	return data;
+	const response = await createModelConfiguration(
+		model.id,
+		'Default config',
+		'Default config',
+		model
+	);
+	return response.data;
 };
 
 export const updateModelConfiguration = async (config: ModelConfiguration) => {

@@ -5,7 +5,7 @@ import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
 
-export async function createModel(model): Promise<Model | null> {
+export async function createModel(model: Model): Promise<{ id: string } | null> {
 	const response = await API.post(`/models`, model);
 	return response?.data ?? null;
 }
