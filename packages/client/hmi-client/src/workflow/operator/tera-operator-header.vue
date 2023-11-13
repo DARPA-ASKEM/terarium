@@ -1,5 +1,5 @@
 <template>
-	<nav>
+	<nav :class="status">
 		<h5>{{ name }}</h5>
 		<Button
 			icon="pi pi-ellipsis-v"
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType } from 'vue';
+import { ref, PropType } from 'vue';
 import { OperatorStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -33,16 +33,6 @@ const menu = ref();
 const toggleMenu = (event) => {
 	menu.value.toggle(event);
 };
-
-const backgroundColor = computed(
-	() =>
-		// switch (props.status) {
-		// 	case props.status === OperatorStatus.ERROR:
-		// 		return 'red';
-		// 	default:
-		'var(--surface-highlight)'
-	// }
-);
 
 function bringToFront() {
 	// TODO: bring to front
@@ -70,10 +60,29 @@ nav {
 	padding: 0.25rem 0.25rem 0.25rem 1rem;
 	justify-content: space-between;
 	align-items: center;
-	background-color: v-bind(backgroundColor);
+	background-color: var(--surface-highlight);
 	white-space: nowrap;
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
+}
+
+.warning {
+	background-color: var(--surface-warning);
+}
+
+.error,
+.failed {
+	background-color: var(--surface-error);
+}
+
+.focus {
+	background-color: var(--primary-color);
+	color: var(--gray-0);
+}
+
+.disabled {
+	background-color: var(--surface-disabled);
+	color: var(--text-color-disabled);
 }
 
 nav.active-node {

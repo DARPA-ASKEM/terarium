@@ -17,15 +17,15 @@ export enum WorkflowOperationTypes {
 }
 
 export enum OperatorStatus {
-	DEFAULT,
-	FOCUS,
-	LOADING,
-	SUCCESS,
-	INVALID,
-	FAILED,
-	WARNING,
-	ERROR,
-	DISABLED
+	DEFAULT = 'default',
+	FOCUS = 'focus',
+	LOADING = 'loading',
+	SUCCESS = 'success',
+	INVALID = 'invalid',
+	FAILED = 'failed',
+	WARNING = 'warning',
+	ERROR = 'error',
+	DISABLED = 'disabled'
 }
 
 export enum WorkflowPortStatus {
