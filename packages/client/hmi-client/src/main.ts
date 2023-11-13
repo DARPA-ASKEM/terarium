@@ -20,6 +20,7 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import '@/assets/css/style.scss';
 import Keycloak from 'keycloak-js';
+import { init } from '@/services/ClientEventService';
 
 // Extend the window object to include the Keycloak object
 declare global {
@@ -48,7 +49,7 @@ authStore.setKeycloak(window.keycloak);
 // Initialize user
 await authStore.init();
 logger.info('Authenticated');
-
+init();
 // Token Refresh
 setInterval(async () => {
 	await window.keycloak.updateToken(70);

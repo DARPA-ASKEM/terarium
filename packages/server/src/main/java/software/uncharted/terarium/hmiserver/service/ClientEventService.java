@@ -16,6 +16,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -41,8 +42,19 @@ public class ClientEventService{
   private final RabbitAdmin rabbitAdmin;
   private final Config config;
 
-  private static final String CLIENT_USER_EVENT_QUEUE = "clientUserEventQueue";
-  private static final String CLIENT_ALL_USERS_EVENT_QUEUE = "clientAllUsersEventQueue";
+  @Value("${terarium.client_user_event_queue}")
+  private String CLIENT_USER_EVENT_QUEUE;
+
+  @Value("${terarium.client_all_user_event_queue}")
+  private String CLIENT_ALL_USERS_EVENT_QUEUE;
+
+  @Value("${terarium.queueSuffix:${terarium.userQueueSuffix}}")
+  private String queueSuffix;
+
+  @Value("${terarium.queueSuffix:#{null}}")
+  private String isUserDev;
+
+
 
   final Map<String, SseEmitter> userIdToEmitter = new ConcurrentHashMap<>();
 
@@ -60,10 +72,10 @@ public class ClientEventService{
 
   @PostConstruct
   void init() {
-    allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE, config.getDurableQueues());
+    allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
     rabbitAdmin.declareQueue(allUsersQueue);
 
-    userQueue = new Queue(CLIENT_USER_EVENT_QUEUE, config.getDurableQueues());
+    userQueue = new Queue(CLIENT_USER_EVENT_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
     rabbitAdmin.declareQueue(userQueue);
   }
 
@@ -118,7 +130,7 @@ public class ClientEventService{
    * @param channel the channel to send the message on
    */
   @RabbitListener(
-          queues = {CLIENT_ALL_USERS_EVENT_QUEUE},
+          queues = "${terarium.client_all_user_event_queue}${terarium.queueSuffix:${terarium.userQueueSuffix}}",
           concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = decodeMessage(message);
@@ -151,7 +163,7 @@ public class ClientEventService{
    * @throws IOException  if there was an error sending the message
    */
   @RabbitListener(
-          queues = {CLIENT_USER_EVENT_QUEUE},
+          queues = {"${terarium.client_user_event_queue}${terarium.queueSuffix:${terarium.userQueueSuffix}}"},
           concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
     final JsonNode messageJson = decodeMessage(message);

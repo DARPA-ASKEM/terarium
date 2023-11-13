@@ -81,7 +81,6 @@ public class SimulationEventService {
 
         final ScimlStatusUpdate update = decodeMessage(message, ScimlStatusUpdate.class);
         ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder().type(ClientEventType.SIMULATION_SCIML).data(update).build();
-
         simulationIdToUserIds.get(update.getId()).forEach(userId -> {
             clientEventService.sendToUser(status, userId);
         });
@@ -99,10 +98,8 @@ public class SimulationEventService {
             queues = {PYCIEMSS_QUEUE},
             concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
-        //SimulationIntermediateResultsCiemss
-        final JsonNode messageJson = decodeMessage(message, JsonNode.class);
-        ClientEvent<Object> status = ClientEvent.builder().type(ClientEventType.SIMULATION_PYCIEMSS).data(messageJson).build();
-        clientEventService.sendToAllUsers(status);
+        // TODO this should mirror the implementation of onScimlSendToUserEvent
+
     }
 
     private <T> T decodeMessage(final Message message, Class<T> clazz) {
