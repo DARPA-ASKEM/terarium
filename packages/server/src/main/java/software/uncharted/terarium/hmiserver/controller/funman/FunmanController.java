@@ -17,27 +17,28 @@ public class FunmanController {
     @Autowired
     private FunmanProxy funmanProxy;
 
-    @GetMapping("/{query_id}/halt")
-		@Secured(Roles.USER)
-    public ResponseEntity<JsonNode> halt(@PathVariable String query_id) {
-        ResponseEntity<JsonNode> response = funmanProxy.halt(query_id);
+    @GetMapping("/{queryId}/halt")
+    @Secured(Roles.USER)
+    public ResponseEntity<JsonNode> halt(@PathVariable String queryId) {
+        ResponseEntity<JsonNode> response = funmanProxy.halt(queryId);
 
         return ResponseEntity.ok(response.getBody());
     }
 
-    @GetMapping("/{query_id}")
-		@Secured(Roles.USER)
-    public ResponseEntity<JsonNode> getQueries(@PathVariable String query_id) {
-        ResponseEntity<JsonNode> response = funmanProxy.getQueries(query_id);
+    @GetMapping("/{queryId}")
+    @Secured(Roles.USER)
+    public ResponseEntity<JsonNode> getQueries(@PathVariable String queryId) {
+        ResponseEntity<JsonNode> response = funmanProxy.getQueries(queryId);
 
         return ResponseEntity.ok(response.getBody());
     }
 
     @PostMapping
-		@Secured(Roles.USER)
-    public ResponseEntity<JsonNode> postQueries(@RequestBody FunmanPostQueriesRequest requestBody) {
+    @Secured(Roles.USER)
+    public ResponseEntity<JsonNode> postQueries(
+        @RequestBody final FunmanPostQueriesRequest requestBody
+    ) {
         ResponseEntity<JsonNode> response = funmanProxy.postQueries(requestBody);
-
         return ResponseEntity.ok(response.getBody());
     }
 }

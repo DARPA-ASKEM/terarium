@@ -3,22 +3,18 @@ package software.uncharted.terarium.hmiserver.models.funman.parts;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import java.util.List;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class FunmanWorkRequest {
+public class FunmanInterval {
 	@TSOptional
-	private JsonNode query;
+	/** Upper bound **/
+	private Double ub;
 	@TSOptional
-	private JsonNode constraints;
+	/** Lower Bound **/
+	private Double lb;
 	@TSOptional
-	private List<FunmanParameter> parameters;
-	@TSOptional
-	private FunmanConfig config;
-	@TSOptional
-	private JsonNode structure_parameters;
+	private Boolean closed_upper_bound;
 }

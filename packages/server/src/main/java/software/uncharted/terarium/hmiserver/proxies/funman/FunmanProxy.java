@@ -8,16 +8,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
-import software.uncharted.terarium.hmiserver.proxies.funman.FunmanProxy;
 
 @FeignClient(name = "funman-api", url = "${funman-service.url}", path="/queries")
 public interface FunmanProxy {
 
-    @GetMapping("/{query_id}/halt")
-    ResponseEntity<JsonNode> halt(@PathVariable("query_id") String queryId);
+    @GetMapping("/{queryId}/halt")
+    ResponseEntity<JsonNode> halt(@PathVariable("queryId") String queryId);
    
-    @GetMapping("/{query_id}")
-    ResponseEntity<JsonNode> getQueries(@PathVariable("query_id") String queryId);
+    @GetMapping("/{queryId}")
+    ResponseEntity<JsonNode> getQueries(@PathVariable("queryId") String queryId);
 
     @PostMapping
     ResponseEntity<JsonNode> postQueries(@RequestBody FunmanPostQueriesRequest requestBody);
