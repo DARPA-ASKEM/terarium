@@ -42,16 +42,16 @@ public class ClientEventService{
   private final RabbitAdmin rabbitAdmin;
   private final Config config;
 
-  @Value("${terarium.client_user_event_queue}")
+  @Value("${terarium.client-user-event-queue}")
   private String CLIENT_USER_EVENT_QUEUE;
 
-  @Value("${terarium.client_all_user_event_queue}")
+  @Value("${terarium.client-all-user-event-queue}")
   private String CLIENT_ALL_USERS_EVENT_QUEUE;
 
-  @Value("${terarium.queueSuffix:${terarium.userQueueSuffix}}")
+  @Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
   private String queueSuffix;
 
-  @Value("${terarium.queueSuffix:#{null}}")
+  @Value("${terarium.queue.suffix:#{null}}")
   private String isUserDev;
 
 
@@ -130,7 +130,7 @@ public class ClientEventService{
    * @param channel the channel to send the message on
    */
   @RabbitListener(
-          queues = "${terarium.client_all_user_event_queue}${terarium.queueSuffix:${terarium.userQueueSuffix}}",
+          queues = "${terarium.client-all-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
           concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = decodeMessage(message);
@@ -163,7 +163,7 @@ public class ClientEventService{
    * @throws IOException  if there was an error sending the message
    */
   @RabbitListener(
-          queues = {"${terarium.client_user_event_queue}${terarium.queueSuffix:${terarium.userQueueSuffix}}"},
+          queues = {"${terarium.client-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}"},
           concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
     final JsonNode messageJson = decodeMessage(message);

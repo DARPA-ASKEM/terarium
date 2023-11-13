@@ -13,7 +13,7 @@ import java.net.UnknownHostException;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class TerariumEnvPostProcessor implements EnvironmentPostProcessor {
 
-    private static final String TERARIUM_USER_QUEUE_SUFFIX = "terarium.userQueueSuffix";
+    private static final String TERARIUM_USER_QUEUE_SUFFIX = "terarium.userqueue.suffix";
 
 
     @Override
