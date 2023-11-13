@@ -112,9 +112,11 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
+					<!--
 					<tera-stratify-node-julia
 						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_JULIA"
 					/>
+					-->
 					<tera-stratify-node-mira
 						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
 					/>
@@ -135,6 +137,11 @@
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
+					/>
+					<tera-funman-node
+						v-else-if="node.operationType === WorkflowOperationTypes.FUNMAN"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 				</template>
 			</tera-workflow-node>
@@ -285,6 +292,10 @@
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER"
 				:node="currentActiveNode"
 			/>
+			<tera-funman
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.FUNMAN"
+				:node="currentActiveNode"
+			/>
 		</tera-fullscreen-modal>
 	</Teleport>
 </template>
@@ -321,6 +332,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+
 import {
 	ModelOperation,
 	TeraModelWorkflowWrapper,
@@ -332,7 +344,7 @@ import {
 	TeraSimulateCiemss,
 	TeraSimulateNodeCiemss
 } from './ops/simulate-ciemss/mod';
-import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
+// import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
 import {
 	StratifyMiraOperation,
 	TeraStratifyMira,
@@ -344,6 +356,8 @@ import {
 	TeraDatasetNode,
 	DatasetOperationState
 } from './ops/dataset/mod';
+import { FunmanOperation, TeraFunman, TeraFunmanNode } from './ops/funman/mod';
+
 import {
 	CalibrateEnsembleCiemssOperation,
 	TeraCalibrateEnsembleCiemss,
@@ -673,6 +687,7 @@ const contextMenuItems = ref([
 			workflowDirty = true;
 		}
 	},
+	/*
 	{
 		label: 'Stratify Julia',
 		command: () => {
@@ -680,11 +695,19 @@ const contextMenuItems = ref([
 			workflowDirty = true;
 		}
 	},
+	*/
 	{
 		label: 'Create model',
 		disabled: false,
 		command: () => {
 			workflowService.addNode(wf.value, ModelFromCodeOperation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Validate model configuration',
+		command: () => {
+			workflowService.addNode(wf.value, FunmanOperation, newNodePosition, { state: null });
 			workflowDirty = true;
 		}
 	},
