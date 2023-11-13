@@ -564,7 +564,6 @@ function appendOutputPort(
 			});
 		}
 	}
-
 	workflowDirty = true;
 }
 
@@ -575,6 +574,7 @@ function updateWorkflowNodeState(node: WorkflowNode<any>, state: any) {
 
 const drilldown = (event: WorkflowNode<any>) => {
 	currentActiveNode.value = event;
+	dialogIsOpened.value = true;
 	// workflowEventBus.emit('drilldown', event);
 };
 
