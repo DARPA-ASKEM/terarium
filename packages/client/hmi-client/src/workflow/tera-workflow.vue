@@ -112,9 +112,11 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
+					<!--
 					<tera-stratify-node-julia
 						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_JULIA"
 					/>
+					-->
 					<tera-stratify-node-mira
 						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
 					/>
@@ -224,6 +226,75 @@
 		</template>
 	</tera-infinite-canvas>
 	<section v-else><tera-progress-spinner :font-size="2" /></section>
+
+	<Teleport to="body">
+		<tera-fullscreen-modal
+			v-if="dialogIsOpened && currentActiveNode"
+			@on-close-clicked="dialogIsOpened = false"
+		>
+			<template #header>
+				<h5>{{ currentActiveNode.displayName }}</h5>
+			</template>
+			<tera-calibrate-julia
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
+				:node="currentActiveNode"
+			/>
+			<tera-calibrate-ciemss
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
+				:node="currentActiveNode"
+			/>
+
+			<tera-simulate-julia
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
+				:node="currentActiveNode"
+			/>
+			<tera-simulate-ciemss
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
+				:node="currentActiveNode"
+			/>
+
+			<tera-stratify-mira
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
+				:node="currentActiveNode"
+			/>
+
+			<tera-model-from-code
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL_FROM_CODE"
+				:node="currentActiveNode"
+			/>
+
+			<tera-simulate-ensemble-ciemss
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
+				:node="currentActiveNode"
+			/>
+			<tera-calibrate-ensemble-ciemss
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
+				:node="currentActiveNode"
+			/>
+
+			<tera-model-workflow-wrapper
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL"
+				:node="currentActiveNode"
+			/>
+			<tera-dataset-workflow-wrapper
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET"
+				:node="currentActiveNode"
+			/>
+
+			<tera-dataset-transformer
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
+				:node="currentActiveNode"
+			/>
+			<tera-model-transformer
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER"
+				:node="currentActiveNode"
+			/>
+			<tera-funman
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.FUNMAN"
+				:node="currentActiveNode"
+			/>
+		</tera-fullscreen-modal>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -231,6 +302,7 @@ import { isArray, cloneDeep, isEqual } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
+import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
 import {
 	Operation,
 	Position,
@@ -257,36 +329,76 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { ModelOperation, TeraModelNode, ModelOperationState } from './ops/model/mod';
-import { SimulateCiemssOperation, TeraSimulateNodeCiemss } from './ops/simulate-ciemss/mod';
-import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
-import { StratifyMiraOperation, TeraStratifyNodeMira } from './ops/stratify-mira/mod';
-import { FunmanOperation, TeraFunmanNode } from './ops/funman/mod';
-import { DatasetOperation, TeraDatasetNode, DatasetOperationState } from './ops/dataset/mod';
+
+import {
+	ModelOperation,
+	TeraModelWorkflowWrapper,
+	TeraModelNode,
+	ModelOperationState
+} from './ops/model/mod';
+import {
+	SimulateCiemssOperation,
+	TeraSimulateCiemss,
+	TeraSimulateNodeCiemss
+} from './ops/simulate-ciemss/mod';
+// import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
+import {
+	StratifyMiraOperation,
+	TeraStratifyMira,
+	TeraStratifyNodeMira
+} from './ops/stratify-mira/mod';
+import {
+	DatasetOperation,
+	TeraDatasetWorkflowWrapper,
+	TeraDatasetNode,
+	DatasetOperationState
+} from './ops/dataset/mod';
+import { FunmanOperation, TeraFunman, TeraFunmanNode } from './ops/funman/mod';
+
 import {
 	CalibrateEnsembleCiemssOperation,
+	TeraCalibrateEnsembleCiemss,
 	TeraCalibrateEnsembleNodeCiemss
 } from './ops/calibrate-ensemble-ciemss/mod';
 import {
 	DatasetTransformerOperation,
+	TeraDatasetTransformer,
 	TeraDatasetTransformerNode
 } from './ops/dataset-transformer/mod';
 import {
 	CalibrationOperationJulia,
 	TeraCalibrateNodeJulia,
+	TeraCalibrateJulia,
 	CalibrationOperationStateJulia
 } from './ops/calibrate-julia/mod';
-import { CalibrationOperationCiemss, TeraCalibrateNodeCiemss } from './ops/calibrate-ciemss/mod';
+import {
+	CalibrationOperationCiemss,
+	TeraCalibrateCiemss,
+	TeraCalibrateNodeCiemss
+} from './ops/calibrate-ciemss/mod';
 import {
 	SimulateEnsembleCiemssOperation,
+	TeraSimulateEnsembleCiemss,
 	TeraSimulateEnsembleNodeCiemss
 } from './ops/simulate-ensemble-ciemss/mod';
 
-import { ModelFromCodeOperation, TeraModelFromCodeNode } from './ops/model-from-code/mod';
+import {
+	ModelFromCodeOperation,
+	TeraModelFromCode,
+	TeraModelFromCodeNode
+} from './ops/model-from-code/mod';
 
-import { SimulateJuliaOperation, TeraSimulateNodeJulia } from './ops/simulate-julia/mod';
+import {
+	SimulateJuliaOperation,
+	TeraSimulateJulia,
+	TeraSimulateNodeJulia
+} from './ops/simulate-julia/mod';
 
-import { ModelTransformerOperation, TeraModelTransformerNode } from './ops/model-transformer/mod';
+import {
+	ModelTransformerOperation,
+	TeraModelTransformer,
+	TeraModelTransformerNode
+} from './ops/model-transformer/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
@@ -314,6 +426,7 @@ workflowEventBus.on('clearActiveNode', () => {
 const newEdge = ref<WorkflowEdge | undefined>();
 const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
+const dialogIsOpened = ref(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
 const contextMenu = ref();
@@ -440,7 +553,6 @@ function appendOutputPort(
 			});
 		}
 	}
-
 	workflowDirty = true;
 }
 
@@ -451,7 +563,8 @@ function updateWorkflowNodeState(node: WorkflowNode<any>, state: any) {
 
 const drilldown = (event: WorkflowNode<any>) => {
 	currentActiveNode.value = event;
-	workflowEventBus.emit('drilldown', event);
+	dialogIsOpened.value = true;
+	// workflowEventBus.emit('drilldown', event);
 };
 
 workflowEventBus.on('node-state-change', (payload: any) => {
@@ -549,6 +662,7 @@ const contextMenuItems = ref([
 			workflowDirty = true;
 		}
 	},
+	/*
 	{
 		label: 'Stratify Julia',
 		command: () => {
@@ -556,6 +670,7 @@ const contextMenuItems = ref([
 			workflowDirty = true;
 		}
 	},
+	*/
 	{
 		label: 'Create model',
 		disabled: false,
