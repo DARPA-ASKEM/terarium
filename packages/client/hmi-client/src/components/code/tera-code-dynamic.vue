@@ -91,10 +91,7 @@ const saveCodeBlockChanges = (index: number) => {
 };
 
 function isValidRange(): boolean {
-	if (startLine.value > endLine.value) {
-		return false;
-	}
-	return true;
+	return startLine.value < endLine.value;
 }
 </script>
 
