@@ -228,7 +228,7 @@
 	<section v-else><tera-progress-spinner :font-size="2" /></section>
 
 	<Teleport to="body">
-		<tera-fullscreen-modal
+		<tera-drilldown
 			v-if="dialogIsOpened && currentActiveNode"
 			@on-close-clicked="dialogIsOpened = false"
 		>
@@ -293,7 +293,7 @@
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.FUNMAN"
 				:node="currentActiveNode"
 			/>
-		</tera-fullscreen-modal>
+		</tera-drilldown>
 	</Teleport>
 </template>
 
@@ -302,7 +302,7 @@ import { isArray, cloneDeep, isEqual } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
+import TeraDrilldown from '@/components/widgets/tera-drilldown.vue';
 import {
 	Operation,
 	Position,
