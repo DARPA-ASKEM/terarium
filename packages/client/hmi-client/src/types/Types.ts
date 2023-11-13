@@ -604,7 +604,7 @@ export interface Document {
 
 export interface DocumentExtraction {
     fileName: string;
-    assetType: string;
+    assetType: ExtractionAssetType;
     metadata: { [index: string]: any };
 }
 
@@ -1029,4 +1029,10 @@ export enum AssetType {
 export enum OntologicalField {
     Object = "OBJECT",
     Unit = "UNIT",
+}
+
+export enum ExtractionAssetType {
+    Figure = "FIGURE",
+    Table = "TABLE",
+    Equation = "EQUATION",
 }
