@@ -35,7 +35,7 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
-      localstack:
+      seaweedfs:
         condition: service_started
 
   data-service:
@@ -69,7 +69,7 @@ services:
         condition: service_completed_successfully
       neo4j:
         condition: service_started
-      localstack:
+      seaweedfs:
         condition: service_started
 
   beaker:
