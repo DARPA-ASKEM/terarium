@@ -44,7 +44,6 @@
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"
 							class="input-label"
-							:style="{ color: getInputLabelColor(labelIdx) }"
 						>
 							{{ label }}
 						</span>
@@ -78,13 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-	Position,
-	WorkflowNode,
-	WorkflowPortStatus,
-	WorkflowDirection,
-	WorkflowOperationTypes
-} from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -155,30 +148,6 @@ onMounted(() => {
 	document.addEventListener('mousemove', drag);
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
-
-// FIXME: temporary function to color input port labels of simulate
-const VIRIDIS_14 = [
-	'#440154',
-	'#481c6e',
-	'#453581',
-	'#3d4d8a',
-	'#34618d',
-	'#2b748e',
-	'#24878e',
-	'#1f998a',
-	'#25ac82',
-	'#40bd72',
-	'#67cc5c',
-	'#98d83e',
-	'#cde11d',
-	'#fde725'
-];
-const getInputLabelColor = (edgeIdx: number) => {
-	const numRuns = props.node.inputs[0].value?.length ?? 0;
-	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE_JULIA
-		? VIRIDIS_14[Math.floor((edgeIdx / numRuns) * VIRIDIS_14.length)]
-		: 'inherit';
-};
 
 function showNodeDrilldown() {
 	emit('drilldown', props.node);
