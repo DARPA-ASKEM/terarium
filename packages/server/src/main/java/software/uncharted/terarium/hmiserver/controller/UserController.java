@@ -18,7 +18,6 @@ public class UserController {
 	private final CurrentUserService currentUserService;
 
 	@GetMapping("/me")
-	@Secured(Roles.USER)
 	public ResponseEntity<User> getWhoAmI() {
 		return ResponseEntity.ok(currentUserService.get());
 	}

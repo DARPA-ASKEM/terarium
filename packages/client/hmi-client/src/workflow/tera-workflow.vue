@@ -160,7 +160,7 @@
 				refX="5"
 				refY="5"
 			>
-				<circle cx="5" cy="5" r="3" :style="`fill: ${getVariableColorByRunIdx(i - 1)}`" />
+				<circle cx="5" cy="5" r="3" :style="`fill: #1B8073`" />
 			</marker>
 			<marker
 				id="arrow"
@@ -201,10 +201,7 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path
-					d="M 0 0 L 8 8 L 0 16 z"
-					:style="`fill: ${getVariableColorByRunIdx(i - 1)}; fill-opacity: 1`"
-				></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" :style="`fill: #1B8073; fill-opacity: 1`"></path>
 			</marker>
 		</template>
 		<template #background>
@@ -220,7 +217,7 @@
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				:stroke="isEdgeTargetSim(edge) ? getVariableColorByRunIdx(index) : '#1B8073'"
+				stroke="#1B8073"
 				stroke-width="2"
 				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
 				:key="index"
@@ -434,24 +431,6 @@ const dialogIsOpened = ref(false);
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
 const contextMenu = ref();
 
-// FIXME: temporary function to color edges with simulate
-const VIRIDIS_14 = [
-	'#440154',
-	'#481c6e',
-	'#453581',
-	'#3d4d8a',
-	'#34618d',
-	'#2b748e',
-	'#24878e',
-	'#1f998a',
-	'#25ac82',
-	'#40bd72',
-	'#67cc5c',
-	'#98d83e',
-	'#cde11d',
-	'#fde725'
-];
-
 const isRenamingWorkflow = ref(false);
 const newWorkflowName = ref('');
 
@@ -471,10 +450,6 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-const getVariableColorByRunIdx = (edgeIdx: number) =>
-	wf.value.edges.length > 1
-		? VIRIDIS_14[Math.floor((edgeIdx / wf.value.edges.length) * VIRIDIS_14.length)]
-		: '#1B8073';
 const isEdgeTargetSim = (edge) =>
 	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
 	WorkflowOperationTypes.SIMULATE_JULIA;
