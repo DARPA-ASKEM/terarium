@@ -9,7 +9,8 @@
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
-					:opened-asset-route="openedAssetRoute"
+					:page-type="pageType"
+					:asset-id="assetId"
 					@open-asset="openAsset"
 					@remove-asset="removeAsset"
 					@open-new-asset="openNewAsset"
@@ -17,11 +18,28 @@
 			</template>
 		</tera-slider-panel>
 		<section class="project-page">
-			<tera-project-page
-				:asset-id="openedAssetRoute.assetId"
-				:page-type="openedAssetRoute.pageType"
+			<tera-model v-if="pageType === AssetType.Models" :asset-id="assetId" />
+			<tera-code :asset-id="assetId" v-else-if="pageType === AssetType.Code" />
+			<tera-project-overview
+				v-else-if="pageType === ProjectPages.OVERVIEW"
 				@open-new-asset="openNewAsset"
 			/>
+			<tera-workflow v-else-if="pageType === AssetType.Workflows" :asset-id="assetId" />
+			<!--Add new process/asset views here-->
+			<template v-else-if="assetId">
+				<tera-external-publication
+					v-if="pageType === AssetType.Publications"
+					:xdd-uri="getXDDuri(assetId)"
+					:previewLineLimit="10"
+					@open-code="openCode"
+				/>
+				<tera-document-asset
+					v-if="pageType === AssetType.Documents"
+					:assetId="assetId"
+					:previewLineLimit="10"
+				/>
+				<tera-dataset v-else-if="pageType === AssetType.Datasets" :asset-id="assetId" />
+			</template>
 		</section>
 		<tera-slider-panel
 			v-model:is-open="isNotesSliderOpen"
@@ -30,10 +48,7 @@
 			header="Notes"
 		>
 			<template v-slot:content>
-				<tera-notes-sidebar
-					:asset-id="openedAssetRoute.assetId"
-					:page-type="openedAssetRoute.pageType"
-				/>
+				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
 			</template>
 		</tera-slider-panel>
 		<!-- New model modal -->
@@ -160,8 +175,15 @@ import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/work
 import { AssetType } from '@/types/Types';
 import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
 import { useProjects } from '@/composables/project';
+import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
+import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
+import { getCodeFileAsText } from '@/services/code';
+import TeraCode from '@/components/code/tera-code.vue';
+import TeraWorkflow from '@/workflow/tera-workflow.vue';
 import TeraModelModal from './components/tera-model-modal.vue';
-import TeraProjectPage from './components/tera-project-page.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -172,19 +194,46 @@ workflowEventBus.on('drilldown', (payload: any) => {
 	dialogIsOpened.value = true;
 });
 
+const code = ref<string>();
 const dialogIsOpened = ref(false);
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);
 
-// Passed down to tera-project-page and tera-notes-sidebar
-const openedAssetRoute = computed<AssetRoute>(() => ({
-	pageType: (route.params.pageType as ProjectPages | AssetType) ?? ProjectPages.EMPTY,
-	assetId: (route.params.assetId as string) ?? ''
-}));
+const pageType = computed(
+	() => (route.params.pageType as ProjectPages | AssetType) ?? ProjectPages.EMPTY
+);
+const assetId = computed(() => (route.params.assetId as string) ?? '');
+const assetName = computed<string>(() => {
+	if (pageType.value === ProjectPages.OVERVIEW) return 'Overview';
+
+	const assets = useProjects().activeProject.value?.assets;
+
+	/**
+	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
+	 *
+	 *   const list = assets[ pageType.value as string] as IdetifiableAsset[]
+	 *   const asset = list.find(...)
+	 */
+	if (assets) {
+		const asset: any = assets[pageType.value as string].find((d: any) => d.id === assetId.value);
+
+		// FIXME should unify upstream via a summary endpoint
+		if (asset.header && asset.header.name) return asset.header.name;
+
+		if (asset.name) return asset.name;
+	}
+	if (pageType.value === AssetType.Code) return 'New File';
+	return 'n/a';
+});
 
 function openAsset(assetRoute: AssetRoute) {
-	if (!isEqual(assetRoute, openedAssetRoute.value)) {
+	if (
+		!isEqual(assetRoute, {
+			pageType: pageType.value,
+			assetId: assetId.value
+		})
+	) {
 		router.push({
 			name: RouteName.Project,
 			params: assetRoute
@@ -193,18 +242,24 @@ function openAsset(assetRoute: AssetRoute) {
 }
 
 async function removeAsset(assetRoute: AssetRoute) {
-	const { assetId, pageType } = assetRoute;
-
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
-		const isRemoved = await useProjects().deleteAsset(pageType as AssetType, assetId);
+	if (
+		assetRoute.assetId &&
+		assetRoute.pageType &&
+		isProjectAssetTypes(assetRoute.pageType) &&
+		assetRoute.pageType !== ProjectPages.OVERVIEW
+	) {
+		const isRemoved = await useProjects().deleteAsset(
+			assetRoute.pageType as AssetType,
+			assetRoute.assetId
+		);
 
 		if (isRemoved) {
-			logger.info(`${assetId} was removed.`, { showToast: true });
+			logger.info(`${assetRoute.assetId} was removed.`, { showToast: true });
 			return;
 		}
 	}
-	logger.error(`Failed to remove ${assetId}`, { showToast: true });
+	logger.error(`Failed to remove ${assetRoute.assetId}`, { showToast: true });
 }
 
 const openWorkflow = async () => {
@@ -242,6 +297,18 @@ const openNewAsset = (assetType: AssetType) => {
 			break;
 	}
 };
+
+// This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
+const getXDDuri = (docAssetId: string): string =>
+	useProjects().activeProject.value?.assets?.[AssetType.Publications]?.find(
+		(document) => document?.id === Number.parseInt(docAssetId ?? '', 10)
+	)?.xdd_uri ?? '';
+
+async function openCode() {
+	const res: string | null = await getCodeFileAsText(assetId.value!, assetName.value!);
+	if (!res) return;
+	code.value = res;
+}
 
 const onCloseModelModal = () => {
 	isNewModelModalVisible.value = false;
