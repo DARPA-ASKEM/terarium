@@ -1,0 +1,444 @@
+<template>
+	<div class="header p-buttonset">
+		<Button
+			label="Wizard"
+			severity="secondary"
+			icon="pi pi-sign-in"
+			size="small"
+			:active="activeTab === FunmanTabs.wizard"
+			@click="activeTab = FunmanTabs.wizard"
+		/>
+		<Button
+			label="Notebook"
+			severity="secondary"
+			icon="pi pi-sign-out"
+			size="small"
+			:active="activeTab === FunmanTabs.notebook"
+			@click="activeTab = FunmanTabs.notebook"
+		/>
+		<Button
+			v-if="!showSpinner"
+			class="p-button-sm run-button"
+			label="Run"
+			icon="pi pi-play"
+			@click="runMakeQuery"
+		/>
+		<tera-progress-spinner v-if="showSpinner" :font-size="2" />
+	</div>
+	<div v-if="activeTab === FunmanTabs.wizard" class="container">
+		<div class="left-side">
+			<h4 class="primary-text">Set validation parameters <i class="pi pi-info-circle" /></h4>
+			<p class="secondary-text">
+				The validator will use these parameters to execute the sanity checks.
+			</p>
+			<div class="button-row">
+				<label>Tolerance</label>
+				<InputNumber
+					mode="decimal"
+					:min-fraction-digits="0"
+					:max-fraction-digits="7"
+					v-model="tolerance"
+				/>
+			</div>
+			<div class="section-row">
+				<!-- This will definitely require a proper tool tip. -->
+				<label>Select parameters to synthesize<i class="pi pi-info-circle" /></label>
+				<div v-for="(parameter, index) of requestParameters" :key="index" class="button-row">
+					<label>{{ parameter.name }}</label>
+					<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
+				</div>
+			</div>
+			<div class="section-row">
+				<div class="button-row">
+					<label>Start time</label>
+					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
+				</div>
+				<div class="button-row">
+					<label>End time</label>
+					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="endTime" />
+				</div>
+				<div class="button-row">
+					<label>Number of steps</label>
+					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numberOfSteps" />
+				</div>
+			</div>
+			<InputText
+				:disabled="true"
+				class="p-inputtext-sm"
+				inputId="integeronly"
+				v-model="requestStepListString"
+			/>
+			<div class="spacer">
+				<h4>Add sanity checks</h4>
+				<p>Model configurations will be tested against these constraints</p>
+			</div>
+			<tera-constraint-group-form
+				v-for="(cfg, index) in node.state.constraintGroups"
+				:key="index"
+				:config="cfg"
+				:index="index"
+				:model-node-options="modelNodeOptions"
+				@delete-self="deleteConstraintGroupForm"
+				@update-self="updateConstraintGroupForm"
+			/>
+
+			<Button label="Add another constraint" size="small" @click="addConstraintForm" />
+		</div>
+		<div class="right-side">
+			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
+			<div v-else>
+				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+				<h4>No Output</h4>
+			</div>
+		</div>
+	</div>
+	<div v-else class="container">
+		<div class="left-side">
+			<!-- TODO: notebook functionality -->
+			<p>{{ requestConstraints }}</p>
+		</div>
+		<div class="right-side">
+			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
+			<div v-else>
+				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+				<h4>No Output</h4>
+			</div>
+		</div>
+	</div>
+</template>
+
+<script setup lang="ts">
+import _, { floor } from 'lodash';
+import { computed, ref, watch } from 'vue';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
+import Dropdown from 'primevue/dropdown';
+import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
+import { getQueries, makeQueries } from '@/services/models/funman-service';
+import { WorkflowNode } from '@/types/workflow';
+import { workflowEventBus } from '@/services/workflow';
+import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import teraFunmanOutput from '@/components/funman/tera-funman-output.vue';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModel } from '@/services/model';
+import { useToastService } from '@/services/toast';
+import { v4 as uuidv4 } from 'uuid';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
+
+const props = defineProps<{
+	node: WorkflowNode<FunmanOperationState>;
+}>();
+
+enum FunmanTabs {
+	wizard,
+	notebook
+}
+const toast = useToastService();
+
+const activeTab = ref(FunmanTabs.wizard);
+const labelOptions = ['any', 'all'];
+const showSpinner = ref(false);
+const tolerance = ref(props.node.state.tolerance);
+const startTime = ref(props.node.state.currentTimespan.start);
+const endTime = ref(props.node.state.currentTimespan.end);
+const numberOfSteps = ref(props.node.state.numSteps);
+const requestStepList = computed(() => getStepList());
+const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
+const requestConstraints = computed(() =>
+	// Same as node state's except typing for state vs linear constraint
+	props.node.state.constraintGroups?.map((ele) => {
+		if (ele.variables.length === 1) {
+			// State Variable Constraint
+			return {
+				name: ele.name,
+				variable: ele.variables[0],
+				interval: ele.interval,
+				timepoints: ele.timepoints
+			};
+		}
+		return {
+			// Linear Constraint
+			name: ele.name,
+			variables: ele.variables,
+			weights: ele.weights,
+			interval: ele.interval,
+			timepoints: ele.timepoints
+		};
+	})
+);
+const requestParameters = ref();
+const model = ref<Model | null>();
+const modelConfiguration = ref<ModelConfiguration>();
+const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
+const outputId = computed(() => {
+	if (props.node.outputs[0]?.value) return String(props.node.outputs[0].value);
+	return undefined;
+});
+
+const runMakeQuery = async () => {
+	if (!model.value) {
+		toast.error('', 'No Model provided for request');
+		return;
+	}
+
+	const request: FunmanPostQueriesRequest = {
+		model: model.value,
+		request: {
+			constraints: requestConstraints.value,
+			parameters: requestParameters.value,
+			structure_parameters: [
+				{
+					name: 'schedules',
+					schedules: [
+						{
+							timepoints: requestStepList.value
+						}
+					]
+				}
+			],
+			config: {
+				use_compartmental_constraints: true,
+				normalization_constant: 1,
+				tolerance: tolerance.value
+			}
+		}
+	};
+
+	const response = await makeQueries(request); // Just commented out so i do not break funman
+	getStatus(response.id);
+};
+
+// TODO: Poller? https://github.com/DARPA-ASKEM/terarium/issues/2196
+const getStatus = async (runId) => {
+	showSpinner.value = true;
+	const response = await getQueries(runId);
+	if (response?.error === true) {
+		showSpinner.value = false;
+		toast.error('', 'An error occured Funman');
+		console.log(response);
+	} else if (response?.done === true) {
+		showSpinner.value = false;
+		updateOutputPorts(runId);
+	} else {
+		setTimeout(async () => {
+			getStatus(runId);
+		}, 2000);
+	}
+};
+
+const updateOutputPorts = async (runId) => {
+	const portLabel = props.node.inputs[0].label;
+	workflowEventBus.emit('append-output-port', {
+		node: props.node,
+		port: {
+			id: uuidv4(),
+			label: `${portLabel} Result`,
+			type: FunmanOperation.outputs[0].type,
+			value: runId
+		}
+	});
+};
+
+const addConstraintForm = () => {
+	const state = _.cloneDeep(props.node.state);
+	const newGroup: ConstraintGroup = {
+		borderColour: '#00c387',
+		name: '',
+		timepoints: { lb: 0, ub: 100 },
+		variables: []
+	};
+	if (!state.constraintGroups) {
+		state.constraintGroups = [];
+	}
+	state.constraintGroups.push(newGroup);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const deleteConstraintGroupForm = (data) => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) {
+		return;
+	}
+	state.constraintGroups.splice(data.index, 1);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const updateConstraintGroupForm = (data) => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) {
+		return;
+	}
+	state.constraintGroups[data.index] = data.updatedConfig;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+// Used to set requestStepList.
+// Grab startTime, endTime, numberOfSteps and create list.
+function getStepList() {
+	const aList = [startTime.value];
+	const stepSize = floor((endTime.value - startTime.value) / numberOfSteps.value);
+	for (let i = 1; i < numberOfSteps.value; i++) {
+		aList[i] = i * stepSize;
+	}
+	aList.push(endTime.value);
+	return aList;
+}
+
+const setModelOptions = async () => {
+	const modelConfigurationId = props.node.inputs[0].value?.[0];
+	if (modelConfigurationId) {
+		modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+		if (modelConfiguration.value) {
+			model.value = await getModel(modelConfiguration.value.modelId);
+			const modelColumnNameOptions: string[] =
+				modelConfiguration.value.configuration.model.states.map((state) => state.id);
+			// observables are not currently supported
+			// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+			// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+			// 		modelColumnNameOptions.push(o.id);
+			// 	});
+			// }
+			modelNodeOptions.value = modelColumnNameOptions;
+
+			if (model.value && model.value.semantics?.ode.parameters) {
+				setRequestParameters(model.value.semantics?.ode.parameters);
+			} else {
+				toast.error('', 'Provided model has no parameters');
+			}
+		}
+	}
+};
+
+const setRequestParameters = async (modelParameters) => {
+	requestParameters.value = modelParameters.map((ele) => {
+		if (ele.distribution) {
+			return {
+				name: ele.id,
+				interval: {
+					lb: ele.distribution.parameters.minimum,
+					ub: ele.distribution.parameters.maximum
+				},
+				label: 'any'
+			};
+		}
+
+		return {
+			name: ele.id,
+			interval: {
+				lb: ele.value,
+				ub: ele.value
+			},
+			label: 'any'
+		};
+	});
+};
+
+// Set model, modelConfiguration, modelNodeOptions
+watch(
+	() => props.node.inputs[0],
+	async () => {
+		setModelOptions();
+	},
+	{ immediate: true }
+);
+</script>
+
+<style>
+main {
+	overflow: auto;
+}
+
+.container {
+	display: flex;
+	margin-top: 1rem;
+}
+.left-side {
+	display: flex;
+	flex-direction: column;
+	overflow: auto;
+	width: 55%;
+	padding-right: 2.5%;
+}
+.left-side h1 {
+	color: var(--text-color-primary);
+	font-family: Inter;
+	font-size: 1rem;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 1.5rem; /* 150% */
+	letter-spacing: 0.03125rem;
+}
+.left-side p {
+	color: var(--Text-Secondary);
+	/* Body Small/Regular */
+	font-family: Figtree;
+	font-size: 0.875rem;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 1.3125rem; /* 150% */
+	letter-spacing: 0.01563rem;
+}
+.right-side {
+	width: 35%;
+	padding-left: 2.5%;
+}
+
+.primary-text {
+	color: var(--Text-Primary, #020203);
+	/* Body Medium/Semibold */
+	font-size: 1rem;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 1.5rem; /* 150% */
+	letter-spacing: 0.03125rem;
+}
+
+.secondary-text {
+	color: var(--Text-Secondary, #667085);
+	/* Body Small/Regular */
+	font-size: 0.875rem;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 1.3125rem; /* 150% */
+	letter-spacing: 0.01563rem;
+}
+
+.button-row {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem 0rem 0.5rem 0rem;
+	align-items: flex-start;
+	align-self: stretch;
+}
+
+.section-row {
+	display: flex;
+	/* flex-direction: column; */
+	padding: 0.5rem 0rem;
+	align-items: center;
+	gap: 0.8125rem;
+	align-self: stretch;
+}
+
+.spacer {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+}
+</style>
