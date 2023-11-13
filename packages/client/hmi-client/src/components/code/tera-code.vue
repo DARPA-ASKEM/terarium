@@ -70,6 +70,7 @@
 						:filename="dynamic[0]"
 						:codefile="dynamic[1]"
 						@remove="onRemoveCodeBlock"
+						@save="onSaveCodeBlock"
 						:key="index"
 					/>
 				</div>
@@ -487,6 +488,17 @@ async function onFileSelect(filePath: string) {
 }
 
 function onRemoveCodeBlock(dynamic: { [index: string]: CodeFile }) {
+	if (!codeAssetCopy.value?.files) return;
+	codeAssetCopy.value.files = {
+		...codeAssetCopy.value?.files,
+		...dynamic
+	};
+
+	removeMarkers();
+	highlightDynamics();
+}
+
+function onSaveCodeBlock(dynamic: { [index: string]: CodeFile }) {
 	if (!codeAssetCopy.value?.files) return;
 	codeAssetCopy.value.files = {
 		...codeAssetCopy.value?.files,
