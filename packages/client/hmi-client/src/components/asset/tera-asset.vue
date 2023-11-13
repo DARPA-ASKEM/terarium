@@ -62,7 +62,7 @@
 				</aside>
 			</header>
 		</template>
-		<section :style="stretchContentStyle">
+		<section :class="overflowHiddenClass" :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
 	</main>
@@ -108,7 +108,8 @@ const props = defineProps({
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,
 	stretchContent: Boolean,
-	isLoading: Boolean
+	isLoading: Boolean,
+	overflowHidden: Boolean
 });
 
 const emit = defineEmits(['close-preview']);
@@ -132,6 +133,8 @@ const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.
 const stretchContentStyle = computed(() =>
 	props.stretchContent ? { gridColumn: '1 / span 2' } : {}
 );
+
+const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
@@ -319,6 +322,10 @@ main:deep(input) {
 main:deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.overflow-hidden {
+	overflow: hidden;
 }
 
 .spread-out {
