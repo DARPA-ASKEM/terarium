@@ -8,12 +8,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.funman.parts.FunmanWorkRequest;
 import com.fasterxml.jackson.databind.JsonNode;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class FunmanPostQueriesRequest {
-   private JsonNode model;
+public class FunmanPostQueriesRequest implements Serializable{
+   private Model model;
    private FunmanWorkRequest request;
-   private JsonNode worker;
 }

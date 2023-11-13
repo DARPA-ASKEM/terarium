@@ -1,3 +1,6 @@
+import { logger } from '@/utils/logger';
+import API from '@/api/api';
+import { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
 
 interface FunmanProcessedData {
@@ -10,6 +13,37 @@ interface FunmanProcessedData {
 interface RenderOptions {
 	width: number;
 	height: number;
+}
+
+export async function getQueries(id: string) {
+	try {
+		const response = await API.get(`/funman/queries/${id}`);
+		return response.data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export async function makeQueries(body: FunmanPostQueriesRequest) {
+	try {
+		const resp = await API.post('/funman/queries', body);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+export async function haltQuery(id: string) {
+	try {
+		const response = await API.get(`/funman/queries/${id}/halt`);
+		return response.data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
 }
 
 export const processFunman = (result: any) => {
@@ -27,8 +61,17 @@ export const processFunman = (result: any) => {
 	let j = 0;
 
 	const parameterSpace = result.parameter_space;
+	let trueBoxes: any[] = [];
+	let falseBoxes: any[] = [];
 
-	[...parameterSpace.true_boxes, ...parameterSpace.false_boxes].forEach((box) => {
+	if (parameterSpace.true_boxes) {
+		trueBoxes = parameterSpace.true_boxes;
+	}
+	if (parameterSpace.false_boxes) {
+		falseBoxes = parameterSpace.false_boxes;
+	}
+
+	[...trueBoxes, ...falseBoxes].forEach((box) => {
 		const boxId = `box${i}`;
 		i++;
 
@@ -128,6 +171,7 @@ export const renderFumanTrajectories = (
 	const { trajs, states } = processedData;
 
 	const elemSelection = d3.select(element);
+	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 	const group = svg.append('g');
 
@@ -183,6 +227,7 @@ export const renderFunmanBoundaryChart = (
 	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
 	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
 
+	d3.select(element).selectAll('*').remove();
 	const svg = d3.select(element).append('svg').attr('width', width).attr('height', height);
 	const g = svg.append('g');
 
