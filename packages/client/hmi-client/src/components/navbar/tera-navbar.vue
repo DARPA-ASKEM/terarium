@@ -47,7 +47,6 @@
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
-				class="modal"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
 			>
 				<template #header>
@@ -528,26 +527,9 @@ i {
 	background-color: var(--surface-hover);
 	color: var(--text-color-secondary);
 }
-</style>
-<style>
-/*
- * On it's own style, because the pop-up happened outside of this component.
- * To left align the content with the h1.
- */
+
 .navigation-menu {
 	margin-top: 0.25rem;
 	min-width: fit-content !important;
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
 }
 </style>

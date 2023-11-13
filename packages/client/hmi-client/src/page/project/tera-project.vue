@@ -121,6 +121,10 @@
 					"
 					:node="workflowNode"
 				/>
+				<tera-funman
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.FUNMAN"
+					:node="workflowNode"
+				/>
 			</tera-fullscreen-modal>
 		</Teleport>
 	</main>
@@ -141,6 +145,7 @@ import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-cie
 import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
 import teraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
 import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
+import TeraFunman from '@/workflow/ops/funman/tera-funman.vue';
 import TeraModelTransformer from '@/workflow/ops/model-transformer/tera-model-transformer.vue';
 import TeraModelFromCode from '@/workflow/ops/model-from-code/tera-model-from-code.vue';
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';

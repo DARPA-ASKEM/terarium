@@ -25,6 +25,7 @@ import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetSe
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
@@ -344,11 +345,11 @@ public class DocumentController implements SnakeCaseController {
 			documentAsset.setAssets(new ArrayList<>());
 			for(int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
-				if(extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.EQUATION_ASSETTYPE)
-				|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.FIGURE_ASSETTYPE)
-				|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.TABLE_ASSETTYPE) ) {
+				if(extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString()) ) {
 					DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
-					documentExtraction.setAssetType(extraction.getAskemClass());
+					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
 					documentExtraction.setFileName("extraction_" + i + ".png");
 					documentExtraction.getMetadata().put("title", extraction.getProperties().getTitle());
 					documentExtraction.getMetadata().put("description", extraction.getProperties().getCaption());
@@ -377,21 +378,24 @@ public class DocumentController implements SnakeCaseController {
 		if(extractions != null) {
 			for (int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
-				if (extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.EQUATION_ASSETTYPE)
-					|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.FIGURE_ASSETTYPE)
-					|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.TABLE_ASSETTYPE)) {
+				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
 					String filename = "extraction_" + i + ".png";
 
 					try(CloseableHttpClient httpclient = HttpClients.custom()
 						.disableRedirectHandling()
 						.build()){
-						byte[] imageAsBytes = Base64.getDecoder().decode(extraction.getProperties().getImage().getBytes("UTF-8"));
-						HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-						final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
+						String image = extraction.getProperties().getImage();
+						if(image != null){
+							byte[] imageAsBytes = Base64.getDecoder().decode(image.getBytes("UTF-8"));
+							HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+							final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
 
-						final HttpPut put = new HttpPut(presignedURL.getUrl());
-						put.setEntity(fileEntity);
-						final HttpResponse pdfUploadResponse = httpclient.execute(put);
+							final HttpPut put = new HttpPut(presignedURL.getUrl());
+							put.setEntity(fileEntity);
+							final HttpResponse pdfUploadResponse = httpclient.execute(put);
+						}
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}

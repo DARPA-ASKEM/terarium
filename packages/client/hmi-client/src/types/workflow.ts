@@ -13,7 +13,8 @@ export enum WorkflowOperationTypes {
 	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms',
 	DATASET_TRANSFORMER = 'DatasetTransformer',
 	MODEL_TRANSFORMER = 'ModelTransformer',
-	MODEL_FROM_CODE = 'ModelFromCode'
+	MODEL_FROM_CODE = 'ModelFromCode',
+	FUNMAN = 'Funman'
 }
 
 export enum WorkflowStatus {

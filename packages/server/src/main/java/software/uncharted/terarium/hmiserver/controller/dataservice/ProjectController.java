@@ -47,23 +47,27 @@ public class ProjectController {
 	public ResponseEntity<List<Project>> getProjects(
 		@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive
 	) {
-		List<Project> projects = proxy.getProjects(includeInactive).getBody();
-		if (projects == null) {
+		RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+		List<String> projectIds = null;
+		try {
+			projectIds = rebacUser.lookupProjects();
+		} catch (Exception e) {
+			log.error("Error getting projects which a user can read", e);
+			return ResponseEntity.internalServerError().build();
+		}
+		if (projectIds == null) {
 			return ResponseEntity.noContent().build();
 		}
-		RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+
+		List<Project> projects = projectIds
+			.stream()
+			.map(id -> proxy.getProject(id).getBody())
+			.toList();
+
 		// Remove non-active (soft-deleted) projects
 		projects = projects
 			.stream()
 			.filter(Project::getActive)
-			.filter(project -> {
-				try {
-					return rebacUser.canRead(new RebacProject(project.getProjectID(), reBACService));
-				} catch (Exception e) {
-					log.error("Error getting user's permissions for project", e);
-					return false;
-				}
-			})
 			.toList();
 
 		projects.forEach(project -> {

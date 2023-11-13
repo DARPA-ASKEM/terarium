@@ -300,8 +300,4 @@ watch(
 i {
 	color: var(--text-color-secondary);
 }
-
-.modal label {
-	margin: 0;
-}
 </style>

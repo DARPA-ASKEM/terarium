@@ -34,7 +34,7 @@ public class LogController {
 	@Secured(Roles.USER)
 	public ResponseEntity<HttpStatus> log(@RequestBody List<ClientLog> logList) {
 		logList.forEach(clientLog -> {
-			List<String> parts = new ArrayList<>(List.of(clientLog.getTimestampMillis() + "", getCurrentUsername(), clientLog.getMessage()));
+			List<String> parts = new ArrayList<>(List.of(clientLog.getTimestampMillis() + "", getCurrentUserId(), clientLog.getMessage()));
 			if (clientLog.getArgs() != null && clientLog.getArgs().length > 0) {
 				parts.addAll(Arrays.asList(clientLog.getArgs()));
 			}
@@ -52,16 +52,16 @@ public class LogController {
 	}
 
 	/**
-	 * Get the current username, or "Anonymous" if no user is logged in (eg/ this is a log message from
+	 * Get the current user id, or "Anonymous" if no user is logged in (eg/ this is a log message from
 	 * a system or scheduled event)
 	 *
-	 * @return the current username
+	 * @return the current user id
 	 */
-	private String getCurrentUsername() {
+	private String getCurrentUserId() {
 		final User user = currentUserService.get();
 		if (user == null) {
 			return "Anonymous";
 		}
-		return user.getUsername();
+		return user.getId();
 	}
 }

@@ -6,6 +6,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExist
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
+import java.util.List;
+
 public class RebacUser extends RebacObject {
 	private ReBACService reBACService;
 
@@ -55,5 +57,9 @@ public class RebacUser extends RebacObject {
 			return Schema.Relationship.READER.toString();
 		}
 		return "none";
+	}
+
+	public List<String> lookupProjects() throws Exception {
+		return reBACService.lookupResources(getSchemaObject(), Schema.Permission.READ, Schema.Type.PROJECT);
 	}
 }
