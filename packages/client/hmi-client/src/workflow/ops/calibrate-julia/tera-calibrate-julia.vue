@@ -74,7 +74,7 @@
 		</Accordion>
 		<div v-if="view === CalibrationView.Output && modelConfig">
 			<Dropdown
-				v-if="!showSpinner && runList.length > 0"
+				v-if="runList.length > 0"
 				:options="runList"
 				v-model="selectedRun"
 				option-label="label"
@@ -82,8 +82,7 @@
 			/>
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<AccordionTab header="Loss">
-					<!-- TODO: plot loss as they come in and not just when it's finished -->
-					<div v-if="!showSpinner" ref="drilldownLossPlot"></div>
+					<div ref="drilldownLossPlot"></div>
 				</AccordionTab>
 				<AccordionTab header="Calibrated parameter values">
 					<table class="p-datatable-table">
@@ -91,7 +90,11 @@
 							<th>Parameter</th>
 							<th>Value</th>
 						</thead>
-						<tr v-for="(content, key) in currentParams" :key="key">
+						<tr
+							v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRun?.runId]
+								?.params"
+							:key="key"
+						>
 							<td>
 								<p>{{ key }}</p>
 							</td>
@@ -101,26 +104,7 @@
 						</tr>
 					</table>
 				</AccordionTab>
-				<AccordionTab header="Variables" v-if="showSpinner">
-					<tera-calibrate-chart
-						v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
-						:key="index"
-						:initial-data="csvAsset"
-						:intermediate-data="currentIntermediateVals"
-						:mapping="mapping"
-						:chartConfig="{ selectedRun: runInProgress!, selectedVariable: cfg }"
-						@configuration-change="chartConfigurationChange(index, $event)"
-					/>
-					<Button
-						class="add-chart"
-						text
-						:outlined="true"
-						@click="addChart"
-						label="Add chart"
-						icon="pi pi-plus"
-					></Button>
-				</AccordionTab>
-				<AccordionTab header="Variables" v-else-if="runResults[selectedRun?.runId]">
+				<AccordionTab header="Variables" v-if="runResults[selectedRun?.runId]">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
 						:key="index"
@@ -149,7 +133,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
@@ -163,17 +147,14 @@ import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
-import { ChartConfig, RunType } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
 import SelectButton from 'primevue/selectbutton';
-import {
-	CalibrationOperationStateJulia,
-	CalibrateMap,
-	useJuliaCalibrateOptions
-} from './calibrate-operation';
+import { getRunResultJulia } from '@/services/models/simulation-service';
+import { csvParse } from 'd3';
+import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
@@ -203,34 +184,64 @@ const modelConfig = ref<ModelConfiguration>();
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
+const runResults = ref<RunResults>({});
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
-const {
-	runResults,
-	selectedRun,
-	currentIntermediateVals,
-	parameterResult,
-	showSpinner,
-	runInProgress
-} = useJuliaCalibrateOptions();
 const runList = computed(() =>
 	Object.keys(props.node.state.calibrateConfigs.runConfigs).map((runId: string, idx: number) => ({
 		label: `Output ${idx + 1} - ${runId}`,
 		runId
 	}))
 );
+const selectedRun = ref();
 const drilldownLossPlot = ref<HTMLElement>();
-
-const currentParams = computed(() =>
-	showSpinner.value
-		? parameterResult.value
-		: props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.params
-);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+onMounted(() => {
+	const runId = Object.values(props.node.state.calibrateConfigs.runConfigs).find(
+		(metadata) => metadata.active
+	)?.runId;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
+
+	if (selectedRun.value?.runId) {
+		lazyLoadCalibrationData(selectedRun.value.runId);
+	}
+});
+
+const lazyLoadCalibrationData = async (runId: string) => {
+	if (runResults.value[runId]) return;
+
+	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
+	const csvData = csvParse(resultCsv);
+
+	runResults.value[runId] = csvData as any;
+};
+
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	lazyLoadCalibrationData(selectedRun.value.runId);
+
+	const state = _.cloneDeep(props.node.state);
+	// set the active status for the selected run in the run configs
+	Object.keys(state.calibrateConfigs.runConfigs).forEach((runId) => {
+		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
+	});
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -293,6 +304,8 @@ watch(
 	},
 	{ immediate: true }
 );
+
+watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 
 // Plot loss values if available on mount or on selectedRun change
 watch([() => selectedRun.value, () => drilldownLossPlot.value], () => {

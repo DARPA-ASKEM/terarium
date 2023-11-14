@@ -1,9 +1,8 @@
-import { ref } from 'vue';
 import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflow';
 // import { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { CalibrateConfig, ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { CalibrateConfig, ChartConfig } from '@/types/SimulateConfig';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -82,18 +81,3 @@ export const CalibrationOperationJulia: Operation = {
 		return init;
 	}
 };
-
-const runResults = ref<RunResults>({});
-const selectedRun = ref();
-const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
-const parameterResult = ref<{ [index: string]: number }>();
-const showSpinner = ref(false);
-const runInProgress = ref<string>();
-export const useJuliaCalibrateOptions = () => ({
-	runResults,
-	selectedRun,
-	currentIntermediateVals,
-	parameterResult,
-	showSpinner,
-	runInProgress
-});

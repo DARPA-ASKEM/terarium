@@ -198,7 +198,7 @@ import {
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
 import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
-import { ChartConfig, RunType } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
@@ -216,8 +216,7 @@ import {
 	CalibrationOperationStateJulia,
 	CalibrateMap,
 	CalibrateMethodOptions,
-	CalibrateExtraJulia,
-	useJuliaCalibrateOptions
+	CalibrateExtraJulia
 } from './calibrate-operation';
 
 const props = defineProps<{
@@ -231,34 +230,33 @@ const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | und
 const currentDatasetFileName = ref<string>();
 const modelConfig = ref<ModelConfiguration>();
 const completedRunIdList = ref<string[]>([]);
+const parameterResult = ref<{ [index: string]: any }>();
 
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
+const runResults = ref<RunResults>({});
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
-const {
-	runResults,
-	selectedRun,
-	currentIntermediateVals,
-	parameterResult,
-	showSpinner,
-	runInProgress
-} = useJuliaCalibrateOptions();
 const runList = computed(() =>
 	Object.keys(props.node.state.calibrateConfigs.runConfigs).map((runId: string, idx: number) => ({
 		label: `Output ${idx + 1} - ${runId}`,
 		runId
 	}))
 );
+const selectedRun = ref();
+const runInProgress = ref<string>();
 
-let lossValues: { [key: string]: number }[] = [];
 const lossPlotRef = ref<HTMLElement>();
 const staticLossPlotRef = ref<HTMLElement>();
+let lossValues: { [key: string]: number }[] = [];
+
+const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
 
 const poller = new Poller();
 

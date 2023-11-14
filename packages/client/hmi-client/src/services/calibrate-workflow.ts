@@ -90,7 +90,7 @@ export const renderLossGraph = (
 	path.datum(data).attr('d', pathFn(data)).style('stroke', '#888').style('fill', 'none');
 
 	// Add x-axis
-	const xAxis = d3.axisBottom(xScale).ticks(4);
+	const xAxis = d3.axisBottom(xScale).ticks(5);
 	let xAxisGroup = svg.select('.x-axis');
 	if (xAxisGroup.empty()) {
 		xAxisGroup = svg.append('g').attr('class', 'x-axis');

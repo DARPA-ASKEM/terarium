@@ -43,10 +43,10 @@ public class SimulationEventService {
 
     @PostConstruct
     void init() {
-        scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues());
+        scimlQueue = new Queue(SCIML_QUEUE, true);
         rabbitAdmin.declareQueue(scimlQueue);
 
-        pyciemssQueue = new Queue(PYCIEMSS_QUEUE, config.getDurableQueues());
+        pyciemssQueue = new Queue(PYCIEMSS_QUEUE, true);
         rabbitAdmin.declareQueue(pyciemssQueue);
 
     }
