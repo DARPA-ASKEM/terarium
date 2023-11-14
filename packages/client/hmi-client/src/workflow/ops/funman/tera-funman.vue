@@ -25,41 +25,24 @@
 		/>
 		<tera-progress-spinner v-if="showSpinner" :font-size="2" />
 	</div>
-	<div v-if="activeTab === FunmanTabs.wizard" class="container">
-		<div class="left-side">
+	<div v-if="activeTab === FunmanTabs.wizard" class="content">
+		<div class="container">
 			<h4 class="primary-text">Set validation parameters <i class="pi pi-info-circle" /></h4>
 			<p class="secondary-text">
 				The validator will use these parameters to execute the sanity checks.
 			</p>
-			<div class="button-row">
-				<label>Tolerance</label>
-				<InputNumber
-					mode="decimal"
-					:min-fraction-digits="0"
-					:max-fraction-digits="7"
-					v-model="tolerance"
-				/>
-			</div>
-			<div class="section-row">
-				<!-- This will definitely require a proper tool tip. -->
-				<label>Select parameters to synthesize<i class="pi pi-info-circle" /></label>
-				<div v-for="(parameter, index) of requestParameters" :key="index" class="button-row">
-					<label>{{ parameter.name }}</label>
-					<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
-				</div>
-			</div>
 			<div class="section-row">
 				<div class="button-row">
 					<label>Start time</label>
-					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="startTime" />
+					<InputNumber inputId="integeronly" v-model="startTime" />
 				</div>
 				<div class="button-row">
 					<label>End time</label>
-					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="endTime" />
+					<InputNumber inputId="integeronly" v-model="endTime" />
 				</div>
 				<div class="button-row">
 					<label>Number of steps</label>
-					<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numberOfSteps" />
+					<InputNumber inputId="integeronly" v-model="numberOfSteps" />
 				</div>
 			</div>
 			<InputText
@@ -68,6 +51,32 @@
 				inputId="integeronly"
 				v-model="requestStepListString"
 			/>
+			<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
+				Show additional options
+			</p>
+			<p v-if="showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
+				Hide additional options
+			</p>
+			<div v-if="showAdditionalOptions">
+				<div class="button-row">
+					<label>Tolerance</label>
+					<InputNumber
+						mode="decimal"
+						:min-fraction-digits="0"
+						:max-fraction-digits="7"
+						v-model="tolerance"
+					/>
+				</div>
+				<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
+				<div class="section-row">
+					<!-- This will definitely require a proper tool tip. -->
+					<label>Select parameters to synthesize<i class="pi pi-info-circle" /></label>
+					<div v-for="(parameter, index) of requestParameters" :key="index" class="button-row">
+						<label>{{ parameter.name }}</label>
+						<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
+					</div>
+				</div>
+			</div>
 			<div class="spacer">
 				<h4>Add sanity checks</h4>
 				<p>Model configurations will be tested against these constraints</p>
@@ -84,7 +93,7 @@
 
 			<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 		</div>
-		<div class="right-side">
+		<div class="container">
 			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 			<div v-else>
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -92,12 +101,12 @@
 			</div>
 		</div>
 	</div>
-	<div v-else class="container">
-		<div class="left-side">
+	<div v-else class="content">
+		<div class="container">
 			<!-- TODO: notebook functionality -->
 			<p>{{ requestConstraints }}</p>
 		</div>
-		<div class="right-side">
+		<div class="container">
 			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 			<div v-else>
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -114,6 +123,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
+import Slider from 'primevue/slider';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode } from '@/types/workflow';
@@ -140,6 +150,7 @@ const toast = useToastService();
 const activeTab = ref(FunmanTabs.wizard);
 const labelOptions = ['any', 'all'];
 const showSpinner = ref(false);
+const showAdditionalOptions = ref(false);
 const tolerance = ref(props.node.state.tolerance);
 const startTime = ref(props.node.state.currentTimespan.start);
 const endTime = ref(props.node.state.currentTimespan.end);
@@ -176,6 +187,10 @@ const outputId = computed(() => {
 	if (props.node.outputs[0]?.value) return String(props.node.outputs[0].value);
 	return undefined;
 });
+
+async function toggleAdditonalOptions() {
+	showAdditionalOptions.value = !showAdditionalOptions.value;
+}
 
 const runMakeQuery = async () => {
 	if (!model.value) {
@@ -365,18 +380,24 @@ main {
 	overflow: auto;
 }
 
+.content {
+	display: flex;
+	padding: 1rem 1.5rem 1rem 0rem;
+	align-items: flex-start;
+	gap: 1.5rem;
+	flex: 1 0 0;
+	align-self: stretch;
+}
+
 .container {
 	display: flex;
-	margin-top: 1rem;
-}
-.left-side {
-	display: flex;
+	padding: 0rem 1.5625rem 1rem 1.5625rem;
 	flex-direction: column;
-	overflow: auto;
-	width: 55%;
-	padding-right: 2.5%;
+	align-items: flex-start;
+	flex: 1 0 0;
+	align-self: stretch;
 }
-.left-side h1 {
+.container h1 {
 	color: var(--text-color-primary);
 	font-family: Inter;
 	font-size: 1rem;
@@ -385,19 +406,13 @@ main {
 	line-height: 1.5rem; /* 150% */
 	letter-spacing: 0.03125rem;
 }
-.left-side p {
-	color: var(--Text-Secondary);
-	/* Body Small/Regular */
+.container p {
 	font-family: Figtree;
 	font-size: 0.875rem;
 	font-style: normal;
 	font-weight: 400;
 	line-height: 1.3125rem; /* 150% */
 	letter-spacing: 0.01563rem;
-}
-.right-side {
-	width: 35%;
-	padding-left: 2.5%;
 }
 
 .primary-text {
@@ -430,7 +445,6 @@ main {
 
 .section-row {
 	display: flex;
-	/* flex-direction: column; */
 	padding: 0.5rem 0rem;
 	align-items: center;
 	gap: 0.8125rem;
@@ -440,5 +454,12 @@ main {
 .spacer {
 	margin-top: 1rem;
 	margin-bottom: 1rem;
+}
+
+.green-text {
+	color: var(--Primary, #1b8073);
+}
+.green-text:hover {
+	color: var(--text-color-subdued);
 }
 </style>
