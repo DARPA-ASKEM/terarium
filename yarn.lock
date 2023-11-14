@@ -3155,10 +3155,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.200":
-  version: 4.14.200
-  resolution: "@types/lodash@npm:4.14.200"
-  checksum: 6471f8bb5da692a6ecf03a8da4935bfbc341e67ee9bcb4f5730bfacff0c367232548f0a01e8ac5ea18c6fe78fb085d502494e33ccb47a7ee87cbdee03b47d00d
+"@types/lodash@npm:4.14.201":
+  version: 4.14.201
+  resolution: "@types/lodash@npm:4.14.201"
+  checksum: 484be655298e9b2dc2d218ea934071b2ea31e4a531c561dd220dbda65237e8d08c20dc2d457ac24f29be7fe167415bf7bb9360ea0d80bdb8b0f0ec8d8db92fae
   languageName: node
   linkType: hard
 
@@ -8324,7 +8324,7 @@ __metadata:
   dependencies:
     "@types/d3": 7.4.0
     "@types/jest": 29.5.8
-    "@types/lodash": 4.14.200
+    "@types/lodash": 4.14.201
     "@typescript-eslint/eslint-plugin": 5.42.1
     "@typescript-eslint/parser": 5.42.1
     copy: 0.3.2
@@ -8523,7 +8523,7 @@ __metadata:
     "@playwright/test": 1.31.2
     "@rushstack/eslint-patch": 1.3.3
     "@types/d3": 7.4.0
-    "@types/lodash": 4.14.200
+    "@types/lodash": 4.14.201
     "@types/node": 18.11.18
     "@types/p5": 1.6.2
     "@uncharted.software/design-tokens": 1.1.0
