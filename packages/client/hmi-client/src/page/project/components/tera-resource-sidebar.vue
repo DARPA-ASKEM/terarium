@@ -27,7 +27,7 @@
 		</header>
 		<Button
 			class="asset-button"
-			:active="openedAssetRoute.pageType === ProjectPages.OVERVIEW"
+			:active="pageType === ProjectPages.OVERVIEW"
 			plain
 			text
 			size="small"
@@ -66,10 +66,7 @@
 				<Button
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
-					:active="
-						assetItem.assetId === openedAssetRoute.assetId &&
-						assetItem.pageType === openedAssetRoute.pageType
-					"
+					:active="assetItem.assetId === assetId && assetItem.pageType === pageType"
 					:title="assetItem.assetName"
 					class="asset-button"
 					plain
@@ -83,7 +80,7 @@
 				>
 					<span
 						:draggable="
-							openedAssetRoute.pageType === AssetType.Workflows &&
+							pageType === AssetType.Workflows &&
 							(assetItem.pageType === AssetType.Models || assetItem.pageType === AssetType.Datasets)
 						"
 						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
@@ -150,7 +147,8 @@ import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 
 defineProps<{
-	openedAssetRoute: AssetRoute;
+	pageType: ProjectPages | AssetType;
+	assetId: string;
 }>();
 
 const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
