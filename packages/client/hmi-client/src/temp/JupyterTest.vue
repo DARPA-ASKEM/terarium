@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { KernelSessionManager } from '@/services/jupyter-manager';
+import { KernelSessionManager } from '@/services/jupyter';
 
 const context = {
 	context: 'mira_model',
@@ -19,17 +19,21 @@ onMounted(async () => {
 	await manager.init('beaker', 'Beaker', context);
 
 	setTimeout(() => {
-		const test = manager.sendMessage('stratify_request', {
+		const testStratify = manager.sendMessage('stratify_request', {
 			stratify_args: {
 				key: 'test',
 				strata: ['AA', 'BB', 'CC'],
 				concepts_to_stratify: ['S']
 			}
 		});
-		if (test) {
-			test.on('stratify_response', (data) => {
-				console.log('response', data);
-			});
+		if (testStratify) {
+			testStratify
+				.register('stratify_response', (data) => {
+					console.log('stratify_response', data);
+				})
+				.register('model_preview', (data) => {
+					console.log('model_preview', data);
+				});
 		}
 	}, 1200);
 });
