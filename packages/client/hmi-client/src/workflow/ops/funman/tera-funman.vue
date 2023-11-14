@@ -16,13 +16,6 @@
 			:active="activeTab === FunmanTabs.notebook"
 			@click="activeTab = FunmanTabs.notebook"
 		/>
-		<Button
-			v-if="!showSpinner"
-			class="p-button-sm run-button"
-			label="Run"
-			icon="pi pi-play"
-			@click="runMakeQuery"
-		/>
 		<tera-progress-spinner v-if="showSpinner" :font-size="2" />
 	</div>
 	<div v-if="activeTab === FunmanTabs.wizard" class="content">
@@ -113,6 +106,15 @@
 				<h4>No Output</h4>
 			</div>
 		</div>
+	</div>
+	<div class="footer">
+		<Button
+			v-if="!showSpinner"
+			class="p-button-sm"
+			label="Run"
+			icon="pi pi-play"
+			@click="runMakeQuery"
+		/>
 	</div>
 </template>
 
@@ -418,6 +420,27 @@ main {
 	font-weight: 400;
 	line-height: 1.3125rem; /* 150% */
 	letter-spacing: 0.01563rem;
+}
+
+.footer {
+	display: flex;
+	width: 44.75rem;
+	padding: 1rem 1.5rem;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
+.footer Button {
+	display: flex;
+	height: 3.5rem;
+	padding: 1rem 1.5rem;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	border-radius: 0.375rem;
+	border: 1px solid var(--Stroke, #cacbcc);
+	background: #fff;
+	color: var(--text-color-primary);
 }
 
 .primary-text {
