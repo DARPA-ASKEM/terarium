@@ -63,7 +63,7 @@
 				<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
 				<div class="section-row">
 					<!-- This will definitely require a proper tool tip. -->
-					<label>Select parameters to synthesize<i class="pi pi-info-circle" /></label>
+					<label>Select parameters to synthesize <i class="pi pi-info-circle" /></label>
 					<div v-for="(parameter, index) of requestParameters" :key="index" class="button-column">
 						<label>{{ parameter.name }}</label>
 						<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
