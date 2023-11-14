@@ -57,13 +57,14 @@ const options = ref([
 <style scoped>
 nav {
 	display: flex;
-	padding: 0.25rem 0.25rem 0.25rem 1rem;
+	padding: 0.5rem;
+	height: 32px;
 	justify-content: space-between;
 	align-items: center;
 	background-color: var(--surface-highlight);
 	white-space: nowrap;
-	border-top-right-radius: var(--border-radius);
-	border-top-left-radius: var(--border-radius);
+	border-top-right-radius: var(--border-radius-medium);
+	border-top-left-radius: var(--border-radius-medium);
 }
 
 .warning {
@@ -90,10 +91,6 @@ nav.active-node {
 }
 nav .p-button.p-button-text:enabled:hover {
 	color: var(--surface-highlight);
-}
-nav .p-button.p-button-icon-only,
-nav .p-button.p-button-text:enabled:hover {
-	margin-right: 0.25rem;
 }
 
 h5 {

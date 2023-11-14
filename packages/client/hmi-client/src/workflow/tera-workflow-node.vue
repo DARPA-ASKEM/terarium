@@ -172,7 +172,7 @@ onBeforeUnmount(() => {
 main {
 	background-color: var(--surface-section);
 	outline: 1px solid var(--surface-border);
-	border-radius: var(--border-radius);
+	border-radius: var(--border-radius-medium);
 	position: absolute;
 	width: 20rem;
 	user-select: none;
