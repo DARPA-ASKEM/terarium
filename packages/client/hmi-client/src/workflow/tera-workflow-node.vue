@@ -30,7 +30,6 @@
 							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
 							:key="labelIdx"
 							class="input-label"
-							:style="{ color: getInputLabelColor(labelIdx, node) }"
 						>
 							{{ label }}
 						</span>
@@ -67,7 +66,6 @@
 <script setup lang="ts">
 import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { getInputLabelColor } from '@/utils/generate-color';
 import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';

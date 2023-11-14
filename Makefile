@@ -40,6 +40,14 @@ image-hmi-client: clean-hmi-client yarn-install
 	yarn workspace hmi-client build
 	mv $(PROJECT_DIR)/packages/client/hmi-client/dist $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
+TARGETS += db-migration
+clean-db-migration: clean-db-migration-base
+	rm -rf $(PROJECT_DIR)/packages/server/docker/build
+
+image-db-migration: clean-db-migration
+	./gradlew :packages:server:build -x test
+	mv $(PROJECT_DIR)/packages/server/build $(PROJECT_DIR)/packages/server/docker/build
+
 
 
 ## Clean
@@ -50,6 +58,11 @@ clean: $(TARGETS:%=clean-%)
 .PHONY: clean-hmi-server-base
 clean-hmi-server-base:
 	./gradlew :packages:server:clean
+
+.PHONY: clean-db-migration-base
+clean-db-migration-base:
+	./gradlew :packages:db-migration:clean
+
 
 
 ## Images

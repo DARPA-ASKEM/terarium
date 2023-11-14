@@ -38,91 +38,6 @@
 		</tera-slider-panel>
 		<!-- New model modal -->
 		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
-		<!--Full screen modal-->
-		<Teleport to="body">
-			<tera-fullscreen-modal v-if="dialogIsOpened" @on-close-clicked="dialogIsOpened = false">
-				<template #header>
-					<h5>{{ workflowNode?.displayName }}</h5>
-				</template>
-				<tera-calibrate-julia
-					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA
-					"
-					:node="workflowNode"
-				/>
-				<tera-calibrate-ciemss
-					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
-					"
-					:node="workflowNode"
-				/>
-				<tera-simulate-julia
-					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA
-					"
-					:node="workflowNode"
-				/>
-				<tera-simulate-ciemss
-					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS
-					"
-					:node="workflowNode"
-				/>
-				<tera-stratify-mira
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
-					:node="workflowNode"
-				/>
-				<tera-stratify
-					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY_JULIA
-					"
-					:node="workflowNode"
-					:key="workflowNode.id"
-					@open-asset="openAsset"
-				/>
-				<tera-model-from-code
-					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL_FROM_CODE
-					"
-					:node="workflowNode"
-				/>
-				<tera-simulate-ensemble-ciemss
-					v-if="
-						workflowNode &&
-						workflowNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS
-					"
-					:node="workflowNode"
-				/>
-				<tera-calibrate-ensemble-ciemss
-					v-if="
-						workflowNode &&
-						workflowNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS
-					"
-					:node="workflowNode"
-				/>
-				<tera-model-workflow-wrapper
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
-					:node="workflowNode"
-				/>
-				<tera-dataset-workflow-wrapper
-					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.DATASET"
-					:node="workflowNode"
-				/>
-				<tera-dataset-transformer
-					v-if="
-						workflowNode &&
-						workflowNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER
-					"
-					:node="workflowNode"
-				/>
-				<tera-model-transformer
-					v-if="
-						workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER
-					"
-					:node="workflowNode"
-				/>
-			</tera-fullscreen-modal>
-		</Teleport>
 	</main>
 </template>
 
@@ -130,20 +45,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { isEqual } from 'lodash';
 import { useRoute, useRouter } from 'vue-router';
-import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
-import TeraDatasetWorkflowWrapper from '@//workflow/ops/dataset/tera-dataset-workflow-wrapper.vue';
-import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
-import TeraCalibrateCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
-import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';
-import TeraStratifyMira from '@/workflow/ops/stratify-mira/tera-stratify-mira.vue';
-import TeraStratify from '@/workflow/ops/stratify-julia/tera-stratify.vue';
-import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
-import teraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
-import teraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
-import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
-import TeraModelTransformer from '@/workflow/ops/model-transformer/tera-model-transformer.vue';
-import TeraModelFromCode from '@/workflow/ops/model-from-code/tera-model-from-code.vue';
-import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
@@ -151,9 +52,8 @@ import { RouteName } from '@/router/routes';
 import { AssetRoute } from '@/types/common';
 import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { createWorkflow, emptyWorkflow, workflowEventBus } from '@/services/workflow';
+import { createWorkflow, emptyWorkflow } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
-import TeraFullscreenModal from '@/components/widgets/tera-fullscreen-modal.vue';
 import { useProjects } from '@/composables/project';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
@@ -161,13 +61,6 @@ import TeraProjectPage from './components/tera-project-page.vue';
 const route = useRoute();
 const router = useRouter();
 
-const workflowNode = ref<WorkflowNode<any> | null>(null);
-workflowEventBus.on('drilldown', (payload: any) => {
-	workflowNode.value = payload;
-	dialogIsOpened.value = true;
-});
-
-const dialogIsOpened = ref(false);
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);

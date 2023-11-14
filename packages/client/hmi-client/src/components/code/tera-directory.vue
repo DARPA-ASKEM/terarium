@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import Tree, { TreeExpandedKeys, TreeNode, TreeSelectionKeys } from 'primevue/tree';
 
 const directoryTree = ref<TreeNode[]>([]);
@@ -92,11 +92,19 @@ function expandFirstDirectory(nodes: TreeNode[]) {
 const onNodeSelect = (node: TreeNode) => {
 	emit('file-clicked', node.data.fullPath);
 };
+
+watch(
+	() => props.files,
+	() => {
+		directoryTree.value = buildDirectoryTree(props.files)[0].children ?? [];
+	}
+);
 </script>
 
 <style scoped>
 .tree-container {
 	min-width: 10rem;
 	max-width: 20rem;
+	overflow-y: auto;
 }
 </style>
