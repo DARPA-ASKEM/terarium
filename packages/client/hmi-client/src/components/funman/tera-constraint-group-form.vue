@@ -143,7 +143,7 @@ watch(
 <style>
 .constraint-group {
 	width: 100%;
-	margin: 1rem;
+	margin-top: 1rem;
 	display: flex;
 	padding: 1rem 1rem 1rem 1.5rem;
 	flex-direction: column;
