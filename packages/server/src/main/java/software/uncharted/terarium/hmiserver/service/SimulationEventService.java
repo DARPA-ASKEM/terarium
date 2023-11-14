@@ -41,7 +41,7 @@ public class SimulationEventService {
     Queue pyciemssQueue;
 
 
-    //@PostConstruct // TODO: dvince reenable
+    @PostConstruct
     void init() {
         scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues());
         rabbitAdmin.declareQueue(scimlQueue);
@@ -74,15 +74,13 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-   // @RabbitListener(
-   //         queues = {SCIML_QUEUE},
-   //         concurrency = "1")
-    // TODO: dvince reenable
+    @RabbitListener(
+            queues = {SCIML_QUEUE},
+            concurrency = "1")
     private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
 
         final ScimlStatusUpdate update = decodeMessage(message, ScimlStatusUpdate.class);
         ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder().type(ClientEventType.SIMULATION_SCIML).data(update).build();
-
         simulationIdToUserIds.get(update.getId()).forEach(userId -> {
             clientEventService.sendToUser(status, userId);
         });
@@ -96,15 +94,12 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-   // @RabbitListener(
-   //         queues = {PYCIEMSS_QUEUE},
-   //         concurrency = "1")
-    // TODO: dvince reenable
+    @RabbitListener(
+            queues = {PYCIEMSS_QUEUE},
+            concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
-        //SimulationIntermediateResultsCiemss
-        final JsonNode messageJson = decodeMessage(message, JsonNode.class);
-        ClientEvent<Object> status = ClientEvent.builder().type(ClientEventType.SIMULATION_PYCIEMSS).data(messageJson).build();
-        clientEventService.sendToAllUsers(status);
+        // TODO this should mirror the implementation of onScimlSendToUserEvent
+
     }
 
     private <T> T decodeMessage(final Message message, Class<T> clazz) {
