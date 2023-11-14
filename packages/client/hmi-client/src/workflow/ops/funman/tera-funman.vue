@@ -24,23 +24,23 @@
 			<p class="secondary-text">
 				The validator will use these parameters to execute the sanity checks.
 			</p>
-			<div class="section-row">
-				<div class="button-row">
+			<div class="section-row timespan">
+				<div class="button-column">
 					<label>Start time</label>
 					<InputNumber inputId="integeronly" v-model="startTime" />
 				</div>
-				<div class="button-row">
+				<div class="button-column">
 					<label>End time</label>
 					<InputNumber inputId="integeronly" v-model="endTime" />
 				</div>
-				<div class="button-row">
+				<div class="button-column">
 					<label>Number of steps</label>
 					<InputNumber inputId="integeronly" v-model="numberOfSteps" />
 				</div>
 			</div>
 			<InputText
 				:disabled="true"
-				class="p-inputtext-sm"
+				class="p-inputtext-sm timespan-list"
 				inputId="integeronly"
 				v-model="requestStepListString"
 			/>
@@ -51,7 +51,7 @@
 				Hide additional options
 			</p>
 			<div v-if="showAdditionalOptions">
-				<div class="button-row">
+				<div class="button-column">
 					<label>Tolerance</label>
 					<InputNumber
 						mode="decimal"
@@ -64,7 +64,7 @@
 				<div class="section-row">
 					<!-- This will definitely require a proper tool tip. -->
 					<label>Select parameters to synthesize<i class="pi pi-info-circle" /></label>
-					<div v-for="(parameter, index) of requestParameters" :key="index" class="button-row">
+					<div v-for="(parameter, index) of requestParameters" :key="index" class="button-column">
 						<label>{{ parameter.name }}</label>
 						<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
 					</div>
@@ -463,7 +463,7 @@ main {
 	letter-spacing: 0.01563rem;
 }
 
-.button-row {
+.button-column {
 	display: flex;
 	flex-direction: column;
 	padding: 1rem 0rem 0.5rem 0rem;
@@ -477,6 +477,18 @@ main {
 	align-items: center;
 	gap: 0.8125rem;
 	align-self: stretch;
+}
+
+.timespan > .button-column {
+	width: 100%;
+}
+
+div.section-row.timespan > div > span {
+	width: 100%;
+}
+
+.timespan-list {
+	width: 100%;
 }
 
 .spacer {
