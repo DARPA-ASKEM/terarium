@@ -186,7 +186,10 @@ const openNewAsset = (assetType: AssetType) => {
 	}
 };
 
-// This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
+// TODO:
+// This conversion should maybe be done in tera-external-publication.vue - tera-preview-panel.vue does this conversion differently...
+// This should be deleted eventually since publications are deprecated
+// So delete this when we choose to delete tera-external-publication.vue
 const getXDDuri = (docAssetId: string): string =>
 	useProjects().activeProject.value?.assets?.[AssetType.Publications]?.find(
 		(document) => document?.id === Number.parseInt(docAssetId ?? '', 10)
