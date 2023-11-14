@@ -16,6 +16,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -41,8 +42,19 @@ public class ClientEventService{
   private final RabbitAdmin rabbitAdmin;
   private final Config config;
 
-  private static final String CLIENT_USER_EVENT_QUEUE = "clientUserEventQueue";
-  private static final String CLIENT_ALL_USERS_EVENT_QUEUE = "clientAllUsersEventQueue";
+  @Value("${terarium.client-user-event-queue}")
+  private String CLIENT_USER_EVENT_QUEUE;
+
+  @Value("${terarium.client-all-user-event-queue}")
+  private String CLIENT_ALL_USERS_EVENT_QUEUE;
+
+  @Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
+  private String queueSuffix;
+
+  @Value("${terarium.queue.suffix:#{null}}")
+  private String isUserDev;
+
+
 
   final Map<String, SseEmitter> userIdToEmitter = new ConcurrentHashMap<>();
 
@@ -58,12 +70,12 @@ public class ClientEventService{
   }
 
 
-  //@PostConstruct // TODO: dvince reenable
+  @PostConstruct
   void init() {
-    allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE, config.getDurableQueues());
+    allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
     rabbitAdmin.declareQueue(allUsersQueue);
 
-    userQueue = new Queue(CLIENT_USER_EVENT_QUEUE, config.getDurableQueues());
+    userQueue = new Queue(CLIENT_USER_EVENT_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
     rabbitAdmin.declareQueue(userQueue);
   }
 
@@ -117,9 +129,9 @@ public class ClientEventService{
    * @param message the message to send
    * @param channel the channel to send the message on
    */
-  //@RabbitListener( // TODO: dvince reenable
-  //        queues = {CLIENT_ALL_USERS_EVENT_QUEUE},
-  //        concurrency = "1")
+  @RabbitListener(
+          queues = "${terarium.client-all-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
+          concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = decodeMessage(message);
     if (messageJson == null) {
@@ -150,9 +162,9 @@ public class ClientEventService{
    * @param channel       the channel to send the message on
    * @throws IOException  if there was an error sending the message
    */
-  //@RabbitListener( // TODO: dvince reenable
-  //        queues = {CLIENT_USER_EVENT_QUEUE},
-  //        concurrency = "1")
+  @RabbitListener(
+          queues = {"${terarium.client-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}"},
+          concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
     final JsonNode messageJson = decodeMessage(message);
     if (messageJson == null) {
@@ -192,7 +204,7 @@ public class ClientEventService{
    * Heartbeat to ensure that the clients are subscribed to the SSE service. If the client does
    * not receive a heartbeat within the configured interval, it will attempt to reconnect.
    */
-  //@Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}") // TODO: dvince reenable
+  @Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}")
   public void sendHeartbeat() {
     final ClientEvent<Void> event = ClientEvent.<Void>builder()
             .type(ClientEventType.HEARTBEAT)
