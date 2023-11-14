@@ -25,7 +25,9 @@ public enum ProvenanceType {
 	@JsonAlias("Code")
     CODE("Code"),
 	@JsonAlias("Document")
-    DOCUMENT("Document");
+    DOCUMENT("Document"),
+    @JsonAlias("Workflow")
+    WORKFLOW("Workflow");
 
 	public final String type;
 

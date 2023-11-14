@@ -67,11 +67,7 @@
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
-								<Button
-									icon="pi pi-plus"
-									label="New project"
-									@click="isNewProjectModalVisible = true"
-								/>
+								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
 						</section>
 						<section class="projects">
@@ -83,7 +79,7 @@
 										<Button
 											label="new project"
 											class="p-button-text new-project-button"
-											@click="isNewProjectModalVisible = true"
+											@click="openCreateProjectModal"
 										/>.
 									</p>
 									<p>Your projects will be displayed on this page.</p>
@@ -110,7 +106,6 @@
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								Y
 								:projects="tab.projects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
@@ -119,66 +114,6 @@
 					</TabPanel>
 				</TabView>
 			</section>
-			<!-- New project modal -->
-			<Teleport to="body">
-				<tera-modal
-					v-if="isNewProjectModalVisible"
-					class="modal"
-					@modal-mask-clicked="isNewProjectModalVisible = false"
-					@modal-enter-press="createNewProject"
-				>
-					<template #header>
-						<h4>Create project</h4>
-					</template>
-					<template #default>
-						<form @submit.prevent>
-							<label for="new-project-name">Name</label>
-							<InputText
-								id="new-project-name"
-								type="text"
-								v-model="newProjectName"
-								placeholder="What do you want to call your project?"
-							/>
-							<label for="new-project-description">Description</label>
-							<Textarea
-								id="new-project-description"
-								rows="5"
-								v-model="newProjectDescription"
-								placeholder="Add a short description"
-							/>
-						</form>
-					</template>
-					<template #footer>
-						<Button @click="createNewProject">Create</Button>
-						<Button severity="secondary" outlined @click="isNewProjectModalVisible = false"
-							>Cancel</Button
-						>
-					</template>
-				</tera-modal>
-			</Teleport>
-			<Dialog
-				:header="`Remove ${selectedMenuProject?.name}`"
-				v-model:visible="isRemoveDialogVisible"
-			>
-				<p>
-					You are about to remove project <em>{{ selectedMenuProject?.name }}</em
-					>.
-				</p>
-				<p>Are you sure?</p>
-				<template #footer>
-					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isRemoveDialogVisible = false"
-					/>
-					<Button label="Remove project" @click="removeProject" />
-				</template>
-			</Dialog>
-			<tera-share-project
-				v-if="selectedMenuProject"
-				v-model="isShareDialogVisible"
-				:project="selectedMenuProject"
-			/>
 		</div>
 	</main>
 </template>
@@ -187,28 +122,21 @@
 import { computed, ref, onMounted } from 'vue';
 import useQueryStore from '@/stores/query';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
-import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import { isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
-import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import { logger } from '@/utils/logger';
-import Dialog from 'primevue/dialog';
 import { IProject } from '@/types/Project';
-import { useProjectMenu } from '@/composables/project-menu';
 import SelectButton from 'primevue/selectbutton';
+import { useProjectMenu } from '@/composables/project-menu';
 
-const { isShareDialogVisible, isRemoveDialogVisible, selectedMenuProject } = useProjectMenu();
+const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -249,6 +177,11 @@ const publicFilteredSortedProjects = computed(() => {
 	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
 	return filterAndSortProjects(publicProjects);
 });
+
+function openCreateProjectModal() {
+	isProjectConfigDialogVisible.value = true;
+	menuProject.value = null;
+}
 
 function filterAndSortProjects(projects: IProject[]) {
 	if (!projects) return [];
@@ -300,43 +233,13 @@ const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
 
-const removeProject = async () => {
-	if (!selectedMenuProject.value) return;
-	const { name, id } = selectedMenuProject.value;
-	const isDeleted = await useProjects().remove(id);
-	isRemoveDialogVisible.value = false;
-	if (isDeleted) {
-		useProjects().getAll();
-		logger.info(`The project ${name} was removed`, { showToast: true });
-	} else {
-		logger.error(`Unable to delete the project ${name}`, { showToast: true });
-	}
-};
-
 const queryStore = useQueryStore();
 const router = useRouter();
-const auth = useAuthStore();
 
-const isNewProjectModalVisible = ref(false);
-const newProjectName = ref('');
-const newProjectDescription = ref('');
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
-}
-
-async function createNewProject() {
-	const author = auth.user?.name ?? '';
-	const project = await useProjects().create(
-		newProjectName.value,
-		newProjectDescription.value,
-		author
-	);
-	if (project?.id) {
-		isNewProjectModalVisible.value = false;
-		openProject(project.id);
-	}
 }
 
 onMounted(() => {
@@ -480,31 +383,6 @@ a {
 
 .new-project-button {
 	padding: 0;
-}
-
-#new-project-name,
-#new-project-description {
-	border-color: var(--surface-border);
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
-}
-
-.modal-subheader-text {
-	color: var(--text-color-subdued);
-}
-
-.modal-subheader-text em {
-	color: var(--primary-color);
 }
 
 .close-button {

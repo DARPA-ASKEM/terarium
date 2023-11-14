@@ -9,7 +9,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public enum KeycloakRole {
 	USER,
-	ADMIN;
+	ADMIN,
+	GROUP,
+	TEST,
+	SERVICE;
 
 	public static KeycloakRole get(String role) {
 		try {
@@ -26,5 +29,9 @@ public enum KeycloakRole {
 			.map(KeycloakRole::get)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
+	}
+
+	public String asRole() {
+		return "ROLE_" + super.toString();
 	}
 }

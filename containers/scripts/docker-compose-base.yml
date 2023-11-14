@@ -38,6 +38,19 @@ services:
       - terarium-db:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  db-migration:
+    container_name: db-migration
+    image: ghcr.io/darpa-askem/db-migration:latest
+    networks:
+      - terarium
+    environment:
+      SPRING_PROFILES_ACTIVE: "default, local-docker"
+      TERARIUM_DB_PASSWORD: "postgres"
+      TERARIUM_DB_USERNAME: "postgres"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   terarium-db:
     driver: local

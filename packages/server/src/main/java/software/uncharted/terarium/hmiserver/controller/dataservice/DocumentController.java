@@ -17,6 +17,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -24,6 +25,7 @@ import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetSe
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
@@ -38,6 +40,7 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionP
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -74,6 +77,7 @@ public class DocumentController implements SnakeCaseController {
 	String apikey;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
@@ -83,6 +87,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createDocument(
 		@RequestBody final DocumentAsset document
 	) {
@@ -90,6 +95,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<DocumentAsset> getDocument(
 		@PathVariable("id") final String id
 	) {
@@ -134,6 +140,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteDocument(
 		@PathVariable("id") final String id
 	) {
@@ -180,6 +187,7 @@ public class DocumentController implements SnakeCaseController {
 	 * Uploads a file to the project.
 	 */
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocument(
 		@PathVariable("id") final String id,
 		@RequestParam("filename") final String filename,
@@ -194,6 +202,7 @@ public class DocumentController implements SnakeCaseController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
 	 */
 	@PutMapping("/{documentId}/uploadDocumentFromGithub")
+	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocumentFromGithub(
 		@PathVariable("documentId") final String documentId,
 		@RequestParam("path") final String path,
@@ -210,6 +219,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@PostMapping(value = "/createDocumentFromXDD")
+	@Secured(Roles.USER)
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
 		@RequestBody final AddDocumentAssetFromXDDRequest body
 	) {
@@ -268,6 +278,7 @@ public class DocumentController implements SnakeCaseController {
 
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> downloadDocument(
 		@PathVariable("id") final String id,
 		@RequestParam("filename") final String filename
@@ -291,6 +302,7 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}/download-document-as-text")
+	@Secured(Roles.USER)
 	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);
@@ -333,11 +345,11 @@ public class DocumentController implements SnakeCaseController {
 			documentAsset.setAssets(new ArrayList<>());
 			for(int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
-				if(extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.EQUATION_ASSETTYPE)
-				|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.FIGURE_ASSETTYPE)
-				|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.TABLE_ASSETTYPE) ) {
+				if(extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString()) ) {
 					DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
-					documentExtraction.setAssetType(extraction.getAskemClass());
+					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
 					documentExtraction.setFileName("extraction_" + i + ".png");
 					documentExtraction.getMetadata().put("title", extraction.getProperties().getTitle());
 					documentExtraction.getMetadata().put("description", extraction.getProperties().getCaption());
@@ -366,21 +378,24 @@ public class DocumentController implements SnakeCaseController {
 		if(extractions != null) {
 			for (int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
-				if (extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.EQUATION_ASSETTYPE)
-					|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.FIGURE_ASSETTYPE)
-					|| extraction.getAskemClass().equalsIgnoreCase(DocumentExtraction.TABLE_ASSETTYPE)) {
+				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
 					String filename = "extraction_" + i + ".png";
 
 					try(CloseableHttpClient httpclient = HttpClients.custom()
 						.disableRedirectHandling()
 						.build()){
-						byte[] imageAsBytes = Base64.getDecoder().decode(extraction.getProperties().getImage().getBytes("UTF-8"));
-						HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-						final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
+						String image = extraction.getProperties().getImage();
+						if(image != null){
+							byte[] imageAsBytes = Base64.getDecoder().decode(image.getBytes("UTF-8"));
+							HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+							final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
 
-						final HttpPut put = new HttpPut(presignedURL.getUrl());
-						put.setEntity(fileEntity);
-						final HttpResponse pdfUploadResponse = httpclient.execute(put);
+							final HttpPut put = new HttpPut(presignedURL.getUrl());
+							put.setEntity(fileEntity);
+							final HttpResponse pdfUploadResponse = httpclient.execute(put);
+						}
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}

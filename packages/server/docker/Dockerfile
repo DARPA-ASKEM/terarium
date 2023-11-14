@@ -6,12 +6,18 @@ COPY /packages/server .
 RUN --mount=type=cache,target=/root/.gradle ./gradlew clean bootJar
 
 # Extract JAR into layers for more optimal builds
-RUN mkdir -p ./layers
-RUN cp ./build/libs/*-SNAPSHOT.jar ./layers
-RUN (cd layers; java -Djarmode=layertools -jar *-SNAPSHOT.jar extract)
+RUN mkdir -p ./layers \
+    && cp ./build/libs/*-SNAPSHOT.jar ./layers
+
+WORKDIR /app/layers
+RUN java -Djarmode=layertools -jar ./*-SNAPSHOT.jar extract
 
 FROM eclipse-temurin:17.0.9_9-jre-focal
-RUN groupadd -r terarium && useradd --no-log-init -r -g terarium terarium
+
+WORKDIR /app
+
+RUN groupadd -r terarium \
+    && useradd --no-log-init -r -g terarium terarium
 VOLUME /tmp
 USER terarium
 

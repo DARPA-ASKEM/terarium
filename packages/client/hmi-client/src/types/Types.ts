@@ -389,36 +389,48 @@ export interface ExtractionResponseResult {
 }
 
 export interface FunmanPostQueriesRequest {
-    model: any;
+    model: Model;
     request: FunmanWorkRequest;
-    worker: any;
 }
 
 export interface FunmanConfig {
-    tolerance: number;
-    queueTimeout: number;
-    numberOfProcesses: number;
-    waitTimeout: number;
-    waitActionTimeout: number;
-    solver: string;
-    numSteps: number;
-    stepSize: number;
-    numInitialBoxes: number;
-    saveSmtlib: boolean;
-    drealPrecision: number;
-    drealLogLevel: string;
-    constraintNoise: number;
-    initialStateTolerance: number;
-    drealMcts: boolean;
-    substituteSubformulas: boolean;
-    useCompartmentalConstraints: boolean;
-    normalize: boolean;
+    tolerance?: number;
+    queueTimeout?: number;
+    numberOfProcesses?: number;
+    waitTimeout?: number;
+    waitActionTimeout?: number;
+    solver?: string;
+    numSteps?: number;
+    stepSize?: number;
+    numInitialBoxes?: number;
+    saveSmtlib?: boolean;
+    drealPrecision?: number;
+    drealLogLevel?: string;
+    constraintNoise?: number;
+    initialStateTolerance?: number;
+    drealMcts?: boolean;
+    substituteSubformulas?: boolean;
+    use_compartmental_constraints?: boolean;
+    normalize?: boolean;
+    normalization_constant?: number;
+}
+
+export interface FunmanInterval {
+    ub?: number;
+    lb?: number;
+    closed_upper_bound?: boolean;
+}
+
+export interface FunmanParameter {
+    name: string;
+    interval: FunmanInterval;
+    label: string;
 }
 
 export interface FunmanWorkRequest {
     query?: any;
     constraints?: any;
-    parameters?: any;
+    parameters?: FunmanParameter[];
     config?: FunmanConfig;
     structure_parameters?: any;
 }
@@ -593,7 +605,7 @@ export interface Document {
 
 export interface DocumentExtraction {
     fileName: string;
-    assetType: string;
+    assetType: ExtractionAssetType;
     metadata: { [index: string]: any };
 }
 
@@ -932,6 +944,9 @@ export enum AuthorityType {
 export enum RoleType {
     Admin = "ADMIN",
     User = "USER",
+    Group = "GROUP",
+    Test = "TEST",
+    Service = "SERVICE",
     Special = "SPECIAL",
 }
 
@@ -997,6 +1012,7 @@ export enum ProvenanceType {
     Artifact = "Artifact",
     Code = "Code",
     Document = "Document",
+    Workflow = "Workflow",
 }
 
 export enum AssetType {
@@ -1014,4 +1030,10 @@ export enum AssetType {
 export enum OntologicalField {
     Object = "OBJECT",
     Unit = "UNIT",
+}
+
+export enum ExtractionAssetType {
+    Figure = "FIGURE",
+    Table = "TABLE",
+    Equation = "EQUATION",
 }
