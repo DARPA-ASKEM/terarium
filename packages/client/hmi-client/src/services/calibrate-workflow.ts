@@ -48,7 +48,7 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 
 export const renderLossGraph = (
 	element: HTMLElement,
-	data: any[],
+	data: { [key: string]: number }[],
 	options: { width?: number; height: number }
 ) => {
 	const margin = 20;
