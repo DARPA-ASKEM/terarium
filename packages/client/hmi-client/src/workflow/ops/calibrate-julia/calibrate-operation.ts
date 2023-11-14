@@ -2,7 +2,8 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { CalibrateConfig, ChartConfig } from '@/types/SimulateConfig';
+import { ChartConfig } from '@/types/SimulateConfig';
+import { CalibrateConfig } from '@/types/CalibrateConfig';
 
 export interface CalibrateMap {
 	modelVariable: string;
