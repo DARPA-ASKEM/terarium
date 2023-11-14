@@ -66,7 +66,7 @@
 			<slot name="default" />
 		</section>
 	</main>
-	<section v-else><tera-progress-spinner :font-size="2" /></section>
+	<tera-progress-spinner v-else :font-size="2" is-centered />
 </template>
 
 <script setup lang="ts">
