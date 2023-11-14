@@ -72,46 +72,74 @@
 				</section>
 			</AccordionTab>
 		</Accordion>
-		<Accordion
-			v-if="view === CalibrationView.Output && modelConfig"
-			:multiple="true"
-			:active-index="[0, 1]"
-		>
-			<AccordionTab header="Variables">
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:initial-data="csvAsset"
-					:mapping="mapping"
-					:run-type="RunType.Julia"
-					:chartConfig="cfg"
-					@configuration-change="chartConfigurationChange(index, $event)"
-				/>
-				<Button
-					class="p-button-sm p-button-text"
-					@click="addChart"
-					label="Add chart"
-					icon="pi pi-plus"
-				></Button>
-			</AccordionTab>
-			<AccordionTab header="Calibrated parameter values">
-				<table class="p-datatable-table">
-					<thead class="p-datatable-thead">
-						<th>Parameter</th>
-						<th>Value</th>
-					</thead>
-					<tr v-for="(content, key) in parameterResult" :key="key">
-						<td>
-							<p>{{ key }}</p>
-						</td>
-						<td>
-							<p>{{ content }}</p>
-						</td>
-					</tr>
-				</table>
-			</AccordionTab>
-		</Accordion>
+		<div v-if="view === CalibrationView.Output && modelConfig">
+			<Dropdown
+				v-if="!showSpinner && runList.length > 0"
+				:options="runList"
+				v-model="selectedRun"
+				option-label="label"
+				placeholder="Select a calibration run"
+			/>
+			<Accordion :multiple="true" :active-index="[0, 1, 2]">
+				<AccordionTab header="Loss">
+					<!-- TODO: plot loss as they come in and not just when it's finished -->
+					<div v-if="!showSpinner" ref="drilldownLossPlot"></div>
+				</AccordionTab>
+				<AccordionTab header="Calibrated parameter values">
+					<table class="p-datatable-table">
+						<thead class="p-datatable-thead">
+							<th>Parameter</th>
+							<th>Value</th>
+						</thead>
+						<tr v-for="(content, key) in currentParams" :key="key">
+							<td>
+								<p>{{ key }}</p>
+							</td>
+							<td>
+								<p>{{ content }}</p>
+							</td>
+						</tr>
+					</table>
+				</AccordionTab>
+				<AccordionTab header="Variables" v-if="showSpinner">
+					<tera-calibrate-chart
+						v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+						:key="index"
+						:initial-data="csvAsset"
+						:intermediate-data="currentIntermediateVals"
+						:mapping="mapping"
+						:chartConfig="{ selectedRun: runInProgress!, selectedVariable: cfg }"
+						@configuration-change="chartConfigurationChange(index, $event)"
+					/>
+					<Button
+						class="add-chart"
+						text
+						:outlined="true"
+						@click="addChart"
+						label="Add chart"
+						icon="pi pi-plus"
+					></Button>
+				</AccordionTab>
+				<AccordionTab header="Variables" v-else-if="runResults[selectedRun?.runId]">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+						:key="index"
+						:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
+						:initial-data="csvAsset"
+						:mapping="mapping"
+						:run-type="RunType.Julia"
+						:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+						@configuration-change="chartConfigurationChange(index, $event)"
+					/>
+					<Button
+						class="p-button-sm p-button-text"
+						@click="addChart"
+						label="Add chart"
+						icon="pi pi-plus"
+					></Button>
+				</AccordionTab>
+			</Accordion>
+		</div>
 		<section v-else-if="!modelConfig" class="emptyState">
 			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
 			<p class="helpMessage">Connect a model configuration and dataset</p>
@@ -122,12 +150,10 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ref, shallowRef, watch } from 'vue';
-import { csvParse } from 'd3';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-import { getRunResultJulia } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -136,13 +162,18 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
-import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
+import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
+import { ChartConfig, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
 import SelectButton from 'primevue/selectbutton';
-import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation';
+import {
+	CalibrationOperationStateJulia,
+	CalibrateMap,
+	useJuliaCalibrateOptions
+} from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
@@ -172,15 +203,34 @@ const modelConfig = ref<ModelConfiguration>();
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
-const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.value);
-const runResults = ref<RunResults>({});
-const parameterResult = ref<{ [index: string]: any }[]>();
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
+
+const {
+	runResults,
+	selectedRun,
+	currentIntermediateVals,
+	parameterResult,
+	showSpinner,
+	runInProgress
+} = useJuliaCalibrateOptions();
+const runList = computed(() =>
+	Object.keys(props.node.state.calibrateConfigs.runConfigs).map((runId: string, idx: number) => ({
+		label: `Output ${idx + 1} - ${runId}`,
+		runId
+	}))
+);
+const drilldownLossPlot = ref<HTMLElement>();
+
+const currentParams = computed(() =>
+	showSpinner.value
+		? parameterResult.value
+		: props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.params
+);
 
 // Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -191,7 +241,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	state.calibrateConfigs.chartConfigs.push([]);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -244,21 +294,13 @@ watch(
 	{ immediate: true }
 );
 
-// Fetch simulation run results whenever output changes
-watch(
-	() => simulationIds.value,
-	async () => {
-		if (!simulationIds.value) return;
-		const resultCsv = (await getRunResultJulia(
-			simulationIds.value[0].runId,
-			'result.json'
-		)) as string;
-		const csvData = csvParse(resultCsv);
-		runResults.value[simulationIds.value[0].runId] = csvData as any;
-		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
-	},
-	{ immediate: true }
-);
+// Plot loss values if available on mount or on selectedRun change
+watch([() => selectedRun.value, () => drilldownLossPlot.value], () => {
+	const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.loss;
+	if (lossVals && drilldownLossPlot.value) {
+		renderLossGraph(drilldownLossPlot.value, lossVals, { height: 300 });
+	}
+});
 </script>
 
 <style scoped>

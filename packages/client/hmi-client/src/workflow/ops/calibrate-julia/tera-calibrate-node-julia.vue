@@ -3,7 +3,7 @@
 		<Accordion
 			v-if="datasetColumnNames && modelColumnNames"
 			:multiple="true"
-			:active-index="[0, 3]"
+			:active-index="[1, 2, 3]"
 		>
 			<AccordionTab header="Mapping">
 				<DataTable class="mappingTable" :value="mapping">
@@ -27,15 +27,38 @@
 					</Column>
 				</DataTable>
 			</AccordionTab>
-			<AccordionTab header="Variables">
+			<AccordionTab header="Loss">
+				<div ref="staticLossPlotRef"></div>
+			</AccordionTab>
+			<AccordionTab header="Calibrated parameter values">
+				<table class="p-datatable-table">
+					<thead class="p-datatable-thead">
+						<th>Parameter</th>
+						<th>Value</th>
+					</thead>
+					<tr
+						v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRun?.runId]
+							?.params"
+						:key="key"
+					>
+						<td>
+							<p>{{ key }}</p>
+						</td>
+						<td>
+							<p>{{ content }}</p>
+						</td>
+					</tr>
+				</table>
+			</AccordionTab>
+			<AccordionTab header="Variables" v-if="runResults[selectedRun?.runId]">
 				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
+					v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
 					:key="index"
-					:run-results="runResults"
+					:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
 					:initial-data="csvAsset"
 					:mapping="mapping"
 					:run-type="RunType.Julia"
-					:chartConfig="cfg"
+					:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 				<Button
@@ -46,22 +69,6 @@
 					label="Add chart"
 					icon="pi pi-plus"
 				></Button>
-			</AccordionTab>
-			<AccordionTab header="Calibrated parameter values">
-				<table class="p-datatable-table">
-					<thead class="p-datatable-thead">
-						<th>Parameter</th>
-						<th>Value</th>
-					</thead>
-					<tr v-for="(content, key) in parameterResult" :key="key">
-						<td>
-							<p>{{ key }}</p>
-						</td>
-						<td>
-							<p>{{ content }}</p>
-						</td>
-					</tr>
-				</table>
 			</AccordionTab>
 			<AccordionTab header="Extras">
 				<span class="extras">
@@ -78,9 +85,6 @@
 					/>
 				</span>
 			</AccordionTab>
-			<!-- <AccordionTab header="Loss"></AccordionTab>
-			<AccordionTab header="Parameters"></AccordionTab>
-			<AccordionTab header="Variables"></AccordionTab> -->
 		</Accordion>
 		<section v-else class="emptyState">
 			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -99,11 +103,78 @@
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />
+		<!-- TODO: cleanup duplicate code below -->
+		<Accordion
+			v-if="datasetColumnNames && modelColumnNames"
+			:multiple="true"
+			:active-index="[1, 2, 3]"
+		>
+			<AccordionTab header="Mapping">
+				<DataTable class="mappingTable" :value="mapping">
+					<Column field="modelVariable">
+						<template #header>
+							<span class="column-header">Model variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<div class="mappingVariable">{{ data[field] }}</div>
+						</template>
+					</Column>
+					<Column field="datasetVariable">
+						<template #header>
+							<span class="column-header">Dataset variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
+								{{ data[field] ? data[field] : 'Not mapped' }}
+							</div>
+						</template>
+					</Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab header="Loss">
+				<div ref="lossPlotRef"></div>
+			</AccordionTab>
+			<AccordionTab header="Calibrated parameter values">
+				<table class="p-datatable-table">
+					<thead class="p-datatable-thead">
+						<th>Parameter</th>
+						<th>Value</th>
+					</thead>
+					<tr v-for="(content, key) in parameterResult" :key="key">
+						<td>
+							<p>{{ key }}</p>
+						</td>
+						<td>
+							<p>{{ content }}</p>
+						</td>
+					</tr>
+				</table>
+			</AccordionTab>
+			<AccordionTab header="Variables">
+				<tera-calibrate-chart
+					v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+					:key="index"
+					:initial-data="csvAsset"
+					:intermediate-data="currentIntermediateVals"
+					:mapping="mapping"
+					:chartConfig="{ selectedRun: runInProgress!, selectedVariable: cfg }"
+					@configuration-change="chartConfigurationChange(index, $event)"
+				/>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="addChart"
+					label="Add chart"
+					icon="pi pi-plus"
+				></Button>
+			</AccordionTab>
+		</Accordion>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, ComputedRef, onMounted, onUnmounted } from 'vue';
+import { computed, shallowRef, watch, ref, onMounted, onUnmounted } from 'vue';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
@@ -126,8 +197,8 @@ import {
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
-import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
+import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
+import { ChartConfig, RunType } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
@@ -136,6 +207,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
@@ -144,7 +216,8 @@ import {
 	CalibrationOperationStateJulia,
 	CalibrateMap,
 	CalibrateMethodOptions,
-	CalibrateExtraJulia
+	CalibrateExtraJulia,
+	useJuliaCalibrateOptions
 } from './calibrate-operation';
 
 const props = defineProps<{
@@ -157,29 +230,55 @@ const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string |
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const modelConfig = ref<ModelConfiguration>();
-const completedRunId = ref<string>();
-const parameterResult = ref<{ [index: string]: any }>();
+const completedRunIdList = ref<string[]>([]);
 
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
-const runResults = ref<RunResults>({});
-const simulationIds: ComputedRef<any | undefined> = computed(
-	<any | undefined>(() => props.node.outputs[0]?.value)
-);
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+
+const {
+	runResults,
+	selectedRun,
+	currentIntermediateVals,
+	parameterResult,
+	showSpinner,
+	runInProgress
+} = useJuliaCalibrateOptions();
+const runList = computed(() =>
+	Object.keys(props.node.state.calibrateConfigs.runConfigs).map((runId: string, idx: number) => ({
+		label: `Output ${idx + 1} - ${runId}`,
+		runId
+	}))
+);
+
+let lossValues: { [key: string]: number }[] = [];
+const lossPlotRef = ref<HTMLElement>();
+const staticLossPlotRef = ref<HTMLElement>();
 
 const poller = new Poller();
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length > 0) {
-		getStatus(runIds[0]);
+		getStatus(runIds);
+	}
+
+	const runId = Object.values(props.node.state.calibrateConfigs.runConfigs).find(
+		(metadata) => metadata.active
+	)?.runId;
+	if (runId) {
+		selectedRun.value = runList.value.find((run) => run.runId === runId);
+	} else {
+		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
+	}
+
+	if (selectedRun.value?.runId) {
+		lazyLoadRunResults(selectedRun.value.runId);
 	}
 });
 
@@ -195,6 +294,17 @@ const disableRunButton = computed(
 		!modelConfigId.value ||
 		!datasetId.value
 );
+
+const filterStateVars = (params) => {
+	const initialStates =
+		modelConfig.value?.configuration.semantics.ode.initials.map((d) => d.expression) ?? [];
+	return Object.keys(params).reduce((acc, key) => {
+		if (!initialStates.includes(key)) {
+			acc[key] = params[key];
+		}
+		return acc;
+	}, {});
+};
 
 const runCalibrate = async () => {
 	if (
@@ -238,69 +348,120 @@ const runCalibrate = async () => {
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	if (response?.simulationId) {
-		getStatus(response.simulationId);
+		getStatus([response.simulationId]);
 	}
 };
-
-/* const handleIntermediateResult = (message: string) => {
-	const parsedMessage = JSON.parse(message);
-	console.log(parsedMessage);
-}; */
 
 function getMessageHandler(event: ClientEvent<ScimlStatusUpdate>) {
 	const runIds: string[] = querySimulationInProgress(props.node);
 	if (runIds.length === 0) return;
 
 	if (runIds.includes(event.data.id)) {
-		// perform some action here
-		console.log(`Event received for: ${event.data.id}`);
+		const { iter, loss, params, solData, timesteps } = event.data;
+
+		parameterResult.value = filterStateVars(params);
+
+		lossValues.push({ iter, loss });
+		if (lossPlotRef.value) {
+			renderLossGraph(lossPlotRef.value, lossValues, { height: 150 });
+		}
+
+		if (iter % 100 === 0) {
+			currentIntermediateVals.value = { timesteps, solData };
+		}
 	}
 }
 
-const getStatus = async (simulationId: string) => {
+const getStatus = async (simulationIds: string[]) => {
 	showSpinner.value = true;
-	if (!simulationId) return;
+	runInProgress.value = simulationIds[0];
 
-	const runIds = [simulationId];
-
-	await subscribeToUpdateMessages(runIds, ClientEventType.SimulationSciml, getMessageHandler);
+	await subscribeToUpdateMessages(
+		simulationIds,
+		ClientEventType.SimulationSciml,
+		getMessageHandler
+	);
 
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+		.setPollAction(async () => simulationPollAction(simulationIds, props.node, progress, emit));
 	const pollerResults = await poller.start();
 
-	await unsubscribeToUpdateMessages(runIds, ClientEventType.SimulationSciml, getMessageHandler);
+	await unsubscribeToUpdateMessages(
+		simulationIds,
+		ClientEventType.SimulationSciml,
+		getMessageHandler
+	);
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Calibrate: ${simulationId} has failed`, {
+		logger.error(`Calibrate: ${simulationIds} has failed`, {
 			toastTitle: 'Error - Julia'
 		});
 		throw Error('Failed Runs');
 	}
-	completedRunId.value = simulationId;
-	updateOutputPorts(completedRunId);
+	completedRunIdList.value = simulationIds;
+
+	runInProgress.value = undefined;
 	showSpinner.value = false;
 };
 
-const updateOutputPorts = async (runId) => {
-	const portLabel = props.node.inputs[0].label;
+const watchCompletedRunList = async (runIdList: string[]) => {
+	if (runIdList.length === 0) return;
+
+	const newRunResults = {};
+	await Promise.all(
+		runIdList.map(async (runId) => {
+			if (runResults.value[runId]) {
+				newRunResults[runId] = runResults.value[runId];
+			} else {
+				const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
+				const csvData = csvParse(resultCsv);
+				newRunResults[runId] = csvData;
+			}
+		})
+	);
+	runResults.value = newRunResults;
+
+	const port = props.node.inputs[0];
+
+	const state = _.cloneDeep(props.node.state);
+	if (state.calibrateConfigs.chartConfigs.length === 0) {
+		state.calibrateConfigs.chartConfigs.push([]);
+	}
+
+	state.calibrateConfigs.runConfigs[runIdList[0]] = {
+		runId: runIdList[0],
+		active: true,
+		loss: lossValues,
+		params: parameterResult.value
+	};
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+
+	// clear out intermediate values for next run
+	lossValues = [];
+	parameterResult.value = {};
+
 	emit('append-output-port', {
 		type: CalibrationOperationJulia.outputs[0].type,
-		label: `${portLabel} Result`,
-		value: {
-			runId
-		}
+		label: `${port.label} - Output ${runList.value.length}`,
+		value: runIdList
 	});
+
+	// show the latest run in the dropdown
+	selectedRun.value = runList.value[runList.value.length - 1];
 };
 
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -311,7 +472,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	state.calibrateConfigs.chartConfigs.push([]);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -348,20 +509,44 @@ watch(
 );
 
 // Fetch simulation run results whenever output changes
-watch(
-	() => simulationIds.value,
-	async () => {
-		if (!simulationIds.value) return;
-		const resultCsv = (await getRunResultJulia(
-			simulationIds.value[0].runId,
-			'result.json'
-		)) as string;
-		const csvData = csvParse(resultCsv);
-		runResults.value[simulationIds.value[0].runId] = csvData as any;
-		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
-	},
-	{ immediate: true }
-);
+watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
+
+const lazyLoadRunResults = async (runId: string) => {
+	if (runResults.value[runId]) return;
+
+	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
+	const csvData = csvParse(resultCsv);
+
+	runResults.value[runId] = csvData as any;
+};
+
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	lazyLoadRunResults(selectedRun.value.runId);
+
+	const state = _.cloneDeep(props.node.state);
+	// set the active status for the selected run in the run configs
+	Object.keys(state.calibrateConfigs.runConfigs).forEach((runId) => {
+		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
+	});
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
+
+// Plot loss values if available on mount or on selectedRun change
+watch([() => selectedRun.value, () => staticLossPlotRef.value], () => {
+	const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.loss;
+	if (lossVals && staticLossPlotRef.value) {
+		renderLossGraph(staticLossPlotRef.value, lossVals, { height: 150 });
+	}
+});
 </script>
 
 <style scoped>

@@ -1,3 +1,5 @@
+import * as d3 from 'd3';
+
 import { ModelConfiguration, Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
@@ -42,4 +44,55 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 		return { filename, csv };
 	}
 	return {};
+};
+
+export const getDomain = (data: any[]) => {
+	let minX = Number.MAX_VALUE;
+	let maxX = Number.MIN_VALUE;
+	let minY = Number.MAX_VALUE;
+	let maxY = Number.MIN_VALUE;
+
+	data.forEach((d) => {
+		minX = Math.min(minX, d.iter);
+		maxX = Math.max(maxX, d.iter);
+		minY = Math.min(minY, d.loss);
+		maxY = Math.max(maxY, d.loss);
+	});
+
+	return { minX, maxX, minY, maxY };
+};
+
+export const renderLossGraph = (
+	element: HTMLElement,
+	data: any[],
+	options: { width?: number; height: number }
+) => {
+	const { width, height } = options;
+	const elemSelection = d3.select(element);
+	let svg: any = elemSelection.select('svg');
+	if (svg.empty()) {
+		svg = elemSelection
+			.append('svg')
+			.attr('width', width ?? '100%')
+			.attr('height', height);
+		svg.append('g').append('path').attr('class', 'line');
+	}
+	const group = svg.select('g');
+	const path = group.select('.line');
+
+	const { minX, maxX, minY, maxY } = getDomain(data);
+
+	const w = width ?? element.clientWidth; // Get the width of the parent element if width not provided
+
+	const xScale = d3.scaleLinear().domain([minX, maxX]).range([0, w]);
+	const yScale = d3.scaleLinear().domain([minY, maxY]).range([height, 0]);
+
+	const pathFn = d3
+		.line()
+		.x((d: any) => xScale(d.iter))
+		.y((d: any) => yScale(d.loss))
+		.curve(d3.curveBasis);
+
+	// Update the data and path
+	path.datum(data).attr('d', pathFn(data)).style('stroke', '#888').style('fill', 'none');
 };
