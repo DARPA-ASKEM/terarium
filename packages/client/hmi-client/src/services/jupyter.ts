@@ -160,6 +160,7 @@ export const newSession = async (kernelName: string, name: string) => {
 	if (!initialized) {
 		const settingsResponse = await API.get('/tgpt/configuration');
 		const settings = settingsResponse.data;
+
 		serverSettings = ServerConnection.makeSettings(settings);
 		kernelManager = new KernelManager({
 			serverSettings
