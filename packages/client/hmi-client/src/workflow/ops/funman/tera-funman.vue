@@ -87,6 +87,7 @@
 			<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 		</div>
 		<div class="container output">
+			<h4 class="primary-text">Validation results</h4>
 			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 			<div v-else>
 				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -392,9 +393,10 @@ watch(
 	background: #fafafa;
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 }
+
 .container {
 	display: flex;
-	padding: 0rem 1.5625rem 1rem 1.5625rem;
+	padding: 1rem 1.5625rem 1rem 1.5625rem;
 	flex-direction: column;
 	align-items: flex-start;
 	flex: 1 0 0;
