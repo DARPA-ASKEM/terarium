@@ -3,7 +3,7 @@
 		<header>
 			<tera-operator-header
 				:name="node.displayName"
-				:status="node.statusCode"
+				:status="node.status"
 				@open-in-new-window="openDrilldown"
 				@remove-node="emit('remove-node', props.node.id)"
 			/>
