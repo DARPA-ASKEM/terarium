@@ -65,7 +65,7 @@ const plusNode = (id: string) =>
 		y: 0,
 		width: 0,
 		height: 0,
-		statusCode: OperatorStatusType.INVALID
+		status: OperatorStatusType.INVALID
 	} as WorkflowNode<any>);
 
 describe('basic tests to make sure it all works', () => {
