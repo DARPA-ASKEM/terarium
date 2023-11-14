@@ -46,27 +46,13 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 	return {};
 };
 
-export const getDomain = (data: any[]) => {
-	let minX = Number.MAX_VALUE;
-	let maxX = Number.MIN_VALUE;
-	let minY = Number.MAX_VALUE;
-	let maxY = Number.MIN_VALUE;
-
-	data.forEach((d) => {
-		minX = Math.min(minX, d.iter);
-		maxX = Math.max(maxX, d.iter);
-		minY = Math.min(minY, d.loss);
-		maxY = Math.max(maxY, d.loss);
-	});
-
-	return { minX, maxX, minY, maxY };
-};
-
 export const renderLossGraph = (
 	element: HTMLElement,
 	data: any[],
 	options: { width?: number; height: number }
 ) => {
+	const margin = 20;
+
 	const { width, height } = options;
 	const elemSelection = d3.select(element);
 	let svg: any = elemSelection.select('svg');
@@ -80,12 +66,19 @@ export const renderLossGraph = (
 	const group = svg.select('g');
 	const path = group.select('.line');
 
-	const { minX, maxX, minY, maxY } = getDomain(data);
+	const [minX, maxX] = d3.extent(data, (d) => d.iter);
+	const [minY, maxY] = d3.extent(data, (d) => d.loss);
 
 	const w = width ?? element.clientWidth; // Get the width of the parent element if width not provided
 
-	const xScale = d3.scaleLinear().domain([minX, maxX]).range([0, w]);
-	const yScale = d3.scaleLinear().domain([minY, maxY]).range([height, 0]);
+	const xScale = d3
+		.scaleLinear()
+		.domain([minX, maxX])
+		.range([margin, w - margin]);
+	const yScale = d3
+		.scaleLinear()
+		.domain([minY, maxY])
+		.range([height - margin, margin]);
 
 	const pathFn = d3
 		.line()
@@ -95,4 +88,20 @@ export const renderLossGraph = (
 
 	// Update the data and path
 	path.datum(data).attr('d', pathFn(data)).style('stroke', '#888').style('fill', 'none');
+
+	// Add x-axis
+	const xAxis = d3.axisBottom(xScale).ticks(4);
+	let xAxisGroup = svg.select('.x-axis');
+	if (xAxisGroup.empty()) {
+		xAxisGroup = svg.append('g').attr('class', 'x-axis');
+	}
+	xAxisGroup.attr('transform', `translate(0, ${height - margin})`).call(xAxis);
+
+	// Add y-axis
+	const yAxis = d3.axisLeft(yScale);
+	let yAxisGroup = svg.select('.y-axis');
+	if (yAxisGroup.empty()) {
+		yAxisGroup = svg.append('g').attr('class', 'y-axis');
+	}
+	yAxisGroup.attr('transform', `translate(${margin}, 0)`).call(yAxis);
 };
