@@ -76,22 +76,23 @@ nav {
 	background-color: var(--surface-error);
 }
 
-.focus {
-	background-color: var(--primary-color);
-	color: var(--gray-0);
-}
-
 .disabled {
 	background-color: var(--surface-disabled);
 	color: var(--text-color-disabled);
 }
 
-nav.active-node {
+.focus {
 	background-color: var(--primary-color);
+	color: var(--gray-0);
 }
 
 .p-button.p-button-icon-only {
 	color: var(--text-color-primary);
+}
+
+.focus .p-button.p-button-icon-only,
+.focus .p-button.p-button-icon-only:hover {
+	color: var(--gray-0);
 }
 
 h5 {
