@@ -89,8 +89,9 @@ nav {
 nav.active-node {
 	background-color: var(--primary-color);
 }
-nav .p-button.p-button-text:enabled:hover {
-	color: var(--surface-highlight);
+
+.p-button.p-button-icon-only {
+	color: var(--text-color-primary);
 }
 
 h5 {
