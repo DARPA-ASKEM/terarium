@@ -81,7 +81,9 @@
 					<span
 						:draggable="
 							pageType === AssetType.Workflows &&
-							(assetItem.pageType === AssetType.Models || assetItem.pageType === AssetType.Datasets)
+							(assetItem.pageType === AssetType.Models ||
+								assetItem.pageType === AssetType.Datasets ||
+								assetItem.pageType === AssetType.Code)
 						"
 						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
 						@dragend="endDrag"
