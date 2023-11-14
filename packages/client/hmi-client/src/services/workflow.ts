@@ -66,7 +66,7 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		statusCode: WorkflowStatus.INVALID,
+		status: WorkflowStatus.INVALID,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height

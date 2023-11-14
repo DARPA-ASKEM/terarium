@@ -85,10 +85,7 @@ export interface WorkflowNode<S> {
 	// Internal state. For example chosen model, display color ... etc
 	state: S;
 
-	// FIXME: The section below is slated to be further spec'ed out later.
-	// State and progress, tracking of intermediate results
-	statusCode: WorkflowStatus;
-	intermediateIds?: WorkflowPort[];
+	status: WorkflowStatus;
 }
 
 export interface WorkflowEdge {
