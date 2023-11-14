@@ -139,7 +139,7 @@ import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import SelectButton from 'primevue/selectbutton';

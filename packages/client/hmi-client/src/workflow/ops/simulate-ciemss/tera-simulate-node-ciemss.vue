@@ -63,7 +63,7 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/operator';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';

@@ -17,14 +17,14 @@ export enum WorkflowOperationTypes {
 	FUNMAN = 'Funman'
 }
 
-export enum OperatorStatus {
+export enum OperatorStatusType {
 	DEFAULT = 'default',
-	FOCUS = 'focus',
-	LOADING = 'loading',
+	FOCUS = 'focus', // Hover/drag
+	IN_PROGRESS = 'in progress',
 	SUCCESS = 'success',
 	INVALID = 'invalid',
+	WARNING = 'warning', // Probably won't be used - would there be potential crossover with INVALID?
 	FAILED = 'failed',
-	WARNING = 'warning',
 	ERROR = 'error',
 	DISABLED = 'disabled'
 }
@@ -91,7 +91,7 @@ export interface WorkflowNode<S> {
 
 	// FIXME: The section below is slated to be further spec'ed out later.
 	// State and progress, tracking of intermediate results
-	statusCode: OperatorStatus;
+	statusCode: OperatorStatusType;
 	intermediateIds?: WorkflowPort[];
 }
 

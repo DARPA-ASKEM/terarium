@@ -1,4 +1,4 @@
-import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/operator';
 // import { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';

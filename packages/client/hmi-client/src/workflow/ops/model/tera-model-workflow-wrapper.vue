@@ -9,7 +9,7 @@
 <script setup lang="ts">
 // Proxy to use tera-model via a workflow context
 
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import TeraModel from '@/components/model/tera-model.vue';
 import { workflowEventBus } from '@/services/workflow';
 import { ModelOperationState } from './model-operation';

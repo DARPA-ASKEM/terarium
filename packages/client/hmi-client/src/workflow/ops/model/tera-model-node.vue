@@ -40,7 +40,7 @@ import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import SelectButton from 'primevue/selectbutton';
 import { ModelOperationState } from './model-operation';
 

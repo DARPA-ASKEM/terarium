@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { watch } from 'vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/operator';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{

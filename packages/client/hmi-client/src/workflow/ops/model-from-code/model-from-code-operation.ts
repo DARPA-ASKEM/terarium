@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/operator';
 
 export interface ModelFromCodeState {
 	codeLanguage: string;

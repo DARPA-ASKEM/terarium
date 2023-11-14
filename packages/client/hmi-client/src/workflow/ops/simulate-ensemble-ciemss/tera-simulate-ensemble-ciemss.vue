@@ -198,7 +198,7 @@ import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import { workflowEventBus } from '@/services/workflow';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';

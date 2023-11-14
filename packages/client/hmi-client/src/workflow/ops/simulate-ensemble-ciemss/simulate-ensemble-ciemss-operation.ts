@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/operator';
 // import { EnsembleRequest } from '@/types/Types';
 // import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';

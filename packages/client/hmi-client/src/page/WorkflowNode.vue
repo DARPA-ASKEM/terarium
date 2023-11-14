@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { watch, ref } from 'vue';
-import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
+import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/operator';
 import * as workflowService from '@/services/workflow';
 
 import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';

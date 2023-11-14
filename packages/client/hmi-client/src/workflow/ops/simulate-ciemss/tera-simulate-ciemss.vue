@@ -170,7 +170,7 @@ import { getRunResultCiemss } from '@/services/models/simulation-service';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import { workflowEventBus } from '@/services/workflow';
 import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import InputText from 'primevue/inputtext';

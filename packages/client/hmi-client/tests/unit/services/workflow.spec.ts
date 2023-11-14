@@ -1,11 +1,11 @@
 import {
-	OperatorStatus,
+	OperatorStatusType,
 	Workflow,
 	WorkflowPort,
 	Operation,
 	WorkflowNode,
 	WorkflowOperationTypes
-} from '@/types/workflow';
+} from '@/types/operator';
 import * as workflowService from '@/services/workflow';
 
 import { describe, expect, it } from 'vitest';
@@ -65,7 +65,7 @@ const plusNode = (id: string) =>
 		y: 0,
 		width: 0,
 		height: 0,
-		statusCode: OperatorStatus.INVALID
+		statusCode: OperatorStatusType.INVALID
 	} as WorkflowNode<any>);
 
 describe('basic tests to make sure it all works', () => {

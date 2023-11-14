@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { ref, PropType } from 'vue';
-import { OperatorStatus } from '@/types/workflow';
+import { OperatorStatusType } from '@/types/operator';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
@@ -24,8 +24,8 @@ defineProps({
 		default: ''
 	},
 	status: {
-		type: Object as PropType<OperatorStatus>,
-		default: OperatorStatus.DEFAULT
+		type: Object as PropType<OperatorStatusType>,
+		default: OperatorStatusType.DEFAULT
 	}
 });
 

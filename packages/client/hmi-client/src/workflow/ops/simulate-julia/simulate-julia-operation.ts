@@ -1,5 +1,5 @@
 import { TimeSpan } from '@/types/Types';
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/operator';
 import { SimulationConfig } from '@/types/SimulateConfig';
 
 export interface SimulateJuliaOperationState {

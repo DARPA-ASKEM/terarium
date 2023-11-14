@@ -45,7 +45,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import MultiSelect from 'primevue/multiselect';
 import { DatasetOperationState } from './dataset-operation';
 

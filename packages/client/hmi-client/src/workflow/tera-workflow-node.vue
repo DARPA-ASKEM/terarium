@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/operator';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';

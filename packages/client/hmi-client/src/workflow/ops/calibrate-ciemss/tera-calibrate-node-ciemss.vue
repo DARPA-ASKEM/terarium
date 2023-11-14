@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch, ref, ComputedRef, onMounted, onUnmounted } from 'vue';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/operator';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';

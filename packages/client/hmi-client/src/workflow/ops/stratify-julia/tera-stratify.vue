@@ -207,7 +207,7 @@ import {
 	generateLocationStrataModel
 } from '@/services/models/stratification-service';
 import { AssetType, Model, ModelConfiguration } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel, reconstructAMR } from '@/services/model';
 import { stratify } from '@/model-representation/petrinet/petrinet-service';

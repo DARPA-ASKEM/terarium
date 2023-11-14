@@ -116,7 +116,7 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import teraFunmanOutput from '@/components/funman/tera-funman-output.vue';

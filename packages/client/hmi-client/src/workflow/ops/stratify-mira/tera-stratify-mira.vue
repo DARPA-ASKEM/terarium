@@ -77,7 +77,7 @@ import { Model, ModelConfiguration, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/operator';
 import { workflowEventBus } from '@/services/workflow';
 import { useProjects } from '@/composables/project';
 
