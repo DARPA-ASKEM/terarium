@@ -1,7 +1,7 @@
 import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
 import { ClientEvent, ClientEventType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
-// import getConfiguration from '@/services/ConfigService';
+import getConfiguration from '@/services/ConfigService';
 
 /**
  * A map of event types to message handlers
@@ -11,7 +11,7 @@ const subscribers = new Map<ClientEventType, ((data: ClientEvent<any>) => void)[
 /**
  * The last time a heartbeat was received
  */
-// let lastHeartbeat = new Date().valueOf(); // TODO: dvince reenable
+let lastHeartbeat = new Date().valueOf();
 
 /**
  * The initial backoff time in milliseconds for resubscribing to the SSE endpoint
@@ -22,7 +22,7 @@ let backoffMs = 1000;
 /**
  * Whether we are currently reconnecting to the SSE endpoint
  */
-// let reconnecting = false; // TODO: dvince reenable
+let reconnecting = false;
 
 /**
  * An error that can be retried
@@ -42,7 +42,7 @@ export async function init(): Promise<void> {
 			// Parse the data as a ClientEvent and pass it on to the subscribers
 			const data = JSON.parse(message.data) as ClientEvent<any>;
 			if (data.type === ClientEventType.Heartbeat) {
-				// lastHeartbeat = new Date().valueOf(); // TODO: dvince reenable
+				lastHeartbeat = new Date().valueOf();
 				return;
 			}
 			const handlers = subscribers.get(data.type);
@@ -75,7 +75,7 @@ export async function init(): Promise<void> {
 			throw error; // fatal
 		},
 		onclose() {
-			// init(); // TODO: dvince reenable
+			init();
 		},
 		openWhenHidden: true
 	};
@@ -86,8 +86,7 @@ export async function init(): Promise<void> {
  * Periodically checks if we have received a heartbeat within the configured interval
  * and reconnects if not
  */
-// TODO: dvince reenable
-/* setInterval(async () => {
+setInterval(async () => {
 	if (!reconnecting) {
 		const config = await getConfiguration();
 		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
@@ -97,7 +96,7 @@ export async function init(): Promise<void> {
 			reconnecting = false;
 		}
 	}
-}, 1000); */
+}, 1000);
 
 /**
  * Subscribes to a specific event type
