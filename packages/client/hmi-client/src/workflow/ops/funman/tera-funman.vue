@@ -378,17 +378,13 @@ watch(
 </script>
 
 <style>
-main {
-	overflow: auto;
-}
-
 .content {
 	display: flex;
+	overflow: auto;
 	padding: 1rem 1.5rem 1rem 0rem;
 	align-items: flex-start;
 	gap: 1.5rem;
 	flex: 1 0 0;
-	align-self: stretch;
 }
 
 .output {
@@ -428,6 +424,8 @@ main {
 	padding: 1rem 1.5rem;
 	align-items: flex-start;
 	gap: 0.5rem;
+	width: 100%;
+	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
 .footer Button {
