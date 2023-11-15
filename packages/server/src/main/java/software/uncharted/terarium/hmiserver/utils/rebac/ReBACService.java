@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
 
+import com.authzed.api.v1.Core;
+import com.authzed.api.v1.PermissionService;
 import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
@@ -60,6 +62,8 @@ public class ReBACService {
 	public static String PUBLIC_GROUP_ID;
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
 	public static String ASKEM_ADMIN_GROUP_ID;
+
+	volatile String CURRENT_ZED_TOKEN;
 
 	private String getKeycloakBearerToken() {
 		return "Bearer " + keycloak.tokenManager().getAccessTokenString();
@@ -290,49 +294,51 @@ public class ReBACService {
 	}
 
 	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
-		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.READ, what, full);
+		return rebac.checkPermission(who, Schema.Permission.READ, what, getCurrentConsistency());
 	}
 
 	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.WRITE, what, full);
+		return rebac.checkPermission(who, Schema.Permission.WRITE, what, getCurrentConsistency());
 	}
 
 	public boolean isMemberOf(SchemaObject who, SchemaObject what) throws Exception {
-		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, full);
+		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, getCurrentConsistency());
 	}
 
 	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, full);
+		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, getCurrentConsistency());
 	}
 
 	public boolean isCreator(SchemaObject who, SchemaObject what) throws Exception {
-		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, full);
+		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, getCurrentConsistency());
 	}
 
 	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		rebac.createRelationship(who, relationship, what);
+		CURRENT_ZED_TOKEN = rebac.createRelationship(who, relationship, what);
 	}
 
 	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		rebac.removeRelationship(who, relationship, what);
+		CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
+	}
+
+	private Consistency getCurrentConsistency() {
+		if (CURRENT_ZED_TOKEN == null) {
+			return Consistency.newBuilder().setFullyConsistent(true).build();
+		}
+		Core.ZedToken zedToken = Core.ZedToken.newBuilder().setToken(CURRENT_ZED_TOKEN).build();
+		return Consistency.newBuilder().setAtLeastAsFresh(zedToken).build();
 	}
 
 	public List<RebacPermissionRelationship> getRelationships(SchemaObject what) throws Exception {
-		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.getRelationship(what, full);
+		return rebac.getRelationship(what, getCurrentConsistency());
 	}
 
 	public ResponseEntity<Void> deleteRoleFromUser(String roleName, String userId) {
@@ -425,8 +431,7 @@ public class ReBACService {
 		}
 	}
 	public List<String> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type) throws Exception {
-		Consistency full = Consistency.newBuilder().setFullyConsistent(true).build();
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.lookupResources(type, permission, who, full);
+		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
 	}
 }
