@@ -1,5 +1,5 @@
 <template>
-	<nav :class="status">
+	<header :class="status">
 		<h5>{{ name }}</h5>
 		<Button
 			icon="pi pi-ellipsis-v"
@@ -7,7 +7,7 @@
 			@click="toggleMenu"
 		/>
 		<Menu ref="menu" :model="options" :popup="true" />
-	</nav>
+	</header>
 </template>
 
 <script setup lang="ts">
@@ -49,13 +49,13 @@ const options = ref([
 		command: () => emit('open-in-new-window')
 	},
 	{ icon: 'pi pi-arrow-up', label: 'Bring to front', command: () => bringToFront },
-	{ icon: 'pi pi-arrow-down', label: 'Bring to back', command: () => bringToFront },
+	{ icon: 'pi pi-arrow-down', label: 'Send to back', command: () => bringToFront },
 	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove-node') }
 ]);
 </script>
 
 <style scoped>
-nav {
+header {
 	display: flex;
 	padding: 0.5rem;
 	height: 32px;

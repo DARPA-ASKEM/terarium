@@ -1,13 +1,11 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
-		<header>
-			<tera-operator-header
-				:name="node.displayName"
-				:status="node.status"
-				@open-in-new-window="openDrilldown"
-				@remove-node="emit('remove-node', props.node.id)"
-			/>
-		</header>
+		<tera-operator-header
+			:name="node.displayName"
+			:status="node.status"
+			@open-in-new-window="openDrilldown"
+			@remove-node="emit('remove-node', props.node.id)"
+		/>
 		<ul class="inputs">
 			<li
 				v-for="(input, index) in node.inputs"

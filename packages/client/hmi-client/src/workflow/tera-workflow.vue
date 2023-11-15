@@ -48,7 +48,7 @@
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node
+			<tera-operator
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
@@ -144,7 +144,7 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 				</template>
-			</tera-workflow-node>
+			</tera-operator>
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
@@ -314,7 +314,7 @@ import {
 	WorkflowOperationTypes
 } from '@/types/operator';
 // Operation imports
-import TeraWorkflowNode from '@/workflow/tera-workflow-node.vue';
+import TeraOperator from '@/workflow/tera-operator.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
