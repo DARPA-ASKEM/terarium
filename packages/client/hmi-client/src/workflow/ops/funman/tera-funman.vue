@@ -55,6 +55,8 @@
 					<label>Tolerance</label>
 					<InputNumber
 						mode="decimal"
+						:min="0"
+						:max="1"
 						:min-fraction-digits="0"
 						:max-fraction-digits="7"
 						v-model="tolerance"
