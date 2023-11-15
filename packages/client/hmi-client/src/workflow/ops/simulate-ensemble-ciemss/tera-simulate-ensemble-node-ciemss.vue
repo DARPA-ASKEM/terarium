@@ -28,7 +28,7 @@
 			/>
 		</section>
 		<section v-else class="result-container">
-			<div class="invalid-block" v-if="node.statusCode === WorkflowStatus.INVALID">
+			<div class="invalid-block" v-if="node.status === WorkflowStatus.INVALID">
 				<img class="image" src="@assets/svg/plants.svg" alt="" />
 				<p class="helpMessage">Configure in side panel</p>
 			</div>
