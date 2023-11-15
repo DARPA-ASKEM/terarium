@@ -9,7 +9,8 @@ import {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPortStatus,
-	OperatorStatusType
+	OperatorStatusType,
+	OperatorInteractionStatus
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -67,6 +68,7 @@ export const addNode = (
 		})),
 	  */
 		status: OperatorStatusType.INVALID,
+		interactionStatus: OperatorInteractionStatus.FOUND,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
