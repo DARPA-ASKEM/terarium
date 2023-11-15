@@ -4,7 +4,8 @@
 			:name="node.displayName"
 			:status="node.status"
 			@open-in-new-window="openDrilldown"
-			@remove-node="emit('remove-node', props.node.id)"
+			@remove="emit('remove-operator', props.node.id)"
+			@bring-to-front="bringToFront"
 		/>
 		<ul class="inputs">
 			<li
@@ -81,7 +82,7 @@ const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
-	'remove-node',
+	'remove-operator',
 	'drilldown'
 ]);
 
@@ -136,6 +137,13 @@ onMounted(() => {
 
 function showNodeDrilldown() {
 	emit('drilldown', props.node);
+}
+
+function bringToFront() {
+	// TODO: bring to front
+	// maybe there can be a z-index variable in the parent component
+	// and we can just increment it here, and add a z-index style to the node
+	// console.log('bring to front');
 }
 
 function openDrilldown() {

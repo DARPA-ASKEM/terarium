@@ -56,7 +56,7 @@
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
-				@remove-node="(event) => removeNode(event)"
+				@remove-operator="(event) => removeNode(event)"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 				:isActive="currentActiveNode?.id === node.id"

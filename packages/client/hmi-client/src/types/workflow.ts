@@ -17,9 +17,14 @@ export enum WorkflowOperationTypes {
 	FUNMAN = 'Funman'
 }
 
+export enum OperatorInteractionStatus {
+	FOCUS = 'focus', // Hover/drag
+	FOUND = 'found',
+	NOT_FOUND = 'not found'
+}
+
 export enum OperatorStatusType {
 	DEFAULT = 'default',
-	FOCUS = 'focus', // Hover/drag
 	IN_PROGRESS = 'in progress',
 	SUCCESS = 'success',
 	INVALID = 'invalid',
@@ -90,6 +95,7 @@ export interface WorkflowNode<S> {
 	state: S;
 
 	status: OperatorStatusType;
+	interactionStatus: OperatorInteractionStatus;
 }
 
 export interface WorkflowEdge {

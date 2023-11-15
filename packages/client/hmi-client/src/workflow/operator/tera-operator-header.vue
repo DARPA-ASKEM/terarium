@@ -1,5 +1,5 @@
 <template>
-	<header :class="status">
+	<header :class="`${status} ${interactionStatus}`">
 		<h5>{{ name }}</h5>
 		<Button
 			icon="pi pi-ellipsis-v"
@@ -12,11 +12,11 @@
 
 <script setup lang="ts">
 import { ref, PropType } from 'vue';
-import { OperatorStatusType } from '@/types/workflow';
+import { OperatorInteractionStatus, OperatorStatusType } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
-const emit = defineEmits(['remove-node', 'open-in-new-window']);
+const emit = defineEmits(['remove', 'bring-to-front', 'open-in-new-window']);
 
 defineProps({
 	name: {
@@ -24,8 +24,12 @@ defineProps({
 		default: ''
 	},
 	status: {
-		type: Object as PropType<OperatorStatusType>,
+		type: String as PropType<OperatorStatusType>,
 		default: OperatorStatusType.DEFAULT
+	},
+	interactionStatus: {
+		type: String as PropType<OperatorInteractionStatus>,
+		default: OperatorInteractionStatus.FOUND
 	}
 });
 
@@ -34,23 +38,16 @@ const toggleMenu = (event) => {
 	menu.value.toggle(event);
 };
 
-function bringToFront() {
-	// TODO: bring to front
-	// maybe there can be a z-index variable in the parent component
-	// and we can just increment it here, and add a z-index style to the node
-	// console.log('bring to front');
-}
-
 const options = ref([
-	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => bringToFront },
+	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => emit('bring-to-front') },
 	{
 		icon: 'pi pi-external-link',
 		label: 'Open in new window',
 		command: () => emit('open-in-new-window')
 	},
-	{ icon: 'pi pi-arrow-up', label: 'Bring to front', command: () => bringToFront },
-	{ icon: 'pi pi-arrow-down', label: 'Send to back', command: () => bringToFront },
-	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove-node') }
+	{ icon: 'pi pi-arrow-up', label: 'Bring to front', command: () => emit('bring-to-front') },
+	{ icon: 'pi pi-arrow-down', label: 'Send to back', command: () => emit('bring-to-front') },
+	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove') }
 ]);
 </script>
 
