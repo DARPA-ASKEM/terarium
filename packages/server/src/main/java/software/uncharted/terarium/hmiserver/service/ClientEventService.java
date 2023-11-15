@@ -186,6 +186,14 @@ public class ClientEventService{
     }
   }
 
+	/**
+	 * Decodes a message into the given class. If there is an issue parsing to this class we will attempt to just
+	 * parse it as a JsonNode and log the error. If that fails we will log the error and hope for the best
+	 * @param message the message to decode
+	 * @param clazz  the class to decode the message to
+	 * @return 		 the decoded message or null if there was an error
+	 * @param <T>
+	 */
 	public static <T> T decodeMessage(final Message message, Class<T> clazz) {
 
 		ObjectMapper mapper = new ObjectMapper();
