@@ -1,7 +1,5 @@
 <template>
-	<template>
-		<div class="container">test</div>
-	</template>
+	<main>code asset node</main>
 </template>
 
 <script setup lang="ts">
@@ -32,13 +30,6 @@ watch(
 		if (code.value?.id) {
 			emit('select-code-asset', { id: code.value.id });
 		}
-	}
-);
-watch(
-	() => props.node.state?.codeAssetId,
-	async () => {
-		console.log('here');
-		// await fetchModel();
 	}
 );
 </script>

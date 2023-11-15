@@ -1,5 +1,5 @@
 <template>
-	<tera-code :asset-id="props.node?.state?.codeAssetId ?? ''" />
+	<tera-code :asset-id="props.node?.state?.codeAssetId ?? ''" is-preview />
 </template>
 
 <script setup lang="ts">
