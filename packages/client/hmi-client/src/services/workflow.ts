@@ -10,7 +10,7 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatusType
-} from '@/types/operator';
+} from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

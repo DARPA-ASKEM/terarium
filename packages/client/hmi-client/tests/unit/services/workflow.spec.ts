@@ -5,7 +5,7 @@ import {
 	Operation,
 	WorkflowNode,
 	WorkflowOperationTypes
-} from '@/types/operator';
+} from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
 
 import { describe, expect, it } from 'vitest';

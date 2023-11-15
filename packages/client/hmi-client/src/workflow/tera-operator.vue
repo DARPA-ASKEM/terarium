@@ -1,5 +1,5 @@
 <template>
-	<main :style="nodeStyle" ref="workflowNode">
+	<main :style="nodeStyle" ref="operator">
 		<tera-operator-header
 			:name="node.displayName"
 			:status="node.status"
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/operator';
+import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';
@@ -92,7 +92,7 @@ const nodeStyle = computed(() => ({
 }));
 
 const portBaseSize: number = 8;
-const workflowNode = ref<HTMLElement>();
+const operator = ref<HTMLElement>();
 
 let tempX = 0;
 let tempY = 0;
@@ -127,11 +127,11 @@ const stopDrag = (/* evt: MouseEvent */) => {
 };
 
 onMounted(() => {
-	if (!workflowNode.value) return;
+	if (!operator.value) return;
 
-	workflowNode.value.addEventListener('mousedown', startDrag);
+	operator.value.addEventListener('mousedown', startDrag);
 	document.addEventListener('mousemove', drag);
-	workflowNode.value.addEventListener('mouseup', stopDrag);
+	operator.value.addEventListener('mouseup', stopDrag);
 });
 
 function showNodeDrilldown() {
@@ -158,10 +158,10 @@ function mouseoverPort(event) {
 }
 
 onBeforeUnmount(() => {
-	if (workflowNode.value) {
-		workflowNode.value.removeEventListener('mousedown', startDrag);
+	if (operator.value) {
+		operator.value.removeEventListener('mousedown', startDrag);
 		document.removeEventListener('mousemove', drag);
-		workflowNode.value.removeEventListener('mouseup', stopDrag);
+		operator.value.removeEventListener('mouseup', stopDrag);
 	}
 });
 </script>

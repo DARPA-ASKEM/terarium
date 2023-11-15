@@ -46,7 +46,7 @@ import { ref, shallowRef, watch, computed, ComputedRef, onMounted, onUnmounted }
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode, OperatorStatusType } from '@/types/operator';
+import { ProgressState, WorkflowNode, OperatorStatusType } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import { CsvAsset, EnsembleCalibrationCiemssRequest, EnsembleModelConfigs } from '@/types/Types';

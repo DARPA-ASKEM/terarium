@@ -126,7 +126,7 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage } from '@/types/Types';
-import { WorkflowNode } from '@/types/operator';
+import { WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEmpty } from 'lodash';
 import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';

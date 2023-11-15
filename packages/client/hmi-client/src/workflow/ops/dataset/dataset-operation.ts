@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/operator';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 export interface DatasetOperationState {
 	datasetId: string | null;

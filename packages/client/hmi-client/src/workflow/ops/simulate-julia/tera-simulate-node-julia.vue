@@ -43,7 +43,7 @@ import {
 	querySimulationInProgress,
 	getSimulation
 } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode } from '@/types/operator';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';

@@ -45,7 +45,7 @@ import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode, OperatorStatusType } from '@/types/operator';
+import { ProgressState, WorkflowNode, OperatorStatusType } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';

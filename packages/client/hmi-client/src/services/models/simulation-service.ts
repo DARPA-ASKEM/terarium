@@ -14,7 +14,7 @@ import {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import { ProgressState, WorkflowNode } from '@/types/operator';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEqual } from 'lodash';
 import { Ref } from 'vue';
 import { useProjects } from '@/composables/project';

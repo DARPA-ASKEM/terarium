@@ -312,7 +312,7 @@ import {
 	WorkflowPortStatus,
 	WorkflowDirection,
 	WorkflowOperationTypes
-} from '@/types/operator';
+} from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';

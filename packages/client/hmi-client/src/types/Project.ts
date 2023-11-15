@@ -8,7 +8,7 @@ import {
 	Code,
 	ExternalPublication
 } from '@/types/Types';
-import { Workflow } from '@/types/operator';
+import { Workflow } from '@/types/workflow';
 
 export enum ProjectPages {
 	OVERVIEW = 'overview',

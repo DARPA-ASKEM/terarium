@@ -141,7 +141,7 @@ import { getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { WorkflowNode } from '@/types/operator';
+import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';

@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { ref, PropType } from 'vue';
-import { OperatorStatusType } from '@/types/operator';
+import { OperatorStatusType } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 

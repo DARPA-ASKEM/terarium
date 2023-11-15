@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ProgressState } from '@/types/operator';
+import { ProgressState } from '@/types/workflow';
 import ProgressBar from 'primevue/progressbar';
 import { computed } from 'vue';
 

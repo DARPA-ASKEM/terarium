@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/operator';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { TimeSpan, FunmanInterval } from '@/types/Types';
 
 export interface ConstraintGroup {

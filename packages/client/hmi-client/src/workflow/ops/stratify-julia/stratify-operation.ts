@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/operator';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 export const StratifyOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_JULIA,

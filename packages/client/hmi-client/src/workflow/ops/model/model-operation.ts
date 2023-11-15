@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/operator';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 export interface ModelOperationState {
 	modelId: string | null;
