@@ -3,8 +3,6 @@
 </template>
 
 <script setup lang="ts">
-// Proxy to use tera-dataset via a workflow context
-
 import { WorkflowNode } from '@/types/workflow';
 import TeraCode from '@/components/code/tera-code.vue';
 import { CodeAssetState } from './code-asset-operation';
