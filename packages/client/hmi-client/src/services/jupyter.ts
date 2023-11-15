@@ -196,7 +196,7 @@ export interface IMessageHistory {
 }
 
 class KernelMessage extends EventEmitter {
-	// Make fluent interface
+	// Make fluent interface: https://en.wikipedia.org/wiki/Fluent_interface
 	register(eventName: EventName, fn: EventCallback): KernelMessage {
 		this.on(eventName, fn);
 		return this;
