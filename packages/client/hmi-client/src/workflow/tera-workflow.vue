@@ -409,12 +409,7 @@ import {
 	TeraModelTransformerNode
 } from './ops/model-transformer/mod';
 
-import {
-	TeraCodeAssetNode,
-	CodeAssetOperation,
-	CodeAssetState,
-	TeraCodeAssetWrapper
-} from './ops/code-asset/mod';
+import { TeraCodeAssetNode, CodeAssetState, TeraCodeAssetWrapper } from './ops/code-asset/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
@@ -660,13 +655,6 @@ const contextMenuItems = ref([
 		label: 'Dataset',
 		command: () => {
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Code Asset',
-		command: () => {
-			workflowService.addNode(wf.value, CodeAssetOperation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
