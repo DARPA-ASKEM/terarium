@@ -53,8 +53,8 @@ export const renderLossGraph = (
 ) => {
 	const marginTop = 10;
 	const marginBottom = 20;
-	const marginLeft = 50;
-	const marginRight = 30;
+	const marginLeft = 30;
+	const marginRight = 20;
 
 	const { width, height } = options;
 	const elemSelection = d3.select(element);
@@ -75,7 +75,7 @@ export const renderLossGraph = (
 		.range([marginLeft, width - marginRight]);
 	const yScale = d3
 		.scaleLinear()
-		.domain([minY, maxY])
+		.domain([Math.min(minY, 0), maxY])
 		.range([height - marginBottom, marginTop]);
 
 	const pathFn = d3

@@ -435,6 +435,8 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 		runId: runIdList[0],
 		active: true,
 		loss: lossValues,
+		// TODO JAMI: grab the params from runResults after calibration finishes instead of
+		// just taking the last params from the intermediate results
 		params: parameterResult.value
 	};
 	workflowEventBus.emitNodeStateChange({
