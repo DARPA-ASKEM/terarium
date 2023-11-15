@@ -161,7 +161,8 @@ watch(
 			});
 		}
 		chartData.value = { datasets };
-	}
+	},
+	{ immediate: true }
 );
 
 watch(

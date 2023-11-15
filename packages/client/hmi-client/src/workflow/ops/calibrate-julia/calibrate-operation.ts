@@ -69,7 +69,7 @@ export const CalibrationOperationJulia: Operation = {
 	initState: () => {
 		const init: CalibrationOperationStateJulia = {
 			chartConfigs: [],
-			calibrateConfigs: { runConfigs: {}, chartConfigs: [] },
+			calibrateConfigs: { runConfigs: {}, chartConfigs: [[]] },
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			extra: {
 				numChains: 4,

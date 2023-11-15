@@ -31,14 +31,13 @@
 				<div ref="staticLossPlotRef"></div>
 			</AccordionTab>
 			<AccordionTab header="Calibrated parameter values">
-				<table class="p-datatable-table">
+				<table class="p-datatable-table" v-if="selectedRunId">
 					<thead class="p-datatable-thead">
 						<th>Parameter</th>
 						<th>Value</th>
 					</thead>
 					<tr
-						v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRun?.runId]
-							?.params"
+						v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRunId]?.params"
 						:key="key"
 					>
 						<td>
@@ -50,25 +49,27 @@
 					</tr>
 				</table>
 			</AccordionTab>
-			<AccordionTab header="Variables" v-if="runResults[selectedRun?.runId]">
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
-					:key="index"
-					:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
-					:initial-data="csvAsset"
-					:mapping="mapping"
-					:run-type="RunType.Julia"
-					:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
-					@configuration-change="chartConfigurationChange(index, $event)"
-				/>
-				<Button
-					class="add-chart"
-					text
-					:outlined="true"
-					@click="addChart"
-					label="Add chart"
-					icon="pi pi-plus"
-				></Button>
+			<AccordionTab header="Variables">
+				<div v-if="selectedRunId && runResults[selectedRunId]">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+						:key="index"
+						:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
+						:initial-data="csvAsset"
+						:mapping="mapping"
+						:run-type="RunType.Julia"
+						:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+						@configuration-change="chartConfigurationChange(index, $event)"
+					/>
+					<Button
+						class="add-chart"
+						text
+						:outlined="true"
+						@click="addChart"
+						label="Add chart"
+						icon="pi pi-plus"
+					></Button>
+				</div>
 			</AccordionTab>
 			<AccordionTab header="Extras">
 				<span class="extras">
@@ -249,7 +250,13 @@ const runList = computed(() =>
 		runId
 	}))
 );
-const selectedRun = ref();
+const selectedRun = ref(); // used to select a run from the dropdown for this component
+const selectedRunId = computed(
+	() =>
+		// if selected run changes from the drilldown component, then it should change in this component as well
+		Object.values(props.node.state.calibrateConfigs.runConfigs).find((metadata) => metadata.active)
+			?.runId
+);
 const runInProgress = ref<string>();
 
 const lossPlotRef = ref<HTMLElement>();
@@ -273,10 +280,6 @@ onMounted(() => {
 		selectedRun.value = runList.value.find((run) => run.runId === runId);
 	} else {
 		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
-	}
-
-	if (selectedRun.value?.runId) {
-		lazyLoadRunResults(selectedRun.value.runId);
 	}
 });
 
@@ -427,9 +430,6 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	const port = props.node.inputs[0];
 
 	const state = _.cloneDeep(props.node.state);
-	if (state.calibrateConfigs.chartConfigs.length === 0) {
-		state.calibrateConfigs.chartConfigs.push([]);
-	}
 
 	state.calibrateConfigs.runConfigs[runIdList[0]] = {
 		runId: runIdList[0],
@@ -510,19 +510,8 @@ watch(
 // Fetch simulation run results whenever output changes
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
-const lazyLoadRunResults = async (runId: string) => {
-	if (runResults.value[runId]) return;
-
-	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
-	const csvData = csvParse(resultCsv);
-
-	runResults.value[runId] = csvData as any;
-};
-
 const handleSelectedRunChange = () => {
 	if (!selectedRun.value) return;
-
-	lazyLoadRunResults(selectedRun.value.runId);
 
 	const state = _.cloneDeep(props.node.state);
 	// set the active status for the selected run in the run configs
@@ -536,15 +525,32 @@ const handleSelectedRunChange = () => {
 		state
 	});
 };
-
 watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 
+const lazyLoadRunResults = async (runId?: string) => {
+	if (!runId || runResults.value[runId]) return;
+
+	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
+	const csvData = csvParse(resultCsv);
+
+	runResults.value[runId] = csvData as any;
+};
+watch(
+	() => selectedRunId.value,
+	() => {
+		lazyLoadRunResults(selectedRunId.value);
+	},
+	{ immediate: true }
+);
+
 // Plot loss values if available on mount or on selectedRun change
-watch([() => selectedRun.value, () => staticLossPlotRef.value], () => {
-	const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.loss;
-	if (lossVals && staticLossPlotRef.value) {
-		const width = staticLossPlotRef.value.offsetWidth;
-		renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 150 });
+watch([() => selectedRunId.value, () => staticLossPlotRef.value], () => {
+	if (selectedRunId.value) {
+		const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRunId.value]?.loss;
+		if (lossVals && staticLossPlotRef.value) {
+			const width = staticLossPlotRef.value.offsetWidth;
+			renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 150 });
+		}
 	}
 });
 </script>

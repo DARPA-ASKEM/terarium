@@ -85,13 +85,13 @@
 					<div ref="drilldownLossPlot"></div>
 				</AccordionTab>
 				<AccordionTab header="Calibrated parameter values">
-					<table class="p-datatable-table">
+					<table class="p-datatable-table" v-if="selectedRunId">
 						<thead class="p-datatable-thead">
 							<th>Parameter</th>
 							<th>Value</th>
 						</thead>
 						<tr
-							v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRun?.runId]
+							v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRunId]
 								?.params"
 							:key="key"
 						>
@@ -104,23 +104,25 @@
 						</tr>
 					</table>
 				</AccordionTab>
-				<AccordionTab header="Variables" v-if="runResults[selectedRun?.runId]">
-					<tera-simulate-chart
-						v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
-						:key="index"
-						:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
-						:initial-data="csvAsset"
-						:mapping="mapping"
-						:run-type="RunType.Julia"
-						:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
-						@configuration-change="chartConfigurationChange(index, $event)"
-					/>
-					<Button
-						class="p-button-sm p-button-text"
-						@click="addChart"
-						label="Add chart"
-						icon="pi pi-plus"
-					></Button>
+				<AccordionTab header="Variables">
+					<div v-if="selectedRunId && runResults[selectedRunId]">
+						<tera-simulate-chart
+							v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+							:key="index"
+							:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
+							:initial-data="csvAsset"
+							:mapping="mapping"
+							:run-type="RunType.Julia"
+							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+							@configuration-change="chartConfigurationChange(index, $event)"
+						/>
+						<Button
+							class="p-button-sm p-button-text"
+							@click="addChart"
+							label="Add chart"
+							icon="pi pi-plus"
+						></Button>
+					</div>
 				</AccordionTab>
 			</Accordion>
 		</div>
@@ -193,7 +195,13 @@ const runList = computed(() =>
 		runId
 	}))
 );
-const selectedRun = ref();
+const selectedRun = ref(); // used to select a run from the dropdown for this component
+const selectedRunId = computed(
+	() =>
+		// if selected run changes from the workflow node component, then it should change in this component as well
+		Object.values(props.node.state.calibrateConfigs.runConfigs).find((metadata) => metadata.active)
+			?.runId
+);
 const drilldownLossPlot = ref<HTMLElement>();
 
 // Tom TODO: Make this generic... its copy paste from node.
@@ -217,38 +225,7 @@ onMounted(() => {
 	} else {
 		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
 	}
-
-	if (selectedRun.value?.runId) {
-		lazyLoadCalibrationData(selectedRun.value.runId);
-	}
 });
-
-const lazyLoadCalibrationData = async (runId: string) => {
-	if (runResults.value[runId]) return;
-
-	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
-	const csvData = csvParse(resultCsv);
-
-	runResults.value[runId] = csvData as any;
-};
-
-const handleSelectedRunChange = () => {
-	if (!selectedRun.value) return;
-
-	lazyLoadCalibrationData(selectedRun.value.runId);
-
-	const state = _.cloneDeep(props.node.state);
-	// set the active status for the selected run in the run configs
-	Object.keys(state.calibrateConfigs.runConfigs).forEach((runId) => {
-		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
-	});
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
-};
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -305,14 +282,47 @@ watch(
 	{ immediate: true }
 );
 
+const handleSelectedRunChange = () => {
+	if (!selectedRun.value) return;
+
+	const state = _.cloneDeep(props.node.state);
+	// set the active status for the selected run in the run configs
+	Object.keys(state.calibrateConfigs.runConfigs).forEach((runId) => {
+		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
+	});
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
 watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 
+const lazyLoadCalibrationData = async (runId?: string) => {
+	if (!runId || runResults.value[runId]) return;
+
+	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
+	const csvData = csvParse(resultCsv);
+
+	runResults.value[runId] = csvData as any;
+};
+watch(
+	() => selectedRunId.value,
+	() => {
+		lazyLoadCalibrationData(selectedRunId.value);
+	},
+	{ immediate: true }
+);
+
 // Plot loss values if available on mount or on selectedRun change
-watch([() => selectedRun.value, () => drilldownLossPlot.value], () => {
-	const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.loss;
-	if (lossVals && drilldownLossPlot.value) {
-		const width = drilldownLossPlot.value.offsetWidth;
-		renderLossGraph(drilldownLossPlot.value, lossVals, { width, height: 300 });
+watch([() => selectedRunId.value, () => drilldownLossPlot.value], () => {
+	if (selectedRunId.value) {
+		const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRunId.value]?.loss;
+		if (lossVals && drilldownLossPlot.value) {
+			const width = drilldownLossPlot.value.offsetWidth;
+			renderLossGraph(drilldownLossPlot.value, lossVals, { width, height: 300 });
+		}
 	}
 });
 </script>
