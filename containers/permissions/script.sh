@@ -12,17 +12,17 @@ PROJECT_2_ID="2"
 # Check Env Vars
 ####################
 
-if [ -z ${KEYCLOAK_ADMIN_CLIENT_ID} ]; then exit 2; fi
-if [ -z ${KEYCLOAK_ADMIN_USERNAME} ]; then exit 3; fi
-if [ -z ${KEYCLOAK_ADMIN_PASSWORD} ]; then exit 4; fi
-if [ -z ${KEYCLOAK_URL} ]; then exit 5; fi
-if [ -z ${KEYCLOAK_REALM} ]; then exit 6; fi
-if [ -z ${SPICEDB_URL} ]; then exit 7; fi
-if [ -z ${SPICEDB_TOKEN} ]; then exit 8; fi
+if [ -z ${TERARIUM_KEYCLOAK_ADMIN_CLIENT_ID} ]; then exit 2; fi
+if [ -z ${TERARIUM_KEYCLOAK_ADMIN_USERNAME} ]; then exit 3; fi
+if [ -z ${TERARIUM_KEYCLOAK_ADMIN_PASSWORD} ]; then exit 4; fi
+if [ -z ${TERARIUM_KEYCLOAK_URL} ]; then exit 5; fi
+if [ -z ${TERARIUM_KEYCLOAK_REALM} ]; then exit 6; fi
+if [ -z ${SPICEDB_TARGET} ]; then exit 7; fi
+if [ -z ${SPICEDB_SHARED_KEY} ]; then exit 8; fi
 
 # Configure spicedb
 
-SPICEDB_SETTINGS="--endpoint ${SPICEDB_URL} --token ${SPICEDB_TOKEN}"
+SPICEDB_SETTINGS="--endpoint ${SPICEDB_TARGET} --token ${SPICEDB_SHARED_KEY}"
 if [ ${SPICEDB_INSECURE} == "true" ]; then
   SPICEDB_SETTINGS="${SPICEDB_SETTINGS} --insecure"
 fi
