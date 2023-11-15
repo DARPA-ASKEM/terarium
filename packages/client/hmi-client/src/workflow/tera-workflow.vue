@@ -409,7 +409,12 @@ import {
 	TeraModelTransformerNode
 } from './ops/model-transformer/mod';
 
-import { TeraCodeAssetNode, CodeAssetState, TeraCodeAssetWrapper } from './ops/code-asset/mod';
+import {
+	TeraCodeAssetNode,
+	CodeAssetOperation,
+	CodeAssetState,
+	TeraCodeAssetWrapper
+} from './ops/code-asset/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
