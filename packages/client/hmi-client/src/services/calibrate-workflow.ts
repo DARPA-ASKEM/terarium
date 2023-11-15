@@ -48,19 +48,19 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 
 export const renderLossGraph = (
 	element: HTMLElement,
-	data: { [key: string]: number }[],
-	options: { width?: number; height: number }
+	data: any[],
+	options: { width: number; height: number }
 ) => {
-	const margin = 20;
+	const marginTop = 10;
+	const marginBottom = 20;
+	const marginLeft = 50;
+	const marginRight = 30;
 
 	const { width, height } = options;
 	const elemSelection = d3.select(element);
 	let svg: any = elemSelection.select('svg');
 	if (svg.empty()) {
-		svg = elemSelection
-			.append('svg')
-			.attr('width', width ?? '100%')
-			.attr('height', height);
+		svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 		svg.append('g').append('path').attr('class', 'line');
 	}
 	const group = svg.select('g');
@@ -69,16 +69,14 @@ export const renderLossGraph = (
 	const [minX, maxX] = d3.extent(data, (d) => d.iter);
 	const [minY, maxY] = d3.extent(data, (d) => d.loss);
 
-	const w = width ?? element.clientWidth; // Get the width of the parent element if width not provided
-
 	const xScale = d3
 		.scaleLinear()
 		.domain([minX, maxX])
-		.range([margin, w - margin]);
+		.range([marginLeft, width - marginRight]);
 	const yScale = d3
 		.scaleLinear()
 		.domain([minY, maxY])
-		.range([height - margin, margin]);
+		.range([height - marginBottom, marginTop]);
 
 	const pathFn = d3
 		.line()
@@ -95,7 +93,7 @@ export const renderLossGraph = (
 	if (xAxisGroup.empty()) {
 		xAxisGroup = svg.append('g').attr('class', 'x-axis');
 	}
-	xAxisGroup.attr('transform', `translate(0, ${height - margin})`).call(xAxis);
+	xAxisGroup.attr('transform', `translate(0, ${height - marginBottom})`).call(xAxis);
 
 	// Add y-axis
 	const yAxis = d3.axisLeft(yScale);
@@ -103,5 +101,5 @@ export const renderLossGraph = (
 	if (yAxisGroup.empty()) {
 		yAxisGroup = svg.append('g').attr('class', 'y-axis');
 	}
-	yAxisGroup.attr('transform', `translate(${margin}, 0)`).call(yAxis);
+	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
 };

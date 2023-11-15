@@ -311,7 +311,8 @@ watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 watch([() => selectedRun.value, () => drilldownLossPlot.value], () => {
 	const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.loss;
 	if (lossVals && drilldownLossPlot.value) {
-		renderLossGraph(drilldownLossPlot.value, lossVals, { height: 300 });
+		const width = drilldownLossPlot.value.offsetWidth;
+		renderLossGraph(drilldownLossPlot.value, lossVals, { width, height: 300 });
 	}
 });
 </script>

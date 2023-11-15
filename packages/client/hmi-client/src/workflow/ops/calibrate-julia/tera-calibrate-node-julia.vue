@@ -361,7 +361,8 @@ function getMessageHandler(event: ClientEvent<ScimlStatusUpdate>) {
 
 		lossValues.push({ iter, loss });
 		if (lossPlotRef.value) {
-			renderLossGraph(lossPlotRef.value, lossValues, { height: 150 });
+			const width = lossPlotRef.value.offsetWidth;
+			renderLossGraph(lossPlotRef.value, lossValues, { width, height: 150 });
 		}
 
 		if (iter % 100 === 0) {
@@ -542,7 +543,8 @@ watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 watch([() => selectedRun.value, () => staticLossPlotRef.value], () => {
 	const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRun.value?.runId]?.loss;
 	if (lossVals && staticLossPlotRef.value) {
-		renderLossGraph(staticLossPlotRef.value, lossVals, { height: 150 });
+		const width = staticLossPlotRef.value.offsetWidth;
+		renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 150 });
 	}
 });
 </script>
