@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -27,4 +28,6 @@ public class ScimlStatusUpdate {
 	@JsonAlias("sol_data")
 	private Map<String, JsonNode> solData;
 
+	/** List of timesteps **/
+	private List<Number> timesteps;
 }

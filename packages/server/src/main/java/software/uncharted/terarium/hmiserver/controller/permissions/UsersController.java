@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
+import software.uncharted.terarium.hmiserver.models.authority.RoleType;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
@@ -42,14 +43,14 @@ public class UsersController {
 		}
 
 		try {
-			if (roleName.equals(Roles.ADMIN)) {
+			if (roleName.equals(RoleType.ADMIN.name().toLowerCase())) {
 				RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 				RebacUser who = new RebacUser(userId, reBACService);
 				adminGroup.removePermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 				publicGroup.removePermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 			}
-			if (roleName.equals(Roles.USER)) {
+			if (roleName.equals(RoleType.USER.name().toLowerCase())) {
 				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 				RebacUser who = new RebacUser(userId, reBACService);
 				publicGroup.removePermissionRelationships(who, Schema.Relationship.MEMBER.toString());
@@ -71,14 +72,14 @@ public class UsersController {
 		}
 
 		try {
-			if (roleName.equals(Roles.ADMIN)) {
+			if (roleName.equals(RoleType.ADMIN.name().toLowerCase())) {
 				RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 				RebacUser who = new RebacUser(userId, reBACService);
 				adminGroup.setPermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 				publicGroup.setPermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 			}
-			if (roleName.equals(Roles.USER)) {
+			if (roleName.equals(RoleType.USER.name().toLowerCase())) {
 				RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 				RebacUser who = new RebacUser(userId, reBACService);
 				publicGroup.setPermissionRelationships(who, Schema.Relationship.MEMBER.toString());
