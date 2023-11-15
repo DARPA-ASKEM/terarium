@@ -142,7 +142,8 @@ watch(
 
 <style>
 .constraint-group {
-	margin: 1rem;
+	width: 100%;
+	margin-top: 1rem;
 	display: flex;
 	padding: 1rem 1rem 1rem 1.5rem;
 	flex-direction: column;
@@ -150,6 +151,7 @@ watch(
 	align-items: flex-start;
 	border-radius: 0.375rem;
 	background: #fff;
+	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
 	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
