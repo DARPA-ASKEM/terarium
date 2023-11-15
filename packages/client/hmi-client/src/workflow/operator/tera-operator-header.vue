@@ -12,11 +12,11 @@
 
 <script setup lang="ts">
 import { ref, PropType } from 'vue';
-import { OperatorInteractionStatus, OperatorStatusType } from '@/types/workflow';
+import { OperatorInteractionStatus, OperatorStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
-const emit = defineEmits(['remove', 'bring-to-front', 'open-in-new-window']);
+const emit = defineEmits(['remove-operator', 'bring-to-front', 'open-in-new-window']);
 
 defineProps({
 	name: {
@@ -24,8 +24,8 @@ defineProps({
 		default: ''
 	},
 	status: {
-		type: String as PropType<OperatorStatusType>,
-		default: OperatorStatusType.DEFAULT
+		type: String as PropType<OperatorStatus>,
+		default: OperatorStatus.DEFAULT
 	},
 	interactionStatus: {
 		type: String as PropType<OperatorInteractionStatus>,
@@ -47,7 +47,7 @@ const options = ref([
 	},
 	{ icon: 'pi pi-arrow-up', label: 'Bring to front', command: () => emit('bring-to-front') },
 	{ icon: 'pi pi-arrow-down', label: 'Send to back', command: () => emit('bring-to-front') },
-	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove') }
+	{ icon: 'pi pi-trash', label: 'Remove-operator', command: () => emit('remove-operator') }
 ]);
 </script>
 

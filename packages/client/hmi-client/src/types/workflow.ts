@@ -23,7 +23,7 @@ export enum OperatorInteractionStatus {
 	NOT_FOUND = 'not found'
 }
 
-export enum OperatorStatusType {
+export enum OperatorStatus {
 	DEFAULT = 'default',
 	IN_PROGRESS = 'in progress',
 	SUCCESS = 'success',
@@ -94,7 +94,7 @@ export interface WorkflowNode<S> {
 	// Internal state. For example chosen model, display color ... etc
 	state: S;
 
-	status: OperatorStatusType;
+	status: OperatorStatus;
 	interactionStatus: OperatorInteractionStatus;
 }
 

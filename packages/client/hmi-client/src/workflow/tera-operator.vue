@@ -3,8 +3,8 @@
 		<tera-operator-header
 			:name="node.displayName"
 			:status="node.status"
-			@open-in-new-window="openDrilldown"
-			@remove="emit('remove-operator', props.node.id)"
+			@open-in-new-window="openInNewWindow"
+			@remove-operator="emit('remove-operator', props.node.id)"
 			@bring-to-front="bringToFront"
 		/>
 		<ul class="inputs">
@@ -38,7 +38,7 @@
 		</ul>
 		<section>
 			<slot name="body" />
-			<Button label="Open Drilldown" @click="showNodeDrilldown" severity="secondary" outlined />
+			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
 		</section>
 		<ul class="outputs">
 			<li
@@ -135,7 +135,7 @@ onMounted(() => {
 	operator.value.addEventListener('mouseup', stopDrag);
 });
 
-function showNodeDrilldown() {
+function openDrilldown() {
 	emit('drilldown', props.node);
 }
 
@@ -146,7 +146,7 @@ function bringToFront() {
 	// console.log('bring to front');
 }
 
-function openDrilldown() {
+function openInNewWindow() {
 	const url = router.resolve({
 		name: RouteName.WorkflowNode,
 		params: { nodeId: props.node.id, workflowId: props.node.workflowId }
