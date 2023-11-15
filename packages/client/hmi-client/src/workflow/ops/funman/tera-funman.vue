@@ -191,7 +191,7 @@ const outputId = computed(() => {
 	return undefined;
 });
 
-async function toggleAdditonalOptions() {
+function toggleAdditonalOptions() {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 }
 
