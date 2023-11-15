@@ -536,10 +536,7 @@ function appendOutputPort(
 	// FIXME: This is a bit hacky, we should split this out into separate events, or the action
 	// should be built into the Operation directly. What we are doing is to update the internal state
 	// and this feels it is leaking too much low-level information
-	if (
-		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
-		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
-	) {
+	if (node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS) {
 		const state = node.state as CalibrationOperationStateJulia;
 		if (state.chartConfigs.length === 0) {
 			// This only ends up showing the output of the first run, perhaps we should consider showing
