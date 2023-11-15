@@ -9,6 +9,7 @@ RUN apt update && apt install -y zed
 
 WORKDIR /work
 COPY /script.sh .
+COPY /schema .
 
 ENTRYPOINT ["sh", "./script.sh"]
 

@@ -3,7 +3,7 @@ version: "3.8"
 
 services:
   hmi-server:
-    image: ghcr.io/darpa-askem/permissions:latest
+    image: permission:dev
     container_name: permissions
     networks:
       - terarium
