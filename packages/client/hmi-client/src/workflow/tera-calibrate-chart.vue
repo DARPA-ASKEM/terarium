@@ -171,21 +171,23 @@ watch(
 		if (selectedVariable.value.length > 0) {
 			const { timesteps, solData } = props.intermediateData;
 			selectedVariable.value.forEach((variable) => {
-				const dataset: DataseriesConfig = {
-					data: solData[variable].map((val, idx) => ({
-						x: timesteps[idx],
-						y: val
-					})),
-					label: `${variable} - intermediate`,
-					fill: false,
-					borderColor: getVariableColorByVar(variable),
-					borderWidth: 1
-				};
+				if (solData[variable]) {
+					const dataset: DataseriesConfig = {
+						data: solData[variable].map((val, idx) => ({
+							x: timesteps[idx],
+							y: val
+						})),
+						label: `${variable} - intermediate`,
+						fill: false,
+						borderColor: getVariableColorByVar(variable),
+						borderWidth: 1
+					};
 
-				tempChartData.intermediateData[variable] = dataset;
-				datasets.push(dataset);
-				if (tempChartData.initialData[variable]) {
-					datasets.push(tempChartData.initialData[variable]);
+					tempChartData.intermediateData[variable] = dataset;
+					datasets.push(dataset);
+					if (tempChartData.initialData[variable]) {
+						datasets.push(tempChartData.initialData[variable]);
+					}
 				}
 			});
 		}
