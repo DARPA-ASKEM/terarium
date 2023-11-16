@@ -198,7 +198,7 @@ const handleModelPreview = (data: any) => {
 };
 
 const buildJupyterContext = () => {
-	if (!modelConfiguration.value) {
+	if (!model.value) {
 		console.log('Cannot build Jupyter context without a model');
 		return null;
 	}
@@ -207,7 +207,7 @@ const buildJupyterContext = () => {
 		context: 'mira_model',
 		language: 'python3',
 		context_info: {
-			id: modelConfiguration.value.modelId
+			id: model.value.id
 		}
 	};
 };
@@ -233,7 +233,14 @@ const inputChangeHandler = async () => {
 	modelNodeOptions.value = modelColumnNameOptions;
 
 	// Create a new session and context based on model
-	await kernelManager.init('beaker', 'Beaker', buildJupyterContext());
+	try {
+		const jupyterContext = buildJupyterContext();
+		if (jupyterContext) {
+			await kernelManager.init('beaker', 'Beaker', buildJupyterContext());
+		}
+	} catch (error) {
+		console.error('Error initializing Jupyter session:', error);
+	}
 };
 
 const saveNewModel = async () => {
