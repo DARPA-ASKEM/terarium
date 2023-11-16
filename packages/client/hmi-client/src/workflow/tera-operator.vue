@@ -13,35 +13,6 @@
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="emit('port-selected')"
 		/>
-		<ul class="inputs">
-			<li
-				v-for="(input, index) in node.inputs"
-				:key="index"
-				:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
-			>
-				<div
-					class="port-container"
-					@mouseenter="(event) => mouseoverPort(event)"
-					@mouseleave="emit('port-mouseleave')"
-					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
-					@focus="() => {}"
-					@focusout="() => {}"
-				>
-					<div class="port" />
-					<div>
-						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
-						<span v-if="!input.label">{{ input.type }}</span>
-						<span
-							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
-							:key="labelIdx"
-							class="input-label"
-						>
-							{{ label }}
-						</span>
-					</div>
-				</div>
-			</li>
-		</ul>
 		<section>
 			<slot name="body" />
 			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
@@ -51,18 +22,14 @@
 				v-for="(output, index) in node.outputs"
 				:key="index"
 				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
+				@mouseenter="(event) => mouseoverPort(event)"
+				@mouseleave="emit('port-mouseleave')"
+				@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
+				@focus="() => {}"
+				@focusout="() => {}"
 			>
-				<div
-					class="port-container"
-					@mouseenter="(event) => mouseoverPort(event)"
-					@mouseleave="emit('port-mouseleave')"
-					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
-					@focus="() => {}"
-					@focusout="() => {}"
-				>
-					<div class="port" />
-					{{ output.label }}
-				</div>
+				<div class="port" />
+				{{ output.label }}
 			</li>
 		</ul>
 	</main>
@@ -198,121 +165,91 @@ main:hover {
 }
 
 section {
-	margin-left: 0.5rem;
-	margin-right: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
+	margin: 0 0.5rem;
 }
 
-section,
+/* Inputs/outputs */
 ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-}
-
-ul {
 	margin: 0.25rem 0;
 	list-style: none;
 	font-size: var(--font-caption);
-}
-
-ul li {
-	display: flex;
-	gap: 0.5rem;
-	align-items: center;
-}
-
-.inputs,
-.outputs {
 	color: var(--text-color-secondary);
-}
-.port-container {
-	display: flex;
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	gap: 0.5rem;
-}
-
-.inputs .port-container {
-	padding-right: 0.75rem;
-	border-radius: 0 var(--border-radius) var(--border-radius) 0;
-}
-
-.outputs .port-container {
-	margin-left: 0.5rem;
-	flex-direction: row-reverse;
-	padding-left: 0.75rem;
-	border-radius: var(--border-radius) 0 0 var(--border-radius);
-}
-
-.port-container:hover {
-	cursor: pointer;
-	background-color: var(--surface-highlight);
-}
-
-.port-connected {
-	color: var(--text-color-primary);
-	background: var(--surface-0);
-}
-
-.port {
-	display: inline-block;
-	border: 2px solid var(--surface-border);
-	background: var(--surface-100);
-	position: relative;
-	width: var(--port-base-size);
-	height: calc(var(--port-base-size) * 2);
-}
-
-.port:hover {
-	background: var(--primary-color);
-}
-li:hover .port {
-	background: var(--surface-border);
-}
-.port-connected .port {
-	width: calc(var(--port-base-size) * 2);
-	height: calc(var(--port-base-size) * 2);
-	border: 2px solid var(--primary-color);
-	border-radius: var(--port-base-size);
-	border-radius: 8px;
-	background-color: var(--primary-color);
-}
-.port-connected:hover .port {
-	background: var(--primary-color);
-}
-
-.outputs .port-connected .port {
-	left: var(--port-base-size);
-}
-
-.port-connected .port-container {
-	gap: initial;
-}
-
-.inputs .port-connected .port {
-	left: calc(-1 * var(--port-base-size));
-}
-
-.inputs .port {
-	border-radius: 0 8px 8px 0;
-	border-left: none;
-}
-
-.outputs .port {
-	border-radius: 8px 0 0 8px;
-	border-right: none;
 }
 
 .outputs {
 	align-items: end;
 }
 
-.input-label::after {
-	color: var(--text-color-primary);
-	content: ', ';
+.outputs li {
+	margin-left: 0.5rem;
+	padding: 0.5rem 0;
+	flex-direction: row-reverse;
+	padding-left: 0.75rem;
+	border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
 
-.input-label:last-child::after {
-	content: '';
+.outputs .port {
+	border-radius: 8px 0 0 8px;
+	border: 2px solid var(--surface-border);
+	border-right: none;
+}
+
+.inputs .port-connected .port,
+.outputs .port-connected .port {
+	border-radius: 8px;
+}
+
+.outputs .port-connected .port {
+	left: var(--port-base-size);
+}
+
+:deep(li) {
+	display: flex;
+	width: fit-content;
+	align-items: center;
+
+	gap: 0.5rem;
+}
+
+:deep(li:hover) {
+	cursor: pointer;
+	background-color: var(--surface-highlight);
+}
+
+:deep(li:hover > .port) {
+	/* Not sure what color was intended */
+	background-color: var(--primary-color);
+	background-color: var(--surface-border);
+}
+
+:deep(.port-connected) {
+	color: var(--text-color-primary);
+	background: var(--surface-0);
+	gap: initial;
+}
+
+:deep(.port) {
+	display: inline-block;
+	background-color: var(--surface-100);
+	position: relative;
+	width: var(--port-base-size);
+	height: calc(var(--port-base-size) * 2);
+}
+
+:deep(.port-connected .port) {
+	width: calc(var(--port-base-size) * 2);
+	height: calc(var(--port-base-size) * 2);
+	border: 2px solid var(--primary-color);
+	border-radius: var(--port-base-size);
+	background-color: var(--primary-color);
+}
+:deep(.port-connected:hover .port) {
+	background-color: var(--primary-color);
 }
 </style>

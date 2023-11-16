@@ -1,30 +1,22 @@
 <template>
-	<ul v-if="!isEmpty(inputs)" class="inputs">
+	<ul v-if="!isEmpty(inputs)">
 		<li
 			v-for="(input, index) in inputs"
 			:key="index"
 			:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
+			@mouseenter="emit('port-mouseover', $event)"
+			@mouseleave="emit('port-mouseleave')"
+			@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
+			@focus="() => {}"
+			@focusout="() => {}"
 		>
-			<div
-				class="port-container"
-				@mouseenter="emit('port-mouseover', $event)"
-				@mouseleave="emit('port-mouseleave')"
-				@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
-				@focus="() => {}"
-				@focusout="() => {}"
-			>
-				<div class="port" />
-				<div>
-					<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
-					<span v-if="!input.label">{{ input.type }}</span>
-					<span
-						v-for="(label, labelIdx) in input.label?.split(',') ?? []"
-						:key="labelIdx"
-						class="input-label"
-					>
-						{{ label }}
-					</span>
-				</div>
+			<div class="port" />
+			<div>
+				<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
+				<span v-if="!input.label">{{ input.type }}</span>
+				<label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
+					{{ label }}
+				</label>
 			</div>
 		</li>
 	</ul>
@@ -46,46 +38,28 @@ defineProps({
 </script>
 
 <style scoped>
-ul {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-evenly;
-	margin: 0.25rem 0;
-	list-style: none;
-	font-size: var(--font-caption);
+li {
+	padding: 0.5rem 0;
+	padding-right: 0.75rem;
+	border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
 
-ul li {
-	display: flex;
-	gap: 0.5rem;
-	align-items: center;
+.port {
+	border-radius: 0 8px 8px 0;
+	border: 2px solid var(--surface-border);
+	border-left: none;
 }
 
-.inputs,
-.outputs {
-	color: var(--text-color-secondary);
-}
-.input-port-container,
-.output-port-container {
-	display: flex;
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	gap: 0.5rem;
+.port-connected .port {
+	left: calc(-1 * var(--port-base-size));
 }
 
-.input-port-container {
-	padding-right: 0.5rem;
+label::after {
+	color: var(--text-color-primary);
+	content: ', ';
 }
 
-.output-port-container {
-	margin-left: 0.5rem;
-	flex-direction: row-reverse;
-	padding-left: 0.75rem;
-	border-radius: var(--border-radius) 0 0 var(--border-radius);
-}
-
-.output-port-container:hover {
-	cursor: pointer;
-	background-color: var(--surface-highlight);
+label:last-child::after {
+	content: '';
 }
 </style>
