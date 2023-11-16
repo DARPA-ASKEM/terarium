@@ -10,6 +10,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
@@ -26,15 +27,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class SimulationEventService {
 
-    private final ObjectMapper mapper;
     private final ClientEventService clientEventService;
     private final Config config;
     private final RabbitAdmin rabbitAdmin;
 
     private final Map<String, Set<String>> simulationIdToUserIds = new ConcurrentHashMap<>();
 
-    private final static String SCIML_QUEUE = "sciml-queue";
-    private final static String PYCIEMSS_QUEUE = "simulation-status";
+		@Value("${terarium.sciml-queue}")
+		private String SCIML_QUEUE;
+
+		@Value("${terarium.simulation-status}")
+		private String PYCIEMSS_QUEUE;
+
+		@Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
+		private String queueSuffix;
+
+		@Value("${terarium.queue.suffix:#{null}}")
+		private String isUserDev;
 
 
     Queue scimlQueue;
@@ -43,10 +52,10 @@ public class SimulationEventService {
 
     @PostConstruct
     void init() {
-        scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues());
+        scimlQueue = new Queue(SCIML_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
         rabbitAdmin.declareQueue(scimlQueue);
 
-        pyciemssQueue = new Queue(PYCIEMSS_QUEUE, config.getDurableQueues());
+        pyciemssQueue = new Queue(PYCIEMSS_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
         rabbitAdmin.declareQueue(pyciemssQueue);
 
     }
@@ -68,18 +77,20 @@ public class SimulationEventService {
 
 
     /**
-     * Lisens for messages to send to a user and if we have the SSE connection, send it
+     * Listens for messages to send to a user and if we have the SSE connection, send it
      *
      * @param message the message to send
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
     @RabbitListener(
-            queues = {SCIML_QUEUE},
+            queues = "${terarium.sciml-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
             concurrency = "1")
     private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
 
-        final ScimlStatusUpdate update = decodeMessage(message, ScimlStatusUpdate.class);
+        final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
+				if(update == null)
+					return;
         ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder().type(ClientEventType.SIMULATION_SCIML).data(update).build();
         simulationIdToUserIds.get(update.getId()).forEach(userId -> {
             clientEventService.sendToUser(status, userId);
@@ -95,21 +106,23 @@ public class SimulationEventService {
      * @throws IOException if there was an error sending the message
      */
     @RabbitListener(
-            queues = {PYCIEMSS_QUEUE},
+            queues = "${terarium.simulation-status}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
             concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
-        // TODO this should mirror the implementation of onScimlSendToUserEvent
+
+			/*
+				//TODO implement PyciemssStatusUpdate
+				final PyciemssStatusUpdate update = ClientEventService.decodeMessage(message, PyciemssStatusUpdate.class);
+				if(update == null)
+					return;
+        ClientEvent<PyciemssStatusUpdate> status = ClientEvent.<PyciemssStatusUpdate>builder().type(ClientEventType.SIMULATION_PYCIEMSS).data(update).build();
+        simulationIdToUserIds.get(update.getId()).forEach(userId -> {
+            clientEventService.sendToUser(status, userId);
+        });
+			 */
 
     }
 
-    private <T> T decodeMessage(final Message message, Class<T> clazz) {
 
-        try {
-            return mapper.readValue(message.getBody(), clazz);
-        } catch (IOException e) {
-            log.error("Error decoding message", e);
-            return null;
-        }
-    }
 
 }

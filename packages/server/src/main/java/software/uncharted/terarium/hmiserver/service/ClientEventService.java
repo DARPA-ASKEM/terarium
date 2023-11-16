@@ -133,7 +133,7 @@ public class ClientEventService{
           queues = "${terarium.client-all-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
           concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
-    final JsonNode messageJson = decodeMessage(message);
+    final JsonNode messageJson = decodeMessage(message, JsonNode.class);
     if (messageJson == null) {
       return;
     }
@@ -166,7 +166,7 @@ public class ClientEventService{
           queues = {"${terarium.client-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}"},
           concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
-    final JsonNode messageJson = decodeMessage(message);
+    final JsonNode messageJson = decodeMessage(message, JsonNode.class);
     if (messageJson == null) {
       return;
     }
@@ -186,19 +186,32 @@ public class ClientEventService{
     }
   }
 
-  /**
-   * Decodes a message into a JsonNode
-   * @param message the message to decode
-   * @return        the decoded message, null if there was an error
-   */
-  private JsonNode decodeMessage(final Message message) {
-    try {
-      return mapper.readValue(message.getBody(), JsonNode.class);
-    } catch (IOException e) {
-      log.error("Error decoding message", e);
-      return null;
-    }
-  }
+	/**
+	 * Decodes a message into the given class. If there is an issue parsing to this class we will attempt to just
+	 * parse it as a JsonNode and log the error. If that fails we will log the error and hope for the best
+	 * @param message the message to decode
+	 * @param clazz  the class to decode the message to
+	 * @return 		 the decoded message or null if there was an error
+	 * @param <T>
+	 */
+	public static <T> T decodeMessage(final Message message, Class<T> clazz) {
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		try {
+			return mapper.readValue(message.getBody(), clazz);
+		} catch (Exception e) {
+			try {
+				JsonNode jsonMessage =  mapper.readValue(message.getBody(), JsonNode.class);
+				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
+				return null;
+			} catch (Exception e1) {
+				log.error("Error decoding message as either {} or {}. Raw message is: {}", clazz.getName(), JsonNode.class.getName(), message.getBody());
+				log.error("",e1);
+				return null;
+			}
+		}
+	}
 
   /**
    * Heartbeat to ensure that the clients are subscribed to the SSE service. If the client does
