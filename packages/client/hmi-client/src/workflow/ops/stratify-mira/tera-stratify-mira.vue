@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref, onUnmounted } from 'vue';
+import { watch, ref } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
@@ -82,9 +82,7 @@ import { workflowEventBus } from '@/services/workflow';
 import { useProjects } from '@/composables/project';
 
 /* Jupyter imports */
-import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
-import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
-import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { KernelSessionManager } from '@/services/jupyter';
 // import { StratifyOperationStateMira, StratifyGroup, StratifyMiraOperation } from './stratify-mira-operation';
 import { StratifyOperationStateMira } from './stratify-mira-operation';
 
@@ -97,7 +95,7 @@ enum StratifyTabs {
 	notebook
 }
 
-const jupyterSession = ref<SessionContext | null>(null);
+const kernelManager = new KernelSessionManager();
 
 const activeTab = ref(StratifyTabs.wizard);
 const modelConfiguration = ref<ModelConfiguration>();
@@ -153,98 +151,65 @@ const stratifyModel = () => {
 };
 
 const resetModel = () => {
-	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel || !model.value) return;
+	if (!model.value) return;
 
-	const messageBody = {
-		session: jupyterSession?.value?.name || '',
-		channel: 'shell',
-		content: {},
-		msgType: 'reset_request',
-		msgId: createMessageId('stratify_request')
-	};
-	const contextMessage: JupyterMessage = createMessage(messageBody);
-	kernel.sendJupyterMessage(contextMessage);
+	const resetMessage = kernelManager.sendMessage('reset_request', {});
+
+	if (resetMessage) {
+		resetMessage.register('reset_response', handleResetResponse);
+	}
+};
+
+const handleResetResponse = (data: any) => {
+	console.log(data.content);
 };
 
 const stratifyRequest = () => {
-	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel || !model.value) return;
+	if (!model.value) return;
 
 	const strataOption = props.node.state.strataGroups[0];
-	const messageBody = {
-		session: jupyterSession?.value?.name || '',
-		channel: 'shell',
-		content: {
-			stratify_args: {
-				key: strataOption.name,
-				strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
-				concepts_to_stratify: strataOption.selectedVariables,
-				cartesian_control: strataOption.cartesianProduct
-			}
-		},
-		msgType: 'stratify_request',
-		msgId: createMessageId('stratify_request')
-	};
-	const contextMessage: JupyterMessage = createMessage(messageBody);
-	kernel.sendJupyterMessage(contextMessage);
-};
-
-const setKernelContext = () => {
-	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel || !model.value) {
-		return;
-	}
-
-	const messageBody = {
-		session: jupyterSession?.value?.name || '',
-		channel: 'shell',
-		content: {
-			context: 'mira_model',
-			language: 'python3',
-			context_info: {
-				id: model.value.id
-			}
-		},
-		msgType: 'context_setup_request',
-		msgId: createMessageId('context_setup')
-	};
-	const contextMessage: JupyterMessage = createMessage(messageBody as any);
-	kernel.sendJupyterMessage(contextMessage);
-};
-
-const iopubMessageHandler = (_session: any, message: any) => {
-	if (message.header.msg_type === 'status') {
-		return;
-	}
-
-	const msgType = message.header.msg_type;
-
-	if (msgType === 'stratify_response') {
-		const codes = message.content.executed_code.split('\n');
-		codes.forEach((c: any) => {
-			console.log(c);
-		});
-	} else if (msgType === 'reset_response') {
-		console.log(message.content);
-	} else if (msgType === 'model_preview') {
-		model.value = message.content['application/json'];
-	}
-};
-
-const createSession = async () => {
-	const session = await newSession('beaker', 'Beaker');
-	jupyterSession.value = session;
-
-	session.kernelChanged.connect((_context, kernelInfo) => {
-		if (!kernelInfo.newValue) return;
-
-		const kernel = kernelInfo.newValue;
-		if (kernel?.name === 'beaker') {
-			session.iopubMessage.connect(iopubMessageHandler);
-			setKernelContext();
+	const messageContent = {
+		stratify_args: {
+			key: strataOption.name,
+			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
+			concepts_to_stratify: strataOption.selectedVariables,
+			cartesian_control: strataOption.cartesianProduct
 		}
+	};
+
+	const stratifyMessage = kernelManager.sendMessage('stratify_request', messageContent);
+
+	if (stratifyMessage) {
+		stratifyMessage
+			.register('stratify_response', handleStratifyResponse)
+			.register('model_preview', handleModelPreview);
+	}
+};
+
+const handleStratifyResponse = (data: any) => {
+	const codes = data.content.executed_code.split('\n');
+	codes.forEach((c: any) => {
+		console.log(c);
 	});
+};
+
+const handleModelPreview = (data: any) => {
+	model.value = data.content['application/json'];
+};
+
+const buildJupyterContext = () => {
+	if (!modelConfiguration.value) {
+		console.log('Cannot build Jupyter context without a model');
+		return null;
+	}
+
+	return {
+		context: 'mira_model',
+		language: 'python3',
+		context_info: {
+			id: modelConfiguration.value.modelId
+		}
+	};
 };
 
 const inputChangeHandler = async () => {
@@ -268,7 +233,7 @@ const inputChangeHandler = async () => {
 	modelNodeOptions.value = modelColumnNameOptions;
 
 	// Create a new session and context based on model
-	await createSession();
+	await kernelManager.init('beaker', 'Beaker', buildJupyterContext());
 };
 
 const saveNewModel = async () => {
@@ -291,12 +256,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onUnmounted(async () => {
-	if (jupyterSession.value) {
-		await jupyterSession.value.shutdown();
-	}
-});
 </script>
 
 <style scoped>
