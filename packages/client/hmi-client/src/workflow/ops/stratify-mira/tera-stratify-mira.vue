@@ -194,6 +194,7 @@ const handleStratifyResponse = (data: any) => {
 };
 
 const handleModelPreview = (data: any) => {
+	console.log('model preview', data);
 	model.value = data.content['application/json'];
 };
 
@@ -272,6 +273,7 @@ onUnmounted(() => {
 <style scoped>
 .container {
 	display: flex;
+	flex-direction: row;
 	margin-top: 1rem;
 }
 
