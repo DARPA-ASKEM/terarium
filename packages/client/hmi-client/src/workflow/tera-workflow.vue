@@ -48,7 +48,7 @@
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node
+			<tera-operator
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
@@ -56,7 +56,7 @@
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
-				@remove-node="(event) => removeNode(event)"
+				@remove-operator="(event) => removeNode(event)"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 				:isActive="currentActiveNode?.id === node.id"
@@ -144,7 +144,7 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 				</template>
-			</tera-workflow-node>
+			</tera-operator>
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
@@ -313,9 +313,8 @@ import {
 	WorkflowDirection,
 	WorkflowOperationTypes
 } from '@/types/workflow';
-
 // Operation imports
-import TeraWorkflowNode from '@/workflow/tera-workflow-node.vue';
+import TeraOperator from '@/workflow/tera-operator.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -537,10 +536,7 @@ function appendOutputPort(
 	// FIXME: This is a bit hacky, we should split this out into separate events, or the action
 	// should be built into the Operation directly. What we are doing is to update the internal state
 	// and this feels it is leaking too much low-level information
-	if (
-		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
-		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
-	) {
+	if (node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS) {
 		const state = node.state as CalibrationOperationStateJulia;
 		if (state.chartConfigs.length === 0) {
 			// This only ends up showing the output of the first run, perhaps we should consider showing

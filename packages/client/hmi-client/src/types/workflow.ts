@@ -17,12 +17,21 @@ export enum WorkflowOperationTypes {
 	FUNMAN = 'Funman'
 }
 
-export enum WorkflowStatus {
-	INVALID = 'invalid',
-	FAILED = 'failed',
-	COMPLETED = 'completed',
+export enum OperatorInteractionStatus {
+	FOCUS = 'focus', // Hover/drag
+	FOUND = 'found',
+	NOT_FOUND = 'not found'
+}
+
+export enum OperatorStatus {
+	DEFAULT = 'default',
 	IN_PROGRESS = 'in progress',
-	ERROR = 'error'
+	SUCCESS = 'success',
+	INVALID = 'invalid',
+	WARNING = 'warning', // Probably won't be used - would there be potential crossover with INVALID?
+	FAILED = 'failed',
+	ERROR = 'error',
+	DISABLED = 'disabled'
 }
 
 export enum WorkflowPortStatus {
@@ -85,7 +94,8 @@ export interface WorkflowNode<S> {
 	// Internal state. For example chosen model, display color ... etc
 	state: S;
 
-	status: WorkflowStatus;
+	status: OperatorStatus;
+	interactionStatus: OperatorInteractionStatus;
 }
 
 export interface WorkflowEdge {

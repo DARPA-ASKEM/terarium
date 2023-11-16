@@ -1,27 +1,12 @@
 <template>
-	<main :style="nodeStyle" ref="workflowNode">
-		<header :class="{ 'active-node': isActive }">
-			<h5 class="truncate">{{ node.displayName }}</h5>
-			<span>
-				<Button
-					icon="pi pi-search-plus"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="showNodeDrilldown"
-				/>
-				<Button
-					icon="pi pi-bolt"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="openDrilldown"
-				/>
-				<!-- 3-dot options menu -->
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleNodeMenu"
-				/>
-				<Menu ref="nodeMenu" :model="nodeMenuItems" :popup="true" />
-			</span>
-		</header>
+	<main :style="nodeStyle" ref="operator">
+		<tera-operator-header
+			:name="node.displayName"
+			:status="node.status"
+			@open-in-new-window="openInNewWindow"
+			@remove-operator="emit('remove-operator', props.node.id)"
+			@bring-to-front="bringToFront"
+		/>
 		<ul class="inputs">
 			<li
 				v-for="(input, index) in node.inputs"
@@ -53,6 +38,7 @@
 		</ul>
 		<section>
 			<slot name="body" />
+			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
 		</section>
 		<ul class="outputs">
 			<li
@@ -80,10 +66,10 @@
 import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
-import Menu from 'primevue/menu';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import TeraOperatorHeader from './operator/tera-operator-header.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -96,7 +82,7 @@ const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
-	'remove-node',
+	'remove-operator',
 	'drilldown'
 ]);
 
@@ -107,7 +93,7 @@ const nodeStyle = computed(() => ({
 }));
 
 const portBaseSize: number = 8;
-const workflowNode = ref<HTMLElement>();
+const operator = ref<HTMLElement>();
 
 let tempX = 0;
 let tempY = 0;
@@ -142,18 +128,25 @@ const stopDrag = (/* evt: MouseEvent */) => {
 };
 
 onMounted(() => {
-	if (!workflowNode.value) return;
+	if (!operator.value) return;
 
-	workflowNode.value.addEventListener('mousedown', startDrag);
+	operator.value.addEventListener('mousedown', startDrag);
 	document.addEventListener('mousemove', drag);
-	workflowNode.value.addEventListener('mouseup', stopDrag);
+	operator.value.addEventListener('mouseup', stopDrag);
 });
 
-function showNodeDrilldown() {
+function openDrilldown() {
 	emit('drilldown', props.node);
 }
 
-function openDrilldown() {
+function bringToFront() {
+	// TODO: bring to front
+	// maybe there can be a z-index variable in the parent component
+	// and we can just increment it here, and add a z-index style to the node
+	// console.log('bring to front');
+}
+
+function openInNewWindow() {
 	const url = router.resolve({
 		name: RouteName.WorkflowNode,
 		params: { nodeId: props.node.id, workflowId: props.node.workflowId }
@@ -173,41 +166,19 @@ function mouseoverPort(event) {
 }
 
 onBeforeUnmount(() => {
-	if (workflowNode.value) {
-		workflowNode.value.removeEventListener('mousedown', startDrag);
+	if (operator.value) {
+		operator.value.removeEventListener('mousedown', startDrag);
 		document.removeEventListener('mousemove', drag);
-		workflowNode.value.removeEventListener('mouseup', stopDrag);
+		operator.value.removeEventListener('mouseup', stopDrag);
 	}
 });
-
-function removeNode() {
-	emit('remove-node', props.node.id);
-}
-function bringToFront() {
-	// TODO: bring to front
-	// maybe there can be a z-index variable in the parent component
-	// and we can just increment it here, and add a z-index style to the node
-	// console.log('bring to front');
-}
-
-/*
- * User Menu
- */
-const nodeMenu = ref();
-const nodeMenuItems = ref([
-	{ icon: 'pi pi-clone', label: 'Bring to front', command: bringToFront },
-	{ icon: 'pi pi-trash', label: 'Remove', command: removeNode }
-]);
-const toggleNodeMenu = (event) => {
-	nodeMenu.value.toggle(event);
-};
 </script>
 
 <style scoped>
 main {
 	background-color: var(--surface-section);
 	outline: 1px solid var(--surface-border);
-	border-radius: var(--border-radius);
+	border-radius: var(--border-radius-medium);
 	position: absolute;
 	width: 20rem;
 	user-select: none;
@@ -217,42 +188,6 @@ main {
 main:hover {
 	box-shadow: var(--overlayMenuShadowHover);
 	z-index: 2;
-}
-
-main:hover > header:not(.active-node) {
-	background-color: var(--node-header-hover);
-}
-
-header {
-	display: flex;
-	padding: 0.25rem 0.25rem 0.25rem 1rem;
-	justify-content: space-between;
-	align-items: center;
-	color: var(--gray-0);
-	background-color: var(--node-header);
-	white-space: nowrap;
-	border-top-right-radius: var(--border-radius);
-	border-top-left-radius: var(--border-radius);
-}
-
-header.active-node {
-	background-color: var(--primary-color);
-}
-
-.truncate {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-header .p-button.p-button-icon-only,
-header .p-button.p-button-text:enabled:hover {
-	color: var(--gray-0);
-	width: 1.5rem;
-	margin-right: 0.25rem;
-}
-
-header .p-button.p-button-text:enabled:hover {
-	color: var(--surface-highlight);
 }
 
 section {
