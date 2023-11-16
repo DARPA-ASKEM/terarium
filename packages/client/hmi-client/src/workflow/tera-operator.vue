@@ -7,6 +7,12 @@
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@bring-to-front="bringToFront"
 		/>
+		<tera-operator-inputs
+			:inputs="node.inputs"
+			@port-mouseover="mouseoverPort($event)"
+			@port-mouseleave="emit('port-mouseleave')"
+			@port-selected="emit('port-selected')"
+		/>
 		<ul class="inputs">
 			<li
 				v-for="(input, index) in node.inputs"
@@ -14,14 +20,14 @@
 				:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
 			>
 				<div
-					class="input-port-container"
+					class="port-container"
 					@mouseenter="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
-					<div class="input port" />
+					<div class="port" />
 					<div>
 						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
 						<span v-if="!input.label">{{ input.type }}</span>
@@ -47,14 +53,14 @@
 				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			>
 				<div
-					class="output-port-container"
+					class="port-container"
 					@mouseenter="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
-					<div class="output port" />
+					<div class="port" />
 					{{ output.label }}
 				</div>
 			</li>
@@ -70,6 +76,7 @@ import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
+import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -218,32 +225,33 @@ ul li {
 .outputs {
 	color: var(--text-color-secondary);
 }
-.input-port-container {
+.port-container {
 	display: flex;
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
-	padding-right: 0.5rem;
 	gap: 0.5rem;
 }
 
-.output-port-container {
-	display: flex;
-	gap: 0.5rem;
+.inputs .port-container {
+	padding-right: 0.75rem;
+	border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.outputs .port-container {
 	margin-left: 0.5rem;
 	flex-direction: row-reverse;
 	padding-left: 0.75rem;
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
 	border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
 
-.output-port-container:hover {
+.port-container:hover {
 	cursor: pointer;
 	background-color: var(--surface-highlight);
 }
 
 .port-connected {
 	color: var(--text-color-primary);
+	background: var(--surface-0);
 }
 
 .port {
@@ -255,29 +263,34 @@ ul li {
 	height: calc(var(--port-base-size) * 2);
 }
 
-.port-connected .input.port,
-.port-connected .output.port {
+.port:hover {
+	background: var(--primary-color);
+}
+li:hover .port {
+	background: var(--surface-border);
+}
+.port-connected .port {
 	width: calc(var(--port-base-size) * 2);
 	height: calc(var(--port-base-size) * 2);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--port-base-size);
+	border-radius: 8px;
+	background-color: var(--primary-color);
+}
+.port-connected:hover .port {
+	background: var(--primary-color);
 }
 
-.port-connected .input-port-container,
-.port-connected .output-port-container {
-	gap: initial;
-}
-
-.port-connected .input.port {
-	left: calc(-1 * var(--port-base-size));
-}
-
-.port-connected .output.port {
+.outputs .port-connected .port {
 	left: var(--port-base-size);
 }
 
-.port:hover {
-	background: var(--primary-color);
+.port-connected .port-container {
+	gap: initial;
+}
+
+.inputs .port-connected .port {
+	left: calc(-1 * var(--port-base-size));
 }
 
 .inputs .port {
@@ -292,24 +305,6 @@ ul li {
 
 .outputs {
 	align-items: end;
-}
-
-.port-connected {
-	background: var(--surface-0);
-}
-
-.port-connected .port {
-	background-color: var(--primary-color);
-}
-
-.inputs > li:hover .port,
-.outputs > li:hover .port {
-	background: var(--surface-border);
-}
-
-.inputs > .port-connected:hover .port,
-.outputs > .port-connected:hover .port {
-	background: var(--primary-color);
 }
 
 .input-label::after {
