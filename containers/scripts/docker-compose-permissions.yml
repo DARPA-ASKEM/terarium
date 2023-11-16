@@ -3,7 +3,7 @@ version: "3.8"
 
 services:
   hmi-server:
-    image: permission:dev
+    image: permissions:local
     container_name: permissions
     networks:
       - terarium
