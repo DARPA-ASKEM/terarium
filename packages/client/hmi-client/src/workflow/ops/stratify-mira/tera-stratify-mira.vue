@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref } from 'vue';
+import { watch, ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
@@ -263,6 +263,10 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onUnmounted(() => {
+	kernelManager.shutdown();
+});
 </script>
 
 <style scoped>
