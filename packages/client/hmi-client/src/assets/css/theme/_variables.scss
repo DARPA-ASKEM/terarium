@@ -41,10 +41,11 @@ $fontWeightSemiBold: 600;
 
 //global
 $textColor: rgb(16, 24, 40);
-$textSecondaryColor: $emphasis-medium !default;
+$textSecondaryColor: $emphasis-medium !default; 
 $borderRadius: 4px !default;
 $bigBorderRadius: 8px !default;
 $biggerBorderRadius: 16px !default;
+$smallBorderRadius: 2px !default;
 $transitionDuration: .2s !default;
 $formElementTransition: background-color $transitionDuration, border-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration, background-size 0.2s cubic-bezier(0.64, 0.09, 0.08, 1) !default;
 $actionIconTransition: background-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration !default;
@@ -157,6 +158,9 @@ $roundedButtonBorderRadius: 2rem !default;
 
 $textButtonHoverBgOpacity: .04 !default;
 $textButtonActiveBgOpacity: .16 !default;
+$outlinedSecondaryButtonBg: #ffffff !default;
+$outlinedSecondaryButtonTextColor: var(--text-color-primary) !default;
+$outlinedSecondaryBoxShadow: #CACBCC inset 0 0 0 1px;
 $outlinedButtonBorder: 0 none !default;
 $plainButtonTextColor: $textColor !default;
 $plainButtonHoverBgColor: rgba(0, 0, 0, .04) !default;
@@ -165,9 +169,9 @@ $plainButtonActiveBgColor: rgba(0, 0, 0, .16) !default;
 $secondaryButtonBg: $accentColor !default;
 $secondaryButtonTextColor: var(--text-color-subdued) !default;
 $secondaryButtonBorder: 0 none !default;
-$secondaryButtonHoverBg: var(--surface-hover)!default;
+$secondaryButtonHoverBg: var(--surface-hover) !default;
 $secondaryButtonTextHoverColor: var(--text-color-primary) !default;
-$secondaryButtonHoverBorderColor: var(--gray-200) !default;
+$secondaryButtonHoverBorderColor: #CACBCC !default;
 $secondaryButtonActiveBg: rgba($accentColor, .68) !default;
 $secondaryButtonTextActiveColor: var(--text-color-primary) !default;
 $secondaryButtonActiveBorderColor: transparent !default;
@@ -856,10 +860,10 @@ $petri-nodeFill: var(--gray-500);
 $petri-lineColor: var(--gray-700);
 $petri-inputBox: var(--surface-0);
 
-
 :root {
 	--editing-color: rgb(238, 238, 136);
 	--border-radius: #{$borderRadius};
+	--border-radius-medium: 6px;
 	--border-radius-big: #{$bigBorderRadius};
 	--border-radius-bigger: #{$biggerBorderRadius};
 	--chevron-hover: #1b807332;
@@ -888,6 +892,7 @@ $petri-inputBox: var(--surface-0);
 	--gray-1000: #000000;
 	--inline-spacing: #{$inlineSpacing};
 	--maskbg: #{$maskBg};
+	--modal-border-radius: 6px;
 	--primary-color: #{$primaryColor};
 	--primary-color-hover: #{$primaryColorHover};
 	--primary-color-dark: #{$primaryColorDark};
@@ -918,10 +923,14 @@ $petri-inputBox: var(--surface-0);
 	--surface-f: #ffffff;
 	--surface-overlay: #ffffff;
 	--surface-ground: var(--gray-100);
+	--surface-disabled: #F4F4F4;
 	--surface-highlight: #EBF4F3;
+	--surface-warning: #FEC;
+	--surface-error: #FDDDD3;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #f9fbfa;
 	--surface-section: #ffffff;
+	--tab-backgroundcolor-unselected: #DEE4EB;
 	--text-color: #{$textColor};
 	--text-color-disabled: rgb(208, 213, 221);
 	--text-color-primary: #{$textColor};
@@ -940,4 +949,6 @@ $petri-inputBox: var(--surface-0);
 	--overlayMenuShadowHover: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 8px 0 rgba(0, 0, 0, 0.3);
 	--node-header: #7b8498;
 	--node-header-hover: var(--text-color-subdued);
+	--z-index-modal: 1000;
+	--keyboard-zindex: calc(var(--z-index-modal) + 100);
 }

@@ -1,17 +1,14 @@
-import { DocumentAsset, Document, Dataset, Model, Artifact } from '@/types/Types';
-
-// TODO: this should be an enum driven by our back end.
-export enum ProjectAssetTypes {
-	DOCUMENTS = 'publications',
-	MODELS = 'models',
-	PLANS = 'plans',
-	SIMULATIONS = 'simulations',
-	SIMULATION_RUNS = 'simulation_runs',
-	SIMULATION_WORKFLOW = 'workflows',
-	DATASETS = 'datasets',
-	CODE = 'code',
-	ARTIFACTS = 'artifacts'
-}
+import {
+	DocumentAsset,
+	Document,
+	Dataset,
+	Model,
+	Artifact,
+	AssetType,
+	Code,
+	ExternalPublication
+} from '@/types/Types';
+import { Workflow } from '@/types/workflow';
 
 export enum ProjectPages {
 	OVERVIEW = 'overview',
@@ -20,19 +17,24 @@ export enum ProjectPages {
 	EMPTY = ''
 }
 
-export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
-	Object.values(ProjectAssetTypes).includes(type as ProjectAssetTypes);
+export const isProjectAssetTypes = (type: AssetType | string): boolean =>
+	Object.values(AssetType).includes(type as AssetType);
 
+// TODO this is essentially the same as Assets from Types.tx, however for some reason the
+// Workflows class referenced here is only implemented on the front end and not
+// driven by the TypeScrypt generation on the backend. This should be fixed.
 export type ProjectAssets = {
-	[ProjectAssetTypes.DOCUMENTS]: DocumentAsset[];
-	[ProjectAssetTypes.MODELS]: Model[];
-	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.DATASETS]: Dataset[];
-	[ProjectAssetTypes.CODE]: any[];
-	[ProjectAssetTypes.ARTIFACTS]: Artifact[];
+	[AssetType.Publications]: ExternalPublication[];
+	[AssetType.Models]: Model[];
+	[AssetType.Datasets]: Dataset[];
+	[AssetType.Code]: Code[];
+	[AssetType.Artifacts]: Artifact[];
+	[AssetType.Workflows]: Workflow[];
+	[AssetType.Documents]: DocumentAsset[];
 };
 
+// TODO this is essentially the same as Project from Types.ts, however it references
+// the above ProjectAssets type instead of the Assets type. This should be fixed.
 export interface IProject {
 	id: string;
 	name: string;
@@ -43,4 +45,7 @@ export interface IProject {
 	assets: ProjectAssets | null;
 	relatedDocuments: Document[];
 	username: string;
+	metadata?: { [index: string]: string };
+	publicProject?: boolean;
+	userPermission?: string;
 }

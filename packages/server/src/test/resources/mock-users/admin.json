@@ -1,0 +1,80 @@
+{
+  "id": "930b9501-ab07-4baf-b5c8-d4095dc82b3b",
+  "createdAtMs": null,
+  "lastLoginAtMs": null,
+  "authorities":
+  [
+    "DELETE_USERS",
+    "READ_USERS",
+    "UPDATE_USERS",
+    "CREATE_USERS",
+    "DELETE_GRANT_AUTHORITY",
+    "SCOPE_profile",
+    "SCOPE_openid",
+    "SCOPE_email",
+    "ROLE_USER",
+    "CREATE_GRANT_AUTHORITY",
+    "UPDATE_GRANT_AUTHORITY",
+    "READ_GRANT_AUTHORITY",
+    "ROLE_ADMIN"
+  ],
+  "roles":
+  [
+    {
+      "id": 1,
+      "name": "ADMIN",
+      "authorities":
+      [
+        {
+          "id": 2,
+          "mask": 15,
+          "authority":
+          {
+            "id": 1,
+            "name": "GRANT_AUTHORITY"
+          }
+        },
+        {
+          "id": 1,
+          "mask": 15,
+          "authority":
+          {
+            "id": 2,
+            "name": "USERS"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "USER",
+      "authorities":
+      [
+        {
+          "id": 3,
+          "mask": 5,
+          "authority":
+          {
+            "id": 2,
+            "name": "USERS"
+          }
+        },
+        {
+          "id": 4,
+          "mask": 1,
+          "authority":
+          {
+            "id": 1,
+            "name": "GRANT_AUTHORITY"
+          }
+        }
+      ]
+    }
+  ],
+  "username": "adam",
+  "email": "adam@test.io",
+  "givenName": "Emperor",
+  "familyName": "Adam",
+  "name": "Emperor Adam",
+  "enabled": true
+}

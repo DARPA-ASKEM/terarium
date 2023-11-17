@@ -10,7 +10,7 @@
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects"
+					v-if="resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects"
 				>
 					<template
 						v-for="icon in [
@@ -28,20 +28,31 @@
 						/>
 					</template>
 				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.schema_name }}</div>
+				<div v-else-if="resourceType === ResourceType.MODEL">
+					{{ (asset as Model).header.schema_name }}
+				</div>
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
 			<ul class="snippets" v-if="snippets">
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
-			<div class="description" v-html="highlightSearchTerms(asset.description)" />
+			<div
+				class="description"
+				v-if="resourceType === ResourceType.MODEL"
+				v-html="highlightSearchTerms((asset as Model).header.description)"
+			/>
+			<div
+				class="description"
+				v-else-if="resourceType === ResourceType.DATASET"
+				v-html="highlightSearchTerms((asset as Dataset).description)"
+			/>
 			<div
 				class="parameters"
-				v-if="resourceType === ResourceType.MODEL && asset?.semantics?.ode?.parameters"
+				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
 			>
 				PARAMETERS:
-				{{ asset.semantics.ode.parameters }}
+				{{ (asset as Model).semantics?.ode.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
 			</div>
 			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
@@ -51,7 +62,9 @@
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
 		<aside class="preview-and-options">
-			<figure v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects">
+			<figure
+				v-if="resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects"
+			>
 				<template v-if="relatedAsset">
 					<img
 						v-if="relatedAsset.properties.image"
@@ -85,13 +98,22 @@
 				</template>
 				<div class="asset-nav-arrows">
 					<span class="asset-pages" v-if="!isEmpty(extractions)">
-						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-						<span class="asset-count">
-							{{ chosenExtractionFilter }}
-							<span class="asset-count-text">{{ relatedAssetPage + 1 }}</span> of
-							<span class="asset-count-text">{{ extractions.length }}</span>
+						<span v-if="totalExtractions > 1" class="asset-count">
+							<template v-for="(_, index) in extractions.length" :key="_">
+								<i
+									:class="
+										index === relatedAssetPage
+											? 'asset-count-selected-text'
+											: 'asset-count-selected'
+									"
+									@click.stop="previewMovement(index)"
+									>{{ index + 1 }}</i
+								>
+							</template>
+							<span v-if="totalExtractions > 5" class="asset-count-text">
+								(+{{ totalExtractions }})</span
+							>
 						</span>
-						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</span>
 				</div>
 			</figure>
@@ -105,7 +127,7 @@ import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
 import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
-import { ResourceType } from '@/types/common';
+import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
 
@@ -116,7 +138,7 @@ type UrlExtraction = {
 };
 
 const props = defineProps<{
-	asset: Document & Model & Dataset;
+	asset: ResultType;
 	resourceType: ResourceType;
 	highlight?: string;
 }>();
@@ -137,8 +159,8 @@ const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
 
-	if (props.asset.knownEntities.askemObjects) {
-		const documentsWithUrls = props.asset.knownEntities.askemObjects.filter(
+	if ((props.asset as Document).knownEntities.askemObjects) {
+		const documentsWithUrls = (props.asset as Document).knownEntities.askemObjects.filter(
 			(ex) =>
 				ex.askemClass === XDDExtractionType.Doc &&
 				ex.properties.documentBibjson?.knownEntities &&
@@ -162,9 +184,9 @@ const urlExtractions = computed(() => {
 });
 
 const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
-	if (props.asset.knownEntities.askemObjects) {
+	if ((props.asset as Document).knownEntities.askemObjects) {
 		const allExtractions = [
-			...(props.asset.knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
+			...((props.asset as Document).knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
 			...(urlExtractions.value as UrlExtraction[] & Extraction[])
 		];
 
@@ -175,12 +197,31 @@ const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => 
 	return [];
 });
 
+const totalExtractions: ComputedRef<number> = computed(() => {
+	if ((props.asset as Document).knownEntitiesCounts) {
+		return (
+			(props.asset as Document).knownEntitiesCounts.askemObjectCount +
+			(props.asset as Document).knownEntitiesCounts.urlExtractionCount
+		);
+	}
+	return 0;
+});
+
 const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() =>
-	props.asset.highlight ? Array.from(props.asset.highlight).splice(0, 3) : null
+	(props.asset as Document).highlight
+		? Array.from((props.asset as Document).highlight).splice(0, 3)
+		: null
 );
 const title = computed(() => {
-	const value = props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name;
+	let value = '';
+	if (props.resourceType === ResourceType.XDD) {
+		value = (props.asset as Document).title;
+	} else if (props.resourceType === ResourceType.MODEL) {
+		value = (props.asset as Model).header.name;
+	} else if (props.resourceType === ResourceType.DATASET) {
+		value = (props.asset as Dataset).name;
+	}
 	return highlightSearchTerms(value);
 });
 
@@ -193,11 +234,9 @@ watch(
 );
 
 function previewMovement(movement: number) {
-	const newPage = relatedAssetPage.value + movement;
-	if (newPage > -1 && newPage < extractions.value.length) {
-		relatedAssetPage.value = newPage;
+	if (movement > -1 && movement < extractions.value.length) {
+		relatedAssetPage.value = movement;
 	}
-	// console.log(relatedAsset.value);
 }
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
@@ -224,14 +263,14 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
 	if (props.resourceType === ResourceType.XDD) {
-		const details = `${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
-			props.asset.journal
-		}`;
+		const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
+			(props.asset as Document).year
+		}) ${(props.asset as Document).journal}`;
 		return highlightSearchTerms(details);
 	}
 
 	if (props.resourceType === ResourceType.DATASET) {
-		return props.asset?.url;
+		return (props.asset as Dataset).datasetUrl;
 	}
 
 	return null;
@@ -354,6 +393,11 @@ function endDrag() {
 
 .asset-nav-arrows .asset-count-text {
 	color: var(--text-color-subdued);
+}
+
+.asset-count-selected-text {
+	font-weight: 1000;
+	color: var(--text-color-primary);
 }
 
 .title,

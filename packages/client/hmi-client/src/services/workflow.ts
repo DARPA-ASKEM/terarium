@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import API from '@/api/api';
 import _ from 'lodash';
+import { EventEmitter } from '@/utils/emitter';
 import {
 	Operation,
 	Position,
@@ -9,18 +9,17 @@ import {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPortStatus,
-	WorkflowStatus
+	OperatorStatus,
+	OperatorInteractionStatus
 } from '@/types/workflow';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
  * not optimized, on the account that we don't expect most workflow graphs to
  * exceed say ... 10-12 nodes with 30-40 edges.
  *
- * TODO:
- * - Should we update workflow node status on modification???
  */
-
 export const emptyWorkflow = (name: string = 'test', description: string = '') => {
 	const workflow: Workflow = {
 		id: uuidv4(),
@@ -41,7 +40,7 @@ export const addNode = (
 	pos: Position,
 	options: { size?: Size; state?: any } = { size: defaultNodeSize, state: {} }
 ) => {
-	const node: WorkflowNode = {
+	const node: WorkflowNode<any> = {
 		id: uuidv4(),
 		workflowId: wf.id,
 		operationType: op.name,
@@ -68,7 +67,8 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		statusCode: WorkflowStatus.INVALID,
+		status: OperatorStatus.INVALID,
+		interactionStatus: OperatorInteractionStatus.FOUND,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
@@ -209,56 +209,14 @@ export const getWorkflow = async (id: string) => {
 /// /////////////////////////////////////////////////////////////////////////////
 // Events bus for workflow
 /// /////////////////////////////////////////////////////////////////////////////
-type EventCallback = (args: any) => void;
-type EventName = string | symbol;
-class EventEmitter {
-	listeners: Map<EventName, Set<EventCallback>> = new Map();
-
-	on(eventName: EventName, fn: EventCallback): void {
-		if (!this.listeners.has(eventName)) {
-			this.listeners.set(eventName, new Set());
-		}
-		this.listeners.get(eventName)?.add(fn);
-	}
-
-	once(eventName: EventName, fn: EventCallback): void {
-		if (!this.listeners.has(eventName)) {
-			this.listeners.set(eventName, new Set());
-		}
-
-		const onceWrapper = (args: any) => {
-			fn(args);
-			this.off(eventName, onceWrapper);
-		};
-		this.listeners.get(eventName)?.add(onceWrapper);
-	}
-
-	off(eventName: EventName, fn: EventCallback): void {
-		const set = this.listeners.get(eventName);
-		if (set) {
-			set.delete(fn);
-		}
-	}
-
-	removeAllEvents(eventName: EventName): void {
-		if (this.listeners.has(eventName)) {
-			this.listeners.delete(eventName);
-		}
-	}
-
-	emit(eventName: EventName, args: any): boolean {
-		const fns = this.listeners.get(eventName);
-		if (!fns) return false;
-
-		fns.forEach((f) => {
-			f(args);
-		});
-		return true;
-	}
-
+class WorkflowEventEmitter extends EventEmitter {
 	emitNodeStateChange(payload: { workflowId: string; nodeId: string; state: any }) {
 		this.emit('node-state-change', payload);
 	}
+
+	emitNodeRefresh(payload: { workflowId: string; nodeId: string }) {
+		this.emit('node-refresh', payload);
+	}
 }
 
-export const workflowEventBus = new EventEmitter();
+export const workflowEventBus = new WorkflowEventEmitter();

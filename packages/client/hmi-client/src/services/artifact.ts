@@ -1,7 +1,5 @@
-import { Artifact, PresignedURL } from '@/types/Types';
+import { Artifact } from '@/types/Types';
 import API from '@/api/api';
-import { ProjectAssetTypes } from '@/types/Project';
-import { addAsset } from '@/services/project';
 import { Ref } from 'vue';
 import { logger } from '@/utils/logger';
 
@@ -15,8 +13,7 @@ import { logger } from '@/utils/logger';
 async function createNewArtifactFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string,
-	projectId: string
+	userName: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -46,7 +43,7 @@ async function createNewArtifactFromGithubFile(
 		return null;
 	}
 
-	return addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
+	return newArtifact;
 }
 
 /**
@@ -58,12 +55,11 @@ async function createNewArtifactFromGithubFile(
  * @param description? description of the file. Optional. If not given description will be just the file name
  */
 async function uploadArtifactToProject(
-	progress: Ref<number>,
 	file: File,
 	userName: string,
-	projectId: string,
-	description?: string
-): Promise<any> {
+	description?: string,
+	progress?: Ref<number>
+): Promise<Artifact | null> {
 	// Create a new artifact with the same name as the file, and post the metadata to TDS
 	const artifact: Artifact = {
 		name: file.name,
@@ -78,7 +74,7 @@ async function uploadArtifactToProject(
 	const successfulUpload = await addFileToArtifact(newArtifact.id, file, progress);
 	if (!successfulUpload) return null;
 
-	return addAsset(projectId, ProjectAssetTypes.ARTIFACTS, newArtifact.id);
+	return newArtifact;
 }
 
 /**
@@ -86,7 +82,7 @@ async function uploadArtifactToProject(
  * @param artifact the artifact to create
  */
 async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
-	const response = await API.put('/artifacts', artifact);
+	const response = await API.post('/artifacts', artifact);
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }
@@ -99,7 +95,7 @@ async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
 async function addFileToArtifact(
 	artifactId: string,
 	file: File,
-	progress: Ref<number>
+	progress?: Ref<number>
 ): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('file', file);
@@ -112,10 +108,12 @@ async function addFileToArtifact(
 			'Content-Type': 'multipart/form-data'
 		},
 		onUploadProgress(progressEvent) {
-			progress.value = Math.min(
-				90,
-				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
-			);
+			if (progress) {
+				progress.value = Math.min(
+					90,
+					Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
+				);
+			}
 		},
 		timeout: 30000
 	});
@@ -131,20 +129,6 @@ async function getArtifactFileAsText(artifactId: string, fileName: string): Prom
 
 	if (!response || response.status >= 400) {
 		logger.error('Error getting artifact file as text');
-		return null;
-	}
-
-	return response.data;
-}
-
-async function getPresignedDownloadURL(
-	artifactId: string,
-	fileName: string
-): Promise<PresignedURL | null> {
-	const response = await API.get(`/artifacts/${artifactId}/download-url?filename=${fileName}`, {});
-
-	if (!response || response.status >= 400) {
-		logger.error('Error getting presigned download url');
 		return null;
 	}
 
@@ -171,6 +155,5 @@ export {
 	uploadArtifactToProject,
 	createNewArtifactFromGithubFile,
 	getArtifactFileAsText,
-	getPresignedDownloadURL,
 	getArtifactArrayBuffer
 };

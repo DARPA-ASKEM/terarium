@@ -12,12 +12,14 @@
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
 				:auto-expand-preview="autoExpandPreview"
+				:default-preview="defaultPreview"
 				@cell-updated="scrollToLastCell"
+				@preview-selected="previewSelected"
 			/>
 
-			<!-- Chatty Input -->
-			<tera-chatty-input
-				class="tera-chatty-input"
+			<!-- Beaker Input -->
+			<tera-beaker-input
+				class="tera-beaker-input"
 				:kernel-is-busy="props.kernelStatus !== KernelState.idle"
 				context="dataset"
 				@submitQuery="submitQuery"
@@ -28,20 +30,21 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onUnmounted, onMounted } from 'vue';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
 import {
 	getSessionManager,
 	JupyterMessage,
 	KernelState,
 	createMessageId
 } from '@/services/jupyter';
-import { CsvAsset } from '@/types/Types';
-import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
+import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
+import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { updateNotebookSession } from '@/services/notebook-session';
+import { useProjects } from '@/composables/project';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -60,34 +63,39 @@ const notebookItems = ref(
 		}[]
 	>[]
 );
-const notebookCells = ref([]);
+const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
 
 const emit = defineEmits([
 	'new-message',
 	'download-response',
 	'update-kernel-status',
 	'new-dataset-saved',
-	'new-model-saved'
+	'new-model-saved',
+	'update-kernel-state'
 ]);
 
 const props = defineProps<{
-	project?: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes;
+	assetType?: AssetType;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
 	showChatThoughts?: boolean;
 	jupyterSession: SessionContext;
 	kernelStatus: String;
 	autoExpandPreview?: boolean;
+	notebookSession?: NotebookSession;
 }>();
 
-onMounted(() => {
+onMounted(async () => {
+	if (props.notebookSession) {
+		notebookItems.value = props.notebookSession.data?.history;
+	}
 	activeSessions.value = getSessionManager().running();
 });
 
 const queryString = ref('');
+const defaultPreview = ref('df');
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
@@ -96,6 +104,10 @@ const iopubMessageHandler = (_session, message) => {
 		return;
 	}
 	newJupyterMessage(message);
+};
+
+const previewSelected = (selection) => {
+	defaultPreview.value = selection;
 };
 
 props.jupyterSession.iopubMessage.connect(iopubMessageHandler);
@@ -180,14 +192,21 @@ const updateNotebookCells = (message) => {
 			(msg) => msg.header.msg_type !== 'dataset'
 		);
 		notebookItem.resultingCsv = message.content;
+		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'model_preview') {
 		// If we get a new model preview, remove any old previews
 		notebookItem.messages = notebookItem.messages.filter(
 			(msg) => msg.header.msg_type !== 'model_preview'
 		);
+		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
 		notebookItem.executions.push(executionParent);
+		// add the latest message execution to the code cell, we need this in order to persist the latest code execution
+		const codeCell = notebookItem.messages.find((m) => m.header.msg_type === 'code_cell');
+		if (codeCell) {
+			codeCell.content.code = message.content.code;
+		}
 		return;
 	}
 
@@ -200,7 +219,11 @@ const updateKernelStatus = (kernelStatus) => {
 
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
-	if (['stream', 'code_cell', 'llm_request', 'chatty_response', 'dataset'].indexOf(msgType) > -1) {
+	if (
+		['stream', 'code_cell', 'llm_request', 'llm_response', 'beaker_response', 'dataset'].indexOf(
+			msgType
+		) > -1
+	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
 		isExecutingCode.value = msgType === 'llm_request' || msgType === 'code_cell';
@@ -227,6 +250,31 @@ const newJupyterMessage = (jupyterMessage) => {
 const clearHistory = () => {
 	messagesHistory.value = [];
 	notebookItems.value = [];
+};
+
+// Clear all the outputs in the chat, without clearing the code/prompts/etc.
+const clearOutputs = () => {
+	for (let i = 0; i < notebookItems.value.length; i++) {
+		const item = notebookItems.value[i];
+		for (let j = item.messages.length - 1; j >= 0; j--) {
+			const message = item.messages[j];
+			const msgType = message.header.msg_type;
+			if (msgType === 'model_preview' || msgType === 'dataset') {
+				item.messages.splice(j, 1);
+			}
+			if (msgType === 'code_cell') {
+				console.log(message);
+			}
+		}
+	}
+	for (let i = 0; i < notebookCells.value.length; i++) {
+		const el = notebookCells.value[i];
+		if (el.codeCell) {
+			for (let j = 0; j < el.codeCell.length; j++) {
+				el.codeCell[j].clear();
+			}
+		}
+	}
 };
 
 const scrollToLastCell = (element, msg) => {
@@ -272,15 +320,42 @@ watch(
 watch(
 	() => [
 		props.assetId, // Once the route name changes, add/switch to another tab
-		props.project
+		useProjects().activeProject.value
 	],
 	() => {
-		console.log(props.project, props.assetId);
+		console.log(useProjects().activeProject.value, props.assetId);
 	}
 );
 
+// update the notebook history when we get the notebookSession
+watch(
+	() => props.notebookSession,
+	() => {
+		if (props.notebookSession) {
+			notebookItems.value = props.notebookSession.data.history;
+		}
+	}
+);
+
+watch(
+	() => notebookItems.value,
+	async () => {
+		if (props.notebookSession) {
+			await updateNotebookSession({
+				id: props.notebookSession.id,
+				name: props.notebookSession.name,
+				description: props.notebookSession.description,
+				data: { history: notebookItems.value },
+				timestamp: new Date().toISOString()
+			});
+		}
+	},
+	{ deep: true }
+);
+
 defineExpose({
-	clearHistory
+	clearHistory,
+	clearOutputs
 });
 </script>
 

@@ -1,13 +1,52 @@
 .p-selectbutton {
+    padding: 2px;
+    display: flex;
+    gap: 2px;
+    width: fit-content;
+    border-radius: 6px;
+    border: 1px solid var(--surface-border);
+    background-color: var(--tab-backgroundcolor-unselected);
+    height: 40px; 
+
     .p-button {
-        &:focus {
-            background: $toggleButtonActiveBg;
-            border-color: $toggleButtonActiveBorderColor;
-    
-            &.p-highlight {
-                background: $toggleButtonActiveHoverBg;
-                border-color: $toggleButtonActiveHoverBorderColor;
+        padding: 12px;
+        border-radius: $borderRadius; 
+        background-color: var(--tab-backgroundcolor-unselected);
+        border: none;
+         &:hover {
+                background: $toggleButtonHoverBg;
             }
+        &:focus {
+            background: $toggleButtonActiveBg;  
+            &.p-highlight {
+                background: $toggleButtonBg;
+            } 
+        }
+        &.p-highlight {
+            background: $toggleButtonBg;
+            border-radius: $borderRadius; 
+        }
+    }
+}
+
+// Only way I found to sepcify this
+.p-buttonset .p-button:not(:first-of-type):not(:last-of-type) {
+    border-radius: $borderRadius;
+}
+
+.p-buttonset .p-button-sm:not(:first-of-type):not(:last-of-type) {
+    border-radius: $smallBorderRadius;
+}
+
+.p-selectbutton.p-button-sm {
+    height:24px;
+    border-radius: $borderRadius;
+
+    .p-button {
+        padding: 8px;
+        border-radius: $smallBorderRadius;
+        &.p-highlight {
+            border-radius: $smallBorderRadius;
         }
     }
 }

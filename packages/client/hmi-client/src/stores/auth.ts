@@ -1,115 +1,58 @@
 import { defineStore } from 'pinia';
-import { config } from 'vue-gtag';
+import { User } from '@/types/Types';
+import Keycloak from 'keycloak-js';
+import axios, { AxiosHeaders } from 'axios';
+import { computed, ref } from 'vue';
 
-/**
- * Decode the OIDC token for additional information
- * @param token the OIDC token
- * @returns decoded JSON object representing the token
- * @throws an Error if token is not formatted as expected
- */
-const decode = (token: string) => {
-	// split the string up based on delimiter '.'
-	const tokens = token.split('.');
-
-	// retrieve only the 2nd one
-	if (tokens.length !== 3) {
-		throw new Error('Failed to Decode OIDC Token');
-	}
-	const infoToken = tokens[1];
-
-	// decode the token
-	const decodedToken = window.atob(infoToken);
-	// const decodedToken = base64Decoder(infoToken);
-	return JSON.parse(decodedToken);
-};
-
-let timer: NodeJS.Timeout;
 /**
  * Main store used for authentication
  */
-const useAuthStore = defineStore('auth', {
-	state: () => ({
-		userId: null,
-		userToken: null as string | null,
-		expires: null as number | null,
-		name: null as string | null,
-		email: null as string | null
-	}),
-	getters: {
-		token: (state) => state.userToken,
-		isAuthenticated: (state) => !!state.userToken
-	},
-	actions: {
-		/**
-		 * Retrieve access tokens from Keycloak
-		 */
-		async fetchSSO() {
-			// In development mode, bypass Keycloak setting the user to be anonymous
-			if (import.meta.env.VITE_BYPASS_KEYCLOAK === 'true') {
-				console.log(import.meta.env);
-				this.userToken = null;
-				this.name = 'Dev User';
-				this.email = 'dev@terarium.ai';
-			} else {
-				// Fetch or refresh the access token
-				const response =
-					this.userToken !== null
-						? await fetch(
-								`/app/redirect_uri?refresh=/silent-check-sso.html&access_token=${this.userToken}`
-						  )
-						: await fetch('/silent-check-sso.html');
+const useAuthStore = defineStore('auth', () => {
+	// keycloak
+	const keycloak = ref<Keycloak | null>(null);
+	const setKeycloak = (newKeycloak: Keycloak) => {
+		keycloak.value = newKeycloak;
+	};
+	const logout = async (options?: Keycloak.KeycloakLogoutOptions) => {
+		await keycloak.value?.logout(options);
+	};
 
-				if (!response.ok) {
-					this.logout();
-					const error = new Error('Authentication Failed');
-					throw error;
-				}
+	const token = computed(() => keycloak.value?.token);
 
-				const accessToken = response.headers.get('OIDC_access_token');
-				const expirationTimestamp =
-					+(response?.headers?.get('OIDC_access_token_expires') ?? 0) * 1000;
+	// user
+	const user = ref<User | null>(null);
+	const updateUser = async (updatedUser: User) => {
+		const response = await axios.put('/api/user/me', updatedUser, {
+			headers: new AxiosHeaders().setAuthorization(`Bearer ${token.value}`)
+		});
+		user.value = response.data;
+	};
 
-				this.userToken = accessToken;
+	const loadUserModel = async () => {
+		const response = await axios.get('/api/user/me', {
+			headers: new AxiosHeaders().setAuthorization(`Bearer ${token.value}`)
+		});
+		user.value = response.data;
+	};
+	const userInitials = computed(
+		() => `${user.value?.givenName?.charAt(0)}${user.value?.familyName?.charAt(0)}`
+	);
 
-				if (accessToken) {
-					try {
-						const tokenInfo = decode(accessToken);
+	const init = async () => {
+		await loadUserModel();
+	};
 
-						this.name = tokenInfo.name;
-						this.email = tokenInfo.email;
-
-						// Configure Google Analytics user_id property.  The preferred username is
-						// the username within Keycloak, or, when using GitHub authentication, the GitHub
-						// username.
-						config({ user_id: tokenInfo.preferred_username });
-					} catch (error) {
-						console.error('Unable to decode authentication token for additional user information');
-						this.name = null;
-						this.email = null;
-					}
-
-					// TODO: other info we can gather
-					// preferred_username, given_name, family_name, realm_access.roles etc
-				}
-
-				const expiresIn = expirationTimestamp - new Date().getTime();
-				timer = setTimeout(() => {
-					this.autoRenew();
-				}, expiresIn);
-			}
-		},
-		logout() {
-			this.userId = null;
-			this.userToken = null;
-			this.name = null;
-			this.email = null;
-			window.location.assign('/logout');
-		},
-		autoRenew() {
-			clearTimeout(timer);
-			this.fetchSSO();
-		}
-	}
+	return {
+		keycloak,
+		setKeycloak,
+		logout,
+		token,
+		user,
+		updateUser,
+		loadUserModel,
+		userInitials,
+		init
+	};
 });
 
 export default useAuthStore;

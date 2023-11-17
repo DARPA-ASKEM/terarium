@@ -1,9 +1,16 @@
-import { XDDFacetsItemResponse, Document, Dataset, Model } from '@/types/Types';
+import {
+	XDDFacetsItemResponse,
+	Document,
+	Dataset,
+	Model,
+	AssetType,
+	DocumentAsset
+} from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
-import { ProjectAssetTypes, ProjectPages } from './Project';
+import { ProjectPages } from './Project';
 
 export type Annotation = {
 	id: string;
@@ -14,6 +21,16 @@ export type Annotation = {
 	username: number;
 	section: string;
 };
+
+export interface FeatureConfig {
+	isPreview: boolean;
+}
+
+export enum ParamType {
+	CONSTANT,
+	DISTRIBUTION,
+	TIME_SERIES
+}
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
 // But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
@@ -48,7 +65,7 @@ export type SearchParameters = {
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | Dataset | Document;
+export type ResultType = Model | Dataset | Document | DocumentAsset;
 
 export type SearchResults = {
 	results: ResultType[];
@@ -93,16 +110,18 @@ export type SidePanelTab = {
 	badgeCount?: number;
 };
 
-// Tabs
-export type Tab = {
-	assetName: string;
-	icon?: string;
-	assetId?: string;
-	pageType?: ProjectAssetTypes | ProjectPages;
+export type AssetRoute = {
+	assetId: string;
+	pageType: AssetType | ProjectPages;
 };
 
+export interface AssetItem extends AssetRoute {
+	icon?: string;
+	assetName?: string;
+}
+
 export type CodeRequest = {
-	asset: Tab;
+	asset: AssetItem;
 	code?: string;
 };
 
@@ -113,8 +132,6 @@ export enum AcceptedTypes {
 	TXT = 'text/plain',
 	MD = 'text/markdown',
 	PY = 'text/x-python-script',
-	M = 'text/x-matlab',
-	JS = 'application/javascript',
 	R = 'text/x-r',
 	JL = 'application/julia'
 }
@@ -125,8 +142,6 @@ export enum AcceptedExtensions {
 	TXT = 'txt',
 	MD = 'md',
 	PY = 'py',
-	M = 'm',
-	JS = 'js',
 	R = 'r',
 	JL = 'jl'
 }

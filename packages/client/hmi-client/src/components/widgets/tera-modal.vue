@@ -12,29 +12,41 @@
  * @example
  * <modal @modal-mask-clicked="closeModal"></modal>
  */
+
+defineProps<{
+	zIndex?: number;
+}>();
 </script>
 
 <template>
 	<Transition name="modal">
-		<aside @click.self="$emit('modalMaskClicked')">
-			<main>
+		<main :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
+			<section>
 				<header>
-					<slot name="header"></slot>
+					<slot name="header" />
 				</header>
-				<slot></slot>
-				<section><slot name="math-editor"></slot></section>
+				<section class="content"><slot /></section>
+				<section><slot name="math-editor" /></section>
 				<footer>
-					<slot name="footer"></slot>
+					<slot name="footer" />
 				</footer>
-			</main>
-		</aside>
+			</section>
+			<aside @click.self="$emit('modalMaskClicked')" />
+		</main>
 	</Transition>
 </template>
 
 <style scoped>
+main {
+	isolation: isolate;
+	z-index: var(--z-index, var(--z-index-modal));
+}
+
+main > * {
+	position: absolute;
+}
 aside {
-	position: fixed;
-	z-index: 1000;
+	z-index: 1;
 	top: 0;
 	left: 0;
 	width: 100%;
@@ -45,16 +57,27 @@ aside {
 	transition: opacity 0.1s ease;
 }
 
-main {
+main > section {
 	max-height: 95vh;
+	max-width: 640px;
 	background-color: #fff;
-	border-radius: 0.5rem;
+	border-radius: var(--modal-border-radius);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	margin: 0px auto;
-	padding: 2rem;
+	padding: 2rem 0;
 	transition: all 0.1s ease;
 	min-width: max-content;
 	width: 80vw;
+	z-index: 2;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.content {
+	max-height: 65vh;
+	padding: 0 2rem;
+	overflow-y: auto;
 }
 
 header {
@@ -72,14 +95,31 @@ footer {
 	margin-top: 2rem;
 }
 
+header,
+footer {
+	padding: 0 2rem;
+}
+
 .modal-enter-from,
 .modal-leave-to {
 	opacity: 0;
 }
 
-.modal-enter-from main,
-.modal-leave-to main {
+.modal-enter-from main > section,
+.modal-leave-to main > section {
 	-webkit-transform: scale(0.9);
 	transform: scale(0.9);
+}
+
+.content:deep(label) {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.content:deep(input),
+.content:deep(textarea) {
+	display: block;
+	margin-bottom: 1rem;
+	width: 100%;
 }
 </style>

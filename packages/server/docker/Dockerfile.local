@@ -1,0 +1,6 @@
+FROM eclipse-temurin:17.0.9_9-jdk-focal AS builder
+
+WORKDIR /app
+COPY . /app
+
+CMD ["/bin/bash", "./gradlew", "bootRun", "--args='--spring.profiles.active=default,local'", "--continuous"]

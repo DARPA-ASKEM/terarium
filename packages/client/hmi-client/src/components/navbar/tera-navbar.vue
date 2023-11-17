@@ -1,12 +1,12 @@
 <template>
-	<header>
+	<nav>
 		<section class="header-left">
 			<router-link :to="RoutePath.Home">
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
 			</router-link>
 			<div class="navigation-dropdown" @click="showNavigationMenu">
-				<h1 v-if="currentProjectId || isDataExplorer">
-					{{ currentProjectName ?? 'Explorer' }}
+				<h1 v-if="useProjects().activeProject.value?.id || isDataExplorer">
+					{{ useProjects().activeProject.value?.name ?? 'Explorer' }}
 				</h1>
 				<img
 					v-else
@@ -47,7 +47,6 @@
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
-				class="modal"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
 			>
 				<template #header>
@@ -119,7 +118,7 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-	</header>
+	</nav>
 </template>
 
 <script setup lang="ts">
@@ -137,19 +136,16 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
-import { IProject } from '@/types/Project';
 import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
+import { useProjects } from '@/composables/project';
 
-const props = defineProps<{
+defineProps<{
 	active: boolean;
-	currentProjectId: IProject['id'] | null;
-	projects: IProject[] | null;
 	showSuggestions: boolean;
 }>();
 
@@ -158,7 +154,6 @@ const props = defineProps<{
  */
 const router = useRouter();
 const navigationMenu = ref();
-const resources = useResourcesStore();
 
 /**
  * Evaluation scenario code
@@ -197,7 +192,7 @@ const isEvaluationScenarioValid = computed(
 const beginEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Started))
 	);
 	persistEvaluationScenario();
@@ -212,7 +207,7 @@ const beginEvaluationScenario = async () => {
 const stopEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Stopped))
 	);
 	clearEvaluationScenario();
@@ -226,7 +221,7 @@ const stopEvaluationScenario = async () => {
 const pauseEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
 	);
 	await refreshEvaluationScenario();
@@ -237,7 +232,7 @@ const pauseEvaluationScenario = async () => {
 const resumeEvaluationScenario = async () => {
 	await EventService.create(
 		EventType.EvaluationScenario,
-		resources.activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
 	);
 	await refreshEvaluationScenario();
@@ -315,13 +310,13 @@ const clearEvaluationScenario = () => {
 };
 
 const homeItem: MenuItem = {
-	label: RouteMetadata[RouteName.HomeRoute].displayName,
-	icon: RouteMetadata[RouteName.HomeRoute].icon,
+	label: RouteMetadata[RouteName.Home].displayName,
+	icon: RouteMetadata[RouteName.Home].icon,
 	command: () => router.push(RoutePath.Home)
 };
 const explorerItem: MenuItem = {
-	label: RouteMetadata[RouteName.DataExplorerRoute].displayName,
-	icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
+	label: RouteMetadata[RouteName.DataExplorer].displayName,
+	icon: RouteMetadata[RouteName.DataExplorer].icon,
 	command: () => router.push(RoutePath.DataExplorer)
 };
 const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
@@ -329,7 +324,7 @@ const showNavigationMenu = (event) => {
 	navigationMenu.value.toggle(event);
 };
 const currentRoute = useCurrentRoute();
-const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorerRoute);
+const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
 
 /*
  * User Menu
@@ -343,6 +338,13 @@ const userMenuItems = ref([
 		command: () => {
 			isEvaluationScenarioModalVisible.value = true;
 		}
+	},
+	{
+		label: 'User Administration',
+		command: () => {
+			router.push(RoutePath.UserAdmin);
+		},
+		visible: auth.user?.roles.some((r) => r.name === 'ADMIN')
 	},
 	{
 		label: 'Logout',
@@ -361,11 +363,7 @@ const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
 
-const userInitials = computed(() =>
-	auth.name
-		?.split(' ')
-		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
-);
+const userInitials = computed(() => auth.userInitials);
 
 function closeLogoutDialog() {
 	isLogoutDialog.value = false;
@@ -395,35 +393,25 @@ function searchByExampleModalToggled() {
 	*/
 }
 
-/*
- * Reactive
- */
-const currentProjectName = computed(
-	() => props.projects?.find((project) => project.id === props.currentProjectId?.toString())?.name
-);
-
 watch(
-	() => props.projects,
+	() => useProjects().allProjects.value,
 	() => {
-		if (props.projects) {
-			const items: MenuItem[] = [];
-			props.projects?.forEach((project) => {
-				items.push({
-					label: project.name,
-					icon: 'pi pi-folder',
-					command: () =>
-						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
-				});
+		const items: MenuItem[] = [];
+		useProjects().allProjects.value?.forEach((project) => {
+			items.push({
+				label: project.name,
+				icon: 'pi pi-folder',
+				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
 			});
-			navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
-		}
+		});
+		navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
 	},
 	{ immediate: true }
 );
 </script>
 
 <style scoped>
-header {
+nav {
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
@@ -539,26 +527,9 @@ i {
 	background-color: var(--surface-hover);
 	color: var(--text-color-secondary);
 }
-</style>
-<style>
-/*
- * On it's own style, because the pop-up happened outside of this component.
- * To left align the content with the h1.
- */
+
 .navigation-menu {
 	margin-top: 0.25rem;
 	min-width: fit-content !important;
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
 }
 </style>

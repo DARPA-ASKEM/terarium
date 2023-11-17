@@ -17,45 +17,37 @@
 			/>
 			<label for="fileInput" class="file-label">
 				<div v-if="dragOver">Release mouse button to add files to import</div>
-				<div v-else>Drop resources here or <span class="text-link">upload a file</span>.</div>
-			</label>
-			<br />
-
-			<div v-if="importFiles.length > 0">
-				<div class="preview-container mt-4" v-if="importFiles.length">
-					<div v-for="file in importFiles" :key="file.name" class="file-preview" scrolling="no">
-						<TeraDragAndDropFilePreviewer
-							:file="file"
-							:show-preview="props.showPreview"
-							:is-processing="isProcessing"
-							:progress="props.progress"
-							@remove-file="removeFile(importFiles.indexOf(file))"
-						>
-						</TeraDragAndDropFilePreviewer>
+				<div v-else class="drop-zone">
+					<div><i class="pi pi-file" style="font-size: 2.5rem" /></div>
+					<div>
+						Drop resources here or <span class="text-link">click to open a file browser</span>
 					</div>
 				</div>
-				<br />
+			</label>
+		</div>
+		<div v-if="importFiles.length > 0">
+			<div class="preview-container mt-4" v-if="importFiles.length">
+				<div v-for="file in importFiles" :key="file.name" class="file-preview" scrolling="no">
+					<TeraDragAndDropFilePreviewer
+						:file="file"
+						:is-processing="isProcessing"
+						:progress="props.progress"
+						@remove-file="removeFile(importFiles.indexOf(file))"
+					>
+					</TeraDragAndDropFilePreviewer>
+				</div>
 			</div>
-			<br />
-			<Button
-				v-if="canImport"
-				type="button"
-				class="import-button"
-				@click="processFiles(importFiles)"
-				label="Import data"
-			></Button>
 		</div>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, watch } from 'vue';
 import API from '@/api/api';
-import Button from 'primevue/button';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
-const emit = defineEmits(['import-completed']);
+const emit = defineEmits(['import-completed', 'imported-files-updated']);
 const importFiles = ref(<File[]>[]);
 const fileInput = ref(<HTMLInputElement | null>null);
 const dragOver = ref(false);
@@ -65,11 +57,6 @@ const processResponse = ref(<{ file: string; response: { text: string } }[]>[]);
 const csvDescription = ref('');
 
 const props = defineProps({
-	// show preview
-	showPreview: {
-		type: Boolean,
-		required: true
-	},
 	progress: {
 		type: Number,
 		default: undefined
@@ -85,8 +72,6 @@ const props = defineProps({
 				AcceptedTypes.TXT,
 				AcceptedTypes.MD,
 				AcceptedTypes.PY,
-				AcceptedTypes.M,
-				AcceptedTypes.JS,
 				AcceptedTypes.R,
 				AcceptedTypes.JL
 			].every((v) => value.includes(v))
@@ -101,8 +86,6 @@ const props = defineProps({
 				AcceptedExtensions.TXT,
 				AcceptedExtensions.MD,
 				AcceptedExtensions.PY,
-				AcceptedExtensions.M,
-				AcceptedExtensions.JS,
 				AcceptedExtensions.R,
 				AcceptedExtensions.JL
 			].every((v) => value.includes(v))
@@ -160,6 +143,7 @@ const addFiles = (addedFiles: File[] | undefined) => {
 			}
 		}
 	}
+	processFiles(importFiles.value);
 };
 
 /**
@@ -222,7 +206,12 @@ async function processFiles(files) {
 	files.value = [];
 }
 
-const canImport = computed(() => importFiles.value.length > 0);
+watch(
+	() => importFiles.value.length,
+	() => {
+		emit('imported-files-updated', importFiles.value);
+	}
+);
 </script>
 
 <style scoped>
@@ -266,7 +255,7 @@ const canImport = computed(() => importFiles.value.length > 0);
 	flex-direction: column;
 	cursor: pointer;
 	align-items: center;
-	padding-top: 2.5rem;
+	padding: 2.5rem 0 2.5rem 0;
 }
 
 .text-link {
@@ -300,5 +289,15 @@ const canImport = computed(() => importFiles.value.length > 0);
 	border-radius: 0.25rem;
 	cursor: pointer;
 	border: 1px solid var(--surface-border);
+}
+
+.drop-zone {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+i {
+	color: var(--text-color-secondary);
 }
 </style>

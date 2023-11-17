@@ -1,9 +1,14 @@
-import _, { cloneDeep } from 'lodash';
+import _, { cloneDeep, isEmpty, some } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, Model, PetriNetTransition, TypingSemantics } from '@/types/Types';
+import {
+	PetriNetModel,
+	Model,
+	PetriNetTransition,
+	TypingSemantics,
+	ModelConfiguration
+} from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
-import { getModelConfigurations } from '@/services/model';
 import { updateModelConfiguration } from '@/services/model-configurations';
 
 export interface NodeData {
@@ -14,6 +19,11 @@ export interface NodeData {
 
 export interface EdgeData {
 	numEdges: number;
+}
+
+export enum StratifiedModel {
+	Mira = 'mira',
+	Catlab = 'catlab'
 }
 
 // Used to derive equations
@@ -52,6 +62,14 @@ export const convertAMRToACSet = (amr: Model) => {
 				ot: result.T.findIndex((t) => t.tname === transition.id) + 1
 			});
 		});
+	});
+
+	// post processing to use expressions rather than ids
+	result.T = result.T.map((transition) => {
+		const foundRate = amr.semantics?.ode.rates.find((rate) => rate.target === transition.tname);
+
+		// default to the id if there is a case where there is no expression
+		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
 	});
 
 	return result;
@@ -160,34 +178,7 @@ export const convertToIGraph = (amr: Model) => {
 const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
-export const newAMR = (modelName: string) => {
-	const amr: Model = {
-		id: '',
-		name: modelName,
-		description: '',
-		schema:
-			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-		schema_name: 'petrinet',
-		model_version: '0.1',
-		model: {
-			states: [],
-			transitions: []
-		},
-		semantics: {
-			ode: {
-				rates: [],
-				initials: [],
-				parameters: []
-			}
-		}
-	};
-	return amr;
-};
-
 export const addState = (amr: Model, id: string, name: string) => {
-	if (amr.model.states.find((s) => s.id === id)) {
-		return;
-	}
 	amr.model.states.push({
 		id,
 		name,
@@ -207,9 +198,6 @@ export const addState = (amr: Model, id: string, name: string) => {
 };
 
 export const addTransition = (amr: Model, id: string, name: string, value?: number) => {
-	if (amr.model.transitions.find((t) => t.id === id)) {
-		return;
-	}
 	amr.model.transitions.push({
 		id,
 		input: [],
@@ -516,9 +504,11 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 	}
 };
 
-export const updateConfigFields = async (modelId: string, id: string, newId: string) => {
-	const modelConfigs = await getModelConfigurations(modelId);
-
+export const updateConfigFields = async (
+	modelConfigs: ModelConfiguration[],
+	id: string,
+	newId: string
+) => {
 	modelConfigs.forEach((config) => {
 		updateParameterId(config.configuration, id, newId);
 		// note that this is making an async call but we don't need to wait for it to finish
@@ -558,24 +548,16 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
 
-// FIXME - We need a proper way to update the model
-export const updateExistingModelContent = (amr: Model, amrOld: Model): Model => ({
-	...amrOld,
-	...amr,
-	name: amrOld.name,
-	metadata: amrOld.metadata
-});
-
-export const modifyModelTypeSystemforStratification = (amr: Model) => {
+export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
-		const { name, description, schema, semantics } = amrCopy;
+		const { name, description, schema } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
 			schema,
-			model_version: amrCopy.model_version,
-			model: semantics?.typing?.system
+			model_version: amrCopy.header.model_version,
+			model: amrCopy.semantics?.typing?.system
 		};
 		amrCopy.semantics.typing.system = typeSystem;
 	}
@@ -592,9 +574,7 @@ function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
 	}
 }
 
-export const stratify = async (baseAMR: Model, strataAMR: Model) => {
-	const baseModel = modifyModelTypeSystemforStratification(baseAMR);
-	const strataModel = modifyModelTypeSystemforStratification(strataAMR);
+export const stratify = async (baseModel: Model, strataModel: Model) => {
 	unifyModelTypeSystems(baseModel, strataModel);
 	const response = await API.post('/modeling-request/stratify', {
 		baseModel,
@@ -608,77 +588,46 @@ export const stratify = async (baseAMR: Model, strataAMR: Model) => {
 /// /////////////////////////////////////////////////////////////////////////////
 
 // Check if AMR is a stratified AMR
-export const isStratifiedAMR = (amr: Model) => {
-	// Catlab stratification: this will have "semantics.span" field
-	if (amr.semantics?.span && amr.semantics.span.length > 1) return true;
-	return false;
+export const getStratificationType = (amr: Model) => {
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
+
+	const hasModifiers = some(
+		(amr.model as PetriNetModel).states,
+		(s) =>
+			s.grounding &&
+			s.grounding.modifiers &&
+			!isEmpty(Object.keys(s.grounding.modifiers)) &&
+			// Temp hack to reject SBML type models with actual groundings, may not work
+			// all the time, MIRA will move strata info to metadata section - Oct 2023
+			s.id.includes('_')
+	);
+	if (hasModifiers) return StratifiedModel.Mira;
+
+	return null;
 };
 
-// Returns a 1xN matrix describing state's initials
-export const extractMapping = (amr: Model, id: string) => {
-	const typeMapList = amr.semantics?.typing?.map as [string, string][];
-	const item = typeMapList.find((d) => d[0] === id);
-	if (!item) return [];
-	const result = typeMapList.filter((d) => d[1] === item[1]);
-	return result.map((d) => d[0]);
-};
-
-// Flattens out transitions and their relationships/types into a 1-D vector
-export const extractTransitionMatrixData = (amr: Model, transitionIds: string[]) => {
-	const model = amr.model as PetriNetModel;
-	const transitions = model.transitions;
-
-	const results: any[] = [];
-
-	transitions.forEach((transition) => {
-		const id = transition.id;
-		if (!transitionIds.includes(id)) return;
-
-		const input = transition.input;
-		const output = transition.output;
-		const obj: any = {};
-
-		// Get input typings
-		input.forEach((iid) => {
-			const mapping = amr.semantics?.typing?.map.find((t) => t[0] === iid);
-			if (!mapping) return;
-			obj[mapping[1]] = mapping[0];
-		});
-
-		// Get output typings
-		output.forEach((oid) => {
-			const mapping = amr.semantics?.typing?.map.find((t) => t[0] === oid);
-			if (!mapping) return;
-			obj[mapping[1]] = mapping[0];
-		});
-
-		// Get self typing
-		const mapping = amr.semantics?.typing?.map.find((d) => d[0] === transition.id);
-		if (mapping) {
-			obj[mapping[1]] = mapping[0];
+export function newAMR(modelName: string) {
+	const amr: Model = {
+		header: {
+			name: modelName,
+			description: '',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1'
+		},
+		id: '',
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
 		}
-
-		// FIXME: not sure what we need
-		obj.id = transition.id;
-		results.push(obj);
-	});
-	return results;
-};
-
-// Returns state list as a 1D vector for pivot matrix
-export const extractStateMatrixData = (amr: Model, stateIds: string[], dimensions: string[]) => {
-	const model = amr.model as PetriNetModel;
-	const states = model.states;
-	const results: any[] = [];
-
-	states.forEach((state) => {
-		const id = state.id;
-		if (!stateIds.includes(id)) return;
-		const obj: any = {};
-
-		// FIXME: This only works for 2 dimensions now, may have to handle more than 2 differently
-		obj[dimensions[results.length]] = state.id;
-		results.push(obj);
-	});
-	return results;
-};
+	};
+	return amr;
+}

@@ -36,7 +36,6 @@ nb-configuration.xml
 *.rej
 
 # Local environment
-.env
 .openai.env
 
 # Yarn
@@ -56,3 +55,5 @@ build
 # MISC
 create.sql
 .eslintcache
+
+/docker-compose*.y*ml

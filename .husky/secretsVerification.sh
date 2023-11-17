@@ -2,7 +2,8 @@
 echo "Running secrets encryption check"
 # Place files that need to be encrypted with ansible-vault here, path relative to parent Terarium project.
 ENCRYPTED_FILES=(
-"packages/services/hmi-server/src/main/resources/application-secrets.properties.encrypted"
+"packages/server/src/main/resources/application-secrets.properties.encrypted"
+"containers/secrets.env.encrypted"
 )
 
 for file in "${ENCRYPTED_FILES[@]}"; do
