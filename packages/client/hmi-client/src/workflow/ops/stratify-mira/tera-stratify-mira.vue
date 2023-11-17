@@ -80,6 +80,7 @@ import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { useProjects } from '@/composables/project';
+import { logger } from '@/utils/logger';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -153,11 +154,7 @@ const stratifyModel = () => {
 const resetModel = () => {
 	if (!model.value) return;
 
-	const resetMessage = kernelManager.sendMessage('reset_request', {});
-
-	if (resetMessage) {
-		resetMessage.register('reset_response', handleResetResponse);
-	}
+	kernelManager.sendMessage('reset_request', {})?.register('reset_response', handleResetResponse);
 };
 
 const handleResetResponse = (data: any) => {
@@ -177,13 +174,10 @@ const stratifyRequest = () => {
 		}
 	};
 
-	const stratifyMessage = kernelManager.sendMessage('stratify_request', messageContent);
-
-	if (stratifyMessage) {
-		stratifyMessage
-			.register('stratify_response', handleStratifyResponse)
-			.register('model_preview', handleModelPreview);
-	}
+	kernelManager
+		.sendMessage('stratify_request', messageContent)
+		?.register('stratify_response', handleStratifyResponse)
+		?.register('model_preview', handleModelPreview);
 };
 
 const handleStratifyResponse = (data: any) => {
@@ -200,7 +194,7 @@ const handleModelPreview = (data: any) => {
 
 const buildJupyterContext = () => {
 	if (!model.value) {
-		console.log('Cannot build Jupyter context without a model');
+		logger.warn('Cannot build Jupyter context without a model');
 		return null;
 	}
 
@@ -240,7 +234,7 @@ const inputChangeHandler = async () => {
 			await kernelManager.init('beaker', 'Beaker', buildJupyterContext());
 		}
 	} catch (error) {
-		console.error('Error initializing Jupyter session:', error);
+		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
 };
 
