@@ -8,3 +8,4 @@ include:
   - scripts/docker-compose-data-services.yml
   - scripts/docker-compose-sim-services.yml
   - scripts/docker-compose-model-services.yml
+  - scripts/docker-compose-permissions.yml
