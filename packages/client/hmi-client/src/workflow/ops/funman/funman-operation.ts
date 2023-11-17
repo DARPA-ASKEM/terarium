@@ -21,7 +21,7 @@ export const FunmanOperation: Operation = {
 	name: WorkflowOperationTypes.FUNMAN,
 	displayName: 'Validate model configuration',
 	description: 'Validate model configuration',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
+	inputs: [{ type: 'modelConfigId', defaultLabel: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'funmanQueryId' }],
 	isRunnable: true,
 	action: () => {},

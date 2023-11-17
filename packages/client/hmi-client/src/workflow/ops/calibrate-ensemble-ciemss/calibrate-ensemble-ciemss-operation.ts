@@ -23,8 +23,8 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	displayName: 'Calibrate ensemble (probabilistic)',
 	description: '',
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true },
-		{ type: 'datasetId', label: 'Dataset' }
+		{ type: 'modelConfigId', defaultLabel: 'Model configuration', acceptMultiple: true },
+		{ type: 'datasetId', defaultLabel: 'Dataset' }
 	],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,

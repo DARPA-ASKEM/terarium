@@ -53,6 +53,7 @@ export const addNode = (
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
+			defaultLabel: port.defaultLabel,
 			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null,
 			acceptMultiple: port.acceptMultiple
@@ -152,9 +153,7 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	if (!targetPort) return;
 	targetPort.value = null;
 	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
-	// TODO: There isn't an easy way to retrieve the default label once the label from the input is deleted
-	// Perhaps there should be a default label property
-	targetPort.label = targetPort.type;
+	delete targetPort.label;
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);

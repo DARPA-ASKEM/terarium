@@ -21,8 +21,8 @@ export const CalibrationOperationCiemss: Operation = {
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration' },
-		{ type: 'datasetId', label: 'Dataset' }
+		{ type: 'modelConfigId', defaultLabel: 'Model configuration' },
+		{ type: 'datasetId', defaultLabel: 'Dataset' }
 	],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,

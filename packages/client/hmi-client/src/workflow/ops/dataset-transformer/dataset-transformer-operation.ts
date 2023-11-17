@@ -10,7 +10,7 @@ export const DatasetTransformerOperation: Operation = {
 	description: 'Select a dataset',
 	displayName: 'Dataset Transformer',
 	isRunnable: true,
-	inputs: [{ type: 'datasetId', label: 'Dataset' }],
+	inputs: [{ type: 'datasetId', defaultLabel: 'Dataset' }],
 	outputs: [],
 	action: () => {},
 

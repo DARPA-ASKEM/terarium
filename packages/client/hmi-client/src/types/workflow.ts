@@ -43,6 +43,7 @@ export enum WorkflowPortStatus {
 export interface OperationData {
 	type: string;
 	label?: string;
+	defaultLabel?: string;
 	acceptMultiple?: boolean;
 }
 
@@ -73,6 +74,7 @@ export interface WorkflowPort {
 	label?: string;
 	value?: any[] | null;
 	isOptional?: boolean;
+	defaultLabel?: string;
 	acceptMultiple?: boolean;
 }
 

@@ -15,7 +15,7 @@
 			</div>
 			<span>
 				<label>
-					{{ input.label ?? input.type ?? '' }}
+					{{ input.label ?? input.defaultLabel ?? input.type ?? '' }}
 					{{ input.isOptional ? '(optional)' : '' }}
 				</label>
 				<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->

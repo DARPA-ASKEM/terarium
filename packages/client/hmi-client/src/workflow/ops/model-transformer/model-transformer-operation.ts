@@ -11,7 +11,7 @@ export const ModelTransformerOperation: Operation = {
 	description: 'Select a model',
 	displayName: 'Model Transformer',
 	isRunnable: true,
-	inputs: [{ type: 'modelConfigId', label: 'Model Configuration' }],
+	inputs: [{ type: 'modelConfigId', defaultLabel: 'Model Configuration' }],
 	outputs: [],
 	action: () => {},
 
