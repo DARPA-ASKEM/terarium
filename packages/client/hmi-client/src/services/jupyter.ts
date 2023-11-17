@@ -301,8 +301,6 @@ export class KernelSessionManager {
 	}
 
 	shutdown() {
-		if (this.jupyterSession) {
-			this.jupyterSession.shutdown();
-		}
+		this.jupyterSession?.shutdown();
 	}
 }

@@ -130,6 +130,7 @@ import { WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEmpty } from 'lodash';
 import { KernelSessionManager } from '@/services/jupyter';
 import { JSONObject } from '@lumino/coreutils';
+import { logger } from '@/utils/logger';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -172,7 +173,7 @@ onMounted(async () => {
 			await kernelManager.init('beaker', 'Beaker', jupyterContext);
 		}
 	} catch (error) {
-		console.error('Error initializing Jupyter session:', error);
+		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
 });
 
@@ -188,7 +189,7 @@ function buildJupyterContext() {
 	const languageName =
 		selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 	if (contextName === null || languageName === null) {
-		console.log("Can't work with current language. Do nothing.");
+		logger.warn("Can't work with current language. Do nothing.");
 		return null;
 	}
 
@@ -216,12 +217,10 @@ function handleCode() {
 
 	modelValid.value = false;
 
-	const compileExprMessage = kernelManager.sendMessage('compile_expr_request', messageContent);
-
-	if (compileExprMessage) {
-		compileExprMessage.register('compile_expr_response', handleCompileExprResponse);
-		compileExprMessage.register('decapodes_preview', handleDecapodesPreview);
-	}
+	kernelManager
+		.sendMessage('compile_expr_request', messageContent)
+		?.register('compile_expr_response', handleCompileExprResponse)
+		?.register('decapodes_preview', handleDecapodesPreview);
 }
 
 function getModel() {
@@ -231,11 +230,9 @@ function getModel() {
 
 	modelValid.value = false;
 
-	const constructAmrMessage = kernelManager.sendMessage('construct_amr_request', modelContent);
-
-	if (constructAmrMessage) {
-		constructAmrMessage.register('construct_amr_response', handleConstructAmrResponse);
-	}
+	kernelManager
+		.sendMessage('construct_amr_request', modelContent)
+		?.register('construct_amr_response', handleConstructAmrResponse);
 }
 
 function saveAsNewModel() {
@@ -252,11 +249,9 @@ function saveAsNewModel() {
 
 	modelValid.value = false;
 
-	const saveAmrMessage = kernelManager.sendMessage('save_amr_request', messageContent);
-
-	if (saveAmrMessage) {
-		saveAmrMessage.register('save_amr_response', handleSaveAmrResponse);
-	}
+	kernelManager
+		.sendMessage('save_amr_request', messageContent)
+		?.register('save_amr_response', handleSaveAmrResponse);
 }
 
 function handleCompileExprResponse() {
