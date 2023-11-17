@@ -57,6 +57,7 @@
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-operator="(event) => removeNode(event)"
+				@remove-edge="removeEdge"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 				:isActive="currentActiveNode?.id === node.id"
@@ -328,6 +329,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
+import { logger } from '@/utils/logger';
 import {
 	ModelOperation,
 	TeraModelWorkflowWrapper,
@@ -848,6 +850,12 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 		);
 		cancelNewEdge();
 	}
+}
+
+function removeEdge(portId: string) {
+	const edge = wf.value.edges.find(({ targetPortId }) => targetPortId === portId);
+	if (edge) workflowService.removeEdge(wf.value, edge.id);
+	else logger.error(`Edge with port id:${portId} not found.`);
 }
 
 function onCanvasClick() {

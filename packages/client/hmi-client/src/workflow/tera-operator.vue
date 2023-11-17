@@ -7,35 +7,13 @@
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@bring-to-front="bringToFront"
 		/>
-		<ul class="inputs">
-			<li
-				v-for="(input, index) in node.inputs"
-				:key="index"
-				:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
-			>
-				<div
-					class="input-port-container"
-					@mouseenter="(event) => mouseoverPort(event)"
-					@mouseleave="emit('port-mouseleave')"
-					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
-					@focus="() => {}"
-					@focusout="() => {}"
-				>
-					<div class="input port" />
-					<div>
-						<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
-						<span v-if="!input.label">{{ input.type }}</span>
-						<span
-							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
-							:key="labelIdx"
-							class="input-label"
-						>
-							{{ label }}
-						</span>
-					</div>
-				</div>
-			</li>
-		</ul>
+		<tera-operator-inputs
+			:inputs="node.inputs"
+			@port-mouseover="(event) => mouseoverPort(event)"
+			@port-mouseleave="emit('port-mouseleave')"
+			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@remove-edge="(portId: string) => emit('remove-edge', portId)"
+		/>
 		<section>
 			<slot name="body" />
 			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
@@ -45,31 +23,34 @@
 				v-for="(output, index) in node.outputs"
 				:key="index"
 				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
+				@mouseenter="(event) => mouseoverPort(event)"
+				@mouseleave="emit('port-mouseleave')"
+				@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
+				@focus="() => {}"
+				@focusout="() => {}"
 			>
-				<div
-					class="output-port-container"
-					@mouseenter="(event) => mouseoverPort(event)"
-					@mouseleave="emit('port-mouseleave')"
-					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
-					@focus="() => {}"
-					@focusout="() => {}"
-				>
-					<div class="output port" />
-					{{ output.label }}
-				</div>
+				<div class="port" />
+				{{ output.label }}
 			</li>
 		</ul>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import {
+	Position,
+	WorkflowNode,
+	WorkflowPortStatus,
+	WorkflowDirection,
+	WorkflowPort
+} from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
+import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -83,6 +64,7 @@ const emit = defineEmits([
 	'port-mouseover',
 	'port-mouseleave',
 	'remove-operator',
+	'remove-edge',
 	'drilldown'
 ]);
 
@@ -191,133 +173,91 @@ main:hover {
 }
 
 section {
-	margin-left: 0.5rem;
-	margin-right: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
+	margin: 0 0.5rem;
 }
 
-section,
+/* Inputs/outputs */
 ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-}
-
-ul {
-	margin: 0.25rem 0;
+	margin: 0.6rem 0;
+	gap: 0.6rem;
 	list-style: none;
 	font-size: var(--font-caption);
-}
-
-ul li {
-	display: flex;
-	gap: 0.5rem;
-	align-items: center;
-}
-
-.inputs,
-.outputs {
 	color: var(--text-color-secondary);
-}
-.input-port-container {
-	display: flex;
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	padding-right: 0.5rem;
-	gap: 0.5rem;
-}
-
-.output-port-container {
-	display: flex;
-	gap: 0.5rem;
-	margin-left: 0.5rem;
-	flex-direction: row-reverse;
-	padding-left: 0.75rem;
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	border-radius: var(--border-radius) 0 0 var(--border-radius);
-}
-
-.output-port-container:hover {
-	cursor: pointer;
-	background-color: var(--surface-highlight);
-}
-
-.port-connected {
-	color: var(--text-color-primary);
-}
-
-.port {
-	display: inline-block;
-	border: 2px solid var(--surface-border);
-	background: var(--surface-100);
-	position: relative;
-	width: var(--port-base-size);
-	height: calc(var(--port-base-size) * 2);
-}
-
-.port-connected .input.port,
-.port-connected .output.port {
-	width: calc(var(--port-base-size) * 2);
-	height: calc(var(--port-base-size) * 2);
-	border: 2px solid var(--primary-color);
-	border-radius: var(--port-base-size);
-}
-
-.port-connected .input-port-container,
-.port-connected .output-port-container {
-	gap: initial;
-}
-
-.port-connected .input.port {
-	left: calc(-1 * var(--port-base-size));
-}
-
-.port-connected .output.port {
-	left: var(--port-base-size);
-}
-
-.port:hover {
-	background: var(--primary-color);
-}
-
-.inputs .port {
-	border-radius: 0 8px 8px 0;
-	border-left: none;
-}
-
-.outputs .port {
-	border-radius: 8px 0 0 8px;
-	border-right: none;
 }
 
 .outputs {
 	align-items: end;
 }
 
-.port-connected {
-	background: var(--surface-0);
+.outputs li {
+	flex-direction: row-reverse;
+	padding-left: 0.75rem;
+	border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
 
-.port-connected .port {
+.outputs .port {
+	border-radius: var(--port-base-size) 0 0 var(--port-base-size);
+	border: 2px solid var(--surface-border);
+	border-right: none;
+}
+
+.inputs .port-connected .port,
+.outputs .port-connected .port {
+	border-radius: var(--port-base-size);
+}
+
+.outputs .port-connected .port {
+	left: var(--port-base-size);
+}
+
+:deep(li) {
+	display: flex;
+	width: fit-content;
+	align-items: center;
+	cursor: pointer;
+	height: calc(var(--port-base-size) * 2);
+	gap: 0.25rem;
+}
+
+:deep(li:hover) {
+	background-color: var(--surface-highlight);
+}
+
+:deep(li:hover > .port) {
+	/* Not sure what color was intended */
+	background-color: var(--primary-color);
+	background-color: var(--surface-border);
+}
+
+:deep(.port-connected) {
+	color: var(--text-color-primary);
+}
+
+:deep(.port-container) {
+	width: calc(var(--port-base-size) * 2);
+}
+
+:deep(.port) {
+	display: inline-block;
+	background-color: var(--surface-100);
+	position: relative;
+	width: var(--port-base-size);
+	height: calc(var(--port-base-size) * 2);
+}
+
+:deep(.port-connected .port) {
+	width: calc(var(--port-base-size) * 2);
+	border: 2px solid var(--primary-color);
+	border-radius: var(--port-base-size);
 	background-color: var(--primary-color);
 }
-
-.inputs > li:hover .port,
-.outputs > li:hover .port {
-	background: var(--surface-border);
-}
-
-.inputs > .port-connected:hover .port,
-.outputs > .port-connected:hover .port {
-	background: var(--primary-color);
-}
-
-.input-label::after {
-	color: var(--text-color-primary);
-	content: ', ';
-}
-
-.input-label:last-child::after {
-	content: '';
+:deep(.port-connected:hover .port) {
+	background-color: var(--primary-color);
 }
 </style>
