@@ -57,7 +57,7 @@ li {
 }
 
 .port {
-	border-radius: 0 8px 8px 0;
+	border-radius: 0 var(--port-base-size) var(--port-base-size) 0;
 	border: 2px solid var(--surface-border);
 	border-left: none;
 }

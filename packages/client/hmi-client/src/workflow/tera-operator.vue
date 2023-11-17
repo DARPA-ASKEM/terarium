@@ -184,8 +184,8 @@ ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-	margin: 8px 0;
-	gap: 8px;
+	margin: 0.6rem 0;
+	gap: 0.6rem;
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
@@ -202,14 +202,14 @@ ul {
 }
 
 .outputs .port {
-	border-radius: 8px 0 0 8px;
+	border-radius: var(--port-base-size) 0 0 var(--port-base-size);
 	border: 2px solid var(--surface-border);
 	border-right: none;
 }
 
 .inputs .port-connected .port,
 .outputs .port-connected .port {
-	border-radius: 8px;
+	border-radius: var(--port-base-size);
 }
 
 .outputs .port-connected .port {
