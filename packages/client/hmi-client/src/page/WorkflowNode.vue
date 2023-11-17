@@ -21,6 +21,7 @@
 			:node="node"
 		/>
 		<tera-funman v-else-if="isNodeType(OperationType.FUNMAN)" :node="node" />
+		<tera-code-asset-wrapper v-else-if="isNodeType(OperationType.CODE)" :node="node" />
 	</template>
 	<template v-else>{{ node }}</template>
 </template>
@@ -42,6 +43,7 @@ import TeraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/
 import TeraStratifyJulia from '@/workflow/ops/stratify-julia/tera-stratify.vue';
 import TeraFunman from '@/workflow/ops/funman/tera-funman.vue';
 import teraStratifyMira from '@/workflow/ops/stratify-mira/tera-stratify-mira.vue';
+import TeraCodeAssetWrapper from '@/workflow/ops/code-asset/tera-code-asset-wrapper.vue';
 
 const props = defineProps<{ nodeId: string; workflowId: string }>();
 

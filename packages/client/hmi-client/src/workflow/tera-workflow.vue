@@ -77,6 +77,13 @@
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
+					<tera-code-asset-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CODE && codeAssets"
+						:dropped-code-asset-id="droppedAssetId"
+						:code-assets="codeAssets"
+						:node="node"
+						@select-code-asset="(event) => selectCodeAsset(node, event)"
+					/>
 					<tera-dataset-transformer-node
 						v-else-if="
 							node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER && datasets
@@ -280,7 +287,10 @@
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET"
 				:node="currentActiveNode"
 			/>
-
+			<tera-code-asset-wrapper
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CODE"
+				:node="currentActiveNode"
+			/>
 			<tera-dataset-transformer
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
 				:node="currentActiveNode"
@@ -322,7 +332,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, Dataset, Model } from '@/types/Types';
+import { AssetType, Code, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -400,6 +410,13 @@ import {
 	TeraModelTransformerNode
 } from './ops/model-transformer/mod';
 
+import {
+	TeraCodeAssetNode,
+	CodeAssetOperation,
+	CodeAssetState,
+	TeraCodeAssetWrapper
+} from './ops/code-asset/mod';
+
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -459,6 +476,8 @@ const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
 );
 
+const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.code ?? []);
+
 const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023
 	const configurationList = await getModelConfigurations(node.state.modelId as string);
@@ -484,6 +503,11 @@ async function selectModel(node: WorkflowNode<ModelOperationState>, data: { id: 
 	droppedAssetId.value = null;
 	node.state.modelId = data.id;
 	await refreshModelNode(node);
+}
+
+async function selectCodeAsset(node: WorkflowNode<CodeAssetState>, data: { id: string }) {
+	droppedAssetId.value = null;
+	node.state.codeAssetId = data.id;
 }
 
 async function updateWorkflowName() {
@@ -790,6 +814,9 @@ function onDrop(event) {
 				break;
 			case AssetType.Datasets:
 				operation = DatasetOperation;
+				break;
+			case AssetType.Code:
+				operation = CodeAssetOperation;
 				break;
 			default:
 				return;
