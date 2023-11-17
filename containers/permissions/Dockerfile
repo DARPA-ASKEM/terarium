@@ -2,14 +2,14 @@ FROM debian:12.2
 
 ADD https://apt.fury.io/authzed/gpg.key /authzed-gpg.key
 
-RUN apt update && apt install -y curl ca-certificates gpg jq
-RUN cat /authzed-gpg.key | apt-key add -
+RUN apt-get update && apt-get install -y curl ca-certificates gpg jq
+RUN apt-key add - < /authzed-gpg.key
 RUN echo "deb https://apt.fury.io/authzed/ * *" > /etc/apt/sources.list.d/fury.list
-RUN apt update && apt install -y zed
+RUN apt-get update && apt-get install -y zed
 
 WORKDIR /work
 COPY /script.sh .
 COPY /schema .
 
-ENTRYPOINT ["sh", "./script.sh"]
+ENTRYPOINT ["bash", "./script.sh"]
 
