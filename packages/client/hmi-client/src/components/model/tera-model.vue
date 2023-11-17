@@ -1,7 +1,6 @@
 <template>
 	<tera-asset
-		v-if="model"
-		:name="model.header.name"
+		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"
 		:stretch-content="view === ModelView.MODEL"
@@ -38,7 +37,7 @@
 			</template>
 		</template>
 		<tera-model-description
-			v-if="view === ModelView.DESCRIPTION"
+			v-if="view === ModelView.DESCRIPTION && model"
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:highlight="highlight"
@@ -47,7 +46,7 @@
 			:key="model?.id"
 		/>
 		<tera-model-editor
-			v-else-if="view === ModelView.MODEL"
+			v-else-if="view === ModelView.MODEL && model"
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:feature-config="featureConfig"
