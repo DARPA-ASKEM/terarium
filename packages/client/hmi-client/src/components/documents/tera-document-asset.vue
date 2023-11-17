@@ -1,10 +1,9 @@
 <!-- This template is a copy of tera-external-publication with some elements stripped out.  TODO: merge the concept of external publication and document asset -->
 <template>
 	<tera-asset
-		v-if="doc"
 		:feature-config="featureConfig"
-		:name="highlightSearchTerms(doc.name)"
-		:overline="highlightSearchTerms(doc.source)"
+		:name="highlightSearchTerms(doc?.name)"
+		:overline="highlightSearchTerms(doc?.source)"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
@@ -102,7 +101,7 @@
 		<p
 			class="pl-3"
 			v-if="
-				isEmpty(doc.assets) &&
+				isEmpty(doc?.assets) &&
 				view === DocumentView.EXTRACTIONS &&
 				viewOptions[1]?.value === DocumentView.PDF
 			"
@@ -112,7 +111,7 @@
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
-			:title="doc.name || ''"
+			:title="doc?.name || ''"
 		/>
 		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
 	</tera-asset>
@@ -216,7 +215,7 @@ watch(
 		if (props.assetId) {
 			documentLoading.value = true;
 			const document = await getDocumentAsset(props.assetId);
-			documentLoading.value = false;
+
 			if (!document) {
 				return;
 			}
@@ -231,6 +230,7 @@ watch(
 					view.value = DocumentView.TXT;
 				}
 			}
+			documentLoading.value = false;
 		} else {
 			doc.value = null;
 		}

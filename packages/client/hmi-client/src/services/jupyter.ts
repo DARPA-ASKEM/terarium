@@ -299,4 +299,8 @@ export class KernelSessionManager {
 	disposeMessage(msgId: string) {
 		this.map.delete(msgId);
 	}
+
+	shutdown() {
+		this.jupyterSession?.shutdown();
+	}
 }

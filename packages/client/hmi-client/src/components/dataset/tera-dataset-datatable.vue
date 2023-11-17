@@ -243,6 +243,15 @@ const setChartOptions = () => {
 .p-datatable:deep(.p-sortable-column-icon) {
 	grid-area: sortIcon;
 }
+
+.p-datatable.p-datatable-sm:deep(.p-datatable-thead > tr > th) {
+	padding: 0.5rem 0;
+	background-color: var(--surface-50);
+}
+
+.p-datatable.p-datatable-sm:deep(.p-datatable-tbody > tr > td) {
+	padding: 0.25rem 0.5rem;
+}
 /* Histograms & Charts  */
 .column-summary {
 	position: relative;
