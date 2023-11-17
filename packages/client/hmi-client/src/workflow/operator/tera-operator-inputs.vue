@@ -10,14 +10,20 @@
 			@focus="() => {}"
 			@focusout="() => {}"
 		>
-			<div class="port" />
-			<div>
-				<!-- if input is empty, show the type. TODO: Create a human readable 'type' to display here -->
-				<span v-if="!input.label">{{ input.type }}</span>
-				<label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
-					{{ label }}
-				</label>
+			<div class="port-container">
+				<div class="port" />
 			</div>
+			<span>
+				<label>
+					{{ input.label ?? input.type ?? '' }}
+					{{ input.isOptional ? '(optional)' : '' }}
+				</label>
+				<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
+				<!-- <label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
+					{{ label }}
+				</label> -->
+			</span>
+			<Button label="Unlink" size="small" text @click.stop="emit('remove-edge', input.id)" />
 		</li>
 	</ul>
 </template>
@@ -26,8 +32,15 @@
 import { PropType } from 'vue';
 import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { isEmpty } from 'lodash';
+import Button from 'primevue/button';
 
-const emit = defineEmits(['port-mouseover', 'port-selected', 'port-mouseover', 'port-mouseleave']);
+const emit = defineEmits([
+	'port-mouseover',
+	'port-selected',
+	'port-mouseover',
+	'port-mouseleave',
+	'remove-edge'
+]);
 
 defineProps({
 	inputs: {
@@ -39,7 +52,6 @@ defineProps({
 
 <style scoped>
 li {
-	padding: 0.5rem 0;
 	padding-right: 0.75rem;
 	border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
@@ -54,12 +66,17 @@ li {
 	left: calc(-1 * var(--port-base-size));
 }
 
-label::after {
-	color: var(--text-color-primary);
+label:not(:last-child)::after {
 	content: ', ';
 }
 
-label:last-child::after {
-	content: '';
+.p-button.p-button-sm {
+	display: none;
+	min-width: fit-content;
+	padding: 0 0.3rem;
+}
+
+.port-connected:hover .p-button.p-button-sm {
+	display: block;
 }
 </style>

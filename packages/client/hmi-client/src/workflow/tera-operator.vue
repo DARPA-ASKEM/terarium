@@ -9,9 +9,10 @@
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="mouseoverPort($event)"
+			@port-mouseover="(event) => mouseoverPort(event)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="emit('port-selected')"
+			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@remove-edge="(portId: string) => emit('remove-edge', portId)"
 		/>
 		<section>
 			<slot name="body" />
@@ -36,7 +37,13 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import {
+	Position,
+	WorkflowNode,
+	WorkflowPortStatus,
+	WorkflowDirection,
+	WorkflowPort
+} from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';
@@ -57,6 +64,7 @@ const emit = defineEmits([
 	'port-mouseover',
 	'port-mouseleave',
 	'remove-operator',
+	'remove-edge',
 	'drilldown'
 ]);
 
@@ -176,7 +184,8 @@ ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-	margin: 0.25rem 0;
+	margin: 8px 0;
+	gap: 8px;
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
@@ -187,8 +196,6 @@ ul {
 }
 
 .outputs li {
-	margin-left: 0.5rem;
-	padding: 0.5rem 0;
 	flex-direction: row-reverse;
 	padding-left: 0.75rem;
 	border-radius: var(--border-radius) 0 0 var(--border-radius);
@@ -213,12 +220,12 @@ ul {
 	display: flex;
 	width: fit-content;
 	align-items: center;
-
-	gap: 0.5rem;
+	cursor: pointer;
+	height: calc(var(--port-base-size) * 2);
+	gap: 0.25rem;
 }
 
 :deep(li:hover) {
-	cursor: pointer;
 	background-color: var(--surface-highlight);
 }
 
@@ -230,8 +237,10 @@ ul {
 
 :deep(.port-connected) {
 	color: var(--text-color-primary);
-	background: var(--surface-0);
-	gap: initial;
+}
+
+:deep(.port-container) {
+	width: calc(var(--port-base-size) * 2);
 }
 
 :deep(.port) {
@@ -244,7 +253,6 @@ ul {
 
 :deep(.port-connected .port) {
 	width: calc(var(--port-base-size) * 2);
-	height: calc(var(--port-base-size) * 2);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--port-base-size);
 	background-color: var(--primary-color);
