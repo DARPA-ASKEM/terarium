@@ -220,6 +220,7 @@ function handleCode() {
 
 	if (compileExprMessage) {
 		compileExprMessage.register('compile_expr_response', handleCompileExprResponse);
+		compileExprMessage.register('decapodes_preview', handleDecapodesPreview);
 	}
 }
 
@@ -262,9 +263,7 @@ function handleCompileExprResponse() {
 	modelValid.value = true;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleDecapodesPreview(data: any) {
-	// TODO: figure out where this is used
 	console.log('Decapode preview', data);
 	previewHTML.value = data.content['image/svg'];
 	isProcessing.value = false;
