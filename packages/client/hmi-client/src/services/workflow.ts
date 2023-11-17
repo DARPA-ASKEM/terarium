@@ -145,18 +145,22 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	const edgeToRemove = wf.edges.find((d) => d.id === id);
 	if (!edgeToRemove) return;
 
-	// Remove the data refernece at the targetPort
+	// Remove the data reference at the targetPort
 	const targetNode = wf.nodes.find((d) => d.id === edgeToRemove.target);
 	if (!targetNode) return;
 	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
 	if (!targetPort) return;
 	targetPort.value = null;
+	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
+	// TODO: There isn't an easy way to retrieve the default label once the label from the input is deleted
+	// Perhaps there should be a default label property
+	targetPort.label = targetPort.type;
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
 
 	// If there are no more references reset the connected status of the source node
-	if (wf.edges.filter((e) => e.source === edgeToRemove.source).length === 0) {
+	if (_.isEmpty(wf.edges.filter((e) => e.source === edgeToRemove.source))) {
 		const sourceNode = wf.nodes.find((d) => d.id === edgeToRemove.source);
 		if (!sourceNode) return;
 		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
