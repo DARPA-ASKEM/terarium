@@ -696,7 +696,8 @@ h4 {
 
 .code-asset-editor {
 	width: 100%;
-	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
 }
 
 .code-asset-editor-header {

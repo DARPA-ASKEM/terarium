@@ -105,6 +105,11 @@ watch(
 .tree-container {
 	min-width: 10rem;
 	max-width: 20rem;
-	overflow-y: auto;
+}
+
+.tree-container:deep(.p-tree) {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 }
 </style>
