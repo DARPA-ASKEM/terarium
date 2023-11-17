@@ -128,10 +128,9 @@ import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEmpty } from 'lodash';
-import { newSession, JupyterMessage, createMessageId } from '@/services/jupyter';
-import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
-import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { KernelSessionManager } from '@/services/jupyter';
 import { JSONObject } from '@lumino/coreutils';
+import { logger } from '@/utils/logger';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -156,7 +155,7 @@ const selectedModelFramework = ref(
 		: props.node.state.modelFramework
 );
 const modelValid = ref(false);
-const jupyterSession = ref<SessionContext | null>(null);
+const kernelManager = new KernelSessionManager();
 const previewHTML = ref('');
 
 const codeBlock = {
@@ -168,145 +167,112 @@ const codeBlock = {
 const codeBlocks = ref([codeBlock]);
 
 onMounted(async () => {
-	const session = await newSession('beaker', 'Beaker');
-	jupyterSession.value = session;
-
-	session.kernelChanged.connect((_context, kernelInfo) => {
-		const kernel = kernelInfo.newValue;
-		if (kernel?.name === 'beaker') {
-			session.iopubMessage.connect(iopubMessageHandler);
-			setKernelContext();
+	try {
+		const jupyterContext = buildJupyterContext();
+		if (jupyterContext) {
+			await kernelManager.init('beaker', 'Beaker', jupyterContext);
 		}
-	});
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
 });
 
-onUnmounted(async () => {
+onUnmounted(() => {
 	// Get rid of session/kernels on unmount, otherwise we end upwith lots of kernels hanging
 	// around using up memory.
-	jupyterSession.value?.shutdown();
+	kernelManager.shutdown();
 });
 
-function setKernelContext() {
-	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel) {
-		return;
-	}
+function buildJupyterContext() {
 	const contextName =
 		selectedModelFramework.value === ModelFramework.Decapodes ? 'decapodes_creation' : null;
 	const languageName =
 		selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 	if (contextName === null || languageName === null) {
-		console.log("Can't work with current language. Do nothing.");
-		return;
+		logger.warn("Can't work with current language. Do nothing.");
+		return null;
 	}
-	const messageBody = {
-		session: jupyterSession?.value?.name || '',
-		channel: 'shell',
-		content: {
-			context: contextName,
-			language: languageName,
-			context_info: {}
-		},
-		msgType: 'context_setup_request',
-		msgId: createMessageId('context_setup')
-	};
-	const contextMessage: JupyterMessage = createMessage(messageBody);
 
-	kernel.sendJupyterMessage(contextMessage);
+	return {
+		context: contextName,
+		language: languageName,
+		context_info: {}
+	};
+}
+
+function setKernelContext() {
+	const jupyterContext = buildJupyterContext();
+	if (jupyterContext) {
+		kernelManager.sendMessage('context_setup_request', jupyterContext);
+	}
 }
 
 function handleCode() {
-	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel) {
-		return;
-	}
 	isProcessing.value = true;
 
 	const code = editor.value?.getValue();
-	const messageBody: JSONObject = {
-		session: jupyterSession?.value?.name || 'shell',
-		channel: 'shell',
-		content: <JSONObject>{
-			declaration: code
-		},
-		msgType: 'compile_expr_request',
-		msgId: createMessageId('context_setup')
+	const messageContent = <JSONObject>{
+		declaration: code
 	};
-	const compileExprMessage: JupyterMessage = createMessage(messageBody);
 
 	modelValid.value = false;
-	kernel.sendJupyterMessage(compileExprMessage);
+
+	kernelManager
+		.sendMessage('compile_expr_request', messageContent)
+		?.register('compile_expr_response', handleCompileExprResponse)
+		?.register('decapodes_preview', handleDecapodesPreview);
 }
 
 function getModel() {
-	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel) {
-		return;
-	}
-	const constructModelMessage: JupyterMessage = createMessage({
-		session: jupyterSession?.value?.name || '',
-		channel: 'shell',
-		content: {
-			name: modelName.value
-		},
-		msgType: 'construct_amr_request',
-		msgId: createMessageId('context_setup')
-	});
+	const modelContent = {
+		name: modelName.value
+	};
 
 	modelValid.value = false;
-	kernel.sendJupyterMessage(constructModelMessage);
+
+	kernelManager
+		.sendMessage('construct_amr_request', modelContent)
+		?.register('construct_amr_response', handleConstructAmrResponse);
 }
 
 function saveAsNewModel() {
-	const kernel = jupyterSession.value?.session?.kernel;
-	if (!kernel) {
-		return;
-	}
-	const messageBody = {
-		session: jupyterSession?.value?.name || '',
-		channel: 'shell',
-		content: {
-			header: {
-				description: modelName.value,
-				name: modelName.value,
-				_type: 'Header',
-				model_version: 'v1.0',
-				schema: 'modelreps.io/DecaExpr',
-				schema_name: 'DecaExpr'
-			}
-		},
-		msgType: 'save_amr_request',
-		msgId: createMessageId('context_setup')
+	const messageContent = {
+		header: {
+			description: modelName.value,
+			name: modelName.value,
+			_type: 'Header',
+			model_version: 'v1.0',
+			schema: 'modelreps.io/DecaExpr',
+			schema_name: 'DecaExpr'
+		}
 	};
-	const saveAsNewMessage: JupyterMessage = createMessage(messageBody);
 
 	modelValid.value = false;
-	kernel.sendJupyterMessage(saveAsNewMessage);
+
+	kernelManager
+		.sendMessage('save_amr_request', messageContent)
+		?.register('save_amr_response', handleSaveAmrResponse);
 }
 
-const iopubMessageHandler = (_session, message) => {
-	if (message.header.msg_type === 'status') {
-		return;
-	}
+function handleCompileExprResponse() {
+	modelValid.value = true;
+}
 
-	console.log('');
-	console.log('header', message.header.msg_type);
-	console.log('');
+function handleDecapodesPreview(data: any) {
+	console.log('Decapode preview', data);
+	previewHTML.value = data.content['image/svg'];
+	isProcessing.value = false;
+}
 
-	if (message.header.msg_type === 'compile_expr_response') {
-		modelValid.value = true;
-	} else if (message.header.msg_type === 'decapodes_preview') {
-		console.log('Decapode preview', message.content);
-		previewHTML.value = message.content['image/svg'];
-		isProcessing.value = false;
-	} else if (message.header.msg_type === 'construct_amr_response') {
-		// console.log("Decapode preview", message.content);
-		// previewHTML.value = message.content["image/svg"];
-		alert(JSON.stringify(message.content, null, 2));
-	} else if (message.header.msg_type === 'save_model_response') {
-		// TODO: Save into project
-	}
-};
+function handleConstructAmrResponse(data: any) {
+	// console.log("Decapode preview", message.content);
+	// previewHTML.value = message.content["image/svg"];
+	alert(JSON.stringify(data.content, null, 2));
+}
+
+function handleSaveAmrResponse() {
+	// TODO: Save into project
+}
 
 /**
  * Editor initialization function
