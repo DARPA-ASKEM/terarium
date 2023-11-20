@@ -2,8 +2,10 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -25,19 +27,22 @@ import java.util.List;
 @RequestMapping("/simulation-request")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class SimulationRequestController implements SnakeCaseController {
 
-	@Autowired
-	private SimulationServiceProxy simulationServiceProxy;
+	private final SimulationServiceProxy simulationServiceProxy;
 
-	@Autowired
-	private SimulationCiemssServiceProxy simulationCiemssServiceProxy;
+	private final SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
-	@Autowired
-	private SimulationProxy simulationProxy;
+	private final SimulationProxy simulationProxy;
 
-	@Autowired
-	private ModelConfigurationProxy modelConfigProxy;
+	private final ModelConfigurationProxy modelConfigProxy;
+
+	@Value("${terarium.sciml-queue}")
+	private String SCIML_QUEUE;
+
+	@Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
+	private String queueSuffix;
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
@@ -110,7 +115,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeCalibrateJob(
 		@RequestBody final CalibrationRequestJulia request
 	) {
-		return ResponseEntity.ok(simulationServiceProxy.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
+		return ResponseEntity.ok(simulationServiceProxy.makeCalibrateJob(SCIML_QUEUE+queueSuffix, convertObjectToSnakeCaseJsonNode(request)).getBody());
 	}
 
 	@PostMapping("ciemss/calibrate")
