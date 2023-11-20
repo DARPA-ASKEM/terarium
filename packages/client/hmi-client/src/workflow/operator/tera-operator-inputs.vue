@@ -75,14 +75,6 @@ li {
 	left: calc(-1 * var(--port-base-size));
 }
 
-.unlink {
-	display: none;
-}
-
-.port-connected:hover .unlink {
-	display: block;
-}
-
 label:not(:last-child)::after {
 	content: ', ';
 }

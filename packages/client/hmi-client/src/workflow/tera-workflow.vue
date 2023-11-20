@@ -880,7 +880,9 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 }
 
 function removeEdge(portId: string) {
-	const edge = wf.value.edges.find(({ targetPortId }) => targetPortId === portId);
+	const edge = wf.value.edges.find(
+		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
+	);
 	if (edge) workflowService.removeEdge(wf.value, edge.id);
 	else logger.error(`Edge with port id:${portId} not found.`);
 }

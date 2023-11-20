@@ -9,7 +9,7 @@
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="(event) => mouseoverPort(event)"
+			@port-mouseover="(event) => mouseoverPort(event, 'input')"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edge="(portId: string) => emit('remove-edge', portId)"
@@ -20,9 +20,10 @@
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
-			@port-mouseover="(event) => mouseoverPort(event)"
+			@port-mouseover="(event) => mouseoverPort(event, 'output')"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@remove-edge="(portId: string) => emit('remove-edge', portId)"
 		/>
 	</main>
 </template>
@@ -122,10 +123,9 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event) {
+function mouseoverPort(event: MouseEvent, portDirection: 'input' | 'output') {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
-	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
@@ -181,6 +181,14 @@ ul {
 	font-size: var(--font-caption);
 	min-width: fit-content;
 	padding: 0 0.25rem;
+}
+
+:deep(.unlink) {
+	display: none;
+}
+
+:deep(.port-connected:hover .unlink) {
+	display: block;
 }
 
 :deep(li) {

@@ -15,6 +15,13 @@
 					<div class="port" />
 				</div>
 				<label>{{ output.label }}</label>
+				<Button
+					class="unlink"
+					label="Unlink"
+					size="small"
+					text
+					@click.stop="emit('remove-edge', output.id)"
+				/>
 			</section>
 			<!--TODO: We will see how to integrate port actions into this button later-->
 			<!-- <Button
@@ -31,9 +38,15 @@
 import { PropType } from 'vue';
 import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { isEmpty } from 'lodash';
-// import Button from 'primevue/button';
+import Button from 'primevue/button';
 
-const emit = defineEmits(['port-mouseover', 'port-selected', 'port-mouseover', 'port-mouseleave']);
+const emit = defineEmits([
+	'port-mouseover',
+	'port-selected',
+	'port-mouseover',
+	'port-mouseleave',
+	'remove-edge'
+]);
 
 defineProps({
 	outputs: {
