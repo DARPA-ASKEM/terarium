@@ -24,7 +24,13 @@
 					{{ label }}
 				</label> -->
 				</span>
-				<Button label="Unlink" size="small" text @click.stop="emit('remove-edge', input.id)" />
+				<Button
+					class="unlink"
+					label="Unlink"
+					size="small"
+					text
+					@click.stop="emit('remove-edge', input.id)"
+				/>
 			</section>
 		</li>
 	</ul>
@@ -69,15 +75,15 @@ li {
 	left: calc(-1 * var(--port-base-size));
 }
 
-label:not(:last-child)::after {
-	content: ', ';
-}
-
-.p-button.p-button-sm {
+.unlink {
 	display: none;
 }
 
-.port-connected:hover .p-button.p-button-sm {
+.port-connected:hover .unlink {
 	display: block;
+}
+
+label:not(:last-child)::after {
+	content: ', ';
 }
 </style>

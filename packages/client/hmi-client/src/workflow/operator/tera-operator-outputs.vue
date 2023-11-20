@@ -17,12 +17,12 @@
 				<label>{{ output.label }}</label>
 			</section>
 			<!--TODO: We will see how to integrate port actions into this button later-->
-			<Button
+			<!-- <Button
 				size="small"
 				text
 				label="output.actionLabel"
 				@click.stop="console.log('Do output.action() here')"
-			/>
+			/> -->
 		</li>
 	</ul>
 </template>
@@ -31,15 +31,9 @@
 import { PropType } from 'vue';
 import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { isEmpty } from 'lodash';
-import Button from 'primevue/button';
+// import Button from 'primevue/button';
 
-const emit = defineEmits([
-	'port-mouseover',
-	'port-selected',
-	'port-mouseover',
-	'port-mouseleave',
-	'remove-edge'
-]);
+const emit = defineEmits(['port-mouseover', 'port-selected', 'port-mouseover', 'port-mouseleave']);
 
 defineProps({
 	outputs: {
@@ -61,6 +55,10 @@ li {
 
 li > section {
 	flex-direction: row-reverse;
+}
+
+li > *:not(:first-child) {
+	margin-right: calc(var(--port-base-size) * 2);
 }
 
 .port-container {

@@ -23,7 +23,6 @@
 			@port-mouseover="(event) => mouseoverPort(event)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
-			@remove-edge="(portId: string) => emit('remove-edge', portId)"
 		/>
 	</main>
 </template>
@@ -181,7 +180,7 @@ ul {
 :deep(ul .p-button.p-button-sm) {
 	font-size: var(--font-caption);
 	min-width: fit-content;
-	padding: 0 0.3rem;
+	padding: 0 0.25rem;
 }
 
 :deep(li) {
@@ -189,12 +188,12 @@ ul {
 	flex-direction: column;
 	gap: 0.25rem;
 	width: fit-content;
+	cursor: pointer;
 }
 
 :deep(li > section) {
 	display: flex;
 	align-items: center;
-	cursor: pointer;
 	height: calc(var(--port-base-size) * 2);
 	gap: 0.25rem;
 }
@@ -203,7 +202,7 @@ ul {
 	background-color: var(--surface-highlight);
 }
 
-:deep(li:hover > .port) {
+:deep(li:hover .port) {
 	/* Not sure what color was intended */
 	background-color: var(--primary-color);
 	background-color: var(--surface-border);
