@@ -65,15 +65,23 @@ export async function getRunResultJulia(runId: string, filename = 'result.json')
 			params: { filename }
 		});
 		const output = resp.data;
-		const columnNames = (output[0].colindex.names as string[]).join(',');
+		const [states, params] = output;
+
+		const columnNames = (states.colindex.names as string[]).join(',');
 		let csvData: string = columnNames as string;
-		for (let j = 0; j < output[0].columns[0].length; j++) {
+		for (let j = 0; j < states.columns[0].length; j++) {
 			csvData += '\n';
-			for (let i = 0; i < output[0].columns.length; i++) {
-				csvData += `${output[0].columns[i][j]},`;
+			for (let i = 0; i < states.columns.length; i++) {
+				csvData += `${states.columns[i][j]},`;
 			}
 		}
-		return csvData;
+
+		const paramVals = {};
+		Object.entries(params.colindex.lookup).forEach(([key, value]) => {
+			paramVals[key] = params.columns[(value as number) - 1][0];
+		});
+
+		return { csvData, paramVals };
 	} catch (err) {
 		logger.error(err);
 		return null;
