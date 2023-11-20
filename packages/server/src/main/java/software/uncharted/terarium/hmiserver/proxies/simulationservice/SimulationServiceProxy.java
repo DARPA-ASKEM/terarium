@@ -14,7 +14,7 @@ public interface SimulationServiceProxy {
 	);
 
 	@PostMapping("/calibrate")
-	ResponseEntity<JobResponse> makeCalibrateJob(@RequestParam("queue-name") String queueName,
+	ResponseEntity<JobResponse> makeCalibrateJob(@RequestParam("queue") String queue,
 		@RequestBody JsonNode request
 	);
 
