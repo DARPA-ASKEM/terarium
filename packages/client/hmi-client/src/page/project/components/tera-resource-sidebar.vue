@@ -81,7 +81,9 @@
 					<span
 						:draggable="
 							pageType === AssetType.Workflows &&
-							(assetItem.pageType === AssetType.Models || assetItem.pageType === AssetType.Datasets)
+							(assetItem.pageType === AssetType.Models ||
+								assetItem.pageType === AssetType.Datasets ||
+								assetItem.pageType === AssetType.Code)
 						"
 						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
 						@dragend="endDrag"
@@ -169,8 +171,11 @@ const activeAccordionTabs = ref(
 const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 
 function removeAsset() {
-	emit('remove-asset', assetToDelete.value);
-	isRemovalModal.value = false;
+	if (assetToDelete.value) {
+		const { assetId, pageType } = assetToDelete.value;
+		emit('remove-asset', { assetId, pageType } as AssetRoute); // Pass as AssetRoute
+		isRemovalModal.value = false;
+	}
 }
 
 function saveAccordionTabsState() {

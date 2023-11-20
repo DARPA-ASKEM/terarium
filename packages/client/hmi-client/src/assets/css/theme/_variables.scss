@@ -35,7 +35,7 @@ $fontBodySmall: 14px;
 $fontBodyMedium: 16px;
 $fontBodyLarge: 18px;
 $fontFamily: Figtree, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif !default;
-$fontSize: $fontBodySmall;
+$fontSize: $fontBodyMedium;
 $fontWeight: 400 !default;
 $fontWeightSemiBold: 600;
 
@@ -863,6 +863,7 @@ $petri-inputBox: var(--surface-0);
 :root {
 	--editing-color: rgb(238, 238, 136);
 	--border-radius: #{$borderRadius};
+	--border-radius-medium: 6px;
 	--border-radius-big: #{$bigBorderRadius};
 	--border-radius-bigger: #{$biggerBorderRadius};
 	--chevron-hover: #1b807332;
@@ -922,7 +923,10 @@ $petri-inputBox: var(--surface-0);
 	--surface-f: #ffffff;
 	--surface-overlay: #ffffff;
 	--surface-ground: var(--gray-100);
+	--surface-disabled: #F4F4F4;
 	--surface-highlight: #EBF4F3;
+	--surface-warning: #FEC;
+	--surface-error: #FDDDD3;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #f9fbfa;
 	--surface-section: #ffffff;

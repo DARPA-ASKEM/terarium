@@ -48,7 +48,7 @@
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node
+			<tera-operator
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
@@ -56,7 +56,8 @@
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
-				@remove-node="(event) => removeNode(event)"
+				@remove-operator="(event) => removeNode(event)"
+				@remove-edge="removeEdge"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 				:isActive="currentActiveNode?.id === node.id"
@@ -75,6 +76,13 @@
 						:dropped-dataset-id="droppedAssetId"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
+					/>
+					<tera-code-asset-node
+						v-else-if="node.operationType === WorkflowOperationTypes.CODE && codeAssets"
+						:dropped-code-asset-id="droppedAssetId"
+						:code-assets="codeAssets"
+						:node="node"
+						@select-code-asset="(event) => selectCodeAsset(node, event)"
 					/>
 					<tera-dataset-transformer-node
 						v-else-if="
@@ -144,7 +152,7 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 				</template>
-			</tera-workflow-node>
+			</tera-operator>
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
@@ -279,7 +287,10 @@
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET"
 				:node="currentActiveNode"
 			/>
-
+			<tera-code-asset-wrapper
+				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CODE"
+				:node="currentActiveNode"
+			/>
 			<tera-dataset-transformer
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
 				:node="currentActiveNode"
@@ -313,22 +324,22 @@ import {
 	WorkflowDirection,
 	WorkflowOperationTypes
 } from '@/types/workflow';
-
 // Operation imports
-import TeraWorkflowNode from '@/workflow/tera-workflow-node.vue';
+import TeraOperator from '@/workflow/tera-operator.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, Dataset, Model } from '@/types/Types';
+import { AssetType, Code, Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
+import { logger } from '@/utils/logger';
 import {
 	ModelOperation,
 	TeraModelWorkflowWrapper,
@@ -399,6 +410,13 @@ import {
 	TeraModelTransformerNode
 } from './ops/model-transformer/mod';
 
+import {
+	TeraCodeAssetNode,
+	CodeAssetOperation,
+	CodeAssetState,
+	TeraCodeAssetWrapper
+} from './ops/code-asset/mod';
+
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -458,6 +476,8 @@ const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
 );
 
+const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.code ?? []);
+
 const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023
 	const configurationList = await getModelConfigurations(node.state.modelId as string);
@@ -483,6 +503,11 @@ async function selectModel(node: WorkflowNode<ModelOperationState>, data: { id: 
 	droppedAssetId.value = null;
 	node.state.modelId = data.id;
 	await refreshModelNode(node);
+}
+
+async function selectCodeAsset(node: WorkflowNode<CodeAssetState>, data: { id: string }) {
+	droppedAssetId.value = null;
+	node.state.codeAssetId = data.id;
 }
 
 async function updateWorkflowName() {
@@ -537,10 +562,7 @@ function appendOutputPort(
 	// FIXME: This is a bit hacky, we should split this out into separate events, or the action
 	// should be built into the Operation directly. What we are doing is to update the internal state
 	// and this feels it is leaking too much low-level information
-	if (
-		node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA ||
-		node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS
-	) {
+	if (node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS) {
 		const state = node.state as CalibrationOperationStateJulia;
 		if (state.chartConfigs.length === 0) {
 			// This only ends up showing the output of the first run, perhaps we should consider showing
@@ -793,6 +815,9 @@ function onDrop(event) {
 			case AssetType.Datasets:
 				operation = DatasetOperation;
 				break;
+			case AssetType.Code:
+				operation = CodeAssetOperation;
+				break;
 			default:
 				return;
 		}
@@ -852,6 +877,12 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 		);
 		cancelNewEdge();
 	}
+}
+
+function removeEdge(portId: string) {
+	const edge = wf.value.edges.find(({ targetPortId }) => targetPortId === portId);
+	if (edge) workflowService.removeEdge(wf.value, edge.id);
+	else logger.error(`Edge with port id:${portId} not found.`);
 }
 
 function onCanvasClick() {

@@ -1,5 +1,5 @@
 import {
-	WorkflowStatus,
+	OperatorStatus,
 	Workflow,
 	WorkflowPort,
 	Operation,
@@ -65,7 +65,7 @@ const plusNode = (id: string) =>
 		y: 0,
 		width: 0,
 		height: 0,
-		status: WorkflowStatus.INVALID
+		status: OperatorStatus.INVALID
 	} as WorkflowNode<any>);
 
 describe('basic tests to make sure it all works', () => {

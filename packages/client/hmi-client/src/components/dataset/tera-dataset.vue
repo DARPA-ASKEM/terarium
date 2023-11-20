@@ -1,6 +1,5 @@
 <template>
 	<tera-asset
-		v-if="dataset"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isRenamingDataset"
@@ -113,10 +112,11 @@
 						<header id="Source">Source</header>
 					</template>
 					This data is sourced from
-					{{ dataset.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
-					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''">{{
-						dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''
-					}}</a>
+					{{ dataset?.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
+					<a
+						:href="dataset?.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''"
+						>{{ dataset?.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : '' }}</a
+					>
 				</AccordionTab>
 				<AccordionTab>
 					<template #header>
@@ -156,7 +156,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].name)"
 							/>
 							<div class="variables-value" v-else>{{ column.name }}</div>
 							<!-- name - currently just a formatted id -->
@@ -165,7 +165,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].name)"
 							/>
 							<div class="variables-value" v-else>{{ formatName(column.name) }}</div>
 							<!-- data type -->
@@ -174,7 +174,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.dataType"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].dataType)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].dataType)"
 							/>
 							<div class="variables-value" v-else>{{ column.dataType }}</div>
 							<!-- units - field does not exist in tds yet -->
@@ -183,7 +183,7 @@
 								type="text"
 								v-if="rowEditList[index] && column.metadata"
 								v-model="column.metadata.unit"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].metadata?.unit)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].metadata?.unit)"
 							/>
 							<div class="variables-value" v-else>{{ column.metadata?.unit ?? '--' }}</div>
 							<!-- Concept -->
@@ -224,7 +224,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.description"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].description)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].description)"
 							/>
 							<div class="variables-description variables-value" v-else>
 								{{ column.description }}
@@ -234,7 +234,7 @@
 								<span>Suggested value</span>
 								<div>
 									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata?.documents?.[0].title ?? '' }}
+										<i class="pi pi-file" />{{ dataset?.metadata?.documents?.[0].title ?? '' }}
 									</div>
 									<div class="suggested-value">{{ suggestedValues[index] }}</div>
 								</div>
@@ -242,7 +242,7 @@
 								<div>
 									<div class="suggested-value-source">
 										<i class="pi pi-file" />{{
-											dataset.metadata?.documents ? dataset.metadata.documents[0].title : ''
+											dataset?.metadata?.documents ? dataset.metadata.documents[0].title : ''
 										}}
 									</div>
 									<div class="suggested-value">

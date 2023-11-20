@@ -9,6 +9,7 @@ module.exports = {
 	],
 	parser: 'vue-eslint-parser',
 	rules: {
+	        'max-classes-per-file': 'off',
 		'class-methods-use-this': 'off',
 		'func-names': 'off',
 		'no-alert': 'off',

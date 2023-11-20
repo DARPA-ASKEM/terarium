@@ -506,6 +506,7 @@ export interface ScimlStatusUpdate {
     params: { [index: string]: number };
     id: string;
     solData: { [index: string]: any };
+    timesteps: number[];
 }
 
 export interface SimulationRequest {

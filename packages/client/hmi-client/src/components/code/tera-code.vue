@@ -1,6 +1,6 @@
 <template>
 	<tera-asset :is-loading="isLoading" stretch-content overflow-hidden>
-		<template #name-input>
+		<template #name-input v-if="!isPreview">
 			<section class="header">
 				<section class="name">
 					<InputText v-model="codeName" class="name-input" @change="() => saveCode" />
@@ -72,6 +72,7 @@
 						@remove="onRemoveCodeBlock"
 						@save="onSaveCodeBlock"
 						:key="index"
+						:is-preview="props.isPreview"
 					/>
 				</div>
 				<div class="code-blocks-buttons-container">
@@ -243,6 +244,7 @@ const INITIAL_TEXT = '# Paste some code here';
 
 const props = defineProps<{
 	assetId: string;
+	isPreview?: boolean;
 }>();
 
 const emit = defineEmits(['asset-loaded']);
@@ -696,7 +698,8 @@ h4 {
 
 .code-asset-editor {
 	width: 100%;
-	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
 }
 
 .code-asset-editor-header {

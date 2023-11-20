@@ -92,6 +92,7 @@ const pageType = computed(
 	() => (route.params.pageType as ProjectPages | AssetType) ?? ProjectPages.EMPTY
 );
 const assetId = computed(() => (route.params.assetId as string) ?? '');
+const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }));
 const assetName = computed<string>(() => {
 	if (pageType.value === ProjectPages.OVERVIEW) return 'Overview';
 
@@ -116,12 +117,7 @@ const assetName = computed<string>(() => {
 });
 
 function openAsset(assetRoute: AssetRoute) {
-	if (
-		!isEqual(assetRoute, {
-			pageType: pageType.value,
-			assetId: assetId.value
-		})
-	) {
+	if (!isEqual(assetRoute, openedAssetRoute.value)) {
 		router.push({
 			name: RouteName.Project,
 			params: assetRoute
@@ -141,8 +137,10 @@ async function removeAsset(assetRoute: AssetRoute) {
 			assetRoute.pageType as AssetType,
 			assetRoute.assetId
 		);
-
 		if (isRemoved) {
+			if (isEqual(assetRoute, openedAssetRoute.value)) {
+				openAsset({ assetId: '', pageType: ProjectPages.OVERVIEW });
+			}
 			logger.info(`${assetRoute.assetId} was removed.`, { showToast: true });
 			return;
 		}

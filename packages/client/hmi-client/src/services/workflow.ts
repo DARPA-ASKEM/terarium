@@ -9,7 +9,9 @@ import {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPortStatus,
-	WorkflowStatus
+	OperatorStatus,
+	OperatorInteractionStatus,
+	WorkflowPort
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -66,7 +68,8 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		status: WorkflowStatus.INVALID,
+		status: OperatorStatus.INVALID,
+		interactionStatus: OperatorInteractionStatus.FOUND,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
@@ -143,18 +146,20 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	const edgeToRemove = wf.edges.find((d) => d.id === id);
 	if (!edgeToRemove) return;
 
-	// Remove the data refernece at the targetPort
+	// Remove the data reference at the targetPort
 	const targetNode = wf.nodes.find((d) => d.id === edgeToRemove.target);
 	if (!targetNode) return;
 	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
 	if (!targetPort) return;
 	targetPort.value = null;
+	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
+	delete targetPort.label;
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
 
 	// If there are no more references reset the connected status of the source node
-	if (wf.edges.filter((e) => e.source === edgeToRemove.source).length === 0) {
+	if (_.isEmpty(wf.edges.filter((e) => e.source === edgeToRemove.source))) {
 		const sourceNode = wf.nodes.find((d) => d.id === edgeToRemove.source);
 		if (!sourceNode) return;
 		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
@@ -180,6 +185,24 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	if (!node) return;
 	node.state = state;
 };
+
+// Get port label for frontend
+const defaultPortLabels = {
+	modelId: 'Model',
+	modelConfigId: 'Model configuration',
+	datasetId: 'Dataset'
+};
+
+export function getPortLabel({ label, type }: WorkflowPort) {
+	if (label) return label; // Return name of port value
+
+	// Return default label using port type
+	if (defaultPortLabels[type]) {
+		return defaultPortLabels[type];
+	}
+
+	return type; // Show type when it lacks a default name
+}
 
 /**
  * API hooks: Handles reading and writing back to the store

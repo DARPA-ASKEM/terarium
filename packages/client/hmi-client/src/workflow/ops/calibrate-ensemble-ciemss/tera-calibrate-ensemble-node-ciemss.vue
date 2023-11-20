@@ -29,7 +29,7 @@
 			/>
 		</section>
 		<section v-else class="result-container">
-			<div class="invalid-block" v-if="node.status === WorkflowStatus.INVALID">
+			<div class="invalid-block" v-if="node.status === OperatorStatus.INVALID">
 				<img class="image" src="@assets/svg/plants.svg" alt="" />
 				<p class="helpMessage">Configure in side panel</p>
 			</div>
@@ -46,7 +46,7 @@ import { ref, shallowRef, watch, computed, ComputedRef, onMounted, onUnmounted }
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { ProgressState, WorkflowNode, OperatorStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { workflowEventBus } from '@/services/workflow';
 import { CsvAsset, EnsembleCalibrationCiemssRequest, EnsembleModelConfigs } from '@/types/Types';
