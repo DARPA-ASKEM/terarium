@@ -15,7 +15,7 @@
 			</div>
 			<span>
 				<label>
-					{{ input.label ?? input.defaultLabel ?? input.type ?? '' }}
+					{{ getPortLabel(input) }}
 					{{ input.isOptional ? '(optional)' : '' }}
 				</label>
 				<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
 import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import { getPortLabel } from '@/services/workflow';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 

@@ -17,7 +17,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS,
 	displayName: 'Simulate ensemble (probabilistic)',
 	description: '',
-	inputs: [{ type: 'modelConfigId', defaultLabel: 'Model configuration', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 

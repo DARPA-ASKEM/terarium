@@ -10,7 +10,8 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	OperatorInteractionStatus
+	OperatorInteractionStatus,
+	WorkflowPort
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -53,7 +54,6 @@ export const addNode = (
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
-			defaultLabel: port.defaultLabel,
 			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null,
 			acceptMultiple: port.acceptMultiple
@@ -185,6 +185,23 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	if (!node) return;
 	node.state = state;
 };
+
+// Get port label for frontend
+const portTypeLabels = {
+	modelId: 'Model',
+	modelConfigId: 'Model configuration',
+	datasetId: 'Dataset'
+};
+
+export function getPortLabel({ label, type }: WorkflowPort) {
+	if (label) return label;
+
+	if (portTypeLabels[type]) {
+		return portTypeLabels[type];
+	}
+
+	return type;
+}
 
 /**
  * API hooks: Handles reading and writing back to the store
