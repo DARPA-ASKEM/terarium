@@ -124,7 +124,7 @@ function openInNewWindow() {
 
 function mouseoverPort(event) {
 	const el = event.target as HTMLElement;
-	const portElement = (el.firstChild as HTMLElement) ?? el;
+	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
