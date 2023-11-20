@@ -20,6 +20,6 @@ public class Variable {
 
 	private Paper paper;
 
-	private List<Equation> equations;
+	private List<EquationVariable> equations;
 }
 
