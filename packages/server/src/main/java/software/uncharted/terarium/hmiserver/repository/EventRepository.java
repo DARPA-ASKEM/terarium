@@ -2,8 +2,8 @@ package software.uncharted.terarium.hmiserver.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.models.user.Event;
 
 import java.util.List;
 

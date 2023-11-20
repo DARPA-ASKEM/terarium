@@ -10,13 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.entities.Annotation;
+import software.uncharted.terarium.hmiserver.models.user.Annotation;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.AnnotationService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
-
-import javax.ws.rs.*;
 import java.time.Instant;
 import java.util.List;
 
@@ -56,14 +54,14 @@ public class AnnotationController {
 	@Secured(Roles.USER)
 	@Transactional
 	public ResponseEntity<Annotation> updateAnnotation(@RequestBody final Annotation newAnnotation){
-		String id = newAnnotation.getId();
-		String content = newAnnotation.getContent();
-		String section = newAnnotation.getSection();
+		final String id = newAnnotation.getId();
+		final String content = newAnnotation.getContent();
+		final String section = newAnnotation.getSection();
 		if (id == null || content == null || section == null) {
 			return ResponseEntity.badRequest()
 				.build();
 		}
-		Annotation annotation = annotationService.findArtifact(id);
+		final Annotation annotation = annotationService.findArtifact(id);
 		if (annotation == null){
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotation not found");
 		}
@@ -79,7 +77,7 @@ public class AnnotationController {
 	@Transactional
 	public ResponseEntity<JsonNode> deleteAnnotations(@RequestParam("id") final String id) {
 
-		Annotation annotation = annotationService.findArtifact(id);
+		final Annotation annotation = annotationService.findArtifact(id);
 		if (annotation == null){
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotation not found");
 		}

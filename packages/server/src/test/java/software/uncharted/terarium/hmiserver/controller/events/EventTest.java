@@ -3,12 +3,10 @@ package software.uncharted.terarium.hmiserver.controller.events;
 
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.entities.Event;
+import software.uncharted.terarium.hmiserver.models.user.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.service.EventService;
 

@@ -6,8 +6,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.models.user.Event;
 import software.uncharted.terarium.hmiserver.repository.EventRepository;
 
 import java.util.List;

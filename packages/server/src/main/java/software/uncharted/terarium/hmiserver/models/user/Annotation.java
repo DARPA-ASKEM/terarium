@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.entities;
+package software.uncharted.terarium.hmiserver.models.user;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
@@ -25,6 +25,8 @@ import java.util.UUID;
 	@Index(columnList = "artifactType, artifactId")
 })
 public class Annotation implements Serializable {
+	@Serial
+	private static final long serialVersionUID = 4939620703969267901L;
 	@Id
 	private String id = UUID.randomUUID().toString();
 

@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.entities;
+package software.uncharted.terarium.hmiserver.models.user;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -8,6 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.EventType;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
@@ -25,6 +26,8 @@ import java.util.UUID;
 	@Index(columnList = "value")
 })
 public class Event implements Serializable {
+	@Serial
+	private static final long serialVersionUID = 7337142167492880031L;
 	@Id
 	@TSOptional
 	private String id = UUID.randomUUID().toString();
