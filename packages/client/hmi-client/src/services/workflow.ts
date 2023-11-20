@@ -187,20 +187,21 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 };
 
 // Get port label for frontend
-const portTypeLabels = {
+const defaultPortLabels = {
 	modelId: 'Model',
 	modelConfigId: 'Model configuration',
 	datasetId: 'Dataset'
 };
 
 export function getPortLabel({ label, type }: WorkflowPort) {
-	if (label) return label;
+	if (label) return label; // Return name of port value
 
-	if (portTypeLabels[type]) {
-		return portTypeLabels[type];
+	// Return default label using port type
+	if (defaultPortLabels[type]) {
+		return defaultPortLabels[type];
 	}
 
-	return type;
+	return type; // Show type when it lacks a default name
 }
 
 /**
