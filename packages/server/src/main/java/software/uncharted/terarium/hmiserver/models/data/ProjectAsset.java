@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.data;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -19,32 +18,35 @@ import java.util.UUID;
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class Project implements Serializable {
+public class ProjectAsset implements Serializable {
 	@Serial
-	private static final long serialVersionUID = 1321579058167591071L;
+	private static final long serialVersionUID = -4647375493078889464L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	@JsonProperty("id")
 	private UUID id;
 
 	@NotNull
-	private String name;
+	private UUID projectId;
+
+	@NotNull
+	private String resourceId;
+
+	@NotNull
+	@Enumerated(EnumType.STRING)
+	private ResourceType resourceType;
 
 	@TSOptional
-	private String description;
+	private String externalRef;
 
 	@CreationTimestamp
-	@JsonProperty("created_on")
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
 	@UpdateTimestamp
-	@JsonProperty("updated_on")
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp updatedOn;
 
-	@JsonProperty("deleted_on")
 	@TSOptional
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
