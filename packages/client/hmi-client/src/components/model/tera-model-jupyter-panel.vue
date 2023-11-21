@@ -496,11 +496,8 @@ main .annotation-group {
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
 }
-</style>
 
-// Overwrite style on primevue dialog message to allow line breaks
-<style>
-.p-confirm-dialog-message {
+:deep(.p-confirm-dialog-message) {
 	white-space: pre-wrap;
 }
 </style>

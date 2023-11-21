@@ -140,7 +140,7 @@ watch(
 );
 </script>
 
-<style>
+<style scoped>
 .constraint-group {
 	width: 100%;
 	margin-top: 1rem;

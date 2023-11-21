@@ -20,7 +20,7 @@ import useAuthStore from '@/stores/auth';
 const auth = useAuthStore();
 </script>
 
-<style>
+<style scoped>
 .unauthorized {
 	align-items: center;
 	display: flex;

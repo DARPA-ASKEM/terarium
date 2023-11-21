@@ -73,7 +73,7 @@ const updatedConfig = computed<StratifyGroup>(() => ({
 }));
 </script>
 
-<style>
+<style scoped>
 .strata-group {
 	margin: 1rem;
 	display: flex;
