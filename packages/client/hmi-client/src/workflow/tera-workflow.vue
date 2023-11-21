@@ -887,6 +887,7 @@ function removeEdges(portId: string) {
 		edges.forEach((edge) => {
 			workflowService.removeEdge(wf.value, edge.id);
 		});
+		workflowDirty = true;
 	} else logger.error(`Edges with port id:${portId} not found.`);
 }
 
