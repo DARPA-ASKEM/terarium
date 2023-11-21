@@ -1,27 +1,39 @@
 <template>
 	<aside class="overlay-container">
 		<section>
-			<header ref="header">
-				<div>
-					<slot name="header" />
-				</div>
-				<Button
-					icon="pi pi-times"
-					text
-					rounded
-					aria-label="Close"
-					@click="emit('on-close-clicked')"
-				/>
-			</header>
-			<main><slot /></main>
+			<tera-drilldown-header
+				:active-index="selectedViewIndex"
+				:views="props.views"
+				@tab-change="handleTabChange"
+				@close="emit('on-close-clicked')"
+				>{{ props.title }}</tera-drilldown-header
+			>
+			<main>
+				<template v-for="(view, index) in views">
+					<slot v-if="selectedViewIndex === index" :name="view" />
+				</template>
+			</main>
 		</section>
 	</aside>
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button';
+import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
+import { TabViewChangeEvent } from 'primevue/tabview';
+import { ref } from 'vue';
 
+const props = defineProps<{
+	title: string;
+	// a list of names of views for the drilldown component (i.e. 'Wizard', 'Notebook', etc...)
+	views: string[];
+}>();
+
+const selectedViewIndex = ref<number>(0);
 const emit = defineEmits(['on-close-clicked']);
+
+const handleTabChange = (event: TabViewChangeEvent) => {
+	selectedViewIndex.value = event.index;
+};
 </script>
 
 <style scoped>
@@ -48,16 +60,6 @@ than the main application behind the modal when these render issues come, howeve
 	overflow: hidden;
 }
 
-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
-	background-color: var(--surface-highlight);
-	padding: 20px 16px;
-	height: 56px;
-}
-
 main {
 	margin: 0 0 0.5rem;
 	max-width: inherit;
@@ -65,14 +67,5 @@ main {
 	height: calc(100vh - 1rem - 56px);
 	display: flex;
 	flex-direction: column;
-}
-
-.p-button.p-button-icon-only.p-button-rounded {
-	height: 24px;
-	width: 24px;
-}
-.p-button:deep(.p-button-icon) {
-	font-size: 16px;
-	color: var(--text-color-primary);
 }
 </style>
