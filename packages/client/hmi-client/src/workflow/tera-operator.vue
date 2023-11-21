@@ -14,9 +14,8 @@
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
-		<section>
+		<section class="content">
 			<slot name="body" />
-			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
 			<tera-operator-actions :action-buttons="actionButtons" />
 		</section>
 		<tera-operator-outputs
@@ -38,7 +37,6 @@ import {
 	OperatorActionButton
 } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
@@ -63,9 +61,14 @@ const emit = defineEmits([
 	'drilldown'
 ]);
 
-const actionButtons = computed<OperatorActionButton[]>(() => [
-	{ label: 'Open drilldown', isPrimary: false, icon: '', action: openDrilldown() }
-]);
+const actionButtons: OperatorActionButton[] = [
+	{
+		label: 'Open drilldown',
+		icon: '',
+		isPrimary: false,
+		action: () => emit('drilldown', props.node)
+	}
+];
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -115,10 +118,6 @@ onMounted(() => {
 	document.addEventListener('mousemove', drag);
 	operator.value.addEventListener('mouseup', stopDrag);
 });
-
-function openDrilldown() {
-	emit('drilldown', props.node);
-}
 
 function bringToFront() {
 	// TODO: bring to front
@@ -170,20 +169,24 @@ main:hover {
 	z-index: 2;
 }
 
-section {
+main > .content {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
 	margin: 0 0.5rem;
+	gap: 0.5rem;
+}
+
+.content:deep(> *),
+ul {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin: 0.5rem 0;
 }
 
 /* Inputs/outputs */
 ul {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-evenly;
-	margin: 0.5rem 0;
-	gap: 0.5rem;
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);

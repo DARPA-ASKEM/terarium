@@ -37,9 +37,9 @@ export enum OperatorStatus {
 
 export interface OperatorActionButton {
 	label: string;
-	action: any;
 	icon: string;
 	isPrimary: boolean;
+	action: Function;
 }
 
 export enum WorkflowPortStatus {
