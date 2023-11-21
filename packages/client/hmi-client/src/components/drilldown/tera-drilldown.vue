@@ -4,6 +4,7 @@
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
 				:views="props.views"
+				:tooltip="props.tooltip"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
 				>{{ props.title }}</tera-drilldown-header
@@ -26,6 +27,7 @@ const props = defineProps<{
 	title: string;
 	// a list of names of views for the drilldown component (i.e. 'Wizard', 'Notebook', etc...)
 	views: string[];
+	tooltip?: string;
 }>();
 
 const selectedViewIndex = ref<number>(0);
@@ -64,7 +66,7 @@ main {
 	margin: 0 0 0.5rem;
 	max-width: inherit;
 	/* contentHeight = fullscreen - modalMargin - headerHeight*/
-	height: calc(100vh - 1rem - 56px);
+	height: calc(100vh - 1rem - 108px);
 	display: flex;
 	flex-direction: column;
 }

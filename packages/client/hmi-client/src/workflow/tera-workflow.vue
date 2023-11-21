@@ -240,6 +240,7 @@
 			@on-close-clicked="dialogIsOpened = false"
 			:title="currentActiveNode.displayName"
 			:views="['default', 'Notebook']"
+			:tooltip="'A brief description of the operator.'"
 		>
 			<tera-calibrate-julia
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
