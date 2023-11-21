@@ -294,6 +294,8 @@
 			<tera-dataset-transformer
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-model-transformer
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER"
@@ -434,10 +436,10 @@ let workflowDirty: boolean = false;
 
 const isWorkflowLoading = ref(false);
 
-const currentActiveNode = ref<WorkflowNode<any> | null>();
+const currentActiveNode = ref<WorkflowNode<any>>();
 
 workflowEventBus.on('clearActiveNode', () => {
-	currentActiveNode.value = null;
+	currentActiveNode.value = undefined;
 });
 
 const newEdge = ref<WorkflowEdge | undefined>();
@@ -584,7 +586,6 @@ function updateWorkflowNodeState(node: WorkflowNode<any>, state: any) {
 const drilldown = (event: WorkflowNode<any>) => {
 	currentActiveNode.value = event;
 	dialogIsOpened.value = true;
-	// workflowEventBus.emit('drilldown', event);
 };
 
 workflowEventBus.on('node-state-change', (payload: any) => {
@@ -609,15 +610,15 @@ workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: stri
 	}
 });
 
-workflowEventBus.on(
-	'add-node',
-	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
-		workflowService.addNode(wf.value, payload.operation, payload.position, {
-			state: payload.state
-		});
-		workflowDirty = true;
-	}
-);
+// workflowEventBus.on(
+// 	'add-node',
+// 	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
+// 		workflowService.addNode(wf.value, payload.operation, payload.position, {
+// 			state: payload.state
+// 		});
+// 		workflowDirty = true;
+// 	}
+// );
 
 workflowEventBus.on(
 	'append-output-port',
