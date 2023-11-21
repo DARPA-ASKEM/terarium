@@ -73,7 +73,7 @@ const addOutputPort = (data) => {
 };
 </script>
 
-<style>
+<style scoped>
 .background {
 	background: white;
 	height: 100%;
