@@ -44,7 +44,7 @@
 			</span>
 		</Button>
 		<Accordion
-			v-if="!isEmpty(assetItemsMap) && useProjects().projectLoading.value"
+			v-if="!isEmpty(assetItemsMap) && !useProjects().projectLoading.value"
 			:multiple="true"
 			:active-index="Array.from(activeAccordionTabs)"
 			@tab-open="
@@ -107,7 +107,7 @@
 			</AccordionTab>
 		</Accordion>
 
-		<div v-if="!useProjects().projectLoading.value" class="skeleton-container">
+		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
 			<Skeleton v-for="i in 10" :key="i" width="85%" />
 		</div>
 
