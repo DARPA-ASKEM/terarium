@@ -17,6 +17,7 @@
 		<section>
 			<slot name="body" />
 			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
+			<tera-operator-actions :action-buttons="actionButtons" />
 		</section>
 		<ul class="outputs">
 			<li
@@ -42,7 +43,8 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	WorkflowDirection,
-	WorkflowPort
+	WorkflowPort,
+	OperatorActionButton
 } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
@@ -51,6 +53,7 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
+import TeraOperatorActions from './operator/tera-operator-actions.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -66,6 +69,10 @@ const emit = defineEmits([
 	'remove-operator',
 	'remove-edge',
 	'drilldown'
+]);
+
+const actionButtons = computed<OperatorActionButton[]>(() => [
+	{ label: 'Open drilldown', isPrimary: false, icon: '', action: openDrilldown() }
 ]);
 
 const nodeStyle = computed(() => ({
