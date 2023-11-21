@@ -129,6 +129,10 @@ export interface Project {
     relatedDocuments?: Document[];
 }
 
+export interface ResponseId {
+    id: string;
+}
+
 export interface Simulation {
     id: string;
     executionPayload: any;
@@ -216,6 +220,23 @@ export interface DocumentAsset {
     grounding?: Grounding;
     concepts?: Concept[];
     assets?: DocumentExtraction[];
+}
+
+export interface Equation {
+    id?: string;
+    timestamp?: Date;
+    username?: string;
+    name?: string;
+    equationType: EquationType;
+    content: string;
+    metadata?: { [index: string]: any };
+    source?: EquationSource;
+}
+
+export interface EquationSource {
+    extractedFrom?: string;
+    documentAssetName?: string;
+    hmiGenerated?: boolean;
 }
 
 export interface Model {
@@ -858,7 +879,7 @@ export interface Variable {
     metadata: VariableMetadata[];
     column: DataColumn[];
     paper: Paper;
-    equations: Equation[];
+    equations: EquationVariable[];
     dkg_groundings: DKGConcept[];
 }
 
@@ -895,7 +916,7 @@ export interface Paper {
     file_directory: string;
 }
 
-export interface Equation {
+export interface EquationVariable {
     id: string;
     text: string;
     image: string;
@@ -999,6 +1020,11 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum EquationType {
+    Mathml = "mathml",
+    Latex = "latex",
 }
 
 export enum ProvenanceType {
