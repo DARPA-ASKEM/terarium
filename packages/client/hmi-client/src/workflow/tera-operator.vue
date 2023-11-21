@@ -14,6 +14,7 @@
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edge="(portId: string) => emit('remove-edge', portId)"
 		/>
+		<tera-operator-title :title="'ww'" />
 		<section>
 			<slot name="body" />
 			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
@@ -50,6 +51,7 @@ import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
+import TeraOperatorTitle from './operator/tera-operator-title.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 
 const props = defineProps<{
