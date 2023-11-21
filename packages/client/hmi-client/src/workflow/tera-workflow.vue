@@ -460,7 +460,7 @@ let workflowDirty: boolean = false;
 
 const isWorkflowLoading = ref(false);
 
-const currentActiveNode = ref<WorkflowNode<any> | null>();
+const currentActiveNode = ref<WorkflowNode<any> | null>(null);
 
 workflowEventBus.on('clearActiveNode', () => {
 	currentActiveNode.value = null;
