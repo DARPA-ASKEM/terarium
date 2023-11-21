@@ -147,7 +147,6 @@ import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import SelectButton from 'primevue/selectbutton';
 import { getRunResultJulia } from '@/services/models/simulation-service';
@@ -157,6 +156,7 @@ import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operat
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 enum CalibrationView {
 	Input = 'Input',
@@ -206,11 +206,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 onMounted(() => {
@@ -228,11 +224,7 @@ const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Used from button to add new entry to the mapping object
@@ -246,11 +238,7 @@ function addMapping() {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 }
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
@@ -288,11 +276,7 @@ const handleSelectedRunChange = () => {
 		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 
