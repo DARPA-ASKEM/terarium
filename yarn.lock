@@ -1074,17 +1074,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hsorby/vue3-katex@npm:0.6.0-rc.5":
-  version: 0.6.0-rc.5
-  resolution: "@hsorby/vue3-katex@npm:0.6.0-rc.5"
+"@hsorby/vue3-katex@npm:0.6.0-rc.7":
+  version: 0.6.0-rc.7
+  resolution: "@hsorby/vue3-katex@npm:0.6.0-rc.7"
   dependencies:
     core-js: ^3.8.3
     deepmerge: ^4.2.2
     katex: ^0.16.2
     vue: ^3.2.22
-  peerDependencies:
-    vue-dompurify-html: ^4.0.0
-  checksum: 0500393d6dd63caf8583766fc74f80082f620fc4fafc14a7984a814b58518f1d791e373e61f1b82477f71343ab111424169bd2e5729cb4f90f419a84ca789810
+  checksum: cf6944d7d68073e796a5899b24fb20de2a278369bbb659f54d6c9a9c8ca9e7ac738c4c8fafdb6817f883c38c677b877b3afe819b129f91c6092482a0db1afac5
   languageName: node
   linkType: hard
 
@@ -8501,7 +8499,7 @@ __metadata:
   resolution: "hmi-client@workspace:packages/client/hmi-client"
   dependencies:
     "@carbon/icons-vue": 10.60.0
-    "@hsorby/vue3-katex": 0.6.0-rc.5
+    "@hsorby/vue3-katex": 0.6.0-rc.7
     "@jupyter/ydoc": 1.0.2
     "@jupyterlab/application": 3.6.6
     "@jupyterlab/apputils": 3.6.6
