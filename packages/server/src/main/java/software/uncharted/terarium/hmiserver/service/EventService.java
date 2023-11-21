@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -14,9 +15,10 @@ import java.util.List;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class EventService {
-	@Autowired
-	private EventRepository eventRepository;
+
+	final EventRepository eventRepository;
 
 	public List<Event> findEvents(final EventType type, final Long projectId, final String currentUserId, final String like, final int limit) {
 		final Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "timestampMillis"));

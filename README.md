@@ -117,6 +117,23 @@ create a new run config to decrypt the application secrets and then modify the d
 
 Start local dev server for Vue webapp, with Hot Module Replacement.
 
+## Debugging REST Api
+### Swagger
+For convenience, a [Swagger](https://swagger.io/) UI is provided to experiment with the API. With the server running
+locally (eg, not via Docker), it can be accessed at [http://localhost:3000/swagger-ui/index.html](http://localhost:3000/swagger-ui/index.html).
+To authorize requests, click the `Authorize` button and click `Authorize` on the modal that appears. You can enter the credentials
+of the user you want to use to make requests.
+Note: In order to "logout" from Swagger, you will need to clear your browser's cookies.
+### Postman
+A Postman collection can be imported via the OpenAPI specification at [http://localhost:3000/v3/api-docs](http://localhost:3000/v3/api-docs).
+In Postman:
+1. Click the `Import` button at the top left of the Postman window
+2. Paste in the the URL above and click `Continue`
+3. Click `Import` and you should have a new collection named `Pantera APIs`
+4. Click on the collection and click on the `Authorization` tab
+5. Ensure the `Client ID` is `app` and the `Authorize using browser` checkbox is checked
+
+
 ```
 yarn dev
 # equivalent to: yarn workspace hmi-client run dev

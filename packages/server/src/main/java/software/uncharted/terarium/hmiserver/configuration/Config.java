@@ -47,6 +47,11 @@ public class Config {
 	 */
 	Boolean durableQueues = false;
 
+	/**
+	 * If true, enable swagger
+	 */
+	Boolean enableSwagger;
+
 	@Data
 	@Accessors(chain = true)
 	public static class Caching {

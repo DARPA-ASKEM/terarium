@@ -236,7 +236,7 @@ public class DocumentController implements SnakeCaseController {
 		Document document = body.getDocument();
 		String projectId = body.getProjectId();
 		String doi = documentAssetService.getDocumentDoi(document);
-		String username = projectProxy.getProject(projectId).getBody().getUsername();
+		String username = "";//TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
 
 		// get pdf url and filename
 		String fileUrl = null;

@@ -8,15 +8,6 @@ export interface ClientConfig {
     sseHeartbeatIntervalMillis: number;
 }
 
-export interface Event {
-    id?: string;
-    timestampMillis?: number;
-    projectId?: number;
-    userId?: string;
-    type: EventType;
-    value?: string;
-}
-
 export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
@@ -67,6 +58,17 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
+export interface ProjectAsset {
+    id: string;
+    projectId: string;
+    resourceId: string;
+    resourceType: ResourceType;
+    externalRef?: string;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
+}
+
 export interface Artifact {
     id?: string;
     timestamp?: any;
@@ -115,18 +117,16 @@ export interface NotebookSession {
 }
 
 export interface Project {
+    id?: string;
     name: string;
     description?: string;
-    timestamp?: Date;
-    active: boolean;
-    concept?: Concept;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     assets?: Assets;
     metadata?: { [index: string]: string };
-    username: string;
     publicProject?: boolean;
     userPermission?: string;
-    id?: string;
-    relatedDocuments?: Document[];
 }
 
 export interface ResponseId {
@@ -559,6 +559,15 @@ export interface Intervention {
 export interface TimeSpan {
     start: number;
     end: number;
+}
+
+export interface Event {
+    id?: string;
+    timestampMillis?: number;
+    projectId?: number;
+    userId?: string;
+    type: EventType;
+    value?: string;
 }
 
 export interface UserEvent {
@@ -998,6 +1007,19 @@ export enum FileCategory {
     Data = "Data",
     Documents = "Documents",
     Other = "Other",
+}
+
+export enum ResourceType {
+    Artifact = "ARTIFACT",
+    Code = "CODE",
+    Dataset = "DATASET",
+    Document = "DOCUMENT",
+    Equation = "EQUATION",
+    Model = "MODEL",
+    ModelConfiguration = "MODEL_CONFIGURATION",
+    Publication = "PUBLICATION",
+    Simulation = "SIMULATION",
+    Workflow = "WORKFLOW",
 }
 
 export enum ProgrammingLanguage {

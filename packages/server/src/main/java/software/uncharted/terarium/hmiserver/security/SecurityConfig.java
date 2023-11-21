@@ -44,10 +44,14 @@ public class SecurityConfig {
 //	@Order(1)
 	public SecurityFilterChain initialSecurityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.authorizeHttpRequests((authorize) -> authorize
+			.authorizeHttpRequests((authorize) -> {
+			if (config.getEnableSwagger()) {
+				authorize.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**").permitAll();
+			}
+				authorize
 				.requestMatchers(config.getUnauthenticatedUrlPatterns().toArray(new String[0])).permitAll()
-				.anyRequest().authenticated()
-			);
+				.anyRequest().authenticated();
+		});
 		http.oauth2ResourceServer(configurer -> configurer.jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(authenticationConverter)));
 		return http.build();
 	}
