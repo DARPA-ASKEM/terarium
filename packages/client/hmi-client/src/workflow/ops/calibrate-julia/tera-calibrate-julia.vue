@@ -90,11 +90,7 @@
 							<th>Parameter</th>
 							<th>Value</th>
 						</thead>
-						<tr
-							v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRunId]
-								?.params"
-							:key="key"
-						>
+						<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
 							<td>
 								<p>{{ key }}</p>
 							</td>
@@ -187,6 +183,7 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
 const runResults = ref<RunResults>({});
+const runResultParams = ref<Record<string, Record<string, number>>>({});
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const runList = computed(() =>
@@ -302,10 +299,12 @@ watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 const lazyLoadCalibrationData = async (runId?: string) => {
 	if (!runId || runResults.value[runId]) return;
 
-	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
-	const csvData = csvParse(resultCsv);
-
-	runResults.value[runId] = csvData as any;
+	const result = await getRunResultJulia(runId, 'result.json');
+	if (result) {
+		const csvData = csvParse(result.csvData);
+		runResults.value[runId] = csvData as any;
+		runResultParams.value[runId] = result.paramVals;
+	}
 };
 watch(
 	() => selectedRunId.value,
