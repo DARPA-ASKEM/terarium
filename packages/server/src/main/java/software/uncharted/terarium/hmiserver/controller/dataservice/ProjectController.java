@@ -1,8 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.Id;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
@@ -309,6 +306,11 @@ public class ProjectController {
 	}
 
 
+	@Operation(summary = "Creates a new project")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "201", description = "Project created",
+			content = { @Content(mediaType = "application/json",
+				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)) })})
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> createProject(

@@ -1,21 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,37 +23,47 @@ public class Project implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
+	@Schema(defaultValue = "My New Project")
 	private String name;
 
 	@TSOptional
+	@Schema(defaultValue = "My Project Description")
 	private String description;
 
 	@CreationTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp createdOn;
 
 	@UpdateTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp updatedOn;
 
 	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp deletedOn;
 
 	@TSOptional
 	@Transient
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Assets assets;
 
 	@TSOptional
 	@Transient
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	// Metadata that can be useful for the UI
 	private Map<String, String> metadata;
 
 	@TSOptional
 	@Transient
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Boolean publicProject;
 
 	@TSOptional
 	@Transient
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private String userPermission;
 
 	/**
