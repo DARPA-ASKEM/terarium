@@ -8567,7 +8567,7 @@ __metadata:
     vue-gtag: 2.0.1
     vue-router: 4.1.6
     vue-tsc: 1.6.5
-    vue3-ace-editor: 2.2.3
+    vue3-ace-editor: 2.2.4
     vue3-draggable-resizable: 1.6.5
   languageName: unknown
   linkType: soft
@@ -14557,15 +14557,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue3-ace-editor@npm:2.2.3":
-  version: 2.2.3
-  resolution: "vue3-ace-editor@npm:2.2.3"
+"vue3-ace-editor@npm:2.2.4":
+  version: 2.2.4
+  resolution: "vue3-ace-editor@npm:2.2.4"
   dependencies:
     resize-observer-polyfill: ^1.5.1
   peerDependencies:
     ace-builds: "*"
     vue: ^3
-  checksum: 4a18bd1ade2cc58288d6a707cb22bedf79ba43fb23e3c6f723296d9d64afd433002e646cc01f9aa65794f7a769dad84734ff5279502783854c82f05fa1c3a903
+  checksum: d7f029bac72a9bbf245019a25ea502495e3ad3d38fb70004bc26d48747036c12a8b81c006b58bc6e2cf737e6fbf8ce94f2ea509a1c1110e9b508eee6f22677c8
   languageName: node
   linkType: hard
 
