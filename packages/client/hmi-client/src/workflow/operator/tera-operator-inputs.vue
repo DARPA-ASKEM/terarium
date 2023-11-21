@@ -10,20 +10,28 @@
 			@focus="() => {}"
 			@focusout="() => {}"
 		>
-			<div class="port-container">
-				<div class="port" />
-			</div>
-			<span>
-				<label>
-					{{ getPortLabel(input) }}
-					{{ input.isOptional ? '(optional)' : '' }}
-				</label>
-				<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
-				<!-- <label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
+			<section>
+				<div class="port-container">
+					<div class="port" />
+				</div>
+				<span>
+					<label>
+						{{ getPortLabel(input) }}
+						{{ input.isOptional ? '(optional)' : '' }}
+					</label>
+					<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
+					<!-- <label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
 					{{ label }}
 				</label> -->
-			</span>
-			<Button label="Unlink" size="small" text @click.stop="emit('remove-edge', input.id)" />
+				</span>
+				<Button
+					class="unlink"
+					label="Unlink"
+					size="small"
+					text
+					@click.stop="emit('remove-edges', input.id)"
+				/>
+			</section>
 		</li>
 	</ul>
 </template>
@@ -40,7 +48,7 @@ const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
-	'remove-edge'
+	'remove-edges'
 ]);
 
 defineProps({
@@ -69,15 +77,5 @@ li {
 
 label:not(:last-child)::after {
 	content: ', ';
-}
-
-.p-button.p-button-sm {
-	display: none;
-	min-width: fit-content;
-	padding: 0 0.3rem;
-}
-
-.port-connected:hover .p-button.p-button-sm {
-	display: block;
 }
 </style>

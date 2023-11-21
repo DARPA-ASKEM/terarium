@@ -9,41 +9,27 @@
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="(event) => mouseoverPort(event)"
+			@port-mouseover="(event) => mouseoverPort(event, 'input')"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
-			@remove-edge="(portId: string) => emit('remove-edge', portId)"
+			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section>
 			<slot name="body" />
 			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
 		</section>
-		<ul class="outputs">
-			<li
-				v-for="(output, index) in node.outputs"
-				:key="index"
-				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
-				@mouseenter="(event) => mouseoverPort(event)"
-				@mouseleave="emit('port-mouseleave')"
-				@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
-				@focus="() => {}"
-				@focusout="() => {}"
-			>
-				<div class="port" />
-				{{ output.label }}
-			</li>
-		</ul>
+		<tera-operator-outputs
+			:outputs="node.outputs"
+			@port-mouseover="(event) => mouseoverPort(event, 'output')"
+			@port-mouseleave="emit('port-mouseleave')"
+			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@remove-edges="(portId: string) => emit('remove-edges', portId)"
+		/>
 	</main>
 </template>
 
 <script setup lang="ts">
-import {
-	Position,
-	WorkflowNode,
-	WorkflowPortStatus,
-	WorkflowDirection,
-	WorkflowPort
-} from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';
@@ -51,6 +37,7 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
+import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -64,7 +51,7 @@ const emit = defineEmits([
 	'port-mouseover',
 	'port-mouseleave',
 	'remove-operator',
-	'remove-edge',
+	'remove-edges',
 	'drilldown'
 ]);
 
@@ -136,10 +123,9 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event) {
+function mouseoverPort(event: MouseEvent, portDirection: 'input' | 'output') {
 	const el = event.target as HTMLElement;
-	const portElement = (el.firstChild as HTMLElement) ?? el;
-	const portDirection = portElement.className.split(' ')[0];
+	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
@@ -162,7 +148,7 @@ main {
 	outline: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
 	position: absolute;
-	width: 20rem;
+	width: 15rem;
 	user-select: none;
 	box-shadow: var(--overlayMenuShadow);
 }
@@ -184,43 +170,38 @@ ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-	margin: 0.6rem 0;
-	gap: 0.6rem;
+	margin: 0.5rem 0;
+	gap: 0.5rem;
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
 }
 
-.outputs {
-	align-items: end;
+:deep(ul .p-button.p-button-sm) {
+	font-size: var(--font-caption);
+	min-width: fit-content;
+	padding: 0 0.25rem;
 }
 
-.outputs li {
-	flex-direction: row-reverse;
-	padding-left: 0.75rem;
-	border-radius: var(--border-radius) 0 0 var(--border-radius);
+:deep(.unlink) {
+	display: none;
 }
 
-.outputs .port {
-	border-radius: var(--port-base-size) 0 0 var(--port-base-size);
-	border: 2px solid var(--surface-border);
-	border-right: none;
-}
-
-.inputs .port-connected .port,
-.outputs .port-connected .port {
-	border-radius: var(--port-base-size);
-}
-
-.outputs .port-connected .port {
-	left: var(--port-base-size);
+:deep(.port-connected:hover .unlink) {
+	display: block;
 }
 
 :deep(li) {
 	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
 	width: fit-content;
-	align-items: center;
 	cursor: pointer;
+}
+
+:deep(li > section) {
+	display: flex;
+	align-items: center;
 	height: calc(var(--port-base-size) * 2);
 	gap: 0.25rem;
 }
@@ -229,7 +210,7 @@ ul {
 	background-color: var(--surface-highlight);
 }
 
-:deep(li:hover > .port) {
+:deep(li:hover .port) {
 	/* Not sure what color was intended */
 	background-color: var(--primary-color);
 	background-color: var(--surface-border);

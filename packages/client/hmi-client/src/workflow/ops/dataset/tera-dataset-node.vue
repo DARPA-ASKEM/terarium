@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
 import { CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
@@ -73,7 +74,10 @@ watch(
 		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
 			selectedColumns = ref(csvHeaders?.value);
-			emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+			// Once dataset is selected
+			if (isEmpty(props.node.outputs)) {
+				emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+			}
 		}
 	}
 );
