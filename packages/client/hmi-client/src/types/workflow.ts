@@ -35,6 +35,13 @@ export enum OperatorStatus {
 	DISABLED = 'disabled'
 }
 
+export interface OperatorActionButton {
+	label: string;
+	icon: string;
+	isPrimary: boolean;
+	action: Function;
+}
+
 export enum WorkflowPortStatus {
 	CONNECTED = 'connected',
 	NOT_CONNECTED = 'not connected'

@@ -44,7 +44,6 @@ function deploy_remote() {
 function deploy_local() {
   echo "Deploying containers for development against local services"
   cat containers/common.env containers/secrets.env > containers/.env
-  docker build -t permissions:local containers/permissions
   docker compose --env-file containers/.env --file containers/docker-compose-remote.yml pull
   docker compose --env-file containers/.env --file containers/docker-compose-local.yml up --detach --wait
 }
