@@ -308,7 +308,7 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep, isEqual } from 'lodash';
+import { isArray, cloneDeep, isEqual, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
@@ -880,11 +880,14 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 }
 
 function removeEdge(portId: string) {
-	const edge = wf.value.edges.find(
+	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);
-	if (edge) workflowService.removeEdge(wf.value, edge.id);
-	else logger.error(`Edge with port id:${portId} not found.`);
+	if (!isEmpty(edges)) {
+		edges.forEach((edge) => {
+			workflowService.removeEdge(wf.value, edge.id);
+		});
+	} else logger.error(`Edges with port id:${portId} not found.`);
 }
 
 function onCanvasClick() {
