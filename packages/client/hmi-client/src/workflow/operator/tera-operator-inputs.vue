@@ -29,7 +29,7 @@
 					label="Unlink"
 					size="small"
 					text
-					@click.stop="emit('remove-edge', input.id)"
+					@click.stop="emit('remove-edges', input.id)"
 				/>
 			</section>
 		</li>
@@ -48,7 +48,7 @@ const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
-	'remove-edge'
+	'remove-edges'
 ]);
 
 defineProps({

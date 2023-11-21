@@ -57,7 +57,7 @@
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-operator="(event) => removeNode(event)"
-				@remove-edge="removeEdge"
+				@remove-edges="removeEdges"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 				:isActive="currentActiveNode?.id === node.id"
@@ -879,7 +879,7 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 	}
 }
 
-function removeEdge(portId: string) {
+function removeEdges(portId: string) {
 	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);

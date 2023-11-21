@@ -20,7 +20,7 @@
 					label="Unlink"
 					size="small"
 					text
-					@click.stop="emit('remove-edge', output.id)"
+					@click.stop="emit('remove-edges', output.id)"
 				/>
 			</section>
 			<!--TODO: We will see how to integrate port actions into this button later-->
@@ -45,7 +45,7 @@ const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
-	'remove-edge'
+	'remove-edges'
 ]);
 
 defineProps({

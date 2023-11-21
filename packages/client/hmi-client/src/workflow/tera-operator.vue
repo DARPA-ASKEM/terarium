@@ -12,7 +12,7 @@
 			@port-mouseover="(event) => mouseoverPort(event, 'input')"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
-			@remove-edge="(portId: string) => emit('remove-edge', portId)"
+			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section>
 			<slot name="body" />
@@ -23,7 +23,7 @@
 			@port-mouseover="(event) => mouseoverPort(event, 'output')"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
-			@remove-edge="(portId: string) => emit('remove-edge', portId)"
+			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 	</main>
 </template>
@@ -51,7 +51,7 @@ const emit = defineEmits([
 	'port-mouseover',
 	'port-mouseleave',
 	'remove-operator',
-	'remove-edge',
+	'remove-edges',
 	'drilldown'
 ]);
 
