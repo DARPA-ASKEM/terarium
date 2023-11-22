@@ -1,10 +1,8 @@
 <template>
 	<header>
 		<div class="title-row">
-			<div class="title-container">
-				<h4><slot /></h4>
-				<i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" />
-			</div>
+			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
+
 			<Button
 				class="close-mask"
 				icon="pi pi-times"
@@ -20,7 +18,7 @@
 					<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 				</TabView>
 			</div>
-			<a target="_blank">Documentation</a>
+			<a :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
 		</div>
 	</header>
 </template>
@@ -34,6 +32,7 @@ const props = defineProps<{
 	activeIndex: number;
 	views: string[];
 	tooltip?: string;
+	documentationUrl?: string;
 }>();
 const emit = defineEmits(['close', 'tab-change']);
 
@@ -60,14 +59,9 @@ header > * {
 	justify-content: space-between;
 }
 
-.title-container {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-}
-
-.title-container > i {
+.title-row > h4 > i {
 	color: var(--text-color-secondary);
+	margin-left: 1rem;
 }
 
 .p-button.p-button-icon-only.p-button-rounded {
