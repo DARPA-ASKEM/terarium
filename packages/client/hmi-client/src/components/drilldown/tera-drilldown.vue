@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import { TabViewChangeEvent } from 'primevue/tabview';
-import { computed, onMounted, ref, useSlots } from 'vue';
+import { computed, ref, useSlots } from 'vue';
 
 const props = defineProps<{
 	title: string;
@@ -35,9 +35,6 @@ const views = computed(() => Object.keys(slots));
 
 const selectedViewIndex = ref<number>(0);
 
-onMounted(() => {
-	console.log(slots);
-});
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
