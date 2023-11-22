@@ -10,14 +10,14 @@
 				>{{ props.title }}</tera-drilldown-header
 			>
 			<main>
-				<div
+				<section
 					v-for="(view, index) in views"
 					class="slot-container"
 					:class="{ 'hide-slot': hideSlot(index) }"
 					:key="index"
 				>
 					<slot :name="view" />
-				</div>
+				</section>
 			</main>
 		</section>
 	</aside>
