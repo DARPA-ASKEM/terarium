@@ -16,7 +16,12 @@
 		/>
 		<section class="content">
 			<slot name="body" />
-			<Button label="Open Drilldown" @click="emit('drilldown')" severity="secondary" outlined />
+			<Button
+				label="Open Drilldown"
+				@click="emit('drilldown', node)"
+				severity="secondary"
+				outlined
+			/>
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
