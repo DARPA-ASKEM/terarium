@@ -13,11 +13,9 @@
 			/>
 		</div>
 		<div class="tabs-row">
-			<div>
-				<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
-					<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
-				</TabView>
-			</div>
+			<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
+				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
+			</TabView>
 			<a :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
 		</div>
 	</header>
@@ -83,6 +81,7 @@ header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 	align-items: center;
 	padding-right: 1.5rem;
 	color: var(--primary-color);
+	margin-left: auto;
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {
