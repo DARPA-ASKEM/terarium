@@ -461,11 +461,6 @@ let workflowDirty: boolean = false;
 const isWorkflowLoading = ref(false);
 
 const currentActiveNode = ref<WorkflowNode<any> | null>(null);
-
-workflowEventBus.on('clearActiveNode', () => {
-	currentActiveNode.value = null;
-});
-
 const newEdge = ref<WorkflowEdge | undefined>();
 const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
