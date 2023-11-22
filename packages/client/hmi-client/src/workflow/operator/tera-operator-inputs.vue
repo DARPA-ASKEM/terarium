@@ -1,5 +1,5 @@
 <template>
-	<ul v-if="!isEmpty(inputs)">
+	<ul>
 		<li
 			v-for="(input, index) in inputs"
 			:key="index"
@@ -15,10 +15,7 @@
 					<div class="port" />
 				</div>
 				<span>
-					<label>
-						{{ getPortLabel(input) }}
-						{{ input.isOptional ? '(optional)' : '' }}
-					</label>
+					<label>{{ getPortLabel(input) }}</label>
 					<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
 					<!-- <label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
 					{{ label }}
@@ -40,7 +37,6 @@
 import { PropType } from 'vue';
 import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { getPortLabel } from '@/services/workflow';
-import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 
 const emit = defineEmits([
