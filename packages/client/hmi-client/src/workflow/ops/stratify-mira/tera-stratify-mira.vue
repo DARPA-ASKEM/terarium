@@ -21,6 +21,9 @@
 		<div class="left-side" v-if="activeTab === StratifyTabs.wizard">
 			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
 			<p>The model will be stratified with the following settings.</p>
+			<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+				Note: Code has been executed which may not be reflected here.
+			</p>
 			<tera-stratification-group-form
 				v-for="(cfg, index) in node.state.strataGroups"
 				:key="index"
@@ -37,9 +40,16 @@
 			<Button label="Reset" size="small" @click="resetModel" />
 		</div>
 		<div class="left-side" v-if="activeTab === StratifyTabs.notebook">
-			<Suspense>
-				<tera-mira-notebook />
-			</Suspense>
+			<h4>Code Editor - Python</h4>
+			<v-ace-editor
+				v-model:value="codeText"
+				@init="initialize"
+				lang="python"
+				theme="chrome"
+				style="height: 100%; width: 100%"
+				class="ace-editor"
+			/>
+			<Button label="Run" size="small" @click="runCodeStratify" />
 		</div>
 
 		<div class="right-side">
@@ -60,7 +70,7 @@
 					type="text"
 					class="input-small"
 				/>
-				<Button label="Save as new Model" size="small" @click="saveNewModel" />
+				<Button label="Save as new Model" size="small" @click="() => saveNewModel(newModelName)" />
 			</div>
 		</div>
 	</div>
@@ -68,19 +78,24 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref, onUnmounted } from 'vue';
+import { watch, ref, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
-import teraMiraNotebook from '@/components/stratification/tera-mira-notebook.vue';
 import { Model, ModelConfiguration, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel, createModel } from '@/services/model';
+import {
+	getModelConfigurationById,
+	addDefaultConfiguration
+} from '@/services/model-configurations';
+import { getModel, createModel, getModelConfigurations } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { v4 as uuidv4 } from 'uuid';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -104,6 +119,63 @@ const model = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
+
+const editor = ref<VAceEditorInstance['_editor'] | null>(null);
+const codeText = ref('');
+
+const initialize = async (editorInstance) => {
+	editor.value = editorInstance;
+};
+
+const runCodeStratify = () => {
+	const code = editor.value?.getValue();
+	if (!code) return;
+
+	resetModel();
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	let executedCode = '';
+
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		?.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		?.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		?.register('error', (data) => {
+			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+		})
+		?.register('model_preview', (data) => {
+			model.value = data.content['application/json'];
+
+			if (model.value) {
+				saveNewModel(`${model.value.header.name} - Stratified`);
+			}
+
+			if (executedCode) {
+				saveCodeToState(executedCode);
+
+				const state = _.cloneDeep(props.node.state);
+				state.hasCodeBeenRun = true;
+
+				workflowEventBus.emitNodeStateChange({
+					workflowId: props.node.workflowId,
+					nodeId: props.node.id,
+					state
+				});
+			}
+		});
+};
 
 // TODO: Limit to single strata for now - DC, Nov 2023
 // const addGroupForm = () => {
@@ -181,15 +253,16 @@ const stratifyRequest = () => {
 };
 
 const handleStratifyResponse = (data: any) => {
-	const codes = data.content.executed_code.split('\n');
-	codes.forEach((c: any) => {
-		console.log(c);
-	});
+	const code = data.content.executed_code;
+	codeText.value = code;
+	saveCodeToState(code);
 };
 
 const handleModelPreview = (data: any) => {
-	console.log('model preview', data);
 	model.value = data.content['application/json'];
+	if (model.value) {
+		saveNewModel(`${model.value.header.name} - Stratified`);
+	}
 };
 
 const buildJupyterContext = () => {
@@ -238,9 +311,9 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async () => {
-	if (!model.value || !newModelName.value) return;
-	model.value.header.name = newModelName.value;
+const saveNewModel = async (modelName: string) => {
+	if (!model.value || !modelName) return;
+	model.value.header.name = modelName;
 
 	const projectResource = useProjects();
 	const modelData = await createModel(model.value);
@@ -248,6 +321,40 @@ const saveNewModel = async () => {
 
 	if (!modelData) return;
 	await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+
+	// fetch the model that was just created
+	const newModel = await getModel(modelData.id);
+	if (!newModel) return;
+
+	// set default configuration for the newly created model
+	await addDefaultConfiguration(newModel);
+
+	// setting timeout...elastic search might not update default config in time
+	setTimeout(async () => {
+		const configurationList = await getModelConfigurations(newModel.id);
+		configurationList.forEach((configuration) => {
+			workflowEventBus.emit('append-output-port', {
+				node: props.node,
+				port: {
+					id: uuidv4(),
+					label: `${newModel.header.name} - ${configuration.name}`,
+					type: 'modelConfigId',
+					value: [configuration.id]
+				}
+			});
+		});
+	}, 800);
+};
+
+const saveCodeToState = (code: string) => {
+	const state = _.cloneDeep(props.node.state);
+	state.strataCodeHistory.push({ code, timestamp: Date.now() });
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
 };
 
 // Set model, modelConfiguration, modelNodeOptions
@@ -258,6 +365,13 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onMounted(() => {
+	const codeHistoryLength = props.node.state.strataCodeHistory.length;
+	if (codeHistoryLength > 0) {
+		codeText.value = props.node.state.strataCodeHistory[codeHistoryLength - 1].code;
+	}
+});
 
 onUnmounted(() => {
 	kernelManager.shutdown();
@@ -302,5 +416,12 @@ onUnmounted(() => {
 
 .input-small {
 	padding: 0.5rem;
+}
+
+.code-executed-warning {
+	background-color: #ffe6e6;
+	color: #cc0000;
+	padding: 10px;
+	border-radius: 4px;
 }
 </style>

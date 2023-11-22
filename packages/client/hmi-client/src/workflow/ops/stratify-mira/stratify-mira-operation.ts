@@ -16,6 +16,7 @@ export interface StratifyCode {
 export interface StratifyOperationStateMira {
 	strataGroups: StratifyGroup[];
 	strataCodeHistory: StratifyCode[];
+	hasCodeBeenRun: boolean;
 }
 
 export const StratifyMiraOperation: Operation = {
@@ -37,7 +38,8 @@ export const StratifyMiraOperation: Operation = {
 					cartesianProduct: true
 				}
 			],
-			strataCodeHistory: []
+			strataCodeHistory: [],
+			hasCodeBeenRun: false
 		};
 		return init;
 	}
