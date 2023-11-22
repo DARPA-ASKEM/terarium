@@ -1,5 +1,5 @@
 <template>
-	<ul v-if="!isEmpty(outputs)">
+	<ul>
 		<li
 			v-for="(output, index) in outputs"
 			:key="index"
@@ -37,7 +37,6 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
 import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
-import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 
 const emit = defineEmits([
