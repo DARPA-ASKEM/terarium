@@ -74,7 +74,7 @@ main {
 	margin: 0 0 0.5rem;
 	max-width: inherit;
 	/* contentHeight = fullscreen - modalMargin - headerHeight*/
-	height: calc(100vh - 1rem - 116px);
+	height: calc(100vh - 1rem - var(--drilldown-header-height));
 	display: flex;
 	flex-direction: column;
 }

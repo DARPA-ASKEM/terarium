@@ -51,7 +51,7 @@ header {
 	padding-top: 1.25rem;
 	padding-left: 1rem;
 	padding-right: 1rem;
-	height: 116px;
+	height: var(--drilldown-header-height);
 }
 
 header > * {
