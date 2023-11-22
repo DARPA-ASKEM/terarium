@@ -21,6 +21,8 @@ public class ProjectService {
 		return projectRepository.findAll();
 	}
 
+	public List<Project> getProjects(final List<UUID> ids){ return projectRepository.findAllById(ids);}
+
 	public Optional<Project> getProject(final UUID id){
 		return projectRepository.findById(id);
 	}

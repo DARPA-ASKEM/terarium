@@ -33,6 +33,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRe
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.*;
 
@@ -430,7 +431,7 @@ public class ReBACService {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
-	public List<String> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type) throws Exception {
+	public List<UUID> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
 	}

@@ -17,6 +17,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRe
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 public class ReBACFunctions {
 	final PermissionsServiceGrpc.PermissionsServiceBlockingStub permissionsService;
@@ -162,8 +163,8 @@ public class ReBACFunctions {
 		return false;
 	}
 
-	public List<String> lookupResources(Schema.Type resourceType, Schema.Permission permission, SchemaObject who, Consistency consistency) throws Exception {
-		List<String> results = new ArrayList<>();
+	public List<UUID> lookupResources(Schema.Type resourceType, Schema.Permission permission, SchemaObject who, Consistency consistency) throws Exception {
+		List<UUID> results = new ArrayList<>();
 
 		PermissionService.LookupResourcesRequest request = PermissionService.LookupResourcesRequest.newBuilder()
 			.setConsistency(consistency)
@@ -177,7 +178,13 @@ public class ReBACFunctions {
 			PermissionService.LookupResourcesResponse response = iter.next();
 
 			if( response.getPermissionshipValue() == PermissionService.LookupPermissionship.LOOKUP_PERMISSIONSHIP_HAS_PERMISSION.getNumber()) {
-				results.add(response.getResourceObjectId());
+				try{
+					UUID uuid = UUID.fromString(response.getResourceObjectId());
+					results.add(uuid);
+				} catch (IllegalArgumentException ex) {
+					//TODO dvince: swallow this for now its an int id
+				}
+
 			}
 		}
 		return results;

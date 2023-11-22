@@ -43,58 +43,67 @@ public class ProjectController {
 
 	@GetMapping
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets all projects (which are visible to this user)")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Project found.",
+			content = { @Content(mediaType = "application/json",
+				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)) }),
+		@ApiResponse(responseCode = "204", description = "There are no errors, but also no projects for this user",
+			content = @Content),
+		@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions",
+			content = @Content) })
 	public ResponseEntity<List<Project>> getProjects(
 		@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive
 	) {
-//		final RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
-//		List<String> projectIds = null;
-//		try {
-//			projectIds = rebacUser.lookupProjects();
-//		} catch (final Exception e) {
-//			log.error("Error getting projects which a user can read", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
-//		if (projectIds == null) {
-//			return ResponseEntity.noContent().build();
-//		}
-//
-//		// Get projects from the project repository associated with the list of ids. Filter the list of projects to only include active projects.
-//		List<Project> projects = projectIds
-//			.stream()
-//			.map(id -> proxy.getProject(id).getBody())
-//			.toList();
-//
-//		// Remove non-active (soft-deleted) projects
-//		projects = projects
-//			.stream()
-//			.filter(Project::getActive)
-//			.toList();
-//
-//		projects.forEach(project -> {
-//			try {
-//				final List<AssetType> assetTypes = Arrays.asList(AssetType.datasets, AssetType.models, AssetType.publications);
-//
-//				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
-//				project.setPublicProject(rebacProject.isPublic());
-//				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
-//
-//				final Assets assets = proxy.getAssets(project.getId(), assetTypes).getBody();
-//				final Map<String, String> metadata = new HashMap<>();
-//				metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
-//				metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
-//				metadata.put("models-count", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
-//				metadata.put("publications-count", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
-//				metadata.put("workflows-count", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
-//				metadata.put("artifacts-count", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
-//				project.setMetadata(metadata);
-//			} catch (final Exception e) {
-//				log.error("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}", project.getId(), e);
-//			}
-//		});
-//
-//
-//		return ResponseEntity.ok(projects);
-		return ResponseEntity.noContent().build();
+		final RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+		List<UUID> projectIds = null;
+		try {
+			projectIds = rebacUser.lookupProjects();
+		} catch (final Exception e) {
+			log.error("Error getting projects which a user can read", e);
+			return ResponseEntity.internalServerError().build();
+		}
+		if (projectIds == null || projectIds.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		// Get projects from the project repository associated with the list of ids. Filter the list of projects to only include active projects.
+		List<Project> projects = projectService.getProjects(projectIds);
+
+		if(!includeInactive){
+			// Remove non-active (soft-deleted) projects
+			projects = projects
+				.stream()
+				.filter(project -> project.getDeletedOn() != null)
+				.toList();
+		}
+
+
+
+		projects.forEach(project -> {
+			try {
+				final List<AssetType> assetTypes = Arrays.asList(AssetType.datasets, AssetType.models, AssetType.publications);
+
+				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+				project.setPublicProject(rebacProject.isPublic());
+				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
+
+				final Assets assets = new Assets();//TODO dvince: proxy.getAssets(project.getId(), assetTypes).getBody();
+				final Map<String, String> metadata = new HashMap<>();
+				metadata.put("datasets-count", assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
+				metadata.put("extractions-count", assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
+				metadata.put("models-count", assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
+				metadata.put("publications-count", assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
+				metadata.put("workflows-count", assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
+				metadata.put("artifacts-count", assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
+				project.setMetadata(metadata);
+			} catch (final Exception e) {
+				log.error("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}", project.getId(), e);
+			}
+		});
+
+
+		return ResponseEntity.ok(projects);
 	}
 
 	/**
@@ -118,7 +127,7 @@ public class ProjectController {
 	) {
 		try {
 			final RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
-			final RebacProject rebacProject = new RebacProject(id.toString(), reBACService);
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
 			if (rebacUser.canRead(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(id);
 				if(project.isPresent()){
@@ -137,7 +146,7 @@ public class ProjectController {
 	@GetMapping("/{id}/permissions")
 	@Secured(Roles.USER)
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(
-		@PathVariable("id") final String id
+		@PathVariable("id") final UUID id
 	) {
 		try {
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
@@ -164,7 +173,7 @@ public class ProjectController {
 	@PostMapping("/{projectId}/permissions/group/{groupId}/{relationship}")
 	@Secured({Roles.USER, Roles.SERVICE})
 	public ResponseEntity<JsonNode> setProjectGroupPermissions(
-		@PathVariable("projectId") final String projectId,
+		@PathVariable("projectId") final UUID projectId,
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -181,7 +190,7 @@ public class ProjectController {
 	@PutMapping("/{projectId}/permissions/group/{groupId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateProjectGroupPermissions(
-		@PathVariable("projectId") final String projectId,
+		@PathVariable("projectId") final UUID projectId,
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("oldRelationship") final String oldRelationship,
 		@RequestParam("to") final String newRelationship
@@ -199,7 +208,7 @@ public class ProjectController {
 	@DeleteMapping("/{projectId}/permissions/group/{groupId}/{relationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> removeProjectGroupPermissions(
-		@PathVariable("projectId") final String projectId,
+		@PathVariable("projectId") final UUID projectId,
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -219,7 +228,7 @@ public class ProjectController {
 	@PostMapping("/{projectId}/permissions/user/{userId}/{relationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> setProjectUserPermissions(
-		@PathVariable("projectId") final String projectId,
+		@PathVariable("projectId") final UUID projectId,
 		@PathVariable("userId") final String userId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -236,7 +245,7 @@ public class ProjectController {
 	@PutMapping("/{projectId}/permissions/user/{userId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
-		@PathVariable("projectId") final String projectId,
+		@PathVariable("projectId") final UUID projectId,
 		@PathVariable("userId") final String userId,
 		@PathVariable("oldRelationship") final String oldRelationship,
 		@RequestParam("to") final String newRelationship
@@ -254,7 +263,7 @@ public class ProjectController {
 	@DeleteMapping("/{projectId}/permissions/user/{userId}/{relationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> removeProjectUserPermissions(
-		@PathVariable("projectId") final String projectId,
+		@PathVariable("projectId") final UUID projectId,
 		@PathVariable("userId") final String userId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -320,7 +329,7 @@ public class ProjectController {
 		project = projectService.save(Project.cloneFrom(project));
 
 		try {
-			new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(project.getId().toString(), reBACService));
+			new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(project.getId(), reBACService));
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			// TODO: Rollback potential?
@@ -339,7 +348,7 @@ public class ProjectController {
 		@RequestBody final Project project
 	) {
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id.toString(), reBACService))) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
 				project.setId(id);
 				return ResponseEntity.ok(projectService.save(project));
 			}

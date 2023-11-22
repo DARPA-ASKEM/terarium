@@ -6,13 +6,14 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
 import java.util.List;
+import java.util.UUID;
 
 public class RebacProject extends RebacObject {
 
 	ReBACService reBACService;
 
-	public RebacProject(String id, ReBACService reBACService) {
-		super(id);
+	public RebacProject(UUID id, ReBACService reBACService) {
+		super(id.toString());
 		this.reBACService = reBACService;
 	}
 
