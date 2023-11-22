@@ -26,6 +26,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExist
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 
 @RequestMapping("/projects")
@@ -40,6 +42,11 @@ public class ProjectController {
 	final CurrentUserService currentUserService;
 
 	final ProjectService projectService;
+
+
+	//--------------------------------------------------------------------------
+	//												Basic Project Operations
+	//--------------------------------------------------------------------------
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -111,7 +118,7 @@ public class ProjectController {
 	 * @param id the UUID for a project
 	 * @return The project wrapped in a response entity, a 404 if missing or a 500 if there is a rebac permissions issue.
 	 */
-	@Operation(summary = "Gets a project by UUID")
+	@Operation(summary = "Gets a project by ID")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "Project found.",
 			content = { @Content(mediaType = "application/json",
@@ -143,6 +150,168 @@ public class ProjectController {
 		}
 	}
 
+	@Operation(summary = "Soft deletes project by ID")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Project marked for deletion",
+			content = { @Content(mediaType = "application/json",
+				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
+		@ApiResponse(responseCode = "404", description = "Project could not be found",
+			content = @Content),
+		@ApiResponse(responseCode = "304", description = "The current user does not have delete privileges to this project",
+			content = @Content) ,
+		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions",
+			content = @Content) })
+	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<UUID> deleteProject(
+		@PathVariable("id") final UUID id
+	) {
+
+		try {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(new RebacProject(id, reBACService))) {
+				Optional<Project> project = projectService.getProject(id);
+				if(project.isEmpty())
+					return ResponseEntity.notFound().build();
+
+				project.get().setDeletedOn(Timestamp.from(Instant.now()));
+				projectService.save(project.get());
+
+				return ResponseEntity.ok(id);
+			}
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+		} catch (final Exception e) {
+			log.error("Error deleting project", e);
+			return ResponseEntity.internalServerError().build();
+		}
+
+	}
+
+	@Operation(summary = "Creates a new project")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "201", description = "Project created",
+			content = { @Content(mediaType = "application/json",
+				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)) })})
+	@PostMapping
+	@Secured(Roles.USER)
+	public ResponseEntity<Project> createProject(
+		@RequestBody Project project
+	) {
+
+		project = projectService.save(Project.cloneFrom(project));
+
+		try {
+			new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(project.getId(), reBACService));
+		} catch (final Exception e) {
+			log.error("Error setting user's permissions for project", e);
+			// TODO: Rollback potential?
+		} catch (final RelationshipAlreadyExistsException e) {
+			log.error("Error the user is already the creator of this project", e);
+			// TODO: Rollback potential?
+		}
+		return ResponseEntity.status(HttpStatus.CREATED).body(project);
+
+	}
+
+	@Operation(summary = "Updates a project by ID")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Project marked for deletion",
+			content = { @Content(mediaType = "application/json",
+				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
+		@ApiResponse(responseCode = "404", description = "Project could not be found",
+			content = @Content),
+		@ApiResponse(responseCode = "304", description = "The current user does not have delete privileges to this project",
+			content = @Content) ,
+		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions",
+			content = @Content) })
+	@PutMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Project> updateProject(
+		@PathVariable("id") final UUID id,
+		@RequestBody final Project project
+	) {
+		try {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
+				project.setId(id);
+				return ResponseEntity.ok(projectService.save(project));
+			}
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+		} catch (final Exception e) {
+			log.error("Error updating project", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	//--------------------------------------------------------------------------
+	//												Project Assets
+	//--------------------------------------------------------------------------
+
+
+	@GetMapping("/{id}/assets")
+	@Secured(Roles.USER)
+	public ResponseEntity<Assets> getAssets(
+		@PathVariable("id") final String projectId,
+		@RequestParam("types") final List<AssetType> types
+	) {
+//		try {
+//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
+//				return ResponseEntity.ok(proxy.getAssets(projectId, types).getBody());
+//			}
+//			return ResponseEntity.notFound().build();
+//		} catch (final Exception e) {
+//			log.error("Error getting project assets", e);
+//			return ResponseEntity.internalServerError().build();
+//		}
+		return ResponseEntity.noContent().build();
+
+
+	}
+
+	@PostMapping("/{id}/assets/{resource_type}/{resource_id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> createAsset(
+		@PathVariable("id") final String projectId,
+		@PathVariable("resource_type") final AssetType type,
+		@PathVariable("resource_id") final String resourceId
+	) {
+
+
+//		try {
+//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+//				return ResponseEntity.ok(proxy.createAsset(projectId, type, resourceId).getBody());
+//			}
+//			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+//		} catch (final Exception e) {
+//			log.error("Error creating project assets", e);
+//			return ResponseEntity.internalServerError().build();
+//		}
+
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}/assets/{resource_type}/{resource_id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> deleteAsset(
+		@PathVariable("id") final String projectId,
+		@PathVariable("resource_type") final AssetType type,
+		@PathVariable("resource_id") final String resourceId
+	) {
+
+//		try {
+//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+//				return ResponseEntity.ok(proxy.deleteAsset(projectId, type, resourceId).getBody());
+//			}
+//			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+//		} catch (final Exception e) {
+//			log.error("Error deleting project assets", e);
+//			return ResponseEntity.internalServerError().build();
+//		}
+		return ResponseEntity.noContent().build();
+	}
+
+	//--------------------------------------------------------------------------
+	//												Project Permissions
+	//--------------------------------------------------------------------------
+
 	@GetMapping("/{id}/permissions")
 	@Secured(Roles.USER)
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(
@@ -170,10 +339,10 @@ public class ProjectController {
 	}
 
 
-	@PostMapping("/{projectId}/permissions/group/{groupId}/{relationship}")
+	@PostMapping("/{id}/permissions/group/{groupId}/{relationship}")
 	@Secured({Roles.USER, Roles.SERVICE})
 	public ResponseEntity<JsonNode> setProjectGroupPermissions(
-		@PathVariable("projectId") final UUID projectId,
+		@PathVariable("id") final UUID projectId,
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -187,10 +356,10 @@ public class ProjectController {
 		}
 	}
 
-	@PutMapping("/{projectId}/permissions/group/{groupId}/{oldRelationship}")
+	@PutMapping("/{id}/permissions/group/{groupId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateProjectGroupPermissions(
-		@PathVariable("projectId") final UUID projectId,
+		@PathVariable("id") final UUID projectId,
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("oldRelationship") final String oldRelationship,
 		@RequestParam("to") final String newRelationship
@@ -205,10 +374,10 @@ public class ProjectController {
 		}
 	}
 
-	@DeleteMapping("/{projectId}/permissions/group/{groupId}/{relationship}")
+	@DeleteMapping("/{id}/permissions/group/{groupId}/{relationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> removeProjectGroupPermissions(
-		@PathVariable("projectId") final UUID projectId,
+		@PathVariable("id") final UUID projectId,
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -225,10 +394,10 @@ public class ProjectController {
 		}
 	}
 
-	@PostMapping("/{projectId}/permissions/user/{userId}/{relationship}")
+	@PostMapping("/{id}/permissions/user/{userId}/{relationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> setProjectUserPermissions(
-		@PathVariable("projectId") final UUID projectId,
+		@PathVariable("id") final UUID projectId,
 		@PathVariable("userId") final String userId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -242,10 +411,10 @@ public class ProjectController {
 		}
 	}
 
-	@PutMapping("/{projectId}/permissions/user/{userId}/{oldRelationship}")
+	@PutMapping("/{id}/permissions/user/{userId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
-		@PathVariable("projectId") final UUID projectId,
+		@PathVariable("id") final UUID projectId,
 		@PathVariable("userId") final String userId,
 		@PathVariable("oldRelationship") final String oldRelationship,
 		@RequestParam("to") final String newRelationship
@@ -260,10 +429,10 @@ public class ProjectController {
 		}
 	}
 
-	@DeleteMapping("/{projectId}/permissions/user/{userId}/{relationship}")
+	@DeleteMapping("/{id}/permissions/user/{userId}/{relationship}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> removeProjectUserPermissions(
-		@PathVariable("projectId") final UUID projectId,
+		@PathVariable("id") final UUID projectId,
 		@PathVariable("userId") final String userId,
 		@PathVariable("relationship") final String relationship
 	) {
@@ -315,128 +484,4 @@ public class ProjectController {
 	}
 
 
-	@Operation(summary = "Creates a new project")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "201", description = "Project created",
-			content = { @Content(mediaType = "application/json",
-				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)) })})
-	@PostMapping
-	@Secured(Roles.USER)
-	public ResponseEntity<Project> createProject(
-		@RequestBody Project project
-	) {
-
-		project = projectService.save(Project.cloneFrom(project));
-
-		try {
-			new RebacUser(currentUserService.getToken().getSubject(), reBACService).createCreatorRelationship(new RebacProject(project.getId(), reBACService));
-		} catch (final Exception e) {
-			log.error("Error setting user's permissions for project", e);
-			// TODO: Rollback potential?
-		} catch (final RelationshipAlreadyExistsException e) {
-			log.error("Error the user is already the creator of this project", e);
-			// TODO: Rollback potential?
-		}
-		return ResponseEntity.status(HttpStatus.CREATED).body(project);
-
-	}
-
-	@PutMapping("/{project_id}")
-	@Secured(Roles.USER)
-	public ResponseEntity<Project> updateProject(
-		@PathVariable("project_id") final UUID id,
-		@RequestBody final Project project
-	) {
-		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
-				project.setId(id);
-				return ResponseEntity.ok(projectService.save(project));
-			}
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		} catch (final Exception e) {
-			log.error("Error updating project", e);
-			return ResponseEntity.internalServerError().build();
-		}
-	}
-
-	@DeleteMapping("/{id}")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteProject(
-		@PathVariable("id") final String id
-	) {
-
-//		try {
-//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(new RebacProject(id, reBACService))) {
-//				return ResponseEntity.ok(proxy.deleteProject(id).getBody());
-//			}
-//			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-//		} catch (final Exception e) {
-//			log.error("Error deleting project", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
-		return ResponseEntity.noContent().build();
-
-	}
-
-	@GetMapping("/{project_id}/assets")
-	@Secured(Roles.USER)
-	public ResponseEntity<Assets> getAssets(
-		@PathVariable("project_id") final String projectId,
-		@RequestParam("types") final List<AssetType> types
-	) {
-//		try {
-//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
-//				return ResponseEntity.ok(proxy.getAssets(projectId, types).getBody());
-//			}
-//			return ResponseEntity.notFound().build();
-//		} catch (final Exception e) {
-//			log.error("Error getting project assets", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
-		return ResponseEntity.noContent().build();
-
-
-	}
-
-	@PostMapping("/{project_id}/assets/{resource_type}/{resource_id}")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> createAsset(
-		@PathVariable("project_id") final String projectId,
-		@PathVariable("resource_type") final AssetType type,
-		@PathVariable("resource_id") final String resourceId
-	) {
-
-
-//		try {
-//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
-//				return ResponseEntity.ok(proxy.createAsset(projectId, type, resourceId).getBody());
-//			}
-//			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-//		} catch (final Exception e) {
-//			log.error("Error creating project assets", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
-
-		return ResponseEntity.noContent().build();
-	}
-
-	@DeleteMapping("/{project_id}/assets/{resource_type}/{resource_id}")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteAsset(
-		@PathVariable("project_id") final String projectId,
-		@PathVariable("resource_type") final AssetType type,
-		@PathVariable("resource_id") final String resourceId
-	) {
-
-//		try {
-//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
-//				return ResponseEntity.ok(proxy.deleteAsset(projectId, type, resourceId).getBody());
-//			}
-//			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-//		} catch (final Exception e) {
-//			log.error("Error deleting project assets", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
-		return ResponseEntity.noContent().build();
-	}
 }
