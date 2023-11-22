@@ -1,6 +1,6 @@
 <template>
 	<template v-if="dataset">
-		<h5>{{ dataset.name }}</h5>
+		<tera-operator-title>{{ dataset.name }}</tera-operator-title>
 		<section v-if="csvContent">
 			<div class="datatable-toolbar">
 				<span class="datatable-toolbar-item"
@@ -48,6 +48,7 @@ import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
+import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{

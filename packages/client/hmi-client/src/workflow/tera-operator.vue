@@ -14,9 +14,9 @@
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
-		<section>
+		<section class="content">
 			<slot name="body" />
-			<Button label="Open Drilldown" @click="openDrilldown" severity="secondary" outlined />
+			<Button label="Open Drilldown" @click="emit('drilldown')" severity="secondary" outlined />
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
@@ -31,10 +31,10 @@
 <script setup lang="ts">
 import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import Button from 'primevue/button';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import Button from 'primevue/button';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
@@ -109,10 +109,6 @@ onMounted(() => {
 	operator.value.addEventListener('mouseup', stopDrag);
 });
 
-function openDrilldown() {
-	emit('drilldown', props.node);
-}
-
 function bringToFront() {
 	// TODO: bring to front
 	// maybe there can be a z-index variable in the parent component
@@ -164,20 +160,24 @@ main:hover {
 	z-index: 2;
 }
 
-section {
+main > .content {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
 	margin: 0 0.5rem;
+	gap: 0.5rem;
+}
+
+.content:deep(> *),
+main > ul {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin: 0.5rem 0;
 }
 
 /* Inputs/outputs */
 ul {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-evenly;
-	margin: 0.5rem 0;
-	gap: 0.5rem;
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
