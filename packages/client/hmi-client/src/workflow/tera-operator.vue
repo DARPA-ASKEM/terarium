@@ -7,7 +7,6 @@
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@bring-to-front="bringToFront"
 		/>
-		<tera-operator-title />
 		<tera-operator-inputs
 			:inputs="node.inputs"
 			@port-mouseover="(event) => mouseoverPort(event, 'input')"
@@ -42,7 +41,6 @@ import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
-import TeraOperatorTitle from './operator/tera-operator-title.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 import TeraOperatorActions from './operator/tera-operator-actions.vue';
 import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
