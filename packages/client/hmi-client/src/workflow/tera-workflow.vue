@@ -615,15 +615,6 @@ const drilldown = (event: WorkflowNode<any>) => {
 	dialogIsOpened.value = true;
 };
 
-workflowEventBus.on('node-state-change', (/* payload: any */) => {
-	throw new Error('node-state-change event is no longer available');
-	/*
-	if (wf.value?.id !== payload.workflowId) return;
-	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
-	workflowDirty = true;
-	*/
-});
-
 workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
 	if (wf.value?.id !== payload.workflowId) return;
 	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
@@ -640,37 +631,17 @@ workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: stri
 	}
 });
 
-// workflowEventBus.on(
-// 	'add-node',
-// 	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
-// 		workflowService.addNode(wf.value, payload.operation, payload.position, {
-// 			state: payload.state
-// 		});
-// 		workflowDirty = true;
-// 	}
-// );
+// TODO: Remove
+workflowEventBus.on('node-state-change', (/* payload: any */) => {
+	throw new Error('bus event no longer available');
+});
 
-workflowEventBus.on(
-	'append-output-port',
-	(payload: {
-		node: WorkflowNode<any>;
-		port: { id: string; type: string; label: string; value: string };
-	}) => {
-		const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
-		if (foundNode) {
-			if (payload.port.type === 'datasetId') {
-				foundNode.state.datasetId = payload.port.value;
-			}
-			appendOutputPort(foundNode, payload.port);
-		}
-	}
-);
+workflowEventBus.on('append-output-port', () => {
+	throw new Error('bus event no longer available');
+});
 
-workflowEventBus.on('update-state', (payload: { node: WorkflowNode<any>; state }) => {
-	const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
-	if (foundNode) {
-		updateWorkflowNodeState(foundNode, payload.state);
-	}
+workflowEventBus.on('update-state', () => {
+	throw new Error('bus event no longer available');
 });
 
 const removeNode = (event) => {
