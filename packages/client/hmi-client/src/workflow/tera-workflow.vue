@@ -239,7 +239,6 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			@on-close-clicked="dialogIsOpened = false"
 			:title="currentActiveNode.displayName"
-			:views="['default', 'Notebook']"
 			:tooltip="'A brief description of the operator.'"
 		>
 			<tera-calibrate-julia

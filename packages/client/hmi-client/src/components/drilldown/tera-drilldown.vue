@@ -3,8 +3,8 @@
 		<section>
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
-				:views="props.views"
-				:tooltip="props.tooltip"
+				:views="views"
+				:tooltip="tooltip"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
 				>{{ props.title }}</tera-drilldown-header
@@ -21,18 +21,23 @@
 <script setup lang="ts">
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import { TabViewChangeEvent } from 'primevue/tabview';
-import { ref } from 'vue';
+import { computed, onMounted, ref, useSlots } from 'vue';
 
 const props = defineProps<{
 	title: string;
-	// a list of names of views for the drilldown component (i.e. 'Wizard', 'Notebook', etc...)
-	views: string[];
 	tooltip?: string;
 }>();
 
-const selectedViewIndex = ref<number>(0);
 const emit = defineEmits(['on-close-clicked']);
+const slots = useSlots();
 
+const views = computed(() => Object.keys(slots));
+
+const selectedViewIndex = ref<number>(0);
+
+onMounted(() => {
+	console.log(slots);
+});
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };

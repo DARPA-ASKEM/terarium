@@ -2,19 +2,22 @@
 	<header>
 		<div class="title-row">
 			<div class="title-container">
-				<h5><slot /></h5>
+				<h4><slot /></h4>
 				<i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" />
 			</div>
-			<Button icon="pi pi-times" text rounded aria-label="Close" @click="emit('close')" />
+			<Button
+				class="close-mask"
+				icon="pi pi-times"
+				text
+				rounded
+				aria-label="Close"
+				@click="emit('close')"
+			/>
 		</div>
-		<div class="actions-row">
+		<div class="tabs-row">
 			<div>
-				<TabView
-					v-if="props.views.length > 1"
-					:active-index="props.activeIndex"
-					@tab-change="onTabChange"
-				>
-					<TabPanel v-for="(view, index) in props.views" :key="index" :header="view" />
+				<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
+					<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 				</TabView>
 			</div>
 			<a target="_blank">Documentation</a>
@@ -43,12 +46,12 @@ const onTabChange = (event: TabViewChangeEvent) => {
 header {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 1rem;
 	background-color: var(--surface-highlight);
-	padding-top: 20px;
-	padding-left: 16px;
-	padding-right: 16px;
-	height: 108px;
+	padding-top: 1.25rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	height: 116px;
 }
 header .title-row {
 	display: flex;
@@ -57,7 +60,7 @@ header .title-row {
 	gap: 0.5rem;
 }
 
-header .actions-row {
+header .tabs-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -84,17 +87,36 @@ header .actions-row {
 	color: var(--text-color-primary);
 }
 
-header .actions-row:deep(.p-tabview .p-tabview-panels) {
+header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 	padding: 0;
 }
 
-.actions-row > a {
+.tabs-row > a {
 	height: 3rem;
 	display: flex;
 	align-items: center;
+	padding-right: 1.5rem;
+	color: var(--primary-color);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {
 	background: var(--tab-backgroundcolor-unselected);
+}
+
+.close-mask {
+	position: relative;
+	overflow: visible;
+}
+
+.close-mask.p-button.p-button-icon-only:deep() {
+	padding: 1rem;
+}
+.close-mask:before {
+	content: '';
+	position: absolute;
+	top: -100px;
+	right: -100px;
+	bottom: -12px;
+	left: -12px;
 }
 </style>
