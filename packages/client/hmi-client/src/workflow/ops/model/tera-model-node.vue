@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<template v-if="model">
-			<h5>{{ model.header.name }}</h5>
+			<tera-operator-title>{{ model.header.name }}</tera-operator-title>
 			<SelectButton
 				class="p-button-sm"
 				:model-value="view"
@@ -42,6 +42,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
 import SelectButton from 'primevue/selectbutton';
+import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
