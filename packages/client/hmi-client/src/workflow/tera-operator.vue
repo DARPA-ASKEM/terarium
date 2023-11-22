@@ -16,7 +16,7 @@
 		/>
 		<section class="content">
 			<slot name="body" />
-			<tera-operator-actions :action-buttons="actionButtons" />
+			<Button label="Open Drilldown" @click="emit('drilldown')" severity="secondary" outlined />
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
@@ -29,20 +29,14 @@
 </template>
 
 <script setup lang="ts">
-import {
-	Position,
-	WorkflowNode,
-	WorkflowDirection,
-	WorkflowPort,
-	OperatorActionButton
-} from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import Button from 'primevue/button';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
-import TeraOperatorActions from './operator/tera-operator-actions.vue';
 import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
 
 const props = defineProps<{
@@ -60,15 +54,6 @@ const emit = defineEmits([
 	'remove-edges',
 	'drilldown'
 ]);
-
-const actionButtons: OperatorActionButton[] = [
-	{
-		label: 'Open drilldown',
-		icon: '',
-		isPrimary: false,
-		action: () => emit('drilldown', props.node)
-	}
-];
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
