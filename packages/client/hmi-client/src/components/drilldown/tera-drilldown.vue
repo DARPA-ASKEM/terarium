@@ -10,9 +10,14 @@
 				>{{ props.title }}</tera-drilldown-header
 			>
 			<main>
-				<template v-for="(view, index) in views">
-					<slot v-if="selectedViewIndex === index" :name="view" />
-				</template>
+				<div
+					v-for="(view, index) in views"
+					class="slot-container"
+					:class="{ 'hide-slot': hideSlot(index) }"
+					:key="index"
+				>
+					<slot :name="view" />
+				</div>
 			</main>
 		</section>
 	</aside>
@@ -35,6 +40,7 @@ const views = computed(() => Object.keys(slots));
 
 const selectedViewIndex = ref<number>(0);
 
+const hideSlot = (index: number) => selectedViewIndex.value !== index;
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
@@ -71,5 +77,12 @@ main {
 	height: calc(100vh - 1rem - 116px);
 	display: flex;
 	flex-direction: column;
+}
+
+.slot-container {
+	height: 100%;
+}
+.hide-slot {
+	display: none;
 }
 </style>

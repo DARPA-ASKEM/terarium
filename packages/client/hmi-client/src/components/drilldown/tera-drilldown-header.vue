@@ -53,19 +53,11 @@ header {
 	padding-right: 1rem;
 	height: 116px;
 }
-header .title-row {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
-}
 
-header .tabs-row {
+header > * {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	/* padding-left: 1rem;
-    padding-right: 1rem; */
 }
 
 .title-container {
@@ -101,6 +93,10 @@ header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {
 	background: var(--tab-backgroundcolor-unselected);
+}
+
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
+	background-color: var(--surface-section);
 }
 
 .close-mask {
