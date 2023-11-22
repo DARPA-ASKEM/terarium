@@ -54,7 +54,8 @@ const options = ref([
 <style scoped>
 header {
 	display: flex;
-	padding: 0.1rem 0.6rem;
+	height: 2rem;
+	padding: 0.5rem;
 	justify-content: space-between;
 	align-items: center;
 	background-color: var(--surface-highlight);
