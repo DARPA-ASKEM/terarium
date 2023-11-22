@@ -126,6 +126,7 @@ export const processFunman = (result: any) => {
 		});
 	});
 
+	console.log({ boxes, points, states, trajs });
 	return { boxes, points, states, trajs } as FunmanProcessedData;
 };
 
@@ -164,7 +165,8 @@ export const renderFumanTrajectories = (
 	element: HTMLElement,
 	processedData: FunmanProcessedData,
 	boxId: string,
-	options: RenderOptions
+	options: RenderOptions,
+	state: string
 ) => {
 	const width = options.width;
 	const height = options.height;
@@ -192,6 +194,9 @@ export const renderFumanTrajectories = (
 		.curve(d3.curveBasis);
 
 	states.forEach((s: string) => {
+		if (s !== state) {
+			return;
+		}
 		const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
 		group.append('path').attr('d', pathFn(path)).style('stroke', '#888').style('fill', 'none');
 	});
