@@ -57,7 +57,7 @@
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-operator="(event) => removeNode(event)"
-				@remove-edge="removeEdge"
+				@remove-edges="removeEdges"
 				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 				:isActive="currentActiveNode?.id === node.id"
@@ -308,7 +308,7 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep, isEqual } from 'lodash';
+import { isArray, cloneDeep, isEqual, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
@@ -879,10 +879,16 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 	}
 }
 
-function removeEdge(portId: string) {
-	const edge = wf.value.edges.find(({ targetPortId }) => targetPortId === portId);
-	if (edge) workflowService.removeEdge(wf.value, edge.id);
-	else logger.error(`Edge with port id:${portId} not found.`);
+function removeEdges(portId: string) {
+	const edges = wf.value.edges.filter(
+		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
+	);
+	if (!isEmpty(edges)) {
+		edges.forEach((edge) => {
+			workflowService.removeEdge(wf.value, edge.id);
+		});
+		workflowDirty = true;
+	} else logger.error(`Edges with port id:${portId} not found.`);
 }
 
 function onCanvasClick() {
