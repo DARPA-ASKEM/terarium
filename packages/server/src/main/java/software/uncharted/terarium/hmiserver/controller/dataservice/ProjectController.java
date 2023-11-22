@@ -231,7 +231,15 @@ public class ProjectController {
 	) {
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(id, reBACService))) {
-				project.setId(id);
+
+				final Optional<Project> currentProject = projectService.getProject(id);
+				if(currentProject.isEmpty())
+					return ResponseEntity.notFound().build();
+
+				// Ensure that we retain our current Id and created on date
+				project.setId(currentProject.get().getId());
+				project.setCreatedOn(currentProject.get().getCreatedOn());
+
 				return ResponseEntity.ok(projectService.save(project));
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
