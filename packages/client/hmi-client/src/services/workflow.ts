@@ -56,6 +56,7 @@ export const addNode = (
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null,
+			isOptional: false,
 			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
