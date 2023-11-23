@@ -140,7 +140,6 @@ import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import SelectButton from 'primevue/selectbutton';
 import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation';
@@ -148,6 +147,7 @@ import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-opera
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 enum CalibrationView {
 	Input = 'Input',
@@ -183,22 +183,14 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Used from button to add new entry to the mapping object
@@ -212,11 +204,7 @@ function addMapping() {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 }
 // Set up model config + dropdown names
 // Note: Same as calibrate-node

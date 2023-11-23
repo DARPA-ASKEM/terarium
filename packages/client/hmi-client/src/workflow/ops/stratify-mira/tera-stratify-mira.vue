@@ -90,7 +90,6 @@ import {
 } from '@/services/model-configurations';
 import { getModel, createModel, getModelConfigurations } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -105,6 +104,7 @@ import { StratifyOperationStateMira } from './stratify-mira-operation';
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 enum StratifyTabs {
 	wizard,
@@ -123,100 +123,16 @@ const newModelName = ref('');
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const codeText = ref('');
 
-const initialize = async (editorInstance) => {
-	editor.value = editorInstance;
-};
-
-const runCodeStratify = () => {
-	const code = editor.value?.getValue();
-	if (!code) return;
-
-	resetModel();
-
-	const messageContent = {
-		silent: false,
-		store_history: false,
-		user_expressions: {},
-		allow_stdin: true,
-		stop_on_error: false,
-		code
-	};
-
-	let executedCode = '';
-
-	kernelManager
-		.sendMessage('execute_request', messageContent)
-		?.register('execute_input', (data) => {
-			executedCode = data.content.code;
-		})
-		?.register('stream', (data) => {
-			console.log('stream', data);
-		})
-		?.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-		})
-		?.register('model_preview', (data) => {
-			model.value = data.content['application/json'];
-
-			if (model.value) {
-				saveNewModel(`${model.value.header.name} - Stratified`);
-			}
-
-			if (executedCode) {
-				saveCodeToState(executedCode);
-
-				const state = _.cloneDeep(props.node.state);
-				state.hasCodeBeenRun = true;
-
-				workflowEventBus.emitNodeStateChange({
-					workflowId: props.node.workflowId,
-					nodeId: props.node.id,
-					state
-				});
-			}
-		});
-};
-
-// TODO: Limit to single strata for now - DC, Nov 2023
-// const addGroupForm = () => {
-// 	const state = _.cloneDeep(props.node.state);
-// 	const newGroup: StratifyGroup = {
-// 		borderColour: '#00c387',
-// 		name: '',
-// 		selectedVariables: [],
-// 		groupLabels: '',
-// 		cartesianProduct: true,
-// 		isPending: true
-// 	};
-// 	state.strataGroups.push(newGroup);
-//
-// 	workflowEventBus.emitNodeStateChange({
-// 		workflowId: props.node.workflowId,
-// 		nodeId: props.node.id,
-// 		state
-// 	});
-// };
-
 const deleteStratifyGroupForm = (data: any) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroups.splice(data.index, 1);
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const updateStratifyGroupForm = (data: any) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroups[data.index] = data.updatedConfig;
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const stratifyModel = () => {
@@ -255,7 +171,10 @@ const stratifyRequest = () => {
 const handleStratifyResponse = (data: any) => {
 	const code = data.content.executed_code;
 	codeText.value = code;
-	saveCodeToState(code);
+
+	const state = _.cloneDeep(props.node.state);
+	state.strataCodeHistory.push({ code, timestamp: Date.now() });
+	emit('update-state', state);
 };
 
 const handleModelPreview = (data: any) => {
@@ -333,28 +252,62 @@ const saveNewModel = async (modelName: string) => {
 	setTimeout(async () => {
 		const configurationList = await getModelConfigurations(newModel.id);
 		configurationList.forEach((configuration) => {
-			workflowEventBus.emit('append-output-port', {
-				node: props.node,
-				port: {
-					id: uuidv4(),
-					label: `${newModel.header.name} - ${configuration.name}`,
-					type: 'modelConfigId',
-					value: [configuration.id]
-				}
+			emit('append-output-port', {
+				id: uuidv4(),
+				label: `${newModel.header.name} - ${configuration.name}`,
+				type: 'modelConfigId',
+				value: [configuration.id]
 			});
 		});
 	}, 800);
 };
 
-const saveCodeToState = (code: string) => {
-	const state = _.cloneDeep(props.node.state);
-	state.strataCodeHistory.push({ code, timestamp: Date.now() });
+const initialize = async (editorInstance) => {
+	editor.value = editorInstance;
+};
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+const runCodeStratify = () => {
+	const code = editor.value?.getValue();
+	if (!code) return;
+
+	resetModel();
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	let executedCode = '';
+
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		?.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		?.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		?.register('error', (data) => {
+			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+		})
+		?.register('model_preview', (data) => {
+			model.value = data.content['application/json'];
+
+			if (model.value) {
+				saveNewModel(`${model.value.header.name} - Stratified`);
+			}
+
+			if (executedCode) {
+				const state = _.cloneDeep(props.node.state);
+				state.hasCodeBeenRun = true;
+				state.strataCodeHistory.push({ code: executedCode, timestamp: Date.now() });
+				emit('update-state', state);
+			}
+		});
 };
 
 // Set model, modelConfiguration, modelNodeOptions
