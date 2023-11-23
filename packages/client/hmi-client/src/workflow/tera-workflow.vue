@@ -66,20 +66,17 @@
 					<tera-model-node
 						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
 						:models="models"
-						:dropped-model-id="droppedAssetId"
 						:node="node"
 						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
 						:datasets="datasets"
-						:dropped-dataset-id="droppedAssetId"
 						:node="node"
 						@select-dataset="(event) => selectDataset(node, event)"
 					/>
 					<tera-code-asset-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CODE && codeAssets"
-						:dropped-code-asset-id="droppedAssetId"
 						:code-assets="codeAssets"
 						:node="node"
 						@select-code-asset="(event) => selectCodeAsset(node, event)"
@@ -292,7 +289,6 @@ import {
 	TeraSimulateCiemss,
 	TeraSimulateNodeCiemss
 } from './ops/simulate-ciemss/mod';
-// import { StratifyOperation, TeraStratifyNodeJulia } from './ops/stratify-julia/mod';
 import {
 	StratifyMiraOperation,
 	TeraStratifyMira,
@@ -394,7 +390,6 @@ const isWorkflowLoading = ref(false);
 
 const currentActiveNode = ref<WorkflowNode<any> | null>(null);
 const newEdge = ref<WorkflowEdge | undefined>();
-const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
 const dialogIsOpened = ref(false);
 
@@ -453,13 +448,11 @@ const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 };
 
 async function selectModel(node: WorkflowNode<ModelOperationState>, data: { id: string }) {
-	droppedAssetId.value = null;
 	node.state.modelId = data.id;
 	await refreshModelNode(node);
 }
 
 async function selectCodeAsset(node: WorkflowNode<CodeAssetState>, data: { id: string }) {
-	droppedAssetId.value = null;
 	node.state.codeAssetId = data.id;
 }
 
@@ -475,7 +468,6 @@ async function selectDataset(
 	node: WorkflowNode<DatasetOperationState>,
 	data: { id: string; name: string }
 ) {
-	droppedAssetId.value = null;
 	node.state.datasetId = data.id;
 	node.outputs = [
 		{
@@ -727,23 +719,25 @@ function onDrop(event) {
 		updateNewNodePosition(event);
 
 		let operation: Operation;
+		let state: any = null;
 
 		switch (assetType) {
 			case AssetType.Models:
 				operation = ModelOperation;
+				state = { modelId: assetId };
 				break;
 			case AssetType.Datasets:
 				operation = DatasetOperation;
+				state = { datasetId: assetId };
 				break;
 			case AssetType.Code:
 				operation = CodeAssetOperation;
+				state = { codeAssetId: assetId };
 				break;
 			default:
 				return;
 		}
-
-		workflowService.addNode(wf.value, operation, newNodePosition);
-		droppedAssetId.value = assetId;
+		workflowService.addNode(wf.value, operation, newNodePosition, { state });
 	}
 }
 

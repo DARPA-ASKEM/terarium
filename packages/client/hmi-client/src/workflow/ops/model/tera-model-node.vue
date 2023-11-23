@@ -48,7 +48,6 @@ import { ModelOperationState } from './model-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 	models: Model[];
-	droppedModelId: null | string;
 }>();
 
 const emit = defineEmits(['select-model']);
@@ -82,9 +81,6 @@ onMounted(async () => {
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
 	}
-
-	// If model is drag and dropped from resource panel
-	else if (props.droppedModelId) await getModelById(props.droppedModelId);
 
 	// Force refresh of configs in the workflow node - August 2023
 	emit('select-model', { id: model.value?.id });
