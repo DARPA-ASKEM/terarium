@@ -171,7 +171,6 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -182,6 +181,7 @@ import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
@@ -218,11 +218,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const handleSelectedRunChange = () => {
@@ -236,22 +232,14 @@ const handleSelectedRunChange = () => {
 		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 async function saveDatasetToProject() {
@@ -302,11 +290,7 @@ watch(
 	(n) => {
 		const state = _.cloneDeep(props.node.state);
 		state.numSamples = n;
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	}
 );
 </script>

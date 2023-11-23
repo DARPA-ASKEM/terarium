@@ -244,59 +244,85 @@
 			<tera-calibrate-julia
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-calibrate-ciemss
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 
 			<tera-simulate-julia
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-simulate-ciemss
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 
 			<tera-stratify-mira
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 
 			<tera-model-from-code
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL_FROM_CODE"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 
 			<tera-simulate-ensemble-ciemss
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-calibrate-ensemble-ciemss
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 
 			<tera-model-workflow-wrapper
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-dataset-workflow-wrapper
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-code-asset-wrapper
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.CODE"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-dataset-transformer
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-model-transformer
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER"
 				:node="currentActiveNode"
+				@append-output-port="(event) => appendOutputPort(currentActiveNode, event)"
+				@update-state="(event) => updateWorkflowNodeState(currentActiveNode, event)"
 			/>
 			<tera-funman
 				v-if="currentActiveNode.operationType === WorkflowOperationTypes.FUNMAN"
@@ -433,12 +459,7 @@ let workflowDirty: boolean = false;
 
 const isWorkflowLoading = ref(false);
 
-const currentActiveNode = ref<WorkflowNode<any> | null>();
-
-workflowEventBus.on('clearActiveNode', () => {
-	currentActiveNode.value = null;
-});
-
+const currentActiveNode = ref<WorkflowNode<any> | null>(null);
 const newEdge = ref<WorkflowEdge | undefined>();
 const droppedAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
@@ -547,9 +568,11 @@ function appendInputPort(
 }
 
 function appendOutputPort(
-	node: WorkflowNode<any>,
+	node: WorkflowNode<any> | null,
 	port: { type: string; label?: string; value: any }
 ) {
+	if (!node) return;
+
 	node.outputs.push({
 		id: uuidv4(),
 		type: port.type,
@@ -575,7 +598,8 @@ function appendOutputPort(
 	workflowDirty = true;
 }
 
-function updateWorkflowNodeState(node: WorkflowNode<any>, state: any) {
+function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
+	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
 	workflowDirty = true;
 }
@@ -583,14 +607,7 @@ function updateWorkflowNodeState(node: WorkflowNode<any>, state: any) {
 const drilldown = (event: WorkflowNode<any>) => {
 	currentActiveNode.value = event;
 	dialogIsOpened.value = true;
-	// workflowEventBus.emit('drilldown', event);
 };
-
-workflowEventBus.on('node-state-change', (payload: any) => {
-	if (wf.value?.id !== payload.workflowId) return;
-	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
-	workflowDirty = true;
-});
 
 workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
 	if (wf.value?.id !== payload.workflowId) return;
@@ -608,37 +625,17 @@ workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: stri
 	}
 });
 
-workflowEventBus.on(
-	'add-node',
-	(payload: { id: string; operation: Operation; position: Position; state: any }) => {
-		workflowService.addNode(wf.value, payload.operation, payload.position, {
-			state: payload.state
-		});
-		workflowDirty = true;
-	}
-);
+// TODO: Remove
+workflowEventBus.on('node-state-change', (/* payload: any */) => {
+	throw new Error('bus event no longer available');
+});
 
-workflowEventBus.on(
-	'append-output-port',
-	(payload: {
-		node: WorkflowNode<any>;
-		port: { id: string; type: string; label: string; value: string };
-	}) => {
-		const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
-		if (foundNode) {
-			if (payload.port.type === 'datasetId') {
-				foundNode.state.datasetId = payload.port.value;
-			}
-			appendOutputPort(foundNode, payload.port);
-		}
-	}
-);
+workflowEventBus.on('append-output-port', () => {
+	throw new Error('bus event no longer available');
+});
 
-workflowEventBus.on('update-state', (payload: { node: WorkflowNode<any>; state }) => {
-	const foundNode = wf.value.nodes.find((node) => node.id === payload.node.id);
-	if (foundNode) {
-		updateWorkflowNodeState(foundNode, payload.state);
-	}
+workflowEventBus.on('update-state', () => {
+	throw new Error('bus event no longer available');
 });
 
 const removeNode = (event) => {
