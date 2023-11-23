@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
@@ -43,14 +43,15 @@ import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.v
 import { WorkflowNode } from '@/types/workflow';
 import SelectButton from 'primevue/selectbutton';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import { useProjects } from '@/composables/project';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
-	models: Model[];
 }>();
 
 const emit = defineEmits(['select-model']);
+const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
 
 enum ModelNodeView {
 	Diagram = 'Diagram',

@@ -1,41 +1,43 @@
 <template>
-	<template v-if="dataset">
-		<tera-operator-title>{{ dataset.name }}</tera-operator-title>
-		<section v-if="csvContent">
-			<div class="datatable-toolbar">
-				<span class="datatable-toolbar-item"
-					>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }}
-				</span>
-				<span class="datatable-toolbar-item">
-					<MultiSelect
-						:modelValue="selectedColumns"
-						:options="csvHeaders"
-						@update:modelValue="onToggle"
-						:maxSelectedLabels="1"
-						placeholder="Select columns"
-					/>
-				</span>
-			</div>
+	<main>
+		<template v-if="dataset">
+			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
+			<section v-if="csvContent">
+				<div class="datatable-toolbar">
+					<span class="datatable-toolbar-item"
+						>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }}
+					</span>
+					<span class="datatable-toolbar-item">
+						<MultiSelect
+							:modelValue="selectedColumns"
+							:options="csvHeaders"
+							@update:modelValue="onToggle"
+							:maxSelectedLabels="1"
+							placeholder="Select columns"
+						/>
+					</span>
+				</div>
 
-			<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
-				<Column
-					v-for="(colName, index) of selectedColumns"
-					:key="index"
-					:field="index.toString()"
-					:header="colName"
-				/>
-			</DataTable>
-			<span>Showing first 5 rows</span>
-		</section>
-	</template>
-	<Dropdown
-		v-else
-		class="w-full p-button-sm p-button-outlined"
-		:options="datasets"
-		option-label="name"
-		v-model="dataset"
-		placeholder="Select a dataset"
-	/>
+				<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
+					<Column
+						v-for="(colName, index) of selectedColumns"
+						:key="index"
+						:field="index.toString()"
+						:header="colName"
+					/>
+				</DataTable>
+				<span>Showing first 5 rows</span>
+			</section>
+		</template>
+		<Dropdown
+			v-else
+			class="w-full p-button-sm p-button-outlined"
+			:options="datasets"
+			option-label="name"
+			v-model="dataset"
+			placeholder="Select a dataset"
+		/>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -49,14 +51,18 @@ import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import { useProjects } from '@/composables/project';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
-	datasets: Dataset[];
 }>();
 
 const emit = defineEmits(['select-dataset']);
+
+const datasets = computed<Dataset[]>(
+	() => useProjects().activeProject.value?.assets?.datasets ?? []
+);
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
