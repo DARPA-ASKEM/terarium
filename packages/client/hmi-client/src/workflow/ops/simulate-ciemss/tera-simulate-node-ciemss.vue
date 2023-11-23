@@ -65,7 +65,6 @@ import {
 import InputNumber from 'primevue/inputnumber';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
@@ -192,11 +191,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 		};
 	}
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
@@ -217,11 +212,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.numSamples = numSamples.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	}
 );
 
@@ -231,11 +222,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.method = method.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	}
 );
 
@@ -243,11 +230,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const lazyLoadRunResults = async (runId: string) => {
@@ -268,22 +251,14 @@ const handleSelectedRunChange = () => {
 		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 </script>
 

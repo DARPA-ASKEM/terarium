@@ -58,12 +58,4 @@ export class EventEmitter {
 		});
 		return true;
 	}
-
-	emitNodeStateChange(payload: { workflowId: string; nodeId: string; state: any }) {
-		this.emit('node-state-change', payload);
-	}
-
-	emitNodeRefresh(payload: { workflowId: string; nodeId: string }) {
-		this.emit('node-refresh', payload);
-	}
 }
