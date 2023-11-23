@@ -18,12 +18,6 @@ export enum WorkflowOperationTypes {
 	CODE = 'Code'
 }
 
-export enum OperatorInteractionStatus {
-	FOCUS = 'focus', // Hover/drag
-	FOUND = 'found',
-	NOT_FOUND = 'not found'
-}
-
 export enum OperatorStatus {
 	DEFAULT = 'default',
 	IN_PROGRESS = 'in progress',
@@ -33,6 +27,14 @@ export enum OperatorStatus {
 	FAILED = 'failed',
 	ERROR = 'error',
 	DISABLED = 'disabled'
+}
+
+// Multiple states can be on at once - using bitmasking
+export enum OperatorInteractionStatus {
+	Found = 0x0001,
+	Hover = 0x0010,
+	Focus = 0x0100,
+	Drag = 0x1000
 }
 
 export enum WorkflowPortStatus {
@@ -97,7 +99,6 @@ export interface WorkflowNode<S> {
 	state: S;
 
 	status: OperatorStatus;
-	interactionStatus: OperatorInteractionStatus;
 }
 
 export interface WorkflowEdge {

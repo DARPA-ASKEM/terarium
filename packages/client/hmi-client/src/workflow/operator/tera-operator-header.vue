@@ -1,5 +1,5 @@
 <template>
-	<header :class="`${status} ${interactionStatus}`">
+	<header :class="`${status} ${interactionClasses}`">
 		<h5>{{ name }}</h5>
 		<Button
 			icon="pi pi-ellipsis-v"
@@ -11,14 +11,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, PropType } from 'vue';
-import { OperatorInteractionStatus, OperatorStatus } from '@/types/workflow';
+import { ref, PropType, computed } from 'vue';
+import { OperatorStatus, OperatorInteractionStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
 const emit = defineEmits(['remove-operator', 'bring-to-front', 'open-in-new-window']);
 
-defineProps({
+const props = defineProps({
 	name: {
 		type: String,
 		default: ''
@@ -28,9 +28,16 @@ defineProps({
 		default: OperatorStatus.DEFAULT
 	},
 	interactionStatus: {
-		type: String as PropType<OperatorInteractionStatus>,
-		default: OperatorInteractionStatus.FOUND
+		type: Number,
+		default: 0
 	}
+});
+
+const interactionClasses = computed(() => {
+	const classes: string[] = [];
+	// eslint-disable-next-line no-bitwise
+	if (props.interactionStatus & OperatorInteractionStatus.Drag) classes.push('focus');
+	return classes.join(' ');
 });
 
 const menu = ref();

@@ -1,8 +1,16 @@
 <template>
-	<main :style="nodeStyle" ref="operator">
+	<main
+		:style="nodeStyle"
+		ref="operator"
+		@mouseenter="interactionStatus |= OperatorInteractionStatus.Hover"
+		@mouseleave="interactionStatus &= ~OperatorInteractionStatus.Hover"
+		@focus="() => {}"
+		@focusout="() => {}"
+	>
 		<tera-operator-header
 			:name="node.displayName"
 			:status="node.status"
+			:interaction-status="interactionStatus"
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@bring-to-front="bringToFront"
@@ -29,7 +37,13 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
+import {
+	Position,
+	WorkflowNode,
+	WorkflowDirection,
+	WorkflowPort,
+	OperatorInteractionStatus
+} from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
@@ -64,18 +78,20 @@ const nodeStyle = computed(() => ({
 const portBaseSize: number = 8;
 const operator = ref<HTMLElement>();
 
+const interactionStatus = ref(0);
 let tempX = 0;
 let tempY = 0;
-let dragStart = false;
 
 const startDrag = (evt: MouseEvent) => {
 	tempX = evt.x;
 	tempY = evt.y;
-	dragStart = true;
+	// eslint-disable-next-line no-bitwise
+	interactionStatus.value |= OperatorInteractionStatus.Drag;
 };
 
 const drag = (evt: MouseEvent) => {
-	if (dragStart === false) return;
+	// eslint-disable-next-line no-bitwise
+	if (!(interactionStatus.value & OperatorInteractionStatus.Drag)) return;
 
 	const dx = evt.x - tempX;
 	const dy = evt.y - tempY;
@@ -93,7 +109,8 @@ const drag = (evt: MouseEvent) => {
 const stopDrag = (/* evt: MouseEvent */) => {
 	tempX = 0;
 	tempY = 0;
-	dragStart = false;
+	// eslint-disable-next-line no-bitwise
+	interactionStatus.value &= ~OperatorInteractionStatus.Drag;
 };
 
 onMounted(() => {
