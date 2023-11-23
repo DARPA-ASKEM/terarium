@@ -17,18 +17,23 @@
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="(event) => mouseoverPort(event, 'input')"
+			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
 			<slot name="body" />
-			<Button label="Open Drilldown" @click="emit('drilldown')" severity="secondary" outlined />
+			<Button
+				label="Open Drilldown"
+				@click="emit('drilldown', node)"
+				severity="secondary"
+				outlined
+			/>
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
-			@port-mouseover="(event) => mouseoverPort(event, 'output')"
+			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
@@ -52,6 +57,11 @@ import Button from 'primevue/button';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
+
+enum PortDirection {
+	Input,
+	Output
+}
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -136,11 +146,12 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event: MouseEvent, portDirection: 'input' | 'output') {
+function mouseoverPort(event: MouseEvent, portDirection: PortDirection) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
+	const totalOffsetX =
+		portElement.offsetLeft + (portDirection === PortDirection.Input ? 0 : portBaseSize);
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
@@ -192,6 +203,10 @@ ul {
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
+}
+
+ul:empty {
+	display: none;
 }
 
 :deep(ul .p-button.p-button-sm) {

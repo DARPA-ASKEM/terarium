@@ -191,15 +191,19 @@ const defaultPortLabels = {
 	datasetId: 'Dataset'
 };
 
-export function getPortLabel({ label, type }: WorkflowPort) {
-	if (label) return label; // Return name of port value
+export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
+	let portLabel = type; // Initialize to port type (fallback)
 
-	// Return default label using port type
-	if (defaultPortLabels[type]) {
-		return defaultPortLabels[type];
+	// Assign to name of port value
+	if (label) portLabel = label;
+	// Assign to default label using port type
+	else if (defaultPortLabels[type]) {
+		portLabel = defaultPortLabels[type];
 	}
 
-	return type; // Show type when it lacks a default name
+	if (isOptional) portLabel = portLabel.concat(' (optional)');
+
+	return portLabel;
 }
 
 /**

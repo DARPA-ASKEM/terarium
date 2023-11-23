@@ -75,7 +75,7 @@ watch(
 		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
 			selectedColumns = ref(csvHeaders?.value);
-			// Once dataset is selected
+			// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
 			if (isEmpty(props.node.outputs)) {
 				emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
 			}

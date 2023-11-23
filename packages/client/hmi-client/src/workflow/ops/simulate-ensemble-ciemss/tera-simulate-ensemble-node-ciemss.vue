@@ -47,7 +47,6 @@ import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { getRunResult } from '@/services/models/simulation-service';
 import { ProgressState, WorkflowNode, OperatorStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
-import { workflowEventBus } from '@/services/workflow';
 import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
 	makeEnsembleCiemssSimulation,
@@ -115,11 +114,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
@@ -127,11 +122,7 @@ const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const getStatus = async (simulationId: string) => {
@@ -185,11 +176,7 @@ watch(
 			const state = _.cloneDeep(props.node.state);
 			state.modelConfigIds = modelConfigIds.value;
 			state.mapping = mapping;
-			workflowEventBus.emitNodeStateChange({
-				workflowId: props.node.workflowId,
-				nodeId: props.node.id,
-				state
-			});
+			emit('update-state', state);
 		}
 	},
 	{ immediate: true }

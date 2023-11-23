@@ -198,7 +198,6 @@ import {
 import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
-import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
@@ -440,11 +439,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 		active: true,
 		loss: lossValues
 	};
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 
 	// clear out intermediate values for next run
 	lossValues = [];
@@ -465,22 +460,14 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Set up model config + dropdown names
@@ -522,11 +509,7 @@ const handleSelectedRunChange = () => {
 		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 

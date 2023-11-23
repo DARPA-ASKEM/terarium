@@ -78,7 +78,6 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
@@ -90,6 +89,7 @@ import { StratifyOperationStateMira } from './stratify-mira-operation';
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 enum StratifyTabs {
 	wizard,
@@ -105,46 +105,16 @@ const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 
-// TODO: Limit to single strata for now - DC, Nov 2023
-// const addGroupForm = () => {
-// 	const state = _.cloneDeep(props.node.state);
-// 	const newGroup: StratifyGroup = {
-// 		borderColour: '#00c387',
-// 		name: '',
-// 		selectedVariables: [],
-// 		groupLabels: '',
-// 		cartesianProduct: true,
-// 		isPending: true
-// 	};
-// 	state.strataGroups.push(newGroup);
-//
-// 	workflowEventBus.emitNodeStateChange({
-// 		workflowId: props.node.workflowId,
-// 		nodeId: props.node.id,
-// 		state
-// 	});
-// };
-
 const deleteStratifyGroupForm = (data: any) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroups.splice(data.index, 1);
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const updateStratifyGroupForm = (data: any) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroups[data.index] = data.updatedConfig;
-
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const stratifyModel = () => {
