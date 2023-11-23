@@ -230,10 +230,9 @@
 		<tera-drilldown
 			v-if="dialogIsOpened && currentActiveNode"
 			@on-close-clicked="dialogIsOpened = false"
+			:title="currentActiveNode.displayName"
+			:tooltip="'A brief description of the operator.'"
 		>
-			<template #header>
-				<h5>{{ currentActiveNode.displayName }}</h5>
-			</template>
 			<component
 				:is="drilldownRegistry.get(currentActiveNode.operationType)"
 				:node="currentActiveNode"
@@ -250,7 +249,7 @@ import { isArray, cloneDeep, isEqual, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import TeraDrilldown from '@/components/widgets/tera-drilldown.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import {
 	Operation,
 	Position,
