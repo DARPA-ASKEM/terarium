@@ -11,12 +11,12 @@
 			>
 			<main>
 				<section
-					v-for="(view, index) in views"
+					v-for="(tab, index) in tabs"
 					class="slot-container"
 					:class="{ 'hide-slot': hideSlot(index) }"
 					:key="index"
 				>
-					<slot :name="view" />
+					<component :is="tab" class="drilldown-panel" />
 				</section>
 			</main>
 		</section>
@@ -36,7 +36,17 @@ const props = defineProps<{
 const emit = defineEmits(['on-close-clicked']);
 const slots = useSlots();
 
-const views = computed(() => Object.keys(slots));
+/**
+ * This will retrieve and filer all top level components in the default slot if they have the tabName prop.
+ */
+const tabs = computed(() => {
+	if (slots.default?.()) {
+		return slots.default().filter((vnode) => vnode.props?.tabName);
+	}
+	return [];
+});
+
+const views = computed(() => tabs.value.map((vnode) => vnode.props?.tabName));
 
 const selectedViewIndex = ref<number>(0);
 
@@ -84,5 +94,10 @@ main {
 }
 .hide-slot {
 	display: none;
+}
+
+:deep(.drilldown-panel) {
+	display: grid;
+	grid-auto-flow: column;
 }
 </style>

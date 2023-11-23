@@ -234,12 +234,18 @@
 			:tooltip="'A brief description of the operator.'"
 		>
 			<component
+				tabName="Wizard"
 				:is="drilldownRegistry.get(currentActiveNode.operationType)"
 				:node="currentActiveNode"
 				@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
 				@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			>
 			</component>
+
+			<div tabName="Notebook">
+				<section>section 1</section>
+				<section>section 2</section>
+			</div>
 		</tera-drilldown>
 	</Teleport>
 </template>
