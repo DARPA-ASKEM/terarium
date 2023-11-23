@@ -70,7 +70,11 @@
 					type="text"
 					class="input-small"
 				/>
-				<Button label="Save as new Model" size="small" @click="() => saveNewModel(newModelName)" />
+				<Button
+					label="Save as new Model"
+					size="small"
+					@click="() => saveNewModel(newModelName, { addToProject: true })"
+				/>
 			</div>
 		</div>
 	</div>
@@ -180,7 +184,7 @@ const handleStratifyResponse = (data: any) => {
 const handleModelPreview = (data: any) => {
 	model.value = data.content['application/json'];
 	if (model.value) {
-		saveNewModel(`${model.value.header.name} - Stratified`);
+		saveNewModel(`${model.value.header.name} - Stratified`, { appendOutputPort: true });
 	}
 };
 
@@ -230,7 +234,7 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string) => {
+const saveNewModel = async (modelName: string, options: Record<string, boolean>) => {
 	if (!model.value || !modelName) return;
 	model.value.header.name = modelName;
 
@@ -239,10 +243,19 @@ const saveNewModel = async (modelName: string) => {
 	const projectId = projectResource.activeProject.value?.id;
 
 	if (!modelData) return;
-	await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
 
+	if (options.addToProject) {
+		await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+	}
+
+	if (options.appendOutputPort) {
+		await appendOutputPort(modelData.id);
+	}
+};
+
+const appendOutputPort = async (modelId: string) => {
 	// fetch the model that was just created
-	const newModel = await getModel(modelData.id);
+	const newModel = await getModel(modelId);
 	if (!newModel) return;
 
 	// set default configuration for the newly created model
@@ -295,11 +308,7 @@ const runCodeStratify = () => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
 		})
 		?.register('model_preview', (data) => {
-			model.value = data.content['application/json'];
-
-			if (model.value) {
-				saveNewModel(`${model.value.header.name} - Stratified`);
-			}
+			handleModelPreview(data);
 
 			if (executedCode) {
 				const state = _.cloneDeep(props.node.state);
