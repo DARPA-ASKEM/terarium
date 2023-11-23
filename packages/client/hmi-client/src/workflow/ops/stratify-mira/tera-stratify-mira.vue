@@ -169,11 +169,11 @@ const stratifyRequest = () => {
 };
 
 const handleStratifyResponse = (data: any) => {
-	const code = data.content.executed_code;
-	codeText.value = code;
+	const executedCode = data.content.executed_code;
+	codeText.value = executedCode;
 
 	const state = _.cloneDeep(props.node.state);
-	state.strataCodeHistory.push({ code, timestamp: Date.now() });
+	state.strataCodeHistory.push({ code: executedCode, timestamp: Date.now() });
 	emit('update-state', state);
 };
 
@@ -262,7 +262,7 @@ const saveNewModel = async (modelName: string) => {
 	}, 800);
 };
 
-const initialize = async (editorInstance) => {
+const initialize = (editorInstance) => {
 	editor.value = editorInstance;
 };
 
