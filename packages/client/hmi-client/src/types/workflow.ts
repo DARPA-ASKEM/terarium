@@ -75,7 +75,7 @@ export interface WorkflowPort {
 	status: WorkflowPortStatus;
 	label?: string;
 	value?: any[] | null;
-	isOptional?: boolean;
+	isOptional: boolean;
 	acceptMultiple?: boolean;
 }
 
