@@ -442,6 +442,7 @@ const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 			type: 'modelConfigId',
 			label: configuration.name,
 			value: [configuration.id],
+			isOptional: false,
 			status: WorkflowPortStatus.NOT_CONNECTED
 		});
 	});
@@ -475,6 +476,7 @@ async function selectDataset(
 			type: 'datasetId',
 			label: data.name,
 			value: [data.id],
+			isOptional: false,
 			status: WorkflowPortStatus.NOT_CONNECTED
 		}
 	];
@@ -488,6 +490,7 @@ function appendInputPort(
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
+		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 }
@@ -503,6 +506,7 @@ function appendOutputPort(
 		type: port.type,
 		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
+		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 
