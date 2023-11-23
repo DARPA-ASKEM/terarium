@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class Equation {
+public class EquationVariable {
 	private String id;
 	private String text;
 	private String image;

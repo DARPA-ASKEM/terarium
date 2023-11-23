@@ -1,6 +1,6 @@
 <template>
 	<template v-if="dataset">
-		<h5>{{ dataset.name }}</h5>
+		<tera-operator-title>{{ dataset.name }}</tera-operator-title>
 		<section v-if="csvContent">
 			<div class="datatable-toolbar">
 				<span class="datatable-toolbar-item"
@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
 import { CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
@@ -47,12 +48,12 @@ import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
+import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 	datasets: Dataset[];
-	droppedDatasetId: null | string;
 }>();
 
 const emit = defineEmits(['select-dataset']);
@@ -73,7 +74,10 @@ watch(
 		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
 			selectedColumns = ref(csvHeaders?.value);
-			emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+			// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
+			if (isEmpty(props.node.outputs)) {
+				emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+			}
 		}
 	}
 );
@@ -81,11 +85,6 @@ watch(
 onMounted(async () => {
 	if (props.node.state.datasetId) {
 		dataset.value = await getDataset(props.node.state.datasetId);
-	}
-
-	// If dataset is drag and dropped from resource panel
-	else if (props.droppedDatasetId) {
-		dataset.value = props.datasets.find(({ id }) => id === props.droppedDatasetId) ?? null;
 	}
 });
 </script>

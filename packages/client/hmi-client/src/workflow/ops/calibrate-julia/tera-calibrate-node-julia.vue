@@ -36,10 +36,7 @@
 						<th>Parameter</th>
 						<th>Value</th>
 					</thead>
-					<tr
-						v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRunId]?.params"
-						:key="key"
-					>
+					<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
 						<td>
 							<p>{{ key }}</p>
 						</td>
@@ -201,7 +198,6 @@ import {
 import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
-import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
@@ -236,6 +232,7 @@ const parameterResult = ref<{ [index: string]: any }>();
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
 const runResults = ref<RunResults>({});
+const runResultParams = ref<Record<string, Record<string, number>>>({});
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
@@ -414,18 +411,24 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	if (runIdList.length === 0) return;
 
 	const newRunResults = {};
+	const newRunResultParams = {};
 	await Promise.all(
 		runIdList.map(async (runId) => {
-			if (runResults.value[runId]) {
+			if (runResults.value[runId] && runResultParams.value[runId]) {
 				newRunResults[runId] = runResults.value[runId];
+				newRunResultParams[runId] = runResultParams.value[runId];
 			} else {
-				const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
-				const csvData = csvParse(resultCsv);
-				newRunResults[runId] = csvData;
+				const result = await getRunResultJulia(runId, 'result.json');
+				if (result) {
+					const csvData = csvParse(result.csvData);
+					newRunResults[runId] = csvData;
+					newRunResultParams[runId] = result.paramVals;
+				}
 			}
 		})
 	);
 	runResults.value = newRunResults;
+	runResultParams.value = newRunResultParams;
 
 	const port = props.node.inputs[0];
 
@@ -434,16 +437,9 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	state.calibrateConfigs.runConfigs[runIdList[0]] = {
 		runId: runIdList[0],
 		active: true,
-		loss: lossValues,
-		// TODO JAMI: grab the params from runResults after calibration finishes instead of
-		// just taking the last params from the intermediate results
-		params: parameterResult.value
+		loss: lossValues
 	};
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 
 	// clear out intermediate values for next run
 	lossValues = [];
@@ -464,22 +460,14 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Set up model config + dropdown names
@@ -521,21 +509,19 @@ const handleSelectedRunChange = () => {
 		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 
 const lazyLoadRunResults = async (runId?: string) => {
 	if (!runId || runResults.value[runId]) return;
 
-	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
-	const csvData = csvParse(resultCsv);
-
-	runResults.value[runId] = csvData as any;
+	const result = await getRunResultJulia(runId, 'result.json');
+	if (result) {
+		const csvData = csvParse(result.csvData);
+		runResults.value[runId] = csvData as any;
+		runResultParams.value[runId] = result.paramVals;
+	}
 };
 watch(
 	() => selectedRunId.value,

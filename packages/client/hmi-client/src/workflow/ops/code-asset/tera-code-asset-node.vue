@@ -10,7 +10,6 @@ import { CodeAssetState } from './code-asset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CodeAssetState>;
-	droppedCodeAssetId: null | string;
 	codeAssets: Code[];
 }>();
 
@@ -19,8 +18,8 @@ const emit = defineEmits(['select-code-asset']);
 const code = ref<Code | null>(null);
 
 onMounted(async () => {
-	if (props.droppedCodeAssetId) {
-		code.value = props.codeAssets.find(({ id }) => id === props.droppedCodeAssetId) ?? null;
+	if (props.node.state.codeAssetId) {
+		code.value = props.codeAssets.find(({ id }) => id === props.node.state.codeAssetId) ?? null;
 	}
 });
 

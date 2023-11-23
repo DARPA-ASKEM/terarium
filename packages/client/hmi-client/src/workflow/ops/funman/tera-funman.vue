@@ -380,7 +380,7 @@ watch(
 );
 </script>
 
-<style>
+<style scoped>
 .content {
 	display: flex;
 	overflow: auto;

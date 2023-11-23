@@ -3,10 +3,7 @@ package software.uncharted.terarium.hmiserver.proxies.simulationservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 @FeignClient(name = "simulation-service", url = "${simulation-service.url}")
@@ -17,7 +14,7 @@ public interface SimulationServiceProxy {
 	);
 
 	@PostMapping("/calibrate")
-	ResponseEntity<JobResponse> makeCalibrateJob(
+	ResponseEntity<JobResponse> makeCalibrateJob(@RequestParam("queue") String queue,
 		@RequestBody JsonNode request
 	);
 

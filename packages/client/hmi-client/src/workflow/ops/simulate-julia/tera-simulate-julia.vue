@@ -142,7 +142,6 @@ import { getModel } from '@/services/model';
 import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -153,6 +152,7 @@ import { SimulateJuliaOperationState } from './simulate-julia-operation';
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 
@@ -187,11 +187,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const handleSelectedRunChange = () => {
@@ -205,22 +201,14 @@ const handleSelectedRunChange = () => {
 		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 async function saveDatasetToProject() {

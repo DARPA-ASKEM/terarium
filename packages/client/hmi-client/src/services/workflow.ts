@@ -10,7 +10,8 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	OperatorInteractionStatus
+	OperatorInteractionStatus,
+	WorkflowPort
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -55,6 +56,7 @@ export const addNode = (
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null,
+			isOptional: false,
 			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
@@ -152,9 +154,7 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	if (!targetPort) return;
 	targetPort.value = null;
 	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
-	// TODO: There isn't an easy way to retrieve the default label once the label from the input is deleted
-	// Perhaps there should be a default label property
-	targetPort.label = targetPort.type;
+	delete targetPort.label;
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
@@ -186,6 +186,28 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	if (!node) return;
 	node.state = state;
 };
+
+// Get port label for frontend
+const defaultPortLabels = {
+	modelId: 'Model',
+	modelConfigId: 'Model configuration',
+	datasetId: 'Dataset'
+};
+
+export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
+	let portLabel = type; // Initialize to port type (fallback)
+
+	// Assign to name of port value
+	if (label) portLabel = label;
+	// Assign to default label using port type
+	else if (defaultPortLabels[type]) {
+		portLabel = defaultPortLabels[type];
+	}
+
+	if (isOptional) portLabel = portLabel.concat(' (optional)');
+
+	return portLabel;
+}
 
 /**
  * API hooks: Handles reading and writing back to the store
