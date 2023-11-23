@@ -432,25 +432,6 @@ async function updateWorkflowName() {
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
 
-/*
-async function selectDataset(
-	node: WorkflowNode<DatasetOperationState>,
-	data: { id: string; name: string }
-) {
-	node.state.datasetId = data.id;
-	node.outputs = [
-		{
-			id: uuidv4(),
-			type: 'datasetId',
-			label: data.name,
-			value: [data.id],
-			isOptional: false,
-			status: WorkflowPortStatus.NOT_CONNECTED
-		}
-	];
-	workflowDirty = true;
-}
-*/
 function appendInputPort(
 	node: WorkflowNode<any>,
 	port: { type: string; label?: string; value: any }

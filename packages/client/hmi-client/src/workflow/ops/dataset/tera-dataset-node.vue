@@ -58,7 +58,7 @@ const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['select-dataset', 'append-output-port']);
+const emit = defineEmits(['append-output-port']);
 
 const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
@@ -80,10 +80,9 @@ watch(
 		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
 			selectedColumns = ref(csvHeaders?.value);
+
 			// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
 			if (isEmpty(props.node.outputs)) {
-				// emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
-
 				emit('append-output-port', {
 					type: 'datasetId',
 					label: dataset.value.name,
