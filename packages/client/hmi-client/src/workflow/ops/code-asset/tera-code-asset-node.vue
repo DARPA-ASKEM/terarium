@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
 import { onMounted, ref, computed, watch } from 'vue';
 import { Code } from '@/types/Types';
@@ -13,7 +14,7 @@ const props = defineProps<{
 	node: WorkflowNode<CodeAssetState>;
 }>();
 
-const emit = defineEmits(['select-code-asset']);
+const emit = defineEmits(['update-state']);
 
 const code = ref<Code | null>(null);
 const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.code ?? []);
@@ -28,7 +29,9 @@ watch(
 	() => code.value,
 	() => {
 		if (code.value?.id) {
-			emit('select-code-asset', { id: code.value.id });
+			const state = _.cloneDeep(props.node.state);
+			state.codeAssetId = code.value.id;
+			emit('update-state', state);
 		}
 	}
 );

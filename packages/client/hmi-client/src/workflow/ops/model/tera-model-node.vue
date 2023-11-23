@@ -34,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, watch, onMounted, computed } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
@@ -50,7 +51,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['select-model']);
+const emit = defineEmits(['update-state']);
 const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
 
 enum ModelNodeView {
@@ -65,7 +66,12 @@ const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
 
 async function getModelById(modelId: string) {
 	model.value = await getModel(modelId);
-	emit('select-model', { id: model.value?.id });
+
+	if (model.value) {
+		const state = _.cloneDeep(props.node.state);
+		state.modelId = model.value?.id;
+		emit('update-state', state);
+	}
 }
 
 watch(
@@ -81,10 +87,10 @@ onMounted(async () => {
 	const state = props.node.state;
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
-	}
 
-	// Force refresh of configs in the workflow node - August 2023
-	emit('select-model', { id: model.value?.id });
+		// Force refresh of configs in the workflow node - August 2023
+		emit('update-state', _.cloneDeep(state));
+	}
 });
 </script>
 

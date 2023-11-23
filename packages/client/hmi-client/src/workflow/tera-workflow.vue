@@ -66,17 +66,17 @@
 					<tera-model-node
 						v-if="node.operationType === WorkflowOperationTypes.MODEL"
 						:node="node"
-						@select-model="(event) => selectModel(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === WorkflowOperationTypes.DATASET"
 						:node="node"
-						@select-dataset="(event) => selectDataset(node, event)"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-code-asset-node
 						v-else-if="node.operationType === WorkflowOperationTypes.CODE"
 						:node="node"
-						@select-code-asset="(event) => selectCodeAsset(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-dataset-transformer-node
 						v-else-if="node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
@@ -287,12 +287,7 @@ import {
 	TeraStratifyMira,
 	TeraStratifyNodeMira
 } from './ops/stratify-mira/mod';
-import {
-	DatasetOperation,
-	TeraDatasetWorkflowWrapper,
-	TeraDatasetNode,
-	DatasetOperationState
-} from './ops/dataset/mod';
+import { DatasetOperation, TeraDatasetWorkflowWrapper, TeraDatasetNode } from './ops/dataset/mod';
 import { FunmanOperation, TeraFunman, TeraFunmanNode } from './ops/funman/mod';
 
 import {
@@ -340,12 +335,7 @@ import {
 	TeraModelTransformerNode
 } from './ops/model-transformer/mod';
 
-import {
-	TeraCodeAssetNode,
-	CodeAssetOperation,
-	CodeAssetState,
-	TeraCodeAssetWrapper
-} from './ops/code-asset/mod';
+import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './ops/code-asset/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
@@ -434,15 +424,6 @@ const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 	});
 };
 
-async function selectModel(node: WorkflowNode<ModelOperationState>, data: { id: string }) {
-	node.state.modelId = data.id;
-	await refreshModelNode(node);
-}
-
-async function selectCodeAsset(node: WorkflowNode<CodeAssetState>, data: { id: string }) {
-	node.state.codeAssetId = data.id;
-}
-
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
@@ -451,6 +432,7 @@ async function updateWorkflowName() {
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
 
+/*
 async function selectDataset(
 	node: WorkflowNode<DatasetOperationState>,
 	data: { id: string; name: string }
@@ -468,6 +450,7 @@ async function selectDataset(
 	];
 	workflowDirty = true;
 }
+*/
 function appendInputPort(
 	node: WorkflowNode<any>,
 	port: { type: string; label?: string; value: any }
@@ -516,6 +499,10 @@ function appendOutputPort(
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
+
+	if (node.operationType === WorkflowOperationTypes.MODEL) {
+		refreshModelNode(node);
+	}
 	workflowDirty = true;
 }
 

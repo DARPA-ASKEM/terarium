@@ -58,7 +58,7 @@ const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['select-dataset']);
+const emit = defineEmits(['select-dataset', 'append-output-port']);
 
 const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
@@ -82,7 +82,13 @@ watch(
 			selectedColumns = ref(csvHeaders?.value);
 			// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
 			if (isEmpty(props.node.outputs)) {
-				emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+				// emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+
+				emit('append-output-port', {
+					type: 'datasetId',
+					label: dataset.value.name,
+					value: [dataset.value.id]
+				});
 			}
 		}
 	}
