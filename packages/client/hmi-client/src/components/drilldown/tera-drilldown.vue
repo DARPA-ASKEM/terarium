@@ -99,5 +99,6 @@ main {
 :deep(.drilldown-panel) {
 	display: grid;
 	grid-auto-flow: column;
+	height: 100%;
 }
 </style>

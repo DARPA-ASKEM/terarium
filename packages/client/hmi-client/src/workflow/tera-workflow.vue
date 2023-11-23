@@ -233,14 +233,15 @@
 			:title="currentActiveNode.displayName"
 			:tooltip="'A brief description of the operator.'"
 		>
-			<component
-				tabName="Wizard"
-				:is="drilldownRegistry.get(currentActiveNode.operationType)"
-				:node="currentActiveNode"
-				@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
-				@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
-			>
-			</component>
+			<div tabName="Wizard">
+				<component
+					:is="drilldownRegistry.get(currentActiveNode.operationType)"
+					:node="currentActiveNode"
+					@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+					@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+				>
+				</component>
+			</div>
 
 			<div tabName="Notebook">
 				<section>section 1</section>
