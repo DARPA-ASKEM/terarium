@@ -1,73 +1,35 @@
-enum OperatorInteractionStatus {
+// These values represent different interaction states on an operator node
+// The operator header, border, etc. will be styled differently depending on which states are active
+enum Status {
 	Found = 0x0001,
 	Hover = 0x0010,
 	Focus = 0x0100,
 	Drag = 0x1000
 }
 
-function addState(status: number, state: OperatorInteractionStatus) {
+const addState = (status: number, state: Status) => {
 	status |= state;
 	return status;
-}
-
-function removeState(status: number, state: OperatorInteractionStatus) {
+};
+const removeState = (status: number, state: Status) => {
 	status &= ~state;
 	return status;
-}
-
-function isStateActive(status: number, state: OperatorInteractionStatus) {
-	return status & state;
-}
+};
+const isStateActive = (status: number, state: Status) => status & state;
 
 // Hover
-export function addHover(status: number) {
-	return addState(status, OperatorInteractionStatus.Hover);
-}
-
-export function removeHover(status: number) {
-	return removeState(status, OperatorInteractionStatus.Hover);
-}
-
-export function isHover(status: number) {
-	return isStateActive(status, OperatorInteractionStatus.Hover);
-}
-
+export const addHover = (status: number) => addState(status, Status.Hover);
+export const removeHover = (status: number) => removeState(status, Status.Hover);
+export const isHover = (status: number) => isStateActive(status, Status.Hover);
 // Found
-export function addFound(status: number) {
-	return addState(status, OperatorInteractionStatus.Found);
-}
-
-export function removeFound(status: number) {
-	return removeState(status, OperatorInteractionStatus.Found);
-}
-
-export function isFound(status: number) {
-	return isStateActive(status, OperatorInteractionStatus.Found);
-}
-
+export const addFound = (status: number) => addState(status, Status.Found);
+export const removeFound = (status: number) => removeState(status, Status.Found);
+export const isFound = (status: number) => isStateActive(status, Status.Found);
 // Focus
-export function addFocus(status: number) {
-	return addState(status, OperatorInteractionStatus.Focus);
-}
-
-export function removeFocus(status: number) {
-	return removeState(status, OperatorInteractionStatus.Focus);
-}
-
-export function isFocus(status: number) {
-	return isStateActive(status, OperatorInteractionStatus.Focus);
-}
-
+export const addFocus = (status: number) => addState(status, Status.Focus);
+export const removeFocus = (status: number) => removeState(status, Status.Focus);
+export const isFocus = (status: number) => isStateActive(status, Status.Focus);
 // Drag
-export function addDrag(status: number) {
-	console.log(addState(status, OperatorInteractionStatus.Drag));
-	return addState(status, OperatorInteractionStatus.Drag);
-}
-
-export function removeDrag(status: number) {
-	return removeState(status, OperatorInteractionStatus.Drag);
-}
-
-export function isDrag(status: number) {
-	return isStateActive(status, OperatorInteractionStatus.Drag);
-}
+export const addDrag = (status: number) => addState(status, Status.Drag);
+export const removeDrag = (status: number) => removeState(status, Status.Drag);
+export const isDrag = (status: number) => isStateActive(status, Status.Drag);
