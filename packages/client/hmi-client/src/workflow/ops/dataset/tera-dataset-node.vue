@@ -57,14 +57,18 @@ import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import Button from 'primevue/button';
+import { useProjects } from '@/composables/project';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
-	datasets: Dataset[];
 }>();
 
-const emit = defineEmits(['select-dataset']);
+const emit = defineEmits(['append-output-port']);
+
+const datasets = computed<Dataset[]>(
+	() => useProjects().activeProject.value?.assets?.datasets ?? []
+);
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
@@ -84,9 +88,14 @@ watch(
 		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
 			selectedColumns = ref(csvHeaders?.value);
+
 			// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
 			if (isEmpty(props.node.outputs)) {
-				emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
+				emit('append-output-port', {
+					type: 'datasetId',
+					label: dataset.value.name,
+					value: [dataset.value.id]
+				});
 			}
 		}
 	}

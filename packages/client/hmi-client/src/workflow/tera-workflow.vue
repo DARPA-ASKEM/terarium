@@ -64,32 +64,27 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === WorkflowOperationTypes.MODEL && models"
-						:models="models"
+						v-if="node.operationType === WorkflowOperationTypes.MODEL"
 						:node="node"
-						@select-model="(event) => selectModel(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === WorkflowOperationTypes.DATASET && datasets"
-						:datasets="datasets"
+						v-else-if="node.operationType === WorkflowOperationTypes.DATASET"
 						:node="node"
-						@select-dataset="(event) => selectDataset(node, event)"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-code-asset-node
-						v-else-if="node.operationType === WorkflowOperationTypes.CODE && codeAssets"
-						:code-assets="codeAssets"
+						v-else-if="node.operationType === WorkflowOperationTypes.CODE"
 						:node="node"
-						@select-code-asset="(event) => selectCodeAsset(node, event)"
+						@update-state="(event) => updateWorkflowNodeState(node, event)"
 					/>
 					<tera-dataset-transformer-node
-						v-else-if="
-							node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER && datasets
-						"
+						v-else-if="node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
 						:node="node"
 						@append-input-port="(event) => appendInputPort(node, event)"
 					/>
 					<tera-model-transformer-node
-						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER && models"
+						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER"
 						:node="node"
 						@append-input-port="(event) => appendInputPort(node, event)"
 					/>
@@ -269,11 +264,10 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, Code, Dataset, Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
-import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { logger } from '@/utils/logger';
@@ -293,12 +287,7 @@ import {
 	TeraStratifyMira,
 	TeraStratifyNodeMira
 } from './ops/stratify-mira/mod';
-import {
-	DatasetOperation,
-	TeraDatasetWorkflowWrapper,
-	TeraDatasetNode,
-	DatasetOperationState
-} from './ops/dataset/mod';
+import { DatasetOperation, TeraDatasetWorkflowWrapper, TeraDatasetNode } from './ops/dataset/mod';
 import { FunmanOperation, TeraFunman, TeraFunmanNode } from './ops/funman/mod';
 
 import {
@@ -346,12 +335,7 @@ import {
 	TeraModelTransformerNode
 } from './ops/model-transformer/mod';
 
-import {
-	TeraCodeAssetNode,
-	CodeAssetOperation,
-	CodeAssetState,
-	TeraCodeAssetWrapper
-} from './ops/code-asset/mod';
+import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './ops/code-asset/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
@@ -418,13 +402,6 @@ const isEdgeTargetSim = (edge) =>
 	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
 	WorkflowOperationTypes.SIMULATE_JULIA;
 
-const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
-const datasets = computed<Dataset[]>(
-	() => useProjects().activeProject.value?.assets?.datasets ?? []
-);
-
-const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.code ?? []);
-
 const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 	// FIXME: Need additional design to work out exactly what to show. June 2023
 	const configurationList = await getModelConfigurations(node.state.modelId as string);
@@ -447,15 +424,6 @@ const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
 	});
 };
 
-async function selectModel(node: WorkflowNode<ModelOperationState>, data: { id: string }) {
-	node.state.modelId = data.id;
-	await refreshModelNode(node);
-}
-
-async function selectCodeAsset(node: WorkflowNode<CodeAssetState>, data: { id: string }) {
-	node.state.codeAssetId = data.id;
-}
-
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
@@ -464,23 +432,6 @@ async function updateWorkflowName() {
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
 
-async function selectDataset(
-	node: WorkflowNode<DatasetOperationState>,
-	data: { id: string; name: string }
-) {
-	node.state.datasetId = data.id;
-	node.outputs = [
-		{
-			id: uuidv4(),
-			type: 'datasetId',
-			label: data.name,
-			value: [data.id],
-			isOptional: false,
-			status: WorkflowPortStatus.NOT_CONNECTED
-		}
-	];
-	workflowDirty = true;
-}
 function appendInputPort(
 	node: WorkflowNode<any>,
 	port: { type: string; label?: string; value: any }
@@ -529,6 +480,10 @@ function appendOutputPort(
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
+
+	if (node.operationType === WorkflowOperationTypes.MODEL) {
+		refreshModelNode(node);
+	}
 	workflowDirty = true;
 }
 
