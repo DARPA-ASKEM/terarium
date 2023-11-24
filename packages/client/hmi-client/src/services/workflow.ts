@@ -249,7 +249,8 @@ class WorkflowEventEmitter extends EventEmitter {
 export const workflowEventBus = new WorkflowEventEmitter();
 
 /// /////////////////////////////////////////////////////////////////////////////
-// Workflow component registry
+// Workflow component registry, this is used to
+// dynamically determine which component should be rendered
 /// /////////////////////////////////////////////////////////////////////////////
 export class WorkflowRegistry {
 	nodeMap: Map<string, Component>;
