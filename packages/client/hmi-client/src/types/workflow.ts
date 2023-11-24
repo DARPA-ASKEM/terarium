@@ -29,14 +29,6 @@ export enum OperatorStatus {
 	DISABLED = 'disabled'
 }
 
-// Multiple states can be on at once - using bitmasking
-export enum OperatorInteractionStatus {
-	Found = 0x0001,
-	Hover = 0x0010,
-	Focus = 0x0100,
-	Drag = 0x1000
-}
-
 export enum WorkflowPortStatus {
 	CONNECTED = 'connected',
 	NOT_CONNECTED = 'not connected'

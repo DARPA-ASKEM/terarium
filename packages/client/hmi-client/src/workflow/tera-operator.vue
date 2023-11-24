@@ -2,11 +2,12 @@
 	<main
 		:style="nodeStyle"
 		ref="operator"
-		@mouseenter="interactionStatus |= OperatorInteractionStatus.Hover"
-		@mouseleave="interactionStatus &= ~OperatorInteractionStatus.Hover"
+		@mouseenter="interactionStatus = addHover(interactionStatus)"
+		@mouseleave="interactionStatus = removeHover(interactionStatus)"
 		@focus="() => {}"
 		@focusout="() => {}"
 	>
+		{{ interactionStatus }}
 		<tera-operator-header
 			:name="node.displayName"
 			:status="node.status"
@@ -42,13 +43,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-	Position,
-	WorkflowNode,
-	WorkflowDirection,
-	WorkflowPort,
-	OperatorInteractionStatus
-} from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
+import { addHover, removeHover, addDrag, removeDrag, isDrag } from '@/utils/bitmask';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
@@ -88,20 +84,18 @@ const nodeStyle = computed(() => ({
 const portBaseSize: number = 8;
 const operator = ref<HTMLElement>();
 
-const interactionStatus = ref(0);
+const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 let tempX = 0;
 let tempY = 0;
 
 const startDrag = (evt: MouseEvent) => {
 	tempX = evt.x;
 	tempY = evt.y;
-	// eslint-disable-next-line no-bitwise
-	interactionStatus.value |= OperatorInteractionStatus.Drag;
+	interactionStatus.value = addDrag(interactionStatus.value);
 };
 
 const drag = (evt: MouseEvent) => {
-	// eslint-disable-next-line no-bitwise
-	if (!(interactionStatus.value & OperatorInteractionStatus.Drag)) return;
+	if (!isDrag(interactionStatus.value)) return;
 
 	const dx = evt.x - tempX;
 	const dy = evt.y - tempY;
@@ -119,8 +113,7 @@ const drag = (evt: MouseEvent) => {
 const stopDrag = (/* evt: MouseEvent */) => {
 	tempX = 0;
 	tempY = 0;
-	// eslint-disable-next-line no-bitwise
-	interactionStatus.value &= ~OperatorInteractionStatus.Drag;
+	interactionStatus.value = removeDrag(interactionStatus.value);
 };
 
 onMounted(() => {

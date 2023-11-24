@@ -12,7 +12,8 @@
 
 <script setup lang="ts">
 import { ref, PropType, computed } from 'vue';
-import { OperatorStatus, OperatorInteractionStatus } from '@/types/workflow';
+import { isHover } from '@/utils/bitmask';
+import { OperatorStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
@@ -36,7 +37,7 @@ const props = defineProps({
 const interactionClasses = computed(() => {
 	const classes: string[] = [];
 	// eslint-disable-next-line no-bitwise
-	if (props.interactionStatus & OperatorInteractionStatus.Drag) classes.push('focus');
+	if (isHover(props.interactionStatus)) classes.push('focus');
 	return classes.join(' ');
 });
 
