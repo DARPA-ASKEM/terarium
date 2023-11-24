@@ -77,9 +77,20 @@ export interface WorkflowPort {
 	acceptMultiple?: boolean;
 }
 
+// Operator Output needs more information than a standard operator port.
+export interface OperatorOutput<S> extends WorkflowPort {
+	id: string;
+  label: string;
+  selected: boolean;
+  state: S;
+  status: OperatorStatus;
+	timestamp: DateTime;
+}
+
 // Node definition in the workflow
 // This is the graphical operation of the operation defined in operationType
 export interface WorkflowNode<S> {
+	// Information
 	id: string;
 	displayName: string;
 	workflowId: string;
@@ -90,12 +101,16 @@ export interface WorkflowNode<S> {
 	y: number;
 	width: number;
 	height: number;
+
+	// Current operator state
+	state: S; // Internal state. For example chosen model, display color ... etc
+  active: OperatorOutput<S>["id"]
+
+	// I/O
 	inputs: WorkflowPort[];
-	outputs: WorkflowPort[];
+	outputs: OperatorOutput[];
 
-	// Internal state. For example chosen model, display color ... etc
-	state: S;
-
+	// Behaviour
 	status: OperatorStatus;
 	interactionStatus: OperatorInteractionStatus;
 }
