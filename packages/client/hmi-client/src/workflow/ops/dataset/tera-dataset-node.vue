@@ -1,41 +1,48 @@
 <template>
-	<template v-if="dataset">
-		<tera-operator-title>{{ dataset.name }}</tera-operator-title>
-		<section v-if="csvContent">
-			<div class="datatable-toolbar">
-				<span class="datatable-toolbar-item"
-					>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }}
-				</span>
-				<span class="datatable-toolbar-item">
-					<MultiSelect
-						:modelValue="selectedColumns"
-						:options="csvHeaders"
-						@update:modelValue="onToggle"
-						:maxSelectedLabels="1"
-						placeholder="Select columns"
+	<main>
+		<template v-if="dataset">
+			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
+			<section v-if="csvContent">
+				<div class="toolbar">
+					<span>{{ csvContent[0].length }} columns</span>
+					<!--TODO: May want to turn this feather icon button into its own component-->
+					<div class="multiselect-btn">
+						<Button class="p-button-icon-only" rounded text @click="columnSelect.show()">
+							<span>
+								<vue-feather type="columns" size="1.25rem" />
+							</span>
+						</Button>
+						<MultiSelect
+							ref="columnSelect"
+							:modelValue="selectedColumns"
+							:options="csvHeaders"
+							:show-toggle-all="false"
+							@update:modelValue="onToggle"
+							:maxSelectedLabels="1"
+							placeholder="Select columns"
+						/>
+					</div>
+				</div>
+				<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
+					<Column
+						v-for="(colName, index) of selectedColumns"
+						:key="index"
+						:field="index.toString()"
+						:header="colName"
 					/>
-				</span>
-			</div>
-
-			<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
-				<Column
-					v-for="(colName, index) of selectedColumns"
-					:key="index"
-					:field="index.toString()"
-					:header="colName"
-				/>
-			</DataTable>
-			<span>Showing first 5 rows</span>
-		</section>
-	</template>
-	<Dropdown
-		v-else
-		class="w-full p-button-sm p-button-outlined"
-		:options="datasets"
-		option-label="name"
-		v-model="dataset"
-		placeholder="Select a dataset"
-	/>
+				</DataTable>
+				<span>1 - 5 of {{ csvContent.length }} rows</span>
+			</section>
+		</template>
+		<Dropdown
+			v-else
+			class="w-full p-button-sm p-button-outlined"
+			:options="datasets"
+			option-label="name"
+			v-model="dataset"
+			placeholder="Select a dataset"
+		/>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -49,6 +56,7 @@ import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import Button from 'primevue/button';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
@@ -65,6 +73,8 @@ const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
 let selectedColumns = ref(csvHeaders?.value);
+
+const columnSelect = ref();
 const onToggle = (val) => {
 	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
 };
@@ -98,36 +108,68 @@ onMounted(async () => {
 <style scoped>
 section {
 	display: flex;
-	justify-content: center;
 	flex-direction: column;
 	max-width: 400px;
+	gap: 0.5rem;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
 }
 
-.datatable-toolbar {
+.toolbar {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
 }
-.datatable-toolbar-item {
+.toolbar > span {
 	display: flex;
-	flex-direction: row;
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
 	align-items: center;
 }
-.datatable-toolbar:deep(.p-multiselect .p-multiselect-label) {
-	padding: 0.5rem;
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
+.multiselect-btn {
+	display: flex;
+	flex-direction: column;
 }
-.p-datatable-xsm {
-	margin-top: 0.5rem;
-	margin-bottom: 0.25rem;
+.p-multiselect {
+	visibility: hidden;
+	width: 0;
+	height: 0;
 }
 
-span {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
+.p-datatable.p-datatable-xsm:deep(.p-datatable-wrapper) {
+	scrollbar-width: thin;
+	scrollbar-color: #d9d9d9;
+}
+
+:deep(::-webkit-scrollbar) {
+	height: 6px;
+	background-color: var(--surface-section);
+	outline: 1px solid var(--surface-section);
+}
+
+:deep(::-webkit-scrollbar-thumb) {
+	background-color: #d9d9d9;
+	border-radius: 0.5rem;
+}
+
+.p-datatable.p-datatable-xsm:deep(table) {
+	background-color: var(--surface-50);
+	padding: 0.5rem;
+	border: 1px solid var(--surface-border-light);
+	margin-bottom: 0.5rem;
+}
+
+.p-datatable.p-datatable-xsm:deep(.p-datatable-tbody > tr > td),
+.p-datatable.p-datatable-xsm:deep(.p-datatable-thead > tr > th) {
+	padding: 0 0.5rem;
+	background-color: var(--surface-50);
+}
+
+.p-datatable.p-datatable-xsm:deep(.p-datatable-tbody > tr > td:not(:first-child)),
+.p-datatable.p-datatable-xsm:deep(.p-datatable-thead > tr > th:not(:first-child)) {
+	border-left: 1px solid var(--surface-border-light);
+}
+
+.p-button:deep(span) {
+	margin-top: 0.25rem;
 }
 
 .p-button-sm.p-button-outlined {
