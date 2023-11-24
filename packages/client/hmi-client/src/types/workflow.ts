@@ -79,9 +79,9 @@ export interface WorkflowPort {
 
 // Operator Output needs more information than a standard operator port.
 export interface OperatorOutput<S> extends WorkflowPort {
-  isSelected: boolean;
-  state: S;
-  operatorStatus: OperatorStatus;
+	isSelected: boolean;
+	operatorStatus: OperatorStatus;
+	state: S;
 	timestamp: DateTime;
 }
 
@@ -102,7 +102,7 @@ export interface WorkflowNode<S> {
 
 	// Current operator state
 	state: S; // Internal state. For example chosen model, display color ... etc
-  active: OperatorOutput<S>["id"]
+	active: OperatorOutput<S>["id"]
 
 	// I/O
 	inputs: WorkflowPort[];
