@@ -6,19 +6,16 @@ enum OperatorInteractionStatus {
 }
 
 function addState(status: number, state: OperatorInteractionStatus) {
-	// eslint-disable-next-line no-bitwise
 	status |= state;
 	return status;
 }
 
 function removeState(status: number, state: OperatorInteractionStatus) {
-	// eslint-disable-next-line no-bitwise
 	status &= ~state;
 	return status;
 }
 
 function isStateActive(status: number, state: OperatorInteractionStatus) {
-	// eslint-disable-next-line no-bitwise
 	return status & state;
 }
 

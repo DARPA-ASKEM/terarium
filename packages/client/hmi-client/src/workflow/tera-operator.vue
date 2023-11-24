@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
-import { addHover, removeHover, addDrag, removeDrag, isDrag } from '@/utils/bitmask';
+import { addHover, removeHover, addDrag, removeDrag, isDrag } from '@/services/operator-bitmask';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';

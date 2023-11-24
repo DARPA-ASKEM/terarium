@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { ref, PropType, computed } from 'vue';
-import { isHover } from '@/utils/bitmask';
+import { isHover } from '@/services/operator-bitmask';
 import { OperatorStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
