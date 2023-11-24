@@ -25,7 +25,7 @@ import java.util.Objects;
  */
 @Configuration
 @RequiredArgsConstructor
-public class FlywayConfig {
+public class FlywayConfiguration {
 
 	private final DataSource dataSource;
 
@@ -51,7 +51,7 @@ public class FlywayConfig {
 	 * @return
 	 */
 	@Bean
-	FlywayMigrationInitializer flywayInitializer(Flyway flyway) {
+	FlywayMigrationInitializer flywayInitializer(final Flyway flyway) {
 		return new FlywayMigrationInitializer(flyway, (f) -> {
 		});
 	}
@@ -68,7 +68,7 @@ public class FlywayConfig {
 	 */
 	@Bean
 	@DependsOn("entityManagerFactory")
-	FlywayVoid delayedFlywayInitializer(Flyway flyway, FlywayProperties flywayProperties) {
+	FlywayVoid delayedFlywayInitializer(final Flyway flyway, final FlywayProperties flywayProperties) {
 		if (flywayProperties.isEnabled() && !isFlywayInitialized()) {
 			flyway.baseline();
 		}
@@ -82,11 +82,11 @@ public class FlywayConfig {
 	 * @return true if flyway is initialized, false otherwise
 	 */
 	private boolean isFlywayInitialized() {
-		try (Connection connection = dataSource.getConnection()) {
-			DatabaseMetaData metadata = connection.getMetaData();
-			ResultSet result = metadata.getTables(null, null, flywayTableName, null);
+		try (final Connection connection = dataSource.getConnection()) {
+			final DatabaseMetaData metadata = connection.getMetaData();
+			final ResultSet result = metadata.getTables(null, null, flywayTableName, null);
 			return result.next();
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			throw new RuntimeException("Failed to check if Flyway is initialized", e);
 		}
 	}
