@@ -36,7 +36,6 @@ const props = defineProps({
 
 const interactionClasses = computed(() => {
 	const classes: string[] = [];
-	// eslint-disable-next-line no-bitwise
 	if (isHover(props.interactionStatus)) classes.push('focus');
 	return classes.join(' ');
 });
