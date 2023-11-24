@@ -175,29 +175,28 @@ main:hover {
 }
 
 main > .content {
+	margin: 0.5rem;
+}
+
+main > ul,
+main > .content,
+/* Assumes that the child put in the slot will be wrapped in its own tag */
+main > .content:deep(> *) {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-	margin: 0 0.5rem;
 	gap: 0.5rem;
-}
-
-.content:deep(> *),
-main > ul {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin: 0.5rem 0;
 }
 
 /* Inputs/outputs */
-ul {
+main > ul {
+	margin: 0.5rem 0;
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
 }
 
-ul:empty {
+main > ul:empty {
 	display: none;
 }
 
