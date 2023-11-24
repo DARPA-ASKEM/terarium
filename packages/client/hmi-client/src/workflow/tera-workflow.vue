@@ -70,84 +70,6 @@
 						@append-input-port="(event: any) => appendInputPort(node, event)"
 						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 					/>
-
-					<!--
-					<tera-model-node
-						v-if="node.operationType === WorkflowOperationTypes.MODEL"
-						:node="node"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-dataset-node
-						v-else-if="node.operationType === WorkflowOperationTypes.DATASET"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-					/>
-					<tera-code-asset-node
-						v-else-if="node.operationType === WorkflowOperationTypes.CODE"
-						:node="node"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-dataset-transformer-node
-						v-else-if="node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
-						:node="node"
-						@append-input-port="(event) => appendInputPort(node, event)"
-					/>
-					<tera-model-transformer-node
-						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER"
-						:node="node"
-						@append-input-port="(event) => appendInputPort(node, event)"
-					/>
-					<tera-simulate-node-julia
-						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-simulate-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-calibrate-node-julia
-						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-calibrate-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-stratify-node-mira
-						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
-					/>
-					<tera-simulate-ensemble-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-calibrate-ensemble-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-model-from-code-node
-						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_FROM_CODE"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-funman-node
-						v-else-if="node.operationType === WorkflowOperationTypes.FUNMAN"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-					/>
-					-->
 				</template>
 			</tera-operator>
 		</template>
@@ -523,19 +445,6 @@ workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: stri
 		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
 		nodesToRefresh.forEach(refreshModelNode);
 	}
-});
-
-// TODO: Remove
-workflowEventBus.on('node-state-change', (/* payload: any */) => {
-	throw new Error('bus event no longer available');
-});
-
-workflowEventBus.on('append-output-port', () => {
-	throw new Error('bus event no longer available');
-});
-
-workflowEventBus.on('update-state', () => {
-	throw new Error('bus event no longer available');
 });
 
 const removeNode = (event) => {
