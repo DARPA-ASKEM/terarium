@@ -88,11 +88,8 @@ import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import { Model, ModelConfiguration, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import {
-	getModelConfigurationById,
-	addDefaultConfiguration
-} from '@/services/model-configurations';
-import { getModel, createModel, getModelConfigurations } from '@/services/model';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -115,6 +112,11 @@ enum StratifyTabs {
 	notebook
 }
 
+interface SaveOptions {
+	addToProject: boolean;
+	appendOutputPort: boolean;
+}
+
 const kernelManager = new KernelSessionManager();
 
 const activeTab = ref(StratifyTabs.wizard);
@@ -124,7 +126,7 @@ const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 
-const editor = ref<VAceEditorInstance['_editor'] | null>(null);
+let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
 const deleteStratifyGroupForm = (data: any) => {
@@ -174,18 +176,23 @@ const stratifyRequest = () => {
 
 const handleStratifyResponse = (data: any) => {
 	const executedCode = data.content.executed_code;
-	codeText.value = executedCode;
+	if (executedCode) {
+		codeText.value = executedCode;
 
-	const state = _.cloneDeep(props.node.state);
-	state.strataCodeHistory.push({ code: executedCode, timestamp: Date.now() });
-	emit('update-state', state);
+		// If stratify is run from the wizard, save the code but set `hasCodeBeenRun` to false
+		saveCodeToState(executedCode, false);
+	}
 };
 
 const handleModelPreview = (data: any) => {
 	model.value = data.content['application/json'];
-	if (model.value) {
-		saveNewModel(`${model.value.header.name} - Stratified`, { appendOutputPort: true });
-	}
+
+	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2306
+	// reenable this once we figure out how to take modelId as input to a
+	// stratify workflow node instead of only modelConfigurationId as input
+	// if (model.value) {
+	// 	saveNewModel(`${model.value.header.name} - Stratified`, { appendOutputPort: true });
+	// }
 };
 
 const buildJupyterContext = () => {
@@ -234,7 +241,7 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string, options: Record<string, boolean>) => {
+const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	if (!model.value || !modelName) return;
 	model.value.header.name = modelName;
 
@@ -249,38 +256,22 @@ const saveNewModel = async (modelName: string, options: Record<string, boolean>)
 	}
 
 	if (options.appendOutputPort) {
-		await appendOutputPort(modelData.id);
+		// NOTE: this code is actually never invoked currently as `handleModelPreview` has `saveNewModel` commented out
+		emit('append-output-port', {
+			id: uuidv4(),
+			label: modelData.header.name,
+			type: 'modelId',
+			value: [modelData.id]
+		});
 	}
 };
 
-const appendOutputPort = async (modelId: string) => {
-	// fetch the model that was just created
-	const newModel = await getModel(modelId);
-	if (!newModel) return;
-
-	// set default configuration for the newly created model
-	await addDefaultConfiguration(newModel);
-
-	// setting timeout...elastic search might not update default config in time
-	setTimeout(async () => {
-		const configurationList = await getModelConfigurations(newModel.id);
-		configurationList.forEach((configuration) => {
-			emit('append-output-port', {
-				id: uuidv4(),
-				label: `${newModel.header.name} - ${configuration.name}`,
-				type: 'modelConfigId',
-				value: [configuration.id]
-			});
-		});
-	}, 800);
-};
-
 const initialize = (editorInstance) => {
-	editor.value = editorInstance;
+	editor = editorInstance;
 };
 
 const runCodeStratify = () => {
-	const code = editor.value?.getValue();
+	const code = editor?.getValue();
 	if (!code) return;
 
 	resetModel();
@@ -308,15 +299,23 @@ const runCodeStratify = () => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
 		})
 		?.register('model_preview', (data) => {
+			// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
+			// currently no matter what kind of code is run we always get a `model_preview` response.
+			// We may want to compare the response model with the existing model to see if the response model
+			// has been stratified - if not then don't save the model or the code.
 			handleModelPreview(data);
 
 			if (executedCode) {
-				const state = _.cloneDeep(props.node.state);
-				state.hasCodeBeenRun = true;
-				state.strataCodeHistory.push({ code: executedCode, timestamp: Date.now() });
-				emit('update-state', state);
+				saveCodeToState(executedCode, true);
 			}
 		});
+};
+
+const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
+	const state = _.cloneDeep(props.node.state);
+	state.hasCodeBeenRun = hasCodeBeenRun;
+	state.strataCodeHistory.push({ code, timestamp: Date.now() });
+	emit('update-state', state);
 };
 
 // Set model, modelConfiguration, modelNodeOptions
