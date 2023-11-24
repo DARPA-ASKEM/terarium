@@ -113,8 +113,8 @@ enum StratifyTabs {
 }
 
 interface SaveOptions {
-	addToProject: boolean;
-	appendOutputPort: boolean;
+	addToProject?: boolean;
+	appendOutputPort?: boolean;
 }
 
 const kernelManager = new KernelSessionManager();
