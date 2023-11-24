@@ -25,17 +25,10 @@
 				Note: Code has been executed which may not be reflected here.
 			</p>
 			<tera-stratification-group-form
-				v-for="(cfg, index) in node.state.strataGroups"
-				:key="index"
 				:modelNodeOptions="modelNodeOptions"
-				:config="cfg"
-				:index="index"
-				@delete-self="deleteStratifyGroupForm"
+				:config="node.state.strataGroup"
 				@update-self="updateStratifyGroupForm"
 			/>
-			<!--
-			<Button label="Add another strata group" size="small" @click="addGroupForm" />
-			-->
 			<Button label="Stratify" size="small" @click="stratifyModel" />
 			<Button label="Reset" size="small" @click="resetModel" />
 		</div>
@@ -99,8 +92,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
-// import { StratifyOperationStateMira, StratifyGroup, StratifyMiraOperation } from './stratify-mira-operation';
-import { StratifyOperationStateMira } from './stratify-mira-operation';
+import {
+	StratifyOperationStateMira,
+	StratifyGroup,
+	blankStratifyGroup
+} from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
@@ -129,15 +125,9 @@ const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-const deleteStratifyGroupForm = (data: any) => {
+const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
-	state.strataGroups.splice(data.index, 1);
-	emit('update-state', state);
-};
-
-const updateStratifyGroupForm = (data: any) => {
-	const state = _.cloneDeep(props.node.state);
-	state.strataGroups[data.index] = data.updatedConfig;
+	state.strataGroup = config;
 	emit('update-state', state);
 };
 
@@ -148,17 +138,32 @@ const stratifyModel = () => {
 const resetModel = () => {
 	if (!model.value) return;
 
-	kernelManager.sendMessage('reset_request', {})?.register('reset_response', handleResetResponse);
+	kernelManager
+		.sendMessage('reset_request', {})
+		?.register('reset_response', handleResetResponse)
+		?.register('model_preview', handleModelPreview);
 };
 
 const handleResetResponse = (data: any) => {
-	console.log(data.content);
+	if (data.content.success) {
+		updateStratifyGroupForm(blankStratifyGroup);
+
+		codeText.value = '';
+		saveCodeToState('', false);
+
+		logger.info('Model reset');
+	} else {
+		logger.error('Error resetting model');
+	}
 };
 
 const stratifyRequest = () => {
 	if (!model.value) return;
 
-	const strataOption = props.node.state.strataGroups[0];
+	// reset model
+	kernelManager.sendMessage('reset_request', {});
+
+	const strataOption = props.node.state.strataGroup;
 	const messageContent = {
 		stratify_args: {
 			key: strataOption.name,
@@ -274,7 +279,8 @@ const runCodeStratify = () => {
 	const code = editor?.getValue();
 	if (!code) return;
 
-	resetModel();
+	// reset model
+	kernelManager.sendMessage('reset_request', {});
 
 	const messageContent = {
 		silent: false,
@@ -314,7 +320,16 @@ const runCodeStratify = () => {
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
-	state.strataCodeHistory.push({ code, timestamp: Date.now() });
+
+	// for now only save the last code executed, may want to save all code executed in the future
+	const codeHistoryLength = props.node.state.strataCodeHistory.length;
+	const timestamp = Date.now();
+	if (codeHistoryLength > 0) {
+		state.strataCodeHistory[0] = { code, timestamp };
+	} else {
+		state.strataCodeHistory.push({ code, timestamp });
+	}
+
 	emit('update-state', state);
 };
 

@@ -14,10 +14,18 @@ export interface StratifyCode {
 }
 
 export interface StratifyOperationStateMira {
-	strataGroups: StratifyGroup[];
+	strataGroup: StratifyGroup;
 	strataCodeHistory: StratifyCode[];
 	hasCodeBeenRun: boolean;
 }
+
+export const blankStratifyGroup: StratifyGroup = {
+	borderColour: '#c300a6',
+	name: '',
+	selectedVariables: [],
+	groupLabels: '',
+	cartesianProduct: true
+};
 
 export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
@@ -29,15 +37,7 @@ export const StratifyMiraOperation: Operation = {
 	action: () => {},
 	initState: () => {
 		const init: StratifyOperationStateMira = {
-			strataGroups: [
-				{
-					borderColour: '#c300a6',
-					name: '',
-					selectedVariables: [],
-					groupLabels: '',
-					cartesianProduct: true
-				}
-			],
+			strataGroup: blankStratifyGroup,
 			strataCodeHistory: [],
 			hasCodeBeenRun: false
 		};
