@@ -79,11 +79,9 @@ export interface WorkflowPort {
 
 // Operator Output needs more information than a standard operator port.
 export interface OperatorOutput<S> extends WorkflowPort {
-	id: string;
-  label: string;
-  selected: boolean;
+  isSelected: boolean;
   state: S;
-  status: OperatorStatus;
+  operatorStatus: OperatorStatus;
 	timestamp: DateTime;
 }
 
