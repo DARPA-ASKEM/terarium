@@ -7,7 +7,6 @@
 		@focus="() => {}"
 		@focusout="() => {}"
 	>
-		{{ interactionStatus }}
 		<tera-operator-header
 			:name="node.displayName"
 			:status="node.status"
