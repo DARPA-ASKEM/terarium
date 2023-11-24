@@ -100,5 +100,7 @@ main {
 	display: grid;
 	grid-auto-flow: column;
 	height: 100%;
+	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+	padding: 1rem 1.5rem;
 }
 </style>

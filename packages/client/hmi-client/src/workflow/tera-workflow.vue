@@ -233,7 +233,7 @@
 			:title="currentActiveNode.displayName"
 			:tooltip="'A brief description of the operator.'"
 		>
-			<div tabName="Wizard">
+			<section tabName="Wizard">
 				<component
 					:is="drilldownRegistry.get(currentActiveNode.operationType)"
 					:node="currentActiveNode"
@@ -241,12 +241,7 @@
 					@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 				>
 				</component>
-			</div>
-
-			<div tabName="Notebook">
-				<section>section 1</section>
-				<section>section 2</section>
-			</div>
+			</section>
 		</tera-drilldown>
 	</Teleport>
 </template>
