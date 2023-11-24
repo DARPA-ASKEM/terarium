@@ -62,7 +62,6 @@ import { DatasetOperationState } from './dataset-operation';
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 	datasets: Dataset[];
-	droppedDatasetId: null | string;
 }>();
 
 const emit = defineEmits(['select-dataset']);
@@ -96,11 +95,6 @@ watch(
 onMounted(async () => {
 	if (props.node.state.datasetId) {
 		dataset.value = await getDataset(props.node.state.datasetId);
-	}
-
-	// If dataset is drag and dropped from resource panel
-	else if (props.droppedDatasetId) {
-		dataset.value = props.datasets.find(({ id }) => id === props.droppedDatasetId) ?? null;
 	}
 });
 </script>

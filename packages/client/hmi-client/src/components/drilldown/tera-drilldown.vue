@@ -1,27 +1,49 @@
 <template>
 	<aside class="overlay-container">
 		<section>
-			<header ref="header">
-				<div>
-					<slot name="header" />
-				</div>
-				<Button
-					icon="pi pi-times"
-					text
-					rounded
-					aria-label="Close"
-					@click="emit('on-close-clicked')"
-				/>
-			</header>
-			<main><slot /></main>
+			<tera-drilldown-header
+				:active-index="selectedViewIndex"
+				:views="views"
+				:tooltip="tooltip"
+				@tab-change="handleTabChange"
+				@close="emit('on-close-clicked')"
+				>{{ props.title }}</tera-drilldown-header
+			>
+			<main>
+				<section
+					v-for="(view, index) in views"
+					class="slot-container"
+					:class="{ 'hide-slot': hideSlot(index) }"
+					:key="index"
+				>
+					<slot :name="view" />
+				</section>
+			</main>
 		</section>
 	</aside>
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button';
+import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
+import { TabViewChangeEvent } from 'primevue/tabview';
+import { computed, ref, useSlots } from 'vue';
+
+const props = defineProps<{
+	title: string;
+	tooltip?: string;
+}>();
 
 const emit = defineEmits(['on-close-clicked']);
+const slots = useSlots();
+
+const views = computed(() => Object.keys(slots));
+
+const selectedViewIndex = ref<number>(0);
+
+const hideSlot = (index: number) => selectedViewIndex.value !== index;
+const handleTabChange = (event: TabViewChangeEvent) => {
+	selectedViewIndex.value = event.index;
+};
 </script>
 
 <style scoped>
@@ -48,31 +70,19 @@ than the main application behind the modal when these render issues come, howeve
 	overflow: hidden;
 }
 
-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
-	background-color: var(--surface-highlight);
-	padding: 20px 16px;
-	height: 56px;
-}
-
 main {
 	margin: 0 0 0.5rem;
 	max-width: inherit;
 	/* contentHeight = fullscreen - modalMargin - headerHeight*/
-	height: calc(100vh - 1rem - 56px);
+	height: calc(100vh - 1rem - var(--drilldown-header-height));
 	display: flex;
 	flex-direction: column;
 }
 
-.p-button.p-button-icon-only.p-button-rounded {
-	height: 24px;
-	width: 24px;
+.slot-container {
+	height: 100%;
 }
-.p-button:deep(.p-button-icon) {
-	font-size: 16px;
-	color: var(--text-color-primary);
+.hide-slot {
+	display: none;
 }
 </style>
