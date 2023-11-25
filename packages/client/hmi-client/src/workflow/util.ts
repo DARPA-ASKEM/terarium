@@ -89,11 +89,11 @@ export const getGraphDataFromDatasetCSV = (
 };
 
 /**
- * Update an operator to use a selected OperatorOutput
+ * Update an operator to use a selected WorkflowOutput.
  * The current state will be saved as a new operator output if it did not exist prior.
  * This will replace the current state of the operator by the selected output.
  */
-function selectOutput(operator: WorkflowNode<S>, operatorOutputId: OperatorOutput<S>["id"]) {
+function selectOutput(operator: WorkflowNode<S>, operatorOutputId: WorkflowOutput<S>["id"]) {
 
 	// Check if the current state existed previously in the outputs
 	let current = operator.outputs.find(output => output.id === operator.active);
