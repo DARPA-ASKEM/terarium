@@ -10,7 +10,6 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	OperatorInteractionStatus,
 	WorkflowPort
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
@@ -70,7 +69,6 @@ export const addNode = (
 		})),
 	  */
 		status: OperatorStatus.INVALID,
-		interactionStatus: OperatorInteractionStatus.FOUND,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height

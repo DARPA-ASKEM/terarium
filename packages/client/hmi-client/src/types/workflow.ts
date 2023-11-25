@@ -18,12 +18,6 @@ export enum WorkflowOperationTypes {
 	CODE = 'Code'
 }
 
-export enum OperatorInteractionStatus {
-	FOCUS = 'focus', // Hover/drag
-	FOUND = 'found',
-	NOT_FOUND = 'not found'
-}
-
 export enum OperatorStatus {
 	DEFAULT = 'default',
 	IN_PROGRESS = 'in progress',
@@ -110,7 +104,6 @@ export interface WorkflowNode<S> {
 
 	// Behaviour
 	status: OperatorStatus;
-	interactionStatus: OperatorInteractionStatus;
 }
 
 export interface WorkflowEdge {
