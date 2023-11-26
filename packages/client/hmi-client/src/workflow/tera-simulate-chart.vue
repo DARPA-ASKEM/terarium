@@ -241,7 +241,6 @@ const renderGraph = () => {
 			}
 		}
 	});
-	console.log(datasets);
 	chartData.value = { datasets };
 };
 

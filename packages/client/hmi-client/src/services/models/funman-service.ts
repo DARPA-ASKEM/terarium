@@ -3,7 +3,7 @@ import API from '@/api/api';
 import { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
 
-interface FunmanProcessedData {
+export interface FunmanProcessedData {
 	boxes: any[];
 	points: any[];
 	states: string[];
