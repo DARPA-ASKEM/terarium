@@ -306,11 +306,7 @@ export function selectOutput(
 			id: uuidv4(),
 			type: '',
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			isOptional: false,
-			isSelected: false,
-			operatorStatus: OperatorStatus.DEFAULT,
-			state: null,
-			timestamp: new Date()
+			isOptional: false
 		} as WorkflowOutput<any>;
 		operator.outputs.push(current);
 	}
@@ -324,7 +320,7 @@ export function selectOutput(
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
 	if (selected) {
 		operator.state = selected.state;
-		operator.status = selected.operatorStatus;
+		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
 		operator.active = selected.id;
 	} else {
 		logger.warn(
