@@ -183,7 +183,9 @@ export const renderFumanTrajectories = (
 	const xDomain = d3.extent(points.map((d) => d.timestep)) as [number, number];
 
 	// Find max/min across all state values
-	const yDomain = d3.extent(points.map((d) => states.map((s) => d[s])).flat()) as [number, number];
+	const yDomain = d3.extent(
+		points.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
+	) as [number, number];
 
 	const xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
 	const yScale = d3.scaleLinear().domain(yDomain).range([height, 0]);
@@ -224,18 +226,17 @@ export const renderFumanTrajectories = (
 		.y((d) => yScale(d.y))
 		.curve(d3.curveBasis);
 
-	states.forEach((s: string) => {
-		if (s !== state) {
-			return;
-		}
-		const path = points.map((p: any) => ({ x: p.timestep + 1, y: p[s] }));
-		svg
-			.append('g')
-			.append('path')
-			.attr('d', pathFn(path))
-			.style('stroke', '#888')
-			.style('fill', 'none');
-	});
+	states
+		.filter((s) => s === state)
+		.forEach((s: string) => {
+			const path = points.map((p: any) => ({ x: p.timestep + 1, y: p[s] }));
+			svg
+				.append('g')
+				.append('path')
+				.attr('d', pathFn(path))
+				.style('stroke', '#888')
+				.style('fill', 'none');
+		});
 };
 
 const getBoxesDomain = (boxes: FunmanBox[]) => {
