@@ -171,21 +171,23 @@ export const renderFumanTrajectories = (
 	const height = options.height;
 	const rightMargin = 30;
 	const bottomMargin = 30;
+	console.log(processedData);
 	const { trajs, states } = processedData;
-
-	const x = d3
-		.scaleLinear()
-		.domain([-1, width + 1])
-		.range([-1, width + 1]);
-
-	const y = d3
-		.scaleLinear()
-		.domain([-1, height + 1])
-		.range([-1, height + 1]);
 
 	const elemSelection = d3.select(element);
 	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
+
+	const points = trajs.filter((d: any) => d.boxId === boxId);
+
+	// Find max/min across timesteps
+	const xDomain = d3.extent(points.map((d) => d.timestep)) as [number, number];
+
+	// Find max/min across all state values
+	const yDomain = d3.extent(points.map((d) => states.map((s) => d[s])).flat()) as [number, number];
+
+	const xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
+	const yScale = d3.scaleLinear().domain(yDomain).range([height, 0]);
 
 	// Add the x-axis.
 	svg
@@ -193,7 +195,7 @@ export const renderFumanTrajectories = (
 		.attr('transform', `translate(${rightMargin},${height - bottomMargin})`)
 		.call(
 			d3
-				.axisBottom(x)
+				.axisBottom(xScale)
 				.ticks(width / 60)
 				.tickSizeOuter(0)
 		);
@@ -204,7 +206,7 @@ export const renderFumanTrajectories = (
 		.attr('transform', `translate(${rightMargin},${-bottomMargin})`)
 		.call(
 			d3
-				.axisLeft(y)
+				.axisLeft(yScale)
 				.ticks(height / 60)
 				.tickSizeOuter(0)
 		);
@@ -217,16 +219,6 @@ export const renderFumanTrajectories = (
 		.attr('y', height - 2)
 		.text('Timestep');
 
-	const points = trajs.filter((d: any) => d.boxId === boxId);
-
-	// Find max/min across timesteps
-	const xDomain = d3.extent(points.map((d) => d.timestep)) as [number, number];
-
-	// Find max/min across all state values
-	const yDomain = d3.extent(points.map((d) => states.map((s) => d[s])).flat()) as [number, number];
-
-	const xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
-	const yScale = d3.scaleLinear().domain(yDomain).range([height, 0]);
 	const pathFn = d3
 		.line<{ x: number; y: number }>()
 		.x((d) => xScale(d.x))
