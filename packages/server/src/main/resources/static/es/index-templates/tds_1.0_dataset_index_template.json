@@ -1,9 +1,9 @@
 {
-  "index_patterns": ["*_tera_1.0"],
+  "index_patterns": ["*_dataset_tera_1.0"],
   "version": 1,
   "priority": 500,
   "_meta": {
-    "description": "This index template is the standard template for all Terarium indices"
+    "description": "This index template is the standard template for all Terarium DATASET indices"
   },
   "template": {
     "settings": {
@@ -16,7 +16,7 @@
         "analyzer": {
           "english_analyzer": {
             "type": "custom",
-            "tokenizer": "icu_tokenizer",
+            "tokenizer": "standard",
             "char_filter": ["html_strip"],
             "filter": [
               "english_possessive_stemmer",
@@ -215,104 +215,111 @@
         }
       ],
       "properties": {
-        "subtype": {
-          "type": "keyword"
-        },
-        "title": {
-          "type": "text",
-          "analyzer": "english_analyzer",
-          "fields": {
-            "language_en": {
-              "analyzer": "english_analyzer",
-              "type": "text"
-            }
-          }
-        },
-        "body": {
-          "type": "text",
-          "analyzer": "english_analyzer",
-          "fields": {
-            "language_en": {
-              "analyzer": "english_analyzer",
-              "type": "text"
-            }
-          }
-        },
-        "content": {
-          "type": "text",
-          "analyzer": "english_analyzer",
-          "fields": {
-            "language_en": {
-              "analyzer": "english_analyzer",
-              "type": "text"
-            }
-          }
-        },
-        "provenance": {
-          "type": "object",
+        "columns": {
           "properties": {
-            "hasActivity": {
-              "type": "keyword"
-            },
-            "atTime": {
-              "type": "date"
-            },
-            "associatedWith": {
-              "type": "keyword"
-            }
-          }
-        },
-        "locality": {
-          "type": "object",
-          "properties": {
-            "label": {
-              "type": "keyword",
-              "ignore_above": 512,
-              "eager_global_ordinals": true
-            },
-            "dateBegin": {
-              "type": "date"
-            },
-            "dateEnd": {
-              "type": "date"
-            },
-            "location": {
-              "type": "geo_point"
-            }
-          }
-        },
-        "feature": {
-          "type": "object",
-          "properties": {
-            "age": {
-              "type": "integer"
-            },
-            "height": {
-              "type": "integer"
-            },
-            "keywords": {
-              "properties": {
-                "classifier": {
+            "data_type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
                   "type": "keyword",
-                  "ignore_above": 512
-                },
-                "count": {
-                  "type": "integer"
-                },
-                "matches": {
+                  "ignore_above": 256
+                }
+              }
+            },
+            "format_str": {
+              "type": "text",
+              "fields": {
+                "keyword": {
                   "type": "keyword",
-                  "ignore_above": 512
+                  "ignore_above": 256
+                }
+              }
+            },
+            "metadata": {
+              "type": "object",
+              "enabled": false
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             }
           }
         },
-        "table": {
+        "data_source_date": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "description": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "file_names": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "metadata": {
           "type": "object",
           "enabled": false
         },
-        "image_details": {
-          "enabled": false
+        "name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "source": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss"
+        },
+        "username": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
         }
       }
     }

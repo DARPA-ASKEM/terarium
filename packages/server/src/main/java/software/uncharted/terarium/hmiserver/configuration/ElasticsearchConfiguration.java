@@ -26,15 +26,22 @@ public class ElasticsearchConfiguration {
 		String prefix,
 		String suffix,
 		String codeRoot,
+		String datasetRoot,
 		String documentRoot,
 		String equationRoot,
 		String modelRoot,
+		String modelConfigurationRoot,
+		String notebookSessionRoot,
 		String simulationRoot,
 		String workflowRoot
 	) {}
 
 	public String getCodeIndex() {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
+	}
+
+	public String getDatasetIndex() {
+		return String.join("_", index.prefix, index.datasetRoot, index.suffix);
 	}
 
 	public String getDocumentIndex() {
@@ -47,6 +54,14 @@ public class ElasticsearchConfiguration {
 
 	public String getModelIndex() {
 		return String.join("_", index.prefix, index.modelRoot, index.suffix);
+	}
+
+	public String getModelConfigurationIndex() {
+		return String.join("_", index.prefix, index.modelConfigurationRoot, index.suffix);
+	}
+
+	public String getNotebookSessionIndex() {
+		return String.join("_", index.prefix, index.notebookSessionRoot, index.suffix);
 	}
 
 	public String getSimulationIndex() {
