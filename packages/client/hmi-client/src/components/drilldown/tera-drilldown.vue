@@ -41,6 +41,11 @@ const slots = useSlots();
  */
 const tabs = computed(() => {
 	if (slots.default?.()) {
+		if (slots.default().length === 1) {
+			// if there is only 1 component we don't need to know the tab name and we can render it.
+			return slots.default();
+		}
+
 		return slots.default().filter((vnode) => vnode.props?.tabName);
 	}
 	return [];
