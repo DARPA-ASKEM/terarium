@@ -169,6 +169,7 @@ export const renderFumanTrajectories = (
 ) => {
 	const width = options.width;
 	const height = options.height;
+	const topMargin = 10;
 	const rightMargin = 30;
 	const leftMargin = 30;
 	const bottomMargin = 30;
@@ -196,7 +197,7 @@ export const renderFumanTrajectories = (
 	const yScale = d3
 		.scaleLinear()
 		.domain(yDomain)
-		.range([height - bottomMargin, 0]);
+		.range([height - bottomMargin, topMargin]);
 
 	// Add the x-axis.
 	svg
