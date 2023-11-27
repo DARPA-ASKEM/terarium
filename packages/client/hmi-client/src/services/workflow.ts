@@ -286,13 +286,17 @@ export class WorkflowRegistry {
 ///
 
 /**
- * Update an operator to use a selected WorkflowOutput.
- * The current state will be saved as a new operator output if it did not exist prior.
- * This will replace the current state of the operator by the selected output.
+ * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
+ * current state was not previously stored as a WorkflowOutput, this function first saves the current state
+ * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
+ *
+ * @param operator - The operator whose state is to be updated.
+ * @param selectedWorkflowOutputId - The ID of the WorkflowOutput whose data will be used to update the operator's state.
  */
+
 export function selectOutput(
 	operator: WorkflowNode<any>,
-	operatorOutputId: WorkflowOutput<any>['id']
+	selectedWorkflowOutputId: WorkflowOutput<any>['id']
 ) {
 	// Check if the current state existed previously in the outputs
 	let current = operator.outputs.find((output) => output.id === operator.active);
@@ -311,14 +315,14 @@ export function selectOutput(
 	current.timestamp = new Date();
 
 	// Update the Operator state with the selected one
-	const selected = operator.outputs.find((output) => output.id === operatorOutputId);
+	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
 	if (selected) {
 		operator.state = selected.state;
 		operator.status = selected.operatorStatus;
 		operator.active = selected.id;
 	} else {
 		logger.warn(
-			`Operator Output Id ${operatorOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
+			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
 		);
 	}
 }
