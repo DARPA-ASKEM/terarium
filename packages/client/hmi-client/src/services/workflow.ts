@@ -10,10 +10,10 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	OperatorInteractionStatus,
 	WorkflowPort
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
+import { Component } from 'vue';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -70,7 +70,6 @@ export const addNode = (
 		})),
 	  */
 		status: OperatorStatus.INVALID,
-		interactionStatus: OperatorInteractionStatus.FOUND,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
@@ -246,3 +245,36 @@ class WorkflowEventEmitter extends EventEmitter {
 }
 
 export const workflowEventBus = new WorkflowEventEmitter();
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Workflow component registry, this is used to
+// dynamically determine which component should be rendered
+/// /////////////////////////////////////////////////////////////////////////////
+export class WorkflowRegistry {
+	nodeMap: Map<string, Component>;
+
+	drilldownMap: Map<string, Component>;
+
+	constructor() {
+		this.nodeMap = new Map();
+		this.drilldownMap = new Map();
+	}
+
+	set(name: string, node: Component, drilldown: Component) {
+		this.nodeMap.set(name, node);
+		this.drilldownMap.set(name, drilldown);
+	}
+
+	getNode(name: string) {
+		return this.nodeMap.get(name);
+	}
+
+	getDrilldown(name: string) {
+		return this.drilldownMap.get(name);
+	}
+
+	remove(name: string) {
+		this.nodeMap.delete(name);
+		this.drilldownMap.delete(name);
+	}
+}

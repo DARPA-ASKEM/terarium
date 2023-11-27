@@ -1,8 +1,16 @@
 <template>
-	<main :style="nodeStyle" ref="operator">
+	<main
+		:style="nodeStyle"
+		ref="operator"
+		@mouseenter="interactionStatus = addHover(interactionStatus)"
+		@mouseleave="interactionStatus = removeHover(interactionStatus)"
+		@focus="() => {}"
+		@focusout="() => {}"
+	>
 		<tera-operator-header
 			:name="node.displayName"
 			:status="node.status"
+			:interaction-status="interactionStatus"
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@bring-to-front="bringToFront"
@@ -35,6 +43,7 @@
 
 <script setup lang="ts">
 import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
+import { addHover, removeHover, addDrag, removeDrag, isDrag } from '@/services/operator-bitmask';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
@@ -74,18 +83,18 @@ const nodeStyle = computed(() => ({
 const portBaseSize: number = 8;
 const operator = ref<HTMLElement>();
 
+const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 let tempX = 0;
 let tempY = 0;
-let dragStart = false;
 
 const startDrag = (evt: MouseEvent) => {
 	tempX = evt.x;
 	tempY = evt.y;
-	dragStart = true;
+	interactionStatus.value = addDrag(interactionStatus.value);
 };
 
 const drag = (evt: MouseEvent) => {
-	if (dragStart === false) return;
+	if (!isDrag(interactionStatus.value)) return;
 
 	const dx = evt.x - tempX;
 	const dy = evt.y - tempY;
@@ -103,7 +112,7 @@ const drag = (evt: MouseEvent) => {
 const stopDrag = (/* evt: MouseEvent */) => {
 	tempX = 0;
 	tempY = 0;
-	dragStart = false;
+	interactionStatus.value = removeDrag(interactionStatus.value);
 };
 
 onMounted(() => {
@@ -166,29 +175,28 @@ main:hover {
 }
 
 main > .content {
+	margin: 0.5rem;
+}
+
+main > ul,
+main > .content,
+/* Assumes that the child put in the slot will be wrapped in its own tag */
+main > .content:deep(> *) {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-	margin: 0 0.5rem;
 	gap: 0.5rem;
-}
-
-.content:deep(> *),
-main > ul {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin: 0.5rem 0;
 }
 
 /* Inputs/outputs */
-ul {
+main > ul {
+	margin: 0.5rem 0;
 	list-style: none;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
 }
 
-ul:empty {
+main > ul:empty {
 	display: none;
 }
 
