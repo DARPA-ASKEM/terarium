@@ -55,7 +55,6 @@ const lastTrueBox = ref();
 
 const initalizeParameters = async () => {
 	const funModel = await getQueries(props.funModelId);
-	console.log(funModel);
 	parameterOptions.value = [];
 	funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
 		parameterOptions.value.push(ele.id)
@@ -77,7 +76,6 @@ const renderGraph = async () => {
 	const width = 800;
 	const height = 250;
 	const funModel = await getQueries(props.funModelId);
-	console.log(funModel);
 	const processedData = processFunman(funModel);
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,

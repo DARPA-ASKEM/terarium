@@ -126,7 +126,6 @@ export const processFunman = (result: any) => {
 		});
 	});
 
-	console.log({ boxes, points, states, trajs });
 	return { boxes, points, states, trajs } as FunmanProcessedData;
 };
 
