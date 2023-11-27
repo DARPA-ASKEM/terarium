@@ -3,7 +3,8 @@
 		<label>Trajectory State</label>
 		<Dropdown v-model="selectedTrajState" :options="modelStates"> </Dropdown>
 	</div>
-	<Chart type="scatter" :data="trajData" :options="CHART_OPTIONS" />
+	<div ref="trajRef"></div>
+
 	<h4>Configuration parameters <i class="pi pi-info-circle" /></h4>
 	<p class="secondary-text">
 		Adjust parameter ranges to only include values in the green region or less.
@@ -31,9 +32,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { getQueries, processFunman, FunmanProcessedData } from '@/services/models/funman-service';
+import {
+	getQueries,
+	processFunman,
+	renderFumanTrajectories
+} from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
-import Chart from 'primevue/chart';
 
 const props = defineProps<{
 	funModelId: string;
@@ -46,12 +50,9 @@ const modelStates = ref<string[]>();
 const selectedParamTwo = ref();
 const timestepOptions = ref();
 const timestep = ref();
-const trajData = ref({});
+const trajRef = ref();
+const boxId = 'box2';
 const lastTrueBox = ref();
-
-const CATEGORYPERCENTAGE = 0.9;
-const BARPERCENTAGE = 0.6;
-const MINBARLENGTH = 1;
 
 const initalizeParameters = async () => {
 	const funModel = await getQueries(props.funModelId);
@@ -75,78 +76,21 @@ const initalizeParameters = async () => {
 };
 
 const renderGraph = async () => {
+	const width = 800;
+	const height = 250;
 	const funModel = await getQueries(props.funModelId);
 	console.log(funModel);
 	const processedData = processFunman(funModel);
-	trajData.value = setFumanTrajectories(processedData);
-};
-
-// X = traj[i].timestep
-// Y = traj[i].(selectedTrajState)
-const setFumanTrajectories = (processedData: FunmanProcessedData) => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	const weights = processedData.trajs.map((traj) => ({
-		x: traj.timestep,
-		y: traj[selectedTrajState.value]
-	}));
-	const labels = processedData.trajs.map((traj) => traj.pointId);
-	console.log(weights);
-	return {
-		labels,
-		datasets: [
-			{
-				backgroundColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				borderColor: '##CACBCC',
-				borderWidth: 1,
-				data: weights,
-				categoryPercentage: CATEGORYPERCENTAGE,
-				barPercentage: BARPERCENTAGE,
-				minBarLength: MINBARLENGTH
-			}
-		]
-	};
-};
-
-const CHART_OPTIONS = {
-	devicePixelRatio: 4,
-	maintainAspectRatio: false,
-	pointStyle: false,
-	animation: {
-		duration: 0
-	},
-	showLine: true,
-	plugins: {
-		legend: {
-			display: false
-		}
-	},
-	scales: {
-		x: {
-			ticks: {
-				color: '#aaa',
-				maxTicksLimit: 5,
-				includeBounds: true,
-				// this rounds the tick label to nearest int
-				callback: (num) => num
-			},
-			grid: {
-				color: '#fff',
-				borderColor: '#fff'
-			}
+	renderFumanTrajectories(
+		trajRef.value as HTMLElement,
+		processedData,
+		boxId,
+		{
+			width,
+			height
 		},
-		y: {
-			ticks: {
-				color: '#aaa',
-				maxTicksLimit: 3,
-				includeBounds: true,
-				precision: 4
-			},
-			grid: {
-				color: '#fff',
-				borderColor: '#fff'
-			}
-		}
-	}
+		selectedTrajState.value
+	);
 };
 
 onMounted(() => {
