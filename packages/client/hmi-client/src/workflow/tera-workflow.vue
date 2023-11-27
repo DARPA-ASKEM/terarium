@@ -63,80 +63,12 @@
 				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
-					<tera-model-node
-						v-if="node.operationType === WorkflowOperationTypes.MODEL"
+					<component
+						:is="registry.getNode(node.operationType)"
 						:node="node"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-dataset-node
-						v-else-if="node.operationType === WorkflowOperationTypes.DATASET"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-					/>
-					<tera-code-asset-node
-						v-else-if="node.operationType === WorkflowOperationTypes.CODE"
-						:node="node"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-dataset-transformer-node
-						v-else-if="node.operationType === WorkflowOperationTypes.DATASET_TRANSFORMER"
-						:node="node"
-						@append-input-port="(event) => appendInputPort(node, event)"
-					/>
-					<tera-model-transformer-node
-						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_TRANSFORMER"
-						:node="node"
-						@append-input-port="(event) => appendInputPort(node, event)"
-					/>
-					<tera-simulate-node-julia
-						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_JULIA"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-simulate-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-calibrate-node-julia
-						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_JULIA"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-calibrate-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-stratify-node-mira
-						v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY_MIRA"
-					/>
-					<tera-simulate-ensemble-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-calibrate-ensemble-node-ciemss
-						v-else-if="node.operationType === WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-model-from-code-node
-						v-else-if="node.operationType === WorkflowOperationTypes.MODEL_FROM_CODE"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-						@update-state="(event) => updateWorkflowNodeState(node, event)"
-					/>
-					<tera-funman-node
-						v-else-if="node.operationType === WorkflowOperationTypes.FUNMAN"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
+						@append-output-port="(event: any) => appendOutputPort(node, event)"
+						@append-input-port="(event: any) => appendInputPort(node, event)"
+						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 					/>
 				</template>
 			</tera-operator>
@@ -229,7 +161,7 @@
 			:tooltip="'A brief description of the operator.'"
 		>
 			<component
-				:is="drilldownRegistry.get(currentActiveNode.operationType)"
+				:is="registry.getDrilldown(currentActiveNode.operationType)"
 				:node="currentActiveNode"
 				@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
 				@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
@@ -340,22 +272,29 @@ import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './o
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
-// FIXME: check if there is a component typing instead of any
-const drilldownRegistry = new Map<string, any>();
-drilldownRegistry.set(CalibrationOperationJulia.name, TeraCalibrateJulia);
-drilldownRegistry.set(CalibrationOperationCiemss.name, TeraCalibrateCiemss);
-drilldownRegistry.set(SimulateJuliaOperation.name, TeraSimulateJulia);
-drilldownRegistry.set(SimulateCiemssOperation.name, TeraSimulateCiemss);
-drilldownRegistry.set(StratifyMiraOperation.name, TeraStratifyMira);
-drilldownRegistry.set(ModelFromCodeOperation.name, TeraModelFromCode);
-drilldownRegistry.set(SimulateEnsembleCiemssOperation.name, TeraSimulateEnsembleCiemss);
-drilldownRegistry.set(CalibrateEnsembleCiemssOperation.name, TeraCalibrateEnsembleCiemss);
-drilldownRegistry.set(ModelOperation.name, TeraModelWorkflowWrapper);
-drilldownRegistry.set(DatasetOperation.name, TeraDatasetWorkflowWrapper);
-drilldownRegistry.set(CodeAssetOperation.name, TeraCodeAssetWrapper);
-drilldownRegistry.set(DatasetTransformerOperation.name, TeraDatasetTransformer);
-drilldownRegistry.set(ModelTransformerOperation.name, TeraModelTransformer);
-drilldownRegistry.set(FunmanOperation.name, TeraFunman);
+const registry = new workflowService.WorkflowRegistry();
+registry.set(CalibrationOperationJulia.name, TeraCalibrateNodeJulia, TeraCalibrateJulia);
+registry.set(CalibrationOperationCiemss.name, TeraCalibrateNodeCiemss, TeraCalibrateCiemss);
+registry.set(SimulateJuliaOperation.name, TeraSimulateNodeJulia, TeraSimulateJulia);
+registry.set(SimulateCiemssOperation.name, TeraSimulateNodeCiemss, TeraSimulateCiemss);
+registry.set(StratifyMiraOperation.name, TeraStratifyNodeMira, TeraStratifyMira);
+registry.set(ModelFromCodeOperation.name, TeraModelFromCodeNode, TeraModelFromCode);
+registry.set(
+	SimulateEnsembleCiemssOperation.name,
+	TeraSimulateEnsembleNodeCiemss,
+	TeraSimulateEnsembleCiemss
+);
+registry.set(
+	CalibrateEnsembleCiemssOperation.name,
+	TeraCalibrateEnsembleNodeCiemss,
+	TeraCalibrateEnsembleCiemss
+);
+registry.set(ModelOperation.name, TeraModelNode, TeraModelWorkflowWrapper);
+registry.set(DatasetOperation.name, TeraDatasetNode, TeraDatasetWorkflowWrapper);
+registry.set(CodeAssetOperation.name, TeraCodeAssetNode, TeraCodeAssetWrapper);
+registry.set(DatasetTransformerOperation.name, TeraDatasetTransformerNode, TeraDatasetTransformer);
+registry.set(ModelTransformerOperation.name, TeraModelTransformerNode, TeraModelTransformer);
+registry.set(FunmanOperation.name, TeraFunmanNode, TeraFunman);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -506,19 +445,6 @@ workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: stri
 		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
 		nodesToRefresh.forEach(refreshModelNode);
 	}
-});
-
-// TODO: Remove
-workflowEventBus.on('node-state-change', (/* payload: any */) => {
-	throw new Error('bus event no longer available');
-});
-
-workflowEventBus.on('append-output-port', () => {
-	throw new Error('bus event no longer available');
-});
-
-workflowEventBus.on('update-state', () => {
-	throw new Error('bus event no longer available');
 });
 
 const removeNode = (event) => {
