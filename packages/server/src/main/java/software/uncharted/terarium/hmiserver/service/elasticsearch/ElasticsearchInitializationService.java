@@ -96,9 +96,12 @@ public class ElasticsearchInitializationService {
 	private void pushMissingIndices() {
 		final String[] indices = new String[]{
 			config.getCodeIndex(),
+			config.getDatasetIndex(),
 			config.getDocumentIndex(),
 			config.getEquationIndex(),
 			config.getModelIndex(),
+			config.getModelConfigurationIndex(),
+			config.getNotebookSessionIndex(),
 			config.getSimulationIndex(),
 			config.getWorkflowIndex()
 		};

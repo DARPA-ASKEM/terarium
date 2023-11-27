@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.ingest.GetPipelineRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -144,17 +145,14 @@ public class ElasticsearchService {
 	 * @return True if the pipeline is contained in the cluster, false otherwise
 	 */
 	public boolean containsPipeline(final String name) {
-		final String url = config.getUrl() + "/_ingest/pipeline/" + name;
+		final GetPipelineRequest request = new GetPipelineRequest(name);
+		boolean exists = false;
 		try {
-			final ResponseEntity<JsonNode> response = getRestTemplate().exchange(
-				new URI(url),
-				HttpMethod.HEAD, null,
-				JsonNode.class);
-			return response.getStatusCode() == HttpStatus.OK;
-		} catch (final Exception e) {
+			exists = restHighLevelClient.ingest().getPipeline(request, RequestOptions.DEFAULT).isFound();
+		} catch (final IOException e) {
 			log.error("Error checking existence of pipeline {}", name, e);
 		}
-		return false;
+		return exists;
 	}
 
 	/**
