@@ -1,2 +1,7 @@
-export * from './model-config-operation';
-export { default as node } from './tera-model-config-node.vue';
+import { ModelConfigOperation as operation } from './model-config-operation';
+import node from './tera-model-config-node.vue';
+import drilldown from './tera-model-config.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };

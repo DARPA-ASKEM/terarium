@@ -1,4 +1,4 @@
-import { Operation } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 export const name = 'ModelConfigOperation';
 
@@ -7,7 +7,7 @@ export interface ModelConfigOperationState {
 }
 
 export const ModelConfigOperation: Operation = {
-	name,
+	name: WorkflowOperationTypes.MODEL_CONFIG,
 	displayName: 'Model Configuration',
 	description: 'Create model configurations.',
 	isRunnable: true,
