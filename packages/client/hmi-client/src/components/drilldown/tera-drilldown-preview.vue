@@ -16,11 +16,15 @@
 			</main>
 		</div>
 		<footer>
-			<Button v-if="canSaveAsset" outlined label="Save Model" @click="emit('save-asset')"></Button>
-			<div class="right-aligned-buttons">
-				<Button outlined label="Cancel" @click="emit('cancel')"></Button>
-				<Button label="Apply Changes and Close" @click="emit('apply-changes')"></Button>
-			</div>
+			<Button
+				v-if="canSaveAsset"
+				outlined
+				label="Save Model"
+				@click="emit('save-asset')"
+				class="save-asset-button"
+			></Button>
+			<Button outlined label="Cancel" @click="emit('cancel')"></Button>
+			<Button label="Apply Changes and Close" @click="emit('apply-changes')"></Button>
 		</footer>
 	</div>
 </template>
@@ -66,11 +70,11 @@ onUpdated(async () => {
 
 footer {
 	display: flex;
-}
-.right-aligned-buttons {
-	margin-left: auto;
-	display: flex;
+	justify-content: flex-end;
 	gap: 0.5rem;
+}
+.save-asset-button {
+	margin-right: auto;
 }
 
 header {
