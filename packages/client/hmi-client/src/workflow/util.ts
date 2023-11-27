@@ -1,7 +1,5 @@
 import { DataseriesConfig, RunType } from '@/types/SimulateConfig';
 import { CsvAsset, TimeSpan } from '@/types/Types';
-import { logger } from '@/utils/logger';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 
 export const getTimespan = (
 	dataset?: CsvAsset,
@@ -88,40 +86,3 @@ export const getGraphDataFromDatasetCSV = (
 
 	return graphData;
 };
-
-/**
- * Update an operator to use a selected WorkflowOutput.
- * The current state will be saved as a new operator output if it did not exist prior.
- * This will replace the current state of the operator by the selected output.
- */
-function selectOutput(operator: WorkflowNode<any>, operatorOutputId: WorkflowOutput<any>['id']) {
-	// Check if the current state existed previously in the outputs
-	let current = operator.outputs.find((output) => output.id === operator.active);
-	if (!current) {
-		// the current state was never saved in the outputs prior
-		current = {
-			id: crypto.randomUUID(),
-			isSelected: false
-		};
-		operator.outputs.push(current);
-	}
-
-	// Update the current state within the outputs
-	current.state = operator.state;
-	current.operatorStatus = operator.status;
-	current.timestamp = new Date();
-
-	// Update the Operator state with the selected one
-	const selected = operator.outputs.find((output) => output.id === operatorOutputId);
-	if (selected) {
-		operator.state = selected.state;
-		operator.status = selected.operatorStatus;
-		operator.active = selected.id;
-	} else {
-		logger.warn(
-			`Operator Output Id ${operatorOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
-		);
-	}
-}
-
-export default { selectOutput };

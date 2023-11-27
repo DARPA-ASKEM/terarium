@@ -1,5 +1,8 @@
+import { Component } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
-import _ from 'lodash';
+import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
 import {
 	Operation,
@@ -10,10 +13,9 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	WorkflowPort
+	WorkflowPort,
+	WorkflowOutput
 } from '@/types/workflow';
-import { v4 as uuidv4 } from 'uuid';
-import { Component } from 'vue';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -276,5 +278,47 @@ export class WorkflowRegistry {
 	remove(name: string) {
 		this.nodeMap.delete(name);
 		this.drilldownMap.delete(name);
+	}
+}
+
+///
+// Operator
+///
+
+/**
+ * Update an operator to use a selected WorkflowOutput.
+ * The current state will be saved as a new operator output if it did not exist prior.
+ * This will replace the current state of the operator by the selected output.
+ */
+export function selectOutput(
+	operator: WorkflowNode<any>,
+	operatorOutputId: WorkflowOutput<any>['id']
+) {
+	// Check if the current state existed previously in the outputs
+	let current = operator.outputs.find((output) => output.id === operator.active);
+	if (!current) {
+		// the current state was never saved in the outputs prior
+		current = {
+			id: uuidv4(),
+			isSelected: false
+		};
+		operator.outputs.push(current);
+	}
+
+	// Update the current state within the outputs
+	current.state = cloneDeep(operator.state);
+	current.operatorStatus = operator.status;
+	current.timestamp = new Date();
+
+	// Update the Operator state with the selected one
+	const selected = operator.outputs.find((output) => output.id === operatorOutputId);
+	if (selected) {
+		operator.state = selected.state;
+		operator.status = selected.operatorStatus;
+		operator.active = selected.id;
+	} else {
+		logger.warn(
+			`Operator Output Id ${operatorOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
+		);
 	}
 }
