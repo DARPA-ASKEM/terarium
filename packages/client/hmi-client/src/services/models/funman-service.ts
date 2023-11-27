@@ -170,12 +170,45 @@ export const renderFumanTrajectories = (
 ) => {
 	const width = options.width;
 	const height = options.height;
+	const rightMargin = 30;
+	const bottomMargin = 30;
 	const { trajs, states } = processedData;
+
+	const x = d3
+		.scaleLinear()
+		.domain([-1, width + 1])
+		.range([-1, width + 1]);
+
+	const y = d3
+		.scaleLinear()
+		.domain([-1, height + 1])
+		.range([-1, height + 1]);
 
 	const elemSelection = d3.select(element);
 	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
-	const group = svg.append('g');
+
+	// Add the x-axis.
+	svg
+		.append('g')
+		.attr('transform', `translate(${rightMargin},${height - bottomMargin})`)
+		.call(
+			d3
+				.axisBottom(x)
+				.ticks(width / 60)
+				.tickSizeOuter(0)
+		);
+
+	// Add the y-axis
+	svg
+		.append('g')
+		.attr('transform', `translate(${rightMargin},${-bottomMargin})`)
+		.call(
+			d3
+				.axisLeft(y)
+				.ticks(height / 60)
+				.tickSizeOuter(0)
+		);
 
 	const points = trajs.filter((d: any) => d.boxId === boxId);
 
@@ -197,8 +230,13 @@ export const renderFumanTrajectories = (
 		if (s !== state) {
 			return;
 		}
-		const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
-		group.append('path').attr('d', pathFn(path)).style('stroke', '#888').style('fill', 'none');
+		const path = points.map((p: any) => ({ x: p.timestep + 1, y: p[s] }));
+		svg
+			.append('g')
+			.append('path')
+			.attr('d', pathFn(path))
+			.style('stroke', '#888')
+			.style('fill', 'none');
 	});
 };
 
