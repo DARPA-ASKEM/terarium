@@ -1,7 +1,7 @@
 <template>
 	<div class="preview">
 		<div class="content-container">
-			<header ref="header">
+			<header>
 				<h5>Preview</h5>
 				<Dropdown
 					v-if="options"
@@ -11,7 +11,7 @@
 					@update:model-value="emit('update:output', $event)"
 				></Dropdown>
 			</header>
-			<main :style="{ height: mainHeight }">
+			<main>
 				<slot />
 			</main>
 		</div>
@@ -32,7 +32,6 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { onUpdated, ref } from 'vue';
 
 defineProps<{
 	options?: string[]; // subject to change based on how we want to pass in output data
@@ -41,14 +40,6 @@ defineProps<{
 }>();
 
 const emit = defineEmits(['cancel', 'apply-changes', 'save-asset', 'update:output']);
-
-const mainHeight = ref();
-const header = ref();
-
-onUpdated(async () => {
-	const headerHeight = header.value?.offsetHeight;
-	mainHeight.value = `calc(100% - ${headerHeight}px)`;
-});
 </script>
 
 <style scoped>
@@ -60,6 +51,8 @@ onUpdated(async () => {
 	gap: 0.5rem;
 }
 .content-container {
+	display: flex;
+	flex-direction: column;
 	background-color: var(--surface-50);
 	flex-grow: 1;
 	padding: 1rem;
@@ -86,6 +79,7 @@ header {
 
 .content-container > main {
 	overflow-y: auto;
+	flex-grow: 1;
 }
 
 .output-dropdown:deep(.p-inputtext) {
