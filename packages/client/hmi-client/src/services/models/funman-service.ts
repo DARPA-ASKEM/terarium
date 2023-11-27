@@ -171,7 +171,6 @@ export const renderFumanTrajectories = (
 	const height = options.height;
 	const rightMargin = 30;
 	const bottomMargin = 30;
-	console.log(processedData);
 	const { trajs, states } = processedData;
 
 	const elemSelection = d3.select(element);
