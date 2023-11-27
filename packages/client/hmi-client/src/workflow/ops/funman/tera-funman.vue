@@ -383,6 +383,7 @@ watch(
 <style scoped>
 .content {
 	display: flex;
+	height: 100%;
 	overflow: auto;
 	padding: 1rem 1.5rem 1rem 0rem;
 	align-items: flex-start;
