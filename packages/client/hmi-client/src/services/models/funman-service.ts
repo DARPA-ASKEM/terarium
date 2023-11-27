@@ -170,6 +170,7 @@ export const renderFumanTrajectories = (
 	const width = options.width;
 	const height = options.height;
 	const rightMargin = 30;
+	const leftMargin = 30;
 	const bottomMargin = 30;
 	const { trajs, states } = processedData;
 
@@ -190,7 +191,8 @@ export const renderFumanTrajectories = (
 	const xScale = d3
 		.scaleLinear()
 		.domain(xDomain)
-		.range([0, width - rightMargin]);
+		.range([leftMargin, width - rightMargin]);
+
 	const yScale = d3
 		.scaleLinear()
 		.domain(yDomain)
@@ -199,7 +201,7 @@ export const renderFumanTrajectories = (
 	// Add the x-axis.
 	svg
 		.append('g')
-		.attr('transform', `translate(${rightMargin},${height - bottomMargin})`)
+		.attr('transform', `translate(0,${height - bottomMargin})`)
 		.call(
 			d3
 				.axisBottom(xScale)
@@ -210,7 +212,7 @@ export const renderFumanTrajectories = (
 	// Add the y-axis
 	svg
 		.append('g')
-		.attr('transform', `translate(${rightMargin},0)`)
+		.attr('transform', `translate(${leftMargin},0)`)
 		.call(
 			d3
 				.axisLeft(yScale)
@@ -218,6 +220,7 @@ export const renderFumanTrajectories = (
 				.tickSizeOuter(0)
 		);
 
+	// Add label for x-axis
 	svg
 		.append('text')
 		.attr('class', 'x label')
@@ -235,7 +238,7 @@ export const renderFumanTrajectories = (
 	states
 		.filter((s) => s === state)
 		.forEach((s: string) => {
-			const path = points.map((p: any) => ({ x: p.timestep + 1, y: p[s] }));
+			const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
 			svg
 				.append('g')
 				.append('path')
