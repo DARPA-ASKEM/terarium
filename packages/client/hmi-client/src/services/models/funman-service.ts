@@ -210,6 +210,14 @@ export const renderFumanTrajectories = (
 				.tickSizeOuter(0)
 		);
 
+	svg
+		.append('text')
+		.attr('class', 'x label')
+		.attr('text-anchor', 'end')
+		.attr('x', width / 2)
+		.attr('y', height - 2)
+		.text('Timestep');
+
 	const points = trajs.filter((d: any) => d.boxId === boxId);
 
 	// Find max/min across timesteps
