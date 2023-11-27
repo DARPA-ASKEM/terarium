@@ -37,7 +37,7 @@ const emit = defineEmits(['on-close-clicked']);
 const slots = useSlots();
 
 /**
- * This will retrieve and filer all top level components in the default slot if they have the tabName prop.
+ * This will retrieve and filter all top level components in the default slot if they have the tabName prop.
  */
 const tabs = computed(() => {
 	if (slots.default?.()) {

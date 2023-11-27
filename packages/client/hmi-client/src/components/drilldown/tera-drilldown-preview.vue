@@ -6,9 +6,9 @@
 				<Dropdown
 					v-if="options"
 					class="output-dropdown"
-					v-model="selectedValue"
+					:model-value="output"
 					:options="options"
-					@update:model-value="emit('change-output')"
+					@update:model-value="emit('update:output', $event)"
 				></Dropdown>
 			</header>
 			<main :style="{ height: mainHeight }">
@@ -26,43 +26,25 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { nextTick, onMounted, onUpdated, ref, watch } from 'vue';
+import { onUpdated, ref } from 'vue';
 
-const props = defineProps<{
+defineProps<{
 	options?: string[]; // subject to change based on how we want to pass in output data
-	// selectedOutput: string
-	value?: string;
+	output?: string;
 	canSaveAsset?: boolean;
 }>();
 
-const emit = defineEmits(['cancel', 'apply-changes', 'save-asset', 'change-output']);
-
-const selectedValue = ref<string>();
+const emit = defineEmits(['cancel', 'apply-changes', 'save-asset', 'update:output']);
 
 const mainHeight = ref();
 const header = ref();
 
-onMounted(() => {
-	if (!isEmpty(props.options)) {
-		selectedValue.value = props.options?.[0];
-	}
-});
-
 onUpdated(async () => {
-	await nextTick();
 	const headerHeight = header.value?.offsetHeight;
 	mainHeight.value = `calc(100% - ${headerHeight}px)`;
 });
-
-watch(
-	() => props.value,
-	() => {
-		selectedValue.value = props.value;
-	}
-);
 </script>
 
 <style scoped>
@@ -77,7 +59,7 @@ watch(
 	background-color: var(--surface-50);
 	flex-grow: 1;
 	padding: 1rem;
-	border-radius: 6px;
+	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	overflow: hidden;
 }
@@ -104,10 +86,10 @@ header {
 
 .output-dropdown:deep(.p-inputtext) {
 	padding: 0.75rem 1rem;
-	font-size: 14px;
+	font-size: var(--font-body-small);
 }
 
 .output-dropdown:deep(.pi) {
-	font-size: 14px;
+	font-size: var(--font-body-small);
 }
 </style>
