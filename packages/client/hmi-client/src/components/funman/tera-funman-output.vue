@@ -44,10 +44,9 @@ const props = defineProps<{
 }>();
 
 const parameterOptions = ref<string[]>([]);
-const selectedParamOne = ref();
+const selectedParam = ref();
 const selectedTrajState = ref();
 const modelStates = ref<string[]>();
-const selectedParamTwo = ref();
 const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
@@ -61,8 +60,7 @@ const initalizeParameters = async () => {
 	funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
 		parameterOptions.value.push(ele.id)
 	);
-	selectedParamOne.value = parameterOptions.value[0];
-	selectedParamTwo.value = parameterOptions.value[0];
+	selectedParam.value = parameterOptions.value[0];
 	timestepOptions.value = funModel.request.structure_parameters[0].schedules[0].timepoints;
 	timestep.value = timestepOptions.value[1];
 	const tempList: string[] = [];
@@ -107,7 +105,7 @@ watch(
 
 watch(
 	// Whenever user changes options rerender.
-	() => [selectedParamOne.value, selectedParamTwo.value, timestep.value, selectedTrajState.value],
+	() => [selectedParam.value, timestep.value, selectedTrajState.value],
 	async () => {
 		renderGraph();
 	}
