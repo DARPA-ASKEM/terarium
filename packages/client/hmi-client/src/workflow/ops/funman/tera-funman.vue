@@ -402,7 +402,7 @@ watch(
 	flex-direction: column;
 	align-items: flex-start;
 	flex: 1 0 0;
-	align-self: stretch;
+	align-self: auto;
 }
 .container h1 {
 	color: var(--text-color-primary);

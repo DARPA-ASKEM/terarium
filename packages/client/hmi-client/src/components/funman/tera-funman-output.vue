@@ -8,6 +8,25 @@
 	<p class="secondary-text">
 		Adjust parameter ranges to only include values in the green region or less.
 	</p>
+
+	<!-- TODO: add boxes modal per row https://github.com/DARPA-ASKEM/terarium/issues/1924 -->
+	<div class="variables-table">
+		<div class="variables-header">
+			<header
+				v-for="(title, index) in ['Parameter', 'Lower bound', 'Upper bound', '', '']"
+				:key="index"
+			>
+				{{ title }}
+			</header>
+		</div>
+		<div v-for="(column, index) in lastTrueBox?.bounds" :key="index">
+			<div class="variables-row" v-if="parameterOptions.includes(index.toString())">
+				<div>{{ index.toString() }}</div>
+				<div>{{ column?.lb }}</div>
+				<div>{{ column?.ub }}</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -28,6 +47,7 @@ const selectedParamTwo = ref();
 const timestepOptions = ref();
 const timestep = ref();
 const trajData = ref({});
+const lastTrueBox = ref();
 
 const CATEGORYPERCENTAGE = 0.9;
 const BARPERCENTAGE = 0.6;
@@ -35,6 +55,7 @@ const MINBARLENGTH = 1;
 
 const initalizeParameters = async () => {
 	const funModel = await getQueries(props.funModelId);
+	console.log(funModel);
 	parameterOptions.value = [];
 	funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
 		parameterOptions.value.push(ele.id)
@@ -49,10 +70,13 @@ const initalizeParameters = async () => {
 	});
 	modelStates.value = tempList;
 	selectedTrajState.value = modelStates.value[0];
+
+	lastTrueBox.value = funModel.parameter_space.true_boxes.at(-1);
 };
 
 const renderGraph = async () => {
 	const funModel = await getQueries(props.funModelId);
+	console.log(funModel);
 	const processedData = processFunman(funModel);
 	trajData.value = setFumanTrajectories(processedData);
 };
@@ -159,7 +183,6 @@ watch(
 	padding: 0.5rem 0rem;
 	align-items: center;
 	gap: 0.8125rem;
-	align-self: stretch;
 }
 
 .p-chart {
@@ -176,5 +199,30 @@ watch(
 	font-weight: 400;
 	line-height: 1.3125rem; /* 150% */
 	letter-spacing: 0.01563rem;
+}
+
+.variables-table {
+	display: grid;
+	grid-template-columns: 1fr;
+}
+
+.variables-table div {
+	padding: 0.25rem;
+}
+
+.variables-row {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr) 0.5fr;
+	grid-template-rows: 1fr 1fr;
+	border-top: 1px solid var(--surface-border);
+}
+
+.variables-header {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr) 0.5fr;
+}
+
+header {
+	padding-right: 1rem;
 }
 </style>
