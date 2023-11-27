@@ -45,7 +45,7 @@ export interface OperationData {
 export interface Operation {
 	name: WorkflowOperationTypes;
 	description: string;
-	displayName: string; // Human readable name for each node.
+	displayName: string; // Human-readable name for each node.
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -96,7 +96,7 @@ export interface WorkflowNode<S> {
 
 	// Current operator state
 	state: S; // Internal state. For example chosen model, display color ... etc
-	active: WorkflowOutput<S>['id'];
+	active?: WorkflowOutput<S>['id'] | null;
 
 	// I/O
 	inputs: WorkflowPort[];

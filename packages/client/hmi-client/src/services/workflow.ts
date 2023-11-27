@@ -304,8 +304,14 @@ export function selectOutput(
 		// the current state was never saved in the outputs prior
 		current = {
 			id: uuidv4(),
-			isSelected: false
-		};
+			type: '',
+			status: WorkflowPortStatus.NOT_CONNECTED,
+			isOptional: false,
+			isSelected: false,
+			operatorStatus: OperatorStatus.DEFAULT,
+			state: null,
+			timestamp: new Date()
+		} as WorkflowOutput<any>;
 		operator.outputs.push(current);
 	}
 
