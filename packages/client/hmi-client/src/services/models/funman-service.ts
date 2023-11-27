@@ -187,8 +187,14 @@ export const renderFumanTrajectories = (
 		points.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
 	) as [number, number];
 
-	const xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
-	const yScale = d3.scaleLinear().domain(yDomain).range([height, 0]);
+	const xScale = d3
+		.scaleLinear()
+		.domain(xDomain)
+		.range([0, width - rightMargin]);
+	const yScale = d3
+		.scaleLinear()
+		.domain(yDomain)
+		.range([height - bottomMargin, 0]);
 
 	// Add the x-axis.
 	svg
@@ -204,7 +210,7 @@ export const renderFumanTrajectories = (
 	// Add the y-axis
 	svg
 		.append('g')
-		.attr('transform', `translate(${rightMargin},${-bottomMargin})`)
+		.attr('transform', `translate(${rightMargin},0)`)
 		.call(
 			d3
 				.axisLeft(yScale)
