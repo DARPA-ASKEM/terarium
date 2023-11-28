@@ -1,5 +1,4 @@
 <template>
-	<!-- stub testing -->
 	<ul>
 		<li v-for="config of modelConfigs" :key="config.id">
 			{{ config.name }}
@@ -35,7 +34,6 @@ const refresh = async (modelId: string) => {
 watch(
 	() => [props.node.inputs[0].value],
 	async () => {
-		console.log('hello');
 		if (props.node.inputs[0].value) {
 			const modelId = props.node.inputs[0].value[0];
 			await refresh(modelId);
