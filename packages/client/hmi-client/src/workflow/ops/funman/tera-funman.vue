@@ -1,123 +1,125 @@
 <template>
-	<div class="header p-buttonset">
-		<Button
-			label="Wizard"
-			severity="secondary"
-			icon="pi pi-sign-in"
-			size="small"
-			:active="activeTab === FunmanTabs.wizard"
-			@click="activeTab = FunmanTabs.wizard"
-		/>
-		<Button
-			label="Notebook"
-			severity="secondary"
-			icon="pi pi-sign-out"
-			size="small"
-			:active="activeTab === FunmanTabs.notebook"
-			@click="activeTab = FunmanTabs.notebook"
-		/>
-		<tera-progress-spinner v-if="showSpinner" :font-size="2" />
-	</div>
-	<div v-if="activeTab === FunmanTabs.wizard" class="content">
-		<div class="container">
-			<h4 class="primary-text">Set validation parameters <i class="pi pi-info-circle" /></h4>
-			<p class="secondary-text">
-				The validator will use these parameters to execute the sanity checks.
-			</p>
-			<div class="section-row timespan">
-				<div class="button-column">
-					<label>Start time</label>
-					<InputNumber inputId="integeronly" v-model="startTime" />
-				</div>
-				<div class="button-column">
-					<label>End time</label>
-					<InputNumber inputId="integeronly" v-model="endTime" />
-				</div>
-				<div class="button-column">
-					<label>Number of steps</label>
-					<InputNumber inputId="integeronly" v-model="numberOfSteps" />
-				</div>
-			</div>
-			<InputText
-				:disabled="true"
-				class="p-inputtext-sm timespan-list"
-				inputId="integeronly"
-				v-model="requestStepListString"
+	<div>
+		<div class="header p-buttonset">
+			<Button
+				label="Wizard"
+				severity="secondary"
+				icon="pi pi-sign-in"
+				size="small"
+				:active="activeTab === FunmanTabs.wizard"
+				@click="activeTab = FunmanTabs.wizard"
 			/>
-			<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-				Show additional options
-			</p>
-			<p v-if="showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-				Hide additional options
-			</p>
-			<div v-if="showAdditionalOptions">
-				<div class="button-column">
-					<label>Tolerance</label>
-					<InputNumber
-						mode="decimal"
-						:min="0"
-						:max="1"
-						:min-fraction-digits="0"
-						:max-fraction-digits="7"
-						v-model="tolerance"
-					/>
-				</div>
-				<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
-				<div class="section-row">
-					<!-- This will definitely require a proper tool tip. -->
-					<label>Select parameters to synthesize <i class="pi pi-info-circle" /></label>
-					<div v-for="(parameter, index) of requestParameters" :key="index" class="button-column">
-						<label>{{ parameter.name }}</label>
-						<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
+			<Button
+				label="Notebook"
+				severity="secondary"
+				icon="pi pi-sign-out"
+				size="small"
+				:active="activeTab === FunmanTabs.notebook"
+				@click="activeTab = FunmanTabs.notebook"
+			/>
+			<tera-progress-spinner v-if="showSpinner" :font-size="2" />
+		</div>
+		<div v-if="activeTab === FunmanTabs.wizard" class="content">
+			<div class="container">
+				<h4 class="primary-text">Set validation parameters <i class="pi pi-info-circle" /></h4>
+				<p class="secondary-text">
+					The validator will use these parameters to execute the sanity checks.
+				</p>
+				<div class="section-row timespan">
+					<div class="button-column">
+						<label>Start time</label>
+						<InputNumber inputId="integeronly" v-model="startTime" />
+					</div>
+					<div class="button-column">
+						<label>End time</label>
+						<InputNumber inputId="integeronly" v-model="endTime" />
+					</div>
+					<div class="button-column">
+						<label>Number of steps</label>
+						<InputNumber inputId="integeronly" v-model="numberOfSteps" />
 					</div>
 				</div>
-			</div>
-			<div class="spacer">
-				<h4>Add sanity checks</h4>
-				<p>Model configurations will be tested against these constraints</p>
-			</div>
-			<tera-constraint-group-form
-				v-for="(cfg, index) in node.state.constraintGroups"
-				:key="index"
-				:config="cfg"
-				:index="index"
-				:model-node-options="modelNodeOptions"
-				@delete-self="deleteConstraintGroupForm"
-				@update-self="updateConstraintGroupForm"
-			/>
+				<InputText
+					:disabled="true"
+					class="p-inputtext-sm timespan-list"
+					inputId="integeronly"
+					v-model="requestStepListString"
+				/>
+				<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
+					Show additional options
+				</p>
+				<p v-if="showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
+					Hide additional options
+				</p>
+				<div v-if="showAdditionalOptions">
+					<div class="button-column">
+						<label>Tolerance</label>
+						<InputNumber
+							mode="decimal"
+							:min="0"
+							:max="1"
+							:min-fraction-digits="0"
+							:max-fraction-digits="7"
+							v-model="tolerance"
+						/>
+					</div>
+					<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
+					<div class="section-row">
+						<!-- This will definitely require a proper tool tip. -->
+						<label>Select parameters to synthesize <i class="pi pi-info-circle" /></label>
+						<div v-for="(parameter, index) of requestParameters" :key="index" class="button-column">
+							<label>{{ parameter.name }}</label>
+							<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
+						</div>
+					</div>
+				</div>
+				<div class="spacer">
+					<h4>Add sanity checks</h4>
+					<p>Model configurations will be tested against these constraints</p>
+				</div>
+				<tera-constraint-group-form
+					v-for="(cfg, index) in node.state.constraintGroups"
+					:key="index"
+					:config="cfg"
+					:index="index"
+					:model-node-options="modelNodeOptions"
+					@delete-self="deleteConstraintGroupForm"
+					@update-self="updateConstraintGroupForm"
+				/>
 
-			<Button label="Add another constraint" size="small" @click="addConstraintForm" />
-		</div>
-		<div class="container output">
-			<h4 class="primary-text">Validation results</h4>
-			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
-			<div v-else>
-				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Output</h4>
+				<Button label="Add another constraint" size="small" @click="addConstraintForm" />
+			</div>
+			<div class="container output">
+				<h4 class="primary-text">Validation results</h4>
+				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+					<h4>No Output</h4>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div v-else class="content">
-		<div class="container">
-			<!-- TODO: notebook functionality -->
-			<p>{{ requestConstraints }}</p>
-		</div>
-		<div class="container">
-			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
-			<div v-else>
-				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Output</h4>
+		<div v-else class="content">
+			<div class="container">
+				<!-- TODO: notebook functionality -->
+				<p>{{ requestConstraints }}</p>
+			</div>
+			<div class="container">
+				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+					<h4>No Output</h4>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div class="footer">
-		<Button
-			v-if="!showSpinner"
-			class="p-button-sm"
-			label="Run"
-			icon="pi pi-play"
-			@click="runMakeQuery"
-		/>
+		<div class="footer">
+			<Button
+				v-if="!showSpinner"
+				class="p-button-sm"
+				label="Run"
+				icon="pi pi-play"
+				@click="runMakeQuery"
+			/>
+		</div>
 	</div>
 </template>
 
