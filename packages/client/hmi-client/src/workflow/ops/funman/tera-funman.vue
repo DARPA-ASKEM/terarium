@@ -132,7 +132,6 @@ import Slider from 'primevue/slider';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import teraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -145,6 +144,8 @@ import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
+
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 enum FunmanTabs {
 	wizard,
@@ -250,14 +251,11 @@ const getStatus = async (runId) => {
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
-	workflowEventBus.emit('append-output-port', {
-		node: props.node,
-		port: {
-			id: uuidv4(),
-			label: `${portLabel} Result`,
-			type: FunmanOperation.outputs[0].type,
-			value: runId
-		}
+	emit('append-output-port', {
+		id: uuidv4(),
+		label: `${portLabel} Result`,
+		type: FunmanOperation.outputs[0].type,
+		value: runId
 	});
 };
 
@@ -274,11 +272,7 @@ const addConstraintForm = () => {
 	}
 	state.constraintGroups.push(newGroup);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const deleteConstraintGroupForm = (data) => {
@@ -288,11 +282,7 @@ const deleteConstraintGroupForm = (data) => {
 	}
 	state.constraintGroups.splice(data.index, 1);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (data) => {
@@ -302,11 +292,7 @@ const updateConstraintGroupForm = (data) => {
 	}
 	state.constraintGroups[data.index] = data.updatedConfig;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Used to set requestStepList.
