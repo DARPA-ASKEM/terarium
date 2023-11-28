@@ -160,13 +160,15 @@
 			:title="currentActiveNode.displayName"
 			:tooltip="'A brief description of the operator.'"
 		>
-			<component
-				:is="registry.getDrilldown(currentActiveNode.operationType)"
-				:node="currentActiveNode"
-				@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
-				@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
-			>
-			</component>
+			<section tabName="Wizard">
+				<component
+					:is="registry.getDrilldown(currentActiveNode.operationType)"
+					:node="currentActiveNode"
+					@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+					@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+				>
+				</component>
+			</section>
 		</tera-drilldown>
 	</Teleport>
 </template>
