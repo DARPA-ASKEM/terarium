@@ -418,10 +418,6 @@ function appendOutputPort(
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
-
-	// if (node.operationType === WorkflowOperationTypes.MODEL) {
-	// 	refreshModelNode(node);
-	// }
 	workflowDirty = true;
 }
 
