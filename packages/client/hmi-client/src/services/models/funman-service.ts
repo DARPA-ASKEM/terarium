@@ -164,8 +164,8 @@ export const renderFumanTrajectories = (
 	element: HTMLElement,
 	processedData: FunmanProcessedData,
 	boxId: string,
-	options: RenderOptions,
-	state: string
+	state: string,
+	options: RenderOptions
 ) => {
 	const width = options.width;
 	const height = options.height;

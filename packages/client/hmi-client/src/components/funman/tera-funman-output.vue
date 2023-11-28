@@ -80,12 +80,12 @@ const renderGraph = async () => {
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
 		processedData,
+		selectedTrajState.value,
 		boxId,
 		{
 			width,
 			height
-		},
-		selectedTrajState.value
+		}
 	);
 };
 
