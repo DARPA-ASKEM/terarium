@@ -154,22 +154,15 @@
 	</tera-infinite-canvas>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
 	<Teleport to="body">
-		<tera-drilldown
+		<component
 			v-if="dialogIsOpened && currentActiveNode"
-			@on-close-clicked="dialogIsOpened = false"
-			:title="currentActiveNode.displayName"
-			:tooltip="'A brief description of the operator.'"
+			:is="registry.getDrilldown(currentActiveNode.operationType)"
+			:node="currentActiveNode"
+			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@close="dialogIsOpened = false"
 		>
-			<section tabName="Wizard">
-				<component
-					:is="registry.getDrilldown(currentActiveNode.operationType)"
-					:node="currentActiveNode"
-					@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
-					@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
-				>
-				</component>
-			</section>
-		</tera-drilldown>
+		</component>
 	</Teleport>
 </template>
 
@@ -178,7 +171,6 @@ import { isArray, cloneDeep, isEqual, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import {
 	Operation,
 	Position,

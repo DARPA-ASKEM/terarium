@@ -3,7 +3,7 @@ import API from '@/api/api';
 import { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
 
-interface FunmanProcessedData {
+export interface FunmanProcessedData {
 	boxes: any[];
 	points: any[];
 	states: string[];
@@ -164,16 +164,20 @@ export const renderFumanTrajectories = (
 	element: HTMLElement,
 	processedData: FunmanProcessedData,
 	boxId: string,
+	state: string,
 	options: RenderOptions
 ) => {
 	const width = options.width;
 	const height = options.height;
+	const topMargin = 10;
+	const rightMargin = 30;
+	const leftMargin = 30;
+	const bottomMargin = 30;
 	const { trajs, states } = processedData;
 
 	const elemSelection = d3.select(element);
 	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
-	const group = svg.append('g');
 
 	const points = trajs.filter((d: any) => d.boxId === boxId);
 
@@ -181,20 +185,68 @@ export const renderFumanTrajectories = (
 	const xDomain = d3.extent(points.map((d) => d.timestep)) as [number, number];
 
 	// Find max/min across all state values
-	const yDomain = d3.extent(points.map((d) => states.map((s) => d[s])).flat()) as [number, number];
+	const yDomain = d3.extent(
+		points.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
+	) as [number, number];
 
-	const xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
-	const yScale = d3.scaleLinear().domain(yDomain).range([height, 0]);
+	const xScale = d3
+		.scaleLinear()
+		.domain(xDomain)
+		.range([leftMargin, width - rightMargin]);
+
+	const yScale = d3
+		.scaleLinear()
+		.domain(yDomain)
+		.range([height - bottomMargin, topMargin]);
+
+	// Add the x-axis.
+	svg
+		.append('g')
+		.attr('transform', `translate(0,${height - bottomMargin})`)
+		.call(
+			d3
+				.axisBottom(xScale)
+				.ticks(width / 60)
+				.tickSizeOuter(0)
+		);
+
+	// Add the y-axis
+	svg
+		.append('g')
+		.attr('transform', `translate(${leftMargin},0)`)
+		.call(
+			d3
+				.axisLeft(yScale)
+				.ticks(height / 60)
+				.tickSizeOuter(0)
+		);
+
+	// Add label for x-axis
+	svg
+		.append('text')
+		.attr('class', 'x label')
+		.attr('text-anchor', 'end')
+		.attr('x', width / 2)
+		.attr('y', height - 2)
+		.text('Timestep');
+
 	const pathFn = d3
 		.line<{ x: number; y: number }>()
 		.x((d) => xScale(d.x))
 		.y((d) => yScale(d.y))
 		.curve(d3.curveBasis);
 
-	states.forEach((s: string) => {
-		const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
-		group.append('path').attr('d', pathFn(path)).style('stroke', '#888').style('fill', 'none');
-	});
+	states
+		.filter((s) => s === state)
+		.forEach((s: string) => {
+			const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
+			svg
+				.append('g')
+				.append('path')
+				.attr('d', pathFn(path))
+				.style('stroke', '#888')
+				.style('fill', 'none');
+		});
 };
 
 const getBoxesDomain = (boxes: FunmanBox[]) => {
