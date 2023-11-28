@@ -1,5 +1,8 @@
+import { Component } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
-import _ from 'lodash';
+import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
 import {
 	Operation,
@@ -10,10 +13,9 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	WorkflowPort
+	WorkflowPort,
+	WorkflowOutput
 } from '@/types/workflow';
-import { v4 as uuidv4 } from 'uuid';
-import { Component } from 'vue';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -276,5 +278,53 @@ export class WorkflowRegistry {
 	remove(name: string) {
 		this.nodeMap.delete(name);
 		this.drilldownMap.delete(name);
+	}
+}
+
+///
+// Operator
+///
+
+/**
+ * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
+ * current state was not previously stored as a WorkflowOutput, this function first saves the current state
+ * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
+ *
+ * @param operator - The operator whose state is to be updated.
+ * @param selectedWorkflowOutputId - The ID of the WorkflowOutput whose data will be used to update the operator's state.
+ */
+
+export function selectOutput(
+	operator: WorkflowNode<any>,
+	selectedWorkflowOutputId: WorkflowOutput<any>['id']
+) {
+	// Check if the current state existed previously in the outputs
+	let current = operator.outputs.find((output) => output.id === operator.active);
+	if (!current) {
+		// the current state was never saved in the outputs prior
+		current = {
+			id: uuidv4(),
+			type: '',
+			status: WorkflowPortStatus.NOT_CONNECTED,
+			isOptional: false
+		} as WorkflowOutput<any>;
+		operator.outputs.push(current);
+	}
+
+	// Update the current state within the outputs
+	current.state = cloneDeep(operator.state);
+	current.operatorStatus = operator.status;
+	current.timestamp = new Date();
+
+	// Update the Operator state with the selected one
+	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
+	if (selected) {
+		operator.state = selected.state;
+		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
+		operator.active = selected.id;
+	} else {
+		logger.warn(
+			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
+		);
 	}
 }
