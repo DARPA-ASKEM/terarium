@@ -79,6 +79,12 @@ yarn workspace hmi-client run dev                       # client development ser
 yarn workspace @uncharted/server-type-generator run dev # typescript model generator
 ```
 
+To generate the typescript models as a single command:
+
+```shell
+yarn workspace @uncharted/server-type-generator run generateTypes
+```
+
 <details>
 <summary><b>Debugging the Client in IntelliJ</b></summary>
 
