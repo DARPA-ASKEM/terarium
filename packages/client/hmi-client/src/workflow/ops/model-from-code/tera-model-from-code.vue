@@ -1,116 +1,120 @@
 <template>
-	<main>
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section>
-			<header>
-				<h5>Code</h5>
-				<Dropdown
-					class="w-full md:w-14rem"
-					v-model="selectedProgrammingLanguage"
-					:options="programmingLanguages"
-					@change="setKernelContext"
-				/>
-				<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
-			</header>
-			<ul>
-				<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
-					<Panel toggleable>
-						<template #header>
-							<section>
-								<h5>{{ name }}</h5>
-								<Button icon="pi pi-pencil" text rounded />
-							</section>
-						</template>
-						<template #icons>
-							<span>
-								<label>Include in process</label>
-								<InputSwitch v-model="codeBlocks[i].includeInProcess" />
-							</span>
-							<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
-						</template>
-						<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
+			<main>
+				<section>
+					<header>
+						<h5>Code</h5>
+						<Dropdown
+							class="w-full md:w-14rem"
+							v-model="selectedProgrammingLanguage"
+							:options="programmingLanguages"
+							@change="setKernelContext"
+						/>
+						<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
+					</header>
+					<ul>
+						<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
+							<Panel toggleable>
+								<template #header>
+									<section>
+										<h5>{{ name }}</h5>
+										<Button icon="pi pi-pencil" text rounded />
+									</section>
+								</template>
+								<template #icons>
+									<span>
+										<label>Include in process</label>
+										<InputSwitch v-model="codeBlocks[i].includeInProcess" />
+									</span>
+									<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
+								</template>
+								<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
 						<template #togglericon="{ collapsed }">
 							<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 						</template> -->
-						<v-ace-editor
-							v-model:value="codeBlocks[i].codeContent"
-							@init="initialize"
-							:lang="codeLanguage"
-							theme="chrome"
-							style="height: 10rem; width: 100%"
-							class="ace-editor"
+								<v-ace-editor
+									v-model:value="codeBlocks[i].codeContent"
+									@init="initialize"
+									:lang="codeLanguage"
+									theme="chrome"
+									style="height: 10rem; width: 100%"
+									class="ace-editor"
+								/>
+							</Panel>
+						</li>
+					</ul>
+					<footer>
+						<span
+							><label>Model framework:</label
+							><Dropdown
+								class="w-full md:w-14rem"
+								v-model="selectedModelFramework"
+								:options="modelFrameworks"
+								@change="setKernelContext"
+						/></span>
+						<Button
+							:disabled="isProcessing"
+							label="Run"
+							icon="pi pi-play"
+							severity="secondary"
+							outlined
+							size="large"
+							@click="handleCode"
 						/>
-					</Panel>
-				</li>
-			</ul>
-			<footer>
-				<span
-					><label>Model framework:</label
-					><Dropdown
-						class="w-full md:w-14rem"
-						v-model="selectedModelFramework"
-						:options="modelFrameworks"
-						@change="setKernelContext"
-				/></span>
-				<Button
-					:disabled="isProcessing"
-					label="Run"
-					icon="pi pi-play"
-					severity="secondary"
-					outlined
-					size="large"
-					@click="handleCode"
-				/>
-			</footer>
-		</section>
-		<section v-if="modelValid === false || previewHTML === ''">
-			<div v-if="isProcessing">
-				<i class="pi pi-spin pi-spinner" :style="{ fontSize: '2rem' }"></i>
-			</div>
-		</section>
-		<section v-if="previewHTML !== ''">
-			<section class="preview">
-				<header>
-					<h5>Preview</h5>
-					<Dropdown
-						class="w-full md:w-14rem"
-						v-model="selectedModelFramework"
-						:options="modelFrameworks"
-					/>
-				</header>
+					</footer>
+				</section>
+				<section v-if="modelValid === false || previewHTML === ''">
+					<div v-if="isProcessing">
+						<i class="pi pi-spin pi-spinner" :style="{ fontSize: '2rem' }"></i>
+					</div>
+				</section>
+				<section v-if="previewHTML !== ''">
+					<section class="preview">
+						<header>
+							<h5>Preview</h5>
+							<Dropdown
+								class="w-full md:w-14rem"
+								v-model="selectedModelFramework"
+								:options="modelFrameworks"
+							/>
+						</header>
 
-				<template v-if="selectedModelFramework === ModelFramework.Petrinet">
-					<!--Potentially put tera-model-diagram here just for petrinets-->
-					<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
-				</template>
-				<template v-if="selectedModelFramework === ModelFramework.Decapodes">
-					<div :innerHTML="previewHTML" />
-				</template>
-				<div class="flex flex-column gap-2">
-					<label>Model name</label>
-					<InputText v-model="modelName" />
-				</div>
-			</section>
-			<footer>
-				<Button
-					:disabled="!modelValid || modelName === ''"
-					label="Save as new model"
-					severity="secondary"
-					outlined
-					size="large"
-					@click="saveAsNewModel"
-				/>
-				<span class="btn-group">
-					<Button label="Cancel" severity="secondary" outlined size="large" />
-					<Button
-						:disabled="!modelValid || modelName === ''"
-						label="Apply changes and close"
-						size="large"
-						@click="getModel"
-					/>
-				</span>
-			</footer>
+						<template v-if="selectedModelFramework === ModelFramework.Petrinet">
+							<!--Potentially put tera-model-diagram here just for petrinets-->
+							<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
+						</template>
+						<template v-if="selectedModelFramework === ModelFramework.Decapodes">
+							<div :innerHTML="previewHTML" />
+						</template>
+						<div class="flex flex-column gap-2">
+							<label>Model name</label>
+							<InputText v-model="modelName" />
+						</div>
+					</section>
+					<footer>
+						<Button
+							:disabled="!modelValid || modelName === ''"
+							label="Save as new model"
+							severity="secondary"
+							outlined
+							size="large"
+							@click="saveAsNewModel"
+						/>
+						<span class="btn-group">
+							<Button label="Cancel" severity="secondary" outlined size="large" />
+							<Button
+								:disabled="!modelValid || modelName === ''"
+								label="Apply changes and close"
+								size="large"
+								@click="getModel"
+							/>
+						</span>
+					</footer>
+				</section>
+			</main>
 		</section>
-	</main>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -131,11 +135,14 @@ import { cloneDeep, isEmpty } from 'lodash';
 import { KernelSessionManager } from '@/services/jupyter';
 import { JSONObject } from '@lumino/coreutils';
 import { logger } from '@/utils/logger';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
 }>();
+
+const emit = defineEmits(['close']);
 
 enum ModelFramework {
 	Petrinet = 'Petrinet',
