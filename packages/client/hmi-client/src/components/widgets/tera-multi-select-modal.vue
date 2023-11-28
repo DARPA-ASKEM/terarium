@@ -33,7 +33,7 @@ defineProps<{
 }>();
 </script>
 
-<style>
+<style scoped>
 .p-dialog.multi-selection-dialog .p-dialog-content {
 	opacity: 0.9;
 	background: inherit;

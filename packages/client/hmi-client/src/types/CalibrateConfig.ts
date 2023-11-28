@@ -7,5 +7,4 @@ export type CalibrateStore = {
 	runId: string;
 	active: boolean;
 	loss?: { [key: string]: number }[];
-	params?: { [key: string]: number };
 };

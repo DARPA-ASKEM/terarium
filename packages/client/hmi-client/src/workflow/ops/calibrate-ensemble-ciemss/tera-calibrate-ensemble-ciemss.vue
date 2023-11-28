@@ -203,7 +203,6 @@ import { ref, shallowRef, computed, watch } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
@@ -228,6 +227,7 @@ const dataLabelPlugin = [ChartDataLabels];
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 enum CalibrateView {
 	Input = 'Input',
@@ -283,11 +283,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const calculateWeights = () => {
@@ -315,11 +311,7 @@ function addMapping() {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 }
 
 const setBarChartData = () => {
@@ -384,11 +376,7 @@ const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // assume only one run for now
@@ -458,11 +446,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	},
 	{ immediate: true }
 );
@@ -473,11 +457,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.extra = extra.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	},
 	{ immediate: true }
 );

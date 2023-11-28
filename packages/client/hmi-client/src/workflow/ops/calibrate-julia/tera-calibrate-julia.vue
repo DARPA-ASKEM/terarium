@@ -90,11 +90,7 @@
 							<th>Parameter</th>
 							<th>Value</th>
 						</thead>
-						<tr
-							v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRunId]
-								?.params"
-							:key="key"
-						>
+						<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
 							<td>
 								<p>{{ key }}</p>
 							</td>
@@ -151,7 +147,6 @@ import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import SelectButton from 'primevue/selectbutton';
 import { getRunResultJulia } from '@/services/models/simulation-service';
@@ -161,6 +156,7 @@ import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operat
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
 
 enum CalibrationView {
 	Input = 'Input',
@@ -187,6 +183,7 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
 const runResults = ref<RunResults>({});
+const runResultParams = ref<Record<string, Record<string, number>>>({});
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const runList = computed(() =>
@@ -209,11 +206,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 onMounted(() => {
@@ -231,11 +224,7 @@ const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Used from button to add new entry to the mapping object
@@ -249,11 +238,7 @@ function addMapping() {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 }
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
@@ -291,21 +276,19 @@ const handleSelectedRunChange = () => {
 		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 
 const lazyLoadCalibrationData = async (runId?: string) => {
 	if (!runId || runResults.value[runId]) return;
 
-	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
-	const csvData = csvParse(resultCsv);
-
-	runResults.value[runId] = csvData as any;
+	const result = await getRunResultJulia(runId, 'result.json');
+	if (result) {
+		const csvData = csvParse(result.csvData);
+		runResults.value[runId] = csvData as any;
+		runResultParams.value[runId] = result.paramVals;
+	}
 };
 watch(
 	() => selectedRunId.value,

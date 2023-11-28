@@ -19,7 +19,6 @@
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
-import { workflowEventBus } from '@/services/workflow';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
 import { v4 as uuidv4 } from 'uuid';
 import { NotebookSession } from '@/types/Types';
@@ -31,6 +30,8 @@ import { ModelTransformerState } from './model-transformer-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelTransformerState>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state']);
+
 const modelConfigurationId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
 	const modelConfirgurationList = props.node?.inputs
@@ -59,10 +60,7 @@ onMounted(async () => {
 		if (notebookSessionId) {
 			// update the node state with the notebook session id
 			state.notebookSessionId = notebookSessionId;
-			workflowEventBus.emit('update-state', {
-				node: props.node,
-				state
-			});
+			emit('update-state', state);
 		}
 	}
 	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
@@ -78,7 +76,7 @@ const addOutputPort = async (data) => {
 	const state = cloneDeep(props.node.state);
 	state.modelId = model?.id;
 	// update node state with the model id
-	workflowEventBus.emit('update-state', { node: props.node, state });
+	emit('update-state', state);
 
 	// set default configuration
 	await addDefaultConfiguration(model);
@@ -87,21 +85,18 @@ const addOutputPort = async (data) => {
 	setTimeout(async () => {
 		const configurationList = await getModelConfigurations(model.id);
 		configurationList.forEach((configuration) => {
-			workflowEventBus.emit('append-output-port', {
-				node: props.node,
-				port: {
-					id: uuidv4(),
-					label: configuration.name,
-					type: 'modelConfigId',
-					value: [configuration.id]
-				}
+			emit('append-output-port', {
+				id: uuidv4(),
+				label: configuration.name,
+				type: 'modelConfigId',
+				value: [configuration.id]
 			});
 		});
 	}, 800);
 };
 </script>
 
-<style>
+<style scoped>
 .background {
 	background: white;
 	height: 100%;

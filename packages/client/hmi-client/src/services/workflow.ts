@@ -10,10 +10,10 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	OperatorInteractionStatus,
 	WorkflowPort
 } from '@/types/workflow';
 import { v4 as uuidv4 } from 'uuid';
+import { Component } from 'vue';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -56,6 +56,7 @@ export const addNode = (
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null,
+			isOptional: false,
 			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
@@ -69,7 +70,6 @@ export const addNode = (
 		})),
 	  */
 		status: OperatorStatus.INVALID,
-		interactionStatus: OperatorInteractionStatus.FOUND,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
@@ -193,15 +193,19 @@ const defaultPortLabels = {
 	datasetId: 'Dataset'
 };
 
-export function getPortLabel({ label, type }: WorkflowPort) {
-	if (label) return label; // Return name of port value
+export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
+	let portLabel = type; // Initialize to port type (fallback)
 
-	// Return default label using port type
-	if (defaultPortLabels[type]) {
-		return defaultPortLabels[type];
+	// Assign to name of port value
+	if (label) portLabel = label;
+	// Assign to default label using port type
+	else if (defaultPortLabels[type]) {
+		portLabel = defaultPortLabels[type];
 	}
 
-	return type; // Show type when it lacks a default name
+	if (isOptional) portLabel = portLabel.concat(' (optional)');
+
+	return portLabel;
 }
 
 /**
@@ -241,3 +245,36 @@ class WorkflowEventEmitter extends EventEmitter {
 }
 
 export const workflowEventBus = new WorkflowEventEmitter();
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Workflow component registry, this is used to
+// dynamically determine which component should be rendered
+/// /////////////////////////////////////////////////////////////////////////////
+export class WorkflowRegistry {
+	nodeMap: Map<string, Component>;
+
+	drilldownMap: Map<string, Component>;
+
+	constructor() {
+		this.nodeMap = new Map();
+		this.drilldownMap = new Map();
+	}
+
+	set(name: string, node: Component, drilldown: Component) {
+		this.nodeMap.set(name, node);
+		this.drilldownMap.set(name, drilldown);
+	}
+
+	getNode(name: string) {
+		return this.nodeMap.get(name);
+	}
+
+	getDrilldown(name: string) {
+		return this.drilldownMap.get(name);
+	}
+
+	remove(name: string) {
+		this.nodeMap.delete(name);
+		this.drilldownMap.delete(name);
+	}
+}
