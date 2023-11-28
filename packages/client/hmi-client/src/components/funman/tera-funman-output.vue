@@ -111,24 +111,12 @@ watch(
 </script>
 
 <style scoped>
-.container {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
 .section-row {
 	display: flex;
 	/* flex-direction: column; */
 	padding: 0.5rem 0rem;
 	align-items: center;
 	gap: 0.8125rem;
-}
-
-.p-chart {
-	width: 100%;
-	height: 200px;
-	margin-top: 0.5em;
 }
 
 .secondary-text {
