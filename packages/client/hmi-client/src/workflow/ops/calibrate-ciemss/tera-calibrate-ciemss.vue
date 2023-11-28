@@ -1,103 +1,105 @@
 <template>
 	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset stretch-content>
-		<template #edit-buttons>
-			<SelectButton
-				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
-				:options="viewOptions"
-				option-value="value"
-			>
-				<template #option="{ option }">
-					<i :class="`${option.icon} p-button-icon-left`" />
-					<span class="p-button-label">{{ option.value }}</span>
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<section>
+			<tera-asset stretch-content>
+				<template #edit-buttons>
+					<SelectButton
+						:model-value="view"
+						@change="if ($event.value) view = $event.value;"
+						:options="viewOptions"
+						option-value="value"
+					>
+						<template #option="{ option }">
+							<i :class="`${option.icon} p-button-icon-left`" />
+							<span class="p-button-label">{{ option.value }}</span>
+						</template>
+					</SelectButton>
 				</template>
-			</SelectButton>
-		</template>
-		<Accordion
-			v-if="view === CalibrationView.Input && modelConfig"
-			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4]"
-		>
-			<AccordionTab :header="modelConfig.configuration.name">
-				<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
-			</AccordionTab>
-			<AccordionTab header="Mapping">
-				<DataTable class="mapping-table" :value="mapping">
-					<Column field="modelVariable">
-						<template #header>
-							<span class="column-header">Model variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<!-- Tom TODO: No v-model -->
-							<Dropdown
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="data[field]"
-								:options="modelColumnNames"
+				<Accordion
+					v-if="view === CalibrationView.Input && modelConfig"
+					:multiple="true"
+					:active-index="[0, 1, 2, 3, 4]"
+				>
+					<AccordionTab :header="modelConfig.configuration.name">
+						<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
+					</AccordionTab>
+					<AccordionTab header="Mapping">
+						<DataTable class="mapping-table" :value="mapping">
+							<Column field="modelVariable">
+								<template #header>
+									<span class="column-header">Model variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<!-- Tom TODO: No v-model -->
+									<Dropdown
+										class="w-full"
+										placeholder="Select a variable"
+										v-model="data[field]"
+										:options="modelColumnNames"
+									/>
+								</template>
+							</Column>
+							<Column field="datasetVariable">
+								<template #header>
+									<span class="column-header">Dataset variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<!-- Tom TODO: No v-model -->
+									<Dropdown
+										class="w-full"
+										placeholder="Select a variable"
+										v-model="data[field]"
+										:options="datasetColumnNames"
+									/>
+								</template>
+							</Column>
+						</DataTable>
+						<div>
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-plus"
+								label="Add mapping"
+								@click="addMapping"
 							/>
-						</template>
-					</Column>
-					<Column field="datasetVariable">
-						<template #header>
-							<span class="column-header">Dataset variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<!-- Tom TODO: No v-model -->
-							<Dropdown
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="data[field]"
-								:options="datasetColumnNames"
-							/>
-						</template>
-					</Column>
-				</DataTable>
-				<div>
-					<Button
-						class="p-button-sm p-button-text"
-						icon="pi pi-plus"
-						label="Add mapping"
-						@click="addMapping"
-					/>
-				</div>
-			</AccordionTab>
-			<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
-				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
-			</AccordionTab>
-			<AccordionTab header="Train / Test ratio">
-				<section class="train-test-ratio">
-					<InputNumber v-model="trainTestValue" />
-					<Slider v-model="trainTestValue" />
-				</section>
-			</AccordionTab>
-		</Accordion>
-		<Accordion
-			v-if="view === CalibrationView.Output && modelConfig"
-			:multiple="true"
-			:active-index="[0, 1]"
-		>
-			<AccordionTab header="Variables">
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:chartConfig="cfg"
-					:initial-data="csvAsset"
-					:mapping="mapping"
-					has-mean-line
-					@configuration-change="chartConfigurationChange(index, $event)"
-				/>
-				<Button
-					class="add-chart"
-					text
-					:outlined="true"
-					@click="addChart"
-					label="Add chart"
-					icon="pi pi-plus"
-				></Button>
-			</AccordionTab>
-			<!-- <AccordionTab header="Calibrated parameter values">
+						</div>
+					</AccordionTab>
+					<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
+						<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
+					</AccordionTab>
+					<AccordionTab header="Train / Test ratio">
+						<section class="train-test-ratio">
+							<InputNumber v-model="trainTestValue" />
+							<Slider v-model="trainTestValue" />
+						</section>
+					</AccordionTab>
+				</Accordion>
+				<Accordion
+					v-if="view === CalibrationView.Output && modelConfig"
+					:multiple="true"
+					:active-index="[0, 1]"
+				>
+					<AccordionTab header="Variables">
+						<tera-simulate-chart
+							v-for="(cfg, index) of node.state.chartConfigs"
+							:key="index"
+							:run-results="runResults"
+							:chartConfig="cfg"
+							:initial-data="csvAsset"
+							:mapping="mapping"
+							has-mean-line
+							@configuration-change="chartConfigurationChange(index, $event)"
+						/>
+						<Button
+							class="add-chart"
+							text
+							:outlined="true"
+							@click="addChart"
+							label="Add chart"
+							icon="pi pi-plus"
+						></Button>
+					</AccordionTab>
+					<!-- <AccordionTab header="Calibrated parameter values">
 				<table class="p-datatable-table">
 					<thead class="p-datatable-thead">
 						<th>Parameter</th>
@@ -113,12 +115,14 @@
 					</tr>
 				</table>
 			</AccordionTab> -->
-		</Accordion>
-		<section v-else-if="!modelConfig" class="emptyState">
-			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
-			<p class="helpMessage">Connect a model configuration and dataset</p>
+				</Accordion>
+				<section v-else-if="!modelConfig" class="emptyState">
+					<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+					<p class="helpMessage">Connect a model configuration and dataset</p>
+				</section>
+			</tera-asset>
 		</section>
-	</tera-asset>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -142,12 +146,13 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import SelectButton from 'primevue/selectbutton';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { CalibrationOperationStateCiemss, CalibrateMap } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
+const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
 enum CalibrationView {
 	Input = 'Input',
