@@ -10,14 +10,9 @@
 				>{{ props.title }}</tera-drilldown-header
 			>
 			<main>
-				<section
-					v-for="(tab, index) in tabs"
-					class="slot-container"
-					:class="{ 'hide-slot': hideSlot(index) }"
-					:key="index"
-				>
-					<component :is="tab" class="drilldown-panel" />
-				</section>
+				<template v-for="(tab, index) in tabs" :key="index">
+					<component :is="tab" class="drilldown-panel" v-show="selectedViewIndex === index" />
+				</template>
 			</main>
 		</section>
 	</aside>
@@ -41,6 +36,11 @@ const slots = useSlots();
  */
 const tabs = computed(() => {
 	if (slots.default?.()) {
+		if (slots.default().length === 1) {
+			// if there is only 1 component we don't need to know the tab name and we can render it.
+			return slots.default();
+		}
+
 		return slots.default().filter((vnode) => vnode.props?.tabName);
 	}
 	return [];
@@ -49,8 +49,6 @@ const tabs = computed(() => {
 const views = computed(() => tabs.value.map((vnode) => vnode.props?.tabName));
 
 const selectedViewIndex = ref<number>(0);
-
-const hideSlot = (index: number) => selectedViewIndex.value !== index;
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
@@ -87,13 +85,6 @@ main {
 	height: calc(100vh - 1rem - var(--drilldown-header-height));
 	display: flex;
 	flex-direction: column;
-}
-
-.slot-container {
-	height: 100%;
-}
-.hide-slot {
-	display: none;
 }
 
 :deep(.drilldown-panel) {
