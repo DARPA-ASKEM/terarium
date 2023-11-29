@@ -23,7 +23,10 @@
 				</div>
 				<div v-if="activeTab === FunmanTabs.wizard" class="content">
 					<div class="container">
-						<h4 class="primary-text">Set validation parameters <i class="pi pi-info-circle" /></h4>
+						<h4 class="primary-text">
+							Set validation parameters
+							<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
+						</h4>
 						<p class="secondary-text">
 							The validator will use these parameters to execute the sanity checks.
 						</p>
@@ -163,6 +166,8 @@ enum FunmanTabs {
 	notebook
 }
 const toast = useToastService();
+const validateParametersToolTip =
+	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
 
 const activeTab = ref(FunmanTabs.wizard);
 const labelOptions = ['any', 'all'];
