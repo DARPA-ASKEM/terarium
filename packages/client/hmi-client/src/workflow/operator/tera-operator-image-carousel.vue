@@ -4,6 +4,7 @@
 			<img :src="slotProps.item" alt="Alt" />
 		</template>
 	</Galleria>
+
 	<div v-else class="no-image">
 		<i class="pi pi-image" />
 	</div>
@@ -16,7 +17,7 @@ import Galleria from 'primevue/galleria';
 
 defineProps({
 	images: {
-		type: Array as PropType<string[]>,
+		type: Array as PropType<string[]>, // image-hrefs and base64 formats work
 		default: () => []
 	}
 });
