@@ -34,14 +34,16 @@
 				<span>1 - 5 of {{ csvContent.length }} rows</span>
 			</section>
 		</template>
-		<Dropdown
-			v-else
-			class="w-full p-button-sm p-button-outlined"
-			:options="datasets"
-			option-label="name"
-			v-model="dataset"
-			placeholder="Select a dataset"
-		/>
+		<template v-else>
+			<Dropdown
+				class="w-full p-button-sm p-button-outlined"
+				:options="datasets"
+				option-label="name"
+				v-model="dataset"
+				placeholder="Select a dataset"
+			/>
+			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+		</template>
 	</main>
 </template>
 
@@ -58,6 +60,7 @@ import MultiSelect from 'primevue/multiselect';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
@@ -123,14 +126,17 @@ section {
 	flex-direction: row;
 	justify-content: space-between;
 }
+
 .toolbar > span {
 	display: flex;
 	align-items: center;
 }
+
 .multiselect-btn {
 	display: flex;
 	flex-direction: column;
 }
+
 .p-multiselect {
 	visibility: hidden;
 	width: 0;
