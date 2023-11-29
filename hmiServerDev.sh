@@ -44,14 +44,14 @@ function deploy_remote() {
 function deploy_local() {
   echo "Deploying containers for development against local services"
   cat containers/common.env containers/secrets.env > containers/.env
-  docker compose --env-file containers/.env --file containers/docker-compose-remote.yml pull
+  docker compose --env-file containers/.env --file containers/docker-compose-local.yml pull
   docker compose --env-file containers/.env --file containers/docker-compose-local.yml up --detach --wait
 }
 
 function deploy_full() {
   echo "Locally run all containers"
   cat containers/common.env containers/secrets.env > containers/.env
-  docker compose --env-file containers/.env --file containers/docker-compose-remote.yml pull
+  docker compose --env-file containers/.env --file containers/docker-compose-full.yml pull
   docker compose --env-file containers/.env --file containers/docker-compose-full.yml up --detach --wait
 }
 
