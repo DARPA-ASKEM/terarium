@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -14,12 +15,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
+import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.data.project.Project;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
@@ -43,6 +46,8 @@ public class ProjectController {
 
 	final ProjectService projectService;
 
+	final ProjectAssetService projectAssetService;
+
 
 	//--------------------------------------------------------------------------
 	//												Basic Project Operations
@@ -52,9 +57,8 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all projects (which are visible to this user)")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Project found.",
-			content = { @Content(mediaType = "application/json",
-				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)) }),
+		@ApiResponse(responseCode = "200", description = "Projects found.",
+			content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)))),
 		@ApiResponse(responseCode = "204", description = "There are no errors, but also no projects for this user",
 			content = @Content),
 		@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions",
@@ -81,7 +85,7 @@ public class ProjectController {
 			// Remove non-active (soft-deleted) projects
 			projects = projects
 				.stream()
-				.filter(project -> project.getDeletedOn() != null)
+				.filter(project -> project.getDeletedOn() == null)
 				.toList();
 		}
 
@@ -89,7 +93,7 @@ public class ProjectController {
 
 		projects.forEach(project -> {
 			try {
-				final List<AssetType> assetTypes = Arrays.asList(AssetType.datasets, AssetType.models, AssetType.publications);
+				final List<ResourceType> assetTypes = Arrays.asList(ResourceType.DATASET, ResourceType.MODEL, ResourceType.PUBLICATION);
 
 				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 				project.setPublicProject(rebacProject.isPublic());
@@ -254,66 +258,108 @@ public class ProjectController {
 	//--------------------------------------------------------------------------
 
 
+	@Operation(summary = "Gets the assets belonging to a specific project, by asset type")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "204", description = "Currently unimplemented. This is all you'll get for now!",
+			content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)))),
+		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions",
+			content = @Content) })
 	@GetMapping("/{id}/assets")
 	@Secured(Roles.USER)
-	public ResponseEntity<Assets> getAssets(
-		@PathVariable("id") final String projectId,
-		@RequestParam("types") final List<AssetType> types
+	public ResponseEntity<List<ProjectAsset>> getAssets(
+		@PathVariable("id") final UUID projectId,
+		@RequestParam("types") final List<ResourceType> types
 	) {
-//		try {
-//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
-//				return ResponseEntity.ok(proxy.getAssets(projectId, types).getBody());
-//			}
-//			return ResponseEntity.notFound().build();
-//		} catch (final Exception e) {
-//			log.error("Error getting project assets", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
-		return ResponseEntity.noContent().build();
+		try {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(new RebacProject(projectId, reBACService))) {
+
+
+				List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
+
+				//TODO we have our Assets. Now we need to actually get them from...?
+
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.notFound().build();
+		} catch (final Exception e) {
+			log.error("Error getting project assets", e);
+			return ResponseEntity.internalServerError().build();
+		}
 
 
 	}
 
+	@Operation(summary = "Creates an asset inside of a given project")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "201", description = "Asset Created",
+			content = { @Content(mediaType = "application/json",
+				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
+		@ApiResponse(responseCode = "500", description = "Error finding project",
+			content = @Content)})
 	@PostMapping("/{id}/assets/{resource_type}/{resource_id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> createAsset(
-		@PathVariable("id") final String projectId,
-		@PathVariable("resource_type") final AssetType type,
+	public ResponseEntity<ProjectAsset> createAsset(
+		@PathVariable("id") final UUID projectId,
+		@PathVariable("resource_type") final ResourceType type,
 		@PathVariable("resource_id") final String resourceId
 	) {
 
 
-//		try {
-//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
-//				return ResponseEntity.ok(proxy.createAsset(projectId, type, resourceId).getBody());
-//			}
-//			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-//		} catch (final Exception e) {
-//			log.error("Error creating project assets", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
 
-		return ResponseEntity.noContent().build();
+
+		try {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+				final Optional<Project> project = projectService.getProject(projectId);
+				if(project.isPresent()) {
+					Project project_actual = project.get();
+					ProjectAsset asset = new ProjectAsset();
+					project_actual.getProjectAssets().add(asset);
+					asset.setProject(project_actual);
+					asset.setResourceType(type);
+					asset.setResourceId(resourceId);
+					asset = projectAssetService.save(asset);
+					return ResponseEntity.status(HttpStatus.CREATED).body(asset);
+				}
+			}
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+		} catch (final Exception e) {
+			log.error("Error creating project assets", e);
+			return ResponseEntity.internalServerError().build();
+		}
 	}
 
+	@Operation(summary = "Deletes an asset inside of a given project")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Asset Deleted",
+			content = { @Content(mediaType = "application/json",
+				schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
+		@ApiResponse(responseCode = "204", description = "User may not have permission to this project",
+			content = @Content),
+		@ApiResponse(responseCode = "500", description = "Error finding project",
+			content = @Content)})
 	@DeleteMapping("/{id}/assets/{resource_type}/{resource_id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteAsset(
-		@PathVariable("id") final String projectId,
-		@PathVariable("resource_type") final AssetType type,
+	public ResponseEntity<UUID> deleteAsset(
+		@PathVariable("id") final UUID projectId,
+		@PathVariable("resource_type") final ResourceType type,
 		@PathVariable("resource_id") final String resourceId
 	) {
 
-//		try {
-//			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
-//				return ResponseEntity.ok(proxy.deleteAsset(projectId, type, resourceId).getBody());
-//			}
-//			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-//		} catch (final Exception e) {
-//			log.error("Error deleting project assets", e);
-//			return ResponseEntity.internalServerError().build();
-//		}
-		return ResponseEntity.noContent().build();
+
+
+		try {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+				ProjectAsset asset = projectAssetService.findByProjectIdAndResourceIdAndResourceType(projectId, resourceId,  type);
+				asset.setDeletedOn(Timestamp.from(Instant.now()));
+				projectAssetService.save(asset);
+
+				return ResponseEntity.ok(asset.getId());
+			}
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+		} catch (final Exception e) {
+			log.error("Error deleting project assets", e);
+			return ResponseEntity.internalServerError().build();
+		}
 	}
 
 	//--------------------------------------------------------------------------

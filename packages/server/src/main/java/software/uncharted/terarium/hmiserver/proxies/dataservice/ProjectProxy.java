@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.data.project.Project;
 
 import java.util.List;
 

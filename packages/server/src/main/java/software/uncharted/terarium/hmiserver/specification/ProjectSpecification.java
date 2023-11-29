@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.specification;
 
 import org.springframework.data.jpa.domain.Specification;
-import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.data.project.Project;
 
 import java.util.UUID;
 

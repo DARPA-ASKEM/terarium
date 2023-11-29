@@ -3,7 +3,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.data.project.Project;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 
 import java.util.List;

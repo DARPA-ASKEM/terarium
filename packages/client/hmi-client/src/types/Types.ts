@@ -58,15 +58,32 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
+export interface Project {
+    id?: string;
+    name: string;
+    description?: string;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
+    projectAssets: ProjectAsset[];
+    /**
+     * @deprecated
+     */
+    assets?: Assets;
+    metadata?: { [index: string]: string };
+    publicProject?: boolean;
+    userPermission?: string;
+}
+
 export interface ProjectAsset {
     id: string;
-    projectId: string;
     resourceId: string;
     resourceType: ResourceType;
     externalRef?: string;
     createdOn: Date;
     updatedOn: Date;
     deletedOn?: Date;
+    project: Project;
 }
 
 export interface Artifact {
@@ -114,19 +131,6 @@ export interface NotebookSession {
     description?: string;
     data: any;
     timestamp: string;
-}
-
-export interface Project {
-    id?: string;
-    name: string;
-    description?: string;
-    createdOn: Date;
-    updatedOn: Date;
-    deletedOn?: Date;
-    assets?: Assets;
-    metadata?: { [index: string]: string };
-    publicProject?: boolean;
-    userPermission?: string;
 }
 
 export interface ResponseId {
@@ -589,14 +593,6 @@ export interface Links {
     self: string;
 }
 
-export interface Concept {
-    id: string;
-    curie: string;
-    type: AssetType;
-    status: OntologicalField;
-    object_id: string;
-}
-
 export interface Assets {
     datasets: Dataset[];
     extractions: Extraction[];
@@ -606,6 +602,14 @@ export interface Assets {
     artifacts: Artifact[];
     code: Code[];
     documents: DocumentAsset[];
+}
+
+export interface Concept {
+    id: string;
+    curie: string;
+    type: AssetType;
+    status: OntologicalField;
+    object_id: string;
 }
 
 export interface Document {
@@ -1063,6 +1067,20 @@ export enum ProvenanceType {
     Workflow = "Workflow",
 }
 
+/**
+ * @deprecated
+ * 
+ * Values:
+ * - `datasets`
+ * - `model_configurations`
+ * - `models`
+ * - `publications`
+ * - `simulations`
+ * - `workflows`
+ * - `artifacts`
+ * - `code`
+ * - `documents`
+ */
 export enum AssetType {
     Datasets = "datasets",
     ModelConfigurations = "model_configurations",

@@ -5,6 +5,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.Arrays;
 
 
+/**
+ * This will be removed in favour of ResourceType
+ */
+@Deprecated
 public enum AssetType {
 	datasets("datasets"),
 	model_configurations("model_configurations"),

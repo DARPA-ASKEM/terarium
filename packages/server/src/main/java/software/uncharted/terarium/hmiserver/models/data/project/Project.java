@@ -1,16 +1,20 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.data.project;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -48,9 +52,16 @@ public class Project implements Serializable {
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
 
+	@OneToMany(mappedBy = "project")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@ToString.Exclude
+	@JsonManagedReference
+	private List<ProjectAsset> projectAssets;
+
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Deprecated
 	private Assets assets;
 
 	@TSOptional
