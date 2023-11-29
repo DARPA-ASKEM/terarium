@@ -1,7 +1,7 @@
 <template>
-	<section>
+	<div class="placeholder-graphic-container">
 		<img :src="placeholderGraphic" alt="Plant icon" />
-	</section>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -35,7 +35,7 @@ const placeholderGraphic = operatorGraphics[props.operationType] ?? plants;
 </script>
 
 <style scoped>
-section {
+.placeholder-graphic-container {
 	display: flex;
 	justify-content: center;
 }

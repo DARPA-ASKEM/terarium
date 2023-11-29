@@ -42,7 +42,7 @@
 				v-model="dataset"
 				placeholder="Select a dataset"
 			/>
-			<slot name="placeholder-graphic" />
+			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
 		</template>
 	</main>
 </template>
@@ -60,6 +60,7 @@ import MultiSelect from 'primevue/multiselect';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{

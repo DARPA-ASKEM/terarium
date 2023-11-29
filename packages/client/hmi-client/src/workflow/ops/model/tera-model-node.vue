@@ -30,7 +30,7 @@
 				option-label="header.name"
 				placeholder="Select a model"
 			/>
-			<slot name="placeholder-graphic" />
+			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
 		</template>
 	</main>
 </template>
@@ -47,6 +47,7 @@ import { WorkflowNode } from '@/types/workflow';
 import SelectButton from 'primevue/selectbutton';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{

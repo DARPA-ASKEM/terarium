@@ -67,11 +67,7 @@
 						@append-output-port="(event: any) => appendOutputPort(node, event)"
 						@append-input-port="(event: any) => appendInputPort(node, event)"
 						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-					>
-						<template #placeholder-graphic>
-							<tera-operator-placeholder-graphic :operation-type="node.operationType" />
-						</template>
-					</component>
+					/>
 				</template>
 			</tera-operator>
 		</template>
@@ -186,7 +182,6 @@ import {
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
