@@ -75,7 +75,7 @@
 
 					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 				</main>
-				<footer>
+				<!-- <footer>
 					<Button
 						outlined
 						:loading="showSpinner"
@@ -83,7 +83,7 @@
 						icon="pi pi-play"
 						@click="runMakeQuery"
 					/>
-				</footer>
+				</footer> -->
 			</div>
 
 			<tera-drilldown-preview title="Validation results">
@@ -92,10 +92,10 @@
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
 				</div>
-				<template #footer>
+				<!-- <template #footer>
 					<Button outlined label="Save as a new model" />
 					<Button label="Close" @click="emit('close')" />
-				</template>
+				</template> -->
 			</tera-drilldown-preview>
 		</section>
 		<section :tabName="FunmanTabs.Notebook">
@@ -104,7 +104,7 @@
 					<!-- TODO: notebook functionality -->
 					<p>{{ requestConstraints }}</p>
 				</main>
-				<footer>
+				<!-- <footer>
 					<Button
 						outlined
 						:loading="showSpinner"
@@ -112,7 +112,7 @@
 						icon="pi pi-play"
 						@click="runMakeQuery"
 					/>
-				</footer>
+				</footer> -->
 			</div>
 			<tera-drilldown-preview title="Validation results">
 				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
@@ -120,12 +120,24 @@
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
 				</div>
-				<template #footer>
+				<!-- <template #footer>
 					<Button outlined label="Save as a new model" />
 					<Button label="Close" @click="emit('close')" />
-				</template>
+				</template> -->
 			</tera-drilldown-preview>
 		</section>
+		<template #footer>
+			<Button
+				outlined
+				:loading="showSpinner"
+				class="run-button"
+				label="Run"
+				icon="pi pi-play"
+				@click="runMakeQuery"
+			/>
+			<Button outlined label="Save as a new model" />
+			<Button label="Close" @click="emit('close')" />
+		</template>
 	</tera-drilldown>
 </template>
 
@@ -375,22 +387,6 @@ watch(
 </script>
 
 <style scoped>
-.content {
-	display: flex;
-	height: 80%;
-	overflow: auto;
-	padding: 1rem 1.5rem 1rem 0rem;
-	align-items: flex-start;
-	gap: 1.5rem;
-	flex: 1 0 0;
-}
-
-.output {
-	border-radius: 0.375rem;
-	background: #fafafa;
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
-}
-
 .container {
 	display: flex;
 	flex-direction: column;
@@ -400,7 +396,7 @@ watch(
 .container > main {
 	flex-grow: 1;
 	overflow-y: auto;
-	padding-bottom: 1rem;
+	width: 100%;
 }
 .container h1 {
 	color: var(--text-color-primary);
@@ -478,5 +474,9 @@ div.section-row.timespan > div > span {
 }
 .green-text:hover {
 	color: var(--text-color-subdued);
+}
+
+.run-button {
+	margin-right: auto;
 }
 </style>

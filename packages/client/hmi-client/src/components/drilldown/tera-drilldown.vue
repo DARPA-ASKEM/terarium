@@ -14,6 +14,9 @@
 					<component :is="tab" v-show="selectedViewIndex === index" />
 				</template>
 			</main>
+			<footer>
+				<slot name="footer" />
+			</footer>
 		</section>
 	</aside>
 </template>
@@ -71,20 +74,20 @@ An extra div here is used to alleviate the impact of these issues a little by al
 than the main application behind the modal when these render issues come, however this is still an issue regardless.
 */
 .overlay-container > section {
-	height: calc(100vh - 1rem);
+	height: calc(100% - 1rem);
 	margin: 0.5rem;
 	background: #fff;
 	border-radius: var(--modal-border-radius);
 	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 main {
-	margin: 0 0 0.5rem;
 	max-width: inherit;
-	/* contentHeight = fullscreen - modalMargin - headerHeight*/
-	height: calc(100vh - 1rem - var(--drilldown-header-height));
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
 }
 
 main > :deep(*) {
@@ -93,6 +96,13 @@ main > :deep(*) {
 	height: 100%;
 	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 	padding: 1rem 1.5rem;
+	gap: 0.5rem;
+}
+
+footer {
+	padding: 1rem 1.5rem;
+	display: flex;
+	justify-content: flex-end;
 	gap: 0.5rem;
 }
 </style>
