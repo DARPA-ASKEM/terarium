@@ -297,6 +297,7 @@ const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
+const isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
@@ -304,7 +305,6 @@ const isWorkflowLoading = ref(false);
 
 const currentActiveNode = ref<WorkflowNode<any> | null>(null);
 const newEdge = ref<WorkflowEdge | undefined>();
-const isMouseOverCanvas = ref<boolean>(false);
 const dialogIsOpened = ref(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
@@ -734,7 +734,7 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	if (!isMouseOverCanvas.value) return;
+	if (!isMouseOverCanvas) return;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
