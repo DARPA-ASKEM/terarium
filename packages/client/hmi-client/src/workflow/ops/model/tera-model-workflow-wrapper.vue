@@ -15,7 +15,7 @@
 
 import { WorkflowNode } from '@/types/workflow';
 import TeraModel from '@/components/model/tera-model.vue';
-import { workflowEventBus } from '@/services/workflow';
+// import { workflowEventBus } from '@/services/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { ModelOperationState } from './model-operation';
 
@@ -27,9 +27,9 @@ const emit = defineEmits(['close']);
 
 // Send refresh event onto the eventBus
 const refreshModelNode = () => {
-	workflowEventBus.emitNodeRefresh({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id
-	});
+	// workflowEventBus.emitNodeRefresh({
+	// 	workflowId: props.node.workflowId,
+	// 	nodeId: props.node.id
+	// });
 };
 </script>
