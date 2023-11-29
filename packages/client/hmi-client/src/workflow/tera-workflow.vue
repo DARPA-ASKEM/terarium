@@ -59,8 +59,6 @@
 				@remove-operator="(event) => removeNode(event)"
 				@remove-edges="removeEdges"
 				@drilldown="(event) => drilldown(event)"
-				:canDrag="isMouseOverCanvas"
-				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
 					<component
@@ -736,6 +734,7 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	if (!isMouseOverCanvas.value) return;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
