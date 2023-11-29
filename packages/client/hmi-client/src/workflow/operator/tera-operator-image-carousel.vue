@@ -4,7 +4,6 @@
 			<img :src="slotProps.item" alt="Alt" />
 		</template>
 	</Galleria>
-
 	<div v-else class="no-image">
 		<i class="pi pi-image" />
 	</div>
