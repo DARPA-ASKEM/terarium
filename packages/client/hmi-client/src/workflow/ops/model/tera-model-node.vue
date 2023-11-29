@@ -22,14 +22,16 @@
 				/>
 			</div>
 		</template>
-		<Dropdown
-			v-else
-			class="w-full p-button-sm p-button-outlined"
-			v-model="selectedModel"
-			:options="models"
-			option-label="header.name"
-			placeholder="Select a model"
-		/>
+		<template v-else>
+			<Dropdown
+				class="w-full p-button-sm p-button-outlined"
+				v-model="selectedModel"
+				:options="models"
+				option-label="header.name"
+				placeholder="Select a model"
+			/>
+			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+		</template>
 	</main>
 </template>
 
@@ -45,6 +47,7 @@ import { WorkflowNode } from '@/types/workflow';
 import SelectButton from 'primevue/selectbutton';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
