@@ -88,6 +88,7 @@ main {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	flex-grow: 1;
 }
 
 main > :deep(*) {
