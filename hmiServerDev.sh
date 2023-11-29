@@ -131,6 +131,10 @@ COMMAND=${COMMAND:-"help"}
 ENVIRONMENT=${ENVIRONMENT:-"remote"}
 SERVER=${SERVER:-"false"}
 
+echo "COMMAND: $COMMAND"
+echo "ENVIRONMENT: $ENVIRONMENT"
+echo "SERVER: $SERVER"
+
 case ${COMMAND} in
   start)
     decrypt_secrets
@@ -205,7 +209,6 @@ case ${COMMAND} in
       stop
         ENVIRONMENT
           remote | local | full (default: remote)  Indicate which containers to stop
-
 
       OTHER COMMANDS:
         encrypt

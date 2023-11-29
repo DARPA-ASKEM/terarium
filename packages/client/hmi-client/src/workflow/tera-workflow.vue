@@ -5,8 +5,8 @@
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		@mouseleave="isMouseOverCanvas = false"
-		@mouseenter="isMouseOverCanvas = true"
+		@mouseleave="setMouseOverCanvas(false)"
+		@mouseenter="setMouseOverCanvas(true)"
 		@focus="() => {}"
 		@blur="() => {}"
 		@drop="onDrop"
@@ -59,8 +59,6 @@
 				@remove-operator="(event) => removeNode(event)"
 				@remove-edges="removeEdges"
 				@drilldown="(event) => drilldown(event)"
-				:canDrag="isMouseOverCanvas"
-				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
 					<component
@@ -154,22 +152,15 @@
 	</tera-infinite-canvas>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
 	<Teleport to="body">
-		<tera-drilldown
+		<component
 			v-if="dialogIsOpened && currentActiveNode"
-			@on-close-clicked="dialogIsOpened = false"
-			:title="currentActiveNode.displayName"
-			:tooltip="'A brief description of the operator.'"
+			:is="registry.getDrilldown(currentActiveNode.operationType)"
+			:node="currentActiveNode"
+			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@close="dialogIsOpened = false"
 		>
-			<section tabName="Wizard">
-				<component
-					:is="registry.getDrilldown(currentActiveNode.operationType)"
-					:node="currentActiveNode"
-					@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
-					@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
-				>
-				</component>
-			</section>
-		</tera-drilldown>
+		</component>
 	</Teleport>
 </template>
 
@@ -178,7 +169,6 @@ import { isArray, cloneDeep, isEqual, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import {
 	Operation,
 	Position,
@@ -271,6 +261,9 @@ import {
 
 import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './ops/code-asset/mod';
 
+// New import style for operators
+import * as ModelConfigOp from './ops/model-config/mod';
+
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -298,6 +291,8 @@ registry.set(DatasetTransformerOperation.name, TeraDatasetTransformerNode, TeraD
 registry.set(ModelTransformerOperation.name, TeraModelTransformerNode, TeraModelTransformer);
 registry.set(FunmanOperation.name, TeraFunmanNode, TeraFunman);
 
+registry.set(ModelConfigOp.name, ModelConfigOp.node, ModelConfigOp.drilldown);
+
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	assetId: string;
@@ -307,6 +302,7 @@ const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
+let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
@@ -314,7 +310,6 @@ const isWorkflowLoading = ref(false);
 
 const currentActiveNode = ref<WorkflowNode<any> | null>(null);
 const newEdge = ref<WorkflowEdge | undefined>();
-const isMouseOverCanvas = ref<boolean>(false);
 const dialogIsOpened = ref(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
@@ -334,6 +329,10 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
+
+const setMouseOverCanvas = (val: boolean) => {
+	isMouseOverCanvas = val;
+};
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -421,10 +420,6 @@ function appendOutputPort(
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
-
-	if (node.operationType === WorkflowOperationTypes.MODEL) {
-		refreshModelNode(node);
-	}
 	workflowDirty = true;
 }
 
@@ -458,6 +453,13 @@ const contextMenuItems = ref([
 		label: 'Model',
 		command: () => {
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Model Configuration',
+		command: () => {
+			workflowService.addNode(wf.value, ModelConfigOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
@@ -744,6 +746,7 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	if (!isMouseOverCanvas) return;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
