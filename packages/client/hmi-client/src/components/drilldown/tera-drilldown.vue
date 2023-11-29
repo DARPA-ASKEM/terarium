@@ -14,7 +14,7 @@
 					<component :is="tab" v-show="selectedViewIndex === index" />
 				</template>
 			</main>
-			<footer>
+			<footer v-if="slots.footer">
 				<slot name="footer" />
 			</footer>
 		</section>
@@ -100,7 +100,7 @@ main > :deep(*) {
 }
 
 footer {
-	padding: 1rem 1.5rem;
+	padding: 0 1.5rem 1rem 1.5rem;
 	display: flex;
 	justify-content: flex-end;
 	gap: 0.5rem;
