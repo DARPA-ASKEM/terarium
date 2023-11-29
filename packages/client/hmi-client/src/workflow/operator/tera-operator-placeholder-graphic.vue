@@ -5,7 +5,6 @@
 </template>
 
 <script setup lang="ts">
-// To add this to a node place <slot name="placeholder-graphic" /> where you would like
 import { WorkflowOperationTypes } from '@/types/workflow';
 import plants from '@/assets/svg/plants.svg';
 import seed from '@/assets/svg/seed.svg';
