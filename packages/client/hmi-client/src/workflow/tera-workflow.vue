@@ -5,8 +5,8 @@
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		@mouseleave="isMouseOverCanvas = false"
-		@mouseenter="isMouseOverCanvas = true"
+		@mouseleave="setMouseOverCanvas(false)"
+		@mouseenter="setMouseOverCanvas(true)"
 		@focus="() => {}"
 		@blur="() => {}"
 		@drop="onDrop"
@@ -297,7 +297,7 @@ const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
-const isMouseOverCanvas: boolean = false;
+let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
@@ -324,6 +324,10 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
+
+const setMouseOverCanvas = (val: boolean) => {
+	isMouseOverCanvas = val;
+};
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
