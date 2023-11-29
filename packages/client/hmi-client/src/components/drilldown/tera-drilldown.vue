@@ -11,7 +11,7 @@
 			>
 			<main>
 				<template v-for="(tab, index) in tabs" :key="index">
-					<component :is="tab" class="drilldown-panel" v-show="selectedViewIndex === index" />
+					<component :is="tab" v-show="selectedViewIndex === index" />
 				</template>
 			</main>
 		</section>
@@ -87,11 +87,12 @@ main {
 	flex-direction: column;
 }
 
-:deep(.drilldown-panel) {
+main > :deep(*) {
 	display: grid;
 	grid-auto-flow: column;
 	height: 100%;
 	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 	padding: 1rem 1.5rem;
+	gap: 0.5rem;
 }
 </style>
