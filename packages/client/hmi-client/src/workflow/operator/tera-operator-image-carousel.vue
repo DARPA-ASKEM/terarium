@@ -29,11 +29,13 @@ defineProps({
 }
 
 .p-galleria:deep(.p-galleria-item-container),
+.p-galleria:deep(.p-galleria-item-container > div),
 .no-image {
-	height: 240px;
-	max-height: 240px;
-	border: 1px solid #e7e9ee;
-	border-radius: 0.5rem;
+	height: 7.5rem;
+	max-height: 7.5rem;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: hidden;
 	background-color: var(--surface-ground);
 }
 
@@ -45,5 +47,6 @@ i {
 
 .p-galleria:deep(img) {
 	background-color: var(--surface-section);
+	max-height: 7.5rem;
 }
 </style>
