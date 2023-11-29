@@ -229,7 +229,10 @@ main > ul:empty {
 	gap: 0.25rem;
 }
 
-:deep(li:hover) {
+/* 	TODO: Now that it's supported this would be a great place to use css nesting.
+	The formatter doesn't recognize it yet though, maybe there could be a way to tweak that? 
+*/
+:deep(main > ul > li:hover) {
 	background-color: var(--surface-highlight);
 }
 
