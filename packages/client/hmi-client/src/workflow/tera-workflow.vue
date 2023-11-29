@@ -5,8 +5,8 @@
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		@mouseleave="isMouseOverCanvas = false"
-		@mouseenter="isMouseOverCanvas = true"
+		@mouseleave="setMouseOverCanvas(false)"
+		@mouseenter="setMouseOverCanvas(true)"
 		@focus="() => {}"
 		@blur="() => {}"
 		@drop="onDrop"
@@ -59,8 +59,6 @@
 				@remove-operator="(event) => removeNode(event)"
 				@remove-edges="removeEdges"
 				@drilldown="(event) => drilldown(event)"
-				:canDrag="isMouseOverCanvas"
-				:isActive="currentActiveNode?.id === node.id"
 			>
 				<template #body>
 					<component
@@ -299,6 +297,7 @@ const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
+let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 
@@ -306,7 +305,6 @@ const isWorkflowLoading = ref(false);
 
 const currentActiveNode = ref<WorkflowNode<any> | null>(null);
 const newEdge = ref<WorkflowEdge | undefined>();
-const isMouseOverCanvas = ref<boolean>(false);
 const dialogIsOpened = ref(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
@@ -326,6 +324,10 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
+
+const setMouseOverCanvas = (val: boolean) => {
+	isMouseOverCanvas = val;
+};
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -736,6 +738,7 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	if (!isMouseOverCanvas) return;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
