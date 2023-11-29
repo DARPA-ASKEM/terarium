@@ -22,14 +22,16 @@
 				/>
 			</div>
 		</template>
-		<Dropdown
-			v-else
-			class="w-full p-button-sm p-button-outlined"
-			v-model="selectedModel"
-			:options="models"
-			option-label="header.name"
-			placeholder="Select a model"
-		/>
+		<template v-else>
+			<Dropdown
+				class="w-full p-button-sm p-button-outlined"
+				v-model="selectedModel"
+				:options="models"
+				option-label="header.name"
+				placeholder="Select a model"
+			/>
+			<slot name="placeholder-graphic" />
+		</template>
 	</main>
 </template>
 
