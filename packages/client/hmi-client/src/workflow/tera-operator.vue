@@ -60,8 +60,6 @@ enum PortDirection {
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	canDrag: boolean;
-	isActive: boolean;
 }>();
 
 const emit = defineEmits([
@@ -103,10 +101,6 @@ const drag = (evt: MouseEvent) => {
 
 	tempX = evt.x;
 	tempY = evt.y;
-
-	if (!props.canDrag) {
-		stopDrag();
-	}
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {

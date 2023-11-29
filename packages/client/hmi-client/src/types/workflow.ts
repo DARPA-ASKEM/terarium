@@ -15,7 +15,8 @@ export enum WorkflowOperationTypes {
 	MODEL_TRANSFORMER = 'ModelTransformer',
 	MODEL_FROM_CODE = 'ModelFromCode',
 	FUNMAN = 'Funman',
-	CODE = 'Code'
+	CODE = 'Code',
+	MODEL_CONFIG = 'ModelConfiguraiton'
 }
 
 export enum OperatorStatus {
