@@ -75,15 +75,6 @@
 
 					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 				</main>
-				<!-- <footer>
-					<Button
-						outlined
-						:loading="showSpinner"
-						label="Run"
-						icon="pi pi-play"
-						@click="runMakeQuery"
-					/>
-				</footer> -->
 			</div>
 
 			<tera-drilldown-preview title="Validation results">
@@ -92,10 +83,6 @@
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
 				</div>
-				<!-- <template #footer>
-					<Button outlined label="Save as a new model" />
-					<Button label="Close" @click="emit('close')" />
-				</template> -->
 			</tera-drilldown-preview>
 		</section>
 		<section :tabName="FunmanTabs.Notebook">
@@ -104,15 +91,6 @@
 					<!-- TODO: notebook functionality -->
 					<p>{{ requestConstraints }}</p>
 				</main>
-				<!-- <footer>
-					<Button
-						outlined
-						:loading="showSpinner"
-						label="Run"
-						icon="pi pi-play"
-						@click="runMakeQuery"
-					/>
-				</footer> -->
 			</div>
 			<tera-drilldown-preview title="Validation results">
 				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
@@ -120,10 +98,6 @@
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
 				</div>
-				<!-- <template #footer>
-					<Button outlined label="Save as a new model" />
-					<Button label="Close" @click="emit('close')" />
-				</template> -->
 			</tera-drilldown-preview>
 		</section>
 		<template #footer>
