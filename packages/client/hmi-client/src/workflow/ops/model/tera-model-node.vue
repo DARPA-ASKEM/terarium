@@ -51,7 +51,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['update-state']);
+const emit = defineEmits(['update-state', 'append-output-port']);
 const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
 
 enum ModelNodeView {
@@ -71,6 +71,11 @@ async function getModelById(modelId: string) {
 		const state = _.cloneDeep(props.node.state);
 		state.modelId = model.value?.id;
 		emit('update-state', state);
+		emit('append-output-port', {
+			type: 'modelId',
+			label: model.value.header.name,
+			value: [model.value.id]
+		});
 	}
 }
 
@@ -87,9 +92,6 @@ onMounted(async () => {
 	const state = props.node.state;
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
-
-		// Force refresh of configs in the workflow node - August 2023
-		emit('update-state', _.cloneDeep(state));
 	}
 });
 </script>

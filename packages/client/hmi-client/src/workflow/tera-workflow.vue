@@ -261,6 +261,9 @@ import {
 
 import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './ops/code-asset/mod';
 
+// New import style for operators
+import * as ModelConfigOp from './ops/model-config/mod';
+
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -287,6 +290,8 @@ registry.set(CodeAssetOperation.name, TeraCodeAssetNode, TeraCodeAssetWrapper);
 registry.set(DatasetTransformerOperation.name, TeraDatasetTransformerNode, TeraDatasetTransformer);
 registry.set(ModelTransformerOperation.name, TeraModelTransformerNode, TeraModelTransformer);
 registry.set(FunmanOperation.name, TeraFunmanNode, TeraFunman);
+
+registry.set(ModelConfigOp.name, ModelConfigOp.node, ModelConfigOp.drilldown);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -415,10 +420,6 @@ function appendOutputPort(
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
-
-	if (node.operationType === WorkflowOperationTypes.MODEL) {
-		refreshModelNode(node);
-	}
 	workflowDirty = true;
 }
 
@@ -452,6 +453,13 @@ const contextMenuItems = ref([
 		label: 'Model',
 		command: () => {
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Model Configuration',
+		command: () => {
+			workflowService.addNode(wf.value, ModelConfigOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
