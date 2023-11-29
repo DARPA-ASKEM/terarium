@@ -10,7 +10,7 @@ export interface FunmanProcessedData {
 	trajs: any[];
 }
 
-interface RenderOptions {
+export interface RenderOptions {
 	width: number;
 	height: number;
 }

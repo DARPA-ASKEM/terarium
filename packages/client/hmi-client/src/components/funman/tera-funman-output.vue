@@ -14,7 +14,7 @@
 	<div class="variables-table">
 		<div class="variables-header">
 			<header
-				v-for="(title, index) in ['Parameter', 'Lower bound', 'Upper bound', '', '']"
+				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '']"
 				:key="index"
 			>
 				{{ title }}
@@ -22,9 +22,16 @@
 		</div>
 		<div v-for="(column, index) in lastTrueBox?.bounds" :key="index">
 			<div class="variables-row" v-if="parameterOptions.includes(index.toString())">
+				<RadioButton v-model="selectedParam" :value="index.toString()" />
 				<div>{{ index.toString() }}</div>
 				<div>{{ column?.lb }}</div>
 				<div>{{ column?.ub }}</div>
+				<TeraFunmanBoundaryChart
+					:fun-model-id="funModelId"
+					:param1="index.toString()"
+					:param2="selectedParam"
+					:timestep="timestep"
+				/>
 			</div>
 		</div>
 	</div>
@@ -36,9 +43,10 @@ import {
 	getQueries,
 	processFunman,
 	renderFumanTrajectories
-	// ,renderFunmanBoundaryChart
 } from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
+import RadioButton from 'primevue/radiobutton';
+import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
 	funModelId: string;
@@ -129,7 +137,7 @@ watch(
 }
 
 .variables-table div {
-	padding: 0.25rem;
+	padding-top: 0.25rem;
 }
 
 .variables-row {
@@ -142,9 +150,5 @@ watch(
 .variables-header {
 	display: grid;
 	grid-template-columns: repeat(6, 1fr) 0.5fr;
-}
-
-header {
-	padding-right: 1rem;
 }
 </style>
