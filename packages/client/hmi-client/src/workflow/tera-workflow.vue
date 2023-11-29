@@ -195,103 +195,41 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { logger } from '@/utils/logger';
-import {
-	ModelOperation,
-	TeraModelWorkflowWrapper,
-	TeraModelNode,
-	ModelOperationState
-} from './ops/model/mod';
-import {
-	SimulateCiemssOperation,
-	TeraSimulateCiemss,
-	TeraSimulateNodeCiemss
-} from './ops/simulate-ciemss/mod';
-import {
-	StratifyMiraOperation,
-	TeraStratifyMira,
-	TeraStratifyNodeMira
-} from './ops/stratify-mira/mod';
-import { DatasetOperation, TeraDatasetWorkflowWrapper, TeraDatasetNode } from './ops/dataset/mod';
-import { FunmanOperation, TeraFunman, TeraFunmanNode } from './ops/funman/mod';
-
-import {
-	CalibrateEnsembleCiemssOperation,
-	TeraCalibrateEnsembleCiemss,
-	TeraCalibrateEnsembleNodeCiemss
-} from './ops/calibrate-ensemble-ciemss/mod';
-import {
-	DatasetTransformerOperation,
-	TeraDatasetTransformer,
-	TeraDatasetTransformerNode
-} from './ops/dataset-transformer/mod';
-import {
-	CalibrationOperationJulia,
-	TeraCalibrateNodeJulia,
-	TeraCalibrateJulia,
-	CalibrationOperationStateJulia
-} from './ops/calibrate-julia/mod';
-import {
-	CalibrationOperationCiemss,
-	TeraCalibrateCiemss,
-	TeraCalibrateNodeCiemss
-} from './ops/calibrate-ciemss/mod';
-import {
-	SimulateEnsembleCiemssOperation,
-	TeraSimulateEnsembleCiemss,
-	TeraSimulateEnsembleNodeCiemss
-} from './ops/simulate-ensemble-ciemss/mod';
-
-import {
-	ModelFromCodeOperation,
-	TeraModelFromCode,
-	TeraModelFromCodeNode
-} from './ops/model-from-code/mod';
-
-import {
-	SimulateJuliaOperation,
-	TeraSimulateJulia,
-	TeraSimulateNodeJulia
-} from './ops/simulate-julia/mod';
-
-import {
-	ModelTransformerOperation,
-	TeraModelTransformer,
-	TeraModelTransformerNode
-} from './ops/model-transformer/mod';
-
-import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './ops/code-asset/mod';
-
-// New import style for operators
+import * as SimulateCiemssOp from './ops/simulate-ciemss/mod';
+import * as StratifyMiraOp from './ops/stratify-mira/mod';
+import * as DatasetOp from './ops/dataset/mod';
+import * as FunmanOp from './ops/funman/mod';
+import * as SimulateEnsembleCiemssOp from './ops/simulate-ensemble-ciemss/mod';
+import * as ModelFromCodeOp from './ops/model-from-code/mod';
+import * as SimulateJuliaOp from './ops/simulate-julia/mod';
+import * as ModelTransformerOp from './ops/model-transformer/mod';
+import * as ModelOp from './ops/model/mod';
 import * as ModelConfigOp from './ops/model-config/mod';
+import * as CalibrateCiemssOp from './ops/calibrate-ciemss/mod';
+import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod';
+import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
+import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
+import * as CodeAssetOp from './ops/code-asset/mod';
 
 const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
 const registry = new workflowService.WorkflowRegistry();
-registry.set(CalibrationOperationJulia.name, TeraCalibrateNodeJulia, TeraCalibrateJulia);
-registry.set(CalibrationOperationCiemss.name, TeraCalibrateNodeCiemss, TeraCalibrateCiemss);
-registry.set(SimulateJuliaOperation.name, TeraSimulateNodeJulia, TeraSimulateJulia);
-registry.set(SimulateCiemssOperation.name, TeraSimulateNodeCiemss, TeraSimulateCiemss);
-registry.set(StratifyMiraOperation.name, TeraStratifyNodeMira, TeraStratifyMira);
-registry.set(ModelFromCodeOperation.name, TeraModelFromCodeNode, TeraModelFromCode);
-registry.set(
-	SimulateEnsembleCiemssOperation.name,
-	TeraSimulateEnsembleNodeCiemss,
-	TeraSimulateEnsembleCiemss
-);
-registry.set(
-	CalibrateEnsembleCiemssOperation.name,
-	TeraCalibrateEnsembleNodeCiemss,
-	TeraCalibrateEnsembleCiemss
-);
-registry.set(ModelOperation.name, TeraModelNode, TeraModelWorkflowWrapper);
-registry.set(DatasetOperation.name, TeraDatasetNode, TeraDatasetWorkflowWrapper);
-registry.set(CodeAssetOperation.name, TeraCodeAssetNode, TeraCodeAssetWrapper);
-registry.set(DatasetTransformerOperation.name, TeraDatasetTransformerNode, TeraDatasetTransformer);
-registry.set(ModelTransformerOperation.name, TeraModelTransformerNode, TeraModelTransformer);
-registry.set(FunmanOperation.name, TeraFunmanNode, TeraFunman);
-
-registry.set(ModelConfigOp.name, ModelConfigOp.node, ModelConfigOp.drilldown);
+registry.registerOp(SimulateJuliaOp);
+registry.registerOp(SimulateCiemssOp);
+registry.registerOp(StratifyMiraOp);
+registry.registerOp(ModelFromCodeOp);
+registry.registerOp(SimulateEnsembleCiemssOp);
+registry.registerOp(DatasetOp);
+registry.registerOp(ModelTransformerOp);
+registry.registerOp(FunmanOp);
+registry.registerOp(ModelOp);
+registry.registerOp(CalibrateEnsembleCiemssOp);
+registry.registerOp(ModelConfigOp);
+registry.registerOp(CalibrateCiemssOp);
+registry.registerOp(DatasetTransformerOp);
+registry.registerOp(CodeAssetOp);
+registry.registerOp(CalibrateJuliaOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -452,7 +390,7 @@ const contextMenuItems = ref([
 	{
 		label: 'Model',
 		command: () => {
-			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+			workflowService.addNode(wf.value, ModelOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
@@ -466,28 +404,28 @@ const contextMenuItems = ref([
 	{
 		label: 'Dataset',
 		command: () => {
-			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
+			workflowService.addNode(wf.value, DatasetOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Dataset Transformer',
 		command: () => {
-			workflowService.addNode(wf.value, DatasetTransformerOperation, newNodePosition);
+			workflowService.addNode(wf.value, DatasetTransformerOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Model Transformer',
 		command: () => {
-			workflowService.addNode(wf.value, ModelTransformerOperation, newNodePosition);
+			workflowService.addNode(wf.value, ModelTransformerOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Stratify Mira',
 		command: () => {
-			workflowService.addNode(wf.value, StratifyMiraOperation, newNodePosition, { state: null });
+			workflowService.addNode(wf.value, StratifyMiraOp.operation, newNodePosition, { state: null });
 			workflowDirty = true;
 		}
 	},
@@ -495,14 +433,14 @@ const contextMenuItems = ref([
 		label: 'Create model',
 		disabled: false,
 		command: () => {
-			workflowService.addNode(wf.value, ModelFromCodeOperation, newNodePosition);
+			workflowService.addNode(wf.value, ModelFromCodeOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Validate model configuration',
 		command: () => {
-			workflowService.addNode(wf.value, FunmanOperation, newNodePosition, { state: null });
+			workflowService.addNode(wf.value, FunmanOp.operation, newNodePosition, { state: null });
 			workflowDirty = true;
 		}
 	},
@@ -512,7 +450,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Simulate',
 				command: () => {
-					workflowService.addNode(wf.value, SimulateJuliaOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateJuliaOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -529,7 +467,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Calibrate',
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperationJulia, newNodePosition);
+					workflowService.addNode(wf.value, CalibrationOp.operationJulia, newNodePosition);
 					workflowDirty = true;
 				}
 			}
@@ -541,7 +479,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Simulate',
 				command: () => {
-					workflowService.addNode(wf.value, SimulateCiemssOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -554,7 +492,7 @@ const contextMenuItems = ref([
 				label: 'Calibrate & Simulate',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
+					workflowService.addNode(wf.value, CalibrationOp.operationCiemss, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -567,7 +505,7 @@ const contextMenuItems = ref([
 				label: 'Simulate ensemble',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, SimulateEnsembleCiemssOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateEnsembleCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -580,7 +518,7 @@ const contextMenuItems = ref([
 				label: 'Calibrate ensemble',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOperation, newNodePosition, {
+					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -611,15 +549,15 @@ function onDrop(event) {
 
 		switch (assetType) {
 			case AssetType.Models:
-				operation = ModelOperation;
+				operation = ModelOp.operation;
 				state = { modelId: assetId };
 				break;
 			case AssetType.Datasets:
-				operation = DatasetOperation;
+				operation = DatasetOp.operation;
 				state = { datasetId: assetId };
 				break;
 			case AssetType.Code:
-				operation = CodeAssetOperation;
+				operation = CodeAssetOp.operation;
 				state = { codeAssetId: assetId };
 				break;
 			default:
