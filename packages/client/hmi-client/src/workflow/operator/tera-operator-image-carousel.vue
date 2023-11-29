@@ -1,12 +1,5 @@
 <template>
-	<Galleria
-		v-if="!isEmpty(images)"
-		:value="images"
-		:numVisible="5"
-		containerStyle="max-width: 640px"
-		:showThumbnails="false"
-		:showIndicators="true"
-	>
+	<Galleria v-if="!isEmpty(images)" :value="images" :showThumbnails="false" :showIndicators="true">
 		<template #item="slotProps">
 			<img :src="slotProps.item" alt="Alt" />
 		</template>
