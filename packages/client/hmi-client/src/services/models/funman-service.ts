@@ -163,7 +163,6 @@ export const getBoxes = (
 export const renderFumanTrajectories = (
 	element: HTMLElement,
 	processedData: FunmanProcessedData,
-	boxId: string,
 	state: string,
 	options: RenderOptions
 ) => {
@@ -179,14 +178,12 @@ export const renderFumanTrajectories = (
 	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 
-	const points = trajs.filter((d: any) => d.boxId === boxId);
-
 	// Find max/min across timesteps
-	const xDomain = d3.extent(points.map((d) => d.timestep)) as [number, number];
+	const xDomain = d3.extent(trajs.map((d) => d.timestep)) as [number, number];
 
 	// Find max/min across all state values
 	const yDomain = d3.extent(
-		points.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
+		trajs.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
 	) as [number, number];
 
 	const xScale = d3
@@ -239,7 +236,7 @@ export const renderFumanTrajectories = (
 	states
 		.filter((s) => s === state)
 		.forEach((s: string) => {
-			const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
+			const path = trajs.map((p: any) => ({ x: p.timestep, y: p[s] }));
 			svg
 				.append('g')
 				.append('path')

@@ -36,6 +36,7 @@ import {
 	getQueries,
 	processFunman,
 	renderFumanTrajectories
+	// ,renderFunmanBoundaryChart
 } from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
 
@@ -50,7 +51,6 @@ const modelStates = ref<string[]>();
 const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
-const boxId = 'box2';
 const lastTrueBox = ref();
 
 const initalizeParameters = async () => {
@@ -77,16 +77,10 @@ const renderGraph = async () => {
 	const height = 250;
 	const funModel = await getQueries(props.funModelId);
 	const processedData = processFunman(funModel);
-	renderFumanTrajectories(
-		trajRef.value as HTMLElement,
-		processedData,
-		boxId,
-		selectedTrajState.value,
-		{
-			width,
-			height
-		}
-	);
+	renderFumanTrajectories(trajRef.value as HTMLElement, processedData, selectedTrajState.value, {
+		width,
+		height
+	});
 };
 
 onMounted(() => {
