@@ -77,17 +77,6 @@
 				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
 			</marker>
 			<marker
-				v-for="i in wf.edges.length"
-				:key="i"
-				:id="`circle${i - 1}`"
-				markerWidth="8"
-				markerHeight="8"
-				refX="5"
-				refY="5"
-			>
-				<circle cx="5" cy="5" r="3" :style="`fill: #1B8073`" />
-			</marker>
-			<marker
 				id="arrow"
 				viewBox="0 0 16 16"
 				refX="8"
@@ -113,21 +102,6 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
-			<marker
-				v-for="i in wf.edges.length"
-				:key="i"
-				:id="`smallArrow${i - 1}`"
-				viewBox="0 0 16 16"
-				refX="8"
-				refY="8"
-				orient="auto"
-				markerWidth="12"
-				markerHeight="12"
-				markerUnits="userSpaceOnUse"
-				xoverflow="visible"
-			>
-				<path d="M 0 0 L 8 8 L 0 16 z" :style="`fill: #1B8073; fill-opacity: 1`"></path>
-			</marker>
 		</template>
 		<template #background>
 			<path
@@ -144,7 +118,7 @@
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#1B8073"
 				stroke-width="2"
-				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
+				marker-start="url(#circle)"
 				:key="index"
 				fill="none"
 			/>
@@ -165,9 +139,8 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep, isEqual, isEmpty } from 'lodash';
+import { isArray, cloneDeep, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -177,8 +150,7 @@ import {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowPortStatus,
-	WorkflowDirection,
-	WorkflowOperationTypes
+	WorkflowDirection
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
@@ -211,7 +183,6 @@ import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 
-const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
 const registry = new workflowService.WorkflowRegistry();
@@ -276,32 +247,6 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-const isEdgeTargetSim = (edge) =>
-	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
-	WorkflowOperationTypes.SIMULATE_JULIA;
-
-const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
-	// FIXME: Need additional design to work out exactly what to show. June 2023
-	const configurationList = await getModelConfigurations(node.state.modelId as string);
-	configurationList.forEach((configuration) => {
-		// Only add new configurations
-		const existingConfig = node.outputs.find((port) => isEqual(port.value, [configuration.id]));
-		if (existingConfig) {
-			existingConfig.label = configuration.name;
-			return;
-		}
-
-		node.outputs.push({
-			id: uuidv4(),
-			type: 'modelConfigId',
-			label: configuration.name,
-			value: [configuration.id],
-			isOptional: false,
-			status: WorkflowPortStatus.NOT_CONNECTED
-		});
-	});
-};
-
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
@@ -351,21 +296,21 @@ const drilldown = (event: WorkflowNode<any>) => {
 	dialogIsOpened.value = true;
 };
 
-workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
-	if (wf.value?.id !== payload.workflowId) return;
-	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
-	if (!node) return;
-
-	if (node.operationType === WorkflowOperationTypes.MODEL) {
-		// This part is a bit hacky and slow. Because we allow multiple instances of the
-		// same model across many nodes in a workflow, they ALL need to be updated. However
-		// this multi-models setup is also somewhat uncommon so I don't want to go out of the way
-		// to communicate "model change" instead of "node change", the former seemingly out of
-		// place when using the WorkflowEventBus mechanism. DC - Aug 2023
-		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
-		nodesToRefresh.forEach(refreshModelNode);
-	}
-});
+// workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
+// 	if (wf.value?.id !== payload.workflowId) return;
+// 	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
+// 	if (!node) return;
+//
+// 	if (node.operationType === WorkflowOperationTypes.MODEL) {
+// 		// This part is a bit hacky and slow. Because we allow multiple instances of the
+// 		// same model across many nodes in a workflow, they ALL need to be updated. However
+// 		// this multi-models setup is also somewhat uncommon so I don't want to go out of the way
+// 		// to communicate "model change" instead of "node change", the former seemingly out of
+// 		// place when using the WorkflowEventBus mechanism. DC - Aug 2023
+// 		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
+// 		nodesToRefresh.forEach(refreshModelNode);
+// 	}
+// });
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
@@ -452,7 +397,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Calibrate',
 				command: () => {
-					workflowService.addNode(wf.value, CalibrateJuliaOp.operationJulia, newNodePosition);
+					workflowService.addNode(wf.value, CalibrateJuliaOp.operation, newNodePosition);
 					workflowDirty = true;
 				}
 			}
@@ -477,7 +422,7 @@ const contextMenuItems = ref([
 				label: 'Calibrate & Simulate',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrateCiemssOp.operationCiemss, newNodePosition, {
+					workflowService.addNode(wf.value, CalibrateCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
