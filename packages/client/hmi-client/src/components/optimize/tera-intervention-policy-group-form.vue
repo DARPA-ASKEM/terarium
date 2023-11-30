@@ -1,0 +1,165 @@
+<template>
+	<div class="policy-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
+		<div>
+			<div v-if="isEditing" class="policy-header">
+				<InputText
+					v-model="policyName"
+					placeholder="Policy bounds"
+					@focusout="emit('update-self', { index, updatedConfig })"
+				/>
+				<i class="pi pi-check i" :style="'cursor: pointer'" @click="onEdit"></i>
+			</div>
+			<div v-else class="policy-header">
+				<h4>{{ props.config.name }}</h4>
+				<i class="pi pi-pencil i" :style="'cursor: pointer'" @click="onEdit"></i>
+			</div>
+		</div>
+		<div class="input-row">
+			<div class="label-and-input">
+				<label for="parameter">Parameter</label>
+				<Dropdown
+					:options="props.modelNodeOptions.parameters"
+					v-model="parameter"
+					placeholder="Select"
+					@update:model-value="emit('update-self', { index, updatedConfig })"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="goal">Goal</label>
+				<Dropdown
+					:options="props.modelNodeOptions.goals"
+					v-model="goal"
+					placeholder="Select"
+					@update:model-value="emit('update-self', { index, updatedConfig })"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="cost-benefit">Cost/Benefit function</label>
+				<Dropdown
+					:options="props.modelNodeOptions.costBenefitFns"
+					v-model="costBenefitFn"
+					placeholder="Select"
+					@update:model-value="emit('update-self', { index, updatedConfig })"
+				/>
+			</div>
+		</div>
+		<div class="input-row">
+			<div class="label-and-input">
+				<label for="start-time">Start time</label>
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="startTime"
+					@update:model-value="emit('update-self', { index, updatedConfig })"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="lower-bound">Lower bound</label>
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="lowerBound"
+					@update:model-value="emit('update-self', { index, updatedConfig })"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="upper-bound">Upper bound</label>
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="upperBound"
+					@update:model-value="emit('update-self', { index, updatedConfig })"
+				/>
+			</div>
+		</div>
+	</div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
+import { InterventionPolicyGroup } from '@/workflow/ops/model-optimize/model-optimize-operation';
+
+const props = defineProps<{
+	modelNodeOptions: Record<string, string[]>;
+	config: InterventionPolicyGroup;
+	index: number;
+}>();
+
+const emit = defineEmits(['update-self', 'delete-self']);
+
+const isEditing = ref<boolean>(false);
+const policyName = ref<string>(props.config.name);
+const parameter = ref<string>(props.config.parameter);
+const goal = ref<string>(props.config.goal);
+const costBenefitFn = ref<string>(props.config.costBenefitFn);
+const startTime = ref<number>(props.config.startTime);
+const lowerBound = ref<number>(props.config.lowerBound);
+const upperBound = ref<number>(props.config.upperBound);
+
+const updatedConfig = computed<InterventionPolicyGroup>(() => ({
+	borderColour: props.config.borderColour,
+	name: policyName.value,
+	parameter: parameter.value,
+	goal: goal.value,
+	costBenefitFn: costBenefitFn.value,
+	startTime: startTime.value,
+	lowerBound: lowerBound.value,
+	upperBound: upperBound.value
+}));
+
+const onEdit = () => {
+	isEditing.value = !isEditing.value;
+};
+</script>
+
+<style scoped>
+.policy-group {
+	margin-top: 1rem;
+	display: flex;
+	padding: 1rem 1rem 1rem 1.5rem;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 0.5rem;
+	border-radius: 0.375rem;
+	background: #fff;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	/* Shadow/medium */
+	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.policy-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.input-row {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.input-row > *:first-child {
+	flex-basis: 40%;
+}
+
+.input-row > *:nth-child(2),
+.input-row > *:nth-child(3) {
+	flex-basis: 30%;
+}
+
+.label-and-input {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+</style>

@@ -259,6 +259,12 @@ import {
 	TeraModelTransformerNode
 } from './ops/model-transformer/mod';
 
+import {
+	ModelOptimizeOperation,
+	TeraModelOptimize,
+	TeraModelOptimizeNode
+} from './ops/model-optimize/mod';
+
 import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './ops/code-asset/mod';
 
 // New import style for operators
@@ -290,6 +296,7 @@ registry.set(CodeAssetOperation.name, TeraCodeAssetNode, TeraCodeAssetWrapper);
 registry.set(DatasetTransformerOperation.name, TeraDatasetTransformerNode, TeraDatasetTransformer);
 registry.set(ModelTransformerOperation.name, TeraModelTransformerNode, TeraModelTransformer);
 registry.set(FunmanOperation.name, TeraFunmanNode, TeraFunman);
+registry.set(ModelOptimizeOperation.name, TeraModelOptimizeNode, TeraModelOptimize);
 
 registry.set(ModelConfigOp.name, ModelConfigOp.node, ModelConfigOp.drilldown);
 
@@ -503,6 +510,13 @@ const contextMenuItems = ref([
 		label: 'Validate model configuration',
 		command: () => {
 			workflowService.addNode(wf.value, FunmanOperation, newNodePosition, { state: null });
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Optimize model',
+		command: () => {
+			workflowService.addNode(wf.value, ModelOptimizeOperation, newNodePosition, { state: null });
 			workflowDirty = true;
 		}
 	},
