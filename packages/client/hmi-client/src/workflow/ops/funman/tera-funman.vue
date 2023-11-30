@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section :tabName="FunmanTabs.Wizard">
-			<div class="container">
+		<div :tabName="FunmanTabs.Wizard">
+			<tera-drilldown-section>
 				<main>
 					<h4 class="primary-text">Set validation parameters <i class="pi pi-info-circle" /></h4>
 					<p class="secondary-text">
@@ -75,16 +75,16 @@
 
 					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 				</main>
-			</div>
-		</section>
-		<section :tabName="FunmanTabs.Notebook">
-			<div class="container">
+			</tera-drilldown-section>
+		</div>
+		<div :tabName="FunmanTabs.Notebook">
+			<tera-drilldown-section>
 				<main>
 					<!-- TODO: notebook functionality -->
 					<p>{{ requestConstraints }}</p>
 				</main>
-			</div>
-		</section>
+			</tera-drilldown-section>
+		</div>
 
 		<template #preview>
 			<tera-drilldown-preview title="Validation results">
@@ -93,6 +93,123 @@
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
 				</div>
+				<p>
+					Lorem ipsum dolor sit amet. Sed accusantium dicta qui laborum asperiores eos voluptatem
+					ducimus et deleniti consequatur. Qui ipsam quia qui sunt voluptatem qui animi molestiae
+					nam expedita distinctio. Et perferendis consequatur ab doloribus quod quo suscipit
+					praesentium rem quam vero vel itaque porro.
+				</p>
+				<p>
+					Ut architecto magni sed vero inventore et beatae perspiciatis 33 internos harum et illo
+					quidem. Eum fugit blanditiis qui recusandae velit aut soluta placeat.
+				</p>
+				<p>
+					Non deleniti quisquam in laboriosam facilis aut laboriosam quos ex animi doloribus in quia
+					animi sit omnis nulla sed ducimus repellat! Et asperiores nobis vel voluptas dolorem hic
+					mollitia nesciunt non cupiditate distinctio qui dolores natus. Est sequi voluptatem ea
+					beatae incidunt eum dolorem tempora cum dolores mollitia id eveniet aliquid.
+				</p>
+				<p>
+					A possimus tempora qui galisum soluta aut sint porro nam veniam illum. Et excepturi
+					consequatur est libero sunt ea quia suscipit et eaque fugit. Sit accusamus sint ea omnis
+					vitae aut incidunt dolor.
+				</p>
+				<p>
+					Hic dolorem iste est iste unde quo incidunt maiores. Et exercitationem sunt est earum enim
+					in quas illo. Et aperiam eveniet aut possimus deserunt aut suscipit exercitationem sit
+					reiciendis quos et magni libero aut animi beatae. Et minus nostrum ab odio praesentium sed
+					sunt laudantium ex cupiditate debitis qui quaerat modi aut nobis dignissimos.
+				</p>
+				<p>
+					Et quia similique ex impedit quam qui harum quaerat aut dolorem cumque ab exercitationem
+					omnis id enim amet ea obcaecati rerum. Sed quasi dolorem ea minus expedita rem adipisci
+					voluptates eum explicabo error non molestiae aperiam. Eos harum consequatur vel quia nemo
+					et adipisci voluptatem et debitis doloremque. Et ullam esse qui numquam libero rem
+					possimus velit.
+				</p>
+				<p>
+					Non itaque illo quo facilis maiores aut consequatur molestias vel porro praesentium. 33
+					reiciendis rerum sed nihil rerum sit corporis dolore non labore ipsam eos mollitia
+					suscipit et ratione fugiat.
+				</p>
+				<p>
+					Qui sunt voluptas aut maiores deleniti et accusantium excepturi sit omnis fuga! Sed dicta
+					aliquid et fugiat temporibus hic ullam natus est numquam dolore.
+				</p>
+				<p>
+					Non minus esse est molestias optio ut incidunt doloribus. Sit atque dolorum est tempore
+					voluptate sit dicta sint et consequatur alias At nulla officiis aut earum eveniet qui
+					maiores galisum. Vel ducimus architecto nam quia necessitatibus eum quaerat enim aut
+					voluptatem impedit et odit magnam qui molestiae atque ea odio cumque. Est mollitia fugiat
+					eum aliquam natus vel commodi rerum et animi repudiandae et ipsa quisquam!
+				</p>
+				<p>
+					Ut esse maxime ad blanditiis voluptatibus qui nostrum voluptas et fuga nihil eos ipsam
+					nobis ut maiores dolores ut placeat consequatur. Et nesciunt quam sed suscipit voluptatem
+					non assumenda voluptatem sed quisquam vitae et reiciendis velit et suscipit quidem?
+				</p>
+				<p>
+					Qui molestiae quod nam officiis sint ut repudiandae minima est cumque galisum eum facilis
+					enim hic nemo animi At deserunt expedita. Ut error consequatur 33 dolor nihil et quia
+					ratione! Non eaque omnis et blanditiis eius eum voluptate aperiam et velit sint ea galisum
+					iusto ut voluptas odio!
+				</p>
+				<p>
+					Est odio sunt hic sunt illo non tempore ratione quo sunt facilis et sapiente error qui
+					facere mollitia. Et asperiores voluptatem et deleniti asperiores eum omnis dolorem a
+					perspiciatis fugiat.
+				</p>
+				<p>
+					Ut voluptas officiis ut veniam voluptate et dolor velit est suscipit fugit ea blanditiis
+					expedita et temporibus impedit qui consequuntur consequuntur. Sit fuga perspiciatis qui
+					quia neque et maiores iste sit repudiandae dolor qui odit consequuntur. Vel galisum facere
+					aut omnis possimus hic distinctio optio sed doloremque molestiae. Ut sapiente consequuntur
+					ea deleniti quaerat est nisi obcaecati hic dolorum voluptas ea enim consequuntur qui
+					eveniet perferendis et asperiores consequatur.
+				</p>
+				<p>
+					Vel reiciendis rerum sed aspernatur architecto et repudiandae modi cum consequatur sequi
+					qui tempore voluptas cum odio quidem. Et quia eligendi est aliquid nostrum et soluta
+					molestiae qui voluptate omnis eum aliquam fugiat quo alias asperiores! Aut saepe dolor ut
+					quis fugit et quas voluptas. Eos labore dolor et quae nihil vel ipsa sapiente eum
+					repudiandae magni.
+				</p>
+				<p>
+					Vel fugit suscipit 33 laborum sunt ut velit quia. Et expedita maiores est nemo doloribus
+					qui mollitia quaerat sed rerum nostrum ab esse voluptatem rem deleniti sequi.
+				</p>
+				<p>
+					Qui reiciendis deserunt in tempore obcaecati est autem officia non architecto vitae aut
+					delectus error. Id maiores dignissimos sed soluta debitis aut fugit veritatis cum adipisci
+					dolorum est maxime galisum ad modi quia ex tempore sunt. In enim culpa aut odit temporibus
+					vel internos similique id voluptatem amet est libero iusto. Est veritatis galisum ad
+					accusantium rerum ut nemo dolores aut tempora deserunt ut iste quisquam ad quaerat ratione
+					hic odit aperiam.
+				</p>
+				<p>
+					Ut laboriosam quae et molestiae minima cum excepturi tempore ea dolores expedita ut quia
+					rerum. Aut fuga quidem vel eligendi tempora est perferendis cupiditate. Eos quam quisquam
+					ut praesentium vitae cum obcaecati fuga et debitis recusandae. Est placeat omnis et minima
+					laborum est tempore dolores et animi itaque et dignissimos inventore.
+				</p>
+				<p>
+					Et dolor culpa aut dolorum omnis qui neque neque. Sit voluptatem minima eos perspiciatis
+					incidunt ut architecto repudiandae et quia corrupti est dolore ipsum ut eius vitae. Est
+					voluptate voluptate non labore quia et expedita laudantium. Ea minus voluptate non nisi
+					delectus non quis tempore qui voluptas internos ex natus galisum.
+				</p>
+				<p>
+					Est dolorem modi et quae quia non porro rerum qui sint Quis. Est ratione vero est
+					molestiae quas et exercitationem porro! Et quasi saepe et culpa nulla id aspernatur
+					perferendis et illum odit. Ab neque recusandae At animi praesentium hic enim quas ad
+					veniam ipsum est accusantium maxime sed vero consequatur.
+				</p>
+				<p>
+					Sit nihil molestiae eos veniam amet et necessitatibus iste. Ut dignissimos illum ut sequi
+					minus sit voluptates vitae. Et modi praesentium rem autem iusto et excepturi nihil a
+					assumenda placeat et temporibus dolorem et quaerat nisi ut distinctio dolorem! Non quia
+					veritatis sed reiciendis nobis aut voluptas voluptatem id porro sapiente ea sint nemo!
+				</p>
 			</tera-drilldown-preview>
 		</template>
 
@@ -130,6 +247,7 @@ import { useToastService } from '@/services/toast';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 const props = defineProps<{
@@ -357,35 +475,6 @@ watch(
 </script>
 
 <style scoped>
-.container {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	overflow: hidden;
-}
-.container > main {
-	flex-grow: 1;
-	overflow-y: auto;
-	width: 100%;
-}
-.container h1 {
-	color: var(--text-color-primary);
-	font-family: Inter;
-	font-size: 1rem;
-	font-style: normal;
-	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
-	letter-spacing: 0.03125rem;
-}
-.container p {
-	font-family: Figtree;
-	font-size: 0.875rem;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
-	letter-spacing: 0.01563rem;
-}
-
 .primary-text {
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */

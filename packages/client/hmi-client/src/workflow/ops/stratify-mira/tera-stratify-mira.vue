@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section :tabName="StratifyTabs.Wizard">
-			<div>
+		<div :tabName="StratifyTabs.Wizard">
+			<tera-drilldown-section>
 				<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
 				<p>The model will be stratified with the following settings.</p>
 				<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
@@ -12,12 +12,14 @@
 					:config="node.state.strataGroup"
 					@update-self="updateStratifyGroupForm"
 				/>
-				<Button label="Stratify" size="small" @click="stratifyModel" />
-				<Button label="Reset" size="small" @click="resetModel" />
-			</div>
-		</section>
-		<section :tabName="StratifyTabs.Notebook">
-			<div class="code-container">
+				<template #footer>
+					<Button label="Stratify" @click="stratifyModel" />
+					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
+				</template>
+			</tera-drilldown-section>
+		</div>
+		<div :tabName="StratifyTabs.Notebook">
+			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -27,9 +29,12 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
-				<Button label="Run" size="small" @click="runCodeStratify" />
-			</div>
-		</section>
+
+				<template #footer>
+					<Button style="margin-right: auto" label="Run" @click="runCodeStratify" />
+				</template>
+			</tera-drilldown-section>
+		</div>
 		<template #preview>
 			<tera-drilldown-preview>
 				<div>
@@ -83,6 +88,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
