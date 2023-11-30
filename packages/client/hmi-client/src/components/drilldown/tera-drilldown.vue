@@ -14,8 +14,8 @@
 					<component :is="tab" v-show="selectedViewIndex === index" />
 				</template>
 
-				<section v-if="slots.shared">
-					<slot name="shared" />
+				<section v-if="slots.preview">
+					<slot name="preview" />
 				</section>
 			</main>
 			<footer v-if="slots.footer">

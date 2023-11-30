@@ -30,19 +30,21 @@
 				<Button label="Run" size="small" @click="runCodeStratify" />
 			</div>
 		</section>
-		<template #shared>
-			<div>
-				<tera-model-diagram
-					v-if="model"
-					ref="teraModelDiagramRef"
-					:model="model"
-					:is-editable="false"
-				/>
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Model Provided</h4>
+		<template #preview>
+			<tera-drilldown-preview>
+				<div>
+					<tera-model-diagram
+						v-if="model"
+						ref="teraModelDiagramRef"
+						:model="model"
+						:is-editable="false"
+					/>
+					<div v-else>
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+						<h4>No Model Provided</h4>
+					</div>
 				</div>
-				<div v-if="model">
+				<template #footer>
 					<InputText
 						v-model="newModelName"
 						placeholder="model name"
@@ -50,12 +52,15 @@
 						class="input-small"
 					/>
 					<Button
+						:disabled="!model"
+						outlined
+						style="margin-right: auto"
 						label="Save as new Model"
-						size="small"
 						@click="() => saveNewModel(newModelName, { addToProject: true })"
 					/>
-				</div>
-			</div>
+					<Button label="Close" @click="emit('close')" />
+				</template>
+			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
 </template>
@@ -77,6 +82,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';

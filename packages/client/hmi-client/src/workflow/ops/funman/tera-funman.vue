@@ -86,7 +86,7 @@
 			</div>
 		</section>
 
-		<template #shared>
+		<template #preview>
 			<tera-drilldown-preview title="Validation results">
 				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 				<div v-else>
