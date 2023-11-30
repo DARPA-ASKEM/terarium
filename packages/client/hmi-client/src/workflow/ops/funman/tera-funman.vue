@@ -79,14 +79,6 @@
 					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 				</main>
 			</div>
-
-			<tera-drilldown-preview title="Validation results">
-				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Output</h4>
-				</div>
-			</tera-drilldown-preview>
 		</section>
 		<section :tabName="FunmanTabs.Notebook">
 			<div class="container">
@@ -95,6 +87,9 @@
 					<p>{{ requestConstraints }}</p>
 				</main>
 			</div>
+		</section>
+
+		<template #preview>
 			<tera-drilldown-preview title="Validation results">
 				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 				<div v-else>
@@ -102,7 +97,8 @@
 					<h4>No Output</h4>
 				</div>
 			</tera-drilldown-preview>
-		</section>
+		</template>
+
 		<template #footer>
 			<Button
 				outlined
