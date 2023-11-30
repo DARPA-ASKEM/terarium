@@ -1,18 +1,31 @@
 <template>
 	<div class="policy-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
-		<div class="policy-header">
-			<InputText
-				v-if="isEditing"
-				v-model="policyName"
-				placeholder="Policy bounds"
-				@focusout="emit('update-self', { index, updatedConfig })"
-			/>
-			<h4 v-else>{{ props.config.name }}</h4>
-			<i
-				:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
-				:style="'cursor: pointer'"
-				@click="onEdit"
-			/>
+		<div class="form-header">
+			<div class="header-items">
+				<InputText
+					v-if="isEditing"
+					v-model="policyName"
+					placeholder="Policy bounds"
+					@focusout="emit('update-self', { index, updatedConfig })"
+				/>
+				<h4 v-else>{{ props.config.name }}</h4>
+				<i
+					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
+					:style="'cursor: pointer'"
+					@click="onEdit"
+				/>
+			</div>
+			<div class="header-items">
+				<label for="active">Active</label>
+				<InputSwitch @change="emit('update-self', { index, updatedConfig })" v-model="active" />
+			</div>
+			<div>
+				<i
+					class="trash-button pi pi-trash"
+					:style="'cursor: pointer'"
+					@click="emit('delete-self')"
+				/>
+			</div>
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">
@@ -80,6 +93,7 @@ import { computed, ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
+import InputSwitch from 'primevue/inputswitch';
 import { InterventionPolicyGroup } from '@/workflow/ops/model-optimize/model-optimize-operation';
 
 const props = defineProps<{
@@ -92,6 +106,7 @@ const emit = defineEmits(['update-self', 'delete-self']);
 
 const isEditing = ref<boolean>(false);
 const policyName = ref<string>(props.config.name);
+const active = ref<boolean>(props.config.isActive);
 const parameter = ref<string>(props.config.parameter);
 const goal = ref<string>(props.config.goal);
 const costBenefitFn = ref<string>(props.config.costBenefitFn);
@@ -102,6 +117,7 @@ const upperBound = ref<number>(props.config.upperBound);
 const updatedConfig = computed<InterventionPolicyGroup>(() => ({
 	borderColour: props.config.borderColour,
 	name: policyName.value,
+	isActive: active.value,
 	parameter: parameter.value,
 	goal: goal.value,
 	costBenefitFn: costBenefitFn.value,
@@ -131,7 +147,21 @@ const onEdit = () => {
 	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
-.policy-header {
+.form-header {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	padding-bottom: 0.5rem;
+}
+
+.form-header > *:first-child {
+	margin-right: auto;
+}
+
+.header-items {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
