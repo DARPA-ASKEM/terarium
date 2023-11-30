@@ -60,8 +60,6 @@ enum PortDirection {
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	canDrag: boolean;
-	isActive: boolean;
 }>();
 
 const emit = defineEmits([
@@ -103,10 +101,6 @@ const drag = (evt: MouseEvent) => {
 
 	tempX = evt.x;
 	tempY = evt.y;
-
-	if (!props.canDrag) {
-		stopDrag();
-	}
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {
@@ -229,7 +223,10 @@ main > ul:empty {
 	gap: 0.25rem;
 }
 
-:deep(li:hover) {
+/* 	TODO: Now that it's supported this would be a great place to use css nesting.
+	The formatter doesn't recognize it yet though, maybe there could be a way to tweak that? 
+*/
+:deep(main > ul > li:hover) {
 	background-color: var(--surface-highlight);
 }
 

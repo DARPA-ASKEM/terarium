@@ -302,6 +302,13 @@ const getStatus = async (simulationId: string) => {
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs.push({
+		selectedRun: runId,
+		selectedVariable: []
+	});
+	emit('update-state', state);
+
 	emit('append-output-port', {
 		type: CalibrationOperationCiemss.outputs[0].type,
 		label: `${portLabel} Result`,
