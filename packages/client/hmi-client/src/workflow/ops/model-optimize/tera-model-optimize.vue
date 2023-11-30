@@ -271,11 +271,12 @@ const debouncedUpdateState = _.debounce(updateState, 500);
 }
 
 .input-and-slider > *:first-child {
-	/* TODO: this doesn't work properly because InputNumber seems to have a min fixed width*/
+	/* TODO: this doesn't work properly because InputNumber seems to have a min fixed width */
 	flex-basis: 10%;
 }
 
 .input-and-slider > *:nth-child(2) {
+	/* TODO: this isn't actually taking up 90% of the space right now */
 	flex-basis: 90%;
 }
 </style>
