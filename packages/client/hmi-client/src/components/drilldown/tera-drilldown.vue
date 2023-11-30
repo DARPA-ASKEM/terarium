@@ -13,6 +13,10 @@
 				<template v-for="(tab, index) in tabs" :key="index">
 					<component :is="tab" v-show="selectedViewIndex === index" />
 				</template>
+
+				<section v-if="slots.shared">
+					<slot name="shared" />
+				</section>
 			</main>
 			<footer v-if="slots.footer">
 				<slot name="footer" />
@@ -78,17 +82,18 @@ than the main application behind the modal when these render issues come, howeve
 	margin: 0.5rem;
 	background: #fff;
 	border-radius: var(--modal-border-radius);
-	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 }
 
 main {
-	max-width: inherit;
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-auto-flow: column;
+	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 	overflow: hidden;
 	flex-grow: 1;
+	padding: 1rem 1.5rem;
+	gap: 0.5rem;
 }
 
 main > :deep(*) {
@@ -96,8 +101,8 @@ main > :deep(*) {
 	grid-auto-flow: column;
 	height: 100%;
 	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-	padding: 1rem 1.5rem;
 	gap: 0.5rem;
+	overflow: hidden;
 }
 
 footer {
