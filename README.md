@@ -109,19 +109,47 @@ If you don't intend to run the backend with a debugger, you can simply kick off 
 ./hmiServerDev.sh start remote run
 ```
 
-<details>
-<summary><b>Debugging the Server in IntelliJ [Out of Date]</b></summary>
-The easiest way to debug the back end is to use the auto-created debug profile in IntelliJ. However first you'll have to
-create a new run config to decrypt the application secrets and then modify the default run profile to include it.
+If you are going to run the server using the Intellij / VSCode debugger, the first step is to decrypt the `application-secrets.properties.encrypted` file:
 
-1) Create a new run profile named "start-server-ide" which runs the `./hmiServerDev start-server-ide` command:
-   ![start-server-ide.png](docs%2Fstart-server-ide.png)
-2) Navigate now to the default created Spring Boot run profile. If you don't have one, create one and set the properties to what you see below.
-   * Add a "Before Launch > Add before launch task" option
-![springboot-config-add-run-options.png](docs%2Fspringboot-config-add-run-options.png)
-   * Select "Run Another Configuration" and select the `start-server-ide` run config you just created. **Slot it first.**
-   * In the _Active profiles_ field, enter `default,secrets`
-![springboot-config-active-profiles.png](docs%2Fspringboot-config-active-profiles.png)
+```shell
+./hmiServerDev.sh decrypt
+```
+
+There should now be a `application-secrets.properties` file in the `packages/server/src/main/resources` dir.
+
+<details>
+<summary><b>Debugging the Server in IntelliJ</b></summary>
+
+1) Create a new run Spring Boot Run/Debug configuration adding the `default`, `secrets`, and `local` profiles:
+   ![server-intellij-config.png](docs/server-intellij-config.png)
+</details>
+
+<details>
+<summary><b>Debugging the Server in VSCode</b></summary>
+
+1) Ensure you have the `Extension Pack for Java` extension pack installed.
+2) Ensure the following configuration is in the `.vscode/launch.json` directory:
+
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "TerariumApplication",
+            "request": "launch",
+            "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
+            "projectName": "server",
+            "args": [
+              "--spring.profiles.active=default,secrets,local"
+            ]
+        }
+    ]
+}
+```
 </details>
 
 ## Testing

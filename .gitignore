@@ -18,7 +18,7 @@ bin/
 nb-configuration.xml
 
 # Visual Studio Code
-.vscode/*
+.vscode/settings.json
 .factorypath
 
 # Nova
