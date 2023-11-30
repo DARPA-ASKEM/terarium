@@ -62,7 +62,14 @@ enum OptimizeTabs {
 }
 
 const activeTab = ref<OptimizeTabs>(OptimizeTabs.wizard);
-const modelNodeOptions = ref<Record<string, string[]>>({
+
+interface PolicyDropdowns {
+	parameters: string[];
+	goals: string[];
+	costBenefitFns: string[];
+}
+
+const modelNodeOptions = ref<PolicyDropdowns>({
 	parameters: ['beta', 'gamma'],
 	goals: ['Minimize', 'Maximize'],
 	costBenefitFns: ['L1 Norm', 'L2 Norm']

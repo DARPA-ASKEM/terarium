@@ -1,18 +1,18 @@
 <template>
 	<div class="policy-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
-		<div>
-			<div v-if="isEditing" class="policy-header">
-				<InputText
-					v-model="policyName"
-					placeholder="Policy bounds"
-					@focusout="emit('update-self', { index, updatedConfig })"
-				/>
-				<i class="pi pi-check i" :style="'cursor: pointer'" @click="onEdit"></i>
-			</div>
-			<div v-else class="policy-header">
-				<h4>{{ props.config.name }}</h4>
-				<i class="pi pi-pencil i" :style="'cursor: pointer'" @click="onEdit"></i>
-			</div>
+		<div class="policy-header">
+			<InputText
+				v-if="isEditing"
+				v-model="policyName"
+				placeholder="Policy bounds"
+				@focusout="emit('update-self', { index, updatedConfig })"
+			/>
+			<h4 v-else>{{ props.config.name }}</h4>
+			<i
+				:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
+				:style="'cursor: pointer'"
+				@click="onEdit"
+			/>
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">
