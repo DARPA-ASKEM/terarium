@@ -24,8 +24,8 @@
 			<div class="variables-row" v-if="parameterOptions.includes(index.toString())">
 				<RadioButton v-model="selectedParam" :value="index.toString()" />
 				<div>{{ index.toString() }}</div>
-				<div>{{ column?.lb }}</div>
-				<div>{{ column?.ub }}</div>
+				<InputText v-model="column.lb" />
+				<InputText v-model="column.ub" />
 				<TeraFunmanBoundaryChart
 					:fun-model-id="funModelId"
 					:param1="index.toString()"
@@ -46,6 +46,7 @@ import {
 } from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
+import InputText from 'primevue/inputtext';
 import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
@@ -113,6 +114,16 @@ watch(
 </script>
 
 <style scoped>
+.p-inputtext {
+	width: 63px;
+	padding: 12px 16px;
+	align-items: center;
+	gap: 16px;
+	align-self: stretch;
+	border-radius: 6px;
+	border: 1px solid var(--00-neutral-300, #c3ccd6);
+	background: var(--White, #fff);
+}
 .section-row {
 	display: flex;
 	/* flex-direction: column; */
