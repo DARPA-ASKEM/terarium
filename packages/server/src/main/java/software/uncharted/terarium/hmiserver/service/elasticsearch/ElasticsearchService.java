@@ -1,33 +1,38 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import java.io.IOException;
+import java.net.URI;
+
+import org.apache.http.HttpHost;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.rest.RestStatus;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
+import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.elasticsearch.indices.ExistsTemplateRequest;
+import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHost;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.ingest.GetPipelineRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.IndexTemplatesExistRequest;
-import org.elasticsearch.rest.RestStatus;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-
-import java.io.IOException;
-import java.net.URI;
 
 @Service
 @Data
@@ -41,8 +46,6 @@ public class ElasticsearchService {
 	private RestTemplate restTemplate;
 
 	private ElasticsearchClient client = null;
-
-	private RestHighLevelClient restHighLevelClient = null;
 
 	private final ElasticsearchConfiguration config;
 
@@ -67,16 +70,13 @@ public class ElasticsearchService {
 			HttpHost.create(config.getUrl())
 		);
 
-		// Create the HLRC
-		this.restHighLevelClient = new RestHighLevelClient(httpClientBuilder);
+		final RestClient httpClient = httpClientBuilder.build();
 
-		// Create the new Java Client with the same low level client
-		final ElasticsearchTransport transport = new RestClientTransport(
-			restHighLevelClient.getLowLevelClient(),
-			new JacksonJsonpMapper(mapper)
-		);
+		// Now you can create an ElasticsearchTransport object using the RestClient
+		final ElasticsearchTransport transport = new RestClientTransport(httpClient, new JacksonJsonpMapper(mapper));
 
-		this.client = new ElasticsearchClient(transport);
+		client = new ElasticsearchClient(transport);
+
 		try {
 			client.ping();
 		} catch (final IOException e) {
@@ -102,8 +102,10 @@ public class ElasticsearchService {
 
 
 	public void createIndex(final String index) throws IOException {
-		final CreateIndexRequest req = new CreateIndexRequest(index);
-		restHighLevelClient.indices().create(req, RequestOptions.DEFAULT);
+
+		final CreateIndexRequest req = new CreateIndexRequest.Builder().index(index).build();
+
+		client.indices().create(req);
 	}
 
 	/**
@@ -113,10 +115,10 @@ public class ElasticsearchService {
 	 * @return True if the index template is contained in the cluster, false otherwise
 	 */
 	public boolean containsIndexTemplate(final String name) {
-		final IndexTemplatesExistRequest request = new IndexTemplatesExistRequest(name);
-		boolean exists = false;
+		final ExistsTemplateRequest req = new ExistsTemplateRequest.Builder().name(name).build();
+		BooleanResponse exists = new BooleanResponse(false);
 		try {
-			exists = restHighLevelClient.indices().existsTemplate(request, RequestOptions.DEFAULT);
+			exists = client.indices().existsTemplate(req);
 		} catch (final ElasticsearchStatusException e) {
 			if (e.status() != RestStatus.NOT_FOUND) {
 				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}", name, e);
@@ -124,7 +126,7 @@ public class ElasticsearchService {
 		} catch (final IOException e) {
 			log.error("Error checking existence of template {}", name, e);
 		}
-		return exists;
+		return exists.value();
 	}
 
 	/**
@@ -139,20 +141,25 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Check if the cluster contains the pipeline with the provided name
+	 * Check if the cluster contains the pipeline with the provided id
 	 *
-	 * @param name The name of the pipeline to check existence for
+	 * @param id The name of the pipeline to check existence for
 	 * @return True if the pipeline is contained in the cluster, false otherwise
 	 */
-	public boolean containsPipeline(final String name) {
-		final GetPipelineRequest request = new GetPipelineRequest(name);
-		boolean exists = false;
+	public boolean containsPipeline(final String id) {
+		final GetPipelineRequest req = new GetPipelineRequest.Builder().id(id).build();
+
 		try {
-			exists = restHighLevelClient.ingest().getPipeline(request, RequestOptions.DEFAULT).isFound();
+			client.ingest().getPipeline(req);
+			return true;
+		} catch (final ElasticsearchStatusException e) {
+			if (e.status() != RestStatus.NOT_FOUND) {
+				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}", id, e);
+			}
 		} catch (final IOException e) {
-			log.error("Error checking existence of pipeline {}", name, e);
+			log.error("Error checking existence of pipeline {}", id, e);
 		}
-		return exists;
+		return false;
 	}
 
 	/**
