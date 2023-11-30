@@ -252,6 +252,11 @@ export const workflowEventBus = new WorkflowEventEmitter();
 // Workflow component registry, this is used to
 // dynamically determine which component should be rendered
 /// /////////////////////////////////////////////////////////////////////////////
+interface OperatorImport {
+	name: string;
+	node: Component;
+	drilldown: Component;
+}
 export class WorkflowRegistry {
 	nodeMap: Map<string, Component>;
 
@@ -265,6 +270,11 @@ export class WorkflowRegistry {
 	set(name: string, node: Component, drilldown: Component) {
 		this.nodeMap.set(name, node);
 		this.drilldownMap.set(name, drilldown);
+	}
+
+	// shortcut
+	registerOp(op: OperatorImport) {
+		this.set(op.name, op.node, op.drilldown);
 	}
 
 	getNode(name: string) {

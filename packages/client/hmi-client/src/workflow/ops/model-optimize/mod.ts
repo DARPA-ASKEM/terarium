@@ -1,3 +1,7 @@
-export * from './model-optimize-operation';
-export { default as TeraModelOptimize } from './tera-model-optimize.vue';
-export { default as TeraModelOptimizeNode } from './tera-model-optimize-node.vue';
+import { ModelOptimizeOperation as operation } from './model-optimize-operation';
+import node from './tera-model-optimize-node.vue';
+import drilldown from './tera-model-optimize.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };

@@ -77,17 +77,6 @@
 				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
 			</marker>
 			<marker
-				v-for="i in wf.edges.length"
-				:key="i"
-				:id="`circle${i - 1}`"
-				markerWidth="8"
-				markerHeight="8"
-				refX="5"
-				refY="5"
-			>
-				<circle cx="5" cy="5" r="3" :style="`fill: #1B8073`" />
-			</marker>
-			<marker
 				id="arrow"
 				viewBox="0 0 16 16"
 				refX="8"
@@ -113,21 +102,6 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
-			<marker
-				v-for="i in wf.edges.length"
-				:key="i"
-				:id="`smallArrow${i - 1}`"
-				viewBox="0 0 16 16"
-				refX="8"
-				refY="8"
-				orient="auto"
-				markerWidth="12"
-				markerHeight="12"
-				markerUnits="userSpaceOnUse"
-				xoverflow="visible"
-			>
-				<path d="M 0 0 L 8 8 L 0 16 z" :style="`fill: #1B8073; fill-opacity: 1`"></path>
-			</marker>
 		</template>
 		<template #background>
 			<path
@@ -144,7 +118,7 @@
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#1B8073"
 				stroke-width="2"
-				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
+				marker-start="url(#circle)"
 				:key="index"
 				fill="none"
 			/>
@@ -165,9 +139,8 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep, isEqual, isEmpty } from 'lodash';
+import { isArray, cloneDeep, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -177,8 +150,7 @@ import {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowPortStatus,
-	WorkflowDirection,
-	WorkflowOperationTypes
+	WorkflowDirection
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
@@ -195,110 +167,42 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { logger } from '@/utils/logger';
-import {
-	ModelOperation,
-	TeraModelWorkflowWrapper,
-	TeraModelNode,
-	ModelOperationState
-} from './ops/model/mod';
-import {
-	SimulateCiemssOperation,
-	TeraSimulateCiemss,
-	TeraSimulateNodeCiemss
-} from './ops/simulate-ciemss/mod';
-import {
-	StratifyMiraOperation,
-	TeraStratifyMira,
-	TeraStratifyNodeMira
-} from './ops/stratify-mira/mod';
-import { DatasetOperation, TeraDatasetWorkflowWrapper, TeraDatasetNode } from './ops/dataset/mod';
-import { FunmanOperation, TeraFunman, TeraFunmanNode } from './ops/funman/mod';
-
-import {
-	CalibrateEnsembleCiemssOperation,
-	TeraCalibrateEnsembleCiemss,
-	TeraCalibrateEnsembleNodeCiemss
-} from './ops/calibrate-ensemble-ciemss/mod';
-import {
-	DatasetTransformerOperation,
-	TeraDatasetTransformer,
-	TeraDatasetTransformerNode
-} from './ops/dataset-transformer/mod';
-import {
-	CalibrationOperationJulia,
-	TeraCalibrateNodeJulia,
-	TeraCalibrateJulia,
-	CalibrationOperationStateJulia
-} from './ops/calibrate-julia/mod';
-import {
-	CalibrationOperationCiemss,
-	TeraCalibrateCiemss,
-	TeraCalibrateNodeCiemss
-} from './ops/calibrate-ciemss/mod';
-import {
-	SimulateEnsembleCiemssOperation,
-	TeraSimulateEnsembleCiemss,
-	TeraSimulateEnsembleNodeCiemss
-} from './ops/simulate-ensemble-ciemss/mod';
-
-import {
-	ModelFromCodeOperation,
-	TeraModelFromCode,
-	TeraModelFromCodeNode
-} from './ops/model-from-code/mod';
-
-import {
-	SimulateJuliaOperation,
-	TeraSimulateJulia,
-	TeraSimulateNodeJulia
-} from './ops/simulate-julia/mod';
-
-import {
-	ModelTransformerOperation,
-	TeraModelTransformer,
-	TeraModelTransformerNode
-} from './ops/model-transformer/mod';
-
-import {
-	ModelOptimizeOperation,
-	TeraModelOptimize,
-	TeraModelOptimizeNode
-} from './ops/model-optimize/mod';
-
-import { TeraCodeAssetNode, CodeAssetOperation, TeraCodeAssetWrapper } from './ops/code-asset/mod';
-
-// New import style for operators
+import * as SimulateCiemssOp from './ops/simulate-ciemss/mod';
+import * as StratifyMiraOp from './ops/stratify-mira/mod';
+import * as DatasetOp from './ops/dataset/mod';
+import * as FunmanOp from './ops/funman/mod';
+import * as SimulateEnsembleCiemssOp from './ops/simulate-ensemble-ciemss/mod';
+import * as ModelFromCodeOp from './ops/model-from-code/mod';
+import * as SimulateJuliaOp from './ops/simulate-julia/mod';
+import * as ModelTransformerOp from './ops/model-transformer/mod';
+import * as ModelOp from './ops/model/mod';
 import * as ModelConfigOp from './ops/model-config/mod';
+import * as CalibrateCiemssOp from './ops/calibrate-ciemss/mod';
+import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod';
+import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
+import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
+import * as CodeAssetOp from './ops/code-asset/mod';
+import * as ModelOptimizeOp from './ops/model-optimize/mod';
 
-const workflowEventBus = workflowService.workflowEventBus;
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
 const registry = new workflowService.WorkflowRegistry();
-registry.set(CalibrationOperationJulia.name, TeraCalibrateNodeJulia, TeraCalibrateJulia);
-registry.set(CalibrationOperationCiemss.name, TeraCalibrateNodeCiemss, TeraCalibrateCiemss);
-registry.set(SimulateJuliaOperation.name, TeraSimulateNodeJulia, TeraSimulateJulia);
-registry.set(SimulateCiemssOperation.name, TeraSimulateNodeCiemss, TeraSimulateCiemss);
-registry.set(StratifyMiraOperation.name, TeraStratifyNodeMira, TeraStratifyMira);
-registry.set(ModelFromCodeOperation.name, TeraModelFromCodeNode, TeraModelFromCode);
-registry.set(
-	SimulateEnsembleCiemssOperation.name,
-	TeraSimulateEnsembleNodeCiemss,
-	TeraSimulateEnsembleCiemss
-);
-registry.set(
-	CalibrateEnsembleCiemssOperation.name,
-	TeraCalibrateEnsembleNodeCiemss,
-	TeraCalibrateEnsembleCiemss
-);
-registry.set(ModelOperation.name, TeraModelNode, TeraModelWorkflowWrapper);
-registry.set(DatasetOperation.name, TeraDatasetNode, TeraDatasetWorkflowWrapper);
-registry.set(CodeAssetOperation.name, TeraCodeAssetNode, TeraCodeAssetWrapper);
-registry.set(DatasetTransformerOperation.name, TeraDatasetTransformerNode, TeraDatasetTransformer);
-registry.set(ModelTransformerOperation.name, TeraModelTransformerNode, TeraModelTransformer);
-registry.set(FunmanOperation.name, TeraFunmanNode, TeraFunman);
-registry.set(ModelOptimizeOperation.name, TeraModelOptimizeNode, TeraModelOptimize);
-
-registry.set(ModelConfigOp.name, ModelConfigOp.node, ModelConfigOp.drilldown);
+registry.registerOp(SimulateJuliaOp);
+registry.registerOp(SimulateCiemssOp);
+registry.registerOp(StratifyMiraOp);
+registry.registerOp(ModelFromCodeOp);
+registry.registerOp(SimulateEnsembleCiemssOp);
+registry.registerOp(DatasetOp);
+registry.registerOp(ModelTransformerOp);
+registry.registerOp(FunmanOp);
+registry.registerOp(ModelOp);
+registry.registerOp(CalibrateEnsembleCiemssOp);
+registry.registerOp(ModelConfigOp);
+registry.registerOp(CalibrateCiemssOp);
+registry.registerOp(DatasetTransformerOp);
+registry.registerOp(CodeAssetOp);
+registry.registerOp(CalibrateJuliaOp);
+registry.registerOp(ModelOptimizeOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -345,32 +249,6 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-const isEdgeTargetSim = (edge) =>
-	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
-	WorkflowOperationTypes.SIMULATE_JULIA;
-
-const refreshModelNode = async (node: WorkflowNode<ModelOperationState>) => {
-	// FIXME: Need additional design to work out exactly what to show. June 2023
-	const configurationList = await getModelConfigurations(node.state.modelId as string);
-	configurationList.forEach((configuration) => {
-		// Only add new configurations
-		const existingConfig = node.outputs.find((port) => isEqual(port.value, [configuration.id]));
-		if (existingConfig) {
-			existingConfig.label = configuration.name;
-			return;
-		}
-
-		node.outputs.push({
-			id: uuidv4(),
-			type: 'modelConfigId',
-			label: configuration.name,
-			value: [configuration.id],
-			isOptional: false,
-			status: WorkflowPortStatus.NOT_CONNECTED
-		});
-	});
-};
-
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
@@ -406,21 +284,6 @@ function appendOutputPort(
 		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
-
-	// FIXME: This is a bit hacky, we should split this out into separate events, or the action
-	// should be built into the Operation directly. What we are doing is to update the internal state
-	// and this feels it is leaking too much low-level information
-	if (node.operationType === WorkflowOperationTypes.CALIBRATION_CIEMSS) {
-		const state = node.state as CalibrationOperationStateJulia;
-		if (state.chartConfigs.length === 0) {
-			// This only ends up showing the output of the first run, perhaps we should consider showing
-			// the output of the last run, or all runs?
-			state.chartConfigs.push({
-				selectedRun: port.value[0],
-				selectedVariable: []
-			});
-		}
-	}
 	workflowDirty = true;
 }
 
@@ -435,22 +298,6 @@ const drilldown = (event: WorkflowNode<any>) => {
 	dialogIsOpened.value = true;
 };
 
-workflowEventBus.on('node-refresh', (payload: { workflowId: string; nodeId: string }) => {
-	if (wf.value?.id !== payload.workflowId) return;
-	const node = wf.value.nodes.find((n) => n.id === payload.nodeId);
-	if (!node) return;
-
-	if (node.operationType === WorkflowOperationTypes.MODEL) {
-		// This part is a bit hacky and slow. Because we allow multiple instances of the
-		// same model across many nodes in a workflow, they ALL need to be updated. However
-		// this multi-models setup is also somewhat uncommon so I don't want to go out of the way
-		// to communicate "model change" instead of "node change", the former seemingly out of
-		// place when using the WorkflowEventBus mechanism. DC - Aug 2023
-		const nodesToRefresh = wf.value.nodes.filter((n) => n.state.modelId === node.state.modelId);
-		nodesToRefresh.forEach(refreshModelNode);
-	}
-});
-
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
@@ -459,7 +306,7 @@ const contextMenuItems = ref([
 	{
 		label: 'Model',
 		command: () => {
-			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+			workflowService.addNode(wf.value, ModelOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
@@ -473,28 +320,28 @@ const contextMenuItems = ref([
 	{
 		label: 'Dataset',
 		command: () => {
-			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
+			workflowService.addNode(wf.value, DatasetOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Dataset Transformer',
 		command: () => {
-			workflowService.addNode(wf.value, DatasetTransformerOperation, newNodePosition);
+			workflowService.addNode(wf.value, DatasetTransformerOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Model Transformer',
 		command: () => {
-			workflowService.addNode(wf.value, ModelTransformerOperation, newNodePosition);
+			workflowService.addNode(wf.value, ModelTransformerOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Stratify Mira',
 		command: () => {
-			workflowService.addNode(wf.value, StratifyMiraOperation, newNodePosition, { state: null });
+			workflowService.addNode(wf.value, StratifyMiraOp.operation, newNodePosition, { state: null });
 			workflowDirty = true;
 		}
 	},
@@ -502,21 +349,23 @@ const contextMenuItems = ref([
 		label: 'Create model',
 		disabled: false,
 		command: () => {
-			workflowService.addNode(wf.value, ModelFromCodeOperation, newNodePosition);
+			workflowService.addNode(wf.value, ModelFromCodeOp.operation, newNodePosition);
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Validate model configuration',
 		command: () => {
-			workflowService.addNode(wf.value, FunmanOperation, newNodePosition, { state: null });
+			workflowService.addNode(wf.value, FunmanOp.operation, newNodePosition, { state: null });
 			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Optimize model',
 		command: () => {
-			workflowService.addNode(wf.value, ModelOptimizeOperation, newNodePosition, { state: null });
+			workflowService.addNode(wf.value, ModelOptimizeOp.operation, newNodePosition, {
+				state: null
+			});
 			workflowDirty = true;
 		}
 	},
@@ -526,7 +375,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Simulate',
 				command: () => {
-					workflowService.addNode(wf.value, SimulateJuliaOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateJuliaOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -543,7 +392,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Calibrate',
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperationJulia, newNodePosition);
+					workflowService.addNode(wf.value, CalibrateJuliaOp.operation, newNodePosition);
 					workflowDirty = true;
 				}
 			}
@@ -555,7 +404,7 @@ const contextMenuItems = ref([
 			{
 				label: 'Simulate',
 				command: () => {
-					workflowService.addNode(wf.value, SimulateCiemssOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -568,7 +417,7 @@ const contextMenuItems = ref([
 				label: 'Calibrate & Simulate',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrationOperationCiemss, newNodePosition, {
+					workflowService.addNode(wf.value, CalibrateCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -581,7 +430,7 @@ const contextMenuItems = ref([
 				label: 'Simulate ensemble',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, SimulateEnsembleCiemssOperation, newNodePosition, {
+					workflowService.addNode(wf.value, SimulateEnsembleCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -594,7 +443,7 @@ const contextMenuItems = ref([
 				label: 'Calibrate ensemble',
 				disabled: false,
 				command: () => {
-					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOperation, newNodePosition, {
+					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOp.operation, newNodePosition, {
 						size: {
 							width: 420,
 							height: 220
@@ -625,15 +474,15 @@ function onDrop(event) {
 
 		switch (assetType) {
 			case AssetType.Models:
-				operation = ModelOperation;
+				operation = ModelOp.operation;
 				state = { modelId: assetId };
 				break;
 			case AssetType.Datasets:
-				operation = DatasetOperation;
+				operation = DatasetOp.operation;
 				state = { datasetId: assetId };
 				break;
 			case AssetType.Code:
-				operation = CodeAssetOperation;
+				operation = CodeAssetOp.operation;
 				state = { codeAssetId: assetId };
 				break;
 			default:

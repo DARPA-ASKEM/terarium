@@ -1,3 +1,7 @@
-export * from './model-transformer-operation';
-export { default as TeraModelTransformer } from './tera-model-transformer.vue';
-export { default as TeraModelTransformerNode } from './tera-model-transformer-node.vue';
+import { ModelTransformerOperation as operation } from './model-transformer-operation';
+import node from './tera-model-transformer-node.vue';
+import drilldown from './tera-model-transformer.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };

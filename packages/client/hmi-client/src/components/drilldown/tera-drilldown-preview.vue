@@ -2,7 +2,7 @@
 	<div class="preview">
 		<div class="content-container">
 			<header>
-				<h5>Preview</h5>
+				<h5>{{ title ?? 'Preview' }}</h5>
 				<Dropdown
 					v-if="options"
 					class="output-dropdown"
@@ -16,30 +16,22 @@
 			</main>
 		</div>
 		<footer>
-			<Button
-				v-if="canSaveAsset"
-				outlined
-				label="Save Model"
-				@click="emit('save-asset')"
-				class="save-asset-button"
-			></Button>
-			<Button outlined label="Cancel" @click="emit('cancel')"></Button>
-			<Button label="Apply Changes and Close" @click="emit('apply-changes')"></Button>
+			<slot name="footer" />
 		</footer>
 	</div>
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 
 defineProps<{
+	title?: string;
 	options?: string[]; // subject to change based on how we want to pass in output data
 	output?: string;
 	canSaveAsset?: boolean;
 }>();
 
-const emit = defineEmits(['cancel', 'apply-changes', 'save-asset', 'update:output']);
+const emit = defineEmits(['update:output']);
 </script>
 
 <style scoped>
@@ -65,9 +57,6 @@ footer {
 	display: flex;
 	justify-content: flex-end;
 	gap: 0.5rem;
-}
-.save-asset-button {
-	margin-right: auto;
 }
 
 header {

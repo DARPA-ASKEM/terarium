@@ -1,3 +1,7 @@
-export * from './dataset-operation';
-export { default as TeraDatasetWorkflowWrapper } from './tera-dataset-workflow-wrapper.vue';
-export { default as TeraDatasetNode } from './tera-dataset-node.vue';
+import { DatasetOperation as operation } from './dataset-operation';
+import node from './tera-dataset-node.vue';
+import drilldown from './tera-dataset-workflow-wrapper.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };
