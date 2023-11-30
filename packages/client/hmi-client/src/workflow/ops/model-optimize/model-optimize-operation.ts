@@ -13,6 +13,12 @@ export interface InterventionPolicyGroup {
 }
 
 export interface ModelOptimizeOperationState {
+	startTime: number;
+	endTime: number;
+	numTimePoints: number;
+	timeUnit: string;
+	numStochasticSamples: number;
+	solverMethod: string;
 	interventionPolicyGroups: InterventionPolicyGroup[];
 }
 
@@ -38,6 +44,12 @@ export const ModelOptimizeOperation: Operation = {
 
 	initState: () => {
 		const init: ModelOptimizeOperationState = {
+			startTime: 0,
+			endTime: 0,
+			numTimePoints: 0,
+			timeUnit: '',
+			numStochasticSamples: 0,
+			solverMethod: '',
 			interventionPolicyGroups: [blankInterventionPolicyGroup]
 		};
 		return init;

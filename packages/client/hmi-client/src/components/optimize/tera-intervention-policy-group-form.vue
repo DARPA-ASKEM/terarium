@@ -31,6 +31,7 @@
 			<div class="label-and-input">
 				<label for="parameter">Parameter</label>
 				<Dropdown
+					class="p-inputtext-sm"
 					:options="props.modelNodeOptions.parameters"
 					v-model="parameter"
 					placeholder="Select"
@@ -40,6 +41,7 @@
 			<div class="label-and-input">
 				<label for="goal">Goal</label>
 				<Dropdown
+					class="p-inputtext-sm"
 					:options="props.modelNodeOptions.goals"
 					v-model="goal"
 					placeholder="Select"
@@ -49,6 +51,7 @@
 			<div class="label-and-input">
 				<label for="cost-benefit">Cost/Benefit function</label>
 				<Dropdown
+					class="p-inputtext-sm"
 					:options="props.modelNodeOptions.costBenefitFns"
 					v-model="costBenefitFn"
 					placeholder="Select"
@@ -70,7 +73,10 @@
 				<label for="lower-bound">Lower bound</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
+					inputId="numericInput"
+					mode="decimal"
+					:min-fraction-digits="1"
+					:max-fraction-digits="3"
 					v-model="lowerBound"
 					@update:model-value="emit('update-self', { index, updatedConfig })"
 				/>
@@ -79,7 +85,10 @@
 				<label for="upper-bound">Upper bound</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
+					inputId="numericInput"
+					mode="decimal"
+					:min-fraction-digits="1"
+					:max-fraction-digits="3"
 					v-model="upperBound"
 					@update:model-value="emit('update-self', { index, updatedConfig })"
 				/>
