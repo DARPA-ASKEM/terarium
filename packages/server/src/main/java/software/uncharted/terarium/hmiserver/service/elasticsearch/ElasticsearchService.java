@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -21,6 +23,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
+import co.elastic.clients.elasticsearch.core.GetRequest;
+import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsTemplateRequest;
@@ -202,4 +212,107 @@ public class ElasticsearchService {
 		}
 		return false;
 	}
+
+	/**
+	 * Search an index using a provided query (can be null for no query)
+	 *
+	 * @param <T>
+	 * @param index
+	 * @param from
+	 * @param size
+	 * @param query
+	 * @param tClass
+	 * @return A list of found documents.
+	 */
+	public <T> List<T> search(String index, int from, int size, Query query, Class<T> tClass) {
+		log.info("Searching: {} from {} size {}", index, from, size);
+
+		final SearchRequest req = new SearchRequest.Builder()
+			.index(index)
+			.from(from)
+			.size(size)
+			.query(query)
+			.build();
+
+		List<T> docs = new ArrayList<T>();
+		try {
+			final SearchResponse<T> res = client.search(req, tClass);
+			for (final Hit<T> hit : res.hits().hits()) {
+				docs.add(hit.source());
+			}
+		} catch (final IOException e) {
+			log.error("Error searching index {}", index, e);
+		}
+		return docs;
+	}
+
+	/**
+	 * Add a document to an index.
+	 *
+	 * @param <T>
+	 * @param index
+	 * @param id
+	 * @param document
+	 */
+	public <T> void index(String index, String id, T document) {
+		log.info("Indexing: {} into {}", id, index);
+
+		final IndexRequest<T> req = new IndexRequest.Builder<T>()
+			.index(index)
+			.document(document)
+			.build();
+
+		try {
+			client.index(req);
+		} catch (final IOException e) {
+			log.error("Error indexing document {} into {}", id, index, e);
+		}
+	}
+
+	/**
+	 * Remove a document from an index.
+	 *
+	 * @param index
+	 * @param id
+	 */
+	public void delete(String index, String id) {
+		log.info("Deleting: {} from {}", id, index);
+
+		final DeleteRequest req = new DeleteRequest.Builder()
+			.index(index)
+			.id(id)
+			.build();
+
+		try {
+			client.delete(req);
+		} catch (final IOException e) {
+			log.error("Error deleting document {} from {}", id, index, e);
+		}
+	}
+
+	/**
+	 * Get a single document by id.
+	 *
+	 * @param <T>
+	 * @param index
+	 * @param id
+	 * @param tClass
+	 * @return
+	 */
+	public <T> T get(String index, String id, Class<T> tClass) {
+		log.info("Getting: {} from {}", id, index);
+
+		final GetRequest req = new GetRequest.Builder()
+			.index(index)
+			.id(id)
+			.build();
+		try {
+			final GetResponse<T> res = client.get(req, tClass);
+			return res.source();
+		} catch (final IOException e) {
+			log.error("Error getting id {} from index {}", id, index, e);
+		}
+		return null;
+	}
+
 }
