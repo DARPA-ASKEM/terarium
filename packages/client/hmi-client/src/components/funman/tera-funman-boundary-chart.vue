@@ -20,8 +20,8 @@ const props = defineProps<{
 }>();
 
 const boundaryRef = ref();
-const width = 200;
-const height = 100;
+const width = 60;
+const height = 60;
 const renderOptions = { width, height };
 
 onMounted(async () => {
