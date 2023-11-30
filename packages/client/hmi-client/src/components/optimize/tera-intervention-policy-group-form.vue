@@ -23,7 +23,7 @@
 				<i
 					class="trash-button pi pi-trash"
 					:style="'cursor: pointer'"
-					@click="emit('delete-self')"
+					@click="emit('delete-self', index)"
 				/>
 			</div>
 		</div>

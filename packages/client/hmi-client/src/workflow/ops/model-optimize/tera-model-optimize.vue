@@ -29,7 +29,7 @@
 							:index="idx"
 							:model-node-options="modelNodeOptions"
 							@update-self="updateInterventionPolicyGroupForm"
-							@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
+							@delete-self="deleteInterverntionPolicyGroupForm"
 						/>
 					</div>
 					<div class="left-side" v-else-if="activeTab === OptimizeTabs.notebook"></div>
