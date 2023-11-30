@@ -32,19 +32,17 @@
 		</section>
 		<template #shared>
 			<div>
-				<div>
-					<tera-model-diagram
-						v-if="model"
-						ref="teraModelDiagramRef"
-						:model="model"
-						:is-editable="false"
-					/>
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
-					</div>
+				<tera-model-diagram
+					v-if="model"
+					ref="teraModelDiagramRef"
+					:model="model"
+					:is-editable="false"
+				/>
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+					<h4>No Model Provided</h4>
 				</div>
-				<footer v-if="model">
+				<div v-if="model">
 					<InputText
 						v-model="newModelName"
 						placeholder="model name"
@@ -56,7 +54,7 @@
 						size="small"
 						@click="() => saveNewModel(newModelName, { addToProject: true })"
 					/>
-				</footer>
+				</div>
 			</div>
 		</template>
 	</tera-drilldown>
