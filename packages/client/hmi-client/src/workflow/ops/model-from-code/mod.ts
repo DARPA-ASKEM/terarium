@@ -1,3 +1,7 @@
-export * from './model-from-code-operation';
-export { default as TeraModelFromCode } from './tera-model-from-code.vue';
-export { default as TeraModelFromCodeNode } from './tera-model-from-code-node.vue';
+import { ModelFromCodeOperation as operation } from './model-from-code-operation';
+import node from './tera-model-from-code-node.vue';
+import drilldown from './tera-model-from-code.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };
