@@ -1,0 +1,71 @@
+<template>
+	<figure>
+		<div ref="content" class="content">
+			<slot />
+		</div>
+		<nav v-if="itemCount > 0">
+			<ul>
+				<li v-for="(_, index) in itemCount" :key="_" @click.stop="move(index)">
+					<i :class="index === currentPage ? 'asset-count-selected-text' : 'asset-count-selected'">
+						{{ index + 1 }}
+					</i>
+				</li>
+				<!--Should appear-->
+				<li v-if="itemCount > 5" class="asset-count-text">(+{{ itemCount }})</li>
+			</ul>
+		</nav>
+	</figure>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+
+const content = ref();
+const currentPage = ref(0);
+const itemCount = ref(0);
+
+function move(movement: number) {
+	if (movement > -1 && movement < itemCount.value) {
+		content.value.children[currentPage.value].style.display = 'none';
+		currentPage.value = movement;
+		content.value.children[currentPage.value].style.display = 'block';
+	}
+}
+
+onMounted(() => {
+	itemCount.value = content.value?.children.length ?? 0;
+	if (itemCount.value > 0) move(0);
+});
+</script>
+
+<style scoped>
+.content > :deep(*) {
+	display: none;
+}
+
+nav {
+	text-align: center;
+	color: var(--text-color-subdued);
+
+	& > ul {
+		display: flex;
+		align-items: center;
+		list-style: none;
+
+		& > li {
+			white-space: nowrap;
+			padding: 0.25rem;
+			border-radius: var(--border-radius);
+
+			&:hover {
+				background-color: var(--surface-highlight);
+			}
+
+			& .asset-count-selected-text {
+				font-weight: var(--font-weight-semibold);
+				color: var(--text-color-primary);
+			}
+		}
+	}
+}
+</style>

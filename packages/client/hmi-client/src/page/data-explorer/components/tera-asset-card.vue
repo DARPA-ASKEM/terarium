@@ -37,6 +37,7 @@
 			<ul class="snippets" v-if="snippets">
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
+
 			<div
 				class="description"
 				v-if="resourceType === ResourceType.MODEL"
@@ -62,61 +63,39 @@
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
 		<aside class="preview-and-options">
-			<figure
-				v-if="resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects"
-			>
-				<template v-if="relatedAsset">
+			<tera-carousel v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)">
+				<div v-for="(extraction, index) in extractions" :key="index">
 					<img
-						v-if="relatedAsset.properties.image"
-						:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
+						v-if="extraction.properties.image"
+						:src="`data:image/jpeg;base64,${extraction.properties.image}`"
 						class="extracted-assets"
 						alt="asset"
 					/>
-					<div class="link" v-else-if="relatedAsset.properties.doi">
+					<div class="link" v-else-if="extraction.properties.doi">
 						<a
-							v-if="relatedAsset.properties.documentBibjson?.link"
-							:href="relatedAsset.properties.documentBibjson.link[0].url"
+							v-if="extraction.properties.documentBibjson?.link"
+							:href="extraction.properties.documentBibjson.link[0].url"
 							@click.stop
 							rel="noreferrer noopener"
 						>
-							{{ relatedAsset.properties.documentBibjson.link[0].url }}
+							{{ extraction.properties.documentBibjson.link[0].url }}
 						</a>
 						<a
 							v-else
-							:href="`https://doi.org/${relatedAsset.properties.doi}`"
+							:href="`https://doi.org/${extraction.properties.doi}`"
 							@click.stop
 							rel="noreferrer noopener"
 						>
-							{{ `https://doi.org/${relatedAsset.properties.doi}` }}
+							{{ `https://doi.org/${extraction.properties.doi}` }}
 						</a>
 					</div>
-					<div class="link" v-else-if="relatedAsset.urlExtraction">
-						<a :href="relatedAsset.urlExtraction.url" @click.stop rel="noreferrer noopener">
-							{{ relatedAsset.urlExtraction.resourceTitle }}
+					<div class="link" v-else-if="extraction.urlExtraction">
+						<a :href="extraction.urlExtraction.url" @click.stop rel="noreferrer noopener">
+							{{ extraction.urlExtraction.resourceTitle }}
 						</a>
 					</div>
-				</template>
-				<div class="asset-nav-arrows">
-					<span class="asset-pages" v-if="!isEmpty(extractions)">
-						<span v-if="totalExtractions > 1" class="asset-count">
-							<template v-for="(_, index) in extractions.length" :key="_">
-								<i
-									:class="
-										index === relatedAssetPage
-											? 'asset-count-selected-text'
-											: 'asset-count-selected'
-									"
-									@click.stop="previewMovement(index)"
-									>{{ index + 1 }}</i
-								>
-							</template>
-							<span v-if="totalExtractions > 5" class="asset-count-text">
-								(+{{ totalExtractions }})</span
-							>
-						</span>
-					</span>
 				</div>
-			</figure>
+			</tera-carousel>
 			<slot name="default"></slot>
 		</aside>
 	</div>
@@ -130,6 +109,7 @@ import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/
 import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
+import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -197,17 +177,6 @@ const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => 
 	return [];
 });
 
-const totalExtractions: ComputedRef<number> = computed(() => {
-	if ((props.asset as Document).knownEntitiesCounts) {
-		return (
-			(props.asset as Document).knownEntitiesCounts.askemObjectCount +
-			(props.asset as Document).knownEntitiesCounts.urlExtractionCount
-		);
-	}
-	return 0;
-});
-
-const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() =>
 	(props.asset as Document).highlight
 		? Array.from((props.asset as Document).highlight).splice(0, 3)
@@ -232,12 +201,6 @@ watch(
 		relatedAssetPage.value = 0;
 	}
 );
-
-function previewMovement(movement: number) {
-	if (movement > -1 && movement < extractions.value.length) {
-		relatedAssetPage.value = movement;
-	}
-}
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
@@ -370,34 +333,10 @@ function endDrag() {
 	border-radius: 3px;
 	padding: 4px;
 }
-
-.asset-nav-arrows {
-	text-align: center;
-}
-
 .pi-arrow-left,
 .pi-arrow-right {
 	border-radius: 24px;
 	font-size: 10px;
-}
-
-.asset-nav-arrows .asset-pages {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.asset-nav-arrows .asset-count {
-	white-space: nowrap;
-}
-
-.asset-nav-arrows .asset-count-text {
-	color: var(--text-color-subdued);
-}
-
-.asset-count-selected-text {
-	font-weight: 1000;
-	color: var(--text-color-primary);
 }
 
 .title,
