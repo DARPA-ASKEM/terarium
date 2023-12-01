@@ -27,7 +27,7 @@
 				<InputText v-model="bound.lb" />
 				<InputText v-model="bound.ub" />
 				<TeraFunmanBoundaryChart
-					:fun-model-id="funModelId"
+					:processed-data="(processedData as FunmanProcessedData)"
 					:param1="parameter.toString()"
 					:param2="selectedParam"
 					:timestep="timestep"
@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import {
+	FunmanProcessedData,
 	getQueries,
 	processFunman,
 	renderFumanTrajectories
@@ -61,9 +62,11 @@ const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
 const lastTrueBox = ref();
+const processedData = ref<FunmanProcessedData>();
 
 const initalizeParameters = async () => {
 	const funModel = await getQueries(props.funModelId);
+	processedData.value = processFunman(funModel);
 	parameterOptions.value = [];
 	funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
 		parameterOptions.value.push(ele.id)
@@ -84,12 +87,15 @@ const initalizeParameters = async () => {
 const renderGraph = async () => {
 	const width = 800;
 	const height = 250;
-	const funModel = await getQueries(props.funModelId);
-	const processedData = processFunman(funModel);
-	renderFumanTrajectories(trajRef.value as HTMLElement, processedData, selectedTrajState.value, {
-		width,
-		height
-	});
+	renderFumanTrajectories(
+		trajRef.value as HTMLElement,
+		processedData.value as FunmanProcessedData,
+		selectedTrajState.value,
+		{
+			width,
+			height
+		}
+	);
 };
 
 onMounted(() => {

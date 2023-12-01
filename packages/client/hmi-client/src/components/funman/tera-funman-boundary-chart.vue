@@ -5,14 +5,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import {
-	getQueries,
-	processFunman,
+	FunmanProcessedData,
 	RenderOptions,
 	renderFunmanBoundaryChart
 } from '@/services/models/funman-service';
 
 const props = defineProps<{
-	funModelId: string;
+	processedData: FunmanProcessedData;
 	param1: string;
 	param2: string;
 	timestep: number;
@@ -25,11 +24,9 @@ const height = 60;
 const renderOptions = { width, height };
 
 onMounted(async () => {
-	const funModel = await getQueries(props.funModelId);
-	const processedData = processFunman(funModel);
 	renderFunmanBoundaryChart(
 		boundaryRef.value as HTMLElement,
-		processedData,
+		props.processedData,
 		props.param1,
 		props.param2,
 		props.timestep,
@@ -40,11 +37,9 @@ onMounted(async () => {
 watch(
 	() => [props.param1, props.param2],
 	async () => {
-		const funModel = await getQueries(props.funModelId);
-		const processedData = processFunman(funModel);
 		renderFunmanBoundaryChart(
 			boundaryRef.value as HTMLElement,
-			processedData,
+			props.processedData,
 			props.param1,
 			props.param2,
 			props.timestep,
