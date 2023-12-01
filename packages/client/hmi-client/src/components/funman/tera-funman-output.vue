@@ -20,15 +20,15 @@
 				{{ title }}
 			</header>
 		</div>
-		<div v-for="(bound, index) in lastTrueBox?.bounds" :key="index">
-			<div class="variables-row" v-if="parameterOptions.includes(index.toString())">
-				<RadioButton v-model="selectedParam" :value="index.toString()" />
-				<div>{{ index.toString() }}</div>
+		<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter">
+			<div class="variables-row" v-if="parameterOptions.includes(parameter.toString())">
+				<RadioButton v-model="selectedParam" :value="parameter.toString()" />
+				<div>{{ parameter.toString() }}</div>
 				<InputText v-model="bound.lb" />
 				<InputText v-model="bound.ub" />
 				<TeraFunmanBoundaryChart
 					:fun-model-id="funModelId"
-					:param1="index.toString()"
+					:param1="parameter.toString()"
 					:param2="selectedParam"
 					:timestep="timestep"
 				/>
