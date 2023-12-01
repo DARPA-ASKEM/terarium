@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium")
@@ -48,9 +49,29 @@ public class Config {
 	Boolean durableQueues = false;
 
 	/**
+	 * The buffer size when uploading large files to the server
+	 */
+	Integer multipartFileBufferSize = 50 * 1024 * 1024;
+
+	/**
+	 * The encryption key used to encrypt the download urls for retrieving files from the server
+	 */
+	String presignedUrlEncryptionKey;
+
+	/**
+	 * The number of seconds that a presigned url signature is valid for
+	 */
+	Integer presignedUrlExpirationSeconds = 5;
+
+	/**
 	 * If true, enable swagger
 	 */
 	Boolean enableSwagger;
+
+	/**
+	 * Amazon configuration
+	 */
+	Amazon amazon;
 
 	@Data
 	@Accessors(chain = true)
@@ -122,5 +143,27 @@ public class Config {
 		 * The interval, in milliseconds, at which we will send a heartbeat to connected clients for server-side-events
 		 */
 		Long sseHeartbeatIntervalMillis;
+	}
+
+	@Data
+	@Accessors(chain = true)
+	public static class AmazonCredentials {
+		String accessKey;
+		String secretKey;
+	}
+
+	@Data
+	@Accessors(chain = true)
+	public static class AmazonS3 {
+		String region;
+		String url;
+		String credentialsId;
+	}
+
+	@Data
+	@Accessors(chain = true)
+	public static class Amazon {
+		Map<String, AmazonCredentials> credentials;
+		Map<String, AmazonS3> s3;
 	}
 }

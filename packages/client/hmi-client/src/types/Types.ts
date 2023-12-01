@@ -494,6 +494,23 @@ export interface PermissionUser {
     relationship?: string;
 }
 
+export interface S3Object {
+    key: string;
+    lastModifiedMillis?: number;
+    sizeInBytes?: number;
+    etag: string;
+}
+
+export interface S3ObjectListing {
+    contents: S3Object[];
+    truncated: boolean;
+}
+
+export interface UploadProgress {
+    uploadId: string;
+    percentComplete: number;
+}
+
 export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
@@ -996,6 +1013,7 @@ export enum ClientEventType {
     Notification = "NOTIFICATION",
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
 }
 
 export enum FileType {
@@ -1069,7 +1087,7 @@ export enum ProvenanceType {
 
 /**
  * @deprecated
- * 
+ *
  * Values:
  * - `datasets`
  * - `model_configurations`
