@@ -13,13 +13,22 @@ export interface InterventionPolicyGroup {
 }
 
 export interface ModelOptimizeOperationState {
+	// Settings
 	startTime: number;
 	endTime: number;
 	numTimePoints: number;
 	timeUnit: string;
 	numStochasticSamples: number;
 	solverMethod: string;
+	// Intervention policies
 	interventionPolicyGroups: InterventionPolicyGroup[];
+	// Constraints
+	targetVariable: string;
+	statistic: string;
+	numDays: number;
+	riskTolerance: number;
+	aboveOrBelow: string;
+	threshold: number;
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -50,7 +59,13 @@ export const ModelOptimizeOperation: Operation = {
 			timeUnit: '',
 			numStochasticSamples: 0,
 			solverMethod: '',
-			interventionPolicyGroups: [blankInterventionPolicyGroup]
+			interventionPolicyGroups: [blankInterventionPolicyGroup],
+			targetVariable: '',
+			statistic: '',
+			numDays: 0,
+			riskTolerance: 0,
+			aboveOrBelow: '',
+			threshold: 0
 		};
 		return init;
 	}
