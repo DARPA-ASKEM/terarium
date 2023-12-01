@@ -20,12 +20,12 @@
 				{{ title }}
 			</header>
 		</div>
-		<div v-for="(column, index) in lastTrueBox?.bounds" :key="index">
+		<div v-for="(bound, index) in lastTrueBox?.bounds" :key="index">
 			<div class="variables-row" v-if="parameterOptions.includes(index.toString())">
 				<RadioButton v-model="selectedParam" :value="index.toString()" />
 				<div>{{ index.toString() }}</div>
-				<InputText v-model="column.lb" />
-				<InputText v-model="column.ub" />
+				<InputText v-model="bound.lb" />
+				<InputText v-model="bound.ub" />
 				<TeraFunmanBoundaryChart
 					:fun-model-id="funModelId"
 					:param1="index.toString()"
