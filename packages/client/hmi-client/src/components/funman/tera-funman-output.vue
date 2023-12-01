@@ -14,17 +14,24 @@
 	<div class="variables-table">
 		<div class="variables-header">
 			<header
-				v-for="(title, index) in ['Parameter', 'Lower bound', 'Upper bound', '', '']"
+				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '']"
 				:key="index"
 			>
 				{{ title }}
 			</header>
 		</div>
-		<div v-for="(column, index) in lastTrueBox?.bounds" :key="index">
-			<div class="variables-row" v-if="parameterOptions.includes(index.toString())">
-				<div>{{ index.toString() }}</div>
-				<div>{{ column?.lb }}</div>
-				<div>{{ column?.ub }}</div>
+		<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter">
+			<div class="variables-row" v-if="parameterOptions.includes(parameter.toString())">
+				<RadioButton v-model="selectedParam" :value="parameter.toString()" />
+				<div>{{ parameter.toString() }}</div>
+				<InputText v-model="bound.lb" />
+				<InputText v-model="bound.ub" />
+				<TeraFunmanBoundaryChart
+					:processed-data="(processedData as FunmanProcessedData)"
+					:param1="parameter.toString()"
+					:param2="selectedParam"
+					:timestep="timestep"
+				/>
 			</div>
 		</div>
 	</div>
@@ -33,11 +40,15 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import {
+	FunmanProcessedData,
 	getQueries,
 	processFunman,
 	renderFumanTrajectories
 } from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
+import RadioButton from 'primevue/radiobutton';
+import InputText from 'primevue/inputtext';
+import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
 	funModelId: string;
@@ -50,11 +61,12 @@ const modelStates = ref<string[]>();
 const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
-const boxId = 'box2';
 const lastTrueBox = ref();
+const processedData = ref<FunmanProcessedData>();
 
 const initalizeParameters = async () => {
 	const funModel = await getQueries(props.funModelId);
+	processedData.value = processFunman(funModel);
 	parameterOptions.value = [];
 	funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
 		parameterOptions.value.push(ele.id)
@@ -75,12 +87,9 @@ const initalizeParameters = async () => {
 const renderGraph = async () => {
 	const width = 800;
 	const height = 250;
-	const funModel = await getQueries(props.funModelId);
-	const processedData = processFunman(funModel);
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
-		processedData,
-		boxId,
+		processedData.value as FunmanProcessedData,
 		selectedTrajState.value,
 		{
 			width,
@@ -111,6 +120,16 @@ watch(
 </script>
 
 <style scoped>
+.p-inputtext {
+	width: 63px;
+	padding: 12px 16px;
+	align-items: center;
+	gap: 16px;
+	align-self: stretch;
+	border-radius: 6px;
+	border: 1px solid var(--00-neutral-300, #c3ccd6);
+	background: var(--White, #fff);
+}
 .section-row {
 	display: flex;
 	/* flex-direction: column; */
@@ -135,7 +154,7 @@ watch(
 }
 
 .variables-table div {
-	padding: 0.25rem;
+	padding-top: 0.25rem;
 }
 
 .variables-row {
@@ -148,9 +167,5 @@ watch(
 .variables-header {
 	display: grid;
 	grid-template-columns: repeat(6, 1fr) 0.5fr;
-}
-
-header {
-	padding-right: 1rem;
 }
 </style>
