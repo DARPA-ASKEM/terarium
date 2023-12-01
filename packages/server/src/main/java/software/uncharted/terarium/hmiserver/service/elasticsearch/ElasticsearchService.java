@@ -59,7 +59,7 @@ public class ElasticsearchService {
 	}
 
 	@PostConstruct
-	public void init() throws IOException {
+	public void init() {
 		final RestClientBuilder httpClientBuilder = RestClient.builder(
 			HttpHost.create(config.getUrl())
 		);
@@ -81,7 +81,6 @@ public class ElasticsearchService {
 	/**
 	 * Create all indices that are not already present in the cluster
 	 *
-	 * @throws IOException If there is an error creating the index
 	 * @return True if the index exists, false otherwise
 	 */
 	public boolean containsIndex(final String indexName) {
@@ -170,10 +169,10 @@ public class ElasticsearchService {
 	/**
 	 * Put a typed object to the cluster
 	 *
-	 * @param name
-	 * @param typedJson
-	 * @param typeName
-	 * @param indexName
+	 * @param name      The name of the object
+	 * @param typedJson The object json string
+	 * @param typeName  The type of the object
+	 * @param indexName The index to put the object in
 	 * @return True if the object was successfully added, false otherwise
 	 */
 	private boolean putTyped(final String name, final String typedJson, final String typeName, final String indexName) {
