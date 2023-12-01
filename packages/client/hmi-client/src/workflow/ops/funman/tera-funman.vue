@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section :tabName="FunmanTabs.Wizard">
-			<div class="container">
+		<div :tabName="FunmanTabs.Wizard">
+			<tera-drilldown-section>
 				<main>
 					<h4 class="primary-text">
 						Set validation parameters
@@ -78,16 +78,16 @@
 
 					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
 				</main>
-			</div>
-		</section>
-		<section :tabName="FunmanTabs.Notebook">
-			<div class="container">
+			</tera-drilldown-section>
+		</div>
+		<div :tabName="FunmanTabs.Notebook">
+			<tera-drilldown-section>
 				<main>
 					<!-- TODO: notebook functionality -->
 					<p>{{ requestConstraints }}</p>
 				</main>
-			</div>
-		</section>
+			</tera-drilldown-section>
+		</div>
 
 		<template #preview>
 			<tera-drilldown-preview title="Validation results">
@@ -133,6 +133,7 @@ import { useToastService } from '@/services/toast';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 const props = defineProps<{
@@ -362,35 +363,6 @@ watch(
 </script>
 
 <style scoped>
-.container {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	overflow: hidden;
-}
-.container > main {
-	flex-grow: 1;
-	overflow-y: auto;
-	width: 100%;
-}
-.container h1 {
-	color: var(--text-color-primary);
-	font-family: Inter;
-	font-size: 1rem;
-	font-style: normal;
-	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
-	letter-spacing: 0.03125rem;
-}
-.container p {
-	font-family: Figtree;
-	font-size: 0.875rem;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
-	letter-spacing: 0.01563rem;
-}
-
 .primary-text {
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */
