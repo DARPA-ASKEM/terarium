@@ -1,6 +1,8 @@
 <template>
-	<main>model from code node</main>
-	<tera-operator-image-carousel :images="images" />
+	<main>
+		model from code node
+		<tera-operator-image-carousel :images="images" />
+	</main>
 </template>
 
 <script setup lang="ts">
