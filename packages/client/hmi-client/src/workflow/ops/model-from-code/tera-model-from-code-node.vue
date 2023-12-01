@@ -1,5 +1,6 @@
 <template>
 	<main>model from code node</main>
+
 	<tera-operator-image-carousel :images="images" />
 </template>
 

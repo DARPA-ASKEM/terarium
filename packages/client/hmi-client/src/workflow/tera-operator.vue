@@ -24,6 +24,9 @@
 		/>
 		<section class="content">
 			<slot name="body" />
+			<tera-operator-status :status="node.status">
+				<p>sdsdss</p>
+			</tera-operator-status>
 			<Button
 				label="Open Drilldown"
 				@click="emit('drilldown', node)"
@@ -49,6 +52,7 @@ import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
+import TeraOperatorStatus from '@/workflow/operator/tera-operator-status.vue';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
