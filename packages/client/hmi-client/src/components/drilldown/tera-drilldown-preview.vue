@@ -1,5 +1,5 @@
 <template>
-	<div class="preview">
+	<tera-drilldown-section>
 		<div class="content-container">
 			<header>
 				<h5>{{ title ?? 'Preview' }}</h5>
@@ -15,14 +15,16 @@
 				<slot />
 			</main>
 		</div>
-		<footer>
+		<template #footer v-if="slots.footer">
 			<slot name="footer" />
-		</footer>
-	</div>
+		</template>
+	</tera-drilldown-section>
 </template>
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import { useSlots } from 'vue';
 
 defineProps<{
 	title?: string;
@@ -31,17 +33,12 @@ defineProps<{
 	canSaveAsset?: boolean;
 }>();
 
+const slots = useSlots();
+
 const emit = defineEmits(['update:output']);
 </script>
 
 <style scoped>
-.preview {
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	gap: 0.5rem;
-}
 .content-container {
 	display: flex;
 	flex-direction: column;
@@ -51,12 +48,6 @@ const emit = defineEmits(['update:output']);
 	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	overflow: hidden;
-}
-
-footer {
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.5rem;
 }
 
 header {
