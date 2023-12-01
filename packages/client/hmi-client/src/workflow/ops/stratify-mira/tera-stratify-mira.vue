@@ -1,81 +1,72 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section>
-			<div>
-				<div class="header p-buttonset">
-					<Button
-						label="Wizard"
-						severity="secondary"
-						icon="pi pi-sign-in"
-						size="small"
-						:active="activeTab === StratifyTabs.wizard"
-						@click="activeTab = StratifyTabs.wizard"
-					/>
-					<Button
-						label="Notebook"
-						severity="secondary"
-						icon="pi pi-sign-out"
-						size="small"
-						:active="activeTab === StratifyTabs.notebook"
-						@click="activeTab = StratifyTabs.notebook"
-					/>
-				</div>
-				<div class="container">
-					<div class="left-side" v-if="activeTab === StratifyTabs.wizard">
-						<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
-						<p>The model will be stratified with the following settings.</p>
-						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-							Note: Code has been executed which may not be reflected here.
-						</p>
-						<tera-stratification-group-form
-							:modelNodeOptions="modelNodeOptions"
-							:config="node.state.strataGroup"
-							@update-self="updateStratifyGroupForm"
-						/>
-						<Button label="Stratify" size="small" @click="stratifyModel" />
-						<Button label="Reset" size="small" @click="resetModel" />
-					</div>
-					<div class="left-side" v-if="activeTab === StratifyTabs.notebook">
-						<h4>Code Editor - Python</h4>
-						<v-ace-editor
-							v-model:value="codeText"
-							@init="initialize"
-							lang="python"
-							theme="chrome"
-							style="height: 100%; width: 100%"
-							class="ace-editor"
-						/>
-						<Button label="Run" size="small" @click="runCodeStratify" />
-					</div>
+		<div :tabName="StratifyTabs.Wizard">
+			<tera-drilldown-section>
+				<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
+				<p>The model will be stratified with the following settings.</p>
+				<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+					Note: Code has been executed which may not be reflected here.
+				</p>
+				<tera-stratification-group-form
+					:modelNodeOptions="modelNodeOptions"
+					:config="node.state.strataGroup"
+					@update-self="updateStratifyGroupForm"
+				/>
+				<template #footer>
+					<Button label="Stratify" @click="stratifyModel" />
+					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
+				</template>
+			</tera-drilldown-section>
+		</div>
+		<div :tabName="StratifyTabs.Notebook">
+			<tera-drilldown-section>
+				<h4>Code Editor - Python</h4>
+				<v-ace-editor
+					v-model:value="codeText"
+					@init="initialize"
+					lang="python"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%"
+					class="ace-editor"
+				/>
 
-					<div class="right-side">
-						<tera-model-diagram
-							v-if="model"
-							ref="teraModelDiagramRef"
-							:model="model"
-							:is-editable="false"
-						/>
-						<div v-else>
-							<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-							<h4>No Model Provided</h4>
-						</div>
-						<div v-if="model">
-							<InputText
-								v-model="newModelName"
-								placeholder="model name"
-								type="text"
-								class="input-small"
-							/>
-							<Button
-								label="Save as new Model"
-								size="small"
-								@click="() => saveNewModel(newModelName, { addToProject: true })"
-							/>
-						</div>
+				<template #footer>
+					<Button style="margin-right: auto" label="Run" @click="runCodeStratify" />
+				</template>
+			</tera-drilldown-section>
+		</div>
+		<template #preview>
+			<tera-drilldown-preview>
+				<div>
+					<tera-model-diagram
+						v-if="model"
+						ref="teraModelDiagramRef"
+						:model="model"
+						:is-editable="false"
+					/>
+					<div v-else>
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+						<h4>No Model Provided</h4>
 					</div>
 				</div>
-			</div>
-		</section>
+				<template #footer>
+					<InputText
+						v-model="newModelName"
+						placeholder="model name"
+						type="text"
+						class="input-small"
+					/>
+					<Button
+						:disabled="!model"
+						outlined
+						style="margin-right: auto"
+						label="Save as new Model"
+						@click="() => saveNewModel(newModelName, { addToProject: true })"
+					/>
+					<Button label="Close" @click="emit('close')" />
+				</template>
+			</tera-drilldown-preview>
+		</template>
 	</tera-drilldown>
 </template>
 
@@ -96,6 +87,8 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -111,8 +104,8 @@ const props = defineProps<{
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
 enum StratifyTabs {
-	wizard,
-	notebook
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 
 interface SaveOptions {
@@ -122,7 +115,6 @@ interface SaveOptions {
 
 const kernelManager = new KernelSessionManager();
 
-const activeTab = ref(StratifyTabs.wizard);
 const modelConfiguration = ref<ModelConfiguration>();
 const model = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
@@ -362,39 +354,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.container {
+.code-container {
 	display: flex;
-	flex-direction: row;
-	margin-top: 1rem;
-}
-
-.left-side {
-	width: 45%;
-	padding-right: 2.5%;
-}
-.left-side h1 {
-	color: var(--text-color-primary);
-	font-family: Inter;
-	font-size: 1rem;
-	font-style: normal;
-	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
-	letter-spacing: 0.03125rem;
-}
-.left-side p {
-	color: var(--Text-Secondary);
-	/* Body Small/Regular */
-	font-family: Figtree;
-	font-size: 0.875rem;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
-	letter-spacing: 0.01563rem;
-}
-
-.right-side {
-	width: 45%;
-	padding-left: 2.5%;
+	flex-direction: column;
 }
 
 .input-small {
