@@ -2,6 +2,7 @@ import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
+import { Dictionary, groupBy } from 'lodash';
 
 export interface FunmanProcessedData {
 	boxes: any[];
@@ -178,6 +179,8 @@ export const renderFumanTrajectories = (
 	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 
+	const points: Dictionary<any> = groupBy(trajs, 'boxId');
+
 	// Find max/min across timesteps
 	const xDomain = d3.extent(trajs.map((d) => d.timestep)) as [number, number];
 
@@ -233,17 +236,16 @@ export const renderFumanTrajectories = (
 		.y((d) => yScale(d.y))
 		.curve(d3.curveBasis);
 
-	states
-		.filter((s) => s === state)
-		.forEach((s: string) => {
-			const path = trajs.map((p: any) => ({ x: p.timestep, y: p[s] }));
-			svg
-				.append('g')
-				.append('path')
-				.attr('d', pathFn(path))
-				.style('stroke', '#888')
-				.style('fill', 'none');
-		});
+	Object.keys(points).forEach((boxId) => {
+		console.log(boxId);
+		const path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
+		svg
+			.append('g')
+			.append('path')
+			.attr('d', pathFn(path))
+			.style('stroke', '#888')
+			.style('fill', 'none');
+	});
 };
 
 const getBoxesDomain = (boxes: FunmanBox[]) => {
