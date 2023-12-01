@@ -237,7 +237,6 @@ export const renderFumanTrajectories = (
 		.curve(d3.curveBasis);
 
 	Object.keys(points).forEach((boxId) => {
-		console.log(boxId);
 		const path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
 		svg
 			.append('g')
