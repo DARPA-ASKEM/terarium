@@ -142,7 +142,6 @@ const onEdit = () => {
 
 <style scoped>
 .policy-group {
-	margin-top: 1rem;
 	display: flex;
 	padding: 1rem 1rem 1rem 1.5rem;
 	flex-direction: column;
@@ -188,12 +187,12 @@ const onEdit = () => {
 }
 
 .input-row > *:first-child {
-	flex-basis: 40%;
+	flex: 2;
 }
 
 .input-row > *:nth-child(2),
 .input-row > *:nth-child(3) {
-	flex-basis: 30%;
+	flex: 1;
 }
 
 .label-and-input {
