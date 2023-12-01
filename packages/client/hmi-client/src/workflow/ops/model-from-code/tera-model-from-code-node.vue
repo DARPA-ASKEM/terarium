@@ -1,10 +1,12 @@
 <template>
 	<main>model from code node</main>
+	<tera-facet-preview />
 	<tera-operator-image-carousel :images="images" />
 </template>
 
 <script setup lang="ts">
 import TeraOperatorImageCarousel from '@/workflow/operator/tera-operator-image-carousel.vue';
+import TeraFacetPreview from '@/components/widgets/tera-facet-preview.vue';
 import terarium from '@/assets/svg/terarium-icon.svg';
 
 const images = [

@@ -7,8 +7,11 @@
 		action-buttons="0"
 	>
 		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
-		<div slot="header-label">
-			<span class="facet-font">{{ label }}</span>
+		<div slot="header" class="facet-header-container">
+			<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
+			<div slot="header-label">
+				<span class="facet-font">{{ label }}</span>
+			</div>
 		</div>
 
 		<facet-template target="facet-terms-value" class="facet-pointer">
@@ -91,6 +94,8 @@ export default defineComponent({
 		}
 	},
 	setup(props) {
+		console.log(props.baseData);
+		console.log(props.selectedData);
 		const query = useQueryStore();
 		return {
 			query
@@ -240,18 +245,28 @@ export default defineComponent({
 	cursor: pointer;
 }
 
+.content {
+	background-color: red;
+}
+
 .facet-label-truncated {
 	overflow-x: hidden;
 	text-overflow: ellipsis;
 	max-width: 150px;
 }
 
+.facet-header-container,
 .facet-footer-container {
 	min-height: 12px;
 	padding: 6px 12px 5px;
-	font-size: 12px;
+	font-size: var(--font-caption);
 	font-weight: 400;
 	line-height: 16px;
+}
+
+.facet-header-container {
+	font-size: var(--font-body-small);
+	font-weight: var(--font-weight-semibold);
 }
 
 .facet-footer-more {
