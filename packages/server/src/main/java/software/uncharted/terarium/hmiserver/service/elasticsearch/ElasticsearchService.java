@@ -1,8 +1,36 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.HttpHost;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.rest.RestStatus;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
+import co.elastic.clients.elasticsearch.core.GetRequest;
+import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsIndexTemplateRequest;
@@ -12,26 +40,10 @@ import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHost;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.rest.RestStatus;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @Data
@@ -65,6 +77,8 @@ public class ElasticsearchService {
 
 	@PostConstruct
 	public void init() {
+		log.info("Connecting elasticsearch client to: {}", config.getUrl());
+
 		final RestClientBuilder httpClientBuilder = RestClient.builder(
 			HttpHost.create(config.getUrl())
 		);
@@ -247,7 +261,9 @@ public class ElasticsearchService {
 
 		final IndexRequest<T> req = new IndexRequest.Builder<T>()
 			.index(index)
+			.id(id)
 			.document(document)
+			.refresh(Refresh.WaitFor)
 			.build();
 
 		try {
@@ -269,6 +285,7 @@ public class ElasticsearchService {
 		final DeleteRequest req = new DeleteRequest.Builder()
 			.index(index)
 			.id(id)
+			.refresh(Refresh.WaitFor)
 			.build();
 
 		try {
@@ -296,7 +313,9 @@ public class ElasticsearchService {
 			.build();
 		try {
 			final GetResponse<T> res = client.get(req, tClass);
-			return res.source();
+			if (res.found()) {
+				return res.source();
+			}
 		} catch (final IOException e) {
 			log.error("Error getting id {} from index {}", id, index, e);
 		}

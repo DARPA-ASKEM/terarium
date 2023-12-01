@@ -1,9 +1,16 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -15,21 +22,38 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
@@ -41,15 +65,6 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -73,6 +88,8 @@ public class DocumentController implements SnakeCaseController {
 
 	final DocumentAssetService documentAssetService;
 
+	final ObjectMapper objectMapper;
+
 	@Value("${xdd.api-key}")
 	String apikey;
 
@@ -82,8 +99,7 @@ public class DocumentController implements SnakeCaseController {
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
-
-		return ResponseEntity.ok(proxy.getAssets(pageSize, page).getBody());
+		return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
 	}
 
 	@PostMapping
@@ -91,7 +107,11 @@ public class DocumentController implements SnakeCaseController {
 	public ResponseEntity<JsonNode> createDocument(
 		@RequestBody final DocumentAsset document
 	) {
-		return ResponseEntity.ok(proxy.createAsset(convertObjectToSnakeCaseJsonNode(document)).getBody());
+		documentAssetService.createDocumentAsset(document);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("id", document.getId()));
+
+		return ResponseEntity.ok(res);
 	}
 
 	@GetMapping("/{id}")
@@ -99,7 +119,10 @@ public class DocumentController implements SnakeCaseController {
 	public ResponseEntity<DocumentAsset> getDocument(
 		@PathVariable("id") final String id
 	) {
-		final DocumentAsset document = proxy.getAsset(id).getBody();
+		final DocumentAsset document = documentAssetService.getDocumentAsset(id);
+		if (document == null) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
+		}
 
 		// Test if the document as any assets
 		if (document.getAssets() == null) {
@@ -113,7 +136,7 @@ public class DocumentController implements SnakeCaseController {
 				asset.getMetadata().put("url", url);
 
 				// if the asset os of type equation
-				if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
+				if (asset.getAssetType().equals(ExtractionAssetType.EQUATION) && asset.getMetadata().get("equation") == null) {
 					// Fetch the image from the URL
 					final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
 					// Encode the image in Base 64
@@ -133,7 +156,7 @@ public class DocumentController implements SnakeCaseController {
 		});
 
 		// Update data-service with the updated metadata
-		proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(document));
+		documentAssetService.updateDocumentAsset(document);
 
 		// Return the updated document
 		return ResponseEntity.ok(document);
@@ -144,7 +167,11 @@ public class DocumentController implements SnakeCaseController {
 	public ResponseEntity<JsonNode> deleteDocument(
 		@PathVariable("id") final String id
 	) {
-		return ResponseEntity.ok(proxy.deleteAsset(id).getBody());
+		documentAssetService.deleteDocumentAsset(id);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("message", String.format("Document successfully deleted: %s", id)));
+
+		return ResponseEntity.ok(res);
 	}
 
 	/**
@@ -168,11 +195,11 @@ public class DocumentController implements SnakeCaseController {
 
 			// if the fileEntity is not a PDF, then we need to extract the text and update the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				final JsonNode node = this.convertObjectToSnakeCaseJsonNode(proxy.getAsset(documentId).getBody().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8)));
-				final ResponseEntity<JsonNode> updateRes = proxy.updateAsset(documentId, node);
-				if (updateRes.getStatusCode().isError()) {
-					return ResponseEntity.status(updateRes.getStatusCode()).build();
-				}
+				final DocumentAsset document = documentAssetService.getDocumentAsset(documentId);
+
+				document.setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
+
+				documentAssetService.updateDocumentAsset(document);
 			}
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
@@ -242,8 +269,8 @@ public class DocumentController implements SnakeCaseController {
 		String fileUrl = null;
 		String filename = null;
 		try {
-			fileUrl = downloadService.getPDFURL("https://unpaywall.org/" + doi);
-			filename = downloadService.pdfNameFromUrl(fileUrl);
+			fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
+			filename = DownloadService.pdfNameFromUrl(fileUrl);
 		} catch (IOException | URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
@@ -256,7 +283,7 @@ public class DocumentController implements SnakeCaseController {
 			documentAsset.getFileNames().add(filename);
 
 		// Upload the document to TDS in order to get a new ID to pair our files we want to upload with.
-		String newDocumentAssetId = proxy.createAsset(convertObjectToSnakeCaseJsonNode(documentAsset)).getBody().get("id").asText();
+		final String newDocumentAssetId = documentAssetService.createDocumentAsset(documentAsset).getId();
 		response.setDocumentAssetId(newDocumentAssetId);
 
 		// Upload the PDF from unpaywall
@@ -394,7 +421,8 @@ public class DocumentController implements SnakeCaseController {
 
 							final HttpPut put = new HttpPut(presignedURL.getUrl());
 							put.setEntity(fileEntity);
-							final HttpResponse pdfUploadResponse = httpclient.execute(put);
+
+							httpclient.execute(put);
 						}
 					} catch (Exception e) {
 						throw new RuntimeException(e);
