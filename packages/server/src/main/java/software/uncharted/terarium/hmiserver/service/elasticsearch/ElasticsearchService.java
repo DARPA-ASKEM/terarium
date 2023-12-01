@@ -1,38 +1,32 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
-import java.io.IOException;
-import java.net.URI;
-
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
+import co.elastic.clients.elasticsearch.indices.ExistsIndexTemplateRequest;
+import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import co.elastic.clients.elasticsearch.indices.ExistsTemplateRequest;
-import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import jakarta.annotation.PostConstruct;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+
+import java.io.IOException;
+import java.net.URI;
 
 @Service
 @Data
@@ -115,10 +109,10 @@ public class ElasticsearchService {
 	 * @return True if the index template is contained in the cluster, false otherwise
 	 */
 	public boolean containsIndexTemplate(final String name) {
-		final ExistsTemplateRequest req = new ExistsTemplateRequest.Builder().name(name).build();
+		final ExistsIndexTemplateRequest req = new ExistsIndexTemplateRequest.Builder().name(name).build();
 		BooleanResponse exists = new BooleanResponse(false);
 		try {
-			exists = client.indices().existsTemplate(req);
+			exists = client.indices().existsIndexTemplate(req);
 		} catch (final ElasticsearchStatusException e) {
 			if (e.status() != RestStatus.NOT_FOUND) {
 				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}", name, e);
