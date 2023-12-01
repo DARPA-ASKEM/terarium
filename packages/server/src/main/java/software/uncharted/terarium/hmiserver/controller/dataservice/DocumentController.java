@@ -98,7 +98,7 @@ public class DocumentController implements SnakeCaseController {
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
+	) throws IOException {
 		return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
 	}
 
@@ -106,7 +106,7 @@ public class DocumentController implements SnakeCaseController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createDocument(
 		@RequestBody final DocumentAsset document
-	) {
+	) throws IOException {
 		documentAssetService.createDocumentAsset(document);
 
 		JsonNode res = objectMapper.valueToTree(Map.of("id", document.getId()));
@@ -118,7 +118,7 @@ public class DocumentController implements SnakeCaseController {
 	@Secured(Roles.USER)
 	public ResponseEntity<DocumentAsset> getDocument(
 		@PathVariable("id") final String id
-	) {
+	) throws IOException {
 		final DocumentAsset document = documentAssetService.getDocumentAsset(id);
 		if (document == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
@@ -166,7 +166,7 @@ public class DocumentController implements SnakeCaseController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteDocument(
 		@PathVariable("id") final String id
-	) {
+	) throws IOException {
 		documentAssetService.deleteDocumentAsset(id);
 
 		JsonNode res = objectMapper.valueToTree(Map.of("message", String.format("Document successfully deleted: %s", id)));
@@ -249,7 +249,7 @@ public class DocumentController implements SnakeCaseController {
 	@Secured(Roles.USER)
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
 		@RequestBody final AddDocumentAssetFromXDDRequest body
-	) {
+	) throws IOException {
 
 
 		//build initial response

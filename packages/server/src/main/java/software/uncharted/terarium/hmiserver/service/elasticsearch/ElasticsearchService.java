@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
@@ -219,31 +218,17 @@ public class ElasticsearchService {
 	 * Search an index using a provided query (can be null for no query)
 	 *
 	 * @param <T>    The type of the document
-	 * @param index  The index to search
-	 * @param from   The starting index of the search
-	 * @param size   The number of documents to return
-	 * @param query  The query to use (can be null for no query)
+	 * @param req - The search request
 	 * @param tClass The class of the document
 	 * @return A list of found documents.
 	 */
-	public <T> List<T> search(final String index, final int from, final int size, final Query query, final Class<T> tClass) {
-		log.info("Searching: {} from {} size {}", index, from, size);
-
-		final SearchRequest req = new SearchRequest.Builder()
-			.index(index)
-			.from(from)
-			.size(size)
-			.query(query)
-			.build();
+	public <T> List<T> search(final SearchRequest req, final Class<T> tClass) throws IOException {
+		log.info("Searching: {}", req.index());
 
 		final List<T> docs = new ArrayList<>();
-		try {
-			final SearchResponse<T> res = client.search(req, tClass);
-			for (final Hit<T> hit : res.hits().hits()) {
-				docs.add(hit.source());
-			}
-		} catch (final IOException e) {
-			log.error("Error searching index {}", index, e);
+		final SearchResponse<T> res = client.search(req, tClass);
+		for (final Hit<T> hit : res.hits().hits()) {
+			docs.add(hit.source());
 		}
 		return docs;
 	}
@@ -256,7 +241,7 @@ public class ElasticsearchService {
 	 * @param id       The id of the document
 	 * @param document The document to add
 	 */
-	public <T> void index(final String index, final String id, final T document) {
+	public <T> void index(final String index, final String id, final T document) throws IOException {
 		log.info("Indexing: {} into {}", id, index);
 
 		final IndexRequest<T> req = new IndexRequest.Builder<T>()
@@ -266,11 +251,7 @@ public class ElasticsearchService {
 			.refresh(Refresh.WaitFor)
 			.build();
 
-		try {
-			client.index(req);
-		} catch (final IOException e) {
-			log.error("Error indexing document {} into {}", id, index, e);
-		}
+		client.index(req);
 	}
 
 	/**
@@ -279,7 +260,7 @@ public class ElasticsearchService {
 	 * @param index The index to remove the document from
 	 * @param id    The id of the document to remove
 	 */
-	public void delete(final String index, final String id) {
+	public void delete(final String index, final String id) throws IOException {
 		log.info("Deleting: {} from {}", id, index);
 
 		final DeleteRequest req = new DeleteRequest.Builder()
@@ -288,11 +269,7 @@ public class ElasticsearchService {
 			.refresh(Refresh.WaitFor)
 			.build();
 
-		try {
-			client.delete(req);
-		} catch (final IOException e) {
-			log.error("Error deleting document {} from {}", id, index, e);
-		}
+		client.delete(req);
 	}
 
 	/**
@@ -304,20 +281,17 @@ public class ElasticsearchService {
 	 * @param tClass The class of the document
 	 * @return       The document if found, null otherwise
 	 */
-	public <T> T get(final String index, final String id, final Class<T> tClass) {
+	public <T> T get(final String index, final String id, final Class<T> tClass) throws IOException {
 		log.info("Getting: {} from {}", id, index);
 
 		final GetRequest req = new GetRequest.Builder()
 			.index(index)
 			.id(id)
 			.build();
-		try {
-			final GetResponse<T> res = client.get(req, tClass);
-			if (res.found()) {
-				return res.source();
-			}
-		} catch (final IOException e) {
-			log.error("Error getting id {} from index {}", id, index, e);
+
+		final GetResponse<T> res = client.get(req, tClass);
+		if (res.found()) {
+			return res.source();
 		}
 		return null;
 	}

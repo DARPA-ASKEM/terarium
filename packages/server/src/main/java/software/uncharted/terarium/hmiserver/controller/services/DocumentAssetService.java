@@ -1,10 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.services;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -19,24 +21,29 @@ public class DocumentAssetService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
-	public List<DocumentAsset> getDocumentAssets(Integer page, Integer pageSize) {
-		return elasticService.search(elasticConfig.getDocumentIndex(), page, pageSize, null, DocumentAsset.class);
+	public List<DocumentAsset> getDocumentAssets(Integer page, Integer pageSize) throws IOException {
+		final SearchRequest req = new SearchRequest.Builder()
+			.index(elasticConfig.getDocumentIndex())
+			.from(page)
+			.size(pageSize)
+			.build();
+		return elasticService.search(req, DocumentAsset.class);
 	}
 
-	public DocumentAsset getDocumentAsset(String id) {
+	public DocumentAsset getDocumentAsset(String id) throws IOException {
 		return elasticService.get(elasticConfig.getDocumentIndex(), id, DocumentAsset.class);
 	}
 
-	public void deleteDocumentAsset(String id) {
+	public void deleteDocumentAsset(String id) throws IOException {
 		elasticService.delete(elasticConfig.getDocumentIndex(), id);
 	}
 
-	public DocumentAsset createDocumentAsset(DocumentAsset document) {
+	public DocumentAsset createDocumentAsset(DocumentAsset document) throws IOException {
 		elasticService.index(elasticConfig.getDocumentIndex(), document.getId(), document);
 		return document;
 	}
 
-	public DocumentAsset updateDocumentAsset(DocumentAsset document) {
+	public DocumentAsset updateDocumentAsset(DocumentAsset document) throws IOException {
 		elasticService.index(elasticConfig.getDocumentIndex(), document.getId(), document);
 		return document;
 	}
