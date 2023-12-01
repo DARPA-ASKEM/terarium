@@ -34,7 +34,7 @@ facet-terms {
   // This item is hovered
   --facet-terms-bar-0-muted-contrast-hover: var(--primary-color);
   --facet-terms-bar-1-muted-contrast-hover: var(--primary-color); 
-} 
+}
 
 facet-bars {
   // Hide the rectangle that appears to the left of an item on hover
@@ -60,4 +60,4 @@ facet-bars {
   :deep(.facet-bars-value-background) {
     background-color: var(--surface-highlight);
   }
-} 
+}

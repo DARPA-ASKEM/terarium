@@ -91,8 +91,6 @@ export default defineComponent({
 		}
 	},
 	setup(props) {
-		console.log(props.baseData);
-		console.log(props.selectedData);
 		const query = useQueryStore();
 		return {
 			query
