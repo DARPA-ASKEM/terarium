@@ -4,14 +4,24 @@
 			<slot />
 		</div>
 		<nav v-if="itemCount > 0">
-			<ul>
-				<li v-for="(_, index) in itemCount" :key="_" @click.stop="move(index)">
-					<i :class="index === currentPage ? 'asset-count-selected-text' : 'asset-count-selected'">
-						{{ index + 1 }}
-					</i>
+			<ul v-if="isNumeric" class="numeric">
+				<li
+					v-for="(_, index) in itemCount"
+					:class="{ selected: index === currentPage }"
+					:key="_"
+					@click.stop="move(index)"
+				>
+					{{ index + 1 }}
 				</li>
-				<!--Should appear-->
-				<li v-if="itemCount > 5" class="asset-count-text">(+{{ itemCount }})</li>
+				<li v-if="itemCount > 5">(+{{ itemCount }})</li>
+			</ul>
+			<ul v-else>
+				<li
+					v-for="(_, index) in itemCount"
+					:class="{ selected: index === currentPage }"
+					:key="_"
+					@click.stop="move(index)"
+				/>
 			</ul>
 		</nav>
 	</figure>
@@ -19,6 +29,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+
+defineProps({
+	isNumeric: {
+		type: Boolean,
+		default: false
+	}
+});
 
 const content = ref();
 const currentPage = ref(0);
@@ -87,21 +104,52 @@ nav {
 		display: flex;
 		align-items: center;
 		list-style: none;
+		justify-content: center;
+		gap: 0.5rem;
 
 		& > li {
-			white-space: nowrap;
-			padding: 0.25rem;
+			cursor: pointer;
+			transition: 0.2s;
 			border-radius: var(--border-radius);
-
 			&:hover {
 				background-color: var(--surface-highlight);
 			}
+		}
 
-			& .asset-count-selected-text {
+		&:not(.numeric) {
+			margin: 1rem;
+		}
+
+		&:not(.numeric) > li {
+			background-color: #dcdcdc;
+			width: 0.5rem;
+			height: 0.5rem;
+
+			&.selected {
+				background-color: var(--primary-color);
+			}
+		}
+
+		&.numeric {
+			gap: 0;
+		}
+
+		&.numeric > li {
+			white-space: nowrap;
+			padding: 0.25rem;
+
+			&.selected {
 				font-weight: var(--font-weight-semibold);
 				color: var(--text-color-primary);
 			}
 		}
+	}
+
+	/* May be potentially used later */
+	& .pi-arrow-left,
+	& .pi-arrow-right {
+		border-radius: 24px;
+		font-size: 10px;
 	}
 }
 </style>

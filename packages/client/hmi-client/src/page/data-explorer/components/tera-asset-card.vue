@@ -37,7 +37,6 @@
 			<ul class="snippets" v-if="snippets">
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
-
 			<div
 				class="description"
 				v-if="resourceType === ResourceType.MODEL"
@@ -307,12 +306,6 @@ function endDrag() {
 aside {
 	display: flex;
 	gap: 0.5rem;
-}
-
-.pi-arrow-left,
-.pi-arrow-right {
-	border-radius: 24px;
-	font-size: 10px;
 }
 
 .title,
