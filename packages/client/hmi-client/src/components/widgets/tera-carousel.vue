@@ -14,7 +14,7 @@
 					:key="_"
 					@click.stop="move(index)"
 				>
-					<!--Display if isNumeric is true-->
+					<!--Displays when isNumeric is true-->
 					<span>{{ index + 1 }}</span>
 				</li>
 				<li v-if="isNumeric && itemCount > 5">(+{{ itemCount }})</li>
