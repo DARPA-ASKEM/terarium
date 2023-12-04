@@ -49,12 +49,20 @@
 						:readonly="true"
 						:value="timeSamples"
 					/>
-					<p v-if="showAdditionalOptions" class="text-button" @click="toggleAdditonalOptions">
-						Hide additional options
-					</p>
-					<p v-if="!showAdditionalOptions" class="text-button" @click="toggleAdditonalOptions">
-						Show additional options
-					</p>
+					<div>
+						<Button
+							v-if="showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Hide additional options"
+							@click="toggleAdditonalOptions"
+						/>
+						<Button
+							v-if="!showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Show additional options"
+							@click="toggleAdditonalOptions"
+						/>
+					</div>
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of stochastic samples</label>
@@ -96,9 +104,14 @@
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
-					<p class="text-button" @click="addInterventionPolicyGroupForm">
-						+ Add more interventions
-					</p>
+					<div>
+						<Button
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text"
+							label="Add more interventions"
+							@click="addInterventionPolicyGroupForm"
+						/>
+					</div>
 				</div>
 				<div class="form-section">
 					<h4>Constraint</h4>
@@ -314,14 +327,6 @@ const saveModel = () => {
 </script>
 
 <style scoped>
-.text-button {
-	color: var(--Primary, #1b8073);
-}
-
-.text-button:hover {
-	cursor: pointer;
-}
-
 .form-section {
 	display: flex;
 	flex-direction: column;
