@@ -28,7 +28,7 @@ function move(movement: number) {
 	if (movement > -1 && movement < itemCount.value) {
 		content.value.children[currentPage.value].style.display = 'none';
 		currentPage.value = movement;
-		content.value.children[currentPage.value].style.display = 'block';
+		content.value.children[currentPage.value].style.display = 'flex';
 	}
 }
 
@@ -39,8 +39,44 @@ onMounted(() => {
 </script>
 
 <style scoped>
+figure {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	height: 9.5rem;
+}
+
+.content {
+	display: flex;
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	overflow: hidden;
+	background-color: var(--surface-ground);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+}
+
 .content > :deep(*) {
 	display: none;
+	background-color: var(--surface-section);
+	padding: 2px;
+
+	/* overflow: auto; */
+	overflow-wrap: break-word;
+	margin: auto 0;
+	font-size: 10px;
+}
+
+.content > :deep(img) {
+	/* height: fit-content; */
+	margin: auto 0;
+	object-fit: contain;
+	max-height: 5rem;
+}
+
+:deep(a) {
+	color: var(--primary-color);
 }
 
 nav {

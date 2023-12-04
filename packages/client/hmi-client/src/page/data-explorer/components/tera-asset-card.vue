@@ -62,39 +62,47 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
-		<aside class="preview-and-options">
-			<tera-carousel v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)">
-				<div v-for="(extraction, index) in extractions" :key="index">
+		<aside>
+			<tera-carousel
+				v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)"
+				:style="{ width: '8rem', height: '7rem' }"
+			>
+				<template v-for="(extraction, index) in extractions">
 					<img
 						v-if="extraction.properties.image"
 						:src="`data:image/jpeg;base64,${extraction.properties.image}`"
 						class="extracted-assets"
 						alt="asset"
+						:key="index"
 					/>
-					<div class="link" v-else-if="extraction.properties.doi">
-						<a
-							v-if="extraction.properties.documentBibjson?.link"
-							:href="extraction.properties.documentBibjson.link[0].url"
-							@click.stop
-							rel="noreferrer noopener"
-						>
-							{{ extraction.properties.documentBibjson.link[0].url }}
-						</a>
-						<a
-							v-else
-							:href="`https://doi.org/${extraction.properties.doi}`"
-							@click.stop
-							rel="noreferrer noopener"
-						>
-							{{ `https://doi.org/${extraction.properties.doi}` }}
-						</a>
-					</div>
-					<div class="link" v-else-if="extraction.urlExtraction">
-						<a :href="extraction.urlExtraction.url" @click.stop rel="noreferrer noopener">
-							{{ extraction.urlExtraction.resourceTitle }}
-						</a>
-					</div>
-				</div>
+					<a
+						v-else-if="extraction.properties.doi && extraction.properties.documentBibjson?.link"
+						:href="extraction.properties.documentBibjson.link[0].url"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}a`"
+					>
+						{{ extraction.properties.documentBibjson.link[0].url }}
+					</a>
+					<a
+						v-else-if="extraction.properties.doi"
+						:href="`https://doi.org/${extraction.properties.doi}`"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}b`"
+					>
+						{{ `https://doi.org/${extraction.properties.doi}` }}
+					</a>
+					<a
+						v-else-if="extraction.urlExtraction"
+						:href="extraction.urlExtraction.url"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}c`"
+					>
+						{{ extraction.urlExtraction.resourceTitle }}
+					</a>
+				</template>
 			</tera-carousel>
 			<slot name="default"></slot>
 		</aside>
@@ -296,43 +304,11 @@ function endDrag() {
 	font-size: 0.75rem;
 }
 
-.preview-and-options {
+aside {
 	display: flex;
 	gap: 0.5rem;
 }
 
-.preview-and-options figure {
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	width: 8rem;
-	height: 7rem;
-}
-
-.preview-and-options figure img {
-	margin: auto 0;
-	object-fit: contain;
-	max-height: 5rem;
-}
-
-.preview-and-options .link {
-	overflow: auto;
-	overflow-wrap: break-word;
-	margin: auto 0;
-	min-height: 0;
-	font-size: 10px;
-}
-
-.preview-and-options .link a {
-	color: var(--primary-color);
-}
-
-.preview-and-options figure img,
-.preview-and-options .link {
-	border: 1px solid var(--surface-ground);
-	border-radius: 3px;
-	padding: 4px;
-}
 .pi-arrow-left,
 .pi-arrow-right {
 	border-radius: 24px;
