@@ -84,6 +84,7 @@ than the main application behind the modal when these render issues come, howeve
 	border-radius: var(--modal-border-radius);
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
 }
 
 main {
