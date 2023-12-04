@@ -2,6 +2,7 @@ import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
+import { Dictionary, groupBy } from 'lodash';
 
 export interface FunmanProcessedData {
 	boxes: any[];
@@ -10,7 +11,7 @@ export interface FunmanProcessedData {
 	trajs: any[];
 }
 
-interface RenderOptions {
+export interface RenderOptions {
 	width: number;
 	height: number;
 }
@@ -163,7 +164,6 @@ export const getBoxes = (
 export const renderFumanTrajectories = (
 	element: HTMLElement,
 	processedData: FunmanProcessedData,
-	boxId: string,
 	state: string,
 	options: RenderOptions
 ) => {
@@ -179,14 +179,14 @@ export const renderFumanTrajectories = (
 	d3.select(element).selectAll('*').remove();
 	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
 
-	const points = trajs.filter((d: any) => d.boxId === boxId);
+	const points: Dictionary<any> = groupBy(trajs, 'boxId');
 
 	// Find max/min across timesteps
-	const xDomain = d3.extent(points.map((d) => d.timestep)) as [number, number];
+	const xDomain = d3.extent(trajs.map((d) => d.timestep)) as [number, number];
 
 	// Find max/min across all state values
 	const yDomain = d3.extent(
-		points.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
+		trajs.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
 	) as [number, number];
 
 	const xScale = d3
@@ -236,17 +236,15 @@ export const renderFumanTrajectories = (
 		.y((d) => yScale(d.y))
 		.curve(d3.curveBasis);
 
-	states
-		.filter((s) => s === state)
-		.forEach((s: string) => {
-			const path = points.map((p: any) => ({ x: p.timestep, y: p[s] }));
-			svg
-				.append('g')
-				.append('path')
-				.attr('d', pathFn(path))
-				.style('stroke', '#888')
-				.style('fill', 'none');
-		});
+	Object.keys(points).forEach((boxId) => {
+		const path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
+		svg
+			.append('g')
+			.append('path')
+			.attr('d', pathFn(path))
+			.style('stroke', '#888')
+			.style('fill', 'none');
+	});
 };
 
 const getBoxesDomain = (boxes: FunmanBox[]) => {
