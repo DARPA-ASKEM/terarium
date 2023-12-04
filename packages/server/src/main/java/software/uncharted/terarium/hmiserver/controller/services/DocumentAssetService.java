@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.configuration.S3Configuration;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
@@ -23,7 +23,7 @@ public class DocumentAssetService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
-	private final S3Configuration s3Config;
+	private final Config config;
 	private final S3ClientService s3ClientService;
 
 	public List<DocumentAsset> getDocumentAssets(Integer page, Integer pageSize) throws IOException {
@@ -54,7 +54,7 @@ public class DocumentAssetService {
 	}
 
 	private String getPath(String documentId, String filename) {
-		return String.join("/", documentId, filename, s3Config.getDocumentsPath());
+		return String.join("/", documentId, filename, config.getDocumentPath());
 	}
 
 	public PresignedURL getUploadUrl(String documentId, String filename) {
@@ -62,7 +62,7 @@ public class DocumentAssetService {
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
-				s3Config.getBucket(),
+				config.getFileStorageS3BucketName(),
 				getPath(documentId, filename),
 				HOUR_EXPIRATION));
 		presigned.setMethod("PUT");
@@ -74,7 +74,7 @@ public class DocumentAssetService {
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
-				s3Config.getBucket(),
+				config.getFileStorageS3BucketName(),
 				getPath(documentId, filename),
 				HOUR_EXPIRATION));
 		presigned.setMethod("GET");

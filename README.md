@@ -166,7 +166,7 @@ A Postman collection can be imported via the OpenAPI specification at [http://lo
 In Postman:
 1. Click the `Import` button at the top left of the Postman window
 2. Paste in the the URL above and click `Continue`
-3. Click `Import` and you should have a new collection named `Pantera APIs`
+3. Click `Import` and you should have a new collection named `Terarium APIs`
 4. Click on the collection and click on the `Authorization` tab
 5. Ensure the `Client ID` is `app` and the `Authorize using browser` checkbox is checked
 
