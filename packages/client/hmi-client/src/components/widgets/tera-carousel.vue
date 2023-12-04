@@ -1,7 +1,10 @@
 <template>
 	<figure>
-		<div ref="content" class="content">
+		<div ref="content" class="content" :style="{ height, width }">
 			<slot />
+			<div v-if="!hasSlot('default')" class="empty">
+				<i class="pi pi-image" />
+			</div>
 		</div>
 		<nav v-if="itemCount > 0">
 			<ul :class="{ numeric: isNumeric }">
@@ -21,9 +24,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, useSlots } from 'vue';
 
 defineProps({
+	height: {
+		type: String,
+		default: null
+	},
+	width: {
+		type: String,
+		default: null
+	},
 	isNumeric: {
 		type: Boolean,
 		default: false
@@ -34,11 +45,14 @@ const content = ref();
 const currentPage = ref(0);
 const itemCount = ref(0);
 
+const slots = useSlots();
+const hasSlot = (name: string) => !!slots[name];
+
 function move(movement: number) {
 	if (movement > -1 && movement < itemCount.value) {
 		content.value.children[currentPage.value].style.display = 'none';
 		currentPage.value = movement;
-		content.value.children[currentPage.value].style.display = 'flex';
+		content.value.children[currentPage.value].style.display = 'block';
 	}
 }
 
@@ -52,15 +66,15 @@ onMounted(() => {
 figure {
 	display: flex;
 	flex-direction: column;
-	justify-content: flex-end;
-	height: 9.5rem;
+	justify-content: space-between;
 }
 
 .content {
 	display: flex;
-	flex: 1;
-	justify-content: center;
 	align-items: center;
+	justify-content: center;
+	height: 7.5rem;
+	max-height: 7.5rem;
 	overflow: hidden;
 	background-color: var(--surface-ground);
 	border-radius: var(--border-radius);
@@ -69,20 +83,34 @@ figure {
 
 .content > :deep(*) {
 	display: none;
-	background-color: var(--surface-section);
-	padding: 2px;
-
-	overflow: auto;
-	overflow-wrap: break-word;
-	margin: auto 0;
 	font-size: 10px;
-	/* Effects images */
-	object-fit: contain;
+	overflow-wrap: break-word;
+	overflow: auto;
+	background-color: var(--surface-section);
+	padding: 4px;
+}
+
+.content > :deep(img) {
+	background-color: transparent;
+	height: 100%;
+	width: 100%;
+	object-fit: scale-down;
+	padding: 0;
+}
+
+.empty {
+	background-color: transparent;
 }
 
 :deep(a),
 :deep(a:hover) {
 	color: var(--primary-color);
+}
+
+i {
+	margin: auto;
+	color: rgb(226, 227, 229);
+	font-size: 3rem;
 }
 
 nav {
