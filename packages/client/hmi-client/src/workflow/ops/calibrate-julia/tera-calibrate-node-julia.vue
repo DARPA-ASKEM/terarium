@@ -5,46 +5,8 @@
 			:multiple="true"
 			:active-index="[1, 2, 3]"
 		>
-			<AccordionTab header="Mapping">
-				<DataTable class="mappingTable" :value="mapping">
-					<Column field="modelVariable">
-						<template #header>
-							<span class="column-header">Model variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<div class="mappingVariable">{{ data[field] }}</div>
-						</template>
-					</Column>
-					<Column field="datasetVariable">
-						<template #header>
-							<span class="column-header">Dataset variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
-								{{ data[field] ? data[field] : 'Not mapped' }}
-							</div>
-						</template>
-					</Column>
-				</DataTable>
-			</AccordionTab>
 			<AccordionTab header="Loss">
 				<div ref="staticLossPlotRef"></div>
-			</AccordionTab>
-			<AccordionTab header="Calibrated parameter values">
-				<table class="p-datatable-table" v-if="selectedRunId">
-					<thead class="p-datatable-thead">
-						<th>Parameter</th>
-						<th>Value</th>
-					</thead>
-					<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
-						<td>
-							<p>{{ key }}</p>
-						</td>
-						<td>
-							<p>{{ content }}</p>
-						</td>
-					</tr>
-				</table>
 			</AccordionTab>
 			<AccordionTab header="Variables">
 				<div v-if="selectedRunId && runResults[selectedRunId]">
@@ -67,21 +29,6 @@
 						icon="pi pi-plus"
 					></Button>
 				</div>
-			</AccordionTab>
-			<AccordionTab header="Extras">
-				<span class="extras">
-					<label>Num Chains</label>
-					<InputNumber v-model="extra.numChains" />
-					<label>num_iterations</label>
-					<InputNumber v-model="extra.numIterations" />
-					<label>odeMethod</label>
-					<InputText v-model="extra.odeMethod" />
-					<label>calibrate_method</label>
-					<Dropdown
-						:options="Object.values(CalibrateMethodOptions)"
-						v-model="extra.calibrateMethod"
-					/>
-				</span>
 			</AccordionTab>
 		</Accordion>
 		<section v-else class="emptyState">
@@ -107,46 +54,8 @@
 			:multiple="true"
 			:active-index="[1, 2, 3]"
 		>
-			<AccordionTab header="Mapping">
-				<DataTable class="mappingTable" :value="mapping">
-					<Column field="modelVariable">
-						<template #header>
-							<span class="column-header">Model variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<div class="mappingVariable">{{ data[field] }}</div>
-						</template>
-					</Column>
-					<Column field="datasetVariable">
-						<template #header>
-							<span class="column-header">Dataset variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<div :class="data[field] ? 'mappingVariable' : 'unmappedVariable'">
-								{{ data[field] ? data[field] : 'Not mapped' }}
-							</div>
-						</template>
-					</Column>
-				</DataTable>
-			</AccordionTab>
 			<AccordionTab header="Loss">
 				<div ref="lossPlotRef"></div>
-			</AccordionTab>
-			<AccordionTab header="Calibrated parameter values">
-				<table class="p-datatable-table">
-					<thead class="p-datatable-thead">
-						<th>Parameter</th>
-						<th>Value</th>
-					</thead>
-					<tr v-for="(content, key) in parameterResult" :key="key">
-						<td>
-							<p>{{ key }}</p>
-						</td>
-						<td>
-							<p>{{ content }}</p>
-						</td>
-					</tr>
-				</table>
 			</AccordionTab>
 			<AccordionTab header="Variables">
 				<tera-calibrate-chart
@@ -174,9 +83,7 @@
 <script setup lang="ts">
 import { computed, shallowRef, watch, ref, onMounted, onUnmounted } from 'vue';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
-import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
-import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import {
@@ -199,9 +106,6 @@ import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import _ from 'lodash';
-import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
-import Dropdown from 'primevue/dropdown';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
@@ -212,7 +116,6 @@ import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
 	CalibrateMap,
-	CalibrateMethodOptions,
 	CalibrateExtraJulia
 } from './calibrate-operation';
 
