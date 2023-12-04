@@ -114,3 +114,9 @@ const formattedFacets = computed(() => {
 	});
 });
 </script>
+
+<style scoped>
+.facets-panel {
+	overflow-y: auto;
+}
+</style>
