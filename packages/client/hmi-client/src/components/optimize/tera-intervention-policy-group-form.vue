@@ -1,7 +1,7 @@
 <template>
 	<div class="policy-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
 		<div class="form-header">
-			<div class="header-items">
+			<div>
 				<InputText
 					v-if="isEditing"
 					v-model="policyName"
@@ -15,7 +15,7 @@
 					@click="onEdit"
 				/>
 			</div>
-			<div class="header-items">
+			<div>
 				<label for="active">Active</label>
 				<InputSwitch @change="emit('update-self', { index, updatedConfig })" v-model="active" />
 			</div>
@@ -163,18 +163,18 @@ const onEdit = () => {
 	align-items: center;
 	gap: 1rem;
 	padding-bottom: 0.5rem;
-}
 
-.form-header > *:first-child {
-	margin-right: auto;
-}
+	& > *:first-child {
+		margin-right: auto;
+	}
 
-.header-items {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
+	& > * {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.5rem;
+	}
 }
 
 .input-row {
@@ -184,15 +184,14 @@ const onEdit = () => {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
-}
 
-.input-row > *:first-child {
-	flex: 2;
-}
+	& > *:first-child {
+		flex: 2;
+	}
 
-.input-row > *:nth-child(2),
-.input-row > *:nth-child(3) {
-	flex: 1;
+	& > *:not(:first-child) {
+		flex: 1;
+	}
 }
 
 .label-and-input {

@@ -1,25 +1,17 @@
 <template>
-	<section>
-		<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-		Configure in the side panel
-	</section>
+	<main>
+		<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+	</main>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import { WorkflowNode } from '@/types/workflow';
+import { ModelOptimizeOperationState } from './model-optimize-operation';
 
-<style scoped>
-section {
-	align-items: center;
-	display: flex;
-	flex-direction: column;
-	margin-bottom: 1rem;
-	gap: 0.5rem;
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
-}
+defineProps<{
+	node: WorkflowNode<ModelOptimizeOperationState>;
+}>();
+</script>
 
-img {
-	height: 25%;
-	width: 25%;
-}
-</style>
+<style scoped></style>

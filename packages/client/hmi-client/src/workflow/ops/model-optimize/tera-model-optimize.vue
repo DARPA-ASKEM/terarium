@@ -55,7 +55,7 @@
 					<p v-if="!showAdditionalOptions" class="text-button" @click="toggleAdditonalOptions">
 						Show additional options
 					</p>
-					<div v-if="showAdditionalOptions" class="additional-options">
+					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of stochastic samples</label>
 							<div class="input-and-slider">
@@ -181,8 +181,7 @@
 		</section>
 		<template #preview>
 			<tera-drilldown-preview title="Output">
-				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Output</h4>
+				<tera-operator-placeholder-graphic :operation-type="node.operationType" />
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -212,6 +211,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
+import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import {
 	ModelOptimizeOperationState,
 	blankInterventionPolicyGroup
@@ -341,10 +341,10 @@ const saveModel = () => {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
-}
 
-.input-row > * {
-	flex: 1;
+	& > * {
+		flex: 1;
+	}
 }
 
 .constraint-row {
@@ -353,33 +353,14 @@ const saveModel = () => {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
-}
 
-.constraint-row > *:first-child {
-	flex: 2;
-}
+	& > *:first-child {
+		flex: 2;
+	}
 
-.constraint-row > *:nth-child(2),
-.constraint-row > *:nth-child(3) {
-	flex: 1;
-}
-
-.label-and-input {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.additional-options {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.additional-options > * {
-	flex: 1;
+	& > *:not(:first-child) {
+		flex: 1;
+	}
 }
 
 .input-and-slider {
@@ -387,16 +368,16 @@ const saveModel = () => {
 	flex-direction: row;
 	align-items: center;
 	gap: 1rem;
-}
 
-.input-and-slider > *:first-child {
-	/* TODO: this doesn't work properly because InputNumber seems to have a min fixed width */
-	flex: 1;
-}
+	& > *:first-child {
+		/* TODO: this doesn't work properly because InputNumber seems to have a min fixed width */
+		flex: 1;
+	}
 
-.input-and-slider > *:nth-child(2) {
-	/* TODO: this isn't actually taking up 90% of the space right now */
-	flex: 9;
-	margin-right: 0.5rem;
+	& > *:nth-child(2) {
+		/* TODO: this isn't actually taking up 90% of the space right now */
+		flex: 9;
+		margin-right: 0.5rem;
+	}
 }
 </style>
