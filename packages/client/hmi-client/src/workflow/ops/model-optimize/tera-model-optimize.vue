@@ -92,7 +92,6 @@
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
-						:index="idx"
 						:model-node-options="modelNodeOptions"
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
