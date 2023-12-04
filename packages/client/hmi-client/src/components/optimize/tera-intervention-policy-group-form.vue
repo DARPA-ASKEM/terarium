@@ -4,9 +4,9 @@
 			<div>
 				<InputText
 					v-if="isEditing"
-					v-model="policyName"
+					v-model="config.name"
 					placeholder="Policy bounds"
-					@focusout="emit('update-self', { index, updatedConfig })"
+					@focusout="emit('update-self', config)"
 				/>
 				<h4 v-else>{{ props.config.name }}</h4>
 				<i
@@ -17,13 +17,13 @@
 			</div>
 			<div>
 				<label for="active">Active</label>
-				<InputSwitch @change="emit('update-self', { index, updatedConfig })" v-model="active" />
+				<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
 			</div>
 			<div>
 				<i
 					class="trash-button pi pi-trash"
 					:style="'cursor: pointer'"
-					@click="emit('delete-self', index)"
+					@click="emit('delete-self')"
 				/>
 			</div>
 		</div>
@@ -33,9 +33,9 @@
 				<Dropdown
 					class="p-inputtext-sm"
 					:options="props.modelNodeOptions.parameters"
-					v-model="parameter"
+					v-model="config.parameter"
 					placeholder="Select"
-					@update:model-value="emit('update-self', { index, updatedConfig })"
+					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 			<div class="label-and-input">
@@ -43,9 +43,9 @@
 				<Dropdown
 					class="p-inputtext-sm"
 					:options="props.modelNodeOptions.goals"
-					v-model="goal"
+					v-model="config.goal"
 					placeholder="Select"
-					@update:model-value="emit('update-self', { index, updatedConfig })"
+					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 			<div class="label-and-input">
@@ -53,9 +53,9 @@
 				<Dropdown
 					class="p-inputtext-sm"
 					:options="props.modelNodeOptions.costBenefitFns"
-					v-model="costBenefitFn"
+					v-model="config.costBenefitFn"
 					placeholder="Select"
-					@update:model-value="emit('update-self', { index, updatedConfig })"
+					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 		</div>
@@ -65,8 +65,8 @@
 				<InputNumber
 					class="p-inputtext-sm"
 					inputId="integeronly"
-					v-model="startTime"
-					@update:model-value="emit('update-self', { index, updatedConfig })"
+					v-model="config.startTime"
+					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 			<div class="label-and-input">
@@ -77,8 +77,8 @@
 					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="3"
-					v-model="lowerBound"
-					@update:model-value="emit('update-self', { index, updatedConfig })"
+					v-model="config.lowerBound"
+					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 			<div class="label-and-input">
@@ -89,8 +89,8 @@
 					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="3"
-					v-model="upperBound"
-					@update:model-value="emit('update-self', { index, updatedConfig })"
+					v-model="config.upperBound"
+					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 		</div>
@@ -98,7 +98,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import _ from 'lodash';
+import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -108,32 +109,12 @@ import { InterventionPolicyGroup } from '@/workflow/ops/model-optimize/model-opt
 const props = defineProps<{
 	modelNodeOptions: Record<string, string[]>;
 	config: InterventionPolicyGroup;
-	index: number;
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
+const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));
 const isEditing = ref<boolean>(false);
-const policyName = ref<string>(props.config.name);
-const active = ref<boolean>(props.config.isActive);
-const parameter = ref<string>(props.config.parameter);
-const goal = ref<string>(props.config.goal);
-const costBenefitFn = ref<string>(props.config.costBenefitFn);
-const startTime = ref<number>(props.config.startTime);
-const lowerBound = ref<number>(props.config.lowerBound);
-const upperBound = ref<number>(props.config.upperBound);
-
-const updatedConfig = computed<InterventionPolicyGroup>(() => ({
-	borderColour: props.config.borderColour,
-	name: policyName.value,
-	isActive: active.value,
-	parameter: parameter.value,
-	goal: goal.value,
-	costBenefitFn: costBenefitFn.value,
-	startTime: startTime.value,
-	lowerBound: lowerBound.value,
-	upperBound: upperBound.value
-}));
 
 const onEdit = () => {
 	isEditing.value = !isEditing.value;

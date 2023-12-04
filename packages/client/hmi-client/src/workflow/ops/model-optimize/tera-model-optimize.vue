@@ -94,8 +94,8 @@
 						:config="cfg"
 						:index="idx"
 						:model-node-options="modelNodeOptions"
-						@update-self="updateInterventionPolicyGroupForm"
-						@delete-self="deleteInterverntionPolicyGroupForm"
+						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
 					<p class="text-button" @click="addInterventionPolicyGroupForm">
 						+ Add more interventions
@@ -214,6 +214,7 @@ import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-interven
 import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import {
 	ModelOptimizeOperationState,
+	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './model-optimize-operation';
 
@@ -266,11 +267,11 @@ const riskTolerance = ref<number>(props.node.state.riskTolerance);
 const aboveOrBelow = ref<string>(props.node.state.aboveOrBelow);
 const threshold = ref<number>(props.node.state.threshold);
 
-const updateInterventionPolicyGroupForm = (data) => {
+const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
 
-	state.interventionPolicyGroups[data.index] = data.updatedConfig;
+	state.interventionPolicyGroups[index] = config;
 	emit('update-state', state);
 };
 
