@@ -129,7 +129,7 @@ const confirm = useConfirm();
 
 const props = defineProps<{
 	model: Model | null;
-	modelConfigurationId: string;
+	modelId: string;
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
@@ -183,7 +183,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	if (kernel?.name === 'beaker') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'mira_model',
-			context_info: { id: props.modelConfigurationId, type: 'model_config' }
+			context_info: { id: props.modelId, type: 'model' }
 		});
 	}
 });
@@ -255,7 +255,7 @@ const saveAsNewModel = async () => {
 		session: session?.name || '',
 		channel: 'shell',
 		content: {
-			parent_dataset_id: String(props.modelConfigurationId),
+			parent_dataset_id: String(props.modelId),
 			name: modelName
 		},
 		msgType: 'save_amr_request',
