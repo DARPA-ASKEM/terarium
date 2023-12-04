@@ -4,24 +4,17 @@
 			<slot />
 		</div>
 		<nav v-if="itemCount > 0">
-			<ul v-if="isNumeric" class="numeric">
+			<ul :class="{ numeric: isNumeric }">
 				<li
 					v-for="(_, index) in itemCount"
 					:class="{ selected: index === currentPage }"
 					:key="_"
 					@click.stop="move(index)"
 				>
-					{{ index + 1 }}
+					<!--Display if isNumeric is true-->
+					<span>{{ index + 1 }}</span>
 				</li>
-				<li v-if="itemCount > 5">(+{{ itemCount }})</li>
-			</ul>
-			<ul v-else>
-				<li
-					v-for="(_, index) in itemCount"
-					:class="{ selected: index === currentPage }"
-					:key="_"
-					@click.stop="move(index)"
-				/>
+				<li v-if="isNumeric && itemCount > 5">(+{{ itemCount }})</li>
 			</ul>
 		</nav>
 	</figure>
@@ -79,20 +72,16 @@ figure {
 	background-color: var(--surface-section);
 	padding: 2px;
 
-	/* overflow: auto; */
+	overflow: auto;
 	overflow-wrap: break-word;
 	margin: auto 0;
 	font-size: 10px;
-}
-
-.content > :deep(img) {
-	/* height: fit-content; */
-	margin: auto 0;
+	/* Effects images */
 	object-fit: contain;
-	max-height: 5rem;
 }
 
-:deep(a) {
+:deep(a),
+:deep(a:hover) {
 	color: var(--primary-color);
 }
 
@@ -105,7 +94,6 @@ nav {
 		align-items: center;
 		list-style: none;
 		justify-content: center;
-		gap: 0.5rem;
 
 		& > li {
 			cursor: pointer;
@@ -118,26 +106,25 @@ nav {
 
 		&:not(.numeric) {
 			margin: 1rem;
+			gap: 0.5rem;
 		}
 
 		&:not(.numeric) > li {
 			background-color: #dcdcdc;
 			width: 0.5rem;
 			height: 0.5rem;
-
+			/* Hides page number */
+			& > span {
+				display: none;
+			}
 			&.selected {
 				background-color: var(--primary-color);
 			}
 		}
 
-		&.numeric {
-			gap: 0;
-		}
-
 		&.numeric > li {
 			white-space: nowrap;
 			padding: 0.25rem;
-
 			&.selected {
 				font-weight: var(--font-weight-semibold);
 				color: var(--text-color-primary);

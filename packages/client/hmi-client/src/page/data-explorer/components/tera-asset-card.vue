@@ -64,6 +64,7 @@
 		<aside>
 			<tera-carousel
 				v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)"
+				is-numeric
 				:style="{ width: '8rem', height: '7rem' }"
 			>
 				<template v-for="(extraction, index) in extractions">
