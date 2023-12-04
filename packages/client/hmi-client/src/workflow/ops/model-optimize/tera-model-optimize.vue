@@ -49,12 +49,20 @@
 						:readonly="true"
 						:value="timeSamples"
 					/>
-					<p v-if="showAdditionalOptions" class="text-button" @click="toggleAdditonalOptions">
-						Hide additional options
-					</p>
-					<p v-if="!showAdditionalOptions" class="text-button" @click="toggleAdditonalOptions">
-						Show additional options
-					</p>
+					<div>
+						<Button
+							v-if="showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Hide additional options"
+							@click="toggleAdditonalOptions"
+						/>
+						<Button
+							v-if="!showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Show additional options"
+							@click="toggleAdditonalOptions"
+						/>
+					</div>
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of stochastic samples</label>
@@ -92,14 +100,18 @@
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
-						:index="idx"
 						:model-node-options="modelNodeOptions"
-						@update-self="updateInterventionPolicyGroupForm"
-						@delete-self="deleteInterverntionPolicyGroupForm"
+						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
-					<p class="text-button" @click="addInterventionPolicyGroupForm">
-						+ Add more interventions
-					</p>
+					<div>
+						<Button
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text"
+							label="Add more interventions"
+							@click="addInterventionPolicyGroupForm"
+						/>
+					</div>
 				</div>
 				<div class="form-section">
 					<h4>Constraint</h4>
@@ -214,6 +226,7 @@ import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-interven
 import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import {
 	ModelOptimizeOperationState,
+	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './model-optimize-operation';
 
@@ -266,11 +279,11 @@ const riskTolerance = ref<number>(props.node.state.riskTolerance);
 const aboveOrBelow = ref<string>(props.node.state.aboveOrBelow);
 const threshold = ref<number>(props.node.state.threshold);
 
-const updateInterventionPolicyGroupForm = (data) => {
+const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
 
-	state.interventionPolicyGroups[data.index] = data.updatedConfig;
+	state.interventionPolicyGroups[index] = config;
 	emit('update-state', state);
 };
 
@@ -314,14 +327,6 @@ const saveModel = () => {
 </script>
 
 <style scoped>
-.text-button {
-	color: var(--Primary, #1b8073);
-}
-
-.text-button:hover {
-	cursor: pointer;
-}
-
 .form-section {
 	display: flex;
 	flex-direction: column;
