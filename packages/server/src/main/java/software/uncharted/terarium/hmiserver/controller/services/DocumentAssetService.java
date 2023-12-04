@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.configuration.S3Configuration;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
+import software.uncharted.terarium.hmiserver.service.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
@@ -21,12 +23,15 @@ public class DocumentAssetService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
+	private final S3Configuration s3Config;
+	private final S3ClientService s3ClientService;
+
 	public List<DocumentAsset> getDocumentAssets(Integer page, Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
-			.index(elasticConfig.getDocumentIndex())
-			.from(page)
-			.size(pageSize)
-			.build();
+				.index(elasticConfig.getDocumentIndex())
+				.from(page)
+				.size(pageSize)
+				.build();
 		return elasticService.search(req, DocumentAsset.class);
 	}
 
@@ -48,16 +53,32 @@ public class DocumentAssetService {
 		return document;
 	}
 
-	public PresignedURL getUploadUrl(String documentId, String filename)
-	{
-		// TODO(kbirk): impl
-		return null;
+	private String getPath(String documentId, String filename) {
+		return String.join("/", documentId, filename, s3Config.getDocumentsPath());
 	}
 
-	public PresignedURL getDownloadUrl(String documentId, String filename)
-	{
-		// TODO(kbirk): impl
-		return null;
+	public PresignedURL getUploadUrl(String documentId, String filename) {
+		long HOUR_EXPIRATION = 60 * 24;
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
+				s3Config.getBucket(),
+				getPath(documentId, filename),
+				HOUR_EXPIRATION));
+		presigned.setMethod("PUT");
+		return presigned;
+	}
+
+	public PresignedURL getDownloadUrl(String documentId, String filename) {
+		long HOUR_EXPIRATION = 60 * 24;
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
+				s3Config.getBucket(),
+				getPath(documentId, filename),
+				HOUR_EXPIRATION));
+		presigned.setMethod("GET");
+		return presigned;
 	}
 
 	public String getDocumentDoi(Document doc) {
@@ -72,6 +93,5 @@ public class DocumentAssetService {
 		}
 		return docIdentifier;
 	}
-
 
 }

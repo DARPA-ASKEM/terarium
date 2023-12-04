@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -58,7 +57,6 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
@@ -71,8 +69,6 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @Slf4j
 @RequiredArgsConstructor
 public class DocumentController implements SnakeCaseController {
-
-	final DocumentProxy proxy;
 
 	final ExtractionProxy extractionProxy;
 
@@ -96,17 +92,15 @@ public class DocumentController implements SnakeCaseController {
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
-		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) throws IOException {
+			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) throws IOException {
 		return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createDocument(
-		@RequestBody final DocumentAsset document
-	) throws IOException {
+			@RequestBody final DocumentAsset document) throws IOException {
 		documentAssetService.createDocumentAsset(document);
 
 		JsonNode res = objectMapper.valueToTree(Map.of("id", document.getId()));
@@ -117,8 +111,7 @@ public class DocumentController implements SnakeCaseController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<DocumentAsset> getDocument(
-		@PathVariable("id") final String id
-	) throws IOException {
+			@PathVariable("id") final String id) throws IOException {
 		final DocumentAsset document = documentAssetService.getDocumentAsset(id);
 		if (document == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
@@ -132,11 +125,12 @@ public class DocumentController implements SnakeCaseController {
 		document.getAssets().forEach(asset -> {
 			try {
 				// Add the S3 bucket url to each asset metadata
-				final String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
+				final String url = documentAssetService.getDownloadUrl(id, asset.getFileName()).getUrl();
 				asset.getMetadata().put("url", url);
 
 				// if the asset os of type equation
-				if (asset.getAssetType().equals(ExtractionAssetType.EQUATION) && asset.getMetadata().get("equation") == null) {
+				if (asset.getAssetType().equals(ExtractionAssetType.EQUATION)
+						&& asset.getMetadata().get("equation") == null) {
 					// Fetch the image from the URL
 					final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
 					// Encode the image in Base 64
@@ -165,11 +159,11 @@ public class DocumentController implements SnakeCaseController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteDocument(
-		@PathVariable("id") final String id
-	) throws IOException {
+			@PathVariable("id") final String id) throws IOException {
 		documentAssetService.deleteDocumentAsset(id);
 
-		JsonNode res = objectMapper.valueToTree(Map.of("message", String.format("Document successfully deleted: %s", id)));
+		JsonNode res = objectMapper
+				.valueToTree(Map.of("message", String.format("Document successfully deleted: %s", id)));
 
 		return ResponseEntity.ok(res);
 	}
@@ -177,23 +171,25 @@ public class DocumentController implements SnakeCaseController {
 	/**
 	 * Uploads an artifact inside the entity to TDS via a presigned URL
 	 *
-	 * @param documentId         The ID of the document to upload to
-	 * @param fileName           The name of the file to upload
-	 * @param fileEntity  		 The entity containing the file to upload
+	 * @param documentId The ID of the document to upload to
+	 * @param fileName   The name of the file to upload
+	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadDocumentHelper(final String documentId, final String fileName, final HttpEntity fileEntity) {
+	private ResponseEntity<Integer> uploadDocumentHelper(final String documentId, final String fileName,
+			final HttpEntity fileEntity) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build()) {
+				.disableRedirectHandling()
+				.build()) {
 
 			// upload file to S3
-			final PresignedURL presignedURL = proxy.getUploadUrl(documentId, fileName).getBody();
+			final PresignedURL presignedURL = documentAssetService.getUploadUrl(documentId, fileName);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(fileEntity);
 			final HttpResponse response = httpclient.execute(put);
 
-			// if the fileEntity is not a PDF, then we need to extract the text and update the document asset
+			// if the fileEntity is not a PDF, then we need to extract the text and update
+			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
 				final DocumentAsset document = documentAssetService.getDocumentAsset(documentId);
 
@@ -216,29 +212,28 @@ public class DocumentController implements SnakeCaseController {
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocument(
-		@PathVariable("id") final String id,
-		@RequestParam("filename") final String filename,
-		@RequestPart("file") final MultipartFile file
-	) throws IOException {
+			@PathVariable("id") final String id,
+			@RequestParam("filename") final String filename,
+			@RequestPart("file") final MultipartFile file) throws IOException {
 		final byte[] fileAsBytes = file.getBytes();
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadDocumentHelper(id, filename, fileEntity);
 	}
 
 	/**
-	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
+	 * Downloads a file from GitHub given the path and owner name, then uploads it
+	 * to the project.
 	 */
 	@PutMapping("/{documentId}/uploadDocumentFromGithub")
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadDocumentFromGithub(
-		@PathVariable("documentId") final String documentId,
-		@RequestParam("path") final String path,
-		@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
-		@RequestParam("filename") final String filename
-	) {
+			@PathVariable("documentId") final String documentId,
+			@RequestParam("path") final String path,
+			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+			@RequestParam("filename") final String filename) {
 		log.debug("Uploading Document file from github to dataset {}", documentId);
 
-		//download file from GitHub
+		// download file from GitHub
 		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadDocumentHelper(documentId, filename, fileEntity);
@@ -248,22 +243,19 @@ public class DocumentController implements SnakeCaseController {
 	@PostMapping(value = "/createDocumentFromXDD")
 	@Secured(Roles.USER)
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
-		@RequestBody final AddDocumentAssetFromXDDRequest body
-	) throws IOException {
+			@RequestBody final AddDocumentAssetFromXDDRequest body) throws IOException {
 
-
-		//build initial response
+		// build initial response
 		AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
 		response.setExtractionJobId(null);
 		response.setPdfUploadError(false);
 		response.setDocumentAssetId(null);
 
-
 		// get preliminary info to build document asset
 		Document document = body.getDocument();
 		String projectId = body.getProjectId();
 		String doi = documentAssetService.getDocumentDoi(document);
-		String username = "";//TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
+		String username = "";// TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
 
 		// get pdf url and filename
 		String fileUrl = null;
@@ -275,20 +267,23 @@ public class DocumentController implements SnakeCaseController {
 			throw new RuntimeException(e);
 		}
 
-		XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null, null, null, null, apikey);
+		XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null, null, null,
+				null, apikey);
 
 		// create a new document asset from the metadata in the xdd document
-		DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, username, extractionResponse.getSuccess().getData());
-		if(filename != null)
+		DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, username,
+				extractionResponse.getSuccess().getData());
+		if (filename != null)
 			documentAsset.getFileNames().add(filename);
 
-		// Upload the document to TDS in order to get a new ID to pair our files we want to upload with.
+		// Upload the document to TDS in order to get a new ID to pair our files we want
+		// to upload with.
 		final String newDocumentAssetId = documentAssetService.createDocumentAsset(documentAsset).getId();
 		response.setDocumentAssetId(newDocumentAssetId);
 
 		// Upload the PDF from unpaywall
 		String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
-		if(extractionJobId == null)
+		if (extractionJobId == null)
 			response.setPdfUploadError(true);
 		else
 			response.setExtractionJobId(extractionJobId);
@@ -296,25 +291,23 @@ public class DocumentController implements SnakeCaseController {
 		// Now upload additional extraction files
 		uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
 
-		//add asset to project
+		// add asset to project
 		projectProxy.createAsset(projectId, AssetType.documents, newDocumentAssetId);
 
 		return ResponseEntity.ok(response);
 
 	}
 
-
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> downloadDocument(
-		@PathVariable("id") final String id,
-		@RequestParam("filename") final String filename
-	) throws IOException {
+			@PathVariable("id") final String id,
+			@RequestParam("filename") final String filename) throws IOException {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build()) {
+				.disableRedirectHandling()
+				.build()) {
 
-			final PresignedURL presignedURL = proxy.getDownloadUrl(id, filename).getBody();
+			final PresignedURL presignedURL = documentAssetService.getDownloadUrl(id, filename);
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
@@ -330,15 +323,16 @@ public class DocumentController implements SnakeCaseController {
 
 	@GetMapping("/{id}/download-document-as-text")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
+	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final String documentId,
+			@RequestParam("filename") final String filename) {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build()) {
+				.disableRedirectHandling()
+				.build()) {
 
-			final PresignedURL presignedURL = proxy.getDownloadUrl(documentId, filename).getBody();
+			final PresignedURL presignedURL = documentAssetService.getDownloadUrl(documentId, filename);
 			final HttpGet httpGet = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(httpGet);
 			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -353,28 +347,30 @@ public class DocumentController implements SnakeCaseController {
 
 	/**
 	 * Creates a document asset from an XDD document
-	 * @param document xdd document
-	 * @param username current user name
+	 *
+	 * @param document    xdd document
+	 * @param username    current user name
 	 * @param extractions list of extractions associated with the document
 	 * @return
 	 */
-	private DocumentAsset createDocumentAssetFromXDDDocument(Document document, String username, List<Extraction> extractions) {
+	private DocumentAsset createDocumentAssetFromXDDDocument(Document document, String username,
+			List<Extraction> extractions) {
 		String name = document.getTitle();
 
-		//create document asset
+		// create document asset
 		DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName(name);
 		documentAsset.setDescription(name);
 		documentAsset.setUsername(username);
 		documentAsset.setFileNames(new ArrayList<>());
 
-		if(extractions != null) {
+		if (extractions != null) {
 			documentAsset.setAssets(new ArrayList<>());
-			for(int i = 0; i < extractions.size(); i++) {
+			for (int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
-				if(extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString()) ) {
+				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
+						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
+						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
 					DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
 					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
 					documentExtraction.setFileName("extraction_" + i + ".png");
@@ -387,7 +383,7 @@ public class DocumentController implements SnakeCaseController {
 
 		}
 
-		if(document.getGithubUrls() != null && !document.getGithubUrls().isEmpty()){
+		if (document.getGithubUrls() != null && !document.getGithubUrls().isEmpty()) {
 			documentAsset.setMetadata(new HashMap<>());
 			documentAsset.getMetadata().put("github_urls", document.getGithubUrls());
 		}
@@ -397,27 +393,29 @@ public class DocumentController implements SnakeCaseController {
 
 	/**
 	 * Uploads the extractions associated with an XDD document
+	 *
 	 * @param docId
 	 * @param extractions
 	 */
-	private void uploadXDDExtractions(String docId, List<Extraction> extractions){
+	private void uploadXDDExtractions(String docId, List<Extraction> extractions) {
 
-		if(extractions != null) {
+		if (extractions != null) {
 			for (int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
 				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
+						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
+						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
 					String filename = "extraction_" + i + ".png";
 
-					try(CloseableHttpClient httpclient = HttpClients.custom()
-						.disableRedirectHandling()
-						.build()){
+					try (CloseableHttpClient httpclient = HttpClients.custom()
+							.disableRedirectHandling()
+							.build()) {
 						String image = extraction.getProperties().getImage();
-						if(image != null){
+						if (image != null) {
 							byte[] imageAsBytes = Base64.getDecoder().decode(image.getBytes("UTF-8"));
-							HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-							final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
+							HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes,
+									ContentType.APPLICATION_OCTET_STREAM);
+							final PresignedURL presignedURL = documentAssetService.getUploadUrl(docId, filename);
 
 							final HttpPut put = new HttpPut(presignedURL.getUrl());
 							put.setEntity(fileEntity);
@@ -433,44 +431,45 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	/**
-	 * Uploads a PDF file to a document asset and then fires and forgets the extraction
+	 * Uploads a PDF file to a document asset and then fires and forgets the
+	 * extraction
+	 *
 	 * @param doi
 	 * @param filename
 	 * @param docId
 	 * @return
 	 */
-	private String uploadPDFFileToDocumentThenExtract(String doi, String filename, String docId){
-		try(CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build()){
+	private String uploadPDFFileToDocumentThenExtract(String doi, String filename, String docId) {
+		try (CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build()) {
 
 			byte[] fileAsBytes = downloadService.getPDF("https://unpaywall.org/" + doi);
 
-			//if this service fails, return ok with errors
-			if(fileAsBytes == null || fileAsBytes.length == 0){
+			// if this service fails, return ok with errors
+			if (fileAsBytes == null || fileAsBytes.length == 0) {
 				return null;
 			}
 
 			// upload pdf to document asset
 			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			final PresignedURL presignedURL = proxy.getUploadUrl(docId, filename).getBody();
+			final PresignedURL presignedURL = documentAssetService.getUploadUrl(docId, filename);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(fileEntity);
 			final HttpResponse pdfUploadResponse = httpclient.execute(put);
 
-			if(pdfUploadResponse.getStatusLine().getStatusCode() >= 400) {
+			if (pdfUploadResponse.getStatusLine().getStatusCode() >= 400) {
 				return null;
 			}
 
 			// fire and forgot pdf extractions
 			return knowledgeMiddlewareProxy.postPDFToCosmos(docId).getBody().get("id").asText();
 
-		} catch (Exception e){
+		} catch (Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
 			return null;
 		}
 
 	}
-
 
 }
