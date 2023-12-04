@@ -39,9 +39,9 @@
 			<tera-drilldown-preview>
 				<div>
 					<tera-model-diagram
-						v-if="model"
+						v-if="amr"
 						ref="teraModelDiagramRef"
-						:model="model"
+						:model="amr"
 						:is-editable="false"
 					/>
 					<div v-else>
@@ -57,7 +57,7 @@
 						class="input-small"
 					/>
 					<Button
-						:disabled="!model"
+						:disabled="!amr"
 						outlined
 						style="margin-right: auto"
 						label="Save as new Model"
@@ -76,9 +76,8 @@ import { watch, ref, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
-import { Model, ModelConfiguration, AssetType } from '@/types/Types';
+import { Model, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
@@ -115,8 +114,7 @@ interface SaveOptions {
 
 const kernelManager = new KernelSessionManager();
 
-const modelConfiguration = ref<ModelConfiguration>();
-const model = ref<Model | null>(null);
+const amr = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
@@ -135,7 +133,7 @@ const stratifyModel = () => {
 };
 
 const resetModel = () => {
-	if (!model.value) return;
+	if (!amr.value) return;
 
 	kernelManager
 		.sendMessage('reset_request', {})
@@ -157,7 +155,7 @@ const handleResetResponse = (data: any) => {
 };
 
 const stratifyRequest = () => {
-	if (!model.value) return;
+	if (!amr.value) return;
 
 	// reset model
 	kernelManager.sendMessage('reset_request', {});
@@ -189,7 +187,7 @@ const handleStratifyResponse = (data: any) => {
 };
 
 const handleModelPreview = (data: any) => {
-	model.value = data.content['application/json'];
+	amr.value = data.content['application/json'];
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2306
 	// reenable this once we figure out how to take modelId as input to a
@@ -200,7 +198,7 @@ const handleModelPreview = (data: any) => {
 };
 
 const buildJupyterContext = () => {
-	if (!model.value) {
+	if (!amr.value) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
 	}
@@ -209,26 +207,22 @@ const buildJupyterContext = () => {
 		context: 'mira_model',
 		language: 'python3',
 		context_info: {
-			id: model.value.id
+			id: amr.value.id
 		}
 	};
 };
 
 const inputChangeHandler = async () => {
-	const modelConfigurationId = props.node.inputs[0].value?.[0];
-	if (!modelConfigurationId) return;
+	const modelId = props.node.inputs[0].value?.[0];
+	if (!modelId) return;
 
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+	amr.value = await getModel(modelId);
+	if (!amr.value) return;
 
-	if (!modelConfiguration.value) return;
-	model.value = await getModel(modelConfiguration.value.modelId);
-
-	const modelColumnNameOptions: string[] = modelConfiguration.value.configuration.model.states.map(
-		(state: any) => state.id
-	);
+	const modelColumnNameOptions: string[] = amr.value.model.states.map((state: any) => state.id);
 	// add observables
-	if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-		modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+	if (amr.value.model.semantics?.ode?.observables) {
+		amr.value.model.semantics.ode.observables.forEach((o) => {
 			modelColumnNameOptions.push(o.id);
 		});
 	}
@@ -246,11 +240,11 @@ const inputChangeHandler = async () => {
 };
 
 const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!model.value || !modelName) return;
-	model.value.header.name = modelName;
+	if (!amr.value || !modelName) return;
+	amr.value.header.name = modelName;
 
 	const projectResource = useProjects();
-	const modelData = await createModel(model.value);
+	const modelData = await createModel(amr.value);
 	const projectId = projectResource.activeProject.value?.id;
 
 	if (!modelData) return;
