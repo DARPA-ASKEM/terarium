@@ -1,136 +1,137 @@
 <template>
-	<!--Probably rename tera-asset to something even more abstract-->
-	<tera-asset stretch-content>
-		<template #edit-buttons>
-			<SelectButton
-				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
-				:options="viewOptions"
-				option-value="value"
-			>
-				<template #option="{ option }">
-					<i :class="`${option.icon} p-button-icon-left`" />
-					<span class="p-button-label">{{ option.value }}</span>
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<section>
+			<!--Probably rename tera-asset to something even more abstract-->
+
+			<tera-asset stretch-content>
+				<template #edit-buttons>
+					<SelectButton
+						:model-value="view"
+						@change="if ($event.value) view = $event.value;"
+						:options="viewOptions"
+						option-value="value"
+					>
+						<template #option="{ option }">
+							<i :class="`${option.icon} p-button-icon-left`" />
+							<span class="p-button-label">{{ option.value }}</span>
+						</template>
+					</SelectButton>
 				</template>
-			</SelectButton>
-		</template>
-		<Accordion
-			v-if="view === CalibrationView.Input && modelConfig"
-			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4]"
-		>
-			<AccordionTab :header="modelConfig.configuration.name">
-				<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
-			</AccordionTab>
-			<AccordionTab header="Mapping">
-				<DataTable class="mapping-table" :value="mapping">
-					<Column field="modelVariable">
-						<template #header>
-							<span class="column-header">Model variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<!-- Tom TODO: No v-model -->
-							<Dropdown
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="data[field]"
-								:options="modelColumnNames"
+				<Accordion
+					v-if="view === CalibrationView.Input && modelConfig"
+					:multiple="true"
+					:active-index="[0, 1, 2, 3, 4]"
+				>
+					<AccordionTab :header="modelConfig.configuration.name">
+						<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
+					</AccordionTab>
+					<AccordionTab header="Mapping">
+						<DataTable class="mapping-table" :value="mapping">
+							<Column field="modelVariable">
+								<template #header>
+									<span class="column-header">Model variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<!-- Tom TODO: No v-model -->
+									<Dropdown
+										class="w-full"
+										placeholder="Select a variable"
+										v-model="data[field]"
+										:options="modelColumnNames"
+									/>
+								</template>
+							</Column>
+							<Column field="datasetVariable">
+								<template #header>
+									<span class="column-header">Dataset variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<!-- Tom TODO: No v-model -->
+									<Dropdown
+										class="w-full"
+										placeholder="Select a variable"
+										v-model="data[field]"
+										:options="datasetColumnNames"
+									/>
+								</template>
+							</Column>
+						</DataTable>
+						<div>
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-plus"
+								label="Add mapping"
+								@click="addMapping"
 							/>
-						</template>
-					</Column>
-					<Column field="datasetVariable">
-						<template #header>
-							<span class="column-header">Dataset variable</span>
-						</template>
-						<template #body="{ data, field }">
-							<!-- Tom TODO: No v-model -->
-							<Dropdown
-								class="w-full"
-								placeholder="Select a variable"
-								v-model="data[field]"
-								:options="datasetColumnNames"
-							/>
-						</template>
-					</Column>
-				</DataTable>
-				<div>
-					<Button
-						class="p-button-sm p-button-text"
-						icon="pi pi-plus"
-						label="Add mapping"
-						@click="addMapping"
+						</div>
+					</AccordionTab>
+					<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
+						<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
+					</AccordionTab>
+					<AccordionTab header="Train / Test ratio">
+						<section class="train-test-ratio">
+							<InputNumber v-model="trainTestValue" />
+							<Slider v-model="trainTestValue" />
+						</section>
+					</AccordionTab>
+				</Accordion>
+				<div v-if="view === CalibrationView.Output && modelConfig">
+					<Dropdown
+						v-if="runList.length > 0"
+						:options="runList"
+						v-model="selectedRun"
+						option-label="label"
+						placeholder="Select a calibration run"
 					/>
+					<Accordion :multiple="true" :active-index="[0, 1, 2]">
+						<AccordionTab header="Loss">
+							<div ref="drilldownLossPlot"></div>
+						</AccordionTab>
+						<AccordionTab header="Calibrated parameter values">
+							<table class="p-datatable-table" v-if="selectedRunId">
+								<thead class="p-datatable-thead">
+									<th>Parameter</th>
+									<th>Value</th>
+								</thead>
+								<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
+									<td>
+										<p>{{ key }}</p>
+									</td>
+									<td>
+										<p>{{ content }}</p>
+									</td>
+								</tr>
+							</table>
+						</AccordionTab>
+						<AccordionTab header="Variables">
+							<div v-if="selectedRunId && runResults[selectedRunId]">
+								<tera-simulate-chart
+									v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+									:key="index"
+									:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
+									:initial-data="csvAsset"
+									:mapping="mapping"
+									:run-type="RunType.Julia"
+									:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+									@configuration-change="chartConfigurationChange(index, $event)"
+								/>
+								<Button
+									class="p-button-sm p-button-text"
+									@click="addChart"
+									label="Add chart"
+									icon="pi pi-plus"
+								></Button>
+							</div>
+						</AccordionTab>
+					</Accordion>
 				</div>
-			</AccordionTab>
-			<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
-				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
-			</AccordionTab>
-			<AccordionTab header="Train / Test ratio">
-				<section class="train-test-ratio">
-					<InputNumber v-model="trainTestValue" />
-					<Slider v-model="trainTestValue" />
+				<section v-else-if="!modelConfig" class="emptyState">
+					<img src="@assets/svg/seed.svg" alt="" draggable="false" />
+					<p class="helpMessage">Connect a model configuration and dataset</p>
 				</section>
-			</AccordionTab>
-		</Accordion>
-		<div v-if="view === CalibrationView.Output && modelConfig">
-			<Dropdown
-				v-if="runList.length > 0"
-				:options="runList"
-				v-model="selectedRun"
-				option-label="label"
-				placeholder="Select a calibration run"
-			/>
-			<Accordion :multiple="true" :active-index="[0, 1, 2]">
-				<AccordionTab header="Loss">
-					<div ref="drilldownLossPlot"></div>
-				</AccordionTab>
-				<AccordionTab header="Calibrated parameter values">
-					<table class="p-datatable-table" v-if="selectedRunId">
-						<thead class="p-datatable-thead">
-							<th>Parameter</th>
-							<th>Value</th>
-						</thead>
-						<tr
-							v-for="(content, key) in node.state.calibrateConfigs.runConfigs[selectedRunId]
-								?.params"
-							:key="key"
-						>
-							<td>
-								<p>{{ key }}</p>
-							</td>
-							<td>
-								<p>{{ content }}</p>
-							</td>
-						</tr>
-					</table>
-				</AccordionTab>
-				<AccordionTab header="Variables">
-					<div v-if="selectedRunId && runResults[selectedRunId]">
-						<tera-simulate-chart
-							v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
-							:key="index"
-							:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
-							:initial-data="csvAsset"
-							:mapping="mapping"
-							:run-type="RunType.Julia"
-							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-							@configuration-change="chartConfigurationChange(index, $event)"
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							@click="addChart"
-							label="Add chart"
-							icon="pi pi-plus"
-						></Button>
-					</div>
-				</AccordionTab>
-			</Accordion>
-		</div>
-		<section v-else-if="!modelConfig" class="emptyState">
-			<img src="@assets/svg/seed.svg" alt="" draggable="false" />
-			<p class="helpMessage">Connect a model configuration and dataset</p>
+			</tera-asset>
 		</section>
-	</tera-asset>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -151,16 +152,17 @@ import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import SelectButton from 'primevue/selectbutton';
 import { getRunResultJulia } from '@/services/models/simulation-service';
 import { csvParse } from 'd3';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { CalibrationOperationStateJulia, CalibrateMap } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
 enum CalibrationView {
 	Input = 'Input',
@@ -187,6 +189,7 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
 const runResults = ref<RunResults>({});
+const runResultParams = ref<Record<string, Record<string, number>>>({});
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const runList = computed(() =>
@@ -209,11 +212,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 onMounted(() => {
@@ -231,11 +230,7 @@ const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Used from button to add new entry to the mapping object
@@ -249,11 +244,7 @@ function addMapping() {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 }
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
@@ -291,21 +282,19 @@ const handleSelectedRunChange = () => {
 		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
 
 const lazyLoadCalibrationData = async (runId?: string) => {
 	if (!runId || runResults.value[runId]) return;
 
-	const resultCsv = (await getRunResultJulia(runId, 'result.json')) as string;
-	const csvData = csvParse(resultCsv);
-
-	runResults.value[runId] = csvData as any;
+	const result = await getRunResultJulia(runId, 'result.json');
+	if (result) {
+		const csvData = csvParse(result.csvData);
+		runResults.value[runId] = csvData as any;
+		runResultParams.value[runId] = result.paramVals;
+	}
 };
 watch(
 	() => selectedRunId.value,

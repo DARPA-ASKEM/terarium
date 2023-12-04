@@ -1,5 +1,8 @@
+import { Component } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
-import _ from 'lodash';
+import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
 import {
 	Operation,
@@ -10,10 +13,9 @@ import {
 	WorkflowNode,
 	WorkflowPortStatus,
 	OperatorStatus,
-	OperatorInteractionStatus,
-	WorkflowPort
+	WorkflowPort,
+	WorkflowOutput
 } from '@/types/workflow';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -56,6 +58,7 @@ export const addNode = (
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null,
+			isOptional: false,
 			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
@@ -69,7 +72,6 @@ export const addNode = (
 		})),
 	  */
 		status: OperatorStatus.INVALID,
-		interactionStatus: OperatorInteractionStatus.FOUND,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
@@ -193,15 +195,19 @@ const defaultPortLabels = {
 	datasetId: 'Dataset'
 };
 
-export function getPortLabel({ label, type }: WorkflowPort) {
-	if (label) return label; // Return name of port value
+export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
+	let portLabel = type; // Initialize to port type (fallback)
 
-	// Return default label using port type
-	if (defaultPortLabels[type]) {
-		return defaultPortLabels[type];
+	// Assign to name of port value
+	if (label) portLabel = label;
+	// Assign to default label using port type
+	else if (defaultPortLabels[type]) {
+		portLabel = defaultPortLabels[type];
 	}
 
-	return type; // Show type when it lacks a default name
+	if (isOptional) portLabel = portLabel.concat(' (optional)');
+
+	return portLabel;
 }
 
 /**
@@ -241,3 +247,94 @@ class WorkflowEventEmitter extends EventEmitter {
 }
 
 export const workflowEventBus = new WorkflowEventEmitter();
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Workflow component registry, this is used to
+// dynamically determine which component should be rendered
+/// /////////////////////////////////////////////////////////////////////////////
+interface OperatorImport {
+	name: string;
+	node: Component;
+	drilldown: Component;
+}
+export class WorkflowRegistry {
+	nodeMap: Map<string, Component>;
+
+	drilldownMap: Map<string, Component>;
+
+	constructor() {
+		this.nodeMap = new Map();
+		this.drilldownMap = new Map();
+	}
+
+	set(name: string, node: Component, drilldown: Component) {
+		this.nodeMap.set(name, node);
+		this.drilldownMap.set(name, drilldown);
+	}
+
+	// shortcut
+	registerOp(op: OperatorImport) {
+		this.set(op.name, op.node, op.drilldown);
+	}
+
+	getNode(name: string) {
+		return this.nodeMap.get(name);
+	}
+
+	getDrilldown(name: string) {
+		return this.drilldownMap.get(name);
+	}
+
+	remove(name: string) {
+		this.nodeMap.delete(name);
+		this.drilldownMap.delete(name);
+	}
+}
+
+///
+// Operator
+///
+
+/**
+ * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
+ * current state was not previously stored as a WorkflowOutput, this function first saves the current state
+ * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
+ *
+ * @param operator - The operator whose state is to be updated.
+ * @param selectedWorkflowOutputId - The ID of the WorkflowOutput whose data will be used to update the operator's state.
+ */
+
+export function selectOutput(
+	operator: WorkflowNode<any>,
+	selectedWorkflowOutputId: WorkflowOutput<any>['id']
+) {
+	// Check if the current state existed previously in the outputs
+	let current = operator.outputs.find((output) => output.id === operator.active);
+	if (!current) {
+		// the current state was never saved in the outputs prior
+		current = {
+			id: uuidv4(),
+			type: '',
+			status: WorkflowPortStatus.NOT_CONNECTED,
+			isOptional: false
+		} as WorkflowOutput<any>;
+		operator.outputs.push(current);
+	}
+
+	// Update the current state within the outputs
+	current.state = cloneDeep(operator.state);
+	current.operatorStatus = operator.status;
+	current.timestamp = new Date();
+
+	// Update the Operator state with the selected one
+	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
+	if (selected) {
+		operator.state = selected.state;
+		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
+		operator.active = selected.id;
+	} else {
+		logger.warn(
+			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
+		);
+	}
+}

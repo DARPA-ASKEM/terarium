@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<template v-if="model">
-			<h5>{{ model.header.name }}</h5>
+			<tera-operator-title>{{ model.header.name }}</tera-operator-title>
 			<SelectButton
 				class="p-button-sm"
 				:model-value="view"
@@ -22,19 +22,22 @@
 				/>
 			</div>
 		</template>
-		<Dropdown
-			v-else
-			class="w-full p-button-sm p-button-outlined"
-			v-model="selectedModel"
-			:options="models"
-			option-label="header.name"
-			placeholder="Select a model"
-		/>
+		<template v-else>
+			<Dropdown
+				class="w-full p-button-sm p-button-outlined"
+				v-model="selectedModel"
+				:options="models"
+				option-label="header.name"
+				placeholder="Select a model"
+			/>
+			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+		</template>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import _ from 'lodash';
+import { ref, watch, onMounted, computed } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
@@ -42,15 +45,17 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
 import SelectButton from 'primevue/selectbutton';
+import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
-	models: Model[];
-	droppedModelId: null | string;
 }>();
 
-const emit = defineEmits(['select-model']);
+const emit = defineEmits(['update-state', 'append-output-port']);
+const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
 
 enum ModelNodeView {
 	Diagram = 'Diagram',
@@ -64,7 +69,17 @@ const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
 
 async function getModelById(modelId: string) {
 	model.value = await getModel(modelId);
-	emit('select-model', { id: model.value?.id });
+
+	if (model.value) {
+		const state = _.cloneDeep(props.node.state);
+		state.modelId = model.value?.id;
+		emit('update-state', state);
+		emit('append-output-port', {
+			type: 'modelId',
+			label: model.value.header.name,
+			value: [model.value.id]
+		});
+	}
 }
 
 watch(
@@ -81,12 +96,6 @@ onMounted(async () => {
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
 	}
-
-	// If model is drag and dropped from resource panel
-	else if (props.droppedModelId) await getModelById(props.droppedModelId);
-
-	// Force refresh of configs in the workflow node - August 2023
-	emit('select-model', { id: model.value?.id });
 });
 </script>
 

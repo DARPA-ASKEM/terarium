@@ -88,4 +88,4 @@ async function createNewModel() {
 }
 </script>
 
-<style></style>
+<style scoped></style>

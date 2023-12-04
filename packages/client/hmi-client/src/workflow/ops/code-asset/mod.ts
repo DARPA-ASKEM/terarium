@@ -1,3 +1,7 @@
-export * from './code-asset-operation';
-export { default as TeraCodeAssetWrapper } from './tera-code-asset-wrapper.vue';
-export { default as TeraCodeAssetNode } from './tera-code-asset-node.vue';
+import { CodeAssetOperation as operation } from './code-asset-operation';
+import node from './tera-code-asset-node.vue';
+import drilldown from './tera-code-asset-wrapper.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };

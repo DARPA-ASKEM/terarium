@@ -20,8 +20,8 @@ To develop and test the core application:
 
 3. Start a service locally to replace the services you shut down
 
-- Start up the Backend Quarkus server using `./hmiServerDev.sh` command from the root directory
-- Start the front end by doing `yarn && yarn dev` (shortcut for `yarn install && yarn workspaces him-client dev`)
+- Start up the Backend SpringBoot server using `./hmiServerDev.sh` command from the root directory
+- Start the front end by doing `yarn && yarn dev` (shortcut for `yarn install && yarn workspaces hmi-client dev`)
 
 4. Navigate your browser to `localhost:8078`
 5. You can start services back up in kubernetes by running the following commands from the
@@ -119,7 +119,7 @@ brew install ansible
 1. Decrypt the secrets vault via ansible-vault
 
 ```shell
-./hmiServerDev decrypt 
+./hmiServerDev decrypt
 ```
 
 2. Notice that in the resources directory there is now a `application-secrets.properties` file. Add the secrets that you
@@ -127,7 +127,7 @@ brew install ansible
 3. Re-encrypt the file to commit via the command
 
 ```shell
-./hmiServerDev decrypt  
+./hmiServerDev decrypt
 ```
 
 4. In the Orchestration project, add the secret to the correct file with the prefix of %prod

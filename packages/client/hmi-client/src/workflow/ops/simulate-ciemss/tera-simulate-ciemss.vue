@@ -1,157 +1,161 @@
 <template>
-	<section class="tera-simulate">
-		<div class="simulate-header">
-			<SelectButton
-				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
-				:options="viewOptions"
-				option-value="value"
-			>
-				<template #option="{ option }">
-					<i :class="`${option.icon} p-button-icon-left`" />
-					<span class="p-button-label">{{ option.value }}</span>
-				</template>
-			</SelectButton>
-		</div>
-		<div v-if="view === SimulateView.Output && node?.outputs.length" class="simulate-container">
-			<Dropdown
-				v-if="runList.length > 0"
-				:options="runList"
-				v-model="selectedRun"
-				option-label="label"
-				placeholder="Select a simulation run"
-				@update:model-value="handleSelectedRunChange"
-			/>
-			<template v-if="runResults[selectedRun?.runId]">
-				<ul class="metadata-container">
-					<li><span>Run ID:</span> {{ selectedRun.runId }}</li>
-					<li>
-						<span>Configuration name:</span>
-						{{ node.state.simConfigs.runConfigs[selectedRun.runId].configName }}
-					</li>
-					<li>
-						<span>Method selected:</span>
-						{{ node.state.simConfigs.runConfigs[selectedRun.runId].method }}
-					</li>
-					<li>
-						<span>Number of samples:</span>
-						{{ node.state.simConfigs.runConfigs[selectedRun.runId].numSamples }}
-					</li>
-					<li>
-						<span>Start step:</span>
-						{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.start }}
-						<span>End step:</span>
-						{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.end }}
-					</li>
-				</ul>
-				<tera-simulate-chart
-					v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
-					:key="idx"
-					:run-results="runResults[selectedRun.runId]"
-					:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
-					has-mean-line
-					@configuration-change="configurationChange(idx, $event)"
-				/>
-				<Button
-					class="add-chart"
-					text
-					:outlined="true"
-					@click="addChart"
-					label="Add chart"
-					icon="pi pi-plus"
-				>
-				</Button>
-				<tera-dataset-datatable
-					v-if="rawContent[selectedRun?.runId]"
-					:rows="10"
-					:raw-content="rawContent[selectedRun.runId]"
-				/>
-				<Button
-					class="add-chart"
-					title="Saves the current version of the model as a new Terarium asset"
-					@click="showSaveInput = !showSaveInput"
-				>
-					<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-					<span class="p-button-text">Save as</span>
-				</Button>
-				<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-					<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-					<i
-						class="pi pi-times i"
-						:class="{ clear: hasValidDatasetName }"
-						@click="saveAsName = ''"
-					></i>
-					<i
-						v-if="useProjects().activeProject.value?.id"
-						class="pi pi-check i"
-						:class="{ save: hasValidDatasetName }"
-						@click="saveDatasetToProject"
-					></i>
-				</span>
-			</template>
-		</div>
-		<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
-			<div class="simulate-model">
-				<Accordion :multiple="true" :active-index="[0, 1, 2]">
-					<AccordionTab>
-						<template #header> Model </template>
-						<tera-model-diagram
-							v-if="model[selectedRun?.runId]"
-							:model="model[selectedRun.runId]!"
-							:is-editable="false"
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<section>
+			<section class="tera-simulate" stretch-content>
+				<div class="simulate-header">
+					<SelectButton
+						:model-value="view"
+						@change="if ($event.value) view = $event.value;"
+						:options="viewOptions"
+						option-value="value"
+					>
+						<template #option="{ option }">
+							<i :class="`${option.icon} p-button-icon-left`" />
+							<span class="p-button-label">{{ option.value }}</span>
+						</template>
+					</SelectButton>
+				</div>
+				<div v-if="view === SimulateView.Output && node?.outputs.length" class="simulate-container">
+					<Dropdown
+						v-if="runList.length > 0"
+						:options="runList"
+						v-model="selectedRun"
+						option-label="label"
+						placeholder="Select a simulation run"
+						@update:model-value="handleSelectedRunChange"
+					/>
+					<template v-if="runResults[selectedRun?.runId]">
+						<ul class="metadata-container">
+							<li><span>Run ID:</span> {{ selectedRun.runId }}</li>
+							<li>
+								<span>Configuration name:</span>
+								{{ node.state.simConfigs.runConfigs[selectedRun.runId].configName }}
+							</li>
+							<li>
+								<span>Method selected:</span>
+								{{ node.state.simConfigs.runConfigs[selectedRun.runId].method }}
+							</li>
+							<li>
+								<span>Number of samples:</span>
+								{{ node.state.simConfigs.runConfigs[selectedRun.runId].numSamples }}
+							</li>
+							<li>
+								<span>Start step:</span>
+								{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.start }}
+								<span>End step:</span>
+								{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.end }}
+							</li>
+						</ul>
+						<tera-simulate-chart
+							v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+							:key="idx"
+							:run-results="runResults[selectedRun.runId]"
+							:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+							has-mean-line
+							@configuration-change="configurationChange(idx, $event)"
 						/>
-					</AccordionTab>
-					<AccordionTab>
-						<template #header> Model configuration </template>
-						<tera-model-configurations
-							v-if="model[selectedRun?.runId]"
-							:model="model[selectedRun.runId]!"
-							:model-configurations="modelConfigurations"
-							:feature-config="{ isPreview: true }"
+						<Button
+							class="add-chart"
+							text
+							:outlined="true"
+							@click="addChart"
+							label="Add chart"
+							icon="pi pi-plus"
+						>
+						</Button>
+						<tera-dataset-datatable
+							v-if="rawContent[selectedRun?.runId]"
+							:rows="10"
+							:raw-content="rawContent[selectedRun.runId]"
 						/>
-					</AccordionTab>
-					<AccordionTab>
-						<template #header> Simulation time range </template>
-						<div class="sim-tspan-container">
-							<div class="sim-tspan-group">
-								<label for="2">Start date</label>
-								<InputNumber
-									id="2"
-									class="p-inputtext-sm"
-									v-model="timespan.start"
-									inputId="integeronly"
+						<Button
+							class="add-chart"
+							title="Saves the current version of the model as a new Terarium asset"
+							@click="showSaveInput = !showSaveInput"
+						>
+							<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+							<span class="p-button-text">Save as</span>
+						</Button>
+						<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+							<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+							<i
+								class="pi pi-times i"
+								:class="{ clear: hasValidDatasetName }"
+								@click="saveAsName = ''"
+							></i>
+							<i
+								v-if="useProjects().activeProject.value?.id"
+								class="pi pi-check i"
+								:class="{ save: hasValidDatasetName }"
+								@click="saveDatasetToProject"
+							></i>
+						</span>
+					</template>
+				</div>
+				<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
+					<div class="simulate-model">
+						<Accordion :multiple="true" :active-index="[0, 1, 2]">
+							<AccordionTab>
+								<template #header> Model </template>
+								<tera-model-diagram
+									v-if="model[selectedRun?.runId]"
+									:model="model[selectedRun.runId]!"
+									:is-editable="false"
 								/>
-							</div>
-							<div class="sim-tspan-group">
-								<label for="3">End date</label>
-								<InputNumber
-									id="3"
-									class="p-inputtext-sm"
-									v-model="timespan.end"
-									inputId="integeronly"
+							</AccordionTab>
+							<AccordionTab>
+								<template #header> Model configuration </template>
+								<tera-model-configurations
+									v-if="model[selectedRun?.runId]"
+									:model="model[selectedRun.runId]!"
+									:model-configurations="modelConfigurations"
+									:feature-config="{ isPreview: true }"
 								/>
-							</div>
-						</div>
-					</AccordionTab>
-					<AccordionTab>
-						<template #header> Other options </template>
-						<div class="sim-tspan-container">
-							<div class="sim-tspan-group">
-								<label for="4">Number of stochastic samples</label>
-								<InputNumber
-									id="4"
-									class="p-inputtext-sm"
-									v-model="numSamples"
-									inputId="integeronly"
-									:min="2"
-								/>
-							</div>
-						</div>
-					</AccordionTab>
-				</Accordion>
-			</div>
-		</div>
-	</section>
+							</AccordionTab>
+							<AccordionTab>
+								<template #header> Simulation time range </template>
+								<div class="sim-tspan-container">
+									<div class="sim-tspan-group">
+										<label for="2">Start date</label>
+										<InputNumber
+											id="2"
+											class="p-inputtext-sm"
+											v-model="timespan.start"
+											inputId="integeronly"
+										/>
+									</div>
+									<div class="sim-tspan-group">
+										<label for="3">End date</label>
+										<InputNumber
+											id="3"
+											class="p-inputtext-sm"
+											v-model="timespan.end"
+											inputId="integeronly"
+										/>
+									</div>
+								</div>
+							</AccordionTab>
+							<AccordionTab>
+								<template #header> Other options </template>
+								<div class="sim-tspan-container">
+									<div class="sim-tspan-group">
+										<label for="4">Number of stochastic samples</label>
+										<InputNumber
+											id="4"
+											class="p-inputtext-sm"
+											v-model="numSamples"
+											inputId="integeronly"
+											:min="2"
+										/>
+									</div>
+								</div>
+							</AccordionTab>
+						</Accordion>
+					</div>
+				</div>
+			</section>
+		</section>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -171,17 +175,18 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelConfigurations from '@/components/model/petrinet/tera-model-configurations.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import InputText from 'primevue/inputtext';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
@@ -218,11 +223,7 @@ const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const handleSelectedRunChange = () => {
@@ -236,22 +237,14 @@ const handleSelectedRunChange = () => {
 		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.simConfigs.chartConfigs.push([]);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 async function saveDatasetToProject() {
@@ -302,11 +295,7 @@ watch(
 	(n) => {
 		const state = _.cloneDeep(props.node.state);
 		state.numSamples = n;
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	}
 );
 </script>

@@ -42,7 +42,7 @@ onUnmounted(() => {
 });
 </script>
 
-<style>
+<style scoped>
 .codeBox {
 	width: 100%;
 	height: 50%;

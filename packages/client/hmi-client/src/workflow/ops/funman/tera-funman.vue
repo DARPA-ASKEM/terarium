@@ -1,124 +1,117 @@
 <template>
-	<div class="header p-buttonset">
-		<Button
-			label="Wizard"
-			severity="secondary"
-			icon="pi pi-sign-in"
-			size="small"
-			:active="activeTab === FunmanTabs.wizard"
-			@click="activeTab = FunmanTabs.wizard"
-		/>
-		<Button
-			label="Notebook"
-			severity="secondary"
-			icon="pi pi-sign-out"
-			size="small"
-			:active="activeTab === FunmanTabs.notebook"
-			@click="activeTab = FunmanTabs.notebook"
-		/>
-		<tera-progress-spinner v-if="showSpinner" :font-size="2" />
-	</div>
-	<div v-if="activeTab === FunmanTabs.wizard" class="content">
-		<div class="container">
-			<h4 class="primary-text">Set validation parameters <i class="pi pi-info-circle" /></h4>
-			<p class="secondary-text">
-				The validator will use these parameters to execute the sanity checks.
-			</p>
-			<div class="section-row timespan">
-				<div class="button-column">
-					<label>Start time</label>
-					<InputNumber inputId="integeronly" v-model="startTime" />
-				</div>
-				<div class="button-column">
-					<label>End time</label>
-					<InputNumber inputId="integeronly" v-model="endTime" />
-				</div>
-				<div class="button-column">
-					<label>Number of steps</label>
-					<InputNumber inputId="integeronly" v-model="numberOfSteps" />
-				</div>
-			</div>
-			<InputText
-				:disabled="true"
-				class="p-inputtext-sm timespan-list"
-				inputId="integeronly"
-				v-model="requestStepListString"
-			/>
-			<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-				Show additional options
-			</p>
-			<p v-if="showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-				Hide additional options
-			</p>
-			<div v-if="showAdditionalOptions">
-				<div class="button-column">
-					<label>Tolerance</label>
-					<InputNumber
-						mode="decimal"
-						:min="0"
-						:max="1"
-						:min-fraction-digits="0"
-						:max-fraction-digits="7"
-						v-model="tolerance"
-					/>
-				</div>
-				<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
-				<div class="section-row">
-					<!-- This will definitely require a proper tool tip. -->
-					<label>Select parameters to synthesize <i class="pi pi-info-circle" /></label>
-					<div v-for="(parameter, index) of requestParameters" :key="index" class="button-column">
-						<label>{{ parameter.name }}</label>
-						<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<div :tabName="FunmanTabs.Wizard">
+			<tera-drilldown-section>
+				<main>
+					<h4 class="primary-text">
+						Set validation parameters
+						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
+					</h4>
+					<p class="secondary-text">
+						The validator will use these parameters to execute the sanity checks.
+					</p>
+					<div class="section-row timespan">
+						<div class="button-column">
+							<label>Start time</label>
+							<InputNumber inputId="integeronly" v-model="startTime" />
+						</div>
+						<div class="button-column">
+							<label>End time</label>
+							<InputNumber inputId="integeronly" v-model="endTime" />
+						</div>
+						<div class="button-column">
+							<label>Number of steps</label>
+							<InputNumber inputId="integeronly" v-model="numberOfSteps" />
+						</div>
 					</div>
-				</div>
-			</div>
-			<div class="spacer">
-				<h4>Add sanity checks</h4>
-				<p>Model configurations will be tested against these constraints</p>
-			</div>
-			<tera-constraint-group-form
-				v-for="(cfg, index) in node.state.constraintGroups"
-				:key="index"
-				:config="cfg"
-				:index="index"
-				:model-node-options="modelNodeOptions"
-				@delete-self="deleteConstraintGroupForm"
-				@update-self="updateConstraintGroupForm"
-			/>
+					<InputText
+						:disabled="true"
+						class="p-inputtext-sm timespan-list"
+						inputId="integeronly"
+						v-model="requestStepListString"
+					/>
+					<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
+						Show additional options
+					</p>
+					<p v-if="showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
+						Hide additional options
+					</p>
+					<div v-if="showAdditionalOptions">
+						<div class="button-column">
+							<label>Tolerance</label>
+							<InputNumber
+								mode="decimal"
+								:min="0"
+								:max="1"
+								:min-fraction-digits="0"
+								:max-fraction-digits="7"
+								v-model="tolerance"
+							/>
+						</div>
+						<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
+						<div class="section-row">
+							<!-- This will definitely require a proper tool tip. -->
+							<label>Select parameters to synthesize <i class="pi pi-info-circle" /></label>
+							<div
+								v-for="(parameter, index) of requestParameters"
+								:key="index"
+								class="button-column"
+							>
+								<label>{{ parameter.name }}</label>
+								<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
+							</div>
+						</div>
+					</div>
+					<div class="spacer">
+						<h4>Add sanity checks</h4>
+						<p>Model configurations will be tested against these constraints</p>
+					</div>
+					<tera-constraint-group-form
+						v-for="(cfg, index) in node.state.constraintGroups"
+						:key="index"
+						:config="cfg"
+						:index="index"
+						:model-node-options="modelNodeOptions"
+						@delete-self="deleteConstraintGroupForm"
+						@update-self="updateConstraintGroupForm"
+					/>
 
-			<Button label="Add another constraint" size="small" @click="addConstraintForm" />
+					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
+				</main>
+			</tera-drilldown-section>
 		</div>
-		<div class="container output">
-			<h4 class="primary-text">Validation results</h4>
-			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
-			<div v-else>
-				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Output</h4>
-			</div>
+		<div :tabName="FunmanTabs.Notebook">
+			<tera-drilldown-section>
+				<main>
+					<!-- TODO: notebook functionality -->
+					<p>{{ requestConstraints }}</p>
+				</main>
+			</tera-drilldown-section>
 		</div>
-	</div>
-	<div v-else class="content">
-		<div class="container">
-			<!-- TODO: notebook functionality -->
-			<p>{{ requestConstraints }}</p>
-		</div>
-		<div class="container">
-			<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
-			<div v-else>
-				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Output</h4>
-			</div>
-		</div>
-	</div>
-	<div class="footer">
-		<Button
-			v-if="!showSpinner"
-			class="p-button-sm"
-			label="Run"
-			icon="pi pi-play"
-			@click="runMakeQuery"
-		/>
-	</div>
+
+		<template #preview>
+			<tera-drilldown-preview title="Validation results">
+				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+					<h4>No Output</h4>
+				</div>
+			</tera-drilldown-preview>
+		</template>
+
+		<template #footer>
+			<Button
+				outlined
+				:loading="showSpinner"
+				class="run-button"
+				label="Run"
+				icon="pi pi-play"
+				@click="runMakeQuery"
+			/>
+			<Button outlined label="Save as a new model" />
+			<Button label="Close" @click="emit('close')" />
+		</template>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -132,27 +125,31 @@ import Slider from 'primevue/slider';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import teraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { useToastService } from '@/services/toast';
 import { v4 as uuidv4 } from 'uuid';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
+const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+
 enum FunmanTabs {
-	wizard,
-	notebook
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 const toast = useToastService();
+const validateParametersToolTip =
+	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
 
-const activeTab = ref(FunmanTabs.wizard);
 const labelOptions = ['any', 'all'];
 const showSpinner = ref(false);
 const showAdditionalOptions = ref(false);
@@ -250,14 +247,11 @@ const getStatus = async (runId) => {
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
-	workflowEventBus.emit('append-output-port', {
-		node: props.node,
-		port: {
-			id: uuidv4(),
-			label: `${portLabel} Result`,
-			type: FunmanOperation.outputs[0].type,
-			value: runId
-		}
+	emit('append-output-port', {
+		id: uuidv4(),
+		label: `${portLabel} Result`,
+		type: FunmanOperation.outputs[0].type,
+		value: runId
 	});
 };
 
@@ -274,11 +268,7 @@ const addConstraintForm = () => {
 	}
 	state.constraintGroups.push(newGroup);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const deleteConstraintGroupForm = (data) => {
@@ -288,11 +278,7 @@ const deleteConstraintGroupForm = (data) => {
 	}
 	state.constraintGroups.splice(data.index, 1);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (data) => {
@@ -302,11 +288,7 @@ const updateConstraintGroupForm = (data) => {
 	}
 	state.constraintGroups[data.index] = data.updatedConfig;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Used to set requestStepList.
@@ -380,71 +362,7 @@ watch(
 );
 </script>
 
-<style>
-.content {
-	display: flex;
-	overflow: auto;
-	padding: 1rem 1.5rem 1rem 0rem;
-	align-items: flex-start;
-	gap: 1.5rem;
-	flex: 1 0 0;
-}
-
-.output {
-	border-radius: 0.375rem;
-	background: #fafafa;
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
-}
-
-.container {
-	display: flex;
-	padding: 1rem 1.5625rem 1rem 1.5625rem;
-	flex-direction: column;
-	align-items: flex-start;
-	flex: 1 0 0;
-	align-self: stretch;
-}
-.container h1 {
-	color: var(--text-color-primary);
-	font-family: Inter;
-	font-size: 1rem;
-	font-style: normal;
-	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
-	letter-spacing: 0.03125rem;
-}
-.container p {
-	font-family: Figtree;
-	font-size: 0.875rem;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
-	letter-spacing: 0.01563rem;
-}
-
-.footer {
-	display: flex;
-	width: 44.75rem;
-	padding: 1rem 1.5rem;
-	align-items: flex-start;
-	gap: 0.5rem;
-	width: 100%;
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.footer Button {
-	display: flex;
-	height: 3.5rem;
-	padding: 1rem 1.5rem;
-	justify-content: center;
-	align-items: center;
-	gap: 0.5rem;
-	border-radius: 0.375rem;
-	border: 1px solid var(--Stroke, #cacbcc);
-	background: #fff;
-	color: var(--text-color-primary);
-}
-
+<style scoped>
 .primary-text {
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */
@@ -503,5 +421,9 @@ div.section-row.timespan > div > span {
 }
 .green-text:hover {
 	color: var(--text-color-subdued);
+}
+
+.run-button {
+	margin-right: auto;
 }
 </style>

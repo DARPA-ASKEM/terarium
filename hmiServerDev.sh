@@ -44,7 +44,6 @@ function deploy_remote() {
 function deploy_local() {
   echo "Deploying containers for development against local services"
   cat containers/common.env containers/secrets.env > containers/.env
-  docker build -t permissions:local containers/permissions
   docker compose --env-file containers/.env --file containers/docker-compose-remote.yml pull
   docker compose --env-file containers/.env --file containers/docker-compose-local.yml up --detach --wait
 }
@@ -132,6 +131,10 @@ COMMAND=${COMMAND:-"help"}
 ENVIRONMENT=${ENVIRONMENT:-"remote"}
 SERVER=${SERVER:-"false"}
 
+echo "COMMAND: $COMMAND"
+echo "ENVIRONMENT: $ENVIRONMENT"
+echo "SERVER: $SERVER"
+
 case ${COMMAND} in
   start)
     decrypt_secrets
@@ -206,7 +209,6 @@ case ${COMMAND} in
       stop
         ENVIRONMENT
           remote | local | full (default: remote)  Indicate which containers to stop
-
 
       OTHER COMMANDS:
         encrypt

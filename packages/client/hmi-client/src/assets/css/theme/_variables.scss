@@ -29,7 +29,7 @@ $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
 
 // font
-$fontTiny: 10 px;
+$fontTiny: 10px;
 $fontCaption: 12px;
 $fontBodySmall: 14px;
 $fontBodyMedium: 16px;
@@ -768,7 +768,7 @@ $galleriaIndicatorBorderRadius: 50% !default;
 $galleriaIndicatorWidth: 1.25rem !default;
 $galleriaIndicatorHeight: 1.25rem !default;
 $galleriaIndicatorsBgOnItem: rgba(0, 0, 0, .5) !default;
-$galleriaIndicatorBgOnItem: rgba(255, 255, 255, .4) !default;
+$galleriaIndicatorBgOnItem: $primaryColor !default;
 $galleriaIndicatorHoverBgOnItem: rgba(255, 255, 255, .6) !default;
 
 $galleriaThumbnailContainerBg: rgba(0, 0, 0, .9) !default;
@@ -926,7 +926,9 @@ $petri-inputBox: var(--surface-0);
 	--surface-disabled: #F4F4F4;
 	--surface-highlight: #EBF4F3;
 	--surface-warning: #FEC;
+	--warning-color: #FFAB00;
 	--surface-error: #FDDDD3;
+	--error-color: #F35625;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #f9fbfa;
 	--surface-section: #ffffff;
