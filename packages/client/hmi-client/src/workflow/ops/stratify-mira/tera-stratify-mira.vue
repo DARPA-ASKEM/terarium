@@ -238,7 +238,7 @@ const inputChangeHandler = async () => {
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
-			await kernelManager.init('beaker', 'Beaker', buildJupyterContext());
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);

@@ -121,7 +121,7 @@ import { useProjects } from '@/composables/project';
 // import { createNewDataset } from '@/services/dataset';
 
 const emit = defineEmits(['new-model-saved']);
-const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
+const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -180,7 +180,7 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
-	if (kernel?.name === 'beaker') {
+	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'mira_model',
 			context_info: { id: props.modelConfigurationId, type: 'model_config' }
