@@ -61,62 +61,50 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
-		<aside class="preview-and-options">
-			<figure
-				v-if="resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects"
+		<aside>
+			<tera-carousel
+				v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)"
+				is-numeric
+				height="6rem"
+				width="8rem"
 			>
-				<template v-if="relatedAsset">
+				<template v-for="(extraction, index) in extractions">
 					<img
-						v-if="relatedAsset.properties.image"
-						:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
+						v-if="extraction.properties.image"
+						:src="`data:image/jpeg;base64,${extraction.properties.image}`"
 						class="extracted-assets"
 						alt="asset"
+						:key="index"
 					/>
-					<div class="link" v-else-if="relatedAsset.properties.doi">
-						<a
-							v-if="relatedAsset.properties.documentBibjson?.link"
-							:href="relatedAsset.properties.documentBibjson.link[0].url"
-							@click.stop
-							rel="noreferrer noopener"
-						>
-							{{ relatedAsset.properties.documentBibjson.link[0].url }}
-						</a>
-						<a
-							v-else
-							:href="`https://doi.org/${relatedAsset.properties.doi}`"
-							@click.stop
-							rel="noreferrer noopener"
-						>
-							{{ `https://doi.org/${relatedAsset.properties.doi}` }}
-						</a>
-					</div>
-					<div class="link" v-else-if="relatedAsset.urlExtraction">
-						<a :href="relatedAsset.urlExtraction.url" @click.stop rel="noreferrer noopener">
-							{{ relatedAsset.urlExtraction.resourceTitle }}
-						</a>
-					</div>
+					<a
+						v-else-if="extraction.properties.doi && extraction.properties.documentBibjson?.link"
+						:href="extraction.properties.documentBibjson.link[0].url"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}a`"
+					>
+						{{ extraction.properties.documentBibjson.link[0].url }}
+					</a>
+					<a
+						v-else-if="extraction.properties.doi"
+						:href="`https://doi.org/${extraction.properties.doi}`"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}b`"
+					>
+						{{ `https://doi.org/${extraction.properties.doi}` }}
+					</a>
+					<a
+						v-else-if="extraction.urlExtraction"
+						:href="extraction.urlExtraction.url"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}c`"
+					>
+						{{ extraction.urlExtraction.resourceTitle }}
+					</a>
 				</template>
-				<div class="asset-nav-arrows">
-					<span class="asset-pages" v-if="!isEmpty(extractions)">
-						<span v-if="totalExtractions > 1" class="asset-count">
-							<template v-for="(_, index) in extractions.length" :key="_">
-								<i
-									:class="
-										index === relatedAssetPage
-											? 'asset-count-selected-text'
-											: 'asset-count-selected'
-									"
-									@click.stop="previewMovement(index)"
-									>{{ index + 1 }}</i
-								>
-							</template>
-							<span v-if="totalExtractions > 5" class="asset-count-text">
-								(+{{ totalExtractions }})</span
-							>
-						</span>
-					</span>
-				</div>
-			</figure>
+			</tera-carousel>
 			<slot name="default"></slot>
 		</aside>
 	</div>
@@ -130,6 +118,7 @@ import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/
 import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
+import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -197,17 +186,6 @@ const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => 
 	return [];
 });
 
-const totalExtractions: ComputedRef<number> = computed(() => {
-	if ((props.asset as Document).knownEntitiesCounts) {
-		return (
-			(props.asset as Document).knownEntitiesCounts.askemObjectCount +
-			(props.asset as Document).knownEntitiesCounts.urlExtractionCount
-		);
-	}
-	return 0;
-});
-
-const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() =>
 	(props.asset as Document).highlight
 		? Array.from((props.asset as Document).highlight).splice(0, 3)
@@ -232,12 +210,6 @@ watch(
 		relatedAssetPage.value = 0;
 	}
 );
-
-function previewMovement(movement: number) {
-	if (movement > -1 && movement < extractions.value.length) {
-		relatedAssetPage.value = movement;
-	}
-}
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
@@ -333,71 +305,9 @@ function endDrag() {
 	font-size: 0.75rem;
 }
 
-.preview-and-options {
+aside {
 	display: flex;
 	gap: 0.5rem;
-}
-
-.preview-and-options figure {
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	width: 8rem;
-	height: 7rem;
-}
-
-.preview-and-options figure img {
-	margin: auto 0;
-	object-fit: contain;
-	max-height: 5rem;
-}
-
-.preview-and-options .link {
-	overflow: auto;
-	overflow-wrap: break-word;
-	margin: auto 0;
-	min-height: 0;
-	font-size: 10px;
-}
-
-.preview-and-options .link a {
-	color: var(--primary-color);
-}
-
-.preview-and-options figure img,
-.preview-and-options .link {
-	border: 1px solid var(--surface-ground);
-	border-radius: 3px;
-	padding: 4px;
-}
-
-.asset-nav-arrows {
-	text-align: center;
-}
-
-.pi-arrow-left,
-.pi-arrow-right {
-	border-radius: 24px;
-	font-size: 10px;
-}
-
-.asset-nav-arrows .asset-pages {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.asset-nav-arrows .asset-count {
-	white-space: nowrap;
-}
-
-.asset-nav-arrows .asset-count-text {
-	color: var(--text-color-subdued);
-}
-
-.asset-count-selected-text {
-	font-weight: 1000;
-	color: var(--text-color-primary);
 }
 
 .title,
