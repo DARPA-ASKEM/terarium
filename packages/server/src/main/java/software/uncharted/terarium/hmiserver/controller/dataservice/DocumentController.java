@@ -256,6 +256,8 @@ public class DocumentController {
 		String doi = documentAssetService.getDocumentDoi(document);
 		String username = "";// TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
 
+		log.info("ahaha");
+
 		// get pdf url and filename
 		String fileUrl = null;
 		String filename = null;
