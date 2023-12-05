@@ -37,6 +37,7 @@
 		<template v-else>
 			<Dropdown
 				class="w-full p-button-sm p-button-outlined"
+				size="small"
 				:options="datasets"
 				option-label="name"
 				v-model="dataset"
@@ -181,6 +182,7 @@ section {
 	margin-top: 0.25rem;
 }
 
+/* TODO: These are wrongly named and should be a general rule for small dropdowns in the SASS themes */
 .p-button-sm.p-button-outlined {
 	border: 1px solid var(--surface-border);
 	padding-top: 0rem;

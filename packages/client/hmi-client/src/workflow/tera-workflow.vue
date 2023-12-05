@@ -346,7 +346,14 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Create model',
+		label: 'Code',
+		command: () => {
+			workflowService.addNode(wf.value, CodeAssetOp.operation, newNodePosition);
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Create model from code',
 		disabled: false,
 		command: () => {
 			workflowService.addNode(wf.value, ModelFromCodeOp.operation, newNodePosition);

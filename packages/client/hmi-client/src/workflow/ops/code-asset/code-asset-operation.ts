@@ -10,7 +10,7 @@ export const CodeAssetOperation: Operation = {
 	displayName: 'Code Asset',
 	isRunnable: true,
 	inputs: [],
-	outputs: [],
+	outputs: [{ type: 'codeAssetId' }],
 	action: () => {},
 
 	initState: () => {
