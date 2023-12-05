@@ -43,7 +43,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -68,7 +67,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class DocumentController implements SnakeCaseController {
+public class DocumentController {
 
 	final ExtractionProxy extractionProxy;
 
@@ -256,6 +255,8 @@ public class DocumentController implements SnakeCaseController {
 		String projectId = body.getProjectId();
 		String doi = documentAssetService.getDocumentDoi(document);
 		String username = "";// TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
+
+		log.info("ahaha");
 
 		// get pdf url and filename
 		String fileUrl = null;

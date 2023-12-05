@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
-import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.controller.services.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -28,7 +27,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RequestMapping("/model_configurations")
 @RestController
 @RequiredArgsConstructor
-public class ModelConfigurationController implements SnakeCaseController {
+public class ModelConfigurationController {
 
 	final ModelConfigurationService modelConfigurationService;
 	final ObjectMapper objectMapper;
