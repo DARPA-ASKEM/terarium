@@ -16,7 +16,7 @@ const INITIAL_CODE =
 	"from mira.metamodel import ControlledConversion, NaturalConversion, Concept, Template \n infected = Concept(name='infected population', identifiers={'ido': '0000511'}) \n susceptible = Concept(name='susceptible population', identifiers={'ido': '0000514'}) \n immune = Concept(name='immune population', identifiers={'ido': '0000592'}) \n \n t1 = ControlledConversion(controller=infected, subject=susceptible, outcome=infected,) \n t2 = NaturalConversion(subject=infected, outcome=immune) \n t1.dict() \n ";
 
 const codeAsText = ref(INITIAL_CODE);
-const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
+const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 
 async function hitMira() {
 	if (!jupyterSession) return;
