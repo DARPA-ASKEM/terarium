@@ -1,93 +1,78 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import software.uncharted.terarium.hmiserver.controller.services.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.controller.services.ModelService;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
-import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 @RequestMapping("/models")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class ModelController {
 
-	@Autowired
-	ModelProxy modelProxy;
+	final ModelService modelService;
 
-	@Autowired
-	DocumentProxy documentProxy;
+	final DocumentAssetService documentAssetService;
 
-	@Autowired
-	ProvenanceProxy provenanceProxy;
+	// final ModelProxy modelProxy;
 
-	@PostMapping("/frameworks")
-	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> createFramework(
-			@RequestBody final ModelFramework framework) {
-		return ResponseEntity.ok(modelProxy.createFramework(framework).getBody());
-	}
+	final ProvenanceProxy provenanceProxy;
 
-	@GetMapping("/frameworks/{name}")
-	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> getFramework(
-			@PathVariable("name") String name) {
-		return ResponseEntity.ok(modelProxy.getFramework(name).getBody());
-	}
-
-	@DeleteMapping("/frameworks/{name}")
-	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> deleteFramework(
-			@PathVariable("name") String name) {
-		return ResponseEntity.ok(modelProxy.deleteFramework(name).getBody());
-	}
+	final ObjectMapper objectMapper;
 
 	@GetMapping("/descriptions")
 	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> getDescriptions(
-			@RequestParam(name = "page_size", defaultValue = "100") Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0") Integer page) {
-		return ResponseEntity.ok(modelProxy.getDescriptions(pageSize, page).getBody());
+	public ResponseEntity<List<ModelDescription>> listModels(
+			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) throws IOException {
+		return ResponseEntity.ok(modelService.getDescriptions(page, pageSize));
 	}
 
 	@GetMapping("/{id}/descriptions")
 	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> getDescription(
-			@PathVariable("id") String id) {
-		return ResponseEntity.ok(modelProxy.getDescription(id).getBody());
+	ResponseEntity<ModelDescription> getDescription(
+			@PathVariable("id") String id) throws IOException {
+		return ResponseEntity.ok(modelService.getDescription(id));
 	}
 
-	/**
-	 * Get a Model from the data-service
-	 * Return Model
-	 */
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	ResponseEntity<Model> getModel(
-			@PathVariable("id") String id) {
+	ResponseEntity<Model> getModel(@PathVariable("id") String id) throws IOException {
 		Model model;
 		final ObjectMapper mapper = new ObjectMapper();
 
 		// Fetch the model from the data-service
 		try {
-			model = modelProxy.getModel(id).getBody();
+			model = modelService.getModel(id);
 		} catch (RuntimeException e) {
 			log.error("Unable to get the model" + id, e);
 			return ResponseEntity.internalServerError().build();
@@ -109,7 +94,8 @@ public class ModelController {
 			// If there are results, fetch the Documents
 			if (resultsNode != null && resultsNode.isArray() && !resultsNode.isEmpty()) {
 				// Get the list as Document Ids
-				final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {});
+				final List<String> documentIds = mapper.convertValue(resultsNode, new TypeReference<List<String>>() {
+				});
 
 				// Make sure we have an attributes list
 				if (model.getMetadata().getAttributes() == null)
@@ -118,15 +104,18 @@ public class ModelController {
 				documentIds.forEach(documentId -> {
 					try {
 						// Fetch the Document extractions
-						final DocumentAsset document = documentProxy.getAsset(documentId).getBody();
+						final DocumentAsset document = documentAssetService.getDocumentAsset(documentId);
 						if (document != null) {
-							final List<JsonNode> extractions = mapper.convertValue(document.getMetadata().get("attributes"), new TypeReference<List<JsonNode>>() {});
+							final List<JsonNode> extractions = mapper.convertValue(
+									document.getMetadata().get("attributes"), new TypeReference<List<JsonNode>>() {
+									});
 
-							// Append the Document extractions to the Model extractions, just for the front-end.
+							// Append the Document extractions to the Model extractions, just for the
+							// front-end.
 							// Those are NOT to be saved back to the data-service.
 							model.getMetadata().getAttributes().addAll(extractions);
 						}
-					} catch (RuntimeException e) {
+					} catch (Exception e) {
 						log.error("Unable to get the document " + documentId, e);
 					}
 				});
@@ -139,26 +128,47 @@ public class ModelController {
 		return ResponseEntity.ok(model);
 	}
 
+	@GetMapping("/search")
+	@Secured(Roles.USER)
+	public ResponseEntity<List<Model>> searchModels(
+			@RequestBody JsonNode query,
+			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) throws IOException {
+		return ResponseEntity.ok(modelService.searchModels(page, pageSize, query));
+	}
+
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	ResponseEntity<JsonNode> updateModel(
 			@PathVariable("id") String id,
-			@RequestBody Model model) {
-		return ResponseEntity.ok(modelProxy.updateModel(id, model).getBody());
+			@RequestBody Model model) throws IOException {
+
+		modelService.updateModel(model);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("id", model.getId()));
+
+		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
 	ResponseEntity<JsonNode> createModel(
-			@RequestBody Model model) {
-		return ResponseEntity.ok(modelProxy.createModel(model).getBody());
+			@RequestBody Model model) throws IOException {
+
+		modelService.createModel(model);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("id", model.getId()));
+
+		return ResponseEntity.ok(res);
 	}
 
 	@GetMapping("/{id}/model_configurations")
 	@Secured(Roles.USER)
-	ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
+	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
 			@PathVariable("id") String id,
-			@RequestParam(value = "page_size", required = false, defaultValue = "100") int pageSize) {
-		return ResponseEntity.ok(modelProxy.getModelConfigurations(id, pageSize).getBody());
+			@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+			@RequestParam(value = "page_size", required = false, defaultValue = "100") int pageSize)
+			throws IOException {
+		return ResponseEntity.ok(modelService.getModelConfigurationsByModelId(id, page, pageSize));
 	}
 }
