@@ -39,16 +39,18 @@ public class ModelConfigurationService {
 	}
 
 	public void deleteModelConfiguration(String id) throws IOException {
-		elasticService.delete(elasticConfig.getModelIndex(), id);
+		elasticService.delete(elasticConfig.getModelConfigurationIndex(), id);
 	}
 
 	public ModelConfiguration createModelConfiguration(ModelConfiguration modelConfiguration) throws IOException {
-		elasticService.index(elasticConfig.getModelIndex(), modelConfiguration.getId(), modelConfiguration);
+		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId(),
+				modelConfiguration);
 		return modelConfiguration;
 	}
 
 	public ModelConfiguration updateModelConfiguration(ModelConfiguration modelConfiguration) throws IOException {
-		elasticService.index(elasticConfig.getModelIndex(), modelConfiguration.getId(), modelConfiguration);
+		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId(),
+				modelConfiguration);
 		return modelConfiguration;
 	}
 
