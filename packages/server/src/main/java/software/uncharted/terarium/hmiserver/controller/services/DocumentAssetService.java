@@ -54,7 +54,7 @@ public class DocumentAssetService {
 	}
 
 	private String getPath(String documentId, String filename) {
-		return String.join("/", documentId, filename, config.getDocumentPath());
+		return String.join("/", config.getDocumentPath(), documentId, filename);
 	}
 
 	public PresignedURL getUploadUrl(String documentId, String filename) {
