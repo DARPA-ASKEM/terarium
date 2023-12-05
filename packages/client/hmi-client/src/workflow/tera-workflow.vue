@@ -182,6 +182,7 @@ import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod'
 import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
+import * as ModelOptimizeOp from './ops/model-optimize/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -201,6 +202,7 @@ registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
+registry.registerOp(ModelOptimizeOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -355,6 +357,15 @@ const contextMenuItems = ref([
 		label: 'Validate model configuration',
 		command: () => {
 			workflowService.addNode(wf.value, FunmanOp.operation, newNodePosition, { state: null });
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Optimize model',
+		command: () => {
+			workflowService.addNode(wf.value, ModelOptimizeOp.operation, newNodePosition, {
+				state: null
+			});
 			workflowDirty = true;
 		}
 	},

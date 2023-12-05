@@ -6,6 +6,7 @@
 		:publisher="`Last updated ${DateUtils.formatLong(
 			useProjects().activeProject.value?.timestamp
 		)}`"
+		:is-loading="useProjects().projectLoading.value"
 	>
 		<template #edit-buttons>
 			<tera-project-menu :project="useProjects().activeProject.value" />

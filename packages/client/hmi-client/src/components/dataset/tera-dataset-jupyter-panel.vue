@@ -126,8 +126,8 @@ import { useProjects } from '@/composables/project';
 
 // import { createNewDataset } from '@/services/dataset';
 
-// const jupyterSession = ref(<SessionContext>newSession('beaker', 'Beaker'));
-const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
+// const jupyterSession = ref(<SessionContext>newSession('beaker_kernel', 'Beaker Kernel'));
+const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -194,7 +194,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 		const key = `d${i + 1}`;
 		contextInfo[key] = assetId;
 	});
-	if (kernel?.name === 'beaker') {
+	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
 			context_info: contextInfo

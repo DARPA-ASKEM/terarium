@@ -3,7 +3,7 @@
 		<div class="background">
 			<Suspense>
 				<tera-model-jupyter-panel
-					:model-configuration-id="modelConfigurationId"
+					:model-id="modelId"
 					:model="null"
 					:show-kernels="false"
 					:show-chat-thoughts="false"
@@ -25,7 +25,7 @@ import { createNotebookSession, getNotebookSessionById } from '@/services/notebo
 import { v4 as uuidv4 } from 'uuid';
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
-import { getModel, getModelConfigurations } from '@/services/model';
+import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { ModelTransformerState } from './model-transformer-operation';
@@ -35,7 +35,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
-const modelConfigurationId = computed(() => {
+const modelId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
 	const modelConfirgurationList = props.node?.inputs
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
@@ -84,18 +84,12 @@ const addOutputPort = async (data) => {
 	// set default configuration
 	await addDefaultConfiguration(model);
 
-	// setting timeout...elastic search might not update default config in time
-	setTimeout(async () => {
-		const configurationList = await getModelConfigurations(model.id);
-		configurationList.forEach((configuration) => {
-			emit('append-output-port', {
-				id: uuidv4(),
-				label: configuration.name,
-				type: 'modelConfigId',
-				value: [configuration.id]
-			});
-		});
-	}, 800);
+	emit('append-output-port', {
+		id: uuidv4(),
+		label: model.header.name,
+		type: 'modelId',
+		value: [model.id]
+	});
 };
 </script>
 

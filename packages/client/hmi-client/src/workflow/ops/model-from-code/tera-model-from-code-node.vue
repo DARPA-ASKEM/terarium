@@ -1,12 +1,14 @@
 <template>
 	<main>
 		model from code node
-		<tera-operator-image-carousel :images="images" />
+		<tera-carousel>
+			<img v-for="(image, index) in images" :src="image" alt="alt" :key="index" />
+		</tera-carousel>
 	</main>
 </template>
 
 <script setup lang="ts">
-import TeraOperatorImageCarousel from '@/workflow/operator/tera-operator-image-carousel.vue';
+import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import terarium from '@/assets/svg/terarium-icon.svg';
 
 const images = [

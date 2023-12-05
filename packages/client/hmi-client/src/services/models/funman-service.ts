@@ -86,46 +86,48 @@ export const processFunman = (result: any) => {
 		});
 		boxes.push(temp);
 
-		Object.values(box.points).forEach((point: any) => {
-			point.id = `point${j}`;
-			j++;
+		if (box.points) {
+			Object.values(box.points).forEach((point: any) => {
+				point.id = `point${j}`;
+				j++;
 
-			// id, label, box_id, param values
-			const values = params.map((p: any) => point.values[p]);
-			points.push([point.id, point.label, boxId, ...values]);
+				// id, label, box_id, param values
+				const values = params.map((p: any) => point.values[p]);
+				points.push([point.id, point.label, boxId, ...values]);
 
-			// Get trajectories
-			const filteredVals = Object.keys(point.values)
-				.filter(
-					(key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume'
-				)
-				.reduce((obj, key) => {
-					obj[key] = point.values[key];
-					return obj;
-				}, {});
+				// Get trajectories
+				const filteredVals = Object.keys(point.values)
+					.filter(
+						(key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume'
+					)
+					.reduce((obj, key) => {
+						obj[key] = point.values[key];
+						return obj;
+					}, {});
 
-			const timesteps = [
-				...new Set(
-					Object.keys(filteredVals).map((key) => {
-						const splitKey = key.split('_');
-						return +splitKey[splitKey.length - 1]; // timestep
-					})
-				)
-			].sort((a, b) => a - b);
+				const timesteps = [
+					...new Set(
+						Object.keys(filteredVals).map((key) => {
+							const splitKey = key.split('_');
+							return +splitKey[splitKey.length - 1]; // timestep
+						})
+					)
+				].sort((a, b) => a - b);
 
-			timesteps.forEach((t) => {
-				const traj: any = {
-					boxId,
-					pointId: point.id,
-					timestep: t
-				};
-				states.forEach((s) => {
-					traj[s] = filteredVals[`${s}_${t}`];
+				timesteps.forEach((t) => {
+					const traj: any = {
+						boxId,
+						pointId: point.id,
+						timestep: t
+					};
+					states.forEach((s) => {
+						traj[s] = filteredVals[`${s}_${t}`];
+					});
+					trajs.push(traj);
 				});
-				trajs.push(traj);
-			});
-		});
-	});
+			}); // foreach point
+		} // box.points
+	}); // foreach box
 
 	return { boxes, points, states, trajs } as FunmanProcessedData;
 };
