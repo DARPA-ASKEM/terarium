@@ -1,119 +1,109 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section>
-			<main>
-				<section>
-					<header>
-						<h5>Code</h5>
-						<Dropdown
-							class="w-full md:w-14rem"
-							v-model="selectedProgrammingLanguage"
-							:options="programmingLanguages"
-							@change="setKernelContext"
-						/>
-						<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
-					</header>
-					<ul>
-						<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
-							<Panel toggleable>
-								<template #header>
-									<section>
-										<h5>{{ name }}</h5>
-										<Button icon="pi pi-pencil" text rounded />
-									</section>
-								</template>
-								<template #icons>
-									<span>
-										<label>Include in process</label>
-										<InputSwitch v-model="codeBlocks[i].includeInProcess" />
-									</span>
-									<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
-								</template>
-								<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
+		<div tabName="Wizard">
+			<tera-drilldown-section>
+				<header>
+					<h5>Code</h5>
+					<Dropdown
+						class="w-full md:w-14rem"
+						v-model="selectedProgrammingLanguage"
+						:options="programmingLanguages"
+						@change="setKernelContext"
+					/>
+					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
+				</header>
+				<ul>
+					<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
+						<Panel toggleable>
+							<template #header>
+								<section>
+									<h5>{{ name }}</h5>
+									<Button icon="pi pi-pencil" text rounded />
+								</section>
+							</template>
+							<template #icons>
+								<span>
+									<label>Include in process</label>
+									<InputSwitch v-model="codeBlocks[i].includeInProcess" />
+								</span>
+								<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
+							</template>
+							<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
 						<template #togglericon="{ collapsed }">
 							<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 						</template> -->
-								<v-ace-editor
-									v-model:value="codeBlocks[i].codeContent"
-									@init="initialize"
-									:lang="codeLanguage"
-									theme="chrome"
-									style="height: 10rem; width: 100%"
-									class="ace-editor"
-								/>
-							</Panel>
-						</li>
-					</ul>
-					<footer>
-						<span
-							><label>Model framework:</label
-							><Dropdown
-								class="w-full md:w-14rem"
-								v-model="selectedModelFramework"
-								:options="modelFrameworks"
-								@change="setKernelContext"
-						/></span>
-						<Button
-							:disabled="isProcessing"
-							label="Run"
-							icon="pi pi-play"
-							severity="secondary"
-							outlined
-							size="large"
-							@click="handleCode"
-						/>
-					</footer>
-				</section>
+							<v-ace-editor
+								v-model:value="codeBlocks[i].codeContent"
+								@init="initialize"
+								:lang="codeLanguage"
+								theme="chrome"
+								style="height: 10rem; width: 100%"
+								class="ace-editor"
+							/>
+						</Panel>
+					</li>
+				</ul>
+				<template #footer>
+					<span style="margin-right: auto"
+						><label>Model framework:</label
+						><Dropdown
+							class="w-full md:w-14rem"
+							v-model="selectedModelFramework"
+							:options="modelFrameworks"
+							@change="setKernelContext"
+					/></span>
+					<Button
+						:disabled="isProcessing"
+						label="Run"
+						icon="pi pi-play"
+						severity="secondary"
+						outlined
+						@click="handleCode"
+					/>
+				</template>
+			</tera-drilldown-section>
+		</div>
+		<div tabName="Notebook">
+			<!--Notebook section if we decide we need one-->
+		</div>
+		<template #preview>
+			<tera-drilldown-preview v-model:output="selectedModelFramework" :options="modelFrameworks">
 				<section v-if="modelValid === false || previewHTML === ''">
 					<div v-if="isProcessing">
 						<i class="pi pi-spin pi-spinner" :style="{ fontSize: '2rem' }"></i>
 					</div>
 				</section>
 				<section v-if="previewHTML !== ''">
-					<section class="preview">
-						<header>
-							<h5>Preview</h5>
-							<Dropdown
-								class="w-full md:w-14rem"
-								v-model="selectedModelFramework"
-								:options="modelFrameworks"
-							/>
-						</header>
-
-						<template v-if="selectedModelFramework === ModelFramework.Petrinet">
-							<!--Potentially put tera-model-diagram here just for petrinets-->
-							<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
-						</template>
-						<template v-if="selectedModelFramework === ModelFramework.Decapodes">
-							<div :innerHTML="previewHTML" />
-						</template>
-						<div class="flex flex-column gap-2">
-							<label>Model name</label>
-							<InputText v-model="modelName" />
-						</div>
-					</section>
-					<footer>
-						<Button
-							:disabled="!modelValid || modelName === ''"
-							label="Save as new model"
-							severity="secondary"
-							outlined
-							size="large"
-							@click="saveAsNewModel"
-						/>
-						<span class="btn-group">
-							<Button label="Cancel" severity="secondary" outlined size="large" />
-							<Button
-								:disabled="!modelValid || modelName === ''"
-								label="Apply changes and close"
-								size="large"
-								@click="getModel"
-							/>
-						</span>
-					</footer>
+					<template v-if="selectedModelFramework === ModelFramework.Petrinet">
+						<!--Potentially put tera-model-diagram here just for petrinets-->
+						<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
+					</template>
+					<template v-if="selectedModelFramework === ModelFramework.Decapodes">
+						<div :innerHTML="previewHTML" />
+					</template>
+					<div class="flex flex-column gap-2">
+						<label>Model name</label>
+						<InputText v-model="modelName" />
+					</div>
 				</section>
-			</main>
-		</section>
+				<template #footer>
+					<Button
+						:disabled="!modelValid || modelName === ''"
+						label="Save as new model"
+						severity="secondary"
+						outlined
+						@click="saveAsNewModel"
+						style="margin-right: auto"
+					/>
+					<Button label="Cancel" severity="secondary" outlined />
+					<Button
+						:disabled="!modelValid || modelName === ''"
+						label="Apply changes and close"
+						@click="getModel"
+					/>
+				</template>
+			</tera-drilldown-preview>
+		</template>
 	</tera-drilldown>
 </template>
 
@@ -136,6 +126,8 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { JSONObject } from '@lumino/coreutils';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -299,59 +291,11 @@ function removeCodeBlock(index: number) {
 </script>
 
 <style scoped>
-main {
-	padding: 16px;
-	display: flex;
-	gap: 2rem;
-	flex: 1;
-	height: 100%;
-}
-
-main > section {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	overflow-y: auto;
-	height: 100%;
-}
-
-section > header,
-footer {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-footer {
-	margin-top: auto;
-}
-
-.preview {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background-color: var(--surface-ground);
-	padding: 1rem;
-	flex: 1;
-	flex-direction: column;
-	display: flex;
-	gap: 0.5rem;
-}
-
-.preview > section {
-	display: flex;
-	justify-content: space-between;
-}
-
 span {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
-.btn-group {
-	gap: 1rem;
-}
-
 .p-dropdown {
 	max-height: 40px;
 }
