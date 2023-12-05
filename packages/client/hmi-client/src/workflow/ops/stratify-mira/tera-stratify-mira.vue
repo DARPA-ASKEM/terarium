@@ -61,7 +61,9 @@
 						outlined
 						style="margin-right: auto"
 						label="Save as new Model"
-						@click="() => saveNewModel(newModelName, { addToProject: true })"
+						@click="
+							() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
+						"
 					/>
 					<Button label="Close" @click="emit('close')" />
 				</template>
@@ -188,13 +190,6 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = (data: any) => {
 	amr.value = data.content['application/json'];
-
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2306
-	// reenable this once we figure out how to take modelId as input to a
-	// stratify workflow node instead of only modelConfigurationId as input
-	// if (model.value) {
-	// 	saveNewModel(`${model.value.header.name} - Stratified`, { appendOutputPort: true });
-	// }
 };
 
 const buildJupyterContext = () => {
@@ -254,17 +249,17 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 
 	if (options.appendOutputPort) {
-		// NOTE: this code is actually never invoked currently as `handleModelPreview` has `saveNewModel` commented out
 		emit('append-output-port', {
 			id: uuidv4(),
-			label: modelData.header.name,
+			label: modelName,
 			type: 'modelId',
 			value: [modelData.id]
 		});
+		emit('close');
 	}
 };
 
-const initialize = (editorInstance) => {
+const initialize = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
