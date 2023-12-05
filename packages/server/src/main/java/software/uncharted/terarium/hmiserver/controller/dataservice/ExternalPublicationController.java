@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ExternalPublicationProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -19,7 +18,7 @@ import java.util.List;
 @RequestMapping("/external/publications")
 @RestController
 @Slf4j
-public class ExternalPublicationController implements SnakeCaseController {
+public class ExternalPublicationController{
 
 	@Autowired
 	ExternalPublicationProxy proxy;

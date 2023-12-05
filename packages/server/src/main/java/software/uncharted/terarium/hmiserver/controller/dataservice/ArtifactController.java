@@ -33,6 +33,7 @@ import java.util.List;
 @RequestMapping("/artifacts")
 @RestController
 @Slf4j
+//TODO: Once we've moved this off of TDS remove the SnakeCaseController interface and import.
 public class ArtifactController implements SnakeCaseController {
 
 	@Autowired

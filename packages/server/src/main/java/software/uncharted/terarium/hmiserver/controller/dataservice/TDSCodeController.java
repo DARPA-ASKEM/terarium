@@ -38,6 +38,7 @@ import java.util.Map;
 @RequestMapping("/code-asset")
 @RestController
 @Slf4j
+//TODO: Once we've moved this off of TDS remove the SnakeCaseController interface and import.
 public class TDSCodeController implements SnakeCaseController {
 
 	@Autowired

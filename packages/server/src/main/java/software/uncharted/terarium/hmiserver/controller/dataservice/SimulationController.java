@@ -30,6 +30,7 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+//TODO: Once we've moved this off of TDS remove the SnakeCaseController interface and import.
 public class SimulationController implements SnakeCaseController {
 
 	private final SimulationProxy simulationProxy;

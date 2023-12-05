@@ -246,6 +246,8 @@ export interface EquationSource {
 export interface Model {
     id: string;
     header: ModelHeader;
+    timestamp?: Date;
+    username?: string;
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
@@ -258,6 +260,12 @@ export interface ModelConfiguration {
     description?: string;
     modelId: string;
     configuration: any;
+}
+
+export interface ModelDescription {
+    header: ModelHeader;
+    timestamp: Date;
+    username?: string;
 }
 
 export interface State {
@@ -662,10 +670,11 @@ export interface DocumentExtraction {
 
 export interface ModelHeader {
     name: string;
+    description: string;
     schema: string;
     schema_name?: string;
-    description: string;
     model_version?: string;
+    extracted_from?: string;
 }
 
 export interface ModelSemantics {
@@ -1087,7 +1096,7 @@ export enum ProvenanceType {
 
 /**
  * @deprecated
- *
+ * 
  * Values:
  * - `datasets`
  * - `model_configurations`

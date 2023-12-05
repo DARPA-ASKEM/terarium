@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/datasets")
 @RestController
 @Slf4j
+//TODO: Once we've moved this off of TDS remove the SnakeCaseController interface and import.
 public class DatasetController implements SnakeCaseController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;
