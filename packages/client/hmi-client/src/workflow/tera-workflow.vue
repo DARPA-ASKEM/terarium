@@ -183,6 +183,7 @@ import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 import * as ModelOptimizeOp from './ops/model-optimize/mod';
+import * as ModelCouplingOp from './ops/model-coupling/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -203,6 +204,7 @@ registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(ModelOptimizeOp);
+registry.registerOp(ModelCouplingOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -371,6 +373,15 @@ const contextMenuItems = ref([
 		label: 'Optimize model',
 		command: () => {
 			workflowService.addNode(wf.value, ModelOptimizeOp.operation, newNodePosition, {
+				state: null
+			});
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Coupling model',
+		command: () => {
+			workflowService.addNode(wf.value, ModelCouplingOp.operation, newNodePosition, {
 				state: null
 			});
 			workflowDirty = true;
