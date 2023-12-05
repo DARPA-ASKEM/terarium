@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.controller.services;
+package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.List;
