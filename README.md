@@ -128,7 +128,8 @@ There should now be a `application-secrets.properties` file in the `packages/ser
 <summary><b>Debugging the Server in VSCode</b></summary>
 
 1) Ensure you have the `Extension Pack for Java` extension pack installed.
-2) Ensure the following configuration is in the `.vscode/launch.json` directory:
+2) If you have the `Gradle for Java` extension installed, disable the gradle build server: [it causes problems with building and live reload](https://github.com/redhat-developer/vscode-java/issues/2338).
+3) Ensure the following configuration is in the `.vscode/launch.json` directory:
 
 ```json
 {
