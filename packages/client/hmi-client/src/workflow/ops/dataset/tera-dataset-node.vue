@@ -37,7 +37,6 @@
 		<template v-else>
 			<Dropdown
 				class="w-full p-button-sm p-button-outlined"
-				size="small"
 				:options="datasets"
 				option-label="name"
 				v-model="dataset"

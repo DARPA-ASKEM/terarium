@@ -192,7 +192,8 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 const defaultPortLabels = {
 	modelId: 'Model',
 	modelConfigId: 'Model configuration',
-	datasetId: 'Dataset'
+	datasetId: 'Dataset',
+	codeAssetId: 'Code'
 };
 
 export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
