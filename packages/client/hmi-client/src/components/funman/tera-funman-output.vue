@@ -81,7 +81,7 @@ const initalizeParameters = async () => {
 	modelStates.value = tempList;
 	selectedTrajState.value = modelStates.value[0];
 
-	lastTrueBox.value = funModel.parameter_space.true_boxes.at(-1);
+	lastTrueBox.value = funModel.parameter_space.true_boxes?.at(-1);
 };
 
 const renderGraph = async () => {
