@@ -7,7 +7,7 @@ export interface CodeAssetState {
 export const CodeAssetOperation: Operation = {
 	name: WorkflowOperationTypes.CODE,
 	description: 'Select a code asset',
-	displayName: 'Code Asset',
+	displayName: 'Code asset',
 	isRunnable: true,
 	inputs: [],
 	outputs: [{ type: 'codeAssetId' }],

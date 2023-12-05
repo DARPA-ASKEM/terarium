@@ -193,7 +193,7 @@ const defaultPortLabels = {
 	modelId: 'Model',
 	modelConfigId: 'Model configuration',
 	datasetId: 'Dataset',
-	codeAssetId: 'Code'
+	codeAssetId: 'Code asset'
 };
 
 export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
