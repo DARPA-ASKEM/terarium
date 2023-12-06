@@ -68,36 +68,29 @@
 		</div>
 		<template #preview>
 			<tera-drilldown-preview v-model:output="selectedModelFramework" :options="modelFrameworks">
-				<section v-if="modelValid === false || previewHTML === ''">
-					<div v-if="isProcessing">
-						<i class="pi pi-spin pi-spinner" :style="{ fontSize: '2rem' }"></i>
-					</div>
-				</section>
+				<tera-progress-spinner v-if="isProcessing" :font-size="2" />
 				<section>
-					<template v-if="selectedModelFramework === ModelFramework.Petrinet && model">
-						<tera-model-diagram :model="model" :is-editable="false"></tera-model-diagram>
+					<template v-if="selectedModelFramework === ModelFramework.Petrinet && selectedModel">
+						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 						<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
 					</template>
 					<template v-if="selectedModelFramework === ModelFramework.Decapodes && previewHTML">
 						<div :innerHTML="previewHTML" />
 					</template>
-					<div class="flex flex-column gap-2">
-						<label>Model name</label>
-						<InputText v-model="modelName" />
-					</div>
 				</section>
 				<template #footer>
 					<Button
-						:disabled="!modelValid || modelName === ''"
+						:loading="savingAsset"
+						:disabled="!isModelValid()"
 						label="Save as new model"
 						severity="secondary"
 						outlined
 						@click="saveAsNewModel"
 						style="margin-right: auto"
 					/>
-					<Button label="Cancel" severity="secondary" outlined />
+					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
 					<Button
-						:disabled="!modelValid || modelName === ''"
+						:disabled="!isModelValid()"
 						label="Apply changes and close"
 						@click="constructModel"
 					/>
@@ -112,14 +105,13 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import InputSwitch from 'primevue/inputswitch';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import { ProgrammingLanguage, Model } from '@/types/Types';
+import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEmpty } from 'lodash';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -132,6 +124,10 @@ import { getCodeAsset, getCodeFileAsText } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { getModel } from '@/services/model';
+import { addAsset } from '@/services/project';
+import { useProjects } from '@/composables/project';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { useToastService } from '@/services/toast';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -148,7 +144,6 @@ enum ModelFramework {
 const isProcessing = ref(false);
 
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
-const modelName = ref('');
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const selectedProgrammingLanguage = ref(ProgrammingLanguage.Python);
 const modelFrameworks = Object.values(ModelFramework);
@@ -157,16 +152,18 @@ const selectedModelFramework = ref(
 		? ModelFramework.Petrinet
 		: props.node.state.modelFramework
 );
-const modelValid = ref(false);
+const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 const previewHTML = ref('');
 
-const model = ref<Model>();
+const selectedModel = ref<Model>();
 const codeBlock = {
 	...props.node.state,
 	name: 'Code block 1',
 	includeInProcess: true
 };
+
+const savingAsset = ref(false);
 
 const codeBlocks = ref([codeBlock]);
 
@@ -225,7 +222,7 @@ async function handleCode() {
 		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
 		const newModel = await getModel(modelId);
 		if (newModel) {
-			model.value = newModel;
+			selectedModel.value = newModel;
 		}
 		isProcessing.value = false;
 	}
@@ -236,7 +233,7 @@ async function handleCode() {
 			declaration: code
 		};
 
-		modelValid.value = false;
+		decapodesModelValid.value = false;
 
 		kernelManager
 			.sendMessage('compile_expr_request', messageContent)
@@ -247,26 +244,39 @@ async function handleCode() {
 
 function constructModel() {
 	const modelContent = {
-		name: modelName.value
+		name: 'new model'
 	};
 
-	modelValid.value = false;
+	decapodesModelValid.value = false;
 
 	kernelManager
 		.sendMessage('construct_amr_request', modelContent)
 		?.register('construct_amr_response', handleConstructAmrResponse);
 }
 
-function saveAsNewModel() {
+async function saveAsNewModel() {
 	if (selectedModelFramework.value === ModelFramework.Petrinet) {
-		// save function here for petrinet
+		const projectId = useProjects().activeProject.value?.id;
+
+		if (!projectId || !selectedModel.value) return;
+
+		savingAsset.value = true;
+		const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+		savingAsset.value = false;
+
+		if (!response) {
+			logger.error('Could not save asset to project');
+			return;
+		}
+
+		useToastService().success('', 'Model saved successfully.');
 	}
 
 	if (selectedModelFramework.value === ModelFramework.Decapodes) {
 		const messageContent = {
 			header: {
-				description: modelName.value,
-				name: modelName.value,
+				description: 'new description',
+				name: 'new model',
 				_type: 'Header',
 				model_version: 'v1.0',
 				schema: 'modelreps.io/DecaExpr',
@@ -274,7 +284,7 @@ function saveAsNewModel() {
 			}
 		};
 
-		modelValid.value = false;
+		decapodesModelValid.value = false;
 
 		kernelManager
 			.sendMessage('save_amr_request', messageContent)
@@ -283,7 +293,7 @@ function saveAsNewModel() {
 }
 
 function handleCompileExprResponse() {
-	modelValid.value = true;
+	decapodesModelValid.value = true;
 }
 
 function handleDecapodesPreview(data: any) {
@@ -316,6 +326,18 @@ function addCodeBlock() {
 
 function removeCodeBlock(index: number) {
 	codeBlocks.value.splice(index, 1);
+}
+
+function isModelValid() {
+	if (selectedModelFramework.value === ModelFramework.Petrinet) {
+		return !!selectedModel.value;
+	}
+
+	if (selectedModelFramework.value === ModelFramework.Decapodes) {
+		return decapodesModelValid.value;
+	}
+
+	return false;
 }
 </script>
 
