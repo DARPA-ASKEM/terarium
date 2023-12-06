@@ -1,21 +1,24 @@
 <template>
 	<Portal :appendTo="props.appendTo">
 		<div class="tera-context-menu" ref="container">
-			<Menu v-if="isVisible" :model="props.model">
-				<template v-slot:item="{ item }">
-					<a class="p-menuitem-link" @click="(e) => itemClick(e, item)">
+			<TieredMenu v-if="isVisible" :model="props.model">
+				<template #item="{ item }">
+					<a class="p-menuitem-link" @click="itemClick(item)">
+						<i :class="item.icon" class="menuitem-icon" />
 						<span class="p-menuitem-text">{{ item.label }}</span>
+						<i v-if="!isEmpty(item.items)" class="pi pi-angle-right ml-auto" />
 					</a>
 				</template>
-			</Menu>
+			</TieredMenu>
 		</div>
 	</Portal>
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { ref, onUnmounted, PropType } from 'vue';
 import Portal from 'primevue/portal';
-import Menu from 'primevue/menu';
+import TieredMenu from 'primevue/tieredmenu';
 import { MenuItem } from 'primevue/menuitem';
 import { DomHandler, ZIndexUtils } from 'primevue/utils';
 
@@ -69,10 +72,9 @@ defineExpose({
 	hide
 });
 
-const itemClick = (e, item: MenuItem) => {
+const itemClick = (item: MenuItem) => {
 	if (item.command) {
 		hide();
-		item.command(e);
 	}
 };
 
@@ -135,11 +137,27 @@ onUnmounted(() => {
 <style scoped>
 .tera-context-menu {
 	position: absolute;
+
+	&:deep(.p-tieredmenu),
+	&:deep(.p-submenu-list) {
+		width: fit-content;
+		white-space: nowrap;
+	}
+
+	&:deep(.menuitem-icon) {
+		margin-right: 0.5rem;
+	}
+
+	&:deep(.p-menuitem-link:not(.p-disabled):hover) {
+		background-color: var(--surface-highlight);
+	}
+
+	&:deep(.pi-angle-right) {
+		color: var(--text-color-subdued);
+	}
 }
-.tera-context-menu:deep(.p-menu) {
-	width: fit-content;
-	max-height: fit-content;
-}
+
+/* Unused */
 .tera-context-menu:deep(.p-submenu-header .p-menuitem-link) {
 	padding-left: 0px;
 	padding-bottom: 0px;
