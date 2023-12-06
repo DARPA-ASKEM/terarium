@@ -62,8 +62,9 @@ public class FrameworkController {
 	@PutMapping("/frameworks/{name}")
 	@Secured(Roles.USER)
 	ResponseEntity<JsonNode> updateFramework(
+			@PathVariable("name") String name,
 			@RequestBody final ModelFramework framework) {
-		ModelFramework modelFramework = frameworkService.updateFramework(framework);
+		ModelFramework modelFramework = frameworkService.updateFramework(framework.setName(name));
 
 		JsonNode res = objectMapper.valueToTree(Map.of("name", modelFramework.getName()));
 

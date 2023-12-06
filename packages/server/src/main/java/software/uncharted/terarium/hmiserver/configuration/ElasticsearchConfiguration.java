@@ -1,10 +1,11 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium.elasticsearch")
@@ -22,22 +23,27 @@ public class ElasticsearchConfiguration {
 
 	Index index;
 
-	public record Index (
-		String prefix,
-		String suffix,
-		String codeRoot,
-		String datasetRoot,
-		String documentRoot,
-		String equationRoot,
-		String modelRoot,
-		String modelConfigurationRoot,
-		String notebookSessionRoot,
-		String simulationRoot,
-		String workflowRoot
-	) {}
+	public record Index(
+			String prefix,
+			String suffix,
+			String codeRoot,
+			String artifactRoot,
+			String datasetRoot,
+			String documentRoot,
+			String equationRoot,
+			String modelRoot,
+			String modelConfigurationRoot,
+			String notebookSessionRoot,
+			String simulationRoot,
+			String workflowRoot) {
+	}
 
 	public String getCodeIndex() {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
+	}
+
+	public String getArtifactIndex() {
+		return String.join("_", index.prefix, index.artifactRoot, index.suffix);
 	}
 
 	public String getDatasetIndex() {

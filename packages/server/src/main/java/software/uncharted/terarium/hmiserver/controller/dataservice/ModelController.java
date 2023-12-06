@@ -144,7 +144,7 @@ public class ModelController {
 			@PathVariable("id") String id,
 			@RequestBody Model model) throws IOException {
 
-		modelService.updateModel(model);
+		modelService.updateModel(model.setId(id));
 
 		JsonNode res = objectMapper.valueToTree(Map.of("id", model.getId()));
 

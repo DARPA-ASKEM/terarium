@@ -20,14 +20,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 
 @RequestMapping("/model_configurations")
 @RestController
 @RequiredArgsConstructor
-public class ModelConfigurationController{
+public class ModelConfigurationController {
 
 	final ModelConfigurationService modelConfigurationService;
 	final ObjectMapper objectMapper;
