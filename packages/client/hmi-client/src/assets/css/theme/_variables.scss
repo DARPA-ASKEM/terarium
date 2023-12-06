@@ -43,6 +43,7 @@ $fontWeightSemiBold: 600;
 $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default; 
 $borderRadius: 4px !default;
+$mediumBorderRadius: 6px !default;
 $bigBorderRadius: 8px !default;
 $biggerBorderRadius: 16px !default;
 $smallBorderRadius: 2px !default;
@@ -692,6 +693,7 @@ $overlayMenuBorder: 0 none !default;
 $overlayMenuShadow: 0 2px 4px -1px rgba(0, 0, 0, .2), 0 4px 5px 0 rgba(0, 0, 0, .14), 0 1px 10px 0 rgba(0, 0, 0, .12) !default;
 $verticalMenuPadding: .5rem 0 !default;
 $menuSeparatorMargin: .5rem 0 !default;
+$menuItemSeparatorMargin: 0.2rem 0;
 
 $breadcrumbPadding: 1rem !default;
 $breadcrumbBg: #ffffff !default;
@@ -863,7 +865,7 @@ $petri-inputBox: var(--surface-0);
 :root {
 	--editing-color: rgb(238, 238, 136);
 	--border-radius: #{$borderRadius};
-	--border-radius-medium: 6px;
+	--border-radius-medium: #{$mediumBorderRadius};
 	--border-radius-big: #{$bigBorderRadius};
 	--border-radius-bigger: #{$biggerBorderRadius};
 	--chevron-hover: #1b807332;

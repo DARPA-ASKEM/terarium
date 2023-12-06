@@ -1,7 +1,7 @@
 <template>
 	<Portal :appendTo="props.appendTo">
 		<div class="tera-context-menu" ref="container">
-			<TieredMenu v-if="isVisible" :model="props.model">
+			<TieredMenu v-if="isVisible" :model="props.model" class="p-tieredmenu-overlay">
 				<template #item="{ item }">
 					<a class="p-menuitem-link" @click="itemClick(item)">
 						<i :class="item.icon" class="menuitem-icon" />
@@ -146,6 +146,10 @@ onUnmounted(() => {
 
 	&:deep(.menuitem-icon) {
 		margin-right: 0.5rem;
+	}
+
+	&:deep(.p-menuitem-link) {
+		padding: 0.65rem 1rem;
 	}
 
 	&:deep(.p-menuitem-link:not(.p-disabled):hover) {

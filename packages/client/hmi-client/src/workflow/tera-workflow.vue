@@ -304,7 +304,9 @@ const removeNode = (event) => {
 };
 
 const largeNode = { width: 420, height: 220 };
-const categories = {
+
+// Menu categories and list items are in order of appearance for separators to work
+const categories: Record<string, { label: string; icon: string; separator?: boolean }> = {
 	model: {
 		label: 'Model operators',
 		icon: 'pi pi-share-alt'
@@ -322,6 +324,7 @@ const categories = {
 		icon: 'pi pi-database'
 	},
 	simulate: {
+		separator: true,
 		label: 'Simulate',
 		icon: 'pi pi-chart-bar'
 	},
@@ -331,27 +334,41 @@ const categories = {
 	}
 };
 const operationContextMenuList = [
+	// Model
 	{ name: ModelOp.name, category: categories.model },
 	{ name: ModelConfigOp.name, category: categories.model },
-	{ name: DatasetOp.name, category: categories.dataset },
-	{ name: DatasetTransformerOp.name, category: categories.dataset },
-	{ name: ModelTransformerOp.name, category: categories.model },
 	{ name: StratifyMiraOp.name, category: categories.model },
+	{ name: ModelTransformerOp.name, category: categories.model },
+	{ name: FunmanOp.name, category: categories.model, separator: true },
+	{ name: ModelOptimizeOp.name, category: categories.model },
+	// Code
 	{ name: CodeAssetOp.name, category: categories.code },
 	{ name: ModelFromCodeOp.name, category: categories.code },
-	{ name: FunmanOp.name, category: categories.model },
-	{ name: ModelOptimizeOp.name, category: categories.model },
-	{ name: SimulateJuliaOp.name, category: categories.simulate, options: { size: largeNode } },
+	// Dataset
+	{ name: DatasetOp.name, category: categories.dataset },
+	{ name: DatasetTransformerOp.name, category: categories.dataset },
+	// Simulate
 	{ name: CalibrateJuliaOp.name, category: categories.simulate, options: { size: largeNode } },
-	{ name: SimulateCiemssOp.name, category: categories.simulate, options: { size: largeNode } },
-	{ name: CalibrateCiemssOp.name, category: categories.simulate, options: { size: largeNode } },
+	{ name: SimulateJuliaOp.name, category: categories.simulate, options: { size: largeNode } },
 	{
-		name: SimulateEnsembleCiemssOp.name,
+		name: SimulateCiemssOp.name,
+		category: categories.simulate,
+		options: { size: largeNode },
+		separator: true
+	},
+	{
+		name: CalibrateCiemssOp.name,
 		category: categories.simulate,
 		options: { size: largeNode }
 	},
 	{
 		name: CalibrateEnsembleCiemssOp.name,
+		category: categories.simulate,
+		options: { size: largeNode },
+		separator: true
+	},
+	{
+		name: SimulateEnsembleCiemssOp.name,
 		category: categories.simulate,
 		options: { size: largeNode }
 	}
@@ -360,7 +377,10 @@ const operationContextMenuList = [
 const contextMenuItems = ref<any[]>([]);
 
 // Add operator categories to the context menu
-Object.values(categories).forEach(({ label, icon }) => {
+Object.values(categories).forEach(({ label, icon, separator }) => {
+	if (separator) {
+		contextMenuItems.value.push({ separator });
+	}
 	contextMenuItems.value.push({
 		label,
 		icon,
@@ -376,6 +396,10 @@ operationContextMenuList.forEach((item) => {
 	const categoryIndex = contextMenuItems.value.findIndex(
 		({ label }) => label === item.category.label
 	);
+
+	if (item.separator) {
+		contextMenuItems.value[categoryIndex].items.push({ separator: item.separator });
+	}
 
 	contextMenuItems.value[categoryIndex].items.push({
 		label: op.displayName,
