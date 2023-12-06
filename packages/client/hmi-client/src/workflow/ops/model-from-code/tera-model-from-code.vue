@@ -199,8 +199,10 @@ onUnmounted(() => {
 });
 
 function buildJupyterContext() {
-	const contextName = 'decapodes_creation';
-	const languageName = 'julia-1.9';
+	const contextName =
+		selectedModelFramework.value === ModelFramework.Decapodes ? 'decapodes_creation' : null;
+	const languageName =
+		selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 
 	return {
 		context: contextName,
