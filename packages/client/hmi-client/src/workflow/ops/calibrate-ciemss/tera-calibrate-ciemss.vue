@@ -225,10 +225,6 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		// const csvData = csvParse(resultCsv);
-		// console.log(csvData);
-		// runResults.value[simulationIds.value[0].runId] = csvData as any;
 
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;
