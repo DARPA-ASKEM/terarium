@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,10 +39,9 @@ public class FrameworkController {
 	@Secured(Roles.USER)
 	ResponseEntity<JsonNode> createFramework(
 			@RequestBody final ModelFramework framework) {
-
 		ModelFramework modelFramework = frameworkService.createFramework(framework);
 
-		JsonNode res = objectMapper.valueToTree(Map.of("id", modelFramework.getId()));
+		JsonNode res = objectMapper.valueToTree(Map.of("name", modelFramework.getName()));
 
 		return ResponseEntity.ok(res);
 	}
@@ -51,7 +51,7 @@ public class FrameworkController {
 	ResponseEntity<ModelFramework> getFramework(
 			@PathVariable("name") String name) {
 
-		Optional<ModelFramework> framework = frameworkService.getFrameworkByName(name);
+		Optional<ModelFramework> framework = frameworkService.getFramework(name);
 		if (framework.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", name));
 		}
@@ -59,12 +59,23 @@ public class FrameworkController {
 		return ResponseEntity.ok(framework.get());
 	}
 
+	@PutMapping("/frameworks/{name}")
+	@Secured(Roles.USER)
+	ResponseEntity<JsonNode> updateFramework(
+			@RequestBody final ModelFramework framework) {
+		ModelFramework modelFramework = frameworkService.updateFramework(framework);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("name", modelFramework.getName()));
+
+		return ResponseEntity.ok(res);
+	}
+
 	@DeleteMapping("/frameworks/{name}")
 	@Secured(Roles.USER)
 	ResponseEntity<JsonNode> deleteFramework(
 			@PathVariable("name") String name) {
 
-		frameworkService.deleteFrameworkByName(name);
+		frameworkService.deleteFramework(name);
 
 		JsonNode res = objectMapper
 				.valueToTree(Map.of("message", String.format("ModelFramework successfully deleted: %s", name)));

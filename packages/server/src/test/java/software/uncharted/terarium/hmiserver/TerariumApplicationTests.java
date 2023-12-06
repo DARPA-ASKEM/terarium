@@ -14,7 +14,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 @AutoConfigureMockMvc
 @SpringBootTest
-@ActiveProfiles({"test"})
+@ActiveProfiles({ "local", "test" })
 public class TerariumApplicationTests {
 	@Autowired
 	private WebApplicationContext context;
@@ -25,9 +25,9 @@ public class TerariumApplicationTests {
 	@BeforeEach
 	public void beforeEach() {
 		mockMvc = MockMvcBuilders
-			.webAppContextSetup(this.context)
-			.apply(springSecurity())
-			.build();
+				.webAppContextSetup(this.context)
+				.apply(springSecurity())
+				.build();
 	}
 
 	@Test

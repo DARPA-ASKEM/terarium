@@ -43,7 +43,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -62,6 +61,7 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -191,6 +191,10 @@ public class DocumentController {
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
 				final DocumentAsset document = documentAssetService.getDocumentAsset(documentId);
+				if (document == null) {
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+							String.format("Document %s not found", documentId));
+				}
 
 				document.setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
 

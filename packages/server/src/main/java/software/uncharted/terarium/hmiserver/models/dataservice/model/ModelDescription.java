@@ -16,18 +16,21 @@ public class ModelDescription implements Serializable {
 
 	static public ModelDescription fromModel(Model model) {
 
-		ModelHeader header = new ModelHeader()
-				.setName(model.getHeader().getName())
-				.setDescription(model.getHeader().getDescription())
-				.setModelSchema(model.getHeader().getModelSchema())
-				.setSchemaName(model.getHeader().getSchemaName())
-				.setModelVersion(model.getHeader().getModelVersion())
-				.setExtractedFrom(model.getHeader().getExtractedFrom());
-
-		return new ModelDescription()
-				.setHeader(header)
+		ModelDescription desc = new ModelDescription()
 				.setUsername(model.getUsername())
 				.setTimestamp(model.getTimestamp());
+
+		if (model.getHeader() != null) {
+			desc.setHeader(new ModelHeader()
+					.setName(model.getHeader().getName())
+					.setDescription(model.getHeader().getDescription())
+					.setModelSchema(model.getHeader().getModelSchema())
+					.setSchemaName(model.getHeader().getSchemaName())
+					.setModelVersion(model.getHeader().getModelVersion())
+					.setExtractedFrom(model.getHeader().getExtractedFrom()));
+		}
+
+		return desc;
 	}
 
 	private ModelHeader header;

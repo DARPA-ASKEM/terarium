@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,8 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
@@ -32,6 +31,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 @RequestMapping("/models")
 @RestController
@@ -146,6 +147,18 @@ public class ModelController {
 		modelService.updateModel(model);
 
 		JsonNode res = objectMapper.valueToTree(Map.of("id", model.getId()));
+
+		return ResponseEntity.ok(res);
+	}
+
+	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
+	ResponseEntity<JsonNode> deleteModel(
+			@PathVariable("id") String id) throws IOException {
+
+		modelService.deleteModel(id);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("message", String.format("Model successfully deleted: %s", id)));
 
 		return ResponseEntity.ok(res);
 	}
