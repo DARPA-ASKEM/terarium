@@ -4,6 +4,11 @@ import { ModelConfiguration, Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 
+export interface CalibrateMap {
+	modelVariable: string;
+	datasetVariable: string;
+}
+
 // Used in the setup of calibration node and drill down
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
@@ -102,4 +107,11 @@ export const renderLossGraph = (
 		yAxisGroup = svg.append('g').attr('class', 'y-axis');
 	}
 	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
+};
+
+export const setupCalibrationMapping = async (modelConfigId: string, datasetId: String) => {
+	console.log('TODO');
+	console.log(modelConfigId);
+	console.log(datasetId);
+	// return { map, modelStateOptions, datasetColumnOptions }
 };

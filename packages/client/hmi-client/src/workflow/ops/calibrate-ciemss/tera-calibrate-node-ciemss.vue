@@ -128,7 +128,7 @@ import {
 	simulationPollAction,
 	querySimulationInProgress
 } from '@/services/models/simulation-service';
-import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupModelInput, setupDatasetInput, CalibrateMap } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import _ from 'lodash';
 import { Poller, PollerState } from '@/api/api';
@@ -137,11 +137,7 @@ import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import {
-	CalibrationOperationCiemss,
-	CalibrationOperationStateCiemss,
-	CalibrateMap
-} from './calibrate-operation';
+import { CalibrationOperationCiemss, CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;

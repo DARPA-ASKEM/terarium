@@ -4,11 +4,7 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 import { getModel } from '@/services/model';
 import { ChartConfig } from '@/types/SimulateConfig';
 import { CalibrateConfig } from '@/types/CalibrateConfig';
-
-export interface CalibrateMap {
-	modelVariable: string;
-	datasetVariable: string;
-}
+import { CalibrateMap } from '@/services/calibrate-workflow';
 
 export interface CalibrateExtraJulia {
 	numChains: number;

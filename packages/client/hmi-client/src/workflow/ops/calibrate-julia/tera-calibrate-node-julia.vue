@@ -195,7 +195,12 @@ import {
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
-import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
+import {
+	setupModelInput,
+	setupDatasetInput,
+	renderLossGraph,
+	CalibrateMap
+} from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import _ from 'lodash';
@@ -211,7 +216,6 @@ import { logger } from '@/utils/logger';
 import {
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia,
-	CalibrateMap,
 	CalibrateMethodOptions,
 	CalibrateExtraJulia
 } from './calibrate-operation';
