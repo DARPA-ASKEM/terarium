@@ -243,13 +243,6 @@ const runCalibrate = async () => {
 	}
 };
 
-/* const handlingProgress = (message: string) => {
-	const parsedMessage = JSON.parse(message);
-	if (parsedMessage.progress) {
-		progress.value.value = Math.round(parsedMessage.progress * 100);
-	}
-}; */
-
 function getMessageHandler(event: ClientEvent<any>) {
 	const runIds: string[] = querySimulationInProgress(props.node);
 	if (runIds.length === 0) return;
@@ -314,7 +307,6 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-// Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -361,10 +353,6 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		// const csvData = csvParse(resultCsv);
-		// runResults.value[simulationIds.value[0].runId] = csvData as any;
-		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'parameters.json');
 
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;

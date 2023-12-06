@@ -99,22 +99,6 @@
 							icon="pi pi-plus"
 						></Button>
 					</AccordionTab>
-					<!-- <AccordionTab header="Calibrated parameter values">
-				<table class="p-datatable-table">
-					<thead class="p-datatable-thead">
-						<th>Parameter</th>
-						<th>Value</th>
-					</thead>
-					<tr v-for="(content, key) in parameterResult" :key="key">
-						<td>
-							<p>{{ key }}</p>
-						</td>
-						<td>
-							<p>{{ content }}</p>
-						</td>
-					</tr>
-				</table>
-			</AccordionTab> -->
 				</Accordion>
 				<section v-else-if="!modelConfig" class="emptyState">
 					<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -183,7 +167,6 @@ const runResults = ref<RunResults>({});
 const parameterResult = ref<{ [index: string]: any }[]>();
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
-// Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -199,7 +182,6 @@ const addChart = () => {
 };
 
 // Used from button to add new entry to the mapping object
-// Tom TODO: Make this generic... its copy paste from node.
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',

@@ -113,5 +113,19 @@ export const setupCalibrationMapping = async (modelConfigId: string, datasetId: 
 	console.log('TODO');
 	console.log(modelConfigId);
 	console.log(datasetId);
+	const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
+	// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
+	const modelColumnNameOptions: string[] = modelConfiguration.configuration.model.states.map(
+		(state) => state.id
+	);
+
+	// add observables
+	if (modelConfiguration.configuration.semantics?.ode?.observables) {
+		modelConfiguration.configuration.semantics.ode.observables.forEach((o) => {
+			modelColumnNameOptions.push(o.id);
+		});
+	}
+
+	modelColumnNameOptions.push('timestamp');
 	// return { map, modelStateOptions, datasetColumnOptions }
 };
