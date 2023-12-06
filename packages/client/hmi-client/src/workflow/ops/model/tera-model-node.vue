@@ -24,7 +24,7 @@
 		</template>
 		<template v-else>
 			<Dropdown
-				class="w-full p-button-sm p-button-outlined"
+				class="w-full p-dropdown-sm"
 				v-model="selectedModel"
 				:options="models"
 				option-label="header.name"
@@ -110,18 +110,5 @@ main {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	overflow: hidden;
-}
-
-/* TODO: These are wrongly named and should be a general rule for small dropdowns in the SASS themes */
-.p-button-sm.p-button-outlined {
-	border: 1px solid var(--surface-border);
-}
-
-.p-button-sm.p-button-outlined:hover {
-	border: 1px solid var(--surface-border-hover);
-}
-
-.p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
-	padding: 0.5rem;
 }
 </style>

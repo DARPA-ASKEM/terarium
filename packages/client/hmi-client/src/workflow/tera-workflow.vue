@@ -302,166 +302,40 @@ const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
 
-const contextMenuItems = ref([
-	{
-		label: 'Model',
+const largeNode = { width: 420, height: 220 };
+const operationContextMenuList = [
+	{ name: ModelOp.name },
+	{ name: ModelConfigOp.name },
+	{ name: DatasetOp.name },
+	{ name: DatasetTransformerOp.name },
+	{ name: ModelTransformerOp.name },
+	{ name: StratifyMiraOp.name },
+	{ name: CodeAssetOp.name },
+	{ name: ModelFromCodeOp.name },
+	{ name: FunmanOp.name },
+	{ name: ModelOptimizeOp.name },
+	{ name: SimulateJuliaOp.name, options: { size: largeNode } },
+	{ name: CalibrateJuliaOp.name, options: { size: largeNode } },
+	{ name: SimulateCiemssOp.name, options: { size: largeNode } },
+	{ name: CalibrateCiemssOp.name, options: { size: largeNode } },
+	{ name: SimulateEnsembleCiemssOp.name, options: { size: largeNode } },
+	{ name: CalibrateEnsembleCiemssOp.name, options: { size: largeNode } }
+];
+
+const contextMenuItems = ref<any[]>([]);
+operationContextMenuList.forEach((item) => {
+	const op = registry.getOperation(item.name);
+	if (!op) return;
+
+	contextMenuItems.value.push({
+		label: op.displayName,
 		command: () => {
-			workflowService.addNode(wf.value, ModelOp.operation, newNodePosition);
+			workflowService.addNode(wf.value, op, newNodePosition, item.options);
 			workflowDirty = true;
 		}
-	},
-	{
-		label: 'Model Configuration',
-		command: () => {
-			workflowService.addNode(wf.value, ModelConfigOp.operation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Dataset',
-		command: () => {
-			workflowService.addNode(wf.value, DatasetOp.operation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Dataset Transformer',
-		command: () => {
-			workflowService.addNode(wf.value, DatasetTransformerOp.operation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Model Transformer',
-		command: () => {
-			workflowService.addNode(wf.value, ModelTransformerOp.operation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Stratify Mira',
-		command: () => {
-			workflowService.addNode(wf.value, StratifyMiraOp.operation, newNodePosition, { state: null });
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Code asset',
-		command: () => {
-			workflowService.addNode(wf.value, CodeAssetOp.operation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Model from code',
-		disabled: false,
-		command: () => {
-			workflowService.addNode(wf.value, ModelFromCodeOp.operation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Validate model configuration',
-		command: () => {
-			workflowService.addNode(wf.value, FunmanOp.operation, newNodePosition, { state: null });
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Optimize model',
-		command: () => {
-			workflowService.addNode(wf.value, ModelOptimizeOp.operation, newNodePosition, {
-				state: null
-			});
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'DETERMINISTIC',
-		items: [
-			{
-				label: 'Simulate',
-				command: () => {
-					workflowService.addNode(wf.value, SimulateJuliaOp.operation, newNodePosition, {
-						size: {
-							width: 420,
-							height: 220
-						}
-					});
-					workflowDirty = true;
-				}
-			},
-			{
-				label: 'Simulate ensemble',
-				disabled: true,
-				command: () => {}
-			},
-			{
-				label: 'Calibrate',
-				command: () => {
-					workflowService.addNode(wf.value, CalibrateJuliaOp.operation, newNodePosition);
-					workflowDirty = true;
-				}
-			}
-		]
-	},
-	{
-		label: 'PROBABILISTIC',
-		items: [
-			{
-				label: 'Simulate',
-				command: () => {
-					workflowService.addNode(wf.value, SimulateCiemssOp.operation, newNodePosition, {
-						size: {
-							width: 420,
-							height: 220
-						}
-					});
-					workflowDirty = true;
-				}
-			},
-			{
-				label: 'Calibrate & Simulate',
-				disabled: false,
-				command: () => {
-					workflowService.addNode(wf.value, CalibrateCiemssOp.operation, newNodePosition, {
-						size: {
-							width: 420,
-							height: 220
-						}
-					});
-					workflowDirty = true;
-				}
-			},
-			{
-				label: 'Simulate ensemble',
-				disabled: false,
-				command: () => {
-					workflowService.addNode(wf.value, SimulateEnsembleCiemssOp.operation, newNodePosition, {
-						size: {
-							width: 420,
-							height: 220
-						}
-					});
-					workflowDirty = true;
-				}
-			},
-			{
-				label: 'Calibrate ensemble',
-				disabled: false,
-				command: () => {
-					workflowService.addNode(wf.value, CalibrateEnsembleCiemssOp.operation, newNodePosition, {
-						size: {
-							width: 420,
-							height: 220
-						}
-					});
-					workflowDirty = true;
-				}
-			}
-		]
-	}
-]);
+	});
+});
+
 const addComponentMenu = ref();
 const showAddComponentMenu = (event) => addComponentMenu.value.toggle(event);
 

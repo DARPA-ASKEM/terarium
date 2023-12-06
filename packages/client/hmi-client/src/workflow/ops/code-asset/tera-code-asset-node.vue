@@ -3,7 +3,7 @@
 		<template v-if="code">{{ code?.name }}</template>
 		<template v-else>
 			<Dropdown
-				class="w-full"
+				class="w-full p-dropdown-sm"
 				:options="codeAssets"
 				option-label="name"
 				v-model="code"
@@ -17,6 +17,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
+import { getCodeAsset } from '@/services/code';
 import { onMounted, ref, computed, watch } from 'vue';
 import { Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -35,7 +36,7 @@ const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.ass
 
 onMounted(async () => {
 	if (props.node.state.codeAssetId) {
-		code.value = codeAssets.value.find(({ id }) => id === props.node.state.codeAssetId) ?? null;
+		code.value = await getCodeAsset(props.node.state.codeAssetId);
 	}
 });
 
