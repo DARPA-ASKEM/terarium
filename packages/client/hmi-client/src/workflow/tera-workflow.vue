@@ -41,7 +41,7 @@
 						label="Add component"
 						@click="showAddComponentMenu"
 					/>
-					<!--ContextMenu is used instead of TieredMenu for the submenu to appear on the left (not get cut off)-->
+					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
 					<ContextMenu
 						ref="addComponentMenu"
 						:model="contextMenuItems"

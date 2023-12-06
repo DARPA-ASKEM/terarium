@@ -52,6 +52,7 @@ const show = (event) => {
 
 	pageX = event.pageX;
 	pageY = event.pageY;
+
 	isVisible.value = true;
 	setPosition();
 
