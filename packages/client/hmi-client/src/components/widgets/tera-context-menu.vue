@@ -4,9 +4,9 @@
 			<TieredMenu v-if="isVisible" :model="props.model" class="p-tieredmenu-overlay">
 				<template #item="{ item }">
 					<a class="p-menuitem-link" @click="itemClick(item)">
-						<i :class="item.icon" class="menuitem-icon" />
+						<span :class="item.icon" class="p-menuitem-icon" />
 						<span class="p-menuitem-text">{{ item.label }}</span>
-						<i v-if="!isEmpty(item.items)" class="pi pi-angle-right ml-auto" />
+						<span v-if="!isEmpty(item.items)" class="pi pi-angle-right p-submenu-icon" />
 					</a>
 				</template>
 			</TieredMenu>
@@ -142,14 +142,6 @@ onUnmounted(() => {
 	&:deep(.p-submenu-list) {
 		width: fit-content;
 		white-space: nowrap;
-	}
-
-	&:deep(.menuitem-icon) {
-		margin-right: 0.5rem;
-	}
-
-	&:deep(.p-menuitem-link) {
-		padding: 0.65rem 1rem;
 	}
 
 	&:deep(.p-menuitem-link:not(.p-disabled):hover) {

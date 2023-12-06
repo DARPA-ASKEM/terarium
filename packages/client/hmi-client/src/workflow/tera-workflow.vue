@@ -35,11 +35,16 @@
 				<div class="button-group">
 					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
 					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
-					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
-					<TieredMenu
+					<Button
+						id="add-component-btn"
+						icon="pi pi-plus"
+						label="Add component"
+						@click="showAddComponentMenu"
+					/>
+					<!--ContextMenu is used instead of TieredMenu for the submenu to appear on the left (not get cut off)-->
+					<ContextMenu
 						ref="addComponentMenu"
 						:model="contextMenuItems"
-						popup
 						style="white-space: nowrap; width: auto"
 					/>
 				</div>
@@ -158,7 +163,7 @@ import TeraContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
-import TieredMenu from 'primevue/tieredmenu';
+import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType } from '@/types/Types';
@@ -411,7 +416,18 @@ operationContextMenuList.forEach((item) => {
 });
 
 const addComponentMenu = ref();
-const showAddComponentMenu = (event) => addComponentMenu.value.toggle(event);
+const showAddComponentMenu = () => {
+	const el = document.querySelector('#add-component-btn');
+	const coords = el?.getBoundingClientRect();
+
+	if (coords) {
+		const event = new PointerEvent('click', {
+			clientX: coords.x + coords.width,
+			clientY: coords.y + coords.height
+		});
+		addComponentMenu.value.toggle(event);
+	}
+};
 
 const { getDragData } = useDragEvent();
 
