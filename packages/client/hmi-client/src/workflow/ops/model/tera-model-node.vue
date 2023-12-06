@@ -24,7 +24,7 @@
 		</template>
 		<template v-else>
 			<Dropdown
-				class="w-full p-button-sm p-button-outlined"
+				class="w-full p-dropdown-sm"
 				v-model="selectedModel"
 				:options="models"
 				option-label="header.name"
@@ -110,23 +110,5 @@ main {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	overflow: hidden;
-}
-
-.p-button-sm.p-button-outlined {
-	border: 1px solid var(--surface-border);
-}
-
-.p-button-sm.p-button-outlined:hover {
-	border: 1px solid var(--surface-border-hover);
-}
-
-.p-inputtext.p-inputtext-sm {
-	padding: 0.25rem 0.5rem;
-	font-size: 1rem;
-	margin-left: 1rem;
-}
-
-.p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
-	padding: 0.5rem;
 }
 </style>
