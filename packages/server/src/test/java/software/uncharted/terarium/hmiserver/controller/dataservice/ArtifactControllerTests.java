@@ -31,18 +31,18 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	private ArtifactService artifactService;
 
 	final Artifact artifact0 = new Artifact()
-			.setId("test-document-id0")
-			.setName("test-document-name")
+			.setId("test-artifact-id0")
+			.setName("test-artifact-name")
 			.setDescription("my description");
 
 	final Artifact artifact1 = new Artifact()
-			.setId("test-document-id1")
-			.setName("test-document-name")
+			.setId("test-artifact-id1")
+			.setName("test-artifact-name")
 			.setDescription("my description");
 
 	final Artifact artifact2 = new Artifact()
-			.setId("test-document-id2")
-			.setName("test-document-name")
+			.setId("test-artifact-id2")
+			.setName("test-artifact-name")
 			.setDescription("my description");
 
 	@After

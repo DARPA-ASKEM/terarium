@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -38,7 +37,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -46,6 +44,8 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -98,13 +98,10 @@ public class DocumentController {
 
 	@PostMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> createDocument(
+	public ResponseEntity<ResponseId> createDocument(
 			@RequestBody final DocumentAsset document) throws IOException {
 		documentAssetService.createDocumentAsset(document);
-
-		JsonNode res = objectMapper.valueToTree(Map.of("id", document.getId()));
-
-		return ResponseEntity.ok(res);
+		return ResponseEntity.ok(new ResponseId().setId(document.getId()));
 	}
 
 	@GetMapping("/{id}")
@@ -157,14 +154,11 @@ public class DocumentController {
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteDocument(
+	public ResponseEntity<ResponseDeleted> deleteDocument(
 			@PathVariable("id") final String id) throws IOException {
+
 		documentAssetService.deleteDocumentAsset(id);
-
-		JsonNode res = objectMapper
-				.valueToTree(Map.of("message", String.format("Document successfully deleted: %s", id)));
-
-		return ResponseEntity.ok(res);
+		return ResponseEntity.ok(new ResponseDeleted("Document", id));
 	}
 
 	/**

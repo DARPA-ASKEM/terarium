@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -23,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
@@ -140,39 +141,31 @@ public class ModelController {
 
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> updateModel(
+	ResponseEntity<ResponseId> updateModel(
 			@PathVariable("id") String id,
 			@RequestBody Model model) throws IOException {
 
 		modelService.updateModel(model.setId(id));
 
-		JsonNode res = objectMapper.valueToTree(Map.of("id", model.getId()));
-
-		return ResponseEntity.ok(res);
+		return ResponseEntity.ok(new ResponseId().setId(id));
 	}
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> deleteModel(
+	ResponseEntity<ResponseDeleted> deleteModel(
 			@PathVariable("id") String id) throws IOException {
 
 		modelService.deleteModel(id);
-
-		JsonNode res = objectMapper.valueToTree(Map.of("message", String.format("Model successfully deleted: %s", id)));
-
-		return ResponseEntity.ok(res);
+		return ResponseEntity.ok(new ResponseDeleted("Model", id));
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
-	ResponseEntity<JsonNode> createModel(
+	ResponseEntity<ResponseId> createModel(
 			@RequestBody Model model) throws IOException {
 
 		modelService.createModel(model);
-
-		JsonNode res = objectMapper.valueToTree(Map.of("id", model.getId()));
-
-		return ResponseEntity.ok(res);
+		return ResponseEntity.ok(new ResponseId().setId(model.getId()));
 	}
 
 	@GetMapping("/{id}/model_configurations")

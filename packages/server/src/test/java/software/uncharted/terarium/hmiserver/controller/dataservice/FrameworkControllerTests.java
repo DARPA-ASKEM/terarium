@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.After;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -65,11 +66,6 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetFramework() throws Exception {
 
-		final ModelFramework framework = new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics");
-
 		frameworkService.createFramework(framework);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/frameworks/" + framework.getName())
@@ -81,15 +77,12 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteFramework() throws Exception {
 
-		final ModelFramework framework = new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics");
-
 		frameworkService.createFramework(framework);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getName())
 				.with(csrf()))
 				.andExpect(status().isOk());
+
+		Assertions.assertNull(frameworkService.getFramework(framework.getName()));
 	}
 }
