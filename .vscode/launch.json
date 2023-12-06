@@ -24,7 +24,7 @@
             "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
             "projectName": "server",
             "args": [
-              "--spring.profiles.active=default,secrets,local"
+                "--spring.profiles.active=default,secrets,local"
             ]
         }
     ]

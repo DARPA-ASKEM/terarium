@@ -44,7 +44,7 @@
 			</span>
 		</Button>
 		<Accordion
-			v-if="!isEmpty(assetItemsMap)"
+			v-if="!isEmpty(assetItemsMap) && !useProjects().projectLoading.value"
 			:multiple="true"
 			:active-index="Array.from(activeAccordionTabs)"
 			@tab-open="
@@ -106,6 +106,11 @@
 				</Button>
 			</AccordionTab>
 		</Accordion>
+
+		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
+			<Skeleton v-for="i in 10" :key="i" width="85%" />
+		</div>
+
 		<Teleport to="body">
 			<tera-modal
 				v-if="isRemovalModal"
@@ -147,6 +152,7 @@ import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
+import Skeleton from 'primevue/skeleton';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -341,5 +347,12 @@ header {
 
 :deep(.p-button-icon-left.icon) {
 	margin-right: 0.5rem;
+}
+
+.skeleton-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	row-gap: 0.5rem;
 }
 </style>

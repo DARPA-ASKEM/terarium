@@ -112,18 +112,13 @@ main {
 	overflow: hidden;
 }
 
+/* TODO: These are wrongly named and should be a general rule for small dropdowns in the SASS themes */
 .p-button-sm.p-button-outlined {
 	border: 1px solid var(--surface-border);
 }
 
 .p-button-sm.p-button-outlined:hover {
 	border: 1px solid var(--surface-border-hover);
-}
-
-.p-inputtext.p-inputtext-sm {
-	padding: 0.25rem 0.5rem;
-	font-size: 1rem;
-	margin-left: 1rem;
 }
 
 .p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
