@@ -16,7 +16,7 @@
 				editable
 				placeholder="Add people and groups"
 				@update:model-value="(value) => addNewSelectedUser(value.id)"
-				class="w-full sm"
+				class="w-full p-dropdown-sm"
 			/>
 			<section class="selected-users" v-if="selectedUsers.size > 0">
 				<h6>People and groups with access</h6>
@@ -32,7 +32,7 @@
 			</section>
 			<section>
 				<h6>General access</h6>
-				<Dropdown v-model="generalAccess" :options="generalAccessOptions" class="sm">
+				<Dropdown v-model="generalAccess" :options="generalAccessOptions" class="p-dropdown-sm">
 					<template #value="slotProps">
 						<div class="general-access-option">
 							<i :class="slotProps.value.icon" />
@@ -228,7 +228,7 @@ li {
 	font-size: var(--font-tiny);
 }
 
-.p-dropdown.sm {
+.p-dropdown {
 	margin-bottom: 0.5rem;
 }
 </style>
