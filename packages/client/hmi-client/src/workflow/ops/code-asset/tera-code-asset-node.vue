@@ -9,7 +9,7 @@
 				v-model="code"
 				placeholder="Select code asset"
 			/>
-			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
 	</main>
 </template>
@@ -22,7 +22,7 @@ import { onMounted, ref, computed, watch } from 'vue';
 import { Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import { CodeAssetState } from './code-asset-operation';
 
 const props = defineProps<{

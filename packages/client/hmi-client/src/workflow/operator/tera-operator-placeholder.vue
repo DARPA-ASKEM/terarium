@@ -1,6 +1,7 @@
 <template>
 	<div class="placeholder-graphic-container">
 		<img :src="placeholderGraphic" alt="Plant icon" />
+		<slot />
 	</div>
 </template>
 
@@ -36,10 +37,16 @@ const placeholderGraphic = operatorGraphics[props.operationType] ?? plants;
 <style scoped>
 .placeholder-graphic-container {
 	display: flex;
+	flex-direction: column;
 	justify-content: center;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	text-align: center;
+	gap: 0.5rem;
 }
 
 img {
 	max-width: 50%;
+	margin: 0 auto;
 }
 </style>

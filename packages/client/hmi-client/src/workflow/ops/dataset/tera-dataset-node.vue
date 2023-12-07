@@ -33,6 +33,7 @@
 				</DataTable>
 				<span>1 - 5 of {{ csvContent.length }} rows</span>
 			</section>
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
@@ -42,7 +43,7 @@
 				v-model="dataset"
 				placeholder="Select a dataset"
 			/>
-			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
 	</main>
 </template>
@@ -60,14 +61,14 @@ import MultiSelect from 'primevue/multiselect';
 import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'open-drilldown']);
 
 const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
