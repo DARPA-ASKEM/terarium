@@ -255,27 +255,36 @@ export const workflowEventBus = new WorkflowEventEmitter();
 /// /////////////////////////////////////////////////////////////////////////////
 interface OperatorImport {
 	name: string;
+	operation: Operation;
 	node: Component;
 	drilldown: Component;
 }
 export class WorkflowRegistry {
+	operationMap: Map<string, Operation>;
+
 	nodeMap: Map<string, Component>;
 
 	drilldownMap: Map<string, Component>;
 
 	constructor() {
+		this.operationMap = new Map();
 		this.nodeMap = new Map();
 		this.drilldownMap = new Map();
 	}
 
-	set(name: string, node: Component, drilldown: Component) {
+	set(name: string, operation: Operation, node: Component, drilldown: Component) {
+		this.operationMap.set(name, operation);
 		this.nodeMap.set(name, node);
 		this.drilldownMap.set(name, drilldown);
 	}
 
 	// shortcut
 	registerOp(op: OperatorImport) {
-		this.set(op.name, op.node, op.drilldown);
+		this.set(op.name, op.operation, op.node, op.drilldown);
+	}
+
+	getOperation(name: string) {
+		return this.operationMap.get(name);
 	}
 
 	getNode(name: string) {

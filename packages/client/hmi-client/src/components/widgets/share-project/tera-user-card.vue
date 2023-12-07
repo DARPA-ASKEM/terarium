@@ -12,7 +12,7 @@
 		<Dropdown
 			v-model="selectedPermission"
 			:options="permissions"
-			class="sm"
+			class="p-dropdown-sm"
 			@change="selectPermission"
 		/>
 	</section>
