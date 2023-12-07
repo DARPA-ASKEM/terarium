@@ -42,7 +42,7 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 		const csv = (await downloadRawFile(datasetId, filename, limit)) as CsvAsset;
 		// datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 
-		if (csv && csv.headers) {
+		if (csv?.headers) {
 			csv.headers = csv.headers.map((header) => header.trim());
 		}
 
