@@ -47,7 +47,6 @@ onUnmounted(() => {
 });
 
 const getStatus = async (simulationId: string) => {
-	console.log('Getting status');
 	showSpinner.value = true;
 	if (!simulationId) {
 		console.log('No sim id');
@@ -60,7 +59,7 @@ const getStatus = async (simulationId: string) => {
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
-	console.log('Poller defined');
+
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
