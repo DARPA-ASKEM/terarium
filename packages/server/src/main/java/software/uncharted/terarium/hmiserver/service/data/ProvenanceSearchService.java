@@ -13,6 +13,8 @@ import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceEdge;
@@ -29,6 +31,7 @@ import software.uncharted.terarium.hmiserver.service.neo4j.Neo4jService;
 @Slf4j
 public class ProvenanceSearchService {
 
+	private ObjectMapper objectMapper;
 	private Neo4jService neo4jService;
 
 	// Search methods
@@ -57,6 +60,110 @@ public class ProvenanceSearchService {
 			Result result = session.run(query);
 
 			return nodesEdges(result, payload);
+		}
+	}
+
+	private ProvenanceSearchResult connectedNodesByDirection(ProvenanceQueryParam payload, String direction) {
+		try (Session session = neo4jService.getSession()) {
+			String relationshipsStr = relationshipsArrayAsStr(Arrays.asList(ProvenanceRelationType.CONTAINS,
+					ProvenanceRelationType.IS_CONCEPT_OF), new ArrayList<>());
+			String relationDirection = dynamicRelationshipDirection(direction,
+					String.format("r:%s *1..", relationshipsStr));
+			String matchNode = matchNodeBuilder(payload.getRootType(), payload.getRootId());
+			String nodeAbbr = returnNodeAbbr(payload.getRootType());
+
+			String query = String.format("%s%s(n) return %s, r, n", matchNode, relationDirection, nodeAbbr);
+
+			Result response = session.run(query);
+
+			return nodesEdges(response, payload);
+		}
+	}
+
+	public ProvenanceSearchResult childNodes(ProvenanceQueryParam payload) {
+		return connectedNodesByDirection(payload, "child");
+	}
+
+	public ProvenanceSearchResult parentNodes(ProvenanceQueryParam payload) {
+		return connectedNodesByDirection(payload, "parent");
+	}
+
+	public ProvenanceSearchResult parentModelRevisions(ProvenanceQueryParam payload) {
+		if (!Arrays.asList("Model", "SimulationRun", "Plan", "Dataset").contains(payload.getRootType())) {
+			throw new IllegalArgumentException(
+					"Derived models can only be found from root types of Model, SimulationRun, Plan and Dataset");
+		}
+
+		try (Session session = neo4jService.getSession()) {
+			String matchPattern = parentModelQueryGenerator(payload.getRootType(), payload.getRootId());
+			String relationshipsStr = relationshipsArrayAsStr(
+					Arrays.asList(ProvenanceRelationType.CONTAINS, ProvenanceRelationType.IS_CONCEPT_OF),
+					new ArrayList<>());
+
+			String query = String.format(
+					"%s OPTIONAL MATCH (Mr2:ModelRevision)-[r2:%s *1..]->(Mr) WITH *, COLLECT(r)+COLLECT(r2) AS r3, COLLECT(Mr)+COLLECT(Mr2) AS Mrs UNWIND Mrs AS Both_rms UNWIND r3 AS r4 WITH * OPTIONAL MATCH (Both_rms)<-[r5:BEGINS_AT]-(Md:Model) WITH *, COLLECT(r4)+COLLECT(r5) AS r6 UNWIND r6 AS r7 RETURN Both_rms, Md, r7",
+					matchPattern, relationshipsStr);
+
+			Result response = session.run(query);
+
+			return nodesEdges(response, payload);
+		}
+	}
+
+	public ProvenanceSearchResult parentModels(ProvenanceQueryParam payload) {
+		if (!Arrays.asList("Model", "Dataset", "SimulationRun", "Plan").contains(payload.getRootType())) {
+			throw new IllegalArgumentException(
+					"Parent models can only be found from root types of Model, Plan, SimulationRun, Dataset");
+		}
+
+		try (Session session = neo4jService.getSession()) {
+			String matchPattern = parentModelQueryGenerator(payload.getRootType(), payload.getRootId());
+			String nodeAbbr = returnNodeAbbr(payload.getRootType());
+
+			String modelRelationships = relationshipsArrayAsStr(
+					new ArrayList<>(),
+					Arrays.asList(
+							ProvenanceRelationType.EDITED_FROM,
+							ProvenanceRelationType.COPIED_FROM,
+							ProvenanceRelationType.GLUED_FROM,
+							ProvenanceRelationType.DECOMPOSED_FROM,
+							ProvenanceRelationType.STRATIFIED_FROM));
+
+			String query = String.format(
+					"%s OPTIONAL MATCH (Mr)-[r2:%s *1..]->(Mr2:ModelRevision) WITH *, COLLECT(Mr)+COLLECT(Mr2) AS Mrs, COLLECT(r)+COLLECT(r2) AS r3 UNWIND Mrs AS Both_rms WITH * OPTIONAL MATCH (md2:Model)-[r4:BEGINS_AT]->(Both_rms) WITH *, COLLECT(r3)+COLLECT(r4) AS r5 RETURN %s, md2, Both_rms, r5",
+					matchPattern, modelRelationships, nodeAbbr);
+
+			Result response = session.run(query);
+
+			return nodesEdges(response, payload);
+		}
+	}
+
+	public ProvenanceSearchResult artifactsCreatedByUser(ProvenanceQueryParam payload) {
+		try (Session session = neo4jService.getSession()) {
+			String matchNode = matchNodeBuilder();
+
+			String query = String.format(
+					"%s-[r]->(n2) WHERE r.user_id=%s WITH *, COLLECT(n)+COLLECT(n2) AS nodes UNWIND nodes AS both_nodes WITH * RETURN both_nodes",
+					matchNode, payload.getUserId());
+
+			Result response = session.run(query);
+
+			return nodesEdges(response, payload);
+		}
+	}
+
+	public ProvenanceSearchResult concept(ProvenanceQueryParam payload) {
+		try (Session session = neo4jService.getSession()) {
+			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
+
+			String query = String.format(
+					"%s-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN n",
+					matchNode, payload.getCurie());
+
+			Result response = session.run(query);
+
+			return nodesEdges(response, payload);
 		}
 	}
 
@@ -207,6 +314,15 @@ public class ProvenanceSearchService {
 				String.format("-[r:%s *1..]->%s ", relationshipsStr, modelRevisionNode));
 
 		return matchNode + queryTemplatesIndex.get(rootType);
+	}
+
+	public String matchNodeBuilder() {
+		return "MATCH (n) ";
+	}
+
+	public String matchNodeBuilder(ProvenanceType nodeType) {
+		String nodeTypeCharacter = returnNodeAbbr(nodeType);
+		return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
 	}
 
 	public String matchNodeBuilder(ProvenanceType nodeType, String nodeId) {
