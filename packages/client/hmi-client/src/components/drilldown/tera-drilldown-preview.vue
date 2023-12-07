@@ -70,4 +70,13 @@ header {
 .output-dropdown:deep(.pi) {
 	font-size: var(--font-body-small);
 }
+
+main {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	overflow-y: auto;
+	gap: 1.5rem;
+	padding: 1.5rem 1.5rem 1.5rem 1rem;
+}
 </style>
