@@ -448,7 +448,6 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	selectedRun.value = runList.value[runList.value.length - 1];
 };
 
-// Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
@@ -484,7 +483,7 @@ watch(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
-		modelColumnNames.value = modelColumnNameOptions?.map((state) => state.trim());
+		modelColumnNames.value = modelColumnNameOptions;
 	},
 	{ immediate: true }
 );
@@ -496,7 +495,7 @@ watch(
 		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers?.map((col) => col.trim());
+		datasetColumnNames.value = csv?.headers;
 	},
 	{ immediate: true }
 );
