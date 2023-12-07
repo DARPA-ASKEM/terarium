@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.service;
+package software.uncharted.terarium.hmiserver.service.s3;
 
 import java.net.URI;
 import java.util.HashMap;

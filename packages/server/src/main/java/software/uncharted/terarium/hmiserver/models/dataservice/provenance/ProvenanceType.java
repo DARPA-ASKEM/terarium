@@ -1,33 +1,37 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
+import java.util.Arrays;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
 
 public enum ProvenanceType {
 	@JsonAlias("Concept")
 	CONCEPT("Concept"),
 	@JsonAlias("Dataset")
-    DATASET("Dataset"),
+	DATASET("Dataset"),
 	@JsonAlias("Model")
-    MODEL("Model"),
+	MODEL("Model"),
+	@JsonAlias("ModelRevision")
+	MODEL_REVISION("ModelRevision"),
 	@JsonAlias("ModelConfiguration")
-    MODEL_CONFIGURATION("ModelConfiguration"),
+	MODEL_CONFIGURATION("ModelConfiguration"),
 	@JsonAlias("Project")
-    PROJECT("Project"),
+	PROJECT("Project"),
 	@JsonAlias("Concept")
-    PUBLICATION("Publication"),
+	PUBLICATION("Publication"),
 	@JsonAlias("Simulation")
-    SIMULATION("Simulation"),
+	SIMULATION("Simulation"),
 	@JsonAlias("Artifact")
-    ARTIFACT("Artifact"),
+	ARTIFACT("Artifact"),
 	@JsonAlias("Code")
-    CODE("Code"),
+	CODE("Code"),
 	@JsonAlias("Document")
-    DOCUMENT("Document"),
-    @JsonAlias("Workflow")
-    WORKFLOW("Workflow");
+	DOCUMENT("Document"),
+	@JsonAlias("Workflow")
+	WORKFLOW("Workflow"),
+	@JsonAlias("Equation")
+	EQUATION("Equation");
 
 	public final String type;
 
@@ -39,9 +43,10 @@ public enum ProvenanceType {
 	 * @throws IllegalArgumentException if the ProvenanceType is not found
 	 */
 	public static ProvenanceType findByType(final String type) {
+		System.out.println("hello?");
 		return Arrays.stream(values()).filter(
-			value -> type.equalsIgnoreCase(value.type)).findFirst().orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type)
-		);
+				value -> type.equalsIgnoreCase(value.type)).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type));
 	}
 
 	@Override
