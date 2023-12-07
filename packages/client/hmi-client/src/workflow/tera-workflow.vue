@@ -52,7 +52,11 @@
 		</template>
 		<!-- data -->
 		<template #data>
-			<tera-context-menu ref="contextMenu" :model="contextMenuItems" />
+			<ContextMenu
+				ref="contextMenu"
+				:model="contextMenuItems"
+				style="white-space: nowrap; width: auto"
+			/>
 			<tera-operator
 				v-for="(node, index) in wf.nodes"
 				:key="index"
@@ -159,7 +163,6 @@ import {
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
-import TeraContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
