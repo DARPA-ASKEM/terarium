@@ -250,18 +250,6 @@ const runCalibrate = async () => {
 			formattedMap[ele.datasetVariable] = ele.modelVariable;
 		});
 	}
-	// TODO: TS/1225 -> Should not have to rand results
-	const initials = modelConfig.value.configuration.semantics.ode.initials.map((d) => d.target);
-	const rates = modelConfig.value.configuration.semantics.ode.rates.map((d) => d.target);
-	const initialsObj = {};
-	const paramsObj = {};
-
-	initials.forEach((d) => {
-		initialsObj[d] = Math.random() * 100;
-	});
-	rates.forEach((d) => {
-		paramsObj[d] = Math.random() * 0.05;
-	});
 
 	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
