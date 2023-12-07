@@ -10,7 +10,6 @@
 								<span class="column-header">Model variable</span>
 							</template>
 							<template #body="{ data, field }">
-								<!-- Tom TODO: No v-model -->
 								<Dropdown
 									class="w-full"
 									placeholder="Select a variable"
@@ -24,7 +23,6 @@
 								<span class="column-header">Dataset variable</span>
 							</template>
 							<template #body="{ data, field }">
-								<!-- Tom TODO: No v-model -->
 								<Dropdown
 									class="w-full"
 									placeholder="Select a variable"
@@ -182,7 +180,6 @@ const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.val
 
 const runResults = ref<RunResults>({});
 const completedRunId = ref<string>();
-// const parameterResult = ref<{ [index: string]: any }[]>();
 
 const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
@@ -267,13 +264,11 @@ function getMessageHandler(event: ClientEvent<any>) {
 }
 
 const getStatus = async (simulationId: string) => {
-	console.log('Getting status');
 	showSpinner.value = true;
 	if (!simulationId) {
 		console.log('No sim id');
 		return;
 	}
-	console.log(`Simulation Id:${simulationId}`);
 	const runIds = [simulationId];
 
 	// open a connection for each run id and handle the messages
@@ -283,7 +278,7 @@ const getStatus = async (simulationId: string) => {
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
-	console.log('Poller defined');
+
 	const pollerResults = await poller.start();
 
 	// closing event source connections
