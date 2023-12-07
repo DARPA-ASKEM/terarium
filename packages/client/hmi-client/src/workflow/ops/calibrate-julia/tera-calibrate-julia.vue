@@ -1,154 +1,190 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section>
-			<!--Probably rename tera-asset to something even more abstract-->
-
-			<tera-asset stretch-content>
-				<template #edit-buttons>
-					<SelectButton
-						:model-value="view"
-						@change="if ($event.value) view = $event.value;"
-						:options="viewOptions"
-						option-value="value"
-					>
-						<template #option="{ option }">
-							<i :class="`${option.icon} p-button-icon-left`" />
-							<span class="p-button-label">{{ option.value }}</span>
-						</template>
-					</SelectButton>
-				</template>
-				<Accordion
-					v-if="view === CalibrationView.Input && modelConfig"
-					:multiple="true"
-					:active-index="[0, 1, 2, 3, 4]"
-				>
-					<AccordionTab :header="modelConfig.configuration.name">
-						<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
-					</AccordionTab>
-					<AccordionTab header="Mapping">
-						<DataTable class="mapping-table" :value="mapping">
-							<Column field="modelVariable">
-								<template #header>
-									<span class="column-header">Model variable</span>
-								</template>
-								<template #body="{ data, field }">
-									<!-- Tom TODO: No v-model -->
-									<Dropdown
-										class="w-full"
-										placeholder="Select a variable"
-										v-model="data[field]"
-										:options="modelColumnNames"
-									/>
-								</template>
-							</Column>
-							<Column field="datasetVariable">
-								<template #header>
-									<span class="column-header">Dataset variable</span>
-								</template>
-								<template #body="{ data, field }">
-									<!-- Tom TODO: No v-model -->
-									<Dropdown
-										class="w-full"
-										placeholder="Select a variable"
-										v-model="data[field]"
-										:options="datasetColumnNames"
-									/>
-								</template>
-							</Column>
-						</DataTable>
-						<div>
-							<Button
-								class="p-button-sm p-button-text"
-								icon="pi pi-plus"
-								label="Add mapping"
-								@click="addMapping"
+		<section :tabName="CalibrateTabs.Wizard">
+			<tera-drilldown-section>
+				<div class="form-section">
+					<h4>Mapping</h4>
+					<DataTable class="mapping-table" :value="mapping">
+						<Column field="modelVariable">
+							<template #header>
+								<span class="column-header">Model variable</span>
+							</template>
+							<template #body="{ data, field }">
+								<Dropdown
+									class="w-full p-inputtext-sm"
+									placeholder="Select a variable"
+									v-model="data[field]"
+									:options="modelColumnNames"
+								/>
+							</template>
+						</Column>
+						<Column field="datasetVariable">
+							<template #header>
+								<span class="column-header">Dataset variable</span>
+							</template>
+							<template #body="{ data, field }">
+								<Dropdown
+									class="w-full p-inputtext-sm"
+									placeholder="Select a variable"
+									v-model="data[field]"
+									:options="datasetColumnNames"
+								/>
+							</template>
+						</Column>
+					</DataTable>
+					<div>
+						<Button
+							class="p-button-sm p-button-text"
+							icon="pi pi-plus"
+							label="Add mapping"
+							@click="addMapping"
+						/>
+					</div>
+				</div>
+				<div class="form-section">
+					<h4>Calibration settings</h4>
+					<div class="input-row">
+						<div class="label-and-input">
+							<label for="chains">Chains</label>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="extra.numChains" />
+						</div>
+						<div class="label-and-input">
+							<label for="iterations">Iterations</label>
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="extra.numIterations"
 							/>
 						</div>
-					</AccordionTab>
-					<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
-						<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
-					</AccordionTab>
-					<AccordionTab header="Train / Test ratio">
-						<section class="train-test-ratio">
-							<InputNumber v-model="trainTestValue" />
-							<Slider v-model="trainTestValue" />
-						</section>
-					</AccordionTab>
-				</Accordion>
-				<div v-if="view === CalibrationView.Output && modelConfig">
-					<Dropdown
-						v-if="runList.length > 0"
-						:options="runList"
-						v-model="selectedRun"
-						option-label="label"
-						placeholder="Select a calibration run"
-					/>
-					<Accordion :multiple="true" :active-index="[0, 1, 2]">
-						<AccordionTab header="Loss">
-							<div ref="drilldownLossPlot"></div>
-						</AccordionTab>
-						<AccordionTab header="Calibrated parameter values">
-							<table class="p-datatable-table" v-if="selectedRunId">
-								<thead class="p-datatable-thead">
-									<th>Parameter</th>
-									<th>Value</th>
-								</thead>
-								<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
-									<td>
-										<p>{{ key }}</p>
-									</td>
-									<td>
-										<p>{{ content }}</p>
-									</td>
-								</tr>
-							</table>
-						</AccordionTab>
-						<AccordionTab header="Variables">
-							<div v-if="selectedRunId && runResults[selectedRunId]">
-								<tera-simulate-chart
-									v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
-									:key="index"
-									:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
-									:initial-data="csvAsset"
-									:mapping="mapping"
-									:run-type="RunType.Julia"
-									:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-									@configuration-change="chartConfigurationChange(index, $event)"
-								/>
-								<Button
-									class="p-button-sm p-button-text"
-									@click="addChart"
-									label="Add chart"
-									icon="pi pi-plus"
-								></Button>
-							</div>
-						</AccordionTab>
-					</Accordion>
+						<div class="label-and-input">
+							<label for="ode-method">ODE method</label>
+							<InputText class="p-inputtext-sm" v-model="extra.odeMethod" />
+						</div>
+						<div class="label-and-input">
+							<label for="calibrate-method">Calibrate method</label>
+							<Dropdown
+								:options="Object.values(CalibrateMethodOptions)"
+								v-model="extra.calibrateMethod"
+							/>
+						</div>
+					</div>
 				</div>
-				<section v-else-if="!modelConfig" class="emptyState">
-					<img src="@assets/svg/seed.svg" alt="" draggable="false" />
-					<p class="helpMessage">Connect a model configuration and dataset</p>
-				</section>
-			</tera-asset>
+			</tera-drilldown-section>
 		</section>
+		<section :tabName="CalibrateTabs.Notebook">
+			<h4>Notebook</h4>
+		</section>
+		<template #preview>
+			<tera-drilldown-preview title="Preview">
+				<!-- TODO: pass dropdown info as prop to tera-drilldown-preview -->
+				<Dropdown
+					v-if="runList.length > 0"
+					:options="runList"
+					v-model="selectedRun"
+					option-label="label"
+					placeholder="Select a calibration run"
+				/>
+				<div class="form-section">
+					<h4>Calibrated parameters</h4>
+					<table class="p-datatable-table">
+						<thead class="p-datatable-thead">
+							<th>Parameter</th>
+							<th>Value</th>
+						</thead>
+						<template v-if="runInProgress">
+							<tr v-for="(content, key) in parameterResult" :key="key">
+								<td>
+									<p>{{ key }}</p>
+								</td>
+								<td>
+									<p>{{ content }}</p>
+								</td>
+							</tr>
+						</template>
+						<template v-else-if="!runInProgress && selectedRunId">
+							<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
+								<td>
+									<p>{{ key }}</p>
+								</td>
+								<td>
+									<p>{{ content }}</p>
+								</td>
+							</tr>
+						</template>
+					</table>
+				</div>
+				<div class="form-section">
+					<h4>Loss function</h4>
+					<div v-if="runInProgress" ref="drilldownLossPlot"></div>
+					<div v-else ref="staticLossPlotRef"></div>
+				</div>
+				<div class="form-section">
+					<h4>Variables</h4>
+					<div>
+						<template v-if="runInProgress">
+							<tera-calibrate-chart
+								v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+								:key="index"
+								:initial-data="csvAsset"
+								:intermediate-data="currentIntermediateVals"
+								:mapping="mapping"
+								:chartConfig="{ selectedRun: runInProgress, selectedVariable: cfg }"
+								@configuration-change="chartConfigurationChange(index, $event)"
+							/>
+						</template>
+						<template v-else-if="!runInProgress && selectedRunId && runResults[selectedRunId]">
+							<tera-simulate-chart
+								v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+								:key="index"
+								:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
+								:initial-data="csvAsset"
+								:mapping="mapping"
+								:run-type="RunType.Julia"
+								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								@configuration-change="chartConfigurationChange(index, $event)"
+							/>
+						</template>
+						<Button
+							class="p-button-sm p-button-text"
+							@click="addChart"
+							label="Add chart"
+							icon="pi pi-plus"
+						></Button>
+					</div>
+				</div>
+			</tera-drilldown-preview>
+		</template>
+		<template #footer>
+			<Button
+				outlined
+				:style="{ marginRight: 'auto' }"
+				label="Run"
+				icon="pi pi-play"
+				@click="runCalibrate"
+				:disabled="disableRunButton"
+			/>
+			<Button label="Close" @click="emit('close')" />
+		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
+import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
-import Column from 'primevue/column';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
-import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import { CsvAsset, ModelConfiguration } from '@/types/Types';
-import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
+import InputText from 'primevue/inputtext';
+import {
+	CalibrationRequestJulia,
+	ClientEvent,
+	ClientEventType,
+	CsvAsset,
+	ModelConfiguration,
+	ScimlStatusUpdate
+} from '@/types/Types';
 import {
 	setupModelInput,
 	setupDatasetInput,
@@ -156,46 +192,54 @@ import {
 	CalibrateMap
 } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
-import { WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import SelectButton from 'primevue/selectbutton';
-import { getRunResultJulia } from '@/services/models/simulation-service';
+import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
+import {
+	getRunResultJulia,
+	makeCalibrateJobJulia,
+	simulationPollAction,
+	subscribeToUpdateMessages,
+	querySimulationInProgress,
+	unsubscribeToUpdateMessages
+} from '@/services/models/simulation-service';
 import { csvParse } from 'd3';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { CalibrationOperationStateJulia } from './calibrate-operation';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import { getTimespan } from '@/workflow/util';
+import { Poller, PollerState } from '@/api/api';
+import { logger } from '@/utils/logger';
+import {
+	CalibrateExtraJulia,
+	CalibrateMethodOptions,
+	CalibrationOperationJulia,
+	CalibrationOperationStateJulia
+} from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
-enum CalibrationView {
-	Input = 'Input',
-	Output = 'Output'
+enum CalibrateTabs {
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelColumnNames = ref<string[] | undefined>();
-
-const view = ref(CalibrationView.Input);
-const viewOptions = ref([
-	{ value: CalibrationView.Input, icon: 'pi pi-sign-in' },
-	{ value: CalibrationView.Output, icon: 'pi pi-sign-out' }
-]);
-
-const trainTestValue = ref(80);
-
 const datasetColumnNames = ref<string[]>();
+
+const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
+const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
+
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
-
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
-const runResults = ref<RunResults>({});
-const runResultParams = ref<Record<string, Record<string, number>>>({});
-const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const runList = computed(() =>
 	Object.keys(props.node.state.calibrateConfigs.runConfigs).map((runId: string, idx: number) => ({
@@ -210,17 +254,30 @@ const selectedRunId = computed(
 		Object.values(props.node.state.calibrateConfigs.runConfigs).find((metadata) => metadata.active)
 			?.runId
 );
+
 const drilldownLossPlot = ref<HTMLElement>();
+const staticLossPlotRef = ref<HTMLElement>();
+let lossValues: { [key: string]: number }[] = [];
 
-// Tom TODO: Make this generic... its copy paste from node.
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
+// refs to keep track of intermediate states and parameters
+const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
+const parameterResult = ref<{ [index: string]: any }>();
 
-	emit('update-state', state);
-};
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const runInProgress = ref<string>();
+
+const completedRunIdList = ref<string[]>([]);
+const runResults = ref<RunResults>({});
+const runResultParams = ref<Record<string, Record<string, number>>>({});
+
+const poller = new Poller();
 
 onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds);
+	}
+
 	const runId = Object.values(props.node.state.calibrateConfigs.runConfigs).find(
 		(metadata) => metadata.active
 	)?.runId;
@@ -231,6 +288,176 @@ onMounted(() => {
 	}
 });
 
+onUnmounted(() => {
+	// TODO: right now whenever the drilldown is closed, the poller is stopped even
+	// if the calibration is still running. This results in an error being thrown
+	// from the getStatus function. This needs to be addressed in the future.
+	poller.stop();
+});
+
+const disableRunButton = computed(
+	() =>
+		!currentDatasetFileName.value ||
+		!modelConfig.value ||
+		!csvAsset.value ||
+		!modelConfigId.value ||
+		!datasetId.value
+);
+
+const filterStateVars = (params) => {
+	const initialStates =
+		modelConfig.value?.configuration.semantics.ode.initials.map((d) => d.expression) ?? [];
+	return Object.keys(params).reduce((acc, key) => {
+		if (!initialStates.includes(key)) {
+			acc[key] = params[key];
+		}
+		return acc;
+	}, {});
+};
+
+const runCalibrate = async () => {
+	if (
+		!modelConfigId.value ||
+		!datasetId.value ||
+		!currentDatasetFileName.value ||
+		!modelConfig.value
+	)
+		return;
+
+	const formattedMap: { [index: string]: string } = {};
+	// If the user has done any mapping populate formattedMap
+	if (mapping.value[0].datasetVariable !== '') {
+		mapping.value.forEach((ele) => {
+			formattedMap[ele.datasetVariable] = ele.modelVariable;
+		});
+	}
+
+	const calibrationRequest: CalibrationRequestJulia = {
+		modelConfigId: modelConfigId.value,
+		dataset: {
+			id: datasetId.value,
+			filename: currentDatasetFileName.value,
+			mappings: formattedMap
+		},
+		extra: extra.value,
+		engine: 'sciml',
+		timespan: getTimespan(csvAsset.value, mapping.value)
+	};
+	const response = await makeCalibrateJobJulia(calibrationRequest);
+	if (response?.simulationId) {
+		getStatus([response.simulationId]);
+	}
+};
+
+const getMessageHandler = (event: ClientEvent<ScimlStatusUpdate>) => {
+	const runIds: string[] = querySimulationInProgress(props.node);
+	if (runIds.length === 0) return;
+
+	if (runIds.includes(event.data.id)) {
+		const { iter, loss, params, solData, timesteps } = event.data;
+
+		parameterResult.value = filterStateVars(params);
+
+		lossValues.push({ iter, loss });
+		if (drilldownLossPlot.value) {
+			const width = drilldownLossPlot.value.offsetWidth;
+			renderLossGraph(drilldownLossPlot.value, lossValues, { width, height: 150 });
+		}
+
+		if (iter % 100 === 0) {
+			currentIntermediateVals.value = { timesteps, solData };
+		}
+	}
+};
+
+const getStatus = async (simulationIds: string[]) => {
+	runInProgress.value = simulationIds[0];
+
+	await subscribeToUpdateMessages(
+		simulationIds,
+		ClientEventType.SimulationSciml,
+		getMessageHandler
+	);
+
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction(simulationIds, props.node, progress, emit));
+	const pollerResults = await poller.start();
+
+	await unsubscribeToUpdateMessages(
+		simulationIds,
+		ClientEventType.SimulationSciml,
+		getMessageHandler
+	);
+
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`Calibrate: ${simulationIds} has failed`, {
+			toastTitle: 'Error - Julia'
+		});
+		throw Error('Failed Runs');
+	}
+	completedRunIdList.value = simulationIds;
+
+	runInProgress.value = undefined;
+};
+
+const watchCompletedRunList = async (runIdList: string[]) => {
+	if (runIdList.length === 0) return;
+
+	const newRunResults = {};
+	const newRunResultParams = {};
+	await Promise.all(
+		runIdList.map(async (runId) => {
+			if (runResults.value[runId] && runResultParams.value[runId]) {
+				newRunResults[runId] = runResults.value[runId];
+				newRunResultParams[runId] = runResultParams.value[runId];
+			} else {
+				const result = await getRunResultJulia(runId, 'result.json');
+				if (result) {
+					const csvData = csvParse(result.csvData);
+					newRunResults[runId] = csvData;
+					newRunResultParams[runId] = result.paramVals;
+				}
+			}
+		})
+	);
+	runResults.value = newRunResults;
+	runResultParams.value = newRunResultParams;
+
+	const port = props.node.inputs[0];
+
+	const state = _.cloneDeep(props.node.state);
+
+	state.calibrateConfigs.runConfigs[runIdList[0]] = {
+		runId: runIdList[0],
+		active: true,
+		loss: lossValues
+	};
+	emit('update-state', state);
+
+	// clear out intermediate values for next run
+	lossValues = [];
+	parameterResult.value = {};
+
+	emit('append-output-port', {
+		type: CalibrationOperationJulia.outputs[0].type,
+		label: `${port.label} - Output ${runList.value.length}`,
+		value: runIdList
+	});
+
+	// show the latest run in the dropdown
+	selectedRun.value = runList.value[runList.value.length - 1];
+};
+
+const chartConfigurationChange = (index: number, config: ChartConfig) => {
+	const state = _.cloneDeep(props.node.state);
+	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
+
+	emit('update-state', state);
+};
+
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.calibrateConfigs.chartConfigs.push([]);
@@ -239,7 +466,6 @@ const addChart = () => {
 };
 
 // Used from button to add new entry to the mapping object
-// Tom TODO: Make this generic... its copy paste from node.
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',
@@ -251,8 +477,8 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
 // Set up model config + dropdown names
-// Note: Same as calibrate-node
 watch(
 	() => modelConfigId.value,
 	async () => {
@@ -266,7 +492,6 @@ watch(
 );
 
 // Set up csv + dropdown names
-// Note: Same as calibrate-node
 watch(
 	() => datasetId.value,
 	async () => {
@@ -277,6 +502,9 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// Fetch simulation run results whenever output changes
+watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
 const handleSelectedRunChange = () => {
 	if (!selectedRun.value) return;
@@ -310,22 +538,18 @@ watch(
 );
 
 // Plot loss values if available on mount or on selectedRun change
-watch([() => selectedRunId.value, () => drilldownLossPlot.value], () => {
+watch([() => selectedRunId.value, () => staticLossPlotRef.value], () => {
 	if (selectedRunId.value) {
 		const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRunId.value]?.loss;
-		if (lossVals && drilldownLossPlot.value) {
-			const width = drilldownLossPlot.value.offsetWidth;
-			renderLossGraph(drilldownLossPlot.value, lossVals, { width, height: 300 });
+		if (lossVals && staticLossPlotRef.value) {
+			const width = staticLossPlotRef.value.offsetWidth;
+			renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 300 });
 		}
 	}
 });
 </script>
 
 <style scoped>
-.p-accordion {
-	padding-top: 1rem;
-}
-
 .mapping-table:deep(td) {
 	padding: 0rem 0.25rem 0.5rem 0rem !important;
 	border: none !important;
@@ -335,23 +559,6 @@ watch([() => selectedRunId.value, () => drilldownLossPlot.value], () => {
 	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
-}
-
-.dropdown-button {
-	width: 156px;
-	height: 25px;
-	border-radius: 6px;
-}
-
-.train-test-ratio {
-	display: flex;
-	gap: 1rem;
-	margin: 0.5rem 0;
-}
-
-.train-test-ratio > .p-slider {
-	margin-top: 1rem;
-	width: 100%;
 }
 
 th {
@@ -364,24 +571,28 @@ th {
 	font-weight: var(--font-weight-semibold);
 }
 
-.emptyState {
-	align-self: center;
+.form-section {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	text-align: center;
-	margin-top: 15rem;
 	gap: 0.5rem;
 }
 
-.helpMessage {
-	color: var(--text-color-subdued);
-	font-size: var(--font-body-small);
-	width: 90%;
-	margin-top: 1rem;
+.label-and-input {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
-img {
-	width: 20%;
+.input-row {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+
+	& > * {
+		flex: 1;
+	}
 }
 </style>
