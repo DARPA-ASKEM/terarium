@@ -4,7 +4,11 @@
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 			</template>
-			<table v-if="parameters.length > 0" class="datatable" style="--columns: 6">
+			<table
+				v-if="parameters.length > 0"
+				class="datatable"
+				:style="{ '--columns': readonly ? 5 : 6 }"
+			>
 				<tr>
 					<th>Symbol</th>
 					<th>Name</th>
@@ -616,28 +620,6 @@ table th {
 
 table tr > td:empty:before {
 	content: '--';
-}
-
-td.framework {
-	text-transform: capitalize;
-}
-
-table.bibliography th,
-table.bibliography td {
-	font-family: var(--font-family);
-	max-width: 15rem;
-	padding-right: 1rem;
-}
-
-table.bibliography th {
-	font-weight: 500;
-	font-size: var(--font-caption);
-	color: var(--text-color-secondary);
-}
-
-table.bibliography td {
-	font-weight: 400;
-	font-size: var(--font-body-small);
 }
 
 table.datatable {

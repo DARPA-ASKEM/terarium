@@ -148,4 +148,34 @@ function highlightSearchTerms(text: string | undefined): string {
 section {
 	margin-left: 1rem;
 }
+
+table th {
+	text-align: left;
+}
+
+table tr > td:empty:before {
+	content: '--';
+}
+
+td.framework {
+	text-transform: capitalize;
+}
+
+table.bibliography th,
+table.bibliography td {
+	font-family: var(--font-family);
+	max-width: 15rem;
+	padding-right: 1rem;
+}
+
+table.bibliography th {
+	font-weight: 500;
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
+}
+
+table.bibliography td {
+	font-weight: 400;
+	font-size: var(--font-body-small);
+}
 </style>
