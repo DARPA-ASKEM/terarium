@@ -133,6 +133,10 @@ export interface NotebookSession {
     timestamp: string;
 }
 
+export interface ResponseDeleted {
+    message: string;
+}
+
 export interface ResponseId {
     id: string;
 }

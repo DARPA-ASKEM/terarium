@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -12,105 +14,171 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
-import software.uncharted.terarium.hmiserver.models.code.GithubFile;
-import software.uncharted.terarium.hmiserver.models.code.GithubRepo;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.CodeProxy;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RequestMapping("/code-asset")
 @RestController
 @Slf4j
-//TODO: Once we've moved this off of TDS remove the SnakeCaseController interface and import.
-public class TDSCodeController implements SnakeCaseController {
+@RequiredArgsConstructor
+public class TDSCodeController{
 
-	@Autowired
-	CodeProxy codeProxy;
+	final JsDelivrProxy jsdelivrProxy;
 
-	@Autowired
-	JsDelivrProxy jsdelivrProxy;
+	final GithubProxy githubProxy;
 
-	@Autowired
-	GithubProxy githubProxy;
+	final CodeService codeService;
 
+	final ObjectMapper objectMapper;
 
+	/**
+	 * Retrieves a list of codes.
+	 *
+	 * @param pageSize The number of codes to retrieve per page (optional, default value is 100).
+	 * @param page The page number to retrieve (optional, default value is 0).
+	 * @return A ResponseEntity containing a list of Code objects if successful, or an empty list if no codes are found.
+	 * @throws IOException if there is an error during the retrieval process.
+	 */
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<Code>> getCodes(
 		@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		return ResponseEntity.ok(codeProxy.getAssets(pageSize, page).getBody());
+	) throws IOException {
+		return ResponseEntity.ok(codeService.getCode(pageSize, page));
 	}
 
+	/**
+	 * Creates a code.
+	 *
+	 * @param code The code to be created.
+	 *
+	 * @return A ResponseEntity containing the created code's ID in JSON format.
+	 *
+	 * @throws IOException If an I/O error occurs while creating the code.
+	 */
 	@PostMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> createCode(@RequestBody Code code) {
+	public ResponseEntity<JsonNode> createCode(@RequestBody Code code) throws IOException {
 
-		return ResponseEntity.ok(codeProxy.createAsset(convertObjectToSnakeCaseJsonNode(code)).getBody());
+		codeService.createCode(code);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("id", code.getId()));
+
+		return ResponseEntity.ok(res);
 	}
 
+	/**
+	 * Retrieves the code with the specified ID.
+	 *
+	 * @param id the ID of the code to be retrieved
+	 * @return a ResponseEntity containing the code
+	 * @throws IOException if an I/O error occurs while retrieving the code
+	 * @throws ResponseStatusException if the code is not found with the specified ID
+	 */
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Code> getCode(@PathVariable("id") String codeId) {
+	public ResponseEntity<Code> getCode(@PathVariable("id") String id) throws IOException {
 
-		return ResponseEntity.ok(codeProxy.getAsset(codeId).getBody());
+		final Code code = codeService.getCode(id);
+		if (code == null) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Code %s not found", id));
+		}
+
+		// Return the updated document
+		return ResponseEntity.ok(code);
 	}
 
+	/**
+	 * Updates the code with the specified ID.
+	 *
+	 * @param codeId The ID of the code to update.
+	 * @param code The updated code information.
+	 * @return The HTTP response entity containing a JSON node with the updated code ID.
+	 * @throws IOException if an I/O exception occurs while updating the code.
+	 */
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> updateCode(@PathVariable("id") String codeId, @RequestBody Code code) {
-		return ResponseEntity.ok(codeProxy.updateAsset(codeId, convertObjectToSnakeCaseJsonNode(code)).getBody());
+	public ResponseEntity<JsonNode> updateCode(@PathVariable("id") String codeId, @RequestBody Code code) throws IOException {
+
+		codeService.updateCode(code);
+
+		JsonNode res = objectMapper.valueToTree(Map.of("id", code.getId()));
+		return ResponseEntity.ok(res);
 	}
 
+	/**
+	 * Deletes a code with the given ID.
+	 *
+	 * @param id The ID of the code to delete.
+	 * @return A ResponseEntity containing a JsonNode object with a success message.
+	 * @throws IOException if an error occurs while deleting the code.
+	 */
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteCode(@PathVariable("id") String codeId) {
-		return ResponseEntity.ok(codeProxy.deleteAsset(codeId).getBody());
+	public ResponseEntity<JsonNode> deleteCode(@PathVariable("id") String id) throws IOException {
+		codeService.deleteCode(id);
+
+		JsonNode res = objectMapper
+			.valueToTree(Map.of("message", String.format("Code successfully deleted: %s", id)));
+
+		return ResponseEntity.ok(res);
 	}
 
+	/**
+	 * Retrieves the content of a code file as text.
+	 *
+	 * @param codeId    the ID of the code file to be retrieved
+	 * @param filename  the name of the code file
+	 * @return a ResponseEntity object containing the content of the code file as text
+	 */
 	@GetMapping("/{id}/download-code-as-text")
 	@Secured(Roles.USER)
 	public ResponseEntity<String> getCodeFileAsText(@PathVariable("id") String codeId, @RequestParam("filename") String filename) {
-
-		log.debug("Downloading code file {} for code {}", filename, codeId);
 
 		try (CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build()) {
 
-			PresignedURL presignedURL = codeProxy.getDownloadUrl(codeId, filename).getBody();
-			final HttpGet httpGet = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(httpGet);
+			final PresignedURL presignedURL = codeService.getDownloadUrl(codeId, filename);
+			final HttpGet get = new HttpGet(presignedURL.getUrl());
+			final HttpResponse response = httpclient.execute(get);
 			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 
 			return ResponseEntity.ok(textFileAsString);
 
-
 		} catch (Exception e) {
-			log.error("Unable to GET code data", e);
+			log.error("Unable to GET file as string data", e);
 			return ResponseEntity.internalServerError().build();
 		}
 
 	}
 
+	/**
+	 * Uploads a file to the specified codeId.
+	 *
+	 * @param codeId   the code ID to upload the file to
+	 * @param filename the name of the file to be uploaded
+	 * @param input    the file to be uploaded
+	 * @return a ResponseEntity object with an Integer indicating the result of the upload
+	 * @throws IOException if an I/O error occurs while reading the file
+	 */
 	@PutMapping(value = "/{codeId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadFile(
@@ -189,29 +257,15 @@ public class TDSCodeController implements SnakeCaseController {
 			.build()) {
 
 			// upload file to S3
-			final PresignedURL presignedURL = codeProxy.getUploadUrl(codeId, fileName).getBody();
+			final PresignedURL presignedURL = codeService.getUploadUrl(codeId, fileName);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(codeHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
 
-			final Code code = codeProxy.getAsset(codeId).getBody();
-			final CodeFile codeFile = new CodeFile();
-			codeFile.setProgrammingLanguageFromFileName(fileName);
-
-			Map<String, CodeFile> fileMap = code.getFiles();
-
-			if(fileMap == null){
-				fileMap = new HashMap<>();
-			}
-			fileMap.put(fileName, codeFile);
-			code.setFiles(fileMap);
-			codeProxy.updateAsset(codeId, convertObjectToSnakeCaseJsonNode(code)).getBody();
-
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
-
 		} catch (Exception e) {
-			log.error("Unable to PUT code data", e);
+			log.error("Unable to PUT artifact data", e);
 			return ResponseEntity.internalServerError().build();
 		}
 	}
