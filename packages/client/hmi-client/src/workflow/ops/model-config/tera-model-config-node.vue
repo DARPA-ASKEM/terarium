@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<template v-if="!isEmpty(modelConfigs)">
+		<template v-if="!isEmpty(node.outputs)">
 			<ul>
 				<li v-for="config of modelConfigs" :key="config.id">
 					{{ config.name }}
