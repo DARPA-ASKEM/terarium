@@ -91,7 +91,7 @@
 							<th>Parameter</th>
 							<th>Value</th>
 						</thead>
-						<template v-if="showSpinner">
+						<template v-if="runInProgress">
 							<tr v-for="(content, key) in parameterResult" :key="key">
 								<td>
 									<p>{{ key }}</p>
@@ -101,7 +101,7 @@
 								</td>
 							</tr>
 						</template>
-						<template v-else-if="!showSpinner && selectedRunId">
+						<template v-else-if="!runInProgress && selectedRunId">
 							<tr v-for="(content, key) in runResultParams[selectedRunId]" :key="key">
 								<td>
 									<p>{{ key }}</p>
@@ -115,24 +115,24 @@
 				</div>
 				<div class="form-section">
 					<h4>Loss function</h4>
-					<div v-if="showSpinner" ref="drilldownLossPlot"></div>
+					<div v-if="runInProgress" ref="drilldownLossPlot"></div>
 					<div v-else ref="staticLossPlotRef"></div>
 				</div>
 				<div class="form-section">
 					<h4>Variables</h4>
 					<div>
-						<template v-if="showSpinner">
+						<template v-if="runInProgress">
 							<tera-calibrate-chart
 								v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
 								:key="index"
 								:initial-data="csvAsset"
 								:intermediate-data="currentIntermediateVals"
 								:mapping="mapping"
-								:chartConfig="{ selectedRun: runInProgress!, selectedVariable: cfg }"
+								:chartConfig="{ selectedRun: runInProgress, selectedVariable: cfg }"
 								@configuration-change="chartConfigurationChange(index, $event)"
 							/>
 						</template>
-						<template v-else-if="!showSpinner && selectedRunId && runResults[selectedRunId]">
+						<template v-else-if="!runInProgress && selectedRunId && runResults[selectedRunId]">
 							<tera-simulate-chart
 								v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
 								:key="index"
@@ -259,7 +259,6 @@ let lossValues: { [key: string]: number }[] = [];
 const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
 const parameterResult = ref<{ [index: string]: any }>();
 
-const showSpinner = ref(false); // TODO: showSpinner isn't actually showing a spinner -> rename this or maybe show a spinner
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 const runInProgress = ref<string>();
 
@@ -365,7 +364,6 @@ const getMessageHandler = (event: ClientEvent<ScimlStatusUpdate>) => {
 };
 
 const getStatus = async (simulationIds: string[]) => {
-	showSpinner.value = true;
 	runInProgress.value = simulationIds[0];
 
 	await subscribeToUpdateMessages(
@@ -388,7 +386,6 @@ const getStatus = async (simulationIds: string[]) => {
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		showSpinner.value = false;
 		logger.error(`Calibrate: ${simulationIds} has failed`, {
 			toastTitle: 'Error - Julia'
 		});
@@ -397,7 +394,6 @@ const getStatus = async (simulationIds: string[]) => {
 	completedRunIdList.value = simulationIds;
 
 	runInProgress.value = undefined;
-	showSpinner.value = false;
 };
 
 const watchCompletedRunList = async (runIdList: string[]) => {
