@@ -20,20 +20,16 @@
 					icon="pi pi-plus"
 				/>
 			</section>
+			<template v-if="modelConfigIds && datasetId">
+				<Button label="Configure" @click="emit('open-drilldown')" severity="secondary" outlined />
+				<Button label="Run" @click="runEnsemble" :disabled="disableRunButton" icon="pi pi-play" />
+			</template>
 			<tera-operator-placeholder
 				v-else-if="node.status === OperatorStatus.INVALID"
 				:operation-type="node.operationType"
 			>
 				Connect a model and dataset
 			</tera-operator-placeholder>
-			<Button
-				v-if="modelConfigIds && datasetId"
-				label="Configure"
-				@click="emit('open-drilldown')"
-				severity="secondary"
-				outlined
-			/>
-			<Button label="Run" @click="runEnsemble" :disabled="disableRunButton" icon="pi pi-play" />
 		</template>
 		<template v-else>
 			<tera-progress-bar :value="progress.value" :status="progress.status" />
