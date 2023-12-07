@@ -9,7 +9,6 @@ import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-pl
 import { WorkflowNode } from '@/types/workflow';
 import { CalibrationOperationStateJulia } from './calibrate-operation';
 
-// TODO: FIGURE OUT WHAT TO SHOW IN THIS WORKFLOW NODE WHILE CALIBRATION IS RUNNING FROM THE DRILLDOWN
 defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
