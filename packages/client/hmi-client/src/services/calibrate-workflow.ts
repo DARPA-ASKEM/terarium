@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-import { ModelConfiguration, Dataset, CsvAsset } from '@/types/Types';
+import { ModelConfiguration, Dataset, CsvAsset, PetriNetState } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 
@@ -109,23 +109,18 @@ export const renderLossGraph = (
 	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
 };
 
-export const setupCalibrationMapping = async (modelConfigId: string, datasetId: String) => {
-	console.log('TODO');
-	console.log(modelConfigId);
-	console.log(datasetId);
+export const autoCalibrationMapping = async (modelConfigId: string, datasetId: string) => {
 	const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-	// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
-	const modelColumnNameOptions: string[] = modelConfiguration.configuration.model.states.map(
-		(state) => state.id
-	);
-
-	// add observables
-	if (modelConfiguration.configuration.semantics?.ode?.observables) {
-		modelConfiguration.configuration.semantics.ode.observables.forEach((o) => {
-			modelColumnNameOptions.push(o.id);
-		});
+	const modelStates: PetriNetState[] = modelConfiguration.configuration.model.states;
+	const dataset = await getDataset(datasetId);
+	if (dataset === undefined || !dataset) {
+		console.log(`Dataset with id:${datasetId} not found`);
+		return;
 	}
-
-	modelColumnNameOptions.push('timestamp');
-	// return { map, modelStateOptions, datasetColumnOptions }
+	console.log(dataset);
+	const datasetColumnNames = dataset.columns;
+	console.log(modelStates);
+	console.log(datasetColumnNames);
+	// const datasetGroundings = dataset.columns.map(column => column.metadata.groundings)
+	// return [] as CalibrateMap[];
 };

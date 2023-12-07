@@ -62,6 +62,12 @@
 								label="Add mapping"
 								@click="addMapping"
 							/>
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-plus"
+								label="Auto map"
+								@click="getAutoMapping"
+							/>
 						</div>
 					</AccordionTab>
 					<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
@@ -193,6 +199,18 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
+async function getAutoMapping() {
+	if (!modelConfigId.value) {
+		console.log('no model config id'); // should be toast when jami is done
+		return;
+	}
+	if (!datasetId.value) {
+		console.log('no dataset id');
+	}
+	// mapping.value = await autoCalibrationMapping(modelConfigId.value, datasetId.value);
+}
+
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
 watch(
