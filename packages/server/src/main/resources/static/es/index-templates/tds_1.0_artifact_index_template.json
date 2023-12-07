@@ -1,6 +1,6 @@
 {
     "index_patterns": [
-        "*_code_tera_1.0"
+        "*_artifact_tera_1.0"
     ],
     "version": 1,
     "priority": 500,

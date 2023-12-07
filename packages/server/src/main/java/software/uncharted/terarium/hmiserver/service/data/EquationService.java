@@ -10,8 +10,8 @@ import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
-import software.uncharted.terarium.hmiserver.service.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
 @RequiredArgsConstructor

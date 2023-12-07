@@ -7,11 +7,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Data
 @TSModel
 @Accessors(chain = true)
-public class ResponseDeleted {
+public class ResponseSuccess {
 
-	public ResponseDeleted(String type, String id) {
-		message = String.format("%s successfully deleted: %s", type, id);
-	}
-
-	private String message;
+	private Boolean success;
 }

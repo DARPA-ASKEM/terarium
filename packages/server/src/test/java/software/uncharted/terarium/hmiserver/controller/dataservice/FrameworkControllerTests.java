@@ -48,10 +48,6 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateFramework() throws Exception {
-		final ModelFramework framework = new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics");
 
 		frameworkService.createFramework(framework);
 

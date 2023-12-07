@@ -1,0 +1,56 @@
+{
+    "COPIED_FROM":[
+        ["Model","Model"]
+    ],
+    "GLUED_FROM":[
+        ["Model","Model"]
+    ],
+    "STRATIFIED_FROM":[
+        ["Model","Model"]
+    ],
+    "EDITED_FROM":[
+        ["Model","Model"]
+    ],
+    "DECOMPOSED_FROM":[
+        ["Model","Model"]
+    ],
+    "BEGINS_AT":[
+        ["Model","Model"]
+    ],
+    "PARAMETER_OF":[
+        ["ModelParameter","Model"],
+        ["SimulationParameter","Simulation"]
+    ],
+    "GENERATED_BY":[
+        ["Simulation","ModelConfiguration"]
+    ],
+    "USES":[
+        ["ModelConfiguration","Model"]
+    ],
+    "CITES":[
+        ["Document","Document"]
+    ],
+    "EXTRACTED_FROM":[
+        ["Model","Document"],
+        ["Dataset","Document"],
+        ["Model", "Code"],
+        ["Model","Equation"],
+        ["Equation", "Document"]
+    ],
+    "CONTAINS":[
+        ["Project","Document"],
+        ["Project","Model"],
+        ["Project","ModelConfiguration"],
+        ["Project","Simulation"],
+        ["Project","Dataset"],
+        ["Project","Artifact"],
+        ["Project", "Equation"]
+    ],
+    "IS_CONCEPT_OF":[
+        ["Concept","Document"],
+        ["Concept","Model"],
+        ["Concept","ModelConfiguration"],
+        ["Concept","Simulation"],
+        ["Concept","Dataset"]
+    ]
+}
