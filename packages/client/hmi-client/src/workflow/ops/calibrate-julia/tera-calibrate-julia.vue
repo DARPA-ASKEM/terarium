@@ -259,15 +259,15 @@ let lossValues: { [key: string]: number }[] = [];
 const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
 const parameterResult = ref<{ [index: string]: any }>();
 
-const poller = new Poller();
-
-const showSpinner = ref(false);
+const showSpinner = ref(false); // TODO: showSpinner isn't actually showing a spinner -> rename this or maybe show a spinner
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 const runInProgress = ref<string>();
 
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runResultParams = ref<Record<string, Record<string, number>>>({});
+
+const poller = new Poller();
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
@@ -325,18 +325,6 @@ const runCalibrate = async () => {
 			formattedMap[ele.datasetVariable] = ele.modelVariable;
 		});
 	}
-	// TODO: TS/1225 -> Should not have to rand results
-	const initials = modelConfig.value.configuration.semantics.ode.initials.map((d) => d.target);
-	const rates = modelConfig.value.configuration.semantics.ode.rates.map((d) => d.target);
-	const initialsObj = {};
-	const paramsObj = {};
-
-	initials.forEach((d) => {
-		initialsObj[d] = Math.random() * 100;
-	});
-	rates.forEach((d) => {
-		paramsObj[d] = Math.random() * 0.05;
-	});
 
 	const calibrationRequest: CalibrationRequestJulia = {
 		modelConfigId: modelConfigId.value,
@@ -476,7 +464,6 @@ const addChart = () => {
 };
 
 // Used from button to add new entry to the mapping object
-// Tom TODO: Make this generic... its copy paste from node.
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',
@@ -488,8 +475,8 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
 // Set up model config + dropdown names
-// Note: Same as calibrate-node
 watch(
 	() => modelConfigId.value,
 	async () => {
@@ -497,20 +484,19 @@ watch(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
-		modelColumnNames.value = modelColumnNameOptions;
+		modelColumnNames.value = modelColumnNameOptions?.map((state) => state.trim());
 	},
 	{ immediate: true }
 );
 
 // Set up csv + dropdown names
-// Note: Same as calibrate-node
 watch(
 	() => datasetId.value,
 	async () => {
 		const { filename, csv } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers;
+		datasetColumnNames.value = csv?.headers?.map((col) => col.trim());
 	},
 	{ immediate: true }
 );
@@ -562,10 +548,6 @@ watch([() => selectedRunId.value, () => staticLossPlotRef.value], () => {
 </script>
 
 <style scoped>
-.p-accordion {
-	padding-top: 1rem;
-}
-
 .mapping-table:deep(td) {
 	padding: 0rem 0.25rem 0.5rem 0rem !important;
 	border: none !important;
@@ -577,23 +559,6 @@ watch([() => selectedRunId.value, () => staticLossPlotRef.value], () => {
 	width: 50%;
 }
 
-.dropdown-button {
-	width: 156px;
-	height: 25px;
-	border-radius: 6px;
-}
-
-.train-test-ratio {
-	display: flex;
-	gap: 1rem;
-	margin: 0.5rem 0;
-}
-
-.train-test-ratio > .p-slider {
-	margin-top: 1rem;
-	width: 100%;
-}
-
 th {
 	text-align: left;
 }
@@ -602,27 +567,6 @@ th {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
-}
-
-.emptyState {
-	align-self: center;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	text-align: center;
-	margin-top: 15rem;
-	gap: 0.5rem;
-}
-
-.helpMessage {
-	color: var(--text-color-subdued);
-	font-size: var(--font-body-small);
-	width: 90%;
-	margin-top: 1rem;
-}
-
-img {
-	width: 20%;
 }
 
 .form-section {
