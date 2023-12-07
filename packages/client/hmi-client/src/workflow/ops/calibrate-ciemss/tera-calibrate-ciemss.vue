@@ -72,23 +72,6 @@
 		</section>
 		<template #preview>
 			<tera-drilldown-preview title="Preview">
-				<!-- <div class="form-section">
-					<h4>Calibrated parameters</h4>
-					<table class="p-datatable-table">
-						<thead class="p-datatable-thead">
-							<th>Parameter</th>
-							<th>Value</th>
-						</thead>
-						<tr v-for="(content, key) in parameterResult" :key="key">
-							<td>
-								<p>{{ key }}</p>
-							</td>
-							<td>
-								<p>{{ content }}</p>
-							</td>
-						</tr>
-					</table>
-				</div> -->
 				<div v-if="!showSpinner" class="form-section">
 					<h4>Variables</h4>
 					<section v-if="modelConfig && node.state.chartConfigs.length">
@@ -273,13 +256,6 @@ const runCalibrate = async () => {
 	}
 };
 
-/* const handlingProgress = (message: string) => {
-	const parsedMessage = JSON.parse(message);
-	if (parsedMessage.progress) {
-		progress.value.value = Math.round(parsedMessage.progress * 100);
-	}
-}; */
-
 function getMessageHandler(event: ClientEvent<any>) {
 	const runIds: string[] = querySimulationInProgress(props.node);
 	if (runIds.length === 0) return;
@@ -344,7 +320,6 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-// Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -360,7 +335,6 @@ const addChart = () => {
 };
 
 // Used from button to add new entry to the mapping object
-// Tom TODO: Make this generic... its copy paste from node.
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',
@@ -404,14 +378,8 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		// const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
-		// const csvData = csvParse(resultCsv);
-		// console.log(csvData);
-		// runResults.value[simulationIds.value[0].runId] = csvData as any;
-
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
 		runResults.value = output.runResults;
-		// parameterResult.value = await getRunResult(simulationIds.value[0].runId, 'visualization.json');
 	},
 	{ immediate: true }
 );
