@@ -211,6 +211,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+	// TODO: right now whenever the drilldown is closed, the poller is stopped even
+	// if the calibration is still running. This results in an error being thrown
+	// from the getStatus function. This needs to be addressed in the future.
 	poller.stop();
 });
 
