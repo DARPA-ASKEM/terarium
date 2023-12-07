@@ -1,7 +1,11 @@
 <template>
-	<Portal :appendTo="props.appendTo">
-		<div class="tera-context-menu" ref="container">
-			<TieredMenu v-if="isVisible" :model="props.model" class="p-tieredmenu-overlay">
+	<Portal :appendTo="appendTo">
+		<div
+			class="tera-context-menu"
+			ref="container"
+			:style="{ height: `${model.length * 36}px`, width: '200px' }"
+		>
+			<TieredMenu v-if="isVisible" :model="model" class="p-tieredmenu-overlay">
 				<template #item="{ item }">
 					<a class="p-menuitem-link" @click="itemClick(item)">
 						<span :class="item.icon" class="p-menuitem-icon" />
@@ -47,8 +51,7 @@ let pageY = 0;
 const DEFAULT_ZINDEX_MENU = 1000;
 
 const show = (event) => {
-	const containerVal = container.value;
-	if (!containerVal) return;
+	if (!container.value) return;
 
 	pageX = event.pageX;
 	pageY = event.pageY;
@@ -59,14 +62,13 @@ const show = (event) => {
 	event.stopPropagation();
 	event.preventDefault();
 
-	ZIndexUtils.set('menu', containerVal, props.baseZIndex + DEFAULT_ZINDEX_MENU);
+	ZIndexUtils.set('menu', container.value, props.baseZIndex + DEFAULT_ZINDEX_MENU);
 };
 const hide = () => {
-	const containerVal = container.value;
-	if (!containerVal) return;
+	if (!container.value) return;
 
 	isVisible.value = false;
-	ZIndexUtils.clear(containerVal);
+	ZIndexUtils.clear(container.value);
 };
 defineExpose({
 	show,
@@ -81,17 +83,16 @@ const itemClick = (item: MenuItem) => {
 
 // adapted from `position` method of primevue/contextmenu
 const setPosition = () => {
-	const containerVal = container.value;
-	if (!containerVal) return;
+	if (!container.value) return;
 
 	let left = pageX + 1;
 	let top = pageY + 1;
-	const width = containerVal.offsetParent
-		? containerVal.offsetWidth
-		: DomHandler.getHiddenElementOuterWidth(containerVal);
-	const height = containerVal.offsetParent
-		? containerVal.offsetHeight
-		: DomHandler.getHiddenElementOuterHeight(containerVal);
+	const width = container.value.offsetParent
+		? container.value.offsetWidth
+		: DomHandler.getHiddenElementOuterWidth(container.value);
+	const height = container.value.offsetParent
+		? container.value.offsetHeight
+		: DomHandler.getHiddenElementOuterHeight(container.value);
 	const viewport = DomHandler.getViewport();
 
 	// flip
@@ -114,15 +115,14 @@ const setPosition = () => {
 		top = document.body.scrollTop;
 	}
 
-	containerVal.style.left = `${left}px`;
-	containerVal.style.top = `${top}px`;
+	container.value.style.left = `${left}px`;
+	container.value.style.top = `${top}px`;
 };
 
 const CLICK_EVENT = 'click';
 // adapted from `outsideClickListener` method of primevue/contextmenu
 const outsideClickListener = (event) => {
-	const containerVal = container.value;
-	const isOutsideContainer = containerVal && !containerVal.contains(event.target);
+	const isOutsideContainer = container.value && !container.value.contains(event.target);
 
 	if (isOutsideContainer) {
 		hide();
@@ -152,20 +152,5 @@ onUnmounted(() => {
 	&:deep(.pi-angle-right) {
 		color: var(--text-color-subdued);
 	}
-}
-
-/* Unused */
-.tera-context-menu:deep(.p-submenu-header .p-menuitem-link) {
-	padding-left: 0px;
-	padding-bottom: 0px;
-}
-
-.tera-context-menu:deep(.p-submenu-header .p-menuitem-link):hover {
-	background-color: var(--surface);
-	cursor: default;
-}
-.tera-context-menu:deep(.p-submenu-header .p-menuitem-link .p-menuitem-text) {
-	color: var(--text-color-primary);
-	font-weight: var(--font-weight-semibold);
 }
 </style>
