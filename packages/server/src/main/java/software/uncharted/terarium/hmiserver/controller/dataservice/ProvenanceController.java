@@ -64,7 +64,7 @@ public class ProvenanceController {
 
 	private String snakeToCamel(String s) {
 		Pattern p = Pattern.compile("_(.)");
-		Matcher m = p.matcher(s);
+		Matcher m = p.matcher(s.replaceAll("^_|_$", "").replaceAll("_+", "_"));
 		StringBuffer sb = new StringBuffer();
 		while (m.find()) {
 			m.appendReplacement(sb, m.group(1).toUpperCase());
