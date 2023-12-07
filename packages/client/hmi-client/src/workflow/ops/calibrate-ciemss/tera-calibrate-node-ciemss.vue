@@ -8,7 +8,7 @@
 			outlined
 		/>
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
-			Connect a model and dataset
+			Connect a model configuration and dataset
 		</tera-operator-placeholder>
 	</main>
 </template>
@@ -27,9 +27,6 @@ const props = defineProps<{
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 
 const emit = defineEmits(['open-drilldown']);
-
-// const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
-// const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 </script>
 
 <style scoped></style>

@@ -28,7 +28,7 @@
 				v-else-if="node.status === OperatorStatus.INVALID"
 				:operation-type="node.operationType"
 			>
-				Connect a model and dataset
+				Connect a model configuration and dataset
 			</tera-operator-placeholder>
 		</template>
 		<template v-else>

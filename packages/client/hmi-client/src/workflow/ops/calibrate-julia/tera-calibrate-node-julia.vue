@@ -8,7 +8,7 @@
 			outlined
 		/>
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
-			Connect a model and dataset
+			Connect a model configuration and dataset
 		</tera-operator-placeholder>
 	</main>
 </template>
