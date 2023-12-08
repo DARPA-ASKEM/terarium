@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.service;
+package software.uncharted.terarium.hmiserver.service.s3;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -46,6 +46,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 import software.uncharted.terarium.hmiserver.models.s3.S3Object;
 import software.uncharted.terarium.hmiserver.models.s3.S3ObjectListing;
+import software.uncharted.terarium.hmiserver.service.HashService;
 
 @Slf4j
 public class S3Service {

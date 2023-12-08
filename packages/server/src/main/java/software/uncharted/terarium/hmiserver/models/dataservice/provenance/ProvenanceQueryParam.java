@@ -1,21 +1,21 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
+import java.io.Serializable;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
-import java.io.Serializable;
-import java.util.List;
-
 @Data
 @Accessors(chain = true)
 @TSModel
 public class ProvenanceQueryParam implements Serializable {
-
 
 	private String rootId;
 
@@ -30,6 +30,12 @@ public class ProvenanceQueryParam implements Serializable {
 	private Boolean nodes;
 
 	@TSOptional
+	private Boolean edges;
+
+	@TSOptional
+	private Boolean versions;
+
+	@TSOptional
 	private List<ProvenanceType> types;
 
 	@TSOptional
@@ -41,9 +47,12 @@ public class ProvenanceQueryParam implements Serializable {
 	@TSOptional
 	private Boolean verbose;
 
-	// Our front end (and server) want to use the non-underscored version of these properties
-	// but TDS needs underscores.  Its "easy" when taking data *From* TDS to hmi to do this by
-	// simply using the @JsonAlias annotation, however when going the opposite way we need to be
+	// Our front end (and server) want to use the non-underscored version of these
+	// properties
+	// but TDS needs underscores. Its "easy" when taking data *From* TDS to hmi to
+	// do this by
+	// simply using the @JsonAlias annotation, however when going the opposite way
+	// we need to be
 	// very explicit with setters and getters as JsonAlias only works one way.
 
 	@JsonSetter(value = "rootId")
