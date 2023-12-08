@@ -35,11 +35,16 @@
 				<div class="button-group">
 					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
 					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
-					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
-					<Menu
+					<Button
+						id="add-component-btn"
+						icon="pi pi-plus"
+						label="Add component"
+						@click="showAddComponentMenu"
+					/>
+					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
+					<ContextMenu
 						ref="addComponentMenu"
 						:model="contextMenuItems"
-						:popup="true"
 						style="white-space: nowrap; width: auto"
 					/>
 				</div>
@@ -47,7 +52,11 @@
 		</template>
 		<!-- data -->
 		<template #data>
-			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
+			<ContextMenu
+				ref="contextMenu"
+				:model="contextMenuItems"
+				style="white-space: nowrap; width: auto"
+			/>
 			<tera-operator
 				v-for="(node, index) in wf.nodes"
 				:key="index"
@@ -154,10 +163,10 @@ import {
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
-import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
+import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType } from '@/types/Types';
@@ -305,32 +314,105 @@ const removeNode = (event) => {
 };
 
 const largeNode = { width: 420, height: 220 };
+
+// Menu categories and list items are in order of appearance for separators to work
+const categories: Record<string, { label: string; icon: string; separator?: boolean }> = {
+	model: {
+		label: 'Model operators',
+		icon: 'pi pi-share-alt'
+	},
+	code: {
+		label: 'Code operators',
+		icon: 'pi pi-code'
+	},
+	document: {
+		label: 'Document operators',
+		icon: 'pi pi-file'
+	},
+	dataset: {
+		label: 'Dataset operators',
+		icon: 'pi pi-database'
+	},
+	simulate: {
+		separator: true,
+		label: 'Simulate',
+		icon: 'pi pi-chart-bar'
+	},
+	llm: {
+		label: "Ask 'em LLM tool",
+		icon: 'pi pi-comment'
+	}
+};
 const operationContextMenuList = [
-	{ name: ModelOp.name },
-	{ name: ModelConfigOp.name },
-	{ name: DatasetOp.name },
-	{ name: DatasetTransformerOp.name },
-	{ name: ModelTransformerOp.name },
-	{ name: StratifyMiraOp.name },
-	{ name: ModelCouplingOp.name },
-	{ name: CodeAssetOp.name },
-	{ name: ModelFromCodeOp.name },
-	{ name: FunmanOp.name },
-	{ name: ModelOptimizeOp.name },
-	{ name: SimulateJuliaOp.name, options: { size: largeNode } },
-	{ name: CalibrateJuliaOp.name, options: { size: largeNode } },
-	{ name: SimulateCiemssOp.name, options: { size: largeNode } },
-	{ name: CalibrateCiemssOp.name, options: { size: largeNode } },
-	{ name: SimulateEnsembleCiemssOp.name, options: { size: largeNode } },
-	{ name: CalibrateEnsembleCiemssOp.name, options: { size: largeNode } }
+	// Model
+	{ name: ModelOp.name, category: categories.model },
+	{ name: ModelConfigOp.name, category: categories.model },
+	{ name: StratifyMiraOp.name, category: categories.model },
+	{ name: ModelTransformerOp.name, category: categories.model },
+	{ name: FunmanOp.name, category: categories.model, separator: true },
+	{ name: ModelOptimizeOp.name, category: categories.model },
+	{ name: ModelCouplingOp.name, category: categories.model },
+	// Code
+	{ name: CodeAssetOp.name, category: categories.code },
+	{ name: ModelFromCodeOp.name, category: categories.code },
+	// Dataset
+	{ name: DatasetOp.name, category: categories.dataset },
+	{ name: DatasetTransformerOp.name, category: categories.dataset },
+	// Simulate
+	{ name: CalibrateJuliaOp.name, category: categories.simulate, options: { size: largeNode } },
+	{ name: SimulateJuliaOp.name, category: categories.simulate, options: { size: largeNode } },
+	{
+		name: SimulateCiemssOp.name,
+		category: categories.simulate,
+		options: { size: largeNode },
+		separator: true
+	},
+	{
+		name: CalibrateCiemssOp.name,
+		category: categories.simulate,
+		options: { size: largeNode }
+	},
+	{
+		name: CalibrateEnsembleCiemssOp.name,
+		category: categories.simulate,
+		options: { size: largeNode },
+		separator: true
+	},
+	{
+		name: SimulateEnsembleCiemssOp.name,
+		category: categories.simulate,
+		options: { size: largeNode }
+	}
 ];
 
 const contextMenuItems = ref<any[]>([]);
+
+// Add operator categories to the context menu
+Object.values(categories).forEach(({ label, icon, separator }) => {
+	if (separator) {
+		contextMenuItems.value.push({ separator });
+	}
+	contextMenuItems.value.push({
+		label,
+		icon,
+		items: []
+	});
+});
+
+// Add operators within the proper categories
 operationContextMenuList.forEach((item) => {
 	const op = registry.getOperation(item.name);
 	if (!op) return;
 
-	contextMenuItems.value.push({
+	const categoryIndex = contextMenuItems.value.findIndex(
+		({ label }) => label === item.category.label
+	);
+
+	if (item.separator) {
+		contextMenuItems.value[categoryIndex].items.push({ separator: item.separator });
+	}
+
+	contextMenuItems.value[categoryIndex].items.push({
 		label: op.displayName,
 		command: () => {
 			workflowService.addNode(wf.value, op, newNodePosition, item.options);
@@ -340,7 +422,18 @@ operationContextMenuList.forEach((item) => {
 });
 
 const addComponentMenu = ref();
-const showAddComponentMenu = (event) => addComponentMenu.value.toggle(event);
+const showAddComponentMenu = () => {
+	const el = document.querySelector('#add-component-btn');
+	const coords = el?.getBoundingClientRect();
+
+	if (coords) {
+		const event = new PointerEvent('click', {
+			clientX: coords.x + coords.width,
+			clientY: coords.y + coords.height
+		});
+		addComponentMenu.value.toggle(event);
+	}
+};
 
 const { getDragData } = useDragEvent();
 
