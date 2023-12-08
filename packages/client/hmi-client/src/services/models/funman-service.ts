@@ -51,6 +51,7 @@ export const processFunman = (result: any) => {
 	// List of states and parameters
 	const states = result.model.petrinet.model.states.map((s) => s.id);
 	const params = result.model.petrinet.semantics.ode.parameters.map((p) => p.id);
+	const timesteps = result.request.structure_parameters.at(0).schedules.at(0).timepoints;
 
 	// "dataframes"
 	const points = [['id', 'label', 'box_id', ...params]];
@@ -105,15 +106,6 @@ export const processFunman = (result: any) => {
 						return obj;
 					}, {});
 
-				const timesteps = [
-					...new Set(
-						Object.keys(filteredVals).map((key) => {
-							const splitKey = key.split('_');
-							return +splitKey[splitKey.length - 1]; // timestep
-						})
-					)
-				].sort((a, b) => a - b);
-
 				timesteps.forEach((t) => {
 					const traj: any = {
 						boxId,
@@ -121,9 +113,12 @@ export const processFunman = (result: any) => {
 						timestep: t
 					};
 					states.forEach((s) => {
-						traj[s] = filteredVals[`${s}_${t}`];
+						if (filteredVals[`${s}_${t}`] !== undefined) {
+							// Only push values that exist in this box
+							traj[s] = filteredVals[`${s}_${t}`];
+							trajs.push(traj);
+						}
 					});
-					trajs.push(traj);
 				});
 			}); // foreach point
 		} // box.points
