@@ -73,7 +73,7 @@
 				@update:output="onUpdateOutput"
 				:is-loading="isProcessing"
 			>
-				<tera-operator-placeholder-graphic
+				<tera-operator-placeholder
 					v-if="!selectedModel && !previewHTML"
 					:operation-type="node.operationType"
 					style="height: 100%"
@@ -137,7 +137,7 @@ import { addAsset } from '@/services/project';
 import { useProjects } from '@/composables/project';
 import { useToastService } from '@/services/toast';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{

@@ -4,12 +4,16 @@
 		<tera-carousel>
 			<img v-for="(image, index) in images" :src="image" alt="alt" :key="index" />
 		</tera-carousel>
+		<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
 	</main>
 </template>
 
 <script setup lang="ts">
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import terarium from '@/assets/svg/terarium-icon.svg';
+import Button from 'primevue/button';
+
+const emit = defineEmits(['open-drilldown']);
 
 const images = [
 	new URL('@/assets/svg/terarium-icon.svg', import.meta.url).href,
