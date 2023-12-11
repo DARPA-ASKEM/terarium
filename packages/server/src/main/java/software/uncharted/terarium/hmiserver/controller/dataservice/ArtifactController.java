@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -97,6 +98,40 @@ public class ArtifactController {
 				.valueToTree(Map.of("message", String.format("Artifact successfully deleted: %s", artifactId)));
 
 		return ResponseEntity.ok(res);
+	}
+
+	@GetMapping("/{id}/upload-url")
+	@Secured(Roles.USER)
+	public ResponseEntity<PresignedURL> getUploadURL(
+			@PathVariable("id") final String id,
+			@PathVariable("filename") final String filename) {
+
+		try {
+			return ResponseEntity.ok(artifactService.getUploadUrl(id, filename));
+		} catch (Exception e) {
+			final String error = "Unable to get upload url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@GetMapping("/{id}/download-url")
+	@Secured(Roles.USER)
+	public ResponseEntity<PresignedURL> getDownloadURL(
+			@PathVariable("id") final String id,
+			@PathVariable("filename") final String filename) {
+
+		try {
+			return ResponseEntity.ok(artifactService.getDownloadUrl(id, filename));
+		} catch (Exception e) {
+			final String error = "Unable to get download url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@GetMapping("/{id}/download-file-as-text")

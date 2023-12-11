@@ -39,6 +39,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
@@ -46,6 +51,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
+import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -90,6 +96,12 @@ public class DocumentController {
 
 	@GetMapping
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets all documents")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Documents found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no documents found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving documents from the data store", content = @Content)
+	})
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
@@ -171,6 +183,40 @@ public class DocumentController {
 			return ResponseEntity.ok(document);
 		} catch (IOException e) {
 			final String error = "Unable to get document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@GetMapping("/{id}/upload-url")
+	@Secured(Roles.USER)
+	public ResponseEntity<PresignedURL> getUploadURL(
+			@PathVariable("id") final String id,
+			@PathVariable("filename") final String filename) {
+
+		try {
+			return ResponseEntity.ok(documentAssetService.getUploadUrl(id, filename));
+		} catch (Exception e) {
+			final String error = "Unable to get upload url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@GetMapping("/{id}/download-url")
+	@Secured(Roles.USER)
+	public ResponseEntity<PresignedURL> getDownloadURL(
+			@PathVariable("id") final String id,
+			@PathVariable("filename") final String filename) {
+
+		try {
+			return ResponseEntity.ok(documentAssetService.getDownloadUrl(id, filename));
+		} catch (Exception e) {
+			final String error = "Unable to get download url";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
