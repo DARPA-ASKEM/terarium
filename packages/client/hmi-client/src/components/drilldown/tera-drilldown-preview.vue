@@ -28,7 +28,7 @@
 							/>
 							<span>{{ slotProps.option?.label }}</span>
 							<span
-								v-if="slotProps.option?.status === WorkflowPortStatus.NOT_CONNECTED"
+								v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED"
 								class="connection-indicator"
 								><i class="pi pi-link" />Connected</span
 							>
