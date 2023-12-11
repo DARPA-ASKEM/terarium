@@ -1,4 +1,7 @@
-import node from './tera-model-node.vue';
-import drilldown from './tera-model-workflow-wrapper.vue';
+import node from './tera-model-edit-node.vue';
+import drilldown from './tera-model-edit.vue';
+import { ModelEditOperation as operation } from './model-edit-operation';
 
-export { node, drilldown };
+const name = operation.name;
+
+export { name, operation, node, drilldown };
