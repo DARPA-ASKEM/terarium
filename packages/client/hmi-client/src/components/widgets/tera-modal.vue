@@ -38,14 +38,19 @@ defineProps<{
 </script>
 
 <style scoped>
-main {
-	isolation: isolate;
-	z-index: var(--z-index, var(--z-index-modal));
+:root {
+	--z-index: var(--z-index-modal);
 }
 
-main > * {
-	position: absolute;
+main {
+	isolation: isolate;
+	z-index: var(--z-index);
+
+	& > * {
+		position: absolute;
+	}
 }
+
 aside {
 	z-index: 1;
 	top: 0;
