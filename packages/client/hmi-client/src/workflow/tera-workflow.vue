@@ -76,6 +76,7 @@
 						@append-output-port="(event: any) => appendOutputPort(node, event)"
 						@append-input-port="(event: any) => appendInputPort(node, event)"
 						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+						@select-output="(event: any) => selectOutput(node, event)"
 					/>
 				</template>
 			</tera-operator>
@@ -141,6 +142,7 @@
 			:node="currentActiveNode"
 			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
 		>
 		</component>
@@ -281,18 +283,33 @@ function appendInputPort(
 
 function appendOutputPort(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any }
+	port: { type: string; label?: string; value: any; state: any }
 ) {
 	if (!node) return;
 
+	const uuid = uuidv4();
+	const timestamp = new Date();
 	node.outputs.push({
-		id: uuidv4(),
+		id: uuid,
 		type: port.type,
-		label: port.label,
+		label: `${port.label} ${timestamp.toLocaleTimeString()}`,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
+		status: WorkflowPortStatus.NOT_CONNECTED,
+
+		operatorStatus: node.status,
+		state: port.state,
+		timestamp
 	});
+
+	node.active = uuid;
+	workflowDirty = true;
+}
+
+function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
+	if (!node) return;
+
+	workflowService.selectOutput(node, selectedOutputId);
 	workflowDirty = true;
 }
 
