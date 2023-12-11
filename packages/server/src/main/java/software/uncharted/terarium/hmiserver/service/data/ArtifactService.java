@@ -11,8 +11,8 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +56,7 @@ public class ArtifactService {
 	}
 
 	public PresignedURL getUploadUrl(String documentId, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
@@ -68,7 +68,7 @@ public class ArtifactService {
 	}
 
 	public PresignedURL getDownloadUrl(String documentId, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(

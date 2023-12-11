@@ -56,7 +56,7 @@ public class CodeService {
 	}
 
 	public PresignedURL getUploadUrl(String codeId, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
@@ -68,7 +68,7 @@ public class CodeService {
 	}
 
 	public PresignedURL getDownloadUrl(String codeId, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(

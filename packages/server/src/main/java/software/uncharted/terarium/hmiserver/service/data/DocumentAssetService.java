@@ -58,7 +58,7 @@ public class DocumentAssetService {
 	}
 
 	public PresignedURL getUploadUrl(String documentId, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
@@ -70,7 +70,7 @@ public class DocumentAssetService {
 	}
 
 	public PresignedURL getDownloadUrl(String documentId, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
