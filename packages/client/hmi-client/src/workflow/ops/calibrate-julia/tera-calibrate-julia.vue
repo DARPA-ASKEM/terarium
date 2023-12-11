@@ -364,6 +364,9 @@ const getStatus = async (simulationIds: string[]) => {
 		getMessageHandler
 	);
 
+	if (pollerResults.state === PollerState.Cancelled) {
+		return;
+	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		logger.error(`Calibrate: ${simulationIds} has failed`, {
@@ -371,8 +374,8 @@ const getStatus = async (simulationIds: string[]) => {
 		});
 		throw Error('Failed Runs');
 	}
-	completedRunIdList.value = simulationIds;
 
+	completedRunIdList.value = simulationIds;
 	runInProgress.value = undefined;
 };
 
