@@ -18,6 +18,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
@@ -38,6 +42,11 @@ public class FrameworkController {
 
 	@PostMapping("/frameworks")
 	@Secured(Roles.USER)
+	@Operation(summary = "Create a new model framework")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the framework", content = @Content)
+	})
 	ResponseEntity<ResponseId> createFramework(
 			@RequestBody final ModelFramework framework) {
 		ModelFramework modelFramework = frameworkService.createFramework(framework);
@@ -47,6 +56,12 @@ public class FrameworkController {
 
 	@GetMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets a model framework by ID")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Model framework found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
+			@ApiResponse(responseCode = "204", description = "There was no framework found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the framework from the data store", content = @Content)
+	})
 	ResponseEntity<ModelFramework> getFramework(
 			@PathVariable("id") UUID id) {
 
@@ -59,6 +74,11 @@ public class FrameworkController {
 
 	@PutMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Update a model framework")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Model framework updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the framework", content = @Content)
+	})
 	ResponseEntity<ResponseId> updateFramework(
 			@PathVariable("id") String id,
 			@RequestBody final ModelFramework framework) {
@@ -69,6 +89,13 @@ public class FrameworkController {
 
 	@DeleteMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Deletes an model framework")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Deleted framework", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
+			@ApiResponse(responseCode = "404", description = "Model framework could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+	})
 	ResponseEntity<ResponseDeleted> deleteFramework(
 			@PathVariable("id") UUID id) {
 

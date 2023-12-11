@@ -120,7 +120,7 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new document")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
+			@ApiResponse(responseCode = "200", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 	})
 	public ResponseEntity<ResponseId> createDocument(
@@ -142,7 +142,7 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets document by ID")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Workflow found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
+			@ApiResponse(responseCode = "200", description = "Document found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
 			@ApiResponse(responseCode = "204", description = "There was no document found but no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the document from the data store", content = @Content)
 	})
@@ -247,7 +247,7 @@ public class DocumentController {
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	@Operation(summary = "Deletes an uploaded document")
+	@Operation(summary = "Deletes a document")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Delete document", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
@@ -304,7 +304,7 @@ public class DocumentController {
 			}
 			return ResponseEntity.ok(new ResponseStatus(response.getStatusLine().getStatusCode()));
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -357,20 +357,12 @@ public class DocumentController {
 			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
 
-		try {
-			log.debug("Uploading Document file from github to dataset {}", documentId);
+		log.debug("Uploading Document file from github to dataset {}", documentId);
 
-			// download file from GitHub
-			final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-			final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-			return uploadDocumentHelper(documentId, filename, fileEntity);
-		} catch (Exception e) {
-			final String error = "Unable to upload document from github";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
-		}
+		// download file from GitHub
+		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+		return uploadDocumentHelper(documentId, filename, fileEntity);
 	}
 
 	@PostMapping(value = "/createDocumentFromXDD")
