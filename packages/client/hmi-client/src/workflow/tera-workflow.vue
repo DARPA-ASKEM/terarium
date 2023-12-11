@@ -294,7 +294,8 @@ function appendOutputPort(
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED,
-		state: port.state
+		state: port.state,
+		timestamp: new Date()
 	});
 	node.active = uuid;
 
