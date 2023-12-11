@@ -19,23 +19,23 @@
 			:inputs="node.inputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@port-selected="
+				(input: WorkflowPort, direction: WorkflowDirection) =>
+					emit('port-selected', input, direction)
+			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
 			<slot name="body" />
-			<Button
-				label="Open Drilldown"
-				@click="emit('drilldown', node)"
-				severity="secondary"
-				outlined
-			/>
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@port-selected="
+				(input: WorkflowPort, direction: WorkflowDirection) =>
+					emit('port-selected', input, direction)
+			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 	</main>
@@ -48,7 +48,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import Button from 'primevue/button';
 import TeraOperatorHeader from './operator/tera-operator-header.vue';
 import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';

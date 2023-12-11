@@ -61,13 +61,14 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
+				@port-selected="
+					(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)
+				"
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-operator="(event) => removeNode(event)"
 				@remove-edges="removeEdges"
-				@drilldown="(event) => drilldown(event)"
 			>
 				<template #body>
 					<component
@@ -76,6 +77,7 @@
 						@append-output-port="(event: any) => appendOutputPort(node, event)"
 						@append-input-port="(event: any) => appendInputPort(node, event)"
 						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+						@open-drilldown="openDrilldown(node)"
 					/>
 				</template>
 			</tera-operator>
@@ -302,8 +304,8 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	workflowDirty = true;
 }
 
-const drilldown = (event: WorkflowNode<any>) => {
-	currentActiveNode.value = event;
+const openDrilldown = (node: WorkflowNode<any>) => {
+	currentActiveNode.value = node;
 	dialogIsOpened.value = true;
 };
 

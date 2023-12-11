@@ -74,7 +74,7 @@
 					is-centered
 					style="height: 100%"
 				/>
-				<tera-operator-placeholder-graphic
+				<tera-operator-placeholder
 					v-if="!isProcessing && !selectedModel && !previewHTML"
 					:operation-type="node.operationType"
 					style="height: 100%"
@@ -147,7 +147,7 @@ import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useToastService } from '@/services/toast';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{

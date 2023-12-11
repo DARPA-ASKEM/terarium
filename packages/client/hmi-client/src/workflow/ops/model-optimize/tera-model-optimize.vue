@@ -193,7 +193,7 @@
 		</section>
 		<template #preview>
 			<tera-drilldown-preview title="Output">
-				<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+				<tera-operator-placeholder :operation-type="node.operationType" />
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -223,7 +223,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import {
 	ModelOptimizeOperationState,
 	InterventionPolicyGroup,
