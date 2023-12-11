@@ -10,9 +10,26 @@
 					:options="options"
 					option-value="id"
 					option-label="label"
+					option-group-children="items"
+					option-group-label="label"
 					@update:model-value="emit('update:output', $event)"
 					:loading="isLoading"
-				></Dropdown>
+				>
+					<template #optiongroup="slotProps">
+						<span class="dropdown-option-group">{{ slotProps.option?.label }}</span>
+					</template>
+					<template #option="slotProps">
+						<div class="dropdown-option">
+							<Checkbox
+								@click.stop
+								:model-value="slotProps.option?.isSelected"
+								@update:model-value="emit('update:selection', slotProps.option?.id)"
+								binary
+							/>
+							<span>{{ slotProps.option?.label }}</span>
+						</div>
+					</template>
+				</Dropdown>
 			</header>
 			<main>
 				<slot v-if="!isLoading" />
@@ -31,10 +48,11 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import { useSlots } from 'vue';
 import { WorkflowOutput } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import Checkbox from 'primevue/checkbox';
 
 defineProps<{
 	title?: string;
-	options?: WorkflowOutput<any>[]; // subject to change based on how we want to pass in output data
+	options?: WorkflowOutput<any>[] | any; // subject to change based on how we want to pass in output data
 	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
@@ -42,7 +60,7 @@ defineProps<{
 
 const slots = useSlots();
 
-const emit = defineEmits(['update:output']);
+const emit = defineEmits(['update:output', 'update:selection']);
 </script>
 
 <style scoped>
@@ -85,5 +103,14 @@ main {
 	overflow-y: auto;
 	gap: 1.5rem;
 	padding: 1.5rem 1.5rem 1.5rem 1rem;
+}
+
+.dropdown-option {
+	display: flex;
+	gap: 0.5rem;
+}
+.dropdown-option-group {
+	font-size: var(--font-caption);
+	color: var(--gray-600);
 }
 </style>
