@@ -20,7 +20,7 @@
 				/>
 
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="run" />
+					<Button style="margin-right: auto" label="Run" @click="runFromCode" />
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -106,10 +106,46 @@ const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-function run() {
+function runFromCode() {
 	const code = editor?.getValue();
 	if (!code) return;
-	console.log('TODO');
+
+	// reset model
+	kernelManager.sendMessage('reset_request', {});
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	let executedCode = '';
+
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		?.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		?.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		?.register('error', (data) => {
+			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+		})
+		?.register('model_preview', (data) => {
+			// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
+			// currently no matter what kind of code is run we always get a `model_preview` response.
+			// We may want to compare the response model with the existing model to see if the response model
+			// has been stratified - if not then don't save the model or the code.
+			handleModelPreview(data);
+
+			if (executedCode) {
+				saveCodeToState(executedCode, true);
+			}
+		});
 }
 
 const resetModel = () => {
