@@ -125,7 +125,7 @@
 								:initial-data="csvAsset"
 								:intermediate-data="currentIntermediateVals"
 								:mapping="mapping"
-								:chartConfig="cfg"
+								:chartConfig="{ selectedRun: runInProgress, selectedVariable: cfg }"
 								@configuration-change="chartConfigurationChange(index, $event)"
 							/>
 						</template>
@@ -137,7 +137,7 @@
 								:initial-data="csvAsset"
 								:mapping="mapping"
 								:run-type="RunType.Julia"
-								:chartConfig="cfg"
+								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 								@configuration-change="chartConfigurationChange(index, $event)"
 							/>
 						</template>
@@ -425,14 +425,14 @@ const onUpdateOutput = (id) => {
 
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+	state.chartConfigs[index] = config.selectedVariable;
 
 	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+	state.chartConfigs.push([]);
 
 	emit('update-state', state);
 };
