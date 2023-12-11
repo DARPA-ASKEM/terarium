@@ -6,7 +6,7 @@
 					<h5>Code</h5>
 					<Dropdown
 						class="w-full md:w-14rem"
-						v-model="selectedProgrammingLanguage"
+						v-model="clonedState.codeLanguage"
 						:options="programmingLanguages"
 						@change="setKernelContext"
 					/>
@@ -48,7 +48,7 @@
 						><label>Model framework:</label
 						><Dropdown
 							class="w-full md:w-14rem"
-							v-model="selectedModelFramework"
+							v-model="clonedState.modelFramework"
 							:options="modelFrameworks"
 							@change="setKernelContext"
 					/></span>
@@ -67,7 +67,11 @@
 			<!--Notebook section if we decide we need one-->
 		</div>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+			>
 				<tera-progress-spinner
 					v-if="isProcessing"
 					:font-size="2"
@@ -82,17 +86,15 @@
 				<section>
 					<template
 						v-if="
-							selectedModelFramework === ModelFramework.Petrinet && selectedModel && !isProcessing
+							clonedState.modelFramework === ModelFramework.Petrinet &&
+							selectedModel &&
+							!isProcessing
 						"
 					>
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
-					<template
-						v-if="
-							selectedModelFramework === ModelFramework.Decapodes && previewHTML && !isProcessing
-						"
-					>
+					<template v-if="clonedState.modelFramework === ModelFramework.Decapodes && previewHTML">
 						<div :innerHTML="previewHTML" />
 					</template>
 				</section>
@@ -119,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
@@ -131,7 +133,7 @@ import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { KernelSessionManager } from '@/services/jupyter';
 import { JSONObject } from '@lumino/coreutils';
 import { logger } from '@/utils/logger';
@@ -154,7 +156,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
 }>();
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output-port']);
 
 enum ModelFramework {
 	Petrinet = 'Petrinet',
@@ -165,18 +167,12 @@ const isProcessing = ref(false);
 
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const programmingLanguages = Object.values(ProgrammingLanguage);
-const selectedProgrammingLanguage = ref(ProgrammingLanguage.Python);
 const modelFrameworks = Object.values(ModelFramework);
-const selectedModelFramework = ref(
-	isEmpty(props.node.state.modelFramework)
-		? ModelFramework.Petrinet
-		: props.node.state.modelFramework
-);
 const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 const previewHTML = ref('');
 
-const selectedModel = ref<Model>();
+const selectedModel = ref<Model | null>(null);
 const codeBlock = {
 	...props.node.state,
 	name: 'Code block 1',
@@ -187,18 +183,33 @@ const savingAsset = ref(false);
 
 const codeBlocks = ref([codeBlock]);
 
+const clonedState = ref<ModelFromCodeState>({
+	codeLanguage: ProgrammingLanguage.Python,
+	modelFramework: ModelFramework.Petrinet,
+	codeContent: '',
+	modelId: ''
+});
+
+const outputs = computed(() => props.node.outputs);
+const selectedOutputId = ref<string>();
+
 onMounted(async () => {
+	clonedState.value = cloneDeep(props.node.state);
+	if (props.node.active) {
+		selectedOutputId.value = props.node.active;
+		onUpdateOutput(selectedOutputId.value);
+	}
+
 	if (props.node.inputs[0].value?.[0]) {
 		const codeAsset = await getCodeAsset(props.node.inputs[0].value[0]);
 
-		// for now get the first files source code
+		// for now get the first file's source code
 		if (codeAsset?.id && codeAsset?.files) {
 			const filename = Object.keys(codeAsset.files)[0];
 			const codeContent = await getCodeFileAsText(codeAsset.id, filename);
 			codeBlocks.value[0].codeContent = codeContent ?? '';
 		}
 	}
-
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
@@ -217,9 +228,9 @@ onUnmounted(() => {
 
 function buildJupyterContext() {
 	const contextName =
-		selectedModelFramework.value === ModelFramework.Decapodes ? 'decapodes_creation' : null;
+		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes_creation' : null;
 	const languageName =
-		selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
+		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 
 	return {
 		context: contextName,
@@ -238,16 +249,16 @@ function setKernelContext() {
 async function handleCode() {
 	isProcessing.value = true;
 
-	if (selectedModelFramework.value === ModelFramework.Petrinet) {
+	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
 		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
-		const newModel = await getModel(modelId);
-		if (newModel) {
-			selectedModel.value = newModel;
-		}
-		isProcessing.value = false;
+		clonedState.value.modelId = modelId;
+		emit('append-output-port', {
+			label: `Output ${(props.node.outputs?.length ?? 0) + 1}`,
+			state: cloneDeep(clonedState.value)
+		});
 	}
 
-	if (selectedModelFramework.value === ModelFramework.Decapodes) {
+	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
 		const code = editor.value?.getValue();
 		const messageContent = <JSONObject>{
 			declaration: code
@@ -260,6 +271,7 @@ async function handleCode() {
 			?.register('compile_expr_response', handleCompileExprResponse)
 			?.register('decapodes_preview', handleDecapodesPreview);
 	}
+	isProcessing.value = false;
 }
 
 function constructModel() {
@@ -275,7 +287,7 @@ function constructModel() {
 }
 
 async function saveAsNewModel() {
-	if (selectedModelFramework.value === ModelFramework.Petrinet) {
+	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
 		const projectId = useProjects().activeProject.value?.id;
 
 		if (!projectId || !selectedModel.value) return;
@@ -292,7 +304,7 @@ async function saveAsNewModel() {
 		useToastService().success('', 'Model saved successfully.');
 	}
 
-	if (selectedModelFramework.value === ModelFramework.Decapodes) {
+	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
 		const messageContent = {
 			header: {
 				description: 'new description',
@@ -349,16 +361,57 @@ function removeCodeBlock(index: number) {
 }
 
 function isModelValid() {
-	if (selectedModelFramework.value === ModelFramework.Petrinet) {
+	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
 		return !!selectedModel.value;
 	}
 
-	if (selectedModelFramework.value === ModelFramework.Decapodes) {
+	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
 		return decapodesModelValid.value;
 	}
 
 	return false;
 }
+
+async function fetchModel() {
+	if (!clonedState.value.modelId) {
+		selectedModel.value = null;
+		return;
+	}
+	isProcessing.value = true;
+	const model = await getModel(clonedState.value.modelId);
+	selectedModel.value = model;
+	isProcessing.value = false;
+}
+
+// watch for model id changes on state
+watch(
+	() => clonedState.value.modelId,
+	async () => {
+		await fetchModel();
+	}
+);
+
+// watch for prop state changes
+watch(
+	() => props.node.state,
+	() => {
+		clonedState.value = cloneDeep(props.node.state);
+	}
+);
+
+watch(
+	() => props.node.active,
+	async () => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+	}
+);
+
+function onUpdateOutput(id) {
+	emit('select-output', id);
+}
+// watch(() => clonedState)
 </script>
 
 <style scoped>

@@ -4,6 +4,7 @@ export interface ModelFromCodeState {
 	codeLanguage: string;
 	codeContent: string;
 	modelFramework: string;
+	modelId: string;
 }
 
 export const ModelFromCodeOperation: Operation = {
@@ -19,7 +20,8 @@ export const ModelFromCodeOperation: Operation = {
 		const init: ModelFromCodeState = {
 			codeLanguage: 'python',
 			codeContent: '',
-			modelFramework: ''
+			modelFramework: 'Petrinet',
+			modelId: ''
 		};
 		return init;
 	}

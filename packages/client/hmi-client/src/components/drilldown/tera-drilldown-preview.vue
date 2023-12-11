@@ -8,6 +8,8 @@
 					class="output-dropdown"
 					:model-value="output"
 					:options="options"
+					option-value="id"
+					option-label="label"
 					@update:model-value="emit('update:output', $event)"
 				></Dropdown>
 			</header>
@@ -25,11 +27,12 @@
 import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
+import { WorkflowOutput } from '@/types/workflow';
 
 defineProps<{
 	title?: string;
-	options?: string[]; // subject to change based on how we want to pass in output data
-	output?: string;
+	options?: WorkflowOutput<any>[]; // subject to change based on how we want to pass in output data
+	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 }>();
 

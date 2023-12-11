@@ -141,6 +141,7 @@
 			:node="currentActiveNode"
 			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
 		>
 		</component>
@@ -281,24 +282,34 @@ function appendInputPort(
 
 function appendOutputPort(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any }
+	port: { type: string; label?: string; value: any; state?: any }
 ) {
 	if (!node) return;
 
+	const uuid = uuidv4();
 	node.outputs.push({
-		id: uuidv4(),
+		id: uuid,
 		type: port.type,
 		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
+		status: WorkflowPortStatus.NOT_CONNECTED,
+		state: port.state
 	});
+	node.active = uuid;
+
 	workflowDirty = true;
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
+	workflowDirty = true;
+}
+
+function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
+	if (!node) return;
+	workflowService.selectOutput(node, selectedOutputId);
 	workflowDirty = true;
 }
 
