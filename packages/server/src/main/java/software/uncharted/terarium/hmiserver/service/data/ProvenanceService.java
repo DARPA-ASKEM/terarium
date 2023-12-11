@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 
@@ -112,7 +113,7 @@ public class ProvenanceService {
 		return provenance;
 	}
 
-	public void deleteProvenance(String id) {
+	public void deleteProvenance(UUID id) {
 
 		Provenance provenance = provenanceRepository.findById(id)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Provenance not found"));
@@ -133,7 +134,7 @@ public class ProvenanceService {
 		}
 	}
 
-	public Optional<Provenance> getProvenance(String id) {
+	public Optional<Provenance> getProvenance(UUID id) {
 		return provenanceRepository.findById(id);
 	}
 

@@ -63,7 +63,7 @@ public class EquationController {
 	@Secured(Roles.USER)
 	ResponseEntity<ResponseId> createEquation(@RequestBody Equation equation) throws IOException {
 		equationService.createEquation(equation);
-		return ResponseEntity.ok(new ResponseId().setId(equation.getId()));
+		return ResponseEntity.ok(new ResponseId(equation.getId()));
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class EquationController {
 	ResponseEntity<ResponseId> updateEquation(@PathVariable("equation_id") String id, @RequestBody Equation equation)
 			throws IOException {
 		equationService.updateEquation(equation.setId(id));
-		return ResponseEntity.ok(new ResponseId().setId(id));
+		return ResponseEntity.ok(new ResponseId(id));
 	}
 
 	/**

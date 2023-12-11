@@ -147,7 +147,7 @@ public class ModelController {
 
 		modelService.updateModel(model.setId(id));
 
-		return ResponseEntity.ok(new ResponseId().setId(id));
+		return ResponseEntity.ok(new ResponseId(id));
 	}
 
 	@DeleteMapping("/{id}")
@@ -165,7 +165,7 @@ public class ModelController {
 			@RequestBody Model model) throws IOException {
 
 		modelService.createModel(model);
-		return ResponseEntity.ok(new ResponseId().setId(model.getId()));
+		return ResponseEntity.ok(new ResponseId(model.getId()));
 	}
 
 	@GetMapping("/{id}/model_configurations")

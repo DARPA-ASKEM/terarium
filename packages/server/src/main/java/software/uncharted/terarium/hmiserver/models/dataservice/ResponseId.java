@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import java.util.UUID;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -13,6 +15,13 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 public class ResponseId {
 
-	/** This represents the ID for the newly created TDS object **/
+	public ResponseId(String id) {
+		this.id = id;
+	}
+
+	public ResponseId(UUID id) {
+		this.id = id.toString();
+	}
+
 	private String id;
 }

@@ -7,11 +7,9 @@ import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
-import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +17,6 @@ public class EquationService {
 
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
-
-	private final Config config;
-	private final S3ClientService s3ClientService;
 
 	public Equation getEquation(String id) throws IOException {
 		return elasticService.get(elasticConfig.getEquationIndex(), id, Equation.class);

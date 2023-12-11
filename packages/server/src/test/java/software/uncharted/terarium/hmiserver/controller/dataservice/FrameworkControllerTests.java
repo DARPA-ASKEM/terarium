@@ -31,7 +31,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 
 	@After
 	public void tearDown() {
-		frameworkService.deleteFramework(framework.getName());
+		frameworkService.deleteFramework(framework.getId());
 	}
 
 	@Test
@@ -79,6 +79,6 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(frameworkService.getFramework(framework.getName()));
+		Assertions.assertNull(frameworkService.getFramework(framework.getId()));
 	}
 }

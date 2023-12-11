@@ -128,7 +128,7 @@ public class DocumentController {
 
 		try {
 			documentAssetService.createDocumentAsset(document);
-			return ResponseEntity.ok(new ResponseId().setId(document.getId()));
+			return ResponseEntity.ok(new ResponseId(document.getId()));
 		} catch (IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
@@ -302,7 +302,7 @@ public class DocumentController {
 
 				documentAssetService.updateDocumentAsset(document);
 			}
-			return ResponseEntity.ok(new ResponseStatus().setStatus(response.getStatusLine().getStatusCode()));
+			return ResponseEntity.ok(new ResponseStatus(response.getStatusLine().getStatusCode()));
 
 		} catch (final Exception e) {
 			final String error = "Unable to upload document";

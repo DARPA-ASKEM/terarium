@@ -46,7 +46,7 @@ public class ModelConfigurationController {
 			throws IOException {
 
 		ModelConfiguration modelConfiguration = modelConfigurationService.createModelConfiguration(config);
-		return ResponseEntity.ok(new ResponseId().setId(modelConfiguration.getId()));
+		return ResponseEntity.ok(new ResponseId(modelConfiguration.getId()));
 	}
 
 	@GetMapping("/{id}")
@@ -64,7 +64,7 @@ public class ModelConfigurationController {
 			@RequestBody ModelConfiguration config) throws IOException {
 
 		modelConfigurationService.updateModelConfiguration(config.setId(id));
-		return ResponseEntity.ok(new ResponseId().setId(id));
+		return ResponseEntity.ok(new ResponseId(id));
 	}
 
 	@DeleteMapping("/{id}")

@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +46,7 @@ public class ProvenanceController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Provenance> getProvenance(@PathVariable("id") String id) {
+	public ResponseEntity<Provenance> getProvenance(@PathVariable("id") UUID id) {
 		Optional<Provenance> provenance = provenanceService.getProvenance(id);
 
 		if (provenance.isEmpty()) {
@@ -60,7 +61,7 @@ public class ProvenanceController {
 	public ResponseEntity<ResponseId> createProvenance(
 			@RequestBody final Provenance provenance) {
 		Provenance createdProvenance = provenanceService.createProvenance(provenance);
-		return ResponseEntity.ok(new ResponseId().setId(createdProvenance.getId()));
+		return ResponseEntity.ok(new ResponseId(createdProvenance.getId()));
 	}
 
 	private String snakeToCamel(String s) {
@@ -207,13 +208,13 @@ public class ProvenanceController {
 	public ResponseEntity<ResponseSuccess> deleteHangingNodes() {
 		provenanceService.deleteHangingNodes();
 
-		return ResponseEntity.ok(new ResponseSuccess().setSuccess(true));
+		return ResponseEntity.ok(new ResponseSuccess(true));
 	}
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteProvenance(
-			@PathVariable("id") final String id) {
+			@PathVariable("id") final UUID id) {
 
 		provenanceService.deleteProvenance(id);
 		return ResponseEntity.ok(new ResponseDeleted("Provenance", id));

@@ -9,5 +9,9 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 public class ResponseStatus {
 
+	public ResponseStatus(Integer status) {
+		this.status = status;
+	}
+
 	private Integer status;
 }

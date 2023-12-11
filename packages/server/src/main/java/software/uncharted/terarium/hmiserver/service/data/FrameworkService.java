@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -19,12 +20,12 @@ public class FrameworkService {
 		return frameworkRepository.findAll();
 	}
 
-	public List<ModelFramework> getFrameworks(final List<String> names) {
-		return frameworkRepository.findAllById(names);
+	public List<ModelFramework> getFrameworks(final List<UUID> ids) {
+		return frameworkRepository.findAllById(ids);
 	}
 
-	public Optional<ModelFramework> getFramework(final String name) {
-		return frameworkRepository.findById(name);
+	public Optional<ModelFramework> getFramework(final UUID id) {
+		return frameworkRepository.findById(id);
 	}
 
 	public ModelFramework createFramework(final ModelFramework framework) {
@@ -35,8 +36,8 @@ public class FrameworkService {
 		return frameworkRepository.save(framework);
 	}
 
-	public void deleteFramework(final String name) {
-		frameworkRepository.deleteById(name);
+	public void deleteFramework(final UUID id) {
+		frameworkRepository.deleteById(id);
 	}
 
 }

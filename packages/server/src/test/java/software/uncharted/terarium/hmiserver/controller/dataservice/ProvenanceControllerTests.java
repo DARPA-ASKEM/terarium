@@ -28,7 +28,6 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 	private ProvenanceService provenanceService;
 
 	final Provenance provenance = new Provenance()
-			.setId("test-provenance")
 			.setLeft("test-left-id")
 			.setLeftType(ProvenanceType.MODEL)
 			.setRight("test-right-id")

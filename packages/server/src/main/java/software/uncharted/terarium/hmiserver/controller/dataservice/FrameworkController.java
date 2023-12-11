@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,38 +42,38 @@ public class FrameworkController {
 			@RequestBody final ModelFramework framework) {
 		ModelFramework modelFramework = frameworkService.createFramework(framework);
 
-		return ResponseEntity.ok(new ResponseId().setId(modelFramework.getName()));
+		return ResponseEntity.ok(new ResponseId(modelFramework.getId()));
 	}
 
-	@GetMapping("/frameworks/{name}")
+	@GetMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
 	ResponseEntity<ModelFramework> getFramework(
-			@PathVariable("name") String name) {
+			@PathVariable("id") UUID id) {
 
-		Optional<ModelFramework> framework = frameworkService.getFramework(name);
+		Optional<ModelFramework> framework = frameworkService.getFramework(id);
 		if (framework.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", name));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
 		}
 		return ResponseEntity.ok(framework.get());
 	}
 
-	@PutMapping("/frameworks/{name}")
+	@PutMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
 	ResponseEntity<ResponseId> updateFramework(
-			@PathVariable("name") String name,
+			@PathVariable("id") String id,
 			@RequestBody final ModelFramework framework) {
 
-		frameworkService.updateFramework(framework.setName(name));
-		return ResponseEntity.ok(new ResponseId().setId(name));
+		frameworkService.updateFramework(framework);
+		return ResponseEntity.ok(new ResponseId(id));
 	}
 
-	@DeleteMapping("/frameworks/{name}")
+	@DeleteMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
 	ResponseEntity<ResponseDeleted> deleteFramework(
-			@PathVariable("name") String name) {
+			@PathVariable("id") UUID id) {
 
-		frameworkService.deleteFramework(name);
-		return ResponseEntity.ok(new ResponseDeleted("ModelFramework", name));
+		frameworkService.deleteFramework(id);
+		return ResponseEntity.ok(new ResponseDeleted("ModelFramework", id));
 	}
 
 }
