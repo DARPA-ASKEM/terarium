@@ -34,6 +34,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
@@ -102,6 +106,11 @@ public class ArtifactController {
 
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to download the document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final String id,
 			@PathVariable("filename") final String filename) {
@@ -119,6 +128,11 @@ public class ArtifactController {
 
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to upload the document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final String id,
 			@PathVariable("filename") final String filename) {

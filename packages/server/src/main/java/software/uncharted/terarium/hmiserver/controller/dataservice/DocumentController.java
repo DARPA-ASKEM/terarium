@@ -51,7 +51,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
-import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -98,7 +98,7 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all documents")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Documents found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)))),
+			@ApiResponse(responseCode = "200", description = "Documents found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)))),
 			@ApiResponse(responseCode = "204", description = "There are no documents found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving documents from the data store", content = @Content)
 	})
@@ -118,6 +118,11 @@ public class DocumentController {
 
 	@PostMapping
 	@Secured(Roles.USER)
+	@Operation(summary = "Create a new document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
+	})
 	public ResponseEntity<ResponseId> createDocument(
 			@RequestBody final DocumentAsset document) {
 
@@ -135,6 +140,12 @@ public class DocumentController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets document by ID")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Workflow found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
+			@ApiResponse(responseCode = "204", description = "There was no document found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the document from the data store", content = @Content)
+	})
 	public ResponseEntity<DocumentAsset> getDocument(
 			@PathVariable("id") final String id) {
 
@@ -192,6 +203,11 @@ public class DocumentController {
 
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to download the document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final String id,
 			@PathVariable("filename") final String filename) {
@@ -209,6 +225,11 @@ public class DocumentController {
 
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to upload the document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final String id,
 			@PathVariable("filename") final String filename) {
@@ -226,6 +247,13 @@ public class DocumentController {
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Deletes an uploaded document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Delete document", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
+			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+	})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
 			@PathVariable("id") final String id) {
 
@@ -249,7 +277,7 @@ public class DocumentController {
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadDocumentHelper(final String documentId, final String fileName,
+	private ResponseEntity<ResponseStatus> uploadDocumentHelper(final String documentId, final String fileName,
 			final HttpEntity fileEntity) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
@@ -274,8 +302,7 @@ public class DocumentController {
 
 				documentAssetService.updateDocumentAsset(document);
 			}
-
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
+			return ResponseEntity.ok(new ResponseStatus().setStatus(response.getStatusLine().getStatusCode()));
 
 		} catch (final Exception e) {
 			final String error = "Unable to upload document";
@@ -290,7 +317,12 @@ public class DocumentController {
 	 */
 	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<Integer> uploadDocument(
+	@Operation(summary = "Uploads a document to a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
+	})
+	public ResponseEntity<ResponseStatus> uploadDocument(
 			@PathVariable("id") final String id,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile file) {
@@ -314,7 +346,12 @@ public class DocumentController {
 	 */
 	@PutMapping("/{documentId}/uploadDocumentFromGithub")
 	@Secured(Roles.USER)
-	public ResponseEntity<Integer> uploadDocumentFromGithub(
+	@Operation(summary = "Uploads a document from github to a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
+	})
+	public ResponseEntity<ResponseStatus> uploadDocumentFromGithub(
 			@PathVariable("documentId") final String documentId,
 			@RequestParam("path") final String path,
 			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
@@ -338,6 +375,11 @@ public class DocumentController {
 
 	@PostMapping(value = "/createDocumentFromXDD")
 	@Secured(Roles.USER)
+	@Operation(summary = "Creates a document from XDD")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AddDocumentAssetFromXDDResponse.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
+	})
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
 			@RequestBody final AddDocumentAssetFromXDDRequest body) {
 
@@ -398,6 +440,11 @@ public class DocumentController {
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@Secured(Roles.USER)
+	@Operation(summary = "Downloads a document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Downloaded the document", content = @Content(mediaType = "application/octet-stream", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = byte[].class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the document", content = @Content)
+	})
 	public ResponseEntity<byte[]> downloadDocument(
 			@PathVariable("id") final String id,
 			@RequestParam("filename") final String filename) {
@@ -425,6 +472,11 @@ public class DocumentController {
 
 	@GetMapping("/{id}/download-document-as-text")
 	@Secured(Roles.USER)
+	@Operation(summary = "Downloads a document as text")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Downloaded the document", content = @Content(mediaType = "application/text", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the document", content = @Content)
+	})
 	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final String documentId,
 			@RequestParam("filename") final String filename) {
 
