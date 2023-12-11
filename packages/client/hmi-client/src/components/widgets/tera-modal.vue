@@ -1,6 +1,6 @@
 <template>
 	<Transition name="modal">
-		<main v-if="isOpen" :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
+		<main :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
 			<section>
 				<header>
 					<slot name="header" />
@@ -20,7 +20,7 @@
 /**
  * A modal with content slots for a header, body, and footer. Use v-if to control visibility.
  * @example
- * <tera-modal isOpen="isModalVisible">
+ * <tera-modal v-if="isModalVisible">
  * 		<template #header>Header content</template>
  * 		<template #default>Body content</template>
  * 		<template #footer>Footer content</template>
@@ -32,7 +32,6 @@
  */
 
 defineProps<{
-	isOpen?: boolean;
 	zIndex?: number;
 }>();
 </script>
