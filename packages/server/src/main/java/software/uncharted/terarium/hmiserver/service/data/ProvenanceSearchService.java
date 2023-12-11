@@ -3,10 +3,13 @@ package software.uncharted.terarium.hmiserver.service.data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
+import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
@@ -167,6 +170,129 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	public Set<String> modelsFromCode(ProvenanceQueryParam payload) {
+		if (payload.getRootType() != ProvenanceType.MODEL) {
+			throw new IllegalArgumentException("Code used for model extraction can only be found by providing a Model");
+		}
+
+		try (Session session = neo4jService.getSession()) {
+			String modelId = payload.getRootId();
+
+			String query = String.format("MATCH (c:Code)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN c", modelId);
+
+			Result response = session.run(query);
+
+			Set<String> responseData = new HashSet<>();
+			while (response.hasNext()) {
+				responseData.add(response.next().get("c").get("id").asString());
+			}
+
+			return responseData;
+		}
+	}
+
+	public Set<String> modelsFromEquation(ProvenanceQueryParam payload) {
+		if (payload.getRootType() != ProvenanceType.MODEL) {
+			throw new IllegalArgumentException(
+					"Equation used for model extraction can only be found by providing a Model");
+		}
+
+		try (Session session = neo4jService.getSession()) {
+			String modelId = payload.getRootId();
+
+			String query = String.format("MATCH (e:Equation)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN e", modelId);
+
+			Result response = session.run(query);
+
+			Set<String> responseData = new HashSet<>();
+			while (response.hasNext()) {
+				responseData.add(response.next().get("e").get("id").asString());
+			}
+
+			return responseData;
+		}
+	}
+
+	public Set<String> modelsFromDocument(ProvenanceQueryParam payload) {
+		if (payload.getRootType() != ProvenanceType.MODEL) {
+			throw new IllegalArgumentException(
+					"Document used for model extraction can only be found by providing a Model");
+		}
+
+		try (Session session = neo4jService.getSession()) {
+			String modelId = payload.getRootId();
+
+			String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN d", modelId);
+
+			Result response = session.run(query);
+
+			Set<String> responseData = new HashSet<>();
+			while (response.hasNext()) {
+				responseData.add(response.next().get("d").get("id").asString());
+			}
+
+			return responseData;
+		}
+	}
+
+	public Map<String, Integer> conceptCounts(ProvenanceQueryParam payload) {
+		try (Session session = neo4jService.getSession()) {
+			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
+
+			String query = String.format(
+					"%s-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN labels(n) as label, n.id as id",
+					matchNode, payload.getCurie());
+
+			Result response = session.run(query);
+
+			Map<String, Integer> counts = new HashMap<>();
+			while (response.hasNext()) {
+				Record record = response.next();
+				String label = record.get("label").asList().get(0).toString();
+				counts.put(label, counts.getOrDefault(label, 0) + 1);
+			}
+
+			return counts;
+		}
+	}
+
+	public Set<String> extractedModels(ProvenanceQueryParam payload) {
+		ProvenanceType rootType = payload.getRootType();
+		if (rootType != ProvenanceType.DOCUMENT && rootType != ProvenanceType.CODE
+				&& rootType != ProvenanceType.EQUATION) {
+			throw new IllegalArgumentException(
+					"Derived models can only be found from root types of Document, Code, or Equation");
+		}
+
+		try (Session session = neo4jService.getSession()) {
+			String generatedQuery = extractedModelsQueryGenerator(rootType, payload.getRootId());
+
+			Result response = session.run(generatedQuery);
+
+			Set<String> responseData = new HashSet<>();
+			while (response.hasNext()) {
+				responseData.add(response.next().get("m").get("id").asString());
+			}
+
+			return responseData;
+		}
+	}
+
+	public Map<String, Object> modelDocument(ProvenanceQueryParam payload) {
+		try (Session session = neo4jService.getSession()) {
+			String query = String.format(
+					"MATCH (Md:Model {id:'%s'})<-[r:REINTERPRETS|EXTRACTED_FROM|BEGINS_AT *1..]->(Do:Document) RETURN Do",
+					payload.getRootId());
+
+			Result response = session.run(query);
+			if (!response.hasNext()) {
+				return null;
+			}
+
+			return response.next().get("Do").asMap();
+		}
+	}
+
 	// Util methods
 
 	public ProvenanceSearchResult nodesEdges(Result response, ProvenanceQueryParam payload) {
@@ -285,13 +411,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
-	public String extractedModelsQueryGenerator(String rootType, String rootId) {
+	public String extractedModelsQueryGenerator(ProvenanceType rootType, String rootId) {
 		switch (rootType) {
-			case "Document":
+			case DOCUMENT:
 				return String.format("MATCH (m:Model)-[:EXTRACTED_FROM]->(d:Document {id:'%s'}) RETURN m", rootId);
-			case "Code":
+			case CODE:
 				return String.format("MATCH (m:Model)-[:EXTRACTED_FROM]->(c:Code {id:'%s'}) RETURN m", rootId);
-			case "Equation":
+			case EQUATION:
 				return String.format("MATCH (m:Model)-[:EXTRACTED_FROM]->(e:Equation {id:'%s'}) RETURN m", rootId);
 			default:
 				throw new IllegalArgumentException("Models cannot be derived from this type: " + rootType);

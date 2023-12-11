@@ -1,11 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -153,32 +154,52 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.artifactsCreatedByUser(body));
 	}
 
+	@PostMapping("/search/concept_counts")
+	@Secured(Roles.USER)
+	public ResponseEntity<Map<String, Integer>> searchConceptCounts(
+			@RequestBody final ProvenanceQueryParam body) {
+
+		return ResponseEntity.ok(provenanceSearchService.conceptCounts(body));
+	}
+
 	@PostMapping("/search/models_from_code")
 	@Secured(Roles.USER)
-	public ResponseEntity<ProvenanceSearchResult> searchModelsFromCode(
+	public ResponseEntity<Set<String>> searchModelsFromCode(
 			@RequestBody final ProvenanceQueryParam body) {
-		throw new NotImplementedException();
+
+		return ResponseEntity.ok(provenanceSearchService.modelsFromCode(body));
 	}
 
 	@PostMapping("/search/models_from_equation")
 	@Secured(Roles.USER)
-	public ResponseEntity<ProvenanceSearchResult> searchModelsFromEquation(
+	public ResponseEntity<Set<String>> searchModelsFromEquation(
 			@RequestBody final ProvenanceQueryParam body) {
-		throw new NotImplementedException();
+
+		return ResponseEntity.ok(provenanceSearchService.modelsFromEquation(body));
+	}
+
+	@PostMapping("/search/models_from_document")
+	@Secured(Roles.USER)
+	public ResponseEntity<Set<String>> searchModelsFromDocument(
+			@RequestBody final ProvenanceQueryParam body) {
+
+		return ResponseEntity.ok(provenanceSearchService.modelsFromDocument(body));
 	}
 
 	@PostMapping("/search/extracted_models")
 	@Secured(Roles.USER)
-	public ResponseEntity<ProvenanceSearchResult> searchExtractedModels(
+	public ResponseEntity<Set<String>> searchExtractedModels(
 			@RequestBody final ProvenanceQueryParam body) {
-		throw new NotImplementedException();
+
+		return ResponseEntity.ok(provenanceSearchService.extractedModels(body));
 	}
 
 	@PostMapping("/search/model_document")
 	@Secured(Roles.USER)
-	public ResponseEntity<ProvenanceSearchResult> searchModelDocument(
+	public ResponseEntity<Map<String, Object>> searchModelDocument(
 			@RequestBody final ProvenanceQueryParam body) {
-		throw new NotImplementedException();
+
+		return ResponseEntity.ok(provenanceSearchService.modelDocument(body));
 	}
 
 	@DeleteMapping("/hanging_nodes")
