@@ -1,14 +1,16 @@
 <template>
-	<template v-if="model">
-		<div class="container">
+	<section>
+		<!--FIXME: See fetchModel()-->
+		<template v-if="model">
 			<tera-model-diagram :model="model" :is-editable="false" nodePreview />
-		</div>
-	</template>
-	<template v-else>
-		<tera-operator-placeholder :operation-type="node.operationType">
-			Attach a model
-		</tera-operator-placeholder>
-	</template>
+			<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
+		</template>
+		<template v-else>
+			<tera-operator-placeholder :operation-type="node.operationType">
+				Attach a model
+			</tera-operator-placeholder>
+		</template>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -18,9 +20,10 @@ import { WorkflowNode } from '@/types/workflow';
 import { onMounted, ref, watch } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import Button from 'primevue/button';
 import { ModelTransformerState } from './model-transformer-operation';
 
-// const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown']);
 
 const props = defineProps<{
 	node: WorkflowNode<ModelTransformerState>;
