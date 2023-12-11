@@ -71,26 +71,15 @@
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				@update:output="onUpdateOutput"
+				:is-loading="isProcessing"
 			>
-				<tera-progress-spinner
-					v-if="isProcessing"
-					:font-size="2"
-					is-centered
-					style="height: 100%"
-				/>
 				<tera-operator-placeholder-graphic
-					v-if="!isProcessing && !selectedModel && !previewHTML"
+					v-if="!selectedModel && !previewHTML"
 					:operation-type="node.operationType"
 					style="height: 100%"
 				/>
 				<section>
-					<template
-						v-if="
-							clonedState.modelFramework === ModelFramework.Petrinet &&
-							selectedModel &&
-							!isProcessing
-						"
-					>
+					<template v-if="clonedState.modelFramework === ModelFramework.Petrinet && selectedModel">
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
@@ -146,7 +135,6 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import { getModel } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { useProjects } from '@/composables/project';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useToastService } from '@/services/toast';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';

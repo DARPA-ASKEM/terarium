@@ -11,10 +11,12 @@
 					option-value="id"
 					option-label="label"
 					@update:model-value="emit('update:output', $event)"
+					:loading="isLoading"
 				></Dropdown>
 			</header>
 			<main>
-				<slot />
+				<slot v-if="!isLoading" />
+				<tera-progress-spinner v-else :font-size="2" is-centered style="height: 100%" />
 			</main>
 		</div>
 		<template #footer v-if="slots.footer">
@@ -28,12 +30,14 @@ import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
 import { WorkflowOutput } from '@/types/workflow';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 defineProps<{
 	title?: string;
 	options?: WorkflowOutput<any>[]; // subject to change based on how we want to pass in output data
 	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
+	isLoading?: boolean;
 }>();
 
 const slots = useSlots();
