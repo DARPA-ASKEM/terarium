@@ -27,6 +27,11 @@
 								binary
 							/>
 							<span>{{ slotProps.option?.label }}</span>
+							<span
+								v-if="slotProps.option?.status === WorkflowPortStatus.NOT_CONNECTED"
+								class="connection-indicator"
+								><i class="pi pi-link" />Connected</span
+							>
 						</div>
 					</template>
 				</Dropdown>
@@ -46,7 +51,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
-import { WorkflowOutput } from '@/types/workflow';
+import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Checkbox from 'primevue/checkbox';
 
@@ -105,12 +110,26 @@ main {
 	padding: 1.5rem 1.5rem 1.5rem 1rem;
 }
 
+:deep(.p-checkbox .p-checkbox-box) {
+	border-radius: var(--border-radius-medium);
+}
+
 .dropdown-option {
 	display: flex;
 	gap: 0.5rem;
+	font-size: var(--font-body-small);
 }
+
 .dropdown-option-group {
 	font-size: var(--font-caption);
 	color: var(--gray-600);
+}
+.connection-indicator {
+	font-size: var(--font-caption);
+	color: var(--primary-color);
+	display: flex;
+	gap: 0.2rem;
+	align-items: center;
+	margin-left: auto;
 }
 </style>
