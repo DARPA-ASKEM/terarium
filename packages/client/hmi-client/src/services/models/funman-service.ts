@@ -107,18 +107,23 @@ export const processFunman = (result: any) => {
 					}, {});
 
 				timesteps.forEach((t) => {
+					let pushFlag = true;
 					const traj: any = {
 						boxId,
 						pointId: point.id,
 						timestep: t
 					};
 					states.forEach((s) => {
-						if (filteredVals[`${s}_${t}`] !== undefined) {
-							// Only push values that exist in this box
+						// Only push states that have a timestep key pair
+						if (Object.keys(filteredVals).includes(`${s}_${t}`)) {
 							traj[s] = filteredVals[`${s}_${t}`];
-							trajs.push(traj);
+						} else {
+							pushFlag = false;
 						}
 					});
+					if (pushFlag) {
+						trajs.push(traj);
+					}
 				});
 			}); // foreach point
 		} // box.points
