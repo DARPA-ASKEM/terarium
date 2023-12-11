@@ -3,8 +3,14 @@ import { ref } from 'vue';
 
 const isShareDialogVisible = ref(false);
 const isRemoveDialogVisible = ref(false);
-const selectedMenuProject = ref<IProject>();
+const isProjectConfigDialogVisible = ref(false);
+const menuProject = ref<IProject | null>(null);
 
 export function useProjectMenu() {
-	return { isShareDialogVisible, isRemoveDialogVisible, selectedMenuProject };
+	return {
+		isShareDialogVisible,
+		isRemoveDialogVisible,
+		isProjectConfigDialogVisible,
+		menuProject
+	};
 }

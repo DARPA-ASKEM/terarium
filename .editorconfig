@@ -16,7 +16,7 @@ indent_size = 2
 trim_trailing_whitespace = false
 indent_style = space
 
-[*.{yml,yaml,properties,json,conf}]
+[*.{yml,yaml,properties,json,conf,sh}]
 indent_style = space
 
 [*.{cmd,bat}]

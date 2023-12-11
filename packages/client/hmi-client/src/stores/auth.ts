@@ -2,15 +2,8 @@ import { defineStore } from 'pinia';
 import { User } from '@/types/Types';
 import Keycloak from 'keycloak-js';
 import axios, { AxiosHeaders } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
 import { computed, ref } from 'vue';
 
-/**
- * Decode the OIDC token for additional information
- * @param token the OIDC token
- * @returns decoded JSON object representing the token
- * @throws an Error if token is not formatted as expected
- */
 /**
  * Main store used for authentication
  */
@@ -23,6 +16,7 @@ const useAuthStore = defineStore('auth', () => {
 	const logout = async (options?: Keycloak.KeycloakLogoutOptions) => {
 		await keycloak.value?.logout(options);
 	};
+
 	const token = computed(() => keycloak.value?.token);
 
 	// user
@@ -33,6 +27,7 @@ const useAuthStore = defineStore('auth', () => {
 		});
 		user.value = response.data;
 	};
+
 	const loadUserModel = async () => {
 		const response = await axios.get('/api/user/me', {
 			headers: new AxiosHeaders().setAuthorization(`Bearer ${token.value}`)
@@ -42,12 +37,10 @@ const useAuthStore = defineStore('auth', () => {
 	const userInitials = computed(
 		() => `${user.value?.givenName?.charAt(0)}${user.value?.familyName?.charAt(0)}`
 	);
+
 	const init = async () => {
 		await loadUserModel();
 	};
-
-	// avatarKey
-	const avatarKey = ref(uuidv4());
 
 	return {
 		keycloak,
@@ -58,8 +51,7 @@ const useAuthStore = defineStore('auth', () => {
 		updateUser,
 		loadUserModel,
 		userInitials,
-		init,
-		avatarKey
+		init
 	};
 });
 

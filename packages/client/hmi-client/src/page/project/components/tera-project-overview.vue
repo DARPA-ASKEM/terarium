@@ -6,22 +6,10 @@
 		:publisher="`Last updated ${DateUtils.formatLong(
 			useProjects().activeProject.value?.timestamp
 		)}`"
+		:is-loading="useProjects().projectLoading.value"
 	>
-		<template #name-input>
-			<InputText
-				v-if="isRenamingProject"
-				v-model="newProjectName"
-				ref="inputElement"
-				@keyup.enter="updateProjectName"
-			/>
-		</template>
 		<template #edit-buttons>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			<tera-project-menu :project="useProjects().activeProject.value" />
 		</template>
 		<template #overview-summary>
 			<!-- Description & Contributors -->
@@ -48,19 +36,22 @@
 					label="Upload resources"
 					size="large"
 					icon="pi pi-cloud-upload"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 					@click="isUploadResourcesModalVisible = true"
 				/>
 				<Button
 					label="New model"
 					size="large"
 					icon="pi pi-share-alt"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 					@click="emit('open-new-asset', AssetType.Models)"
 				/>
 				<Button
 					size="large"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 					@click="emit('open-new-asset', AssetType.Workflows)"
 				>
 					<vue-feather
@@ -71,7 +62,7 @@
 					/>
 					<span class="p-button-label">New workflow</span>
 				</Button>
-				<Button size="large" class="p-button p-button-secondary quick-link-button">
+				<Button size="large" severity="secondary" outlined>
 					<compare-models-icon class="icon" />
 					<span class="p-button-label">Compare models</span>
 				</Button>
@@ -79,7 +70,8 @@
 					label="New simulation"
 					size="large"
 					icon="pi pi-play"
-					class="p-button p-button-secondary quick-link-button"
+					severity="secondary"
+					outlined
 				/>
 			</section>
 			<!-- Resources list table goes here -->
@@ -104,19 +96,13 @@
 					<Column selection-mode="multiple" headerStyle="width: 3rem" />
 					<Column field="assetName" header="Name" sortable style="width: 75%">
 						<template #body="slotProps">
-							<div class="asset-button" @click="openResource(slotProps.data)">
-								<vue-feather
-									v-if="typeof getAssetIcon(slotProps.data.pageType ?? null) === 'string'"
-									:type="getAssetIcon(slotProps.data.pageType ?? null)"
-									size="1rem"
-									stroke="rgb(16, 24, 40)"
-									class="p-button-icon-left icon"
-								/>
-								<component
-									v-else
-									:is="getAssetIcon(slotProps.data.pageType ?? null)"
-									class="p-button-icon-left icon"
-								/>
+							<div
+								class="asset-button"
+								@click="
+									openAsset({ pageType: slotProps.data.pageType, assetId: slotProps.data.assetId })
+								"
+							>
+								<tera-asset-icon :assetType="slotProps.data.pageType" />
 								<span class="p-button-label">{{ slotProps.data.assetName }}</span>
 							</div>
 						</template>
@@ -139,7 +125,13 @@
 								plain
 								text
 								rounded
-								@click.stop="(e) => showRowActions(e, slotProps.data)"
+								@click.stop="
+									(e) =>
+										showAssetActions(e, {
+											pageType: slotProps.data.pageType,
+											assetId: slotProps.data.assetId
+										})
+								"
 							/>
 							<Menu ref="rowActionMenu" :model="rowActionMenuItems" :popup="true" />
 						</template>
@@ -165,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -180,17 +172,17 @@ import { AssetType } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
-import { getAssetIcon } from '@/services/project';
+import { AssetRoute } from '@/types/common';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
+import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const router = useRouter();
 const isRenamingProject = ref(false);
-const inputElement = ref<HTMLInputElement | null>(null);
-const newProjectName = ref<string>('');
 const selectedResources = ref();
 
-const openedRow = ref(null);
+const assetRouteToOpen = ref<AssetRoute | null>(null);
 
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
@@ -206,38 +198,8 @@ const onRowSelect = (selectedRows) => {
 	showMultiSelect.value = selectedRows.length !== 0;
 };
 
-async function editProject() {
-	newProjectName.value = useProjects().activeProject.value?.name ?? '';
-	isRenamingProject.value = true;
-	await nextTick();
-	// @ts-ignore
-	inputElement.value?.$el.focus();
-}
-
-async function openResource(data) {
-	router.push({ name: RouteName.Project, params: data });
-}
-
-async function updateProjectName() {
-	const { activeProject } = useProjects();
-	if (activeProject.value) {
-		isRenamingProject.value = false;
-		const updatedProject = activeProject.value;
-		updatedProject.name = newProjectName.value;
-		await useProjects().update(updatedProject);
-	}
-}
-
-const projectMenu = ref();
-const projectMenuItems = ref([
-	{
-		label: 'Edit',
-		command: editProject
-	}
-]);
-
-function showProjectMenu(event: any) {
-	projectMenu.value.toggle(event);
+function openAsset(assetRoute: AssetRoute) {
+	router.push({ name: RouteName.Project, params: assetRoute });
 }
 
 /* hacky way of listening to row hover events to display/hide the action button, prime vue unfortunately doesn't have the capability to listen to row hover */
@@ -258,16 +220,18 @@ function setRowHover() {
 /* Row Action Menu */
 const rowActionMenu = ref();
 const rowActionMenuItems = ref([
-	{ label: 'Open', command: () => openResource(openedRow.value) }
-
+	{
+		label: 'Open',
+		command: () => assetRouteToOpen.value && openAsset(assetRouteToOpen.value)
+	}
 	// TODO add the follow commands
 	// { label: 'Rename' },
 	// { label: 'Make a copy' },
 	// { label: 'Delete' },
 	// { label: 'Download' }
 ]);
-const showRowActions = (event, data) => {
-	openedRow.value = data;
+const showAssetActions = (event, assetRoute: AssetRoute) => {
+	assetRouteToOpen.value = assetRoute;
 	rowActionMenu.value.toggle(event);
 };
 
@@ -352,11 +316,7 @@ button .icon {
 	gap: 1rem;
 }
 
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
-.quick-links .p-button.p-button-secondary {
-	background-color: var(--surface);
-	color: var(--text-color-primary);
-	border: 1px solid var(--surface-border);
+.p-button.p-button-secondary {
 	width: 100%;
 	font-size: var(--font-body-small);
 }
@@ -436,10 +396,6 @@ ul {
 	margin-bottom: 1rem;
 }
 
-.modal:deep(main) {
-	width: 50rem;
-}
-
 .asset-button {
 	display: flex;
 	flex-direction: row;
@@ -506,4 +462,3 @@ ul {
 	width: 40%;
 }
 </style>
-@/utils/map-project-assets

@@ -29,7 +29,7 @@
 			/>
 		</section>
 		<section v-else class="result-container">
-			<div class="invalid-block" v-if="node.statusCode === WorkflowStatus.INVALID">
+			<div class="invalid-block" v-if="node.status === OperatorStatus.INVALID">
 				<img class="image" src="@assets/svg/plants.svg" alt="" />
 				<p class="helpMessage">Configure in side panel</p>
 			</div>
@@ -46,9 +46,8 @@ import { ref, shallowRef, watch, computed, ComputedRef, onMounted, onUnmounted }
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { ProgressState, WorkflowNode, OperatorStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
-import { workflowEventBus } from '@/services/workflow';
 import { CsvAsset, EnsembleCalibrationCiemssRequest, EnsembleModelConfigs } from '@/types/Types';
 import {
 	makeEnsembleCiemssCalibration,
@@ -171,11 +170,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
@@ -183,11 +178,7 @@ const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // Set up csv + dropdown names
@@ -220,11 +211,7 @@ watch(
 			const state = _.cloneDeep(props.node.state);
 			state.modelConfigIds = modelConfigIds.value;
 			state.mapping = mapping;
-			workflowEventBus.emitNodeStateChange({
-				workflowId: props.node.workflowId,
-				nodeId: props.node.id,
-				state
-			});
+			emit('update-state', state);
 		}
 	},
 	{ immediate: true }

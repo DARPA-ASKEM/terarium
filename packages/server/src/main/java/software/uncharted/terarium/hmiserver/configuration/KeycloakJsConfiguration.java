@@ -16,6 +16,7 @@ public class KeycloakJsConfiguration implements Serializable {
 	private String realm;
 	@JsonProperty("resource")
 	private String clientId;
+	private String responseMode = "query";
 	/**
 	 * If true, signing out in one window signs out other windows
 	 */

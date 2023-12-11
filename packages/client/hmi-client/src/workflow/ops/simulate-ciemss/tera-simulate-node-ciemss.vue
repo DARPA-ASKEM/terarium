@@ -13,11 +13,24 @@
 		/>
 		<div class="chart-container" v-if="runResults[selectedRun?.runId]">
 			<tera-simulate-chart
+				v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+				:key="idx"
 				:run-results="runResults[selectedRun.runId]"
-				:chartConfig="node.state.chartConfigs[selectedRun.idx]"
+				:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
 				has-mean-line
-				@configuration-change="configurationChange(selectedRun.idx, $event)"
+				@configuration-change="configurationChange(idx, $event)"
 			/>
+			<div class="button-container">
+				<Button
+					class="add-chart"
+					size="small"
+					text
+					@click="addChart"
+					label="Add chart"
+					icon="pi pi-plus"
+				>
+				</Button>
+			</div>
 		</div>
 		<Accordion :multiple="true" :active-index="[0]">
 			<AccordionTab header="EXTRAS">
@@ -46,12 +59,12 @@ import {
 	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	getSimulation
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { workflowEventBus } from '@/services/workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
@@ -75,10 +88,9 @@ const runResults = ref<{ [runId: string]: RunResults }>({});
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
 const runList = computed(() =>
-	props.node.state.chartConfigs.map((cfg: ChartConfig, idx: number) => ({
-		label: `Output ${idx + 1} - ${cfg.selectedRun}`,
-		idx,
-		runId: cfg.selectedRun
+	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
+		label: `Output ${idx + 1} - ${runId}`,
+		runId
 	}))
 );
 const selectedRun = ref();
@@ -116,7 +128,9 @@ onMounted(() => {
 		getStatus(runIds);
 	}
 
-	const runId = props.node.state.chartConfigs.find((cfg) => cfg.active)?.selectedRun;
+	const runId = Object.values(props.node.state.simConfigs.runConfigs).find(
+		(metadata) => metadata.active
+	)?.runId;
 	if (runId) {
 		selectedRun.value = runList.value.find((run) => run.runId === runId);
 	} else {
@@ -159,9 +173,29 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	await lazyLoadRunResults(runIdList[0]);
 
 	const port = props.node.inputs[0];
+
+	const state = _.cloneDeep(props.node.state);
+	if (state.simConfigs.chartConfigs.length === 0) {
+		state.simConfigs.chartConfigs.push([]);
+	}
+
+	const sim = await getSimulation(runIdList[0]);
+	if (sim) {
+		state.simConfigs.runConfigs[sim.id] = {
+			runId: sim.id,
+			active: true,
+			configName: port.label,
+			numSamples: sim.executionPayload.extra.num_samples,
+			method: sim.executionPayload.extra.method,
+			timeSpan: sim.executionPayload.timespan
+		};
+	}
+
+	emit('update-state', state);
+
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `${port.label} - Output ${runList.value.length + 1}`, // TODO: figure out more robust naming system
+		label: `${port.label} - Output ${runList.value.length}`, // TODO: figure out more robust naming system
 		value: runIdList
 	});
 
@@ -178,11 +212,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.numSamples = numSamples.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	}
 );
 
@@ -192,23 +222,15 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.method = method.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	}
 );
 
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+	state.simConfigs.chartConfigs[index] = config.selectedVariable;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const lazyLoadRunResults = async (runId: string) => {
@@ -224,16 +246,19 @@ const handleSelectedRunChange = () => {
 	lazyLoadRunResults(selectedRun.value.runId);
 
 	const state = _.cloneDeep(props.node.state);
-	// set the active status for the selected run in the chart configs
-	state.chartConfigs.forEach((cfg, idx) => {
-		cfg.active = idx === selectedRun.value?.idx;
+	// set the active status for the selected run in the run configs
+	Object.keys(state.simConfigs.runConfigs).forEach((runId) => {
+		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
 	});
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.simConfigs.chartConfigs.push([]);
+
+	emit('update-state', state);
 };
 </script>
 
@@ -248,6 +273,10 @@ section {
 
 .simulate-chart {
 	margin: 1.5em 0em;
+}
+
+.add-chart {
+	width: 9em;
 }
 
 .extras {

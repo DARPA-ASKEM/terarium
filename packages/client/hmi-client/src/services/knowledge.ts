@@ -108,7 +108,7 @@ export const profileDataset = async (datasetId: string, documentId: string | nul
 	return response.data.id;
 };
 
-const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
+export const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
 	try {
 		const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
 		if (response?.status === 200 && response?.data?.id) return response.data.id;
@@ -131,15 +131,24 @@ const extractTextFromPDFDocument = async (documentId: string): Promise<string | 
 	return null;
 };
 
+export enum Extractor {
+	SKEMA = 'SKEMA',
+	MIT = 'MIT'
+}
 export const pdfExtractions = async (
 	documentId: string,
+	extractor: Extractor,
 	pdfName?: string,
 	description?: string
 ): Promise<string | null> => {
-	// I've purposefully excluded the MIT and SKEMA options here, so they're always
-	// defaulted to true.
-
 	let url = `/knowledge/pdf-extractions?document_id=${documentId}`;
+
+	if (extractor === Extractor.SKEMA) {
+		url += '&annotate_skema=true&annotate_mit=false';
+	} else if (extractor === Extractor.MIT) {
+		url += '&annotate_skema=false&annotate_mit=true';
+	}
+
 	if (pdfName) {
 		url += `&name=${pdfName}`;
 	}
@@ -175,17 +184,23 @@ export const extractPDF = async (documentId: string) => {
 		if (resp) {
 			const pollResult = await fetchExtraction(resp);
 			if (pollResult?.state === PollerState.Done) {
-				await pdfExtractions(documentId); // we don't care now. fire and forget.
+				pdfExtractions(documentId, Extractor.SKEMA);
+				pdfExtractions(documentId, Extractor.MIT);
 			}
 		}
 	}
 };
 
-export async function codeToAMR(codeId: string, name: string = '', description: string = '') {
+export async function codeToAMR(
+	codeId: string,
+	name: string = '',
+	description: string = '',
+	dynamicsOnly: boolean = false
+) {
 	const response = await API.post(
-		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}`
+		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}`
 	);
-	if (response && response?.status === 200) {
+	if (response?.status === 200) {
 		const { id, status } = response.data;
 		if (status === 'queued') {
 			const extraction = await fetchExtraction(id);

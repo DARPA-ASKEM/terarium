@@ -42,6 +42,11 @@ public class Config {
 	 */
 	ClientConfig clientConfig;
 
+	/**
+	 * If queues should be declared durable.  IF running Rabbit inside docker, this should be false
+	 */
+	Boolean durableQueues = false;
+
 	@Data
 	@Accessors(chain = true)
 	public static class Caching {
@@ -107,5 +112,10 @@ public class Config {
 		 * The interval, in milliseconds, at which we will ship client-side logs to the server
 		 */
 		Long clientLogShippingIntervalMillis;
+
+		/**
+		 * The interval, in milliseconds, at which we will send a heartbeat to connected clients for server-side-events
+		 */
+		Long sseHeartbeatIntervalMillis;
 	}
 }

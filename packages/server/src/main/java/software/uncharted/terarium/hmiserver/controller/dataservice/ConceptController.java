@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ConceptProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.List;
 
@@ -20,6 +22,7 @@ public class ConceptController {
 	ConceptProxy proxy;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> searchConcept(
 		@RequestParam("curie") final String curie
 	) {
@@ -32,6 +35,7 @@ public class ConceptController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createConcept(
 		@RequestBody final Concept concept
 	) {
@@ -44,6 +48,7 @@ public class ConceptController {
 	}
 
 	@GetMapping("/definitions")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> searchConceptDefinitions(
 		@RequestParam("term") String term,
 		@RequestParam(name = "limit", defaultValue = "100") Integer limit,
@@ -58,6 +63,7 @@ public class ConceptController {
 	}
 
 	@GetMapping("/definitions/{curie}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> getConceptDefinitions(
 		@PathVariable("curie") final String curie
 	) {
@@ -70,6 +76,7 @@ public class ConceptController {
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> getConcept(
 		@PathVariable("id") final String id
 	) {
@@ -77,6 +84,7 @@ public class ConceptController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteConcept(
 		@PathVariable("id") final String id
 	) {
@@ -89,6 +97,7 @@ public class ConceptController {
 	}
 
 	@PutMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateConcept(
 		@PathVariable("id") final String id,
 		@RequestBody final Concept concept
@@ -102,6 +111,7 @@ public class ConceptController {
 	}
 
 	@GetMapping("/facets")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> searchConceptsUsingFacets(
 		@RequestParam(value = "types", required = false) final List<String> types,
 		@RequestParam(value = "curies", required = false) final List<String> curies

@@ -93,6 +93,16 @@
 					<Button label="Cancel" class="p-button-secondary" @click="openEditNode = false" />
 				</template>
 			</tera-modal>
+			<tera-stratified-matrix-modal
+				v-if="openValueConfig && modelConfiguration"
+				:id="selectedTransitionId"
+				:model-configuration="modelConfiguration"
+				:stratified-model-type="StratifiedModel.Mira"
+				:stratified-matrix-type="StratifiedMatrix.Rates"
+				:open-value-config="openValueConfig"
+				@close-modal="openValueConfig = false"
+				@update-configuration="(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)"
+			/>
 		</Teleport>
 	</main>
 </template>
@@ -105,7 +115,10 @@ import InputText from 'primevue/inputtext';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
+import {
+	getStratificationType,
+	StratifiedModel
+} from '@/model-representation/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import {
 	PetrinetRenderer,
@@ -114,10 +127,12 @@ import {
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
-import { Model } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+import { StratifiedMatrix } from '@/types/Model';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
+import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 
 interface AddStateObj {
 	id: string;
@@ -130,10 +145,11 @@ interface AddStateObj {
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
+	modelConfiguration?: ModelConfiguration;
 	nodePreview?: boolean;
 }>();
 
-const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-model', 'update-configuration']);
 
 // Model editor context menu
 const menu = ref();
@@ -170,6 +186,8 @@ const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
+const openValueConfig = ref(false);
+const selectedTransitionId = ref('');
 
 let previousId: any = null;
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
@@ -292,6 +310,14 @@ watch(
 			graphLegendLabels.value = renderer.dims;
 			graphLegendColors.value = renderer.depthColorList;
 		}
+
+		renderer.on('node-click', (_eventName, _event, selection) => {
+			const { id, type } = selection.datum();
+			if (type === NodeType.Transition) {
+				selectedTransitionId.value = id;
+				openValueConfig.value = true;
+			}
+		});
 
 		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
 			if (isEditing.value === true) {

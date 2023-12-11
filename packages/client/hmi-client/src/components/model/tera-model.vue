@@ -1,11 +1,11 @@
 <template>
 	<tera-asset
-		v-if="model"
-		:name="model.header.name"
+		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"
 		:stretch-content="view === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
+		:is-loading="isModelLoading"
 	>
 		<template #name-input>
 			<InputText
@@ -16,22 +16,17 @@
 			/>
 		</template>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Description"
-					icon="pi pi-list"
-					@click="view = ModelView.DESCRIPTION"
-					:active="view === ModelView.DESCRIPTION"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Model"
-					icon="pi pi-share-alt"
-					@click="view = ModelView.MODEL"
-					:active="view === ModelView.MODEL"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="slotProps">
+					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ slotProps.option.value }}</span>
+				</template>
+			</SelectButton>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -42,15 +37,16 @@
 			</template>
 		</template>
 		<tera-model-description
-			v-if="view === ModelView.DESCRIPTION"
+			v-if="view === ModelView.DESCRIPTION && model"
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:highlight="highlight"
 			@update-model="updateModelContent"
 			@fetch-model="fetchModel"
+			:key="model?.id"
 		/>
 		<tera-model-editor
-			v-else-if="view === ModelView.MODEL"
+			v-else-if="view === ModelView.MODEL && model"
 			:model="model"
 			:model-configurations="modelConfigurations"
 			:feature-config="featureConfig"
@@ -80,10 +76,11 @@ import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/s
 import { FeatureConfig } from '@/types/common';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 
 enum ModelView {
-	DESCRIPTION,
-	MODEL
+	DESCRIPTION = 'Description',
+	MODEL = 'Model'
 }
 
 const props = defineProps({
@@ -109,9 +106,15 @@ const emit = defineEmits([
 
 const model = ref<Model | null>(null);
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const view = ref(ModelView.DESCRIPTION);
 const newName = ref('New Model');
 const isRenaming = ref(false);
+const isModelLoading = ref(false);
+
+const view = ref(ModelView.DESCRIPTION);
+const viewOptions = ref([
+	{ value: ModelView.DESCRIPTION, icon: 'pi pi-list' },
+	{ value: ModelView.MODEL, icon: 'pi pi-share-alt' }
+]);
 
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 
@@ -138,7 +141,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().get();
+		useProjects().refresh();
 	}, 800);
 }
 
@@ -151,11 +154,14 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfiguration, index: number) {
+async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	await updateModelConfiguration(updatedConfiguration);
 	setTimeout(async () => {
 		emit('update-model-configuration');
-		modelConfigurations.value[index] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
+		const indexToUpdate = modelConfigurations.value.findIndex(
+			({ id }) => id === updatedConfiguration.id
+		);
+		modelConfigurations.value[indexToUpdate] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
 		// await fetchConfigurations(); // elastic search might still not update in time
 	}, 800);
 }
@@ -212,7 +218,11 @@ watch(
 		// Reset view of model page
 		isRenaming.value = false;
 		view.value = ModelView.DESCRIPTION;
-		if (!isEmpty(props.assetId)) await getModelWithConfigurations();
+		if (!isEmpty(props.assetId)) {
+			isModelLoading.value = true;
+			await getModelWithConfigurations();
+			isModelLoading.value = false;
+		}
 	},
 	{ immediate: true }
 );

@@ -4,15 +4,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.authority.AuthorityLevel;
-import software.uncharted.terarium.hmiserver.models.authority.AuthorityType;
-import software.uncharted.terarium.hmiserver.models.authority.KeycloakRole;
-import software.uncharted.terarium.hmiserver.models.authority.RoleType;
+import software.uncharted.terarium.hmiserver.models.authority.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -35,16 +29,37 @@ public class DataInitializationService {
 	}
 
 	private void initializeRoles() {
-		if (roleService.count() == 0L) {
-			roleService.createRole(RoleType.ADMIN, Map.of(
-				AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE),
-				AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
-			));
+		List<RoleType> roleTypesMissing = new ArrayList<>();
+		for (RoleType roleType : RoleType.values()) {
+			List<Role> res = roleService.getAllByTypes(new HashSet<>(Arrays.asList(roleType.name())));
+			if (res.isEmpty()) {
+				roleTypesMissing.add(roleType);
+			}
+		}
 
-			roleService.createRole(RoleType.USER, Map.of(
-				AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-				AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
-			));
+		for (RoleType roleType : roleTypesMissing) {
+			switch (roleType) {
+				case ADMIN -> roleService.createRole(RoleType.ADMIN, Map.of(
+					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE),
+					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+				));
+				case USER -> roleService.createRole(RoleType.USER, Map.of(
+					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
+				));
+				case GROUP -> roleService.createRole(RoleType.GROUP, Map.of(
+					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
+				));
+				case TEST -> roleService.createRole(RoleType.TEST, Map.of(
+					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+				));
+				case SERVICE -> roleService.createRole(RoleType.SERVICE, Map.of(
+					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+				));
+			}
 		}
 	}
 
@@ -52,6 +67,9 @@ public class DataInitializationService {
 		return switch (keycloakRole) {
 			case ADMIN -> Set.of(RoleType.ADMIN, RoleType.USER);
 			case USER -> Set.of(RoleType.USER);
+			case GROUP -> Set.of(RoleType.GROUP);
+			case TEST -> Set.of(RoleType.TEST);
+			case SERVICE -> Set.of(RoleType.SERVICE);
 		};
 	}
 }

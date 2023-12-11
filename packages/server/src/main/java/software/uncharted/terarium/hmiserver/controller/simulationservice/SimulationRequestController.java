@@ -2,9 +2,12 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
@@ -15,6 +18,7 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurat
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,21 +27,25 @@ import java.util.List;
 @RequestMapping("/simulation-request")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class SimulationRequestController implements SnakeCaseController {
 
-	@Autowired
-	private SimulationServiceProxy simulationServiceProxy;
+	private final SimulationServiceProxy simulationServiceProxy;
 
-	@Autowired
-	private SimulationCiemssServiceProxy simulationCiemssServiceProxy;
+	private final SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
-	@Autowired
-	private SimulationProxy simulationProxy;
+	private final SimulationProxy simulationProxy;
 
-	@Autowired
-	private ModelConfigurationProxy modelConfigProxy;
+	private final ModelConfigurationProxy modelConfigProxy;
+
+	@Value("${terarium.sciml-queue}")
+	private String SCIML_QUEUE;
+
+	@Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
+	private String queueSuffix;
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> getSimulation(
 		@PathVariable("id") final String id
 	) {
@@ -45,6 +53,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("/forecast")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeForecastRun(
 		@RequestBody final SimulationRequest request
 	) {
@@ -66,12 +75,12 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setProjectId(0);
 		sim.setEngine("sciml");
 
-		;
 		return ResponseEntity.ok(simulationProxy.createAsset(convertObjectToSnakeCaseJsonNode(sim)).getBody());
 	}
 
 
 	@PostMapping("ciemss/forecast")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeForecastRunCiemss(
 		@RequestBody final SimulationRequest request
 	) {
@@ -102,13 +111,15 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("/calibrate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJob(
 		@RequestBody final CalibrationRequestJulia request
 	) {
-		return ResponseEntity.ok(simulationServiceProxy.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
+		return ResponseEntity.ok(simulationServiceProxy.makeCalibrateJob(SCIML_QUEUE+queueSuffix, convertObjectToSnakeCaseJsonNode(request)).getBody());
 	}
 
 	@PostMapping("ciemss/calibrate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
 		@RequestBody final CalibrationRequestCiemss request
 	) {
@@ -116,6 +127,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 		@RequestBody final EnsembleSimulationCiemssRequest request
 	) {
@@ -123,6 +135,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
+	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 		@RequestBody final EnsembleCalibrationCiemssRequest request
 	) {

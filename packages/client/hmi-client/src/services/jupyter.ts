@@ -1,3 +1,4 @@
+import { EventEmitter, EventName, EventCallback } from '@/utils/emitter';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
 	ServerConnection,
@@ -16,6 +17,7 @@ import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
 import API from '@/api/api';
 import { v4 as uuidv4 } from 'uuid';
+import { createMessage as createMessageWrapper } from '@jupyterlab/services/lib/kernel/messages';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;
@@ -48,6 +50,12 @@ export type JupyterMessageType =
 	| 'visualization'
 	| 'llm_request'
 	| 'llm_response'
+	| 'compile_expr_request'
+	| 'save_amr_request'
+	| 'construct_amr_request'
+	| 'compile_expr_response'
+	| 'save_amr_response'
+	| 'construct_amr_response'
 	| messages.MessageType;
 
 export interface IJupyterHeader<T extends JupyterMessageType> {
@@ -92,6 +100,7 @@ export interface IJupyterMessageContent {
 	request?: string;
 	response?: string;
 	text?: string;
+	declaration?: any;
 	code?: string;
 	language?: string;
 	data?: any;
@@ -153,6 +162,7 @@ export const newSession = async (kernelName: string, name: string) => {
 	if (!initialized) {
 		const settingsResponse = await API.get('/tgpt/configuration');
 		const settings = settingsResponse.data;
+
 		serverSettings = ServerConnection.makeSettings(settings);
 		kernelManager = new KernelManager({
 			serverSettings
@@ -183,4 +193,114 @@ export const newSession = async (kernelName: string, name: string) => {
 export interface IMessageHistory {
 	message: string;
 	messageType: string;
+}
+
+class KernelMessage extends EventEmitter {
+	// Make fluent interface: https://en.wikipedia.org/wiki/Fluent_interface
+	register(eventName: EventName, fn: EventCallback): KernelMessage {
+		this.on(eventName, fn);
+		return this;
+	}
+}
+
+/**
+ * Provide a higher level interface for interacting with jupyter-kernel session
+ *
+ * Usage:
+ *   const manager = new KernelSessionManager(newSession('beaker_kernel', 'Beaker Kernel'));
+ *   await manager.init('beaker_kernel', 'Beaker Kernel', ...)
+ *   const msgHandle = manager.sendMessage( ... )
+ *   msgHandle.register('response_1', ...)
+ *   msgHandle.register('response_2', ...)
+ * */
+export class KernelSessionManager {
+	map: Map<string, KernelMessage>;
+
+	jupyterSession: SessionContext | null;
+
+	constructor() {
+		this.map = new Map();
+		this.jupyterSession = null;
+	}
+
+	async init(kernelName: string, name: string, context: any) {
+		const session = await newSession(kernelName, name);
+
+		// Dispatch
+		const iopubMessageHandler = (_session: any, message: any) => {
+			if (message.header.msg_type === 'status') {
+				return;
+			}
+			const msgType = message.header.msg_type;
+			const msgId = message.parent_header.msg_id;
+
+			if (this.map.has(msgId)) {
+				this.map.get(msgId)?.emit(msgType, message);
+			}
+		};
+
+		// Assign
+		this.jupyterSession = session;
+
+		// Setup context
+		session.kernelChanged.connect((_context, kernelInfo) => {
+			if (!kernelInfo.newValue) return;
+
+			const sessionKernel = kernelInfo.newValue;
+			if (sessionKernel.name === kernelName) {
+				session.iopubMessage.connect(iopubMessageHandler);
+
+				const messageBody = {
+					session: session.name || '',
+					channel: 'shell',
+					content: context,
+					msgType: 'context_setup_request',
+					msgId: createMessageId('context_setup')
+				};
+				sessionKernel.sendJupyterMessage(createMessageWrapper(messageBody));
+			}
+		});
+
+		// A bit of a hacky way to wait for the kernel to be setup in order
+		// to send custom messages
+		return new Promise((resolve) => {
+			const id = setInterval(() => {
+				console.log('waiting...', this.jupyterSession?.session?.kernel);
+				if (this.jupyterSession?.session?.kernel) {
+					clearInterval(id);
+					resolve(true);
+				}
+			}, 100);
+		});
+	}
+
+	sendMessage(msgType: string, messageContent: any) {
+		if (!this.jupyterSession) throw new Error('Session not ready');
+
+		const msgId = createMessageId(msgType);
+		const messageBody = {
+			session: this.jupyterSession.name || '',
+			channel: 'shell',
+			content: messageContent,
+			msgType,
+			msgId
+		};
+		const contextMessage = createMessageWrapper(messageBody);
+		const sessionKernel = this.jupyterSession.session?.kernel;
+		if (sessionKernel) {
+			const kernelMessage = new KernelMessage();
+			this.map.set(msgId, kernelMessage);
+			sessionKernel.sendJupyterMessage(contextMessage);
+			return kernelMessage;
+		}
+		return null;
+	}
+
+	disposeMessage(msgId: string) {
+		this.map.delete(msgId);
+	}
+
+	shutdown() {
+		this.jupyterSession?.shutdown();
+	}
 }

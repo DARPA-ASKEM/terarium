@@ -6,26 +6,18 @@
 				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
 			</span>
 			<Button
+				class="new"
 				icon="pi pi-plus"
 				label="New"
-				class="p-button-sm secondary-button"
+				severity="secondary"
+				size="small"
+				outlined
 				@click="toggleOptionsMenu"
 			/>
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
-				<!-- A way to use vue feather icons in the MenuItem component, it might be better to try to use 1 icon library for easier integration -->
 				<template #item="slotProps">
 					<a class="p-menuitem-link">
-						<vue-feather
-							v-if="typeof getAssetIcon(slotProps.item.key ?? null) === 'string'"
-							class="p-button-icon-left icon"
-							:type="getAssetIcon(slotProps.item.key ?? null)"
-							size="1rem"
-						/>
-						<component
-							v-else
-							:is="getAssetIcon(slotProps.item.key ?? null)"
-							class="p-button-icon-left icon"
-						/>
+						<tera-asset-icon :asset-type="(slotProps.item.key as AssetType)" />
 						<span class="p-menuitem-text">
 							{{ slotProps.item.label }}
 						</span>
@@ -35,7 +27,7 @@
 		</header>
 		<Button
 			class="asset-button"
-			:active="openedAssetRoute.pageType === ProjectPages.OVERVIEW"
+			:active="pageType === ProjectPages.OVERVIEW"
 			plain
 			text
 			size="small"
@@ -51,7 +43,19 @@
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
-		<Accordion v-if="!isEmpty(assetItemsMap)" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5]">
+		<Accordion
+			v-if="!isEmpty(assetItemsMap) && !useProjects().projectLoading.value"
+			:multiple="true"
+			:active-index="Array.from(activeAccordionTabs)"
+			@tab-open="
+				activeAccordionTabs.add($event.index);
+				saveAccordionTabsState();
+			"
+			@tab-close="
+				activeAccordionTabs.delete($event.index);
+				saveAccordionTabsState();
+			"
+		>
 			<AccordionTab v-for="[type, assetItems] in assetItemsMap" :key="type">
 				<template #header>
 					<template v-if="type === AssetType.Publications">External Publications</template>
@@ -62,7 +66,7 @@
 				<Button
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
-					:active="assetItem.assetId === openedAssetRoute.assetId"
+					:active="assetItem.assetId === assetId && assetItem.pageType === pageType"
 					:title="assetItem.assetName"
 					class="asset-button"
 					plain
@@ -76,8 +80,10 @@
 				>
 					<span
 						:draggable="
-							openedAssetRoute.pageType === AssetType.Workflows &&
-							(assetItem.pageType === AssetType.Models || assetItem.pageType === AssetType.Datasets)
+							pageType === AssetType.Workflows &&
+							(assetItem.pageType === AssetType.Models ||
+								assetItem.pageType === AssetType.Datasets ||
+								assetItem.pageType === AssetType.Code)
 						"
 						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
 						@dragend="endDrag"
@@ -85,20 +91,7 @@
 						fallback-class="original-asset"
 						:force-fallback="true"
 					>
-						<vue-feather
-							v-if="typeof getAssetIcon(assetItem.pageType ?? null) === 'string'"
-							class="p-button-icon-left icon"
-							:type="getAssetIcon(assetItem.pageType ?? null)"
-							size="1rem"
-							:stroke="
-								isEqual(draggedAsset, assetItem) ? 'var(--text-color-primary)' : 'rgb(16, 24, 40)'
-							"
-						/>
-						<component
-							v-else
-							:is="getAssetIcon(assetItem.pageType ?? null)"
-							class="p-button-icon-left icon"
-						/>
+						<tera-asset-icon :asset-type="(assetItem.pageType as AssetType)" />
 						<span class="p-button-label">{{ assetItem.assetName }}</span>
 					</span>
 					<!-- This 'x' only shows while hovering over the row -->
@@ -113,6 +106,11 @@
 				</Button>
 			</AccordionTab>
 		</Accordion>
+
+		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
+			<Skeleton v-for="i in 10" :key="i" width="85%" />
+		</div>
+
 		<Teleport to="body">
 			<tera-modal
 				v-if="isRemovalModal"
@@ -131,7 +129,7 @@
 				</template>
 				<template #footer>
 					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
-					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
+					<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -143,7 +141,6 @@ import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { AssetItem, AssetRoute } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -154,9 +151,12 @@ import Menu from 'primevue/menu';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { generateProjectAssetsMap } from '@/utils/map-project-assets';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
+import Skeleton from 'primevue/skeleton';
 
 defineProps<{
-	openedAssetRoute: AssetRoute;
+	pageType: ProjectPages | AssetType;
+	assetId: string;
 }>();
 
 const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
@@ -168,12 +168,24 @@ const isRemovalModal = ref(false);
 const draggedAsset = ref<AssetRoute | null>(null);
 const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
+const activeAccordionTabs = ref(
+	new Set(
+		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
+	)
+);
 
 const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 
 function removeAsset() {
-	emit('remove-asset', assetToDelete.value);
-	isRemovalModal.value = false;
+	if (assetToDelete.value) {
+		const { assetId, pageType } = assetToDelete.value;
+		emit('remove-asset', { assetId, pageType } as AssetRoute); // Pass as AssetRoute
+		isRemovalModal.value = false;
+	}
+}
+
+function saveAccordionTabsState() {
+	localStorage.setItem('activeResourceBarTabs', Array.from(activeAccordionTabs.value).join());
 }
 
 const { setDragData, deleteDragData } = useDragEvent();
@@ -329,22 +341,18 @@ header {
 	font-size: var(--font-caption);
 }
 
-/* We should make a proper secondary outline button. Until then this works. */
-.secondary-button {
-	color: var(--text-color-secondary);
-	font-size: var(--font-caption);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
+.new {
 	width: 6rem;
-}
-
-.secondary-button:hover {
-	color: var(--text-color-secondary) !important;
-	background-color: var(--surface-highlight) !important;
 }
 
 :deep(.p-button-icon-left.icon) {
 	margin-right: 0.5rem;
 }
+
+.skeleton-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	row-gap: 0.5rem;
+}
 </style>
-@/utils/map-project-assets

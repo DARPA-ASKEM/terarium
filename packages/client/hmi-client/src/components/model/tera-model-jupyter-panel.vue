@@ -121,7 +121,7 @@ import { useProjects } from '@/composables/project';
 // import { createNewDataset } from '@/services/dataset';
 
 const emit = defineEmits(['new-model-saved']);
-const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
+const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -129,7 +129,7 @@ const confirm = useConfirm();
 
 const props = defineProps<{
 	model: Model | null;
-	modelConfigurationId: string;
+	modelId: string;
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
@@ -180,10 +180,10 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
-	if (kernel?.name === 'beaker') {
+	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'mira_model',
-			context_info: { id: props.modelConfigurationId, type: 'model_config' }
+			context_info: { id: props.modelId, type: 'model' }
 		});
 	}
 });
@@ -255,7 +255,7 @@ const saveAsNewModel = async () => {
 		session: session?.name || '',
 		channel: 'shell',
 		content: {
-			parent_dataset_id: String(props.modelConfigurationId),
+			parent_dataset_id: String(props.modelId),
 			name: modelName
 		},
 		msgType: 'save_amr_request',
@@ -287,7 +287,7 @@ const deleteAllKernels = () => {
 
 const confirmReset = () => {
 	confirm.require({
-		message: `Are you sure you want to rese the kernel?
+		message: `Are you sure you want to reset the kernel?
 
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
@@ -496,11 +496,8 @@ main .annotation-group {
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
 }
-</style>
 
-// Overwrite style on primevue dialog message to allow line breaks
-<style>
-.p-confirm-dialog-message {
+:deep(.p-confirm-dialog-message) {
 	white-space: pre-wrap;
 }
 </style>

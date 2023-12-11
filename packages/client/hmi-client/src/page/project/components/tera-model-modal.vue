@@ -2,7 +2,6 @@
 	<Teleport to="body">
 		<tera-modal
 			v-if="isVisible"
-			class="modal"
 			@modal-mask-clicked="emit('close-modal')"
 			@modal-enter-press="createNewModel"
 		>
@@ -89,4 +88,4 @@ async function createNewModel() {
 }
 </script>
 
-<style></style>
+<style scoped></style>

@@ -1,17 +1,12 @@
 <template>
 	<Button
 		icon="pi pi-ellipsis-v"
-		class="project-options p-button-icon-only p-button-text p-button-rounded"
+		rounded
+		text
 		@click.stop="toggle"
-		:disabled="projectMenuItems.length === 0"
+		:disabled="isEmpty(projectMenuItems)"
 	/>
-	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="setProject">
-		<template #item="{ item }">
-			<div>
-				<span :class="item.icon"></span><span>{{ item.label }}</span>
-			</div>
-		</template>
-	</Menu>
+	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="menuProject = project" />
 </template>
 
 <script setup lang="ts">
@@ -19,77 +14,68 @@ import { IProject } from '@/types/Project';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { useProjectMenu } from '@/composables/project-menu';
 import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
+import { useProjectMenu } from '@/composables/project-menu';
 
-const props = defineProps<{ project: IProject }>();
+const props = defineProps<{ project: IProject | null }>();
+
 const emit = defineEmits(['forked-project']);
+
+// Triggers modals from tera-common-modal-dialogs.vue to open
+const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } =
+	useProjectMenu();
 
 const menu = ref();
 const renameMenuItem = {
-	label: 'Rename',
+	label: 'Edit project details',
 	icon: 'pi pi-pencil',
-	disabled: true, // TODO: remove when rename is implemented
-	command: () => {}
+	command: () => {
+		isProjectConfigDialogVisible.value = true;
+	}
 };
 const shareMenuItem = {
 	label: 'Share',
 	icon: 'pi pi-user-plus',
 	command: () => {
-		useProjectMenu().isShareDialogVisible.value = true;
+		isShareDialogVisible.value = true;
 	}
 };
 const removeMenuItem = {
 	label: 'Remove',
 	icon: 'pi pi-trash',
 	command: () => {
-		useProjectMenu().isRemoveDialogVisible.value = true;
+		isRemoveDialogVisible.value = true;
 	}
 };
 const forkMenuItem = {
 	label: 'Fork this project',
 	icon: 'pi pi-clone',
 	command: async () => {
-		const cloned = await useProjects().clone(props.project.id);
-		emit('forked-project', cloned);
+		if (props.project) {
+			const cloned = await useProjects().clone(props.project.id);
+			emit('forked-project', cloned);
+		}
 	}
 };
 const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
-	if (props.project.publicProject) {
+	if (props.project?.publicProject) {
 		return [forkMenuItem];
 	}
-	if (props.project.userPermission === 'creator') {
+	if (props.project?.userPermission === 'creator') {
 		return [renameMenuItem, separatorMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem];
 	}
-	if (props.project.userPermission === 'writer') {
+	if (props.project?.userPermission === 'writer') {
 		return [renameMenuItem, separatorMenuItem, shareMenuItem];
 	}
-	if (props.project.userPermission === 'reader') {
+	if (props.project?.userPermission === 'reader') {
 		return [];
 	}
 	return [];
 });
 
-function setProject() {
-	useProjectMenu().selectedMenuProject.value = props.project;
-}
-
 function toggle(event) {
 	menu.value.toggle(event);
 }
 </script>
-
-<style scoped>
-div > span {
-	margin-right: 0.5rem;
-}
-
-div {
-	padding: 0.5rem 1rem;
-}
-
-div:hover {
-	background: rgba(0, 0, 0, 0.04);
-}
-</style>

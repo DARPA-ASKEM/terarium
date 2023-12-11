@@ -14,11 +14,11 @@ public class RebacGroup extends RebacObject {
 	}
 
 	public SchemaObject getSchemaObject() {
-		return new SchemaObject(Schema.Type.USER, getId());
+		return new SchemaObject(Schema.Type.GROUP, getId());
 	}
 
-	public boolean hasMembership(RebacObject rebacObject) throws Exception {
-		return reBACService.hasMembership(getSchemaObject(), rebacObject.getSchemaObject());
+	public boolean hasMembership(RebacGroup rebacGroup) throws Exception {
+		return reBACService.isMemberOf(getSchemaObject(), rebacGroup.getSchemaObject());
 	}
 
 	public boolean canAdministrate(RebacObject rebacObject) throws Exception {

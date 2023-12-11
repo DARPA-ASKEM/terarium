@@ -1,5 +1,8 @@
 import _ from 'lodash';
 import { Model, PetriNetTransition } from '@/types/Types';
+import { createMatrix1D } from '@/utils/pivot';
+import { StratifiedMatrix } from '@/types/Model';
+import { createParameterMatrix, createTransitionMatrix } from './petri-matrix-service';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -7,10 +10,10 @@ import { Model, PetriNetTransition } from '@/types/Types';
 export const getStates = (amr: Model) => {
 	const model = amr.model;
 	const lookup = new Map();
-	const matrixData: object[] = [];
+	const matrixData: any[] = [];
 
 	const dupe: Set<string> = new Set();
-	const uniqueStates: any[] = []; // FIXME: grounding typing incorrect
+	const uniqueStates: any[] = [];
 
 	for (let i = 0; i < model.states.length; i++) {
 		const state = model.states[i];
@@ -60,7 +63,7 @@ export const getStates = (amr: Model) => {
 export const getTransitions = (amr: Model, lookup: Map<string, string>) => {
 	const model = amr.model;
 	const uniqueTransitions: Partial<PetriNetTransition>[] = [];
-	const matrixData: object[] = [];
+	const matrixData: any[] = [];
 
 	// Cache state-modifiers for faster fetch
 	const stateModifierMap = new Map();
@@ -215,4 +218,39 @@ export const getMiraAMRPresentationData = (amr: Model) => {
 		stateMatrixData: statesData.matrixData,
 		transitionMatrixData: transitionsData.matrixData
 	};
+};
+
+export const generateMatrix = (amr: Model, id: string, stratifiedMatrixType: StratifiedMatrix) => {
+	const { stateMatrixData, transitionMatrixData } = getMiraAMRPresentationData(amr);
+
+	// Get only the states/transitions that are mapped to the base model
+	let matrixData: any[] = [];
+	let childParameterIds: string[] = [];
+
+	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
+		matrixData = stateMatrixData.filter(({ base }) => base === id);
+	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
+		const paramsMap = getUnstratifiedParameters(amr);
+		if (!paramsMap.has(id)) return null;
+
+		// IDs to find within the rates
+		childParameterIds = paramsMap.get(id) as string[];
+		// Holds all points that have the parameter
+		matrixData = filterParameterLocations(amr, transitionMatrixData, [...childParameterIds, id]);
+	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
+		matrixData = transitionMatrixData.filter(({ base }) => base === id);
+	}
+
+	if (_.isEmpty(matrixData)) return null;
+
+	let matrix: any[] = [];
+
+	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
+		matrix = createMatrix1D(matrixData).matrix;
+	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
+		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
+	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
+		matrix = createTransitionMatrix(amr, matrixData).matrix;
+	}
+	return matrix;
 };

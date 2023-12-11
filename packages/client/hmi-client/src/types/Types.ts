@@ -5,6 +5,7 @@ export interface ClientConfig {
     baseUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
+    sseHeartbeatIntervalMillis: number;
 }
 
 export interface Event {
@@ -14,6 +15,13 @@ export interface Event {
     userId?: string;
     type: EventType;
     value?: string;
+}
+
+export interface ClientEvent<T> {
+    id: string;
+    createdAtMs: number;
+    type: ClientEventType;
+    data: T;
 }
 
 export interface ClientLog {
@@ -121,6 +129,10 @@ export interface Project {
     relatedDocuments?: Document[];
 }
 
+export interface ResponseId {
+    id: string;
+}
+
 export interface Simulation {
     id: string;
     executionPayload: any;
@@ -142,10 +154,20 @@ export interface Code {
     timestamp?: Date;
     name: string;
     description: string;
-    filename: string;
+    files?: { [index: string]: CodeFile };
     repoUrl?: string;
-    language: ProgrammingLanguage;
     metadata?: any;
+}
+
+export interface CodeFile {
+    language: ProgrammingLanguage;
+    dynamics: Dynamics;
+}
+
+export interface Dynamics {
+    name: string;
+    description: string;
+    block: string[];
 }
 
 export interface Dataset {
@@ -173,6 +195,17 @@ export interface DatasetColumn {
     description?: string;
 }
 
+export interface AddDocumentAssetFromXDDRequest {
+    document: Document;
+    projectId: string;
+}
+
+export interface AddDocumentAssetFromXDDResponse {
+    documentAssetId: string;
+    pdfUploadError: boolean;
+    extractionJobId: string;
+}
+
 export interface DocumentAsset {
     id?: string;
     name?: string;
@@ -181,12 +214,29 @@ export interface DocumentAsset {
     username?: string;
     fileNames?: string[];
     documentUrl?: string;
-    metadata?: any;
+    metadata?: { [index: string]: any };
     source?: string;
     text?: string;
     grounding?: Grounding;
     concepts?: Concept[];
     assets?: DocumentExtraction[];
+}
+
+export interface Equation {
+    id?: string;
+    timestamp?: Date;
+    username?: string;
+    name?: string;
+    equationType: EquationType;
+    content: string;
+    metadata?: { [index: string]: any };
+    source?: EquationSource;
+}
+
+export interface EquationSource {
+    extractedFrom?: string;
+    documentAssetName?: string;
+    hmiGenerated?: boolean;
 }
 
 export interface Model {
@@ -243,13 +293,50 @@ export interface TypingSemantics {
     system: any;
 }
 
+export interface DecapodesComponent {
+    modelInterface: string[];
+    model: DecapodesExpression;
+    _type: string;
+}
+
+export interface DecapodesEquation {
+    lhs: any;
+    rhs: any;
+    _type: string;
+}
+
+export interface DecapodesExpression {
+    context: any[];
+    equations: DecapodesEquation[];
+    _type: string;
+}
+
+export interface DecapodesTerm {
+    name?: string;
+    var?: DecapodesTerm;
+    symbol?: string;
+    space?: string;
+    fs?: string[];
+    arg?: DecapodesTerm;
+    f?: string;
+    arg1?: DecapodesTerm;
+    arg2?: DecapodesTerm;
+    args?: DecapodesTerm[];
+    _type: string;
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
 }
 
 export interface ProvenanceQueryParam {
-    rootId?: number;
+    nodes?: boolean;
+    types?: ProvenanceType[];
+    hops?: number;
+    limit?: number;
+    verbose?: boolean;
+    rootId?: string;
     rootType?: ProvenanceType;
     userId?: number;
 }
@@ -322,6 +409,53 @@ export interface ExtractionResponseResult {
     job_result: any;
 }
 
+export interface FunmanPostQueriesRequest {
+    model: Model;
+    request: FunmanWorkRequest;
+}
+
+export interface FunmanConfig {
+    tolerance?: number;
+    queueTimeout?: number;
+    numberOfProcesses?: number;
+    waitTimeout?: number;
+    waitActionTimeout?: number;
+    solver?: string;
+    numSteps?: number;
+    stepSize?: number;
+    numInitialBoxes?: number;
+    saveSmtlib?: boolean;
+    drealPrecision?: number;
+    drealLogLevel?: string;
+    constraintNoise?: number;
+    initialStateTolerance?: number;
+    drealMcts?: boolean;
+    substituteSubformulas?: boolean;
+    use_compartmental_constraints?: boolean;
+    normalize?: boolean;
+    normalization_constant?: number;
+}
+
+export interface FunmanInterval {
+    ub?: number;
+    lb?: number;
+    closed_upper_bound?: boolean;
+}
+
+export interface FunmanParameter {
+    name: string;
+    interval: FunmanInterval;
+    label: string;
+}
+
+export interface FunmanWorkRequest {
+    query?: any;
+    constraints?: any;
+    parameters?: FunmanParameter[];
+    config?: FunmanConfig;
+    structure_parameters?: any;
+}
+
 export interface DKG {
     curie: string;
     name: string;
@@ -333,6 +467,7 @@ export interface PermissionGroup {
     id: string;
     name: string;
     relationship?: string;
+    permissionRelationships?: PermissionRelationships;
 }
 
 export interface PermissionProject {
@@ -351,6 +486,7 @@ export interface PermissionUser {
     firstName: string;
     lastName: string;
     email: string;
+    roles?: PermissionRole[];
     relationship?: string;
 }
 
@@ -383,6 +519,15 @@ export interface EnsembleSimulationCiemssRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
+}
+
+export interface ScimlStatusUpdate {
+    loss: number;
+    iter: number;
+    params: { [index: string]: number };
+    id: string;
+    solData: { [index: string]: any };
+    timesteps: number[];
 }
 
 export interface SimulationRequest {
@@ -481,8 +626,8 @@ export interface Document {
 
 export interface DocumentExtraction {
     fileName: string;
-    assetType: string;
-    metadata: any;
+    assetType: ExtractionAssetType;
+    metadata: { [index: string]: any };
 }
 
 export interface ModelHeader {
@@ -510,6 +655,7 @@ export interface ModelMetadata {
     attributes?: any[];
     timeseries?: { [index: string]: any };
     card?: Card;
+    provenance?: string[];
 }
 
 export interface ModelGrounding {
@@ -558,6 +704,12 @@ export interface XDDFacetsItemResponse {
 export interface XDDResponseOK {
     v: number;
     license: string;
+}
+
+export interface PermissionRole {
+    id: string;
+    name: string;
+    users: PermissionUser[];
 }
 
 export interface UserOld {
@@ -727,7 +879,7 @@ export interface Variable {
     metadata: VariableMetadata[];
     column: DataColumn[];
     paper: Paper;
-    equations: Equation[];
+    equations: EquationVariable[];
     dkg_groundings: DKGConcept[];
 }
 
@@ -764,7 +916,7 @@ export interface Paper {
     file_directory: string;
 }
 
-export interface Equation {
+export interface EquationVariable {
     id: string;
     text: string;
     image: string;
@@ -813,6 +965,9 @@ export enum AuthorityType {
 export enum RoleType {
     Admin = "ADMIN",
     User = "USER",
+    Group = "GROUP",
+    Test = "TEST",
+    Service = "SERVICE",
     Special = "SPECIAL",
 }
 
@@ -821,6 +976,13 @@ export enum EvaluationScenarioStatus {
     Paused = "PAUSED",
     Resumed = "RESUMED",
     Stopped = "STOPPED",
+}
+
+export enum ClientEventType {
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationSciml = "SIMULATION_SCIML",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
 }
 
 export enum FileType {
@@ -842,6 +1004,7 @@ export enum ProgrammingLanguage {
     Python = "python",
     R = "r",
     Julia = "julia",
+    Zip = "zip",
 }
 
 export enum ColumnType {
@@ -859,17 +1022,23 @@ export enum ColumnType {
     Time = "TIME",
 }
 
+export enum EquationType {
+    Mathml = "mathml",
+    Latex = "latex",
+}
+
 export enum ProvenanceType {
-    Dataset = "Dataset",
-    Intermediate = "Intermediate",
-    Model = "Model",
-    ModelParameter = "ModelParameter",
-    ModelRevision = "ModelRevision",
-    Plan = "Plan",
-    PlanParameter = "PlanParameter",
-    Publication = "Publication",
-    Project = "Project",
     Concept = "Concept",
+    Dataset = "Dataset",
+    Model = "Model",
+    ModelConfiguration = "ModelConfiguration",
+    Project = "Project",
+    Publication = "Publication",
+    Simulation = "Simulation",
+    Artifact = "Artifact",
+    Code = "Code",
+    Document = "Document",
+    Workflow = "Workflow",
 }
 
 export enum AssetType {
@@ -887,4 +1056,10 @@ export enum AssetType {
 export enum OntologicalField {
     Object = "OBJECT",
     Unit = "UNIT",
+}
+
+export enum ExtractionAssetType {
+    Figure = "FIGURE",
+    Table = "TABLE",
+    Equation = "EQUATION",
 }

@@ -40,3 +40,17 @@ export async function getGithubCode(repoOwnerAndName: string, path: string) {
 		return null;
 	}
 }
+
+export async function getGithubRepo(repoOwnerAndName: string) {
+	try {
+		const response = await API.get('/code/repo-zip', {
+			params: { repoOwnerAndName }
+		});
+		const { status, data } = response;
+		if (status !== 200) return null;
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}

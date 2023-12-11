@@ -288,7 +288,7 @@ async function updatePermissions(
  * Get the icon associated with an Asset
  */
 const icons = new Map<string | AssetType, string | Component>([
-	[AssetType.Publications, 'file'],
+	[AssetType.Documents, 'file'],
 	[AssetType.Models, 'share-2'],
 	[AssetType.Datasets, DatasetIcon],
 	[AssetType.Simulations, 'settings'],

@@ -1,16 +1,18 @@
 <template>
-	<div class="background">
-		<Suspense>
-			<tera-model-jupyter-panel
-				:model-configuration-id="modelConfigurationId"
-				:model="null"
-				:show-kernels="false"
-				:show-chat-thoughts="false"
-				@new-model-saved="addOutputPort"
-				:notebook-session="notebookSession"
-			/>
-		</Suspense>
-	</div>
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<div class="background">
+			<Suspense>
+				<tera-model-jupyter-panel
+					:model-id="modelId"
+					:model="null"
+					:show-kernels="false"
+					:show-chat-thoughts="false"
+					@new-model-saved="addOutputPort"
+					:notebook-session="notebookSession"
+				/>
+			</Suspense>
+		</div>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -19,19 +21,21 @@
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
-import { workflowEventBus } from '@/services/workflow';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
 import { v4 as uuidv4 } from 'uuid';
 import { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
-import { getModel, getModelConfigurations } from '@/services/model';
+import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelTransformerState>;
 }>();
-const modelConfigurationId = computed(() => {
+const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+
+const modelId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
 	const modelConfirgurationList = props.node?.inputs
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
@@ -59,10 +63,7 @@ onMounted(async () => {
 		if (notebookSessionId) {
 			// update the node state with the notebook session id
 			state.notebookSessionId = notebookSessionId;
-			workflowEventBus.emit('update-state', {
-				node: props.node,
-				state
-			});
+			emit('update-state', state);
 		}
 	}
 	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
@@ -78,30 +79,21 @@ const addOutputPort = async (data) => {
 	const state = cloneDeep(props.node.state);
 	state.modelId = model?.id;
 	// update node state with the model id
-	workflowEventBus.emit('update-state', { node: props.node, state });
+	emit('update-state', state);
 
 	// set default configuration
 	await addDefaultConfiguration(model);
 
-	// setting timeout...elastic search might not update default config in time
-	setTimeout(async () => {
-		const configurationList = await getModelConfigurations(model.id);
-		configurationList.forEach((configuration) => {
-			workflowEventBus.emit('append-output-port', {
-				node: props.node,
-				port: {
-					id: uuidv4(),
-					label: configuration.name,
-					type: 'modelConfigId',
-					value: [configuration.id]
-				}
-			});
-		});
-	}, 800);
+	emit('append-output-port', {
+		id: uuidv4(),
+		label: model.header.name,
+		type: 'modelId',
+		value: [model.id]
+	});
 };
 </script>
 
-<style>
+<style scoped>
 .background {
 	background: white;
 	height: 100%;

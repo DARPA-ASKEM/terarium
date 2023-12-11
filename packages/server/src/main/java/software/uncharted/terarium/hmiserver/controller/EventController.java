@@ -4,10 +4,12 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.EventService;
 
@@ -32,6 +34,7 @@ public class EventController {
 	 * @return						a list of {@link Event} for the given user/project/type sorted by most to least recent
 	 */
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<Event>> getEvents(@RequestParam(value = "type") final EventType type,
 																								 @RequestParam(value = "projectId", required = false) final Long projectId,
 																								 @RequestParam(value = "search", required = false) final String likeValue,
@@ -46,6 +49,7 @@ public class EventController {
 	 * @return			the persisted event instance
 	 */
 	@PostMapping
+	@Secured(Roles.USER)
 	@Transactional
 	@IgnoreRequestLogging
 	public ResponseEntity<Event> postEvent(@RequestBody final Event event) {

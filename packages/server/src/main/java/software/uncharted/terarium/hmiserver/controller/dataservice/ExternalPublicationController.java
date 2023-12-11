@@ -5,11 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ExternalPublicationProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class ExternalPublicationController implements SnakeCaseController {
 
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<ExternalPublication>> getPublications() {
 		try {
 			return ResponseEntity.ok(proxy.getPublications().getBody());
@@ -34,6 +37,7 @@ public class ExternalPublicationController implements SnakeCaseController {
 	}
 
 	@PostMapping()
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createPublication(
 		@RequestBody final ExternalPublication publication
 	) {
@@ -41,6 +45,7 @@ public class ExternalPublicationController implements SnakeCaseController {
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<ExternalPublication> getPublication(
 		@PathVariable("id") final Integer id
 	) {
@@ -53,6 +58,7 @@ public class ExternalPublicationController implements SnakeCaseController {
 	}
 
 	@PutMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> putPublication(
 		@PathVariable("id") final Integer id,
 		@RequestBody final ExternalPublication publication
@@ -66,6 +72,7 @@ public class ExternalPublicationController implements SnakeCaseController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deletePublication(
 		@PathVariable("id") final Integer id
 	) {

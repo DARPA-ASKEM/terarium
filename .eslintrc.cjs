@@ -9,6 +9,7 @@ module.exports = {
 	],
 	parser: 'vue-eslint-parser',
 	rules: {
+	        'max-classes-per-file': 'off',
 		'class-methods-use-this': 'off',
 		'func-names': 'off',
 		'no-alert': 'off',
@@ -24,7 +25,8 @@ module.exports = {
 		'vuejs-accessibility/form-control-has-label': 'off',
 		'vue/multi-word-component-names': 'off',
 		'import/prefer-default-export': 'off',
-		'no-underscore-dangle': 'off'
+		'no-underscore-dangle': 'off',
+		'no-bitwise': 'off'
 	},
 	"ignorePatterns": [
 		"**/src/temp/*"

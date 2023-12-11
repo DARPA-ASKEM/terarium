@@ -15,6 +15,7 @@ import useAuthStore from '@/stores/auth';
 const TIMEOUT_MS = 100;
 
 const activeProject = shallowRef<IProject | null>(null);
+const projectLoading = shallowRef<boolean>(false);
 const allProjects = shallowRef<IProject[] | null>(null);
 const activeProjectId = computed<string>(() => activeProject.value?.id ?? '');
 
@@ -26,7 +27,19 @@ export function useProjects() {
 	 * @param {string} projectId Id of the project to set as the active project.
 	 * @returns {Promise<IProject | null>} Active project.
 	 */
-	async function get(projectId: IProject['id'] = activeProjectId.value): Promise<IProject | null> {
+	async function get(projectId: IProject['id']): Promise<IProject | null> {
+		if (projectId) {
+			projectLoading.value = true;
+			activeProject.value = await ProjectService.get(projectId, true);
+			projectLoading.value = false;
+		} else {
+			activeProject.value = null;
+		}
+		return activeProject.value;
+	}
+
+	async function refresh(): Promise<IProject | null> {
+		const projectId: IProject['id'] = activeProjectId.value;
 		if (projectId) {
 			activeProject.value = await ProjectService.get(projectId, true);
 		}
@@ -210,6 +223,7 @@ export function useProjects() {
 	return {
 		activeProject,
 		allProjects,
+		projectLoading,
 		get,
 		getAll,
 		addAsset,
@@ -217,6 +231,7 @@ export function useProjects() {
 		create,
 		update,
 		remove,
+		refresh,
 		getPublicationAssets,
 		getPermissions,
 		setPermissions,

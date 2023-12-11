@@ -1,11 +1,11 @@
 <template>
 	<tera-asset
-		v-if="dataset"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isRenamingDataset"
-		:stretch-content="datasetView === DatasetView.DATA"
+		:stretch-content="view === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
+		:is-loading="isDatasetLoading"
 	>
 		<template #name-input>
 			<InputText
@@ -16,22 +16,17 @@
 			/>
 		</template>
 		<template #edit-buttons>
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Description"
-					icon="pi pi-list"
-					@click="datasetView = DatasetView.DESCRIPTION"
-					:active="datasetView === DatasetView.DESCRIPTION"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Data"
-					icon="pi pi-file"
-					@click="datasetView = DatasetView.DATA"
-					:active="datasetView === DatasetView.DATA"
-				/>
-			</span>
+			<SelectButton
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+				option-value="value"
+			>
+				<template #option="slotProps">
+					<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+					<span class="p-button-label">{{ slotProps.option.value }}</span>
+				</template>
+			</SelectButton>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -41,13 +36,7 @@
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
 		</template>
-		<template v-if="datasetView === DatasetView.DESCRIPTION">
-			<div class="container">
-				<Message class="inline-message" icon="none">
-					This page describes the dataset. Use the content switcher above to see the data table and
-					transformation tools.
-				</Message>
-			</div>
+		<template v-if="view === DatasetView.DESCRIPTION">
 			<section class="metadata data-row">
 				<section>
 					<header>Rows</header>
@@ -87,9 +76,8 @@
 				<AccordionTab>
 					<template #header>Related publications</template>
 					<tera-related-documents
-						:asset-type="ResourceType.DATASET"
+						:asset-type="AssetType.Datasets"
 						:documents="documents"
-						:related-documents="relatedDocuments"
 						:assetId="assetId"
 						@enriched="fetchDataset"
 					/>
@@ -124,10 +112,11 @@
 						<header id="Source">Source</header>
 					</template>
 					This data is sourced from
-					{{ dataset.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
-					<a :href="dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''">{{
-						dataset.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''
-					}}</a>
+					{{ dataset?.metadata?.documents ? dataset.metadata.documents[0].title : 'unknown' }}:
+					<a
+						:href="dataset?.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : ''"
+						>{{ dataset?.metadata?.documents ? dataset.metadata?.documents[0].datasetUrl : '' }}</a
+					>
 				</AccordionTab>
 				<AccordionTab>
 					<template #header>
@@ -137,7 +126,7 @@
 						<div class="variables-header">
 							<div
 								v-for="(title, index) in [
-									'ID',
+									'COLUMN',
 									'NAME',
 									'DATA TYPE',
 									'UNITS',
@@ -167,7 +156,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].name)"
 							/>
 							<div class="variables-value" v-else>{{ column.name }}</div>
 							<!-- name - currently just a formatted id -->
@@ -176,7 +165,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].name)"
 							/>
 							<div class="variables-value" v-else>{{ formatName(column.name) }}</div>
 							<!-- data type -->
@@ -185,7 +174,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.dataType"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].dataType)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].dataType)"
 							/>
 							<div class="variables-value" v-else>{{ column.dataType }}</div>
 							<!-- units - field does not exist in tds yet -->
@@ -194,7 +183,7 @@
 								type="text"
 								v-if="rowEditList[index] && column.metadata"
 								v-model="column.metadata.unit"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].metadata?.unit)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].metadata?.unit)"
 							/>
 							<div class="variables-value" v-else>{{ column.metadata?.unit ?? '--' }}</div>
 							<!-- Concept -->
@@ -235,7 +224,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.description"
-								@focus="setSuggestedValue(index, dataset.columns?.[index].description)"
+								@focus="setSuggestedValue(index, dataset?.columns?.[index].description)"
 							/>
 							<div class="variables-description variables-value" v-else>
 								{{ column.description }}
@@ -245,7 +234,7 @@
 								<span>Suggested value</span>
 								<div>
 									<div class="suggested-value-source">
-										<i class="pi pi-file" />{{ dataset.metadata?.documents?.[0].title ?? '' }}
+										<i class="pi pi-file" />{{ dataset?.metadata?.documents?.[0].title ?? '' }}
 									</div>
 									<div class="suggested-value">{{ suggestedValues[index] }}</div>
 								</div>
@@ -253,7 +242,7 @@
 								<div>
 									<div class="suggested-value-source">
 										<i class="pi pi-file" />{{
-											dataset.metadata?.documents ? dataset.metadata.documents[0].title : ''
+											dataset?.metadata?.documents ? dataset.metadata.documents[0].title : ''
 										}}
 									</div>
 									<div class="suggested-value">
@@ -270,7 +259,7 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.DATA">
+		<template v-else-if="view === DatasetView.DATA">
 			<Accordion :multiple="true" :activeIndex="[0, 1]">
 				<AccordionTab>
 					<template #header>
@@ -287,24 +276,24 @@ import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
-import Message from 'primevue/message';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { isString, cloneDeep, isEmpty } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import { AcceptedExtensions, FeatureConfig, ResourceType } from '@/types/common';
+import { AcceptedExtensions, FeatureConfig } from '@/types/common';
 import Menu from 'primevue/menu';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
 import { enrichDataset } from './utils';
 
 enum DatasetView {
-	DESCRIPTION,
-	DATA,
-	LLM
+	DESCRIPTION = 'Description',
+	DATA = 'Data',
+	LLM = 'LLM'
 }
 
 const props = defineProps({
@@ -340,7 +329,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-const relatedDocuments = computed(() => []);
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 const newCsvContent: any = ref(null);
@@ -351,12 +339,17 @@ const newDatasetName = ref('');
 const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
+const isDatasetLoading = ref(false);
 
 function formatName(name: string) {
 	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
 }
 
-const datasetView = ref(DatasetView.DESCRIPTION);
+const view = ref(DatasetView.DESCRIPTION);
+const viewOptions = ref([
+	{ value: DatasetView.DESCRIPTION, icon: 'pi pi-list' },
+	{ value: DatasetView.DATA, icon: 'pi pi-file' }
+]);
 
 const csvContent = computed(() => rawContent.value?.csv);
 
@@ -386,7 +379,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		useProjects().get();
+		useProjects().refresh();
 		isRenamingDataset.value = false;
 	}
 }
@@ -488,7 +481,9 @@ watch(
 	async () => {
 		isRenamingDataset.value = false;
 		if (props.assetId !== '') {
-			fetchDataset();
+			isDatasetLoading.value = true;
+			await fetchDataset();
+			isDatasetLoading.value = false;
 		} else {
 			dataset.value = null;
 			rawContent.value = null;
@@ -503,21 +498,6 @@ watch(
 	margin-left: 1rem;
 	margin-right: 1rem;
 	max-width: 70rem;
-}
-
-.inline-message:deep(.p-message-wrapper) {
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-	border-radius: var(--border-radius);
-	border: 4px solid var(--primary-color);
-	border-width: 0px 0px 0px 6px;
-}
-
-.p-buttonset {
-	white-space: nowrap;
-	margin-left: 0.5rem;
 }
 
 .metadata {

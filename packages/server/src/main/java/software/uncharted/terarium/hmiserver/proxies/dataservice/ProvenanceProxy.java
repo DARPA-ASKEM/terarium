@@ -10,7 +10,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 
 @FeignClient(name = "provenance", url = "${terarium.dataservice.url}", path = "/provenance")
 public interface ProvenanceProxy {
-	@GetMapping("/id")
+	@GetMapping("/{id}")
 	ResponseEntity<Provenance> getProvenance(@PathVariable("id") String id);
 
 	@PostMapping

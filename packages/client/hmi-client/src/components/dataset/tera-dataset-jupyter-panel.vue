@@ -126,8 +126,8 @@ import { useProjects } from '@/composables/project';
 
 // import { createNewDataset } from '@/services/dataset';
 
-// const jupyterSession = ref(<SessionContext>newSession('beaker', 'Beaker'));
-const jupyterSession: SessionContext = await newSession('beaker', 'Beaker');
+// const jupyterSession = ref(<SessionContext>newSession('beaker_kernel', 'Beaker Kernel'));
+const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
@@ -194,7 +194,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 		const key = `d${i + 1}`;
 		contextInfo[key] = assetId;
 	});
-	if (kernel?.name === 'beaker') {
+	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
 			context_info: contextInfo
@@ -302,7 +302,7 @@ const deleteAllKernels = () => {
 
 const confirmReset = () => {
 	confirm.require({
-		message: `Are you sure you want to rese the kernel?
+		message: `Are you sure you want to reset the kernel?
 
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,

@@ -1,5 +1,5 @@
 <template>
-	<main @scroll="updateScrollPosition">
+	<main v-if="!isLoading" @scroll="updateScrollPosition">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
@@ -62,10 +62,11 @@
 				</aside>
 			</header>
 		</template>
-		<section :style="stretchContentStyle">
+		<section :class="overflowHiddenClass" :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
 	</main>
+	<tera-progress-spinner v-else :font-size="2" is-centered />
 </template>
 
 <script setup lang="ts">
@@ -75,6 +76,7 @@ import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
+import teraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps({
 	name: {
@@ -105,7 +107,9 @@ const props = defineProps({
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,
-	stretchContent: Boolean
+	stretchContent: Boolean,
+	isLoading: Boolean,
+	overflowHidden: Boolean
 });
 
 const emit = defineEmits(['close-preview']);
@@ -129,6 +133,8 @@ const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.
 const stretchContentStyle = computed(() =>
 	props.stretchContent ? { gridColumn: '1 / span 2' } : {}
 );
+
+const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
@@ -316,6 +322,10 @@ main:deep(input) {
 main:deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.overflow-hidden {
+	overflow: hidden;
 }
 
 .spread-out {

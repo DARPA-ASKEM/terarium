@@ -1,6 +1,6 @@
 <template>
 	<Teleport to="body">
-		<tera-modal v-if="visible" class="modal" @modal-mask-clicked="() => emit('close')">
+		<tera-modal v-if="visible" @modal-mask-clicked="() => emit('close')">
 			<template #header>
 				<h4>Upload resources</h4>
 			</template>
@@ -85,16 +85,16 @@ const importedFiles = ref<File[]>([]);
 
 async function processFiles(files: File[], csvDescription: string) {
 	return files.map(async (file) => {
-		switch (file.type) {
-			case AcceptedTypes.CSV:
+		switch (file.name.split('.').pop()) {
+			case AcceptedExtensions.CSV:
 				return processDataset(file, csvDescription);
-			case AcceptedTypes.PDF:
-			case AcceptedTypes.TXT:
-			case AcceptedTypes.MD:
+			case AcceptedExtensions.PDF:
+			case AcceptedExtensions.TXT:
+			case AcceptedExtensions.MD:
 				return processDocument(file);
-			case AcceptedTypes.PY:
-			case AcceptedTypes.R:
-			case AcceptedTypes.JL:
+			case AcceptedExtensions.PY:
+			case AcceptedExtensions.R:
+			case AcceptedExtensions.JL:
 				return processCode(file);
 			default:
 				return { id: '', assetType: '' };
@@ -107,7 +107,6 @@ async function processFiles(files: File[], csvDescription: string) {
  * @param file
  */
 async function processCode(file: File) {
-	// This is pdf, txt, md files
 	const newCode = await uploadCodeToProject(file, progress);
 	return { id: newCode?.id ?? '', assetType: AssetType.Code };
 }

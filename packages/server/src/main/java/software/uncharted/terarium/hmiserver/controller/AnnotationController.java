@@ -7,9 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.entities.Annotation;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.AnnotationService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
@@ -30,6 +32,7 @@ public class AnnotationController {
 	private CurrentUserService currentUserService;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<Annotation>> getAnnotations(
 		@RequestParam("artifact_type") final String artifactType,
 		@RequestParam("artifact_id") final String artifactId,
@@ -40,6 +43,7 @@ public class AnnotationController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	@Transactional
 	public ResponseEntity<Annotation> postEvent(@RequestBody final Annotation annotation) {
 		annotation.setUserId(currentUserService.get().getId());
@@ -49,6 +53,7 @@ public class AnnotationController {
 	}
 
 	@PatchMapping
+	@Secured(Roles.USER)
 	@Transactional
 	public ResponseEntity<Annotation> updateAnnotation(@RequestBody final Annotation newAnnotation){
 		String id = newAnnotation.getId();
@@ -70,6 +75,7 @@ public class AnnotationController {
 	}
 
 	@DeleteMapping
+	@Secured(Roles.USER)
 	@Transactional
 	public ResponseEntity<JsonNode> deleteAnnotations(@RequestParam("id") final String id) {
 

@@ -6,26 +6,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
 
 public enum ProvenanceType {
-	@JsonAlias("Dataset")
-	DATASET("Dataset"),
-	@JsonAlias("Intermediate")
-	INTERMEDIATE("Intermediate"),
-	@JsonAlias("Model")
-	MODEL("Model"),
-	@JsonAlias("ModelParameter")
-	MODEL_PARAMETER("ModelParameter"),
-	@JsonAlias("ModelRevision")
-	MODEL_REVISION("ModelRevision"),
-	@JsonAlias("Plan")
-	PLAN("Plan"),
-	@JsonAlias("PlanParameter")
-	PLAN_PARAMETER("PlanParameter"),
-	@JsonAlias("Publication")
-	PUBLICATION("Publication"),
-	@JsonAlias("Project")
-	PROJECT("Project"),
 	@JsonAlias("Concept")
-	CONCEPT("Concept");
+	CONCEPT("Concept"),
+	@JsonAlias("Dataset")
+    DATASET("Dataset"),
+	@JsonAlias("Model")
+    MODEL("Model"),
+	@JsonAlias("ModelConfiguration")
+    MODEL_CONFIGURATION("ModelConfiguration"),
+	@JsonAlias("Project")
+    PROJECT("Project"),
+	@JsonAlias("Concept")
+    PUBLICATION("Publication"),
+	@JsonAlias("Simulation")
+    SIMULATION("Simulation"),
+	@JsonAlias("Artifact")
+    ARTIFACT("Artifact"),
+	@JsonAlias("Code")
+    CODE("Code"),
+	@JsonAlias("Document")
+    DOCUMENT("Document"),
+    @JsonAlias("Workflow")
+    WORKFLOW("Workflow");
 
 	public final String type;
 

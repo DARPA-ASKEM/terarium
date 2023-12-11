@@ -131,14 +131,4 @@ subheader {
 :deep .p-dropdown .p-dropdown-trigger {
 	color: white;
 }
-
-/* TODO: Create a proper secondary outline button in PrimeVue theme */
-.p-button.p-button-secondary {
-	border: 1px solid var(--surface-border);
-	box-shadow: none;
-	font-weight: 600;
-	font-size: 14px;
-	padding-right: 10px;
-	padding-left: 10px;
-}
 </style>

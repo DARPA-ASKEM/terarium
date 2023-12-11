@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Accessors(chain = true)
@@ -16,7 +17,7 @@ import java.io.Serializable;
 public class ProvenanceQueryParam implements Serializable {
 
 
-	private Number rootId;
+	private String rootId;
 
 	private ProvenanceType rootType;
 
@@ -25,6 +26,20 @@ public class ProvenanceQueryParam implements Serializable {
 	@TSIgnore
 	private String curie;
 
+	@TSOptional
+	private Boolean nodes;
+
+	@TSOptional
+	private List<ProvenanceType> types;
+
+	@TSOptional
+	private Number hops;
+
+	@TSOptional
+	private Number limit;
+
+	@TSOptional
+	private Boolean verbose;
 
 	// Our front end (and server) want to use the non-underscored version of these properties
 	// but TDS needs underscores.  Its "easy" when taking data *From* TDS to hmi to do this by
@@ -33,13 +48,13 @@ public class ProvenanceQueryParam implements Serializable {
 
 	@JsonSetter(value = "rootId")
 	@TSOptional
-	public void setRootId(Number rootId) {
+	public void setRootId(String rootId) {
 		this.rootId = rootId;
 	}
 
 	@JsonGetter(value = "root_id")
 	@TSIgnore
-	public Number getRootId() {
+	public String getRootId() {
 		return rootId;
 	}
 
@@ -66,6 +81,4 @@ public class ProvenanceQueryParam implements Serializable {
 	public Number getUserId() {
 		return userId;
 	}
-
-
 }

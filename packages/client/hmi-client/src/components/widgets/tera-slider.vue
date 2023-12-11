@@ -68,6 +68,7 @@ const sidePanelTabStyle = computed(
 
 .slider {
 	outline: 1px solid var(--surface-border-light);
+	z-index: 0;
 }
 
 .slider-content-container {

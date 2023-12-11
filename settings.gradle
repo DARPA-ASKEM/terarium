@@ -8,5 +8,5 @@ pluginManagement {
 
 rootProject.name = "terarium"
 
-include "packages:server"
-
+include ":packages:server"
+include ':packages:db-migration'

@@ -43,7 +43,7 @@ export async function getBulkModels(modelIDs: string[]) {
  * @return Array<Model>|null - the list of all models, or null if none returned by API
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions');
+	const response = await API.get('/models/descriptions?page_size=200');
 	return response?.data ?? null;
 }
 
@@ -66,6 +66,8 @@ export async function getModelConfigurations(modelId: string): Promise<ModelConf
 
 /**
  * Reconstruct an petrinet AMR's ode semantics
+ *
+ * @deprecated moving to mira-stratify
  */
 export async function reconstructAMR(amr: any) {
 	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
@@ -86,5 +88,9 @@ export async function addNewModelToProject(modelName: string): Promise<string | 
 
 // A helper function to check if a model is empty.
 export function isModelEmpty(model: Model) {
-	return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
+	if (model.header.schema_name === 'petrinet') {
+		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
+	}
+	// TODO: support different frameworks' version of empty
+	return false;
 }

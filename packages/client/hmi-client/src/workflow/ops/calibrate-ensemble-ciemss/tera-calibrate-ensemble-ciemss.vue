@@ -1,207 +1,204 @@
 <template>
-	<section class="tera-ensemble">
-		<div class="ensemble-header p-buttonset">
-			<Button
-				label="Input"
-				severity="secondary"
-				icon="pi pi-sign-in"
-				size="small"
-				:active="activeTab === EnsembleTabs.input"
-				@click="activeTab = EnsembleTabs.input"
-			/>
-			<Button
-				label="Ouput"
-				severity="secondary"
-				icon="pi pi-sign-out"
-				size="small"
-				:active="activeTab === EnsembleTabs.output"
-				@click="activeTab = EnsembleTabs.output"
-			/>
-		</div>
-		<div v-if="activeTab === EnsembleTabs.output && runResults" class="simulate-container">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:initial-data="csvAsset"
-				:chartConfig="cfg"
-				has-mean-line
-				@configuration-change="chartConfigurationChange(index, $event)"
-			/>
-			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add chart"
-				icon="pi pi-plus"
-			/>
-			<Button
-				class="add-chart"
-				title="Saves the current version of the model as a new Terarium asset"
-				@click="showSaveInput = !showSaveInput"
-			>
-				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Save as</span>
-			</Button>
-			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
-				<i
-					v-if="useProjects().activeProject.value?.id"
-					class="pi pi-check i"
-					:class="{ save: hasValidDatasetName }"
-					@click="saveDatasetToProject"
-				></i>
-			</span>
-		</div>
-
-		<div v-else-if="activeTab === EnsembleTabs.input && node" class="simulate-container">
-			<Accordion :multiple="true" :active-index="[0, 1, 2]">
-				<AccordionTab header="Model Weights">
-					<div class="model-weights">
-						<section class="ensemble-calibration-mode">
-							<label>
-								<input
-									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.EQUALWEIGHTS"
-								/>
-								{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
-							</label>
-							<label>
-								<input
-									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.CALIBRATIONWEIGHTS"
-									:disabled="disabledCalibrationWeights"
-								/>
-								{{ EnsembleCalibrationMode.CALIBRATIONWEIGHTS }}
-							</label>
-							<label>
-								<input
-									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.CUSTOM"
-								/>
-								{{ EnsembleCalibrationMode.CUSTOM }}
-							</label>
-						</section>
-						<!-- Turn this into a horizontal bar chart -->
-						<section class="ensemble-calibration-graph">
-							<Chart
-								v-if="
-									ensembleCalibrationMode === EnsembleCalibrationMode.CALIBRATIONWEIGHTS ||
-									ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS
-								"
-								type="bar"
-								:height="200"
-								:data="setBarChartData()"
-								:options="setChartOptions()"
-								:plugins="dataLabelPlugin"
-							/>
-							<table v-else class="p-datatable-table">
-								<thead class="p-datatable-thead">
-									<th>Model Config ID</th>
-									<th>Weight</th>
-								</thead>
-								<tbody class="p-datatable-tbody">
-									<tr v-for="(id, i) in listModelIds" :key="i">
-										<td>
-											{{ id }}
-										</td>
-										<td v-if="customWeights === false">
-											{{ ensembleConfigs[i].weight }}
-										</td>
-										<td v-else>
-											<InputNumber
-												mode="decimal"
-												:min-fraction-digits="0"
-												:max-fraction-digits="7"
-												v-model="ensembleConfigs[i].weight"
-											/>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</section>
-					</div>
-				</AccordionTab>
-				<AccordionTab header="Mapping">
-					<template v-if="ensembleConfigs.length > 0">
-						<table>
-							<tr>
-								<th>Ensemble Variables</th>
-								<th v-for="(element, i) in ensembleConfigs" :key="i">
-									{{ element.id }}
-								</th>
-							</tr>
-							<tr>
-								<div class="row-header">
-									<td
-										v-for="(element, i) in Object.keys(ensembleConfigs[0].solutionMappings)"
-										:key="i"
-									>
-										{{ element }}
-									</td>
-								</div>
-								<td v-for="i in ensembleConfigs.length" :key="i">
-									<template
-										v-for="element in Object.keys(ensembleConfigs[i - 1].solutionMappings)"
-										:key="element"
-									>
-										<Dropdown
-											v-model="ensembleConfigs[i - 1].solutionMappings[element]"
-											:options="allModelOptions[i - 1]"
-										/>
-									</template>
-								</td>
-							</tr>
-						</table>
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<section>
+			<section class="tera-ensemble">
+				<SelectButton
+					:model-value="view"
+					@change="if ($event.value) view = $event.value;"
+					:options="viewOptions"
+					option-value="value"
+				>
+					<template #option="{ option }">
+						<i :class="`${option.icon} p-button-icon-left`" />
+						<span class="p-button-label">{{ option.value }}</span>
 					</template>
-
-					<Dropdown
-						style="width: 50%"
-						v-model="newSolutionMappingKey"
-						:options="datasetColumnNames"
-						placeholder="Variable Name"
+				</SelectButton>
+				<div v-if="view === CalibrateView.Output && runResults" class="simulate-container">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.chartConfigs"
+						:key="index"
+						:run-results="runResults"
+						:initial-data="csvAsset"
+						:chartConfig="cfg"
+						has-mean-line
+						@configuration-change="chartConfigurationChange(index, $event)"
 					/>
 					<Button
-						class="p-button-sm p-button-outlined"
+						class="add-chart"
+						text
+						:outlined="true"
+						@click="addChart"
+						label="Add chart"
 						icon="pi pi-plus"
-						label="Add mapping"
-						@click="addMapping"
 					/>
-				</AccordionTab>
-				<AccordionTab header="Time Span">
-					<table>
-						<thead class="p-datatable-thead">
-							<th>Units</th>
-							<th>Number of Samples</th>
-							<th>Number of iterations</th>
-							<th>Total Population</th>
-						</thead>
-						<tbody class="p-datatable-tbody">
-							<td>Steps</td>
-							<td>
-								<InputNumber v-model="extra.numSamples" />
-							</td>
-							<td>
-								<InputNumber v-model="extra.numIterations" />
-							</td>
-							<td>
-								<InputNumber v-model="extra.totalPopulation" />
-							</td>
-						</tbody>
-					</table>
-				</AccordionTab>
-			</Accordion>
-		</div>
-	</section>
+					<Button
+						class="add-chart"
+						title="Saves the current version of the model as a new Terarium asset"
+						@click="showSaveInput = !showSaveInput"
+					>
+						<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+						<span class="p-button-text">Save as</span>
+					</Button>
+					<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+						<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+						<i
+							class="pi pi-times i"
+							:class="{ clear: hasValidDatasetName }"
+							@click="saveAsName = ''"
+						></i>
+						<i
+							v-if="useProjects().activeProject.value?.id"
+							class="pi pi-check i"
+							:class="{ save: hasValidDatasetName }"
+							@click="saveDatasetToProject"
+						></i>
+					</span>
+				</div>
+
+				<div v-else-if="view === CalibrateView.Input && node" class="simulate-container">
+					<Accordion :multiple="true" :active-index="[0, 1, 2]">
+						<AccordionTab header="Model Weights">
+							<div class="model-weights">
+								<section class="ensemble-calibration-mode">
+									<label>
+										<input
+											type="radio"
+											v-model="ensembleCalibrationMode"
+											:value="EnsembleCalibrationMode.EQUALWEIGHTS"
+										/>
+										{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
+									</label>
+									<label>
+										<input
+											type="radio"
+											v-model="ensembleCalibrationMode"
+											:value="EnsembleCalibrationMode.CALIBRATIONWEIGHTS"
+											:disabled="disabledCalibrationWeights"
+										/>
+										{{ EnsembleCalibrationMode.CALIBRATIONWEIGHTS }}
+									</label>
+									<label>
+										<input
+											type="radio"
+											v-model="ensembleCalibrationMode"
+											:value="EnsembleCalibrationMode.CUSTOM"
+										/>
+										{{ EnsembleCalibrationMode.CUSTOM }}
+									</label>
+								</section>
+								<!-- Turn this into a horizontal bar chart -->
+								<section class="ensemble-calibration-graph">
+									<Chart
+										v-if="
+											ensembleCalibrationMode === EnsembleCalibrationMode.CALIBRATIONWEIGHTS ||
+											ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS
+										"
+										type="bar"
+										:height="200"
+										:data="setBarChartData()"
+										:options="setChartOptions()"
+										:plugins="dataLabelPlugin"
+									/>
+									<table v-else class="p-datatable-table">
+										<thead class="p-datatable-thead">
+											<th>Model Config ID</th>
+											<th>Weight</th>
+										</thead>
+										<tbody class="p-datatable-tbody">
+											<tr v-for="(id, i) in listModelIds" :key="i">
+												<td>
+													{{ id }}
+												</td>
+												<td v-if="customWeights === false">
+													{{ ensembleConfigs[i].weight }}
+												</td>
+												<td v-else>
+													<InputNumber
+														mode="decimal"
+														:min-fraction-digits="0"
+														:max-fraction-digits="7"
+														v-model="ensembleConfigs[i].weight"
+													/>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</section>
+							</div>
+						</AccordionTab>
+						<AccordionTab header="Mapping">
+							<template v-if="ensembleConfigs.length > 0">
+								<table>
+									<tr>
+										<th>Ensemble Variables</th>
+										<th v-for="(element, i) in ensembleConfigs" :key="i">
+											{{ element.id }}
+										</th>
+									</tr>
+									<tr>
+										<div class="row-header">
+											<td
+												v-for="(element, i) in Object.keys(ensembleConfigs[0].solutionMappings)"
+												:key="i"
+											>
+												{{ element }}
+											</td>
+										</div>
+										<td v-for="i in ensembleConfigs.length" :key="i">
+											<template
+												v-for="element in Object.keys(ensembleConfigs[i - 1].solutionMappings)"
+												:key="element"
+											>
+												<Dropdown
+													v-model="ensembleConfigs[i - 1].solutionMappings[element]"
+													:options="allModelOptions[i - 1]"
+												/>
+											</template>
+										</td>
+									</tr>
+								</table>
+							</template>
+
+							<Dropdown
+								style="width: 50%"
+								v-model="newSolutionMappingKey"
+								:options="datasetColumnNames"
+								placeholder="Variable Name"
+							/>
+							<Button
+								class="p-button-sm p-button-outlined"
+								icon="pi pi-plus"
+								label="Add mapping"
+								@click="addMapping"
+							/>
+						</AccordionTab>
+						<AccordionTab header="Time Span">
+							<table>
+								<thead class="p-datatable-thead">
+									<th>Units</th>
+									<th>Number of Samples</th>
+									<th>Number of iterations</th>
+									<th>Total Population</th>
+								</thead>
+								<tbody class="p-datatable-tbody">
+									<td>Steps</td>
+									<td>
+										<InputNumber v-model="extra.numSamples" />
+									</td>
+									<td>
+										<InputNumber v-model="extra.numIterations" />
+									</td>
+									<td>
+										<InputNumber v-model="extra.totalPopulation" />
+									</td>
+								</tbody>
+							</table>
+						</AccordionTab>
+					</Accordion>
+				</div>
+			</section>
+		</section>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -210,7 +207,6 @@ import { ref, shallowRef, computed, watch } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
-import { workflowEventBus } from '@/services/workflow';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
@@ -224,6 +220,8 @@ import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import SelectButton from 'primevue/selectbutton';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -234,10 +232,11 @@ const dataLabelPlugin = [ChartDataLabels];
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
+const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
-enum EnsembleTabs {
-	input,
-	output
+enum CalibrateView {
+	Input = 'Input',
+	Output = 'Output'
 }
 enum EnsembleCalibrationMode {
 	EQUALWEIGHTS = 'equalWeights',
@@ -253,7 +252,11 @@ const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
-const activeTab = ref(EnsembleTabs.input);
+const view = ref(CalibrateView.Input);
+const viewOptions = ref([
+	{ value: CalibrateView.Input, icon: 'pi pi-sign-in' },
+	{ value: CalibrateView.Output, icon: 'pi pi-sign-out' }
+]);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
@@ -285,11 +288,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 const calculateWeights = () => {
@@ -317,11 +316,7 @@ function addMapping() {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 }
 
 const setBarChartData = () => {
@@ -386,11 +381,7 @@ const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
 
-	workflowEventBus.emitNodeStateChange({
-		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		state
-	});
+	emit('update-state', state);
 };
 
 // assume only one run for now
@@ -402,10 +393,10 @@ const watchCompletedRunList = async () => {
 };
 
 async function saveDatasetToProject() {
-	const { activeProject, get } = useProjects();
+	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
 		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
-			get();
+			refresh();
 		}
 		showSaveInput.value = false;
 	}
@@ -446,10 +437,10 @@ watch(
 		allModelOptions.value = [];
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
 			const tempList: string[] = [];
-			allModelConfigurations.value[i].configuration.model.states.forEach((element) => {
+			allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
 				tempList.push(element.id);
 			});
-			allModelConfigurations.value[i].configuration.semantics.ode.observables.forEach((element) =>
+			allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
 				tempList.push(element.id)
 			);
 			allModelOptions.value.push(tempList);
@@ -460,11 +451,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.mapping = ensembleConfigs.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	},
 	{ immediate: true }
 );
@@ -475,11 +462,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.extra = extra.value;
 
-		workflowEventBus.emitNodeStateChange({
-			workflowId: props.node.workflowId,
-			nodeId: props.node.id,
-			state
-		});
+		emit('update-state', state);
 	},
 	{ immediate: true }
 );

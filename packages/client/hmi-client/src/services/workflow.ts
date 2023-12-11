@@ -1,5 +1,9 @@
+import { Component } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
-import _ from 'lodash';
+import { logger } from '@/utils/logger';
+import { EventEmitter } from '@/utils/emitter';
 import {
 	Operation,
 	Position,
@@ -8,19 +12,17 @@ import {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPortStatus,
-	WorkflowStatus
+	OperatorStatus,
+	WorkflowPort,
+	WorkflowOutput
 } from '@/types/workflow';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
  * not optimized, on the account that we don't expect most workflow graphs to
  * exceed say ... 10-12 nodes with 30-40 edges.
  *
- * TODO:
- * - Should we update workflow node status on modification???
  */
-
 export const emptyWorkflow = (name: string = 'test', description: string = '') => {
 	const workflow: Workflow = {
 		id: uuidv4(),
@@ -56,6 +58,7 @@ export const addNode = (
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null,
+			isOptional: false,
 			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
@@ -68,7 +71,7 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		statusCode: WorkflowStatus.INVALID,
+		status: OperatorStatus.INVALID,
 
 		width: options?.size?.width ?? defaultNodeSize.width,
 		height: options?.size?.height ?? defaultNodeSize.height
@@ -145,18 +148,20 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	const edgeToRemove = wf.edges.find((d) => d.id === id);
 	if (!edgeToRemove) return;
 
-	// Remove the data refernece at the targetPort
+	// Remove the data reference at the targetPort
 	const targetNode = wf.nodes.find((d) => d.id === edgeToRemove.target);
 	if (!targetNode) return;
 	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
 	if (!targetPort) return;
 	targetPort.value = null;
+	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
+	delete targetPort.label;
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
 
 	// If there are no more references reset the connected status of the source node
-	if (wf.edges.filter((e) => e.source === edgeToRemove.source).length === 0) {
+	if (_.isEmpty(wf.edges.filter((e) => e.source === edgeToRemove.source))) {
 		const sourceNode = wf.nodes.find((d) => d.id === edgeToRemove.source);
 		if (!sourceNode) return;
 		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
@@ -182,6 +187,29 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	if (!node) return;
 	node.state = state;
 };
+
+// Get port label for frontend
+const defaultPortLabels = {
+	modelId: 'Model',
+	modelConfigId: 'Model configuration',
+	datasetId: 'Dataset',
+	codeAssetId: 'Code asset'
+};
+
+export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
+	let portLabel = type; // Initialize to port type (fallback)
+
+	// Assign to name of port value
+	if (label) portLabel = label;
+	// Assign to default label using port type
+	else if (defaultPortLabels[type]) {
+		portLabel = defaultPortLabels[type];
+	}
+
+	if (isOptional) portLabel = portLabel.concat(' (optional)');
+
+	return portLabel;
+}
 
 /**
  * API hooks: Handles reading and writing back to the store
@@ -209,53 +237,7 @@ export const getWorkflow = async (id: string) => {
 /// /////////////////////////////////////////////////////////////////////////////
 // Events bus for workflow
 /// /////////////////////////////////////////////////////////////////////////////
-type EventCallback = (args: any) => void;
-type EventName = string | symbol;
-class EventEmitter {
-	listeners: Map<EventName, Set<EventCallback>> = new Map();
-
-	on(eventName: EventName, fn: EventCallback): void {
-		if (!this.listeners.has(eventName)) {
-			this.listeners.set(eventName, new Set());
-		}
-		this.listeners.get(eventName)?.add(fn);
-	}
-
-	once(eventName: EventName, fn: EventCallback): void {
-		if (!this.listeners.has(eventName)) {
-			this.listeners.set(eventName, new Set());
-		}
-
-		const onceWrapper = (args: any) => {
-			fn(args);
-			this.off(eventName, onceWrapper);
-		};
-		this.listeners.get(eventName)?.add(onceWrapper);
-	}
-
-	off(eventName: EventName, fn: EventCallback): void {
-		const set = this.listeners.get(eventName);
-		if (set) {
-			set.delete(fn);
-		}
-	}
-
-	removeAllEvents(eventName: EventName): void {
-		if (this.listeners.has(eventName)) {
-			this.listeners.delete(eventName);
-		}
-	}
-
-	emit(eventName: EventName, args?: any): boolean {
-		const fns = this.listeners.get(eventName);
-		if (!fns) return false;
-
-		fns.forEach((f) => {
-			f(args);
-		});
-		return true;
-	}
-
+class WorkflowEventEmitter extends EventEmitter {
 	emitNodeStateChange(payload: { workflowId: string; nodeId: string; state: any }) {
 		this.emit('node-state-change', payload);
 	}
@@ -265,4 +247,104 @@ class EventEmitter {
 	}
 }
 
-export const workflowEventBus = new EventEmitter();
+export const workflowEventBus = new WorkflowEventEmitter();
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Workflow component registry, this is used to
+// dynamically determine which component should be rendered
+/// /////////////////////////////////////////////////////////////////////////////
+interface OperatorImport {
+	name: string;
+	operation: Operation;
+	node: Component;
+	drilldown: Component;
+}
+export class WorkflowRegistry {
+	operationMap: Map<string, Operation>;
+
+	nodeMap: Map<string, Component>;
+
+	drilldownMap: Map<string, Component>;
+
+	constructor() {
+		this.operationMap = new Map();
+		this.nodeMap = new Map();
+		this.drilldownMap = new Map();
+	}
+
+	set(name: string, operation: Operation, node: Component, drilldown: Component) {
+		this.operationMap.set(name, operation);
+		this.nodeMap.set(name, node);
+		this.drilldownMap.set(name, drilldown);
+	}
+
+	// shortcut
+	registerOp(op: OperatorImport) {
+		this.set(op.name, op.operation, op.node, op.drilldown);
+	}
+
+	getOperation(name: string) {
+		return this.operationMap.get(name);
+	}
+
+	getNode(name: string) {
+		return this.nodeMap.get(name);
+	}
+
+	getDrilldown(name: string) {
+		return this.drilldownMap.get(name);
+	}
+
+	remove(name: string) {
+		this.nodeMap.delete(name);
+		this.drilldownMap.delete(name);
+	}
+}
+
+///
+// Operator
+///
+
+/**
+ * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
+ * current state was not previously stored as a WorkflowOutput, this function first saves the current state
+ * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
+ *
+ * @param operator - The operator whose state is to be updated.
+ * @param selectedWorkflowOutputId - The ID of the WorkflowOutput whose data will be used to update the operator's state.
+ */
+
+export function selectOutput(
+	operator: WorkflowNode<any>,
+	selectedWorkflowOutputId: WorkflowOutput<any>['id']
+) {
+	// Check if the current state existed previously in the outputs
+	let current = operator.outputs.find((output) => output.id === operator.active);
+	if (!current) {
+		// the current state was never saved in the outputs prior
+		current = {
+			id: uuidv4(),
+			type: '',
+			status: WorkflowPortStatus.NOT_CONNECTED,
+			isOptional: false
+		} as WorkflowOutput<any>;
+		operator.outputs.push(current);
+	}
+
+	// Update the current state within the outputs
+	current.state = cloneDeep(operator.state);
+	current.operatorStatus = operator.status;
+	current.timestamp = new Date();
+
+	// Update the Operator state with the selected one
+	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
+	if (selected) {
+		operator.state = selected.state;
+		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
+		operator.active = selected.id;
+	} else {
+		logger.warn(
+			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
+		);
+	}
+}

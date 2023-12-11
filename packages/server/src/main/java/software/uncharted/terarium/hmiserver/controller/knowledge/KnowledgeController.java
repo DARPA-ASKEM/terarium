@@ -4,11 +4,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
+
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ArtifactProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +35,9 @@ public class KnowledgeController {
 	@Autowired
 	ArtifactProxy artifactProxy;
 
+	@Autowired
+	ProvenanceProxy provenanceProxy;
+
 	/**
 	 * Retrieve the status of an extraction job
 	 *
@@ -35,6 +45,7 @@ public class KnowledgeController {
 	 * @return the status of the extraction job
 	 */
 	@GetMapping("/status/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> getTaskStatus(
 		@PathVariable("id") final String id) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.getTaskStatus(id).getBody());
@@ -51,6 +62,7 @@ public class KnowledgeController {
 	 * @return (ExtractionResponse): The response from the extraction service
 	 */
 	@PostMapping("/equations-to-model")
+	@Secured(Roles.USER)
 	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(@RequestBody Map<String, Object> requestMap) {
 		String format = (String) requestMap.getOrDefault("format", "latex");
 		String framework = (String) requestMap.getOrDefault("framework", "petrinet");
@@ -61,23 +73,24 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId, equations).getBody());
 	}
 
-	;
-
 	/**
 	 * Transform source code to AMR
 	 *
-	 * @param codeId      (String): id of the code artifact
-	 * @param name        (String): the name to set on the newly created model
-	 * @param description (String): the description to set on the newly created model
+	 * @param codeId       (String): id of the code artifact
+	 * @param name         (String): the name to set on the newly created model
+	 * @param description  (String): the description to set on the newly created model
+	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over specified dynamics from the code object in TDS
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code-to-amr")
+	@Secured(Roles.USER)
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
 		@RequestParam("code_id") String codeId,
-		@RequestParam("name") String name,
-		@RequestParam("description") String description
+		@RequestParam(name = "name", required = false) String name,
+		@RequestParam(name = "description", required = false) String description,
+		@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly
 	) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description, dynamicsOnly).getBody());
 	}
 
 
@@ -94,6 +107,7 @@ public class KnowledgeController {
 	 * @return response status of queueing this operation
 	 */
 	@PostMapping("/pdf-extractions")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFExtractions(
 		@RequestParam("document_id") String documentId,
 		@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
@@ -104,8 +118,6 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFExtractions(documentId, annotateSkema, annotateMIT, name, description).getBody());
 	}
 
-	;
-
 	/**
 	 * Post a PDF to the extraction service to get text
 	 *
@@ -113,6 +125,7 @@ public class KnowledgeController {
 	 * @return response status of queueing this operation
 	 */
 	@PostMapping("/pdf-to-cosmos")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") String documentId) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToCosmos(documentId).getBody());
 	}
@@ -125,10 +138,21 @@ public class KnowledgeController {
 	 * @return the profiled model
 	 */
 	@PostMapping("/profile-model/{model_id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileModel(
 		@PathVariable("model_id") String modelId,
 		@RequestParam("document_id") String documentId
 	) {
+
+		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId, ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
+		try {
+			ResponseEntity<JsonNode> r = provenanceProxy.createProvenance(provenancePayload);
+			if (!r.getStatusCode().is2xxSuccessful())
+			   log.error("unable to create provenance");
+		} catch (Exception e) {
+			   log.error("unable to create provenance", e);
+		}
+
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, documentId).getBody());
 	}
 
@@ -142,10 +166,20 @@ public class KnowledgeController {
 	 * @return the profiled dataset
 	 */
 	@PostMapping("/profile-dataset/{dataset_id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileDataset(
 		@PathVariable("dataset_id") String datasetId,
 		@RequestParam(name = "document_id", required = false) String documentId
 	) {
+
+		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId, ProvenanceType.DATASET, documentId, ProvenanceType.DOCUMENT);
+		try {
+			ResponseEntity<JsonNode> r = provenanceProxy.createProvenance(provenancePayload);
+			if (!r.getStatusCode().is2xxSuccessful())
+			   log.error("unable to create provenance");
+		} catch (Exception e) {
+			   log.error("unable to create provenance", e);
+		}
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
 	}
 
@@ -155,10 +189,11 @@ public class KnowledgeController {
 	 * Profile a model
 	 *
 	 * @param modelId    (String): The ID of the model to profile
-	 * @param artifactId (String): The text of the document to profile
+	 * @param documentId (String): The text of the document to profile
 	 * @return the profiled model
 	 */
 	@PostMapping("/link-amr")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postLinkAmr(
 		@RequestParam("document_id") String documentId,
 		@RequestParam("model_id") String modelId

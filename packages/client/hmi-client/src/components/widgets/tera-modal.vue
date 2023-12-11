@@ -59,8 +59,9 @@ aside {
 
 main > section {
 	max-height: 95vh;
+	max-width: 640px;
 	background-color: #fff;
-	border-radius: 0.5rem;
+	border-radius: var(--modal-border-radius);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	margin: 0px auto;
 	padding: 2rem 0;
@@ -108,5 +109,17 @@ footer {
 .modal-leave-to main > section {
 	-webkit-transform: scale(0.9);
 	transform: scale(0.9);
+}
+
+.content:deep(label) {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.content:deep(input),
+.content:deep(textarea) {
+	display: block;
+	margin-bottom: 1rem;
+	width: 100%;
 }
 </style>

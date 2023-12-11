@@ -55,10 +55,7 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 		// Merge with existing roles (or create the new user if this is first login
 		final String userId = jwt.getClaimAsString(StandardClaimNames.SUB);
 		User databaseUser = userService.getById(userId);
-		User jwtUser = adminClientService.getUserFromJwt(jwt);
-		if (databaseUser == null) {
-			databaseUser = initializeUser(jwt, realmRoles);
-		}
+		User jwtUser = initializeUser(jwt, realmRoles);
 		if (User.isDirty(databaseUser, jwtUser)) {
 			databaseUser = userService.save(jwtUser.merge(databaseUser));
 		}

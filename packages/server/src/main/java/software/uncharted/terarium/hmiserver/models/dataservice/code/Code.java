@@ -5,9 +5,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
+import java.util.Map;
 import java.time.Instant;
 
 @Data
@@ -29,16 +31,14 @@ public class Code {
 	/* The description of the code. */
 	private String description;
 
-	/* The name of the file in this code*/
-	private String filename;
+	/* Files that contain dynamics */
+	@TSOptional
+	private Map<String, CodeFile> files;
 
 	/* The optional URL for where this code came from */
 	@TSOptional
 	@JsonAlias("repo_url")
 	private String repoUrl;
-
-	/* The programming language of this code */
-	private ProgrammingLanguage language;
 
 	/* The optional metadata for this code */
 	@TSOptional
@@ -48,7 +48,8 @@ public class Code {
 	public enum ProgrammingLanguage {
 		PYTHON("python"),
 		R("r"),
-		Julia("julia");
+		Julia("julia"),
+		ZIP("zip");
 
 		public final String language;
 

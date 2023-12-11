@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 @RequestMapping("/documents")
 @RestController
@@ -26,6 +28,7 @@ public class XDDDocumentController {
 
 	// NOTE: the query parameters match the proxy version and the type XDDSearchPayload
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<XDDResponse<DocumentsResponseOK>> getDocuments(
 		@RequestParam(required = false, name = "docid") String docid,
 		@RequestParam(required = false, name = "doi") String doi,
@@ -49,7 +52,7 @@ public class XDDDocumentController {
 		@RequestParam(required = false, name = "known_entities") String known_entities,
 		@RequestParam(required = false, name = "github_url") String github_url,
 		@RequestParam(required = false, name = "similar_to") String similar_to,
-		@RequestParam(required = false, name = "entity_limit", defaultValue = "5") String entity_limit
+		@RequestParam(required = false, name = "askem_object_limit", defaultValue = "5") String askem_object_limit
 	) {
 
 		// only go ahead with the query if at least one param is present
@@ -85,7 +88,7 @@ public class XDDDocumentController {
 
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(apiKey,
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_to, entity_limit);
+					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url, similar_to, askem_object_limit);
 
 				if (doc.getErrorMessage() != null) {
 					return ResponseEntity.internalServerError().build();

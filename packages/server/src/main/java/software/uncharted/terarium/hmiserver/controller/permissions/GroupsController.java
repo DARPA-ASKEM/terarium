@@ -6,11 +6,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionProject;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
+import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
@@ -28,34 +34,40 @@ public class GroupsController {
 	private final CurrentUserService currentUserService;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<PermissionGroup>> getGroups(
 		@RequestParam(name = "page_size", defaultValue = "1000") Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0") Integer page
 	) {
-		return ResponseEntity.ok(reBACService.getGroups());
+		List<PermissionGroup> groups = reBACService.getGroups();
+		return ResponseEntity.ok(groups);
 	}
 
 	@GetMapping("/{groupId}")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<PermissionGroup> getGroup(
 		@PathVariable("groupId") final String groupId
 	) {
 		try {
 			RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacGroup)) {
+			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).isMemberOf(rebacGroup)) {
 				List<RebacPermissionRelationship> relationships = reBACService.getRelationships(rebacGroup.getSchemaObject());
-
-//				PermissionRelationships permissions = new PermissionRelationships();
-//				for (RebacPermissionRelationship permissionRelationship : relationships) {
-//					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-//						permissions.addUser(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-//					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-//						permissions.addGroup(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-//					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
-//						permissions.addProject(permissionRelationship.getSubjectId(), permissionRelationship.getRelationship());
-//					}
-//				}
+				PermissionRelationships permissions = new PermissionRelationships();
+				for (RebacPermissionRelationship permissionRelationship : relationships) {
+					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+						PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+						permissions.addUser(user, permissionRelationship.getRelationship());
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+						PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
+						permissions.addGroup(group, permissionRelationship.getRelationship());
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
+						PermissionProject project = new PermissionProject(permissionRelationship.getSubjectId());
+						permissions.addProject(project, permissionRelationship.getRelationship());
+					}
+				}
 
 				PermissionGroup permissionGroup = reBACService.getGroup(groupId);
+				permissionGroup.setPermissionRelationships(permissions);
 				return ResponseEntity.ok(permissionGroup);
 			}
 			return ResponseEntity.notFound().build();
@@ -66,20 +78,18 @@ public class GroupsController {
 	}
 
 	@PostMapping
-	public ResponseEntity<PermissionGroup> addGroup(
+	@Secured({Roles.GROUP, Roles.ADMIN})
+	public ResponseEntity<PermissionGroup> createGroup(
 		@RequestParam(name = "name") final String name
 	) {
 		try {
 			RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
-			if (rebacUser.canAdministrate(new RebacGroup(reBACService.PUBLIC_GROUP_ID, reBACService))) {
-				try {
-					PermissionGroup permissionGroup = rebacUser.addGroup(name);
-					return ResponseEntity.ok(permissionGroup);
-				} catch (RelationshipAlreadyExistsException e) {
-					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-				}
+			try {
+				PermissionGroup permissionGroup = rebacUser.createGroup(name);
+				return ResponseEntity.ok(permissionGroup);
+			} catch (RelationshipAlreadyExistsException e) {
+				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 			}
-			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			log.error("Error adding group", e);
 			return ResponseEntity.internalServerError().build();
@@ -87,14 +97,15 @@ public class GroupsController {
 	}
 
 	@PostMapping("/{groupId}/permissions/user/{userId}/{relationship}")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<JsonNode> addGroupUserPermissions(
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("userId") final String userId,
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			RebacGroup what = new RebacGroup(userId, reBACService);
-			RebacGroup who = new RebacGroup(groupId, reBACService);
+			RebacGroup what = new RebacGroup(groupId, reBACService);
+			RebacUser who = new RebacUser(userId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					what.setPermissionRelationships(who, relationship);
@@ -103,7 +114,7 @@ public class GroupsController {
 					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 				}
 			}
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		} catch (Exception e) {
 			log.error("Error adding group user permission relationships", e);
 			return ResponseEntity.internalServerError().build();
@@ -111,6 +122,7 @@ public class GroupsController {
 	}
 
 	@PutMapping("/{groupId}/permissions/user/{userId}/{oldRelationship}")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<JsonNode> updateGroupUserPermissions(
 		@PathVariable("groupId") final String groupId,
 		@PathVariable("userId") final String userId,
@@ -118,8 +130,11 @@ public class GroupsController {
 		@RequestParam("to") final String newRelationship
 	) {
 		try {
-			RebacGroup what = new RebacGroup(userId, reBACService);
-			RebacGroup who = new RebacGroup(groupId, reBACService);
+			if (oldRelationship.equals(newRelationship)) {
+				return ResponseEntity.badRequest().build();
+			}
+			RebacGroup what = new RebacGroup(groupId, reBACService);
+			RebacUser who = new RebacUser(userId, reBACService);
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					 what.removePermissionRelationships(who, oldRelationship);
@@ -129,7 +144,7 @@ public class GroupsController {
 					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 				}
 			}
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		} catch (Exception e) {
 			log.error("Error adding group user permission relationships", e);
 			return ResponseEntity.internalServerError().build();
@@ -137,6 +152,7 @@ public class GroupsController {
 	}
 
 	@DeleteMapping("/{groupId}/permissions/user/{userId}/{relationship}")
+	@Secured({Roles.GROUP, Roles.ADMIN})
 	public ResponseEntity<JsonNode> removeGroupUserPermissions(
 		@PathVariable("groupId") final String groupdId,
 		@PathVariable("userId") final String userId,
@@ -153,7 +169,7 @@ public class GroupsController {
 					return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 				}
 			}
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		} catch (Exception e) {
 			log.error("Error removing group user permission relationships", e);
 			return ResponseEntity.internalServerError().build();

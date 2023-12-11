@@ -1,5 +1,5 @@
 <template>
-	<header>
+	<nav>
 		<section class="header-left">
 			<router-link :to="RoutePath.Home">
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
@@ -47,7 +47,6 @@
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
-				class="modal"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
 			>
 				<template #header>
@@ -119,7 +118,7 @@
 				</template>
 			</tera-modal>
 		</Teleport>
-	</header>
+	</nav>
 </template>
 
 <script setup lang="ts">
@@ -341,6 +340,13 @@ const userMenuItems = ref([
 		}
 	},
 	{
+		label: 'User Administration',
+		command: () => {
+			router.push(RoutePath.UserAdmin);
+		},
+		visible: auth.user?.roles.some((r) => r.name === 'ADMIN')
+	},
+	{
 		label: 'Logout',
 		command: () => {
 			isLogoutDialog.value = true;
@@ -405,7 +411,7 @@ watch(
 </script>
 
 <style scoped>
-header {
+nav {
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
@@ -521,26 +527,9 @@ i {
 	background-color: var(--surface-hover);
 	color: var(--text-color-secondary);
 }
-</style>
-<style>
-/*
- * On it's own style, because the pop-up happened outside of this component.
- * To left align the content with the h1.
- */
+
 .navigation-menu {
 	margin-top: 0.25rem;
 	min-width: fit-content !important;
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
 }
 </style>

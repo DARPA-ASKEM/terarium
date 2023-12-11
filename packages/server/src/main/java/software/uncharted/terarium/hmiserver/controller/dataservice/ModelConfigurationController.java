@@ -4,10 +4,12 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurationProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.List;
 
@@ -21,6 +23,7 @@ public class ModelConfigurationController implements SnakeCaseController {
 	ModelConfigurationProxy proxy;
 
 	@GetMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
 		@RequestParam(name = "page_size", defaultValue = "500") final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0") final Integer page
@@ -29,11 +32,13 @@ public class ModelConfigurationController implements SnakeCaseController {
 	}
 
 	@PostMapping
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createModelConfiguration(@RequestBody ModelConfiguration config) {
 		return ResponseEntity.ok(proxy.createAsset(convertObjectToSnakeCaseJsonNode(config)).getBody());
 	}
 
 	@GetMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
 		@PathVariable("id") String id
 	) {
@@ -41,6 +46,7 @@ public class ModelConfigurationController implements SnakeCaseController {
 	}
 
 	@PutMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateModelConfiguration(
 		@PathVariable("id") String id,
 		@RequestBody ModelConfiguration config
@@ -49,6 +55,7 @@ public class ModelConfigurationController implements SnakeCaseController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteModelConfiguration(
 		@PathVariable("id") String id
 	) {

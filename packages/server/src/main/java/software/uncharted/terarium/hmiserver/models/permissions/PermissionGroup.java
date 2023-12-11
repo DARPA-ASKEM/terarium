@@ -13,6 +13,8 @@ public class PermissionGroup {
 	private String name;
 	@TSOptional
 	private String relationship;
+	@TSOptional
+	private PermissionRelationships permissionRelationships;
 
 	public PermissionGroup(String id, String name) {
 		this.id = id;

@@ -8,7 +8,9 @@ import {
 	CalibrationRequestCiemss,
 	EventType,
 	EnsembleSimulationCiemssRequest,
-	EnsembleCalibrationCiemssRequest
+	EnsembleCalibrationCiemssRequest,
+	ClientEventType,
+	ClientEvent
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
@@ -16,6 +18,7 @@ import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { cloneDeep, isEqual } from 'lodash';
 import { Ref } from 'vue';
 import { useProjects } from '@/composables/project';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -62,15 +65,23 @@ export async function getRunResultJulia(runId: string, filename = 'result.json')
 			params: { filename }
 		});
 		const output = resp.data;
-		const columnNames = (output[0].colindex.names as string[]).join(',');
+		const [states, params] = output;
+
+		const columnNames = (states.colindex.names as string[]).join(',');
 		let csvData: string = columnNames as string;
-		for (let j = 0; j < output[0].columns[0].length; j++) {
+		for (let j = 0; j < states.columns[0].length; j++) {
 			csvData += '\n';
-			for (let i = 0; i < output[0].columns.length; i++) {
-				csvData += `${output[0].columns[i][j]},`;
+			for (let i = 0; i < states.columns.length; i++) {
+				csvData += `${states.columns[i][j]},`;
 			}
 		}
-		return csvData;
+
+		const paramVals = {};
+		Object.entries(params.colindex.lookup).forEach(([key, value]) => {
+			paramVals[key] = params.columns[(value as number) - 1][0];
+		});
+
+		return { csvData, paramVals };
 	} catch (err) {
 		logger.error(err);
 		return null;
@@ -118,7 +129,7 @@ export async function getRunResultCiemss(runId: string, filename = 'result.csv')
 			const keySuffix = keyArr.pop();
 			const keyName = keyArr.join('_');
 
-			if (keySuffix === 'param') {
+			if (keySuffix === 'param' || keySuffix === 'state') {
 				outputRowRunResults[keyName] = inputRow[key];
 				if (!runConfigs[keyName]) {
 					runConfigs[keyName] = [];
@@ -234,6 +245,24 @@ export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => 
 	// return an empty array if no run ids are present
 	return [];
 };
+
+export async function subscribeToUpdateMessages(
+	simulationIds: string[],
+	eventType: ClientEventType,
+	messageHandler: (data: ClientEvent<any>) => void
+) {
+	await API.get(`/simulations/subscribe?simulationIds=${simulationIds}`);
+	await subscribe(eventType, messageHandler);
+}
+
+export async function unsubscribeToUpdateMessages(
+	simulationIds: string[],
+	eventType: ClientEventType,
+	messageHandler: (data: ClientEvent<any>) => void
+) {
+	await API.get(`/simulations/unsubscribe?simulationIds=${simulationIds}`);
+	await unsubscribe(eventType, messageHandler);
+}
 
 export async function simulationPollAction(
 	simulationIds: string[],

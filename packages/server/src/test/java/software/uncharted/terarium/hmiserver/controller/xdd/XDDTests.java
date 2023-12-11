@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -14,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,7 +37,7 @@ public class XDDTests extends TerariumApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails(MockUser.ADAM)
+	@WithMockUser(username="ursula",authorities={Roles.USER})
 	public void canStandardDocSearch() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 
@@ -77,7 +79,7 @@ public class XDDTests extends TerariumApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails(MockUser.ADAM)
+	@WithMockUser(username="ursula",authorities={Roles.USER})
 	public void canSearchWithDateFacet() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 
@@ -121,7 +123,7 @@ public class XDDTests extends TerariumApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails(MockUser.ADAM)
+	@WithMockUser(username="ursula",authorities={Roles.USER})
 	public void canItLimitExtractionsReturned() throws Exception {
 
 		ObjectMapper m = new ObjectMapper();
