@@ -103,7 +103,9 @@
 				:stratified-matrix-type="modalAttributes.stratifiedMatrixType"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
-				@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)"
+				@update-configuration="
+					(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)
+				"
 			/>
 			<tera-modal
 				v-else-if="
@@ -278,7 +280,7 @@ const headerInitials = computed<any[]>(() =>
 const headerParameters = computed<any[]>(() =>
 	stratifiedModelType.value
 		? // ? baseModel.value.transitions.map(({ id }) => id)
-		  [...getUnstratifiedParameters(props.model).keys()]
+			[...getUnstratifiedParameters(props.model).keys()]
 		: configurations.value[0]?.semantics?.ode.parameters?.map(({ id }) => id) ?? []
 );
 const headerInitialsAndParameters = computed(() => [

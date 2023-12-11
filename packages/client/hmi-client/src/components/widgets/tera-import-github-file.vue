@@ -256,8 +256,8 @@ const hasOther: ComputedRef<boolean> = computed(
 	() => !isEmpty(directoryContent?.value?.files?.Other)
 );
 
-const projectOptions = computed(() =>
-	useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
+const projectOptions = computed(
+	() => useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
 );
 
 async function initializeCodeBrowser() {
