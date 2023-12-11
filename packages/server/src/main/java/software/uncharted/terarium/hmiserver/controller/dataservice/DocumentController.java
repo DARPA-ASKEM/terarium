@@ -92,73 +92,107 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) throws IOException {
-		return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+		try {
+			return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
+		} catch (IOException e) {
+			final String error = "Unable to get documents";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseId> createDocument(
-			@RequestBody final DocumentAsset document) throws IOException {
-		documentAssetService.createDocumentAsset(document);
-		return ResponseEntity.ok(new ResponseId().setId(document.getId()));
+			@RequestBody final DocumentAsset document) {
+
+		try {
+			documentAssetService.createDocumentAsset(document);
+			return ResponseEntity.ok(new ResponseId().setId(document.getId()));
+		} catch (IOException e) {
+			final String error = "Unable to create document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<DocumentAsset> getDocument(
-			@PathVariable("id") final String id) throws IOException {
-		final DocumentAsset document = documentAssetService.getDocumentAsset(id);
-		if (document == null) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
-		}
+			@PathVariable("id") final String id) {
 
-		// Test if the document as any assets
-		if (document.getAssets() == null) {
-			return ResponseEntity.ok(document);
-		}
-
-		document.getAssets().forEach(asset -> {
-			try {
-				// Add the S3 bucket url to each asset metadata
-				final String url = documentAssetService.getDownloadUrl(id, asset.getFileName()).getUrl();
-				asset.getMetadata().put("url", url);
-
-				// if the asset os of type equation
-				if (asset.getAssetType().equals(ExtractionAssetType.EQUATION)
-						&& asset.getMetadata().get("equation") == null) {
-					// Fetch the image from the URL
-					final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
-					// Encode the image in Base 64
-					final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
-
-					// Send it to SKEMA to get the Presentation MathML equation
-					final String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
-
-					log.warn("Equation: {}", equation);
-
-					// Add the equations into the metadata
-					asset.getMetadata().put("equation", equation);
-				}
-			} catch (final Exception e) {
-				log.error("Unable to extract S3 url for assets or extract equations", e);
+		try {
+			final DocumentAsset document = documentAssetService.getDocumentAsset(id);
+			if (document == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
 			}
-		});
 
-		// Update data-service with the updated metadata
-		documentAssetService.updateDocumentAsset(document);
+			// Test if the document as any assets
+			if (document.getAssets() == null) {
+				return ResponseEntity.ok(document);
+			}
 
-		// Return the updated document
-		return ResponseEntity.ok(document);
+			document.getAssets().forEach(asset -> {
+				try {
+					// Add the S3 bucket url to each asset metadata
+					final String url = documentAssetService.getDownloadUrl(id, asset.getFileName()).getUrl();
+					asset.getMetadata().put("url", url);
+
+					// if the asset os of type equation
+					if (asset.getAssetType().equals(ExtractionAssetType.EQUATION)
+							&& asset.getMetadata().get("equation") == null) {
+						// Fetch the image from the URL
+						final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
+						// Encode the image in Base 64
+						final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+						// Send it to SKEMA to get the Presentation MathML equation
+						final String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+
+						log.warn("Equation: {}", equation);
+
+						// Add the equations into the metadata
+						asset.getMetadata().put("equation", equation);
+					}
+				} catch (final Exception e) {
+					log.error("Unable to extract S3 url for assets or extract equations", e);
+				}
+			});
+
+			// Update data-service with the updated metadata
+			documentAssetService.updateDocumentAsset(document);
+
+			// Return the updated document
+			return ResponseEntity.ok(document);
+		} catch (IOException e) {
+			final String error = "Unable to get document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteDocument(
-			@PathVariable("id") final String id) throws IOException {
+			@PathVariable("id") final String id) {
 
-		documentAssetService.deleteDocumentAsset(id);
-		return ResponseEntity.ok(new ResponseDeleted("Document", id));
+		try {
+			documentAssetService.deleteDocumentAsset(id);
+			return ResponseEntity.ok(new ResponseDeleted("Document", id));
+		} catch (IOException e) {
+			final String error = "Unable to delete document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	/**
@@ -198,8 +232,10 @@ public class DocumentController {
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
 		} catch (final Exception e) {
-			log.error("Unable to PUT artifact data", e);
-			return ResponseEntity.internalServerError().build();
+			final String error = "Unable to upload document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -211,10 +247,19 @@ public class DocumentController {
 	public ResponseEntity<Integer> uploadDocument(
 			@PathVariable("id") final String id,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") final MultipartFile file) throws IOException {
-		final byte[] fileAsBytes = file.getBytes();
-		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadDocumentHelper(id, filename, fileEntity);
+			@RequestPart("file") final MultipartFile file) {
+
+		try {
+			final byte[] fileAsBytes = file.getBytes();
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			return uploadDocumentHelper(id, filename, fileEntity);
+		} catch (IOException e) {
+			final String error = "Unable to upload document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	/**
@@ -228,78 +273,89 @@ public class DocumentController {
 			@RequestParam("path") final String path,
 			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
-		log.debug("Uploading Document file from github to dataset {}", documentId);
 
-		// download file from GitHub
-		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		return uploadDocumentHelper(documentId, filename, fileEntity);
+		try {
+			log.debug("Uploading Document file from github to dataset {}", documentId);
 
+			// download file from GitHub
+			final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+			final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+			return uploadDocumentHelper(documentId, filename, fileEntity);
+		} catch (Exception e) {
+			final String error = "Unable to upload document from github";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@PostMapping(value = "/createDocumentFromXDD")
 	@Secured(Roles.USER)
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
-			@RequestBody final AddDocumentAssetFromXDDRequest body) throws IOException {
+			@RequestBody final AddDocumentAssetFromXDDRequest body) {
 
-		// build initial response
-		AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
-		response.setExtractionJobId(null);
-		response.setPdfUploadError(false);
-		response.setDocumentAssetId(null);
-
-		// get preliminary info to build document asset
-		Document document = body.getDocument();
-		String projectId = body.getProjectId();
-		String doi = documentAssetService.getDocumentDoi(document);
-		String username = "";// TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
-
-		// get pdf url and filename
-		String fileUrl = null;
-		String filename = null;
 		try {
-			fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
-			filename = DownloadService.pdfNameFromUrl(fileUrl);
+			// build initial response
+			AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
+			response.setExtractionJobId(null);
+			response.setPdfUploadError(false);
+			response.setDocumentAssetId(null);
+
+			// get preliminary info to build document asset
+			Document document = body.getDocument();
+			String projectId = body.getProjectId();
+			String doi = documentAssetService.getDocumentDoi(document);
+			String username = "";// TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
+
+			// get pdf url and filename
+			String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
+			String filename = DownloadService.pdfNameFromUrl(fileUrl);
+
+			XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null, null,
+					null,
+					null, apikey);
+
+			// create a new document asset from the metadata in the xdd document
+			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, username,
+					extractionResponse.getSuccess().getData());
+			if (filename != null)
+				documentAsset.getFileNames().add(filename);
+
+			// Upload the document to TDS in order to get a new ID to pair our files we want
+			// to upload with.
+			final String newDocumentAssetId = documentAssetService.createDocumentAsset(documentAsset).getId();
+			response.setDocumentAssetId(newDocumentAssetId);
+
+			// Upload the PDF from unpaywall
+			String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
+			if (extractionJobId == null)
+				response.setPdfUploadError(true);
+			else
+				response.setExtractionJobId(extractionJobId);
+
+			// Now upload additional extraction files
+			uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
+
+			// add asset to project
+			projectProxy.createAsset(projectId, AssetType.documents, newDocumentAssetId);
+
+			return ResponseEntity.ok(response);
 		} catch (IOException | URISyntaxException e) {
-			throw new RuntimeException(e);
+			final String error = "Unable to upload document from github";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
-
-		XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null, null, null,
-				null, apikey);
-
-		// create a new document asset from the metadata in the xdd document
-		DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, username,
-				extractionResponse.getSuccess().getData());
-		if (filename != null)
-			documentAsset.getFileNames().add(filename);
-
-		// Upload the document to TDS in order to get a new ID to pair our files we want
-		// to upload with.
-		final String newDocumentAssetId = documentAssetService.createDocumentAsset(documentAsset).getId();
-		response.setDocumentAssetId(newDocumentAssetId);
-
-		// Upload the PDF from unpaywall
-		String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
-		if (extractionJobId == null)
-			response.setPdfUploadError(true);
-		else
-			response.setExtractionJobId(extractionJobId);
-
-		// Now upload additional extraction files
-		uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
-
-		// add asset to project
-		projectProxy.createAsset(projectId, AssetType.documents, newDocumentAssetId);
-
-		return ResponseEntity.ok(response);
-
 	}
 
 	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> downloadDocument(
 			@PathVariable("id") final String id,
-			@RequestParam("filename") final String filename) throws IOException {
+			@RequestParam("filename") final String filename) {
+
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
@@ -313,8 +369,11 @@ public class DocumentController {
 			}
 			return ResponseEntity.status(response.getStatusLine().getStatusCode()).build();
 		} catch (final Exception e) {
-			log.error("Unable to GET document data", e);
-			return ResponseEntity.internalServerError().build();
+			final String error = "Unable to download document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -336,8 +395,12 @@ public class DocumentController {
 
 			return ResponseEntity.ok(textFileAsString);
 		} catch (final Exception e) {
-			log.error("Unable to GET document data", e);
-			return ResponseEntity.internalServerError().build();
+
+			final String error = "Unable to download document as text";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 
 	}
