@@ -2,7 +2,6 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { ChartConfig } from '@/types/SimulateConfig';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -23,7 +22,7 @@ export enum CalibrateMethodOptions {
 }
 
 export interface CalibrationOperationStateJulia {
-	chartConfigs: ChartConfig[];
+	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	extra: CalibrateExtraJulia;
 	simulationsInProgress: string[];
