@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +34,7 @@ public class WorkflowController {
 		@ApiResponse(
 			responseCode = "200",
 			description = "Workflows found.",
-			content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)))
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)))
 		),
 		@ApiResponse(
 			responseCode = "204",
@@ -73,7 +74,7 @@ public class WorkflowController {
 		@ApiResponse(
 			responseCode = "200",
 			description = "Workflow found.",
-			content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
 		),
 		@ApiResponse(responseCode = "204",
 			description = "There was no workflow found but no errors occurred",
@@ -111,7 +112,7 @@ public class WorkflowController {
 		@ApiResponse(
 			responseCode = "200",
 			description = "Workflow created.",
-			content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
 		),
 		@ApiResponse(
 			responseCode = "500",
@@ -139,7 +140,7 @@ public class WorkflowController {
 		@ApiResponse(
 			responseCode = "200",
 			description = "Workflow updated.",
-			content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
 		),
 		@ApiResponse(
 			responseCode = "500",
@@ -165,6 +166,35 @@ public class WorkflowController {
 			log.error(error, e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.BAD_REQUEST,
+				error
+			);
+		}
+	}
+
+	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Delete a workflow by ID")
+	@ApiResponses(value = {
+		@ApiResponse(
+			responseCode = "200",
+			description = "Workflow deleted.",
+			content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "There was an issue deleting the workflow",
+			content = @Content
+		)
+	})
+	public String deleteWorkflow(@PathVariable("id") final String id) {
+		try {
+			workflowService.deleteWorkflow(id);
+			return "Workflow deleted";
+		} catch (final Exception e) {
+			final String error = String.format("Failed to delete workflow %s", id);
+			log.error(error, e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 				error
 			);
 		}
