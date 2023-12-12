@@ -124,7 +124,7 @@ import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { KernelSessionManager } from '@/services/jupyter';
 import { JSONObject } from '@lumino/coreutils';
 import { logger } from '@/utils/logger';
@@ -198,16 +198,20 @@ const outputs = computed(() => {
 		unsavedOutputs.push(output);
 	});
 
-	const groupedOutputs = [
-		{
+	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromCodeState>[] }[] = [];
+	if (!isEmpty(unsavedOutputs)) {
+		groupedOutputs.push({
 			label: 'Select outputs to display in operator',
 			items: unsavedOutputs
-		},
-		{
+		});
+	}
+
+	if (!isEmpty(savedOutputs)) {
+		groupedOutputs.push({
 			label: 'Saved models',
 			items: savedOutputs
-		}
-	];
+		});
+	}
 
 	return groupedOutputs;
 });
