@@ -10,7 +10,9 @@
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects"
+					v-if="
+						resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects
+					"
 				>
 					<template
 						v-for="icon in [
