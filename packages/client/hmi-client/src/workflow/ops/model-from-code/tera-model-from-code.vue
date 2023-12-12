@@ -71,7 +71,9 @@
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
 				:is-loading="isProcessing"
+				is-selectable
 			>
 				<tera-operator-placeholder
 					v-if="!selectedModel && !previewHTML"
@@ -121,7 +123,7 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { cloneDeep } from 'lodash';
 import { KernelSessionManager } from '@/services/jupyter';
 import { JSONObject } from '@lumino/coreutils';
@@ -144,7 +146,13 @@ const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output-port']);
+const emit = defineEmits([
+	'close',
+	'update-state',
+	'select-output',
+	'append-output-port',
+	'update-output-port'
+]);
 
 enum ModelFramework {
 	Petrinet = 'Petrinet',
@@ -178,7 +186,31 @@ const clonedState = ref<ModelFromCodeState>({
 	modelId: ''
 });
 
-const outputs = computed(() => props.node.outputs);
+const outputs = computed(() => {
+	const savedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
+	const unsavedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
+
+	props.node.outputs?.forEach((output) => {
+		if (output.state?.isSaved) {
+			savedOutputs.push(output);
+			return;
+		}
+		unsavedOutputs.push(output);
+	});
+
+	const groupedOutputs = [
+		{
+			label: 'Select outputs to display in operator',
+			items: unsavedOutputs
+		},
+		{
+			label: 'Saved models',
+			items: savedOutputs
+		}
+	];
+
+	return groupedOutputs;
+});
 const selectedOutputId = ref<string>();
 
 onMounted(async () => {
@@ -240,9 +272,11 @@ async function handleCode() {
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
 		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
 		clonedState.value.modelId = modelId;
+		clonedState.value.isSaved = false;
 		emit('append-output-port', {
 			label: `Output ${(props.node.outputs?.length ?? 0) + 1}`,
-			state: cloneDeep(clonedState.value)
+			state: cloneDeep(clonedState.value),
+			isSelected: false
 		});
 	}
 
@@ -282,6 +316,7 @@ async function saveAsNewModel() {
 
 		savingAsset.value = true;
 		const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+
 		savingAsset.value = false;
 
 		if (!response) {
@@ -289,6 +324,12 @@ async function saveAsNewModel() {
 			return;
 		}
 
+		clonedState.value.isSaved = true;
+		emit('append-output-port', {
+			label: 'saved model',
+			state: cloneDeep(clonedState.value),
+			isSelected: false
+		});
 		useToastService().success('', 'Model saved successfully.');
 	}
 
@@ -399,7 +440,13 @@ watch(
 function onUpdateOutput(id) {
 	emit('select-output', id);
 }
-// watch(() => clonedState)
+
+function onUpdateSelection(id) {
+	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+}
 </script>
 
 <style scoped>

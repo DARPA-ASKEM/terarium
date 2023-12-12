@@ -142,6 +142,7 @@
 			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
 		>
 		</component>
@@ -160,7 +161,8 @@ import {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowPortStatus,
-	WorkflowDirection
+	WorkflowDirection,
+	WorkflowOutput
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
@@ -282,12 +284,13 @@ function appendInputPort(
 
 function appendOutputPort(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any; state?: any }
+	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 ) {
 	if (!node) return;
 
 	const uuid = uuidv4();
-	node.outputs.push({
+
+	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
 		type: port.type,
 		label: port.label,
@@ -296,7 +299,11 @@ function appendOutputPort(
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
 		timestamp: new Date()
-	});
+	};
+
+	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
+
+	node.outputs.push(outputPort);
 	node.active = uuid;
 
 	workflowDirty = true;
@@ -311,6 +318,16 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
 	workflowService.selectOutput(node, selectedOutputId);
+	workflowDirty = true;
+}
+
+function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
+	if (!node) return;
+	let outputPort = node.outputs.find((port) => port.id === workflowOutput.id);
+	if (!outputPort) return;
+	outputPort = {
+		...workflowOutput
+	};
 	workflowDirty = true;
 }
 

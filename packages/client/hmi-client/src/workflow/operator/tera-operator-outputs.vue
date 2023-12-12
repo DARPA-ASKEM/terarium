@@ -1,7 +1,7 @@
 <template>
 	<ul>
 		<li
-			v-for="(output, index) in outputs"
+			v-for="(output, index) in selectedOutputs"
 			:key="index"
 			:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			@mouseenter="emit('port-mouseover', $event)"
@@ -35,8 +35,8 @@
 </template>
 
 <script setup lang="ts">
-import { PropType } from 'vue';
-import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import { PropType, computed } from 'vue';
+import { WorkflowPortStatus, WorkflowDirection, WorkflowOutput } from '@/types/workflow';
 import Button from 'primevue/button';
 
 const emit = defineEmits([
@@ -47,12 +47,19 @@ const emit = defineEmits([
 	'remove-edges'
 ]);
 
-defineProps({
+const props = defineProps({
 	outputs: {
-		type: Array as PropType<WorkflowPort[]>,
+		type: Array as PropType<WorkflowOutput<any>[]>,
 		default: () => []
 	}
 });
+
+const selectedOutputs = computed(() =>
+	props.outputs?.filter((output) => {
+		if (!('isSelected' in output)) return true;
+		return output.isSelected;
+	})
+);
 </script>
 
 <style scoped>
