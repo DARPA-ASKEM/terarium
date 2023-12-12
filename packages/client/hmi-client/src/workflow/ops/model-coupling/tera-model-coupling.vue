@@ -97,7 +97,6 @@ interface SaveOptions {
 const kernelManager = new KernelSessionManager();
 
 const amr = ref<Model | null>(null);
-const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 
@@ -135,12 +134,12 @@ const buildJupyterContext = () => {
 	}
 
 	return {
-		// context: 'mira_model',
-		// language: 'python3',
 		context: 'decapodes',
 		language: 'julia-1.9',
 		context_info: {
-			id: amr.value.id
+			modelA: '98124914-c432-49ec-98b6-5519c8aefb12'
+			// id: amr.value.id
+			// 'modelB': '98124914-c432-49ec-98b6-5519c8aefb12'
 		}
 	};
 };
@@ -151,15 +150,6 @@ const inputChangeHandler = async () => {
 
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
-
-	const modelColumnNameOptions: string[] = amr.value.model.states.map((state: any) => state.id);
-	// add observables
-	if (amr.value.model.semantics?.ode?.observables) {
-		amr.value.model.semantics.ode.observables.forEach((o) => {
-			modelColumnNameOptions.push(o.id);
-		});
-	}
-	modelNodeOptions.value = modelColumnNameOptions;
 
 	// Create a new session and context based on model
 	try {
@@ -218,37 +208,25 @@ const runCodeModelCoupling = () => {
 	};
 	console.log('messageContent', messageContent);
 
-	/*
-	let executedCode = '';
-
 	kernelManager
 		.sendMessage('execute_request', messageContent)
 		?.register('execute_input', (data) => {
-			executedCode = data.content.code;
+			console.log('execute_input', data.content);
 		})
 		?.register('stream', (data) => {
-			console.log('stream', data);
+			console.log('stream', data.content);
 		})
 		?.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			console.log('error', data.content.evalue);
 		})
-		?.register('model_preview', (data) => {
-			// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
-			// currently no matter what kind of code is run we always get a `model_preview` response.
-			// We may want to compare the response model with the existing model to see if the response model
-			// has been stratified - if not then don't save the model or the code.
-			handleModelPreview(data);
-
-			if (executedCode) {
-				saveCodeToState(executedCode, true);
-			}
+		?.register('decapodes_preview', (data) => {
+			console.log('decapodes_preview', data.content);
 		});
-	*/
 };
 
 // Set model, modelConfiguration, modelNodeOptions
 watch(
-	() => props.node.inputs[0],
+	() => props.node.inputs,
 	async () => {
 		await inputChangeHandler();
 	},
