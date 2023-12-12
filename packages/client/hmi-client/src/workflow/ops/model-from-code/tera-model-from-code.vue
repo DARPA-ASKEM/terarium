@@ -215,12 +215,11 @@ const outputs = computed(() => {
 
 	return groupedOutputs;
 });
-const selectedOutputId = ref<string>();
+const selectedOutputId = computed<string>(() => props.node.active ?? '');
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
-	if (props.node.active) {
-		selectedOutputId.value = props.node.active;
+	if (selectedOutputId.value) {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
@@ -429,15 +428,6 @@ watch(
 	() => props.node.state,
 	() => {
 		clonedState.value = cloneDeep(props.node.state);
-	}
-);
-
-watch(
-	() => props.node.active,
-	async () => {
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
-		}
 	}
 );
 
