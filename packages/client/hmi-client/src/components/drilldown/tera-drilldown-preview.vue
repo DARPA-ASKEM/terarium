@@ -57,7 +57,7 @@ import Checkbox from 'primevue/checkbox';
 
 defineProps<{
 	title?: string;
-	options?: WorkflowOutput<any>[] | any; // subject to change based on how we want to pass in output data
+	options?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
