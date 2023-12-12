@@ -31,6 +31,11 @@
 				<div v-else-if="resourceType === ResourceType.MODEL">
 					{{ (asset as Model).header.schema_name }}
 				</div>
+				<ul>
+					<li v-for="(project, index) in foundInProjects" :key="index">
+						<a>{{ project }}</a>
+					</li>
+				</ul>
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
@@ -119,6 +124,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
+import { useProjects } from '@/composables/project';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -140,10 +146,17 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-// const emit = defineEmits(['toggle-asset-preview']);
-
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
+
+const foundInProjects = computed(() => {
+	const projs =
+		useProjects().allProjects.value?.forEach((project) => {
+			console.log(project);
+		}) ?? [];
+	console.log(projs);
+	return ['thing', 'ss'];
+});
 
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
@@ -287,6 +300,10 @@ function endDrag() {
 	margin: 1px;
 	min-height: 5rem;
 	padding: 0.5rem 0.625rem 0.625rem;
+
+	& > main {
+		width: 100%;
+	}
 }
 
 .asset-card:hover {
@@ -303,6 +320,17 @@ function endDrag() {
 	align-items: center;
 	gap: 2rem;
 	font-size: 0.75rem;
+
+	& > ul {
+		margin-left: auto;
+		list-style: none;
+		display: flex;
+		gap: 0.5rem;
+
+		/* & > li:not(:last-child)::after {
+			content: '-';
+		} */
+	}
 }
 
 aside {

@@ -6,50 +6,36 @@
 		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
-		<Button
-			:icon="`pi ${statusIcon}`"
-			class="p-button-icon-only p-button-text p-button-rounded"
-			@click.stop="emit('toggle-selected-asset')"
-		/>
+		<Button @click.stop="toggle" :icon="`pi ${statusIcon}`" text rounded />
+		<Menu ref="menu" :model="projectOptions" :popup="true" />
 	</tera-asset-card>
 </template>
 
 <script setup lang="ts">
-import { Document, Dataset, Model } from '@/types/Types';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
-import { isDocument, isDataset, isModel } from '@/utils/data-util';
+import Menu from 'primevue/menu';
 import { ResultType, ResourceType } from '@/types/common';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
+// import { MenuItem } from 'primevue/menuitem';
 
-const props = defineProps<{
+defineProps<{
 	asset: ResultType;
+	projectOptions: any[]; // { label: string; items: MenuItem[] }[];
 	isPreviewed: boolean;
 	resourceType: ResourceType;
-	selectedSearchItems: ResultType[];
 	searchTerm?: string;
 }>();
 
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
-const isSelected = () =>
-	props.selectedSearchItems.find((item) => {
-		if (isDocument(item)) {
-			const itemAsDocument = item as Document;
-			return itemAsDocument.title === (props.asset as Document).title;
-		}
-		if (isDataset(item)) {
-			const itemAsDataset = item as Dataset;
-			return itemAsDataset.id === (props.asset as Dataset).id;
-		}
-		if (isModel(item)) {
-			const itemAsModel = item as Model;
-			return itemAsModel.id === (props.asset as Model).id;
-		}
-		return false;
-	});
+const statusIcon = computed(() => (false ? 'pi-check' : 'pi-plus'));
 
-const statusIcon = computed(() => (isSelected() ? 'pi-check' : 'pi-plus'));
+const menu = ref();
+const toggle = (event: Event) => {
+	menu.value.toggle(event);
+	emit('toggle-selected-asset');
+};
 </script>
 
 <style scoped>

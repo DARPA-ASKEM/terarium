@@ -41,10 +41,10 @@
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<tera-search-item
 				:asset="(asset as Document & Model & Dataset)"
-				:selectedSearchItems="selectedSearchItems"
-				:isPreviewed="previewedAsset === asset"
-				:resourceType="(resultType as ResourceType)"
-				:searchTerm="searchTerm"
+				:is-previewed="previewedAsset === asset"
+				:resource-type="(resultType as ResourceType)"
+				:search-term="searchTerm"
+				:project-options="projectOptions"
 				@toggle-selected-asset="updateSelection(asset)"
 				@toggle-asset-preview="togglePreview(asset)"
 			/>
@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
-import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
+import { Document, XDDFacetsItemResponse, Dataset, Model, AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
@@ -64,9 +64,14 @@ import {
 	useSearchByExampleOptions,
 	getSearchByExampleOptionsString
 } from '@/page/data-explorer/search-by-example';
+import { useProjects } from '@/composables/project';
+import { createDocumentFromXDD } from '@/services/document-assets';
+import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
+
+const emit = defineEmits(['toggle-data-item-selected']);
 
 const props = defineProps({
 	dataItems: {
@@ -75,10 +80,6 @@ const props = defineProps({
 	},
 	facets: {
 		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
-		required: true
-	},
-	selectedSearchItems: {
-		type: Array as PropType<ResultType[]>,
 		required: true
 	},
 	resultType: {
@@ -99,9 +100,43 @@ const props = defineProps({
 	}
 });
 
-const previewedAsset = ref<ResultType | null>(null);
+const selectedAsset = ref();
 
-const emit = defineEmits(['toggle-data-item-selected']);
+const projectOptions = computed(() => [
+	{
+		label: 'Add this to...',
+		items:
+			useProjects().allProjects.value?.map((project) => ({
+				label: project.name,
+				command: async () => {
+					if (isDocument(selectedAsset.value)) {
+						const document = selectedAsset.value as Document;
+						await createDocumentFromXDD(document, project.id);
+						// finally add asset to project
+						await useProjects().get(project.id);
+					}
+					if (isModel(selectedAsset.value)) {
+						// FIXME: handle cases where assets is already added to the project
+						const modelId = selectedAsset.value.id;
+						// then, link and store in the project assets
+						const assetsType = AssetType.Models;
+						await useProjects().addAsset(assetsType, modelId, project.id);
+					}
+					if (isDataset(selectedAsset.value)) {
+						// FIXME: handle cases where assets is already added to the project
+						const datasetId = selectedAsset.value.id;
+						// then, link and store in the project assets
+						const assetsType = AssetType.Datasets;
+						if (datasetId) {
+							await useProjects().addAsset(assetsType, datasetId, project.id);
+						}
+					}
+				}
+			})) ?? []
+	}
+]);
+
+const previewedAsset = ref<ResultType | null>(null);
 
 const chosenFacets = computed(() => useQueryStore().clientFilters.clauses);
 
@@ -112,7 +147,7 @@ const removeFacetValue = (field: string, values: ClauseValue[], valueToRemove: C
 };
 
 const updateSelection = (asset: ResultType) => {
-	emit('toggle-data-item-selected', { item: asset, type: 'selected' });
+	selectedAsset.value = asset;
 };
 
 const togglePreview = (asset: ResultType) => {
