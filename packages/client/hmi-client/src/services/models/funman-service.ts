@@ -115,7 +115,7 @@ export const processFunman = (result: any) => {
 					};
 					states.forEach((s) => {
 						// Only push states that have a timestep key pair
-						if (Object.keys(filteredVals).includes(`${s}_${t}`)) {
+						if (Object.prototype.hasOwnProperty.call(filteredVals, `${s}_${t}`)) {
 							traj[s] = filteredVals[`${s}_${t}`];
 						} else {
 							pushFlag = false;
