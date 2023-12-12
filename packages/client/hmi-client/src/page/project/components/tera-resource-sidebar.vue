@@ -17,7 +17,7 @@
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
 				<template #item="slotProps">
 					<a class="p-menuitem-link">
-						<tera-asset-icon :asset-type="(slotProps.item.key as AssetType)" />
+						<tera-asset-icon :asset-type="slotProps.item.key as AssetType" />
 						<span class="p-menuitem-text">
 							{{ slotProps.item.label }}
 						</span>
@@ -91,7 +91,7 @@
 						fallback-class="original-asset"
 						:force-fallback="true"
 					>
-						<tera-asset-icon :asset-type="(assetItem.pageType as AssetType)" />
+						<tera-asset-icon :asset-type="assetItem.pageType as AssetType" />
 						<span class="p-button-label">{{ assetItem.assetName }}</span>
 					</span>
 					<!-- This 'x' only shows while hovering over the row -->

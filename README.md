@@ -35,8 +35,8 @@ machine extracted models.
 The Terarium client is built with Typescript and Vue3. The Terarium server is built with Java and Spring Boot. To run and
 develop Terarium, you will need these as a prerequisite:
 
-- [Yarn 2](https://yarnpkg.com/getting-started/install)
-- [NodeJS 18](https://nodejs.org/en/download/current/)
+- [Yarn 4](https://yarnpkg.com/getting-started/install)
+- [NodeJS 20](https://nodejs.org/en/download/current/)
 - [JDK 17](https://adoptium.net/temurin)
 - [Gradle 7](https://gradle.org/install/)
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
