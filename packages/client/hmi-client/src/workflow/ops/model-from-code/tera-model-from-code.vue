@@ -96,7 +96,7 @@
 						label="Save as new model"
 						severity="secondary"
 						outlined
-						@click="saveAsNewModel"
+						@click="openModal"
 						style="margin-right: auto"
 					/>
 					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
@@ -109,6 +109,19 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
+	<tera-modal v-if="isNewModelModalVisible">
+		<template #header>
+			<h4>New Model</h4>
+		</template>
+		<form @submit.prevent>
+			<label for="new-model">Enter a unique name for your model</label>
+			<InputText id="new-model" type="text" v-model="newModelName" placeholder="New model" />
+		</form>
+		<template #footer>
+			<Button @click="createModel">Create model</Button>
+			<Button class="p-button-secondary" @click="isNewModelModalVisible = false">Cancel</Button>
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -134,12 +147,14 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import { getCodeAsset, getCodeFileAsText } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModel } from '@/services/model';
+import { getModel, updateModel, validateModelName } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { useProjects } from '@/composables/project';
 import { useToastService } from '@/services/toast';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -158,7 +173,8 @@ enum ModelFramework {
 	Petrinet = 'Petrinet',
 	Decapodes = 'Decapodes'
 }
-
+const isNewModelModalVisible = ref(false);
+const newModelName = ref('');
 const isProcessing = ref(false);
 
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
@@ -311,15 +327,24 @@ function constructModel() {
 		?.register('construct_amr_response', handleConstructAmrResponse);
 }
 
+function openModal() {
+	isNewModelModalVisible.value = true;
+}
+
 async function saveAsNewModel() {
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		const projectId = useProjects().activeProject.value?.id;
-
-		if (!projectId || !selectedModel.value) return;
-
 		savingAsset.value = true;
-		const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+		// 1. Update model name
+		const model = selectedModel.value;
+		if (!model) return;
+		model.header.name = newModelName.value;
+		const updateResponse = await updateModel(model);
+		if (!updateResponse) return;
 
+		// 2. Save asset to project
+		const projectId = useProjects().activeProject.value?.id;
+		if (!projectId || !selectedModel.value) return;
+		const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
 		savingAsset.value = false;
 
 		if (!response) {
@@ -327,9 +352,10 @@ async function saveAsNewModel() {
 			return;
 		}
 
+		// 3. Append Model to output port
 		clonedState.value.isSaved = true;
 		emit('append-output-port', {
-			label: 'saved model',
+			label: selectedModel.value.header?.name,
 			state: cloneDeep(clonedState.value),
 			isSelected: false
 		});
@@ -440,6 +466,11 @@ function onUpdateSelection(id) {
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
+}
+
+async function createModel() {
+	if (!validateModelName(newModelName.value)) return;
+	await saveAsNewModel();
 }
 </script>
 
