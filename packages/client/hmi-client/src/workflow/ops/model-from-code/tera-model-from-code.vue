@@ -67,14 +67,32 @@
 			<!--Notebook section if we decide we need one-->
 		</div>
 		<template #preview>
-			<tera-drilldown-preview v-model:output="selectedModelFramework" :options="modelFrameworks">
-				<tera-progress-spinner v-if="isProcessing" :font-size="2" />
+			<tera-drilldown-preview>
+				<tera-progress-spinner
+					v-if="isProcessing"
+					:font-size="2"
+					is-centered
+					style="height: 100%"
+				/>
+				<tera-operator-placeholder
+					v-if="!isProcessing && !selectedModel && !previewHTML"
+					:operation-type="node.operationType"
+					style="height: 100%"
+				/>
 				<section>
-					<template v-if="selectedModelFramework === ModelFramework.Petrinet && selectedModel">
+					<template
+						v-if="
+							selectedModelFramework === ModelFramework.Petrinet && selectedModel && !isProcessing
+						"
+					>
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
-						<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
+						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
-					<template v-if="selectedModelFramework === ModelFramework.Decapodes && previewHTML">
+					<template
+						v-if="
+							selectedModelFramework === ModelFramework.Decapodes && previewHTML && !isProcessing
+						"
+					>
 						<div :innerHTML="previewHTML" />
 					</template>
 				</section>
@@ -128,6 +146,8 @@ import { addAsset } from '@/services/project';
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useToastService } from '@/services/toast';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
