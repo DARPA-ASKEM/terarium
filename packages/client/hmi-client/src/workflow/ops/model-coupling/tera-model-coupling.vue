@@ -1,15 +1,16 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<div :tabName="StratifyTabs.Wizard">
+		<div :tabName="ModelCouplingTabgs.Wizard">
 			<tera-drilldown-section> </tera-drilldown-section>
 		</div>
-		<div :tabName="StratifyTabs.Notebook">
+		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
+				<h4>Code Editor - Julia</h4>
+				{{ modelids }}
 				<v-ace-editor
 					v-model:value="codeText"
-					@init="initialize"
-					lang="python"
+					@init="initializeEditor"
+					lang="julia"
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
@@ -58,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, onUnmounted, onMounted } from 'vue';
+import { watch, ref, computed, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { Model, AssetType } from '@/types/Types';
@@ -83,7 +84,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
-enum StratifyTabs {
+enum ModelCouplingTabgs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }
@@ -99,6 +100,17 @@ const amr = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
+
+const modelids = computed(() => {
+	const ids: string[] = [];
+	const inputs = props.node.inputs;
+	for (let i = 0; i < inputs.length; i++) {
+		if (inputs[i].value) {
+			ids.push(inputs[i].value?.[0]);
+		}
+	}
+	return ids;
+});
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
@@ -123,8 +135,10 @@ const buildJupyterContext = () => {
 	}
 
 	return {
-		context: 'mira_model',
-		language: 'python3',
+		// context: 'mira_model',
+		// language: 'python3',
+		context: 'decapodes',
+		language: 'julia-1.9',
 		context_info: {
 			id: amr.value.id
 		}
@@ -183,7 +197,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 };
 
-const initialize = (editorInstance: any) => {
+const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
