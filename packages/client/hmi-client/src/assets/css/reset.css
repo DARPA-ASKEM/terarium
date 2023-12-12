@@ -20,7 +20,9 @@ a, div, em, figure, footer, form, h1, h2, h3, h4, h5, h6, header, img, li, ol, p
 }
 
 ol, ul {
-	list-style: disc;
+	&:not([class]) {
+		list-style: disc;
+	}
 }
 
 ol, ul {

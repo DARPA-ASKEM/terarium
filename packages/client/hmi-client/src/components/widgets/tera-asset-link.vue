@@ -1,7 +1,7 @@
 <template>
 	<a @click="openAsset(assetRoute)">
 		<span>
-			<tera-asset-icon :asset-type="(assetRoute.pageType as AssetType)" />
+			<tera-asset-icon :asset-type="assetRoute.pageType as AssetType" />
 		</span>
 		{{ label }}</a
 	>

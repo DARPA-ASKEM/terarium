@@ -26,11 +26,11 @@ const props = defineProps<{
 
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 
-const stateTypes = computed<string[]>(() =>
-	props.model.semantics?.typing?.system?.model.states.map((s) => s.name)
+const stateTypes = computed<string[]>(
+	() => props.model.semantics?.typing?.system?.model.states.map((s) => s.name)
 );
-const transitionTypes = computed<string[]>(() =>
-	props.model.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name)
+const transitionTypes = computed<string[]>(
+	() => props.model.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name)
 );
 
 function getLegendKeyStyle(id: string) {

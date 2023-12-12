@@ -8,7 +8,7 @@
 				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
 					<tera-asset-card
 						:asset="searchByExampleItem!"
-						:resource-type="(resultType as ResourceType)"
+						:resource-type="resultType as ResourceType"
 					/>
 				</div>
 			</template>
@@ -40,9 +40,9 @@
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<tera-search-item
-				:asset="(asset as Document & Model & Dataset)"
+				:asset="asset as Document & Model & Dataset"
 				:is-previewed="previewedAsset === asset"
-				:resource-type="(resultType as ResourceType)"
+				:resource-type="resultType as ResourceType"
 				:search-term="searchTerm"
 				:project-options="projectOptions"
 				@select-asset="updateSelection(asset)"
