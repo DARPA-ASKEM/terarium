@@ -42,6 +42,7 @@
 			<tera-search-item
 				:asset="asset as Document & Model & Dataset"
 				:is-previewed="previewedAsset === asset"
+				:is-adding-asset="isAdding && selectedAsset === asset"
 				:resource-type="resultType as ResourceType"
 				:search-term="searchTerm"
 				:project-options="projectOptions"
@@ -102,16 +103,18 @@ const props = defineProps({
 });
 
 const selectedAsset = ref();
+const isAdding = ref(false);
 
 const projectOptions = computed(() => [
 	{
-		label: 'Add this to...',
+		label: 'Add to which project?',
 		items:
 			useProjects().allProjects.value?.map((project) => ({
 				label: project.name,
 				command: async () => {
 					let response: any = null;
 					let assetName = '';
+					isAdding.value = true;
 
 					if (isDocument(selectedAsset.value)) {
 						const document = selectedAsset.value as Document;
@@ -138,9 +141,11 @@ const projectOptions = computed(() => [
 							assetName = selectedAsset.value.name;
 						}
 					}
-					console.log(selectedAsset.value);
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
+					else logger.error(`Failed adding ${assetName} to ${project.name}`);
+
+					isAdding.value = false;
 				}
 			})) ?? []
 	}

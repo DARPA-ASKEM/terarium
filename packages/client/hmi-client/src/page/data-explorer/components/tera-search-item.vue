@@ -6,8 +6,8 @@
 		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
-		<Button @click.stop="toggle" icon="pi pi-plus" text rounded />
-		<Menu ref="menu" :model="projectOptions" :popup="true" />
+		<Button @click.stop="toggle" icon="pi pi-plus" text rounded :loading="isAddingAsset" />
+		<Menu class="search-item-menu" ref="menu" :model="projectOptions" :popup="true" />
 	</tera-asset-card>
 </template>
 
@@ -22,6 +22,7 @@ import { MenuItem } from 'primevue/menuitem';
 defineProps<{
 	asset: ResultType;
 	projectOptions: { label: string; items: MenuItem[] }[];
+	isAddingAsset: boolean;
 	isPreviewed: boolean;
 	resourceType: ResourceType;
 	searchTerm?: string;
