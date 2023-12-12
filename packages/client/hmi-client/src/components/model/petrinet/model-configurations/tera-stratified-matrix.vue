@@ -88,11 +88,12 @@ const editableCellStates = ref<boolean[][]>([]);
 
 const matrixExpressionsList = ref<string[][]>([]);
 
-const parametersValueMap = computed(() =>
-	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
-		acc[val.id] = val.value;
-		return acc;
-	}, {})
+const parametersValueMap = computed(
+	() =>
+		props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
+			acc[val.id] = val.value;
+			return acc;
+		}, {})
 );
 
 // Makes cell inputs focus once they appear

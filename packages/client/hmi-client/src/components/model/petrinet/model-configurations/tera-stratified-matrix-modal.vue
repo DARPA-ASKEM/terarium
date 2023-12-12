@@ -38,7 +38,9 @@
 			<tera-stratified-matrix
 				v-bind="props"
 				:should-eval="matrixShouldEval"
-				@update-configuration="(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)"
+				@update-configuration="
+					(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
+				"
 			/>
 		</template>
 		<template #footer>

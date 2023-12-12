@@ -87,7 +87,9 @@ watch(
 	border-radius: 0.375rem;
 	background: #fff;
 	/* Shadow/medium */
-	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+	box-shadow:
+		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
+		0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
 .sub-header {
