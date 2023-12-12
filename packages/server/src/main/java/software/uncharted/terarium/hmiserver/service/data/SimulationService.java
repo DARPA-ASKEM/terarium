@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.data.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
@@ -43,7 +43,7 @@ public class SimulationService {
 	}
 
 	public Simulation createSimulation(final Simulation simulation) throws IOException {
-		elasticService.index(elasticConfig.getSimulationIndex(), simulation.getId(), simulation);
+		elasticService.index(elasticConfig.getSimulationIndex(), simulation.getId().toString(), simulation);
 		return simulation;
 	}
 
@@ -51,7 +51,7 @@ public class SimulationService {
 		if (!id.equals(simulation.getId())) {
 			throw new IllegalArgumentException("Simulation ID does not match Simulation object ID");
 		}
-		elasticService.index(elasticConfig.getSimulationIndex(), simulation.getId(), simulation);
+		elasticService.index(elasticConfig.getSimulationIndex(), simulation.getId().toString(), simulation);
 		return simulation;
 	}
 

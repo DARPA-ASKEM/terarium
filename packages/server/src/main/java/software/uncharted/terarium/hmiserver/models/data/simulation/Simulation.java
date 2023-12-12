@@ -11,6 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -34,6 +35,7 @@ public class Simulation implements Serializable {
 	private UUID id;
 
 	@JsonAlias("execution_payload")
+	@Convert(converter = JpaConverterJson.class)
 	private Object executionPayload;
 
 	@TSOptional
