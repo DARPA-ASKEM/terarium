@@ -86,6 +86,34 @@ export interface ProjectAsset {
     project: Project;
 }
 
+export interface Simulation {
+    id?: string;
+    executionPayload: any;
+    name?: string;
+    description?: string;
+    resultFiles?: SimulationResult[];
+    type: SimulationType;
+    status: SimulationStatus;
+    startTime?: Date;
+    completedTime?: Date;
+    engine: SimulationEngine;
+    workflowId: string;
+    userId?: number;
+    projectId?: number;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
+}
+
+export interface SimulationResult {
+    id?: string;
+    filename: string;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
+    simulation: Simulation;
+}
+
 export interface Artifact {
     id?: string;
     timestamp?: any;
@@ -115,8 +143,11 @@ export interface CsvColumnStats {
 }
 
 export interface ExternalPublication {
-    id?: number;
+    id?: string;
     title: string;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     xdd_uri: string;
 }
 
@@ -141,20 +172,12 @@ export interface ResponseId {
     id: string;
 }
 
-export interface Simulation {
-    id: string;
-    executionPayload: any;
-    name?: string;
-    description?: string;
-    resultFiles?: string[];
-    type: string;
-    status: string;
-    startTime?: string;
-    completedTime?: string;
-    engine: string;
-    workflowId: string;
-    userId?: number;
-    projectId?: number;
+export interface ResponseStatus {
+    status: number;
+}
+
+export interface ResponseSuccess {
+    success: boolean;
 }
 
 export interface Code {
@@ -348,6 +371,8 @@ export interface PetriNetModel {
 
 export interface ProvenanceQueryParam {
     nodes?: boolean;
+    edges?: boolean;
+    versions?: boolean;
     types?: ProvenanceType[];
     hops?: number;
     limit?: number;
@@ -1057,6 +1082,26 @@ export enum ResourceType {
     Workflow = "WORKFLOW",
 }
 
+export enum SimulationType {
+    Ensemble = "ENSEMBLE",
+    Simulation = "SIMULATION",
+    Calibration = "CALIBRATION",
+}
+
+export enum SimulationStatus {
+    Cancelled = "CANCELLED",
+    Complete = "COMPLETE",
+    Error = "ERROR",
+    Queued = "QUEUED",
+    Running = "RUNNING",
+    Failed = "FAILED",
+}
+
+export enum SimulationEngine {
+    Sciml = "SCIML",
+    Ciemss = "CIEMSS",
+}
+
 export enum ProgrammingLanguage {
     Python = "python",
     R = "r",
@@ -1088,6 +1133,7 @@ export enum ProvenanceType {
     Concept = "Concept",
     Dataset = "Dataset",
     Model = "Model",
+    ModelRevision = "ModelRevision",
     ModelConfiguration = "ModelConfiguration",
     Project = "Project",
     Publication = "Publication",
@@ -1096,6 +1142,7 @@ export enum ProvenanceType {
     Code = "Code",
     Document = "Document",
     Workflow = "Workflow",
+    Equation = "Equation",
 }
 
 /**

@@ -1,10 +1,11 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.experimental.Accessors;
+package software.uncharted.terarium.hmiserver.models.dataservice.person;
 
 import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)

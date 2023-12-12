@@ -1,13 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-
-import java.util.List;
 
 /**
  * Represents a dataset document from TDS
@@ -21,12 +23,13 @@ public class Dataset {
 	 * Universally unique identifier for the dataset
 	 **/
 	@TSOptional
-	private String id; //Is this a UUID?
+	private String id; // Is this a UUID?
 
 	/**
 	 * Timestamp of when the dataset was created
 	 **/
-	//TODO: This should be "Instant" but there is an issue and a time crunch here...
+	// TODO: This should be "Instant" but there is an issue and a time crunch
+	// here...
 	@TSOptional
 	private Object timestamp;
 
@@ -52,7 +55,7 @@ public class Dataset {
 	 **/
 	@TSOptional
 	@JsonAlias("data_source_date")
-	private String dataSourceDate;
+	private Timestamp dataSourceDate;
 
 	/**
 	 * (Optional) list of file names associated with the dataset
@@ -87,7 +90,8 @@ public class Dataset {
 	private String source;
 
 	/**
-	 * (Optional) Grounding of ontological concepts related to the dataset as a whole
+	 * (Optional) Grounding of ontological concepts related to the dataset as a
+	 * whole
 	 **/
 	@TSOptional
 	private Grounding grounding;

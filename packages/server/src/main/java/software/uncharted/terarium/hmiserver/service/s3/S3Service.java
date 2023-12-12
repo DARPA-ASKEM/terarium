@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
@@ -466,4 +467,45 @@ public class S3Service {
 				.map(timestamp -> getSignature(bucket, key, s3Id, timestamp, encryptionKey))
 				.anyMatch(potentialSignature -> potentialSignature.equals(signature));
 	}
+
+	/**
+	 * Copies an object from one bucket to another
+	 *
+	 * @param sourceBucket
+	 * @param sourceKey
+	 * @param destinationBucket
+	 * @param destinationKey
+	 */
+	public void copyObject(String sourceBucket, String sourceKey, String destinationBucket, String destinationKey) {
+		S3Client s3 = S3Client.create();
+
+		CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
+				.sourceBucket(sourceBucket)
+				.sourceKey(sourceKey)
+				.destinationBucket(destinationBucket)
+				.destinationKey(destinationKey)
+				.build();
+
+		s3.copyObject(copyObjectRequest);
+	}
+
+	/**
+	 * Parses the filename from a path
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public String parseFilename(String path) {
+		String filename = path;
+		if (path.contains("http") || path.contains("s3")) {
+			String[] pieces = path.split("/");
+			filename = pieces[pieces.length - 1];
+
+			if (filename.contains("?")) {
+				filename = filename.split("\\?")[0];
+			}
+		}
+		return filename;
+	}
+
 }

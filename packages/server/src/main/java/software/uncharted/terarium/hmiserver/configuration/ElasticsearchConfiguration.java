@@ -35,7 +35,8 @@ public class ElasticsearchConfiguration {
 			String modelConfigurationRoot,
 			String notebookSessionRoot,
 			String simulationRoot,
-			String workflowRoot) {
+			String workflowRoot,
+			String externalPublicationRoot) {
 	}
 
 	public String getCodeIndex() {
@@ -76,5 +77,9 @@ public class ElasticsearchConfiguration {
 
 	public String getWorkflowIndex() {
 		return String.join("_", index.prefix, index.workflowRoot, index.suffix);
+	}
+
+	public String getExternalPublicationIndex() {
+		return String.join("_", index.prefix, index.externalPublicationRoot, index.suffix);
 	}
 }
