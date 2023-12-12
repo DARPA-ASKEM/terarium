@@ -138,7 +138,6 @@ const props = defineProps<{
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
-const showKernels = ref(<boolean>false);
 const autoExpandPreview = ref(<boolean>true);
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);

@@ -77,11 +77,14 @@ const formattedFacets = computed(() => {
 		}
 
 		const filteredFacetDict = props.filteredFacets[key]
-			? buckets.reduce((dict, category) => {
-					// eslint-disable-next-line no-param-reassign
-					dict[category.key] = docFacet ? Number(category.docCount) : category.value;
-					return dict;
-			  }, {} as { [key: string]: number })
+			? buckets.reduce(
+					(dict, category) => {
+						// eslint-disable-next-line no-param-reassign
+						dict[category.key] = docFacet ? Number(category.docCount) : category.value;
+						return dict;
+					},
+					{} as { [key: string]: number }
+				)
 			: {};
 
 		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets

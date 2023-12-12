@@ -79,7 +79,7 @@
 								class="tera-dataset-datatable"
 								paginatorPosition="bottom"
 								:rows="10"
-								:raw-content="(m.content[(selectedPreviewDataset || 'df')] as CsvAsset)"
+								:raw-content="m.content[selectedPreviewDataset || 'df'] as CsvAsset"
 								:preview-mode="true"
 								:showGridlines="true"
 								table-style="width: 100%; font-size: small;"
@@ -232,7 +232,9 @@ defineExpose({
 	font-family: var(--font-family);
 	border-radius: 3px;
 	margin-top: 10px;
-	transition: background-color 0.3s, border 0.3s;
+	transition:
+		background-color 0.3s,
+		border 0.3s;
 	border: 1px solid rgba(0, 0, 0, 0);
 }
 
