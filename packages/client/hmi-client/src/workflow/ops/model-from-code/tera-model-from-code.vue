@@ -471,6 +471,7 @@ function onUpdateSelection(id) {
 async function createModel() {
 	if (!validateModelName(newModelName.value)) return;
 	await saveAsNewModel();
+	isNewModelModalVisible.value = false;
 }
 </script>
 
