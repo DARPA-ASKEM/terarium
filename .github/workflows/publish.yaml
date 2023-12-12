@@ -93,11 +93,11 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
 
       # 2.2 - Install the appropriate tool based on target
-      - name: Setup Node v18.8.0
+      - name: Setup Node 20.10.0 LTS
         if: matrix.target == 'hmi-client'
         uses: actions/setup-node@v3
         with:
-          node-version: 18.8.0
+          node-version: 20.10.0
           cache: 'yarn'
 
       - name: Validate GradleW JAR

@@ -27,7 +27,7 @@
 				<InputText v-model="bound.lb" />
 				<InputText v-model="bound.ub" />
 				<TeraFunmanBoundaryChart
-					:processed-data="(processedData as FunmanProcessedData)"
+					:processed-data="processedData as FunmanProcessedData"
 					:param1="parameter.toString()"
 					:param2="selectedParam"
 					:timestep="timestep"
