@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType } from 'vue';
+import { ref, computed, PropType, onMounted } from 'vue';
 import { Document, XDDFacetsItemResponse, Dataset, Model, AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
@@ -135,6 +135,16 @@ const projectOptions = computed(() => [
 			})) ?? []
 	}
 ]);
+
+onMounted(() => {
+	// To preview if the asset is already in a project we need to grab the assets of all projects...
+	const projs =
+		useProjects().allProjects.value?.forEach(async (project) => {
+			const assets = await useProjects().get(project.id);
+			console.log(project, props.resultType, assets);
+		}) ?? [];
+	console.log(projs);
+});
 
 const previewedAsset = ref<ResultType | null>(null);
 

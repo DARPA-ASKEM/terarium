@@ -124,7 +124,6 @@ import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
-import { useProjects } from '@/composables/project';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -149,14 +148,7 @@ function highlightSearchTerms(text: string | undefined): string {
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
-const foundInProjects = computed(() => {
-	const projs =
-		useProjects().allProjects.value?.forEach((project) => {
-			console.log(project);
-		}) ?? [];
-	console.log(projs);
-	return ['thing', 'ss'];
-});
+const foundInProjects = computed(() => ['project 1', 'project 2']);
 
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
@@ -325,6 +317,7 @@ function endDrag() {
 		margin-left: auto;
 		list-style: none;
 		display: flex;
+		margin-right: 0.5rem;
 		gap: 0.5rem;
 
 		/* & > li:not(:last-child)::after {
