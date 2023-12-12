@@ -56,7 +56,7 @@ const props = defineProps({
 
 const selectedOutputs = computed(() =>
 	props.outputs?.filter((output) => {
-		if (output.type) return true;
+		if (!('isSelected' in output)) return true;
 		return output.isSelected;
 	})
 );

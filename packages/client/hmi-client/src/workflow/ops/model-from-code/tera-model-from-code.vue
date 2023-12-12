@@ -274,7 +274,8 @@ async function handleCode() {
 		clonedState.value.isSaved = false;
 		emit('append-output-port', {
 			label: `Output ${(props.node.outputs?.length ?? 0) + 1}`,
-			state: cloneDeep(clonedState.value)
+			state: cloneDeep(clonedState.value),
+			isSelected: false
 		});
 	}
 
@@ -323,7 +324,11 @@ async function saveAsNewModel() {
 		}
 
 		clonedState.value.isSaved = true;
-		emit('append-output-port', { label: 'saved model', state: cloneDeep(clonedState.value) });
+		emit('append-output-port', {
+			label: 'saved model',
+			state: cloneDeep(clonedState.value),
+			isSelected: false
+		});
 		useToastService().success('', 'Model saved successfully.');
 	}
 

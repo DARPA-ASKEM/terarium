@@ -284,12 +284,13 @@ function appendInputPort(
 
 function appendOutputPort(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any; state?: any }
+	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 ) {
 	if (!node) return;
 
 	const uuid = uuidv4();
-	node.outputs.push({
+
+	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
 		type: port.type,
 		label: port.label,
@@ -298,7 +299,11 @@ function appendOutputPort(
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
 		timestamp: new Date()
-	});
+	};
+
+	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
+
+	node.outputs.push(outputPort);
 	node.active = uuid;
 
 	workflowDirty = true;
