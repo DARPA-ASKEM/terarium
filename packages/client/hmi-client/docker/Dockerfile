@@ -1,8 +1,10 @@
 FROM nginx:1.23-alpine
 
 # update packages and add some basics
-RUN apk update \
-    && apk add --no-cache curl && apk add --no-cache bash && apk add --no-cache vim
+RUN apk update && \
+    apk add --no-cache curl=8.5.0-r0 && \
+    apk add --no-cache bash=5.2.15-r5 && \
+    apk add --no-cache vim=9.0.2073-r0
 
 # remove default and add configuration
 COPY default.conf /etc/nginx/conf.d/
