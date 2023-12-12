@@ -1,47 +1,56 @@
 <template>
 	<section v-if="!showSpinner">
-		<div class="button-container">
-			<Button size="small" label="Run" @click="runSimulate" icon="pi pi-play"></Button>
-		</div>
-		<Dropdown
-			v-if="runList.length > 0"
-			:options="runList"
-			v-model="selectedRun"
-			option-label="label"
-			placeholder="Select a simulation run"
-			@update:model-value="handleSelectedRunChange"
-		/>
-		<div class="chart-container" v-if="runResults[selectedRun?.runId]">
-			<tera-simulate-chart
-				v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
-				:key="idx"
-				:run-results="runResults[selectedRun.runId]"
-				:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
-				has-mean-line
-				@configuration-change="configurationChange(idx, $event)"
+		<template v-if="node.inputs[0].value">
+			<Dropdown
+				v-if="runList.length > 0"
+				:options="runList"
+				v-model="selectedRun"
+				option-label="label"
+				placeholder="Select a simulation run"
+				@update:model-value="handleSelectedRunChange"
 			/>
-			<div class="button-container">
-				<Button
-					class="add-chart"
-					size="small"
-					text
-					@click="addChart"
-					label="Add chart"
-					icon="pi pi-plus"
-				>
-				</Button>
+			<div class="chart-container" v-if="runResults[selectedRun?.runId]">
+				<tera-simulate-chart
+					v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+					:key="idx"
+					:run-results="runResults[selectedRun.runId]"
+					:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+					has-mean-line
+					@configuration-change="configurationChange(idx, $event)"
+				/>
+				<div class="button-container">
+					<Button
+						class="add-chart"
+						size="small"
+						text
+						@click="addChart"
+						label="Add chart"
+						icon="pi pi-plus"
+					>
+					</Button>
+				</div>
 			</div>
-		</div>
-		<Accordion :multiple="true" :active-index="[0]">
-			<AccordionTab header="EXTRAS">
-				<span class="extras">
-					<label>num_samples</label>
-					<InputNumber v-model.lazy="numSamples" />
-					<label>method</label>
-					<Dropdown :options="ciemssMethodOptions" v-model="method" />
-				</span>
-			</AccordionTab>
-		</Accordion>
+			<Accordion :multiple="true" :active-index="[0]">
+				<AccordionTab header="EXTRAS">
+					<span class="extras">
+						<label>num_samples</label>
+						<InputNumber v-model.lazy="numSamples" />
+						<label>method</label>
+						<Dropdown :options="ciemssMethodOptions" v-model="method" />
+					</span>
+				</AccordionTab>
+			</Accordion>
+			<Button label="Run" @click="runSimulate" icon="pi pi-play" severity="secondary" outlined />
+			<Button
+				label="Simulation settings"
+				@click="emit('open-drilldown')"
+				severity="secondary"
+				outlined
+			/>
+		</template>
+		<tera-operator-placeholder v-else :operation-type="node.operationType">
+			Connect a model configuration
+		</tera-operator-placeholder>
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />
@@ -63,6 +72,7 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
@@ -75,7 +85,7 @@ import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulat
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
+const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
 
 const showSpinner = ref(false);
 // EXTRA section
@@ -281,9 +291,5 @@ section {
 
 .extras {
 	display: grid;
-}
-
-.button-container {
-	padding-bottom: 10px;
 }
 </style>
