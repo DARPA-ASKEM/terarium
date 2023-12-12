@@ -323,11 +323,7 @@ function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) 
 
 function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
-	let outputPort = node.outputs.find((port) => port.id === workflowOutput.id);
-	if (!outputPort) return;
-	outputPort = {
-		...workflowOutput
-	};
+	workflowService.updateOutputPort(node, workflowOutput);
 	workflowDirty = true;
 }
 
