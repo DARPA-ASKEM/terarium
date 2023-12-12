@@ -90,9 +90,9 @@ public class ProvenanceController {
 		return sb.toString();
 	}
 
-	// We should deprecate this endpoint, it isn't ideal because the different
-	// search types have different search response types. Below I have implemented
-	// the individual search methods explicitly instead.
+	// I have deprecated this endpoint. The dynamic nature of it isn't ideal because
+	// the different search types have different response types. Below I have
+	// implemented the individual search methods explicitly instead.
 	@PostMapping("/search")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search provenance by name")
