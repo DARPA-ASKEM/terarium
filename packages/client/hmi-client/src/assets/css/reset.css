@@ -23,6 +23,12 @@ ol, ul {
 	list-style: disc;
 }
 
+ol, ul {
+	&:not([class]) {
+		list-style: disc;
+	}
+}
+
 img {
 	display: block;
 	max-width: 100%;

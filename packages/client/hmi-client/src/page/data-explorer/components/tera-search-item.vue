@@ -6,35 +6,33 @@
 		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
-		<Button @click.stop="toggle" :icon="`pi ${statusIcon}`" text rounded />
+		<Button @click.stop="toggle" icon="pi pi-plus" text rounded />
 		<Menu ref="menu" :model="projectOptions" :popup="true" />
 	</tera-asset-card>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { ResultType, ResourceType } from '@/types/common';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
-// import { MenuItem } from 'primevue/menuitem';
+import { MenuItem } from 'primevue/menuitem';
 
 defineProps<{
 	asset: ResultType;
-	projectOptions: any[]; // { label: string; items: MenuItem[] }[];
+	projectOptions: { label: string; items: MenuItem[] }[];
 	isPreviewed: boolean;
 	resourceType: ResourceType;
 	searchTerm?: string;
 }>();
 
-const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
-
-const statusIcon = computed(() => (false ? 'pi-check' : 'pi-plus'));
+const emit = defineEmits(['select-asset', 'toggle-asset-preview']);
 
 const menu = ref();
 const toggle = (event: Event) => {
 	menu.value.toggle(event);
-	emit('toggle-selected-asset');
+	emit('select-asset');
 };
 </script>
 

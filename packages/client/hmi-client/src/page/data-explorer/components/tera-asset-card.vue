@@ -148,7 +148,7 @@ function highlightSearchTerms(text: string | undefined): string {
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
-const foundInProjects = computed(() => ['project 1', 'project 2']);
+const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];

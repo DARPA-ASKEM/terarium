@@ -45,7 +45,7 @@
 				:resource-type="(resultType as ResourceType)"
 				:search-term="searchTerm"
 				:project-options="projectOptions"
-				@toggle-selected-asset="updateSelection(asset)"
+				@select-asset="updateSelection(asset)"
 				@toggle-asset-preview="togglePreview(asset)"
 			/>
 		</li>
@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType, onMounted } from 'vue';
+import { ref, computed, PropType } from 'vue';
 import { Document, XDDFacetsItemResponse, Dataset, Model, AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
@@ -67,6 +67,7 @@ import {
 import { useProjects } from '@/composables/project';
 import { createDocumentFromXDD } from '@/services/document-assets';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
+import { logger } from '@/utils/logger';
 import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
@@ -109,42 +110,51 @@ const projectOptions = computed(() => [
 			useProjects().allProjects.value?.map((project) => ({
 				label: project.name,
 				command: async () => {
+					let response: any = null;
+					let assetName = '';
+
 					if (isDocument(selectedAsset.value)) {
 						const document = selectedAsset.value as Document;
 						await createDocumentFromXDD(document, project.id);
 						// finally add asset to project
-						await useProjects().get(project.id);
+						response = await useProjects().get(project.id);
+						assetName = selectedAsset.value.title;
 					}
 					if (isModel(selectedAsset.value)) {
 						// FIXME: handle cases where assets is already added to the project
 						const modelId = selectedAsset.value.id;
 						// then, link and store in the project assets
-						const assetsType = AssetType.Models;
-						await useProjects().addAsset(assetsType, modelId, project.id);
+						const assetType = AssetType.Models;
+						response = await useProjects().addAsset(assetType, modelId, project.id);
+						assetName = selectedAsset.value.header.name;
 					}
 					if (isDataset(selectedAsset.value)) {
 						// FIXME: handle cases where assets is already added to the project
 						const datasetId = selectedAsset.value.id;
 						// then, link and store in the project assets
-						const assetsType = AssetType.Datasets;
+						const assetType = AssetType.Datasets;
 						if (datasetId) {
-							await useProjects().addAsset(assetsType, datasetId, project.id);
+							response = await useProjects().addAsset(assetType, datasetId, project.id);
+							assetName = selectedAsset.value.name;
 						}
 					}
+					console.log(selectedAsset.value);
+
+					if (response) logger.info(`Added ${assetName} to ${project.name}`);
 				}
 			})) ?? []
 	}
 ]);
 
-onMounted(() => {
-	// To preview if the asset is already in a project we need to grab the assets of all projects...
-	const projs =
-		useProjects().allProjects.value?.forEach(async (project) => {
-			const assets = await useProjects().get(project.id);
-			console.log(project, props.resultType, assets);
-		}) ?? [];
-	console.log(projs);
-});
+// onMounted(() => {
+// 	// To preview if the asset is already in a project we need to grab the assets of all projects...
+// 	const projs =
+// 		useProjects().allProjects.value?.forEach(async (project) => {
+// 			const assets = await useProjects().get(project.id);
+// 		    console.log(project, props.resultType, assets);
+// 		}) ?? [];
+// 	console.log(projs);
+// });
 
 const previewedAsset = ref<ResultType | null>(null);
 
