@@ -73,6 +73,7 @@
 				@update:output="onUpdateOutput"
 				@update:selection="onUpdateSelection"
 				:is-loading="isProcessing"
+				is-selectable
 			>
 				<tera-operator-placeholder
 					v-if="!selectedModel && !previewHTML"

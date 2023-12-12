@@ -21,6 +21,7 @@
 					<template #option="slotProps">
 						<div class="dropdown-option">
 							<Checkbox
+								v-if="isSelectable"
 								@click.stop
 								:model-value="slotProps.option?.isSelected"
 								@update:model-value="emit('update:selection', slotProps.option?.id)"
@@ -61,6 +62,7 @@ defineProps<{
 	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
+	isSelectable?: boolean;
 }>();
 
 const slots = useSlots();
