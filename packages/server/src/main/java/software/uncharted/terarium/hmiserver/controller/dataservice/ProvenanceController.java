@@ -24,6 +24,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseSuccess;
@@ -46,6 +51,12 @@ public class ProvenanceController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets a provenance entry by ID")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class))),
+			@ApiResponse(responseCode = "204", description = "There was no provenance found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the provenance from the data store", content = @Content)
+	})
 	public ResponseEntity<Provenance> getProvenance(@PathVariable("id") UUID id) {
 		Optional<Provenance> provenance = provenanceService.getProvenance(id);
 
@@ -58,6 +69,10 @@ public class ProvenanceController {
 
 	@PostMapping
 	@Secured(Roles.USER)
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the provenance", content = @Content)
+	})
 	public ResponseEntity<ResponseId> createProvenance(
 			@RequestBody final Provenance provenance) {
 		Provenance createdProvenance = provenanceService.createProvenance(provenance);
@@ -80,6 +95,13 @@ public class ProvenanceController {
 	// the individual search methods explicitly instead.
 	@PostMapping("/search")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search provenance by name")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
+			@ApiResponse(responseCode = "204", description = "There are no provenance entries found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving provenance entries from the data store", content = @Content)
+	})
+	@Deprecated
 	public ResponseEntity<JsonNode> searchProvenance(
 			@RequestParam final String searchType,
 			@RequestBody final ProvenanceQueryParam body) {
@@ -101,6 +123,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/child_nodes")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search child nodes")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<ProvenanceSearchResult> searchChildNodes(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -109,6 +137,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/parent_nodes")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search parent nodes")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<ProvenanceSearchResult> searchParentNodes(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -117,6 +151,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/connected_nodes")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search connected nodes")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<ProvenanceSearchResult> searchConnectedNodes(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -125,6 +165,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/parent_model_revisions")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search model revisions")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<ProvenanceSearchResult> searchParentModelRevisions(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -133,6 +179,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/parent_models")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search parent models")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<ProvenanceSearchResult> searchParentModels(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -141,6 +193,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/concept")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search concepts")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<ProvenanceSearchResult> searchConcept(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -149,6 +207,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/artifacts_created_by_user")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search artifacts created by user")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<ProvenanceSearchResult> searchArtifactsCreatedByUser(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -157,6 +221,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/concept_counts")
 	@Secured(Roles.USER)
+	@Operation(summary = "Get concept counts")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<Map<String, Integer>> searchConceptCounts(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -165,6 +235,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/models_from_code")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search models from code")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<Set<String>> searchModelsFromCode(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -173,6 +249,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/models_from_equation")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search models from equations")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<Set<String>> searchModelsFromEquation(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -181,6 +263,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/models_from_document")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search models from documents")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<Set<String>> searchModelsFromDocument(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -189,6 +277,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/extracted_models")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search extracted models")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<Set<String>> searchExtractedModels(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -197,6 +291,12 @@ public class ProvenanceController {
 
 	@PostMapping("/search/model_document")
 	@Secured(Roles.USER)
+	@Operation(summary = "Search for a models document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
+	})
 	public ResponseEntity<Map<String, Object>> searchModelDocument(
 			@RequestBody final ProvenanceQueryParam body) {
 
@@ -205,6 +305,12 @@ public class ProvenanceController {
 
 	@DeleteMapping("/hanging_nodes")
 	@Secured(Roles.USER)
+	@Operation(summary = "Deletes all hanging nodes")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Whether the delete was successful", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseSuccess.class)) }),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+	})
 	public ResponseEntity<ResponseSuccess> deleteHangingNodes() {
 		provenanceService.deleteHangingNodes();
 
@@ -213,6 +319,13 @@ public class ProvenanceController {
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Deletes a provenance entry")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Deleted entry", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
+			@ApiResponse(responseCode = "404", description = "Provenance could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+	})
 	public ResponseEntity<ResponseDeleted> deleteProvenance(
 			@PathVariable("id") final UUID id) {
 

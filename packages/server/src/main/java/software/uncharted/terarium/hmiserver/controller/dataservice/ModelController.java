@@ -165,7 +165,7 @@ public class ModelController {
 
 	@GetMapping("/search")
 	@Secured(Roles.USER)
-	@Operation(summary = "Searchs models with a query")
+	@Operation(summary = "Search models with a query")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Models found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)))),
 			@ApiResponse(responseCode = "204", description = "There are no models found and no errors occurred", content = @Content),
@@ -216,7 +216,7 @@ public class ModelController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Deleted model", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Model model could not be found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	ResponseEntity<ResponseDeleted> deleteModel(
