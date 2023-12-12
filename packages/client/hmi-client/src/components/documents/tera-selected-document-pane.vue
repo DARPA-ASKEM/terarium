@@ -54,8 +54,8 @@ const addResourcesToProject = async (projectId: string) => {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
-		const assetsType = AssetType.Publications;
-		await useProjects().addAsset(assetsType, documentId, projectId);
+		const assetType = AssetType.Publications;
+		await useProjects().addAsset(assetType, documentId, projectId);
 	}
 };
 
