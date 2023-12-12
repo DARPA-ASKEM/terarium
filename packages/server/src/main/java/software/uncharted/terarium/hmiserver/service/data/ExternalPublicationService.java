@@ -1,8 +1,13 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
@@ -10,17 +15,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-
 /**
  * Service class for handling external publications.
  */
 @Service
 @RequiredArgsConstructor
 public class ExternalPublicationService {
-
 
 	private final ElasticsearchService elasticService;
 
@@ -35,10 +35,12 @@ public class ExternalPublicationService {
 	 *
 	 * @param id The ID of the ExternalPublication to retrieve.
 	 * @return The ExternalPublication object if found, or null otherwise.
-	 * @throws IOException If an I/O error occurs while retrieving the ExternalPublication.
+	 * @throws IOException If an I/O error occurs while retrieving the
+	 *                     ExternalPublication.
 	 */
 	public ExternalPublication getExternalPublication(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getExternalPublicationIndex(), id.toString(), ExternalPublication.class);
+		return elasticService.get(elasticConfig.getExternalPublicationIndex(), id.toString(),
+				ExternalPublication.class);
 	}
 
 	/**
@@ -47,7 +49,8 @@ public class ExternalPublicationService {
 	 * @param page     The page number of the search results.
 	 * @param pageSize The number of results per page.
 	 * @return A list of ExternalPublication objects.
-	 * @throws IOException If an I/O error occurs while retrieving the ExternalPublications.
+	 * @throws IOException If an I/O error occurs while retrieving the
+	 *                     ExternalPublications.
 	 */
 	public List<ExternalPublication> getExternalPublications(Integer page, Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
@@ -62,7 +65,8 @@ public class ExternalPublicationService {
 	 * Deletes an external publication from the Elasticsearch index.
 	 *
 	 * @param id The ID of the external publication to delete.
-	 * @throws IOException If an I/O error occurs while deleting the external publication.
+	 * @throws IOException If an I/O error occurs while deleting the external
+	 *                     publication.
 	 */
 	public void deleteExternalPublication(UUID id) throws IOException {
 		elasticService.delete(elasticConfig.getExternalPublicationIndex(), id.toString());
@@ -73,10 +77,12 @@ public class ExternalPublicationService {
 	 *
 	 * @param externalPublication The external publication to be created.
 	 * @return The created external publication.
-	 * @throws IOException If an I/O error occurs while indexing the external publication.
+	 * @throws IOException If an I/O error occurs while indexing the external
+	 *                     publication.
 	 */
 	public ExternalPublication createExternalPublication(ExternalPublication externalPublication) throws IOException {
-		elasticService.index(elasticConfig.getExternalPublicationIndex(), externalPublication.getId().toString(), externalPublication);
+		elasticService.index(elasticConfig.getExternalPublicationIndex(), externalPublication.getId().toString(),
+				externalPublication);
 		return externalPublication;
 	}
 
@@ -85,17 +91,20 @@ public class ExternalPublicationService {
 	 *
 	 * @param externalPublication The ExternalPublication object to be updated.
 	 * @return The updated ExternalPublication object.
-	 * @throws IOException If an I/O error occurs while indexing the ExternalPublication.
+	 * @throws IOException If an I/O error occurs while indexing the
+	 *                     ExternalPublication.
 	 */
 	public ExternalPublication updateExternalPublication(ExternalPublication externalPublication) throws IOException {
-		elasticService.index(elasticConfig.getExternalPublicationIndex(), externalPublication.getId().toString(), externalPublication);
+		elasticService.index(elasticConfig.getExternalPublicationIndex(), externalPublication.getId().toString(),
+				externalPublication);
 		return externalPublication;
 	}
 
 	/**
-	 * Calculates the path for a file based on the ID and filename using the configured document path.
+	 * Calculates the path for a file based on the ID and filename using the
+	 * configured document path.
 	 *
-	 * @param id The ID of the file.
+	 * @param id       The ID of the file.
 	 * @param filename The name of the file.
 	 * @return The calculated path for the file.
 	 */
@@ -111,7 +120,7 @@ public class ExternalPublicationService {
 	 * @return The generated pre-signed URL.
 	 */
 	public PresignedURL getUploadUrl(UUID id, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
@@ -130,7 +139,7 @@ public class ExternalPublicationService {
 	 * @return The generated pre-signed URL for downloading the file.
 	 */
 	public PresignedURL getDownloadUrl(UUID id, String filename) {
-		long HOUR_EXPIRATION = 60 * 24;
+		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(

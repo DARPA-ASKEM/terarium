@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -47,7 +49,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.data.project.Project;
+import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
@@ -61,13 +64,14 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -85,7 +89,8 @@ public class DocumentController {
 
 	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
-	final ProjectProxy projectProxy;
+	private final ProjectService projectService;
+	private final ProjectAssetService projectAssetService;
 
 	final DocumentAssetService documentAssetService;
 
@@ -384,7 +389,7 @@ public class DocumentController {
 
 			// get preliminary info to build document asset
 			Document document = body.getDocument();
-			String projectId = body.getProjectId();
+			UUID projectId = UUID.fromString(body.getProjectId());
 			String doi = documentAssetService.getDocumentDoi(document);
 			String username = "";// TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
 
@@ -418,9 +423,14 @@ public class DocumentController {
 			uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
 
 			// add asset to project
-			projectProxy.createAsset(projectId, AssetType.documents, newDocumentAssetId);
+			Optional<Project> project = projectService.getProject(projectId);
+			if (project.isPresent()) {
+				projectAssetService.createProjectAsset(project.get(), ResourceType.DOCUMENT,
+						newDocumentAssetId);
+			}
 
 			return ResponseEntity.ok(response);
+
 		} catch (IOException | URISyntaxException e) {
 			final String error = "Unable to upload document from github";
 			log.error(error, e);
