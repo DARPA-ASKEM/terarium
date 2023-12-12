@@ -15,10 +15,10 @@ public class Neo4jService {
 	@Value("${spring.data.neo4j.uri}")
 	private String uri;
 
-	@Value("${spring.data.neo4j.username}")
+	@Value("${spring.data.neo4j.authentication.username}")
 	private String username;
 
-	@Value("${spring.data.neo4j.password}")
+	@Value("${spring.data.neo4j.authentication.password}")
 	private String password;
 
 	private Driver driver;
