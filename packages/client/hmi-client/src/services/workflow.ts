@@ -352,6 +352,7 @@ export const getGroupedOutputs = <T>(
 ) => {
 	const savedOutputs: WorkflowOutput<T>[] = [];
 	const unsavedOutputs: WorkflowOutput<T>[] = [];
+
 	node.outputs?.forEach((output) => {
 		if (output.isSaved) {
 			savedOutputs.push(output);
@@ -359,6 +360,8 @@ export const getGroupedOutputs = <T>(
 		}
 		unsavedOutputs.push(output);
 	});
+
+	// Group the outputs in the correct format based off of their saved status
 	const groupedOutputs: GroupedOutputItem<T>[] = [];
 	if (!_.isEmpty(unsavedOutputs) && labels.unsaved) {
 		groupedOutputs.push({
@@ -372,5 +375,6 @@ export const getGroupedOutputs = <T>(
 			items: savedOutputs
 		});
 	}
+
 	return groupedOutputs;
 };
