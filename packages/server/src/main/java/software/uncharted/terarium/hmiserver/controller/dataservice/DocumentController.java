@@ -1,16 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -26,28 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.data.project.Project;
@@ -73,6 +51,12 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -113,7 +97,7 @@ public class DocumentController {
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to get documents";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -135,7 +119,7 @@ public class DocumentController {
 		try {
 			documentAssetService.createDocumentAsset(document);
 			return ResponseEntity.ok(new ResponseId(document.getId()));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -198,7 +182,7 @@ public class DocumentController {
 
 			// Return the updated document
 			return ResponseEntity.ok(document);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to get document";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -220,7 +204,7 @@ public class DocumentController {
 
 		try {
 			return ResponseEntity.ok(documentAssetService.getUploadUrl(id, filename));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -242,7 +226,7 @@ public class DocumentController {
 
 		try {
 			return ResponseEntity.ok(documentAssetService.getDownloadUrl(id, filename));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -266,7 +250,7 @@ public class DocumentController {
 		try {
 			documentAssetService.deleteDocumentAsset(id);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to delete document";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -337,7 +321,7 @@ public class DocumentController {
 			final byte[] fileAsBytes = file.getBytes();
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 			return uploadDocumentHelper(id, filename, fileEntity);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -383,27 +367,27 @@ public class DocumentController {
 
 		try {
 			// build initial response
-			AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
+			final AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
 			response.setExtractionJobId(null);
 			response.setPdfUploadError(false);
 			response.setDocumentAssetId(null);
 
 			// get preliminary info to build document asset
-			Document document = body.getDocument();
-			UUID projectId = UUID.fromString(body.getProjectId());
-			String doi = documentAssetService.getDocumentDoi(document);
-			UserId userId = projectService.getProject(projectId).get().getUserId();
+			final Document document = body.getDocument();
+			final UUID projectId = body.getProjectId();
+			final String doi = documentAssetService.getDocumentDoi(document);
+			final UserId userId = projectService.getProject(projectId).get().getUserId();
 
 			// get pdf url and filename
-			String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
-			String filename = DownloadService.pdfNameFromUrl(fileUrl);
+			final String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
+			final String filename = DownloadService.pdfNameFromUrl(fileUrl);
 
-			XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null, null,
+			final XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null, null,
 					null,
 					null, apikey);
 
 			// create a new document asset from the metadata in the xdd document
-			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+			final DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
 					extractionResponse.getSuccess().getData());
 			if (filename != null)
 				documentAsset.getFileNames().add(filename);
@@ -414,7 +398,7 @@ public class DocumentController {
 			response.setDocumentAssetId(newDocumentAssetId);
 
 			// Upload the PDF from unpaywall
-			String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
+			final String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
 			if (extractionJobId == null)
 				response.setPdfUploadError(true);
 			else
@@ -424,7 +408,7 @@ public class DocumentController {
 			uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
 
 			// add asset to project
-			Optional<Project> project = projectService.getProject(projectId);
+			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
 				projectAssetService.createProjectAsset(project.get(), ResourceType.DOCUMENT,
 						newDocumentAssetId);
@@ -432,7 +416,7 @@ public class DocumentController {
 
 			return ResponseEntity.ok(response);
 
-		} catch (IOException | URISyntaxException e) {
+		} catch (final IOException | URISyntaxException e) {
 			final String error = "Unable to upload document from github";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -514,12 +498,15 @@ public class DocumentController {
 	 * @param extractions list of extractions associated with the document
 	 * @return
 	 */
-	private DocumentAsset createDocumentAssetFromXDDDocument(final Document document, final UserId userId,
-			List<Extraction> extractions) {
+	private static DocumentAsset createDocumentAssetFromXDDDocument(
+		final Document document,
+		final UserId userId,
+		final List<Extraction> extractions
+	) {
 		String name = document.getTitle();
 
 		// create document asset
-		DocumentAsset documentAsset = new DocumentAsset();
+		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName(name);
 		documentAsset.setDescription(name);
 		documentAsset.setUserId(userId);
@@ -528,11 +515,11 @@ public class DocumentController {
 		if (extractions != null) {
 			documentAsset.setAssets(new ArrayList<>());
 			for (int i = 0; i < extractions.size(); i++) {
-				Extraction extraction = extractions.get(i);
+				final Extraction extraction = extractions.get(i);
 				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
 						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
 						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
-					DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
+					final DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
 					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
 					documentExtraction.setFileName("extraction_" + i + ".png");
 					documentExtraction.getMetadata().put("title", extraction.getProperties().getTitle());
@@ -558,23 +545,23 @@ public class DocumentController {
 	 * @param docId
 	 * @param extractions
 	 */
-	private void uploadXDDExtractions(UUID docId, List<Extraction> extractions) {
+	private void uploadXDDExtractions(final UUID docId, final List<Extraction> extractions) {
 
 		if (extractions != null) {
 			for (int i = 0; i < extractions.size(); i++) {
-				Extraction extraction = extractions.get(i);
+				final Extraction extraction = extractions.get(i);
 				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
 						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
 						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
-					String filename = "extraction_" + i + ".png";
+					final String filename = "extraction_" + i + ".png";
 
-					try (CloseableHttpClient httpclient = HttpClients.custom()
+					try (final CloseableHttpClient httpclient = HttpClients.custom()
 							.disableRedirectHandling()
 							.build()) {
-						String image = extraction.getProperties().getImage();
+						final String image = extraction.getProperties().getImage();
 						if (image != null) {
-							byte[] imageAsBytes = Base64.getDecoder().decode(image.getBytes("UTF-8"));
-							HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes,
+							final byte[] imageAsBytes = Base64.getDecoder().decode(image.getBytes(StandardCharsets.UTF_8));
+							final HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes,
 									ContentType.APPLICATION_OCTET_STREAM);
 							final PresignedURL presignedURL = documentAssetService.getUploadUrl(docId, filename);
 
@@ -583,7 +570,7 @@ public class DocumentController {
 
 							httpclient.execute(put);
 						}
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						throw new RuntimeException(e);
 					}
 				}
@@ -600,12 +587,12 @@ public class DocumentController {
 	 * @param docId
 	 * @return
 	 */
-	private String uploadPDFFileToDocumentThenExtract(String doi, String filename, UUID docId) {
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+	private String uploadPDFFileToDocumentThenExtract(final String doi, final String filename, final UUID docId) {
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
 
-			byte[] fileAsBytes = downloadService.getPDF("https://unpaywall.org/" + doi);
+			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
 			// if this service fails, return ok with errors
 			if (fileAsBytes == null || fileAsBytes.length == 0) {
@@ -613,7 +600,7 @@ public class DocumentController {
 			}
 
 			// upload pdf to document asset
-			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 			final PresignedURL presignedURL = documentAssetService.getUploadUrl(docId, filename);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(fileEntity);
@@ -624,9 +611,9 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			return knowledgeMiddlewareProxy.postPDFToCosmos(docId.toString()).getBody().get("id").asText();
+			return knowledgeMiddlewareProxy.postPDFToCosmos(docId).getBody().get("id").asText();
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
 			return null;
 		}

@@ -34,7 +34,7 @@ public class Annotation implements Serializable {
 	private Long timestampMillis = Instant.now().toEpochMilli();
 
 	@Column()
-	private Long projectId;
+	private UUID projectId;
 
 	@Column(columnDefinition = "TEXT")
 	private String content;

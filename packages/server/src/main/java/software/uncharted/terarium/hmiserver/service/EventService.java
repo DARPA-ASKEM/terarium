@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -12,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.user.Event;
 import software.uncharted.terarium.hmiserver.repository.EventRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -20,7 +20,7 @@ public class EventService {
 
 	final EventRepository eventRepository;
 
-	public List<Event> findEvents(final EventType type, final Long projectId, final String currentUserId, final String like, final int limit) {
+	public List<Event> findEvents(final EventType type, final UUID projectId, final String currentUserId, final String like, final int limit) {
 		final Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "timestampMillis"));
 		if (like != null && !like.isEmpty()) {
 			final String likeQuery = "%" + like + "%";

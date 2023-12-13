@@ -28,6 +28,7 @@ import java.util.UUID;
 public class Event implements Serializable {
 	@Serial
 	private static final long serialVersionUID = 7337142167492880031L;
+
 	@Id
 	@TSOptional
 	private String id = UUID.randomUUID().toString();
@@ -37,7 +38,7 @@ public class Event implements Serializable {
 	private Long timestampMillis = Instant.now().toEpochMilli();
 
 	@TSOptional
-	private Long projectId;
+	private UUID projectId;
 
 	@Column(nullable = false)
 	@TSOptional
