@@ -288,7 +288,7 @@ const headerInitials = computed<any[]>(() =>
 const headerParameters = computed<any[]>(() =>
 	stratifiedModelType.value
 		? // ? baseModel.value.transitions.map(({ id }) => id)
-			[...getUnstratifiedParameters(props.model).keys()]
+		  [...getUnstratifiedParameters(props.model).keys()]
 		: configurations.value[0]?.semantics?.ode.parameters?.map(({ id }) => id) ?? []
 );
 const headerInitialsAndParameters = computed(() => [

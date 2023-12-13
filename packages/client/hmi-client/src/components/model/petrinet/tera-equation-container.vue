@@ -69,10 +69,7 @@ main {
 }
 
 main.is-editing {
-	box-shadow:
-		inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px #1b8073,
+	box-shadow: inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073,
 		inset 0 0 0 1px var(--primary-color);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--border-radius);

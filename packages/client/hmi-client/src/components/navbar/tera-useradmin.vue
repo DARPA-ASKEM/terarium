@@ -229,8 +229,8 @@ const groupTableData = ref<PermissionGroup[] | null>(null);
 const expandedRows = ref([]);
 const userDropdownValue = ref('');
 const selectedUser = ref<PermissionUser | null>();
-const usersMenu = computed(
-	() => users.value?.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+const usersMenu = computed(() =>
+	users.value?.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
 );
 const selectedGroupUser = ref<PermissionUser | null>(null);
 const selectedGroupRelationship = ref('');

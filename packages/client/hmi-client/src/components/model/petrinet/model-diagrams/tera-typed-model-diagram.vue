@@ -309,18 +309,17 @@ watch(
 		const transitionTypedMap: string[][] = [];
 		const updatedTypeSystem: TypeSystem = { states: [], transitions: [] };
 		let typingSemantics: TypingSemantics;
-		typedRows.value.forEach(
-			(row) =>
-				row.assignTo?.forEach((parameter) => {
-					if (row.typeName && row.typeName && row.nodeType) {
-						if (row.nodeType === 'Variable') {
-							stateTypedMap.push([parameter, row.typeName]);
-						}
-						if (row.nodeType === 'Transition') {
-							transitionTypedMap.push([parameter, row.typeName]);
-						}
+		typedRows.value.forEach((row) =>
+			row.assignTo?.forEach((parameter) => {
+				if (row.typeName && row.typeName && row.nodeType) {
+					if (row.nodeType === 'Variable') {
+						stateTypedMap.push([parameter, row.typeName]);
 					}
-				})
+					if (row.nodeType === 'Transition') {
+						transitionTypedMap.push([parameter, row.typeName]);
+					}
+				}
+			})
 		);
 
 		stateTypedMap.forEach((map) => {

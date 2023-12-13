@@ -133,9 +133,7 @@ const onEdit = () => {
 	background: #fff;
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
-	box-shadow:
-		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
-		0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
 .form-header {

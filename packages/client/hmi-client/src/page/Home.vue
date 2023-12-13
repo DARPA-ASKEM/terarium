@@ -265,9 +265,7 @@ header {
 		radial-gradient(105.92% 916.85% at 101.3% -5.92%, #75d5c8 0%, white 100%);
 	background-repeat: no-repeat;
 	background-size: 25%, 100%;
-	background-position:
-		right 100px top -60px,
-		100%;
+	background-position: right 100px top -60px, 100%;
 }
 
 header h3 {

@@ -144,9 +144,9 @@ export default defineComponent({
 						this.facet === 'numEvidence' && facet.selection[1] >= 5
 							? '--'
 							: facet.selection[1] !== this.baseData.length
-								? this.baseData[facet.selection[1]].key
-								: (this.baseData[1].key - this.baseData[0].key) * this.baseData.length +
-									this.baseData[0].key;
+							? this.baseData[facet.selection[1]].key
+							: (this.baseData[1].key - this.baseData[0].key) * this.baseData.length +
+							  this.baseData[0].key;
 					this.query.setSearchClause({ field: this.facet, values: [[from, to]] });
 				} else {
 					this.query.setSearchClause({ field: this.facet, values: [[0, this.baseData.length]] });

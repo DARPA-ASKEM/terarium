@@ -36,18 +36,11 @@ const props = defineProps<{
 	margin: 0;
 	opacity: 0;
 	padding: 0;
-	transition:
-		opacity 0.3s,
-		margin 0.5s ease-in,
-		padding 0.5s ease-in,
-		max-height 0.4s ease-in;
+	transition: opacity 0.3s, margin 0.5s ease-in, padding 0.5s ease-in, max-height 0.4s ease-in;
 }
 
 .show {
-	transition:
-		margin 0.5s ease-in,
-		opacity 0.3s ease-in,
-		max-height 0.5s ease-in;
+	transition: margin 0.5s ease-in, opacity 0.3s ease-in, max-height 0.5s ease-in;
 }
 
 .response-thought-container {
