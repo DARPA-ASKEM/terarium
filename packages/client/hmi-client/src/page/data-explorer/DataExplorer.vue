@@ -36,7 +36,6 @@
 					:data-items="dataItems"
 					:facets="filteredFacets"
 					:result-type="resourceType"
-					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
 					:doc-count="docCount"

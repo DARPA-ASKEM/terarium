@@ -107,11 +107,6 @@
 						style="margin-right: auto"
 					/>
 					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
-					<Button
-						:disabled="!isModelValid()"
-						label="Apply changes and close"
-						@click="constructModel"
-					/>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -119,7 +114,9 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep, isEmpty } from 'lodash';
 import { onMounted, onUnmounted, ref } from 'vue';
+
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
@@ -129,25 +126,25 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
-import { cloneDeep, isEmpty } from 'lodash';
-import { KernelSessionManager } from '@/services/jupyter';
-import { JSONObject } from '@lumino/coreutils';
-import { logger } from '@/utils/logger';
+
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { getCodeAsset, getCodeFileAsText } from '@/services/code';
-import { codeToAMR } from '@/services/knowledge';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModel } from '@/services/model';
-import { addAsset } from '@/services/project';
-import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { useToastService } from '@/services/toast';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+
+import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
+import { WorkflowNode } from '@/types/workflow';
+import { KernelSessionManager } from '@/services/jupyter';
+import { logger } from '@/utils/logger';
+import { getCodeAsset, getCodeFileAsText } from '@/services/code';
+import { codeToAMR } from '@/services/knowledge';
+import { getModel, createModel } from '@/services/model';
+import { addAsset } from '@/services/project';
+import { useProjects } from '@/composables/project';
+import { useToastService } from '@/services/toast';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -217,7 +214,7 @@ onUnmounted(() => {
 
 function buildJupyterContext() {
 	const contextName =
-		selectedModelFramework.value === ModelFramework.Decapodes ? 'decapodes_creation' : null;
+		selectedModelFramework.value === ModelFramework.Decapodes ? 'decapodes' : null;
 	const languageName =
 		selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 
@@ -249,7 +246,7 @@ async function handleCode() {
 
 	if (selectedModelFramework.value === ModelFramework.Decapodes) {
 		const code = editor.value?.getValue();
-		const messageContent = <JSONObject>{
+		const messageContent = {
 			declaration: code
 		};
 
@@ -262,74 +259,51 @@ async function handleCode() {
 	}
 }
 
-function constructModel() {
-	const modelContent = {
-		name: 'new model'
-	};
-
-	decapodesModelValid.value = false;
-
-	kernelManager
-		.sendMessage('construct_amr_request', modelContent)
-		?.register('construct_amr_response', handleConstructAmrResponse);
-}
-
 async function saveAsNewModel() {
-	if (selectedModelFramework.value === ModelFramework.Petrinet) {
-		const projectId = useProjects().activeProject.value?.id;
+	const projectId = useProjects().activeProject.value?.id;
+	if (!projectId || !selectedModel.value) return;
 
-		if (!projectId || !selectedModel.value) return;
+	savingAsset.value = true;
+	const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+	savingAsset.value = false;
 
-		savingAsset.value = true;
-		const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
-		savingAsset.value = false;
-
-		if (!response) {
-			logger.error('Could not save asset to project');
-			return;
-		}
-
-		useToastService().success('', 'Model saved successfully.');
+	if (!response) {
+		logger.error('Could not save asset to project');
+		return;
 	}
-
-	if (selectedModelFramework.value === ModelFramework.Decapodes) {
-		const messageContent = {
-			header: {
-				description: 'new description',
-				name: 'new model',
-				_type: 'Header',
-				model_version: 'v1.0',
-				schema: 'modelreps.io/DecaExpr',
-				schema_name: 'DecaExpr'
-			}
-		};
-
-		decapodesModelValid.value = false;
-
-		kernelManager
-			.sendMessage('save_amr_request', messageContent)
-			?.register('save_amr_response', handleSaveAmrResponse);
-	}
+	useToastService().success('', 'Model saved successfully.');
 }
 
 function handleCompileExprResponse() {
 	decapodesModelValid.value = true;
 }
 
-function handleDecapodesPreview(data: any) {
+// FIXME: This saves the preview as AMR, revisit when we have temporary-assets
+async function handleDecapodesPreview(data: any) {
 	console.log('Decapode preview', data);
-	previewHTML.value = data.content['image/svg'];
-	isProcessing.value = false;
-}
+	const decapodeJSON = data.content['application/json'];
+	const header = {
+		description: 'new description',
+		name: 'new model',
+		_type: 'Header',
+		model_version: 'v1.0',
+		schema: 'modelreps.io/DecaExpr',
+		schema_name: 'decapode'
+	};
+	const amr = {
+		header,
+		model: decapodeJSON
+	};
 
-function handleConstructAmrResponse(data: any) {
-	// console.log("Decapode preview", message.content);
-	// previewHTML.value = message.content["image/svg"];
-	alert(JSON.stringify(data.content, null, 2));
-}
-
-function handleSaveAmrResponse() {
-	// TODO: Save into project
+	const response = await createModel(amr);
+	if (response) {
+		const m = await getModel(response.id);
+		if (m) {
+			selectedModel.value = m;
+			previewHTML.value = `Decapode created ${m.id}`;
+		}
+		isProcessing.value = false;
+	}
 }
 
 /**
