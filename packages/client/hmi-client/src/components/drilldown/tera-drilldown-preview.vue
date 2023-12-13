@@ -6,6 +6,7 @@
 				<Dropdown
 					v-if="options"
 					class="output-dropdown"
+					placeholder="Select an output"
 					:model-value="output"
 					:options="options"
 					option-value="id"
@@ -52,13 +53,13 @@
 import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
-import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
+import { GroupedOutputItem, WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Checkbox from 'primevue/checkbox';
 
 defineProps<{
 	title?: string;
-	options?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
+	options?: WorkflowOutput<any>[] | GroupedOutputItem<any>[];
 	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 	isLoading?: boolean;

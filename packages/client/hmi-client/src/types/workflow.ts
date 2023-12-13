@@ -79,6 +79,12 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 	operatorStatus?: OperatorStatus;
 	state?: S;
 	timestamp?: Date;
+	isSaved?: boolean;
+}
+
+export interface GroupedOutputItem<T> {
+	label: string;
+	items: WorkflowOutput<T>[];
 }
 
 // Node definition in the workflow

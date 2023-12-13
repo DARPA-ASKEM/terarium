@@ -202,6 +202,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import { getTimespan } from '@/workflow/util';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+import { getGroupedOutputs } from '@/services/workflow';
 import {
 	CalibrateExtraJulia,
 	CalibrateMap,
@@ -234,10 +235,14 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
 
-const outputs = computed(() => props.node.outputs);
-const selectedOutputId = computed(() => props.node.active) as any;
+const outputs = computed(() =>
+	getGroupedOutputs<CalibrationOperationStateJulia>(props.node, {
+		unsaved: 'Select outputs to display in operator'
+	})
+);
+const selectedOutputId = ref<string>();
 const selectedRunId = computed(
-	() => outputs.value.find((o) => o.id === selectedOutputId.value)?.value?.[0]
+	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
 const drilldownLossPlot = ref<HTMLElement>();
@@ -415,8 +420,6 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	// clear out intermediate values for next run
 	lossValues = [];
 	parameterResult.value = {};
-
-	onUpdateOutput(outputs.value[outputs.value.length - 1].id);
 };
 
 const onUpdateOutput = (id) => {
@@ -449,6 +452,16 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
+watch(
+	() => props.node.active,
+	() => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+	},
+	{ immediate: true }
+);
 
 // Set up model config + dropdown names
 watch(

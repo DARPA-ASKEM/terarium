@@ -14,7 +14,8 @@ import {
 	WorkflowPortStatus,
 	OperatorStatus,
 	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	GroupedOutputItem
 } from '@/types/workflow';
 
 /**
@@ -338,3 +339,32 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 		...updatedOutputPort
 	};
 }
+
+export const getGroupedOutputs = <T>(
+	node: WorkflowNode<any>,
+	labels: { saved?: string; unsaved?: string }
+) => {
+	const savedOutputs: WorkflowOutput<T>[] = [];
+	const unsavedOutputs: WorkflowOutput<T>[] = [];
+	node.outputs?.forEach((output) => {
+		if (output.isSaved) {
+			savedOutputs.push(output);
+			return;
+		}
+		unsavedOutputs.push(output);
+	});
+	const groupedOutputs: GroupedOutputItem<T>[] = [];
+	if (!_.isEmpty(unsavedOutputs) && labels.unsaved) {
+		groupedOutputs.push({
+			label: labels.unsaved,
+			items: unsavedOutputs
+		});
+	}
+	if (!_.isEmpty(savedOutputs) && labels.saved) {
+		groupedOutputs.push({
+			label: labels.saved,
+			items: savedOutputs
+		});
+	}
+	return groupedOutputs;
+};

@@ -121,7 +121,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
@@ -132,7 +132,7 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -149,6 +149,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import { getCodeAsset, getCodeFileAsText } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
+import { getGroupedOutputs } from '@/services/workflow';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -196,36 +197,13 @@ const clonedState = ref<ModelFromCodeState>({
 	modelId: ''
 });
 
-const outputs = computed(() => {
-	const savedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
-	const unsavedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
-
-	props.node.outputs?.forEach((output) => {
-		if (output.state?.isSaved) {
-			savedOutputs.push(output);
-			return;
-		}
-		unsavedOutputs.push(output);
-	});
-
-	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromCodeState>[] }[] = [];
-	if (!isEmpty(unsavedOutputs)) {
-		groupedOutputs.push({
-			label: 'Select outputs to display in operator',
-			items: unsavedOutputs
-		});
-	}
-
-	if (!isEmpty(savedOutputs)) {
-		groupedOutputs.push({
-			label: 'Saved models',
-			items: savedOutputs
-		});
-	}
-
-	return groupedOutputs;
-});
-const selectedOutputId = computed<string>(() => props.node.active ?? '');
+const outputs = computed(() =>
+	getGroupedOutputs<ModelFromCodeState>(props.node, {
+		saved: 'Saved models',
+		unsaved: 'Select outputs to display in operator'
+	})
+);
+const selectedOutputId = ref<string>();
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
@@ -285,11 +263,11 @@ async function handleCode() {
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
 		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
 		clonedState.value.modelId = modelId;
-		clonedState.value.isSaved = false;
 		emit('append-output-port', {
 			label: `Output ${(props.node.outputs?.length ?? 0) + 1}`,
 			state: cloneDeep(clonedState.value),
-			isSelected: false
+			isSelected: false,
+			isSaved: false
 		});
 		isProcessing.value = false;
 	}
@@ -336,11 +314,11 @@ async function saveAsNewModel() {
 		}
 
 		// 3. Append Model to output port
-		clonedState.value.isSaved = true;
 		emit('append-output-port', {
 			label: selectedModel.value.header?.name,
 			state: cloneDeep(clonedState.value),
-			isSelected: false
+			isSelected: false,
+			isSaved: true
 		});
 		useToastService().success('', 'Model saved successfully.');
 	}
@@ -416,6 +394,16 @@ async function fetchModel() {
 	selectedModel.value = model;
 	isProcessing.value = false;
 }
+
+watch(
+	() => props.node.active,
+	() => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+	},
+	{ immediate: true }
+);
 
 // watch for model id changes on state
 watch(
