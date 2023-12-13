@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.jupiter.api.Assertions;
@@ -31,17 +32,17 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	private ArtifactService artifactService;
 
 	final Artifact artifact0 = new Artifact()
-			.setId("test-artifact-id0")
+			.setId(UUID.randomUUID())
 			.setName("test-artifact-name")
 			.setDescription("my description");
 
 	final Artifact artifact1 = new Artifact()
-			.setId("test-artifact-id1")
+			.setId(UUID.randomUUID())
 			.setName("test-artifact-name")
 			.setDescription("my description");
 
 	final Artifact artifact2 = new Artifact()
-			.setId("test-artifact-id2")
+			.setId(UUID.randomUUID())
 			.setName("test-artifact-name")
 			.setDescription("my description");
 

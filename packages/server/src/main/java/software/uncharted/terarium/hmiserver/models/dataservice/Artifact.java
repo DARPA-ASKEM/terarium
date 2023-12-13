@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,7 +26,7 @@ public class Artifact {
 
 	/* The id of the artifact. */
 	@TSOptional
-	private String id;
+	private UUID id;
 
 	/* Timestamp of creation */
 	@TSOptional

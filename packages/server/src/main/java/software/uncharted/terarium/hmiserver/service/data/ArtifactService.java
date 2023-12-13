@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -24,8 +25,8 @@ public class ArtifactService {
 	private final Config config;
 	private final S3ClientService s3ClientService;
 
-	public Artifact getArtifact(String id) throws IOException {
-		return elasticService.get(elasticConfig.getArtifactIndex(), id, Artifact.class);
+	public Artifact getArtifact(UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getArtifactIndex(), id.toString(), Artifact.class);
 	}
 
 	public List<Artifact> getArtifacts(Integer page, Integer pageSize) throws IOException {
@@ -37,43 +38,43 @@ public class ArtifactService {
 		return elasticService.search(req, Artifact.class);
 	}
 
-	public void deleteArtifact(String id) throws IOException {
-		elasticService.delete(elasticConfig.getArtifactIndex(), id);
+	public void deleteArtifact(UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getArtifactIndex(), id.toString());
 	}
 
 	public Artifact createArtifact(Artifact artifact) throws IOException {
-		elasticService.index(elasticConfig.getArtifactIndex(), artifact.getId(), artifact);
+		elasticService.index(elasticConfig.getArtifactIndex(), artifact.getId().toString(), artifact);
 		return artifact;
 	}
 
 	public Artifact updateArtifact(Artifact artifact) throws IOException {
-		elasticService.index(elasticConfig.getArtifactIndex(), artifact.getId(), artifact);
+		elasticService.index(elasticConfig.getArtifactIndex(), artifact.getId().toString(), artifact);
 		return artifact;
 	}
 
-	private String getPath(String documentId, String filename) {
-		return String.join("/", config.getArtifactPath(), documentId, filename);
+	private String getPath(UUID artifactId, String filename) {
+		return String.join("/", config.getArtifactPath(), artifactId.toString(), filename);
 	}
 
-	public PresignedURL getUploadUrl(String documentId, String filename) {
+	public PresignedURL getUploadUrl(UUID artifactId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
 				config.getFileStorageS3BucketName(),
-				getPath(documentId, filename),
+				getPath(artifactId, filename),
 				HOUR_EXPIRATION));
 		presigned.setMethod("PUT");
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(String documentId, String filename) {
+	public PresignedURL getDownloadUrl(UUID artifactId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
-				getPath(documentId, filename),
+				getPath(artifactId, filename),
 				HOUR_EXPIRATION));
 		presigned.setMethod("GET");
 		return presigned;
