@@ -78,11 +78,6 @@ public class Config {
 	 */
 	Amazon amazon;
 
-	/**
-	 * DKG configuration
-	 */
-	Dkg dkg;
-
 	/*
 	 * S3 Storage related config
 	 */
@@ -102,12 +97,6 @@ public class Config {
 		 * environments
 		 */
 		Boolean clearOnStartup;
-	}
-
-	@Data
-	@Accessors(chain = true)
-	public static class Dkg {
-		String url;
 	}
 
 	@Data
