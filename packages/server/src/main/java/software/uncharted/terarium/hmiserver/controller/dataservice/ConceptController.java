@@ -1,17 +1,31 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.ConceptProxy;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse;
+import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.security.Roles;
-
-import java.util.List;
-
+import software.uncharted.terarium.hmiserver.service.data.ConceptService;
 
 @RequestMapping("/concepts")
 @RestController
@@ -19,15 +33,14 @@ import java.util.List;
 public class ConceptController {
 
 	@Autowired
-	ConceptProxy proxy;
+	ConceptService conceptService;
 
 	@GetMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> searchConcept(
-		@RequestParam("curie") final String curie
-	) {
+	public ResponseEntity<List<OntologyConcept>> searchConcept(
+			@RequestParam("curie") final String curie) {
 		try {
-			return ResponseEntity.ok(proxy.searchConcept(curie).getBody());
+			return ResponseEntity.ok(conceptService.searchConcept(curie));
 		} catch (RuntimeException e) {
 			log.error("Unable to get search concept", e);
 			return ResponseEntity.internalServerError().build();
@@ -36,91 +49,118 @@ public class ConceptController {
 
 	@PostMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> createConcept(
-		@RequestBody final Concept concept
-	) {
+	public ResponseEntity<OntologyConcept> createConcept(
+			@RequestBody final OntologyConcept concept) {
+
 		try {
-			return ResponseEntity.ok(proxy.createConcept(concept).getBody());
-		} catch (RuntimeException e) {
-			log.error("Unable to create a concept", e);
-			return ResponseEntity.internalServerError().build();
+			return ResponseEntity.ok(conceptService.createConcept(concept));
+		} catch (Exception e) {
+			final String error = "Unable to create concept";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
 	@GetMapping("/definitions")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> searchConceptDefinitions(
-		@RequestParam("term") String term,
-		@RequestParam(name = "limit", defaultValue = "100") Integer limit,
-		@RequestParam(name = "offset", defaultValue = "100") Integer offset
-	) {
+	public ResponseEntity<DKG> searchConceptDefinitions(
+			@RequestParam("term") String term,
+			@RequestParam(name = "limit", defaultValue = "100") Integer limit,
+			@RequestParam(name = "offset", defaultValue = "100") Integer offset) {
 		try {
-			return ResponseEntity.ok(proxy.searchConceptDefinitions(term, limit, offset).getBody());
-		} catch (RuntimeException e) {
-			log.error("An error searching concept definitions", e);
-			return ResponseEntity.internalServerError().build();
+			return ResponseEntity.ok(conceptService.searchConceptDefinitions(term, limit, offset));
+		} catch (Exception e) {
+			final String error = "Unable to search concept definitions";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
 	@GetMapping("/definitions/{curie}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> getConceptDefinitions(
-		@PathVariable("curie") final String curie
-	) {
+	public ResponseEntity<DKG> getConceptDefinition(
+			@PathVariable("curie") final String curie) {
 		try {
-			return ResponseEntity.ok(proxy.getConceptDefinitions(curie).getBody());
-		} catch (RuntimeException e) {
-			log.error("An error getting concept definitions", e);
-			return ResponseEntity.internalServerError().build();
+			return ResponseEntity.ok(conceptService.getConceptDefinition(curie));
+		} catch (Exception e) {
+			final String error = "Unable to get concept definition";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> getConcept(
-		@PathVariable("id") final String id
-	) {
-		return ResponseEntity.ok(proxy.getConcept(id).getBody());
+	public ResponseEntity<OntologyConcept> getConcept(
+			@PathVariable("id") final UUID id) {
+
+		try {
+			Optional<OntologyConcept> concept = conceptService.getConcept(id);
+			if (concept.isPresent()) {
+				return ResponseEntity.ok(concept.get());
+			}
+			return ResponseEntity.notFound().build();
+		} catch (Exception e) {
+			final String error = "Unable to get concept";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteConcept(
-		@PathVariable("id") final String id
-	) {
+	public ResponseEntity<ResponseDeleted> deleteConcept(
+			@PathVariable("id") final UUID id) {
+
 		try {
-			return ResponseEntity.ok(proxy.deleteConcept(id).getBody());
-		} catch (RuntimeException e) {
-			log.error("Unable to delete concept", e);
-			return ResponseEntity.internalServerError().build();
+			conceptService.deleteConcept(id);
+			return ResponseEntity.ok(new ResponseDeleted("Concept", id));
+		} catch (Exception e) {
+			final String error = "Unable to delete concept";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> updateConcept(
-		@PathVariable("id") final String id,
-		@RequestBody final Concept concept
-	) {
+	public ResponseEntity<OntologyConcept> updateConcept(
+			@PathVariable("id") final UUID id,
+			@RequestBody final OntologyConcept concept) {
 		try {
-			return ResponseEntity.ok(proxy.updateConcept(id, concept).getBody());
+			return ResponseEntity.ok(conceptService.updateConcept(concept));
 		} catch (RuntimeException e) {
-			log.error("Unable to update concept", e);
-			return ResponseEntity.internalServerError().build();
+			final String error = "Unable to update concept";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
 	@GetMapping("/facets")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> searchConceptsUsingFacets(
-		@RequestParam(value = "types", required = false) final List<String> types,
-		@RequestParam(value = "curies", required = false) final List<String> curies
-	) {
+	public ResponseEntity<ConceptFacetSearchResponse> searchConceptsUsingFacets(
+			@RequestParam(value = "types", required = false) final List<TaggableType> types,
+			@RequestParam(value = "curies", required = false) final List<String> curies) {
 		try {
-			return ResponseEntity.ok(proxy.searchConceptsUsingFacets(types, curies).getBody());
+			return ResponseEntity.ok(conceptService.searchConceptsUsingFacets(types, curies));
 		} catch (RuntimeException e) {
-			log.error("Unable to search concept using facets", e);
-			return ResponseEntity.internalServerError().build();
+			final String error = "Unable to search concepts using facets";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 }

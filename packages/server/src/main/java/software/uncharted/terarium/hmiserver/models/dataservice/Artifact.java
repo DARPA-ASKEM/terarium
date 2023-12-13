@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.UserId;
+import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 
 /**
  * Represents a generic artifact that can be stored in the data service. For
@@ -52,6 +53,6 @@ public class Artifact {
 
 	/* concepts associated with these files */
 	@TSOptional
-	private List<Concept> concepts;
+	private List<OntologyConcept> concepts;
 
 }
