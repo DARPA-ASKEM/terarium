@@ -353,7 +353,6 @@ export const getGroupedOutputs = <T>(
 	// Group the outputs based off of their saved status
 	const savedOutputs: WorkflowOutput<T>[] = [];
 	const unsavedOutputs: WorkflowOutput<T>[] = [];
-
 	node.outputs?.forEach((output) => {
 		if (output.isSaved) {
 			savedOutputs.push(output);
