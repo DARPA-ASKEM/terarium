@@ -37,13 +37,9 @@ defineProps<{
 </script>
 
 <style scoped>
-:root {
-	--z-index: var(--z-index-modal);
-}
-
 main {
 	isolation: isolate;
-	z-index: var(--z-index);
+	z-index: var(--z-index, var(--z-index-modal));
 
 	& > * {
 		position: absolute;

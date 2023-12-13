@@ -33,6 +33,11 @@
 				<div v-else-if="resourceType === ResourceType.MODEL">
 					{{ (asset as Model).header.schema_name }}
 				</div>
+				<ul>
+					<li v-for="(project, index) in foundInProjects" :key="index">
+						<a>{{ project }}</a>
+					</li>
+				</ul>
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
@@ -142,10 +147,10 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-// const emit = defineEmits(['toggle-asset-preview']);
-
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
+
+const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
@@ -289,6 +294,10 @@ function endDrag() {
 	margin: 1px;
 	min-height: 5rem;
 	padding: 0.5rem 0.625rem 0.625rem;
+
+	& > main {
+		width: 100%;
+	}
 }
 
 .asset-card:hover {
@@ -305,6 +314,18 @@ function endDrag() {
 	align-items: center;
 	gap: 2rem;
 	font-size: 0.75rem;
+
+	& > ul {
+		margin-left: auto;
+		list-style: none;
+		display: flex;
+		margin-right: 0.5rem;
+		gap: 0.5rem;
+
+		/* & > li:not(:last-child)::after {
+			content: '-';
+		} */
+	}
 }
 
 aside {
