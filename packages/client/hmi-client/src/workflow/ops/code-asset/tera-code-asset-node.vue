@@ -30,7 +30,7 @@ import { onMounted, ref, computed, watch } from 'vue';
 import { Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import { CodeAssetState } from './code-asset-operation';
 
