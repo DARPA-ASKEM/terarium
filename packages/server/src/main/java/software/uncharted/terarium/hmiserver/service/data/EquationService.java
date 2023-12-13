@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -18,8 +19,8 @@ public class EquationService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
-	public Equation getEquation(String id) throws IOException {
-		return elasticService.get(elasticConfig.getEquationIndex(), id, Equation.class);
+	public Equation getEquation(UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getEquationIndex(), id.toString(), Equation.class);
 	}
 
 	public List<Equation> getEquations(Integer page, Integer pageSize) throws IOException {
@@ -31,17 +32,17 @@ public class EquationService {
 		return elasticService.search(req, Equation.class);
 	}
 
-	public void deleteEquation(String id) throws IOException {
-		elasticService.delete(elasticConfig.getEquationIndex(), id);
+	public void deleteEquation(UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getEquationIndex(), id.toString());
 	}
 
 	public Equation createEquation(Equation artifact) throws IOException {
-		elasticService.index(elasticConfig.getEquationIndex(), artifact.getId(), artifact);
+		elasticService.index(elasticConfig.getEquationIndex(), artifact.getId().toString(), artifact);
 		return artifact;
 	}
 
 	public Equation updateEquation(Equation artifact) throws IOException {
-		elasticService.index(elasticConfig.getEquationIndex(), artifact.getId(), artifact);
+		elasticService.index(elasticConfig.getEquationIndex(), artifact.getId().toString(), artifact);
 		return artifact;
 	}
 

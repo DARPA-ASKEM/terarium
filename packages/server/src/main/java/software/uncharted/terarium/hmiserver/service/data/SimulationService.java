@@ -40,12 +40,12 @@ public class SimulationService {
 		return elasticService.search(req, Simulation.class);
 	}
 
-	public Simulation getSimulation(final String id) throws IOException {
-		return elasticService.get(elasticConfig.getSimulationIndex(), id, Simulation.class);
+	public Simulation getSimulation(final UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
 	}
 
-	public void deleteSimulation(final String id) throws IOException {
-		elasticService.delete(elasticConfig.getSimulationIndex(), id);
+	public void deleteSimulation(final UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getSimulationIndex(), id.toString());
 	}
 
 	public Simulation createSimulation(final Simulation simulation) throws IOException {
@@ -58,11 +58,11 @@ public class SimulationService {
 		return simulation;
 	}
 
-	private String getPath(final String id, final String filename) {
-		return String.join("/", config.getResultsPath(), id, filename);
+	private String getPath(final UUID id, final String filename) {
+		return String.join("/", config.getResultsPath(), id.toString(), filename);
 	}
 
-	public PresignedURL getUploadUrl(final String id, final String filename) {
+	public PresignedURL getUploadUrl(final UUID id, final String filename) {
 		final PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
 				config.getFileStorageS3BucketName(),
@@ -72,7 +72,7 @@ public class SimulationService {
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(final String id, final String filename) {
+	public PresignedURL getDownloadUrl(final UUID id, final String filename) {
 		final PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
@@ -86,8 +86,8 @@ public class SimulationService {
 		return String.join("/", config.getResultsPath(), simId.toString(), filename);
 	}
 
-	private String getDatasetPath(String datasetId, String filename) {
-		return String.join("/", config.getDatasetPath(), datasetId, filename);
+	private String getDatasetPath(UUID datasetId, String filename) {
+		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
 	public Dataset copySimulationResultToDataset(Simulation simulation) {
@@ -104,10 +104,9 @@ public class SimulationService {
 		dataset.setColumns(new ArrayList<>());
 
 		// Attach the user to the dataset
-		// TODO(kbirk): have dataset use userId rather than username
-		// if (simulation.getUserId() != null) {
-		// dataset.setUserId(simulation.getUserId());
-		// }
+		if (simulation.getUserId() != null) {
+			dataset.setUserId(simulation.getUserId());
+		}
 
 		if (simulation.getResultFiles() != null) {
 			for (SimulationResult result : simulation.getResultFiles()) {

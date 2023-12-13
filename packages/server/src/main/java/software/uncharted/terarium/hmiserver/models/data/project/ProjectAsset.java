@@ -1,19 +1,29 @@
 package software.uncharted.terarium.hmiserver.models.data.project;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.UUID;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
@@ -27,13 +37,13 @@ public class ProjectAsset implements Serializable {
 	private UUID id;
 
 	@ManyToOne
-	@JoinColumn(name="project_id", nullable=false)
+	@JoinColumn(name = "project_id", nullable = false)
 	@JsonBackReference
 	@NotNull
 	private Project project;
 
 	@NotNull
-	private String resourceId;
+	private UUID resourceId;
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
@@ -43,17 +53,17 @@ public class ProjectAsset implements Serializable {
 	private String externalRef;
 
 	@CreationTimestamp
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp createdOn;
 
 	@UpdateTimestamp
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp updatedOn;
 
 	@TSOptional
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp deletedOn;
 }

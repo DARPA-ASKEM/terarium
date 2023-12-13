@@ -39,7 +39,7 @@ public class ProjectAssetService {
 		return projectAssetRepository.findByProjectIdAndResourceIdAndResourceType(projectId, resourceId, type);
 	}
 
-	public ProjectAsset createProjectAsset(final Project project, final ResourceType type, final String resourceId) {
+	public ProjectAsset createProjectAsset(final Project project, final ResourceType type, final UUID resourceId) {
 
 		ProjectAsset asset = new ProjectAsset();
 		project.getProjectAssets().add(asset);

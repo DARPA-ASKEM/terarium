@@ -49,6 +49,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
+import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.data.project.Project;
 import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -152,7 +153,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the document from the data store", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> getDocument(
-			@PathVariable("id") final String id) {
+			@PathVariable("id") final UUID id) {
 
 		try {
 			final DocumentAsset document = documentAssetService.getDocumentAsset(id);
@@ -214,7 +215,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getUploadURL(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@PathVariable("filename") final String filename) {
 
 		try {
@@ -236,7 +237,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@PathVariable("filename") final String filename) {
 
 		try {
@@ -260,7 +261,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
-			@PathVariable("id") final String id) {
+			@PathVariable("id") final UUID id) {
 
 		try {
 			documentAssetService.deleteDocumentAsset(id);
@@ -282,7 +283,7 @@ public class DocumentController {
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<ResponseStatus> uploadDocumentHelper(final String documentId, final String fileName,
+	private ResponseEntity<ResponseStatus> uploadDocumentHelper(final UUID documentId, final String fileName,
 			final HttpEntity fileEntity) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
@@ -328,7 +329,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
 	public ResponseEntity<ResponseStatus> uploadDocument(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile file) {
 
@@ -357,7 +358,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
 	public ResponseEntity<ResponseStatus> uploadDocumentFromGithub(
-			@PathVariable("documentId") final String documentId,
+			@PathVariable("documentId") final UUID documentId,
 			@RequestParam("path") final String path,
 			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
@@ -391,7 +392,7 @@ public class DocumentController {
 			Document document = body.getDocument();
 			UUID projectId = UUID.fromString(body.getProjectId());
 			String doi = documentAssetService.getDocumentDoi(document);
-			String username = "";// TODO dvince:projectProxy.getProject(projectId).getBody().getUsername();
+			UserId userId = projectService.getProject(projectId).get().getUserId();
 
 			// get pdf url and filename
 			String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
@@ -402,14 +403,14 @@ public class DocumentController {
 					null, apikey);
 
 			// create a new document asset from the metadata in the xdd document
-			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, username,
+			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
 					extractionResponse.getSuccess().getData());
 			if (filename != null)
 				documentAsset.getFileNames().add(filename);
 
 			// Upload the document to TDS in order to get a new ID to pair our files we want
 			// to upload with.
-			final String newDocumentAssetId = documentAssetService.createDocumentAsset(documentAsset).getId();
+			final UUID newDocumentAssetId = documentAssetService.createDocumentAsset(documentAsset).getId();
 			response.setDocumentAssetId(newDocumentAssetId);
 
 			// Upload the PDF from unpaywall
@@ -448,7 +449,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue downloading the document", content = @Content)
 	})
 	public ResponseEntity<byte[]> downloadDocument(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
@@ -479,7 +480,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "200", description = "Downloaded the document", content = @Content(mediaType = "application/text", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue downloading the document", content = @Content)
 	})
-	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final String documentId,
+	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final UUID documentId,
 			@RequestParam("filename") final String filename) {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);
@@ -513,7 +514,7 @@ public class DocumentController {
 	 * @param extractions list of extractions associated with the document
 	 * @return
 	 */
-	private DocumentAsset createDocumentAssetFromXDDDocument(Document document, String username,
+	private DocumentAsset createDocumentAssetFromXDDDocument(final Document document, final UserId userId,
 			List<Extraction> extractions) {
 		String name = document.getTitle();
 
@@ -521,7 +522,7 @@ public class DocumentController {
 		DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName(name);
 		documentAsset.setDescription(name);
-		documentAsset.setUsername(username);
+		documentAsset.setUserId(userId);
 		documentAsset.setFileNames(new ArrayList<>());
 
 		if (extractions != null) {
@@ -557,7 +558,7 @@ public class DocumentController {
 	 * @param docId
 	 * @param extractions
 	 */
-	private void uploadXDDExtractions(String docId, List<Extraction> extractions) {
+	private void uploadXDDExtractions(UUID docId, List<Extraction> extractions) {
 
 		if (extractions != null) {
 			for (int i = 0; i < extractions.size(); i++) {
@@ -599,7 +600,7 @@ public class DocumentController {
 	 * @param docId
 	 * @return
 	 */
-	private String uploadPDFFileToDocumentThenExtract(String doi, String filename, String docId) {
+	private String uploadPDFFileToDocumentThenExtract(String doi, String filename, UUID docId) {
 		try (CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
@@ -623,7 +624,7 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			return knowledgeMiddlewareProxy.postPDFToCosmos(docId).getBody().get("id").asText();
+			return knowledgeMiddlewareProxy.postPDFToCosmos(docId.toString()).getBody().get("id").asText();
 
 		} catch (Exception e) {
 			log.error("Unable to upload PDF document then extract", e);

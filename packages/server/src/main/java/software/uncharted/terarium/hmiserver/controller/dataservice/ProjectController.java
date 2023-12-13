@@ -304,7 +304,7 @@ public class ProjectController {
 	public ResponseEntity<ProjectAsset> createAsset(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("resource_type") final ResourceType type,
-			@PathVariable("resource_id") final String resourceId) {
+			@PathVariable("resource_id") final UUID resourceId) {
 
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)

@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 import org.springframework.data.neo4j.core.schema.Id;
 
@@ -12,7 +13,7 @@ import lombok.experimental.Accessors;
 public class ProvenanceEdge implements Serializable {
 
 	@Id
-	private String id;
+	private UUID id;
 
 	private ProvenanceRelationType relationType;
 

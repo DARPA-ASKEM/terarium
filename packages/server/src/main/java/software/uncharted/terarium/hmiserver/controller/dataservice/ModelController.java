@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -88,7 +89,7 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the description from the data store", content = @Content)
 	})
 	ResponseEntity<ModelDescription> getDescription(
-			@PathVariable("id") String id) {
+			@PathVariable("id") UUID id) {
 
 		try {
 			return ResponseEntity.ok(modelService.getDescription(id));
@@ -109,7 +110,7 @@ public class ModelController {
 			@ApiResponse(responseCode = "204", description = "There was no model found but no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the model from the data store", content = @Content)
 	})
-	ResponseEntity<Model> getModel(@PathVariable("id") String id) {
+	ResponseEntity<Model> getModel(@PathVariable("id") UUID id) {
 
 		try {
 
@@ -133,7 +134,8 @@ public class ModelController {
 				documentIds.forEach(documentId -> {
 					try {
 						// Fetch the Document extractions
-						final DocumentAsset document = documentAssetService.getDocumentAsset(documentId);
+						final DocumentAsset document = documentAssetService
+								.getDocumentAsset(UUID.fromString(documentId));
 						if (document != null) {
 							final List<JsonNode> extractions = objectMapper.convertValue(
 									document.getMetadata().get("attributes"), new TypeReference<List<JsonNode>>() {
@@ -195,7 +197,7 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
 	})
 	ResponseEntity<ResponseId> updateModel(
-			@PathVariable("id") String id,
+			@PathVariable("id") UUID id,
 			@RequestBody Model model) {
 
 		try {
@@ -220,7 +222,7 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	ResponseEntity<ResponseDeleted> deleteModel(
-			@PathVariable("id") String id) {
+			@PathVariable("id") UUID id) {
 
 		try {
 			modelService.deleteModel(id);
@@ -265,7 +267,7 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving configurations from the data store", content = @Content)
 	})
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
-			@PathVariable("id") String id,
+			@PathVariable("id") UUID id,
 			@RequestParam(value = "page", required = false, defaultValue = "0") int page,
 			@RequestParam(value = "page_size", required = false, defaultValue = "100") int pageSize) {
 

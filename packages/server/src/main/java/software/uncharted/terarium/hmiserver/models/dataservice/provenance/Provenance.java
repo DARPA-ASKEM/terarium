@@ -18,6 +18,7 @@ import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
 
 @Entity
 @Data
@@ -63,7 +64,7 @@ public class Provenance implements Serializable {
 	private ProvenanceType rightType;
 
 	@JsonProperty("user_id")
-	private String userId;
+	private UserId userId;
 
 	public Provenance() {
 	}

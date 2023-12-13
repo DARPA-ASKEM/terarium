@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
 
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
@@ -15,8 +16,6 @@ import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,6 @@ import software.uncharted.terarium.hmiserver.service.neo4j.Neo4jService;
 @Slf4j
 public class ProvenanceSearchService {
 
-	private ObjectMapper objectMapper;
 	private Neo4jService neo4jService;
 
 	// Search methods
@@ -92,7 +90,10 @@ public class ProvenanceSearchService {
 	}
 
 	public ProvenanceSearchResult parentModelRevisions(ProvenanceQueryParam payload) {
-		if (!Arrays.asList("Model", "SimulationRun", "Plan", "Dataset").contains(payload.getRootType())) {
+		if (!Arrays
+				.asList(ProvenanceType.MODEL, ProvenanceType.SIMULATION_RUN, ProvenanceType.PLAN,
+						ProvenanceType.DATASET)
+				.contains(payload.getRootType())) {
 			throw new IllegalArgumentException(
 					"Derived models can only be found from root types of Model, SimulationRun, Plan and Dataset");
 		}
@@ -114,7 +115,8 @@ public class ProvenanceSearchService {
 	}
 
 	public ProvenanceSearchResult parentModels(ProvenanceQueryParam payload) {
-		if (!Arrays.asList("Model", "Dataset", "SimulationRun", "Plan").contains(payload.getRootType())) {
+		if (!Arrays.asList(ProvenanceType.MODEL, ProvenanceType.SIMULATION_RUN, ProvenanceType.PLAN,
+				ProvenanceType.DATASET).contains(payload.getRootType())) {
 			throw new IllegalArgumentException(
 					"Parent models can only be found from root types of Model, Plan, SimulationRun, Dataset");
 		}
@@ -176,7 +178,7 @@ public class ProvenanceSearchService {
 		}
 
 		try (Session session = neo4jService.getSession()) {
-			String modelId = payload.getRootId();
+			UUID modelId = payload.getRootId();
 
 			String query = String.format("MATCH (c:Code)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN c", modelId);
 
@@ -198,7 +200,7 @@ public class ProvenanceSearchService {
 		}
 
 		try (Session session = neo4jService.getSession()) {
-			String modelId = payload.getRootId();
+			UUID modelId = payload.getRootId();
 
 			String query = String.format("MATCH (e:Equation)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN e", modelId);
 
@@ -220,7 +222,7 @@ public class ProvenanceSearchService {
 		}
 
 		try (Session session = neo4jService.getSession()) {
-			String modelId = payload.getRootId();
+			UUID modelId = payload.getRootId();
 
 			String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN d", modelId);
 
@@ -385,7 +387,7 @@ public class ProvenanceSearchService {
 				String label = node.labels().iterator().next();
 
 				ProvenanceNode formatted = new ProvenanceNode();
-				formatted.setId(node.elementId());
+				formatted.setId(UUID.fromString(node.elementId()));
 				formatted.setType(ProvenanceType.findByType(label));
 
 				nodes.add(formatted);
@@ -411,7 +413,7 @@ public class ProvenanceSearchService {
 		}
 	}
 
-	public String extractedModelsQueryGenerator(ProvenanceType rootType, String rootId) {
+	public String extractedModelsQueryGenerator(ProvenanceType rootType, UUID rootId) {
 		switch (rootType) {
 			case DOCUMENT:
 				return String.format("MATCH (m:Model)-[:EXTRACTED_FROM]->(d:Document {id:'%s'}) RETURN m", rootId);
@@ -424,7 +426,7 @@ public class ProvenanceSearchService {
 		}
 	}
 
-	public String parentModelQueryGenerator(ProvenanceType rootType, String rootId) {
+	public String parentModelQueryGenerator(ProvenanceType rootType, UUID rootId) {
 		String matchNode = matchNodeBuilder(rootType, rootId);
 		String relationshipsStr = relationshipsArrayAsStr(
 				Arrays.asList(ProvenanceRelationType.CONTAINS, ProvenanceRelationType.IS_CONCEPT_OF),
@@ -451,7 +453,7 @@ public class ProvenanceSearchService {
 		return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
 	}
 
-	public String matchNodeBuilder(ProvenanceType nodeType, String nodeId) {
+	public String matchNodeBuilder(ProvenanceType nodeType, UUID nodeId) {
 		if (nodeType == null) {
 			return "MATCH (n) ";
 		}
@@ -530,16 +532,16 @@ public class ProvenanceSearchService {
 				String endLabel = endNode.labels().iterator().next();
 
 				ProvenanceNode left = new ProvenanceNode();
-				left.setId(startId);
+				left.setId(UUID.fromString(startId));
 				left.setType(ProvenanceType.findByType(startLabel));
 
 				ProvenanceNode right = new ProvenanceNode();
-				right.setId(endId);
+				right.setId(UUID.fromString(endId));
 				right.setType(ProvenanceType.findByType(endLabel));
 
 				ProvenanceEdge edge = new ProvenanceEdge();
 				edge.setRelationType(ProvenanceRelationType.findByType(relationship.type()));
-				edge.setId(relationship.elementId());
+				edge.setId(UUID.fromString(relationship.elementId()));
 				edge.setLeft(left);
 				edge.setRight(right);
 

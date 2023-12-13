@@ -1,17 +1,19 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
-
 @Data
 @Accessors(chain = true)
 @TSModel
 public class ModelConfiguration {
-	private String id;
+	private UUID id;
 
 	private String name;
 
@@ -19,7 +21,7 @@ public class ModelConfiguration {
 	private String description;
 
 	@JsonAlias("model_id")
-	private String modelId;
+	private UUID modelId;
 
 	private Object configuration;
 

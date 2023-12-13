@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -93,7 +94,7 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the configuration from the data store", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
-			@PathVariable("id") String id) {
+			@PathVariable("id") UUID id) {
 
 		try {
 			return ResponseEntity.ok(modelConfigurationService.getModelConfiguration(id));
@@ -114,7 +115,7 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the configuration", content = @Content)
 	})
 	public ResponseEntity<ResponseId> updateModelConfiguration(
-			@PathVariable("id") String id,
+			@PathVariable("id") UUID id,
 			@RequestBody ModelConfiguration config) {
 
 		try {
@@ -139,7 +140,7 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
-			@PathVariable("id") String id) {
+			@PathVariable("id") UUID id) {
 
 		try {
 			modelConfigurationService.deleteModelConfiguration(id);

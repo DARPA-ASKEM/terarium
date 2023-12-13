@@ -22,6 +22,10 @@ public enum ProvenanceType {
 	PUBLICATION("Publication"),
 	@JsonAlias("Simulation")
 	SIMULATION("Simulation"),
+	@JsonAlias("SimulationRun")
+	SIMULATION_RUN("SimulationRun"),
+	@JsonAlias("Plan")
+	PLAN("Plan"),
 	@JsonAlias("Artifact")
 	ARTIFACT("Artifact"),
 	@JsonAlias("Code")

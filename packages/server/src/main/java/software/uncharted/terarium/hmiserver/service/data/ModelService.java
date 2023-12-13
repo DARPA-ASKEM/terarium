@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -48,8 +49,9 @@ public class ModelService {
 		return elasticService.search(req, Model.class).stream().map(m -> ModelDescription.fromModel(m)).toList();
 	}
 
-	public ModelDescription getDescription(String id) throws IOException {
-		return ModelDescription.fromModel(elasticService.get(elasticConfig.getModelIndex(), id, Model.class));
+	public ModelDescription getDescription(UUID id) throws IOException {
+		return ModelDescription
+				.fromModel(elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class));
 	}
 
 	public List<Model> searchModels(Integer page, Integer pageSize, JsonNode queryJson) throws IOException {
@@ -74,13 +76,14 @@ public class ModelService {
 		return elasticService.search(req, Model.class);
 	}
 
-	public List<ModelConfiguration> getModelConfigurationsByModelId(String id, Integer page, Integer pageSize)
+	public List<ModelConfiguration> getModelConfigurationsByModelId(UUID id, Integer page, Integer pageSize)
 			throws IOException {
 
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getModelConfigurationIndex())
 				.size(pageSize)
-				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id).build()).build())
+				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id.toString()).build())
+						.build())
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();
@@ -88,21 +91,21 @@ public class ModelService {
 		return elasticService.search(req, ModelConfiguration.class);
 	}
 
-	public Model getModel(String id) throws IOException {
-		return elasticService.get(elasticConfig.getModelIndex(), id, Model.class);
+	public Model getModel(UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class);
 	}
 
-	public void deleteModel(String id) throws IOException {
-		elasticService.delete(elasticConfig.getModelIndex(), id);
+	public void deleteModel(UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getModelIndex(), id.toString());
 	}
 
 	public Model createModel(Model model) throws IOException {
-		elasticService.index(elasticConfig.getModelIndex(), model.getId(), model);
+		elasticService.index(elasticConfig.getModelIndex(), model.getId().toString(), model);
 		return model;
 	}
 
 	public Model updateModel(Model model) throws IOException {
-		elasticService.index(elasticConfig.getModelIndex(), model.getId(), model);
+		elasticService.index(elasticConfig.getModelIndex(), model.getId().toString(), model);
 		return model;
 	}
 

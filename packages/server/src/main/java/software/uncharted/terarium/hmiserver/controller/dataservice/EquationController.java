@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -115,7 +116,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "204", description = "There was no equation found but no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the equation from the data store", content = @Content)
 	})
-	ResponseEntity<Equation> getEquation(@PathVariable("equation_id") String id) {
+	ResponseEntity<Equation> getEquation(@PathVariable("equation_id") UUID id) {
 
 		try {
 			return ResponseEntity.ok(equationService.getEquation(id));
@@ -142,7 +143,9 @@ public class EquationController {
 			@ApiResponse(responseCode = "200", description = "Equation updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the equation", content = @Content)
 	})
-	ResponseEntity<ResponseId> updateEquation(@PathVariable("equation_id") String id, @RequestBody Equation equation) {
+	ResponseEntity<ResponseId> updateEquation(
+			@PathVariable("equation_id") UUID id,
+			@RequestBody Equation equation) {
 
 		try {
 			equationService.updateEquation(equation.setId(id));
@@ -171,7 +174,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "404", description = "Equation could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
-	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("equation_id") String id) {
+	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("equation_id") UUID id) {
 
 		try {
 			equationService.deleteEquation(id);

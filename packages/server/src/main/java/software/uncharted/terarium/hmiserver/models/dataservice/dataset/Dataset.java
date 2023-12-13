@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
@@ -9,6 +10,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 /**
@@ -23,7 +25,7 @@ public class Dataset {
 	 * Universally unique identifier for the dataset
 	 **/
 	@TSOptional
-	private String id; // Is this a UUID?
+	private UUID id;
 
 	/**
 	 * Timestamp of when the dataset was created
@@ -34,10 +36,10 @@ public class Dataset {
 	private Object timestamp;
 
 	/**
-	 * Username of the user who created the dataset
+	 * UserId of the user who created the dataset
 	 **/
 	@TSOptional
-	private String username;
+	private UserId userId;
 
 	/**
 	 * Name of the dataset

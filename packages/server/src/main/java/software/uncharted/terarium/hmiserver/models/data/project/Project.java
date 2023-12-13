@@ -1,22 +1,31 @@
 package software.uncharted.terarium.hmiserver.models.data.project;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.ToString;
-import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Transient;
+import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 
 @Data
 @Accessors(chain = true)
@@ -33,23 +42,25 @@ public class Project implements Serializable {
 	@Schema(defaultValue = "My New Project")
 	private String name;
 
+	private UserId userId;
+
 	@TSOptional
 	@Schema(defaultValue = "My Project Description")
 	private String description;
 
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
 	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp updatedOn;
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
 
 	@OneToMany(mappedBy = "project")
@@ -81,15 +92,18 @@ public class Project implements Serializable {
 	private String userPermission;
 
 	/**
-	 * Helper method to create a new project from an existing one, excluding UUID and timestamps. This
-	 * will be useful for creating new projects to save in the database from the client for example
+	 * Helper method to create a new project from an existing one, excluding UUID
+	 * and timestamps. This
+	 * will be useful for creating new projects to save in the database from the
+	 * client for example
+	 *
 	 * @param oldProject project to copy from
 	 * @return new project
 	 */
-	public static Project cloneFrom(Project oldProject){
+	public static Project cloneFrom(Project oldProject) {
 		return new Project()
-			.setName(oldProject.getName())
-			.setDescription(oldProject.getDescription())
-			.setAssets(oldProject.getAssets());
+				.setName(oldProject.getName())
+				.setDescription(oldProject.getDescription())
+				.setAssets(oldProject.getAssets());
 	}
 }

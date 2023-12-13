@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -35,29 +36,29 @@ public class DocumentAssetService {
 		return elasticService.search(req, DocumentAsset.class);
 	}
 
-	public DocumentAsset getDocumentAsset(String id) throws IOException {
-		return elasticService.get(elasticConfig.getDocumentIndex(), id, DocumentAsset.class);
+	public DocumentAsset getDocumentAsset(UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getDocumentIndex(), id.toString(), DocumentAsset.class);
 	}
 
-	public void deleteDocumentAsset(String id) throws IOException {
-		elasticService.delete(elasticConfig.getDocumentIndex(), id);
+	public void deleteDocumentAsset(UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getDocumentIndex(), id.toString());
 	}
 
 	public DocumentAsset createDocumentAsset(DocumentAsset document) throws IOException {
-		elasticService.index(elasticConfig.getDocumentIndex(), document.getId(), document);
+		elasticService.index(elasticConfig.getDocumentIndex(), document.getId().toString(), document);
 		return document;
 	}
 
 	public DocumentAsset updateDocumentAsset(DocumentAsset document) throws IOException {
-		elasticService.index(elasticConfig.getDocumentIndex(), document.getId(), document);
+		elasticService.index(elasticConfig.getDocumentIndex(), document.getId().toString(), document);
 		return document;
 	}
 
-	private String getPath(String documentId, String filename) {
-		return String.join("/", config.getDocumentPath(), documentId, filename);
+	private String getPath(UUID documentId, String filename) {
+		return String.join("/", config.getDocumentPath(), documentId.toString(), filename);
 	}
 
-	public PresignedURL getUploadUrl(String documentId, String filename) {
+	public PresignedURL getUploadUrl(UUID documentId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
@@ -69,7 +70,7 @@ public class DocumentAssetService {
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(String documentId, String filename) {
+	public PresignedURL getDownloadUrl(UUID documentId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();

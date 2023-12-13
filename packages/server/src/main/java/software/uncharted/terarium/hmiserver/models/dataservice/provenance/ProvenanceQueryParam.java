@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -11,17 +12,18 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
 
 @Data
 @Accessors(chain = true)
 @TSModel
 public class ProvenanceQueryParam implements Serializable {
 
-	private String rootId;
+	private UUID rootId;
 
 	private ProvenanceType rootType;
 
-	private Number userId;
+	private UserId userId;
 
 	@TSIgnore
 	private String curie;
@@ -57,13 +59,13 @@ public class ProvenanceQueryParam implements Serializable {
 
 	@JsonSetter(value = "rootId")
 	@TSOptional
-	public void setRootId(String rootId) {
+	public void setRootId(UUID rootId) {
 		this.rootId = rootId;
 	}
 
 	@JsonGetter(value = "root_id")
 	@TSIgnore
-	public String getRootId() {
+	public UUID getRootId() {
 		return rootId;
 	}
 
@@ -81,13 +83,13 @@ public class ProvenanceQueryParam implements Serializable {
 
 	@JsonSetter(value = "userId")
 	@TSOptional
-	public void setUserId(Number userId) {
+	public void setUserId(UserId userId) {
 		this.userId = userId;
 	}
 
 	@JsonGetter(value = "user_id")
 	@TSIgnore
-	public Number getUserId() {
+	public UserId getUserId() {
 		return userId;
 	}
 }

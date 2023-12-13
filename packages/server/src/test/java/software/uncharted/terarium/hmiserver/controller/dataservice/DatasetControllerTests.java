@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.jupiter.api.Assertions;
@@ -31,17 +32,17 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	private DatasetService datasetService;
 
 	final Dataset dataset0 = new Dataset()
-			.setId("test-dataset-id0")
+			.setId(UUID.randomUUID())
 			.setName("test-dataset-name")
 			.setDescription("my description");
 
 	final Dataset dataset1 = new Dataset()
-			.setId("test-dataset-id1")
+			.setId(UUID.randomUUID())
 			.setName("test-dataset-name")
 			.setDescription("my description");
 
 	final Dataset dataset2 = new Dataset()
-			.setId("test-dataset-id2")
+			.setId(UUID.randomUUID())
 			.setName("test-dataset-name")
 			.setDescription("my description");
 

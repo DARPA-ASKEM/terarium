@@ -1,15 +1,18 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-
-import java.util.HashMap;
-import java.util.List;
 
 @Data
 @TSModel
@@ -17,7 +20,7 @@ import java.util.List;
 public class DocumentAsset {
 
 	@TSOptional
-	private String id;
+	private UUID id;
 
 	@TSOptional
 	private String name;
@@ -29,7 +32,7 @@ public class DocumentAsset {
 	private String timestamp;
 
 	@TSOptional
-	private String username;
+	private UserId userId;
 
 	@TSOptional
 	@JsonAlias("file_names")

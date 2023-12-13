@@ -3,11 +3,13 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Map;
+import java.util.UUID;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
@@ -16,7 +18,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Accessors(chain = true)
 @TSModel
 public class Model implements Serializable {
-	private String id;
+	private UUID id;
 
 	private ModelHeader header;
 
@@ -24,7 +26,7 @@ public class Model implements Serializable {
 	private Timestamp timestamp;
 
 	@TSOptional
-	private String username;
+	private UserId userId;
 
 	private Map<String, Object> model;
 
