@@ -350,6 +350,7 @@ export const getGroupedOutputs = <T>(
 	node: WorkflowNode<any>,
 	labels: { saved?: string; unsaved?: string }
 ) => {
+	// Group the outputs based off of their saved status
 	const savedOutputs: WorkflowOutput<T>[] = [];
 	const unsavedOutputs: WorkflowOutput<T>[] = [];
 
@@ -361,7 +362,7 @@ export const getGroupedOutputs = <T>(
 		unsavedOutputs.push(output);
 	});
 
-	// Group the outputs in the correct format based off of their saved status
+	// Format the grouped outputs to the format that tera-drilldown-preview expects
 	const groupedOutputs: GroupedOutputItem<T>[] = [];
 	if (!_.isEmpty(unsavedOutputs) && labels.unsaved) {
 		groupedOutputs.push({
