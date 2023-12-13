@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -34,22 +35,22 @@ public class ModelConfigurationService {
 		return elasticService.search(req, ModelConfiguration.class);
 	}
 
-	public ModelConfiguration getModelConfiguration(String id) throws IOException {
-		return elasticService.get(elasticConfig.getModelConfigurationIndex(), id, ModelConfiguration.class);
+	public ModelConfiguration getModelConfiguration(UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getModelConfigurationIndex(), id.toString(), ModelConfiguration.class);
 	}
 
-	public void deleteModelConfiguration(String id) throws IOException {
-		elasticService.delete(elasticConfig.getModelConfigurationIndex(), id);
+	public void deleteModelConfiguration(UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getModelConfigurationIndex(), id.toString());
 	}
 
 	public ModelConfiguration createModelConfiguration(ModelConfiguration modelConfiguration) throws IOException {
-		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId(),
+		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId().toString(),
 				modelConfiguration);
 		return modelConfiguration;
 	}
 
 	public ModelConfiguration updateModelConfiguration(ModelConfiguration modelConfiguration) throws IOException {
-		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId(),
+		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId().toString(),
 				modelConfiguration);
 		return modelConfiguration;
 	}

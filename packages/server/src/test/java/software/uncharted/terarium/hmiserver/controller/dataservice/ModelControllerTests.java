@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 			.setDescription("test-description");
 
 	final Model model = new Model()
-			.setId("test-model-id")
+			.setId(UUID.randomUUID())
 			.setHeader(header);
 
 	@After
@@ -53,7 +54,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	}
 
 	// TODO(kbirk): issues with provenance causing this to fail
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModel() throws Exception {
 

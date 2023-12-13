@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.jupiter.api.Assertions;
@@ -31,17 +32,17 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	private DocumentAssetService documentAssetService;
 
 	final DocumentAsset documentAsset0 = new DocumentAsset()
-			.setId("test-document-id0")
+			.setId(UUID.randomUUID())
 			.setName("test-document-name")
 			.setDescription("my description");
 
 	final DocumentAsset documentAsset1 = new DocumentAsset()
-			.setId("test-document-id1")
+			.setId(UUID.randomUUID())
 			.setName("test-document-name")
 			.setDescription("my description");
 
 	final DocumentAsset documentAsset2 = new DocumentAsset()
-			.setId("test-document-id2")
+			.setId(UUID.randomUUID())
 			.setName("test-document-name")
 			.setDescription("my description");
 

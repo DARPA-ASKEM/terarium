@@ -91,7 +91,7 @@ public class SimulationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving simulations from the data store", content = @Content)
 	})
 	public ResponseEntity<Simulation> getSimulation(
-			@PathVariable("id") final String id) {
+			@PathVariable("id") final UUID id) {
 		try {
 			final Simulation simulation = simulationService.getSimulation(id);
 			if (simulation == null) {
@@ -114,7 +114,7 @@ public class SimulationController {
 			@ApiResponse(responseCode = "200", description = "Simulation updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the simulation", content = @Content)
 	})
-	public ResponseEntity<Simulation> updateSimulation(@PathVariable("id") final String id,
+	public ResponseEntity<Simulation> updateSimulation(@PathVariable("id") final UUID id,
 			@RequestBody final Simulation simulation) {
 		try {
 			return ResponseEntity.ok(simulationService.updateSimulation(simulation));
@@ -134,7 +134,7 @@ public class SimulationController {
 			@ApiResponse(responseCode = "200", description = "Simulation deleted.", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the simulation", content = @Content)
 	})
-	public String deleteSimulation(@PathVariable("id") final String id) {
+	public String deleteSimulation(@PathVariable("id") final UUID id) {
 		try {
 			simulationService.deleteSimulation(id);
 			return "Simulation deleted";
@@ -150,7 +150,7 @@ public class SimulationController {
 	@GetMapping("/{id}/result")
 	@Secured(Roles.USER)
 	public ResponseEntity<String> getSimulationResults(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build()) {
@@ -188,7 +188,7 @@ public class SimulationController {
 	@GetMapping("/{id}/add-result-as-dataset-to-project/{projectId}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createFromSimulationResult(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@PathVariable("projectId") final UUID projectId,
 			@RequestParam("datasetName") final String datasetName) {
 

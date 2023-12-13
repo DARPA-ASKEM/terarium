@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -78,13 +79,13 @@ public class ArtifactController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") String artifactId) throws IOException {
+	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId) throws IOException {
 		return ResponseEntity.ok(artifactService.getArtifact(artifactId));
 	}
 
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> updateArtifact(@PathVariable("id") String artifactId,
+	public ResponseEntity<JsonNode> updateArtifact(@PathVariable("id") UUID artifactId,
 			@RequestBody Artifact artifact) throws IOException {
 		artifactService.updateArtifact(artifact.setId(artifactId));
 
@@ -95,7 +96,7 @@ public class ArtifactController {
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteArtifact(@PathVariable("id") String artifactId) throws IOException {
+	public ResponseEntity<JsonNode> deleteArtifact(@PathVariable("id") UUID artifactId) throws IOException {
 		artifactService.deleteArtifact(artifactId);
 
 		JsonNode res = objectMapper
@@ -112,7 +113,7 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getUploadURL(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@PathVariable("filename") final String filename) {
 
 		try {
@@ -134,7 +135,7 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
-			@PathVariable("id") final String id,
+			@PathVariable("id") final UUID id,
 			@PathVariable("filename") final String filename) {
 
 		try {
@@ -150,7 +151,7 @@ public class ArtifactController {
 
 	@GetMapping("/{id}/download-file-as-text")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> downloadFileAsText(@PathVariable("id") String artifactId,
+	public ResponseEntity<String> downloadFileAsText(@PathVariable("id") UUID artifactId,
 			@RequestParam("filename") String filename) {
 
 		try (CloseableHttpClient httpclient = HttpClients.custom()
@@ -173,7 +174,7 @@ public class ArtifactController {
 
 	@GetMapping("/{id}/download-file")
 	@Secured(Roles.USER)
-	public ResponseEntity<byte[]> downloadFile(@PathVariable("id") String artifactId,
+	public ResponseEntity<byte[]> downloadFile(@PathVariable("id") UUID artifactId,
 			@RequestParam("filename") String filename) {
 
 		log.debug("Downloading artifact {} from project", artifactId);
@@ -201,7 +202,7 @@ public class ArtifactController {
 	@PutMapping(value = "/{artifactId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadFile(
-			@PathVariable("artifactId") final String artifactId,
+			@PathVariable("artifactId") final UUID artifactId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") MultipartFile input) throws IOException {
 
@@ -220,7 +221,7 @@ public class ArtifactController {
 	@PutMapping("/{artifactId}/uploadArtifactFromGithub")
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
-			@PathVariable("artifactId") final String artifactId,
+			@PathVariable("artifactId") final UUID artifactId,
 			@RequestParam("path") final String path,
 			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
@@ -241,7 +242,7 @@ public class ArtifactController {
 	 * @param artifactHttpEntity The entity containing the artifact to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadArtifactHelper(String artifactId, String fileName,
+	private ResponseEntity<Integer> uploadArtifactHelper(UUID artifactId, String fileName,
 			HttpEntity artifactHttpEntity) {
 
 		try (CloseableHttpClient httpclient = HttpClients.custom()

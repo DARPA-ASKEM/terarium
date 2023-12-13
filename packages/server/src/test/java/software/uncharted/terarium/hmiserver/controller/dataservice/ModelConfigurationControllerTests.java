@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.jupiter.api.Test;
@@ -28,9 +29,9 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	private ModelConfigurationService modelConfigurationService;
 
 	final ModelConfiguration modelConfiguration = new ModelConfiguration()
-			.setId("test-config-id")
+			.setId(UUID.randomUUID())
 			.setName("test-framework")
-			.setModelId("test-model-id")
+			.setModelId(UUID.randomUUID())
 			.setDescription("test-desc")
 			.setConfiguration(Map.of("key", "value"));
 

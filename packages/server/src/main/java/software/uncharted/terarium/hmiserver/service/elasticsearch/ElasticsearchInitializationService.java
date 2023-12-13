@@ -1,17 +1,20 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
+import java.io.IOException;
+import java.util.Arrays;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +26,8 @@ public class ElasticsearchInitializationService {
 	private final ObjectMapper objectMapper;
 
 	private final ElasticsearchConfiguration config;
+
+	private final Environment env;
 
 	@Value("classpath:static/es/index-templates/*.json")
 	private Resource[] resourceIndexTemplates;
@@ -37,6 +42,17 @@ public class ElasticsearchInitializationService {
 		pushMissingIndices();
 	}
 
+	private boolean isRunningLocalProfile() {
+		String[] activeProfiles = env.getActiveProfiles();
+
+		for (String profile : activeProfiles) {
+			if ("local".equals(profile)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	/**
 	 * For each system template resource, add it to the cluster if it doesn't exist
@@ -46,11 +62,12 @@ public class ElasticsearchInitializationService {
 			final String filename = resource.getFilename();
 			if (filename != null) {
 				final String indexTemplateName = filename.substring(0, filename.length() - 5);
-				if (!elasticsearchService.containsIndexTemplate(indexTemplateName)) {
+				if (isRunningLocalProfile() || !elasticsearchService.containsIndexTemplate(indexTemplateName)) {
 					final JsonNode templateJson;
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putIndexTemplate(indexTemplateName, templateJson.toString());
+						final boolean acknowledged = elasticsearchService.putIndexTemplate(indexTemplateName,
+								templateJson.toString());
 						if (acknowledged) {
 							log.info("Added index template: {}", indexTemplateName);
 						} else {
@@ -72,11 +89,12 @@ public class ElasticsearchInitializationService {
 			final String filename = resource.getFilename();
 			if (filename != null) {
 				final String pipelineName = filename.substring(0, filename.length() - 5);
-				if (!elasticsearchService.containsPipeline(pipelineName)) {
+				if (isRunningLocalProfile() || !elasticsearchService.containsPipeline(pipelineName)) {
 					final JsonNode pipelineJson;
 					try {
 						pipelineJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putPipeline(pipelineName, pipelineJson.toString());
+						final boolean acknowledged = elasticsearchService.putPipeline(pipelineName,
+								pipelineJson.toString());
 						if (acknowledged) {
 							log.info("Added pipeline: {}", pipelineName);
 						} else {
@@ -91,19 +109,20 @@ public class ElasticsearchInitializationService {
 	}
 
 	/**
-	 * For each index in the ElasticsearchConfiguration, add it to the cluster if it doesn't exist
+	 * For each index in the ElasticsearchConfiguration, add it to the cluster if it
+	 * doesn't exist
 	 */
 	private void pushMissingIndices() {
-		final String[] indices = new String[]{
-			config.getCodeIndex(),
-			config.getDatasetIndex(),
-			config.getDocumentIndex(),
-			config.getEquationIndex(),
-			config.getModelIndex(),
-			config.getModelConfigurationIndex(),
-			config.getNotebookSessionIndex(),
-			config.getSimulationIndex(),
-			config.getWorkflowIndex()
+		final String[] indices = new String[] {
+				config.getCodeIndex(),
+				config.getDatasetIndex(),
+				config.getDocumentIndex(),
+				config.getEquationIndex(),
+				config.getModelIndex(),
+				config.getModelConfigurationIndex(),
+				config.getNotebookSessionIndex(),
+				config.getSimulationIndex(),
+				config.getWorkflowIndex()
 		};
 		Arrays.stream(indices).forEach(index -> {
 			if (!elasticsearchService.containsIndex(index)) {

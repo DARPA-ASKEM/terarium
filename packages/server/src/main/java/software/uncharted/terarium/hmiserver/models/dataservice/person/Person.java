@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.person;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,7 +12,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Person implements Serializable {
 
-	private String id;
+	private UUID id;
 
 	private String name;
 

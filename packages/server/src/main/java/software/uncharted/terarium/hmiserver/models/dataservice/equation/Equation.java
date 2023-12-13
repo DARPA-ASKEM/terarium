@@ -1,14 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.equation;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.time.Instant;
-import java.util.Map;
+import software.uncharted.terarium.hmiserver.models.UserId;
 
 /**
  * The Equation Data Model
@@ -18,34 +21,34 @@ import java.util.Map;
 @Accessors(chain = true)
 public class Equation {
 
-    /** Universally unique identifier for the item **/
-    @TSOptional
-    private String id;
+	/** Universally unique identifier for the item **/
+	@TSOptional
+	private UUID id;
 
-    @TSOptional
-    private Instant timestamp;
+	@TSOptional
+	private Instant timestamp;
 
-    /** The username of the user that created the equation **/
-    @TSOptional
-    private String username;
+	/** The userId of the user that created the equation **/
+	@TSOptional
+	private UserId userId;
 
-    /** (Optional) Display/human name for the equation **/
-    @TSOptional
-    private String name;
+	/** (Optional) Display/human name for the equation **/
+	@TSOptional
+	private String name;
 
-    /** The type of equation (mathml or latex) **/
-    @JsonAlias("equation_type")
-    private EquationType equationType;
+	/** The type of equation (mathml or latex) **/
+	@JsonAlias("equation_type")
+	private EquationType equationType;
 
-    /** String representation of the equation **/
-    private String content;
+	/** String representation of the equation **/
+	private String content;
 
-    /** (Optional) Unformatted metadata about the equation **/
-    @TSOptional
-    private Map<String, JsonNode> metadata;
+	/** (Optional) Unformatted metadata about the equation **/
+	@TSOptional
+	private Map<String, JsonNode> metadata;
 
-    /** (Optional) Source of the equation, whether a document or HMI generated **/
-    @TSOptional
-    private EquationSource source;
+	/** (Optional) Source of the equation, whether a document or HMI generated **/
+	@TSOptional
+	private EquationSource source;
 
 }

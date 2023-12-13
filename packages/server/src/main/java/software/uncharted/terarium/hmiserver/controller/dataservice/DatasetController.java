@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -124,7 +125,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "204", description = "There was no dataset found but no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
-	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final String id) {
+	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
 		try {
 			return ResponseEntity.ok(datasetService.getDataset(id));
 		} catch (IOException e) {
@@ -146,7 +147,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
-			@PathVariable("id") final String id) {
+			@PathVariable("id") final UUID id) {
 
 		try {
 			datasetService.deleteDataset(id);
@@ -168,7 +169,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 	})
 	ResponseEntity<ResponseId> updateDataset(
-			@PathVariable("id") String id,
+			@PathVariable("id") UUID id,
 			@RequestBody final Dataset dataset) {
 
 		try {
@@ -197,7 +198,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<CsvAsset> getCsv(
-			@PathVariable("datasetId") final String datasetId,
+			@PathVariable("datasetId") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestParam(name = "limit", defaultValue = "-1", required = false) final Integer limit // -1 means no
 																										// limit
@@ -252,7 +253,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
 	})
 	public ResponseEntity<ResponseStatus> uploadCsvFromGithub(
-			@PathVariable("datasetId") final String datasetId,
+			@PathVariable("datasetId") final UUID datasetId,
 			@RequestParam("path") final String path,
 			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
@@ -285,7 +286,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
 	})
 	public ResponseEntity<ResponseStatus> uploadCsv(
-			@PathVariable("datasetId") final String datasetId,
+			@PathVariable("datasetId") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input) {
 
@@ -323,7 +324,7 @@ public class DatasetController {
 	 * @param headers   headers of the CSV file
 	 * @return Response from the upload
 	 */
-	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(final String datasetId, final String fileName,
+	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(final UUID datasetId, final String fileName,
 			final HttpEntity csvEntity, final String[] headers) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom()

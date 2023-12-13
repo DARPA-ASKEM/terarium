@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.jupiter.api.Assertions;
@@ -28,15 +29,15 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	private EquationService equationService;
 
 	final Equation equation0 = new Equation()
-			.setId("test-equation-id0")
+			.setId(UUID.randomUUID())
 			.setName("test-equation-name");
 
 	final Equation equation1 = new Equation()
-			.setId("test-equation-id1")
+			.setId(UUID.randomUUID())
 			.setName("test-equation-name");
 
 	final Equation equation2 = new Equation()
-			.setId("test-equation-id2")
+			.setId(UUID.randomUUID())
 			.setName("test-equation-name");
 
 	@After

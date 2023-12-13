@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -33,29 +34,29 @@ public class DatasetService {
 		return elasticService.search(req, Dataset.class);
 	}
 
-	public Dataset getDataset(String id) throws IOException {
-		return elasticService.get(elasticConfig.getDocumentIndex(), id, Dataset.class);
+	public Dataset getDataset(UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getDocumentIndex(), id.toString(), Dataset.class);
 	}
 
-	public void deleteDataset(String id) throws IOException {
-		elasticService.delete(elasticConfig.getDocumentIndex(), id);
+	public void deleteDataset(UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getDocumentIndex(), id.toString());
 	}
 
 	public Dataset createDataset(Dataset dataset) throws IOException {
-		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId(), dataset);
+		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId().toString(), dataset);
 		return dataset;
 	}
 
 	public Dataset updateDataset(Dataset dataset) throws IOException {
-		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId(), dataset);
+		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId().toString(), dataset);
 		return dataset;
 	}
 
-	private String getPath(String documentId, String filename) {
-		return String.join("/", config.getDocumentPath(), documentId, filename);
+	private String getPath(UUID documentId, String filename) {
+		return String.join("/", config.getDocumentPath(), documentId.toString(), filename);
 	}
 
-	public PresignedURL getUploadUrl(String documentId, String filename) {
+	public PresignedURL getUploadUrl(UUID documentId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
@@ -67,7 +68,7 @@ public class DatasetService {
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(String documentId, String filename) {
+	public PresignedURL getDownloadUrl(UUID documentId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();

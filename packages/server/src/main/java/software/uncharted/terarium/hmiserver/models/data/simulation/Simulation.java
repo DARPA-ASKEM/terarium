@@ -1,23 +1,34 @@
 package software.uncharted.terarium.hmiserver.models.data.simulation;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.ToString;
-import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
+import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @Data
 @Accessors(chain = true)
@@ -60,12 +71,12 @@ public class Simulation implements Serializable {
 
 	@JsonAlias("start_time")
 	@TSOptional
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp startTime;
 
 	@JsonAlias("completed_time")
 	@TSOptional
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp completedTime;
 
 	@Enumerated(EnumType.STRING)
@@ -76,24 +87,24 @@ public class Simulation implements Serializable {
 
 	@JsonAlias("user_id")
 	@TSOptional
-	private Integer userId;
+	private UserId userId;
 
 	@JsonAlias("project_id")
 	@TSOptional
-	private Integer projectId;
+	private UUID projectId;
 
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
 	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp updatedOn;
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
 }

@@ -1,17 +1,22 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import java.util.List;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.util.List;
+import software.uncharted.terarium.hmiserver.models.UserId;
 
 /**
- * Represents a generic artifact that can be stored in the data service. For example,
- * this could be a text file, a code file, a zip file, or anything else. It should not
+ * Represents a generic artifact that can be stored in the data service. For
+ * example,
+ * this could be a text file, a code file, a zip file, or anything else. It
+ * should not
  * be used for a dataset or a model, which have their own classes.
  */
 @Data
@@ -21,14 +26,14 @@ public class Artifact {
 
 	/* The id of the artifact. */
 	@TSOptional
-	private String id;
+	private UUID id;
 
 	/* Timestamp of creation */
 	@TSOptional
 	private Object timestamp;
 
-	/* Username of who created this asset */
-	private String username;
+	/* UserId of who created this asset */
+	private UserId userId;
 
 	/* The name of the artifact. */
 	private String name;
@@ -37,7 +42,7 @@ public class Artifact {
 	@TSOptional
 	private String description;
 
-	/* The name of the file(s) in this artifact*/
+	/* The name of the file(s) in this artifact */
 	@JsonAlias("file_names")
 	private List<String> fileNames;
 
@@ -48,6 +53,5 @@ public class Artifact {
 	/* concepts associated with these files */
 	@TSOptional
 	private List<Concept> concepts;
-
 
 }

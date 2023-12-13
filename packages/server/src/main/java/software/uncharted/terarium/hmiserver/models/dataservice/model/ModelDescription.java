@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 
 @Data
@@ -17,7 +18,7 @@ public class ModelDescription implements Serializable {
 	static public ModelDescription fromModel(Model model) {
 
 		ModelDescription desc = new ModelDescription()
-				.setUsername(model.getUsername())
+				.setUserId(model.getUserId())
 				.setTimestamp(model.getTimestamp());
 
 		if (model.getHeader() != null) {
@@ -37,5 +38,5 @@ public class ModelDescription implements Serializable {
 	private Timestamp timestamp;
 
 	@TSOptional
-	private String username;
+	private UserId userId;
 }
