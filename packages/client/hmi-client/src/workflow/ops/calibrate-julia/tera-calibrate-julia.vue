@@ -75,15 +75,12 @@
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview title="Preview">
-				<!-- TODO: pass dropdown info as prop to tera-drilldown-preview -->
-				<Dropdown
-					v-if="runList.length > 0"
-					:options="runList"
-					v-model="selectedRun"
-					option-label="label"
-					placeholder="Select a calibration run"
-				/>
+			<tera-drilldown-preview
+				title="Preview"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+			>
 				<div class="form-section">
 					<h4>Calibrated parameters</h4>
 					<table class="p-datatable-table">
@@ -123,24 +120,24 @@
 					<div>
 						<template v-if="runInProgress">
 							<tera-calibrate-chart
-								v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+								v-for="(cfg, index) of node.state.chartConfigs"
 								:key="index"
 								:initial-data="csvAsset"
 								:intermediate-data="currentIntermediateVals"
 								:mapping="mapping"
-								:chartConfig="{ selectedRun: runInProgress, selectedVariable: cfg }"
+								:chartConfig="cfg"
 								@configuration-change="chartConfigurationChange(index, $event)"
 							/>
 						</template>
 						<template v-else-if="!runInProgress && selectedRunId && runResults[selectedRunId]">
 							<tera-simulate-chart
-								v-for="(cfg, index) of node.state.calibrateConfigs.chartConfigs"
+								v-for="(cfg, index) of node.state.chartConfigs"
 								:key="index"
 								:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
 								:initial-data="csvAsset"
 								:mapping="mapping"
 								:run-type="RunType.Julia"
-								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chartConfig="cfg"
 								@configuration-change="chartConfigurationChange(index, $event)"
 							/>
 						</template>
@@ -216,7 +213,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output-port', 'update-state', 'select-output', 'close']);
 
 enum CalibrateTabs {
 	Wizard = 'Wizard',
@@ -237,18 +234,10 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
 
-const runList = computed(() =>
-	Object.keys(props.node.state.calibrateConfigs.runConfigs).map((runId: string, idx: number) => ({
-		label: `Output ${idx + 1} - ${runId}`,
-		runId
-	}))
-);
-const selectedRun = ref(); // used to select a run from the dropdown for this component
+const outputs = computed(() => props.node.outputs);
+const selectedOutputId = computed(() => props.node.active) as any;
 const selectedRunId = computed(
-	() =>
-		// if selected run changes from the workflow node component, then it should change in this component as well
-		Object.values(props.node.state.calibrateConfigs.runConfigs).find((metadata) => metadata.active)
-			?.runId
+	() => outputs.value.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
 const drilldownLossPlot = ref<HTMLElement>();
@@ -273,21 +262,9 @@ onMounted(() => {
 	if (runIds.length > 0) {
 		getStatus(runIds);
 	}
-
-	const runId = Object.values(props.node.state.calibrateConfigs.runConfigs).find(
-		(metadata) => metadata.active
-	)?.runId;
-	if (runId) {
-		selectedRun.value = runList.value.find((run) => run.runId === runId);
-	} else {
-		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
-	}
 });
 
 onUnmounted(() => {
-	// TODO: right now whenever the drilldown is closed, the poller is stopped even
-	// if the calibration is still running. This results in an error being thrown
-	// from the getStatus function. This needs to be addressed in the future.
 	poller.stop();
 });
 
@@ -425,41 +402,37 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	runResults.value = newRunResults;
 	runResultParams.value = newRunResultParams;
 
-	const port = props.node.inputs[0];
-
 	const state = _.cloneDeep(props.node.state);
+	state.intermediateLoss = lossValues;
 
-	state.calibrateConfigs.runConfigs[runIdList[0]] = {
-		runId: runIdList[0],
-		active: true,
-		loss: lossValues
-	};
-	emit('update-state', state);
+	emit('append-output-port', {
+		type: CalibrationOperationJulia.outputs[0].type,
+		label: 'Output',
+		value: runIdList,
+		state
+	});
 
 	// clear out intermediate values for next run
 	lossValues = [];
 	parameterResult.value = {};
 
-	emit('append-output-port', {
-		type: CalibrationOperationJulia.outputs[0].type,
-		label: `${port.label} - Output ${runList.value.length}`,
-		value: runIdList
-	});
+	onUpdateOutput(outputs.value[outputs.value.length - 1].id);
+};
 
-	// show the latest run in the dropdown
-	selectedRun.value = runList.value[runList.value.length - 1];
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
 };
 
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
-	state.calibrateConfigs.chartConfigs[index] = config.selectedVariable;
+	state.chartConfigs[index] = config;
 
 	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
-	state.calibrateConfigs.chartConfigs.push([]);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	emit('update-state', state);
 };
@@ -505,19 +478,6 @@ watch(
 // Fetch simulation run results whenever output changes
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
-const handleSelectedRunChange = () => {
-	if (!selectedRun.value) return;
-
-	const state = _.cloneDeep(props.node.state);
-	// set the active status for the selected run in the run configs
-	Object.keys(state.calibrateConfigs.runConfigs).forEach((runId) => {
-		state.calibrateConfigs.runConfigs[runId].active = runId === selectedRun.value.runId;
-	});
-
-	emit('update-state', state);
-};
-watch(() => selectedRun.value, handleSelectedRunChange, { immediate: true });
-
 const lazyLoadCalibrationData = async (runId?: string) => {
 	if (!runId || runResults.value[runId]) return;
 
@@ -528,6 +488,7 @@ const lazyLoadCalibrationData = async (runId?: string) => {
 		runResultParams.value[runId] = result.paramVals;
 	}
 };
+
 watch(
 	() => selectedRunId.value,
 	() => {
@@ -539,7 +500,7 @@ watch(
 // Plot loss values if available on mount or on selectedRun change
 watch([() => selectedRunId.value, () => staticLossPlotRef.value], () => {
 	if (selectedRunId.value) {
-		const lossVals = props.node.state.calibrateConfigs.runConfigs[selectedRunId.value]?.loss;
+		const lossVals = props.node.state.intermediateLoss;
 		if (lossVals && staticLossPlotRef.value) {
 			const width = staticLossPlotRef.value.offsetWidth;
 			renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 300 });
