@@ -8,11 +8,38 @@
 					class="output-dropdown"
 					:model-value="output"
 					:options="options"
+					option-value="id"
+					option-label="label"
+					option-group-children="items"
+					option-group-label="label"
 					@update:model-value="emit('update:output', $event)"
-				></Dropdown>
+					:loading="isLoading"
+				>
+					<template #optiongroup="slotProps">
+						<span class="dropdown-option-group">{{ slotProps.option?.label }}</span>
+					</template>
+					<template #option="slotProps">
+						<div class="dropdown-option">
+							<Checkbox
+								v-if="isSelectable"
+								@click.stop
+								:model-value="slotProps.option?.isSelected"
+								@update:model-value="emit('update:selection', slotProps.option?.id)"
+								binary
+							/>
+							<span>{{ slotProps.option?.label }}</span>
+							<span
+								v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED"
+								class="connection-indicator"
+								><i class="pi pi-link" />Connected</span
+							>
+						</div>
+					</template>
+				</Dropdown>
 			</header>
 			<main>
-				<slot />
+				<slot v-if="!isLoading" />
+				<tera-progress-spinner v-else :font-size="2" is-centered style="height: 100%" />
 			</main>
 		</div>
 		<template #footer v-if="slots.footer">
@@ -25,17 +52,22 @@
 import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
+import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import Checkbox from 'primevue/checkbox';
 
 defineProps<{
 	title?: string;
-	options?: string[]; // subject to change based on how we want to pass in output data
-	output?: string;
+	options?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
+	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
+	isLoading?: boolean;
+	isSelectable?: boolean;
 }>();
 
 const slots = useSlots();
 
-const emit = defineEmits(['update:output']);
+const emit = defineEmits(['update:output', 'update:selection']);
 </script>
 
 <style scoped>
@@ -78,5 +110,28 @@ main {
 	overflow-y: auto;
 	gap: 1.5rem;
 	padding: 1.5rem 1.5rem 1.5rem 1rem;
+}
+
+:deep(.p-checkbox .p-checkbox-box) {
+	border-radius: var(--border-radius-medium);
+}
+
+.dropdown-option {
+	display: flex;
+	gap: 0.5rem;
+	font-size: var(--font-body-small);
+}
+
+.dropdown-option-group {
+	font-size: var(--font-caption);
+	color: var(--gray-600);
+}
+.connection-indicator {
+	font-size: var(--font-caption);
+	color: var(--primary-color);
+	display: flex;
+	gap: 0.2rem;
+	align-items: center;
+	margin-left: auto;
 }
 </style>
