@@ -144,7 +144,6 @@ const emit = defineEmits(['new-dataset-saved']);
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
-const showKernels = ref(<boolean>false);
 const autoExpandPreview = ref(<boolean>true);
 const actionTarget = ref('df');
 

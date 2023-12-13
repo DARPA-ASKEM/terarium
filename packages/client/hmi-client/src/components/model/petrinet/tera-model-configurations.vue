@@ -24,12 +24,8 @@
 						</tr>
 					</thead>
 					<!--Different tbody depending on model-->
-					<component
-						:is="
-							stratifiedModelType
-								? TeraStratifiedModelConfigurations
-								: TeraRegularModelConfigurations
-						"
+					<tera-stratified-model-configurations
+						v-if="stratifiedModelType"
 						v-model:editValue="editValue"
 						:model-configurations="modelConfigurations"
 						:cell-edit-states="cellEditStates"
@@ -38,7 +34,19 @@
 						@update-name="updateName"
 						@enter-name-cell="onEnterNameCell"
 						@enter-value-cell="onEnterValueCell"
-						v-on="{ 'open-modal': stratifiedModelType ? openMatrixModal : openValueModal }"
+						v-on="{ 'open-modal': openMatrixModal }"
+					/>
+					<tera-regular-model-configurations
+						v-else
+						v-model:editValue="editValue"
+						:model-configurations="modelConfigurations"
+						:cell-edit-states="cellEditStates"
+						:base-initials-and-parameters="headerInitialsAndParameters"
+						@update-value="updateValue"
+						@update-name="updateName"
+						@enter-name-cell="onEnterNameCell"
+						@enter-value-cell="onEnterValueCell"
+						v-on="{ 'open-modal': openValueModal }"
 					/>
 				</table>
 			</div>
@@ -50,7 +58,7 @@
 			icon="pi pi-plus"
 			:model="addConfigurationItems"
 		/>
-		<!-- 
+		<!--
 			For viewing transition matrices without clicking nodes
 			<tera-transition-matrices
 			v-if="stratifiedModelType"
@@ -103,7 +111,9 @@
 				:stratified-matrix-type="modalAttributes.stratifiedMatrixType"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
-				@update-configuration="(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)"
+				@update-configuration="
+					(configToUpdate: ModelConfiguration) => updateConfiguration(configToUpdate)
+				"
 			/>
 			<tera-modal
 				v-else-if="

@@ -79,7 +79,7 @@
 								class="tera-dataset-datatable"
 								paginatorPosition="bottom"
 								:rows="10"
-								:raw-content="(m.content[(selectedPreviewDataset || 'df')] as CsvAsset)"
+								:raw-content="m.content[selectedPreviewDataset || 'df'] as CsvAsset"
 								:preview-mode="true"
 								:showGridlines="true"
 								table-style="width: 100%; font-size: small;"
