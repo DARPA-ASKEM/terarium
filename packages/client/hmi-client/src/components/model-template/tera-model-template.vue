@@ -8,7 +8,11 @@
 				</section>
 				<section>
 					<h7>Model templates</h7>
-					<ul></ul>
+					<ul>
+						<li>
+							<tera-model-template-card />
+						</li>
+					</ul>
 				</section>
 				<section class="trash">
 					<i class="pi pi-trash"></i>
@@ -42,6 +46,10 @@ aside {
 	border-right: 1px solid var(--surface-border-alt);
 	padding: 1rem;
 	gap: 0.5rem;
+}
+
+ul {
+	list-style: none;
 }
 
 h5 {
