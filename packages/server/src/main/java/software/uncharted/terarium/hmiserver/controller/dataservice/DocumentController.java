@@ -503,7 +503,7 @@ public class DocumentController {
 		final UserId userId,
 		final List<Extraction> extractions
 	) {
-		String name = document.getTitle();
+		final String name = document.getTitle();
 
 		// create document asset
 		final DocumentAsset documentAsset = new DocumentAsset();
@@ -611,7 +611,7 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			return knowledgeMiddlewareProxy.postPDFToCosmos(docId).getBody().get("id").asText();
+			return knowledgeMiddlewareProxy.postPDFToCosmos(docId.toString()).getBody().get("id").asText();
 
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
