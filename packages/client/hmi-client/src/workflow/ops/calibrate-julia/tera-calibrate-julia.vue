@@ -80,6 +80,8 @@
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				is-selectable
 			>
 				<div class="form-section">
 					<h4>Calibrated parameters</h4>
@@ -214,7 +216,13 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'select-output', 'close']);
+const emit = defineEmits([
+	'append-output-port',
+	'update-state',
+	'select-output',
+	'update-output-port',
+	'close'
+]);
 
 enum CalibrateTabs {
 	Wizard = 'Wizard',
@@ -414,6 +422,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 		type: CalibrationOperationJulia.outputs[0].type,
 		label: 'Output',
 		value: runIdList,
+		isSelected: false,
 		state
 	});
 
@@ -424,6 +433,13 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 const onUpdateOutput = (id) => {
 	emit('select-output', id);
+};
+
+const onUpdateSelection = (id) => {
+	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
 };
 
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
