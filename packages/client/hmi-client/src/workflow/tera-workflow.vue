@@ -61,13 +61,14 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
+				@port-selected="
+					(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)
+				"
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-operator="(event) => removeNode(event)"
 				@remove-edges="removeEdges"
-				@drilldown="(event) => drilldown(event)"
 			>
 				<template #body>
 					<component
@@ -76,6 +77,7 @@
 						@append-output-port="(event: any) => appendOutputPort(node, event)"
 						@append-input-port="(event: any) => appendInputPort(node, event)"
 						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+						@open-drilldown="openDrilldown(node)"
 					/>
 				</template>
 			</tera-operator>
@@ -141,6 +143,8 @@
 			:node="currentActiveNode"
 			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
 		>
 		</component>
@@ -159,7 +163,8 @@ import {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowPortStatus,
-	WorkflowDirection
+	WorkflowDirection,
+	WorkflowOutput
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
@@ -281,18 +286,29 @@ function appendInputPort(
 
 function appendOutputPort(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any }
+	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 ) {
 	if (!node) return;
 
-	node.outputs.push({
-		id: uuidv4(),
+	const uuid = uuidv4();
+	const timestamp = new Date();
+
+	const outputPort: WorkflowOutput<any> = {
+		id: uuid,
 		type: port.type,
-		label: port.label,
+		label: `${port.label} ${timestamp.toLocaleTimeString()}`,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
-	});
+		status: WorkflowPortStatus.NOT_CONNECTED,
+		state: port.state,
+		timestamp
+	};
+
+	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
+
+	node.outputs.push(outputPort);
+	node.active = uuid;
+
 	workflowDirty = true;
 }
 
@@ -302,8 +318,20 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	workflowDirty = true;
 }
 
-const drilldown = (event: WorkflowNode<any>) => {
-	currentActiveNode.value = event;
+function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
+	if (!node) return;
+	workflowService.selectOutput(node, selectedOutputId);
+	workflowDirty = true;
+}
+
+function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
+	if (!node) return;
+	workflowService.updateOutputPort(node, workflowOutput);
+	workflowDirty = true;
+}
+
+const openDrilldown = (node: WorkflowNode<any>) => {
+	currentActiveNode.value = node;
 	dialogIsOpened.value = true;
 };
 

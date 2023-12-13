@@ -1,27 +1,42 @@
 <template>
-	<section v-if="!showSpinner" class="result-container">
-		<div class="button-container">
-			<Button label="Run" @click="runSimulate" icon="pi pi-play"></Button>
-		</div>
-		<Dropdown
-			v-if="runList.length > 0"
-			:options="runList"
-			v-model="selectedRun"
-			option-label="label"
-			placeholder="Select a simulation run"
-			@update:model-value="handleSelectedRunChange"
-		/>
-		<div class="chart-container" v-if="runResults[selectedRun?.runId]">
-			<tera-simulate-chart
-				v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
-				:key="idx"
-				:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
-				:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
-				@configuration-change="configurationChange(idx, $event)"
-				:colorByRun="true"
+	<section v-if="!showSpinner">
+		<template v-if="node.inputs[0].value">
+			<Dropdown
+				v-if="runList.length > 0"
+				:options="runList"
+				v-model="selectedRun"
+				option-label="label"
+				placeholder="Select a simulation run"
+				@update:model-value="handleSelectedRunChange"
 			/>
-			<Button class="add-chart" text @click="addChart" label="Add chart" icon="pi pi-plus"></Button>
-		</div>
+			<div v-if="runResults[selectedRun?.runId]">
+				<tera-simulate-chart
+					v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+					:key="idx"
+					:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
+					:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+					@configuration-change="configurationChange(idx, $event)"
+					:colorByRun="true"
+				/>
+				<Button
+					class="add-chart"
+					text
+					@click="addChart"
+					label="Add chart"
+					icon="pi pi-plus"
+				></Button>
+			</div>
+			<Button label="Run" @click="runSimulate" icon="pi pi-play" severity="secondary" outlined />
+			<Button
+				label="Simulation settings"
+				@click="emit('open-drilldown')"
+				severity="secondary"
+				outlined
+			/>
+		</template>
+		<tera-operator-placeholder v-else :operation-type="node.operationType">
+			Connect a model configuration
+		</tera-operator-placeholder>
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />
@@ -31,6 +46,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { csvParse } from 'd3';
@@ -53,10 +69,11 @@ import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
+const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
+
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
 
 const showSpinner = ref(false);
 const completedRunIdList = ref<string[]>([]);
@@ -257,14 +274,6 @@ section {
 	width: 100%;
 	padding: 10px;
 	background: var(--surface-overlay);
-}
-
-.simulate-chart {
-	margin: 1em 0em;
-}
-
-.button-container {
-	padding-bottom: 10px;
 }
 
 .add-chart {

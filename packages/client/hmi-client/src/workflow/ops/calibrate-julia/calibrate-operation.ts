@@ -2,8 +2,6 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { ChartConfig } from '@/types/SimulateConfig';
-import { CalibrateConfig } from '@/types/CalibrateConfig';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -24,11 +22,11 @@ export enum CalibrateMethodOptions {
 }
 
 export interface CalibrationOperationStateJulia {
-	chartConfigs: ChartConfig[];
-	calibrateConfigs: CalibrateConfig;
+	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	extra: CalibrateExtraJulia;
 	simulationsInProgress: string[];
+	intermediateLoss?: Record<string, number>[];
 }
 
 export const CalibrationOperationJulia: Operation = {
@@ -69,7 +67,6 @@ export const CalibrationOperationJulia: Operation = {
 	initState: () => {
 		const init: CalibrationOperationStateJulia = {
 			chartConfigs: [],
-			calibrateConfigs: { runConfigs: {}, chartConfigs: [[]] },
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			extra: {
 				numChains: 4,

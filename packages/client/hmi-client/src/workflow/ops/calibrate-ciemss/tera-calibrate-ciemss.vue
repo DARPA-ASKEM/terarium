@@ -211,9 +211,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-	// TODO: right now whenever the drilldown is closed, the poller is stopped even
-	// if the calibration is still running. This results in an error being thrown
-	// from the getStatus function. This needs to be addressed in the future.
 	poller.stop();
 });
 
@@ -287,6 +284,9 @@ const getStatus = async (simulationId: string) => {
 	// closing event source connections
 	await unsubscribe(ClientEventType.SimulationPyciemss, getMessageHandler);
 
+	if (pollerResults.state === PollerState.Cancelled) {
+		return;
+	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
@@ -295,6 +295,7 @@ const getStatus = async (simulationId: string) => {
 		});
 		throw Error('Failed Runs');
 	}
+
 	completedRunId.value = simulationId;
 	updateOutputPorts(completedRunId);
 	showSpinner.value = false;
