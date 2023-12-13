@@ -51,7 +51,7 @@ services:
     environment:
       - NEO4J_PLUGINS=["apoc"]
       - apoc.import.file.enabled=true
-      - NEO4J_AUTH=neo4j/password
+      - NEO4J_AUTH=none
       - NEO4J_dbms_memory_pagecache_size=512M
       - PG_HOST=postgres
       - PG_PORT=5432

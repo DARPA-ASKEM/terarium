@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
-@Converter(autoApply = true)
+@Converter(autoApply = false)
 @Slf4j
 public class JpaConverterJson implements AttributeConverter<Object, String> {
 	private final static ObjectMapper objectMapper = new ObjectMapper();

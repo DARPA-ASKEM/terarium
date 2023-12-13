@@ -4,11 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.uncharted.terarium.hmiserver.models.data.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @FeignClient(name = "dataservice", url = "${terarium.dataservice.url}", path = "/projects")
@@ -22,7 +23,7 @@ public interface ProjectProxy {
 
 	@GetMapping("/{id}")
 	ResponseEntity<Project> getProject(
-		@PathVariable("id") String id
+		@PathVariable("id") UUID id
 	);
 
 	@PostMapping
@@ -31,33 +32,33 @@ public interface ProjectProxy {
 	);
 
 
-	@PutMapping("/{project_id}")
+	@PutMapping("/{id}")
 	ResponseEntity<JsonNode> updateProject(
-		@PathVariable("project_id") String id,
+		@PathVariable("id") UUID id,
 		@RequestBody Project project
 	);
 
 	@DeleteMapping("/{id}")
 	ResponseEntity<JsonNode> deleteProject(
-		@PathVariable("id") String id
+		@PathVariable("id") UUID id
 	);
 
 	@GetMapping("/{project_id}/assets")
 	ResponseEntity<Assets> getAssets(
-		@PathVariable("project_id") String projectId,
+		@PathVariable("project_id") UUID projectId,
 		@RequestParam("types") final List<AssetType> types
 	);
 
-	@PostMapping("/{id}/assets/{resource_type}/{resource_id}")
+	@PostMapping("/{project_id}/assets/{resource_type}/{resource_id}")
 	ResponseEntity<JsonNode> createAsset(
-		@PathVariable("id") String id,
+		@PathVariable("project_id") UUID projectId,
 		@PathVariable("resource_type") AssetType type,
 		@PathVariable("resource_id") String resourceId
 	);
 
 	@DeleteMapping("/{project_id}/assets/{resource_type}/{resource_id}")
 	ResponseEntity<JsonNode> deleteAsset(
-		@PathVariable("project_id") String projectId,
+		@PathVariable("project_id") UUID projectId,
 		@PathVariable("resource_type") AssetType type,
 		@PathVariable("resource_id") String resourceId
 	);
