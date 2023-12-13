@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { Model } from '@/types/Model';
+import { Model } from '@/types/Types';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplateCard from './tera-model-template-card.vue';
 
