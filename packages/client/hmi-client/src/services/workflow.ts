@@ -340,6 +340,12 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 	};
 }
 
+/**
+ * This function gets the groupings of outputs for the drilldown preview dropdown selection.
+ * See: tera-drilldown-preview.
+ * Currently the only 2 groupings are saved/unsaved, but this is subject to change in the future
+ * if design requirements change.
+ */
 export const getGroupedOutputs = <T>(
 	node: WorkflowNode<any>,
 	labels: { saved?: string; unsaved?: string }
