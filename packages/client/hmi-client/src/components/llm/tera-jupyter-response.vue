@@ -232,7 +232,9 @@ defineExpose({
 	font-family: var(--font-family);
 	border-radius: 3px;
 	margin-top: 10px;
-	transition: background-color 0.3s, border 0.3s;
+	transition:
+		background-color 0.3s,
+		border 0.3s;
 	border: 1px solid rgba(0, 0, 0, 0);
 }
 

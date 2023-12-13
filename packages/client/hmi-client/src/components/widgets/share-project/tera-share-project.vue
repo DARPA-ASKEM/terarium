@@ -137,9 +137,8 @@ async function setPermissions() {
 	selectedUsers.value.forEach(async ({ id }) => {
 		const permission = newSelectedUserPermissions.get(id);
 		if (permission) {
-			const currentPermission = permissions.value?.permissionUsers.find(
-				(u) => u.id === id
-			)?.relationship;
+			const currentPermission = permissions.value?.permissionUsers.find((u) => u.id === id)
+				?.relationship;
 			if (permission === 'remove') {
 				if (currentPermission) {
 					await useProjects().removePermissions(props.project.id, id, currentPermission);

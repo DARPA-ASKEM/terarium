@@ -92,7 +92,7 @@ const stats = computed(() =>
 				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10),
 				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
 				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10)
-		  }
+			}
 );
 
 const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
@@ -145,7 +145,9 @@ section {
 	height: 8.75rem;
 	background-color: var(--surface-ground);
 	border-radius: var(--border-radius-big);
-	transition: opacity 0.3s ease, height 0.3s ease;
+	transition:
+		opacity 0.3s ease,
+		height 0.3s ease;
 	position: relative;
 	margin: 0.5rem 0 0.5rem 0;
 }
@@ -191,7 +193,9 @@ section {
 	overflow: hidden;
 	opacity: 0;
 	height: 0;
-	transition: opacity 0.5s ease, height 0.3s ease;
+	transition:
+		opacity 0.5s ease,
+		height 0.3s ease;
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
 }
