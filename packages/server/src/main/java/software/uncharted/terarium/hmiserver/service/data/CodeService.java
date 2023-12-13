@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,13 @@ public class CodeService {
 	private final Config config;
 	private final S3ClientService s3ClientService;
 
+	/**
+	 * Retrieves a list of Code objects from an Elasticsearch index.
+	 * @param page The page number of the search results.
+	 * @param pageSize The number of results per page.
+	 * @return A ResponseEntity containing a list of Code objects.
+	 * @throws IOException if an error occurs while retrieving the Code objects.
+	 */
 	public List<Code> getCode(Integer page, Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getCodeIndex())
@@ -33,29 +41,64 @@ public class CodeService {
 		return elasticService.search(req, Code.class);
 	}
 
-	public Code getCode(String id) throws IOException {
-		return elasticService.get(elasticConfig.getCodeIndex(), id, Code.class);
+	/**
+	 * Retrieves a Code object from an Elasticsearch index.
+	 * @param id The id of the Code object to retrieve.
+	 * @return A ResponseEntity containing a Code object.
+	 * @throws IOException if an error occurs while retrieving the Code object.
+	 */
+	public Code getCode(UUID id) throws IOException {
+		return elasticService.get(elasticConfig.getCodeIndex(), id.toString(), Code.class);
 	}
 
-	public void deleteCode(String id) throws IOException {
-		elasticService.delete(elasticConfig.getCodeIndex(), id);
+	/**
+	 * Deletes a Code object from an Elasticsearch index.
+	 * @param id The id of the Code object to delete.
+	 * @throws IOException if an error occurs while deleting the Code object.
+	 */
+	public void deleteCode(UUID id) throws IOException {
+		elasticService.delete(elasticConfig.getCodeIndex(), id.toString());
 	}
 
+	/**
+	 * Creates a Code object in an Elasticsearch index.
+	 * @param code The Code object to create.
+	 * @return A ResponseEntity containing the created Code object.
+	 * @throws IOException if an error occurs while creating the Code object.
+	 */
 	public Code createCode(Code code) throws IOException {
-		elasticService.index(elasticConfig.getCodeIndex(), code.getId(), code);
+		elasticService.index(elasticConfig.getCodeIndex(), code.getId().toString(), code);
 		return code;
 	}
 
+	/**
+	 * Updates a Code object in an Elasticsearch index.
+	 * @param code The Code object to update.
+	 * @return A ResponseEntity containing the updated Code object.
+	 * @throws IOException if an error occurs while updating the Code object.
+	 */
 	public Code updateCode(Code code) throws IOException {
-		elasticService.index(elasticConfig.getCodeIndex(), code.getId(), code);
+		elasticService.index(elasticConfig.getCodeIndex(), code.getId().toString(), code);
 		return code;
 	}
 
-	private String getPath(String codeId, String filename) {
-		return String.join("/", config.getCodePath(), codeId, filename);
+	/**
+	 * Retrieves the path to a file in S3.
+	 * @param codeId The id of the Code object.
+	 * @param filename The name of the file.
+	 * @return The path to the file in S3.
+	 */
+	private String getPath(UUID codeId, String filename) {
+		return String.join("/", config.getCodePath(), codeId.toString(), filename);
 	}
 
-	public PresignedURL getUploadUrl(String codeId, String filename) {
+	/**
+	 * Retrieves a presigned URL for uploading a file to S3.
+	 * @param codeId The id of the Code object.
+	 * @param filename The name of the file.
+	 * @return A presigned upload URL.
+	 */
+	public PresignedURL getUploadUrl(UUID codeId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
@@ -67,7 +110,13 @@ public class CodeService {
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(String codeId, String filename) {
+	/**
+	 * Retrieves a presigned URL for downloading a file from S3.
+	 * @param codeId The id of the Code object.
+	 * @param filename The name of the file.
+	 * @return A presigned download URL.
+	 */
+	public PresignedURL getDownloadUrl(UUID codeId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
