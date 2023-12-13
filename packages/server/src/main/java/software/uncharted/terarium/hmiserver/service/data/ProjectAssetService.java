@@ -34,7 +34,7 @@ public class ProjectAssetService {
 		return projectAssetRepository.save(asset);
 	}
 
-	public ProjectAsset findByProjectIdAndResourceIdAndResourceType(@NotNull UUID projectId, @NotNull String resourceId,
+	public ProjectAsset findByProjectIdAndResourceIdAndResourceType(@NotNull UUID projectId, @NotNull UUID resourceId,
 			@NotNull ResourceType type) {
 		return projectAssetRepository.findByProjectIdAndResourceIdAndResourceType(projectId, resourceId, type);
 	}
