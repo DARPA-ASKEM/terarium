@@ -100,11 +100,6 @@
 						style="margin-right: auto"
 					/>
 					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
-					<Button
-						:disabled="!isModelValid()"
-						label="Apply changes and close"
-						@click="constructModel"
-					/>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -118,7 +113,7 @@
 			<InputText id="new-model" type="text" v-model="newModelName" placeholder="New model" />
 		</form>
 		<template #footer>
-			<Button @click="createModel">Create model</Button>
+			<Button @click="saveAsNewModel">Create model</Button>
 			<Button class="p-button-secondary" @click="isNewModelModalVisible = false">Cancel</Button>
 		</template>
 	</tera-modal>
@@ -126,6 +121,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
@@ -137,17 +133,13 @@ import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { cloneDeep, isEmpty } from 'lodash';
 import { KernelSessionManager } from '@/services/jupyter';
-import { JSONObject } from '@lumino/coreutils';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { getCodeAsset, getCodeFileAsText } from '@/services/code';
-import { codeToAMR } from '@/services/knowledge';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModel, updateModel, validateModelName } from '@/services/model';
+import { createModel, getModel, updateModel, validateModelName } from '@/services/model';
 import { addAsset } from '@/services/project';
 import { useProjects } from '@/composables/project';
 import { useToastService } from '@/services/toast';
@@ -155,6 +147,8 @@ import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-sema
 import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
+import { getCodeAsset, getCodeFileAsText } from '@/services/code';
+import { codeToAMR } from '@/services/knowledge';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -267,7 +261,7 @@ onUnmounted(() => {
 
 function buildJupyterContext() {
 	const contextName =
-		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes_creation' : null;
+		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
 	const languageName =
 		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 
@@ -297,11 +291,12 @@ async function handleCode() {
 			state: cloneDeep(clonedState.value),
 			isSelected: false
 		});
+		isProcessing.value = false;
 	}
 
 	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
 		const code = editor.value?.getValue();
-		const messageContent = <JSONObject>{
+		const messageContent = {
 			declaration: code
 		};
 
@@ -312,19 +307,6 @@ async function handleCode() {
 			?.register('compile_expr_response', handleCompileExprResponse)
 			?.register('decapodes_preview', handleDecapodesPreview);
 	}
-	isProcessing.value = false;
-}
-
-function constructModel() {
-	const modelContent = {
-		name: 'new model'
-	};
-
-	decapodesModelValid.value = false;
-
-	kernelManager
-		.sendMessage('construct_amr_request', modelContent)
-		?.register('construct_amr_response', handleConstructAmrResponse);
 }
 
 function openModal() {
@@ -332,6 +314,7 @@ function openModal() {
 }
 
 async function saveAsNewModel() {
+	if (!validateModelName(newModelName.value)) return;
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
 		savingAsset.value = true;
 		// 1. Update model name
@@ -361,45 +344,38 @@ async function saveAsNewModel() {
 		});
 		useToastService().success('', 'Model saved successfully.');
 	}
-
-	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
-		const messageContent = {
-			header: {
-				description: 'new description',
-				name: 'new model',
-				_type: 'Header',
-				model_version: 'v1.0',
-				schema: 'modelreps.io/DecaExpr',
-				schema_name: 'DecaExpr'
-			}
-		};
-
-		decapodesModelValid.value = false;
-
-		kernelManager
-			.sendMessage('save_amr_request', messageContent)
-			?.register('save_amr_response', handleSaveAmrResponse);
-	}
 }
 
 function handleCompileExprResponse() {
 	decapodesModelValid.value = true;
 }
 
-function handleDecapodesPreview(data: any) {
+// FIXME: This saves the preview as AMR, revisit when we have temporary-assets
+async function handleDecapodesPreview(data: any) {
 	console.log('Decapode preview', data);
-	previewHTML.value = data.content['image/svg'];
-	isProcessing.value = false;
-}
+	const decapodeJSON = data.content['application/json'];
+	const header = {
+		description: 'new description',
+		name: 'new model',
+		_type: 'Header',
+		model_version: 'v1.0',
+		schema: 'modelreps.io/DecaExpr',
+		schema_name: 'decapode'
+	};
+	const amr = {
+		header,
+		model: decapodeJSON
+	};
 
-function handleConstructAmrResponse(data: any) {
-	// console.log("Decapode preview", message.content);
-	// previewHTML.value = message.content["image/svg"];
-	alert(JSON.stringify(data.content, null, 2));
-}
-
-function handleSaveAmrResponse() {
-	// TODO: Save into project
+	const response = await createModel(amr);
+	if (response) {
+		const m = await getModel(response.id);
+		if (m) {
+			selectedModel.value = m;
+			previewHTML.value = `Decapode created ${m.id}`;
+		}
+		isProcessing.value = false;
+	}
 }
 
 /**
@@ -466,12 +442,6 @@ function onUpdateSelection(id) {
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
-}
-
-async function createModel() {
-	if (!validateModelName(newModelName.value)) return;
-	await saveAsNewModel();
-	isNewModelModalVisible.value = false;
 }
 </script>
 
