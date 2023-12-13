@@ -159,9 +159,6 @@ const handleResetResponse = (data: any) => {
 const stratifyRequest = () => {
 	if (!amr.value) return;
 
-	// reset model
-	kernelManager.sendMessage('reset_request', {});
-
 	const strataOption = props.node.state.strataGroup;
 	const messageContent = {
 		stratify_args: {
@@ -172,10 +169,12 @@ const stratifyRequest = () => {
 		}
 	};
 
-	kernelManager
-		.sendMessage('stratify_request', messageContent)
-		?.register('stratify_response', handleStratifyResponse)
-		?.register('model_preview', handleModelPreview);
+	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+		kernelManager
+			.sendMessage('stratify_request', messageContent)
+			?.register('stratify_response', handleStratifyResponse)
+			?.register('model_preview', handleModelPreview);
+	});
 };
 
 const handleStratifyResponse = (data: any) => {
@@ -267,9 +266,6 @@ const runCodeStratify = () => {
 	const code = editor?.getValue();
 	if (!code) return;
 
-	// reset model
-	kernelManager.sendMessage('reset_request', {});
-
 	const messageContent = {
 		silent: false,
 		store_history: false,
@@ -281,28 +277,30 @@ const runCodeStratify = () => {
 
 	let executedCode = '';
 
-	kernelManager
-		.sendMessage('execute_request', messageContent)
-		?.register('execute_input', (data) => {
-			executedCode = data.content.code;
-		})
-		?.register('stream', (data) => {
-			console.log('stream', data);
-		})
-		?.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-		})
-		?.register('model_preview', (data) => {
-			// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
-			// currently no matter what kind of code is run we always get a `model_preview` response.
-			// We may want to compare the response model with the existing model to see if the response model
-			// has been stratified - if not then don't save the model or the code.
-			handleModelPreview(data);
+	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+		kernelManager
+			.sendMessage('execute_request', messageContent)
+			?.register('execute_input', (data) => {
+				executedCode = data.content.code;
+			})
+			?.register('stream', (data) => {
+				console.log('stream', data);
+			})
+			?.register('error', (data) => {
+				logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			})
+			?.register('model_preview', (data) => {
+				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
+				// currently no matter what kind of code is run we always get a `model_preview` response.
+				// We may want to compare the response model with the existing model to see if the response model
+				// has been stratified - if not then don't save the model or the code.
+				handleModelPreview(data);
 
-			if (executedCode) {
-				saveCodeToState(executedCode, true);
-			}
-		});
+				if (executedCode) {
+					saveCodeToState(executedCode, true);
+				}
+			});
+	});
 };
 
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {

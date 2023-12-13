@@ -143,6 +143,8 @@
 			:node="currentActiveNode"
 			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
 		>
 		</component>
@@ -161,7 +163,8 @@ import {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowPortStatus,
-	WorkflowDirection
+	WorkflowDirection,
+	WorkflowOutput
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/workflow/tera-operator.vue';
@@ -283,24 +286,46 @@ function appendInputPort(
 
 function appendOutputPort(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any }
+	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 ) {
 	if (!node) return;
 
-	node.outputs.push({
-		id: uuidv4(),
+	const uuid = uuidv4();
+
+	const outputPort: WorkflowOutput<any> = {
+		id: uuid,
 		type: port.type,
 		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
-	});
+		status: WorkflowPortStatus.NOT_CONNECTED,
+		state: port.state,
+		timestamp: new Date()
+	};
+
+	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
+
+	node.outputs.push(outputPort);
+	node.active = uuid;
+
 	workflowDirty = true;
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
+	workflowDirty = true;
+}
+
+function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
+	if (!node) return;
+	workflowService.selectOutput(node, selectedOutputId);
+	workflowDirty = true;
+}
+
+function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
+	if (!node) return;
+	workflowService.updateOutputPort(node, workflowOutput);
 	workflowDirty = true;
 }
 
