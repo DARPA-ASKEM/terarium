@@ -4,7 +4,7 @@
 			<div class="draggable"></div>
 			<main>
 				<header>Template title</header>
-				<section>Diagram</section>
+				<section>Diagram/Equations</section>
 			</main>
 		</section>
 		<ul>
@@ -31,7 +31,7 @@ const fakeVariables = ['X', 'Y', 'p'];
 		gap: 0.5rem;
 		margin: 0.75rem 0;
 
-		li {
+		& > li {
 			background-color: var(--surface-section);
 			border: 1px solid var(--surface-border-alt);
 			border-top-right-radius: var(--border-radius);
@@ -52,6 +52,10 @@ const fakeVariables = ['X', 'Y', 'p'];
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+
+		& > * {
+			margin: 0 auto;
+		}
 	}
 }
 
