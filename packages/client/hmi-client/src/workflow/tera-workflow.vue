@@ -167,7 +167,7 @@ import {
 	WorkflowOutput
 } from '@/types/workflow';
 // Operation imports
-import TeraOperator from '@/workflow/tera-operator.vue';
+import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';

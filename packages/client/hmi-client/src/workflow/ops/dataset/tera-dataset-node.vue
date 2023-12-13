@@ -58,10 +58,10 @@ import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
-import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
