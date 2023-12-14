@@ -322,7 +322,7 @@ export function selectOutput(
 	// Update the Operator state with the selected one
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
 	if (selected) {
-		operator.state = selected.state;
+		operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
 		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
 		operator.active = selected.id;
 	} else {

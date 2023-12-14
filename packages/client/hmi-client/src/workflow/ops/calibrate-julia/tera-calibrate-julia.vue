@@ -46,7 +46,12 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="chains">Chains</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="extra.numChains" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="extra.numChains"
+								@update:model-value="updateStateExtras"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="iterations">Iterations</label>
@@ -54,17 +59,23 @@
 								class="p-inputtext-sm"
 								inputId="integeronly"
 								v-model="extra.numIterations"
+								@update:model-value="updateStateExtras"
 							/>
 						</div>
 						<div class="label-and-input">
 							<label for="ode-method">ODE method</label>
-							<InputText class="p-inputtext-sm" v-model="extra.odeMethod" />
+							<InputText
+								class="p-inputtext-sm"
+								v-model="extra.odeMethod"
+								@update:model-value="updateStateExtras"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="calibrate-method">Calibrate method</label>
 							<Dropdown
 								:options="Object.values(CalibrateMethodOptions)"
 								v-model="extra.calibrateMethod"
+								@update:model-value="updateStateExtras"
 							/>
 						</div>
 					</div>
@@ -290,6 +301,12 @@ const disableRunButton = computed(
 		!datasetId.value
 );
 
+const updateStateExtras = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.extra = extra.value;
+	emit('update-state', state);
+};
+
 const filterStateVars = (params) => {
 	const initialStates =
 		modelConfig.value?.configuration.semantics.ode.initials.map((d) => d.expression) ?? [];
@@ -423,7 +440,11 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 		label: 'Output',
 		value: runIdList,
 		isSelected: false,
-		state
+		state: {
+			extra: state.extra,
+			simulationsInProgress: state.simulationsInProgress,
+			intermediateLoss: state.intermediateLoss
+		}
 	});
 
 	// clear out intermediate values for next run
@@ -472,9 +493,12 @@ function addMapping() {
 watch(
 	() => props.node.active,
 	() => {
+		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 		}
+		// Update Wizard form fields with current selected output state extras
+		extra.value = props.node.state.extra;
 	},
 	{ immediate: true }
 );

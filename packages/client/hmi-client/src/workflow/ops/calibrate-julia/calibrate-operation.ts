@@ -22,8 +22,11 @@ export enum CalibrateMethodOptions {
 }
 
 export interface CalibrationOperationStateJulia {
+	// state shared across all runs
 	chartConfigs: string[][];
 	mapping: CalibrateMap[];
+
+	// state specific to individual calibrate runs
 	extra: CalibrateExtraJulia;
 	simulationsInProgress: string[];
 	intermediateLoss?: Record<string, number>[];
