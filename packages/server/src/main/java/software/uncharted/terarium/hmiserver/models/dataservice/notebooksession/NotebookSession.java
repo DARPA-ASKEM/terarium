@@ -1,4 +1,7 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.dataservice.notebooksession;
+
+import java.time.Instant;
+import java.util.UUID;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -9,7 +12,12 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 public class NotebookSession {
-	private String id;
+
+	@TSOptional
+	private UUID id;
+
+	@TSOptional
+	private Instant timestamp;
 
 	private String name;
 
@@ -17,7 +25,5 @@ public class NotebookSession {
 	private String description;
 
 	private Object data;
-
-	private String timestamp;
 
 }

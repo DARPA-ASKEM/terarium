@@ -36,14 +36,14 @@ public class EquationService {
 		elasticService.delete(elasticConfig.getEquationIndex(), id.toString());
 	}
 
-	public Equation createEquation(Equation artifact) throws IOException {
-		elasticService.index(elasticConfig.getEquationIndex(), artifact.getId().toString(), artifact);
-		return artifact;
+	public Equation createEquation(Equation equation) throws IOException {
+		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
+		return equation;
 	}
 
-	public Equation updateEquation(Equation artifact) throws IOException {
-		elasticService.index(elasticConfig.getEquationIndex(), artifact.getId().toString(), artifact);
-		return artifact;
+	public Equation updateEquation(Equation equation) throws IOException {
+		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
+		return equation;
 	}
 
 }
