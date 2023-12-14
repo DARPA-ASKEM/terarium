@@ -19,7 +19,10 @@
 			:inputs="node.inputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@port-selected="
+				(input: WorkflowPort, direction: WorkflowDirection) =>
+					emit('port-selected', input, direction)
+			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
@@ -29,7 +32,10 @@
 			:outputs="node.outputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@port-selected="
+				(input: WorkflowPort, direction: WorkflowDirection) =>
+					emit('port-selected', input, direction)
+			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 	</main>
@@ -42,9 +48,9 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import TeraOperatorHeader from './operator/tera-operator-header.vue';
-import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
-import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
+import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
+import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
+import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 
 enum PortDirection {
 	Input,
@@ -164,8 +170,8 @@ main {
 		margin: 0.5rem;
 	}
 
-	& > ul, 
-	& > .content, 
+	& > ul,
+	& > .content,
 	& > .content:deep(> *)  /* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
 		display: flex;
 		flex-direction: column;

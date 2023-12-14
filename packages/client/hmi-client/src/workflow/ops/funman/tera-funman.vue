@@ -159,27 +159,28 @@ const endTime = ref(props.node.state.currentTimespan.end);
 const numberOfSteps = ref(props.node.state.numSteps);
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
-const requestConstraints = computed(() =>
-	// Same as node state's except typing for state vs linear constraint
-	props.node.state.constraintGroups?.map((ele) => {
-		if (ele.variables.length === 1) {
-			// State Variable Constraint
+const requestConstraints = computed(
+	() =>
+		// Same as node state's except typing for state vs linear constraint
+		props.node.state.constraintGroups?.map((ele) => {
+			if (ele.variables.length === 1) {
+				// State Variable Constraint
+				return {
+					name: ele.name,
+					variable: ele.variables[0],
+					interval: ele.interval,
+					timepoints: ele.timepoints
+				};
+			}
 			return {
+				// Linear Constraint
 				name: ele.name,
-				variable: ele.variables[0],
+				variables: ele.variables,
+				weights: ele.weights,
 				interval: ele.interval,
 				timepoints: ele.timepoints
 			};
-		}
-		return {
-			// Linear Constraint
-			name: ele.name,
-			variables: ele.variables,
-			weights: ele.weights,
-			interval: ele.interval,
-			timepoints: ele.timepoints
-		};
-	})
+		})
 );
 const requestParameters = ref();
 const model = ref<Model | null>();

@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { csvParse } from 'd3';
