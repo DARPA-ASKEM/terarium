@@ -1,8 +1,6 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
-export interface ModelCouplingState {
-	modelIds: string[];
-}
+export interface ModelCouplingState {}
 
 export const ModelCouplingOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_COUPLING,
@@ -14,9 +12,7 @@ export const ModelCouplingOperation: Operation = {
 	action: () => {},
 
 	initState: () => {
-		const init: ModelCouplingState = {
-			modelIds: []
-		};
+		const init: ModelCouplingState = {};
 		return init;
 	}
 };
