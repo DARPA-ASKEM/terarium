@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.After;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,21 +26,16 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProvenanceService provenanceService;
 
-	final Provenance provenance = new Provenance()
-			.setLeft("test-left-id")
-			.setLeftType(ProvenanceType.MODEL)
-			.setRight("test-right-id")
-			.setRightType(ProvenanceType.EQUATION)
-			.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
-
-	@After
-	public void tearDown() {
-		provenanceService.deleteProvenance(provenance.getId());
-	}
-
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProvenance() throws Exception {
+
+		final Provenance provenance = new Provenance()
+				.setLeft("test-left-id")
+				.setLeftType(ProvenanceType.MODEL)
+				.setRight("test-right-id")
+				.setRightType(ProvenanceType.EQUATION)
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/provenance")
 				.with(csrf())
@@ -54,7 +48,12 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetProvenance() throws Exception {
 
-		provenanceService.createProvenance(provenance);
+		final Provenance provenance = provenanceService.createProvenance(new Provenance()
+				.setLeft("test-left-id")
+				.setLeftType(ProvenanceType.MODEL)
+				.setRight("test-right-id")
+				.setRightType(ProvenanceType.EQUATION)
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/provenance/" + provenance.getId())
 				.with(csrf()))
@@ -65,7 +64,12 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteProvenance() throws Exception {
 
-		provenanceService.createProvenance(provenance);
+		final Provenance provenance = provenanceService.createProvenance(new Provenance()
+				.setLeft("test-left-id")
+				.setLeftType(ProvenanceType.MODEL)
+				.setRight("test-right-id")
+				.setRightType(ProvenanceType.EQUATION)
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/provenance/" + provenance.getId())
 				.with(csrf()))
