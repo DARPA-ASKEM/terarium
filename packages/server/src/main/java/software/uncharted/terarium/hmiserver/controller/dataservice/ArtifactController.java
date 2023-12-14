@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -70,6 +72,7 @@ public class ArtifactController {
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createArtifact(@RequestBody Artifact artifact) throws IOException {
+		artifact.setCreatedOn(Timestamp.from(Instant.now()));
 		artifactService.createArtifact(artifact);
 
 		JsonNode res = objectMapper.valueToTree(Map.of("id", artifact.getId()));
@@ -87,6 +90,7 @@ public class ArtifactController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> updateArtifact(@PathVariable("id") UUID artifactId,
 			@RequestBody Artifact artifact) throws IOException {
+		artifact.setUpdatedOn(Timestamp.from(Instant.now()));
 		artifactService.updateArtifact(artifact.setId(artifactId));
 
 		JsonNode res = objectMapper.valueToTree(Map.of("id", artifact.getId()));

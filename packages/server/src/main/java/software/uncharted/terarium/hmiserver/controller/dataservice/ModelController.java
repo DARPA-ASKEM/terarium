@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -201,6 +203,7 @@ public class ModelController {
 			@RequestBody Model model) {
 
 		try {
+			model.setUpdatedOn(Timestamp.from(Instant.now()));
 			modelService.updateModel(model.setId(id));
 			return ResponseEntity.ok(new ResponseId(id));
 		} catch (IOException e) {
@@ -247,6 +250,7 @@ public class ModelController {
 			@RequestBody Model model) {
 
 		try {
+			model.setCreatedOn(Timestamp.from(Instant.now()));
 			modelService.createModel(model);
 			return ResponseEntity.ok(new ResponseId(model.getId()));
 		} catch (IOException e) {

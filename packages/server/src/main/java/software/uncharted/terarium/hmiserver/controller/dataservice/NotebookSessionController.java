@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -91,6 +93,7 @@ public class NotebookSessionController {
 	ResponseEntity<ResponseId> createNotebookSession(@RequestBody NotebookSession session) {
 
 		try {
+			session.setCreatedOn(Timestamp.from(Instant.now()));
 			sessionService.createNotebookSession(session);
 			return ResponseEntity.ok(new ResponseId(session.getId()));
 		} catch (IOException e) {
@@ -148,6 +151,7 @@ public class NotebookSessionController {
 			@RequestBody NotebookSession session) {
 
 		try {
+			session.setUpdatedOn(Timestamp.from(Instant.now()));
 			sessionService.updateNotebookSession(session.setId(id));
 			return ResponseEntity.ok(new ResponseId(id));
 		} catch (IOException e) {

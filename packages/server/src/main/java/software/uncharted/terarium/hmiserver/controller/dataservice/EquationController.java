@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -91,6 +93,7 @@ public class EquationController {
 	ResponseEntity<ResponseId> createEquation(@RequestBody Equation equation) {
 
 		try {
+			equation.setCreatedOn(Timestamp.from(Instant.now()));
 			equationService.createEquation(equation);
 			return ResponseEntity.ok(new ResponseId(equation.getId()));
 		} catch (IOException e) {
@@ -148,6 +151,7 @@ public class EquationController {
 			@RequestBody Equation equation) {
 
 		try {
+			equation.setUpdatedOn(Timestamp.from(Instant.now()));
 			equationService.updateEquation(equation.setId(id));
 			return ResponseEntity.ok(new ResponseId(id));
 		} catch (IOException e) {

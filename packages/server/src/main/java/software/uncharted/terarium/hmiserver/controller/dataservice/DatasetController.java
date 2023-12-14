@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -103,9 +105,10 @@ public class DatasetController {
 			@ApiResponse(responseCode = "200", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createDocument(@RequestBody final Dataset dataset) {
+	public ResponseEntity<ResponseId> createDataset(@RequestBody final Dataset dataset) {
 
 		try {
+			dataset.setCreatedOn(Timestamp.from(Instant.now()));
 			datasetService.createDataset(dataset);
 			return ResponseEntity.ok(new ResponseId(dataset.getId()));
 		} catch (IOException e) {
@@ -173,6 +176,7 @@ public class DatasetController {
 			@RequestBody final Dataset dataset) {
 
 		try {
+			dataset.setUpdatedOn(Timestamp.from(Instant.now()));
 			datasetService.updateDataset(dataset);
 			return ResponseEntity.ok(new ResponseId(id));
 		} catch (IOException e) {

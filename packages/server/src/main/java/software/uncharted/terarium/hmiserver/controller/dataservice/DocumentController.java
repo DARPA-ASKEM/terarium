@@ -73,6 +73,9 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+
 @RequestMapping("/document-asset")
 @RestController
 @Slf4j
@@ -132,6 +135,7 @@ public class DocumentController {
 			@RequestBody final DocumentAsset document) {
 
 		try {
+			document.setCreatedOn(Timestamp.from(Instant.now()));
 			documentAssetService.createDocumentAsset(document);
 			return ResponseEntity.ok(new ResponseId(document.getId()));
 		} catch (final IOException e) {
