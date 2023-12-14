@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 import java.util.Arrays;
 
@@ -9,6 +10,7 @@ import java.util.Arrays;
  * This will be removed in favour of ResourceType
  */
 @Deprecated
+@TSModel
 public enum AssetType {
 	datasets("datasets"),
 	model_configurations("model_configurations"),
@@ -24,7 +26,7 @@ public enum AssetType {
 	public final String type;
 
 
-	private AssetType(final String type) {
+	AssetType(final String type) {
 		this.type = type.toLowerCase();
 	}
 
