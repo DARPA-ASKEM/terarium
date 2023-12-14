@@ -1,8 +1,10 @@
+import { ProgrammingLanguage } from '@/types/Types';
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { CodeBlock } from '@/utils/code-asset';
 
 export interface ModelFromCodeState {
-	codeLanguage: string;
-	codeContent: string;
+	codeLanguage: ProgrammingLanguage;
+	codeBlocks: CodeBlock[];
 	modelFramework: string;
 	modelId: string;
 	isSaved?: boolean;
@@ -19,8 +21,8 @@ export const ModelFromCodeOperation: Operation = {
 
 	initState: () => {
 		const init: ModelFromCodeState = {
-			codeLanguage: 'python',
-			codeContent: '',
+			codeLanguage: ProgrammingLanguage.Python,
+			codeBlocks: [],
 			modelFramework: 'Petrinet',
 			modelId: ''
 		};
