@@ -5,7 +5,6 @@ export interface ModelFromCodeState {
 	codeContent: string;
 	modelFramework: string;
 	modelId: string;
-	isSaved?: boolean;
 }
 
 export const ModelFromCodeOperation: Operation = {
