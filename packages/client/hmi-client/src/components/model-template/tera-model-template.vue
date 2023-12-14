@@ -9,7 +9,7 @@
 				<section>
 					<h7>Model templates</h7>
 					<ul>
-						<li>
+						<li v-for="(_, index) in 5" :key="index">
 							<tera-model-template-card />
 						</li>
 					</ul>
@@ -50,6 +50,10 @@ aside {
 
 ul {
 	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
 }
 
 h5 {
