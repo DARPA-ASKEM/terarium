@@ -93,7 +93,7 @@ jobs:
 
       # Run the tests
       - name: Run tests
-        uses: gradle/gradle-build-action@9bca466e2722baf9e77b4f929bbe0af18848791f
+        uses: gradle/gradle-build-action@0280eb7de5ad3fb0deb50017b8ce842980b4789a
         with:
           gradle-version: wrapper
           build-root-directory: packages/server

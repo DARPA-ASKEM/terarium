@@ -154,16 +154,16 @@ async function getPublicationAssets(projectId: string): Promise<ExternalPublicat
  * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return any|null - some result if success, or null if none returned by API
  */
-async function addAsset(projectId: string, assetsType: string, assetId: string) {
+async function addAsset(projectId: string, assetType: string, assetId: string) {
 	// FIXME: handle cases where assets is already added to the project
-	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
+	const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 	const response = await API.post(url);
 
 	EventService.create(
 		EventType.AddResourcesToProject,
 		projectId,
 		JSON.stringify({
-			assetsType,
+			assetType,
 			assetId
 		})
 	);

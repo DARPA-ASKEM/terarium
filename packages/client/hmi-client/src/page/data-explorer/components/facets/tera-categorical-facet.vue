@@ -249,7 +249,7 @@ export default defineComponent({
 .facet-footer-container {
 	min-height: 12px;
 	padding: 6px 12px 5px;
-	font-size: 12px;
+	font-size: var(--font-caption);
 	font-weight: 400;
 	line-height: 16px;
 }

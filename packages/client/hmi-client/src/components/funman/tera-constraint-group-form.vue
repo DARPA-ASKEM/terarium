@@ -128,7 +128,7 @@ const updatedConfig = computed<ConstraintGroup>(
 			weights: weights.value,
 			timepoints: { lb: startTime.value, ub: endTime.value },
 			interval: { lb: lowerBound.value, ub: upperBound.value }
-		} as ConstraintGroup)
+		}) as ConstraintGroup
 );
 
 watch(
@@ -153,7 +153,10 @@ watch(
 	background: #fff;
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
-	box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.06), 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+	box-shadow:
+		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
+		0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
 }
 
 .sub-header {
@@ -178,8 +181,9 @@ watch(
 	/* flex-direction: column; */
 	padding: 0.5rem 0rem;
 	align-items: center;
-	gap: 0.8125rem;
+	gap: 0.5rem;
 	align-self: stretch;
+	flex-wrap: wrap;
 }
 
 .age-group {

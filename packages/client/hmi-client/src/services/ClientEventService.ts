@@ -57,7 +57,6 @@ export async function init(): Promise<void> {
 					redirectUri: window.location.href
 				});
 			} else if (response.status >= 500) {
-				console.log('SSE connection error');
 				throw new RetriableError('Internal server error');
 			} else {
 				// Reset the backoff time as we've made a connection successfully
@@ -68,9 +67,7 @@ export async function init(): Promise<void> {
 			// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
 			if (error instanceof RetriableError) {
 				backoffMs *= 2;
-				const retriesTime = Math.min(backoffMs, 60000);
-				console.log(`Retrying SSE connection in ${retriesTime}ms`);
-				return retriesTime;
+				return Math.min(backoffMs, 60000);
 			}
 			throw error; // fatal
 		},

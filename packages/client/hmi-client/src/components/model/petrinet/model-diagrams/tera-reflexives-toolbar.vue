@@ -12,7 +12,11 @@
 					optionLabel="id"
 					:model-value="statesToAddReflexives[transition.id]"
 					@update:model-value="
-						(states) => updateStatesToAddReflexives({states, typeOfTransition: transition, typeIdOfState: stateType as string}, i)
+						(states) =>
+							updateStatesToAddReflexives(
+								{ states, typeOfTransition: transition, typeIdOfState: stateType as string },
+								i
+							)
 					"
 				/>
 			</div>

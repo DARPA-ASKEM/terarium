@@ -1,42 +1,39 @@
 <template>
-	<div v-if="!disableRunButton">
-		<Button
-			size="small"
-			label="Run"
-			@click="runEnsemble"
-			:disabled="disableRunButton"
-			icon="pi pi-play"
-		></Button>
-	</div>
-	<section v-if="!showSpinner" class="result-container">
-		<section v-if="simulationIds">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:initial-data="csvAsset"
-				:chartConfig="cfg"
-				has-mean-line
-				@configuration-change="chartConfigurationChange(index, $event)"
-			/>
-			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add chart"
-				icon="pi pi-plus"
-			/>
-		</section>
-		<section v-else class="result-container">
-			<div class="invalid-block" v-if="node.status === OperatorStatus.INVALID">
-				<img class="image" src="@assets/svg/plants.svg" alt="" />
-				<p class="helpMessage">Configure in side panel</p>
-			</div>
-		</section>
-	</section>
-	<section v-else>
-		<tera-progress-bar :value="progress.value" :status="progress.status" />
+	<section>
+		<template v-if="!showSpinner">
+			<section v-if="simulationIds">
+				<tera-simulate-chart
+					v-for="(cfg, index) of node.state.chartConfigs"
+					:key="index"
+					:run-results="runResults"
+					:initial-data="csvAsset"
+					:chartConfig="cfg"
+					has-mean-line
+					@configuration-change="chartConfigurationChange(index, $event)"
+				/>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="addChart"
+					label="Add chart"
+					icon="pi pi-plus"
+				/>
+			</section>
+			<template v-if="modelConfigIds && datasetId">
+				<Button label="Configure" @click="emit('open-drilldown')" severity="secondary" outlined />
+				<Button label="Run" @click="runEnsemble" :disabled="disableRunButton" icon="pi pi-play" />
+			</template>
+			<tera-operator-placeholder
+				v-else-if="node.status === OperatorStatus.INVALID"
+				:operation-type="node.operationType"
+			>
+				Connect a model configuration and dataset
+			</tera-operator-placeholder>
+		</template>
+		<template v-else>
+			<tera-progress-bar :value="progress.value" :status="progress.status" />
+		</template>
 	</section>
 </template>
 
@@ -63,6 +60,7 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleCiemssOperation,
@@ -72,7 +70,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
+const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
@@ -240,9 +238,6 @@ section {
 .helpMessage {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
-}
-.result-container {
-	align-items: center;
 }
 
 .image {

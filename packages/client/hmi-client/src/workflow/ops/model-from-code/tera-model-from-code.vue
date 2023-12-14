@@ -1,176 +1,252 @@
 <template>
-	<main>
-		<section>
-			<header>
-				<h5>Code</h5>
-				<Dropdown
-					class="w-full md:w-14rem"
-					v-model="selectedProgrammingLanguage"
-					:options="programmingLanguages"
-					@change="setKernelContext"
-				/>
-				<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
-			</header>
-			<ul>
-				<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
-					<Panel toggleable>
-						<template #header>
-							<section>
-								<h5>{{ name }}</h5>
-								<Button icon="pi pi-pencil" text rounded />
-							</section>
-						</template>
-						<template #icons>
-							<span>
-								<label>Include in process</label>
-								<InputSwitch v-model="codeBlocks[i].includeInProcess" />
-							</span>
-							<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
-						</template>
-						<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<div tabName="Wizard">
+			<tera-drilldown-section>
+				<header>
+					<h5>Code</h5>
+					<Dropdown
+						class="w-full md:w-14rem"
+						v-model="clonedState.codeLanguage"
+						:options="programmingLanguages"
+						@change="setKernelContext"
+					/>
+					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
+				</header>
+				<ul>
+					<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
+						<Panel toggleable>
+							<template #header>
+								<section>
+									<h5>{{ name }}</h5>
+									<Button icon="pi pi-pencil" text rounded />
+								</section>
+							</template>
+							<template #icons>
+								<span>
+									<label>Include in process</label>
+									<InputSwitch v-model="codeBlocks[i].includeInProcess" />
+								</span>
+								<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
+							</template>
+							<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
 						<template #togglericon="{ collapsed }">
 							<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 						</template> -->
-						<v-ace-editor
-							v-model:value="codeBlocks[i].codeContent"
-							@init="initialize"
-							:lang="codeLanguage"
-							theme="chrome"
-							style="height: 10rem; width: 100%"
-							class="ace-editor"
-						/>
-					</Panel>
-				</li>
-			</ul>
-			<footer>
-				<span
-					><label>Model framework:</label
-					><Dropdown
-						class="w-full md:w-14rem"
-						v-model="selectedModelFramework"
-						:options="modelFrameworks"
-						@change="setKernelContext"
-				/></span>
-				<Button
-					:disabled="isProcessing"
-					label="Run"
-					icon="pi pi-play"
-					severity="secondary"
-					outlined
-					size="large"
-					@click="handleCode"
-				/>
-			</footer>
-		</section>
-		<section v-if="modelValid === false || previewHTML === ''">
-			<div v-if="isProcessing">
-				<i class="pi pi-spin pi-spinner" :style="{ fontSize: '2rem' }"></i>
-			</div>
-		</section>
-		<section v-if="previewHTML !== ''">
-			<section class="preview">
-				<header>
-					<h5>Preview</h5>
-					<Dropdown
-						class="w-full md:w-14rem"
-						v-model="selectedModelFramework"
-						:options="modelFrameworks"
-					/>
-				</header>
-
-				<template v-if="selectedModelFramework === ModelFramework.Petrinet">
-					<!--Potentially put tera-model-diagram here just for petrinets-->
-					<!--Potentially breakdown tera-model-descriptions state and parameter tables and put them here-->
-				</template>
-				<template v-if="selectedModelFramework === ModelFramework.Decapodes">
-					<div :innerHTML="previewHTML" />
-				</template>
-				<div class="flex flex-column gap-2">
-					<label>Model name</label>
-					<InputText v-model="modelName" />
-				</div>
-			</section>
-			<footer>
-				<Button
-					:disabled="!modelValid || modelName === ''"
-					label="Save as new model"
-					severity="secondary"
-					outlined
-					size="large"
-					@click="saveAsNewModel"
-				/>
-				<span class="btn-group">
-					<Button label="Cancel" severity="secondary" outlined size="large" />
+							<v-ace-editor
+								v-model:value="codeBlocks[i].codeContent"
+								@init="initialize"
+								:lang="codeLanguage"
+								theme="chrome"
+								style="height: 10rem; width: 100%"
+								class="ace-editor"
+							/>
+						</Panel>
+					</li>
+				</ul>
+				<template #footer>
+					<span style="margin-right: auto"
+						><label>Model framework:</label
+						><Dropdown
+							class="w-full md:w-14rem"
+							v-model="clonedState.modelFramework"
+							:options="modelFrameworks"
+							@change="setKernelContext"
+					/></span>
 					<Button
-						:disabled="!modelValid || modelName === ''"
-						label="Apply changes and close"
-						size="large"
-						@click="getModel"
+						:disabled="isProcessing"
+						label="Run"
+						icon="pi pi-play"
+						severity="secondary"
+						outlined
+						@click="handleCode"
 					/>
-				</span>
-			</footer>
-		</section>
-	</main>
+				</template>
+			</tera-drilldown-section>
+		</div>
+		<div tabName="Notebook">
+			<!--Notebook section if we decide we need one-->
+		</div>
+		<template #preview>
+			<tera-drilldown-preview
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:is-loading="isProcessing"
+				is-selectable
+			>
+				<tera-operator-placeholder
+					v-if="!selectedModel && !previewHTML"
+					:operation-type="node.operationType"
+					style="height: 100%"
+				/>
+				<section>
+					<template v-if="clonedState.modelFramework === ModelFramework.Petrinet && selectedModel">
+						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
+						<tera-model-semantic-tables :model="selectedModel" readonly />
+					</template>
+					<template v-if="clonedState.modelFramework === ModelFramework.Decapodes && previewHTML">
+						<div :innerHTML="previewHTML" />
+					</template>
+				</section>
+				<template #footer>
+					<Button
+						:loading="savingAsset"
+						:disabled="!isModelValid()"
+						label="Save as new model"
+						severity="secondary"
+						outlined
+						@click="openModal"
+						style="margin-right: auto"
+					/>
+					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
+				</template>
+			</tera-drilldown-preview>
+		</template>
+	</tera-drilldown>
+	<tera-modal v-if="isNewModelModalVisible">
+		<template #header>
+			<h4>New Model</h4>
+		</template>
+		<form @submit.prevent>
+			<label for="new-model">Enter a unique name for your model</label>
+			<InputText id="new-model" type="text" v-model="newModelName" placeholder="New model" />
+		</form>
+		<template #footer>
+			<Button @click="saveAsNewModel">Create model</Button>
+			<Button class="p-button-secondary" @click="isNewModelModalVisible = false">Cancel</Button>
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import InputSwitch from 'primevue/inputswitch';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import { ProgrammingLanguage } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
-import { cloneDeep, isEmpty } from 'lodash';
+import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
-import { JSONObject } from '@lumino/coreutils';
 import { logger } from '@/utils/logger';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import { createModel, getModel, updateModel, validateModelName } from '@/services/model';
+import { addAsset } from '@/services/project';
+import { useProjects } from '@/composables/project';
+import { useToastService } from '@/services/toast';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import InputText from 'primevue/inputtext';
+import { getCodeAsset, getCodeFileAsText } from '@/services/code';
+import { codeToAMR } from '@/services/knowledge';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
 }>();
 
+const emit = defineEmits([
+	'close',
+	'update-state',
+	'select-output',
+	'append-output-port',
+	'update-output-port'
+]);
+
 enum ModelFramework {
 	Petrinet = 'Petrinet',
 	Decapodes = 'Decapodes'
 }
-
+const isNewModelModalVisible = ref(false);
+const newModelName = ref('');
 const isProcessing = ref(false);
 
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
-const modelName = ref('');
 const programmingLanguages = Object.values(ProgrammingLanguage);
-const selectedProgrammingLanguage = ref(ProgrammingLanguage.Julia);
 const modelFrameworks = Object.values(ModelFramework);
-const selectedModelFramework = ref(
-	isEmpty(props.node.state.modelFramework)
-		? ModelFramework.Decapodes
-		: props.node.state.modelFramework
-);
-const modelValid = ref(false);
+const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 const previewHTML = ref('');
 
+const selectedModel = ref<Model | null>(null);
 const codeBlock = {
 	...props.node.state,
 	name: 'Code block 1',
 	includeInProcess: true
 };
 
+const savingAsset = ref(false);
+
 const codeBlocks = ref([codeBlock]);
 
+const clonedState = ref<ModelFromCodeState>({
+	codeLanguage: ProgrammingLanguage.Python,
+	modelFramework: ModelFramework.Petrinet,
+	codeContent: '',
+	modelId: ''
+});
+
+const outputs = computed(() => {
+	const savedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
+	const unsavedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
+
+	props.node.outputs?.forEach((output) => {
+		if (output.state?.isSaved) {
+			savedOutputs.push(output);
+			return;
+		}
+		unsavedOutputs.push(output);
+	});
+
+	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromCodeState>[] }[] = [];
+	if (!isEmpty(unsavedOutputs)) {
+		groupedOutputs.push({
+			label: 'Select outputs to display in operator',
+			items: unsavedOutputs
+		});
+	}
+
+	if (!isEmpty(savedOutputs)) {
+		groupedOutputs.push({
+			label: 'Saved models',
+			items: savedOutputs
+		});
+	}
+
+	return groupedOutputs;
+});
+const selectedOutputId = computed<string>(() => props.node.active ?? '');
+
 onMounted(async () => {
+	clonedState.value = cloneDeep(props.node.state);
+	if (selectedOutputId.value) {
+		onUpdateOutput(selectedOutputId.value);
+	}
+
+	if (props.node.inputs[0].value?.[0]) {
+		const codeAsset = await getCodeAsset(props.node.inputs[0].value[0]);
+
+		// for now get the first file's source code
+		if (codeAsset?.id && codeAsset?.files) {
+			const filename = Object.keys(codeAsset.files)[0];
+			const codeContent = await getCodeFileAsText(codeAsset.id, filename);
+			codeBlocks.value[0].codeContent = codeContent ?? '';
+		}
+	}
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
-			await kernelManager.init('beaker', 'Beaker', jupyterContext);
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -185,13 +261,9 @@ onUnmounted(() => {
 
 function buildJupyterContext() {
 	const contextName =
-		selectedModelFramework.value === ModelFramework.Decapodes ? 'decapodes_creation' : null;
+		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
 	const languageName =
-		selectedProgrammingLanguage.value === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
-	if (contextName === null || languageName === null) {
-		logger.warn("Can't work with current language. Do nothing.");
-		return null;
-	}
+		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
 
 	return {
 		context: contextName,
@@ -207,71 +279,103 @@ function setKernelContext() {
 	}
 }
 
-function handleCode() {
+async function handleCode() {
 	isProcessing.value = true;
 
-	const code = editor.value?.getValue();
-	const messageContent = <JSONObject>{
-		declaration: code
-	};
+	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
+		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
+		clonedState.value.modelId = modelId;
+		clonedState.value.isSaved = false;
+		emit('append-output-port', {
+			label: `Output ${(props.node.outputs?.length ?? 0) + 1}`,
+			state: cloneDeep(clonedState.value),
+			isSelected: false
+		});
+		isProcessing.value = false;
+	}
 
-	modelValid.value = false;
+	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
+		const code = editor.value?.getValue();
+		const messageContent = {
+			declaration: code
+		};
 
-	kernelManager
-		.sendMessage('compile_expr_request', messageContent)
-		?.register('compile_expr_response', handleCompileExprResponse)
-		?.register('decapodes_preview', handleDecapodesPreview);
+		decapodesModelValid.value = false;
+
+		kernelManager
+			.sendMessage('compile_expr_request', messageContent)
+			?.register('compile_expr_response', handleCompileExprResponse)
+			?.register('decapodes_preview', handleDecapodesPreview);
+	}
 }
 
-function getModel() {
-	const modelContent = {
-		name: modelName.value
-	};
-
-	modelValid.value = false;
-
-	kernelManager
-		.sendMessage('construct_amr_request', modelContent)
-		?.register('construct_amr_response', handleConstructAmrResponse);
+function openModal() {
+	isNewModelModalVisible.value = true;
 }
 
-function saveAsNewModel() {
-	const messageContent = {
-		header: {
-			description: modelName.value,
-			name: modelName.value,
-			_type: 'Header',
-			model_version: 'v1.0',
-			schema: 'modelreps.io/DecaExpr',
-			schema_name: 'DecaExpr'
+async function saveAsNewModel() {
+	if (!validateModelName(newModelName.value)) return;
+	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
+		savingAsset.value = true;
+		// 1. Update model name
+		const model = selectedModel.value;
+		if (!model) return;
+		model.header.name = newModelName.value;
+		const updateResponse = await updateModel(model);
+		if (!updateResponse) return;
+
+		// 2. Save asset to project
+		const projectId = useProjects().activeProject.value?.id;
+		if (!projectId || !selectedModel.value) return;
+		const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+		savingAsset.value = false;
+
+		if (!response) {
+			logger.error('Could not save asset to project');
+			return;
 		}
-	};
 
-	modelValid.value = false;
-
-	kernelManager
-		.sendMessage('save_amr_request', messageContent)
-		?.register('save_amr_response', handleSaveAmrResponse);
+		// 3. Append Model to output port
+		clonedState.value.isSaved = true;
+		emit('append-output-port', {
+			label: selectedModel.value.header?.name,
+			state: cloneDeep(clonedState.value),
+			isSelected: false
+		});
+		useToastService().success('', 'Model saved successfully.');
+	}
 }
 
 function handleCompileExprResponse() {
-	modelValid.value = true;
+	decapodesModelValid.value = true;
 }
 
-function handleDecapodesPreview(data: any) {
+// FIXME: This saves the preview as AMR, revisit when we have temporary-assets
+async function handleDecapodesPreview(data: any) {
 	console.log('Decapode preview', data);
-	previewHTML.value = data.content['image/svg'];
-	isProcessing.value = false;
-}
+	const decapodeJSON = data.content['application/json'];
+	const header = {
+		description: 'new description',
+		name: 'new model',
+		_type: 'Header',
+		model_version: 'v1.0',
+		schema: 'modelreps.io/DecaExpr',
+		schema_name: 'decapode'
+	};
+	const amr = {
+		header,
+		model: decapodeJSON
+	};
 
-function handleConstructAmrResponse(data: any) {
-	// console.log("Decapode preview", message.content);
-	// previewHTML.value = message.content["image/svg"];
-	alert(JSON.stringify(data.content, null, 2));
-}
-
-function handleSaveAmrResponse() {
-	// TODO: Save into project
+	const response = await createModel(amr);
+	if (response) {
+		const m = await getModel(response.id);
+		if (m) {
+			selectedModel.value = m;
+			previewHTML.value = `Decapode created ${m.id}`;
+		}
+		isProcessing.value = false;
+	}
 }
 
 /**
@@ -289,62 +393,64 @@ function addCodeBlock() {
 function removeCodeBlock(index: number) {
 	codeBlocks.value.splice(index, 1);
 }
+
+function isModelValid() {
+	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
+		return !!selectedModel.value;
+	}
+
+	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
+		return decapodesModelValid.value;
+	}
+
+	return false;
+}
+
+async function fetchModel() {
+	if (!clonedState.value.modelId) {
+		selectedModel.value = null;
+		return;
+	}
+	isProcessing.value = true;
+	const model = await getModel(clonedState.value.modelId);
+	selectedModel.value = model;
+	isProcessing.value = false;
+}
+
+// watch for model id changes on state
+watch(
+	() => clonedState.value.modelId,
+	async () => {
+		await fetchModel();
+	}
+);
+
+// watch for prop state changes
+watch(
+	() => props.node.state,
+	() => {
+		clonedState.value = cloneDeep(props.node.state);
+	}
+);
+
+function onUpdateOutput(id) {
+	emit('select-output', id);
+}
+
+function onUpdateSelection(id) {
+	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+}
 </script>
 
 <style scoped>
-main {
-	padding: 16px;
-	display: flex;
-	gap: 2rem;
-	flex: 1;
-	height: 100%;
-}
-
-main > section {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	overflow-y: auto;
-	height: 100%;
-}
-
-section > header,
-footer {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-footer {
-	margin-top: auto;
-}
-
-.preview {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background-color: var(--surface-ground);
-	padding: 1rem;
-	flex: 1;
-	flex-direction: column;
-	display: flex;
-	gap: 0.5rem;
-}
-
-.preview > section {
-	display: flex;
-	justify-content: space-between;
-}
-
 span {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
-.btn-group {
-	gap: 1rem;
-}
-
 .p-dropdown {
 	max-height: 40px;
 }

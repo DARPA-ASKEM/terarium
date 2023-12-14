@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.miraservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +28,13 @@ public class MIRAController {
 	) {
 		try {
 			ResponseEntity<List<DKG>> response = proxy.getEntities(curies);
-			if(response.getStatusCode().is2xxSuccessful()){
+			if (response.getStatusCode().is2xxSuccessful()) {
 				return ResponseEntity.ok(response.getBody());
 			}
 			return ResponseEntity.internalServerError().build();
+		} catch (FeignException.NotFound e) { // Handle 404 errors
+			log.info("Could not find resource in the DKG", e);
+			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();

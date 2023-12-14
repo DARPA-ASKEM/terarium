@@ -58,13 +58,13 @@
                 border-radius: $galleriaIndicatorBorderRadius;
 
                 &:hover {
-                    background: $galleriaIndicatorHoverBg;
+                    background-color: var(--surface-highlight);
                 }
             }
 
             &.p-highlight {
                 button {
-                    background: $highlightBg;
+                    background: $galleriaIndicatorBgOnItem;
                     color: $highlightTextColor;
                 }
             }

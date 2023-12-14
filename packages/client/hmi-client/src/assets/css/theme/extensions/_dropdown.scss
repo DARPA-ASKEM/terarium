@@ -39,6 +39,8 @@
     }
 }
 
-.sm {
-    height: 2rem;
+.p-dropdown-sm {
+    .p-dropdown-label {
+        padding: 0.5rem;
+    }
 }

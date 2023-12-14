@@ -1,38 +1,49 @@
 <template>
-	<div v-if="!disableRunButton">
-		<Button
-			size="small"
-			label="Run"
-			@click="runEnsemble"
-			:disabled="disableRunButton"
-			icon="pi pi-play"
-		></Button>
-	</div>
-	<section v-if="!showSpinner" class="result-container">
-		<section v-if="simulationIds">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				has-mean-line
-				@configuration-change="chartConfigurationChange(index, $event)"
+	<section v-if="!showSpinner">
+		<template v-if="node.inputs[0].value">
+			<template v-if="simulationIds">
+				<tera-simulate-chart
+					v-for="(cfg, index) of node.state.chartConfigs"
+					:key="index"
+					:run-results="runResults"
+					:chartConfig="cfg"
+					has-mean-line
+					@configuration-change="chartConfigurationChange(index, $event)"
+				/>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="addChart"
+					label="Add chart"
+					icon="pi pi-plus"
+				/>
+			</template>
+			<Button
+				label="Run"
+				@click="runEnsemble"
+				:disabled="disableRunButton"
+				icon="pi pi-play"
+				severity="secondary"
+				outlined
 			/>
 			<Button
-				class="add-chart"
-				text
-				:outlined="true"
-				@click="addChart"
-				label="Add chart"
-				icon="pi pi-plus"
+				label="Simulation settings"
+				@click="emit('open-drilldown')"
+				severity="secondary"
+				outlined
 			/>
-		</section>
-		<section v-else class="result-container">
+		</template>
+		<tera-operator-placeholder v-else :operation-type="node.operationType">
+			Connect a model configuration
+		</tera-operator-placeholder>
+		<!--TODO: Consider adding status as another attribute to the placeholder
+			A different image/message would appear depending on the node status. Currently it just depends on the type of operator.
+
 			<div class="invalid-block" v-if="node.status === OperatorStatus.INVALID">
 				<img class="image" src="@assets/svg/plants.svg" alt="" />
 				<p class="helpMessage">Configure in side panel</p>
-			</div>
-		</section>
+			</div> -->
 	</section>
 	<section v-else>
 		<tera-progress-bar :value="progress.value" :status="progress.status" />
@@ -45,7 +56,7 @@ import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode, OperatorStatus } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
@@ -60,6 +71,7 @@ import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleCiemssOperation
@@ -68,13 +80,13 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
+const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
 const completedRunId = ref<string>();
-const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const ensembleConfigs = computed<EnsembleModelConfigs[]>(() => props.node.state.mapping);
+const disableRunButton = computed(() => !ensembleConfigs?.value[0]?.weight);
 const timeSpan = computed<TimeSpan>(() => props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
 const runResults = ref<RunResults>({});
@@ -207,10 +219,6 @@ section {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 }
-.result-container {
-	align-items: center;
-}
-
 .image {
 	height: 8.75rem;
 	margin-bottom: 0.5rem;

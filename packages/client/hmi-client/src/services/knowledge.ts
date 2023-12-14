@@ -195,10 +195,11 @@ export async function codeToAMR(
 	codeId: string,
 	name: string = '',
 	description: string = '',
-	dynamicsOnly: boolean = false
+	dynamicsOnly: boolean = false,
+	llmAssisted: boolean = false
 ) {
 	const response = await API.post(
-		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}`
+		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}&llm_assisted=${llmAssisted}`
 	);
 	if (response?.status === 200) {
 		const { id, status } = response.data;

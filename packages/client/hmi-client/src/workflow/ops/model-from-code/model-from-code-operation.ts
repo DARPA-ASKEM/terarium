@@ -4,6 +4,8 @@ export interface ModelFromCodeState {
 	codeLanguage: string;
 	codeContent: string;
 	modelFramework: string;
+	modelId: string;
+	isSaved?: boolean;
 }
 
 export const ModelFromCodeOperation: Operation = {
@@ -11,7 +13,7 @@ export const ModelFromCodeOperation: Operation = {
 	description: 'Create model',
 	displayName: 'Create model from code',
 	isRunnable: true,
-	inputs: [],
+	inputs: [{ type: 'codeAssetId', label: 'Code' }],
 	outputs: [],
 	action: () => {},
 
@@ -19,7 +21,8 @@ export const ModelFromCodeOperation: Operation = {
 		const init: ModelFromCodeState = {
 			codeLanguage: 'python',
 			codeContent: '',
-			modelFramework: ''
+			modelFramework: 'Petrinet',
+			modelId: ''
 		};
 		return init;
 	}

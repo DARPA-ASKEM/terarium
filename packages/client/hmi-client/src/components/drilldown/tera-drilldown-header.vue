@@ -3,6 +3,9 @@
 		<div class="title-row">
 			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
 
+			<a v-if="views.length <= 1" :href="documentationUrl" rel="noopener noreferrer"
+				>Documentation</a
+			>
 			<Button
 				class="close-mask"
 				icon="pi pi-times"
@@ -16,7 +19,9 @@
 			<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
 				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 			</TabView>
-			<a :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<a v-if="views.length > 1" :href="documentationUrl" rel="noopener noreferrer"
+				>Documentation</a
+			>
 		</div>
 	</header>
 </template>
@@ -48,7 +53,6 @@ header {
 	padding-top: 1.25rem;
 	padding-left: 1rem;
 	padding-right: 1rem;
-	height: var(--drilldown-header-height);
 }
 
 header > * {
@@ -75,7 +79,7 @@ header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 	padding: 0;
 }
 
-.tabs-row > a {
+a {
 	height: 3rem;
 	display: flex;
 	align-items: center;

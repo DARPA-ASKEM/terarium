@@ -16,7 +16,7 @@ const context = {
 
 onMounted(async () => {
 	const manager = new KernelSessionManager();
-	await manager.init('beaker', 'Beaker', context);
+	await manager.init('beaker_kernel', 'Beaker Kernel', context);
 
 	setTimeout(() => {
 		const testStratify = manager.sendMessage('stratify_request', {

@@ -19,23 +19,23 @@
 			:inputs="node.inputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@port-selected="
+				(input: WorkflowPort, direction: WorkflowDirection) =>
+					emit('port-selected', input, direction)
+			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
 			<slot name="body" />
-			<Button
-				label="Open Drilldown"
-				@click="emit('drilldown', node)"
-				severity="secondary"
-				outlined
-			/>
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
+			@port-selected="
+				(input: WorkflowPort, direction: WorkflowDirection) =>
+					emit('port-selected', input, direction)
+			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 	</main>
@@ -48,10 +48,9 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import Button from 'primevue/button';
-import TeraOperatorHeader from './operator/tera-operator-header.vue';
-import TeraOperatorInputs from './operator/tera-operator-inputs.vue';
-import TeraOperatorOutputs from './operator/tera-operator-outputs.vue';
+import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
+import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
+import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 
 enum PortDirection {
 	Input,
@@ -60,8 +59,6 @@ enum PortDirection {
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	canDrag: boolean;
-	isActive: boolean;
 }>();
 
 const emit = defineEmits([
@@ -103,10 +100,6 @@ const drag = (evt: MouseEvent) => {
 
 	tempX = evt.x;
 	tempY = evt.y;
-
-	if (!props.canDrag) {
-		stopDrag();
-	}
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {
@@ -167,101 +160,98 @@ main {
 	width: 15rem;
 	user-select: none;
 	box-shadow: var(--overlayMenuShadow);
-}
 
-main:hover {
-	box-shadow: var(--overlayMenuShadowHover);
-	z-index: 2;
-}
+	&:hover {
+		box-shadow: var(--overlayMenuShadowHover);
+		z-index: 2;
+	}
 
-main > .content {
-	margin: 0.5rem;
-}
+	& > .content {
+		margin: 0.5rem;
+	}
 
-main > ul,
-main > .content,
-/* Assumes that the child put in the slot will be wrapped in its own tag */
-main > .content:deep(> *) {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-evenly;
-	gap: 0.5rem;
-}
+	& > ul,
+	& > .content,
+	& > .content:deep(> *)  /* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-evenly;
+		gap: 0.5rem;
+	}
 
-/* Inputs/outputs */
-main > ul {
-	margin: 0.5rem 0;
-	list-style: none;
-	font-size: var(--font-caption);
-	color: var(--text-color-secondary);
-}
+	/* Shared styles between tera-operator-inputs and tera-operator-outputs */
+	& > ul {
+		margin: 0.5rem 0;
+		list-style: none;
+		font-size: var(--font-caption);
+		color: var(--text-color-secondary);
 
-main > ul:empty {
-	display: none;
-}
+		&:empty {
+			display: none;
+		}
 
-:deep(ul .p-button.p-button-sm) {
-	font-size: var(--font-caption);
-	min-width: fit-content;
-	padding: 0 0.25rem;
-}
+		/* Can't nest css within the deep selector */
+		&:deep(> li) {
+			display: flex;
+			flex-direction: column;
+			gap: 0.25rem;
+			width: fit-content;
+			cursor: pointer;
+		}
+		&:deep(> li:hover) {
+			background-color: var(--surface-highlight);
+		}
+		&:deep(li:hover .port) {
+			/* Not sure what color was intended */
+			background-color: var(--primary-color);
+			background-color: var(--surface-border);
+		}
+		&:deep(> li > section) {
+			display: flex;
+			align-items: center;
+			height: calc(var(--port-base-size) * 2);
+			gap: 0.25rem;
+		}
 
-:deep(.unlink) {
-	display: none;
-}
+		&:deep(.p-button.p-button-sm) {
+			font-size: var(--font-caption);
+			min-width: fit-content;
+			padding: 0 0.25rem;
+		}
 
-:deep(.port-connected:hover .unlink) {
-	display: block;
-}
+		&:deep(.unlink) {
+			display: none;
+		}
 
-:deep(li) {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	width: fit-content;
-	cursor: pointer;
-}
+		&:deep(.port-connected:hover .unlink) {
+			display: block;
+		}
 
-:deep(li > section) {
-	display: flex;
-	align-items: center;
-	height: calc(var(--port-base-size) * 2);
-	gap: 0.25rem;
-}
+		&:deep(.port-connected) {
+			color: var(--text-color-primary);
+		}
 
-:deep(li:hover) {
-	background-color: var(--surface-highlight);
-}
+		&:deep(.port-container) {
+			width: calc(var(--port-base-size) * 2);
+		}
 
-:deep(li:hover .port) {
-	/* Not sure what color was intended */
-	background-color: var(--primary-color);
-	background-color: var(--surface-border);
-}
+		&:deep(.port) {
+			display: inline-block;
+			background-color: var(--surface-100);
+			position: relative;
+			width: var(--port-base-size);
+			height: calc(var(--port-base-size) * 2);
+		}
 
-:deep(.port-connected) {
-	color: var(--text-color-primary);
-}
-
-:deep(.port-container) {
-	width: calc(var(--port-base-size) * 2);
-}
-
-:deep(.port) {
-	display: inline-block;
-	background-color: var(--surface-100);
-	position: relative;
-	width: var(--port-base-size);
-	height: calc(var(--port-base-size) * 2);
-}
-
-:deep(.port-connected .port) {
-	width: calc(var(--port-base-size) * 2);
-	border: 2px solid var(--primary-color);
-	border-radius: var(--port-base-size);
-	background-color: var(--primary-color);
-}
-:deep(.port-connected:hover .port) {
-	background-color: var(--primary-color);
+		&:deep(.port-connected .port) {
+			width: calc(var(--port-base-size) * 2);
+			border: 2px solid var(--primary-color);
+			border-radius: var(--port-base-size);
+			background-color: var(--primary-color);
+		}
+		&:deep(.port-connected:hover .port) {
+			background-color: var(--primary-color);
+		}
+	}
 }
 </style>

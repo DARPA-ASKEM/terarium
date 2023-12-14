@@ -101,7 +101,9 @@
 				:stratified-matrix-type="StratifiedMatrix.Rates"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
-				@update-configuration="(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)"
+				@update-configuration="
+					(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
+				"
 			/>
 		</Teleport>
 	</main>
@@ -431,7 +433,10 @@ main {
 }
 
 .diagram-container-editing {
-	box-shadow: inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073, inset 0 0 0 1px #1b8073,
+	box-shadow:
+		inset 0 0 0 1px #1b8073,
+		inset 0 0 0 1px #1b8073,
+		inset 0 0 0 1px #1b8073,
 		inset 0 0 0 1px var(--primary-color);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--border-radius);

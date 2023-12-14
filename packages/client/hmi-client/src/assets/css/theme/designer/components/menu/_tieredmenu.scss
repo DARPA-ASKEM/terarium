@@ -3,7 +3,7 @@
     background: $menuBg;
     color: $menuTextColor;
     border: $menuBorder;
-    border-radius: $borderRadius;
+    border-radius: $mediumBorderRadius;
     width: $menuWidth;
 
     .p-menuitem-link {
@@ -21,6 +21,7 @@
         background: $overlayMenuBg;
         border: $overlayMenuBorder;
         box-shadow: $overlayMenuShadow;
+        border-radius: $mediumBorderRadius;
     }
 
     .p-menuitem {

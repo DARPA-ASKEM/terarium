@@ -1,3 +1,7 @@
-export * from './simulate-ciemss-operation';
-export { default as TeraSimulateCiemss } from './tera-simulate-ciemss.vue';
-export { default as TeraSimulateNodeCiemss } from './tera-simulate-node-ciemss.vue';
+import { SimulateCiemssOperation as operation } from './simulate-ciemss-operation';
+import node from './tera-simulate-node-ciemss.vue';
+import drilldown from './tera-simulate-ciemss.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };

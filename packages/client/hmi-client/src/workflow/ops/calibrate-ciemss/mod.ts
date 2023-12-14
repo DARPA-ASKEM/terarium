@@ -1,3 +1,7 @@
-export * from './calibrate-operation';
-export { default as TeraCalibrateCiemss } from './tera-calibrate-ciemss.vue';
-export { default as TeraCalibrateNodeCiemss } from './tera-calibrate-node-ciemss.vue';
+import { CalibrationOperationCiemss as operation } from './calibrate-operation';
+import node from './tera-calibrate-node-ciemss.vue';
+import drilldown from './tera-calibrate-ciemss.vue';
+
+const name = operation.name;
+
+export { name, operation, node, drilldown };

@@ -9,7 +9,7 @@ module.exports = {
 	],
 	parser: 'vue-eslint-parser',
 	rules: {
-	        'max-classes-per-file': 'off',
+		'max-classes-per-file': 'off',
 		'class-methods-use-this': 'off',
 		'func-names': 'off',
 		'no-alert': 'off',
@@ -23,6 +23,7 @@ module.exports = {
 		'vuejs-accessibility/click-events-have-key-events': 'off',
 		'vuejs-accessibility/label-has-for': 'off',
 		'vuejs-accessibility/form-control-has-label': 'off',
+		'vue/require-toggle-inside-transition': 'off',
 		'vue/multi-word-component-names': 'off',
 		'import/prefer-default-export': 'off',
 		'no-underscore-dangle': 'off',

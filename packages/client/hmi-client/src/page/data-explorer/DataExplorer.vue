@@ -13,7 +13,6 @@
 				<template v-slot:content>
 					<tera-facets-panel
 						v-if="viewType === ViewType.LIST"
-						class="facets-panel"
 						:facets="facets"
 						:filtered-facets="filteredFacets"
 						:result-type="resourceType"
@@ -37,7 +36,6 @@
 					:data-items="dataItems"
 					:facets="filteredFacets"
 					:result-type="resourceType"
-					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
 					:doc-count="docCount"
@@ -608,10 +606,6 @@ onUnmounted(() => {
 	flex-grow: 1;
 	gap: 0.5rem;
 	margin: 0.5rem 0.5rem 0;
-}
-
-.facets-panel {
-	overflow-y: auto;
 }
 
 .resources-slider {

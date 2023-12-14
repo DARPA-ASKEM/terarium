@@ -207,8 +207,8 @@ class KernelMessage extends EventEmitter {
  * Provide a higher level interface for interacting with jupyter-kernel session
  *
  * Usage:
- *   const manager = new KernelSessionManager(newSession('beaker', 'Beaker'));
- *   await manager.init('beaker', 'Beaker', ...)
+ *   const manager = new KernelSessionManager(newSession('beaker_kernel', 'Beaker Kernel'));
+ *   await manager.init('beaker_kernel', 'Beaker Kernel', ...)
  *   const msgHandle = manager.sendMessage( ... )
  *   msgHandle.register('response_1', ...)
  *   msgHandle.register('response_2', ...)

@@ -3,7 +3,7 @@
 		<h4>Python playground</h4>
 		<section>
 			The following variables are preset:
-			<div v-for="(k) in Object.keys(variableMap) as string[]" :key="k">
+			<div v-for="k in Object.keys(variableMap) as string[]" :key="k">
 				<div style="margin-left: 2rem">{{ k }} = {{ variableMap[k] }}</div>
 			</div>
 		</section>

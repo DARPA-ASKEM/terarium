@@ -15,7 +15,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
-import Tree, { TreeExpandedKeys, TreeNode, TreeSelectionKeys } from 'primevue/tree';
+import Tree, { TreeExpandedKeys, TreeSelectionKeys } from 'primevue/tree';
+import { TreeNode } from 'primevue/treenode';
 
 const directoryTree = ref<TreeNode[]>([]);
 

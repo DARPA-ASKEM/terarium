@@ -31,7 +31,7 @@ export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
 	displayName: 'Stratify MIRA',
 	description: 'Stratify a model',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
+	inputs: [{ type: 'modelId', label: 'Model', acceptMultiple: false }],
 	outputs: [{ type: 'model' }],
 	isRunnable: false,
 	action: () => {},

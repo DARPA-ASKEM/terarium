@@ -1,23 +1,3 @@
-<script setup lang="ts">
-/**
- * A modal with content slots for a header, body, and footer. Use v-if to control visiblity.
- * @example
- * <modal v-if="isModalVisible">
- * 		<template #header>Header content</template>
- * 		<template #default>Body content</template>
- * 		<template #footer>Footer content</template>
- * </modal>
- *
- * Clicking outside the modal will emit the event modalMaskClicked.
- * @example
- * <modal @modal-mask-clicked="closeModal"></modal>
- */
-
-defineProps<{
-	zIndex?: number;
-}>();
-</script>
-
 <template>
 	<Transition name="modal">
 		<main :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
@@ -36,15 +16,36 @@ defineProps<{
 	</Transition>
 </template>
 
+<script setup lang="ts">
+/**
+ * A modal with content slots for a header, body, and footer. Use v-if to control visibility.
+ * @example
+ * <tera-modal v-if="isModalVisible">
+ * 		<template #header>Header content</template>
+ * 		<template #default>Body content</template>
+ * 		<template #footer>Footer content</template>
+ * </tera-modal>
+ *
+ * Clicking outside the modal will emit the event modalMaskClicked.
+ * @example
+ * <modal @modal-mask-clicked="closeModal"></modal>
+ */
+
+defineProps<{
+	zIndex?: number;
+}>();
+</script>
+
 <style scoped>
 main {
 	isolation: isolate;
 	z-index: var(--z-index, var(--z-index-modal));
+
+	& > * {
+		position: absolute;
+	}
 }
 
-main > * {
-	position: absolute;
-}
 aside {
 	z-index: 1;
 	top: 0;

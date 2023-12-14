@@ -1,76 +1,75 @@
 <template>
-	<div class="header p-buttonset">
-		<Button
-			label="Wizard"
-			severity="secondary"
-			icon="pi pi-sign-in"
-			size="small"
-			:active="activeTab === StratifyTabs.wizard"
-			@click="activeTab = StratifyTabs.wizard"
-		/>
-		<Button
-			label="Notebook"
-			severity="secondary"
-			icon="pi pi-sign-out"
-			size="small"
-			:active="activeTab === StratifyTabs.notebook"
-			@click="activeTab = StratifyTabs.notebook"
-		/>
-	</div>
-	<div class="container">
-		<div class="left-side" v-if="activeTab === StratifyTabs.wizard">
-			<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
-			<p>The model will be stratified with the following settings.</p>
-			<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-				Note: Code has been executed which may not be reflected here.
-			</p>
-			<tera-stratification-group-form
-				:modelNodeOptions="modelNodeOptions"
-				:config="node.state.strataGroup"
-				@update-self="updateStratifyGroupForm"
-			/>
-			<Button label="Stratify" size="small" @click="stratifyModel" />
-			<Button label="Reset" size="small" @click="resetModel" />
+	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<div :tabName="StratifyTabs.Wizard">
+			<tera-drilldown-section>
+				<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
+				<p>The model will be stratified with the following settings.</p>
+				<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+					Note: Code has been executed which may not be reflected here.
+				</p>
+				<tera-stratification-group-form
+					:modelNodeOptions="modelNodeOptions"
+					:config="node.state.strataGroup"
+					@update-self="updateStratifyGroupForm"
+				/>
+				<template #footer>
+					<Button label="Stratify" @click="stratifyModel" />
+					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
+				</template>
+			</tera-drilldown-section>
 		</div>
-		<div class="left-side" v-if="activeTab === StratifyTabs.notebook">
-			<h4>Code Editor - Python</h4>
-			<v-ace-editor
-				v-model:value="codeText"
-				@init="initialize"
-				lang="python"
-				theme="chrome"
-				style="height: 100%; width: 100%"
-				class="ace-editor"
-			/>
-			<Button label="Run" size="small" @click="runCodeStratify" />
-		</div>
+		<div :tabName="StratifyTabs.Notebook">
+			<tera-drilldown-section>
+				<h4>Code Editor - Python</h4>
+				<v-ace-editor
+					v-model:value="codeText"
+					@init="initialize"
+					lang="python"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%"
+					class="ace-editor"
+				/>
 
-		<div class="right-side">
-			<tera-model-diagram
-				v-if="model"
-				ref="teraModelDiagramRef"
-				:model="model"
-				:is-editable="false"
-			/>
-			<div v-else>
-				<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				<h4>No Model Provided</h4>
-			</div>
-			<div v-if="model">
-				<InputText
-					v-model="newModelName"
-					placeholder="model name"
-					type="text"
-					class="input-small"
-				/>
-				<Button
-					label="Save as new Model"
-					size="small"
-					@click="() => saveNewModel(newModelName, { addToProject: true })"
-				/>
-			</div>
+				<template #footer>
+					<Button style="margin-right: auto" label="Run" @click="runCodeStratify" />
+				</template>
+			</tera-drilldown-section>
 		</div>
-	</div>
+		<template #preview>
+			<tera-drilldown-preview>
+				<div>
+					<tera-model-diagram
+						v-if="amr"
+						ref="teraModelDiagramRef"
+						:model="amr"
+						:is-editable="false"
+					/>
+					<div v-else>
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+						<h4>No Model Provided</h4>
+					</div>
+				</div>
+				<template #footer>
+					<InputText
+						v-model="newModelName"
+						placeholder="model name"
+						type="text"
+						class="input-small"
+					/>
+					<Button
+						:disabled="!amr"
+						outlined
+						style="margin-right: auto"
+						label="Save as new Model"
+						@click="
+							() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
+						"
+					/>
+					<Button label="Close" @click="emit('close')" />
+				</template>
+			</tera-drilldown-preview>
+		</template>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -79,9 +78,8 @@ import { watch, ref, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
-import { Model, ModelConfiguration, AssetType } from '@/types/Types';
+import { Model, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
@@ -89,6 +87,9 @@ import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { v4 as uuidv4 } from 'uuid';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -101,11 +102,11 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state']);
+const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
 enum StratifyTabs {
-	wizard,
-	notebook
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 
 interface SaveOptions {
@@ -115,9 +116,7 @@ interface SaveOptions {
 
 const kernelManager = new KernelSessionManager();
 
-const activeTab = ref(StratifyTabs.wizard);
-const modelConfiguration = ref<ModelConfiguration>();
-const model = ref<Model | null>(null);
+const amr = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
@@ -136,7 +135,7 @@ const stratifyModel = () => {
 };
 
 const resetModel = () => {
-	if (!model.value) return;
+	if (!amr.value) return;
 
 	kernelManager
 		.sendMessage('reset_request', {})
@@ -158,10 +157,7 @@ const handleResetResponse = (data: any) => {
 };
 
 const stratifyRequest = () => {
-	if (!model.value) return;
-
-	// reset model
-	kernelManager.sendMessage('reset_request', {});
+	if (!amr.value) return;
 
 	const strataOption = props.node.state.strataGroup;
 	const messageContent = {
@@ -173,10 +169,12 @@ const stratifyRequest = () => {
 		}
 	};
 
-	kernelManager
-		.sendMessage('stratify_request', messageContent)
-		?.register('stratify_response', handleStratifyResponse)
-		?.register('model_preview', handleModelPreview);
+	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+		kernelManager
+			.sendMessage('stratify_request', messageContent)
+			?.register('stratify_response', handleStratifyResponse)
+			?.register('model_preview', handleModelPreview);
+	});
 };
 
 const handleStratifyResponse = (data: any) => {
@@ -190,18 +188,11 @@ const handleStratifyResponse = (data: any) => {
 };
 
 const handleModelPreview = (data: any) => {
-	model.value = data.content['application/json'];
-
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2306
-	// reenable this once we figure out how to take modelId as input to a
-	// stratify workflow node instead of only modelConfigurationId as input
-	// if (model.value) {
-	// 	saveNewModel(`${model.value.header.name} - Stratified`, { appendOutputPort: true });
-	// }
+	amr.value = data.content['application/json'];
 };
 
 const buildJupyterContext = () => {
-	if (!model.value) {
+	if (!amr.value) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
 	}
@@ -210,26 +201,22 @@ const buildJupyterContext = () => {
 		context: 'mira_model',
 		language: 'python3',
 		context_info: {
-			id: model.value.id
+			id: amr.value.id
 		}
 	};
 };
 
 const inputChangeHandler = async () => {
-	const modelConfigurationId = props.node.inputs[0].value?.[0];
-	if (!modelConfigurationId) return;
+	const modelId = props.node.inputs[0].value?.[0];
+	if (!modelId) return;
 
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+	amr.value = await getModel(modelId);
+	if (!amr.value) return;
 
-	if (!modelConfiguration.value) return;
-	model.value = await getModel(modelConfiguration.value.modelId);
-
-	const modelColumnNameOptions: string[] = modelConfiguration.value.configuration.model.states.map(
-		(state: any) => state.id
-	);
+	const modelColumnNameOptions: string[] = amr.value.model.states.map((state: any) => state.id);
 	// add observables
-	if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-		modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+	if (amr.value.model.semantics?.ode?.observables) {
+		amr.value.model.semantics.ode.observables.forEach((o) => {
 			modelColumnNameOptions.push(o.id);
 		});
 	}
@@ -239,7 +226,7 @@ const inputChangeHandler = async () => {
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
-			await kernelManager.init('beaker', 'Beaker', buildJupyterContext());
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -247,11 +234,11 @@ const inputChangeHandler = async () => {
 };
 
 const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!model.value || !modelName) return;
-	model.value.header.name = modelName;
+	if (!amr.value || !modelName) return;
+	amr.value.header.name = modelName;
 
 	const projectResource = useProjects();
-	const modelData = await createModel(model.value);
+	const modelData = await createModel(amr.value);
 	const projectId = projectResource.activeProject.value?.id;
 
 	if (!modelData) return;
@@ -261,26 +248,23 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 
 	if (options.appendOutputPort) {
-		// NOTE: this code is actually never invoked currently as `handleModelPreview` has `saveNewModel` commented out
 		emit('append-output-port', {
 			id: uuidv4(),
-			label: modelData.header.name,
+			label: modelName,
 			type: 'modelId',
 			value: [modelData.id]
 		});
+		emit('close');
 	}
 };
 
-const initialize = (editorInstance) => {
+const initialize = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
 const runCodeStratify = () => {
 	const code = editor?.getValue();
 	if (!code) return;
-
-	// reset model
-	kernelManager.sendMessage('reset_request', {});
 
 	const messageContent = {
 		silent: false,
@@ -293,28 +277,30 @@ const runCodeStratify = () => {
 
 	let executedCode = '';
 
-	kernelManager
-		.sendMessage('execute_request', messageContent)
-		?.register('execute_input', (data) => {
-			executedCode = data.content.code;
-		})
-		?.register('stream', (data) => {
-			console.log('stream', data);
-		})
-		?.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-		})
-		?.register('model_preview', (data) => {
-			// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
-			// currently no matter what kind of code is run we always get a `model_preview` response.
-			// We may want to compare the response model with the existing model to see if the response model
-			// has been stratified - if not then don't save the model or the code.
-			handleModelPreview(data);
+	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+		kernelManager
+			.sendMessage('execute_request', messageContent)
+			?.register('execute_input', (data) => {
+				executedCode = data.content.code;
+			})
+			?.register('stream', (data) => {
+				console.log('stream', data);
+			})
+			?.register('error', (data) => {
+				logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			})
+			?.register('model_preview', (data) => {
+				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
+				// currently no matter what kind of code is run we always get a `model_preview` response.
+				// We may want to compare the response model with the existing model to see if the response model
+				// has been stratified - if not then don't save the model or the code.
+				handleModelPreview(data);
 
-			if (executedCode) {
-				saveCodeToState(executedCode, true);
-			}
-		});
+				if (executedCode) {
+					saveCodeToState(executedCode, true);
+				}
+			});
+	});
 };
 
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
@@ -355,39 +341,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.container {
+.code-container {
 	display: flex;
-	flex-direction: row;
-	margin-top: 1rem;
-}
-
-.left-side {
-	width: 45%;
-	padding-right: 2.5%;
-}
-.left-side h1 {
-	color: var(--text-color-primary);
-	font-family: Inter;
-	font-size: 1rem;
-	font-style: normal;
-	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
-	letter-spacing: 0.03125rem;
-}
-.left-side p {
-	color: var(--Text-Secondary);
-	/* Body Small/Regular */
-	font-family: Figtree;
-	font-size: 0.875rem;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
-	letter-spacing: 0.01563rem;
-}
-
-.right-side {
-	width: 45%;
-	padding-left: 2.5%;
+	flex-direction: column;
 }
 
 .input-small {

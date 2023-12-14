@@ -429,7 +429,7 @@ export default {
 						1,
 						-1 / quadAspectRatio,
 						1
-				  ]
+					]
 				: [
 						-1, // x, y
 						-1 * quadAspectRatio,
@@ -439,7 +439,7 @@ export default {
 						1 * quadAspectRatio,
 						-1,
 						1 * quadAspectRatio
-				  ];
+					];
 		this.worldHeight = vertexPosition[5] - vertexPosition[3];
 		this.worldWidth = vertexPosition[2] - vertexPosition[0];
 		this.viewport = new Viewport({

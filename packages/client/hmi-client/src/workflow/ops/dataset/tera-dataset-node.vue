@@ -33,15 +33,18 @@
 				</DataTable>
 				<span>1 - 5 of {{ csvContent.length }} rows</span>
 			</section>
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
-		<Dropdown
-			v-else
-			class="w-full p-button-sm p-button-outlined"
-			:options="datasets"
-			option-label="name"
-			v-model="dataset"
-			placeholder="Select a dataset"
-		/>
+		<template v-else>
+			<Dropdown
+				class="w-full p-dropdown-sm"
+				:options="datasets"
+				option-label="name"
+				v-model="dataset"
+				placeholder="Select a dataset"
+			/>
+			<tera-operator-placeholder :operation-type="node.operationType" />
+		</template>
 	</main>
 </template>
 
@@ -55,16 +58,17 @@ import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
-import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
 
 const datasets = computed<Dataset[]>(
 	() => useProjects().activeProject.value?.assets?.datasets ?? []
@@ -91,6 +95,10 @@ watch(
 
 			// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
 			if (isEmpty(props.node.outputs)) {
+				emit('update-state', {
+					datasetId: dataset.value.id
+				});
+
 				emit('append-output-port', {
 					type: 'datasetId',
 					label: dataset.value.name,
@@ -102,6 +110,7 @@ watch(
 );
 
 onMounted(async () => {
+	console.log(props.node.state);
 	if (props.node.state.datasetId) {
 		dataset.value = await getDataset(props.node.state.datasetId);
 	}
@@ -123,14 +132,17 @@ section {
 	flex-direction: row;
 	justify-content: space-between;
 }
+
 .toolbar > span {
 	display: flex;
 	align-items: center;
 }
+
 .multiselect-btn {
 	display: flex;
 	flex-direction: column;
 }
+
 .p-multiselect {
 	visibility: hidden;
 	width: 0;
@@ -173,19 +185,5 @@ section {
 
 .p-button:deep(span) {
 	margin-top: 0.25rem;
-}
-
-.p-button-sm.p-button-outlined {
-	border: 1px solid var(--surface-border);
-	padding-top: 0rem;
-	padding-bottom: 0rem;
-}
-
-.p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
-	padding: 0.5rem;
-}
-
-.p-button-sm.p-button-outlined:hover {
-	border: 1px solid var(--surface-border-hover);
 }
 </style>
