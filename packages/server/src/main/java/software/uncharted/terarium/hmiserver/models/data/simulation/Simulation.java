@@ -27,7 +27,6 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @Data
@@ -87,7 +86,7 @@ public class Simulation implements Serializable {
 
 	@JsonAlias("user_id")
 	@TSOptional
-	private UserId userId;
+	private String userId;
 
 	@JsonAlias("project_id")
 	@TSOptional

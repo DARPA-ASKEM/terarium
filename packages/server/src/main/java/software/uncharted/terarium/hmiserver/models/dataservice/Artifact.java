@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 
 /**
@@ -34,7 +33,7 @@ public class Artifact {
 	private Object timestamp;
 
 	/* UserId of who created this asset */
-	private UserId userId;
+	private String userId;
 
 	/* The name of the artifact. */
 	private String name;

@@ -12,7 +12,6 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 
 @Data
 @Accessors(chain = true)
@@ -23,7 +22,7 @@ public class ProvenanceQueryParam implements Serializable {
 
 	private ProvenanceType rootType;
 
-	private UserId userId;
+	private String userId;
 
 	@TSIgnore
 	private String curie;
@@ -83,13 +82,13 @@ public class ProvenanceQueryParam implements Serializable {
 
 	@JsonSetter(value = "userId")
 	@TSOptional
-	public void setUserId(UserId userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 
 	@JsonGetter(value = "user_id")
 	@TSIgnore
-	public UserId getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 }

@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
@@ -26,7 +25,7 @@ public class Model implements Serializable {
 	private Timestamp timestamp;
 
 	@TSOptional
-	private UserId userId;
+	private String userId;
 
 	private Map<String, Object> model;
 
