@@ -35,6 +35,9 @@ const fakeVariables = ['X', 'Y', 'p'];
 	outline: 1px solid var(--surface-border-alt);
 	min-width: 12rem;
 	position: relative;
+	box-shadow:
+		0px 1px 3px 0px rgba(0, 0, 0, 0.08),
+		0px 1px 2px 0px rgba(0, 0, 0, 0.04);
 
 	& > main {
 		width: 100%;
@@ -74,6 +77,9 @@ ul {
 		border-bottom-right-radius: var(--border-radius);
 		padding: 0.15rem 0.25rem;
 		color: var(--text-color-subdued);
+		box-shadow:
+			0px 1px 3px 0px rgba(0, 0, 0, 0.08),
+			0px 1px 2px 0px rgba(0, 0, 0, 0.04);
 		/* Font should be "Latin Modern Math" */
 		font-family: serif;
 		font-style: italic;
