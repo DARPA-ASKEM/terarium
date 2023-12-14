@@ -19,7 +19,7 @@ import { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { onMounted, ref, watch } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import { ModelTransformerState } from './model-transformer-operation';
 

@@ -167,7 +167,7 @@ import {
 	WorkflowOutput
 } from '@/types/workflow';
 // Operation imports
-import TeraOperator from '@/workflow/tera-operator.vue';
+import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -197,6 +197,7 @@ import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 import * as ModelOptimizeOp from './ops/model-optimize/mod';
+import * as ModelCouplingOp from './ops/model-coupling/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -217,6 +218,7 @@ registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(ModelOptimizeOp);
+registry.registerOp(ModelCouplingOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -377,6 +379,7 @@ const operationContextMenuList = [
 	{ name: ModelTransformerOp.name, category: categories.model },
 	{ name: FunmanOp.name, category: categories.model, separator: true },
 	{ name: ModelOptimizeOp.name, category: categories.model },
+	{ name: ModelCouplingOp.name, category: categories.model },
 	// Code
 	{ name: CodeAssetOp.name, category: categories.code },
 	{ name: ModelFromCodeOp.name, category: categories.code },
