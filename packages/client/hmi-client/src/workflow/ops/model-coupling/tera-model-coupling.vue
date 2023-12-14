@@ -31,7 +31,6 @@
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 						<h4>No Model Provided</h4>
 					</div>
-					-->
 				</div>
 				<template #footer>
 					<InputText
@@ -41,7 +40,7 @@
 						class="input-small"
 					/>
 					<Button
-						:disabled="!amr"
+						:disabled="!modelCouplingResult"
 						outlined
 						style="margin-right: auto"
 						label="Save as new Model"
@@ -57,10 +56,10 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed, onUnmounted, onMounted } from 'vue';
+import { ref, computed, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import { Model, AssetType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
@@ -94,9 +93,9 @@ interface SaveOptions {
 
 const kernelManager = new KernelSessionManager();
 
-const amr = ref<Model | null>(null);
 const newModelName = ref('');
 
+// Generates name-id pairings for beaker kernel context_info
 const modelMap = computed(() => {
 	const map: { [key: string]: string } = {};
 	const inputs = props.node.inputs;
@@ -111,21 +110,7 @@ const modelMap = computed(() => {
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-// const resetModel = () => {
-// 	if (!amr.value) return;
-//
-// 	kernelManager
-// 		.sendMessage('reset_request', {})
-// 		?.register('reset_response', handleResetResponse)
-// 		?.register('model_preview', handleModelPreview);
-// };
-
-// const handleModelPreview = (data: any) => {
-// 	amr.value = data.content['application/json'];
-// };
-
 /**
-
 ice_dynamics_composition_diagram = @relation () begin
   dynamics(Γ,n)
   stress(Γ,n)
@@ -138,19 +123,19 @@ ice_dynamics_cospan = oapply(ice_dynamics_composition_diagram,
 )
 
 decapode = apex(ice_dynamics_cospan)
+
+
+# halfar: 'cde2b856-114e-4008-8493-b0d93361fa72',
+# glen: '97eb6e11-05cb-4ffe-9556-980a8d287c36'
 * */
 
 const buildJupyterContext = () => ({
 	context: 'decapodes',
 	language: 'julia-1.9',
 	context_info: modelMap.value
-	// context_info: {
-	// 	// halfar: 'cde2b856-114e-4008-8493-b0d93361fa72',
-	// 	// glen: '97eb6e11-05cb-4ffe-9556-980a8d287c36'
-	// }
 });
 
-const inputChangeHandler = async () => {
+const initialize = async () => {
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
 
@@ -166,12 +151,22 @@ const inputChangeHandler = async () => {
 };
 
 const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!amr.value || !modelName) return;
-	amr.value.header.name = modelName;
-
 	const projectResource = useProjects();
-	const modelData = await createModel(amr.value);
 	const projectId = projectResource.activeProject.value?.id;
+
+	const header = {
+		description: modelName,
+		name: modelName,
+		_type: 'Header',
+		model_version: 'v1.0',
+		schema: 'modelreps.io/DecaExpr',
+		schema_name: 'decapode'
+	};
+	const amr = {
+		header,
+		model: modelCouplingResult.value
+	};
+	const modelData = await createModel(amr);
 
 	if (!modelData) return;
 
@@ -223,22 +218,14 @@ const runCodeModelCoupling = () => {
 			console.log('error', data.content.evalue);
 		})
 		?.register('decapodes_preview', (data) => {
-			console.log('......................');
 			console.log('decapodes_preview', data.content);
 			modelCouplingResult.value = data.content['application/json'];
 		});
 };
 
-// Set model, modelConfiguration, modelNodeOptions
-watch(
-	() => props.node.inputs,
-	async () => {
-		await inputChangeHandler();
-	},
-	{ immediate: true }
-);
-
-onMounted(() => {});
+onMounted(() => {
+	initialize();
+});
 
 onUnmounted(() => {
 	kernelManager.shutdown();
@@ -253,12 +240,5 @@ onUnmounted(() => {
 
 .input-small {
 	padding: 0.5rem;
-}
-
-.code-executed-warning {
-	background-color: #ffe6e6;
-	color: #cc0000;
-	padding: 10px;
-	border-radius: 4px;
 }
 </style>
