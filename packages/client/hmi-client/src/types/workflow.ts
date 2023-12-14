@@ -78,7 +78,7 @@ export interface WorkflowPort {
 export interface WorkflowOutput<S> extends WorkflowPort {
 	isSelected?: boolean;
 	operatorStatus?: OperatorStatus;
-	state?: S;
+	state?: Partial<S>;
 	timestamp?: Date;
 }
 

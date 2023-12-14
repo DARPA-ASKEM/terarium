@@ -7,7 +7,6 @@ export interface ModelFromCodeState {
 	codeBlocks: CodeBlock[];
 	modelFramework: string;
 	modelId: string;
-	isSaved?: boolean;
 }
 
 export const ModelFromCodeOperation: Operation = {
