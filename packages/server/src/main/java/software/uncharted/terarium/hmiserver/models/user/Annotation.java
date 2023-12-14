@@ -27,6 +27,7 @@ import java.util.UUID;
 public class Annotation implements Serializable {
 	@Serial
 	private static final long serialVersionUID = 4939620703969267901L;
+
 	@Id
 	private String id = UUID.randomUUID().toString();
 
@@ -49,5 +50,4 @@ public class Annotation implements Serializable {
 	private String artifactType;
 
 	private String section;
-
 }
