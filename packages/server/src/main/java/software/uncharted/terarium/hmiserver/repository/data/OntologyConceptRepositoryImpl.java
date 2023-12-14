@@ -2,26 +2,37 @@ package software.uncharted.terarium.hmiserver.repository.data;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse;
 import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.data.concept.QActiveConcept;
 import software.uncharted.terarium.hmiserver.models.data.concept.QOntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 
-@RequiredArgsConstructor
-public class OntologyConceptRepositoryCustomImpl implements OntologyConceptRepositoryCustom {
+@Component
+public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryCustom {
 
 	@PersistenceContext
 	private EntityManager entityManager;
 
-	private final JPAQueryFactory queryFactory;
+	@Autowired
+	@Lazy
+	private JPAQueryFactory queryFactory;
+
+	@Bean
+	public JPAQueryFactory jpaQueryFactory() {
+		return new JPAQueryFactory(entityManager);
+	}
 
 	@Override
 	public ConceptFacetSearchResponse facetQuery(List<TaggableType> types, List<String> curies) {

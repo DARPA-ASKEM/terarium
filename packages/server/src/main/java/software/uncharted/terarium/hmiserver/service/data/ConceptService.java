@@ -35,7 +35,7 @@ public class ConceptService {
 	}
 
 	public List<OntologyConcept> searchConcept(final String curie) {
-		return ontologyConceptRepository.listAllByCurie(curie);
+		return ontologyConceptRepository.findAllByCurie(curie);
 	}
 
 	public Optional<OntologyConcept> getConcept(final UUID id) {
@@ -49,7 +49,7 @@ public class ConceptService {
 
 	public OntologyConcept updateConcept(final OntologyConcept concept) {
 		ActiveConcept active = markConceptAsActive(concept);
-		concept.setActiveConceptId(active.getId());
+		concept.setActiveConcept(active);
 		return ontologyConceptRepository.save(concept);
 	}
 

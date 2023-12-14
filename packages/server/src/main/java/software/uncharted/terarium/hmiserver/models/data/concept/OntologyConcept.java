@@ -36,11 +36,10 @@ public class OntologyConcept implements Serializable {
 
 	private String curie;
 
-	@JsonProperty("active_concept_id")
 	@ManyToOne
-	@JoinColumn(name = "ontology_concept_id", nullable = true)
+	@JoinColumn(name = "activeConceptId", nullable = true)
 	@JsonBackReference
-	private UUID activeConceptId;
+	private ActiveConcept activeConcept;
 
 	private TaggableType type;
 
