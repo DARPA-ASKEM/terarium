@@ -53,13 +53,13 @@
 import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
-import { GroupedOutputItem, WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Checkbox from 'primevue/checkbox';
 
 defineProps<{
 	title?: string;
-	options?: WorkflowOutput<any>[] | GroupedOutputItem<any>[];
+	options?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 	isLoading?: boolean;

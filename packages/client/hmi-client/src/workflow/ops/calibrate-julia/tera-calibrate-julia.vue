@@ -215,7 +215,6 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import { getTimespan } from '@/workflow/util';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { getGroupedOutputs } from '@/services/workflow';
 import {
 	CalibrateExtraJulia,
 	CalibrateMap,
@@ -254,11 +253,17 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
 
-const outputs = computed(() =>
-	getGroupedOutputs<CalibrationOperationStateJulia>(props.node, {
-		unsaved: 'Select outputs to display in operator'
-	})
-);
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]

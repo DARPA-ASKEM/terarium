@@ -14,8 +14,7 @@ import {
 	WorkflowPortStatus,
 	OperatorStatus,
 	WorkflowPort,
-	WorkflowOutput,
-	GroupedOutputItem
+	WorkflowOutput
 } from '@/types/workflow';
 
 /**
@@ -339,42 +338,3 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 		...updatedOutputPort
 	};
 }
-
-/**
- * This function gets the groupings of outputs for the drilldown preview dropdown selection.
- * See: tera-drilldown-preview.vue
- * Currently the only 2 groupings are saved/unsaved, but this is subject to change in the future
- * if design requirements change.
- */
-export const getGroupedOutputs = <T>(
-	node: WorkflowNode<any>,
-	labels: { saved?: string; unsaved?: string }
-) => {
-	// Group the outputs based off of their saved status
-	const savedOutputs: WorkflowOutput<T>[] = [];
-	const unsavedOutputs: WorkflowOutput<T>[] = [];
-	node.outputs?.forEach((output) => {
-		if (output.isSaved) {
-			savedOutputs.push(output);
-			return;
-		}
-		unsavedOutputs.push(output);
-	});
-
-	// Format the grouped outputs to the format that tera-drilldown-preview.vue expects
-	const groupedOutputs: GroupedOutputItem<T>[] = [];
-	if (!_.isEmpty(unsavedOutputs) && labels.unsaved) {
-		groupedOutputs.push({
-			label: labels.unsaved,
-			items: unsavedOutputs
-		});
-	}
-	if (!_.isEmpty(savedOutputs) && labels.saved) {
-		groupedOutputs.push({
-			label: labels.saved,
-			items: savedOutputs
-		});
-	}
-
-	return groupedOutputs;
-};
