@@ -23,7 +23,7 @@ import { WorkflowNode } from '@/types/workflow';
 import { ModelConfiguration } from '@/types/Types';
 import { getModelConfigurations } from '@/services/model';
 import Button from 'primevue/button';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
