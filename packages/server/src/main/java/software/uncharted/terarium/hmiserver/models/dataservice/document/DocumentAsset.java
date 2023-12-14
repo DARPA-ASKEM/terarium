@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
@@ -32,7 +31,7 @@ public class DocumentAsset {
 	private String timestamp;
 
 	@TSOptional
-	private UserId userId;
+	private String userId;
 
 	@TSOptional
 	@JsonAlias("file_names")

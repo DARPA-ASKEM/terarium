@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 /**
@@ -39,7 +38,7 @@ public class Dataset {
 	 * UserId of the user who created the dataset
 	 **/
 	@TSOptional
-	private UserId userId;
+	private String userId;
 
 	/**
 	 * Name of the dataset

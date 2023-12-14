@@ -11,7 +11,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 
 /**
  * The Equation Data Model
@@ -30,7 +29,7 @@ public class Equation {
 
 	/** The userId of the user that created the equation **/
 	@TSOptional
-	private UserId userId;
+	private String userId;
 
 	/** (Optional) Display/human name for the equation **/
 	@TSOptional

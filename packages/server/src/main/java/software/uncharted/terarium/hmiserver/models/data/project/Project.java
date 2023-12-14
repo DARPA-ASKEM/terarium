@@ -24,7 +24,6 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.UserId;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 
 @Data
@@ -42,7 +41,7 @@ public class Project implements Serializable {
 	@Schema(defaultValue = "My New Project")
 	private String name;
 
-	private UserId userId;
+	private String userId;
 
 	@TSOptional
 	@Schema(defaultValue = "My Project Description")
