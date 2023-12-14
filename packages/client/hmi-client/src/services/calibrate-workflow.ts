@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-import { ModelConfiguration, Dataset, CsvAsset, PetriNetState } from '@/types/Types';
+import { ModelConfiguration, Dataset, CsvAsset, State } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 
@@ -14,20 +14,17 @@ export interface CalibrateMap {
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
 		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-		// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
-		const modelColumnNameOptions: string[] = modelConfiguration.configuration.model.states.map(
-			(state) => state.id.trim()
-		);
+		const modelOptions: State[] = modelConfiguration.configuration.model.states;
 
 		// add observables
 		if (modelConfiguration.configuration.semantics?.ode?.observables) {
 			modelConfiguration.configuration.semantics.ode.observables.forEach((o) => {
-				modelColumnNameOptions.push(o.id.trim());
+				modelOptions.push(o.id.trim());
 			});
 		}
 
-		modelColumnNameOptions.push('timestamp');
-		return { modelConfiguration, modelColumnNameOptions };
+		modelOptions.push({ id: 'timestamp' });
+		return { modelConfiguration, modelOptions };
 	}
 	return {};
 };
@@ -38,6 +35,11 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 	if (datasetId) {
 		// Get dataset:
 		const dataset: Dataset | null = await getDataset(datasetId);
+		if (dataset === undefined || !dataset) {
+			console.log(`Dataset with id:${datasetId} not found`);
+			return {};
+		}
+		const datasetOptions = dataset.columns;
 		const filename = dataset?.fileNames?.[0] ?? '';
 		// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
 		// This is a temporary fix since the datasets could be very large.
@@ -51,7 +53,7 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 			csv.headers = csv.headers.map((header) => header.trim());
 		}
 
-		return { filename, csv };
+		return { filename, csv, datasetOptions };
 	}
 	return {};
 };
@@ -114,18 +116,9 @@ export const renderLossGraph = (
 	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
 };
 
-export const autoCalibrationMapping = async (modelConfigId: string, datasetId: string) => {
-	const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-	const modelStates: PetriNetState[] = modelConfiguration.configuration.model.states;
-	const dataset = await getDataset(datasetId);
-	if (dataset === undefined || !dataset) {
-		console.log(`Dataset with id:${datasetId} not found`);
-		return;
-	}
-	console.log(dataset);
-	const datasetColumnNames = dataset.columns;
-	console.log(modelStates);
-	console.log(datasetColumnNames);
+export const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: any[]) => {
+	console.log(modelOptions);
+	console.log(datasetOptions);
 	// const datasetGroundings = dataset.columns.map(column => column.metadata.groundings)
 	// return [] as CalibrateMap[];
 };

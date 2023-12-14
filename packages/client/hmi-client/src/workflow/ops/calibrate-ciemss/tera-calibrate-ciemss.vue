@@ -14,7 +14,7 @@
 									class="w-full"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="modelColumnNames"
+									:options="modelStateOptions?.map((ele) => ele.id)"
 								/>
 							</template>
 						</Column>
@@ -27,7 +27,7 @@
 									class="w-full"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="datasetColumnNames"
+									:options="datasetColumns?.map((ele) => ele.name)"
 								/>
 							</template>
 						</Column>
@@ -38,6 +38,12 @@
 							icon="pi pi-plus"
 							label="Add mapping"
 							@click="addMapping"
+						/>
+						<Button
+							class="p-button-sm p-button-text"
+							icon="pi pi-plus"
+							label="Auto map"
+							@click="getAutoMapping"
 						/>
 					</div>
 				</div>
@@ -134,10 +140,16 @@ import {
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
-	ModelConfiguration
+	ModelConfiguration,
+	State
 } from '@/types/Types';
 import InputNumber from 'primevue/inputnumber';
-import { setupModelInput, setupDatasetInput, CalibrateMap } from '@/services/calibrate-workflow';
+import {
+	setupModelInput,
+	setupDatasetInput,
+	CalibrateMap,
+	autoCalibrationMapping
+} from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
@@ -162,9 +174,9 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelColumnNames = ref<string[] | undefined>();
+const modelStateOptions = ref<State[] | undefined>();
 
-const datasetColumnNames = ref<string[]>();
+const datasetColumns = ref<any[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
@@ -345,27 +357,27 @@ function addMapping() {
 	emit('update-state', state);
 }
 
-// async function getAutoMapping() {
-// 	if (!modelConfigId.value) {
-// 		console.log('no model config id'); // should be toast when jami is done
-// 		return;
-// 	}
-// 	if (!datasetId.value) {
-// 		console.log('no dataset id');
-// 	}
-// 	// mapping.value = await autoCalibrationMapping(modelConfigId.value, datasetId.value);
-// }
+async function getAutoMapping() {
+	if (!modelStateOptions.value) {
+		console.log('no model config id'); // should be toast when jami is done
+		return;
+	}
+	if (!datasetColumns.value) {
+		console.log('no dataset id');
+		return;
+	}
+	// mapping.value =
+	await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+}
 
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
-			modelConfigId.value
-		);
+		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
 		modelConfig.value = modelConfiguration;
-		modelColumnNames.value = modelColumnNameOptions;
+		modelStateOptions.value = modelOptions;
 	},
 	{ immediate: true }
 );
@@ -375,10 +387,10 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers;
+		datasetColumns.value = datasetOptions;
 	},
 	{ immediate: true }
 );

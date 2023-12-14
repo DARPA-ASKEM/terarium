@@ -14,7 +14,7 @@
 									class="w-full p-inputtext-sm"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="modelColumnNames"
+									:options="modelStateOptions?.map((ele) => ele.id)"
 								/>
 							</template>
 						</Column>
@@ -27,7 +27,7 @@
 									class="w-full p-inputtext-sm"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="datasetColumnNames"
+									:options="datasetColumns?.map((ele) => ele.name)"
 								/>
 							</template>
 						</Column>
@@ -183,7 +183,8 @@ import {
 	ClientEventType,
 	CsvAsset,
 	ModelConfiguration,
-	ScimlStatusUpdate
+	ScimlStatusUpdate,
+	State
 } from '@/types/Types';
 import {
 	setupModelInput,
@@ -228,8 +229,8 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelColumnNames = ref<string[] | undefined>();
-const datasetColumnNames = ref<string[]>();
+const modelStateOptions = ref<State[] | undefined>();
+const datasetColumns = ref<any[]>();
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
@@ -485,11 +486,9 @@ function addMapping() {
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
-			modelConfigId.value
-		);
+		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
 		modelConfig.value = modelConfiguration;
-		modelColumnNames.value = modelColumnNameOptions;
+		modelStateOptions.value = modelOptions;
 	},
 	{ immediate: true }
 );
@@ -498,10 +497,10 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers;
+		datasetColumns.value = datasetOptions;
 	},
 	{ immediate: true }
 );
