@@ -10,10 +10,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 @AutoConfigureMockMvc
 @SpringBootTest
+@Transactional
 @ActiveProfiles({ "local", "test" })
 public class TerariumApplicationTests {
 	@Autowired

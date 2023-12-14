@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.UserId;
-import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
+import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 @Data
@@ -55,7 +55,7 @@ public class DocumentAsset {
 	private Grounding grounding;
 
 	@TSOptional
-	private List<Concept> concepts;
+	private List<OntologyConcept> concepts;
 
 	@TSOptional
 	private List<DocumentExtraction> assets;

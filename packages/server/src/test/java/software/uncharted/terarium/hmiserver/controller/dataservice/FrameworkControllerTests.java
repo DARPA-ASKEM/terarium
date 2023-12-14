@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.After;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,19 +23,14 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private FrameworkService frameworkService;
 
-	final ModelFramework framework = new ModelFramework()
-			.setName("test-framework")
-			.setVersion("0.1.2")
-			.setSemantics("test-semantics");
-
-	@After
-	public void tearDown() {
-		frameworkService.deleteFramework(framework.getId());
-	}
-
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateFramework() throws Exception {
+
+		final ModelFramework framework = new ModelFramework()
+				.setName("test-framework")
+				.setVersion("0.1.2")
+				.setSemantics("test-semantics");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models/frameworks")
 				.with(csrf())
@@ -49,7 +43,10 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateFramework() throws Exception {
 
-		frameworkService.createFramework(framework);
+		final ModelFramework framework = frameworkService.createFramework(new ModelFramework()
+				.setName("test-framework")
+				.setVersion("0.1.2")
+				.setSemantics("test-semantics"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/models/frameworks/" + framework.getName())
 				.with(csrf())
@@ -62,7 +59,10 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetFramework() throws Exception {
 
-		frameworkService.createFramework(framework);
+		final ModelFramework framework = frameworkService.createFramework(new ModelFramework()
+				.setName("test-framework")
+				.setVersion("0.1.2")
+				.setSemantics("test-semantics"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/frameworks/" + framework.getName())
 				.with(csrf()))
@@ -73,7 +73,10 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteFramework() throws Exception {
 
-		frameworkService.createFramework(framework);
+		final ModelFramework framework = frameworkService.createFramework(new ModelFramework()
+				.setName("test-framework")
+				.setVersion("0.1.2")
+				.setSemantics("test-semantics"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getName())
 				.with(csrf()))
