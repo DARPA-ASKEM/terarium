@@ -6,7 +6,7 @@
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
 				<h4>Code Editor - Julia</h4>
-				{{ modelids }}
+				{{ modelMap }}
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -24,16 +24,14 @@
 		<template #preview>
 			<tera-drilldown-preview>
 				<div>
-					<tera-model-diagram
-						v-if="amr"
-						ref="teraModelDiagramRef"
-						:model="amr"
-						:is-editable="false"
-					/>
+					<div v-if="modelCouplingResult">
+						{{ modelCouplingResult }}
+					</div>
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 						<h4>No Model Provided</h4>
 					</div>
+					-->
 				</div>
 				<template #footer>
 					<InputText
@@ -63,8 +61,7 @@ import { watch, ref, computed, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { Model, AssetType } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModel, createModel } from '@/services/model';
+import { createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -83,6 +80,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelCouplingState>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const modelCouplingResult = ref<any>(null);
 
 enum ModelCouplingTabgs {
 	Wizard = 'Wizard',
@@ -97,18 +95,17 @@ interface SaveOptions {
 const kernelManager = new KernelSessionManager();
 
 const amr = ref<Model | null>(null);
-const teraModelDiagramRef = ref();
 const newModelName = ref('');
 
-const modelids = computed(() => {
-	const ids: string[] = [];
+const modelMap = computed(() => {
+	const map: { [key: string]: string } = {};
 	const inputs = props.node.inputs;
 	for (let i = 0; i < inputs.length; i++) {
 		if (inputs[i].value) {
-			ids.push(inputs[i].value?.[0]);
+			map[`model_${i}`] = inputs[i].value?.[0];
 		}
 	}
-	return ids;
+	return map;
 });
 
 let editor: VAceEditorInstance['_editor'] | null;
@@ -127,29 +124,35 @@ const codeText = ref('');
 // 	amr.value = data.content['application/json'];
 // };
 
-const buildJupyterContext = () => {
-	if (!amr.value) {
-		logger.warn('Cannot build Jupyter context without a model');
-		return null;
-	}
+/**
 
-	return {
-		context: 'decapodes',
-		language: 'julia-1.9',
-		context_info: {
-			modelA: '98124914-c432-49ec-98b6-5519c8aefb12'
-			// id: amr.value.id
-			// 'modelB': '98124914-c432-49ec-98b6-5519c8aefb12'
-		}
-	};
-};
+ice_dynamics_composition_diagram = @relation () begin
+  dynamics(Γ,n)
+  stress(Γ,n)
+end
+ice_dynamics_cospan = oapply(ice_dynamics_composition_diagram,
+  [
+		Open(halfar_eq2, [:Γ,:n]),
+		Open(glens_law, [:Γ,:n])
+	]
+)
+
+decapode = apex(ice_dynamics_cospan)
+* */
+
+const buildJupyterContext = () => ({
+	context: 'decapodes',
+	language: 'julia-1.9',
+	context_info: modelMap.value
+	// context_info: {
+	// 	// halfar: 'cde2b856-114e-4008-8493-b0d93361fa72',
+	// 	// glen: '97eb6e11-05cb-4ffe-9556-980a8d287c36'
+	// }
+});
 
 const inputChangeHandler = async () => {
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
-
-	amr.value = await getModel(modelId);
-	if (!amr.value) return;
 
 	// Create a new session and context based on model
 	try {
@@ -195,7 +198,7 @@ const runCodeModelCoupling = () => {
 	const code = editor?.getValue();
 	if (!code) return;
 
-	// reset model
+	// FIXME: reset model doesn't exist yet, wait for beaker update
 	kernelManager.sendMessage('reset_request', {});
 
 	const messageContent = {
@@ -220,7 +223,9 @@ const runCodeModelCoupling = () => {
 			console.log('error', data.content.evalue);
 		})
 		?.register('decapodes_preview', (data) => {
+			console.log('......................');
 			console.log('decapodes_preview', data.content);
+			modelCouplingResult.value = data.content['application/json'];
 		});
 };
 
