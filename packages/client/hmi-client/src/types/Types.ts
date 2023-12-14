@@ -61,7 +61,7 @@ export interface GithubRepo {
 export interface Project {
     id?: string;
     name: string;
-    userId: UserId;
+    userId: string;
     description?: string;
     createdOn: Date;
     updatedOn: Date;
@@ -99,7 +99,7 @@ export interface Simulation {
     completedTime?: Date;
     engine: SimulationEngine;
     workflowId: string;
-    userId?: UserId;
+    userId?: string;
     projectId?: string;
     createdOn: Date;
     updatedOn: Date;
@@ -118,7 +118,7 @@ export interface SimulationResult {
 export interface Artifact {
     id?: string;
     timestamp?: any;
-    userId: UserId;
+    userId: string;
     name: string;
     description?: string;
     fileNames: string[];
@@ -199,7 +199,7 @@ export interface Dynamics {
 export interface Dataset {
     id?: string;
     timestamp?: any;
-    userId?: UserId;
+    userId?: string;
     name: string;
     description?: string;
     dataSourceDate?: Date;
@@ -237,7 +237,7 @@ export interface DocumentAsset {
     name?: string;
     description?: string;
     timestamp?: string;
-    userId?: UserId;
+    userId?: string;
     fileNames?: string[];
     documentUrl?: string;
     metadata?: { [index: string]: any };
@@ -251,7 +251,7 @@ export interface DocumentAsset {
 export interface Equation {
     id?: string;
     timestamp?: Date;
-    userId?: UserId;
+    userId?: string;
     name?: string;
     equationType: EquationType;
     content: string;
@@ -269,7 +269,7 @@ export interface Model {
     id: string;
     header: ModelHeader;
     timestamp?: Date;
-    userId?: UserId;
+    userId?: string;
     model: { [index: string]: any };
     properties?: any;
     semantics?: ModelSemantics;
@@ -287,7 +287,7 @@ export interface ModelConfiguration {
 export interface ModelDescription {
     header: ModelHeader;
     timestamp: Date;
-    userId?: UserId;
+    userId?: string;
 }
 
 export interface State {
@@ -382,7 +382,7 @@ export interface ProvenanceQueryParam {
     verbose?: boolean;
     rootId?: string;
     rootType?: ProvenanceType;
-    userId?: UserId;
+    userId?: string;
 }
 
 export interface RegNetBaseProperties {
@@ -651,9 +651,6 @@ export interface Links {
     html: string;
     git: string;
     self: string;
-}
-
-export interface UserId {
 }
 
 export interface Assets {
