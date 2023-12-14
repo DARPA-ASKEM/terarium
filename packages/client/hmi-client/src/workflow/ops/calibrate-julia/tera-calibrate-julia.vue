@@ -442,7 +442,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 	emit('append-output-port', {
 		type: CalibrationOperationJulia.outputs[0].type,
-		label: 'Output',
+		label: `Output - ${new Date().toLocaleString()}`,
 		value: runIdList,
 		isSelected: false,
 		state: {

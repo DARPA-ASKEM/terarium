@@ -50,7 +50,15 @@
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview title="Simulation output">
+			<tera-drilldown-preview
+				title="Simulation output"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:is-loading="showSpinner"
+				is-selectable
+			>
 				<SelectButton
 					:model-value="view"
 					@change="if ($event.value) view = $event.value;"
@@ -62,42 +70,13 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
-				<Dropdown
-					v-if="runList.length > 0"
-					:options="runList"
-					v-model="selectedRun"
-					option-label="label"
-					placeholder="Select a simulation run"
-					@update:model-value="handleSelectedRunChange"
-				/>
-				<template v-if="runResults[selectedRun?.runId]">
+				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts">
-						<!-- <ul class="metadata-container">
-							<li><span>Run ID:</span> {{ selectedRun.runId }}</li>
-							<li>
-								<span>Configuration name:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].configName }}
-							</li>
-							<li>
-								<span>Method selected:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].method }}
-							</li>
-							<li>
-								<span>Number of samples:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].numSamples }}
-							</li>
-							<li>
-								<span>Start step:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.start }}
-								<span>End step:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.end }}
-							</li>
-						</ul> -->
 						<tera-simulate-chart
-							v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
-							:run-results="runResults[selectedRun.runId]"
-							:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+							:run-results="runResults[selectedRunId]"
+							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="configurationChange(idx, $event)"
 						/>
@@ -110,9 +89,9 @@
 					</div>
 					<div v-else-if="view === OutputView.Data">
 						<tera-dataset-datatable
-							v-if="rawContent[selectedRun?.runId]"
+							v-if="rawContent[selectedRunId]"
 							:rows="10"
-							:raw-content="rawContent[selectedRun.runId]"
+							:raw-content="rawContent[selectedRunId]"
 						/>
 					</div>
 				</template>
@@ -125,6 +104,7 @@
 				label="Run"
 				icon="pi pi-play"
 				@click="runSimulate"
+				:disabled="showSpinner"
 			/>
 			<Button
 				outlined
@@ -168,8 +148,8 @@ import {
 	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
 	simulationPollAction,
-	querySimulationInProgress
-	// getSimulation
+	querySimulationInProgress,
+	getSimulation
 } from '@/services/models/simulation-service';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
@@ -183,19 +163,23 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import { Poller, PollerState } from '@/api/api';
 // import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
-import {
-	// SimulateCiemssOperation,
-	SimulateCiemssOperationState
-} from './simulate-ciemss-operation';
+import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits([
+	'append-output-port',
+	'update-state',
+	'select-output',
+	'update-output-port',
+	'close'
+]);
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+// extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
@@ -220,7 +204,7 @@ const model = ref<{ [runId: string]: Model | null }>({});
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 
 const showSpinner = ref(false);
-const completedRunIdList = ref<string[]>([]);
+const completedRunId = ref<string>('');
 const runResults = ref<{ [runId: string]: RunResults }>({});
 const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
 
@@ -228,33 +212,29 @@ const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
-const runList = computed(() =>
-	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
-		label: `Output ${idx + 1} - ${runId}`,
-		runId
-	}))
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+const selectedOutputId = ref<string>();
+const selectedRunId = computed(
+	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
-const selectedRun = ref();
 
 const poller = new Poller();
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds);
-	}
-
-	const runId = Object.values(props.node.state.simConfigs.runConfigs).find(
-		(metadata) => metadata.active
-	)?.runId;
-	if (runId) {
-		selectedRun.value = runList.value.find((run) => run.runId === runId);
-	} else {
-		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
-	}
-
-	if (selectedRun.value?.runId) {
-		lazyLoadSimulationData(selectedRun.value.runId);
+	if (runIds.length === 1) {
+		// there should only be one run happening at a time
+		getStatus(runIds[0]);
 	}
 });
 
@@ -284,69 +264,60 @@ const runSimulate = async () => {
 		engine: 'ciemss'
 	};
 	const response = await makeForecastJob(payload);
-	getStatus([response.id]);
+	getStatus(response.id);
 };
 
-const getStatus = async (runIds: string[]) => {
+const getStatus = async (runId: string) => {
 	showSpinner.value = true;
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+		.setPollAction(async () => simulationPollAction([runId], props.node, progress, emit));
 	const pollerResults = await poller.start();
 
+	if (pollerResults.state === PollerState.Cancelled) {
+		showSpinner.value = false;
+		return;
+	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Simulation: ${runIds} has failed`, {
+		logger.error(`Simulation: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
 		throw Error('Failed Runs');
 	}
-	completedRunIdList.value = runIds;
+
+	completedRunId.value = runId;
 	showSpinner.value = false;
 };
 
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.simConfigs.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const handleSelectedRunChange = () => {
-	if (!selectedRun.value) return;
-
-	lazyLoadSimulationData(selectedRun.value.runId);
+const watchCompletedRunId = async (runId: string) => {
+	if (!runId) return;
 
 	const state = _.cloneDeep(props.node.state);
-	// set the active status for the selected run in the run configs
-	Object.keys(state.simConfigs.runConfigs).forEach((runId) => {
-		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
-	});
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.simConfigs.chartConfigs.push([]);
-
-	emit('update-state', state);
-};
-
-async function saveDatasetToProject() {
-	const { activeProject, refresh } = useProjects();
-	if (activeProject.value?.id) {
-		if (await saveDataset(activeProject.value.id, selectedRun.value.runId, saveAsName.value)) {
-			refresh();
-		}
-		showSaveInput.value = false;
+	if (state.chartConfigs.length === 0) {
+		addChart();
 	}
-}
+
+	const sim = await getSimulation(runId);
+
+	emit('append-output-port', {
+		type: SimulateCiemssOperation.outputs[0].type,
+		label: `Output - ${new Date().toLocaleString()}`,
+		value: runId,
+		state: {
+			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
+			numSamples: sim?.executionPayload.extra.num_samples ?? numSamples.value,
+			method: sim?.executionPayload.extra.method ?? method.value,
+			simulationsInProgress: state.simulationsInProgress
+		},
+		isSelected: false
+	});
+};
 
 const lazyLoadSimulationData = async (runId: string) => {
-	if (runResults.value[runId]) return;
+	if (runResults.value[runId] && rawContent.value[runId]) return;
 
 	// there's only a single input config
 	const modelConfigId = props.node.inputs[0].value?.[0];
@@ -362,6 +333,64 @@ const lazyLoadSimulationData = async (runId: string) => {
 	runResults.value[runId] = output.runResults;
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value[runId]);
 };
+
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
+};
+
+const onUpdateSelection = (id) => {
+	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+};
+
+const configurationChange = (index: number, config: ChartConfig) => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config.selectedVariable;
+
+	emit('update-state', state);
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs.push([]);
+
+	emit('update-state', state);
+};
+
+async function saveDatasetToProject() {
+	const { activeProject, refresh } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, selectedRunId.value, saveAsName.value)) {
+			refresh();
+		}
+		showSaveInput.value = false;
+	}
+}
+
+watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
+
+watch(
+	() => selectedRunId.value,
+	() => {
+		lazyLoadSimulationData(selectedRunId.value);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+
+		// TODO: set operator state (wizard) from selected output state
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => numSamples.value,
@@ -386,18 +415,6 @@ watch(
 <style scoped>
 .simulate-chart {
 	margin: 2em 1.5em;
-}
-
-.metadata-container {
-	padding: 1rem;
-	display: flex;
-	flex-direction: column;
-	gap: 1em;
-	list-style: none;
-}
-
-li > span {
-	font-weight: bold;
 }
 
 .form-section {
