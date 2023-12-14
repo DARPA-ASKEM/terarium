@@ -217,6 +217,7 @@ const outputs = computed(() => {
 	});
 
 	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromCodeState>[] }[] = [];
+
 	if (!isEmpty(unsavedOutputs)) {
 		groupedOutputs.push({
 			label: 'Select outputs to display in operator',
