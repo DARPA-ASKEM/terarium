@@ -4,6 +4,30 @@
 	<meta charset="UTF-8" />
 	<link rel="icon" type="image/png" href="/src/assets/images/terarium-icon.png" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta
+		http-equiv="Content-Security-Policy"
+		content="
+			default-src 'self';
+			connect-src 'self'
+				https://keycloak.staging.terarium.ai/realms/Uncharted/protocol/openid-connect/token;
+			script-src 'self'
+				'sha256-7t97Qle/O3CBtrFAwg4PrPYLZUUnIxA/OWiPZ8TkoqU='
+				https://cdn.jsdelivr.net/npm/keycloak-js@22.0.3/dist/keycloak.min.js
+				https://documentservices.adobe.com/view-sdk/viewer.js
+				https://documentservices.adobe.com/view-sdk/3.12.1_3.2.2-bee18b73/ViewSDKInterface.js
+				https://www.googletagmanager.com/gtag/js
+				'unsafe-eval';
+			img-src 'self' data:;
+			child-src 'none';
+			worker-src 'self';
+			font-src 'self'
+				 https://fonts.gstatic.com/s/figtree/v5/_Xms-HUzqDCFdgfMm4q9DaRvziissg.woff2
+				 https://fonts.gstatic.com/s/figtree/v5/_Xmu-HUzqDCFdgfMm4GNAa5o7Cqcs8-2.woff2
+				 https://fonts.gstatic.com/s/figtree/v5/_Xmu-HUzqDCFdgfMm4GND65o7Cqcsw.woff2
+				 https://fonts.gstatic.com/s/figtree/v5/_Xms-HUzqDCFdgfMm4S9DaRvzig.woff2;
+			style-src 'self' 'unsafe-inline'
+				https://fonts.googleapis.com/css2;
+		"/>
 	<title>Terarium</title>
 	<script src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.3/dist/keycloak.min.js"></script>
 	<script>
