@@ -105,6 +105,7 @@ public interface KnowledgeMiddlewareProxy {
 	 * @param name         (String): the name to set on the newly created model
 	 * @param description  (String): the description to set on the newly created model
 	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over specified dynamics from the code object in TDS
+	 * @param llm_assisted (Boolean): whether amr extraction is llm assisted
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code_to_amr")
@@ -112,7 +113,8 @@ public interface KnowledgeMiddlewareProxy {
 		@RequestParam("code_id") String codeId,
 		@RequestParam(name = "name", required = false) String name,
 		@RequestParam(name = "description", required = false) String description,
-		@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly
+		@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly,
+		@RequestParam(name = "llm_assisted", required = false) Boolean llmAssisted
 	);
 
 	/**

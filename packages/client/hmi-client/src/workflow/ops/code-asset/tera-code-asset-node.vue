@@ -1,6 +1,14 @@
 <template>
 	<main>
-		<template v-if="code">{{ code?.name }}</template>
+		<template v-if="code">
+			<div>{{ code?.name }}</div>
+			<Button
+				label="Open code editor"
+				@click="emit('open-drilldown')"
+				severity="secondary"
+				outlined
+			/>
+		</template>
 		<template v-else>
 			<Dropdown
 				class="w-full p-dropdown-sm"
@@ -9,7 +17,7 @@
 				v-model="code"
 				placeholder="Select code asset"
 			/>
-			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
 	</main>
 </template>
@@ -22,14 +30,15 @@ import { onMounted, ref, computed, watch } from 'vue';
 import { Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import Button from 'primevue/button';
 import { CodeAssetState } from './code-asset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CodeAssetState>;
 }>();
 
-const emit = defineEmits(['update-state', 'append-output-port']);
+const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
 
 const code = ref<Code | null>(null);
 const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.code ?? []);

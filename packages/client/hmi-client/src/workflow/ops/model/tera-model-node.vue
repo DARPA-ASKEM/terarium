@@ -21,6 +21,7 @@
 					:is-editable="false"
 				/>
 			</div>
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
@@ -30,7 +31,7 @@
 				option-label="header.name"
 				placeholder="Select a model"
 			/>
-			<tera-operator-placeholder-graphic :operation-type="node.operationType" />
+			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
 	</main>
 </template>
@@ -45,16 +46,17 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
 import SelectButton from 'primevue/selectbutton';
-import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
-import TeraOperatorPlaceholderGraphic from '@/workflow/operator/tera-operator-placeholder-graphic.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import Button from 'primevue/button';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['update-state', 'append-output-port']);
+const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
 const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
 
 enum ModelNodeView {

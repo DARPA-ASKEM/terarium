@@ -4,6 +4,7 @@ import * as EventService from '@/services/event';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
+import { logger } from '@/utils/logger';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -43,7 +44,7 @@ export async function getBulkModels(modelIDs: string[]) {
  * @return Array<Model>|null - the list of all models, or null if none returned by API
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions?page_size=200');
+	const response = await API.get('/models/descriptions?page_size=500');
 	return response?.data ?? null;
 }
 
@@ -93,4 +94,23 @@ export function isModelEmpty(model: Model) {
 	}
 	// TODO: support different frameworks' version of empty
 	return false;
+}
+
+// A helper function to check if a model name already exists
+export function validateModelName(name: string): boolean {
+	const existingModelNames: string[] = [];
+	useProjects().activeProject.value?.assets?.models.forEach((item) => {
+		existingModelNames.push(item.header.name);
+	});
+
+	if (name.trim().length === 0) {
+		logger.info('Model name cannot be empty - please enter a different name');
+		return false;
+	}
+	if (existingModelNames.includes(name.trim())) {
+		logger.info('Duplicate model name - please enter a different name');
+		return false;
+	}
+
+	return true;
 }

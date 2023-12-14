@@ -35,6 +35,7 @@
 	color: $menuitemTextColor;
     border-radius: $menuitemBorderRadius;
     transition: $listItemTransition;
+    text-decoration: none;
     user-select: none;
 
 	.p-menuitem-text {

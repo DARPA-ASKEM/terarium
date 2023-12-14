@@ -1,6 +1,6 @@
 import { Component } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import _, { cloneDeep } from 'lodash';
+import _ from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
@@ -318,24 +318,6 @@ export function selectOutput(
 	operator: WorkflowNode<any>,
 	selectedWorkflowOutputId: WorkflowOutput<any>['id']
 ) {
-	// Check if the current state existed previously in the outputs
-	let current = operator.outputs.find((output) => output.id === operator.active);
-	if (!current) {
-		// the current state was never saved in the outputs prior
-		current = {
-			id: uuidv4(),
-			type: '',
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			isOptional: false
-		} as WorkflowOutput<any>;
-		operator.outputs.push(current);
-	}
-
-	// Update the current state within the outputs
-	current.state = cloneDeep(operator.state);
-	current.operatorStatus = operator.status;
-	current.timestamp = new Date();
-
 	// Update the Operator state with the selected one
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
 	if (selected) {
@@ -347,4 +329,12 @@ export function selectOutput(
 			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
 		);
 	}
+}
+
+export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
+	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
+	if (!outputPort) return;
+	outputPort = {
+		...updatedOutputPort
+	};
 }

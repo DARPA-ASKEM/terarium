@@ -2,7 +2,7 @@
 	<div class="breakdown-pane-container">
 		<ul>
 			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
-				<tera-asset-card :asset="asset" :resourceType="(getType(asset) as ResourceType)">
+				<tera-asset-card :asset="asset" :resourceType="getType(asset) as ResourceType">
 					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
 						<i class="pi pi-ellipsis-v" />
 					</button>

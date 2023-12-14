@@ -1,25 +1,32 @@
 <template>
 	<section>
-		<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-		Configure in the side panel
+		<tera-operator-placeholder :operation-type="node.operationType">
+			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
+		</tera-operator-placeholder>
+		<template v-if="node.inputs[0].value">
+			<Button
+				@click="emit('open-drilldown')"
+				label="Review sanity checks"
+				severity="secondary"
+				outlined
+			/>
+			<!--TODO: Run button isn't functional-->
+			<Button label="Run" severity="secondary" outlined />
+		</template>
 	</section>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { WorkflowNode } from '@/types/workflow';
+import { FunmanOperationState } from '@/workflow/ops/funman/funman-operation';
+import Button from 'primevue/button';
 
-<style scoped>
-section {
-	align-items: center;
-	display: flex;
-	flex-direction: column;
-	margin-bottom: 1rem;
-	gap: 0.5rem;
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
-}
+const emit = defineEmits(['open-drilldown']);
 
-img {
-	height: 25%;
-	width: 25%;
-}
-</style>
+defineProps<{
+	node: WorkflowNode<FunmanOperationState>;
+}>();
+</script>
+
+<style scoped></style>
