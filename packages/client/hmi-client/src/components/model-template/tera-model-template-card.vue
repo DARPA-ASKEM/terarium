@@ -1,9 +1,9 @@
 <template>
-	<section class="card-container">
+	<section ref="cardRef" class="card-container" :style="cardStyle">
 		<section class="card">
 			<div class="draggable"><i class="pi pi-pause" /></div>
 			<main>
-				<h7>Template title</h7>
+				<header>Template title</header>
 				<section>Diagram/Equations</section>
 			</main>
 			<Button icon="pi pi-ellipsis-v" rounded text />
@@ -17,15 +17,77 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 
+const props = defineProps<{
+	card: { x: number; y: number };
+}>();
+
+const emit = defineEmits(['dragging']);
+
 const fakeVariables = ['X', 'Y', 'p'];
+let isDragging = false;
+let tempX = 0;
+let tempY = 0;
+
+const cardRef = ref();
+
+const cardStyle = computed(() => ({
+	minWidth: '106px',
+	top: `${props.card.y}px`,
+	left: `${props.card.x}px`
+}));
+
+// const setDrag = (val: boolean) => {
+// 	isDragging = val;
+// };
+
+const startDrag = (evt: MouseEvent) => {
+	tempX = evt.x;
+	tempY = evt.y;
+	isDragging = true;
+};
+
+const drag = (evt: MouseEvent) => {
+	if (!isDragging) return;
+
+	const dx = evt.x - tempX;
+	const dy = evt.y - tempY;
+
+	emit('dragging', { x: dx, y: dy });
+
+	tempX = evt.x;
+	tempY = evt.y;
+};
+
+const stopDrag = (/* evt: MouseEvent */) => {
+	tempX = 0;
+	tempY = 0;
+	isDragging = false;
+};
+
+onMounted(() => {
+	if (!cardRef.value) return;
+	cardRef.value.addEventListener('mousedown', startDrag);
+	document.addEventListener('mousemove', drag);
+	cardRef.value.addEventListener('mouseup', stopDrag);
+});
+
+onBeforeUnmount(() => {
+	if (cardRef.value) {
+		cardRef.value.removeEventListener('mousedown', startDrag);
+		document.removeEventListener('mousemove', drag);
+		cardRef.value.removeEventListener('mouseup', stopDrag);
+	}
+});
 </script>
 
 <style scoped>
 .card-container {
 	display: flex;
 	font-size: var(--font-caption);
+	user-select: none;
 }
 
 .card {
@@ -46,7 +108,7 @@ const fakeVariables = ['X', 'Y', 'p'];
 		flex-direction: column;
 		gap: 1rem;
 
-		& > h7 {
+		& > header {
 			font-weight: var(--font-weight);
 		}
 
@@ -105,6 +167,8 @@ ul {
 /* When a card is placed in the data layer of the infinite canvas 
 (eg. ports shouldn't look selectable if card is in the sidebar) */
 .data-layer .card-container {
+	position: absolute;
+
 	& .card:hover > .p-button {
 		display: block;
 	}

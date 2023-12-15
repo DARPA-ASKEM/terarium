@@ -67,8 +67,7 @@ const emit = defineEmits([
 	'port-mouseover',
 	'port-mouseleave',
 	'remove-operator',
-	'remove-edges',
-	'drilldown'
+	'remove-edges'
 ]);
 
 const nodeStyle = computed(() => ({

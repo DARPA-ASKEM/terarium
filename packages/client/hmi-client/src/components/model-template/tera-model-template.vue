@@ -1,16 +1,23 @@
 <template>
-	<tera-infinite-canvas>
+	<tera-infinite-canvas
+		@save-transform="saveTransform"
+		@focus="() => {}"
+		@blur="() => {}"
+		@mouseleave="setMouseOverCanvas(false)"
+		@mouseenter="setMouseOverCanvas(true)"
+	>
 		<template #foreground>
 			<aside>
 				<section v-if="model?.header?.schema_name">
-					<h7>Model framework</h7>
+					<header>Model framework</header>
 					<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
 				</section>
 				<section>
-					<h7>Model templates</h7>
+					<header>Model templates</header>
 					<ul>
 						<li v-for="(_, index) in 5" :key="index">
 							<tera-model-template-card
+								:card="cards[0]"
 								draggable="true"
 								@dragging="
 									() => {
@@ -28,7 +35,12 @@
 			</aside>
 		</template>
 		<template #data>
-			<tera-model-template-card />
+			<tera-model-template-card
+				v-for="(card, index) in cards"
+				:key="index"
+				:card="card"
+				@dragging="(event) => updatePosition(card, event)"
+			/>
 		</template>
 	</tera-infinite-canvas>
 </template>
@@ -36,6 +48,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Model } from '@/types/Types';
+// import { useDragEvent } from '@/services/drag-drop';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplateCard from './tera-model-template-card.vue';
 
@@ -49,8 +62,24 @@ interface ModelTemplateCard {
 	y: number;
 }
 
-const cards = ref<ModelTemplateCard[]>([]);
-console.log(cards);
+let isMouseOverCanvas: boolean = false;
+let canvasTransform = { x: 0, y: 0, k: 1 };
+
+const cards = ref<ModelTemplateCard[]>([{ x: 100, y: 0 }]);
+
+const setMouseOverCanvas = (val: boolean) => {
+	isMouseOverCanvas = val;
+};
+
+function saveTransform(newTransform: { k: number; x: number; y: number }) {
+	canvasTransform = newTransform;
+}
+
+const updatePosition = (card: ModelTemplateCard, { x, y }) => {
+	if (!isMouseOverCanvas) return;
+	card.x += x / canvasTransform.k;
+	card.y += y / canvasTransform.k;
+};
 </script>
 
 <style scoped>
@@ -80,12 +109,13 @@ h5 {
 }
 
 h5,
-h7 {
+header {
 	font-weight: var(--font-weight);
 }
 
-h7 {
+header {
 	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
 
 .pi-info-circle {

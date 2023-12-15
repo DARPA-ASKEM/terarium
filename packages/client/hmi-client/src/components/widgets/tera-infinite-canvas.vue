@@ -35,7 +35,7 @@ const props = withDefaults(
 	}>(),
 	{
 		background: 'dots',
-		debugMode: false,
+		debugMode: true,
 		scaleExtent: () => [0.1, 10],
 		lastTransform: undefined
 	}
