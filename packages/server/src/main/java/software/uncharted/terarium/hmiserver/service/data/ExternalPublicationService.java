@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -96,6 +98,7 @@ public class ExternalPublicationService {
 	 *                     ExternalPublication.
 	 */
 	public ExternalPublication updateExternalPublication(ExternalPublication externalPublication) throws IOException {
+		externalPublication.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getExternalPublicationIndex(), externalPublication.getId().toString(),
 				externalPublication);
 		return externalPublication;

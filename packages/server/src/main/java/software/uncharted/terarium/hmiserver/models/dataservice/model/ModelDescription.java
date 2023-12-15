@@ -18,7 +18,7 @@ public class ModelDescription implements Serializable {
 
 		ModelDescription desc = new ModelDescription()
 				.setUserId(model.getUserId())
-				.setTimestamp(model.getTimestamp());
+				.setTimestamp(model.getCreatedOn());
 
 		if (model.getHeader() != null) {
 			desc.setHeader(new ModelHeader()

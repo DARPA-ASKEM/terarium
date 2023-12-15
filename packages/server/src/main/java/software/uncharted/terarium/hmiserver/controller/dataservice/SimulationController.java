@@ -115,9 +115,9 @@ public class SimulationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the simulation", content = @Content)
 	})
 	public ResponseEntity<Simulation> updateSimulation(@PathVariable("id") final UUID id,
-			@RequestBody final Simulation simulation) {
+			@RequestBody Simulation simulation) {
 		try {
-			return ResponseEntity.ok(simulationService.updateSimulation(simulation));
+			return ResponseEntity.ok(simulationService.updateSimulation(simulation).setId(id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to update simulation %s", id);
 			log.error(error, e);

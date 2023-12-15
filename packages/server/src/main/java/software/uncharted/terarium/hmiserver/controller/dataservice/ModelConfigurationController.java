@@ -71,11 +71,10 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "200", description = "Model configuration created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the configuration", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createModelConfiguration(@RequestBody ModelConfiguration config) {
+	public ResponseEntity<ModelConfiguration> createModelConfiguration(@RequestBody ModelConfiguration config) {
 
 		try {
-			ModelConfiguration modelConfiguration = modelConfigurationService.createModelConfiguration(config);
-			return ResponseEntity.ok(new ResponseId(modelConfiguration.getId()));
+			return ResponseEntity.ok(modelConfigurationService.createModelConfiguration(config));
 		} catch (IOException e) {
 			final String error = "Unable to create model configuration";
 			log.error(error, e);
@@ -114,13 +113,12 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "200", description = "Model configuration updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the configuration", content = @Content)
 	})
-	public ResponseEntity<ResponseId> updateModelConfiguration(
+	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
 			@PathVariable("id") UUID id,
 			@RequestBody ModelConfiguration config) {
 
 		try {
-			modelConfigurationService.updateModelConfiguration(config.setId(id));
-			return ResponseEntity.ok(new ResponseId(id));
+			return ResponseEntity.ok(modelConfigurationService.updateModelConfiguration(config.setId(id)));
 		} catch (IOException e) {
 			final String error = "Unable to update model configuration";
 			log.error(error, e);

@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,12 +45,14 @@ public class ArtifactService {
 	}
 
 	public Artifact createArtifact(Artifact artifact) throws IOException {
+		artifact.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getArtifactIndex(), artifact.setId(UUID.randomUUID()).getId().toString(),
 				artifact);
 		return artifact;
 	}
 
 	public Artifact updateArtifact(Artifact artifact) throws IOException {
+		artifact.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getArtifactIndex(), artifact.getId().toString(), artifact);
 		return artifact;
 	}

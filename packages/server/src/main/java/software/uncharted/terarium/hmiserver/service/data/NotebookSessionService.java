@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +39,7 @@ public class NotebookSessionService {
 	}
 
 	public NotebookSession createNotebookSession(NotebookSession notebookSession) throws IOException {
+		notebookSession.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getNotebookSessionIndex(),
 				notebookSession.setId(UUID.randomUUID()).getId().toString(),
 				notebookSession);
@@ -44,6 +47,7 @@ public class NotebookSessionService {
 	}
 
 	public NotebookSession updateNotebookSession(NotebookSession notebookSession) throws IOException {
+		notebookSession.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getNotebookSessionIndex(), notebookSession.getId().toString(),
 				notebookSession);
 		return notebookSession;

@@ -128,12 +128,12 @@ public class DocumentController {
 			@ApiResponse(responseCode = "200", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createDocument(
-			@RequestBody final DocumentAsset document) {
+	public ResponseEntity<DocumentAsset> createDocument(
+			@RequestBody DocumentAsset document) {
 
 		try {
-			documentAssetService.createDocumentAsset(document);
-			return ResponseEntity.ok(new ResponseId(document.getId()));
+			document = documentAssetService.createDocumentAsset(document);
+			return ResponseEntity.ok(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);

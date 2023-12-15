@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,6 +47,7 @@ public class DocumentAssetService {
 	}
 
 	public DocumentAsset createDocumentAsset(DocumentAsset document) throws IOException {
+		document.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getDocumentIndex(), document.setId(UUID.randomUUID()).getId().toString(),
 				document);
 		return document;

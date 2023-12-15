@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,6 +73,7 @@ public class CodeService {
 	 * @throws IOException if an error occurs while creating the Code object.
 	 */
 	public Code createCode(Code code) throws IOException {
+		code.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getCodeIndex(), code.setId(UUID.randomUUID()).getId().toString(), code);
 		return code;
 	}
@@ -83,6 +86,7 @@ public class CodeService {
 	 * @throws IOException if an error occurs while updating the Code object.
 	 */
 	public Code updateCode(Code code) throws IOException {
+		code.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getCodeIndex(), code.getId().toString(), code);
 		return code;
 	}

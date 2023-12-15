@@ -1,8 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -150,19 +148,18 @@ public class ExternalPublicationController {
 			@ApiResponse(responseCode = "200", description = "publication updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the publication", content = @Content)
 	})
-	public ResponseEntity<ResponseId> updatePublication(
+	public ResponseEntity<ExternalPublication> updatePublication(
 			@PathVariable("id") final UUID id,
-			@RequestBody final ExternalPublication publication) {
-		publication.setId(id).setUpdatedOn(Timestamp.from(Instant.now()));
+			@RequestBody ExternalPublication publication) {
 		try {
-			externalPublicationService.updateExternalPublication(publication);
+			publication = externalPublicationService.updateExternalPublication(publication.setId(id));
+			return ResponseEntity.ok(publication);
 		} catch (IOException e) {
 			log.error("Unable to PUT publication", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to put publication");
 		}
-		return ResponseEntity.ok(new ResponseId(publication.getId()));
 	}
 
 	/**
