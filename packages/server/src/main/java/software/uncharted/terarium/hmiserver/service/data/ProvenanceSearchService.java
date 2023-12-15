@@ -33,7 +33,7 @@ import software.uncharted.terarium.hmiserver.service.neo4j.Neo4jService;
 @Slf4j
 public class ProvenanceSearchService {
 
-	private Neo4jService neo4jService;
+	private final Neo4jService neo4jService;
 
 	// Search methods
 
@@ -69,11 +69,11 @@ public class ProvenanceSearchService {
 			String relationshipsStr = relationshipsArrayAsStr(Arrays.asList(ProvenanceRelationType.CONTAINS,
 					ProvenanceRelationType.IS_CONCEPT_OF), new ArrayList<>());
 			String relationDirection = dynamicRelationshipDirection(direction,
-					String.format("r:%s *1..", relationshipsStr));
+					String.format("r:'%s' *1..", relationshipsStr));
 			String matchNode = matchNodeBuilder(payload.getRootType(), payload.getRootId());
 			String nodeAbbr = returnNodeAbbr(payload.getRootType());
 
-			String query = String.format("%s%s(n) return %s, r, n", matchNode, relationDirection, nodeAbbr);
+			String query = String.format("'%s''%s'(n) return '%s', r, n", matchNode, relationDirection, nodeAbbr);
 
 			Result response = session.run(query);
 
@@ -105,7 +105,7 @@ public class ProvenanceSearchService {
 					new ArrayList<>());
 
 			String query = String.format(
-					"%s OPTIONAL MATCH (Mr2:ModelRevision)-[r2:%s *1..]->(Mr) WITH *, COLLECT(r)+COLLECT(r2) AS r3, COLLECT(Mr)+COLLECT(Mr2) AS Mrs UNWIND Mrs AS Both_rms UNWIND r3 AS r4 WITH * OPTIONAL MATCH (Both_rms)<-[r5:BEGINS_AT]-(Md:Model) WITH *, COLLECT(r4)+COLLECT(r5) AS r6 UNWIND r6 AS r7 RETURN Both_rms, Md, r7",
+					"'%s' OPTIONAL MATCH (Mr2:ModelRevision)-[r2:'%s' *1..]->(Mr) WITH *, COLLECT(r)+COLLECT(r2) AS r3, COLLECT(Mr)+COLLECT(Mr2) AS Mrs UNWIND Mrs AS Both_rms UNWIND r3 AS r4 WITH * OPTIONAL MATCH (Both_rms)<-[r5:BEGINS_AT]-(Md:Model) WITH *, COLLECT(r4)+COLLECT(r5) AS r6 UNWIND r6 AS r7 RETURN Both_rms, Md, r7",
 					matchPattern, relationshipsStr);
 
 			Result response = session.run(query);
@@ -135,7 +135,7 @@ public class ProvenanceSearchService {
 							ProvenanceRelationType.STRATIFIED_FROM));
 
 			String query = String.format(
-					"%s OPTIONAL MATCH (Mr)-[r2:%s *1..]->(Mr2:ModelRevision) WITH *, COLLECT(Mr)+COLLECT(Mr2) AS Mrs, COLLECT(r)+COLLECT(r2) AS r3 UNWIND Mrs AS Both_rms WITH * OPTIONAL MATCH (md2:Model)-[r4:BEGINS_AT]->(Both_rms) WITH *, COLLECT(r3)+COLLECT(r4) AS r5 RETURN %s, md2, Both_rms, r5",
+					"'%s' OPTIONAL MATCH (Mr)-[r2:'%s' *1..]->(Mr2:ModelRevision) WITH *, COLLECT(Mr)+COLLECT(Mr2) AS Mrs, COLLECT(r)+COLLECT(r2) AS r3 UNWIND Mrs AS Both_rms WITH * OPTIONAL MATCH (md2:Model)-[r4:BEGINS_AT]->(Both_rms) WITH *, COLLECT(r3)+COLLECT(r4) AS r5 RETURN '%s', md2, Both_rms, r5",
 					matchPattern, modelRelationships, nodeAbbr);
 
 			Result response = session.run(query);
@@ -149,7 +149,7 @@ public class ProvenanceSearchService {
 			String matchNode = matchNodeBuilder();
 
 			String query = String.format(
-					"%s-[r]->(n2) WHERE r.user_id=%s WITH *, COLLECT(n)+COLLECT(n2) AS nodes UNWIND nodes AS both_nodes WITH * RETURN both_nodes",
+					"'%s'-[r]->(n2) WHERE r.user_id='%s' WITH *, COLLECT(n)+COLLECT(n2) AS nodes UNWIND nodes AS both_nodes WITH * RETURN both_nodes",
 					matchNode, payload.getUserId());
 
 			Result response = session.run(query);
@@ -163,7 +163,7 @@ public class ProvenanceSearchService {
 			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
 
 			String query = String.format(
-					"%s-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN n",
+					"'%s'-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN n",
 					matchNode, payload.getCurie());
 
 			Result response = session.run(query);
@@ -180,7 +180,7 @@ public class ProvenanceSearchService {
 		try (Session session = neo4jService.getSession()) {
 			UUID modelId = payload.getRootId();
 
-			String query = String.format("MATCH (c:Code)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN c", modelId);
+			String query = String.format("MATCH (c:Code)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN c", modelId);
 
 			Result response = session.run(query);
 
@@ -202,7 +202,8 @@ public class ProvenanceSearchService {
 		try (Session session = neo4jService.getSession()) {
 			UUID modelId = payload.getRootId();
 
-			String query = String.format("MATCH (e:Equation)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN e", modelId);
+			String query = String.format("MATCH (e:Equation)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN e",
+					modelId);
 
 			Result response = session.run(query);
 
@@ -224,7 +225,8 @@ public class ProvenanceSearchService {
 		try (Session session = neo4jService.getSession()) {
 			UUID modelId = payload.getRootId();
 
-			String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: %s}) RETURN d", modelId);
+			String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN d",
+					modelId);
 
 			Result response = session.run(query);
 
@@ -242,7 +244,7 @@ public class ProvenanceSearchService {
 			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
 
 			String query = String.format(
-					"%s-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN labels(n) as label, n.id as id",
+					"'%s'-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN labels(n) as label, n.id as id",
 					matchNode, payload.getCurie());
 
 			Result response = session.run(query);
@@ -403,11 +405,11 @@ public class ProvenanceSearchService {
 	public String dynamicRelationshipDirection(String direction, String relationshipType) {
 		switch (direction) {
 			case "all":
-				return String.format("-[%s]-", relationshipType);
+				return String.format("-['%s']-", relationshipType);
 			case "child":
-				return String.format("<-[%s]-", relationshipType);
+				return String.format("<-['%s']-", relationshipType);
 			case "parent":
-				return String.format("-[%s]->", relationshipType);
+				return String.format("-['%s']->", relationshipType);
 			default:
 				throw new IllegalArgumentException("Relationship direction is not allowed.");
 		}
@@ -434,12 +436,13 @@ public class ProvenanceSearchService {
 		String modelRevisionNode = nodeBuilder(ProvenanceType.MODEL);
 
 		Map<ProvenanceType, String> queryTemplatesIndex = new HashMap<>();
-		queryTemplatesIndex.put(ProvenanceType.MODEL, String.format("-[r:BEGINS_AT]->%s ", modelRevisionNode));
-		queryTemplatesIndex.put(ProvenanceType.MODEL_CONFIGURATION, String.format("-[r:USES]->%s ", modelRevisionNode));
+		queryTemplatesIndex.put(ProvenanceType.MODEL, String.format("-[r:BEGINS_AT]->'%s' ", modelRevisionNode));
+		queryTemplatesIndex.put(ProvenanceType.MODEL_CONFIGURATION,
+				String.format("-[r:USES]->'%s' ", modelRevisionNode));
 		queryTemplatesIndex.put(ProvenanceType.SIMULATION,
-				String.format("-[r:%s *1..]->%s ", relationshipsStr, modelRevisionNode));
+				String.format("-[r:'%s' *1..]->'%s' ", relationshipsStr, modelRevisionNode));
 		queryTemplatesIndex.put(ProvenanceType.DATASET,
-				String.format("-[r:%s *1..]->%s ", relationshipsStr, modelRevisionNode));
+				String.format("-[r:'%s' *1..]->'%s' ", relationshipsStr, modelRevisionNode));
 
 		return matchNode + queryTemplatesIndex.get(rootType);
 	}
@@ -450,7 +453,7 @@ public class ProvenanceSearchService {
 
 	public String matchNodeBuilder(ProvenanceType nodeType) {
 		String nodeTypeCharacter = returnNodeAbbr(nodeType);
-		return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
+		return String.format("MATCH ('%s':'%s')", nodeTypeCharacter, nodeType);
 	}
 
 	public String matchNodeBuilder(ProvenanceType nodeType, UUID nodeId) {
@@ -459,9 +462,9 @@ public class ProvenanceSearchService {
 		}
 		String nodeTypeCharacter = returnNodeAbbr(nodeType);
 		if (nodeId == null) {
-			return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
+			return String.format("MATCH ('%s':'%s')", nodeTypeCharacter, nodeType);
 		}
-		return String.format("MATCH (%s:%s {id: '%s'}) ", nodeTypeCharacter, nodeType, nodeId);
+		return String.format("MATCH ('%s':'%s' {id: '%s'}) ", nodeTypeCharacter, nodeType, nodeId);
 	}
 
 	public String returnNodeAbbr(ProvenanceType nodeType) {
@@ -509,7 +512,7 @@ public class ProvenanceSearchService {
 			return "(n) ";
 		}
 		String nodeTypeAbbr = returnNodeAbbr(nodeType);
-		return String.format("(%s:%s {id: '%s'}) ", nodeTypeAbbr, nodeType, nodeId);
+		return String.format("('%s':'%s' {id: '%s'}) ", nodeTypeAbbr, nodeType, nodeId);
 	}
 
 	public String nodeBuilder(ProvenanceType nodeType) {
@@ -517,7 +520,7 @@ public class ProvenanceSearchService {
 			return "(n) ";
 		}
 		String nodeTypeAbbr = returnNodeAbbr(nodeType);
-		return String.format("(%s:%s)", nodeTypeAbbr, nodeType);
+		return String.format("('%s':'%s')", nodeTypeAbbr, nodeType);
 	}
 
 	public List<ProvenanceEdge> formattedEdges(Graph graph) {

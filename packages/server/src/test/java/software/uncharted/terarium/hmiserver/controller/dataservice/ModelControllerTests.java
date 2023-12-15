@@ -63,7 +63,6 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 	}
 
-	// TODO(kbirk): issues with provenance causing this to fail
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModel() throws Exception {

@@ -106,7 +106,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 				.setName("test-workflow-name0")
 				.setDescription("test-workflow-description"));
 
-		mockMvc.perform(MockMvcRequestBuilders.put("/workflows" + workflow.getId())
+		mockMvc.perform(MockMvcRequestBuilders.put("/workflows/" + workflow.getId())
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(workflow)))
