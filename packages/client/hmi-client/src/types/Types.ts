@@ -117,7 +117,9 @@ export interface SimulationResult {
 
 export interface Artifact {
     id?: string;
-    timestamp?: any;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     userId: string;
     name: string;
     description?: string;
@@ -141,15 +143,6 @@ export interface CsvColumnStats {
     mean: number;
     median: number;
     sd: number;
-}
-
-export interface ExternalPublication {
-    id?: string;
-    title: string;
-    createdOn: Date;
-    updatedOn: Date;
-    deletedOn?: Date;
-    xdd_uri: string;
 }
 
 export interface Grounding {
@@ -198,7 +191,9 @@ export interface Dynamics {
 
 export interface Dataset {
     id?: string;
-    timestamp?: any;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn: Date;
     userId?: string;
     name: string;
     description?: string;
@@ -236,7 +231,9 @@ export interface DocumentAsset {
     id?: string;
     name?: string;
     description?: string;
-    timestamp?: string;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     userId?: string;
     fileNames?: string[];
     documentUrl?: string;
@@ -250,7 +247,9 @@ export interface DocumentAsset {
 
 export interface Equation {
     id?: string;
-    timestamp?: Date;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     userId?: string;
     name?: string;
     equationType: EquationType;
@@ -265,10 +264,21 @@ export interface EquationSource {
     hmiGenerated?: boolean;
 }
 
+export interface ExternalPublication {
+    id?: string;
+    title: string;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn: Date;
+    xdd_uri: string;
+}
+
 export interface Model {
     id: string;
     header: ModelHeader;
-    timestamp?: Date;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     userId?: string;
     model: { [index: string]: any };
     properties?: any;
@@ -278,6 +288,9 @@ export interface Model {
 
 export interface ModelConfiguration {
     id: string;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     name: string;
     description?: string;
     modelId: string;
@@ -361,7 +374,9 @@ export interface DecapodesTerm {
 
 export interface NotebookSession {
     id?: string;
-    timestamp?: Date;
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
     name: string;
     description?: string;
     data: any;
