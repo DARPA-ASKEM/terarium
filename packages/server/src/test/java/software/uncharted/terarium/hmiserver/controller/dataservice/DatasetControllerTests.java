@@ -4,10 +4,10 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
-import java.util.UUID;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,9 +19,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class DatasetControllerTests extends TerariumApplicationTests {
 
@@ -31,36 +33,34 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private DatasetService datasetService;
 
-	final Dataset dataset0 = new Dataset()
-			.setId(UUID.randomUUID())
-			.setName("test-dataset-name")
-			.setDescription("my description");
+	@Autowired
+	private ElasticsearchService elasticService;
 
-	final Dataset dataset1 = new Dataset()
-			.setId(UUID.randomUUID())
-			.setName("test-dataset-name")
-			.setDescription("my description");
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
 
-	final Dataset dataset2 = new Dataset()
-			.setId(UUID.randomUUID())
-			.setName("test-dataset-name")
-			.setDescription("my description");
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDatasetIndex());
+	}
 
-	@After
-	public void tearDown() throws IOException {
-		datasetService.deleteDataset(dataset0.getId());
-		datasetService.deleteDataset(dataset1.getId());
-		datasetService.deleteDataset(dataset2.getId());
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getDatasetIndex());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateDataset() throws Exception {
 
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
+
 		mockMvc.perform(MockMvcRequestBuilders.post("/datasets")
 				.with(csrf())
 				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(dataset0)))
+				.content(objectMapper.writeValueAsString(dataset)))
 				.andExpect(status().isOk());
 	}
 
@@ -68,9 +68,11 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDataset() throws Exception {
 
-		datasetService.createDataset(dataset0);
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset0.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -78,9 +80,18 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDatasets() throws Exception {
-		datasetService.createDataset(dataset0);
-		datasetService.createDataset(dataset1);
-		datasetService.createDataset(dataset2);
+
+		datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name0")
+				.setDescription("my description"));
+
+		datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name1")
+				.setDescription("my description"));
+
+		datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name2")
+				.setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets")
 				.with(csrf()))
@@ -91,19 +102,25 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDataset() throws Exception {
-		datasetService.createDataset(dataset0);
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/datasets/" + dataset0.getId())
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
+
+		mockMvc.perform(MockMvcRequestBuilders.delete("/datasets/" + dataset.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(datasetService.getDataset(dataset0.getId()));
+		Assertions.assertNull(datasetService.getDataset(dataset.getId()));
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDataset() throws Exception {
-		datasetService.createDataset(dataset0);
+
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
 
 		String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -117,7 +134,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset0.getId() + "/uploadCSV")
+				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/uploadCSV")
 						.file(file)
 						.queryParam("filename", "filename.csv")
 						.with(csrf())
@@ -133,10 +150,12 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDatasetFromGithub() throws Exception {
 
-		datasetService.createDataset(dataset0);
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
 
 		mockMvc.perform(
-				MockMvcRequestBuilders.put("/datasets/" + dataset0.getId() + "/uploadCSVFromGithub")
+				MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/uploadCSVFromGithub")
 						.with(csrf())
 						.param("repoOwnerAndName", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -148,7 +167,10 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDataset() throws Exception {
-		datasetService.createDataset(dataset0);
+
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
 
 		String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -162,7 +184,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset0.getId() + "/uploadCSV")
+				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/uploadCSV")
 						.file(file)
 						.queryParam("filename", "filename.csv")
 						.with(csrf())
@@ -174,7 +196,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders.get("/datasets/" + dataset0.getId() + "/downloadCSV")
+				.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/downloadCSV")
 						.queryParam("filename", "filename.csv")
 						.with(csrf()))
 				.andExpect(status().isOk())

@@ -37,7 +37,8 @@ public class NotebookSessionService {
 	}
 
 	public NotebookSession createNotebookSession(NotebookSession notebookSession) throws IOException {
-		elasticService.index(elasticConfig.getNotebookSessionIndex(), notebookSession.getId().toString(),
+		elasticService.index(elasticConfig.getNotebookSessionIndex(),
+				notebookSession.setId(UUID.randomUUID()).getId().toString(),
 				notebookSession);
 		return notebookSession;
 	}

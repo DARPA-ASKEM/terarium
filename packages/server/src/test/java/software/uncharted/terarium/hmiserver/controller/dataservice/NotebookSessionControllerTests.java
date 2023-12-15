@@ -4,10 +4,10 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
-import java.util.UUID;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -16,9 +16,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class NotebookSessionControllerTests extends TerariumApplicationTests {
 
@@ -26,35 +28,35 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	private NotebookSessionService equationService;
+	private NotebookSessionService notebookSessionService;
 
-	final NotebookSession equation0 = new NotebookSession()
-			.setId(UUID.randomUUID())
-			.setName("test-notebook-name");
+	@Autowired
+	private ElasticsearchService elasticService;
 
-	final NotebookSession equation1 = new NotebookSession()
-			.setId(UUID.randomUUID())
-			.setName("test-notebook-name");
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
 
-	final NotebookSession equation2 = new NotebookSession()
-			.setId(UUID.randomUUID())
-			.setName("test-notebook-name");
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getNotebookSessionIndex());
+	}
 
-	@After
-	public void tearDown() throws IOException {
-		equationService.deleteNotebookSession(equation0.getId());
-		equationService.deleteNotebookSession(equation1.getId());
-		equationService.deleteNotebookSession(equation2.getId());
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getNotebookSessionIndex());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateNotebookSession() throws Exception {
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/equations")
+		final NotebookSession notebookSession = new NotebookSession()
+				.setName("test-notebook-name");
+
+		mockMvc.perform(MockMvcRequestBuilders.post("/sessions")
 				.with(csrf())
 				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(equation0)))
+				.content(objectMapper.writeValueAsString(notebookSession)))
 				.andExpect(status().isOk());
 	}
 
@@ -62,9 +64,10 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetNotebookSession() throws Exception {
 
-		equationService.createNotebookSession(equation0);
+		final NotebookSession notebookSession = notebookSessionService.createNotebookSession(new NotebookSession()
+				.setName("test-notebook-name"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/equations/" + equation0.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/sessions/" + notebookSession.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -72,11 +75,15 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetNotebookSessions() throws Exception {
-		equationService.createNotebookSession(equation0);
-		equationService.createNotebookSession(equation1);
-		equationService.createNotebookSession(equation2);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/equations")
+		notebookSessionService.createNotebookSession(new NotebookSession()
+				.setName("test-notebook-name"));
+		notebookSessionService.createNotebookSession(new NotebookSession()
+				.setName("test-notebook-name"));
+		notebookSessionService.createNotebookSession(new NotebookSession()
+				.setName("test-notebook-name"));
+
+		mockMvc.perform(MockMvcRequestBuilders.get("/sessions")
 				.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
@@ -85,13 +92,15 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteNotebookSession() throws Exception {
-		equationService.createNotebookSession(equation0);
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/equations/" + equation0.getId())
+		final NotebookSession notebookSession = notebookSessionService.createNotebookSession(new NotebookSession()
+				.setName("test-notebook-name"));
+
+		mockMvc.perform(MockMvcRequestBuilders.delete("/sessions/" + notebookSession.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(equationService.getNotebookSession(equation0.getId()));
+		Assertions.assertNull(notebookSessionService.getNotebookSession(notebookSession.getId()));
 	}
 
 }

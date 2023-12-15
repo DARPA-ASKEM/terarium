@@ -43,7 +43,8 @@ public class DatasetService {
 	}
 
 	public Dataset createDataset(Dataset dataset) throws IOException {
-		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId().toString(), dataset);
+		elasticService.index(elasticConfig.getDocumentIndex(), dataset.setId(UUID.randomUUID()).getId().toString(),
+				dataset);
 		return dataset;
 	}
 

@@ -45,7 +45,8 @@ public class DocumentAssetService {
 	}
 
 	public DocumentAsset createDocumentAsset(DocumentAsset document) throws IOException {
-		elasticService.index(elasticConfig.getDocumentIndex(), document.getId().toString(), document);
+		elasticService.index(elasticConfig.getDocumentIndex(), document.setId(UUID.randomUUID()).getId().toString(),
+				document);
 		return document;
 	}
 
