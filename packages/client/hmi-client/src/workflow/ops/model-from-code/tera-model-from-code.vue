@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div tabName="Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section :isLoading="fetchingInputBlocks">
 				<header>
 					<h5>Code</h5>
 					<Dropdown
@@ -160,6 +160,7 @@ enum ModelFramework {
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
 const isProcessing = ref(false);
+const fetchingInputBlocks = ref(false);
 
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const modelFrameworks = Object.values(ModelFramework);
@@ -232,7 +233,9 @@ onMounted(async () => {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
+	fetchingInputBlocks.value = true;
 	await getInputCodeBlocks();
+	fetchingInputBlocks.value = false;
 
 	try {
 		const jupyterContext = buildJupyterContext();
