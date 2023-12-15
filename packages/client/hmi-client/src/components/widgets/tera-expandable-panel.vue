@@ -35,6 +35,8 @@ defineProps<{
 <style scoped>
 .p-panel {
 	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-medium);
+	border-left: 0.5rem solid var(--primary-color);
 }
 
 .p-panel:deep(section) {

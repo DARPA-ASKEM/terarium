@@ -27,7 +27,6 @@
 					</template>
 					<v-ace-editor
 						v-model:value="allCodeBlocks[i].codeContent"
-						@init="initialize"
 						:lang="codeLanguage"
 						theme="chrome"
 						style="height: 10rem; width: 100%"
@@ -68,11 +67,11 @@
 				is-selectable
 			>
 				<section v-if="selectedModel">
-					<template v-if="clonedState.modelFramework === ModelFramework.Petrinet">
+					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
-					<template v-if="clonedState.modelFramework === ModelFramework.Decapodes">
+					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
 						<span>Decapodes created: {{ selectedModel.id }}</span>
 					</template>
 				</section>
@@ -117,7 +116,6 @@ import { cloneDeep, isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
@@ -163,7 +161,6 @@ const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
 const isProcessing = ref(false);
 
-const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const modelFrameworks = Object.values(ModelFramework);
 const decapodesModelValid = ref(false);
@@ -225,6 +222,9 @@ const outputs = computed(() => {
 	return groupedOutputs;
 });
 const selectedOutputId = ref<string>();
+const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
+	() => props.node.outputs?.find((output) => selectedOutputId.value === output.id)
+);
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
@@ -287,7 +287,9 @@ async function handleCode() {
 	}
 
 	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
-		const code = editor.value?.getValue();
+		if (isEmpty(allCodeBlocks.value)) return;
+		// we only use one code block for decapodes at the moment
+		const code = allCodeBlocks.value[0].codeContent;
 		const messageContent = {
 			declaration: code
 		};
@@ -414,14 +416,6 @@ async function getInputCodeBlocks() {
 	codeBlocks = inputCodeBlocksArrays.flat();
 
 	inputCodeBlocks.value = codeBlocks;
-}
-
-/**
- * Editor initialization function
- * @param editorInstance	the Ace editor instance
- */
-async function initialize(editorInstance) {
-	editor.value = editorInstance;
 }
 
 function addCodeBlock() {
