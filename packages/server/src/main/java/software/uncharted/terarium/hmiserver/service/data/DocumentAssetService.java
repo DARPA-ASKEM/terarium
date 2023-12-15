@@ -48,7 +48,8 @@ public class DocumentAssetService {
 
 	public DocumentAsset createDocumentAsset(DocumentAsset document) throws IOException {
 		document.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getDocumentIndex(), document.getId().toString(), document);
+		elasticService.index(elasticConfig.getDocumentIndex(), document.setId(UUID.randomUUID()).getId().toString(),
+				document);
 		return document;
 	}
 

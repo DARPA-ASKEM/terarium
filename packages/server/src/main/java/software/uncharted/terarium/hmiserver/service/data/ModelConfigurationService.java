@@ -47,7 +47,8 @@ public class ModelConfigurationService {
 
 	public ModelConfiguration createModelConfiguration(ModelConfiguration modelConfiguration) throws IOException {
 		modelConfiguration.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId().toString(),
+		elasticService.index(elasticConfig.getModelConfigurationIndex(),
+				modelConfiguration.setId(UUID.randomUUID()).getId().toString(),
 				modelConfiguration);
 		return modelConfiguration;
 	}

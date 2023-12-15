@@ -103,7 +103,7 @@ public class ModelService {
 
 	public Model createModel(Model model) throws IOException {
 		model.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getModelIndex(), model.getId().toString(), model);
+		elasticService.index(elasticConfig.getModelIndex(), model.setId(UUID.randomUUID()).getId().toString(), model);
 		return model;
 	}
 

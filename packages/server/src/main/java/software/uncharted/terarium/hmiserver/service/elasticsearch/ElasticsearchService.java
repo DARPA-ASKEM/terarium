@@ -32,6 +32,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
+import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsIndexTemplateRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
@@ -79,8 +80,7 @@ public class ElasticsearchService {
 		log.info("Connecting elasticsearch client to: {}", config.getUrl());
 
 		final RestClientBuilder httpClientBuilder = RestClient.builder(
-			HttpHost.create(config.getUrl())
-		);
+				HttpHost.create(config.getUrl()));
 
 		final RestClient httpClient = httpClientBuilder.build();
 
@@ -111,7 +111,12 @@ public class ElasticsearchService {
 		return exists;
 	}
 
-
+	/**
+	 * Create the provided index.
+	 *
+	 * @param index
+	 * @throws IOException
+	 */
 	public void createIndex(final String index) throws IOException {
 
 		final CreateIndexRequest req = new CreateIndexRequest.Builder().index(index).build();
@@ -120,10 +125,26 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Returns true if the ES cluster contains the index template with the provided name, false otherwise
+	 * Create the provided index if it doesn't exist, if it does, delete it and
+	 * re-create it.
+	 *
+	 * @param index
+	 * @throws IOException
+	 */
+	public void createOrEnsureIndexIsEmpty(final String index) throws IOException {
+		if (containsIndex(index)) {
+			deleteIndex(index);
+		}
+		createIndex(index);
+	}
+
+	/**
+	 * Returns true if the ES cluster contains the index template with the provided
+	 * name, false otherwise
 	 *
 	 * @param name The name of the index template to check existence for
-	 * @return True if the index template is contained in the cluster, false otherwise
+	 * @return True if the index template is contained in the cluster, false
+	 *         otherwise
 	 */
 	public boolean containsIndexTemplate(final String name) {
 		final ExistsIndexTemplateRequest req = new ExistsIndexTemplateRequest.Builder().name(name).build();
@@ -132,7 +153,8 @@ public class ElasticsearchService {
 			exists = client.indices().existsIndexTemplate(req);
 		} catch (final ElasticsearchStatusException e) {
 			if (e.status() != RestStatus.NOT_FOUND) {
-				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}", name, e);
+				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}",
+						name, e);
 			}
 		} catch (final IOException e) {
 			log.error("Error checking existence of template {}", name, e);
@@ -165,7 +187,8 @@ public class ElasticsearchService {
 			return true;
 		} catch (final ElasticsearchStatusException e) {
 			if (e.status() != RestStatus.NOT_FOUND) {
-				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}", id, e);
+				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}", id,
+						e);
 			}
 		} catch (final IOException e) {
 			log.error("Error checking existence of pipeline {}", id, e);
@@ -201,9 +224,9 @@ public class ElasticsearchService {
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			final HttpEntity<String> entity = new HttpEntity<>(typedJson, headers);
 			final ResponseEntity<JsonNode> response = getRestTemplate().exchange(
-				new URI(config.getUrl() + "/" + indexName + "/" + name),
-				HttpMethod.PUT, entity,
-				JsonNode.class);
+					new URI(config.getUrl() + "/" + indexName + "/" + name),
+					HttpMethod.PUT, entity,
+					JsonNode.class);
 			final JsonNode body = response.getBody();
 			if (body != null) {
 				return body.at("/acknowledged").asBoolean();
@@ -218,7 +241,7 @@ public class ElasticsearchService {
 	 * Search an index using a provided query (can be null for no query)
 	 *
 	 * @param <T>    The type of the document
-	 * @param req - The search request
+	 * @param req    - The search request
 	 * @param tClass The class of the document
 	 * @return A list of found documents.
 	 */
@@ -245,11 +268,11 @@ public class ElasticsearchService {
 		log.info("Indexing: {} into {}", id, index);
 
 		final IndexRequest<T> req = new IndexRequest.Builder<T>()
-			.index(index)
-			.id(id)
-			.document(document)
-			.refresh(Refresh.WaitFor)
-			.build();
+				.index(index)
+				.id(id)
+				.document(document)
+				.refresh(Refresh.WaitFor)
+				.build();
 
 		client.index(req);
 	}
@@ -264,12 +287,27 @@ public class ElasticsearchService {
 		log.info("Deleting: {} from {}", id, index);
 
 		final DeleteRequest req = new DeleteRequest.Builder()
-			.index(index)
-			.id(id)
-			.refresh(Refresh.WaitFor)
-			.build();
+				.index(index)
+				.id(id)
+				.refresh(Refresh.WaitFor)
+				.build();
 
 		client.delete(req);
+	}
+
+	/**
+	 * Remove an index.
+	 *
+	 * @param index The index to remove
+	 */
+	public void deleteIndex(final String index) throws IOException {
+		log.info("Deleting index: {}", index);
+
+		DeleteIndexRequest deleteRequest = new DeleteIndexRequest.Builder()
+				.index(index)
+				.build();
+
+		client.indices().delete(deleteRequest);
 	}
 
 	/**
@@ -279,15 +317,15 @@ public class ElasticsearchService {
 	 * @param index  The index to get the document from
 	 * @param id     The id of the document to get
 	 * @param tClass The class of the document
-	 * @return       The document if found, null otherwise
+	 * @return The document if found, null otherwise
 	 */
 	public <T> T get(final String index, final String id, final Class<T> tClass) throws IOException {
 		log.info("Getting: {} from {}", id, index);
 
 		final GetRequest req = new GetRequest.Builder()
-			.index(index)
-			.id(id)
-			.build();
+				.index(index)
+				.id(id)
+				.build();
 
 		final GetResponse<T> res = client.get(req, tClass);
 		if (res.found()) {
