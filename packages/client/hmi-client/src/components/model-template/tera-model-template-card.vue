@@ -102,7 +102,8 @@ ul {
 </style>
 
 <style>
-/* When a card is placed in the data layer of the infinite canvas */
+/* When a card is placed in the data layer of the infinite canvas 
+(eg. ports shouldn't look selectable if card is in the sidebar) */
 .data-layer .card-container {
 	& .card:hover > .p-button {
 		display: block;
