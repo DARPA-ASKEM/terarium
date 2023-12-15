@@ -40,7 +40,8 @@ public class EquationService {
 
 	public Equation createEquation(Equation equation) throws IOException {
 		equation.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
+		elasticService.index(elasticConfig.getEquationIndex(), equation.setId(UUID.randomUUID()).getId().toString(),
+				equation);
 		return equation;
 	}
 

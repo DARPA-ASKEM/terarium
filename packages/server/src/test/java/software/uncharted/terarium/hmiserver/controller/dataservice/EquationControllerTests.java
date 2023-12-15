@@ -4,10 +4,10 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
-import java.util.UUID;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -16,9 +16,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
 import software.uncharted.terarium.hmiserver.service.data.EquationService;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class EquationControllerTests extends TerariumApplicationTests {
 
@@ -28,33 +30,33 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private EquationService equationService;
 
-	final Equation equation0 = new Equation()
-			.setId(UUID.randomUUID())
-			.setName("test-equation-name");
+	@Autowired
+	private ElasticsearchService elasticService;
 
-	final Equation equation1 = new Equation()
-			.setId(UUID.randomUUID())
-			.setName("test-equation-name");
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
 
-	final Equation equation2 = new Equation()
-			.setId(UUID.randomUUID())
-			.setName("test-equation-name");
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getEquationIndex());
+	}
 
-	@After
-	public void tearDown() throws IOException {
-		equationService.deleteEquation(equation0.getId());
-		equationService.deleteEquation(equation1.getId());
-		equationService.deleteEquation(equation2.getId());
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getEquationIndex());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEquation() throws Exception {
 
+		final Equation equation = new Equation()
+				.setName("test-equation-name");
+
 		mockMvc.perform(MockMvcRequestBuilders.post("/equations")
 				.with(csrf())
 				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(equation0)))
+				.content(objectMapper.writeValueAsString(equation)))
 				.andExpect(status().isOk());
 	}
 
@@ -62,9 +64,10 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetEquation() throws Exception {
 
-		equationService.createEquation(equation0);
+		final Equation equation = equationService.createEquation(new Equation()
+				.setName("test-equation-name"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/equations/" + equation0.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/equations/" + equation.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -72,9 +75,13 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetEquations() throws Exception {
-		equationService.createEquation(equation0);
-		equationService.createEquation(equation1);
-		equationService.createEquation(equation2);
+
+		equationService.createEquation(new Equation()
+				.setName("test-equation-name"));
+		equationService.createEquation(new Equation()
+				.setName("test-equation-name"));
+		equationService.createEquation(new Equation()
+				.setName("test-equation-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/equations")
 				.with(csrf()))
@@ -85,13 +92,15 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteEquation() throws Exception {
-		equationService.createEquation(equation0);
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/equations/" + equation0.getId())
+		final Equation equation = equationService.createEquation(new Equation()
+				.setName("test-equation-name"));
+
+		mockMvc.perform(MockMvcRequestBuilders.delete("/equations/" + equation.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(equationService.getEquation(equation0.getId()));
+		Assertions.assertNull(equationService.getEquation(equation.getId()));
 	}
 
 }

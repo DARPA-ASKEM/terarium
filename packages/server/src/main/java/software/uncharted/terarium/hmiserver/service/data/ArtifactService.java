@@ -46,7 +46,8 @@ public class ArtifactService {
 
 	public Artifact createArtifact(Artifact artifact) throws IOException {
 		artifact.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getArtifactIndex(), artifact.getId().toString(), artifact);
+		elasticService.index(elasticConfig.getArtifactIndex(), artifact.setId(UUID.randomUUID()).getId().toString(),
+				artifact);
 		return artifact;
 	}
 

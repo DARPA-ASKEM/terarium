@@ -40,7 +40,8 @@ public class NotebookSessionService {
 
 	public NotebookSession createNotebookSession(NotebookSession notebookSession) throws IOException {
 		notebookSession.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getNotebookSessionIndex(), notebookSession.getId().toString(),
+		elasticService.index(elasticConfig.getNotebookSessionIndex(),
+				notebookSession.setId(UUID.randomUUID()).getId().toString(),
 				notebookSession);
 		return notebookSession;
 	}
