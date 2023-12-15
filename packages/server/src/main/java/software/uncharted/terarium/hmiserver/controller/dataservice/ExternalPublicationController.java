@@ -151,16 +151,15 @@ public class ExternalPublicationController {
 	public ResponseEntity<ExternalPublication> updatePublication(
 			@PathVariable("id") final UUID id,
 			@RequestBody ExternalPublication publication) {
-		publication.setId(id);
 		try {
-			publication = externalPublicationService.updateExternalPublication(publication);
+			publication = externalPublicationService.updateExternalPublication(publication.setId(id));
+			return ResponseEntity.ok(publication);
 		} catch (IOException e) {
 			log.error("Unable to PUT publication", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to put publication");
 		}
-		return ResponseEntity.ok(publication);
 	}
 
 	/**

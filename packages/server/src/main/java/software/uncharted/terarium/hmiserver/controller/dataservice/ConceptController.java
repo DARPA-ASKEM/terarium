@@ -136,9 +136,9 @@ public class ConceptController {
 	@Secured(Roles.USER)
 	public ResponseEntity<OntologyConcept> updateConcept(
 			@PathVariable("id") final UUID id,
-			@RequestBody final OntologyConcept concept) {
+			@RequestBody OntologyConcept concept) {
 		try {
-			return ResponseEntity.ok(conceptService.updateConcept(concept));
+			return ResponseEntity.ok(conceptService.updateConcept(concept.setId(id)));
 		} catch (RuntimeException e) {
 			final String error = "Unable to update concept";
 			log.error(error, e);

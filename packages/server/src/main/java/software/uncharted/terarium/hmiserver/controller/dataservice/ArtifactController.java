@@ -2,8 +2,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -92,8 +90,6 @@ public class ArtifactController {
 			@RequestBody Artifact artifact) throws IOException {
 
 		artifact = artifactService.updateArtifact(artifact.setId(artifactId));
-
-
 		return ResponseEntity.ok(artifact);
 	}
 

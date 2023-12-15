@@ -42,11 +42,7 @@ public class WorkflowService {
 		return workflow;
 	}
 
-	public Workflow updateWorkflow(final UUID id, final Workflow workflow)
-			throws IOException, IllegalArgumentException {
-		if (!id.equals(workflow.getId())) {
-			throw new IllegalArgumentException("Workflow ID does not match Workflow object ID");
-		}
+	public Workflow updateWorkflow(final Workflow workflow) throws IOException {
 		elasticService.index(elasticConfig.getWorkflowIndex(), workflow.getId().toString(), workflow);
 		return workflow;
 	}

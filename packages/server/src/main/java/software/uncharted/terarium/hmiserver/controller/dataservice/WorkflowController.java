@@ -116,9 +116,9 @@ public class WorkflowController {
 	})
 	public ResponseEntity<Workflow> updateWorkflow(
 			@PathVariable("id") final UUID id,
-			@RequestBody final Workflow workflow) {
+			@RequestBody Workflow workflow) {
 		try {
-			return ResponseEntity.ok(workflowService.updateWorkflow(id, workflow));
+			return ResponseEntity.ok(workflowService.updateWorkflow(workflow.setId(id)));
 		} catch (final IOException e) {
 			final String error = "Unable to update workflow";
 			log.error(error, e);

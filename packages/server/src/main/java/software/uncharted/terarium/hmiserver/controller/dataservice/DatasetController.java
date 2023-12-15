@@ -2,8 +2,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -175,8 +173,7 @@ public class DatasetController {
 			@RequestBody Dataset dataset) {
 
 		try {
-
-			dataset = datasetService.updateDataset(dataset);
+			dataset = datasetService.updateDataset(dataset.setId(id));
 			return ResponseEntity.ok(dataset);
 		} catch (IOException e) {
 			final String error = "Unable to delete dataset";
