@@ -228,6 +228,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import { getTimespan } from '@/workflow/util';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
 	CalibrateMethodOptions,
@@ -245,6 +246,7 @@ const emit = defineEmits([
 	'update-output-port',
 	'close'
 ]);
+const toast = useToastService();
 
 enum CalibrateTabs {
 	Wizard = 'Wizard',
@@ -509,11 +511,11 @@ function addMapping() {
 
 async function getAutoMapping() {
 	if (!modelStateOptions.value) {
-		console.log('no model config id'); // should be toast when jami is done
+		toast.error('', 'No model states to map with');
 		return;
 	}
 	if (!datasetColumns.value) {
-		console.log('no dataset id');
+		toast.error('', 'No dataset columns to map with');
 		return;
 	}
 	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);

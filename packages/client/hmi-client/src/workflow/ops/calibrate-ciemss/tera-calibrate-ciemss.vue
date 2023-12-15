@@ -161,12 +161,14 @@ import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { Poller, PollerState } from '@/api/api';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
+import { useToastService } from '@/services/toast';
 import { CalibrationOperationCiemss, CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const toast = useToastService();
 
 enum CalibrateTabs {
 	Wizard = 'Wizard',
@@ -356,11 +358,11 @@ function addMapping() {
 
 async function getAutoMapping() {
 	if (!modelStateOptions.value) {
-		console.log('no model config id'); // should be toast when jami is done
+		toast.error('', 'No model states to map with');
 		return;
 	}
 	if (!datasetColumns.value) {
-		console.log('no dataset id');
+		toast.error('', 'No dataset columns to map with');
 		return;
 	}
 	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
