@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import { ModelConfiguration, Dataset, CsvAsset, State } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
+import { getEntitySimilarity } from './concept';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -129,12 +130,13 @@ export const autoCalibrationMapping = async (modelOptions: State[], datasetOptio
 				modelOption.grounding?.identifiers &&
 				datasetOption?.metadata?.groundings?.identifiers
 			) {
-				const datasetKeys = Object.keys(datasetOption.metadata.groundings.identifiers);
-				Object.keys(modelOption.grounding.identifiers).forEach((modelGrounding) => {
-					if (datasetKeys.includes(modelGrounding)) {
-						result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
-					}
-				}); // End for each grounding key
+				const modelTemp = Object.entries(modelOption.grounding.identifiers);
+				const datasetTemp = Object.entries(datasetOption?.metadata?.groundings?.identifiers);
+				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
+				const dataGroundingList = datasetTemp.map((ele) => ele.join(':'));
+				console.log(modelGroundingList);
+				console.log(dataGroundingList);
+				console.log(getEntitySimilarity(modelGroundingList, dataGroundingList));
 			}
 		}); // end for each dataset Option
 	}); // end for each model Option

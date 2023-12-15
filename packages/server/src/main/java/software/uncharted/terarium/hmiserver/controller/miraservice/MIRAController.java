@@ -8,8 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
+import software.uncharted.terarium.hmiserver.models.mira.Curies;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -52,5 +54,13 @@ public class MIRAController {
 	) {
 		return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
 
+	}
+
+	@PostMapping("/entity_similarity")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> entitySimilarity(
+		@RequestBody Curies obj
+	) {
+		return ResponseEntity.ok(proxy.entitySimilarity(obj).getBody());
 	}
 }

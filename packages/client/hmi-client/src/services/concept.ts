@@ -5,7 +5,7 @@
 import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
-import { DKG } from '@/types/Types';
+import { Curies, DKG } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -51,4 +51,15 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 	}
 }
 
-export { getCuriesEntities, getFacets };
+async function getEntitySimilarity(sources: string[], targets: string[]) {
+	try {
+		const response = await API.post('/mira/entity_similarity', { sources, targets } as Curies);
+		if (response?.status !== 200) return null;
+		return response?.data ?? null;
+	} catch (error) {
+		logger.error(error, { showToast: false });
+		return null;
+	}
+}
+
+export { getCuriesEntities, getFacets, getEntitySimilarity };
