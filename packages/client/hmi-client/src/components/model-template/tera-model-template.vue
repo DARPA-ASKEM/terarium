@@ -10,7 +10,14 @@
 					<h7>Model templates</h7>
 					<ul>
 						<li v-for="(_, index) in 5" :key="index">
-							<tera-model-template-card />
+							<tera-model-template-card
+								draggable="true"
+								@dragging="
+									() => {
+										console.log(0);
+									}
+								"
+							/>
 						</li>
 					</ul>
 				</section>
@@ -27,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Model } from '@/types/Types';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplateCard from './tera-model-template-card.vue';
@@ -34,6 +42,15 @@ import TeraModelTemplateCard from './tera-model-template-card.vue';
 defineProps<{
 	model?: Model;
 }>();
+
+interface ModelTemplateCard {
+	// Position on canvas
+	x: number;
+	y: number;
+}
+
+const cards = ref<ModelTemplateCard[]>([]);
+console.log(cards);
 </script>
 
 <style scoped>
