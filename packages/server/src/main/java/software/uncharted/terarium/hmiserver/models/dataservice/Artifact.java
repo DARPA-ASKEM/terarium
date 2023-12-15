@@ -39,19 +39,14 @@ public class Artifact {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
-	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
-	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp updatedOn;
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
 
 	/* UserId of who created this asset */
