@@ -19,7 +19,7 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 		// add observables
 		if (modelConfiguration.configuration.semantics?.ode?.observables) {
 			modelConfiguration.configuration.semantics.ode.observables.forEach((o) => {
-				modelOptions.push(o.id.trim());
+				modelOptions.push(o);
 			});
 		}
 
@@ -117,8 +117,26 @@ export const renderLossGraph = (
 };
 
 export const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: any[]) => {
-	console.log(modelOptions);
-	console.log(datasetOptions);
-	// const datasetGroundings = dataset.columns.map(column => column.metadata.groundings)
-	// return [] as CalibrateMap[];
+	const result = [] as CalibrateMap[];
+	modelOptions.forEach((modelOption) => {
+		datasetOptions.forEach((datasetOption) => {
+			// Check for direct string match
+			if (modelOption.id.toLowerCase() === datasetOption.name.toLowerCase()) {
+				result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
+			}
+			// No direct string match, check grounding keys (if they exist)
+			else if (
+				modelOption.grounding?.identifiers &&
+				datasetOption?.metadata?.groundings?.identifiers
+			) {
+				const datasetKeys = Object.keys(datasetOption.metadata.groundings.identifiers);
+				Object.keys(modelOption.grounding.identifiers).forEach((modelGrounding) => {
+					if (datasetKeys.includes(modelGrounding)) {
+						result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
+					}
+				}); // End for each grounding key
+			}
+		}); // end for each dataset Option
+	}); // end for each model Option
+	return result as CalibrateMap[];
 };

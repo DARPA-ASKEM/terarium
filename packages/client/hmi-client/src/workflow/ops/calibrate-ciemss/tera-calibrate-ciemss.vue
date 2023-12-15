@@ -366,8 +366,10 @@ async function getAutoMapping() {
 		console.log('no dataset id');
 		return;
 	}
-	// mapping.value =
-	await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+	emit('update-state', state);
 }
 
 // Set up model config + dropdown names

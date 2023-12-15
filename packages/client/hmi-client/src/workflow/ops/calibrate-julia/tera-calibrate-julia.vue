@@ -39,6 +39,12 @@
 							label="Add mapping"
 							@click="addMapping"
 						/>
+						<Button
+							class="p-button-sm p-button-text"
+							icon="pi pi-plus"
+							label="Auto map"
+							@click="getAutoMapping"
+						/>
 					</div>
 				</div>
 				<div class="form-section">
@@ -190,7 +196,8 @@ import {
 	setupModelInput,
 	setupDatasetInput,
 	renderLossGraph,
-	CalibrateMap
+	CalibrateMap,
+	autoCalibrationMapping
 } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
@@ -479,6 +486,21 @@ function addMapping() {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
+	emit('update-state', state);
+}
+
+async function getAutoMapping() {
+	if (!modelStateOptions.value) {
+		console.log('no model config id'); // should be toast when jami is done
+		return;
+	}
+	if (!datasetColumns.value) {
+		console.log('no dataset id');
+		return;
+	}
+	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
 	emit('update-state', state);
 }
 
