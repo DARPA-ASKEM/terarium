@@ -197,25 +197,33 @@ const clonedState = ref<ModelFromCodeState>({
 });
 
 const outputs = computed(() => {
+	const activeProjectModelIds = useProjects().activeProject.value?.assets?.models?.map(
+		(model) => model.id
+	);
+
 	const savedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
 	const unsavedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
 
-	props.node.outputs?.forEach((output) => {
-		if (output.state?.isSaved) {
-			savedOutputs.push(output);
-			return;
+	props.node.outputs.forEach((output) => {
+		const modelId = output.state?.modelId;
+		if (modelId) {
+			const isSaved = activeProjectModelIds?.includes(modelId);
+			if (isSaved) {
+				savedOutputs.push(output);
+				return;
+			}
 		}
 		unsavedOutputs.push(output);
 	});
 
 	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromCodeState>[] }[] = [];
+
 	if (!isEmpty(unsavedOutputs)) {
 		groupedOutputs.push({
 			label: 'Select outputs to display in operator',
 			items: unsavedOutputs
 		});
 	}
-
 	if (!isEmpty(savedOutputs)) {
 		groupedOutputs.push({
 			label: 'Saved models',
@@ -225,7 +233,7 @@ const outputs = computed(() => {
 
 	return groupedOutputs;
 });
-const selectedOutputId = computed<string>(() => props.node.active ?? '');
+const selectedOutputId = ref<string>();
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
@@ -285,7 +293,6 @@ async function handleCode() {
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
 		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
 		clonedState.value.modelId = modelId;
-		clonedState.value.isSaved = false;
 		emit('append-output-port', {
 			label: `Output ${(props.node.outputs?.length ?? 0) + 1}`,
 			state: cloneDeep(clonedState.value),
@@ -336,7 +343,6 @@ async function saveAsNewModel() {
 		}
 
 		// 3. Append Model to output port
-		clonedState.value.isSaved = true;
 		emit('append-output-port', {
 			label: selectedModel.value.header?.name,
 			state: cloneDeep(clonedState.value),
@@ -416,6 +422,16 @@ async function fetchModel() {
 	selectedModel.value = model;
 	isProcessing.value = false;
 }
+
+watch(
+	() => props.node.active,
+	() => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+	},
+	{ immediate: true }
+);
 
 // watch for model id changes on state
 watch(

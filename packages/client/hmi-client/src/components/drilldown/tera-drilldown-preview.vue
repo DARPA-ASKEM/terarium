@@ -6,6 +6,7 @@
 				<Dropdown
 					v-if="options"
 					class="output-dropdown"
+					placeholder="Select an output"
 					:model-value="output"
 					:options="options"
 					option-value="id"
