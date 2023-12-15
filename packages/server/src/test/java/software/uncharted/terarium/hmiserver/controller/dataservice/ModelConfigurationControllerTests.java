@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -16,9 +17,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ModelConfigurationControllerTests extends TerariumApplicationTests {
 
@@ -28,22 +31,32 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@Autowired
 	private ModelConfigurationService modelConfigurationService;
 
-	final ModelConfiguration modelConfiguration = new ModelConfiguration()
-			.setId(UUID.randomUUID())
-			.setName("test-framework")
-			.setModelId(UUID.randomUUID())
-			.setDescription("test-desc")
-			.setConfiguration(Map.of("key", "value"));
+	@Autowired
+	private ElasticsearchService elasticService;
 
-	@After
-	public void tearDown() throws IOException {
-		modelConfigurationService.deleteModelConfiguration(modelConfiguration.getId());
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
+
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelConfigurationIndex());
+	}
+
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getModelConfigurationIndex());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
-		modelConfigurationService.createModelConfiguration(modelConfiguration);
+
+		final ModelConfiguration modelConfiguration = modelConfigurationService
+				.createModelConfiguration(new ModelConfiguration()
+						.setName("test-framework")
+						.setModelId(UUID.randomUUID())
+						.setDescription("test-desc")
+						.setConfiguration(Map.of("key", "value")));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model_configurations/" + modelConfiguration.getId())
 				.with(csrf()))
@@ -53,6 +66,14 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateModelConfiguration() throws Exception {
+
+		final ModelConfiguration modelConfiguration = modelConfigurationService
+				.createModelConfiguration(new ModelConfiguration()
+						.setName("test-framework")
+						.setModelId(UUID.randomUUID())
+						.setDescription("test-desc")
+						.setConfiguration(Map.of("key", "value")));
+
 		mockMvc.perform(MockMvcRequestBuilders.post("/model_configurations")
 				.with(csrf())
 				.contentType("application/json")
@@ -64,7 +85,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		modelConfigurationService.createModelConfiguration(modelConfiguration);
+		final ModelConfiguration modelConfiguration = modelConfigurationService
+				.createModelConfiguration(new ModelConfiguration()
+						.setName("test-framework")
+						.setModelId(UUID.randomUUID())
+						.setDescription("test-desc")
+						.setConfiguration(Map.of("key", "value")));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model_configurations/" + modelConfiguration.getId())
 				.with(csrf())
@@ -77,7 +103,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModelConfiguration() throws Exception {
 
-		modelConfigurationService.createModelConfiguration(modelConfiguration);
+		final ModelConfiguration modelConfiguration = modelConfigurationService
+				.createModelConfiguration(new ModelConfiguration()
+						.setName("test-framework")
+						.setModelId(UUID.randomUUID())
+						.setDescription("test-desc")
+						.setConfiguration(Map.of("key", "value")));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model_configurations/" + modelConfiguration.getId())
 				.with(csrf()))

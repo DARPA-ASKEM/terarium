@@ -3,8 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.UUID;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +29,6 @@ public class ConceptControllerTests extends TerariumApplicationTests {
 	public void testItCanCreateConcept() throws Exception {
 
 		final OntologyConcept concept = new OntologyConcept()
-				.setId(UUID.randomUUID())
 				.setCurie("something");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/concepts")
@@ -58,15 +55,12 @@ public class ConceptControllerTests extends TerariumApplicationTests {
 	public void testItCanSearchConcepts() throws Exception {
 
 		final OntologyConcept concept0 = new OntologyConcept()
-				.setId(UUID.randomUUID())
 				.setCurie("something");
 
 		final OntologyConcept concept1 = new OntologyConcept()
-				.setId(UUID.randomUUID())
 				.setCurie("something-else");
 
 		final OntologyConcept concept2 = new OntologyConcept()
-				.setId(UUID.randomUUID())
 				.setCurie("another-curie");
 
 		conceptService.createConcept(concept0);

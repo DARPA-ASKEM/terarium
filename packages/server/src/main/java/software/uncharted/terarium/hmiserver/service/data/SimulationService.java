@@ -49,7 +49,8 @@ public class SimulationService {
 	}
 
 	public Simulation createSimulation(final Simulation simulation) throws IOException {
-		elasticService.index(elasticConfig.getSimulationIndex(), simulation.getId().toString(), simulation);
+		elasticService.index(elasticConfig.getSimulationIndex(), simulation.setId(UUID.randomUUID()).getId().toString(),
+				simulation);
 		return simulation;
 	}
 

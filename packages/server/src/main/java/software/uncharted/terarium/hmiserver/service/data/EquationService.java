@@ -37,7 +37,8 @@ public class EquationService {
 	}
 
 	public Equation createEquation(Equation equation) throws IOException {
-		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
+		elasticService.index(elasticConfig.getEquationIndex(), equation.setId(UUID.randomUUID()).getId().toString(),
+				equation);
 		return equation;
 	}
 

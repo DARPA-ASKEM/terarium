@@ -10,8 +10,8 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.ExternalPublication;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
@@ -81,7 +81,8 @@ public class ExternalPublicationService {
 	 *                     publication.
 	 */
 	public ExternalPublication createExternalPublication(ExternalPublication externalPublication) throws IOException {
-		elasticService.index(elasticConfig.getExternalPublicationIndex(), externalPublication.getId().toString(),
+		elasticService.index(elasticConfig.getExternalPublicationIndex(),
+				externalPublication.setId(UUID.randomUUID()).getId().toString(),
 				externalPublication);
 		return externalPublication;
 	}
