@@ -129,11 +129,11 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> createDocument(
-			@RequestBody final DocumentAsset document) {
+			@RequestBody DocumentAsset document) {
 
 		try {
-			DocumentAsset d = documentAssetService.createDocumentAsset(document);
-			return ResponseEntity.ok(d);
+			document = documentAssetService.createDocumentAsset(document);
+			return ResponseEntity.ok(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
