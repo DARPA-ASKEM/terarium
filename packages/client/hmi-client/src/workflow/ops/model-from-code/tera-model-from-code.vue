@@ -12,43 +12,29 @@
 					/>
 					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
 				</header>
-				<ul>
-					<li v-for="({ name, codeLanguage, type }, i) in codeBlocks" :key="i">
-						<Panel toggleable>
-							<template #header>
-								<section>
-									<h5>{{ name }}</h5>
-									<Button icon="pi pi-pencil" text rounded />
-								</section>
-							</template>
-							<template #icons>
-								<span>
-									<label>Include in process</label>
-									<InputSwitch v-model="codeBlocks[i].includeInProcess" />
-								</span>
-								<Button
-									v-if="type !== CodeBlockType.INPUT"
-									icon="pi pi-trash"
-									text
-									rounded
-									@click="removeCodeBlock(i)"
-								/>
-							</template>
-							<template #togglericon="{ collapsed }">
-								<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
-							</template>
-							<v-ace-editor
-								v-model:value="codeBlocks[i].codeContent"
-								@init="initialize"
-								:lang="codeLanguage"
-								theme="chrome"
-								style="height: 10rem; width: 100%"
-								class="ace-editor"
-								:readonly="type === CodeBlockType.INPUT"
-							/>
-						</Panel>
-					</li>
-				</ul>
+				<tera-expandable-panel
+					v-for="({ name, codeLanguage, type }, i) in allCodeBlocks"
+					:key="i"
+					:hide-delete="type === CodeBlockType.INPUT"
+					@delete="removeCodeBlock(i)"
+					:is-included="allCodeBlocks[i].includeInProcess"
+					@update:is-included="
+						allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
+					"
+				>
+					<template #header>
+						<h5>{{ name }}</h5>
+					</template>
+					<v-ace-editor
+						v-model:value="allCodeBlocks[i].codeContent"
+						@init="initialize"
+						:lang="codeLanguage"
+						theme="chrome"
+						style="height: 10rem; width: 100%"
+						class="ace-editor"
+						:readonly="type === CodeBlockType.INPUT"
+					/>
+				</tera-expandable-panel>
 				<template #footer>
 					<span style="margin-right: auto"
 						><label>Model framework:</label
@@ -81,11 +67,6 @@
 				:is-loading="isProcessing"
 				is-selectable
 			>
-				<tera-operator-placeholder
-					v-if="!selectedModel"
-					:operation-type="node.operationType"
-					style="height: 100%"
-				/>
 				<section v-if="selectedModel">
 					<template v-if="clonedState.modelFramework === ModelFramework.Petrinet">
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
@@ -95,6 +76,11 @@
 						<span>Decapodes created: {{ selectedModel.id }}</span>
 					</template>
 				</section>
+				<tera-operator-placeholder
+					v-else
+					:operation-type="node.operationType"
+					style="height: 100%"
+				/>
 				<template #footer>
 					<Button
 						:loading="savingAsset"
@@ -129,9 +115,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
-import Panel from 'primevue/panel';
 import Button from 'primevue/button';
-import InputSwitch from 'primevue/inputswitch';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
@@ -156,6 +140,7 @@ import InputText from 'primevue/inputtext';
 import { getCodeAsset, getCodeFileAsText } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, extractCodeLines, extractDynamicRows } from '@/utils/code-asset';
+import TeraExpandablePanel from '@/components/widgets/tera-expandable-panel.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -186,7 +171,12 @@ const kernelManager = new KernelSessionManager();
 
 const selectedModel = ref<Model | null>(null);
 
-const codeBlocks = ref<CodeBlock[]>([]);
+const inputCodeBlocks = ref<CodeBlock[]>([]);
+
+const allCodeBlocks = computed<CodeBlock[]>(() => [
+	...inputCodeBlocks.value,
+	...clonedState.value.codeBlocks
+]);
 
 const savingAsset = ref(false);
 
@@ -389,7 +379,7 @@ async function getInputCodeBlocks() {
 	if (!codeAsset) return;
 
 	if (!codeAsset.id || !codeAsset.files) return;
-	let inputCodeBlocks: CodeBlock[] = [];
+	let codeBlocks: CodeBlock[] = [];
 
 	const filteredFiles = Object.entries(codeAsset.files).filter(
 		(fileEntry) => fileEntry[1].dynamics?.block?.length > 0
@@ -421,9 +411,9 @@ async function getInputCodeBlocks() {
 	const inputCodeBlocksArrays = await Promise.all(promises);
 
 	// Flatten the arrays since map returns an array of arrays
-	inputCodeBlocks = inputCodeBlocksArrays.flat();
+	codeBlocks = inputCodeBlocksArrays.flat();
 
-	codeBlocks.value = inputCodeBlocks;
+	inputCodeBlocks.value = codeBlocks;
 }
 
 /**
@@ -441,11 +431,11 @@ function addCodeBlock() {
 		name: 'Code Block',
 		codeLanguage: clonedState.value.codeLanguage
 	};
-	codeBlocks.value.push(codeBlock);
+	clonedState.value.codeBlocks.push(codeBlock);
 }
 
 function removeCodeBlock(index: number) {
-	codeBlocks.value.splice(index, 1);
+	clonedState.value.codeBlocks.splice(index, 1);
 }
 
 async function fetchModel() {
@@ -491,13 +481,14 @@ function onUpdateOutput(id) {
 }
 
 function updateNodeLabel(id: string, label: string) {
-	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.label = label;
+	emit('update-output-port', outputPort);
 }
 
 function onUpdateSelection(id) {
-	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
@@ -521,32 +512,6 @@ ul {
 	flex-direction: column;
 	gap: 0.5rem;
 	flex: 1;
-}
-.p-panel {
-	border: 1px solid var(--surface-border-light);
-}
-
-.p-panel:deep(section) {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-.p-panel:deep(.p-panel-icons) {
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-}
-
-li > header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-li > header > section {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
 }
 
 .ace-editor {

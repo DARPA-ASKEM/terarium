@@ -1,0 +1,62 @@
+<template>
+	<Panel toggleable>
+		<template #header>
+			<section>
+				<slot name="header" />
+				<Button icon="pi pi-pencil" text rounded />
+			</section>
+		</template>
+		<template #icons>
+			<label>Include in process</label>
+			<InputSwitch :model-value="isIncluded" @update:model-value="emit('update:is-included')" />
+
+			<Button v-if="!hideDelete" icon="pi pi-trash" text rounded @click="emit('delete')" />
+		</template>
+		<template #togglericon="{ collapsed }">
+			<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
+		</template>
+		<slot />
+	</Panel>
+</template>
+
+<script setup lang="ts">
+import Panel from 'primevue/panel';
+import Button from 'primevue/button';
+import InputSwitch from 'primevue/inputswitch';
+
+const emit = defineEmits(['delete', 'edit', 'update:is-included']);
+
+defineProps<{
+	hideDelete: boolean;
+	isIncluded?: boolean;
+}>();
+</script>
+
+<style scoped>
+.p-panel {
+	border: 1px solid var(--surface-border-light);
+}
+
+.p-panel:deep(section) {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.p-panel:deep(.p-panel-icons) {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+header > section {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+</style>
