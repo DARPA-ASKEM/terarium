@@ -198,14 +198,14 @@ public class ModelController {
 			@ApiResponse(responseCode = "200", description = "Model updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
 	})
-	ResponseEntity<ResponseId> updateModel(
+	ResponseEntity<Model> updateModel(
 			@PathVariable("id") UUID id,
 			@RequestBody Model model) {
 
 		try {
-			model.setUpdatedOn(Timestamp.from(Instant.now()));
-			modelService.updateModel(model.setId(id));
-			return ResponseEntity.ok(new ResponseId(id));
+
+			model = modelService.updateModel(model.setId(id));
+			return ResponseEntity.ok(model);
 		} catch (IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);
@@ -246,13 +246,13 @@ public class ModelController {
 			@ApiResponse(responseCode = "200", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
 	})
-	ResponseEntity<ResponseId> createModel(
+	ResponseEntity<Model> createModel(
 			@RequestBody Model model) {
 
 		try {
-			model.setCreatedOn(Timestamp.from(Instant.now()));
-			modelService.createModel(model);
-			return ResponseEntity.ok(new ResponseId(model.getId()));
+
+			model = modelService.createModel(model);
+			return ResponseEntity.ok(model);
 		} catch (IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);

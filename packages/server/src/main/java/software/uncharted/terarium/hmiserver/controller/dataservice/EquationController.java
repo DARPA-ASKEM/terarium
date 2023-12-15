@@ -90,12 +90,12 @@ public class EquationController {
 			@ApiResponse(responseCode = "200", description = "Equation created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the equation", content = @Content)
 	})
-	ResponseEntity<ResponseId> createEquation(@RequestBody Equation equation) {
+	ResponseEntity<Equation> createEquation(@RequestBody Equation equation) {
 
 		try {
-			equation.setCreatedOn(Timestamp.from(Instant.now()));
-			equationService.createEquation(equation);
-			return ResponseEntity.ok(new ResponseId(equation.getId()));
+
+			equation = equationService.createEquation(equation);
+			return ResponseEntity.ok(equation);
 		} catch (IOException e) {
 			final String error = "Unable to create equation";
 			log.error(error, e);
@@ -146,14 +146,13 @@ public class EquationController {
 			@ApiResponse(responseCode = "200", description = "Equation updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the equation", content = @Content)
 	})
-	ResponseEntity<ResponseId> updateEquation(
+	ResponseEntity<Equation> updateEquation(
 			@PathVariable("equation_id") UUID id,
 			@RequestBody Equation equation) {
 
 		try {
-			equation.setUpdatedOn(Timestamp.from(Instant.now()));
-			equationService.updateEquation(equation.setId(id));
-			return ResponseEntity.ok(new ResponseId(id));
+			equation = equationService.updateEquation(equation.setId(id));
+			return ResponseEntity.ok(equation);
 		} catch (IOException e) {
 			final String error = "Unable to update equation";
 			log.error(error, e);

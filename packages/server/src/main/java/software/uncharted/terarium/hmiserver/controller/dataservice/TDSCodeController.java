@@ -110,8 +110,7 @@ public class TDSCodeController{
 	public ResponseEntity<Code> createCode(@RequestBody Code code){
 
 		try {
-			code.setCreatedOn(Timestamp.from(Instant.now()));
-			codeService.createCode(code);
+			code = codeService.createCode(code);
 		} catch (IOException e) {
 			log.error("Unable to create code resource", e);
 			throw new ResponseStatusException(
@@ -194,10 +193,8 @@ public class TDSCodeController{
 	public ResponseEntity<Code> updateCode(@PathVariable("id") UUID codeId, @RequestBody Code code){
 
 		code.setId(codeId);
-		code.setUpdatedOn(Timestamp.from(Instant.now()));
 		try {
-
-			codeService.updateCode(code);
+			code = codeService.updateCode(code);
 		} catch (IOException e) {
 			log.error("Unable to update code resource", e);
 			throw new ResponseStatusException(

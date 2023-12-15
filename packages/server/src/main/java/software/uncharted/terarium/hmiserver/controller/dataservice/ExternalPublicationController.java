@@ -182,13 +182,13 @@ public class ExternalPublicationController{
 			content = @Content
 		)
 	})
-	public ResponseEntity<ResponseId> updatePublication(
+	public ResponseEntity<ExternalPublication> updatePublication(
 		@PathVariable("id") final UUID id,
-		@RequestBody final ExternalPublication publication
+		@RequestBody ExternalPublication publication
 	) {
-		publication.setId(id).setUpdatedOn(Timestamp.from(Instant.now()));
+		publication.setId(id);
         try {
-            externalPublicationService.updateExternalPublication(publication);
+            publication = externalPublicationService.updateExternalPublication(publication);
         } catch (IOException e) {
 					log.error("Unable to PUT publication", e);
 					throw new ResponseStatusException(
@@ -196,7 +196,7 @@ public class ExternalPublicationController{
 						"Unable to put publication"
 					);
         }
-        return ResponseEntity.ok(new ResponseId(publication.getId()));
+        return ResponseEntity.ok(publication);
 	}
 
 	/**

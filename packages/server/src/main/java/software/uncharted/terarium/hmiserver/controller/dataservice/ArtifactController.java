@@ -72,7 +72,7 @@ public class ArtifactController {
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> createArtifact(@RequestBody Artifact artifact) throws IOException {
-		artifact.setCreatedOn(Timestamp.from(Instant.now()));
+
 		artifactService.createArtifact(artifact);
 
 		JsonNode res = objectMapper.valueToTree(Map.of("id", artifact.getId()));
@@ -88,14 +88,13 @@ public class ArtifactController {
 
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> updateArtifact(@PathVariable("id") UUID artifactId,
+	public ResponseEntity<Artifact> updateArtifact(@PathVariable("id") UUID artifactId,
 			@RequestBody Artifact artifact) throws IOException {
-		artifact.setUpdatedOn(Timestamp.from(Instant.now()));
-		artifactService.updateArtifact(artifact.setId(artifactId));
 
-		JsonNode res = objectMapper.valueToTree(Map.of("id", artifact.getId()));
+		artifact = artifactService.updateArtifact(artifact.setId(artifactId));
 
-		return ResponseEntity.ok(res);
+
+		return ResponseEntity.ok(artifact);
 	}
 
 	@DeleteMapping("/{id}")

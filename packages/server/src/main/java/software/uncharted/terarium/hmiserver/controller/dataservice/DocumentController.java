@@ -73,9 +73,6 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-
 @RequestMapping("/document-asset")
 @RestController
 @Slf4j
@@ -131,13 +128,12 @@ public class DocumentController {
 			@ApiResponse(responseCode = "200", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createDocument(
+	public ResponseEntity<DocumentAsset> createDocument(
 			@RequestBody final DocumentAsset document) {
 
 		try {
-			document.setCreatedOn(Timestamp.from(Instant.now()));
-			documentAssetService.createDocumentAsset(document);
-			return ResponseEntity.ok(new ResponseId(document.getId()));
+			DocumentAsset d = documentAssetService.createDocumentAsset(document);
+			return ResponseEntity.ok(d);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
