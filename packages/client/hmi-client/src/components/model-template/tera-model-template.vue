@@ -1,10 +1,13 @@
 <template>
 	<tera-infinite-canvas
 		@save-transform="saveTransform"
+		@mouseenter="setMouseOverCanvas(true)"
+		@mouseleave="setMouseOverCanvas(false)"
+		@drop="onDrop"
+		@dragover.prevent
+		@dragenter.prevent
 		@focus="() => {}"
 		@blur="() => {}"
-		@mouseleave="setMouseOverCanvas(false)"
-		@mouseenter="setMouseOverCanvas(true)"
 	>
 		<template #foreground>
 			<aside>
@@ -16,15 +19,7 @@
 					<header>Model templates</header>
 					<ul>
 						<li v-for="(_, index) in 5" :key="index">
-							<tera-model-template-card
-								:card="cards[0]"
-								draggable="true"
-								@dragging="
-									() => {
-										console.log(0);
-									}
-								"
-							/>
+							<tera-model-template-card :card="newCard" draggable="true" />
 						</li>
 					</ul>
 				</section>
@@ -47,8 +42,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { cloneDeep } from 'lodash';
 import { Model } from '@/types/Types';
-// import { useDragEvent } from '@/services/drag-drop';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplateCard from './tera-model-template-card.vue';
 
@@ -62,10 +57,11 @@ interface ModelTemplateCard {
 	y: number;
 }
 
+const newCard: ModelTemplateCard = { x: 0, y: 0 };
 let isMouseOverCanvas: boolean = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 
-const cards = ref<ModelTemplateCard[]>([{ x: 100, y: 0 }]);
+const cards = ref<ModelTemplateCard[]>([{ x: 300, y: 40 }]);
 
 const setMouseOverCanvas = (val: boolean) => {
 	isMouseOverCanvas = val;
@@ -73,6 +69,16 @@ const setMouseOverCanvas = (val: boolean) => {
 
 function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
+}
+
+function updateNewCardPosition(event) {
+	newCard.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
+	newCard.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
+}
+
+function onDrop(event) {
+	updateNewCardPosition(event);
+	cards.value.push(cloneDeep(newCard));
 }
 
 const updatePosition = (card: ModelTemplateCard, { x, y }) => {
