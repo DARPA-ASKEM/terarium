@@ -33,7 +33,7 @@ public class DatasetService {
 				.index(elasticConfig.getDatasetIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deleted_on")))))
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Dataset.class);
 	}

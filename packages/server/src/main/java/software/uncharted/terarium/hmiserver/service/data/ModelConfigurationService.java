@@ -31,7 +31,7 @@ public class ModelConfigurationService {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getModelConfigurationIndex())
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deleted_on")))))
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();

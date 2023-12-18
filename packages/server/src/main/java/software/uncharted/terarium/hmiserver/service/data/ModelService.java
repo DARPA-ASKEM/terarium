@@ -87,7 +87,7 @@ public class ModelService {
 				.size(pageSize)
 				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id.toString()).build())
 						.build())
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deleted_on")))))
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();
