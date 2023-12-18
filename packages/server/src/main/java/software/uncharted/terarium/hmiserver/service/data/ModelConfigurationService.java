@@ -31,7 +31,7 @@ public class ModelConfigurationService {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getModelConfigurationIndex())
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();
@@ -39,12 +39,22 @@ public class ModelConfigurationService {
 		return elasticService.search(req, ModelConfiguration.class);
 	}
 
-	public ModelConfiguration getModelConfiguration(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getModelConfigurationIndex(), id.toString(), ModelConfiguration.class);
+	public Optional<ModelConfiguration> getModelConfiguration(UUID id) throws IOException {
+		ModelConfiguration doc = elasticService.get(elasticConfig.getModelConfigurationIndex(), id.toString(),
+				ModelConfiguration.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public void deleteModelConfiguration(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getModelConfigurationIndex(), id.toString());
+		Optional<ModelConfiguration> modelConfiguration = getModelConfiguration(id);
+		if (modelConfiguration.isEmpty()) {
+			return;
+		}
+		modelConfiguration.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateModelConfiguration(modelConfiguration.get());
 	}
 
 	public ModelConfiguration createModelConfiguration(ModelConfiguration modelConfiguration) throws IOException {

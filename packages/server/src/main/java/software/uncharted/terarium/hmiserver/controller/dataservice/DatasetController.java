@@ -121,14 +121,18 @@ public class DatasetController {
 	@Operation(summary = "Gets dataset by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dataset found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no dataset found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no dataset found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
 		try {
-			return ResponseEntity.ok(datasetService.getDataset(id));
+			Optional<Dataset> dataset = datasetService.getDataset(id);
+			if (dataset.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(dataset.get());
 		} catch (IOException e) {
-			final String error = "Unable to create dataset";
+			final String error = "Unable to get dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -348,14 +352,14 @@ public class DatasetController {
 				for (final String header : headers) {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
-				final Dataset updatedDataset = datasetService.getDataset(datasetId);
-				if (updatedDataset == null) {
+				final Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
+				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
 				}
-				updatedDataset.setColumns(columns);
+				updatedDataset.get().setColumns(columns);
 
-				datasetService.updateDataset(updatedDataset);
+				datasetService.updateDataset(updatedDataset.get());
 			}
 
 			return ResponseEntity.ok(new ResponseStatus(status));

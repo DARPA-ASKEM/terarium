@@ -111,7 +111,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(datasetService.getDataset(dataset.getId()));
+		Assertions.assertTrue(datasetService.getDataset(dataset.getId()).isEmpty());
 	}
 
 	@Test

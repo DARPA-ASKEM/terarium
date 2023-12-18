@@ -111,7 +111,7 @@ public class ConceptController {
 	@Operation(summary = "Gets concept by curie string")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Concept found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class))),
-			@ApiResponse(responseCode = "204", description = "There was no concept found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
 	})
 	public ResponseEntity<DKG> getConceptDefinition(
@@ -132,7 +132,7 @@ public class ConceptController {
 	@Operation(summary = "Gets concept by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Concept found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class))),
-			@ApiResponse(responseCode = "204", description = "There was no concept found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
 	})
 	public ResponseEntity<OntologyConcept> getConcept(
@@ -190,7 +190,7 @@ public class ConceptController {
 		try {
 			final Optional<OntologyConcept> updated = conceptService.updateConcept(concept.setId(id));
 			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
+				return ResponseEntity.noContent().build();
 			}
 			return ResponseEntity.ok(updated.get());
 		} catch (RuntimeException e) {

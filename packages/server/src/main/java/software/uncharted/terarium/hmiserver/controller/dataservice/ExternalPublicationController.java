@@ -123,7 +123,11 @@ public class ExternalPublicationController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			return ResponseEntity.ok(externalPublicationService.getExternalPublication(id));
+			Optional<ExternalPublication> externalPublication = externalPublicationService.getExternalPublication(id);
+			if (externalPublication.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(externalPublication.get());
 		} catch (IOException e) {
 			log.error("Unable to GET publication", e);
 			throw new ResponseStatusException(

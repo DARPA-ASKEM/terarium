@@ -60,7 +60,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model_configurations/" + modelConfiguration.getId())
 				.with(csrf()))
-				.andExpect(status().isCreated());
+				.andExpect(status().isOk());
 	}
 
 	@Test
@@ -78,7 +78,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(modelConfiguration)))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 	}
 
 	@Test

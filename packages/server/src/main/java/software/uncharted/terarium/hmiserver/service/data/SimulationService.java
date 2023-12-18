@@ -44,15 +44,22 @@ public class SimulationService {
 		return elasticService.search(req, Simulation.class);
 	}
 
-	public Simulation getSimulation(final UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
+	public Optional<Simulation> getSimulation(final UUID id) throws IOException {
+		Simulation doc = elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public void deleteSimulation(final UUID id) throws IOException {
 
-		Simulation simulation = getSimulation(id);
-		simulation.setDeletedOn(Timestamp.from(Instant.now()));
-		updateSimulation(simulation);
+		Optional<Simulation> simulation = getSimulation(id);
+		if (simulation.isEmpty()) {
+			return;
+		}
+		simulation.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateSimulation(simulation.get());
 	}
 
 	public Simulation createSimulation(final Simulation simulation) throws IOException {

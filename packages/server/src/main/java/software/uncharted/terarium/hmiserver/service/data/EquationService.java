@@ -22,8 +22,12 @@ public class EquationService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
-	public Equation getEquation(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getEquationIndex(), id.toString(), Equation.class);
+	public Optional<Equation> getEquation(UUID id) throws IOException {
+		Equation doc = elasticService.get(elasticConfig.getEquationIndex(), id.toString(), Equation.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public List<Equation> getEquations(Integer page, Integer pageSize) throws IOException {
@@ -31,16 +35,18 @@ public class EquationService {
 				.index(elasticConfig.getEquationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Equation.class);
 	}
 
 	public void deleteEquation(UUID id) throws IOException {
-
-		Equation equation = getEquation(id);
-		equation.setDeletedOn(Timestamp.from(Instant.now()));
-		updateEquation(equation);
+		Optional<Equation> equation = getEquation(id);
+		if (equation.isEmpty()) {
+			return;
+		}
+		equation.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateEquation(equation.get());
 	}
 
 	public Equation createEquation(Equation equation) throws IOException {

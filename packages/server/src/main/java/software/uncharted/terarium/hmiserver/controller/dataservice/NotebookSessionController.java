@@ -114,13 +114,17 @@ public class NotebookSessionController {
 	@Operation(summary = "Gets session by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "NotebookSession found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
-			@ApiResponse(responseCode = "204", description = "There was no session found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no session found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the session from the data store", content = @Content)
 	})
 	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("session_id") UUID id) {
 
 		try {
-			return ResponseEntity.ok(sessionService.getNotebookSession(id));
+			Optional<NotebookSession> session = sessionService.getNotebookSession(id);
+			if (session.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(session.get());
 		} catch (IOException e) {
 			final String error = "Unable to get session";
 			log.error(error, e);

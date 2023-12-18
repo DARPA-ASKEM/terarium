@@ -41,9 +41,13 @@ public class ExternalPublicationService {
 	 * @throws IOException If an I/O error occurs while retrieving the
 	 *                     ExternalPublication.
 	 */
-	public ExternalPublication getExternalPublication(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getExternalPublicationIndex(), id.toString(),
+	public Optional<ExternalPublication> getExternalPublication(UUID id) throws IOException {
+		ExternalPublication doc = elasticService.get(elasticConfig.getExternalPublicationIndex(), id.toString(),
 				ExternalPublication.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	/**
@@ -60,22 +64,26 @@ public class ExternalPublicationService {
 				.index(elasticConfig.getExternalPublicationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, ExternalPublication.class);
 	}
 
 	/**
-	 * Marks the ExternalPublication as deleted by setting the deletedOn field to the current time
+	 * Marks the ExternalPublication as deleted by setting the deletedOn field to
+	 * the current time
 	 *
 	 * @param id The ID of the external publication to delete.
 	 * @throws IOException If an I/O error occurs while deleting the external
 	 *                     publication.
 	 */
 	public void deleteExternalPublication(UUID id) throws IOException {
-		ExternalPublication externalPublication = getExternalPublication(id);
-		externalPublication.setDeletedOn(Timestamp.from(Instant.now()));
-		updateExternalPublication(externalPublication);
+		Optional<ExternalPublication> externalPublication = getExternalPublication(id);
+		if (externalPublication.isEmpty()) {
+			return;
+		}
+		externalPublication.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateExternalPublication(externalPublication.get());
 	}
 
 	/**

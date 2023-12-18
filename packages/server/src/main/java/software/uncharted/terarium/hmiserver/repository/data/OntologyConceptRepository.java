@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.repository.data;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,12 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 public interface OntologyConceptRepository
 		extends PSCrudRepository<OntologyConcept, UUID>, OntologyConceptRepositoryCustom {
 
-	List<OntologyConcept> findAllByCurie(String curieString);
+	List<OntologyConcept> findAllByCurieAndDeletedOnIsNull(String curieString);
+
+	List<OntologyConcept> findAllByDeletedOnIsNull();
+
+	List<OntologyConcept> findAllByIdInAndDeletedOnIsNull(final List<UUID> ids);
+
+	Optional<OntologyConcept> getByIdAndDeletedOnIsNull(final UUID id);
 
 }

@@ -109,7 +109,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(artifactService.getArtifact(artifact.getId()));
+		Assertions.assertTrue(artifactService.getArtifact(artifact.getId()).isEmpty());
 	}
 
 	@Test

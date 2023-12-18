@@ -11,5 +11,5 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 @Repository
 public interface ProjectRepository extends PSCrudRepository<Project, UUID> {
 
-	List<Project> findAllByIdAndDeletedOnIsNull(List<UUID> ids);
+	List<Project> findAllByIdInAndDeletedOnIsNull(final List<UUID> ids);
 }

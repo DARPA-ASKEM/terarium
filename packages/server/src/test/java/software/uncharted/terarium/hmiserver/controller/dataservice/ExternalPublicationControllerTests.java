@@ -105,7 +105,7 @@ public class ExternalPublicationControllerTests extends TerariumApplicationTests
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(externalPublicationService.getExternalPublication(externalPublication.getId()));
+		Assertions.assertTrue(externalPublicationService.getExternalPublication(externalPublication.getId()).isEmpty());
 	}
 
 }

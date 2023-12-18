@@ -58,7 +58,7 @@ public class FrameworkController {
 	@Operation(summary = "Gets a model framework by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model framework found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
-			@ApiResponse(responseCode = "204", description = "There was no framework found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no framework found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the framework from the data store", content = @Content)
 	})
 	ResponseEntity<ModelFramework> getFramework(

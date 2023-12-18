@@ -29,7 +29,7 @@ public class ProjectService {
 	}
 
 	public List<Project> getActiveProjects(final List<UUID> ids) {
-		return projectRepository.findAllByIdAndDeletedOnIsNull(ids);
+		return projectRepository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 
 	public Optional<Project> getProject(final UUID id) {

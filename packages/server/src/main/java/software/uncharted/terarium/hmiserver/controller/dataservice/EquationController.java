@@ -114,13 +114,17 @@ public class EquationController {
 	@Operation(summary = "Gets equation by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Equation found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
-			@ApiResponse(responseCode = "204", description = "There was no equation found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no equation found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the equation from the data store", content = @Content)
 	})
 	ResponseEntity<Equation> getEquation(@PathVariable("equation_id") UUID id) {
 
 		try {
-			return ResponseEntity.ok(equationService.getEquation(id));
+			Optional<Equation> equation = equationService.getEquation(id);
+			if (equation.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(equation.get());
 		} catch (IOException e) {
 			final String error = "Unable to get equation";
 			log.error(error, e);
