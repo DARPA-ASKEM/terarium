@@ -32,6 +32,7 @@ import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
+import { getCodeBlocks } from '@/utils/code-asset';
 import { CodeAssetState } from './code-asset-operation';
 
 const props = defineProps<{
@@ -51,18 +52,22 @@ onMounted(async () => {
 
 watch(
 	() => code.value,
-	() => {
+	async () => {
 		if (code.value?.id) {
 			const state = _.cloneDeep(props.node.state);
 			state.codeAssetId = code.value.id;
 			emit('update-state', state);
 
 			if (_.isEmpty(props.node.outputs)) {
-				emit('append-output-port', {
-					type: 'codeAssetId',
-					label: code.value.name,
-					value: [code.value.id]
-				});
+				const blocks = await getCodeBlocks(code.value);
+
+				if (blocks.length > 0) {
+					emit('append-output-port', {
+						type: 'codeAssetId',
+						label: `${code.value.name} code blocks (${blocks.length})`,
+						value: [code.value.id]
+					});
+				}
 			}
 		}
 	}
