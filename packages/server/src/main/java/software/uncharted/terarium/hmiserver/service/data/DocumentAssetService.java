@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -53,9 +54,14 @@ public class DocumentAssetService {
 		return document;
 	}
 
-	public DocumentAsset updateDocumentAsset(DocumentAsset document) throws IOException {
+	public Optional<DocumentAsset> updateDocumentAsset(DocumentAsset document) throws IOException {
+		if (!elasticService.contains(elasticConfig.getDocumentIndex(), document.getId().toString())) {
+			return Optional.empty();
+		}
+
+		document.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getDocumentIndex(), document.getId().toString(), document);
-		return document;
+		return Optional.of(document);
 	}
 
 	private String getPath(UUID documentId, String filename) {

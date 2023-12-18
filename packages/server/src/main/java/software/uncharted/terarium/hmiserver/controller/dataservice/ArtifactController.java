@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
@@ -86,11 +87,15 @@ public class ArtifactController {
 
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Artifact> updateArtifact(@PathVariable("id") UUID artifactId,
+	public ResponseEntity<Artifact> updateArtifact(
+			@PathVariable("id") UUID artifactId,
 			@RequestBody Artifact artifact) throws IOException {
 
-		artifact = artifactService.updateArtifact(artifact.setId(artifactId));
-		return ResponseEntity.ok(artifact);
+		final Optional<Artifact> updated = artifactService.updateArtifact(artifact.setId(artifactId));
+		if (updated.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(updated.get());
 	}
 
 	@DeleteMapping("/{id}")

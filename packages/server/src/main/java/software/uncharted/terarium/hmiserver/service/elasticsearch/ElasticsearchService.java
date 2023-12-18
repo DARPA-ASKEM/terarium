@@ -6,10 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpHost;
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.rest.RestStatus;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +29,7 @@ import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsIndexTemplateRequest;
@@ -38,7 +37,6 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
@@ -101,14 +99,24 @@ public class ElasticsearchService {
 	 *
 	 * @return True if the index exists, false otherwise
 	 */
-	public boolean containsIndex(final String indexName) {
-		boolean exists = false;
-		try {
-			exists = client.indices().exists(ExistsRequest.of(e -> e.index(indexName))).value();
-		} catch (final IOException e) {
-			log.error("Error checking existence of index {}", indexName, e);
-		}
-		return exists;
+	public boolean containsIndex(final String indexName) throws IOException {
+		return client.indices().exists(ExistsRequest.of(e -> e.index(indexName))).value();
+	}
+
+	/**
+	 * Check for the existence of a document in an index by id.
+	 *
+	 * @return True if the index exists, false otherwise
+	 */
+	public boolean contains(final String indexName, final String id) throws IOException {
+		final GetRequest req = new GetRequest.Builder()
+				.index(indexName)
+				.id(id)
+				.source(new SourceConfigParam.Builder().fetch(false).build())
+				.build();
+
+		GetResponse<JsonNode> response = client.get(req, JsonNode.class);
+		return response.found();
 	}
 
 	/**
@@ -146,20 +154,10 @@ public class ElasticsearchService {
 	 * @return True if the index template is contained in the cluster, false
 	 *         otherwise
 	 */
-	public boolean containsIndexTemplate(final String name) {
+	public boolean containsIndexTemplate(final String name) throws IOException {
 		final ExistsIndexTemplateRequest req = new ExistsIndexTemplateRequest.Builder().name(name).build();
-		BooleanResponse exists = new BooleanResponse(false);
-		try {
-			exists = client.indices().existsIndexTemplate(req);
-		} catch (final ElasticsearchStatusException e) {
-			if (e.status() != RestStatus.NOT_FOUND) {
-				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}",
-						name, e);
-			}
-		} catch (final IOException e) {
-			log.error("Error checking existence of template {}", name, e);
-		}
-		return exists.value();
+
+		return client.indices().existsIndexTemplate(req).value();
 	}
 
 	/**
@@ -179,21 +177,10 @@ public class ElasticsearchService {
 	 * @param id The name of the pipeline to check existence for
 	 * @return True if the pipeline is contained in the cluster, false otherwise
 	 */
-	public boolean containsPipeline(final String id) {
+	public boolean containsPipeline(final String id) throws IOException {
 		final GetPipelineRequest req = new GetPipelineRequest.Builder().id(id).build();
 
-		try {
-			client.ingest().getPipeline(req);
-			return true;
-		} catch (final ElasticsearchStatusException e) {
-			if (e.status() != RestStatus.NOT_FOUND) {
-				log.error("Error checking existence of template, unexpected ElasticsearchStatusException result {}", id,
-						e);
-			}
-		} catch (final IOException e) {
-			log.error("Error checking existence of pipeline {}", id, e);
-		}
-		return false;
+		return client.ingest().getPipeline(req).result().containsKey(id);
 	}
 
 	/**

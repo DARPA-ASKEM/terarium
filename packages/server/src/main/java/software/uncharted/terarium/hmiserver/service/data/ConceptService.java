@@ -47,10 +47,13 @@ public class ConceptService {
 		return ontologyConceptRepository.save(concept);
 	}
 
-	public OntologyConcept updateConcept(final OntologyConcept concept) {
+	public Optional<OntologyConcept> updateConcept(final OntologyConcept concept) {
+		if (!ontologyConceptRepository.existsById(concept.getId())) {
+			return Optional.empty();
+		}
 		ActiveConcept active = markConceptAsActive(concept);
 		concept.setActiveConcept(active);
-		return ontologyConceptRepository.save(concept);
+		return Optional.of(ontologyConceptRepository.save(concept));
 	}
 
 	public void deleteConcept(final UUID id) {

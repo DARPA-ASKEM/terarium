@@ -138,7 +138,11 @@ public class ConceptController {
 			@PathVariable("id") final UUID id,
 			@RequestBody OntologyConcept concept) {
 		try {
-			return ResponseEntity.ok(conceptService.updateConcept(concept.setId(id)));
+			final Optional<OntologyConcept> updated = conceptService.updateConcept(concept.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (RuntimeException e) {
 			final String error = "Unable to update concept";
 			log.error(error, e);

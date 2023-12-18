@@ -1,9 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -150,9 +149,11 @@ public class NotebookSessionController {
 			@RequestBody NotebookSession session) {
 
 		try {
-
-			session = sessionService.updateNotebookSession(session.setId(id));
-			return ResponseEntity.ok(session);
+			final Optional<NotebookSession> updated = sessionService.updateNotebookSession(session.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (IOException e) {
 			final String error = "Unable to update session";
 			log.error(error, e);

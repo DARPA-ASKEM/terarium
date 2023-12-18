@@ -1,9 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -151,8 +150,11 @@ public class EquationController {
 			@RequestBody Equation equation) {
 
 		try {
-			equation = equationService.updateEquation(equation.setId(id));
-			return ResponseEntity.ok(equation);
+			final Optional<Equation> updated = equationService.updateEquation(equation.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (IOException e) {
 			final String error = "Unable to update equation";
 			log.error(error, e);

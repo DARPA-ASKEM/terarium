@@ -1,7 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -9,7 +12,7 @@ import org.springframework.stereotype.Service;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
@@ -42,8 +45,12 @@ public class WorkflowService {
 		return workflow;
 	}
 
-	public Workflow updateWorkflow(final Workflow workflow) throws IOException {
+	public Optional<Workflow> updateWorkflow(final Workflow workflow) throws IOException {
+		if (!elasticService.contains(elasticConfig.getWorkflowIndex(), workflow.getId().toString())) {
+			return Optional.empty();
+		}
+		workflow.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getWorkflowIndex(), workflow.getId().toString(), workflow);
-		return workflow;
+		return Optional.of(workflow);
 	}
 }

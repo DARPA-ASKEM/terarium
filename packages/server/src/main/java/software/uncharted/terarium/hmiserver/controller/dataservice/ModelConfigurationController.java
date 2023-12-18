@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -118,7 +119,12 @@ public class ModelConfigurationController {
 			@RequestBody ModelConfiguration config) {
 
 		try {
-			return ResponseEntity.ok(modelConfigurationService.updateModelConfiguration(config.setId(id)));
+			final Optional<ModelConfiguration> updated = modelConfigurationService
+					.updateModelConfiguration(config.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (IOException e) {
 			final String error = "Unable to update model configuration";
 			log.error(error, e);
