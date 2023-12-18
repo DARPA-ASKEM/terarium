@@ -10,30 +10,39 @@
 						:options="programmingLanguages"
 						@change="setKernelContext"
 					/>
-					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
+					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" disabled />
 				</header>
-				<tera-expandable-panel
-					v-for="({ name, codeLanguage, type }, i) in allCodeBlocks"
-					:key="i"
-					:hide-delete="type === CodeBlockType.INPUT"
-					@delete="removeCodeBlock(i)"
-					:is-included="allCodeBlocks[i].includeInProcess"
-					@update:is-included="
-						allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
-					"
+				<tera-operator-placeholder
+					v-if="allCodeBlocks.length === 0"
+					:operation-type="node.operationType"
+					style="height: 100%"
 				>
-					<template #header>
-						<h5>{{ name }}</h5>
-					</template>
-					<v-ace-editor
-						v-model:value="allCodeBlocks[i].codeContent"
-						:lang="codeLanguage"
-						theme="chrome"
-						style="height: 10rem; width: 100%"
-						class="ace-editor"
-						:readonly="type === CodeBlockType.INPUT"
-					/>
-				</tera-expandable-panel>
+					Please attach a code asset.
+				</tera-operator-placeholder>
+				<template v-else>
+					<tera-expandable-panel
+						v-for="({ name, codeLanguage, type }, i) in allCodeBlocks"
+						:key="i"
+						:hide-delete="type === CodeBlockType.INPUT"
+						@delete="removeCodeBlock(i)"
+						:is-included="allCodeBlocks[i].includeInProcess"
+						@update:is-included="
+							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
+						"
+					>
+						<template #header>
+							<h5>{{ name }}</h5>
+						</template>
+						<v-ace-editor
+							v-model:value="allCodeBlocks[i].codeContent"
+							:lang="codeLanguage"
+							theme="chrome"
+							style="height: 10rem; width: 100%"
+							class="ace-editor"
+							:readonly="type === CodeBlockType.INPUT"
+						/>
+					</tera-expandable-panel>
+				</template>
 				<template #footer>
 					<span style="margin-right: auto"
 						><label>Model framework:</label
@@ -44,7 +53,7 @@
 							@change="setKernelContext"
 					/></span>
 					<Button
-						:disabled="isProcessing"
+						:disabled="isProcessing || allCodeBlocks.length === 0"
 						label="Run"
 						icon="pi pi-play"
 						severity="secondary"
@@ -83,7 +92,7 @@
 				<template #footer>
 					<Button
 						:loading="savingAsset"
-						:disabled="!selectedModel"
+						:disabled="isSaveModelDisabled()"
 						label="Save as new model"
 						severity="secondary"
 						outlined
@@ -135,9 +144,9 @@ import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-sema
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
-import { getCodeAsset, getCodeFileAsText } from '@/services/code';
+import { getCodeAsset } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
-import { CodeBlock, CodeBlockType, extractCodeLines, extractDynamicRows } from '@/utils/code-asset';
+import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraExpandablePanel from '@/components/widgets/tera-expandable-panel.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
@@ -382,43 +391,7 @@ async function getInputCodeBlocks() {
 	if (!codeAssetId) return;
 	const codeAsset = await getCodeAsset(codeAssetId);
 	if (!codeAsset) return;
-
-	if (!codeAsset.id || !codeAsset.files) return;
-	let codeBlocks: CodeBlock[] = [];
-
-	const filteredFiles = Object.entries(codeAsset.files).filter(
-		(fileEntry) => fileEntry[1].dynamics?.block?.length > 0
-	);
-
-	const promises = filteredFiles.map(async (fileEntry) => {
-		const codeContent = (await getCodeFileAsText(codeAsset.id!, fileEntry[0])) ?? '';
-
-		// Assuming fileEntry[1].dynamics.block is an array
-		const inputCodeBlocksForFile = fileEntry[1].dynamics.block.map((block) => {
-			const { startRow, endRow } = extractDynamicRows(block);
-			const codeSnippet = extractCodeLines(codeContent, startRow, endRow);
-
-			return {
-				filename: fileEntry[0],
-				block,
-				codeLanguage: fileEntry[1].language,
-				codeContent: codeSnippet ?? '',
-				name: 'Code Block',
-				includeInProcess: true,
-				type: CodeBlockType.INPUT
-			};
-		});
-
-		return inputCodeBlocksForFile;
-	});
-
-	// Use Promise.all to wait for all asynchronous operations to complete
-	const inputCodeBlocksArrays = await Promise.all(promises);
-
-	// Flatten the arrays since map returns an array of arrays
-	codeBlocks = inputCodeBlocksArrays.flat();
-
-	inputCodeBlocks.value = codeBlocks;
+	inputCodeBlocks.value = await getCodeBlocks(codeAsset);
 }
 
 function addCodeBlock() {
@@ -444,6 +417,14 @@ async function fetchModel() {
 	const model = await getModel(clonedState.value.modelId);
 	selectedModel.value = model;
 	isProcessing.value = false;
+}
+
+function isSaveModelDisabled(): boolean {
+	const activeProjectModelIds = useProjects().activeProject.value?.assets?.models?.map(
+		(model) => model.id
+	);
+
+	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }
 
 watch(
