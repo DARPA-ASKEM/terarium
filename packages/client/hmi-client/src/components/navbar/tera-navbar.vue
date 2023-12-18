@@ -2,24 +2,20 @@
 	<nav>
 		<section class="header-left">
 			<router-link :to="RoutePath.Home">
-				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
+				<img src="@assets/svg/terarium-logo.svg" height="30" alt="Terarium logo" />
 			</router-link>
-			<div class="navigation-dropdown" @click="showNavigationMenu">
-				<h1 v-if="useProjects().activeProject.value?.id || isDataExplorer">
-					{{ useProjects().activeProject.value?.name ?? 'Explorer' }}
-				</h1>
-				<img
-					v-else
-					src="@assets/svg/terarium-wordmark.svg"
-					height="16"
-					alt="Terarium icon with name"
-					class="terariumLogo"
-				/>
-				<i class="pi pi-angle-down" />
-			</div>
-			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
+			<SplitButton
+				:label="menuLabel"
+				class="layout-project-selection"
+				:model="navMenuItems"
+				size="small"
+				outlined
+				rounded
+			/>
 		</section>
 		<section v-if="active" class="header-right">
+			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
 			<Dialog header="Logout" v-model:visible="isLogoutDialog">
@@ -104,6 +100,46 @@
 				</template>
 			</tera-modal>
 		</Teleport>
+		<Teleport to="body">
+			<tera-modal
+				v-if="isAboutModalVisible"
+				@modal-mask-clicked="isAboutModalVisible = false"
+				@modal-enter-press="isAboutModalVisible = false"
+			>
+				<template #header>
+					<h4>About Terarium</h4>
+				</template>
+				<article>
+					<img
+						src="@/assets/svg/terarium-logo.svg"
+						alt="Terarium logo"
+						class="about-terarium-logo"
+					/>
+					<p>
+						Terarium is a comprehensive modeling and simulation platform designed to help
+						researchers and analysts find models in academic literature, parameterize and calibrate
+						them, run simulations to test a variety of scenarios, and analyze the results.
+					</p>
+				</article>
+				<article>
+					<img
+						src="@/assets/svg/uncharted-logo-official.svg"
+						alt="Uncharted Software logo"
+						class="about-uncharted-logo"
+					/>
+					<p>
+						Uncharted Software provides design, development and consulting services related to data
+						visualization and analysis software.
+					</p>
+				</article>
+				<template #footer>
+					<div class="modal-footer">
+						<p>&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
+						<Button class="p-button" @click="isAboutModalVisible = false">Close</Button>
+					</div>
+				</template>
+			</tera-modal>
+		</Teleport>
 	</nav>
 </template>
 
@@ -119,6 +155,7 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import InputText from 'primevue/inputtext';
+import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
@@ -130,11 +167,22 @@ defineProps<{
 	active: boolean;
 }>();
 
+const isAboutModalVisible = ref(false);
+
 /*
  * Navigation Menu
  */
 const router = useRouter();
-const navigationMenu = ref();
+
+const menuLabel = computed(() => {
+	if (isDataExplorer.value) {
+		return 'Explorer';
+	}
+	if (useProjects().activeProject.value) {
+		return useProjects().activeProject.value?.name;
+	}
+	return 'Home';
+});
 
 /**
  * Evaluation scenario code
@@ -301,9 +349,6 @@ const explorerItem: MenuItem = {
 	command: () => router.push(RoutePath.DataExplorer)
 };
 const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
-const showNavigationMenu = (event) => {
-	navigationMenu.value.toggle(event);
-};
 const currentRoute = useCurrentRoute();
 const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
 
@@ -365,6 +410,15 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const documentation = computed(() => {
+	const host = window.location.hostname ?? 'localhost';
+	if (host === 'localhost') {
+		return '//localhost:8000';
+	}
+	const url = host.replace(/\bapp\b/g, 'documentation');
+	return `https://${url}`;
+});
 </script>
 
 <style scoped>
@@ -373,49 +427,24 @@ nav {
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
 	display: grid;
-	column-gap: 0.5rem;
-	grid-template-areas:
-		'header-left search-bar header-right'
-		'suggested-terms suggested-terms suggested-terms';
-	grid-template-columns: minMax(max-content, 25%) auto minMax(min-content, 25%);
-}
-
-.navigation-dropdown {
-	border-color: transparent;
-	border-style: solid;
-	border-radius: var(--border-radius);
-	border-width: 1px;
-	cursor: pointer;
-	font-size: var(--font-body-medium);
-	font-weight: var(--font-weight-semibold);
-	padding: 0.5rem;
-}
-
-.navigation-dropdown:hover,
-.navigation-dropdown:focus {
-	background-color: var(--surface-ground);
-}
-
-.terariumLogo {
-	cursor: pointer;
-}
-
-/* Search Bar */
-
-.search-bar {
-	grid-area: search-bar;
-	margin-left: auto;
-	margin-right: auto;
-	min-width: 25vw;
-	max-width: 60rem;
-	width: 100%;
+	column-gap: var(--gap-small);
+	grid-template-areas: 'header-left header-right';
+	grid-template-columns: minMax(max-content, 75%) minMax(min-content, 25%);
 }
 
 /* Header Right */
 
 .header-right {
 	grid-area: header-right;
+	display: flex;
+	align-items: center;
 	margin-left: auto;
+	gap: var(--gap);
+
+	a,
+	a:hover {
+		text-decoration: none;
+	}
 }
 
 .avatar {
@@ -433,7 +462,7 @@ nav {
 .header-left {
 	align-items: center;
 	display: flex;
-	gap: 0.15rem;
+	gap: var(--gap);
 	grid-area: header-left;
 	height: 100%;
 }
@@ -448,45 +477,34 @@ nav {
 	display: flex;
 }
 
-.p-dropdown {
-	border: 0;
+:deep(.p-splitbutton-menubutton.p-button) {
+	background-color: var(--primary-color);
+	border-color: var(--primary-color);
+	color: #ffffff;
 }
 
-.p-dropdown-label {
-	color: var(--text-color-secondary);
-}
-
-i {
-	color: var(--text-color-subdued);
-	margin-left: 0.5rem;
-	vertical-align: bottom;
-}
-
-/* Suggested terms */
-.suggested-terms {
-	align-items: center;
-	color: var(--text-color-subdued);
+.modal-footer {
 	display: flex;
-	column-gap: 0.5rem;
-	font-size: var(--font-caption);
-	grid-area: suggested-terms;
-	justify-content: center;
-	margin-top: 0.5rem;
-	white-space: nowrap;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
 }
 
-.clear-search-terms:enabled {
-	color: var(--text-color-secondary);
-	background-color: transparent;
+.about-terarium-logo {
+	width: 20rem;
 }
 
-.clear-search-terms:enabled:hover {
-	background-color: var(--surface-hover);
-	color: var(--text-color-secondary);
+.about-uncharted-logo {
+	width: 10rem;
+	margin-top: 3rem;
 }
 
-.navigation-menu {
-	margin-top: 0.25rem;
-	min-width: fit-content !important;
+.modal-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
 }
 </style>

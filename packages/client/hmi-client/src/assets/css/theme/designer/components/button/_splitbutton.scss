@@ -30,7 +30,7 @@
                         background: $plainButtonHoverBgColor;
                         color: $plainButtonTextColor;
                     }
-            
+
                     &:active {
                         background: $plainButtonActiveBgColor;
                         color: $plainButtonTextColor;
@@ -70,7 +70,7 @@
                         background: $plainButtonHoverBgColor;
                         color: $plainButtonTextColor;
                     }
-            
+
                     &:active {
                         background: $plainButtonActiveBgColor;
                         color: $plainButtonTextColor;
@@ -116,7 +116,7 @@
     }
 }
 
-.p-splitbutton.p-button-secondary {    
+.p-splitbutton.p-button-secondary {
     &.p-button-outlined {
         > .p-button {
             background-color: transparent;
