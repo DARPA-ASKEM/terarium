@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 
-import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository

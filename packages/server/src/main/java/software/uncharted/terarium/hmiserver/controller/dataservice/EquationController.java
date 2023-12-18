@@ -29,7 +29,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.EquationService;
@@ -87,7 +86,7 @@ public class EquationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new equation")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Equation created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Equation created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the equation", content = @Content)
 	})
 	ResponseEntity<Equation> createEquation(@RequestBody Equation equation) {
@@ -142,7 +141,7 @@ public class EquationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a equation")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Equation updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "Equation updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the equation", content = @Content)
 	})
 	ResponseEntity<Equation> updateEquation(

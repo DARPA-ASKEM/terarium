@@ -1,5 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.data.project;
-
+package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
 public enum ResourceType {
 	ARTIFACT,

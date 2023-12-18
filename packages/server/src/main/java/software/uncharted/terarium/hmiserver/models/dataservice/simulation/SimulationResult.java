@@ -1,15 +1,14 @@
-package software.uncharted.terarium.hmiserver.models.data.project;
+package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -17,35 +16,35 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Transient;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class Project implements Serializable {
+public class SimulationResult implements Serializable {
 
+	@Serial
+	private static final long serialVersionUID = 4211271157196613944L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
-	@Schema(defaultValue = "My New Project")
-	private String name;
+	@ManyToOne
+	@JoinColumn(name = "simulation_id", nullable = false)
+	@JsonBackReference
+	@NotNull
+	private Simulation simulation;
 
-	private String userId;
-
-	@TSOptional
-	@Schema(defaultValue = "My Project Description")
-	private String description;
+	private String filename;
 
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -61,32 +60,4 @@ public class Project implements Serializable {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
-
-	@OneToMany(mappedBy = "project")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
-	@JsonManagedReference
-	private List<ProjectAsset> projectAssets;
-
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Deprecated
-	private Assets assets;
-
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	// Metadata that can be useful for the UI
-	private Map<String, String> metadata;
-
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Boolean publicProject;
-
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private String userPermission;
 }

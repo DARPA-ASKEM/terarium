@@ -29,7 +29,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
@@ -87,7 +86,7 @@ public class NotebookSessionController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new session")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "NotebookSession created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "NotebookSession created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the session", content = @Content)
 	})
 	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody NotebookSession session) {
@@ -142,7 +141,7 @@ public class NotebookSessionController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a session")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "NotebookSession updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "NotebookSession updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the session", content = @Content)
 	})
 	ResponseEntity<NotebookSession> updateNotebookSession(

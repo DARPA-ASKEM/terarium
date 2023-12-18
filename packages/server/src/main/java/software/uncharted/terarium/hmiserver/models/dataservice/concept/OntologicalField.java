@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.data.concept;
+package software.uncharted.terarium.hmiserver.models.dataservice.concept;
 
 import java.util.Arrays;
 

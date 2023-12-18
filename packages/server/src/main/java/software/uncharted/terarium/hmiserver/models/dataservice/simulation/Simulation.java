@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.data.simulation;
+package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
 import java.io.Serial;
 import java.io.Serializable;

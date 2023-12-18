@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -35,11 +33,10 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
-import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
-import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -97,32 +94,38 @@ public class ProjectController {
 
 		// Get projects from the project repository associated with the list of ids.
 		// Filter the list of projects to only include active projects.
-		List<Project> projects = includeInactive? projectService.getProjects(projectIds) : projectService.getActiveProjects(projectIds);
+		List<Project> projects = includeInactive ? projectService.getProjects(projectIds)
+				: projectService.getActiveProjects(projectIds);
 
 		projects.forEach(project -> {
 			try {
-				final List<ResourceType> assetTypes = Arrays.asList(ResourceType.DATASET, ResourceType.MODEL,
+				final List<ResourceType> resourceTypes = Arrays.asList(
+						ResourceType.DATASET,
+						ResourceType.MODEL,
+						ResourceType.DOCUMENT,
+						ResourceType.WORKFLOW,
 						ResourceType.PUBLICATION);
 
 				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 				project.setPublicProject(rebacProject.isPublic());
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 
-				final Assets assets = new Assets();// TODO dvince: proxy.getAssets(project.getId(),
-													// assetTypes).getBody();
+				List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
+						resourceTypes);
+
 				final Map<String, String> metadata = new HashMap<>();
-				metadata.put("datasets-count",
-						assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
-				metadata.put("extractions-count",
-						assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
-				metadata.put("models-count",
-						assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
-				metadata.put("publications-count",
-						assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
-				metadata.put("workflows-count",
-						assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
-				metadata.put("artifacts-count",
-						assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
+
+				Map<ResourceType, Integer> counts = new HashMap<>();
+				for (ProjectAsset asset : assets) {
+					counts.put(asset.getResourceType(), counts.getOrDefault(asset.getResourceType(), 0) + 1);
+				}
+
+				metadata.put("datasets-count", counts.getOrDefault(ResourceType.DATASET, 0).toString());
+				metadata.put("document-count", counts.getOrDefault(ResourceType.DOCUMENT, 0).toString());
+				metadata.put("models-count", counts.getOrDefault(ResourceType.MODEL, 0).toString());
+				metadata.put("workflows-count", counts.getOrDefault(ResourceType.WORKFLOW, 0).toString());
+				metadata.put("publications-count", counts.getOrDefault(ResourceType.PUBLICATION, 0).toString());
+
 				project.setMetadata(metadata);
 			} catch (final Exception e) {
 				log.error("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}",
@@ -184,19 +187,19 @@ public class ProjectController {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canAdministrate(new RebacProject(id, reBACService))) {
 				boolean deleted = projectService.delete(id);
-				if(deleted)
+				if (deleted)
 					return ResponseEntity.ok(new ResponseDeleted("project", id));
 			}
 
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.NOT_MODIFIED,
-				"Failed to delete project");
+					org.springframework.http.HttpStatus.NOT_MODIFIED,
+					"Failed to delete project");
 
 		} catch (final Exception e) {
 			log.error("Error deleting project", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Failed to delete project");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to delete project");
 		}
 
 	}
@@ -252,8 +255,8 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Failed to update project");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to update project");
 		}
 	}
 
@@ -282,8 +285,8 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error getting project assets", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Failed to get project assets");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to get project assets");
 		}
 
 	}
@@ -313,8 +316,8 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error creating project assets", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Failed to create project asset");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to create project asset");
 		}
 	}
 
@@ -342,8 +345,8 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error deleting project assets", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Failed to delete project asset");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to delete project asset");
 		}
 	}
 

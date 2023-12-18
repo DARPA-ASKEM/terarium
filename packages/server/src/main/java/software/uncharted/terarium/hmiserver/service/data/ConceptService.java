@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.data.concept.ActiveConcept;
-import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse;
-import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.ActiveConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
@@ -60,7 +60,7 @@ public class ConceptService {
 
 	public void deleteConcept(final UUID id) {
 		Optional<OntologyConcept> concept = ontologyConceptRepository.findById(id);
-		if(concept.isEmpty()) {
+		if (concept.isEmpty()) {
 			return;
 		}
 		concept.get().setDeletedOn(Timestamp.from(Instant.now()));

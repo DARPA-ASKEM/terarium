@@ -31,7 +31,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseSuccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
@@ -72,7 +71,7 @@ public class ProvenanceController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the provenance", content = @Content)
 	})
 	public ResponseEntity<Provenance> createProvenance(

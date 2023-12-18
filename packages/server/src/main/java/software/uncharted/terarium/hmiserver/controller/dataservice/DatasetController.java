@@ -53,7 +53,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
@@ -101,7 +100,7 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 	})
 	public ResponseEntity<Dataset> createDataset(@RequestBody Dataset dataset) {
@@ -165,7 +164,7 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a dataset")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dataset updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "Dataset updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 	})
 	ResponseEntity<Dataset> updateDataset(

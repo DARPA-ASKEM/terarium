@@ -26,12 +26,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse;
-import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse.Concept;
-import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse.Concept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ConceptService;
@@ -67,7 +66,7 @@ public class ConceptController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new ontological concept")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Concept created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Concept created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OntologyConcept.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the concept", content = @Content)
 	})
 	public ResponseEntity<OntologyConcept> createConcept(
@@ -182,7 +181,7 @@ public class ConceptController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a concept")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Concept updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "Concept updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OntologyConcept.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the concept", content = @Content)
 	})
 	public ResponseEntity<OntologyConcept> updateConcept(
