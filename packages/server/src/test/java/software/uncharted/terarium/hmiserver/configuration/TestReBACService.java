@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.annotations.JsonResource;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.authority.Role;
@@ -27,7 +26,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRe
 
 @Service
 @Primary
-@RequiredArgsConstructor
 public class TestReBACService extends ReBACService {
 
 	@JsonResource("classpath*:/mock-users/*.json")
@@ -36,6 +34,10 @@ public class TestReBACService extends ReBACService {
 	private Map<String, String> groups = new HashMap<>();
 	private Map<String, PermissionUser> users = new HashMap<>();
 	private Map<String, PermissionRole> roles = new HashMap<>();
+
+	public TestReBACService(final Config config) {
+		super(config);
+	}
 
 	@PostConstruct
 	void init() {

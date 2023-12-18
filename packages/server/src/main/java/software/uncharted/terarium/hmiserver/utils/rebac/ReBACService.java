@@ -22,7 +22,6 @@ import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +35,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
@@ -46,12 +46,12 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRe
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ReBACService {
 
 	Keycloak keycloak;
 
-	@Autowired
-	private Config config;
+	private final Config config;
 
 	private final SchemaManager schemaManager = new SchemaManager();
 
