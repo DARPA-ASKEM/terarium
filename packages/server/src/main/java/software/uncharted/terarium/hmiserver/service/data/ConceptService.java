@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,7 +59,12 @@ public class ConceptService {
 	}
 
 	public void deleteConcept(final UUID id) {
-		ontologyConceptRepository.deleteById(id);
+		Optional<OntologyConcept> concept = ontologyConceptRepository.findById(id);
+		if(concept.isEmpty()) {
+			return;
+		}
+		concept.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateConcept(concept.get());
 	}
 
 	public DKG searchConceptDefinitions(String term, Integer limit, Integer offset) throws Exception {

@@ -38,6 +38,7 @@ import software.uncharted.terarium.hmiserver.models.data.project.Project;
 import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -94,15 +95,7 @@ public class ProjectController {
 
 		// Get projects from the project repository associated with the list of ids.
 		// Filter the list of projects to only include active projects.
-		List<Project> projects = projectService.getProjects(projectIds);
-
-		if (!includeInactive) {
-			// Remove non-active (soft-deleted) projects
-			projects = projects
-					.stream()
-					.filter(project -> project.getDeletedOn() == null)
-					.toList();
-		}
+		List<Project> projects = includeInactive? projectService.getProjects(projectIds) : projectService.getActiveProjects(projectIds);
 
 		projects.forEach(project -> {
 			try {
@@ -182,25 +175,26 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<UUID> deleteProject(
+	public ResponseEntity<ResponseDeleted> deleteProject(
 			@PathVariable("id") final UUID id) {
 
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
 					.canAdministrate(new RebacProject(id, reBACService))) {
-				final Optional<Project> project = projectService.getProject(id);
-				if (project.isEmpty()) {
-					return ResponseEntity.notFound().build();
-				}
-
-				projectService.deleteProject(project.get());
-
-				return ResponseEntity.ok(id);
+				boolean deleted = projectService.delete(id);
+				if(deleted)
+					return ResponseEntity.ok(new ResponseDeleted("project", id));
 			}
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.NOT_MODIFIED,
+				"Failed to delete project");
+
 		} catch (final Exception e) {
 			log.error("Error deleting project", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Failed to delete project");
 		}
 
 	}
@@ -255,7 +249,9 @@ public class ProjectController {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Failed to update project");
 		}
 	}
 
@@ -278,14 +274,14 @@ public class ProjectController {
 
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
 
-				// TODO we have our Assets. Now we need to actually get them from...?
-
-				return ResponseEntity.noContent().build();
+				return ResponseEntity.ok(assets);
 			}
 			return ResponseEntity.notFound().build();
 		} catch (final Exception e) {
 			log.error("Error getting project assets", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Failed to get project assets");
 		}
 
 	}
@@ -314,7 +310,9 @@ public class ProjectController {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
 			log.error("Error creating project assets", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Failed to create project asset");
 		}
 	}
 
@@ -326,7 +324,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
 	@DeleteMapping("/{id}/assets/{resource_type}/{resource_id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<UUID> deleteAsset(
+	public ResponseEntity<ResponseDeleted> deleteAsset(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("resource_type") final ResourceType type,
 			@PathVariable("resource_id") final UUID resourceId) {
@@ -334,17 +332,16 @@ public class ProjectController {
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
-				final ProjectAsset asset = projectAssetService.findByProjectIdAndResourceIdAndResourceType(projectId,
-						resourceId, type);
-				asset.setDeletedOn(Timestamp.from(Instant.now()));
-				projectAssetService.save(asset);
-
-				return ResponseEntity.ok(asset.getId());
+				boolean deleted = projectAssetService.delete(resourceId);
+				if (deleted)
+					return ResponseEntity.ok(new ResponseDeleted("asset-" + type, resourceId));
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
 			log.error("Error deleting project assets", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Failed to delete project asset");
 		}
 	}
 

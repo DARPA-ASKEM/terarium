@@ -31,12 +31,16 @@ public class EquationService {
 				.index(elasticConfig.getEquationIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Equation.class);
 	}
 
 	public void deleteEquation(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getEquationIndex(), id.toString());
+
+		Equation equation = getEquation(id);
+		equation.setDeletedOn(Timestamp.from(Instant.now()));
+		updateEquation(equation);
 	}
 
 	public Equation createEquation(Equation equation) throws IOException {

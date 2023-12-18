@@ -37,12 +37,17 @@ public class ArtifactService {
 				.index(elasticConfig.getArtifactIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Artifact.class);
 	}
 
 	public void deleteArtifact(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getArtifactIndex(), id.toString());
+
+		Artifact artifact = getArtifact(id);
+		artifact.setDeletedOn(Timestamp.from(Instant.now()));
+		updateArtifact(artifact);
+
 	}
 
 	public Artifact createArtifact(Artifact artifact) throws IOException {

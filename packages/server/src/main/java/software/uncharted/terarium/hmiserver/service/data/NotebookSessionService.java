@@ -31,12 +31,16 @@ public class NotebookSessionService {
 				.index(elasticConfig.getNotebookSessionIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, NotebookSession.class);
 	}
 
 	public void deleteNotebookSession(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getNotebookSessionIndex(), id.toString());
+
+		NotebookSession notebookSession = getNotebookSession(id);
+		notebookSession.setDeletedOn(Timestamp.from(Instant.now()));
+		updateNotebookSession(notebookSession);
 	}
 
 	public NotebookSession createNotebookSession(NotebookSession notebookSession) throws IOException {
