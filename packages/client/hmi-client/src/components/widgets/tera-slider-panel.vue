@@ -125,7 +125,7 @@ i.slider-header-item {
 }
 
 .slider-tab-header h5 {
-	transform: rotate(180deg);
+	transform: rotate(0deg);
 	writing-mode: vertical-lr;
 }
 

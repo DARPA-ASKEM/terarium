@@ -1,6 +1,6 @@
 <template>
 	<header :class="`${status} ${interactionClasses}`">
-		<h5>{{ name }}</h5>
+		<h6>{{ name }}</h6>
 		<Button
 			icon="pi pi-ellipsis-v"
 			class="p-button-icon-only p-button-text p-button-rounded"
@@ -99,7 +99,7 @@ header {
 	color: var(--gray-0);
 }
 
-h5 {
+h6 {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	font-weight: normal;

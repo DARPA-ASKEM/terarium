@@ -97,6 +97,14 @@ onMounted(async () => {
 	const state = props.node.state;
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
+
+		if (props.node.outputs.length === 0 && model.value) {
+			emit('append-output-port', {
+				type: 'modelId',
+				label: model.value.header.name,
+				value: [model.value.id]
+			});
+		}
 	}
 });
 </script>

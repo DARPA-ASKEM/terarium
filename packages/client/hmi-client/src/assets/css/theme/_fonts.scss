@@ -13,18 +13,17 @@ h2 {
 }
 
 h4 {
-    font-size: 20px;
-    letter-spacing: 0.15px;
+    font-size: $fontBodyLarge;
 }
 
 h5 {
-    font-size: 16px;
+    font-size: $fontBodyMedium;
 }
 
 h6 {
-    font-size: 14px;
+    font-size: $fontBodySmall;
 }
 
 h7 {
-    font-size: var(--font-caption);
+    font-size: $fontCaption;
 }
