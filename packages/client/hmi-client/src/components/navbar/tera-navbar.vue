@@ -1,19 +1,18 @@
 <template>
 	<nav>
-		<section class="header-left">
-			<router-link :to="RoutePath.Home">
-				<img src="@assets/svg/terarium-logo.svg" height="30" alt="Terarium logo" />
-			</router-link>
-			<SplitButton
-				:label="menuLabel"
-				class="layout-project-selection"
-				:model="navMenuItems"
-				size="small"
-				outlined
-				rounded
-			/>
-		</section>
-		<section v-if="active" class="header-right">
+		<router-link :to="RoutePath.Home">
+			<img src="@assets/svg/terarium-logo.svg" height="30" alt="Terarium logo" />
+		</router-link>
+		<SplitButton
+			v-if="active"
+			:label="menuLabel"
+			class="layout-project-selection"
+			:model="navMenuItems"
+			severity="secondary"
+			outlined
+			rounded
+		/>
+		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
@@ -25,7 +24,7 @@
 					<Button label="Ok" @click="auth.logout" />
 				</template>
 			</Dialog>
-		</section>
+		</template>
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
@@ -406,7 +405,7 @@ watch(
 				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
 			});
 		});
-		navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
+		navMenuItems.value = [homeItem, explorerItem, ...items];
 	},
 	{ immediate: true }
 );
@@ -423,28 +422,21 @@ const documentation = computed(() => {
 
 <style scoped>
 nav {
+	align-items: center;
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
-	display: grid;
-	column-gap: var(--gap-small);
-	grid-template-areas: 'header-left header-right';
-	grid-template-columns: minMax(max-content, 75%) minMax(min-content, 25%);
-}
-
-/* Header Right */
-
-.header-right {
-	grid-area: header-right;
 	display: flex;
-	align-items: center;
-	margin-left: auto;
-	gap: var(--gap);
+	gap: var(--gap-large);
 
 	a,
 	a:hover {
 		text-decoration: none;
 	}
+}
+
+.layout-project-selection {
+	margin-right: auto;
 }
 
 .avatar {
@@ -458,29 +450,29 @@ nav {
 	background-color: var(--surface-hover);
 }
 
-/* Header Left */
-.header-left {
-	align-items: center;
-	display: flex;
-	gap: var(--gap);
-	grid-area: header-left;
-	height: 100%;
+/* Split button
+ * This needs to be into its own component
+ */
+
+:deep(.layout-project-selection.p-splitbutton .p-button:first-of-type) {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-right: 0 none;
+	color: var(--text-color);
 }
 
-.header-left:deep(.p-dropdown-label.p-inputtext) {
-	padding-right: 0;
-}
+:deep(.layout-project-selection.p-splitbutton .p-button:last-of-type) {
+	background-color: var(--surface-200);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	color: var(--text-color-light);
+	padding: 0.714rem 0.4rem;
+	width: calc(3rem + 1px);
 
-.header-left > div {
-	align-items: center;
-	cursor: pointer;
-	display: flex;
-}
-
-:deep(.p-splitbutton-menubutton.p-button) {
-	background-color: var(--primary-color);
-	border-color: var(--primary-color);
-	color: #ffffff;
+	&:hover {
+		background-color: var(--surface-50);
+		color: var(--text-color);
+	}
 }
 
 .modal-footer {
