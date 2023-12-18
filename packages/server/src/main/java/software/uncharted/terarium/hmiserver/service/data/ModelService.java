@@ -17,6 +17,7 @@ import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
@@ -85,15 +86,8 @@ public class ModelService {
 				.index(elasticConfig.getModelConfigurationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q
-						.bool(b -> b
-								.mustNot(mn -> mn
-										.exists(e -> e
-												.field("deleted_on")))
-								.must(m -> m
-										.term(t -> t
-												.field("model_id")
-												.value(id.toString())))))
+				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id.toString()).build())
+						.build())
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();
