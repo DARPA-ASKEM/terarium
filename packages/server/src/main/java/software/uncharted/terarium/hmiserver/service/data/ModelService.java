@@ -84,6 +84,7 @@ public class ModelService {
 
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getModelConfigurationIndex())
+				.from(page)
 				.size(pageSize)
 				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id.toString()).build())
 						.build())

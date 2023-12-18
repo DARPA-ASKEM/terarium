@@ -22,8 +22,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
@@ -32,7 +32,7 @@ import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
 
 @RequestMapping("/models")
 @RestController
-@Slf4j
+@Transactional
 @RequiredArgsConstructor
 public class FrameworkController {
 
@@ -44,14 +44,14 @@ public class FrameworkController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model framework")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the framework", content = @Content)
 	})
-	ResponseEntity<ResponseId> createFramework(
+	ResponseEntity<ModelFramework> createFramework(
 			@RequestBody final ModelFramework framework) {
 		ModelFramework modelFramework = frameworkService.createFramework(framework);
 
-		return ResponseEntity.ok(new ResponseId(modelFramework.getId()));
+		return ResponseEntity.status(HttpStatus.CREATED).body(modelFramework);
 	}
 
 	@GetMapping("/frameworks/{id}")

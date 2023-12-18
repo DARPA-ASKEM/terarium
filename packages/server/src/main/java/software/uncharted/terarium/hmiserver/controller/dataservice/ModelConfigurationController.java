@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -69,13 +70,14 @@ public class ModelConfigurationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model configuration created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Model configuration created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the configuration", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> createModelConfiguration(@RequestBody ModelConfiguration config) {
 
 		try {
-			return ResponseEntity.ok(modelConfigurationService.createModelConfiguration(config));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(modelConfigurationService.createModelConfiguration(config));
 		} catch (IOException e) {
 			final String error = "Unable to create model configuration";
 			log.error(error, e);

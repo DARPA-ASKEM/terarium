@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.data.project.Project;
@@ -57,6 +58,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 @Tags(@Tag(name = "Projects", description = "Project related operations"))
 public class ProjectController {
 
@@ -81,7 +83,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions", content = @Content) })
 	public ResponseEntity<List<Project>> getProjects(
 			@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive) {
-		final RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		List<UUID> projectIds = null;
 		try {
 			projectIds = rebacUser.lookupProjects();
@@ -149,7 +151,7 @@ public class ProjectController {
 	public ResponseEntity<Project> getProject(
 			@PathVariable("id") final UUID id) {
 		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
 			if (rebacUser.canRead(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(id);
@@ -179,7 +181,7 @@ public class ProjectController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canAdministrate(new RebacProject(id, reBACService))) {
 				boolean deleted = projectService.delete(id);
 				if(deleted)
@@ -211,14 +213,14 @@ public class ProjectController {
 		project = projectService.createProject(project);
 
 		try {
-			new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			new RebacUser(currentUserService.get().getId(), reBACService)
 					.createCreatorRelationship(new RebacProject(project.getId(), reBACService));
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
-			// TODO: Rollback potential?
+			return ResponseEntity.internalServerError().build();
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
-			// TODO: Rollback potential?
+			return ResponseEntity.internalServerError().build();
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 
@@ -237,7 +239,7 @@ public class ProjectController {
 			@PathVariable("id") final UUID id,
 			@RequestBody Project project) {
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(id, reBACService))) {
 
 				final Optional<Project> updatedProject = projectService.updateProject(project.setId(id));
@@ -269,7 +271,7 @@ public class ProjectController {
 			@PathVariable("id") final UUID projectId,
 			@RequestParam("types") final List<ResourceType> types) {
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canRead(new RebacProject(projectId, reBACService))) {
 
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
@@ -299,7 +301,7 @@ public class ProjectController {
 			@PathVariable("resource_id") final UUID resourceId) {
 
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
 				if (project.isPresent()) {
@@ -330,7 +332,7 @@ public class ProjectController {
 			@PathVariable("resource_id") final UUID resourceId) {
 
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
 				boolean deleted = projectAssetService.delete(resourceId);
 				if (deleted)
@@ -355,7 +357,7 @@ public class ProjectController {
 			@PathVariable("id") final UUID id) {
 		try {
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacProject)) {
+			if (new RebacUser(currentUserService.get().getId(), reBACService).canRead(rebacProject)) {
 				final PermissionRelationships permissions = new PermissionRelationships();
 				for (final RebacPermissionRelationship permissionRelationship : rebacProject
 						.getPermissionRelationships()) {
@@ -480,7 +482,7 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> setProjectPermissions(final RebacProject what, final RebacObject who,
 			final String relationship) throws Exception {
-		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
 			try {
 				what.setPermissionRelationships(who, relationship);
 				return ResponseEntity.ok().build();
@@ -493,7 +495,7 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> updateProjectPermissions(final RebacProject what, final RebacObject who,
 			final String oldRelationship, final String newRelationship) throws Exception {
-		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
 			try {
 				what.removePermissionRelationships(who, oldRelationship);
 				what.setPermissionRelationships(who, newRelationship);
@@ -507,7 +509,7 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> removeProjectPermissions(final RebacProject what, final RebacObject who,
 			final String relationship) throws Exception {
-		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
 			try {
 				what.removePermissionRelationships(who, relationship);
 				return ResponseEntity.ok().build();

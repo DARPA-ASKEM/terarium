@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -86,15 +87,14 @@ public class EquationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new equation")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Equation created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Equation created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the equation", content = @Content)
 	})
 	ResponseEntity<Equation> createEquation(@RequestBody Equation equation) {
 
 		try {
-
 			equation = equationService.createEquation(equation);
-			return ResponseEntity.ok(equation);
+			return ResponseEntity.status(HttpStatus.CREATED).body(equation);
 		} catch (IOException e) {
 			final String error = "Unable to create equation";
 			log.error(error, e);

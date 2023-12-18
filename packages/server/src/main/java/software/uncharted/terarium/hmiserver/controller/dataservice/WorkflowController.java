@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -93,12 +94,12 @@ public class WorkflowController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new workflow")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Workflow created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))),
+			@ApiResponse(responseCode = "201", description = "Workflow created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the workflow", content = @Content)
 	})
 	public ResponseEntity<Workflow> createWorkflow(@RequestBody final Workflow item) {
 		try {
-			return ResponseEntity.ok(workflowService.createWorkflow(item));
+			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createWorkflow(item));
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);

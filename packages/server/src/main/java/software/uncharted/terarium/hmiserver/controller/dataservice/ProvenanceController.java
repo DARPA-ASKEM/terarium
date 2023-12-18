@@ -29,6 +29,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseSuccess;
@@ -41,6 +42,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @RequestMapping("/provenance")
 @RestController
+@Transactional
 public class ProvenanceController {
 
 	@Autowired
@@ -70,13 +72,13 @@ public class ProvenanceController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the provenance", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createProvenance(
-			@RequestBody final Provenance provenance) {
-		Provenance createdProvenance = provenanceService.createProvenance(provenance);
-		return ResponseEntity.ok(new ResponseId(createdProvenance.getId()));
+	public ResponseEntity<Provenance> createProvenance(
+			@RequestBody Provenance provenance) {
+		provenance = provenanceService.createProvenance(provenance);
+		return ResponseEntity.status(HttpStatus.CREATED).body(provenance);
 	}
 
 	private String snakeToCamel(String s) {

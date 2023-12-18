@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -86,14 +87,14 @@ public class NotebookSessionController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new session")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "NotebookSession created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "NotebookSession created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the session", content = @Content)
 	})
 	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody NotebookSession session) {
 
 		try {
 			sessionService.createNotebookSession(session);
-			return ResponseEntity.ok(session);
+			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (IOException e) {
 			final String error = "Unable to create session";
 			log.error(error, e);

@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,10 +19,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse;
+import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse.Concept;
 import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -30,6 +39,7 @@ import software.uncharted.terarium.hmiserver.service.data.ConceptService;
 @RequestMapping("/concepts")
 @RestController
 @Slf4j
+@Transactional
 public class ConceptController {
 
 	@Autowired
@@ -37,6 +47,12 @@ public class ConceptController {
 
 	@GetMapping
 	@Secured(Roles.USER)
+	@Operation(summary = "Search concepts by curie string")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Concepts found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no concepts found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
+	})
 	public ResponseEntity<List<OntologyConcept>> searchConcept(
 			@RequestParam("curie") final String curie) {
 		try {
@@ -49,11 +65,16 @@ public class ConceptController {
 
 	@PostMapping
 	@Secured(Roles.USER)
+	@Operation(summary = "Create a new ontological concept")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Concept created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the concept", content = @Content)
+	})
 	public ResponseEntity<OntologyConcept> createConcept(
 			@RequestBody final OntologyConcept concept) {
 
 		try {
-			return ResponseEntity.ok(conceptService.createConcept(concept));
+			return ResponseEntity.status(HttpStatus.CREATED).body(conceptService.createConcept(concept));
 		} catch (Exception e) {
 			final String error = "Unable to create concept";
 			log.error(error, e);
@@ -64,6 +85,12 @@ public class ConceptController {
 	}
 
 	@GetMapping("/definitions")
+	@Operation(summary = "Search concept definitions by term")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Concepts found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no concepts found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
+	})
 	@Secured(Roles.USER)
 	public ResponseEntity<DKG> searchConceptDefinitions(
 			@RequestParam("term") String term,
@@ -82,6 +109,12 @@ public class ConceptController {
 
 	@GetMapping("/definitions/{curie}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets concept by curie string")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Concept found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class))),
+			@ApiResponse(responseCode = "204", description = "There was no concept found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
+	})
 	public ResponseEntity<DKG> getConceptDefinition(
 			@PathVariable("curie") final String curie) {
 		try {
@@ -97,6 +130,12 @@ public class ConceptController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets concept by ID")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Concept found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class))),
+			@ApiResponse(responseCode = "204", description = "There was no concept found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
+	})
 	public ResponseEntity<OntologyConcept> getConcept(
 			@PathVariable("id") final UUID id) {
 
@@ -117,6 +156,13 @@ public class ConceptController {
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Deletes a concept")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Deleted concept", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
+			@ApiResponse(responseCode = "404", description = "Concept could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+	})
 	public ResponseEntity<ResponseDeleted> deleteConcept(
 			@PathVariable("id") final UUID id) {
 
@@ -134,6 +180,11 @@ public class ConceptController {
 
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Update a concept")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Concept updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the concept", content = @Content)
+	})
 	public ResponseEntity<OntologyConcept> updateConcept(
 			@PathVariable("id") final UUID id,
 			@RequestBody OntologyConcept concept) {
@@ -154,6 +205,12 @@ public class ConceptController {
 
 	@GetMapping("/facets")
 	@Secured(Roles.USER)
+	@Operation(summary = "Faceted search for concepts")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Concepts found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no concepts found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
+	})
 	public ResponseEntity<ConceptFacetSearchResponse> searchConceptsUsingFacets(
 			@RequestParam(value = "types", required = false) final List<TaggableType> types,
 			@RequestParam(value = "curies", required = false) final List<String> curies) {

@@ -94,7 +94,7 @@ public class ExternalPublicationController {
 			@ApiResponse(responseCode = "201", description = "Publication created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the publication", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createPublication(
+	public ResponseEntity<ExternalPublication> createPublication(
 			@RequestBody final ExternalPublication publication) {
 		try {
 			externalPublicationService.createExternalPublication(publication);
@@ -104,7 +104,7 @@ public class ExternalPublicationController {
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to create publication");
 		}
-		return ResponseEntity.status(HttpStatus.CREATED).body(new ResponseId(publication.getId()));
+		return ResponseEntity.status(HttpStatus.CREATED).body(publication);
 	}
 
 	/**

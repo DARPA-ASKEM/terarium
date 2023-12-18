@@ -101,14 +101,13 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 	})
 	public ResponseEntity<Dataset> createDataset(@RequestBody Dataset dataset) {
 
 		try {
-			dataset = datasetService.createDataset(dataset);
-			return ResponseEntity.ok(dataset);
+			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createDataset(dataset));
 		} catch (IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);

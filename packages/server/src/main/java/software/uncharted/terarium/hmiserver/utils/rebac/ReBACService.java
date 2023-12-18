@@ -1,21 +1,24 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
+import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.composeResourceUrl;
+import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.doDeleteJSON;
+import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.doPostJSON;
 
-import com.authzed.api.v1.Core;
-import com.authzed.api.v1.PermissionService;
-import com.authzed.api.v1.PermissionService.Consistency;
-import com.authzed.grpcutil.BearerToken;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.inprocess.InProcessChannelBuilder;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import javax.ws.rs.core.Response;
+
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.admin.client.resource.*;
+import org.keycloak.admin.client.resource.GroupResource;
+import org.keycloak.admin.client.resource.RoleResource;
+import org.keycloak.admin.client.resource.RolesResource;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -23,19 +26,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import com.authzed.api.v1.Core;
+import com.authzed.api.v1.PermissionService.Consistency;
+import com.authzed.grpcutil.BearerToken;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.inprocess.InProcessChannelBuilder;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRole;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
-
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.*;
 
 @Service
 @Slf4j
@@ -45,6 +52,8 @@ public class ReBACService {
 	Keycloak keycloak;
 
 	private final Config config;
+
+	private final SchemaManager schemaManager = new SchemaManager();
 
 	@Value("${terarium.keycloak.realm}")
 	String REALM_NAME;
@@ -57,7 +66,6 @@ public class ReBACService {
 
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
-	private final SchemaManager schemaManager = new SchemaManager();
 
 	public static final String PUBLIC_GROUP_NAME = "Public";
 	public static String PUBLIC_GROUP_ID;
@@ -74,20 +82,19 @@ public class ReBACService {
 	void startup() throws Exception {
 
 		keycloak = KeycloakBuilder.builder()
-			.serverUrl(config.getKeycloak().getUrl())
-			.realm(config.getKeycloak().getAdminRealm())
-			.clientId(config.getKeycloak().getAdminClientId())
-			.grantType(OAuth2Constants.PASSWORD)
-			.username(config.getKeycloak().getAdminUsername())
-			.password(config.getKeycloak().getAdminPassword())
-			.build();
-
+				.serverUrl(config.getKeycloak().getUrl())
+				.realm(config.getKeycloak().getAdminRealm())
+				.clientId(config.getKeycloak().getAdminClientId())
+				.grantType(OAuth2Constants.PASSWORD)
+				.username(config.getKeycloak().getAdminUsername())
+				.password(config.getKeycloak().getAdminPassword())
+				.build();
 
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
 		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
 			channel = InProcessChannelBuilder
-				.forName("TestSpiceDB")
-				.build();
+					.forName("TestSpiceDB")
+					.build();
 			return;
 		} else {
 			ManagedChannelBuilder builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
@@ -151,7 +158,8 @@ public class ReBACService {
 	}
 
 	private String getGroupId(String name) {
-		List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups(name, true, 0, Integer.MAX_VALUE, true);
+		List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups(name, true, 0, Integer.MAX_VALUE,
+				true);
 		for (GroupRepresentation group : groups) {
 			if (group.getPath().equals("/" + name)) {
 				return group.getId();
@@ -177,8 +185,8 @@ public class ReBACService {
 		switch (response.getStatus()) {
 			case 201:
 				return new PermissionGroup(
-					CreatedResponseUtil.getCreatedId(response),
-					name);
+						CreatedResponseUtil.getCreatedId(response),
+						name);
 			case 409:
 				log.error("Conflicting Name");
 				return null;
@@ -197,10 +205,10 @@ public class ReBACService {
 		UserResource userResource = usersResource.get(id);
 		UserRepresentation userRepresentation = userResource.toRepresentation();
 		return new PermissionUser(
-			userRepresentation.getId(),
-			userRepresentation.getFirstName(),
-			userRepresentation.getLastName(),
-			userRepresentation.getEmail());
+				userRepresentation.getId(),
+				userRepresentation.getFirstName(),
+				userRepresentation.getLastName(),
+				userRepresentation.getEmail());
 	}
 
 	public List<PermissionUser> getUsers() {
@@ -213,55 +221,54 @@ public class ReBACService {
 			}
 			UserResource userResource = usersResource.get(userRepresentation.getId());
 
-			List<PermissionRole> roles= new ArrayList<>();
-			for (RoleRepresentation roleRepresentation: userResource.roles().getAll().getRealmMappings()) {
+			List<PermissionRole> roles = new ArrayList<>();
+			for (RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
 				if (roleRepresentation.getDescription().isBlank()) {
 					PermissionRole role = new PermissionRole(
-						roleRepresentation.getId(),
-						roleRepresentation.getName()
-						// no users are acquired (to avoid circular references etc)
+							roleRepresentation.getId(),
+							roleRepresentation.getName()
+					// no users are acquired (to avoid circular references etc)
 					);
 					roles.add(role);
 				}
 			}
 
-			 PermissionUser user = new PermissionUser(
-				 userRepresentation.getId(),
-				 userRepresentation.getFirstName(),
-				 userRepresentation.getLastName(),
-				 userRepresentation.getEmail(),
-				 roles);
-			 response.add(user);
+			PermissionUser user = new PermissionUser(
+					userRepresentation.getId(),
+					userRepresentation.getFirstName(),
+					userRepresentation.getLastName(),
+					userRepresentation.getEmail(),
+					roles);
+			response.add(user);
 		}
 		return response;
 	}
-
 
 	public List<PermissionRole> getRoles() {
 		List<PermissionRole> response = new ArrayList<>();
 
 		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
-		for (RoleRepresentation roleRepresentation: rolesResource.list()) {
+		for (RoleRepresentation roleRepresentation : rolesResource.list()) {
 			if (roleRepresentation.getDescription().isBlank()) {
 				RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
 				List<PermissionUser> users = new ArrayList<>();
 				for (UserRepresentation userRepresentation : roleResource.getRoleUserMembers()) {
 					if (userRepresentation.getEmail() != null) {
 						PermissionUser user = new PermissionUser(
-							userRepresentation.getId(),
-							userRepresentation.getFirstName(),
-							userRepresentation.getLastName(),
-							userRepresentation.getEmail()
-							// no roles are acquired (to avoid circular references etc)
+								userRepresentation.getId(),
+								userRepresentation.getFirstName(),
+								userRepresentation.getLastName(),
+								userRepresentation.getEmail()
+						// no roles are acquired (to avoid circular references etc)
 						);
 						users.add(user);
 					}
 				}
 
 				PermissionRole role = new PermissionRole(
-					roleRepresentation.getId(),
-					roleRepresentation.getName(),
-					users);
+						roleRepresentation.getId(),
+						roleRepresentation.getName(),
+						users);
 				response.add(role);
 			}
 
@@ -276,8 +283,8 @@ public class ReBACService {
 		List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups();
 		for (GroupRepresentation groupRepresentation : groups) {
 			PermissionGroup group = new PermissionGroup(
-				groupRepresentation.getId(),
-				groupRepresentation.getName());
+					groupRepresentation.getId(),
+					groupRepresentation.getName());
 			response.add(group);
 		}
 
@@ -288,8 +295,8 @@ public class ReBACService {
 		GroupResource groupResource = keycloak.realm(REALM_NAME).groups().group(id);
 		GroupRepresentation groupRepresentation = groupResource.toRepresentation();
 		PermissionGroup permissionGroup = new PermissionGroup(
-			groupRepresentation.getId(),
-			groupRepresentation.getName());
+				groupRepresentation.getId(),
+				groupRepresentation.getName());
 
 		return permissionGroup;
 	}
@@ -319,12 +326,14 @@ public class ReBACService {
 		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, getCurrentConsistency());
 	}
 
-	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {
+	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship)
+			throws Exception, RelationshipAlreadyExistsException {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		CURRENT_ZED_TOKEN = rebac.createRelationship(who, relationship, what);
 	}
 
-	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship) throws Exception, RelationshipAlreadyExistsException {
+	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship)
+			throws Exception, RelationshipAlreadyExistsException {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
 	}
@@ -356,7 +365,7 @@ public class ReBACService {
 		RoleRepresentation roleToRemove = null;
 		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
 		for (RoleRepresentation roleRepresentation : rolesResource.list()) {
-			//RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
+			// RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
 			if (roleRepresentation.getName().equals(roleName)) {
 				roleToRemove = roleRepresentation;
 			}
@@ -368,9 +377,9 @@ public class ReBACService {
 		}
 
 		String resourceUrl = composeResourceUrl(
-			config.getKeycloak().getUrl() + "/admin/",
-			REALM_NAME,
-			"users/" + userId + "/role-mappings/realm");
+				config.getKeycloak().getUrl() + "/admin/",
+				REALM_NAME,
+				"users/" + userId + "/role-mappings/realm");
 
 		List<RoleRepresentation> roles = new ArrayList<>();
 		roles.add(roleToRemove);
@@ -416,9 +425,9 @@ public class ReBACService {
 		}
 
 		String resourceUrl = composeResourceUrl(
-			config.getKeycloak().getUrl() + "/admin/",
-			REALM_NAME,
-			"users/" + userId + "/role-mappings/realm");
+				config.getKeycloak().getUrl() + "/admin/",
+				REALM_NAME,
+				"users/" + userId + "/role-mappings/realm");
 
 		List<RoleRepresentation> roles = new ArrayList<>();
 		roles.add(roleToAdd);
@@ -431,7 +440,9 @@ public class ReBACService {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
-	public List<UUID> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type) throws Exception {
+
+	public List<UUID> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type)
+			throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
 	}

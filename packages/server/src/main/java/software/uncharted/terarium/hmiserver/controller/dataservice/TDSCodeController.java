@@ -105,21 +105,20 @@ public class TDSCodeController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new code resource")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Code resource created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "201", description = "Code resource created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the code resource", content = @Content)
 	})
 	public ResponseEntity<Code> createCode(@RequestBody Code code) {
 
 		try {
 			code = codeService.createCode(code);
+			return ResponseEntity.status(HttpStatus.CREATED).body(code);
 		} catch (IOException e) {
 			log.error("Unable to create code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to create code resource");
 		}
-
-		return ResponseEntity.ok(code);
 	}
 
 	/**

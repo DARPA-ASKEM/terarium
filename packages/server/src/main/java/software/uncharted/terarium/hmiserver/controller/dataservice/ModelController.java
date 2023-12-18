@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -244,16 +245,15 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
 	})
 	ResponseEntity<Model> createModel(
 			@RequestBody Model model) {
 
 		try {
-
 			model = modelService.createModel(model);
-			return ResponseEntity.ok(model);
+			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);
