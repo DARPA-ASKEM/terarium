@@ -87,6 +87,7 @@ public class ModelService {
 				.size(pageSize)
 				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id.toString()).build())
 						.build())
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deleted_on")))))
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();
@@ -99,7 +100,9 @@ public class ModelService {
 	}
 
 	public void deleteModel(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getModelIndex(), id.toString());
+		Model model = getModel(id);
+		model.setDeletedOn(Timestamp.from(Instant.now()));
+		updateModel(model);
 	}
 
 	public Model createModel(Model model) throws IOException {

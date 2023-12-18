@@ -60,19 +60,22 @@ public class ExternalPublicationService {
 				.index(elasticConfig.getExternalPublicationIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deleted_on")))))
 				.build();
 		return elasticService.search(req, ExternalPublication.class);
 	}
 
 	/**
-	 * Deletes an external publication from the Elasticsearch index.
+	 * Marks the ExternalPublication as deleted by setting the deletedOn field to the current time
 	 *
 	 * @param id The ID of the external publication to delete.
 	 * @throws IOException If an I/O error occurs while deleting the external
 	 *                     publication.
 	 */
 	public void deleteExternalPublication(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getExternalPublicationIndex(), id.toString());
+		ExternalPublication externalPublication = getExternalPublication(id);
+		externalPublication.setDeletedOn(Timestamp.from(Instant.now()));
+		updateExternalPublication(externalPublication);
 	}
 
 	/**
