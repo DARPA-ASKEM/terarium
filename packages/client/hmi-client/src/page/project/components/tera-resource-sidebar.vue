@@ -283,6 +283,7 @@ header {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
+	border-radius: 0; /* Remove the border-radius to end nitely with the border of the sidebar */
 }
 
 ::v-deep(.asset-button.p-button > span) {
@@ -294,6 +295,13 @@ header {
 
 ::v-deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
+
+	&::after {
+		position: absolute;
+		content: ' ';
+		border-left: 4px solid var(--primary-color);
+		height: 100%;
+	}
 }
 
 ::v-deep(.asset-button.p-button .p-button-label) {
