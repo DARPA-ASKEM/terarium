@@ -231,7 +231,6 @@ export class KernelSessionManager {
 			if (message.header.msg_type === 'status') {
 				return;
 			}
-			console.log(message);
 			const msgType = message.header.msg_type;
 			const msgId = message.parent_header.msg_id;
 
